@@ -400,7 +400,7 @@ if __name__ == "__main__":
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
-    overwrite = 0
+    overwrite = 0  # TODO: Not used. Why?
     fname_data = sct.get_absolute_path(arguments.i)
     path_label = arguments.f
     method = arguments.method
@@ -408,18 +408,18 @@ if __name__ == "__main__":
     append_csv = arguments.append
     combine_labels = arguments.combine
     labels_user = arguments.l
-    adv_param_user = arguments.param
+    adv_param_user = arguments.param  # TODO: Not used. Why?
     slices_of_interest = arguments.z
     vertebral_levels = arguments.vert
     fname_vertebral_labeling = arguments.vertfile
     perslice = arguments.perslice
     perlevel = arguments.perlevel
-    fname_normalizing_label = arguments.norm_file
-    normalization_method = arguments.norm_method
-    label_to_fix = arguments.fix_label
-    fname_output_metric_map = arguments.output_map
-    fname_mask_weight = arguments.mask_weighted
-    discard_negative_values = int(arguments.discard_neg_val)
+    fname_normalizing_label = arguments.norm_file  # TODO: Not used. Why?
+    normalization_method = arguments.norm_method  # TODO: Not used. Why?
+    label_to_fix = arguments.fix_label  # TODO: Not used. Why?
+    fname_output_metric_map = arguments.output_map  # TODO: Not used. Why?
+    fname_mask_weight = arguments.mask_weighted  # TODO: Not used. Why?
+    discard_negative_values = int(arguments.discard_neg_val)  # TODO: Not used. Why?
     verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
