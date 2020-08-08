@@ -133,12 +133,12 @@ def main():
     param.path_out = arguments.ofolder
     param.remove_temp_files = int(arguments.r)
     param.interp = arguments.x
-    if '-g' in arguments:
-        param.group_size = arguments['-g']
-    if '-m' in arguments:
-        param.fname_mask = arguments['-m']
-    if '-param' in arguments:
-        param.update(arguments['-param'])
+    if arguments.g is not None:
+        param.group_size = arguments.g
+    if arguments.m is not None:
+        param.fname_mask = arguments.m
+    if arguments.param is not None:
+        param.update(arguments.param)
     param.verbose = int(arguments.v)
 
     # Update log level
