@@ -14,6 +14,8 @@
 from __future__ import absolute_import, division
 
 import sys
+import os
+import argparse
 
 import numpy as np
 from skimage import transform, img_as_float
@@ -22,7 +24,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from msct_parser import Parser
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 
 # Default parameters
@@ -105,31 +107,41 @@ def main(fname_anat, fname_centerline, verbose):
 
 
 def get_parser():
-    param_default = Param()
-    parser = Parser(__file__)
-    parser.usage.set_description("""Flatten the spinal cord such within the medial sagittal plane. Useful to make nice 
-    pictures. Output data has suffix _flatten. Output type is float32 (regardless of input type) to minimize loss of 
-    precision during conversion.""")
-    parser.add_option(name='-i',
-                      type_value='image_nifti',
-                      description='Input volume.',
-                      mandatory=True,
-                      example='t2.nii.gz')
-    parser.add_option(name='-s',
-                      type_value='image_nifti',
-                      description='Spinal cord segmentation or centerline.',
-                      mandatory=True,
-                      example='t2_seg.nii.gz')
-    parser.add_option(name='-v',
-                      type_value='multiple_choice',
-                      description='0: no verbose (default), 1: min verbose, 2: verbose + figures',
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value=str(param_default.verbose))
-    parser.add_option(name='-h',
-                      type_value=None,
-                      description='Display this help',
-                      mandatory=False)
+    parser = argparse.ArgumentParser(
+        description=("Flatten the spinal cord such within the medial sagittal plane. Useful to make nice pictures. "
+                     "Output data has suffix _flatten. Output type is float32 (regardless of input type) to minimize "
+                     "loss of precision during conversion."),
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Input volume. Example: t2.nii.gz"
+    )
+    mandatory.add_argument(
+        '-s',
+        metavar=Metavar.file,
+        required=True,
+        help="Spinal cord segmentation or centerline. Example: t2_seg.nii.gz"
+    )
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.str,
+        choices=['0', '1', '2'],
+        default=str(param_default.verbose),
+        help="Verbosity. 0: no verbose (default), 1: min verbose, 2: verbose + figures"
+    )
 
     return parser
 
@@ -141,10 +153,10 @@ if __name__ == "__main__":
     param_default = Param()
 
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    fname_anat = arguments['-i']
-    fname_centerline = arguments['-s']
-    verbose = int(arguments.get('-v'))
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    fname_anat = arguments.i
+    fname_centerline = arguments.s
+    verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # call main function
