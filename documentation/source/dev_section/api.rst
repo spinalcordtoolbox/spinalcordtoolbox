@@ -13,14 +13,14 @@ Python API
 ..
 
 
-Segmentation API
-****************
+Segmentation
+************
 
-Spinal Cord Segmentation API
-============================
+Spinal Cord Segmentation
+========================
 
-deepseg API
-+++++++++++
+deepseg
++++++++
 
 .. automodule:: spinalcordtoolbox.deepseg.core
    :members:
@@ -29,8 +29,8 @@ deepseg API
    :members:
 
 
-deepseg_sc API
-++++++++++++++
+deepseg_sc
+++++++++++
 
 .. automodule:: spinalcordtoolbox.deepseg_sc.core
    :members:
@@ -39,11 +39,11 @@ deepseg_sc API
    :members:
 
 
-GM/WM Segmentation API
-======================
+GM/WM Segmentation
+==================
 
-deepseg_gm API
-++++++++++++++
+deepseg_gm
+++++++++++
 
 .. automodule:: spinalcordtoolbox.deepseg_gm.deepseg_gm
    :members:
@@ -52,18 +52,18 @@ deepseg_gm API
    :members:
 
 
-MS Lesion Segmentation API
-==========================
+MS Lesion Segmentation
+======================
 
-deepseg_lesion API
-++++++++++++++++++
+deepseg_lesion
+++++++++++++++
 
 .. automodule:: spinalcordtoolbox.deepseg_lesion.core
    :members:
 
 
-Centerline API
-**************
+Centerline
+**********
 
 spinalcordtoolbox.centerline
 ============================
@@ -78,8 +78,8 @@ spinalcordtoolbox.centerline
    :members:
 
 
-Segmentation Processing API
-***************************
+Segmentation Processing
+***********************
 
 spinalcord.process_seg
 =======================
@@ -94,8 +94,8 @@ spinalcord.straightening
    :members:
 
 
-QMRI API
-********
+QMRI
+****
 
 spinalcordtoolbox.qmri
 ======================
@@ -104,8 +104,8 @@ spinalcordtoolbox.qmri
    :members:
 
 
-Quality Control API
-*******************
+Quality Control
+***************
 
 The modules spinalcordtoolbox.reports.qc_ and
 spinalcordtoolbox.reports.slice_ are used to generate :ref:`qc` reports.
@@ -124,8 +124,8 @@ spinalcordtoolbox.reports.slice
    :members:
 
 
-Vertebrae Labeling API
-**********************
+Vertebrae Labeling
+******************
 
 spinalcordtoolbox.vertebrae
 ===========================
@@ -137,8 +137,8 @@ spinalcordtoolbox.vertebrae
    :members:
 
 
-Metrics Aggregation API
-***********************
+Metrics Aggregation
+*******************
 
 spinalcordtoolbox.aggregate_slicewise
 =====================================
@@ -147,8 +147,8 @@ spinalcordtoolbox.aggregate_slicewise
    :members:
 
 
-Image Manipulation API
-**********************
+Image Manipulation
+******************
 
 spinalcordtoolbox.cropping
 ==========================
@@ -157,7 +157,7 @@ spinalcordtoolbox.cropping
    :members:
 
 spinalcordtoolbox.image
-==========================
+=======================
 
 .. automodule:: spinalcordtoolbox.image
    :members:
@@ -169,8 +169,8 @@ spinalcordtoolbox.resampling
    :members:
 
 
-Motion Correction API
-*********************
+Motion Correction
+*****************
 
 spinalcordtoolbox.moco
 ======================
