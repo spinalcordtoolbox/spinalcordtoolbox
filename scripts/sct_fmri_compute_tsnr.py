@@ -15,12 +15,14 @@
 from __future__ import absolute_import, division
 
 import sys
+import os
+import argparse
 
 import numpy as np
 
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
-from msct_parser import Parser
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.image import Image
 
 
@@ -67,24 +69,39 @@ class Tsnr:
 # PARSER
 # ==========================================================================================
 def get_parser():
-    parser = Parser(__file__)
-    parser.usage.set_description('Compute temporal SNR (tSNR) in fMRI time series.')
-    parser.add_option(name='-i',
-                      type_value='file',
-                      description='fMRI data',
-                      mandatory=True,
-                      example='fmri.nii.gz')
-    parser.add_option(name='-v',
-                      type_value='multiple_choice',
-                      description='verbose',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name='-o',
-                      type_value='file_output',
-                      description='tSNR data output file',
-                      mandatory=False,
-                      example='fmri_tsnr.nii.gz')
+    parser = argparse.ArgumentParser(
+        description="Compute temporal SNR (tSNR) in fMRI time series.",
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Input fMRI data. Example: fmri.nii.gz"
+    )
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.str,
+        choices=['0', '1'],
+        default='1',
+        help="Verbosity. 0: None, 1: Verbose"
+    )
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.file,
+        help="tSNR data output file. Example: fmri_tsnr.nii.gz"
+    )
+
     return parser
 
 
@@ -95,10 +112,14 @@ def main(args=None):
     parser = get_parser()
     param = Param()
 
-    arguments = parser.parse(sys.argv[1:])
-    fname_src = arguments['-i']
-    fname_dst = arguments.get("-o", sct.add_suffix(fname_src, "_tsnr"))
-    verbose = int(arguments.get('-v'))
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    fname_src = arguments.i
+    if "-o" in arguments:
+        fname_dst = arguments.o
+    else:
+        fname_dst = sct.add_suffix(fname_src, "_tsnr")
+
+    verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # call main function
