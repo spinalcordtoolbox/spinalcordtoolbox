@@ -104,7 +104,7 @@ def get_parser():
         '-param',
         metavar=Metavar.str,
         nargs='+',
-        help=f"R|Advanced parameters. Assign value with \"=\", and separate arguments with \",\"\n"
+        help=f"R|Advanced parameters. Assign value with \"=\", and separate arguments with a space (\" \")\n"
              f"    -poly [int]: Degree of polynomial function used for regularization along Z. For no regularization set to "
              f"0. Default={param_default.poly}.\n"
              f"    -smooth [mm]: Smoothing kernel. Default={param_default.smooth}.\n"
