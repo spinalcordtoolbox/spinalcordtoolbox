@@ -38,10 +38,11 @@ from types import SimpleNamespace
 if "SCT_MPI_MODE" in os.environ:
     from mpi4py.futures import MPIPoolExecutor as PoolExecutor
     __MPI__ = True
-    sys.path.insert(0, path_script)
 else:
     import concurrent.futures
-    from concurrent.futures import ProcessPoolExecutor as PoolExecutor
+    from concurrent.futures import ProcessPoolExecutor
+    PoolExecutor = functools.partial(ProcessPoolExecutor,
+                                     mpi_info = [("thread_level", "MPI_THREAD_SERIALIZED")])
     __MPI__ = False
 
 
@@ -293,8 +294,8 @@ def main(argv):
             else:
                 print('Please input y or n')
 
-        if send_test.lower() in ['', 'y']:
-            send_notification('sct_run_batch: test notification', 'Looks good')
+            if send_test.lower() in ['', 'y']:
+               send_notification('sct_run_batch: test notification', 'Looks good')
 
     # Set up output directories and create them if they don't already exist
     path_output = os.path.abspath(os.path.expanduser(args.path_output))
@@ -426,7 +427,7 @@ def main(argv):
                                                continue_on_error=args.continue_on_error)
             results = list(p.map(run_single_dir, subject_dirs))
     except Exception as e:
-        if do_email is not None:
+        if do_email:
             message = ('Oh no there has been the following error in your pipeline:\n\n'
                        '{}'.format(e))
             try:
