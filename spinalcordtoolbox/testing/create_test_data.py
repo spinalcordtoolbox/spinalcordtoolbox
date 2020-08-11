@@ -132,8 +132,6 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     :param angle_IS: int: angle around IS axis (in deg)
     :param radius_RL: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
     :param radius_AP: float: 2nd radius
-    :param polynomial: bool: use polynomial function to create dummy segmentation
-    :param degree: int: degree of polynomial function used for creation of dummy segmentation
     :param zeroslice: list int: zero all slices listed in this param
     :param debug: Write temp files for debug
     :return: img: Image object
