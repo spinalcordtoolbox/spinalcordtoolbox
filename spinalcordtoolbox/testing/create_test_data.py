@@ -147,8 +147,8 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     # create regularized curve, within Y-Z plane (A-P), located at x=nx/2:
     x = [round(nx / 2.)] * len(range(nz))
     # and passing through the following points:
-    y = np.array([round(ny / 4.), round(ny / 2.), round(3 * ny / 4.)])  # oblique curve (changing AP points across SI)
-    #y = [round(ny / 2.), round(ny / 2.), round(ny / 2.)]               # straight curve (same location of AP across SI)
+    #y = np.array([round(ny / 4.), round(ny / 2.), round(3 * ny / 4.)])  # oblique curve (changing AP points across SI)
+    y = [round(ny / 2.), round(ny / 2.), round(ny / 2.)]               # straight curve (same location of AP across SI)
     z = np.array([0, round(nz / 2.), nz - 1])
     # we use bspline (instead of poly) in order to avoid bad extrapolation at edges
     # see: https://github.com/neuropoly/spinalcordtoolbox/pull/2754
