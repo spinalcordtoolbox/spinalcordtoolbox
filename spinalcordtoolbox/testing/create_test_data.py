@@ -119,7 +119,7 @@ def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate
 
 def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
                        shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0,
-                       interleaved=False, factor=1, zeroslice=[], debug=False):
+                       polynomial=False, degree=2, zeroslice=[], debug=False):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :param size_arr: tuple: (nx, ny, nz)
@@ -132,7 +132,8 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     :param angle_IS: int: angle around IS axis (in deg)
     :param radius_RL: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
     :param radius_AP: float: 2nd radius
-    :param interleaved: bool: use polynomial function to simulate slicewise motion
+    :param polynomial: bool: use polynomial function to create dummy segmentation
+    :param degree: int: degree of polynomial function used for creation of dummy segmentation
     :param zeroslice: list int: zero all slices listed in this param
     :param debug: Write temp files for debug
     :return: img: Image object
@@ -143,21 +144,23 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     nx, ny, nz = [int(size_arr[i] * pixdim[i]) for i in range(3)]
     data = np.zeros((nx, ny, nz))
     xx, yy = np.mgrid[:nx, :ny]
-    if not interleaved:
+
+    # Create straight dummy segmentation located in the middle of X-Y plane
+    if not polynomial:
         # loop across slices and add object
         for iz in range(nz):
             if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
                 data[:, :, iz] = ((abs(xx - nx / 2) <= radius_RL) & (abs(yy - ny / 2) <= radius_AP)) * 1
             if shape == 'ellipse':
                 data[:, :, iz] = (((xx - nx / 2) / radius_RL) ** 2 + ((yy - ny / 2) / radius_AP) ** 2 <= 1) * 1
-    elif interleaved:
-        # create regularized curve, within Y-Z plane (A-P), located at x=nx/2, passing through the following points:
+    # Create polynomial dummy segmentation
+    elif polynomial:
         x = [round(ny / 2.)] * len(range(nz))
-        #y = np.array([round(nx / 2.) - 1, round(nx / 2.), round(nx / 2.) + 1])
+        # create regularized curve, within Y-Z plane (A-P), located at x=nx/2, passing through the following points:
         y = np.array([round(nx / 4.), round(nx / 2.), round(3 * nx / 4.)])
         z = np.array([0, round(nz / 2.), nz - 1])
         #yfit, _ = bspline(z, y, range(nz), 10)
-        yfit, _ = polyfit_1d(z, y, range(nz), deg=2)
+        yfit, _ = polyfit_1d(z, y, range(nz), deg=degree)
         yfit = yfit.astype(np.int)
         # loop across slices and add object
         for iz in range(nz):
@@ -217,7 +220,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
 
 def dummy_segmentation_4d(vol_num=10, create_bvecs=False, size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64,
                           orientation='LPI', shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0,
-                          radius_AP=3.0, interleaved=False, zeroslice=[], debug=False):
+                          radius_AP=3.0, polynomial=False, degree=2, zeroslice=[], debug=False):
     """
     Create a dummy 4D segmentation (dMRI/fMRI) and dummy bvecs file (optional)
     :param vol_num: int: number of volumes in 4D data
@@ -230,12 +233,11 @@ def dummy_segmentation_4d(vol_num=10, create_bvecs=False, size_arr=(256, 256, 25
 
     # Loop across individual volumes of 4D data
     for volume in range(0,vol_num):
-        factor = uniform(0.5, 3.0)          # shift in voxels
         # set debug=True in line below for saving individual volumes into individual nii files
         img_list.append(dummy_segmentation(size_arr=size_arr, pixdim=pixdim, dtype=dtype, orientation=orientation,
                                            shape=shape, angle_RL=angle_RL, angle_AP=angle_AP, angle_IS=angle_IS,
-                                           radius_RL=radius_RL, radius_AP=radius_AP, interleaved=interleaved,
-                                           factor=factor, zeroslice=zeroslice, debug=False))
+                                           radius_RL=radius_RL, radius_AP=radius_AP, polynomial=polynomial,
+                                           degree=degree, zeroslice=zeroslice, debug=False))
 
     # Concatenate individual 3D images into 4D data
     img_4d = concat_data(img_list, 3)
