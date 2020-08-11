@@ -36,16 +36,8 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
-    packages=[
-        "spinalcordtoolbox",
-    ],
-    # package_data={'spinalcordtoolbox': ['version.txt']},
-    data_files=[
-        ('', ['version.txt']),
-        # <hack>
-        ("sct_scripts", [os.path.join("scripts", x) for x in os.listdir("scripts") if x.endswith(".py")]),
-        # </hack>
-    ],
+    packages=find_packages(exclude=['.git', 'data', 'dev', 'dev.*',
+                                    'install', 'testing']),
     include_package_data=True,
     extras_require={
         'docs': [
