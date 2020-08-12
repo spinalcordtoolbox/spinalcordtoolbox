@@ -13,14 +13,8 @@ set -e # Error build immediately if install script exits with non-zero
 if [ -n "$DOCKER_IMAGE" ]; then
     ./util/dockerize.sh ./.ci.sh
 elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
-    choco install wsl-ubuntu-1804 -y
-     # or, instead of choco, use curl + powershell:
-     # https://docs.microsoft.com/en-us/windows/wsl/install-manual#downloading-distros-via-the-command-line
-    # wsl --setdefault "Ubuntu-18.04"
-     # TODO: Travis's version of wsl is too old for --setdefault.
-     # Instead we trust that wsl will default to the installed
-     # Ubuntu because it is the only option, but it would be
-     # better to be explicit when it becomes possible.
+    wget -nv -O wsl-ubuntu-1804.appx https://aka.ms/wsl-ubuntu-1804
+    powershell -Command 'Add-AppxPackage -Path .\wsl-ubuntu-1804.appx'
 
     # disable apt's helpful (and build-breaking) interactive mode
     # https://linuxhint.com/debian_frontend_noninteractive/
