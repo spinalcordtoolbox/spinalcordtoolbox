@@ -165,7 +165,7 @@ def get_parser():
               "a pickle file (extension .pickle).")
     )
     optional.add_argument(
-        '-output_map',
+        '-output-map',
         metavar=Metavar.file,
         default='',
         help=("File name for an image consisting of the atlas labels multiplied by the estimated metric values "
@@ -229,7 +229,7 @@ def get_parser():
               "    -#2: standard deviation of the noise (assumed Gaussian)")
     )
     advanced.add_argument(
-        '-fix_label',
+        '-fix-label',
         metavar=Metavar.list,
         type=list_type(',', str),
         default='',
@@ -238,13 +238,13 @@ def get_parser():
               "(Fix the CSF value)")
     )
     advanced.add_argument(
-        '-norm_file',
+        '-norm-file',
         metavar=Metavar.file,
         default='',
         help='Filename of the label by which the user wants to normalize.'
     )
     advanced.add_argument(
-        '-norm_method',
+        '-norm-method',
         metavar=Metavar.str,
         choices=['sbs', 'whole'],
         default='',
@@ -253,13 +253,13 @@ def get_parser():
               "    -whole: normalization by the metric value in the whole label for all slices.")
     )
     advanced.add_argument(
-        '-mask_weighted',
+        '-mask-weighted',
         metavar=Metavar.file,
         default='',
         help="Nifti mask to weight each voxel during ML or MAP estimation. Example: PAM50_wm.nii.gz"
     )
     advanced.add_argument(
-        '-discard_neg_val',
+        '-discard-neg-val',
         metavar=Metavar.str,
         choices=('0', '1'),
         default='0',
