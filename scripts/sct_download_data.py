@@ -17,7 +17,7 @@ import sys
 import argparse
 
 from spinalcordtoolbox.download import install_data
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 import sct_utils as sct
 
 
@@ -46,6 +46,7 @@ def get_parser(dict_url):
     optional.add_argument(
         '-o',
         metavar=Metavar.folder,
+        action=ActionCreateFolder,
         help="Path to directory to save the downloaded data to."
          " (Defaults to ./${dataset-name})."
          " Directory will be created if it does not exist.."
