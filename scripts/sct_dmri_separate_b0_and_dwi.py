@@ -26,7 +26,7 @@ from spinalcordtoolbox.image import Image
 from sct_image import split_data
 from sct_convert import convert
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 import argparse
 
 
@@ -94,6 +94,7 @@ def get_parser():
     optional.add_argument(
         '-ofolder',
         metavar=Metavar.folder,
+        action=ActionCreateFolder,
         default='./',
         help='Output folder. Example: dmri_separate_results/',
     )

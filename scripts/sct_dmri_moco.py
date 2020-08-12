@@ -32,7 +32,7 @@ from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 
 import sct_utils as sct
 import argparse
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 
 
 def get_parser():
@@ -126,6 +126,7 @@ def get_parser():
     optional.add_argument(
         '-ofolder',
         metavar=Metavar.folder,
+        action=ActionCreateFolder,
         default=param_default.path_out,
         help="Output folder. Example: dmri_moco_results/"
     )
