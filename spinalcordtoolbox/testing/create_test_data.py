@@ -154,6 +154,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     # see: https://github.com/neuropoly/spinalcordtoolbox/pull/2754
     yfit, _ = bspline(z, y, range(nz), smooth=10)
     #yfit, _ = polyfit_1d(z, y, range(nz))
+    yfit = np.round(yfit)   # has to be used for correct float -> int conversion in next step
     yfit = yfit.astype(np.int)
     # loop across slices and add object
     for iz in range(nz):
