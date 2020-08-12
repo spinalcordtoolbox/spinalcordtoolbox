@@ -35,14 +35,28 @@ import psutil
 from textwrap import dedent
 from types import SimpleNamespace
 
+# mpiexec -n 3 python -c "
+# import mpi4py.rc
+# mpi4py.rc.thread_level = 'serialized'
+# from mpi4py import MPI
+# from mpi4py.futures import MPICommExecutor as E
+# with E() as e:
+#   if e is not None:
+#     e.map(print, range(10))
+# "
+
 if "SCT_MPI_MODE" in os.environ:
-    from mpi4py.futures import MPIPoolExecutor as PoolExecutor
+    import mpi4py.rc
+    mpi4py.rc.thread_level = 'serialized'
+    from mpi4py.futures import MPICommExecutor
+
+    def PoolExecutor(worker):
+        return MPICommExecutor()
+    
     __MPI__ = True
 else:
     import concurrent.futures
-    from concurrent.futures import ProcessPoolExecutor
-    PoolExecutor = functools.partial(ProcessPoolExecutor,
-                                     mpi_info = [("thread_level", "MPI_THREAD_SERIALIZED")])
+    from concurrent.futures import ProcessPoolExecutor as PoolExecutor
     __MPI__ = False
 
 
@@ -414,18 +428,19 @@ def main(argv):
     # Trap errors to send an email if a script fails.
     try:
         with PoolExecutor(jobs) as p:
-            run_single_dir = functools.partial(run_single,
-                                               script=script,
-                                               script_args=args.script_args,
-                                               path_segmanual=path_segmanual,
-                                               path_data=path_data,
-                                               path_data_processed=path_data_processed,
-                                               path_results=path_results,
-                                               path_log=path_log,
-                                               path_qc=path_qc,
-                                               itk_threads=args.itk_threads,
-                                               continue_on_error=args.continue_on_error)
-            results = list(p.map(run_single_dir, subject_dirs))
+            if p is not None:
+                run_single_dir = functools.partial(run_single,
+                                                   script=script,
+                                                   script_args=args.script_args,
+                                                   path_segmanual=path_segmanual,
+                                                   path_data=path_data,
+                                                   path_data_processed=path_data_processed,
+                                                   path_results=path_results,
+                                                   path_log=path_log,
+                                                   path_qc=path_qc,
+                                                   itk_threads=args.itk_threads,
+                                                   continue_on_error=args.continue_on_error)
+                results = list(p.map(run_single_dir, subject_dirs))
     except Exception as e:
         if do_email:
             message = ('Oh no there has been the following error in your pipeline:\n\n'
