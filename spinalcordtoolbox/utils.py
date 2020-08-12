@@ -16,8 +16,6 @@ import tqdm
 import zipfile
 from enum import Enum
 
-from spinalcordtoolbox.types import Coordinate
-
 logger = logging.getLogger(__name__)
 
 
@@ -62,15 +60,7 @@ def list_type(delimiter, subtype):
         parsing, and preserves the behavior of the old msct_parser.
     """
     def list_typecast_func(string):
-        value_list = string.split(delimiter)
-        typed_value_list = []
-        for value in value_list:
-            if subtype is Coordinate:
-                typecast_value = subtype([int(v) for v in value.split(',')])
-            else:
-                typecast_value = subtype(value)
-            typed_value_list.append(typecast_value)
-        return typed_value_list
+        return [subtype(v) for v in string.split(delimiter)]
 
     return list_typecast_func
 
