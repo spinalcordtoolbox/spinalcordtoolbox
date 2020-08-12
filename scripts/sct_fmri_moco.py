@@ -18,7 +18,7 @@ import argparse
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type
 
 
 def get_parser():
@@ -74,9 +74,9 @@ def get_parser():
     )
     optional.add_argument(
         '-param',
-        nargs='+',
-        metavar=Metavar.str,
-        help=(f"R|Advanced parameters. Assign value with \"=\"; Separate arguments with a space (\" \")\n"
+        metavar=Metavar.list,
+        type=list_type(',', str),
+        help=(f"R|Advanced parameters. Assign value with \"=\"; Separate arguments with \",\".\n"
               f"    -poly [int]: Degree of polynomial function used for regularization along Z. For no regularization "
               f"set to 0. Default={param_default.poly}.\n"
               f"    -smooth [mm]: Smoothing kernel. Default={param_default.smooth}.\n"

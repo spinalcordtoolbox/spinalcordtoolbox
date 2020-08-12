@@ -31,7 +31,7 @@ from spinalcordtoolbox.utils import parse_num_list
 from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric, LabelStruc
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type
 
 # get path of the script and the toolbox
 # TODO: is that useful??
@@ -230,7 +230,8 @@ def get_parser():
     )
     advanced.add_argument(
         '-fix_label',
-        metavar=Metavar.str,
+        metavar=Metavar.list,
+        type=list_type(',', str),
         default='',
         help=("When using ML or MAP estimations, if you do not want to estimate the metric in one label and fix its "
               "value to avoid effects on other labels, specify <label_ID>,<metric_value. Example: -fix-label 36,0 "
