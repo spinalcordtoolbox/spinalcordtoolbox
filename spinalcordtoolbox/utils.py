@@ -16,6 +16,8 @@ import tqdm
 import zipfile
 from enum import Enum
 
+from spinalcordtoolbox.types import Coordinate
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,6 +52,27 @@ class ActionCreateFolder(argparse.Action):
 
         # Add the attribute
         setattr(namespace, self.dest, folders)
+
+
+# TODO: Use for argparse wherever type_value=[['delim'], 'type'] was used
+def list_type(delimiter, subtype):
+    """
+        Factory function that returns a list parsing function, which can be
+        used with argparse's `type` option. This allows for more complex type
+        parsing, and preserves the behavior of the old msct_parser.
+    """
+    def list_typecast_func(string):
+        value_list = string.split(delimiter)
+        typed_value_list = []
+        for value in value_list:
+            if subtype is Coordinate:
+                typecast_value = subtype([int(v) for v in value.split(',')])
+            else:
+                typecast_value = subtype(value)
+            typed_value_list.append(typecast_value)
+        return typed_value_list
+
+    return list_typecast_func
 
 
 class Metavar(Enum):
