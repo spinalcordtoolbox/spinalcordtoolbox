@@ -14,7 +14,7 @@ if [ -n "$DOCKER_IMAGE" ]; then
     ./util/dockerize.sh ./.ci.sh
 elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
     wget -nv -O wsl-ubuntu-1804.appx https://aka.ms/wsl-ubuntu-1804
-    powershell -Command 'Add-AppxPackage -Path .\wsl-ubuntu-1804.appx'
+    sudo powershell -Command 'Add-AppxPackage -Path .\wsl-ubuntu-1804.appx'
 
     # disable apt's helpful (and build-breaking) interactive mode
     # https://linuxhint.com/debian_frontend_noninteractive/
