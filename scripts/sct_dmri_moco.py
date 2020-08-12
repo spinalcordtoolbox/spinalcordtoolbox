@@ -80,24 +80,27 @@ def get_parser():
     optional.add_argument(
         '-bval',
         metavar=Metavar.file,
+        default=param_default.fname_bvals,
         help='Bvals file. Example: bvals.nii.gz',
     )
     optional.add_argument(
         '-bvalmin',
         type=float,
         metavar=Metavar.float,
+        default=param_default.bval_min,
         help='B-value threshold (in s/mm2) below which data is considered as b=0. Example: 50.0',
     )
     optional.add_argument(
         '-g',
         type=int,
         metavar=Metavar.int,
-        help='Group nvols successive dMRI volumes for more robustness. Example: 2',
         default=param_default.group_size,
+        help='Group nvols successive dMRI volumes for more robustness. Example: 2',
     )
     optional.add_argument(
         '-m',
         metavar=Metavar.file,
+        default=param_default.fname_mask,
         help='Binary mask to limit voxels considered by the registration metric. Example: dmri_mask.nii.gz',
     )
     optional.add_argument(
@@ -130,7 +133,7 @@ def get_parser():
         "-r",
         metavar=Metavar.str,
         choices=('0', '1'),
-        default='1',
+        default=param_default.remove_temp_files,
         help="Remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
@@ -153,22 +156,15 @@ def main():
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     param.fname_data = arguments.i
     param.fname_bvecs = os.path.abspath(arguments.bvec)
-    if arguments.bval is not None:
-        param.fname_bvals = os.path.abspath(arguments.bval)
-    if arguments.bvalmin is not None:
-        param.bval_min = arguments.bvalmin
-    if arguments.g is not None:
-        param.group_size = arguments.g
-    if arguments.m is not None:
-        param.fname_mask = arguments.m
+    param.fname_bvals = arguments.bval
+    param.bval_min = arguments.bvalmin
+    param.group_size = arguments.g
+    param.fname_mask = arguments.m
+    param.interp = arguments.x
+    param.path_out = arguments.ofolder
+    param.remove_temp_files = arguments.r
     if arguments.param is not None:
         param.update(arguments.param)
-    if arguments.x is not None:
-        param.interp = arguments.x
-    if arguments.ofolder is not None:
-        param.path_out = arguments.ofolder
-    if arguments.r is not None:
-        param.remove_temp_files = arguments.r
     param.verbose = int(arguments.v)
 
     # Update log level
