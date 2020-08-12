@@ -45,7 +45,6 @@ def get_parser():
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    # TODO: Ask about deprecation plans for '-i'
     mandatory.add_argument(
         '-bvec',
         metavar=Metavar.file,

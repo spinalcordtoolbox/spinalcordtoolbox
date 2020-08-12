@@ -126,7 +126,6 @@ def get_parser():
         default=param_default.path_out,
         help="Output folder. Example: dmri_moco_results/"
     )
-    # TODO: Convert -r to flag using action=store_true
     optional.add_argument(
         "-r",
         metavar=Metavar.str,

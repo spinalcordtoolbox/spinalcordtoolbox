@@ -97,7 +97,6 @@ def get_parser():
         default='./',
         help='Output folder. Example: dmri_separate_results/',
     )
-    # TODO: Convert -r to flag using action=store_true
     optional.add_argument(
         "-r",
         metavar=Metavar.str,

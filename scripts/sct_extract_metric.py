@@ -138,7 +138,6 @@ def get_parser():
               "    - bin: binarize mask (threshold=0.5)\n"
               "    - max: for each z-slice of the input data, extract the max value for each slice of the input data.")
     )
-    # TODO: Change binary int options (-append, -combine -perslice, -perlevel) to flags using action=store_true
     optional.add_argument(
         '-append',
         type=int,
@@ -217,7 +216,6 @@ def get_parser():
         help="Verbose. 0 = nothing, 1 = expanded"
     )
 
-    # TODO: Ask about how parameter deprecations are to be handled (e.g. -param/-p, -normfile/-n)
     advanced = parser.add_argument_group("\nFOR ADVANCED USERS")
     advanced.add_argument(
         '-param',
