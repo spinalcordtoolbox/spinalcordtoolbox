@@ -23,10 +23,10 @@ from scipy.ndimage import map_coordinates
 
 import transforms3d.affines as affines
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import sct_dir_local_path
+from spinalcordtoolbox.utils import sct_dir_local_path, add_suffix
 
 sys.path.append(sct_dir_local_path('scripts'))
-import sct_utils as sct
+import sct_utils as sct # [AJ] FIXME
 
 logger = logging.getLogger(__name__)
 
@@ -376,7 +376,7 @@ class Image(object):
             change_shape(self, shape, self)
 
         if generate_path and self._path is not None:
-            self._path = sct.add_suffix(self._path, "_shape-{}".format("-".join([str(x) for x in shape])))
+            self._path = add_suffix(self._path, "_shape-{}".format("-".join([str(x) for x in shape])))
         else:
             # safe option: remove path to avoid overwrites
             self._path = None
@@ -401,7 +401,7 @@ class Image(object):
         if orientation is not None:
             change_orientation(self, orientation, self, inverse=inverse)
         if generate_path and self._path is not None:
-            self._path = sct.add_suffix(self._path, "_{}".format(orientation.lower()))
+            self._path = add_suffix(self._path, "_{}".format(orientation.lower()))
         else:
             # safe option: remove path to avoid overwrites
             self._path = None
@@ -416,7 +416,7 @@ class Image(object):
         if dtype is not None:
             change_type(self, dtype, self)
         if generate_path and self._path is not None:
-            self._path = sct.add_suffix(self._path, "_{}".format(dtype.name))
+            self._path = add_suffix(self._path, "_{}".format(dtype.name))
         else:
             # safe option: remove path to avoid overwrites
             self._path = None
@@ -870,10 +870,10 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     im_out = empty_like(Image(fname_in_list[0]))
     im_out.data = data_concat
     if isinstance(fname_in_list[0], str):
-        im_out.absolutepath = sct.add_suffix(fname_in_list[0], '_concat')
+        im_out.absolutepath = add_suffix(fname_in_list[0], '_concat')
     else:
         if fname_in_list[0].absolutepath:
-            im_out.absolutepath = sct.add_suffix(fname_in_list[0].absolutepath, '_concat')
+            im_out.absolutepath = add_suffix(fname_in_list[0].absolutepath, '_concat')
 
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim
