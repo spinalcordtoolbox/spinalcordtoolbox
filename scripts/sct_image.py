@@ -486,50 +486,9 @@ def remove_vol(im_in, index_vol_user, todo):
 
 def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     """
-    Concatenate 2d warping fields into a 3d warping field along z dimension. The 3rd dimension of the resulting warping
-    field will be zeroed.
-    :param
-    fname_list: list of 2d warping fields (along X and Y).
-    fname_warp3d: output name of 3d warping field
-    fname_dest: 3d destination file (used to copy header information)
-    :return: none
     """
-    from numpy import zeros
-    import nibabel as nib
-
-    # get dimensions
-    # nib.load(fname_list[0])
-    # im_0 = Image(fname_list[0])
-    nx, ny = nib.load(fname_list[0]).shape[0:2]
-    nz = len(fname_list)
-    # warp3d = tuple([nx, ny, nz, 1, 3])
-    warp3d = zeros([nx, ny, nz, 1, 3])
-    for iz, fname in enumerate(fname_list):
-        warp2d = nib.load(fname).get_data()
-        warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
-        warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
-        del warp2d
-    # save new image
-    im_dest = nib.load(fname_dest)
-    affine_dest = im_dest.get_affine()
-    im_warp3d = nib.Nifti1Image(warp3d, affine_dest)
-    # set "intent" code to vector, to be interpreted as warping field
-    im_warp3d.header.set_intent('vector', (), '')
-    nib.save(im_warp3d, fname_warp3d)
-    # copy header from 2d warping field
-    #
-    # im_dest = Image(fname_dest)
-    # im_warp3d = im_dest.copy()
-    # im_warp3d.data = warp3d.astype('float32')
-    # # add dimension between 3rd and 5th
-    # im_warp3d.hdr.set_data_shape([nx, ny, nz, 1, 3])
-    #
-    # im_warp3d.hdr.set_intent('vector', (), '')
-    # im_warp3d.absolutepath = fname_warp3d
-    # # save 3d warping field
-    # im_warp3d.save()
-    # return im_out
-
+    # backwards compat
+    return msct_image.concat_warp2d(fname_list, fname_warp3d, fname_dest)
 
 def multicomponent_split(im):
     """

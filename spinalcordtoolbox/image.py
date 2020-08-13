@@ -1301,6 +1301,7 @@ def convert(img: Image, squeeze_data=True, dtype=None):
 def split_img_data(src_img: Image, dim, squeeze_data=True):
     """
     Split data
+
     :param src_img: input image.
     :param dim: dimension: 0, 1, 2, 3.
     :return: list of split images
@@ -1337,3 +1338,32 @@ def split_img_data(src_img: Image, dim, squeeze_data=True):
         im_out_list.append(im_out)
 
     return im_out_list
+def concat_warp2d(fname_list, fname_warp3d, fname_dest):
+    """
+    Concatenate 2d warping fields into a 3d warping field along z dimension. The 3rd dimension of the resulting warping
+    field will be zeroed.
+
+    :param fname_list: list of 2d warping fields (along X and Y).
+    :param fname_warp3d: output name of 3d warping field
+    :param fname_dest: 3d destination file (used to copy header information)
+    :return: none
+    """
+
+    nx, ny = nib.load(fname_list[0]).shape[0:2]
+    nz = len(fname_list)
+    warp3d = np.zeros([nx, ny, nz, 1, 3])
+
+    for iz, fname in enumerate(fname_list):
+        warp2d = nib.load(fname).get_data()
+        warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
+        warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
+        del warp2d
+
+    # save new image
+    im_dest = nib.load(fname_dest)
+    affine_dest = im_dest.get_affine()
+    im_warp3d = nib.Nifti1Image(warp3d, affine_dest)
+
+    # set "intent" code to vector, to be interpreted as warping field
+    im_warp3d.header.set_intent('vector', (), '')
+    nib.save(im_warp3d, fname_warp3d)

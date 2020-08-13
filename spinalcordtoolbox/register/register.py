@@ -25,7 +25,6 @@ from spinalcordtoolbox.register.landmarks import register_landmarks
 
 # imports to refactor
 import sct_utils as sct # FIXME [AJ]
-from sct_image import concat_warp2d # FIXME [AJ]
 
 logger = logging.getLogger(__name__)
 
@@ -1097,8 +1096,8 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
     if paramreg.algo in ['Rigid', 'Affine', 'BSplineSyN', 'SyN']:
         # concatenate 2d warping fields along z
-        concat_warp2d(list_warp, fname_warp, fname_dest)
-        concat_warp2d(list_warp_inv, fname_warp_inv, fname_src)
+        image.concat_warp2d(list_warp, fname_warp, fname_dest)
+        image.concat_warp2d(list_warp_inv, fname_warp_inv, fname_src)
 
 
 def numerotation(nb):
