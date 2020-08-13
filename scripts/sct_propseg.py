@@ -16,7 +16,7 @@
 from __future__ import division, absolute_import
 
 import os, sys
-
+import argparse
 import numpy as np
 from scipy import ndimage as ndi
 
@@ -24,7 +24,8 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 import sct_image
 import sct_utils as sct
-from msct_parser import Parser
+# TODO: Properly test when first PR (that includes list_type) gets merged
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
 
@@ -146,205 +147,245 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 
 def get_parser():
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('''This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. You must provide the type of contrast, the image as well as the output folder path.
-The segmentation follows the spinal cord centerline, which is provided by an automatic tool: Optic. The initialization of the segmentation is made on the median slice of the centerline, and can be ajusted using the -init parameter. The initial radius of the tubular mesh that will be propagated should be adapted to size of the spinal cord on the initial propagation slice.
-Primary output is the binary mask of the spinal cord segmentation. This method must provide VTK triangular mesh of the segmentation (option -mesh). Spinal cord centerline is available as a binary image (-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).
-Cross-sectional areas along the spinal cord can be available (-cross).
-Several tips on segmentation correction can be found on the "Correction Tips" page of the documentation while advices on parameters adjustments can be found on the "Parameters" page.
-If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the segmentation again.''')
-    parser.add_option(name="-i",
-                      type_value="image_nifti",
-                      description="input image.",
-                      mandatory=True,
-                      example="t1.nii.gz")
-    parser.add_option(name="-t",
-                      type_value="multiple_choice",
-                      description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
-                      mandatory=False,
-                      deprecated=1,
-                      deprecated_by="-c",
-                      example=['t1', 't2'])
-    parser.add_option(name="-c",
-                      type_value="multiple_choice",
-                      description="type of image contrast, if your contrast is not in the available options (t1, t2, t2s, dwi), use t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)",
-                      mandatory=True,
-                      example=['t1', 't2', 't2s', 'dwi'])
-    parser.usage.addSection("General options")
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="output folder.",
-                      mandatory=False,
-                      example="My_Output_Folder/",
-                      default_value="")
-    parser.add_option(name="-down",
-                      type_value="int",
-                      description="down limit of the propagation, default is 0",
-                      mandatory=False)
-    parser.add_option(name="-up",
-                      type_value="int",
-                      description="up limit of the propagation, default is the highest slice of the image",
-                      mandatory=False)
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="remove temporary files.",
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="1: display on, 0: display off (default)",
-                      mandatory=False,
-                      example=["0", "1"],
-                      default_value="1")
-    parser.add_option(name="-h",
-                      type_value=None,
-                      description="display this help",
-                      mandatory=False)
+    parser = argparse.ArgumentParser(
+        description=(
+            "This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. "
+            "You must provide the type of contrast, the image as well as the output folder path. The segmentation "
+            "follows the spinal cord centerline, which is provided by an automatic tool: Optic. The initialization of "
+            "the segmentation is made on the median slice of the centerline, and can be ajusted using the -init "
+            "parameter. The initial radius of the tubular mesh that will be propagated should be adapted to size of "
+            "the spinal cord on the initial propagation slice. \n"
+            "Primary output is the binary mask of the spinal cord segmentation. This method must provide VTK "
+            "triangular mesh of the segmentation (option -mesh). Spinal cord centerline is available as a binary image "
+            "(-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).\n"
+            "Cross-sectional areas along the spinal cord can be available (-cross). Several tips on segmentation "
+            "correction can be found on the 'Correction Tips' page of the documentation while advices on parameters "
+            "adjustments can be found on the 'Parameters' page.\n "
+            "If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit "
+            "your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values "
+            "around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the "
+            "segmentation again."
+        ),
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
 
-    parser.usage.addSection("\nOutput options")
-    parser.add_option(name="-mesh",
-                      type_value=None,
-                      description="output: mesh of the spinal cord segmentation",
-                      mandatory=False)
-    parser.add_option(name="-centerline-binary",
-                      type_value=None,
-                      description="output: centerline as a binary image ",
-                      mandatory=False)
-    parser.add_option(name="-CSF",
-                      type_value=None,
-                      description="output: CSF segmentation",
-                      mandatory=False)
-    parser.add_option(name="-centerline-coord",
-                      type_value=None,
-                      description="output: centerline in world coordinates",
-                      mandatory=False)
-    parser.add_option(name="-cross",
-                      type_value=None,
-                      description="output: cross-sectional areas",
-                      mandatory=False)
-    parser.add_option(name="-init-tube",
-                      type_value=None,
-                      description="output: initial tubular meshes ",
-                      mandatory=False)
-    parser.add_option(name="-low-resolution-mesh",
-                      type_value=None,
-                      description="output: low-resolution mesh",
-                      mandatory=False)
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Input image. Example: ti.nii.gz"
+    )
+    mandatory.add_argument(
+        '-c',
+        metavar=Metavar.str,
+        choices=['t1', 't2', 't2s', 'dwi'],
+        required=True,
+        help=("Type of image contrast. If your contrast is not in the available options (t1, t2, t2s, dwi), use "
+              "t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)")
+    )
 
-    parser.usage.addSection("\nOptions helping the segmentation")
-    parser.add_option(name="-init-centerline",
-                      type_value="image_nifti",
-                      description="filename of centerline to use for the propagation, "
-                                  "format .txt or .nii, see file structure in documentation."
-                                  "\nReplace filename by 'viewer' to use interactive viewer for providing centerline. "
-                                  "Ex: -init-centerline viewer",
-                      mandatory=False,
-                      list_no_image=['viewer', 'hough', 'optic'])
-    parser.add_option(name="-init",
-                      type_value="float",
-                      description="axial slice where the propagation starts, default is middle axial slice",
-                      mandatory=False)
-    parser.add_option(name="-init-mask",
-                      type_value="image_nifti",
-                      description="mask containing three center of the spinal cord, used to initiate the propagation.\nReplace filename by 'viewer' to use interactive viewer for providing mask. Ex: -init-mask viewer",
-                      mandatory=False,
-                      list_no_image=['viewer'])
-    parser.add_option(name="-mask-correction",
-                      type_value="image_nifti",
-                      description="mask containing binary pixels at edges of the spinal cord on which the segmentation algorithm will be forced to register the surface. Can be used in case of poor/missing contrast between spinal cord and CSF or in the presence of artefacts/pathologies.",
-                      mandatory=False)
-    parser.add_option(name="-rescale",
-                      type_value="float",
-                      description="Rescale the image (only the header, not the data) in order to enable segmentation "
-                                  "on spinal cords with dimensions different than that of humans (e.g., mice, rats, "
-                                  "elephants, etc.). For example, if the spinal cord is 2x smaller than that of human,"
-                                  "then use -rescale 2",
-                      default_value=1,
-                      mandatory=False)
-    parser.add_option(name="-radius",
-                      type_value="float",
-                      description="approximate radius (in mm) of the spinal cord, default is 4",
-                      mandatory=False)
-    parser.add_option(name="-nbiter",
-                      type_value="int",
-                      description="stop condition (affects only the Z propogation): number of iteration for the propagation for both direction, default is 200",
-                      mandatory=False)
-    parser.add_option(name="-max-area",
-                      type_value="float",
-                      description="[mm^2], stop condition (affects only the Z propogation): maximum cross-sectional area, default is 120",
-                      mandatory=False)
-    parser.add_option(name="-max-deformation",
-                      type_value="float",
-                      description="[mm], stop condition (affects only the Z propogation): maximum deformation per iteration, default is 2.5",
-                      mandatory=False)
-    parser.add_option(name="-min-contrast",
-                      type_value="float",
-                      description="[intensity value], stop condition (affects only the Z propogation): minimum local SC/CSF contrast, default is 50",
-                      mandatory=False)
-    parser.add_option(name="-d",
-                      type_value="float",
-                      description="trade-off between distance of most promising point (d is high) and feature strength (d is low), default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results, default is 10",
-                      mandatory=False)
-    parser.add_option(name="-distance-search",
-                      type_value="float",
-                      description="maximum distance of optimal points computation along the surface normals. Range of values from 0 to 30, default is 15",
-                      mandatory=False)
-    parser.add_option(name="-alpha",
-                      type_value="float",
-                      description="trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 to 50, default is 25",
-                      mandatory=False)
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=None)
-    parser.add_option(name='-qc-dataset',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
-                      )
-    parser.add_option(name='-qc-subject',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
-                      )
-    parser.add_option(name='-correct-seg',
-                      type_value="multiple_choice",
-                      description="Enable (1) or disable (0) the algorithm that checks and correct the output "
-                                  "segmentation. More specifically, the algorithm checks if the segmentation is "
-                                  "consistent with the centerline provided by isct_propseg.",
-                      mandatory=False,
-                      example=["0", "1"],
-                      default_value="1")
-    parser.add_option(name='-igt',
-                      type_value='image_nifti',
-                      description='File name of ground-truth segmentation.',
-                      mandatory=False)
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-ofolder',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="Output folder."
+    )
+    optional.add_argument(
+        '-down',
+        metavar=Metavar.int,
+        type=int,
+        help="Down limit of the propagation. Default is 0."
+    )
+    optional.add_argument(
+        '-up',
+        metavar=Metavar.int,
+        type=int,
+        help="Up limit of the propagation. Default is the highest slice of the image."
+    )
+    optional.add_argument(
+        '-r',
+        metavar=Metavar.int,
+        choices=['0', '1'],
+        default='1',
+        help="Whether to remove temporary files. 0 = no, 1 = yes"
+    )
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.int,
+        choices=['0', '1'],
+        default='1',
+        help="Verbose. 1: display on, 0: display off (default)"
+    )
+    optional.add_argument(
+        '-mesh',
+        action="store_true",
+        help="Output: mesh of the spinal cord segmentation"
+    )
+    optional.add_argument(
+        '-centerline-binary',
+        action="store_true",
+        help="Output: centerline as a binary image."
+    )
+    optional.add_argument(
+        '-CSF',
+        action="store_true",
+        help="Output: CSF segmentation."
+    )
+    optional.add_argument(
+        '-centerline-coord',
+        action="store_true",
+        help="Output: centerline in world coordinates."
+    )
+    optional.add_argument(
+        '-cross',
+        action="store_true",
+        help="Output: cross-sectional areas."
+    )
+    optional.add_argument(
+        '-init-tube',
+        action="store_true",
+        help="Output: initial tubular meshes."
+    )
+    optional.add_argument(
+        '-low-resolution-mesh',
+        action="store_true",
+        help="Output: low-resolution mesh."
+    )
+    optional.add_argument(
+        '-init-centerline',
+        metavar=Metavar.file,
 
-    # DEPRECATED OPTIONS
-    parser.add_option(name="-detect-nii",
-                      type_value=None,
-                      description="output: spinal cord detection as a nifti image",
-                      mandatory=False,
-                      deprecated=True)
-    parser.add_option(name="-detect-png",
-                      type_value=None,
-                      description="output: spinal cord detection as a PNG image",
-                      mandatory=False,
-                      deprecated=True)
-    parser.add_option(name="-detect-n",
-                      type_value="int",
-                      description="number of axial slices computed in the detection process, default is 4",
-                      mandatory=False,
-                      deprecated=True)
-    parser.add_option(name="-detect-gap",
-                      type_value="int",
-                      description="gap along Z direction (in mm) for the detection process, default is 4",
-                      mandatory=False,
-                      deprecated=True)
-    parser.add_option(name="-init-validation",
-                      type_value=None,
-                      description="enable validation on spinal cord detection based on discriminant analysis",
-                      mandatory=False,
-                      deprecated=True)
+        # list_no_image=['viewer', 'hough', 'optic']
+        help=("Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in "
+              "documentation.\n"
+              "Replace filename by 'viewer' to use interactive viewer for providing centerline. Example: "
+              "-init-centerline viewer")
+    )
+    optional.add_argument(
+        '-init',
+        metavar=Metavar.float,
+        type=float,
+        help="Axial slice where the propagation starts, default is middle axial slice."
+    )
+    optional.add_argument(
+        '-init-mask',
+        metavar=Metavar.file,
+        # TODO: Investigate what this option does
+        # list_no_image=['viewer']
+        help=("Mask containing three center of the spinal cord, used to initiate the propagation.\n"
+              "Replace filename by 'viewer' to use interactive viewer for providing mask. Example: -init-mask viewer")
+    )
+    optional.add_argument(
+        '-mask-correction',
+        metavar=Metavar.file,
+        help=("mask containing binary pixels at edges of the spinal cord on which the segmentation algorithm will be "
+              "forced to register the surface. Can be used in case of poor/missing contrast between spinal cord and "
+              "CSF or in the presence of artefacts/pathologies.")
+    )
+    optional.add_argument(
+        '-rescale',
+        metavar=Metavar.float,
+        type=float,
+        default=1.0,
+        help=("Rescale the image (only the header, not the data) in order to enable segmentation on spinal cords with "
+              "dimensions different than that of humans (e.g., mice, rats, elephants, etc.). For example, if the "
+              "spinal cord is 2x smaller than that of human, then use -rescale 2")
+    )
+    optional.add_argument(
+        '-radius',
+        metavar=Metavar.float,
+        type=float,
+        help="Approximate radius (in mm) of the spinal cord. Default is 4."
+    )
+    optional.add_argument(
+        '-nbiter',
+        metavar=Metavar.int,
+        type=int,
+        help=("Stop condition (affects only the Z propogation): number of iteration for the propagation for both "
+              "direction. Default is 200.")
+    )
+    optional.add_argument(
+        '-max-area',
+        metavar=Metavar.float,
+        type=float,
+        help="[mm^2], stop condition (affects only the Z propogation): maximum cross-sectional area. Default is 120."
+    )
+    optional.add_argument(
+        '-max-deformation',
+        metavar=Metavar.float,
+        type=float,
+        help=("[mm], stop condition (affects only the Z propogation): maximum deformation per iteration. Default is "
+              "2.5")
+    )
+    optional.add_argument(
+        '-min-contrast',
+        metavar=Metavar.float,
+        type=float,
+        help=("[intensity value], stop condition (affects only the Z propogation): minimum local SC/CSF contrast, "
+              "default is 50")
+    )
+    optional.add_argument(
+        '-d',
+        metavar=Metavar.float,
+        type=float,
+        help=("trade-off between distance of most promising point (d is high) and feature strength (d is low), "
+              "default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results. Default "
+              "is 10.")
+    )
+    optional.add_argument(
+        '-distance-search',
+        metavar=Metavar.float,
+        type=float,
+        help=("maximum distance of optimal points computation along the surface normals. Range of values from 0 to 30. "
+              "Default is 15")
+    )
+    optional.add_argument(
+        '-alpha',
+        metavar=Metavar.float,
+        type=float,
+        help=("Trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 "
+              "to 50. Default is 25.")
+    )
+    optional.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="The path where the quality control generated content will be saved."
+    )
+    optional.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+    )
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
+    optional.add_argument(
+        '-correct-seg',
+        metavar=Metavar.int,
+        choices=['0', '1'],
+        default='1',
+        help=("Enable (1) or disable (0) the algorithm that checks and correct the output segmentation. More "
+              "specifically, the algorithm checks if the segmentation is consistent with the centerline provided by "
+              "isct_propseg.")
+    )
+    optional.add_argument(
+        '-igt',
+        metavar=Metavar.file,
+        help="File name of ground-truth segmentation."
+    )
 
     return parser
 
@@ -383,15 +424,15 @@ def propseg(img_input, options_dict):
     arguments = options_dict
     fname_input_data = img_input.absolutepath
     fname_data = os.path.abspath(fname_input_data)
-    contrast_type = arguments["-c"]
+    contrast_type = arguments.c
     contrast_type_conversion = {'t1': 't1', 't2': 't2', 't2s': 't2', 'dwi': 't1'}
     contrast_type_propseg = contrast_type_conversion[contrast_type]
 
     # Starting building the command
     cmd = ['isct_propseg', '-t', contrast_type_propseg]
 
-    if "-ofolder" in arguments:
-        folder_output = arguments["-ofolder"]
+    if arguments.ofolder is not None:
+        folder_output = arguments.ofolder
     else:
         folder_output = './'
     cmd += ['-o', folder_output]
@@ -400,97 +441,102 @@ def propseg(img_input, options_dict):
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
-    if "-down" in arguments:
-        cmd += ["-down", str(arguments["-down"])]
-    if "-up" in arguments:
-        cmd += ["-up", str(arguments["-up"])]
+    if arguments.down is not None:
+        cmd += ["-down", str(arguments.down)]
+    if arguments.up is not None:
+        cmd += ["-up", str(arguments.up)]
 
     remove_temp_files = 1
-    if "-r" in arguments:
-        remove_temp_files = int(arguments["-r"])
+    if arguments.r is not None:
+        remove_temp_files = int(arguments.r)
 
-    verbose = int(arguments.get('-v'))
+    verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     # Update for propseg binary
     if verbose > 0:
         cmd += ["-verbose"]
 
     # Output options
-    if "-mesh" in arguments:
+    if arguments.mesh is not None:
         cmd += ["-mesh"]
-    if "-centerline-binary" in arguments:
+    if arguments.centerline_binary is not None:
         cmd += ["-centerline-binary"]
-    if "-CSF" in arguments:
+    if arguments.CSF is not None:
         cmd += ["-CSF"]
-    if "-centerline-coord" in arguments:
+    if arguments.centerline_coord is not None:
         cmd += ["-centerline-coord"]
-    if "-cross" in arguments:
+    if arguments.cross is not None:
         cmd += ["-cross"]
-    if "-init-tube" in arguments:
+    if arguments.init_tube is not None:
         cmd += ["-init-tube"]
-    if "-low-resolution-mesh" in arguments:
+    if arguments.low_resolution_mesh is not None:
         cmd += ["-low-resolution-mesh"]
-    if "-detect-nii" in arguments:
-        cmd += ["-detect-nii"]
-    if "-detect-png" in arguments:
-        cmd += ["-detect-png"]
+    # TODO: Not present. Why is this here? Was this renamed?
+    # if arguments.detect_nii is not None:
+    #     cmd += ["-detect-nii"]
+    # TODO: Not present. Why is this here? Was this renamed?
+    # if arguments.detect_png is not None:
+    #     cmd += ["-detect-png"]
 
     # Helping options
     use_viewer = None
     use_optic = True  # enabled by default
     init_option = None
-    rescale_header = arguments["-rescale"]
-    if "-init" in arguments:
-        init_option = float(arguments["-init"])
+    rescale_header = arguments.rescale
+    if arguments.init is not None:
+        init_option = float(arguments.init)
         if init_option < 0:
             sct.printv('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'", 1, 'error')
             sys.exit(1)
-    if "-init-centerline" in arguments:
-        if str(arguments["-init-centerline"]) == "viewer":
+    if arguments.init_centerline is not None:
+        if str(arguments.init_centerline) == "viewer":
             use_viewer = "centerline"
-        elif str(arguments["-init-centerline"]) == "hough":
+        elif str(arguments.init_centerline) == "hough":
             use_optic = False
         else:
             if rescale_header is not 1:
-                fname_labels_viewer = func_rescale_header(str(arguments["-init-centerline"]), rescale_header, verbose=verbose)
+                fname_labels_viewer = func_rescale_header(str(arguments.init_centerline), rescale_header, verbose=verbose)
             else:
-                fname_labels_viewer = str(arguments["-init-centerline"])
+                fname_labels_viewer = str(arguments.init_centerline)
             cmd += ["-init-centerline", fname_labels_viewer]
             use_optic = False
-    if "-init-mask" in arguments:
-        if str(arguments["-init-mask"]) == "viewer":
+    if arguments.init_mask is not None:
+        if str(arguments.init_mask) == "viewer":
             use_viewer = "mask"
         else:
             if rescale_header is not 1:
-                fname_labels_viewer = func_rescale_header(str(arguments["-init-mask"]), rescale_header)
+                fname_labels_viewer = func_rescale_header(str(arguments.init_mask), rescale_header)
             else:
-                fname_labels_viewer = str(arguments["-init-mask"])
+                fname_labels_viewer = str(arguments.init_mask)
             cmd += ["-init-mask", fname_labels_viewer]
             use_optic = False
-    if "-mask-correction" in arguments:
-        cmd += ["-mask-correction", str(arguments["-mask-correction"])]
-    if "-radius" in arguments:
-        cmd += ["-radius", str(arguments["-radius"])]
-    if "-detect-n" in arguments:
-        cmd += ["-detect-n", str(arguments["-detect-n"])]
-    if "-detect-gap" in arguments:
-        cmd += ["-detect-gap", str(arguments["-detect-gap"])]
-    if "-init-validation" in arguments:
-        cmd += ["-init-validation"]
-    if "-nbiter" in arguments:
-        cmd += ["-nbiter", str(arguments["-nbiter"])]
-    if "-max-area" in arguments:
-        cmd += ["-max-area", str(arguments["-max-area"])]
-    if "-max-deformation" in arguments:
-        cmd += ["-max-deformation", str(arguments["-max-deformation"])]
-    if "-min-contrast" in arguments:
-        cmd += ["-min-contrast", str(arguments["-min-contrast"])]
-    if "-d" in arguments:
+    if arguments.mask_correction is not None:
+        cmd += ["-mask-correction", str(arguments.mask_correction)]
+    if arguments.radius is not None:
+        cmd += ["-radius", str(arguments.radius)]
+    # TODO: Not present. Why is this here? Was this renamed?
+    # if arguments.detect_n is not None:
+    #     cmd += ["-detect-n", str(arguments.detect_n)]
+    # TODO: Not present. Why is this here? Was this renamed?
+    # if arguments.detect_gap is not None:
+    #     cmd += ["-detect-gap", str(arguments.detect_gap)]
+    # TODO: Not present. Why is this here? Was this renamed?
+    # if arguments.init_validation is not None:
+    #     cmd += ["-init-validation"]
+    if arguments.nbiter is not None:
+        cmd += ["-nbiter", str(arguments.nbiter)]
+    if arguments.max_area is not None:
+        cmd += ["-max-area", str(arguments.max_area)]
+    if arguments.max_deformation is not None:
+        cmd += ["-max-deformation", str(arguments.max_deformation)]
+    if arguments.min_contrast is not None:
+        cmd += ["-min-contrast", str(arguments.min_contrast)]
+    if arguments.d is not None:
         cmd += ["-d", str(arguments["-d"])]
-    if "-distance-search" in arguments:
-        cmd += ["-dsearch", str(arguments["-distance-search"])]
-    if "-alpha" in arguments:
-        cmd += ["-alpha", str(arguments["-alpha"])]
+    if arguments.distance_search is not None:
+        cmd += ["-dsearch", str(arguments.distance_search)]
+    if arguments.alpha is not None:
+        cmd += ["-alpha", str(arguments.alpha)]
 
     # check if input image is in 3D. Otherwise itk image reader will cut the 4D image in 3D volumes and only take the first one.
     image_input = Image(fname_data)
@@ -587,7 +633,7 @@ def propseg(img_input, options_dict):
             fname_labels_viewer = fname_labels_viewer_new
 
     # check consistency of segmentation
-    if arguments["-correct-seg"] == "1":
+    if arguments.correct_seg == "1":
         check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0,
                                        remove_temp_files=remove_temp_files, verbose=verbose)
 
@@ -605,15 +651,15 @@ def propseg(img_input, options_dict):
 
 
 def main(arguments):
-    fname_input_data = os.path.abspath(arguments["-i"])
+    fname_input_data = os.path.abspath(arguments.i)
     img_input = Image(fname_input_data)
     img_seg = propseg(img_input, arguments)
     fname_seg = img_seg.absolutepath
-    path_qc = arguments.get("-qc", None)
-    qc_dataset = arguments.get("-qc-dataset", None)
-    qc_subject = arguments.get("-qc-subject", None)
+    path_qc = arguments.qc
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
     if path_qc is not None:
-        generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=args, path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=arguments, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_propseg')
     sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'])
 
@@ -621,7 +667,6 @@ def main(arguments):
 if __name__ == "__main__":
     sct.init_sct()
     parser = get_parser()
-    args = sys.argv[1:]
-    arguments = parser.parse(args)
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     res = main(arguments)
     raise SystemExit(res)
