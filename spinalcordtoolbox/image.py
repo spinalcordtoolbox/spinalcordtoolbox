@@ -15,8 +15,7 @@ from __future__ import division, absolute_import
 
 import sys, os, itertools, warnings, logging
 
-import nibabel
-import nibabel.orientations
+import nibabel as nib
 import numpy as np
 import transforms3d.affines as affines
 from scipy.ndimage import map_coordinates
@@ -220,8 +219,6 @@ class Image(object):
     """
 
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1):
-        from nibabel import Nifti1Header
-
         # initialization of all parameters
         self.im_file = None
         self.data = None
@@ -229,7 +226,7 @@ class Image(object):
         self.ext = ""
 
         if hdr is None:
-            hdr = self.hdr = Nifti1Header()  # an empty header
+            hdr = self.hdr = nib.Nifti1Header()  # an empty header
         else:
             self.hdr = hdr
 
@@ -342,7 +339,7 @@ class Image(object):
         :return:
         """
 
-        self.im_file = nibabel.load(path)
+        self.im_file = nib.load(path)
         self.data = self.im_file.get_data()
         self.hdr = self.im_file.header
         self.absolutepath = path
@@ -452,8 +449,6 @@ class Image(object):
 
         path = path or self.absolutepath
 
-        from nibabel import Nifti1Image
-
         if dtype is not None:
             dst = self.copy()
             dst.change_type(dtype)
@@ -471,7 +466,7 @@ class Image(object):
 
         # nb. that copy() is important because if it were a memory map, save()
         # would corrupt it
-        img = Nifti1Image(data.copy(), None, hdr)
+        img = nib.nifti1.Nifti1Image(data.copy(), None, hdr)
         if os.path.isfile(path):
             if verbose:
                 logger.warning('File ' + path + ' already exists. Will overwrite it.')
@@ -484,7 +479,7 @@ class Image(object):
             logger.debug("Saving image to %s (%s) orientation %s shape %s",
              path, os.path.abspath(path), self.orientation, data.shape)
 
-        nibabel.save(img, path)
+        nib.save(img, path)
 
         if mutable:
             self.absolutepath = path
@@ -918,10 +913,9 @@ def get_dimension(im_file, verbose=1):
     :param: im_file: Image or nibabel object
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-    import nibabel.nifti1
     # initialization
     nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
-    if type(im_file) is nibabel.nifti1.Nifti1Image:
+    if type(im_file) is nib.nifti1.Nifti1Image:
         header = im_file.header
     elif type(im_file) is Image:
         header = im_file.hdr
@@ -957,7 +951,7 @@ def get_orientation(im):
     :param im: an Image
     :return: reference space string (ie. what's in Image.orientation)
     """
-    res = "".join(nibabel.orientations.aff2axcodes(im.hdr.get_best_affine()))
+    res = "".join(nib.orientations.aff2axcodes(im.hdr.get_best_affine()))
     return orientation_string_nib2sct(res)
     return res # for later ;)
 
@@ -997,7 +991,7 @@ def change_shape(im_src, shape, im_dst=None):
         # image data may be a view
         im_dst_data = im_src.data.copy().reshape(shape, order="F")
 
-    pair = nibabel.nifti1.Nifti1Pair(im_dst.data, im_dst.hdr.get_best_affine(), im_dst.hdr)
+    pair = nib.nifti1.Nifti1Pair(im_dst.data, im_dst.hdr.get_best_affine(), im_dst.hdr)
     im_dst.hdr = pair.header
     return im_dst
 
@@ -1075,7 +1069,7 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
     # Update header
 
     im_src_aff = im_src.hdr.get_best_affine()
-    aff = nibabel.orientations.inv_ornt_aff(
+    aff = nib.orientations.inv_ornt_aff(
      np.array((perm, inversion)).T,
      im_src_data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
@@ -1279,7 +1273,7 @@ def spatial_crop(im_src, spec, im_dst=None):
     new_aff = aff.copy()
     new_aff[:, [3]] = aff.dot(np.vstack((bounds[:, [0]], [1])))
 
-    new_img = nibabel.Nifti1Image(new_data, new_aff, im_src.header)
+    new_img = nib.nifti1.Nifti1Image(new_data, new_aff, im_src.header)
 
     if im_dst is None:
         im_dst = im_src.copy()
@@ -1338,6 +1332,7 @@ def split_img_data(src_img: Image, dim, squeeze_data=True):
         im_out_list.append(im_out)
 
     return im_out_list
+
 def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     """
     Concatenate 2d warping fields into a 3d warping field along z dimension. The 3rd dimension of the resulting warping
@@ -1362,7 +1357,7 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     # save new image
     im_dest = nib.load(fname_dest)
     affine_dest = im_dest.get_affine()
-    im_warp3d = nib.Nifti1Image(warp3d, affine_dest)
+    im_warp3d = nib.nifti1.Nifti1Image(warp3d, affine_dest)
 
     # set "intent" code to vector, to be interpreted as warping field
     im_warp3d.header.set_intent('vector', (), '')
