@@ -137,7 +137,7 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
     zmin_global, zmax_global = 0, 99999  # this is assuming that typical image has less slice than 99999
 
     for fname in list_fname:
-        im = Image(fname)
+        im = image.Image(fname)
         zmin, zmax = image.find_zmin_zmax(im, threshold=0.1)
         if zmin > zmin_global:
             zmin_global = zmin
@@ -146,9 +146,9 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
 
     # crop images (see issue #293)
     src_crop = sct.add_suffix(src, '_crop')
-    image.spatial_crop(Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
+    image.spatial_crop(image.Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
     dest_crop = sct.add_suffix(dest, '_crop')
-    image.spatial_crop(Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
+    image.spatial_crop(image.Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
 
     # update variables
     src = src_crop
@@ -447,20 +447,20 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest[0]).dim
+    nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest[0]).dim
     sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
     sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
     # Split source volume along z
     sct.printv('\nSplit input segmentation...', verbose)
-    im_src = Image(fname_src[0])
+    im_src = image.Image(fname_src[0])
     split_source_list = split_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
     sct.printv('\nSplit destination segmentation...', verbose)
-    im_dest = Image(fname_dest[0])
+    im_dest = image.Image(fname_dest[0])
     split_dest_list = split_data(im_dest, 2)
     for im in split_dest_list:
         im.save()
@@ -480,14 +480,14 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     if len(fname_src) > 1:
         # Split source volume along z
         sct.printv('\nSplit input image...', verbose)
-        im_src_im = Image(fname_src[1])
+        im_src_im = image.Image(fname_src[1])
         split_source_list = split_data(im_src_im, 2)
         for im in split_source_list:
             im.save()
 
         # Split destination volume along z
         sct.printv('\nSplit destination image...', verbose)
-        im_dest_im = Image(fname_dest[1])
+        im_dest_im = image.Image(fname_dest[1])
         split_dest_list = split_data(im_dest_im, 2)
         for im in split_dest_list:
             im.save()
@@ -704,20 +704,20 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
+    nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest).dim
     sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
     sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
     # Split source volume along z
     sct.printv('\nSplit input volume...', verbose)
-    im_src = Image('src.nii')
+    im_src = image.Image('src.nii')
     split_source_list = split_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
     sct.printv('\nSplit destination volume...', verbose)
-    im_dest = Image('dest.nii')
+    im_dest = image.Image('dest.nii')
     split_dest_list = split_data(im_dest, 2)
     for im in split_dest_list:
         im.save()
@@ -976,20 +976,20 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
     # Get image dimensions and retrieve nz
     sct.printv('\nGet image dimensions of destination image...', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
+    nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest).dim
     sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
     sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
 
     # Split input volume along z
     sct.printv('\nSplit input volume...', verbose)
-    im_src = Image(fname_src)
+    im_src = image.Image(fname_src)
     split_source_list = split_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
     sct.printv('\nSplit destination volume...', verbose)
-    im_dest = Image(fname_dest)
+    im_dest = image.Image(fname_dest)
     split_dest_list = split_data(im_dest, 2)
     for im in split_dest_list:
         im.save()
@@ -997,7 +997,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     # Split mask volume along z
     if fname_mask != '':
         sct.printv('\nSplit mask volume...', verbose)
-        im_mask = Image('mask.nii.gz')
+        im_mask = image.Image('mask.nii.gz')
         split_mask_list = split_data(im_mask, 2)
         for im in split_mask_list:
             im.save()
@@ -1143,7 +1143,7 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
 
     # Get image dimensions
     # sct.printv('Get destination dimension', verbose)
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_dest).dim
+    nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest).dim
     # sct.printv('  matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
     # sct.printv('  voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
