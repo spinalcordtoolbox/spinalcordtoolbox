@@ -17,16 +17,12 @@ import sys, os, itertools, warnings, logging
 
 import nibabel
 import nibabel.orientations
-
 import numpy as np
+import transforms3d.affines as affines
 from scipy.ndimage import map_coordinates
 
-import transforms3d.affines as affines
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils import sct_dir_local_path, add_suffix
-
-sys.path.append(sct_dir_local_path('scripts'))
-import sct_utils as sct # [AJ] FIXME
 
 logger = logging.getLogger(__name__)
 
@@ -513,19 +509,16 @@ class Image(object):
         if self.dim[2] == 1:
             n_dim = 2
 
-        try:
-            if n_dim == 3:
+        if n_dim == 3:
+            X, Y, Z = (self.data > 0).nonzero()
+            list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+        elif n_dim == 2:
+            try:
+                X, Y = (self.data > 0).nonzero()
+                list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+            except ValueError:
                 X, Y, Z = (self.data > 0).nonzero()
-                list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-            elif n_dim == 2:
-                try:
-                    X, Y = (self.data > 0).nonzero()
-                    list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
-                except ValueError:
-                    X, Y, Z = (self.data > 0).nonzero()
-                    list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
-        except Exception as e:
-            sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
+                list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
 
         if coordValue:
             from spinalcordtoolbox.types import CoordinateValue
@@ -1187,7 +1180,7 @@ def change_type(im_src, dtype, im_dst=None):
 
             if (min_in < min_out) or (max_in > max_out):
                 # This condition is important for binary images since we do not want to scale them
-                sct.printv('WARNING: To avoid intensity overflow due to convertion to '+dtype.name+', intensity will be rescaled to the maximum quantization scale.', 1, 'warning')
+                logger.warning(f"To avoid intensity overflow due to convertion to +{dtype.name}+, intensity will be rescaled to the maximum quantization scale")
                 # rescale intensity
                 data_rescaled = im_src.data * (max_out - min_out) / (max_in - min_in)
                 im_dst.data = data_rescaled - ( data_rescaled.min() - min_out )
