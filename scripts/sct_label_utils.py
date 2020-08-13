@@ -20,6 +20,7 @@ from __future__ import division, absolute_import
 
 import os
 import sys
+import argparse
 
 import numpy as np
 from scipy import ndimage
@@ -29,7 +30,8 @@ from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate, CoordinateValue
 from spinalcordtoolbox.reports.qc import generate_qc
 
-from msct_parser import Parser
+# TODO: Properly test when first PR (that includes list_type) gets merged
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 import sct_utils as sct
 
 
@@ -681,127 +683,176 @@ def get_parser():
     # initialize default param
     param_default = Param()
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Utility function for label image.')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="Input image.",
-                      mandatory=True,
-                      example="t2_labels.nii.gz")
+    parser = argparse.ArgumentParser(
+        description="Utility function for label image.",
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
 
-    parser.add_option(name='-add',
-                      type_value='int',
-                      description='Add value to all labels. Value can be negative.',
-                      mandatory=False)
-    parser.add_option(name='-create',
-                      type_value=[[':'], 'Coordinate'],
-                      description='Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2, ...',
-                      example='12,34,32,1:12,35,33,2',
-                      mandatory=False)
-    parser.add_option(name='-create-add',
-                      type_value=[[':'], 'Coordinate'],
-                      description='Same as "-create", but add labels to the input image instead of creating a new image.',
-                      example='12,34,32,1:12,35,33,2',
-                      mandatory=False)
-    parser.add_option(name='-create-seg',
-                      type_value=[[':'], 'str'],
-                      description='Create labels along cord segmentation (or centerline) defined by "-i". First value is "z", second is the value of the label. Separate labels with ":". Example: 5,1:14,2:23,3. To select the mid-point in the superior-inferior direction, set z to "-1". For example if you know that C2-C3 disc is centered in the S-I direction, then enter: -1,3',
-                      mandatory=False)
-    parser.add_option(name='-create-viewer',
-                      type_value=[[','], 'int'],
-                      description='Manually label from a GUI a list of labels IDs, separated with ",". Example: 2,3,4,5',
-                      mandatory=False)
-    parser.add_option(name="-ilabel",
-                      type_value="file",
-                      description="File that contain labels that you want to correct. It is possible to add new points with this option. Use with -create-viewer",
-                      mandatory=False,
-                      example="t2_labels_auto.nii.gz",)
-    parser.add_option(name='-cubic-to-point',
-                      type_value=None,
-                      description='Compute the center-of-mass for each label value.',
-                      mandatory=False)
-    parser.add_option(name='-display',
-                      type_value=None,
-                      description='Display all labels (i.e. non-zero values).',
-                      mandatory=False)
-    parser.add_option(name='-increment',
-                      type_value=None,
-                      description='Takes all non-zero values, sort them along the inverse z direction, and attributes the values 1, 2, 3, etc.',
-                      mandatory=False)
-    parser.add_option(name='-vert-body',
-                      type_value=[[','], 'int'],
-                      description='From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate desired levels with ",". To get all levels, enter "0".',
-                      example='3,8',
-                      mandatory=False)
-    parser.add_option(name='-vert-continuous',
-                      type_value=None,
-                      description='Convert discrete vertebral labeling to continuous vertebral labeling.',
-                      mandatory=False)
-    parser.add_option(name='-MSE',
-                      type_value='file',
-                      description='Compute Mean Square Error between labels from input and reference image. Specify reference image here.',
-                      mandatory=False)
-    parser.add_option(name='-remove-reference',
-                      type_value='file',
-                      description='Remove labels from input image (-i) that are not in reference image (specified here).',
-                      mandatory=False)
-    parser.add_option(name='-remove-sym',
-                      type_value='file',
-                      description='Remove labels from input image (-i) and reference image (specified here) that don\'t match. You must provide two output names separated by ",".',
-                      mandatory=False)
-    parser.add_option(name='-remove',
-                      type_value=[[','], 'int'],
-                      description='Remove labels of specific value (specified here) from reference image',
-                      mandatory=False)
-    parser.add_option(name='-keep',
-                      type_value=[[','], 'int'],
-                      description='Keep labels of specific value (specified here) from reference image',
-                      mandatory=False)
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Input image. Example: tw_labels.nii.gz"
+    )
 
-    parser.usage.addSection("MISC")
-    parser.add_option(name="-msg",
-                      type_value="str",
-                      description='Display a message to explain the labeling task. Use with -create-viewer.',
-                      mandatory=False)
-    parser.add_option(name="-o",
-                      type_value=[[','], "file_output"],
-                      description="Output image(s).",
-                      mandatory=False,
-                      example="t2_labels_cross.nii.gz",
-                      default_value="labels.nii.gz")
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description='Verbose. 0: nothing. 1: basic. 2: extended.',
-                      mandatory=False,
-                      default_value=param_default.verbose,
-                      example=['0', '1', '2'])
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=None)
-    parser.add_option(name='-qc-dataset',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
-                      )
-    parser.add_option(name='-qc-subject',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
-                      )
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-add',
+        metavar=Metavar.int,
+        type=int,
+        help="Add value to all labels. Value can be negative."
+    )
+    optional.add_argument(
+        '-create',
+        metavar=Metavar.list,
+        type=list_type(':', Coordinate),
+        help=("Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2."
+              "Example: 12,34,32,1:12,35,33,2")
+    )
+    optional.add_argument(
+        '-create-add',
+        metavar=Metavar.list,
+        type=list_type(':', Coordinate),
+        help=("Same as '-create', but add labels to the input image instead of creating a new image."
+              "Example: 12,34,32,1:12,35,33,2")
+    )
+    optional.add_argument(
+        '-create-seg',
+        metavar=Metavar.list,
+        type=list_type(':', str),
+        help=("Create labels along cord segmentation (or centerline) defined by '-i'. First value is 'z', second is "
+              "the value of the label. Separate labels with ':'. Example: 5,1:14,2:23,3. \n"
+              "To select the mid-point in the superior-inferior direction, set z to '-1'. For example if you know that "
+              "C2-C3 disc is centered in the S-I direction, then enter: -1,3")
+    )
+    optional.add_argument(
+        '-create-viewer',
+        metavar=Metavar.list,
+        type=list_type(',', int),
+        help="Manually label from a GUI a list of labels IDs, separated with ','. Example: 2,3,4,5"
+    )
+    optional.add_argument(
+        '-ilabel',
+        metavar=Metavar.file,
+        help="File that contain labels that you want to correct. It is possible to add new points with this option. "
+             "Use with -create-viewer. Example: t2_labels_auto.nii.gz"
+    )
+    optional.add_argument(
+        '-cubic-to-point',
+        action="store_true",
+        help="Compute the center-of-mass for each label value."
+    )
+    optional.add_argument(
+        '-display',
+        action="store_true",
+        help="Display all labels (i.e. non-zero values)."
+    )
+    optional.add_argument(
+        '-increment',
+        action="store_true",
+        help=("Takes all non-zero values, sort them along the inverse z direction, and attributes the values "
+              "1, 2, 3, etc.")
+    )
+    optional.add_argument(
+        '-vert-body',
+        metavar=Metavar.list,
+        type=list_type(',', int),
+        help=("From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate desired "
+              "levels with ','. Example: 3,8\n"
+              "To get all levels, enter '0'.")
+    )
+    optional.add_argument(
+        '-vert-continuous',
+        action="store_true",
+        help="Convert discrete vertebral labeling to continuous vertebral labeling.",
+    )
+    optional.add_argument(
+        '-MSE',
+        metavar=Metavar.file,
+        help="Compute Mean Square Error between labels from input and reference image. Specify reference image here."
+    )
+    optional.add_argument(
+        '-remove-reference',
+        metavar=Metavar.file,
+        help="Remove labels from input image (-i) that are not in reference image (specified here)."
+    )
+    optional.add_argument(
+        '-remove-sym',
+        metavar=Metavar.file,
+        help=("Remove labels from input image (-i) and reference image (specified here) that don't match. You must "
+              "provide two output names separated by ','.")
+    )
+    optional.add_argument(
+        '-remove',
+        metavar=Metavar.list,
+        type=list_type(',', int),
+        help="Remove labels of specific value (specified here) from reference image."
+    )
+    optional.add_argument(
+        '-keep',
+        metavar=Metavar.list,
+        type=list_type(',', int),
+        help="Keep labels of specific value (specified here) from reference image."
+    )
+    optional.add_argument(
+        '-msg',
+        metavar=Metavar.str,
+        help="Display a message to explain the labeling task. Use with -create-viewer"
+    )
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.list,
+        # TODO: Is this valid for type 'file_output'? (Are any special actions performed?)
+        type=list_type(',', str),
+        default="labels.nii.gz",
+        help="Output image(s). t2_labels_cross.nii.gz"
+    )
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.int,
+        choices=['0', '1', '2'],
+        default=param_default.verbose,
+        help="Verbose. 0: nothing. 1: basic. 2: extended."
+    )
+    optional.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="The path where the quality control generated content will be saved."
+    )
+    optional.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+    )
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
+
     return parser
 
 
 # MAIN
 # ==========================================================================================
 def main(args=None):
-
-    # check user arguments
-    if not args:
-        args = sys.argv[1:]
-
-    # Get parser info
     parser = get_parser()
-    arguments = parser.parse(args)
-    input_filename = arguments['-i']
+    if args:
+        arguments = parser.parse_args(args)
+    else:
+        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+
+    input_filename = arguments.i
     input_fname_output = None
     input_fname_ref = None
     input_cross_radius = 5
@@ -809,67 +860,68 @@ def main(args=None):
     input_coordinates = None
     vertebral_levels = None
     value = None
-    if '-add' in arguments:
+    if arguments.add is not None:
         process_type = 'add'
-        value = arguments['-add']
-    elif '-create' in arguments:
+        value = arguments.add
+    elif arguments.create is not None:
         process_type = 'create'
-        input_coordinates = arguments['-create']
-    elif '-create-add' in arguments:
+        input_coordinates = arguments.create
+    elif arguments.create_add is not None:
         process_type = 'create-add'
-        input_coordinates = arguments['-create-add']
-    elif '-create-seg' in arguments:
+        input_coordinates = arguments.create_add
+    elif arguments.create_seg is not None:
         process_type = 'create-seg'
-        input_coordinates = arguments['-create-seg']
-    elif '-cross' in arguments:
-        process_type = 'cross'
-        input_cross_radius = arguments['-cross']
-    elif '-cubic-to-point' in arguments:
+        input_coordinates = arguments.create_seg
+    # TODO: This argument was not present in argparse. Should it be included?
+    # elif arguments.cross is not None:
+    #     process_type = 'cross'
+    #     input_cross_radius = arguments.cross
+    elif arguments.cubic_to_point:
         process_type = 'cubic-to-point'
-    elif '-display' in arguments:
+    elif arguments.display:
         process_type = 'display-voxel'
-    elif '-increment' in arguments:
+    elif arguments.increment:
         process_type = 'increment'
-    elif '-vert-body' in arguments:
+    elif arguments.vert_body is not None:
         process_type = 'vert-body'
-        vertebral_levels = arguments['-vert-body']
+        vertebral_levels = arguments.vert_body
     # elif '-vert-disc' in arguments:
     #     process_type = 'vert-disc'
     #     vertebral_levels = arguments['-vert-disc']
-    elif '-vert-continuous' in arguments:
+    elif arguments.vert_continuous:
         process_type = 'vert-continuous'
-    elif '-MSE' in arguments:
+    elif arguments.MSE is not None:
         process_type = 'MSE'
-        input_fname_ref = arguments['-r']
-    elif '-remove-reference' in arguments:
+        input_fname_ref = arguments.r
+    elif arguments.remove_reference is not None:
         process_type = 'remove-reference'
-        input_fname_ref = arguments['-remove-reference']
-    elif '-remove-symm' in arguments:
+        input_fname_ref = arguments.remove_reference
+    elif arguments.remove_symm is not None:
         process_type = 'remove-symm'
-        input_fname_ref = arguments['-r']
-    elif '-create-viewer' in arguments:
+        input_fname_ref = arguments.r
+    elif arguments.create_viewer is not None:
         process_type = 'create-viewer'
-        value = arguments['-create-viewer']
-    elif '-remove' in arguments:
+        value = arguments.create_viewer
+    elif arguments.remove is not None:
         process_type = 'remove'
-        value = arguments['-remove']
-    elif '-keep' in arguments:
+        value = arguments.remove
+    elif arguments.keep is not None:
         process_type = 'keep'
-        value = arguments['-keep']
+        value = arguments.keep
     else:
         # no process chosen
         sct.printv('ERROR: No process was chosen.', 1, 'error')
-    if '-msg' in arguments:
-        msg = arguments['-msg']+"\n"
+    if arguments.msg is not None:
+        msg = arguments.msg+"\n"
     else:
         msg = ""
-    if '-o' in arguments:
-        input_fname_output = arguments['-o']
-    if '-ilabel' in arguments:
-        input_fname_previous = arguments['-ilabel']
+    if arguments.o is not None:
+        input_fname_output = arguments.o
+    if arguments.ilabel is not None:
+        input_fname_previous = arguments.ilabel
     else:
         input_fname_previous = None
-    verbose = int(arguments.get('-v'))
+    verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref,
@@ -881,9 +933,9 @@ def main(args=None):
     if process_type == 'display-voxel':
         return processor.useful_notation
 
-    path_qc = arguments.get("-qc", None)
-    qc_dataset = arguments.get("-qc-dataset", None)
-    qc_subject = arguments.get("-qc-subject", None)
+    path_qc = arguments.qc
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
     if path_qc is not None:
         generate_qc(fname_in1=input_filename, fname_seg=input_fname_output[0], args=args,
                     path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject, process='sct_label_utils')
