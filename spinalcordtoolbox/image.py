@@ -346,10 +346,7 @@ class Image(object):
         :return:
         """
 
-        try:
-            self.im_file = nibabel.load(path)
-        except nibabel.spatialimages.ImageFileError:
-            sct.printv('Error: make sure ' + path + ' is an image.', 1, 'error')
+        self.im_file = nibabel.load(path)
         self.data = self.im_file.get_data()
         self.hdr = self.im_file.header
         self.absolutepath = path
