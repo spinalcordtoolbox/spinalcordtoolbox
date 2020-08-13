@@ -1307,3 +1307,43 @@ def convert(img: Image, squeeze_data=True, dtype=None):
     if dtype:
         img.change_type(dtype)
     return img
+
+def split_img_data(src_img: Image, dim, squeeze_data=True):
+    """
+    Split data
+    :param src_img: input image.
+    :param dim: dimension: 0, 1, 2, 3.
+    :return: list of split images
+    """
+
+    dim_list = ['x', 'y', 'z', 't']
+    data = src_img.data
+
+    # in case input volume is 3d and dim=t, create new axis
+    if dim + 1 > len(np.shape(data)):
+        data = data[..., np.newaxis]
+
+    # in case splitting along the last dim, make sure to remove the last dim to avoid singleton
+    if dim + 1 == len(np.shape(data)):
+        if squeeze_data:
+            do_reshape = True
+        else:
+            do_reshape = False
+    else:
+        do_reshape = False
+
+    # Split data into list
+    data_split = np.array_split(data, data.shape[dim], dim)
+
+    # Write each file
+    im_out_list = []
+    for idx_img, dat in enumerate(data_split):
+        im_out = empty_like(src_img)
+        if do_reshape:
+            im_out.data = dat.reshape(tuple([ x for (idx_shape, x) in enumerate(data.shape) if idx_shape != dim]))
+        else:
+            im_out.data = dat
+        im_out.absolutepath = add_suffix(src_img.absolutepath, "_{}{}".format(dim_list[dim].upper(), str(idx_img).zfill(4)))
+        im_out_list.append(im_out)
+
+    return im_out_list

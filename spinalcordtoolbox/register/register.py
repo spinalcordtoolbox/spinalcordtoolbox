@@ -25,7 +25,7 @@ from spinalcordtoolbox.register.landmarks import register_landmarks
 
 # imports to refactor
 import sct_utils as sct # FIXME [AJ]
-from sct_image import split_data, concat_warp2d # FIXME [AJ]
+from sct_image import concat_warp2d # FIXME [AJ]
 
 logger = logging.getLogger(__name__)
 
@@ -454,14 +454,14 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # Split source volume along z
     sct.printv('\nSplit input segmentation...', verbose)
     im_src = image.Image(fname_src[0])
-    split_source_list = split_data(im_src, 2)
+    split_source_list = image.split_img_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
     sct.printv('\nSplit destination segmentation...', verbose)
     im_dest = image.Image(fname_dest[0])
-    split_dest_list = split_data(im_dest, 2)
+    split_dest_list = image.split_img_data(im_dest, 2)
     for im in split_dest_list:
         im.save()
 
@@ -481,14 +481,14 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         # Split source volume along z
         sct.printv('\nSplit input image...', verbose)
         im_src_im = image.Image(fname_src[1])
-        split_source_list = split_data(im_src_im, 2)
+        split_source_list = image.split_img_data(im_src_im, 2)
         for im in split_source_list:
             im.save()
 
         # Split destination volume along z
         sct.printv('\nSplit destination image...', verbose)
         im_dest_im = image.Image(fname_dest[1])
-        split_dest_list = split_data(im_dest_im, 2)
+        split_dest_list = image.split_img_data(im_dest_im, 2)
         for im in split_dest_list:
             im.save()
 
@@ -711,14 +711,14 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     # Split source volume along z
     sct.printv('\nSplit input volume...', verbose)
     im_src = image.Image('src.nii')
-    split_source_list = split_data(im_src, 2)
+    split_source_list = image.split_img_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
     sct.printv('\nSplit destination volume...', verbose)
     im_dest = image.Image('dest.nii')
-    split_dest_list = split_data(im_dest, 2)
+    split_dest_list = image.split_img_data(im_dest, 2)
     for im in split_dest_list:
         im.save()
 
@@ -983,14 +983,14 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     # Split input volume along z
     sct.printv('\nSplit input volume...', verbose)
     im_src = image.Image(fname_src)
-    split_source_list = split_data(im_src, 2)
+    split_source_list = image.split_img_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
     sct.printv('\nSplit destination volume...', verbose)
     im_dest = image.Image(fname_dest)
-    split_dest_list = split_data(im_dest, 2)
+    split_dest_list = image.split_img_data(im_dest, 2)
     for im in split_dest_list:
         im.save()
 
@@ -998,7 +998,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     if fname_mask != '':
         sct.printv('\nSplit mask volume...', verbose)
         im_mask = image.Image('mask.nii.gz')
-        split_mask_list = split_data(im_mask, 2)
+        split_mask_list = image.split_img_data(im_mask, 2)
         for im in split_mask_list:
             im.save()
 

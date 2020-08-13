@@ -306,7 +306,7 @@ def main(args=None):
         if len(spaces) < 2:
             spaces.append(None)
         im_out = [ displacement_to_abs_fsl(Image(fname_in[0]), spaces[0], spaces[1]) ]
-        
+
     else:
         im_out = None
         sct.printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
@@ -344,7 +344,7 @@ def main(args=None):
         sct.printv('Warping grid generated.', verbose, 'info')
 
 def displacement_to_abs_fsl(disp_im, src, tgt = None):
-    """ Convert an ITK style displacement field to an FSL compatible absolute coordinate field. 
+    """ Convert an ITK style displacement field to an FSL compatible absolute coordinate field.
         this can be applied using `applywarp` from FSL using the `--abs` flag. Or converted to a
         normal relative displacement field with `convertwarp --abs --relout`
         args:
@@ -354,9 +354,9 @@ def displacement_to_abs_fsl(disp_im, src, tgt = None):
           tgt: An `Image` object, with the correct target space, for the unusual case when the deformation
                not in the target space.
     """
-    
+
     def aff(x): return x.header.get_best_affine()
-  
+
     def pad1_3vec(vec_arr):
         """ Pad a 3d array of 3 vectors by 1 to make a 3d array of 4 vectors for affine transformation """
         return np.pad(vec_arr, ((0,0),(0,0),(0,0),(0,1)), constant_values = 1)
@@ -454,41 +454,9 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
 
 def split_data(im_in, dim, squeeze_data=True):
     """
-    Split data
-    :param im_in: input image.
-    :param dim: dimension: 0, 1, 2, 3.
-    :return: list of split images
     """
-
-    dim_list = ['x', 'y', 'z', 't']
-    # Parse file name
-    # Open first file.
-    data = im_in.data
-    # in case input volume is 3d and dim=t, create new axis
-    if dim + 1 > len(np.shape(data)):
-        data = data[..., np.newaxis]
-    # in case splitting along the last dim, make sure to remove the last dim to avoid singleton
-    if dim + 1 == len(np.shape(data)):
-        if squeeze_data:
-            do_reshape = True
-        else:
-            do_reshape = False
-    else:
-        do_reshape = False
-    # Split data into list
-    data_split = np.array_split(data, data.shape[dim], dim)
-    # Write each file
-    im_out_list = []
-    for idx_img, dat in enumerate(data_split):
-        im_out = msct_image.empty_like(im_in)
-        if do_reshape:
-            im_out.data = dat.reshape(tuple([ x for (idx_shape, x) in enumerate(data.shape) if idx_shape != dim]))
-        else:
-            im_out.data = dat
-        im_out.absolutepath = sct.add_suffix(im_in.absolutepath, "_{}{}".format(dim_list[dim].upper(), str(idx_img).zfill(4)))
-        im_out_list.append(im_out)
-
-    return im_out_list
+    # backwards compat
+    return msct_image.split_img_data(src_img=im_in, dim=dim, squeeze_data=squeeze_data)
 
 def remove_vol(im_in, index_vol_user, todo):
     """
