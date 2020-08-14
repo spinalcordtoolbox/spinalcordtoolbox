@@ -17,6 +17,7 @@
 from __future__ import absolute_import
 
 import sys, os, time
+import argparse
 
 import numpy as np
 
@@ -24,7 +25,8 @@ import sct_utils as sct
 import sct_maths
 import spinalcordtoolbox.image as msct_image
 from sct_convert import convert
-from msct_parser import Parser
+# TODO: Properly test when first PR (that includes list_type) gets merged
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type
 
 # PARAMETERS
 class Param:
@@ -45,58 +47,74 @@ class Param:
 # PARSER
 # ==========================================================================================
 def get_parser():
-    # Initialize the parser
-    parser = Parser(__file__)
-
     # initialize default parameters
     param_default = Param()
 
-    parser.usage.set_description('Smooth the spinal cord along its centerline. Steps are:\n'
-                                 '1) Spinal cord is straightened (using centerline),\n'
-                                 '2) a Gaussian kernel is applied in the superior-inferior direction,\n'
-                                 '3) then cord is de-straightened as originally.\n')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="Image to smooth",
-                      mandatory=True,
-                      example='data.nii.gz')
-    parser.add_option(name="-s",
-                      type_value="file",
-                      description="Spinal cord centerline or segmentation",
-                      mandatory=True,
-                      example='data_centerline.nii.gz')
-    parser.add_option(name="-c",
-                      type_value=None,
-                      description="Spinal cord centerline or segmentation",
-                      mandatory=False,
-                      deprecated_by='-s')
-    parser.add_option(name="-smooth",
-                      type_value=[[','], 'float'],
-                      description='Sigma (standard deviation) of the smoothing Gaussian kernel (in mm). For isotropic '
-                                  'smoothing you only need to specify a value (e.g. 2). For anisotropic smoothing '
-                                  'specify a value for each axis, separated with a comma. The order should follow axes '
-                                  'Right-Left, Antero-Posterior, Superior-Inferior (e.g.: 1,1,3). For no smoothing, set '
-                                  'value to 0.',
-                      mandatory=False,
-                      default_value=[0, 0, 3])
-    parser.add_option(name='-param',
-                      type_value=[[','], 'str'],
-                      description="Advanced parameters. Assign value with \"=\"; Separate params with \",\"\n"
-                                  "algo_fitting {bspline, polyfit}: Algorithm for curve fitting. For more information, see sct_straighten_spinalcord. Default="+ param_default.algo_fitting + ".\n",
-                      mandatory=False)
-    parser.usage.addSection('MISC')
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description='Remove temporary files.',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended",
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
+    # Initialize the parser
+    parser = argparse.ArgumentParser(
+        description=("Smooth the spinal cord along its centerline. Steps are:\n"
+                     "    1) Spinal cord is straightened (using centerline),\n"
+                     "    2) a Gaussian kernel is applied in the superior-inferior direction,\n"
+                     "    3) then cord is de-straightened as originally.\n"),
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Image to smooth. Example: data.nii.gz"
+    )
+    mandatory.add_argument(
+        '-s',
+        metavar=Metavar.file,
+        required=True,
+        help="Spinal cord centerline or segmentation. Example: data_centerline.nii.gz"
+    )
+
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-smooth',
+        metavar=Metavar.list,
+        type=list_type(',', float),
+        default=[0, 0, 3],
+        help=("Sigma (standard deviation) of the smoothing Gaussian kernel (in mm). For isotropic smoothing you only "
+              "need to specify a value (e.g. 2). For anisotropic smoothing specify a value for each axis, separated "
+              "with a comma. The order should follow axes Right-Left, Antero-Posterior, Superior-Inferior "
+              "(e.g.: 1,1,3). For no smoothing, set value to 0.")
+    )
+    optional.add_argument(
+        '-param',
+        metavar=Metavar.list,
+        type=list_type(',', str),
+        help=(f"Advanced parameters. Assign value with '='; Separate params with ','\n"
+              f"    - algo_fitting {{bspline, polyfit}}: Algorithm for curve fitting. For more information, "
+              f"see sct_straighten_spinalcord. Default={param_default.algo_fitting}.\n")
+    )
+    optional.add_argument(
+        '-r',
+        metavar=Metavar.int,
+        choices=['0', '1'],
+        default='1',
+        help="Whether to remove temporary files. 0 = no, 1 = yes"
+    )
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.int,
+        choices=['0', '1', '2'],
+        default='1',
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended"
+    )
+
     return parser
 
 
@@ -109,17 +127,17 @@ def main(args=None):
     start_time = time.time()
 
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
-    fname_anat = arguments['-i']
-    fname_centerline = arguments['-s']
-    if '-smooth' in arguments:
-        sigma = arguments['-smooth']
-    if '-param' in arguments:
-        param.update(arguments['-param'])
-    if '-r' in arguments:
-        remove_temp_files = int(arguments['-r'])
-    verbose = int(arguments.get('-v'))
+    fname_anat = arguments.i
+    fname_centerline = arguments.s
+    if arguments.smooth is not None:
+        sigma = arguments.smooth
+    if arguments.param is not None:
+        param.update(arguments.param)
+    if arguments.r is not None:
+        remove_temp_files = int(arguments.r)
+    verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # Display arguments
