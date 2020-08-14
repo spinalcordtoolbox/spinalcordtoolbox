@@ -299,13 +299,14 @@ def create_line(param, fname, coord, nz):
     # set all voxels to zero
     sct.run(['sct_maths', '-i', 'line.nii', '-mul', '0', '-o', 'line.nii'], param.verbose)
 
-    cmd = ['sct_label_utils', '-i', 'line.nii', '-o', 'line.nii', '-create-add']
+    create_add_str = ""
     for iz in range(nz):
         if iz == nz - 1:
-            cmd += [str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1']
+            create_add_str += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1'
         else:
-            cmd += [str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1:']
+            create_add_str += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1:'
 
+    cmd = ['sct_label_utils', '-i', 'line.nii', '-o', 'line.nii', '-create-add', create_add_str]
     sct.run(cmd, param.verbose)
 
     return 'line.nii'
