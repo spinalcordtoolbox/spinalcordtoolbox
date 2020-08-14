@@ -9,6 +9,7 @@ import itertools
 from skimage.transform import rotate
 
 from random import uniform
+import copy
 
 import nibabel as nib
 
@@ -119,7 +120,7 @@ def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate
 
 def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
                        shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0,
-                       degree=2, zeroslice=[], debug=False):
+                       degree=2, interleaved=False, zeroslice=[], debug=False):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :param size_arr: tuple: (nx, ny, nz)
@@ -133,6 +134,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     :param radius_RL: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
     :param radius_AP: float: 2nd radius
     :param degree: int: degree of polynomial fit
+    :param interleaved: bool: create dummy segmentation simulating interleaved acquisition
     :param zeroslice: list int: zero all slices listed in this param
     :param debug: Write temp files for debug
     :return: img: Image object
@@ -152,9 +154,29 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     y = [round(ny / 2.), round(ny / 2.), round(ny / 2.)]               # straight curve (same location of AP across SI)
     z = np.array([0, round(nz / 2.), nz - 1])
     # we use poly (instead of bspline) in order to allow change of scalar for each term of polynomial function
-    #yfit, _ = bspline(z, y, range(nz), smooth=10)
-    yfit, _ = polyfit_1d(z, y, range(nz),deg=degree)
-    yfit = np.round(yfit)   # has to be used for correct float -> int conversion in next step
+    p = np.polynomial.Polynomial.fit(z, y, deg=degree)
+
+    # create two polynomial fits, by choosing random scalar for each term of both polynomial functions and then
+    # interleave these two fits (one for odd slices, second one for even slices)
+    if interleaved:
+        p_even = copy.copy(p)
+        p_odd = copy.copy(p)
+        # choose random scalar for each term of polynomial function
+        # even slices
+        p_even.coef = [element * uniform(0.5, 1) for element in p_even.coef]
+        # odd slices
+        p_odd.coef = [element * uniform(0.5, 1) for element in p_odd.coef]
+        # performs two polynomial fits - one will serve for even slices, second one for odd slices
+        yfit_even = np.round(p_even(range(nz)))
+        yfit_odd = np.round(p_odd(range(nz)))
+
+        # combine even and odd polynomial fits
+        yfit = np.zeros(nz)
+        yfit[0:nz:2] = yfit_even[0:nz:2]
+        yfit[1:nz:2] = yfit_odd[1:nz:2]
+    else:
+        yfit = np.round(p(range(nz)))   # has to be rounded for correct float -> int conversion in next step
+
     yfit = yfit.astype(np.int)
     # loop across slices and add object
     for iz in range(nz):
@@ -214,7 +236,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
 
 def dummy_segmentation_4d(vol_num=10, create_bvecs=False, size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64,
                           orientation='LPI', shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0,
-                          radius_AP=3.0, degree=2, zeroslice=[], debug=False):
+                          radius_AP=3.0, degree=2, interleaved=False, zeroslice=[], debug=False):
     """
     Create a dummy 4D segmentation (dMRI/fMRI) and dummy bvecs file (optional)
     :param vol_num: int: number of volumes in 4D data
@@ -231,7 +253,7 @@ def dummy_segmentation_4d(vol_num=10, create_bvecs=False, size_arr=(256, 256, 25
         img_list.append(dummy_segmentation(size_arr=size_arr, pixdim=pixdim, dtype=dtype, orientation=orientation,
                                            shape=shape, angle_RL=angle_RL, angle_AP=angle_AP, angle_IS=angle_IS,
                                            radius_RL=radius_RL, radius_AP=radius_AP, degree=degree, zeroslice=zeroslice,
-                                           debug=False))
+                                           interleaved=interleaved, debug=False))
 
     # Concatenate individual 3D images into 4D data
     img_4d = concat_data(img_list, 3)
