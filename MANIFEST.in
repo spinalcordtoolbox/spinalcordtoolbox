@@ -3,7 +3,7 @@ include setup*
 include README*
 include CHANGES.md
 include abstract.png
-include version.txt
+include spinalcordtoolbox/version.txt
 
 graft spinalcordtoolbox/reports/assets
 prune dev
