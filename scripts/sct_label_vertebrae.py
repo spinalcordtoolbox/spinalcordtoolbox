@@ -180,7 +180,7 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
-        help=(f"Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
+        help=(f"R|Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
               f"    - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
               f"    - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
               f"    - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"

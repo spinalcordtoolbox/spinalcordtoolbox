@@ -96,7 +96,7 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
-        help=(f"Advanced parameters. Assign value with '='; Separate params with ','\n"
+        help=(f"R|Advanced parameters. Assign value with '='; Separate params with ','\n"
               f"    - algo_fitting {{bspline, polyfit}}: Algorithm for curve fitting. For more information, "
               f"see sct_straighten_spinalcord. Default={param_default.algo_fitting}.\n")
     )

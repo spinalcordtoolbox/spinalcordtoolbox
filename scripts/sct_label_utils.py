@@ -729,7 +729,7 @@ def get_parser():
         '-create-seg',
         metavar=Metavar.list,
         type=list_type(':', str),
-        help=("Create labels along cord segmentation (or centerline) defined by '-i'. First value is 'z', second is "
+        help=("R|Create labels along cord segmentation (or centerline) defined by '-i'. First value is 'z', second is "
               "the value of the label. Separate labels with ':'. Example: 5,1:14,2:23,3. \n"
               "To select the mid-point in the superior-inferior direction, set z to '-1'. For example if you know that "
               "C2-C3 disc is centered in the S-I direction, then enter: -1,3")
