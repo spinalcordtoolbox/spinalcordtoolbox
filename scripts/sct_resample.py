@@ -57,30 +57,34 @@ def get_parser():
         required=True,
         help="Image to segment. Can be 3D or 4D. (Cannot be 2D) Example: dwi.nii.gz"
     )
-    # parser.usage.addSection('TYPE OF THE NEW SIZE INPUT : with a factor of resampling, in mm or in number of voxels\n'
-    #                         'Please choose only one of the 3 options.')
+
+    resample_types = parser.add_argument_group(
+        "\nTYPE OF THE NEW SIZE INPUT: with a factor of resampling, in mm or in number of voxels\n"
+        "Please choose only one of the 3 options"
+    )
+    resample_types.add_argument(
+        '-f',
+        metavar=Metavar.str,
+        help=("Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1\n"
+              "For 2x upsampling, set to 2. For 2x downsampling set to 0.5")
+    )
+    resample_types.add_argument(
+        '-mm',
+        metavar=Metavar.str,
+        help="New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5"
+    )
+    resample_types.add_argument(
+        '-vox',
+        metavar=Metavar.str,
+        help="Resampling size in number of voxels in each dimensions (x,y,z). Separate with 'x'."
+    )
+
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
         "--help",
         action="help",
         help="Show this help message and exit."
-    )
-    optional.add_argument(
-        '-f',
-        metavar=Metavar.str,
-        help=("Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1\n"
-              "For 2x upsampling, set to 2. For 2x downsampling set to 0.5")
-    )
-    optional.add_argument(
-        '-mm',
-        metavar=Metavar.str,
-        help="New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5"
-    )
-    optional.add_argument(
-        '-vox',
-        metavar=Metavar.str,
-        help="Resampling size in number of voxels in each dimensions (x,y,z). Separate with 'x'."
     )
     optional.add_argument(
         '-ref',
