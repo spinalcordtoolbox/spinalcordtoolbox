@@ -44,3 +44,7 @@ unit_testing/*.roi
 test.sh
 sct_course-london19/
 sct_example_data/
+
+# Documentation
+documentation/build
+

@@ -25,8 +25,6 @@ import pathlib
 
 import numpy as np
 
-from sct_convert import convert
-
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +43,7 @@ else:
 
 
 from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
-from spinalcordtoolbox.utils import check_exe
+from spinalcordtoolbox.utils import check_exe, sct_dir_local_path
 
 
 def init_sct(log_level=1, update=False):
@@ -258,10 +256,10 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=
         name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
         path = None
         #binaries_location_default = os.path.expanduser("~/.cache/spinalcordtoolbox-{}/bin".format(__version__)
-        binaries_location_default = os.path.join(__sct_dir__, "bin")
+        binaries_location_default = sct_dir_local_path("bin")
         for directory in (
          #binaries_location_default,
-         os.path.join(__sct_dir__, "bin"),
+         sct_dir_local_path("bin"),
          ):
             candidate = os.path.join(directory, name)
             if os.path.exists(candidate):
@@ -717,6 +715,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     :param verbose:
     :return: fname_out
     """
+    from sct_convert import convert
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
     # create output path (ignore if it already exists)
@@ -902,7 +901,7 @@ class Os(object):
     def __init__(self):
         import os
         if os.name != 'posix':
-            raise UnsupportedOs('We only support OS X/Linux')
+            raise UnsupportedOs('We only support macOS/Linux')
         import platform
         self.os = platform.system().lower()
         self.arch = platform.machine()

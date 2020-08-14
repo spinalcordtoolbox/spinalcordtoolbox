@@ -14,6 +14,13 @@ git:
 #  directories:
 #    - ${HOME}/.cache/pip
 
+# safelist
+# branches with associated PRs are still built by https://docs.travis-ci.com/user/pull-requests
+branches:
+  only:
+  - master
+  - release
+
 matrix:
   include:
     # To support OSes that Travis doesn't, we mix in Docker images.

@@ -18,32 +18,39 @@ from __future__ import absolute_import
 import os
 import sys
 import argparse
+from getpass import getpass
 import multiprocessing
 import subprocess
+import platform
 import re
 import time
 import datetime
 import functools
 import json
+import tempfile
 import warnings
 import yaml
-
-from getpass import getpass
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email
-from spinalcordtoolbox import __version__
+import shutil
+import psutil
 from textwrap import dedent
 from types import SimpleNamespace
+
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit
+from spinalcordtoolbox import __version__
+
 import sct_utils as sct
 
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='Wrapper to processing scripts, which loops across subjects. Subjects '
-        'should be organized as folders within a single directory. We recommend '
-        'following the BIDS convention (https://bids.neuroimaging.io/). '
-        'The processing script (task) should accept a subject directory as its only argument. '
-        'Additional information is passed via environment variables and the arguments '
-        'passed via `-task-args`',
+        description='Wrapper to processing scripts, which loops across subjects. Subjects should be organized as '
+                    'folders within a single directory. We recommend following the BIDS convention '
+                    '(https://bids.neuroimaging.io/). The processing script should accept a subject directory '
+                    'as its only argument. Additional information is passed via environment variables and the '
+                    'arguments passed via `-script-args`. If the script or the input data are located within a '
+                    'git repository, the git commit is displayed. If the script or data have changed since the latest '
+                    'commit, the symbol "*" is added after the git commit number. If no git repository is found, the '
+                    'git commit version displays "?!?". The script is copied on the output folder (-path-out).',
         formatter_class=SmartFormatter,
         prog=os.path.basename(__file__).strip('.py'))
 
@@ -58,13 +65,13 @@ def get_parser():
                             Example YAML configuration:
                             path_data   : "~/sct_data"
                             path_output : "~/pipeline_results"
-                            task        : "nature_paper_analysis.sh"
+                            script      : "nature_paper_analysis.sh"
                             jobs        : -1\n
                             Example JSON configuration:
                             {
                             "path_data"   : "~/sct_data"
                             "path_output" : "~/pipeline_results"
-                            "task"        : "nature_paper_analysis.sh"
+                            "script"      : "nature_paper_analysis.sh"
                             "jobs"        : -1
                             }\n
                             """))
@@ -112,15 +119,15 @@ def get_parser():
                         'Cannot be used with either `exclude`.', nargs='+')
     parser.add_argument('-path-segmanual', default='.',
                         help='R|Setting for environment variable: PATH_SEGMANUAL\n'
-                        'A path containing manual segmentations to be used by the task program.')
+                        'A path containing manual segmentations to be used by the script program.')
     parser.add_argument('-itk-threads', type=int, default=1,
                         help='R|Setting for environment variable: ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS\n'
                         'Number of threads to use for ITK based programs including ANTs. Set to a low '
                         'number to avoid a large increase in memory. Defaults to 1',
                         metavar=Metavar.int)
-    parser.add_argument('-task-args', default='',
-                        help='A quoted string with extra flags and arguments to pass to the task script. '
-                        'For example \'sct_run_batch -path-data data/ -task-args "-foo bar -baz /qux" process_data.sh \'')
+    parser.add_argument('-script-args', default='',
+                        help='A quoted string with extra flags and arguments to pass to the script. '
+                        'For example \'sct_run_batch -path-data data/ -script-args "-foo bar -baz /qux" process_data.sh \'')
     parser.add_argument('-email-to',
                         help='Optional email address where sct_run_batch can send an alert on completion of the '
                         'batch processing.')
@@ -133,19 +140,22 @@ def get_parser():
                              ' at https://myaccount.google.com/security')
     parser.add_argument('-continue-on-error', type=int, default=1, choices=(0, 1),
                         help='Whether the batch processing should continue if a subject fails.')
-    parser.add_argument('-task',
+    parser.add_argument('-script',
                         help='Shell script used to process the data.')
+    parser.add_argument('-zip',
+                        action='store_true',
+                        help='Create zip archive of output folders log/, qc/ and results/.')
 
     return parser
 
 
-def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
+def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
                path_qc, itk_threads, continue_on_error=False):
     """
     Job function for mapping with multiprocessing
     :param subj_dir:
-    :param task:
-    :param task_args:
+    :param script:
+    :param script_args:
     :param path_segmanual:
     :param path_data:
     :param path_data_processed:
@@ -157,16 +167,16 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_data_p
     :return:
     """
 
-    # Strip the `.sh` extension from the task for building error logs
+    # Strip the `.sh` extension from the script for building error logs
     # TODO: we should probably strip all extensions
-    task_base = re.sub('\\.sh$', '', os.path.basename(task))
-    task_full = os.path.abspath(os.path.expanduser(task))
+    script_base = re.sub('\\.sh$', '', os.path.basename(script))
+    script_full = os.path.abspath(os.path.expanduser(script))
 
     subject = os.path.basename(subj_dir)
-    log_file = os.path.join(path_log, '{}_{}.log'.format(task_base, subject))
-    err_file = os.path.join(path_log, 'err.{}_{}.log'.format(task_base, subject))
+    log_file = os.path.join(path_log, '{}_{}.log'.format(script_base, subject))
+    err_file = os.path.join(path_log, 'err.{}_{}.log'.format(script_base, subject))
 
-    print('Running {}. See log file {}'.format(subject, log_file), flush=True)
+    print('Started at {}: {}. See log file {}'.format(time.strftime('%Hh%Mm%Ss'), subject, log_file), flush=True)
 
     # A full copy of the environment is needed otherwise sct programs won't necessarily be found
     envir = os.environ.copy()
@@ -184,7 +194,7 @@ def run_single(subj_dir, task, task_args, path_segmanual, path_data, path_data_p
 
     # Ship the job out, merging stdout/stderr and piping to log file
     try:
-        res = subprocess.run([task_full, subj_dir] + task_args.split(' '),
+        res = subprocess.run([script_full, subj_dir] + script_args.split(' '),
                              env=envir,
                              stdout=open(log_file, 'w'),
                              stderr=subprocess.STDOUT)
@@ -283,15 +293,15 @@ def main(argv):
     path_log = os.path.join(path_output, 'log')
     path_qc = os.path.join(path_output, 'qc')
     path_segmanual = os.path.abspath(os.path.expanduser(args.path_segmanual))
-    task = os.path.abspath(os.path.expanduser(args.task))
+    script = os.path.abspath(os.path.expanduser(args.script))
 
     for pth in [path_output, path_results, path_data_processed, path_log, path_qc]:
         if not os.path.exists(pth):
             os.mkdir(pth)
 
-    # Check that the task can be found
-    if not os.path.exists(task):
-        raise FileNotFoundError('Couldn\'t find the task script at {}'.format(task))
+    # Check that the script can be found
+    if not os.path.exists(script):
+        raise FileNotFoundError('Couldn\'t find the script script at {}'.format(script))
 
     # Setup overall log
     batch_log = open(os.path.join(path_log, args.batch_log), 'w')
@@ -310,9 +320,52 @@ def main(argv):
         sys.stdout = orig_stdout
         sys.stderr = orig_stderr
 
+        # Display OS
+
+    print("INFO SYSTEM")
+    print("-----------")
+    platform_running = sys.platform
+    if platform_running.find('darwin') != -1:
+        os_running = 'osx'
+    elif platform_running.find('linux') != -1:
+        os_running = 'linux'
+    print('OS: ' + os_running + ' (' + platform.platform() + ')')
+
+    # Display number of CPU cores
+    output = int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))
+    print('CPU cores: Available: {} | Used by SCT: {}'.format(multiprocessing.cpu_count(), output))
+
+    # Display RAM available
+    print("RAM: Total {} MB | Available {} MB | Used {} MB".format(
+        int(psutil.virtual_memory().total / 1024 / 1024),
+        int(psutil.virtual_memory().available / 1024 / 1024),
+        int(psutil.virtual_memory().used / 1024 / 1024),
+        ))
+
     # Log the current arguments (in yaml because it's cleaner)
-    print('sct_run_batch arguments were:')
+    print('\nINPUT ARGUMENTS')
+    print("---------------")
     print(yaml.dump(vars(args)))
+
+    # Display script version info
+    print("SCRIPT")
+    print("------")
+    print("git commit: {}".format(__get_commit(path_to_git_folder=os.path.split(args.script)[0])))
+    print("Copying script to output folder...")
+    try:
+        shutil.copy(args.script, args.path_output)
+        print("{} -> {}".format(args.script, os.path.abspath(args.path_output)))
+    except shutil.SameFileError:
+        print("Input and output folder are the same. Skipping copy.")
+        pass
+    except IsADirectoryError:
+        print("Input folder is a directory (not a file). Skipping copy.")
+        pass
+
+    # Display data version info
+    print("\nDATA")
+    print("----")
+    print("git commit: {}\n".format(__get_commit(path_to_git_folder=args.path_data)))
 
     # Find subjects and process inclusion/exclusions
     path_data = os.path.abspath(os.path.expanduser(args.path_data))
@@ -348,12 +401,12 @@ def main(argv):
     # Run the jobs, recording start and end times
     start = datetime.datetime.now()
 
-    # Trap errors to send an email if a task fails.
+    # Trap errors to send an email if a script fails.
     try:
         with multiprocessing.Pool(jobs) as p:
             run_single_dir = functools.partial(run_single,
-                                               task=task,
-                                               task_args=args.task_args,
+                                               script=script,
+                                               script_args=args.script_args,
                                                path_segmanual=path_segmanual,
                                                path_data=path_data,
                                                path_data_processed=path_data_processed,
@@ -384,9 +437,9 @@ def main(argv):
     fails = [sd for (sd, ret) in zip(subject_dirs, results) if ret.returncode != 0]
 
     if len(fails) == 0:
-        status_message = 'Hooray! your batch completed successfully :-)\n'
+        status_message = '\nHooray! your batch completed successfully :-)\n'
     else:
-        status_message = ('Your batch completed but some subjects may have not completed '
+        status_message = ('\nYour batch completed but some subjects may have not completed '
                           'successfully, please consult the logs for:\n'
                           '{}\n'.format('\n'.join(fails)))
     print(status_message)
@@ -407,6 +460,16 @@ def main(argv):
 
     print('To open the Quality Control (QC) report on a web-browser, run the following:\n'
           '{} {}/index.html'.format(open_cmd, path_qc))
+
+    if args.zip:
+        file_zip = 'sct_run_batch_{}'.format(time.strftime('%Y%m%d%H%M%S'))
+        path_tmp = os.path.join(tempfile.mkdtemp(), file_zip)
+        os.makedirs(os.path.join(path_tmp, file_zip))
+        for folder in [path_log, path_qc, path_results]:
+            shutil.copytree(folder, os.path.join(path_tmp, file_zip, os.path.split(folder)[-1]))
+        shutil.make_archive(os.path.join(path_output, file_zip), 'zip', path_tmp)
+        shutil.rmtree(path_tmp)
+        print("\nOutput zip archive: {}.zip".format(os.path.join(path_output, file_zip)))
 
     reset_streams()
     batch_log.close()

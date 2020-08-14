@@ -31,11 +31,11 @@ def get_parser():
                         help='SCT function associated with the QC report to generate',
                         choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_register_multimodal',
                                  'sct_register_to_template', 'sct_warp_template', 'sct_label_vertebrae',
-                                 'sct_detect_pmj','sct_get_centerline'),
+                                 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline'),
                         required=True)
     parser.add_argument('-s',
                         metavar='SEG',
-                        help='Input segmentation',
+                        help='Input segmentation or label',
                         required=False)
     parser.add_argument('-d',
                         metavar='DEST',
@@ -57,6 +57,9 @@ def get_parser():
                         help='If provided, this string will be mentioned in the QC report as the subject the process '
                              'was run on',
                         required=False)
+    parser.add_argument('-v',
+                        action='store_true',
+                        help="Verbose")
     return parser
 
 
@@ -80,7 +83,6 @@ def main(args):
 
 
 if __name__ == '__main__':
-    sct.init_sct()
-    parser = get_parser()
-    arguments = parser.parse_args()
+    arguments = get_parser().parse_args()
+    sct.init_sct(log_level=2 if arguments.v else 1)
     main(arguments)

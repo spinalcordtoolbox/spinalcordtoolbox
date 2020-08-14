@@ -17,6 +17,7 @@ import getopt
 
 import nibabel
 import numpy as np
+from spinalcordtoolbox import sct_test_path
 
 import sct_utils as sct
 
@@ -40,9 +41,9 @@ def main():
 
     if param.debug:
         sct.printv( '\n*** WARNING: DEBUG MODE ON ***\n')
-        path_sct_data = os.path.join(sct.__data_dir__, "sct_testing_data")
+        path_sct_data = sct_test_path()
         fname_input = ''
-        fname_segmentation = os.path.join(path_sct_data, 't2', 't2_seg.nii.gz')
+        fname_segmentation = sct_test_path('t2', 't2_seg.nii.gz')
     else:
     # Check input param
         try:

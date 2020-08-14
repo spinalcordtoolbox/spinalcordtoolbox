@@ -27,6 +27,7 @@ from scipy import ndimage
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate, CoordinateValue
+from spinalcordtoolbox.reports.qc import generate_qc
 
 from msct_parser import Parser
 import sct_utils as sct
@@ -774,6 +775,18 @@ def get_parser():
                       mandatory=False,
                       default_value=param_default.verbose,
                       example=['0', '1', '2'])
+    parser.add_option(name='-qc',
+                      type_value='folder_creation',
+                      description='The path where the quality control generated content will be saved',
+                      default_value=None)
+    parser.add_option(name='-qc-dataset',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
+                      )
+    parser.add_option(name='-qc-subject',
+                      type_value='str',
+                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
+                      )
     return parser
 
 
@@ -867,6 +880,13 @@ def main(args=None):
     # return based on process type
     if process_type == 'display-voxel':
         return processor.useful_notation
+
+    path_qc = arguments.get("-qc", None)
+    qc_dataset = arguments.get("-qc-dataset", None)
+    qc_subject = arguments.get("-qc-subject", None)
+    if path_qc is not None:
+        generate_qc(fname_in1=input_filename, fname_seg=input_fname_output[0], args=args,
+                    path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject, process='sct_label_utils')
 
 
 if __name__ == "__main__":

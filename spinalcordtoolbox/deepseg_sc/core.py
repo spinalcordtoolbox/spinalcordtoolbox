@@ -15,9 +15,11 @@ from .cnn_models import nn_architecture_seg, nn_architecture_ctr
 from .postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
+from spinalcordtoolbox.utils import sct_dir_local_path
 
 import sct_utils as sct
 from sct_image import concat_data, split_data
+
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -75,7 +77,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                           'dwi': {'features': 8, 'dilation_layers': 2}}
 
         # load model
-        ctr_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type))
+        ctr_model_fname = sct_dir_local_path('data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type))
         ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type]['size'][0],
                                         width=dct_patch_ctr[contrast_type]['size'][1],
                                         channels=1,
@@ -500,7 +502,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         # segment data using 2D convolutions
         logger.info("Segmenting the spinal cord using deep learning on 2D patches...")
         segmentation_model_fname = \
-            os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
+            sct_dir_local_path('data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
         seg_crop = segment_2d(model_fname=segmentation_model_fname,
                               contrast_type=contrast_type,
                               input_size=(crop_size, crop_size),
@@ -509,7 +511,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         # segment data using 3D convolutions
         logger.info("Segmenting the spinal cord using deep learning on 3D patches...")
         segmentation_model_fname = \
-            os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_type))
+            sct_dir_local_path('data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_type))
         seg_crop = segment_3d(model_fname=segmentation_model_fname,
                               contrast_type=contrast_type,
                               im_in=im_norm_in)

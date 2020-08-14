@@ -31,7 +31,7 @@ import warnings
 import requirements
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import SmartFormatter
+from spinalcordtoolbox.utils import SmartFormatter, sct_dir_local_path
 
 
 # DEFAULT PARAMETERS
@@ -167,7 +167,7 @@ def add_bash_profile(string):
 
 def get_dependencies(requirements_txt=None):
     if requirements_txt is None:
-        requirements_txt = os.path.join(sct.__sct_dir__, "requirements.txt")
+        requirements_txt = sct_dir_local_path("requirements.txt")
 
     requirements_txt = open(requirements_txt, "r", encoding="utf-8")
 
@@ -201,9 +201,12 @@ def get_parser():
         action="help",
         help="Show this help message and exit")
     optional.add_argument(
-        "-c",
-        "--complete",
+        '-complete',
         help="Complete test.",
+        action="store_true")
+    optional.add_argument(
+        "-short",
+        help="Short test. Only shows SCT version, CPU cores and RAM available.",
         action="store_true")
 
     return parser
@@ -259,6 +262,9 @@ def main():
 
     # check RAM
     sct.checkRAM(os_running, 0)
+
+    if arguments.short:
+        sys.exit()
 
     # check if Python path is within SCT path
     print_line('Check Python executable')

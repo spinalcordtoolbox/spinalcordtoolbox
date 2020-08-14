@@ -30,7 +30,7 @@ import matplotlib.colors as color
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
-from spinalcordtoolbox import __sct_dir__
+from spinalcordtoolbox.utils import sct_dir_local_path
 
 logger = logging.getLogger(__name__)
 
@@ -170,6 +170,22 @@ class QcImage(object):
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
+    def label_utils(self, mask, ax):
+        """Create figure with red label. Common scenario."""
+        img = np.full_like(mask, np.nan)
+        ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
+        non_null_vox = np.where(mask > 0)
+        coord_labels = list(zip(non_null_vox[0], non_null_vox[1]))
+        logger.debug(coord_labels)
+        # compute horizontal offset based on the resolution of the mask
+        horiz_offset = mask.shape[1] / 50
+        for coord in coord_labels:
+            ax.plot(coord[1], coord[0], 'o', color='lime', markersize=5)
+            ax.text(coord[1] + horiz_offset, coord[0], str(round(mask[coord[0], coord[1]])), color='lime', fontsize=15,
+                    verticalalignment='center', clip_on=True)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
     def label_vertebrae(self, mask, ax):
         """Draw vertebrae areas, then add text showing the vertebrae names"""
         from matplotlib import colors
@@ -209,6 +225,24 @@ class QcImage(object):
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
+    def label_centerline(self, mask, ax):
+        """Create figure with red label. Common scenario."""
+        results_mask_pixels = np.where(mask > 0)
+        # TODO: maybe we only need one pixel per centerline (currently, it's a 1x2 matrix of pixels)
+        listOfCoordinates = list(zip(results_mask_pixels[0], results_mask_pixels[1]))
+        for cord in listOfCoordinates:
+            ax.plot(cord[1], cord[0], 'ro', markersize=1)
+            # ax.text(cord[1]+5,cord[0]+5, str(mask[cord]), color='lime', clip_on=True)
+        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        ax.imshow(img,
+                  cmap=color.ListedColormap(self._color_bin_red),
+                  norm=color.Normalize(vmin=0, vmax=1),
+                  interpolation=self.interpolation,
+                  alpha=10,
+                  aspect=float(self.aspect_mask))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
     def vertical_line(self, mask, ax):
         """Centered vertical line to assess quality of straightening"""
         img = np.full_like(mask, np.nan)
@@ -245,7 +279,7 @@ class QcImage(object):
             logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
             if self._angle_line is None:
-                img, mask = func(sct_slice,    *args)
+                img, mask = func(sct_slice, *args)
             else:
                 [img, mask], centermass = func(sct_slice, *args)
                 self._centermass = centermass
@@ -350,22 +384,7 @@ class QcImage(object):
                     bbox_inches=None,
                     transparent=True,
                     dpi=dpi)
-    def label_centerline(self, mask, ax):
-        """Create figure with red label. Common scenario."""
-        results_mask_pixels = np.where(mask > 0)
-        listOfCoordinates= list(zip(results_mask_pixels[0], results_mask_pixels[1]))
-        for cord in listOfCoordinates:
-            ax.plot(cord[1],cord[0], 'ro', markersize=1)
-            # ax.text(cord[1]+5,cord[0]+5, str(mask[cord]), color='lime', clip_on=True)          
-        img = np.rint(np.ma.masked_where(mask < 1, mask))
-        ax.imshow(img,
-                  cmap=color.ListedColormap(self._color_bin_red),
-                  norm=color.Normalize(vmin=0, vmax=1),
-                  interpolation=self.interpolation,
-                  alpha=10,
-                  aspect=float(self.aspect_mask))
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
+
 
 class Params(object):
     """Parses and stores the variables that will be included into the QC details
@@ -417,8 +436,6 @@ class Params(object):
         return os.path.join(self.root_folder, self.overlay_img_path)
 
 
-
-
 class QcReport(object):
     """This class generates the quality control report.
 
@@ -436,7 +453,7 @@ class QcReport(object):
         self.slice_name = qc_params.orientation
         self.qc_params = qc_params
         self.usage = usage
-        self.assets_folder = os.path.join(__sct_dir__, 'assets')
+        self.assets_folder = sct_dir_local_path('assets')
         self.img_base_name = 'bkg_img'
         self.description_base_name = "qc_results"
 
@@ -537,7 +554,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
     :param plane:
     :param path_img: Path to image to display
     :param path_img_overlay: Path to image to display on top of path_img (will flip between the two)
-    :param qcslice: spinalcordtoolbox.reports.slice:Axial
+    :param qcslice: spinalcordtoolbox.reports.slice:Axial or spinalcordtoolbox.reports.slice:Sagittal
     :param qcslice_operations:
     :param qcslice_layout:
     :param dpi: int: Output resolution of the image
@@ -555,6 +572,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
         @QcImage(report, 'none', qcslice_operations, stretch_contrast_method=stretch_contrast_method,
                  angle_line=angle_line)
         def layout(qslice):
+            # This will call qc.__call__(self, func):
             return qcslice_layout(qslice)
 
         layout(qcslice)
@@ -657,6 +675,14 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.label_vertebrae]
         qcslice_layout = lambda x: x.single()
+    #  Sagittal orientation, display posterior labels
+    elif process in ['sct_label_utils']:
+        plane = 'Sagittal'
+        dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
+        # projected_image = projected(Image(fname_seg))
+        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        qcslice_operations = [QcImage.label_utils]
+        qcslice_layout = lambda x: x.single()
     # Sagittal orientation, display PMJ box
     elif process in ['sct_detect_pmj']:
         plane = 'Sagittal'
@@ -664,7 +690,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         qcslice_operations = [QcImage.highlight_pmj]
         qcslice_layout = lambda x: x.single()
     # Sagittal orientation, static image
-    # TODO: Add coronal orientation
     elif process in ['sct_straighten_spinalcord']:
         plane = 'Sagittal'
         dpi = 100
