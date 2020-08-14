@@ -38,11 +38,6 @@ setup(
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
     packages=find_packages(exclude=['.git', 'data', 'dev', 'dev.*',
                                     'install', 'testing']),
-    data_files=[
-        # <hack>
-        ("sct_scripts", [os.path.join("scripts", x) for x in os.listdir("scripts") if x.endswith(".py")]),
-        # </hack>
-    ],
     include_package_data=True,
     extras_require={
         'docs': [
