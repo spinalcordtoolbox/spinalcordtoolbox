@@ -134,7 +134,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     :param radius_RL: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
     :param radius_AP: float: 2nd radius
     :param degree: int: degree of polynomial fit
-    :param interleaved: bool: create dummy segmentation simulating interleaved acquisition
+    :param interleaved: bool: create a dummy segmentation simulating interleaved acquisition
     :param zeroslice: list int: zero all slices listed in this param
     :param debug: Write temp files for debug
     :return: img: Image object
@@ -174,6 +174,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
         yfit = np.zeros(nz)
         yfit[0:nz:2] = yfit_even[0:nz:2]
         yfit[1:nz:2] = yfit_odd[1:nz:2]
+    # IF INTERLEAVED=FALSE, perform only one polynomial fit without modification of term's scalars
     else:
         yfit = np.round(p(range(nz)))   # has to be rounded for correct float -> int conversion in next step
 
