@@ -14,13 +14,6 @@ git:
 #  directories:
 #    - ${HOME}/.cache/pip
 
-# safelist
-# branches with associated PRs are still built by https://docs.travis-ci.com/user/pull-requests
-branches:
-  only:
-  - master
-  - release
-
 matrix:
   include:
     # To support OSes that Travis doesn't, we mix in Docker images.
@@ -75,7 +68,7 @@ matrix:
       env:
         - DOCKER_IMAGE="debian:9"       DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
     - name: "CentOS 8"
-      # runs on all branches
+      if: branch = release or type = cron
       os: linux
       dist: bionic # kernel ~= Centos8
       services:
@@ -100,7 +93,7 @@ matrix:
       if: branch = release or type = cron
       dist: xenial
     - name: "OSX 10.14 (Mojave)"
-      # runs on all branches
+      if: branch = release or type = cron
       os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
       osx_image: xcode11.2
     - name: "OSX 10.13 (High Sierra)"
@@ -108,11 +101,11 @@ matrix:
       os: osx
       osx_image: xcode9.4
     - name: "OSX 10.12 (Sierra)"
-      if: branch = release or type = cron
+      # runs on all branches
       os: osx
       osx_image: xcode9.2
     - name: "Windows Server, 1809"
-      # runs on all branches
+      if: branch = release or type = cron
       language: bash
       os: windows
 
