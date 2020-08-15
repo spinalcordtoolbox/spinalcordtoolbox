@@ -349,8 +349,8 @@ done
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Catch SCT version
-if [[ -e "version.txt" ]]; then
-  SCT_VERSION=$(cat version.txt)
+if [[ -e "spinalcordtoolbox/version.txt" ]]; then
+  SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
 else
   die "ERROR: version.txt not found. \n
 The install_sct script must be executed from the source directory"
@@ -489,7 +489,7 @@ fi
 cd $SCT_DIR
 
 # Make sure we are in SCT folder (to avoid deleting folder from user)
-if [[ ! -f "version.txt" ]]; then
+if [[ ! -f "spinalcordtoolbox/version.txt" ]]; then
   die "ERROR: Cannot cd into SCT folder. SCT_DIR="$SCT_DIR
 fi
 

@@ -434,7 +434,7 @@ def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
     else:
         install_type = 'package'
 
-    with io.open(os.path.join(__sct_dir__, 'version.txt'), 'r') as f:
+    with io.open(os.path.join(__sct_dir__, 'spinalcordtoolbox', 'version.txt'), 'r') as f:
         version_sct = f.read().rstrip()
 
     return install_type, sct_commit, sct_branch, version_sct
