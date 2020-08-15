@@ -530,7 +530,9 @@ conda activate venv_sct
 # Install Python dependencies
 print info "Installing Python dependencies..."
 # numpy is an undeclared build dependency: https://github.com/scikit-image/scikit-image/issues/4919
-# Explicitly install it as a workaround; note that it's *not* in requirements.txt.
+# so explicitly install it as a workaround; note that in releases with requirements-freeze.txt
+# this can cause a strange double-install: https://github.com/neuropoly/spinalcordtoolbox/issues/2750
+# but we can live with that until https://github.com/scikit-image/scikit-image/pull/4920 is merged.
 pip install numpy
 # Check if a frozen version of the requirements exist (for release only)
 if [[ -f "requirements-freeze.txt" ]]; then

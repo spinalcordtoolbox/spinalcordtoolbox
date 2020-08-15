@@ -6,6 +6,7 @@ ivadomed==2.0.2
 Keras==2.1.5
 matplotlib
 nibabel
+numpy
 pandas
 psutil
 pyqt5==5.11.3
