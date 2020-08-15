@@ -547,13 +547,6 @@ if [[ $? != 0 ]]; then
   die "Failed running pip install: $?"
 fi
 
-## Install the spinalcordtoolbox into the Conda venv
-pip install -e $SCT_DIR
-e_status=$?
-if [[ $e_status != 0 ]]; then
-  die "Failed to pip install sct."
-fi
-
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."
 mkdir -p $SCT_DIR/$BIN_DIR

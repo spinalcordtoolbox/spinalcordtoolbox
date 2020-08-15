@@ -39,6 +39,42 @@ setup(
     packages=find_packages(exclude=['.git', 'data', 'dev', 'dev.*',
                                     'install', 'testing']),
     include_package_data=True,
+    install_requires=[
+        'colored',
+        'dipy',
+        'futures',
+        'h5py',
+        'ivadomed==2.0.2',
+        'Keras==2.1.5',
+        'matplotlib',
+        'nibabel',
+        'numpy',
+        'pandas',
+        'psutil',
+        'pyqt5==5.11.3',
+        'pytest',
+        'pytest-cov',
+        'raven',
+        'requests',
+        'requirements-parser',
+        'scipy',
+        'scikit-image',
+        'scikit-learn',
+        'tensorflow==1.5.0',
+        # PyTorch's Linux/Windows distribution is very large due to its GPU support,
+        # but we only need that for training models. For users, use the CPU-only version
+        # The macOS version has never had GPU support, so doesn't need the workaround.
+        # (this is only available directly from the PyTorch project, so you *must*
+        #  install with 'pip install -f https://download.pytorch.org/whl/cpu/torch_stable.html')
+        'torch==1.5.0+cpu; sys_platform != "darwin"',
+        'torch==1.5.0; sys_platform == "darwin"',
+        'torchvision==0.6.0+cpu; sys_platform != "darwin"',
+        'torchvision==0.6.0; sys_platform == "darwin"',
+        'xlwt',
+        'tqdm',
+        'transforms3d',
+        'urllib3[secure]'
+    ],
     extras_require={
         'docs': [
         'sphinx',
