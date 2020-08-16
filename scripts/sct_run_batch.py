@@ -332,7 +332,7 @@ def main(argv):
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
 
     # Display number of CPU cores
-    print('CPU cores: Available: {} | Threads used by SCT: {}'.format(multiprocessing.cpu_count(), args.itk_threads))
+    print('CPU cores: Available: {} | Threads used by ITK Programs: {}'.format(multiprocessing.cpu_count(), args.itk_threads))
 
     # Display RAM available
     print("RAM: Total {} MB | Available {} MB | Used {} MB".format(
