@@ -158,7 +158,7 @@ def get_parser():
         '-o',
         metavar=Metavar.file,
         default=param_default.fname_output,
-        help=("File name (including the file extension) of the output result file collecting the metric estimation "
+        help=("R|File name (including the file extension) of the output result file collecting the metric estimation "
               "results.\n"
               "Three file types are available: a CSV text file (extension .txt), a MS Excel file (extension .xls) and "
               "a pickle file (extension .pickle).")
@@ -175,7 +175,7 @@ def get_parser():
         '-z',
         metavar=Metavar.str,
         default=param_default.slices_of_interest,
-        help=("Slice range to estimate the metric from. First slice is 0. Example: 5:23\n"
+        help=("R|Slice range to estimate the metric from. First slice is 0. Example: 5:23\n"
               "You can also select specific slices using commas. Example: 0,2,3,5,12'")
     )
     optional.add_argument(
@@ -184,7 +184,7 @@ def get_parser():
         metavar=Metavar.int,
         choices=(0, 1),
         default=param_default.perslice,
-        help=("Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.\n"
+        help=("R|Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.\n"
               "Please note that when methods ml or map are used, outputting a single metric per slice and then "
               "averaging them all is not the same as outputting a single metric at once across all slices.")
     )
@@ -205,7 +205,7 @@ def get_parser():
         type=int,
         metavar=Metavar.int,
         default=0,
-        help=("Whether to output one metric per vertebral level instead of a single output metric. 0 = no, 1 = yes.\n"
+        help=("R|Whether to output one metric per vertebral level instead of a single output metric. 0 = no, 1 = yes.\n"
               "Please note that this flag needs to be used with the -vert option.")
     )
     optional.add_argument(
@@ -221,7 +221,7 @@ def get_parser():
         '-param',
         metavar=Metavar.str,
         default='',
-        help=("Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated "
+        help=("R|Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated "
               "with comma).\n"
               "  - #1: standard deviation of metrics across labels\n"
               "  - #2: standard deviation of the noise (assumed Gaussian)")
@@ -246,7 +246,7 @@ def get_parser():
         metavar=Metavar.str,
         choices=['sbs', 'whole'],
         default='',
-        help=("Method to use for normalization:\n"
+        help=("R|Method to use for normalization:\n"
               "  - sbs: normalization slice-by-slice\n"
               "  - whole: normalization by the metric value in the whole label for all slices.")
     )
