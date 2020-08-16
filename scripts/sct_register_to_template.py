@@ -144,7 +144,7 @@ def get_parser():
     optional.add_argument(
         '-l',
         metavar=Metavar.file,
-        help=("One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
+        help=("R|One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
               "Example: anat_labels.nii.gz\n"
               "For more information about label creation, please see: "
               "https://www.slideshare.net/neuropoly/sct-course-20190121/42")
@@ -152,7 +152,7 @@ def get_parser():
     optional.add_argument(
         '-ldisc',
         metavar=Metavar.file,
-        help=("Labels located at the posterior edge of the intervertebral discs. Example: anat_labels.nii.gz\n"
+        help=("R|Labels located at the posterior edge of the intervertebral discs. Example: anat_labels.nii.gz\n"
               "If you are using more than 2 labels, all disc covering the region of interest should be provided. "
               "(E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7.) "
               "For more information about label creation, please refer to "
@@ -161,7 +161,7 @@ def get_parser():
     optional.add_argument(
         '-lspinal',
         metavar=Metavar.file,
-        help=("Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
+        help=("R|Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
               "mid-point of the spinal level. Example: anat_labels.nii.gz\n"
               "Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). "
               "If you are using more than 2 labels, all spinal levels covering the region of interest should be "

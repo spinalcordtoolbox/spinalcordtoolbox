@@ -766,8 +766,8 @@ def get_parser():
         '-vert-body',
         metavar=Metavar.list,
         type=list_type(',', int),
-        help=("From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate desired "
-              "levels with ','. Example: 3,8\n"
+        help=("R|From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
+              "desired levels with ','. Example: 3,8\n"
               "To get all levels, enter '0'.")
     )
     optional.add_argument(

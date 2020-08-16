@@ -114,7 +114,7 @@ def get_parser():
         '-initz',
         metavar=Metavar.list,
         type=list_type(',', int),
-        help=("Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). "
+        help=("R|Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). "
               "Example: 125,3\n"
               "WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but "
               "Y in LIP orientation).")

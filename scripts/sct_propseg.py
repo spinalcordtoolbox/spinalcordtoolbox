@@ -269,7 +269,7 @@ def get_parser():
         metavar=Metavar.file,
 
         # list_no_image=['viewer', 'hough', 'optic']
-        help=("Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in "
+        help=("R|Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in "
               "documentation.\n"
               "Replace filename by 'viewer' to use interactive viewer for providing centerline. Example: "
               "-init-centerline viewer")
@@ -285,7 +285,7 @@ def get_parser():
         metavar=Metavar.file,
         # TODO: Investigate what this option does
         # list_no_image=['viewer']
-        help=("Mask containing three center of the spinal cord, used to initiate the propagation.\n"
+        help=("R|Mask containing three center of the spinal cord, used to initiate the propagation.\n"
               "Replace filename by 'viewer' to use interactive viewer for providing mask. Example: -init-mask viewer")
     )
     optional.add_argument(
