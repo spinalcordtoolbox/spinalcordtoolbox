@@ -127,11 +127,11 @@ def get_parser():
         default=param_default.method,
         help=("R|Method to extract metrics.\n"
               "  - ml: maximum likelihood (only use with well-defined regions and low noise)\n"
-              "        N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in " 
+              "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in " 
               "all voxels (the algorithm doesn't normalize the atlas).\n"
               "  - map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters "
               "         (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.\n"
-              "         N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in "
+              "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in "
               "all voxels (the algorithm doesn't normalize the atlas).\n"
               "  - wa: weighted average\n"
               "  - bin: binarize mask (threshold=0.5)\n"
@@ -155,10 +155,8 @@ def get_parser():
         '-o',
         metavar=Metavar.file,
         default=param_default.fname_output,
-        help=("R|File name (including the file extension) of the output result file collecting the metric estimation "
-              "results.\n"
-              "Three file types are available: a CSV text file (extension .txt), a MS Excel file (extension .xls) and "
-              "a pickle file (extension .pickle).")
+        help=("R|File name of the output result file collecting the metric estimation results. Include the '.csv' "
+              "file extension in the file name. Example: extract_metric.csv")
     )
     optional.add_argument(
         '-output-map',
