@@ -397,6 +397,10 @@ def main(argv):
     else:
         jobs = args.jobs
 
+    print("RUNNING")
+    print("-------")
+    print("Running {} jobs in parallel.\n".format(jobs))
+
     # Run the jobs, recording start and end times
     start = datetime.datetime.now()
 
