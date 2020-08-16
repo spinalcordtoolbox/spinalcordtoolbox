@@ -53,9 +53,9 @@ def get_parser():
     # Initialize the parser
     parser = argparse.ArgumentParser(
         description=("Smooth the spinal cord along its centerline. Steps are:\n"
-                     "    1) Spinal cord is straightened (using centerline),\n"
-                     "    2) a Gaussian kernel is applied in the superior-inferior direction,\n"
-                     "    3) then cord is de-straightened as originally.\n"),
+                     "  1) Spinal cord is straightened (using centerline),\n"
+                     "  2) a Gaussian kernel is applied in the superior-inferior direction,\n"
+                     "  3) then cord is de-straightened as originally.\n"),
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
@@ -97,7 +97,7 @@ def get_parser():
         metavar=Metavar.list,
         type=list_type(',', str),
         help=(f"R|Advanced parameters. Assign value with '='; Separate params with ','\n"
-              f"    - algo_fitting {{bspline, polyfit}}: Algorithm for curve fitting. For more information, "
+              f"  - algo_fitting {{bspline, polyfit}}: Algorithm for curve fitting. For more information, "
               f"see sct_straighten_spinalcord. Default={param_default.algo_fitting}.\n")
     )
     optional.add_argument(

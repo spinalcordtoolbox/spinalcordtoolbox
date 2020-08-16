@@ -69,7 +69,7 @@ def get_parser():
             "on mutual information score. The automatic method uses the module implemented in "
             "'spinalcordtoolbox/vertebrae/detect_c2c3.py' to detect the C2-C3 disc.\n"
             "Tips: To run the function with init txt file that includes flags -initz/-initcenter:\n"
-            "    sct_label_vertebrae -i t2.nii.gz -s t2_seg-manual.nii.gz  '$(< init_label_vertebrae.txt)'"
+            "  sct_label_vertebrae -i t2.nii.gz -s t2_seg-manual.nii.gz  '$(< init_label_vertebrae.txt)'"
         ),
         formatter_class=SmartFormatter,
         add_help=None,
@@ -181,11 +181,11 @@ def get_parser():
         metavar=Metavar.list,
         type=list_type(',', str),
         help=(f"R|Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
-              f"    - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
-              f"    - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
-              f"    - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"
-              f"    - size_IS [mm]: IS window size for disc search. Default={param_default.size_IS}.\n"
-              f"    - gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the "
+              f"  - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
+              f"  - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
+              f"  - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"
+              f"  - size_IS [mm]: IS window size for disc search. Default={param_default.size_IS}.\n"
+              f"  - gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the "
               f"image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values "
               f"to set between 0.1 (strong weighting) and 999 (no weighting). "
               f"Default={param_default.gaussian_std}.\n")

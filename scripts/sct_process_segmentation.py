@@ -43,19 +43,19 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description=(
             "Compute the following morphometric measures based on the spinal cord segmentation:\n"
-            "    - area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be "
+            "  - area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be "
             "accounted for by inputing a mask comprising values within [0,1].\n"
-            "    - angle_AP, angle_RL: Estimated angle between the cord centerline and the axial slice. This angle is "
+            "  - angle_AP, angle_RL: Estimated angle between the cord centerline and the axial slice. This angle is "
             "used to correct for morphometric information.\n"
-            "    - diameter_AP, diameter_RL: Finds the major and minor axes of the cord and measure their length.\n"
-            "    - eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. "
+            "  - diameter_AP, diameter_RL: Finds the major and minor axes of the cord and measure their length.\n"
+            "  - eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. "
             "The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis "
             "length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.\n"
-            "    - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the "
+            "  - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the "
             "image\n"
-            "    - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This "
+            "  - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This "
             "metric is interesting for detecting non-convex shape (e.g., in case of strong compression)\n"
-            "    - length: Length of the segmentation, computed by summing the slice thickness (corrected for the "
+            "  - length: Length of the segmentation, computed by summing the slice thickness (corrected for the "
             "centerline angle at each slice) across the specified superior-inferior region.\n"
         ),
         formatter_class=SmartFormatter,
