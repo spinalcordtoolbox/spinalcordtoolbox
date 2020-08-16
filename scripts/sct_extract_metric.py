@@ -127,16 +127,16 @@ def get_parser():
         choices=['ml', 'map', 'wa', 'bin', 'max'],
         default=param_default.method,
         help=("R|Method to extract metrics.\n"
-              "    - ml: maximum likelihood (only use with well-defined regions and low noise)\n"
-              "          N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in " 
-              "          all voxels (the algorithm doesn't normalize the atlas).\n"
-              "    - map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters "
-              "           (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.\n"
-              "           N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in "
-              "           all voxels (the algorithm doesn't normalize the atlas).\n"
-              "    - wa: weighted average\n"
-              "    - bin: binarize mask (threshold=0.5)\n"
-              "    - max: for each z-slice of the input data, extract the max value for each slice of the input data.")
+              "  - ml: maximum likelihood (only use with well-defined regions and low noise)\n"
+              "        N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in " 
+              "all voxels (the algorithm doesn't normalize the atlas).\n"
+              "  - map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters "
+              "         (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.\n"
+              "         N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in "
+              "all voxels (the algorithm doesn't normalize the atlas).\n"
+              "  - wa: weighted average\n"
+              "  - bin: binarize mask (threshold=0.5)\n"
+              "  - max: for each z-slice of the input data, extract the max value for each slice of the input data.")
     )
     optional.add_argument(
         '-append',
@@ -223,8 +223,8 @@ def get_parser():
         default='',
         help=("Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated "
               "with comma).\n"
-              "    -#1: standard deviation of metrics across labels\n"
-              "    -#2: standard deviation of the noise (assumed Gaussian)")
+              "  - #1: standard deviation of metrics across labels\n"
+              "  - #2: standard deviation of the noise (assumed Gaussian)")
     )
     advanced.add_argument(
         '-fix-label',
@@ -247,8 +247,8 @@ def get_parser():
         choices=['sbs', 'whole'],
         default='',
         help=("Method to use for normalization:\n"
-              "    -sbs: normalization slice-by-slice\n"
-              "    -whole: normalization by the metric value in the whole label for all slices.")
+              "  - sbs: normalization slice-by-slice\n"
+              "  - whole: normalization by the metric value in the whole label for all slices.")
     )
     advanced.add_argument(
         '-mask-weighted',

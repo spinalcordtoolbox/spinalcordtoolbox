@@ -29,18 +29,18 @@ def get_parser():
     # parser initialisation
     parser = argparse.ArgumentParser(
         description=("Motion correction of fMRI data. Some robust features include:\n"
-                     "    - group-wise (-g)\n"
-                     "    - slice-wise regularized along z using polynomial function (-p)\n"
-                     "      (For more info about the method, type: isct_antsSliceRegularizedRegistration)\n"
-                     "    - masking (-m)\n"
-                     "    - iterative averaging of target volume\n"
+                     "  - group-wise (-g)\n"
+                     "  - slice-wise regularized along z using polynomial function (-p)\n"
+                     "    (For more info about the method, type: isct_antsSliceRegularizedRegistration)\n"
+                     "  - masking (-m)\n"
+                     "  - iterative averaging of target volume\n"
                      "\n"
                      "The outputs of the motion correction process are:\n"
-                     "    - the motion-corrected fMRI volumes\n"
-                     "    - the time average of the corrected fMRI volumes\n"
-                     "    - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate "
+                     "  - the motion-corrected fMRI volumes\n"
+                     "  - the time average of the corrected fMRI volumes\n"
+                     "  - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate "
                      "files), as required for FSL analysis.\n"
-                     "    - a TSV file with the slice-wise average of the motion correction for XY (one file), that "
+                     "  - a TSV file with the slice-wise average of the motion correction for XY (one file), that "
                      "can be used for Quality Control.\n"),
         formatter_class=SmartFormatter,
         add_help=None,
@@ -77,17 +77,17 @@ def get_parser():
         metavar=Metavar.list,
         type=list_type(',', str),
         help=(f"R|Advanced parameters. Assign value with \"=\"; Separate arguments with \",\".\n"
-              f"    -poly [int]: Degree of polynomial function used for regularization along Z. For no regularization "
+              f"  - poly [int]: Degree of polynomial function used for regularization along Z. For no regularization "
               f"set to 0. Default={param_default.poly}.\n"
-              f"    -smooth [mm]: Smoothing kernel. Default={param_default.smooth}.\n"
-              f"    -iter [int]: Number of iterations. Default={param_default.iter}.\n"
-              f"    -metric {{MI, MeanSquares, CC}}: Metric used for registration. Default={param_default.metric}.\n"
-              f"    -gradStep [float]: Searching step used by registration algorithm. The higher the more deformation "
+              f"  - smooth [mm]: Smoothing kernel. Default={param_default.smooth}.\n"
+              f"  - iter [int]: Number of iterations. Default={param_default.iter}.\n"
+              f"  - metric {{MI, MeanSquares, CC}}: Metric used for registration. Default={param_default.metric}.\n"
+              f"  - gradStep [float]: Searching step used by registration algorithm. The higher the more deformation "
               f"allowed. Default={param_default.gradStep}.\n"
-              f"    -sampling [None or 0-1]: Sampling rate used for registration metric. "
+              f"  - sampling [None or 0-1]: Sampling rate used for registration metric. "
               f"Default={param_default.sampling}.\n"
-              f"    -numTarget [int]: Target volume or group (starting with 0). Default={param_default.num_target}.\n"
-              f"    -iterAvg [int]: Iterative averaging: Target volume is a weighted average of the "
+              f"  - numTarget [int]: Target volume or group (starting with 0). Default={param_default.num_target}.\n"
+              f"  - iterAvg [int]: Iterative averaging: Target volume is a weighted average of the "
               f"previously-registered volumes. Default={param_default.iterAvg}.\n")
     )
     optional.add_argument(
