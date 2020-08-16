@@ -9,12 +9,13 @@ import itertools
 from skimage.transform import rotate
 
 from random import uniform
+import copy
 
 import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.resampling import resample_nib
-from spinalcordtoolbox.centerline.curve_fitting import bspline
+from spinalcordtoolbox.centerline.curve_fitting import bspline, polyfit_1d
 from sct_image import concat_data
 
 # TODO: retrieve os.environ['SCT_DEBUG']
@@ -119,7 +120,7 @@ def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate
 
 def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64, orientation='LPI',
                        shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0, radius_AP=3.0,
-                       interleaved=False, factor=1, zeroslice=[], debug=False):
+                       degree=2, interleaved=False, zeroslice=[], debug=False):
     """Create a dummy Image with a ellipse or ones running from top to bottom in the 3rd dimension, and rotate the image
     to make sure that compute_csa and compute_shape properly estimate the centerline angle.
     :param size_arr: tuple: (nx, ny, nz)
@@ -132,7 +133,8 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     :param angle_IS: int: angle around IS axis (in deg)
     :param radius_RL: float: 1st radius. With a, b = 50.0, 30.0 (in mm), theoretical CSA of ellipse is 4712.4
     :param radius_AP: float: 2nd radius
-    :param interleaved: bool: use polynomial function to simulate slicewise motion
+    :param degree: int: degree of polynomial fit
+    :param interleaved: bool: create a dummy segmentation simulating interleaved acquisition
     :param zeroslice: list int: zero all slices listed in this param
     :param debug: Write temp files for debug
     :return: img: Image object
@@ -141,29 +143,48 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     padding = 15  # Padding size (isotropic) to avoid edge effect during rotation
     # Create a 3d array, with dimensions corresponding to x: RL, y: AP, z: IS
     nx, ny, nz = [int(size_arr[i] * pixdim[i]) for i in range(3)]
-    data = np.random.random((nx, ny, nz)) * 0.
+    data = np.zeros((nx, ny, nz))
     xx, yy = np.mgrid[:nx, :ny]
-    if not interleaved:
-        # loop across slices and add object
-        for iz in range(nz):
-            if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
-                data[:, :, iz] = ((abs(xx - nx / 2) <= radius_RL) & (abs(yy - ny / 2) <= radius_AP)) * 1
-            if shape == 'ellipse':
-                data[:, :, iz] = (((xx - nx / 2) / radius_RL) ** 2 + ((yy - ny / 2) / radius_AP) ** 2 <= 1) * 1
-    elif interleaved:
-        # define array based on a polynomial function, within Y-Z plane to simulate slicewise motion in A-P
-        y = np.matlib.repmat([round(nx / 2.) + pixdim[0]*factor, round(nx / 2.) - pixdim[0]*factor], 1, round(nz / 2))
-        if nz % 2 != 0:         # if z-dimension is odd, add one more element to fit size
-            y = numpy.append(y,round(nx / 2.) + pixdim[0]*factor)
-        y = y.reshape(nz)       # reshape to vector (1,R) -> (R,)
-        z = np.arange(0, nz)
-        p = np.poly1d(np.polyfit(z, y, deg=nz))
-        # loop across slices and add object
-        for iz in range(nz):
-            if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
-                data[:, :, iz] = ((abs(xx - nx / 2) <= radius_RL) & (abs(yy - p(iz)) <= radius_AP)) * 1
-            if shape == 'ellipse':
-                data[:, :, iz] = (((xx - nx / 2) / radius_RL) ** 2 + ((yy - p(iz)) / radius_AP) ** 2 <= 1) * 1
+
+    # Create a dummy segmentation using polynomial function
+    # create regularized curve, within Y-Z plane (A-P), located at x=nx/2:
+    x = [round(nx / 2.)] * len(range(nz))
+    # and passing through the following points:
+    #y = np.array([round(ny / 4.), round(ny / 2.), round(3 * ny / 4.)])  # oblique curve (changing AP points across SI)
+    y = [round(ny / 2.), round(ny / 2.), round(ny / 2.)]               # straight curve (same location of AP across SI)
+    z = np.array([0, round(nz / 2.), nz - 1])
+    # we use poly (instead of bspline) in order to allow change of scalar for each term of polynomial function
+    p = np.polynomial.Polynomial.fit(z, y, deg=degree)
+
+    # create two polynomial fits, by choosing random scalar for each term of both polynomial functions and then
+    # interleave these two fits (one for odd slices, second one for even slices)
+    if interleaved:
+        p_even = copy.copy(p)
+        p_odd = copy.copy(p)
+        # choose random scalar for each term of polynomial function
+        # even slices
+        p_even.coef = [element * uniform(0.5, 1) for element in p_even.coef]
+        # odd slices
+        p_odd.coef = [element * uniform(0.5, 1) for element in p_odd.coef]
+        # performs two polynomial fits - one will serve for even slices, second one for odd slices
+        yfit_even = np.round(p_even(range(nz)))
+        yfit_odd = np.round(p_odd(range(nz)))
+
+        # combine even and odd polynomial fits
+        yfit = np.zeros(nz)
+        yfit[0:nz:2] = yfit_even[0:nz:2]
+        yfit[1:nz:2] = yfit_odd[1:nz:2]
+    # IF INTERLEAVED=FALSE, perform only one polynomial fit without modification of term's scalars
+    else:
+        yfit = np.round(p(range(nz)))   # has to be rounded for correct float -> int conversion in next step
+
+    yfit = yfit.astype(np.int)
+    # loop across slices and add object
+    for iz in range(nz):
+        if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
+            data[:, :, iz] = ((abs(xx - x[iz]) <= radius_RL) & (abs(yy - yfit[iz]) <= radius_AP)) * 1
+        if shape == 'ellipse':
+            data[:, :, iz] = (((xx - x[iz]) / radius_RL) ** 2 + ((yy - yfit[iz]) / radius_AP) ** 2 <= 1) * 1
 
     # Pad to avoid edge effect during rotation
     data = np.pad(data, padding, 'reflect')
@@ -216,7 +237,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
 
 def dummy_segmentation_4d(vol_num=10, create_bvecs=False, size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64,
                           orientation='LPI', shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0,
-                          radius_AP=3.0, interleaved=False, zeroslice=[], debug=False):
+                          radius_AP=3.0, degree=2, interleaved=False, zeroslice=[], debug=False):
     """
     Create a dummy 4D segmentation (dMRI/fMRI) and dummy bvecs file (optional)
     :param vol_num: int: number of volumes in 4D data
@@ -229,12 +250,11 @@ def dummy_segmentation_4d(vol_num=10, create_bvecs=False, size_arr=(256, 256, 25
 
     # Loop across individual volumes of 4D data
     for volume in range(0,vol_num):
-        factor = uniform(0.5, 3.0)          # shift in voxels
         # set debug=True in line below for saving individual volumes into individual nii files
         img_list.append(dummy_segmentation(size_arr=size_arr, pixdim=pixdim, dtype=dtype, orientation=orientation,
                                            shape=shape, angle_RL=angle_RL, angle_AP=angle_AP, angle_IS=angle_IS,
-                                           radius_RL=radius_RL, radius_AP=radius_AP, interleaved=interleaved,
-                                           factor=factor, zeroslice=zeroslice, debug=False))
+                                           radius_RL=radius_RL, radius_AP=radius_AP, degree=degree, zeroslice=zeroslice,
+                                           interleaved=interleaved, debug=False))
 
     # Concatenate individual 3D images into 4D data
     img_4d = concat_data(img_list, 3)
