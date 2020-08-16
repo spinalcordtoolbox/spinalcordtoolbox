@@ -35,7 +35,7 @@ import psutil
 from textwrap import dedent
 from types import SimpleNamespace
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit, __get_git_origin
 from spinalcordtoolbox import __version__
 
 import sct_utils as sct
@@ -294,6 +294,7 @@ def main(argv):
     path_qc = os.path.join(path_output, 'qc')
     path_segmanual = os.path.abspath(os.path.expanduser(args.path_segmanual))
     script = os.path.abspath(os.path.expanduser(args.script))
+    path_data = os.path.abspath(os.path.expanduser(args.path_data))
 
     for pth in [path_output, path_results, path_data_processed, path_log, path_qc]:
         if not os.path.exists(pth):
@@ -350,7 +351,8 @@ def main(argv):
     # Display script version info
     print("SCRIPT")
     print("------")
-    print("git commit: {}".format(__get_commit(path_to_git_folder=os.path.split(args.script)[0])))
+    print("git commit: {}".format(__get_commit(path_to_git_folder=os.path.dirname(script))))
+    print("git origin: {}".format(__get_git_origin(path_to_git_folder=os.path.dirname(script))))
     print("Copying script to output folder...")
     try:
         shutil.copy(args.script, args.path_output)
@@ -365,10 +367,10 @@ def main(argv):
     # Display data version info
     print("\nDATA")
     print("----")
-    print("git commit: {}\n".format(__get_commit(path_to_git_folder=args.path_data)))
+    print("git commit: {}".format(__get_commit(path_to_git_folder=path_data)))
+    print("git origin: {}\n".format(__get_git_origin(path_to_git_folder=path_data)))
 
     # Find subjects and process inclusion/exclusions
-    path_data = os.path.abspath(os.path.expanduser(args.path_data))
     subject_dirs = [f for f in os.listdir(path_data) if f.startswith(args.subject_prefix)]
 
     # Handle inclusion lists

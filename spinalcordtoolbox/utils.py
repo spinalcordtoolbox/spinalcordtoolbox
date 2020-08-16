@@ -420,6 +420,25 @@ def __get_commit(path_to_git_folder=None):
 
     return commit
 
+def __get_git_origin(path_to_git_folder=None):
+    """
+    :return: git origin url if available
+    """
+    if path_to_git_folder is None:
+        path_to_git_folder = __sct_dir__
+    else:
+        path_to_git_folder = abspath(path_to_git_folder)
+
+    p = subprocess.Popen(["git", "remote", "get-url", "origin"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=path_to_git_folder)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        origin = output.decode().strip()
+    else:
+        origin = "?!?"
+
+    return origin
 
 def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
 
