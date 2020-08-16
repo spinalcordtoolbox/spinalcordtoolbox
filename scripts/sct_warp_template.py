@@ -170,14 +170,12 @@ def get_parser():
     )
     optional.add_argument(
         '-a',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default=str(param_default.warp_atlas),
         help="Warp atlas of white matter."
     )
     optional.add_argument(
         '-s',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default=str(param_default.warp_spinal_levels),
         help="Warp spinal levels."
@@ -214,7 +212,6 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='1',
         help=("Verbose. 0: nothing. 1: basic")

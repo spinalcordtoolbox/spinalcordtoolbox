@@ -49,13 +49,11 @@ def get_parser():
     )
     optional.add_argument(
         "-c",
-        metavar=Metavar.str,
         choices=['t1', 't2', 't2s', 'dwi'],
         help="Type of image contrast. Only with method=optic."
     )
     optional.add_argument(
         "-method",
-        metavar=Metavar.str,
         choices=['optic', 'viewer', 'fitseg'],
         default='optic',
         help=("Method used for extracting the centerline.\n"
@@ -67,7 +65,6 @@ def get_parser():
     )
     optional.add_argument(
         "-centerline-algo",
-        metavar=Metavar.str,
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
         help="Show this help message and exit."
@@ -99,7 +96,6 @@ def get_parser():
     )
     optional.add_argument(
         "-v",
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='1',
         help="Verbose. 1: display on, 0: display off (default)"

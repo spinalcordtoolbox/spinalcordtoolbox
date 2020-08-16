@@ -190,7 +190,6 @@ def get_parser(paramregmulti=None):
     )
     optional.add_argument(
         '-identity',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='0',
         help="Just put source into destination (no optimization)."
@@ -204,7 +203,6 @@ def get_parser(paramregmulti=None):
     )
     optional.add_argument(
         '-x',
-        metavar=Metavar.str,
         choices=['nn', 'linear', 'spline'],
         default='linear',
         help="Final interpolation."
@@ -233,14 +231,12 @@ def get_parser(paramregmulti=None):
     )
     optional.add_argument(
         '-r',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='1',
         help="Whether to remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.int,
         choices=['0', '1', '2'],
         default='1',
         help="Verbose. 0: nothing, 1: basic, 2: extended."

@@ -93,7 +93,6 @@ def get_parser():
     )
     optional.add_argument(
         '-x',
-        metavar=Metavar.str,
         choices=['nn', 'linear', 'spline'],
         default='linear',
         help="Interpolation method."
@@ -105,7 +104,6 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.int,
         choices=['0', '1', '2'],
         default='1',
         help="Verbose: 0 = nothing, 1 = classic, 2 = expended."

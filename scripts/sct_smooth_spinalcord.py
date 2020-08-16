@@ -102,14 +102,12 @@ def get_parser():
     )
     optional.add_argument(
         '-r',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='1',
         help="Whether to remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.int,
         choices=['0', '1', '2'],
         default='1',
         help="Verbose: 0 = nothing, 1 = classic, 2 = expended"

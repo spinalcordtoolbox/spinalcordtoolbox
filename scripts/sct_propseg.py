@@ -183,7 +183,6 @@ def get_parser():
     )
     mandatory.add_argument(
         '-c',
-        metavar=Metavar.str,
         choices=['t1', 't2', 't2s', 'dwi'],
         required=True,
         help=("Type of image contrast. If your contrast is not in the available options (t1, t2, t2s, dwi), use "
@@ -217,14 +216,12 @@ def get_parser():
     )
     optional.add_argument(
         '-r',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='1',
         help="Whether to remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='1',
         help="Verbose. 1: display on, 0: display off (default)"
@@ -377,7 +374,6 @@ def get_parser():
     )
     optional.add_argument(
         '-correct-seg',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='1',
         help=("Enable (1) or disable (0) the algorithm that checks and correct the output segmentation. More "

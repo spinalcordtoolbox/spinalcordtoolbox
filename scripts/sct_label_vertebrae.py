@@ -91,7 +91,6 @@ def get_parser():
     )
     mandatory.add_argument(
         '-c',
-        metavar=Metavar.str,
         choices=['t1', 't2'],
         required=True,
         help="Type of image contrast. 't2': cord dark / CSF bright. 't1': cord bright / CSF dark"
@@ -155,14 +154,12 @@ def get_parser():
     )
     optional.add_argument(
         '-denoise',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='0',
         help="Apply denoising filter to the data. Sometimes denoising is too aggressive, so use with care."
     )
     optional.add_argument(
         '-laplacian',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='0',
         help="Apply Laplacian filtering. More accuracy but could mistake disc depending on anatomy."
@@ -192,14 +189,12 @@ def get_parser():
     )
     optional.add_argument(
         '-r',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='1',
         help="Remove temporary files."
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.int,
         choices=['0', '1', '2'],
         default='1',
         help="Verbose. 0: nothing. 1: basic. 2: extended."

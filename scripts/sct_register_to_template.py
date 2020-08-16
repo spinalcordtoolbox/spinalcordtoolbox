@@ -182,14 +182,12 @@ def get_parser():
     )
     optional.add_argument(
         '-c',
-        metavar=Metavar.str,
         choices=['t1', 't2', 't2s'],
         default='t2',
         help="Contrast to use for registration."
     )
     optional.add_argument(
         '-ref',
-        metavar=Metavar.str,
         choices=['template', 'subject'],
         default='template',
         help="Reference for registration: template: subject->template, subject: template->subject."
@@ -228,7 +226,6 @@ def get_parser():
     )
     optional.add_argument(
         '-centerline-algo',
-        metavar=Metavar.str,
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default=ParamCenterline().algo_fitting,
         help="Algorithm for centerline fitting (when straightening the spinal cord)."
@@ -264,14 +261,12 @@ def get_parser():
     )
     optional.add_argument(
         '-r',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default=param.remove_temp_files,
         help="Whether to remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.int,
         choices=['0', '1', '2'],
         default=param.verbose,
         help="Verbose. 0: nothing. 1: basic. 2: extended."

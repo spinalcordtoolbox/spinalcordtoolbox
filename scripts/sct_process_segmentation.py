@@ -86,7 +86,6 @@ def get_parser():
     )
     optional.add_argument(
         '-append',
-        metavar=Metavar.int,
         choices=[0, 1],
         default=0,
         help="Append results as a new line in the output csv file instead of overwriting it."
@@ -99,7 +98,6 @@ def get_parser():
     )
     optional.add_argument(
         '-perslice',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='0',
         help=("Set to 1 to output one metric per slice instead of a single output metric. Please note that when "
@@ -119,7 +117,6 @@ def get_parser():
     )
     optional.add_argument(
         '-perlevel',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='0',
         help=("Set to 1 to output one metric per vertebral level instead of a single output metric. This flag needs "
@@ -127,14 +124,12 @@ def get_parser():
     )
     optional.add_argument(
         '-r',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='1',
         help="Removes temporary folder used for the algorithm at the end of execution."
     )
     optional.add_argument(
         '-angle-corr',
-        metavar=Metavar.int,
         choices=['0', '1'],
         default='1',
         help=("Angle correction for computing morphometric measures. When angle correction is used, the cord within "
@@ -144,7 +139,6 @@ def get_parser():
     )
     optional.add_argument(
         '-centerline-algo',
-        metavar=Metavar.str,
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
         help="Algorithm for centerline fitting. Only relevant with -angle-corr 1."
@@ -174,7 +168,6 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.int,
         choices=['0', '1', '2'],
         default='1',
         help="Verbosity. 1: display on, 0: display off (default)"
