@@ -163,7 +163,6 @@ def get_parser():
     mathematical.add_argument(
         '-dim',
         type=int,
-        metavar=Metavar.int,
         help="Dimension of the array which 2D structural element will be orthogonal to. For example, if you wish to "
              "apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.",
         required=False,

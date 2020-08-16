@@ -123,7 +123,6 @@ def get_parser():
     )
     optional.add_argument(
         '-method',
-        metavar=Metavar.str,
         choices=['ml', 'map', 'wa', 'bin', 'max'],
         default=param_default.method,
         help=("R|Method to extract metrics.\n"
@@ -141,7 +140,6 @@ def get_parser():
     optional.add_argument(
         '-append',
         type=int,
-        metavar=Metavar.int,
         choices=(0, 1),
         default=0,
         help="Whether to append results as a new line in the output csv file instead of overwriting it. 0 = no, 1 = yes"
@@ -149,7 +147,6 @@ def get_parser():
     optional.add_argument(
         '-combine',
         type=int,
-        metavar=Metavar.int,
         choices=(0, 1),
         default=0,
         help="Whether to combine multiple labels into a single estimation. 0 = no, 1 = yes"
@@ -181,7 +178,6 @@ def get_parser():
     optional.add_argument(
         '-perslice',
         type=int,
-        metavar=Metavar.int,
         choices=(0, 1),
         default=param_default.perslice,
         help=("R|Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.\n"
@@ -210,7 +206,6 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.str,
         choices=("0", "1"),
         default="1",
         help="Verbose. 0 = nothing, 1 = expanded"
@@ -243,7 +238,6 @@ def get_parser():
     )
     advanced.add_argument(
         '-norm-method',
-        metavar=Metavar.str,
         choices=['sbs', 'whole'],
         default='',
         help=("R|Method to use for normalization:\n"
@@ -258,7 +252,6 @@ def get_parser():
     )
     advanced.add_argument(
         '-discard-neg-val',
-        metavar=Metavar.str,
         choices=('0', '1'),
         default='0',
         help='Whether to discard voxels with negative value when computing metrics statistics. 0 = no, 1 = yes'

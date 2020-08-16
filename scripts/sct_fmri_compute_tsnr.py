@@ -91,7 +91,6 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.str,
         choices=['0', '1'],
         default='1',
         help="Verbosity. 0: None, 1: Verbose"

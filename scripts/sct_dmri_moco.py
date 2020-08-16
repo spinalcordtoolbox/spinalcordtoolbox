@@ -119,7 +119,6 @@ def get_parser():
     )
     optional.add_argument(
         '-x',
-        metavar=Metavar.str,
         choices=['nn', 'linear', 'spline'],
         default=param_default.interp,
         help="Final interpolation."
@@ -133,14 +132,12 @@ def get_parser():
     )
     optional.add_argument(
         "-r",
-        metavar=Metavar.str,
         choices=('0', '1'),
         default=param_default.remove_temp_files,
         help="Remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
         "-v",
-        metavar=Metavar.str,
         choices=('0', '1', '2'),
         default='1',
         help="Verbose: 0 = nothing, 1 = classic, 2 = expanded",

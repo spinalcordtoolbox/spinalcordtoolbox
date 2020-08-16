@@ -137,7 +137,6 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.str,
         choices=['0', '1', '2'],
         default=str(param_default.verbose),
         help="Verbosity. 0: no verbose (default), 1: min verbose, 2: verbose + figures"

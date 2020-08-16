@@ -31,10 +31,9 @@ def get_parser(dict_url):
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-d',
-        metavar=Metavar.str,
         required=True,
         choices=list(dict_url.keys()),
-        help=f"Name of the dataset. Choices are: {sorted(dict_url)}"
+        help=f"Name of the dataset."
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -58,7 +57,6 @@ def get_parser(dict_url):
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.str,
         choices=['0', '1', '2'],
         default='1',
         help="Verbose. 0: nothing. 1: basic. 2: extended."

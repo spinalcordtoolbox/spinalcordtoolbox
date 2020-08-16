@@ -74,7 +74,6 @@ def get_parser():
     optional.add_argument(
         '-a',
         type=int,
-        metavar=Metavar.int,
         choices=(0, 1),
         default=param_default.average,
         help="Average b=0 and DWI data. 0 = no, 1 = yes"
@@ -100,14 +99,12 @@ def get_parser():
     )
     optional.add_argument(
         "-r",
-        metavar=Metavar.str,
         choices=('0', '1'),
         default=param_default.remove_temp_files,
         help="Remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
         '-v',
-        metavar=Metavar.str,
         choices=('0', '1'),
         default=param_default.verbose,
         help='Verbose. 0 = nothing, 1 = expanded',
