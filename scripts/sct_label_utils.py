@@ -811,7 +811,6 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.list,
-        # TODO: Is this valid for type 'file_output'? (Are any special actions performed?)
         type=list_type(',', str),
         default="labels.nii.gz",
         help="Output image(s). t2_labels_cross.nii.gz"
