@@ -1,0 +1,5 @@
+# workaround https://github.com/pypa/pip/issues/5898#issuecomment-674370312
+-f https://download.pytorch.org/whl/cpu/torch_stable.html
+
+# install *this* package
+-e .

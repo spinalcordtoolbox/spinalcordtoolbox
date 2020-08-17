@@ -538,11 +538,9 @@ pip install numpy
 if [[ -f "requirements-freeze.txt" ]]; then
   print info "Using requirements-freeze.txt (release installation)"
   pip install -r requirements-freeze.txt
-else
-  # Not a package
-  print info "Using requirements.txt (git installation)"
-  pip install -r requirements.txt
 fi
+
+pip install -r install.txt
 if [[ $? != 0 ]]; then
   die "Failed running pip install: $?"
 fi
