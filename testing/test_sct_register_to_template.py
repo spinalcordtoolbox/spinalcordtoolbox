@@ -54,8 +54,7 @@ def test_integrity(param_test):
         '-d', param_test.file_seg,
         '-w', 'warp_template2anat.nii.gz',
         '-o', 'test_template2anat.nii.gz',
-        '-x', 'nn',
-        '-v', '0'])
+        '-x', 'nn'])
 
     # apply transformation to binary mask: anat --> template
     sct_apply_transfo.main(args=[
@@ -63,8 +62,7 @@ def test_integrity(param_test):
         '-d', param_test.fname_gt[index_args],
         '-w', 'warp_anat2template.nii.gz',
         '-o', 'test_anat2template.nii.gz',
-        '-x', 'nn',
-        '-v', '0'])
+        '-x', 'nn'])
 
     # compute dice coefficient between template segmentation warped to anat and segmentation from anat
     im_seg = Image(param_test.file_seg)

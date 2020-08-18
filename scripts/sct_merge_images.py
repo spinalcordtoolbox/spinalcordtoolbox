@@ -148,13 +148,16 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
     for fname_src in list_fname_src:
 
         # apply transformation src --> dest
-        sct_apply_transfo.main(args=[
+        args = [
             '-i', fname_src,
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
             '-x', param.interp,
             '-o', 'src_' + str(i_file) + '_template.nii.gz',
-            '-v', str(param.verbose)])
+        ]
+        if param.verbose:
+            args.append('-v')
+        sct_apply_transfo.main(args)
         # create binary mask from input file by assigning one to all non-null voxels
         sct_maths.main(args=[
             '-i', fname_src,

@@ -214,8 +214,7 @@ def main(args=None):
     sigma_smooth = ",".join([str(i) for i in sigma])
     sct_maths.main(args=['-i', 'anat_rpi_straight.nii',
                          '-smooth', sigma_smooth,
-                         '-o', 'anat_rpi_straight_smooth.nii',
-                         '-v', '0'])
+                         '-o', 'anat_rpi_straight_smooth.nii'])
     # Apply the reversed warping field to get back the curved spinal cord
     sct.printv('\nApply the reversed warping field to get back the curved spinal cord...')
     sct.run(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)

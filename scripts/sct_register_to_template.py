@@ -849,7 +849,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
         label_new_list.append(','.join(label_sub_new))
     label_new_list = ':'.join(label_new_list)
     # create new labels
-    sct.run(['sct_label_utils', '-i', fname_dest, '-create', label_new_list, '-v', '1', '-o', fname_output])
+    sct.run(['sct_label_utils', '-i', fname_dest, '-create', label_new_list, '-o', fname_output])
 
 
 def check_labels(fname_landmarks, label_type='body'):

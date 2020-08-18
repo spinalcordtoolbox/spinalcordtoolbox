@@ -375,7 +375,7 @@ def moco_wrapper(param):
     # Average across time
     if param.is_diffusion:
         # generate b0_moco_mean and dwi_moco_mean
-        args = ['-i', im_moco.absolutepath, '-bvec', param.fname_bvecs, '-a', '1', '-v', '0']
+        args = ['-i', im_moco.absolutepath, '-bvec', param.fname_bvecs, '-a', '1']
         if not param.fname_bvals == '':
             # if bvals file is provided
             args += ['-bval', param.fname_bvals]
@@ -754,8 +754,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                                      '-d', file_dest,
                                      '-w', file_mat + param.suffix_mat,
                                      '-o', file_out_concat,
-                                     '-x', param.interp,
-                                     '-v', '0'])
+                                     '-x', param.interp])
 
     # check if output file exists
     # Note (from JCA): In the past, i've tried to catch non-zero output from ANTs function (via the 'status' variable),

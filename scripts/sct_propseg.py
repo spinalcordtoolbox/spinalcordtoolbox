@@ -60,8 +60,8 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_input = Image('tmp.segmentation.nii.gz')
     image_input_orientation = im_input.orientation
 
-    sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz -v 0".split())
-    sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz -v 0".split())
+    sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz".split())
+    sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz".split())
 
     # go through segmentation image, and compare with centerline from propseg
     im_seg = Image('tmp.segmentation_RPI.nii.gz')
@@ -132,7 +132,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_seg.save('tmp.segmentation_RPI_c.nii.gz')
 
     # replacing old segmentation with the corrected one
-    sct_image.main('-i tmp.segmentation_RPI_c.nii.gz -setorient {} -o {} -v 0'.
+    sct_image.main('-i tmp.segmentation_RPI_c.nii.gz -setorient {} -o {}'.
                    format(image_input_orientation, fname_seg_absolute).split())
 
     os.chdir(curdir)

@@ -38,7 +38,6 @@ for subject in $SUBJECT_LIST; do
         -b ../../data/${subject}/${contrast}/${file2}
         -a 1
 		-o ./
-        -v 1
         -r 0"
     echo ==============================================================================================
     echo "$cmd"

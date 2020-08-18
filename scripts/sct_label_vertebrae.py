@@ -299,12 +299,14 @@ def main(args=None):
         # apply straightening
         s, o = sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
-        sct_straighten_spinalcord.main(args=[
+        args = [
             '-i', 'data.nii',
             '-s', 'segmentation.nii',
             '-r', str(remove_temp_files),
-            '-v', str(verbose),
-        ])
+        ]
+        if verbose:
+            args.append('-v')
+        sct_straighten_spinalcord.main(args)
         sct.cache_save(cachefile, cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution

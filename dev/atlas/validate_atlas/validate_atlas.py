@@ -200,7 +200,7 @@ def validate_atlas(folder_cropped_atlas, nb_bootstraps, std_noise, range_tract, 
                             index_manual = int(list_methods[i_method][list_methods[i_method].find('man')+3])
                             fname_mask = mask_folder[index_manual] + mask_prefix + list_tracts_txt[i_tract] + mask_ext
                             # manual extraction
-                            status, output = sct.run('sct_average_data_within_mask -i ' + fname_phantom_noise + ' -m ' + fname_mask + ' -v 0')
+                            status, output = sct.run('sct_average_data_within_mask -i ' + fname_phantom_noise + ' -m ' + fname_mask)
                             x_estim_i = float(output)
                         else:
                             # automatic extraction
