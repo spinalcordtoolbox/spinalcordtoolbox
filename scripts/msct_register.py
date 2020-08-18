@@ -340,12 +340,12 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     # generate: forward warping field
     if fname_output_warp == '':
         fname_output_warp = os.path.join(path_out, 'warp_' + file_src + '2' + file_dest + '.nii.gz')
-    sct.generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, param.verbose)
+    sct.generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, verbose=param.verbose)
 
     # generate: inverse warping field
     if generate_warpinv:
         fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
-        sct.generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), fname_output_warpinv, param.verbose)
+        sct.generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), fname_output_warpinv, verbose=param.verbose)
     else:
         fname_output_warpinv = None
 

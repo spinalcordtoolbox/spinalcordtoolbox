@@ -207,11 +207,11 @@ def main(args=None):
     fname_b0_mean = os.path.abspath(os.path.join(path_out, b0_mean_name + ext_data))
     fname_dwi_mean = os.path.abspath(os.path.join(path_out, dwi_mean_name + ext_data))
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, b0_name + ext), fname_b0, verbose)
-    sct.generate_output_file(os.path.join(path_tmp, dwi_name + ext), fname_dwi, verbose)
+    sct.generate_output_file(os.path.join(path_tmp, b0_name + ext), fname_b0, verbose=verbose)
+    sct.generate_output_file(os.path.join(path_tmp, dwi_name + ext), fname_dwi, verbose=verbose)
     if average:
-        sct.generate_output_file(os.path.join(path_tmp, b0_mean_name + ext), fname_b0_mean, verbose)
-        sct.generate_output_file(os.path.join(path_tmp, dwi_mean_name + ext), fname_dwi_mean, verbose)
+        sct.generate_output_file(os.path.join(path_tmp, b0_mean_name + ext), fname_b0_mean, verbose=verbose)
+        sct.generate_output_file(os.path.join(path_tmp, dwi_mean_name + ext), fname_dwi_mean, verbose=verbose)
 
     # Remove temporary files
     if remove_temp_files == 1:
