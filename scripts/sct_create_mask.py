@@ -213,7 +213,7 @@ def create_mask(param):
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
         # TODO: change this way to remove dependence to sct.run. ProcessLabels.display_voxel returns list of coordinates
-        status, output = sct.run(['sct_label_utils', '-i', 'point_RPI.nii', '-display'], verbose=param.verbose)
+        status, output = sct.run(['sct_label_utils', '-i', 'point_RPI.nii', '-display', '-v'], verbose=param.verbose)
         # parse to get coordinate
         # TODO fixup... this is quite magic
         coord = output[output.find('Position=') + 10:-17].split(',')
