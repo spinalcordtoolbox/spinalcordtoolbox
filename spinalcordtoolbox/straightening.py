@@ -350,7 +350,7 @@ class SpinalCordStraightener(object):
             time_centerlines = time.time() - time_centerlines
             logger.info('Time to generate centerline: {} ms'.format(np.round(time_centerlines * 1000.0)))
 
-        if verbose == 2:
+        if verbose:
             # TODO: use OO
             import matplotlib.pyplot as plt
             from datetime import datetime

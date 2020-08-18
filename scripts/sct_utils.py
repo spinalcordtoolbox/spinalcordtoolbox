@@ -242,7 +242,7 @@ def which_sct_binaries():
 
 
 def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=False):
-    # if verbose == 2:
+    # if verbose:
     #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
 
     if cwd is None:
@@ -296,7 +296,7 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=
         if output == '' and process.poll() is not None:
             break
         if output:
-            if verbose == 2:
+            if verbose:
                 printv(output.strip())
             output_final += output.strip() + '\n'
 

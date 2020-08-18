@@ -447,7 +447,7 @@ def propseg(img_input, options_dict):
     verbose = arguments.v
     sct.init_sct(log_level=2 if verbose else 1, update=True)
     # Update for propseg binary
-    if verbose > 0:
+    if verbose:
         cmd += ["-verbose"]
 
     # Output options

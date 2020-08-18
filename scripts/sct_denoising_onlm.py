@@ -145,7 +145,7 @@ def main(file_to_denoise, param, output_file_name) :
     if arguments.std is None:
         difference[~mask[:, :, axial_middle].T] = 0
 
-    if param.verbose == 2:
+    if param.verbose:
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots(1, 3)
         ax[0].imshow(before, cmap='gray', origin='lower')

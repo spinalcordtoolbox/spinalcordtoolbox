@@ -747,7 +747,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
             kw.update(dict(is_sct_binary=True))
             # reducing the number of CPU used for moco (see issue #201 and #2642)
             env = {**os.environ, **{"ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS": "1"}}
-            status, output = sct.run(cmd, verbose=1 if param.verbose == 2 else 0, env=env, **kw)
+            status, output = sct.run(cmd, param.verbose, env=env, **kw)
 
     elif param.todo == 'apply':
         sct_apply_transfo.main(args=['-i', file_src,

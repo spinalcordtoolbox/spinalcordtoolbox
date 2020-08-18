@@ -1091,7 +1091,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
     y_deriv = x_fit[::-1]
     z_deriv = x_fit[::-1]"""
 
-    if verbose == 2:
+    if verbose:
         # TODO qc
         PC = nurbs.getControle()
         PC_x = [p[0] for p in PC]

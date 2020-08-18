@@ -236,7 +236,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     else:
         im_viewer = None
 
-    if verbose == 2:
+    if verbose:
         fname_res_ctr = sct.add_suffix(fname_orient, '_ctr')
         resampling.resample_file(fname_res_ctr, fname_res_ctr, initial_resolution,
                                                            'mm', 'linear', verbose=0)

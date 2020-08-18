@@ -264,7 +264,7 @@ class ComputeDistances:
         sct.printv('-----------------------------------------------------------------------------\n' +
                    self.res, self.param.verbose, 'normal')
 
-        if self.param.verbose == 2:
+        if self.param.verbose:
             self.show_results()
 
     # ------------------------------------------------------------------------------------------------------------------

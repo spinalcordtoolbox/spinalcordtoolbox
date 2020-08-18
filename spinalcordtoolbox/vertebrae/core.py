@@ -114,7 +114,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     sct.printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
 
     # display init disc
-    if verbose == 2:
+    if verbose:
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
         from matplotlib.figure import Figure
         fig_disc = Figure()
@@ -164,7 +164,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
                                         zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc), gaussian_std=999, path_output=path_output)
 
         # display new disc
-        if verbose == 2:
+        if verbose:
             ax_disc.scatter(yc + param.shift_AP_visu, current_z, c='yellow', s=10)
             ax_disc.text(yc + param.shift_AP_visu + 4, current_z, str(current_disc) + '/' + str(current_disc + 1),
                     verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=7)
@@ -225,7 +225,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         if current_z <= 0:
             search_next_disc = False
 
-    if verbose == 2:
+    if verbose:
         fig_disc.savefig('fig_label_discs.png')
 
     # if upper disc is not 1, add disc above top disc based on mean_distance_adjusted
@@ -425,7 +425,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         ind_peak = zrange.index(0)  # approx_distance_to_next_disc
 
     # display patterns and correlation
-    if verbose == 2:
+    if verbose:
         from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
         from matplotlib.figure import Figure
         fig = Figure(figsize=(15, 7))
@@ -495,7 +495,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
-        # if verbose == 2:
+        # if verbose:
         #     # move to OO. No time to finish... (JCA)
         #     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
         #     from matplotlib.figure import Figure

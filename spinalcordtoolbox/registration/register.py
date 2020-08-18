@@ -441,7 +441,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     """
     # TODO: no need to split the src or dest if it is the template (we know its centerline and orientation already)
 
-    if verbose == 2:
+    if verbose:
         import matplotlib
         matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
@@ -580,7 +580,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     if not filter_size == 0 and (rot_method in ['pca', 'hog', 'pcahog']):
         # Filtering the angles by gaussian filter
         angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest[z_nonzero], filter_size)
-        if verbose == 2:
+        if verbose:
             plt.plot(180 * angle_src_dest[z_nonzero] / np.pi, 'ob')
             plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
             plt.grid()
@@ -619,7 +619,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         # apply inverse transformation (in physical space)
         coord_inverse_phy = np.array(np.dot((coord_init_phy - np.transpose(centermass_src_phy)), R3d.T) + np.transpose(centermass_dest_phy))
         # display rotations
-        if verbose == 2 and not angle_src_dest[iz] == 0 and not rot_method == 'hog':
+        if verbose and not angle_src_dest[iz] == 0 and not rot_method == 'hog':
             # compute new coordinates
             coord_src_rot = coord_src[iz] * R
             coord_dest_rot = coord_dest[iz] * R.T
@@ -698,7 +698,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     th_nonzero = 0.5  # values below are considered zero
 
     # for display stuff
-    if verbose == 2:
+    if verbose:
         import matplotlib
         matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
@@ -866,7 +866,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             coord_init_pix_scaleY[:, 1] = col_scaleYsmooth.ravel()
             coord_init_pix_scaleYinv[:, 1] = col_scaleYinvsmooth.ravel()
             # display
-            if verbose == 2:
+            if verbose:
                 # FIG 1
                 plt.figure(figsize=(15, 3))
                 # plot #1

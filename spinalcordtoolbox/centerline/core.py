@@ -205,7 +205,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
     fit_results.param = param
 
     # Display fig of fitted curves
-    if verbose == 2:
+    if verbose:
         from datetime import datetime
         import matplotlib
         matplotlib.use('Agg')  # prevent display figure
