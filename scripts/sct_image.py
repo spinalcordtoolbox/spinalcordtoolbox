@@ -100,6 +100,13 @@ def get_parser():
              'Example: data_dest.nii.gz',
         required = False)
 
+    header.add_argument(
+        '-set-sform-to-qform',
+        help='Set the sform matrix of the output image to the qform matrix '
+             'of the output image.',
+        action='store_true'
+    )
+
     orientation = parser.add_argument_group('ORIENTATION OPERATIONS')
     orientation.add_argument(
         '-getorient',
@@ -203,6 +210,13 @@ def main(args=None):
         im_dest_new.absolutepath = im_dest.absolutepath
         im_out = [im_dest_new]
         fname_out = arguments.copy_header
+
+    elif arguments.set_sform_to_qform:
+        im_in = Image(fname_in[0])
+        im_reaff = im_in.copy()
+        im_reaff.header = im_in.header.copy()
+        im_reaff.header.set_sform(im_reaff.header.get_qform())
+        im_out = [im_reaff]
 
     elif arguments.display_warp:
         im_in = fname_in[0]
