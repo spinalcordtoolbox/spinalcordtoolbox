@@ -112,6 +112,7 @@ matrix:
       os: osx
       osx_image: xcode9.2
     - name: "Windows Server, 1809"
+      # runs on all branches
       language: bash
       os: windows
 
