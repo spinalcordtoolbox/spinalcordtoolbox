@@ -117,25 +117,25 @@ def get_parser():
         '-l',
         metavar=Metavar.str,
         default='',
-        help=("Label IDs to extract the metric from. Default = all labels. Separate labels with ','. To select a group " 
-              "of consecutive labels use ':'. Example: 1:3 is equivalent to 1,2,3. Maximum Likelihood (or MAP) is "
-              "computed using all tracts, but only values of the selected tracts are reported.")
+        help="Label IDs to extract the metric from. Default = all labels. Separate labels with ','. To select a group " 
+             "of consecutive labels use ':'. Example: 1:3 is equivalent to 1,2,3. Maximum Likelihood (or MAP) is "
+             "computed using all tracts, but only values of the selected tracts are reported."
     )
     optional.add_argument(
         '-method',
         choices=['ml', 'map', 'wa', 'bin', 'max'],
         default=param_default.method,
-        help=("R|Method to extract metrics.\n"
-              "  - ml: maximum likelihood (only use with well-defined regions and low noise)\n"
-              "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in " 
-              "all voxels (the algorithm doesn't normalize the atlas).\n"
-              "  - map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters "
-              "(white matter, gray matter and CSF). Tract and noise variance are set with flag -p.\n"
-              "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in "
-              "all voxels (the algorithm doesn't normalize the atlas).\n"
-              "  - wa: weighted average\n"
-              "  - bin: binarize mask (threshold=0.5)\n"
-              "  - max: for each z-slice of the input data, extract the max value for each slice of the input data.")
+        help="R|Method to extract metrics.\n"
+             "  - ml: maximum likelihood (only use with well-defined regions and low noise)\n"
+             "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in " 
+             "all voxels (the algorithm doesn't normalize the atlas).\n"
+             "  - map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters "
+             "(white matter, gray matter and CSF). Tract and noise variance are set with flag -p.\n"
+             "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in "
+             "all voxels (the algorithm doesn't normalize the atlas).\n"
+             "  - wa: weighted average\n"
+             "  - bin: binarize mask (threshold=0.5)\n"
+             "  - max: for each z-slice of the input data, extract the max value for each slice of the input data."
     )
     optional.add_argument(
         '-append',
@@ -155,32 +155,32 @@ def get_parser():
         '-o',
         metavar=Metavar.file,
         default=param_default.fname_output,
-        help=("R|File name of the output result file collecting the metric estimation results. Include the '.csv' "
-              "file extension in the file name. Example: extract_metric.csv")
+        help="R|File name of the output result file collecting the metric estimation results. Include the '.csv' "
+             "file extension in the file name. Example: extract_metric.csv"
     )
     optional.add_argument(
         '-output-map',
         metavar=Metavar.file,
         default='',
-        help=("File name for an image consisting of the atlas labels multiplied by the estimated metric values "
-              "yielding the metric value map, useful to assess the metric estimation and especially partial volume "
-              "effects.")
+        help="File name for an image consisting of the atlas labels multiplied by the estimated metric values "
+             "yielding the metric value map, useful to assess the metric estimation and especially partial volume "
+             "effects."
     )
     optional.add_argument(
         '-z',
         metavar=Metavar.str,
         default=param_default.slices_of_interest,
-        help=("R|Slice range to estimate the metric from. First slice is 0. Example: 5:23\n"
-              "You can also select specific slices using commas. Example: 0,2,3,5,12'")
+        help="R|Slice range to estimate the metric from. First slice is 0. Example: 5:23\n"
+             "You can also select specific slices using commas. Example: 0,2,3,5,12'"
     )
     optional.add_argument(
         '-perslice',
         type=int,
         choices=(0, 1),
         default=param_default.perslice,
-        help=("R|Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.\n"
-              "Please note that when methods ml or map are used, outputting a single metric per slice and then "
-              "averaging them all is not the same as outputting a single metric at once across all slices.")
+        help="R|Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.\n"
+             "Please note that when methods ml or map are used, outputting a single metric per slice and then "
+             "averaging them all is not the same as outputting a single metric at once across all slices."
     )
     optional.add_argument(
         '-vert',
@@ -199,8 +199,8 @@ def get_parser():
         type=int,
         metavar=Metavar.int,
         default=0,
-        help=("R|Whether to output one metric per vertebral level instead of a single output metric. 0 = no, 1 = yes.\n"
-              "Please note that this flag needs to be used with the -vert option.")
+        help="R|Whether to output one metric per vertebral level instead of a single output metric. 0 = no, 1 = yes.\n"
+             "Please note that this flag needs to be used with the -vert option."
     )
     optional.add_argument(
         '-v',
@@ -214,19 +214,19 @@ def get_parser():
         '-param',
         metavar=Metavar.str,
         default='',
-        help=("R|Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated "
-              "with comma).\n"
-              "  - #1: standard deviation of metrics across labels\n"
-              "  - #2: standard deviation of the noise (assumed Gaussian)")
+        help="R|Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated "
+             "with comma).\n"
+             "  - #1: standard deviation of metrics across labels\n"
+             "  - #2: standard deviation of the noise (assumed Gaussian)"
     )
     advanced.add_argument(
         '-fix-label',
         metavar=Metavar.list,
         type=list_type(',', str),
         default='',
-        help=("When using ML or MAP estimations, if you do not want to estimate the metric in one label and fix its "
-              "value to avoid effects on other labels, specify <label_ID>,<metric_value. Example: -fix-label 36,0 "
-              "(Fix the CSF value)")
+        help="When using ML or MAP estimations, if you do not want to estimate the metric in one label and fix its "
+             "value to avoid effects on other labels, specify <label_ID>,<metric_value. Example: -fix-label 36,0 "
+             "(Fix the CSF value)"
     )
     advanced.add_argument(
         '-norm-file',
@@ -238,9 +238,9 @@ def get_parser():
         '-norm-method',
         choices=['sbs', 'whole'],
         default='',
-        help=("R|Method to use for normalization:\n"
-              "  - sbs: normalization slice-by-slice\n"
-              "  - whole: normalization by the metric value in the whole label for all slices.")
+        help="R|Method to use for normalization:\n"
+             "  - sbs: normalization slice-by-slice\n"
+             "  - whole: normalization by the metric value in the whole label for all slices."
     )
     advanced.add_argument(
         '-mask-weighted',

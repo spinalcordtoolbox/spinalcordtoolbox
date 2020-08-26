@@ -108,9 +108,9 @@ def main(fname_anat, fname_centerline, verbose):
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description=("Flatten the spinal cord such within the medial sagittal plane. Useful to make nice pictures. "
-                     "Output data has suffix _flatten. Output type is float32 (regardless of input type) to minimize "
-                     "loss of precision during conversion."),
+        description="Flatten the spinal cord such within the medial sagittal plane. Useful to make nice pictures. "
+                    "Output data has suffix _flatten. Output type is float32 (regardless of input type) to minimize "
+                    "loss of precision during conversion.",
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
