@@ -47,7 +47,7 @@ def get_parser(dict_url):
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help=("R|Path to directory to save the downloaded data to.\n"
-              "  (Defaults to ./${dataset-name}. Directory will be created if it does not exist. Warning: existing "
+              "(Defaults to ./${dataset-name}. Directory will be created if it does not exist. Warning: existing "
               "data in the directory will be erased unless -k is provided.)\n")
     )
     optional.add_argument(
