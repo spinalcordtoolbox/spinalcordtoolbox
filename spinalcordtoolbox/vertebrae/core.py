@@ -69,9 +69,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :param scale_dist: float: Scaling factor to adjust average distance between two adjacent intervertebral discs
     :return:
     """
-    #path_level = path_template + '/template/PAM50_levels.nii.gz'
-    #path_template = path_template + '/template/PAM50_label_discPosterior.nii.gz'
-    #path_level='/home/GRAMES.POLYMTL.CA/luroub/luroub_local/lurou_local/sct/sct/data/PAM50/template/PAM50_levels.nii.gz'
     sct.printv('\nLook for template...', verbose)
     sct.printv('Path template: ' + path_template, verbose)
 
