@@ -368,6 +368,8 @@ sct_process_segmentation
 sct_propseg
 ===========
 
+.. image:: ../../imgs/sct_segmentation_propagation_example.png
+
 .. program-output:: sct_propseg -h
 
 Notes:
