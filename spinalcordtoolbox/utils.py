@@ -573,11 +573,4 @@ def copy(src, dst, verbose=1):
         else:
             if isinstance(e, shutil.SameFileError):
                 return
-def rmtree(folder, verbose=1):
-    """Recursively remove folder, almost like shutil.rmtree
-    """
-    try:
-        logger.info(f"rm -rf {folder}")
-        shutil.rmtree(folder, ignore_errors=True)
-    except Exception as e:
         raise # Must be another error
