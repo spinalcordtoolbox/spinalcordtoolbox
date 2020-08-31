@@ -20,7 +20,7 @@ from sklearn.decomposition import PCA
 from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
-from spinalcordtoolbox.utils import sct_progress_bar
+from spinalcordtoolbox.utils import sct_progress_bar, run_proc
 from spinalcordtoolbox.register.landmarks import register_landmarks
 from spinalcordtoolbox.utils import add_suffix
 
@@ -178,7 +178,7 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
     warp_inverse_out = 'step' + str(step.step) + 'InverseWarp.nii.gz'
 
     # run command
-    status, output = sct.run(cmd, verbose, is_sct_binary=True)
+    status, output = run_proc(cmd, verbose, is_sct_binary=True)
 
     return warp_forward_out, warp_inverse_out
 
@@ -189,15 +189,15 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
     # N.B. no need to pad if iter = 0
     if not step.iter == '0':
         dest_pad = add_suffix(dest, '_pad')
-        sct.run(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(padding)])
+        run_proc(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(padding)])
         dest = dest_pad
 
     # apply Laplacian filter
     if not step.laplacian == '0':
         logger.info(f"\nApply Laplacian filter")
-        sct.run(['sct_maths', '-i', src, '-laplacian', step.laplacian + ','
+        run_proc(['sct_maths', '-i', src, '-laplacian', step.laplacian + ','
                  + step.laplacian + ',0', '-o', add_suffix(src, '_laplacian')])
-        sct.run(['sct_maths', '-i', dest, '-laplacian', step.laplacian + ','
+        run_proc(['sct_maths', '-i', dest, '-laplacian', step.laplacian + ','
                  + step.laplacian + ',0', '-o', add_suffix(dest, '_laplacian')])
         src = add_suffix(src, '_laplacian')
         dest = add_suffix(dest, '_laplacian')
@@ -226,7 +226,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
         cmd += ['-r', '[' + dest + ',' + src + ',' + init_dict[step.init] + ']']
 
     # run command
-    status, output = sct.run(cmd, verbose, is_sct_binary=True)
+    status, output = run_proc(cmd, verbose, is_sct_binary=True)
 
     # get appropriate file name for transformation
     if step.algo in ['rigid', 'affine', 'translation']:
@@ -1049,7 +1049,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
         try:
             # run registration
-            sct.run(cmd, is_sct_binary=True)
+            run_proc(cmd, is_sct_binary=True)
 
             if paramreg.algo in ['Translation']:
                 file_mat = prefix_warp2d + '0GenericAffine.mat'
@@ -1069,7 +1069,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             if paramreg.algo in ['Rigid', 'Affine']:
                 # Generating null 2d warping field (for subsequent concatenation with affine transformation)
                 # TODO fixup isct_ants* parsers
-                sct.run(['isct_antsRegistration',
+                run_proc(['isct_antsRegistration',
                  '-d', '2',
                  '-t', 'SyN[1,1,1]',
                  '-c', '0',
@@ -1081,8 +1081,8 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                 # --> outputs: warp2d_null0Warp.nii.gz, warp2d_null0InverseWarp.nii.gz
                 file_mat = prefix_warp2d + '0GenericAffine.mat'
                 # Concatenating mat transfo and null 2d warping field to obtain 2d warping field of affine transformation
-                sct.run(['isct_ComposeMultiTransform', '2', file_warp2d, '-R', 'dest_Z' + num + '.nii', 'warp2d_null0Warp.nii.gz', file_mat], is_sct_binary=True)
-                sct.run(['isct_ComposeMultiTransform', '2', file_warp2d_inv, '-R', 'src_Z' + num + '.nii', 'warp2d_null0InverseWarp.nii.gz', '-i', file_mat], is_sct_binary=True)
+                run_proc(['isct_ComposeMultiTransform', '2', file_warp2d, '-R', 'dest_Z' + num + '.nii', 'warp2d_null0Warp.nii.gz', file_mat], is_sct_binary=True)
+                run_proc(['isct_ComposeMultiTransform', '2', file_warp2d_inv, '-R', 'src_Z' + num + '.nii', 'warp2d_null0InverseWarp.nii.gz', '-i', file_mat], is_sct_binary=True)
 
         # if an exception occurs with ants, take the last value for the transformation
         # TODO: DO WE NEED TO DO THAT??? (julien 2016-03-01)

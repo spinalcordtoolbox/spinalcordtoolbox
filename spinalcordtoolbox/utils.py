@@ -3,8 +3,7 @@
 # Collection of useful functions
 
 
-import io
-import os
+import io, sys, os
 import re
 import tempfile
 import datetime
@@ -476,3 +475,81 @@ def sct_test_path(*args):
 
     test_path = os.environ.get('SCT_TESTING_DATA', '')
     return os.path.join(test_path, 'sct_testing_data', *args)
+
+def which_sct_binaries():
+    """
+    :return name of the sct binaries to use on this platform
+    """
+
+    if sys.platform.startswith("linux"):
+        return "binaries_linux"
+    else:
+        return "binaries_osx"
+
+if sys.hexversion < 0x03030000:
+    import pipes
+    def list2cmdline(lst):
+        return " ".join(pipes.quote(x) for x in lst)
+else:
+    import shlex
+    def list2cmdline(lst):
+        return " ".join(shlex.quote(x) for x in lst)
+
+def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=False):
+    if cwd is None:
+        cwd = os.getcwd()
+
+    if env is None:
+        env = os.environ
+
+    if sys.hexversion < 0x03000000 and isinstance(cmd, unicode):
+        cmd = str(cmd)
+
+    if is_sct_binary:
+        name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
+        path = None
+        binaries_location_default = sct_dir_local_path("bin")
+        for directory in (
+         sct_dir_local_path("bin"),
+         ):
+            candidate = os.path.join(directory, name)
+            if os.path.exists(candidate):
+                path = candidate
+        if path is None:
+            run_proc(["sct_download_data", "-d", which_sct_binaries(), "-o", binaries_location_default])
+            path = os.path.join(binaries_location_default, name)
+
+        if isinstance(cmd, list):
+            cmd[0] = path
+        elif isinstance(cmd, str):
+            rem = cmd.split(" ", 1)[1:]
+            cmd = path if len(rem) == 0 else "{} {}".format(path, rem[0])
+
+    if isinstance(cmd, str):
+        cmdline = cmd
+    else:
+        cmdline = list2cmdline(cmd)
+
+    logger.debug(f"{cmdline} # in {cwd}")
+
+    shell = isinstance(cmd, str)
+
+    process = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+    output_final = ''
+    while True:
+        # Watch out for deadlock!!!
+        output = process.stdout.readline().decode("utf-8")
+        if output == '' and process.poll() is not None:
+            break
+        if output:
+            if verbose == 2:
+                logger.debug(f"output => {output.strip()}")
+            output_final += output.strip() + '\n'
+
+    status = process.returncode
+    output = output_final.rstrip()
+
+    if status != 0 and raise_exception:
+        raise RuntimeError(output)
+
+    return status, output
