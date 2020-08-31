@@ -27,6 +27,10 @@ from spinalcordtoolbox.utils import add_suffix
 # imports to refactor
 import sct_utils as sct # FIXME [AJ]
 
+# TODO
+# introduce potential cleanup functions in case exceptions occur and
+# filesystem is left with temp artefacts everywhere?
+
 logger = logging.getLogger(__name__)
 
 class Paramreg(object):
@@ -190,7 +194,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
 
     # apply Laplacian filter
     if not step.laplacian == '0':
-        sct.printv('\nApply Laplacian filter', verbose)
+        logger.info(f"\nApply Laplacian filter")
         sct.run(['sct_maths', '-i', src, '-laplacian', step.laplacian + ','
                  + step.laplacian + ',0', '-o', add_suffix(src, '_laplacian')])
         sct.run(['sct_maths', '-i', dest, '-laplacian', step.laplacian + ','
@@ -199,7 +203,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
         dest = add_suffix(dest, '_laplacian')
 
     # Estimate transformation
-    sct.printv('\nEstimate transformation', verbose)
+    logger.info(f"\nEstimate transformation")
     scr_regStep = add_suffix(src, '_regStep' + str(step.step))
 
     cmd = ['isct_antsRegistration',
@@ -239,8 +243,7 @@ def register_step_slicewise_ants(src, dest, step, ants_registration_params, fnam
     """
     # if shrink!=1, force it to be 1 (otherwise, it generates a wrong 3d warping field). TODO: fix that!
     if not step.shrink == '1':
-        sct.printv('\nWARNING: when using slicewise with SyN or BSplineSyN, shrink factor needs to be one. '
-                   'Forcing shrink=1.', 1, 'warning')
+        logger.warning(f"\nWhen using slicewise with SyN or BSplineSyN, shrink factor needs to be one. Forcing shrink=1")
         step.shrink = '1'
 
     warp_forward_out = 'step' + str(step.step) + 'Warp.nii.gz'
@@ -265,8 +268,8 @@ def register_step_slicewise(src, dest, step, ants_registration_params, remove_te
     """
     # smooth data
     if not step.smooth == '0':
-        sct.printv('\nWARNING: algo ' + step.algo + ' will ignore the parameter smoothing.\n',
-                   1, 'warning')
+        logger.warning(f"\nAlgo {step.algo} will ignore the parameter smoothing.\n")
+
     warp_forward_out = 'step' + str(step.step) + 'Warp.nii.gz'
     warp_inverse_out = 'step' + str(step.step) + 'InverseWarp.nii.gz'
 
@@ -323,7 +326,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     path_tmp = sct.tmp_create(basename="register", verbose=verbose)
 
     # copy data to temp folder
-    sct.printv('\nCopy input data to temp folder...', verbose)
+    logger.info(f"\nCopy input data to temp folder...")
     if isinstance(fname_src, list):
         # TODO: swap 0 and 1 (to be consistent with the child function below)
         src_img = image.convert(image.Image(fname_src[0]))
@@ -397,7 +400,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
                    verbose=verbose,
                    )
 
-    sct.printv('\nMove warping fields...', verbose)
+    logger.info(f"\nMove warping fields...")
     sct.copy(warp_forward_out, curdir)
     sct.copy(warp_inverse_out, curdir)
 
@@ -447,20 +450,21 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz
-    sct.printv('\nGet image dimensions of destination image...', verbose)
+    logger.info(f"\nGet image dimensions of destination image...")
     nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest[0]).dim
-    sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
-    sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
+
+    logger.info(f"  matrix size: {str(nx)} x {str(ny)} x {str(nz)}")
+    logger.info(f"  voxel size: {str(px)}mm x {str(py)}mm x {str(nz)}mm")
 
     # Split source volume along z
-    sct.printv('\nSplit input segmentation...', verbose)
+    logger.info(f"\nSplit input segmentation...")
     im_src = image.Image(fname_src[0])
     split_source_list = image.split_img_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
-    sct.printv('\nSplit destination segmentation...', verbose)
+    logger.info(f"\nSplit destination segmentation...")
     im_dest = image.Image(fname_dest[0])
     split_dest_list = image.split_img_data(im_dest, 2)
     for im in split_dest_list:
@@ -480,14 +484,14 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # Deal with cases where both an image and segmentation are input
     if len(fname_src) > 1:
         # Split source volume along z
-        sct.printv('\nSplit input image...', verbose)
+        logger.info(f"\nSplit input image...")
         im_src_im = image.Image(fname_src[1])
         split_source_list = image.split_img_data(im_src_im, 2)
         for im in split_source_list:
             im.save()
 
         # Split destination volume along z
-        sct.printv('\nSplit destination image...', verbose)
+        logger.info(f"\nSplit destination image...")
         im_dest_im = image.Image(fname_dest[1])
         split_dest_list = image.split_img_data(im_dest_im, 2)
         for im in split_dest_list:
@@ -525,8 +529,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                                                                  px, py, angle_range=th_max_angle)
                 # In case no maxima is found (it should never happen)
                 if (angle_src_hog is None) or (angle_dest_hog is None):
-                    sct.printv('WARNING: Slice #' + str(iz) + ' no angle found in dest or src. It will be ignored.',
-                               verbose, 'warning')
+                    logger.warning(f"Slice #{str(iz)} not angle found in dest or src. It will be ignored.")
                     continue
                 if rot_method == 'hog':
                     angle_src = -angle_src_hog  # flip sign to be consistent with PCA output
@@ -574,7 +577,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
 
         # if one of the slice is empty, ignore it
         except ValueError:
-            sct.printv('WARNING: Slice #' + str(iz) + ' is empty. It will be ignored.', verbose, 'warning')
+            logger.warning(f"Slice #{str(iz)} is empty. It will be ignored.")
 
     # regularize rotation
     if not filter_size == 0 and (rot_method in ['pca', 'hog', 'pcahog']):
@@ -704,20 +707,21 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz
-    sct.printv('\nGet image dimensions of destination image...', verbose)
+    logger.info(f"\nGet image dimensions of destination image...")
     nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest).dim
-    sct.printv('  matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
-    sct.printv('  voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
+
+    logger.info(f"  matrix size: {str(nx)} x {str(ny)} x {str(nz)}")
+    logger.info(f"  voxel size: {str(px)}mm x {str(py)}mm x {str(nz)}mm")
 
     # Split source volume along z
-    sct.printv('\nSplit input volume...', verbose)
+    logger.info(f"\nSplit input volume...")
     im_src = image.Image('src.nii')
     split_source_list = image.split_img_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
-    sct.printv('\nSplit destination volume...', verbose)
+    logger.info(f"\nSplit destination volume...")
     im_dest = image.Image('dest.nii')
     split_dest_list = image.split_img_data(im_dest, 2)
     for im in split_dest_list:
@@ -744,9 +748,9 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     warp_inv_y = np.zeros(data_src.shape)
 
     # Loop across slices
-    sct.printv('\nEstimate columnwise transformation...', verbose)
+    logger.info(f"\nEstimate columnwise transformation...")
     for iz in range(0, nz):
-        sct.printv(str(iz) + '/' + str(nz) + '..',)
+        logger.info(f"{str(iz)}/{str(nz)}..")
 
         # PREPARE COORDINATES
         # ============================================================
@@ -976,20 +980,22 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
 
     # Get image dimensions and retrieve nz
-    sct.printv('\nGet image dimensions of destination image...', verbose)
+    logger.info(f"\nGet image dimensions of destination image...")
     nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest).dim
-    sct.printv('.. matrix size: ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), verbose)
-    sct.printv('.. voxel size:  ' + str(px) + 'mm x ' + str(py) + 'mm x ' + str(pz) + 'mm', verbose)
+
+    logger.info(f"  matrix size: {str(nx)} x {str(ny)} x {str(nz)}")
+    logger.info(f"  voxel size: {str(px)}mm x {str(py)}mm x {str(nz)}mm")
 
     # Split input volume along z
-    sct.printv('\nSplit input volume...', verbose)
+    logger.info(f"\nSplit input volume...")
+
     im_src = image.Image(fname_src)
     split_source_list = image.split_img_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
-    sct.printv('\nSplit destination volume...', verbose)
+    logger.info(f"\nSplit destination volume...")
     im_dest = image.Image(fname_dest)
     split_dest_list = image.split_img_data(im_dest, 2)
     for im in split_dest_list:
@@ -997,7 +1003,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
     # Split mask volume along z
     if fname_mask != '':
-        sct.printv('\nSplit mask volume...', verbose)
+        logger.info(f"\nSplit mask volume...")
         im_mask = image.Image('mask.nii.gz')
         split_mask_list = image.split_img_data(im_mask, 2)
         for im in split_mask_list:
@@ -1015,7 +1021,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
     # loop across slices
     for i in range(nz):
         # set masking
-        sct.printv('Registering slice ' + str(i) + '/' + str(nz - 1) + '...', verbose)
+        logger.info(f"Registering slice {str(i)}/{str(nz-1)}...")
         num = numerotation(i)
         prefix_warp2d = 'warp2d_' + num
         # if mask is used, prepare command for ANTs
@@ -1081,10 +1087,11 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         # if an exception occurs with ants, take the last value for the transformation
         # TODO: DO WE NEED TO DO THAT??? (julien 2016-03-01)
         except Exception as e:
-            sct.printv('ERROR: Exception occurred.\n' + str(e), 1, 'error')
+            # TODO [AJ] is it desired to completely ignore exception??
+            logger.error(f"Exception occurred. \n {e}")
 
     # Merge warping field along z
-    sct.printv('\nMerge warping fields along z...', verbose)
+    logger.info(f"\nMerge warping fields along z...")
 
     if paramreg.algo in ['Translation']:
         # convert to array
@@ -1129,7 +1136,6 @@ def numerotation(nb):
         sys.exit(status = 2)
     return nb_output
 
-
 def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field.nii.gz', verbose=1):
     """
     Generate an ITK warping field
@@ -1140,13 +1146,10 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
     :param verbose:
     :return:
     """
-    sct.printv('\nGenerate warping field...', verbose)
+    logger.info(f"\nGenerate warping field...")
 
     # Get image dimensions
-    # sct.printv('Get destination dimension', verbose)
     nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest).dim
-    # sct.printv('  matrix size: '+str(nx)+' x '+str(ny)+' x '+str(nz), verbose)
-    # sct.printv('  voxel size:  '+str(px)+'mm x '+str(py)+'mm x '+str(pz)+'mm', verbose)
 
     # initialize
     data_warp = np.zeros((nx, ny, nz, 1, 3))
@@ -1163,54 +1166,7 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
     hdr_warp.set_data_dtype('float32')
     img = Nifti1Image(data_warp, None, hdr_warp)
     save(img, fname_warp)
-    sct.printv(' --> ' + fname_warp, verbose)
-
-    #
-    # file_dest = load(fname_dest)
-    # hdr_file_dest = file_dest.get_header()
-    # hdr_warp = hdr_file_dest.copy()
-    #
-    #
-    # # Center of rotation
-    # if center_rotation == None:
-    #     x_a = int(round(nx/2))
-    #     y_a = int(round(ny/2))
-    # else:
-    #     x_a = center_rotation[0]
-    #     y_a = center_rotation[1]
-    #
-    # # Calculate displacement for each voxel
-    # data_warp = np.zeros(((((nx, ny, nz, 1, 3)))))
-    # vector_i = [[[i-x_a], [j-y_a]] for i in range(nx) for j in range(ny)]
-    #
-    # # if theta_rot == None:
-    # #     # for translations
-    # #     for k in range(nz):
-    # #         matrix_rot_a = np.asarray([[cos(theta_rot[k]), - sin(theta_rot[k])], [-sin(theta_rot[k]), -cos(theta_rot[k])]])
-    # #         tmp = matrix_rot_a + array(((-1, 0), (0, 1)))
-    # #         result = dot(tmp, array(vector_i).T[0]) + array([[x_trans[k]], [y_trans[k]]])
-    # #         for i in range(ny):
-    # #             data_warp[i, :, k, 0, 0] = result[0][i*nx:i*nx+ny]
-    # #             data_warp[i, :, k, 0, 1] = result[1][i*nx:i*nx+ny]
-    #
-    # # else:
-    #     # For rigid transforms (not optimized)
-    #     # if theta_rot != None:
-    # # TODO: this is not optimized! can do better!
-    # for k in range(nz):
-    #     for i in range(nx):
-    #         for j in range(ny):
-    #             data_warp[i, j, k, 0, 0] = (cos(theta_rot[k]) - 1) * (i - x_a) - sin(theta_rot[k]) * (j - y_a) + x_trans[k]
-    #             data_warp[i, j, k, 0, 1] = - sin(theta_rot[k]) * (i - x_a) - (cos(theta_rot[k]) - 1) * (j - y_a) + y_trans[k]
-    #             data_warp[i, j, k, 0, 2] = 0
-    #
-    # # Generate warp file as a warping field
-    # hdr_warp.set_intent('vector', (), '')
-    # hdr_warp.set_data_dtype('float32')
-    # img = Nifti1Image(data_warp, None, hdr_warp)
-    # save(img, fname)
-    # sct.printv('\nDone! Warping field generated: '+fname, verbose)
-
+    logger.info(f" --> {fname_warp}")
 
 def angle_between(a, b):
     """
