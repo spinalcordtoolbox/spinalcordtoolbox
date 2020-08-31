@@ -4,7 +4,7 @@
 
 
 import io, sys, os
-import re
+import re, shutil
 import tempfile
 import datetime
 import logging
@@ -554,7 +554,7 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
 
     return status, output
 
-def copy(src, dst, verbose=1):
+def copy_helper(src, dst, verbose=1):
     """Copy src to dst, almost like shutil.copy
     If src and dst are the same files, don't crash.
     """

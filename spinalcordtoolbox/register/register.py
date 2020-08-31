@@ -10,6 +10,7 @@
 
 import logging
 import os # FIXME
+import shutil
 from math import asin, cos, sin, acos
 
 import numpy as np
@@ -20,12 +21,8 @@ from sklearn.decomposition import PCA
 from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
-from spinalcordtoolbox.utils import sct_progress_bar, run_proc
 from spinalcordtoolbox.register.landmarks import register_landmarks
-from spinalcordtoolbox.utils import add_suffix
-
-# imports to refactor
-import sct_utils as sct # FIXME [AJ]
+from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, add_suffix, tmp_create
 
 # TODO
 # introduce potential cleanup functions in case exceptions occur and
@@ -323,7 +320,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     """
 
     # create temporary folder
-    path_tmp = sct.tmp_create(basename="register", verbose=verbose)
+    path_tmp = tmp_create(basename="register")
 
     # copy data to temp folder
     logger.info(f"\nCopy input data to temp folder...")
@@ -401,14 +398,15 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
                    )
 
     logger.info(f"\nMove warping fields...")
-    sct.copy(warp_forward_out, curdir)
-    sct.copy(warp_inverse_out, curdir)
+    copy_helper(warp_forward_out, curdir)
+    copy_helper(warp_inverse_out, curdir)
 
     # go back
     os.chdir(curdir)
 
     if remove_temp_files:
-        sct.rmtree(path_tmp, verbose=verbose)
+        logger.info(f"rm -rf {path_tmp}")
+        shutil.rmtree(path_tmp)
 
 
 def register_image_slicewise():
