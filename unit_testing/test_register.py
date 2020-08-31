@@ -7,7 +7,7 @@ import logging
 import pytest
 
 # FIXME only during refactor, everything should move to spinalcordtoolbox.module
-from sct_register_to_template import Param
+from sct_register_to_template import Param, register
 
 from spinalcordtoolbox.register.register import *
 
@@ -124,15 +124,15 @@ def test_register_step_label(step0_data):
 
     warp_forward_out, warp_inverse_out = register_step_label(src=src, dest=dest, step=step, verbose=cli_params.verbose)
 
-def test_register_step_slicewise():
-    """
-    """
-    raise NotImplementedError()
+# def test_register_step_slicewise():
+#     """
+#     """
+#     raise NotImplementedError()
 
-def test_register_step_slicewise_ants():
-    """
-    """
-    raise NotImplementedError()
+# def test_register_step_slicewise_ants():
+#     """
+#     """
+#     raise NotImplementedError()
 
 def test_register_step_ants_registration(step2_data):
     """
@@ -159,10 +159,10 @@ def test_register_step_ants_registration(step2_data):
      verbose=cli_params.verbose,
     )
 
-def test_register_step_ants_slice_regularized_registration():
-    """
-    """
-    raise NotImplementedError()
+# def test_register_step_ants_slice_regularized_registration():
+#     """
+#     """
+#     raise NotImplementedError()
 
 # higher level tests for step registration, regardless of step)
 def test_register_step0(step0_data):
