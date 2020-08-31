@@ -22,6 +22,7 @@ from scipy.io import loadmat
 import spinalcordtoolbox.image as image
 from spinalcordtoolbox.utils import sct_progress_bar
 from spinalcordtoolbox.register.landmarks import register_landmarks
+from spinalcordtoolbox.utils import add_suffix
 
 # imports to refactor
 import sct_utils as sct # FIXME [AJ]
@@ -86,7 +87,7 @@ class Paramreg(object):
         list_objects = paramreg_user.split(',')
         for object in list_objects:
             if len(object) < 2:
-                sct.printv('Please check parameter -param (usage changed from previous version)', 1, type='error')
+                raise ValueError("Invalid use of -param! Check usage (usage changed from previous version)")
             obj = object.split('=')
             setattr(self, obj[0], obj[1])
 
@@ -104,21 +105,22 @@ class ParamregMultiStep:
                 self.addStep(stepParam)
 
     def addStep(self, stepParam):
-        # this function checks if the step is already present. If it is present, it must update it. If it is not, it
-        # must add it.
+        """
+        Checks if the step is already present.
+        If it exists: update it.
+        If not: add it.
+        """
         param_reg = Paramreg()
         param_reg.update(stepParam)
-        # parameters must contain 'step'
         if param_reg.step is None:
-            sct.printv("ERROR: parameters must contain 'step'", 1, 'error')
+            raise ValueError("Parameters must contain 'step'!")
         else:
             if param_reg.step in self.steps:
                 self.steps[param_reg.step].update(stepParam)
             else:
                 self.steps[param_reg.step] = param_reg
-        # parameters must contain 'type'
         if int(param_reg.step) != 0 and param_reg.type not in param_reg.type_list:
-            sct.printv("ERROR: parameters must contain a type, either 'im' or 'seg'", 1, 'error')
+            raise ValueError("Parameters must contain a type, either 'im' or 'seg'")
 
 
 def register_step_ants_slice_regularized_registration(src, dest, step, metricSize, fname_mask='', verbose=1):
@@ -144,15 +146,15 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
             zmax_global = zmax
 
     # crop images (see issue #293)
-    src_crop = sct.add_suffix(src, '_crop')
+    src_crop = add_suffix(src, '_crop')
     image.spatial_crop(image.Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
-    dest_crop = sct.add_suffix(dest, '_crop')
+    dest_crop = add_suffix(dest, '_crop')
     image.spatial_crop(image.Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
 
     # update variables
     src = src_crop
     dest = dest_crop
-    scr_regStep = sct.add_suffix(src, '_regStep' + str(step.step))
+    scr_regStep = add_suffix(src, '_regStep' + str(step.step))
 
     # estimate transfo
     cmd = ['isct_antsSliceRegularizedRegistration',
@@ -182,7 +184,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
     # Pad the destination image (because ants doesn't deform the extremities)
     # N.B. no need to pad if iter = 0
     if not step.iter == '0':
-        dest_pad = sct.add_suffix(dest, '_pad')
+        dest_pad = add_suffix(dest, '_pad')
         sct.run(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(padding)])
         dest = dest_pad
 
@@ -190,15 +192,15 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
     if not step.laplacian == '0':
         sct.printv('\nApply Laplacian filter', verbose)
         sct.run(['sct_maths', '-i', src, '-laplacian', step.laplacian + ','
-                 + step.laplacian + ',0', '-o', sct.add_suffix(src, '_laplacian')])
+                 + step.laplacian + ',0', '-o', add_suffix(src, '_laplacian')])
         sct.run(['sct_maths', '-i', dest, '-laplacian', step.laplacian + ','
-                 + step.laplacian + ',0', '-o', sct.add_suffix(dest, '_laplacian')])
-        src = sct.add_suffix(src, '_laplacian')
-        dest = sct.add_suffix(dest, '_laplacian')
+                 + step.laplacian + ',0', '-o', add_suffix(dest, '_laplacian')])
+        src = add_suffix(src, '_laplacian')
+        dest = add_suffix(dest, '_laplacian')
 
     # Estimate transformation
     sct.printv('\nEstimate transformation', verbose)
-    scr_regStep = sct.add_suffix(src, '_regStep' + str(step.step))
+    scr_regStep = add_suffix(src, '_regStep' + str(step.step))
 
     cmd = ['isct_antsRegistration',
            '--dimensionality', '3',
