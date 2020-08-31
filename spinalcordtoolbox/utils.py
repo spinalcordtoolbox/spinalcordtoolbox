@@ -553,3 +553,31 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         raise RuntimeError(output)
 
     return status, output
+
+def copy(src, dst, verbose=1):
+    """Copy src to dst, almost like shutil.copy
+    If src and dst are the same files, don't crash.
+    """
+    if not os.path.isfile(src):
+        folder = os.path.dirname(src)
+        contents = os.listdir(folder)
+        raise ValueError(f"Couldn't find {os.path.basename(src)} in {folder} (contents: {contents})")
+
+    try:
+        logger.info(f"cp {src} {dst}")
+        shutil.copy(src, dst)
+    except Exception as e:
+        if sys.hexversion < 0x03000000:
+            if isinstance(e, shutil.Error) and "same file" in str(e):
+                return
+        else:
+            if isinstance(e, shutil.SameFileError):
+                return
+def rmtree(folder, verbose=1):
+    """Recursively remove folder, almost like shutil.rmtree
+    """
+    try:
+        logger.info(f"rm -rf {folder}")
+        shutil.rmtree(folder, ignore_errors=True)
+    except Exception as e:
+        raise # Must be another error
