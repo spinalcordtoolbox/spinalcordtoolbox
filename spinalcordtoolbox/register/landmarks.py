@@ -23,13 +23,18 @@
 # TODO: normalize SSE: currently, it depends on the number of landmarks
 
 import sys, io, os
+import logging
+
 from operator import itemgetter
 
-import numpy as np
-
-# from msct_register_regularized import generate_warping_field
-import sct_utils as sct
 from nibabel import load
+import numpy as np
+from scipy.optimize import minimize
+
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import create_folder
+
+logger = logging.getLogger(__name__)
 
 sse_results = []
 ini_param_rotation = 0.5  # rad
@@ -47,7 +52,6 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     :param verbose: 0, 1, 2
     :return:
     """
-    from spinalcordtoolbox.image import Image
     # open src label
     im_src = Image(fname_src)
     # coord_src = im_src.getNonZeroCoordinates(sorting='value')  # landmarks are sorted by value
@@ -71,9 +75,9 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
         points_dest.append([-point_dest[0][0], -point_dest[0][1], point_dest[0][2]])
 
     # display
-    sct.printv('Labels src: ' + str(points_src), verbose)
-    sct.printv('Labels dest: ' + str(points_dest), verbose)
-    sct.printv('Degrees of freedom (dof): ' + dof, verbose)
+    logger.info(f"Labels src: {str(points_src)}")
+    logger.info(f"Labels dest: {str(points_dest)}")
+    logger.info(f"Degrees of freedom (dof): {dof}")
 
     if len(coord_src) != len(coord_dest):
         raise Exception('Error: number of source and destination landmarks are not the same, so landmarks cannot be paired.')
@@ -152,10 +156,10 @@ def Metric_Images(imageA, imageB, type=''):
         result_metric = 1.0 / (len(list_A)) * np.sum(np.absolute(np.array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])))
 
     if type == 'MI':
-        sct.printv('\nto do: MI')
+        logger.info(f"\nto do: MI")
 
     # Return results
-    sct.printv('\nResult of metric is: ' + str(result_metric))
+    logger.info(f"\nResult of metric is: {str(result_metric)}")
     return result_metric
 
 
@@ -207,7 +211,6 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     :return: rotsc_matrix, translation_array, points_src_reg, points_src_barycenter
     """
     # TODO: check input constraints
-    from scipy.optimize import minimize
 
     # initialize default parameters
     init_param = [0, 0, 0, 0, 0, 0, 1, 1, 1]
@@ -247,13 +250,13 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     points_src_barycenter = np.mean(points_src, axis=0)
     # apply transformation to moving points (src)
     points_src_reg = ((rotsc_matrix * (np.matrix(points_src) - points_src_barycenter).T).T + points_src_barycenter) + translation_array
-    # display results
-    sct.printv('Matrix:\n' + str(rotation_matrix))
-    sct.printv('Center:\n' + str(points_src_barycenter))
-    sct.printv('Translation:\n' + str(translation_array))
+
+    logger.info(f"Matrix:\n {rotation_matrix}")
+    logger.info(f"Center:\n {points_src_barycenter}")
+    logger.info(f"Translation:\n {translation_array}")
 
     if verbose == 2 and path_qc is not None:
-        sct.create_folder(path_qc)
+        create_folder(path_qc)
 
         import matplotlib
         # use Agg to prevent display
