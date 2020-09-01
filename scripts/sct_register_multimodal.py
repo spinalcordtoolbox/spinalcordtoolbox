@@ -37,10 +37,11 @@ import sys, os, time
 import numpy as np
 
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.register.register import Paramreg, ParamregMultiStep
 
 import sct_utils as sct
 from msct_parser import Parser
-from msct_register import Paramreg, ParamregMultiStep, register_wrapper
+from sct_register_to_template import register_wrapper
 
 
 def get_parser(paramregmulti=None):
