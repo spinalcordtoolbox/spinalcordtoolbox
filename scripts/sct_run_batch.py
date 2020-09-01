@@ -296,7 +296,7 @@ def main(argv):
     script = os.path.abspath(os.path.expanduser(args.script))
 
     for pth in [path_output, path_results, path_data_processed, path_log, path_qc]:
-        os.mkdir(pth, exist_ok=True)
+        os.makedirs(pth, exist_ok=True)
 
     # Check that the script can be found
     if not os.path.exists(script):
