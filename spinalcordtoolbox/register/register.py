@@ -1112,15 +1112,11 @@ def numerotation(nb):
 
     Given a slice number, this function returns the corresponding number in fslsplit indexation system.
 
-    input:
-        nb: the number of the slice (type: int)
-
-    output:
-        nb_output: the number of the slice for fslsplit (type: string)
+    param nb: the number of the slice (type: int)
+    return nb_output: the number of the slice for fslsplit (type: string)
     """
-    if nb < 0:
-        logger.error('ERROR: the number is negative.')
-        sys.exit(status=2)
+    if nb < 0 or nb > 9999:
+        raise ValueError("Number must be between 0 and 9999")
     elif -1 < nb < 10:
         nb_output = '000' + str(nb)
     elif 9 < nb < 100:
@@ -1129,9 +1125,6 @@ def numerotation(nb):
         nb_output = '0' + str(nb)
     elif 999 < nb < 10000:
         nb_output = str(nb)
-    elif nb > 9999:
-        logger.error('ERROR: the number is superior to 9999.')
-        sys.exit(status = 2)
     return nb_output
 
 def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field.nii.gz', verbose=1):
