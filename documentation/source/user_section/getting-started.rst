@@ -39,6 +39,8 @@ If you would like to get more examples about what SCT can do, please visit the `
 <https://github.com/sct-pipeline/>`_. Each repository is a pipeline dedicated to a specific research project.
 
 
+.. _sct_courses:
+
 Courses
 *******
 
