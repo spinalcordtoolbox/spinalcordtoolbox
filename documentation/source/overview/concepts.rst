@@ -140,6 +140,24 @@ Repository for creating SCT's templates:
 
 - `Spinal levels <https://github.com/neuropoly/spinalcordtoolbox/tree/master/dev/spinal_level>`_
 
+White matter atlas
+==================
+
+.. image:: ../../imgs/white_matter_atlas_illustration.png
+
+The White Matter atlas will be a useful tool for your studies of specific spinal cord tracts. It consists of 30 nifti
+volumes named ``PAM50_atlas_<tract_number>.nii.gz`` where ``<tract_number>`` is the number identifying the tract.
+Fifteen tracts for each side are available. The values of each voxel of the files ``PAM50_atlas_<tract_number>.nii.gz``
+are the voxel volume proportions occupied by the corresponding tract.
+
+The atlas is stored in the ``data/PAM50/atlas`` folder, and comes with a text file (``info_label.txt``) that provides a
+more detailed breakdown of each tract.
+
+**Reference:** `Benhamou M, Fonov V, Taso M, Le Troter A, Sdika M, Collins DL, Callot V, Cohen-Adad J. Atlas of
+white-matter tracts in the human spinal cord. Proceedings of the 22th Annual Meeting of ISMRM, Milan, Italy 2014:0013
+<https://dl.dropboxusercontent.com/u/20592661/publications/benhamou_irmsm14.pdf>`_.
+
+
 
 
 
