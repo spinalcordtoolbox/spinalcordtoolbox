@@ -124,15 +124,17 @@ def test_register_step_label(step0_data):
 
     warp_forward_out, warp_inverse_out = register_step_label(src=src, dest=dest, step=step, verbose=cli_params.verbose)
 
-# def test_register_step_slicewise():
-#     """
-#     """
-#     raise NotImplementedError()
+@pytest.mark.skip(reason="TODO")
+def test_register_step_slicewise():
+     """
+     """
+     raise NotImplementedError()
 
-# def test_register_step_slicewise_ants():
-#     """
-#     """
-#     raise NotImplementedError()
+@pytest.mark.skip(reason="TODO")
+def test_register_step_slicewise_ants():
+     """
+     """
+     raise NotImplementedError()
 
 def test_register_step_ants_registration(step2_data):
     """
@@ -159,10 +161,11 @@ def test_register_step_ants_registration(step2_data):
      verbose=cli_params.verbose,
     )
 
-# def test_register_step_ants_slice_regularized_registration():
-#     """
-#     """
-#     raise NotImplementedError()
+@pytest.mark.skip(reason="TODO")
+def test_register_step_ants_slice_regularized_registration():
+     """
+     """
+     raise NotImplementedError()
 
 # higher level tests for step registration, regardless of step)
 def test_register_step0(step0_data):
@@ -182,3 +185,27 @@ def test_register_step2(step2_data):
     """
     src, dest, step, cli_params = step2_data
     warp_forward_out, warp_inverse_out = register(src=src, dest=dest, step=step, param=cli_params)
+
+@pytest.mark.skip(reason="TODO")
+def test_register2d_centermassrot():
+    """
+    """
+    raise NotImplementedError()
+
+@pytest.mark.skip(reason="TODO")
+def test_register2d_columnwise():
+    """
+    """
+    raise NotImplementedError()
+
+@pytest.mark.skip(reason="TODO")
+def test_register2d():
+    """
+    """
+    raise NotImplementedError()
+
+@pytest.mark.skip(reason="TODO")
+def test_register_slicewise():
+    """
+    """
+    raise NotImplementedError()
