@@ -6,7 +6,7 @@ import logging
 
 import pytest
 
-# FIXME only during refactor, everything should move to spinalcordtoolbox.module
+# FIXME should not use stuff from scripts. Ok for now
 from sct_register_to_template import Param, register
 
 from spinalcordtoolbox.registration.register import *
@@ -19,6 +19,8 @@ logger = logging.getLogger(__name__)
 def step0_data():
     """
     """
+
+    # FIXME
     src = ['register_test_data/src_label.nii']
     dest = ['register_test_data/dest_label_RPI.nii']
 
@@ -52,6 +54,8 @@ def step0_data():
 def step1_data():
     """
     """
+
+    # FIXME
     src = ['register_test_data/src_seg.nii']
     dest = ['register_test_data/dest_seg_RPI.nii']
 
@@ -85,6 +89,8 @@ def step1_data():
 def step2_data():
     """
     """
+
+    # FIXME
     src = ['register_test_data/src_seg_reg.nii']
     dest = ['register_test_data/dest_seg_RPI.nii']
 
@@ -114,6 +120,7 @@ def step2_data():
 
     return src, dest, step, cli_params
 
+@pytest.mark.skip(reason="Need to fix input test data")
 def test_register_step_label(step0_data):
     """
     """
@@ -136,6 +143,7 @@ def test_register_step_slicewise_ants():
      """
      raise NotImplementedError()
 
+@pytest.mark.skip(reason="Need to fix input test data")
 def test_register_step_ants_registration(step2_data):
     """
     """
@@ -168,18 +176,21 @@ def test_register_step_ants_slice_regularized_registration():
      raise NotImplementedError()
 
 # higher level tests for step registration, regardless of step)
+@pytest.mark.skip(reason="Need to fix input test data")
 def test_register_step0(step0_data):
     """
     """
     src, dest, step, cli_params = step0_data
     warp_forward_out, warp_inverse_out = register(src=src, dest=dest, step=step, param=cli_params)
 
+@pytest.mark.skip(reason="Need to fix input test data")
 def test_register_step1(step1_data):
     """
     """
     src, dest, step, cli_params = step1_data
     warp_forward_out, warp_inverse_out = register(src=src, dest=dest, step=step, param=cli_params)
 
+@pytest.mark.skip(reason="Need to fix input test data")
 def test_register_step2(step2_data):
     """
     """
