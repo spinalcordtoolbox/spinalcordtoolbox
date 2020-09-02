@@ -684,7 +684,7 @@ def get_parser():
     param_default = Param()
     # Initialize the parser
     parser = argparse.ArgumentParser(
-        description="Utility function for label image.",
+        description="Utility function for label images.",
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
@@ -695,7 +695,7 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Input image. Example: tw_labels.nii.gz"
+        help="Input image. Example: t2_labels.nii.gz"
     )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
