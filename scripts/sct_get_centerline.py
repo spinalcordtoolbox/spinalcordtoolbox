@@ -20,7 +20,7 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description=(
             "This function extracts the spinal cord centerline. Three methods are available: OptiC (automatic), "
-            "Viewer (manual) and Fitseg (applied on segmented image). These functions output (i) a NIFTI file with "
+            "Viewer (manual), and Fitseg (applied on segmented image). These functions output (i) a NIFTI file with "
             "labels corresponding to the discrete centerline, and (ii) a csv file containing the float (more precise) "
             "coordinates of the centerline in the RPI orientation. \n"
             "\n"
