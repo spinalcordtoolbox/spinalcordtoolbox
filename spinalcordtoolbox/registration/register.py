@@ -21,10 +21,10 @@ from sklearn.decomposition import PCA
 from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
-from spinalcordtoolbox.register.landmarks import register_landmarks
+from spinalcordtoolbox.registration.landmarks import register_landmarks
 from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, add_suffix, tmp_create
 
-# TODO
+# TODO [AJ]
 # introduce potential cleanup functions in case exceptions occur and
 # filesystem is left with temp artefacts everywhere?
 
@@ -270,7 +270,6 @@ def register_step_slicewise(src, dest, step, ants_registration_params, remove_te
     warp_forward_out = 'step' + str(step.step) + 'Warp.nii.gz'
     warp_inverse_out = 'step' + str(step.step) + 'InverseWarp.nii.gz'
 
-    # FIXME [AJ]
     register_slicewise(
      fname_src=src,
      fname_dest=dest,

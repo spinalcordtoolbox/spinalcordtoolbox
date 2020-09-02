@@ -29,8 +29,8 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
 from spinalcordtoolbox.math import dilate
-from spinalcordtoolbox.register.register import *
-from spinalcordtoolbox.register.landmarks import *
+from spinalcordtoolbox.registration.register import *
+from spinalcordtoolbox.registration.landmarks import *
 import spinalcordtoolbox.image as msct_image
 
 import sct_utils as sct

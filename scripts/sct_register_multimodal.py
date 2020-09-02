@@ -37,7 +37,7 @@ import sys, os, time
 import numpy as np
 
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.register.register import Paramreg, ParamregMultiStep
+from spinalcordtoolbox.registration.register import Paramreg, ParamregMultiStep
 
 import sct_utils as sct
 from msct_parser import Parser

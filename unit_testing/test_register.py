@@ -9,7 +9,7 @@ import pytest
 # FIXME only during refactor, everything should move to spinalcordtoolbox.module
 from sct_register_to_template import Param, register
 
-from spinalcordtoolbox.register.register import *
+from spinalcordtoolbox.registration.register import *
 
 logger = logging.getLogger(__name__)
 
