@@ -162,7 +162,7 @@ def get_parser():
         '-laplacian',
         choices=['0', '1'],
         default='0',
-        help="Apply Laplacian filtering. More accuracy but could mistake disc depending on anatomy."
+        help="Apply Laplacian filtering. More accurate but could mistake disc depending on anatomy."
     )
     optional.add_argument(
         '-scale-dist',
