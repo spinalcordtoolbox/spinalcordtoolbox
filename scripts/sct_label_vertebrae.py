@@ -156,7 +156,8 @@ def get_parser():
         '-denoise',
         choices=['0', '1'],
         default='0',
-        help="Apply denoising filter to the data. Sometimes denoising is too aggressive, so use with care."
+        help="Apply denoising filter (non-local means adaptative denoising) to the data. Sometimes denoising is too "
+             "aggressive, so use with care."
     )
     optional.add_argument(
         '-laplacian',
