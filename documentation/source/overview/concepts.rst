@@ -157,7 +157,20 @@ more detailed breakdown of each tract.
 white-matter tracts in the human spinal cord. Proceedings of the 22th Annual Meeting of ISMRM, Milan, Italy 2014:0013
 <https://dl.dropboxusercontent.com/u/20592661/publications/benhamou_irmsm14.pdf>`_.
 
+Spinal levels
+=============
 
+.. image:: ../../imgs/spinal_levels_illustration.png
+
+In the folder ``data/PAM50/spinal_levels``, you will find 11 nifti files, each one corresponding to one spinal level of
+the spinal cord from C3 to T5. On the illustration above, you can see the spinal levels C4 (red-yellow) and T1
+(blue-lightblue). In each nifti file, the value of each voxel is the probability for this voxel to belong to the
+spinal level.
+
+**Reference:** `Cadotte DW, Cadotte A, Cohen-Adad J, Fleet D, Livne M, Mikulis D, Fehlings MG. Resolving the anatomic
+variability of the human cervical spinal cord: a solution to facilitate advanced neural imaging. Proceedings of the
+22th Annual Meeting of ISMRM, Milan, Italy 2014:1719
+<https://dl.dropboxusercontent.com/u/20592661/publications/cadotte_ismrm14.pdf>`_.
 
 
 
