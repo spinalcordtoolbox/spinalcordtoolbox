@@ -126,9 +126,24 @@ def get_parser():
     return parser
 
 
-def main():
+def fetch_metadata(args):
+    """
+    Retrieve metadata from the json sidecar or from the input arguments.
+    :param args:
+    :return:
+    """
+
+    if args.trmt is None:
+        trmt = sct.bids.fetch_metadata(file_json, 'RepetitionTime')
+    else:
+        trmt = args.trmt
+
+    return trmt, trpd, trt1, famt, fapd, fat1
+
+
+def main(argv):
     parser = get_parser()
-    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    args = parser.parse_args(argv if argv else ['--help'])
     verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
@@ -141,9 +156,11 @@ def main():
     else:
         nii_b1map = Image(args.b1map)
 
+    trmt, trpd, trt1, famt, fapd, fat1 = fetch_metadata(args)
+
     # compute MTsat
-    nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1, args.trmt, args.trpd, args.trt1, args.famt, args.fapd,
-                                         args.fat1, nii_b1map=nii_b1map)
+    nii_mtsat, nii_t1map = \
+        compute_mtsat(nii_mt, nii_pd, nii_t1, trmt, trpd, trt1, famt, fapd, fat1, nii_b1map=nii_b1map)
 
     # Output MTsat and T1 maps
     # by default, output in the same directory as the input images
@@ -167,4 +184,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
