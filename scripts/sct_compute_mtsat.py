@@ -60,43 +60,37 @@ def get_parser():
         )
     mandatoryArguments.add_argument(
         "-trmt",
-        required=True,
-        help="TR [in ms] for mt image.",
+        help="TR [in ms] for mt image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
         )
     mandatoryArguments.add_argument(
         "-trpd",
-        required=True,
-        help="TR [in ms] for pd image.",
+        help="TR [in ms] for pd image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
         )
     mandatoryArguments.add_argument(
         "-trt1",
-        required=True,
-        help="TR [in ms] for t1 image.",
+        help="TR [in ms] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
         )
     mandatoryArguments.add_argument(
         "-famt",
-        required=True,
-        help="Flip angle [in deg] for mt image.",
+        help="Flip angle [in deg] for mt image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
         )
     mandatoryArguments.add_argument(
         "-fapd",
-        required=True,
-        help="Flip angle [in deg] for pd image.",
+        help="Flip angle [in deg] for pd image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
         )
     mandatoryArguments.add_argument(
         "-fat1",
-        required=True,
-        help="Flip angle [in deg] for t1 image.",
+        help="Flip angle [in deg] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
         )
