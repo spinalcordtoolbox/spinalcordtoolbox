@@ -154,16 +154,17 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     zrange = list(range(-9, 10))
     direction = 'superior'
     search_next_disc = True
-    image_mid = imed_preprocessing.get_midslice_average(fname,26)
-    nib.save(image_mid,fname)
-    fname_hm = sct_deepseg.segment_nifti(fname,os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/find_disc_t2'),post=False)
+    # image is straighten and oriented according to RPI convention before.
+    mid_index = nib.load(fname).header.get_data_shape[0]
+    image_mid = imed_preprocessing.get_midslice_average(fname, mid_index)
+    nib.save(image_mid, fname)
+    fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct.__sct_dir__, 'spinalcordtoolbox/vertebrae/checkpoints/find_disc_t2'),post=False)
     sct.run('sct_resample -i %s  -mm 0.5x0.5x0.5 -x linear -o hm_tmp_r.nii.gz'%(fname_hm))
     sct.run('sct_resample -i %s -mm 0.5 -x nn -o %s'%(fname_seg,fname_seg))
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
-    #sct.run('sct_maths -i %s -dilate 3 -o lab_dilate.nii.gz'%(fname_template))
-    im_lab=Image(fname_template)
-    data_lab=im_lab.data
+    im_lab = Image(fname_template)
+    data_lab = im_lab.data
     while search_next_disc:
         sct.printv('Current disc: ' + str(current_disc) + ' (z=' + str(current_z) + '). Direction: ' + direction, verbose)
         try:
@@ -429,10 +430,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
                                z + iz - zsize: z + iz + zsize + 1]
 
         # convert subject pattern to 1d profile
-        data_chunk1d = np.sum(data_chunk3d,axis=(0,1))
-        #data_chunk1d = np.convolve(data_chunk1d,np.hanning(3))
-        #print(data_chunk3d.shape)
-        #print(np.any(data_chunk1d))
+        data_chunk1d = np.sum(data_chunk3d, axis=(0, 1))
         # check if data_chunk1d contains at least one non-zero value
         if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
             #a = mutual_information(data_chunk1d/np.max(data_chunk1d), pattern1d/np.max(pattern1d),nbins=64,normalized=True)
@@ -483,7 +481,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         iz = zrange[ind_peak]
         data_chunk3d = src[:,
                            y + yshift - ysize: y + yshift + ysize + 1,
-                           z  -iz - zsize: z + iz + zsize + 1]
+                           z - iz - zsize: z + iz + zsize + 1]
         ax.plot(np.sum(data_chunk3d,axis=(0,1)))
         ax.set_title('Subject accross all iz')
         # display correlation curve
