@@ -77,9 +77,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # adjust file names if MNI-Poly-AMU template is used (by default: PAM50)
     fname_level = get_file_label(os.path.join(path_template, 'template'), id_label=7,
                                  output='filewithpath')  # label = spinal cord mask with discrete vertebral levels
-    # id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
     fname_template = get_file_label(os.path.join(path_template, 'template'), id_label=11,
-                                    output='filewithpath')  # label = *-weighted template
+                                    output='filewithpath')  # label = intevertebral dic label template (PAM50)
 
     # Open template and vertebral levels
     sct.printv('\nOpen template and vertebral levels...', verbose)
@@ -162,15 +161,21 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     mid_index = nib.load(fname).header.get_data_shape[0]
     image_mid = imed_preprocessing.get_midslice_average(fname, mid_index)
     nib.save(image_mid, fname)
-    fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct.__sct_dir__,
-                                                             'spinalcordtoolbox/vertebrae/checkpoints/find_disc_t2'),
+    if contrast=="t2":
+        fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct.__deepseg_dir__,
+                                                             'find_disc_t2'),
                                          post=False)
+    elif contrast=="t2":
+        fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct.__deepseg_dir__,
+                                                                 'find_disc_t1'),
+                                             post=False)
+
+
     sct.run('sct_resample -i %s  -mm 0.5x0.5x0.5 -x linear -o hm_tmp_r.nii.gz' % (fname_hm))
     sct.run('sct_resample -i %s -mm 0.5 -x nn -o %s' % (fname_seg, fname_seg))
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
     im_lab = Image(fname_template)
-    data_lab = im_lab.data
     while search_next_disc:
         sct.printv('Current disc: ' + str(current_disc) + ' (z=' + str(current_z) + '). Direction: ' + direction,
                    verbose)
