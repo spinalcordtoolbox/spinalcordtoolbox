@@ -3,6 +3,7 @@
 
 import os
 import logging
+import json
 
 import spinalcordtoolbox as sct
 
@@ -29,3 +30,18 @@ def get_json_file_name(fname, check_exist=False):
             FileNotFoundError()
 
     return fname_json
+
+
+def fetch_metadata(fname_json, field):
+    """
+    Return specific field value from json sidecar.
+    :param fname_json: str: Json file
+    :param field: str: Field to retrieve
+    :return: value of the field.
+    """
+    with open(fname_json) as f:
+        metadata = json.load(f)
+    if field not in metadata:
+        KeyError("Json file {} does not contain the field: {}".format(fname_json, field))
+    else:
+        return metadata[field]
