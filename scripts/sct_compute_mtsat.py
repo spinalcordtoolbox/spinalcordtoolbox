@@ -21,6 +21,7 @@ import sys
 import os
 import argparse
 
+from spinalcordtoolbox.bids import get_json_file_name, fetch_metadata
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.qmri.mt import compute_mtsat
 from spinalcordtoolbox.image import Image
@@ -126,18 +127,43 @@ def get_parser():
     return parser
 
 
-def fetch_metadata(args):
+def get_tr_and_flipangle(args):
     """
     Retrieve metadata from the json sidecar or from the input arguments.
     :param args:
-    :return:
+    :return: trmt, trpd, trt1, famt, fapd, fat1
     """
-
+    # TODO: deal with the code duplication below
     if args.trmt is None:
-        trmt = sct.bids.fetch_metadata(file_json, 'RepetitionTime')
+        fname_json = get_json_file_name(args.mt, check_exist=True)
+        trmt = fetch_metadata(fname_json, 'RepetitionTime')
     else:
         trmt = args.trmt
-
+    if args.trpd is None:
+        fname_json = get_json_file_name(args.pd, check_exist=True)
+        trpd = fetch_metadata(fname_json, 'RepetitionTime')
+    else:
+        trpd = args.trpd
+    if args.trt1 is None:
+        fname_json = get_json_file_name(args.t1, check_exist=True)
+        trt1 = fetch_metadata(fname_json, 'RepetitionTime')
+    else:
+        trt1 = args.trt1
+    if args.famt is None:
+        fname_json = get_json_file_name(args.mt, check_exist=True)
+        famt = fetch_metadata(fname_json, 'FlipAngle')
+    else:
+        famt = args.famt
+    if args.fapd is None:
+        fname_json = get_json_file_name(args.pd, check_exist=True)
+        fapd = fetch_metadata(fname_json, 'FlipAngle')
+    else:
+        fapd = args.fapd
+    if args.fat1 is None:
+        fname_json = get_json_file_name(args.t1, check_exist=True)
+        fat1 = fetch_metadata(fname_json, 'FlipAngle')
+    else:
+        fat1 = args.fat1
     return trmt, trpd, trt1, famt, fapd, fat1
 
 
@@ -156,7 +182,7 @@ def main(argv):
     else:
         nii_b1map = Image(args.b1map)
 
-    trmt, trpd, trt1, famt, fapd, fat1 = fetch_metadata(args)
+    trmt, trpd, trt1, famt, fapd, fat1 = get_tr_and_flipangle(args)
 
     # compute MTsat
     nii_mtsat, nii_t1map = \
