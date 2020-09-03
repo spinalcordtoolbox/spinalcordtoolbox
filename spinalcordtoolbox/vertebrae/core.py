@@ -451,7 +451,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         data_chunk1d = np.sum(data_chunk3d, axis=(0, 1))
         # check if data_chunk1d contains at least one non-zero value
         if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-            # a = mutual_information(data_chunk1d/np.max(data_chunk1d), pattern1d/np.max(pattern1d),nbins=64,normalized=True)
             a = np.correlate(data_chunk1d, pattern1d) / np.correlate(pattern1d, pattern1d)
             I_corr[ind_I] = a
         else:
@@ -471,7 +470,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     if np.any(I_corr_gauss):
         # if I_corr contains at least a non-zero value
         ind_peak = np.argmax(
-            I_corr_gauss)  # [i for i in range(len(I_corr_gauss)) if I_corr_gauss[i] == max(I_corr_gauss)][0]  # index of max along z
+            I_corr_gauss) # index of max along z
         ind_dl = np.argmax(data_chunk1d)
         sct.printv('.. Peak found: z=' + str(zrange[ind_peak]) + ' (correlation = ' + str(I_corr_gauss[ind_peak]) + ')',
                    verbose)
