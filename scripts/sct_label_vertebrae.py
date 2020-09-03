@@ -29,7 +29,7 @@ from msct_parser import Parser
 import sct_utils as sct
 import sct_straighten_spinalcord
 import spinalcordtoolbox
-from spinalcordtoolbox.vertebrae import detect_c2
+#from spinalcordtoolbox.vertebrae import detect_c2
 
 # PARAMETERS
 class Param:
@@ -322,24 +322,25 @@ def main(args=None):
             Image(fname_initlabel).save(fname_labelz)
         else:
             # automatically finds C2-C3 disc
-            #im_data = Image('data.nii')
-            #im_seg = Image('segmentation.nii')
+            im_data = Image('data.nii')
+            im_seg = Image('segmentation.nii')
             if not remove_temp_files:  # because verbose is here also used for keeping temp files
                 verbose_detect_c2c3 = 2
             else:
                 verbose_detect_c2c3 = 0
+                im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose_detect_c2c3)
                 # Part of testing c2-hog vs dl
-                s, o = sct.run(['sct_resample', '-i', 'data.nii', '-mm', '1x1x1', '-x', 'linear', '-o', 'datar.nii'], verbose=verbose)
-                s,o = sct.run(['sct_resample', '-i', 'segmentation.nii', '-mm', '1x1x1', '-x', 'linear', '-o', 'segmentationr.nii'], verbose=verbose)
+                #s, o = sct.run(['sct_resample', '-i', 'data.nii', '-mm', '1x1x1', '-x', 'linear', '-o', 'datar.nii'], verbose=verbose)
+               # s,o = sct.run(['sct_resample', '-i', 'segmentation.nii', '-mm', '1x1x1', '-x', 'linear', '-o', 'segmentationr.nii'], verbose=verbose)
             # detection of c2/C3 is applied to curved image.
             #sct.run('sct_resample -i data_straight.nii.gz -mm 1x1x1 -o data_straight_c2detect.nii')
-            detect_c2.main(args=['-i', 'datar.nii', '-c', contrast, '-net', 'CC', '-o', path_tmp+'/c2_tmp.nii.gz'])
-            if os.path.exists('c2_tmp.nii.gz'):
-                pass
-            else:
-                sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
-                sys.exit()
-            im_label_c2c3 = Image('c2_tmp.nii.gz')        
+            #detect_c2.main(args=['-i', 'datar.nii', '-c', contrast, '-net', 'CC', '-o', path_tmp+'/c2_tmp.nii.gz'])
+           # if os.path.exists('c2_tmp.nii.gz'):
+            #    pass
+           # else:
+            #    sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
+             #   sys.exit()
+            #im_label_c2c3 = Image('c2_tmp.nii.gz')        
             ind_label = np.where(im_label_c2c3.data)
             #im_data = Image('datar.nii')
             #im_seg = Image('segmentationr.nii')
