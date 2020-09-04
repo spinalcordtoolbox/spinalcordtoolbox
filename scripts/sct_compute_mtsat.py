@@ -15,7 +15,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import, division
 
 import sys
 import os
@@ -37,7 +36,7 @@ def get_parser():
                     'MRI. Magn Reson Med 2008;60(6):1396-1407.',
         add_help=False,
         formatter_class=SmartFormatter,
-        prog= os.path.basename(__file__).strip(".py")
+        prog=os.path.basename(__file__).strip(".py")
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
