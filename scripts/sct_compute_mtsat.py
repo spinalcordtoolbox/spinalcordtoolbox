@@ -58,48 +58,6 @@ def get_parser():
         help="Image T1-weighted",
         metavar=Metavar.file,
         )
-    mandatoryArguments.add_argument(
-        "-trmt",
-        help="TR [in ms] for mt image. By default, will be fetch from the json sidecar (if it exists).",
-        type=float,
-        metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].mt, check_exist=True), 'RepetitionTime')
-        )
-    mandatoryArguments.add_argument(
-        "-trpd",
-        help="TR [in ms] for pd image. By default, will be fetch from the json sidecar (if it exists).",
-        type=float,
-        metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].pd, check_exist=True), 'RepetitionTime')
-        )
-    mandatoryArguments.add_argument(
-        "-trt1",
-        help="TR [in ms] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
-        type=float,
-        metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].t1, check_exist=True), 'RepetitionTime')
-        )
-    mandatoryArguments.add_argument(
-        "-famt",
-        help="Flip angle [in deg] for mt image. By default, will be fetch from the json sidecar (if it exists).",
-        type=float,
-        metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].mt, check_exist=True), 'FlipAngle')
-        )
-    mandatoryArguments.add_argument(
-        "-fapd",
-        help="Flip angle [in deg] for pd image. By default, will be fetch from the json sidecar (if it exists).",
-        type=float,
-        metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].pd, check_exist=True), 'FlipAngle')
-        )
-    mandatoryArguments.add_argument(
-        "-fat1",
-        help="Flip angle [in deg] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
-        type=float,
-        metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].t1, check_exist=True), 'FlipAngle')
-        )
 
     optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
     optional.add_argument(
@@ -107,6 +65,48 @@ def get_parser():
         "--help",
         action="help",
         help="Show this help message and exit")
+    optional.add_argument(
+        "-trmt",
+        help="TR [in ms] for mt image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].mt, check_exist=True), 'RepetitionTime')
+        )
+    optional.add_argument(
+        "-trpd",
+        help="TR [in ms] for pd image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].pd, check_exist=True), 'RepetitionTime')
+        )
+    optional.add_argument(
+        "-trt1",
+        help="TR [in ms] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].t1, check_exist=True), 'RepetitionTime')
+        )
+    optional.add_argument(
+        "-famt",
+        help="Flip angle [in deg] for mt image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].mt, check_exist=True), 'FlipAngle')
+        )
+    optional.add_argument(
+        "-fapd",
+        help="Flip angle [in deg] for pd image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].pd, check_exist=True), 'FlipAngle')
+        )
+    optional.add_argument(
+        "-fat1",
+        help="Flip angle [in deg] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].t1, check_exist=True), 'FlipAngle')
+        )
     optional.add_argument(
         "-b1map",
         help="B1 map",
