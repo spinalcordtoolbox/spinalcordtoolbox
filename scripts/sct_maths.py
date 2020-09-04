@@ -25,9 +25,6 @@ import spinalcordtoolbox.math as math
 from sct_utils import printv, extract_fname, display_viewer_syntax, init_sct
 
 
-ALMOST_ZERO = 0.000000001
-
-
 def get_parser():
 
     parser = argparse.ArgumentParser(
