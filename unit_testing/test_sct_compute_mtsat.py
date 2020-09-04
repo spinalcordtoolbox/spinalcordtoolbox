@@ -33,11 +33,6 @@ class InputParam2:
     fat1 = 6
 
 
-def test_get_tr_and_flipangle():
-    assert sct_compute_mtsat.get_tr_and_flipangle(InputParam1()) == (0.03, 0.03, 0.015, 9, 9, 15)
-    assert sct_compute_mtsat.get_tr_and_flipangle(InputParam2()) == (1, 2, 3, 4, 5, 6)
-
-
 def test_with_json_sidecar():
     sct_compute_mtsat.main(['-mt', sct_test_path('mt', 'mt1.nii.gz'),
                             '-pd', sct_test_path('mt', 'mt0.nii.gz'),
