@@ -185,7 +185,8 @@ def laplacian(data, sigmas):
     assert len(data.shape) == len(sigmas)
     return gaussian_laplace(data.astype(float), sigmas)
 
-
+# FIXME [AJ] don't use files paths
+# FIXME [AJ] handle input sanitization in caller
 def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
     '''
     Compute a similarity metric between two images data
@@ -214,7 +215,9 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
     if metric == 'corr':
         res = correlation(data1_1d, data2_1d)
         metric_full = 'Pearson correlation coefficient'
+
     # qc output
+    # FIXME [AJ] move to caller
     if verbose > 1:
         import matplotlib
         matplotlib.use('Agg')
@@ -242,11 +245,9 @@ def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
         else:
             pickle.dump(res, open(fname_out, 'w'), protocol=2)
 
-
 def otsu(data, nbins):
     thresh = threshold_otsu(data, nbins)
     return data > thresh
-
 
 def adap(data, block_size, offset):
     mask = data
@@ -255,64 +256,20 @@ def adap(data, block_size, offset):
         mask[:, :, iz] = mask[:, :, iz] > adaptive_thresh
     return mask
 
-
 def otsu_median(data, size, n_iter):
     data, mask = median_otsu(data, size, n_iter)
     return mask
-
 
 def threshold(data, thr_value):
     data[data < thr_value] = 0
     return data
 
-
 def perc(data, perc_value):
     perc = np.percentile(data, perc_value)
     return data > perc
 
-
 def binarize(data, bin_thr=0):
     return data > bin_thr
-
-
-def get_data(list_fname):
-    """
-    Get data from list of file names
-    :param list_fname:
-    :return: 3D or 4D numpy array.
-    """
-    try:
-        nii = [Image(f_in) for f_in in list_fname]
-    except Exception as e:
-        printv(str(e), 1, 'error')  # file does not exist, exit program
-    data0 = nii[0].data
-    data = nii[0].data
-    # check that every images have same shape
-    for i in range(1, len(nii)):
-        if not np.shape(nii[i].data) == np.shape(data0):
-            printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(nii[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data0)), 1, 'warning')
-            printv('\nERROR: All input images must have same dimensions.', 1, 'error')
-        else:
-            data = concatenate_along_4th_dimension(data, nii[i].data)
-    return data
-
-
-def get_data_or_scalar(argument, data_in):
-    """
-    Get data from list of file names (scenario 1) or scalar (scenario 2)
-    :param argument: list of file names of scalar
-    :param data_in: if argument is scalar, use data to get np.shape
-    :return: 3d or 4d numpy array
-    """
-    # try to convert argument in float
-    try:
-        # build data2 with same shape as data
-        data_out = data_in[:, :, :] * 0 + float(argument[0])
-    # if conversion fails, it should be a string (i.e. file name)
-    except ValueError:
-        data_out = get_data(argument)
-    return data_out
-
 
 def concatenate_along_4th_dimension(data1, data2):
     """
@@ -326,7 +283,6 @@ def concatenate_along_4th_dimension(data1, data2):
     if len(np.shape(data2)) == 3:
         data2 = data2[..., np.newaxis]
     return np.concatenate((data1, data2), axis=3)
-
 
 def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     """
