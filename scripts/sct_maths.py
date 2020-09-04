@@ -14,8 +14,10 @@ from __future__ import division, absolute_import
 
 import os
 import sys
+
 import numpy as np
 import argparse
+import pickle, gzip
 
 import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image
@@ -476,6 +478,48 @@ def convert_list_str(string_list, type='int'):
             new_type_list[inew_type_list] = float(ele)
 
     return new_type_list
+
+def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, metric_full: str, verbose):
+    """
+    Sanitize input and compute similarity metric between two images data.
+    """
+    if img1.data.size != img2.data.size:
+        raise ValueError(f"Input images don't have the same size! \nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space")
+
+    if verbose > 1:
+        res = math.compute_similarity(img1.data, img2.data, metric=metric, qc_func=compute_similarity_qc_func)
+    else:
+        res = math.compute_similarity(img1.data, img2.data, metric=metric)
+
+    path_out, filename_out, ext_out = extract_fname(fname_out)
+    if ext_out not in ['.txt', '.pkl', '.pklz', '.pickle']:
+        raise ValueError(f"The output file should a text file or a pickle file. Received extension: {ext_out}")
+
+    if ext_out == '.txt':
+        with open(fname_out, 'w') as f:
+            f.write(metric_full + ': \n' + str(res))
+    elif ext_out == '.pklz':
+        pickle.dump(res, gzip.open(fname_out, 'wb'), protocol=2)
+    else:
+        pickle.dump(res, open(fname_out, 'w'), protocol=2)
+
+def compute_similarity_qc_func(data1_1d, data2_1d, res, metric):
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    plt.plot(data1_1d, 'b')
+    plt.plot(data2_1d, 'r')
+    plt.grid
+
+    if metric == 'mi':
+        metric_full = 'Mutual information'
+    if metric == 'minorm':
+        metric_full = 'Normalized Mutual information'
+    if metric == 'corr':
+        metric_full = 'Pearson correlation coefficient'
+
+    plt.title('Similarity: ' + metric_full + ' = ' + str(res))
+    plt.savefig('fig_similarity.png')
 
 
 if __name__ == "__main__":

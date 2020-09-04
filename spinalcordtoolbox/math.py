@@ -6,8 +6,6 @@
 import logging
 
 import numpy as np
-import pickle, gzip
-
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
 from skimage.filters import threshold_local, threshold_otsu
 from scipy.ndimage.filters import gaussian_filter, gaussian_laplace
@@ -186,65 +184,41 @@ def laplacian(data, sigmas):
     assert len(data.shape) == len(sigmas)
     return gaussian_laplace(data.astype(float), sigmas)
 
-# FIXME [AJ] don't use files paths
-# FIXME [AJ] handle input sanitization in caller
-def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
+def compute_similarity(data1, data2, metric, qc_func=None):
     '''
     Compute a similarity metric between two images data
     :param data1: numpy.array 3D data
     :param data2: numpy.array 3D data
     :param fname_out: file name of the output file. Output file should be either a text file ('.txt') or a pickle file ('.pkl', '.pklz' or '.pickle')
     :param metric: 'mi' for mutual information or 'corr' for pearson correlation coefficient
-    :return: None
+    :param qc_fuc: if provided, run reporting func with computed data
+    :return: computetd results of similarity
     '''
-    assert data1.size == data2.size, "\n\nERROR: the data don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
     data1_1d = data1.ravel()
     data2_1d = data2.ravel()
+
     # get indices of non-null voxels from the intersection of both data
     data_mult = data1_1d * data2_1d
     ind_nonnull = np.where(data_mult > ALMOST_ZERO)[0]
+
     # set new variables with non-null voxels
     data1_1d = data1_1d[ind_nonnull]
     data2_1d = data2_1d[ind_nonnull]
+
     # compute similarity metric
     if metric == 'mi':
         res = mutual_information(data1_1d, data2_1d, normalized=False)
-        metric_full = 'Mutual information'
     if metric == 'minorm':
         res = mutual_information(data1_1d, data2_1d, normalized=True)
-        metric_full = 'Normalized Mutual information'
     if metric == 'corr':
         res = correlation(data1_1d, data2_1d)
-        metric_full = 'Pearson correlation coefficient'
-
-    # qc output
-    # FIXME [AJ] move to caller
-    if verbose > 1:
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-        plt.plot(data1_1d, 'b')
-        plt.plot(data2_1d, 'r')
-        plt.grid
-        plt.title('Similarity: ' + metric_full + ' = ' + str(res))
-        plt.savefig('fig_similarity.png')
-
-    printv('\n' + metric_full + ': ' + str(res), verbose, 'info')
-
-    path_out, filename_out, ext_out = extract_fname(fname_out)
-    if ext_out not in ['.txt', '.pkl', '.pklz', '.pickle']:
-        printv('ERROR: the output file should a text file or a pickle file. Received extension: ' + ext_out, 1, 'error')
-
-    elif ext_out == '.txt':
-        file_out = open(fname_out, 'w')
-        file_out.write(metric_full + ': \n' + str(res))
-        file_out.close()
-
     else:
-        if ext_out == '.pklz':
-            pickle.dump(res, gzip.open(fname_out, 'wb'), protocol=2)
-        else:
-            pickle.dump(res, open(fname_out, 'w'), protocol=2)
+        raise ValueError(f"Don't know what metric to use! Got unsupported: {metric}")
+
+    if qc_func:
+        qc_func(data1_1d, data2_1d, res, metric)
+
+    return res
 
 def otsu(data, nbins):
     thresh = threshold_otsu(data, nbins)
