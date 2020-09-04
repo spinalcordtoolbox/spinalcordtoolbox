@@ -268,7 +268,7 @@ def main(args=None):
 
     elif arguments.adap is not None:
         param = convert_list_str(arguments.adap, "int")
-        data_out = math.adapdata, param[0], param[1])
+        data_out = math.adap(data, param[0], param[1])
 
     elif arguments.otsu_median is not None:
         param = convert_list_str(arguments.otsu_median, "int")
@@ -276,7 +276,7 @@ def main(args=None):
 
     elif arguments.thr is not None:
         param = arguments.thr
-        data_out = maththreshold(data, param)
+        data_out = math.threshold(data, param)
 
     elif arguments.percent is not None:
         param = arguments.percent
@@ -288,7 +288,7 @@ def main(args=None):
 
     elif arguments.add is not None:
         data2 = get_data_or_scalar(arguments.add, data)
-        data_concat = concatenate_along_4th_dimension(data, data2)
+        data_concat = math.concatenate_along_4th_dimension(data, data2)
         data_out = np.sum(data_concat, axis=3)
 
     elif arguments.sub is not None:
@@ -308,7 +308,7 @@ def main(args=None):
 
     elif arguments.mul is not None:
         data2 = get_data_or_scalar(arguments.mul, data)
-        data_concat = concatenate_along_4th_dimension(data, data2)
+        data_concat = math.concatenate_along_4th_dimension(data, data2)
         data_out = np.prod(data_concat, axis=3)
 
     elif arguments.div is not None:
@@ -368,19 +368,19 @@ def main(args=None):
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
         im_2 = Image(arguments.mi)
-        compute_similarity(im.data, im_2.data, fname_out, metric='mi', verbose=verbose)
+        compute_similarity(im, im_2, fname_out, metric='mi', metric_full='Mutual information', verbose=verbose)
         data_out = None
 
     elif arguments.minorm is not None:
         im_2 = Image(arguments.minorm)
-        compute_similarity(im.data, im_2.data, fname_out, metric='minorm', verbose=verbose)
+        compute_similarity(im, im_2, fname_out, metric='minorm', metric_full='Normalized Mutual information', verbose=verbose)
         data_out = None
 
     elif arguments.corr is not None:
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
         im_2 = Image(arguments.corr)
-        compute_similarity(im.data, im_2.data, fname_out, metric='corr', verbose=verbose)
+        compute_similarity(im, im_2, fname_out, metric='corr', metric_full='Pearson correlation coefficient', verbose=verbose)
         data_out = None
 
     # if no flag is set
@@ -459,7 +459,7 @@ def get_data(list_fname):
             printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(nii[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data0)), 1, 'warning')
             printv('\nERROR: All input images must have same dimensions.', 1, 'error')
         else:
-            data = concatenate_along_4th_dimension(data, nii[i].data)
+            data = math.concatenate_along_4th_dimension(data, nii[i].data)
     return data
 
 def convert_list_str(string_list, type='int'):
