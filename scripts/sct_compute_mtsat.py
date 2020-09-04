@@ -28,7 +28,7 @@ from spinalcordtoolbox.image import Image
 import sct_utils as sct
 
 
-def get_parser():
+def get_parser(argv):
     parser = argparse.ArgumentParser(
         description='Compute MTsat and T1map. '
                     'Reference: Helms G, Dathe H, Kallenberg K, Dechent P. High-resolution maps of magnetization '
@@ -70,42 +70,48 @@ def get_parser():
         help="TR [in ms] for mt image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].mt, check_exist=True), 'RepetitionTime')
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].mt, check_exist=True), 'RepetitionTime')
         )
     optional.add_argument(
         "-trpd",
         help="TR [in ms] for pd image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].pd, check_exist=True), 'RepetitionTime')
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].pd, check_exist=True), 'RepetitionTime')
         )
     optional.add_argument(
         "-trt1",
         help="TR [in ms] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].t1, check_exist=True), 'RepetitionTime')
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].t1, check_exist=True), 'RepetitionTime')
         )
     optional.add_argument(
         "-famt",
         help="Flip angle [in deg] for mt image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].mt, check_exist=True), 'FlipAngle')
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].mt, check_exist=True), 'FlipAngle')
         )
     optional.add_argument(
         "-fapd",
         help="Flip angle [in deg] for pd image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].pd, check_exist=True), 'FlipAngle')
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].pd, check_exist=True), 'FlipAngle')
         )
     optional.add_argument(
         "-fat1",
         help="Flip angle [in deg] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(get_json_file_name(parser.parse_known_args()[0].t1, check_exist=True), 'FlipAngle')
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].t1, check_exist=True), 'FlipAngle')
         )
     optional.add_argument(
         "-b1map",
@@ -133,7 +139,7 @@ def get_parser():
 
 
 def main(argv):
-    parser = get_parser()
+    parser = get_parser(argv)
     args = parser.parse_args(argv if argv else ['--help'])
     verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
