@@ -158,7 +158,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     direction = 'superior'
     search_next_disc = True
     # image is straighten and oriented according to RPI convention before.
-    mid_index = nib.load(fname).header.get_data_shape[0]
+    mid_index = nib.load(fname).header.get_data_shape()[0]
     image_mid = imed_preprocessing.get_midslice_average(fname, mid_index)
     nib.save(image_mid, fname)
     if contrast=="t2":
