@@ -58,6 +58,11 @@ MODELS = {
         "description": "Cord localisation model, trained on T2-weighted images with tumor.",
         "default": False,
     },
+    "model_find_disc_t2": {
+        "url": ["https://github.com/ivadomed/model_find_disc_t2/archive/r20200904.zip"],
+        "description": "intevertebral disc localisation model, trained on T2-weighted images",
+        "default": True,
+    }
 }
 
 # List of task. The convention for task names is: action_(animal)_region_(contrast)
