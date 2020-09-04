@@ -51,6 +51,19 @@ class ActionCreateFolder(argparse.Action):
         setattr(namespace, self.dest, folders)
 
 
+# TODO: Use for argparse wherever type_value=[['delim'], 'type'] was used
+def list_type(delimiter, subtype):
+    """
+        Factory function that returns a list parsing function, which can be
+        used with argparse's `type` option. This allows for more complex type
+        parsing, and preserves the behavior of the old msct_parser.
+    """
+    def list_typecast_func(string):
+        return [subtype(v) for v in string.split(delimiter)]
+
+    return list_typecast_func
+
+
 class Metavar(Enum):
     """
     This class is used to display intuitive input types via the metavar field of argparse
