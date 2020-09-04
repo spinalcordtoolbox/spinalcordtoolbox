@@ -33,12 +33,12 @@ from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 import spinalcordtoolbox.image as msct_image
 
+# FIXME [AJ] would be nice to get rid of this at some point
 import sct_utils as sct
+
+# FIXME
 import sct_maths
 import sct_label_utils
-from sct_utils import add_suffix
-from sct_convert import convert
-from sct_image import split_data, concat_warp2d
 
 from msct_parser import Parser
 import sct_apply_transfo
@@ -359,6 +359,7 @@ def main(args=None):
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
     ftmp_seg_, ftmp_seg = ftmp_seg, sct.add_suffix(ftmp_seg, "_bin")
+
     sct_maths.main(['-i', ftmp_seg_,
                     '-bin', '0.5',
                     '-o', ftmp_seg])
@@ -368,14 +369,14 @@ def main(args=None):
 
         # resample data to 1mm isotropic
         sct.printv('\nResample data to 1mm isotropic...', verbose)
-        resample_file(ftmp_data, add_suffix(ftmp_data, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
-        ftmp_data = add_suffix(ftmp_data, '_1mm')
-        resample_file(ftmp_seg, add_suffix(ftmp_seg, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
-        ftmp_seg = add_suffix(ftmp_seg, '_1mm')
+        resample_file(ftmp_data, sct.add_suffix(ftmp_data, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
+        ftmp_data = sct.add_suffix(ftmp_data, '_1mm')
+        resample_file(ftmp_seg, sct.add_suffix(ftmp_seg, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
+        ftmp_seg = sct.add_suffix(ftmp_seg, '_1mm')
         # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling
         # with nearest neighbour can make them disappear.
-        resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
-        ftmp_label = add_suffix(ftmp_label, '_1mm')
+        resample_labels(ftmp_label, ftmp_data, sct.add_suffix(ftmp_label, '_1mm'))
+        ftmp_label = sct.add_suffix(ftmp_label, '_1mm')
 
         # Change orientation of input images to RPI
         sct.printv('\nChange orientation of input images to RPI...', verbose)
@@ -385,7 +386,7 @@ def main(args=None):
         ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
 
 
-        ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
+        ftmp_seg_, ftmp_seg = ftmp_seg, sct.add_suffix(ftmp_seg, '_crop')
         if level_alignment:
             # cropping the segmentation based on the label coverage to ensure good registration with level alignment
             # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
@@ -444,12 +445,12 @@ def main(args=None):
                 '-i', ftmp_seg,
                 '-w', 'warp_curve2straight.nii.gz',
                 '-d', 'straight_ref.nii.gz',
-                '-o', add_suffix(ftmp_seg, '_straight')])
+                '-o', sct.add_suffix(ftmp_seg, '_straight')])
         else:
             from spinalcordtoolbox.straightening import SpinalCordStraightener
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
             sc_straight.param_centerline = param_centerline
-            sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
+            sc_straight.output_filename = sct.add_suffix(ftmp_seg, '_straight')
             sc_straight.path_output = './'
             sc_straight.qc = '0'
             sc_straight.remove_temp_files = param.remove_temp_files
@@ -482,18 +483,18 @@ def main(args=None):
 
             # Dilating the input label so they can be straighten without losing them
             sct.printv('\nDilating input labels using 3vox ball radius')
-            dilate(Image(ftmp_label), 3, 'ball').save(add_suffix(ftmp_label, '_dilate'))
-            ftmp_label = add_suffix(ftmp_label, '_dilate')
+            dilate(Image(ftmp_label), 3, 'ball').save(sct.add_suffix(ftmp_label, '_dilate'))
+            ftmp_label = sct.add_suffix(ftmp_label, '_dilate')
 
             # Apply straightening to labels
             sct.printv('\nApply straightening to labels...', verbose)
             sct_apply_transfo.main(args=[
                 '-i', ftmp_label,
-                '-o', add_suffix(ftmp_label, '_straight'),
-                '-d', add_suffix(ftmp_seg, '_straight'),
+                '-o', sct.add_suffix(ftmp_label, '_straight'),
+                '-d', sct.add_suffix(ftmp_seg, '_straight'),
                 '-w', 'warp_curve2straight.nii.gz',
                 '-x', 'nn'])
-            ftmp_label = add_suffix(ftmp_label, '_straight')
+            ftmp_label = sct.add_suffix(ftmp_label, '_straight')
 
             # Compute rigid transformation straight landmarks --> template landmarks
             sct.printv('\nEstimate transformation for step #0...', verbose)
@@ -515,17 +516,17 @@ def main(args=None):
         sct.printv('\nApply transformation...', verbose)
         sct_apply_transfo.main(args=[
             '-i', ftmp_data,
-            '-o', add_suffix(ftmp_data, '_straightAffine'),
+            '-o', sct.add_suffix(ftmp_data, '_straightAffine'),
             '-d', ftmp_template,
             '-w', 'warp_curve2straightAffine.nii.gz'])
-        ftmp_data = add_suffix(ftmp_data, '_straightAffine')
+        ftmp_data = sct.add_suffix(ftmp_data, '_straightAffine')
         sct_apply_transfo.main(args=[
             '-i', ftmp_seg,
-            '-o', add_suffix(ftmp_seg, '_straightAffine'),
+            '-o', sct.add_suffix(ftmp_seg, '_straightAffine'),
             '-d', ftmp_template,
             '-w', 'warp_curve2straightAffine.nii.gz',
             '-x', 'linear'])
-        ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
+        ftmp_seg = sct.add_suffix(ftmp_seg, '_straightAffine')
 
         """
         # Benjamin: Issue from Allan Martin, about the z=0 slice that is screwed up, caused by the affine transform.
@@ -546,33 +547,33 @@ def main(args=None):
         # find min-max of anat2template (for subsequent cropping)
         zmin_template, zmax_template = msct_image.find_zmin_zmax(im_new, threshold=0.5)
         # save binarized segmentation
-        im_new.save(add_suffix(ftmp_seg, '_bin')) # unused?
+        im_new.save(sct.add_suffix(ftmp_seg, '_bin')) # unused?
         # crop template in z-direction (for faster processing)
         # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
-        ftmp_template_, ftmp_template = ftmp_template, add_suffix(ftmp_template, '_crop')
+        ftmp_template_, ftmp_template = ftmp_template, sct.add_suffix(ftmp_template, '_crop')
         msct_image.spatial_crop(Image(ftmp_template_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template)
 
-        ftmp_template_seg_, ftmp_template_seg = ftmp_template_seg, add_suffix(ftmp_template_seg, '_crop')
+        ftmp_template_seg_, ftmp_template_seg = ftmp_template_seg, sct.add_suffix(ftmp_template_seg, '_crop')
         msct_image.spatial_crop(Image(ftmp_template_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template_seg)
 
-        ftmp_data_, ftmp_data = ftmp_data, add_suffix(ftmp_data, '_crop')
+        ftmp_data_, ftmp_data = ftmp_data, sct.add_suffix(ftmp_data, '_crop')
         msct_image.spatial_crop(Image(ftmp_data_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_data)
 
-        ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
+        ftmp_seg_, ftmp_seg = ftmp_seg, sct.add_suffix(ftmp_seg, '_crop')
         msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_seg)
 
         # sub-sample in z-direction
         # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nSub-sample in z-direction (for faster processing)...', verbose)
-        sct.run(['sct_resample', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample], verbose)
-        ftmp_template = add_suffix(ftmp_template, '_sub')
-        sct.run(['sct_resample', '-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
-        ftmp_template_seg = add_suffix(ftmp_template_seg, '_sub')
-        sct.run(['sct_resample', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', '1x1x' + zsubsample], verbose)
-        ftmp_data = add_suffix(ftmp_data, '_sub')
-        sct.run(['sct_resample', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
-        ftmp_seg = add_suffix(ftmp_seg, '_sub')
+        sct.run(['sct_resample', '-i', ftmp_template, '-o', sct.add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        ftmp_template = sct.add_suffix(ftmp_template, '_sub')
+        sct.run(['sct_resample', '-i', ftmp_template_seg, '-o', sct.add_suffix(ftmp_template_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        ftmp_template_seg = sct.add_suffix(ftmp_template_seg, '_sub')
+        sct.run(['sct_resample', '-i', ftmp_data, '-o', sct.add_suffix(ftmp_data, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        ftmp_data = sct.add_suffix(ftmp_data, '_sub')
+        sct.run(['sct_resample', '-i', ftmp_seg, '-o', sct.add_suffix(ftmp_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        ftmp_seg = sct.add_suffix(ftmp_seg, '_sub')
 
         # Registration straight spinal cord to template
         sct.printv('\nRegister straight spinal cord to template...', verbose)
