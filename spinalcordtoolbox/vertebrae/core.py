@@ -10,6 +10,7 @@ import numpy as np
 import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
 import sct_utils as sct
+import spinalcordtoolbox as sct_root
 from sct_maths import mutual_information
 
 from spinalcordtoolbox.image import Image
@@ -162,11 +163,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     image_mid = imed_preprocessing.get_midslice_average(fname, mid_index)
     nib.save(image_mid, fname)
     if contrast=="t2":
-        fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct.__deepseg_dir__,
+        fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct_root.__deepseg_dir__,
                                                              'model_find_disc_t2'),
                                          post=False)
     elif contrast=="t2":
-        fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct.__deepseg_dir__,
+        fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct_root.__deepseg_dir__,
                                                                  'model_find_disc_t1'),
                                              post=False)
 
