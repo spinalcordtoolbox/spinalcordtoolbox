@@ -15,20 +15,20 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import, division
 
 import sys
 import os
 import argparse
+import json
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, splitext
 from spinalcordtoolbox.qmri.mt import compute_mtsat
 from spinalcordtoolbox.image import Image
 
 import sct_utils as sct
 
 
-def get_parser():
+def get_parser(argv):
     parser = argparse.ArgumentParser(
         description='Compute MTsat and T1map. '
                     'Reference: Helms G, Dathe H, Kallenberg K, Dechent P. High-resolution maps of magnetization '
@@ -36,7 +36,7 @@ def get_parser():
                     'MRI. Magn Reson Med 2008;60(6):1396-1407.',
         add_help=False,
         formatter_class=SmartFormatter,
-        prog= os.path.basename(__file__).strip(".py")
+        prog=os.path.basename(__file__).strip(".py")
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -58,48 +58,6 @@ def get_parser():
         help="Image T1-weighted",
         metavar=Metavar.file,
         )
-    mandatoryArguments.add_argument(
-        "-trmt",
-        required=True,
-        help="TR [in ms] for mt image.",
-        type=float,
-        metavar=Metavar.float,
-        )
-    mandatoryArguments.add_argument(
-        "-trpd",
-        required=True,
-        help="TR [in ms] for pd image.",
-        type=float,
-        metavar=Metavar.float,
-        )
-    mandatoryArguments.add_argument(
-        "-trt1",
-        required=True,
-        help="TR [in ms] for t1 image.",
-        type=float,
-        metavar=Metavar.float,
-        )
-    mandatoryArguments.add_argument(
-        "-famt",
-        required=True,
-        help="Flip angle [in deg] for mt image.",
-        type=float,
-        metavar=Metavar.float,
-        )
-    mandatoryArguments.add_argument(
-        "-fapd",
-        required=True,
-        help="Flip angle [in deg] for pd image.",
-        type=float,
-        metavar=Metavar.float,
-        )
-    mandatoryArguments.add_argument(
-        "-fat1",
-        required=True,
-        help="Flip angle [in deg] for t1 image.",
-        type=float,
-        metavar=Metavar.float,
-        )
 
     optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
     optional.add_argument(
@@ -107,6 +65,54 @@ def get_parser():
         "--help",
         action="help",
         help="Show this help message and exit")
+    optional.add_argument(
+        "-trmt",
+        help="TR [in ms] for mt image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].mt, check_exist=True), 'RepetitionTime')
+        )
+    optional.add_argument(
+        "-trpd",
+        help="TR [in ms] for pd image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].pd, check_exist=True), 'RepetitionTime')
+        )
+    optional.add_argument(
+        "-trt1",
+        help="TR [in ms] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].t1, check_exist=True), 'RepetitionTime')
+        )
+    optional.add_argument(
+        "-famt",
+        help="Flip angle [in deg] for mt image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].mt, check_exist=True), 'FlipAngle')
+        )
+    optional.add_argument(
+        "-fapd",
+        help="Flip angle [in deg] for pd image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].pd, check_exist=True), 'FlipAngle')
+        )
+    optional.add_argument(
+        "-fat1",
+        help="Flip angle [in deg] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
+        type=float,
+        metavar=Metavar.float,
+        default=fetch_metadata(
+            get_json_file_name(parser.parse_known_args(argv)[0].t1, check_exist=True), 'FlipAngle')
+        )
     optional.add_argument(
         "-b1map",
         help="B1 map",
@@ -132,9 +138,46 @@ def get_parser():
     return parser
 
 
-def main():
-    parser = get_parser()
-    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+def get_json_file_name(fname, check_exist=False):
+    """
+    Get json file name by replacing '.nii' or '.nii.gz' extension by '.json'.
+    Check if input file follows NIFTI extension rules.
+    Optional: check if json file exists.
+    :param fname: str: Input NIFTI file name.
+    check_exist: Bool: Check if json file exists.
+    :return: fname_json
+    """
+    list_ext = ['.nii', '.nii.gz']
+    basename, ext = splitext(fname)
+    if ext not in list_ext:
+        raise ValueError("Problem with file: {}. Extension should be one of {}".format(fname, list_ext))
+    fname_json = basename + '.json'
+
+    if check_exist:
+        if not os.path.isfile(fname_json):
+            FileNotFoundError()
+
+    return fname_json
+
+
+def fetch_metadata(fname_json, field):
+    """
+    Return specific field value from json sidecar.
+    :param fname_json: str: Json file
+    :param field: str: Field to retrieve
+    :return: value of the field.
+    """
+    with open(fname_json) as f:
+        metadata = json.load(f)
+    if field not in metadata:
+        KeyError("Json file {} does not contain the field: {}".format(fname_json, field))
+    else:
+        return metadata[field]
+
+
+def main(argv):
+    parser = get_parser(argv)
+    args = parser.parse_args(argv if argv else ['--help'])
     verbose = args.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
@@ -148,8 +191,10 @@ def main():
         nii_b1map = Image(args.b1map)
 
     # compute MTsat
-    nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1, args.trmt, args.trpd, args.trt1, args.famt, args.fapd,
-                                         args.fat1, nii_b1map=nii_b1map)
+    nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1,
+                                         args.trmt, args.trpd, args.trt1,
+                                         args.famt, args.fapd, args.fat1,
+                                         nii_b1map=nii_b1map)
 
     # Output MTsat and T1 maps
     # by default, output in the same directory as the input images
@@ -173,4 +218,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])

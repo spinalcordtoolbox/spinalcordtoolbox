@@ -22,6 +22,7 @@ import numpy as np
 
 from sct_utils import init_sct, printv
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
+import spinalcordtoolbox.image as image
 
 
 # DEFAULT PARAMETERS
@@ -79,16 +80,11 @@ def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
     Convert data
     :return True/False
     """
-    import spinalcordtoolbox.image as msct_image
     printv('sct_convert -i ' + fname_in + ' -o ' + fname_out, verbose, 'code')
-    im = msct_image.Image(fname_in)
-    if squeeze_data:
-        im.data = np.squeeze(im.data)
-    if dtype:
-        im.change_type(dtype)
-    im.save(fname_out, mutable=True, verbose=verbose)
-    return im
 
+    img = image.Image(fname_in)
+    img = image.convert(img, squeeze_data=squeeze_data, dtype=dtype)
+    img.save(fname_out, mutable=True, verbose=verbose)
 
 def main(args=None):
     """

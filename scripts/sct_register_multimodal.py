@@ -38,10 +38,11 @@ import argparse
 import numpy as np
 
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.registration.register import Paramreg, ParamregMultiStep
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
-from msct_register import Paramreg, ParamregMultiStep, register_wrapper
+from sct_register_to_template import register_wrapper
 
 
 def get_parser(paramregmulti=None):

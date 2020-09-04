@@ -283,8 +283,8 @@ def main(argv):
             else:
                 print('Please input y or n')
 
-        if send_test.lower() in ['', 'y']:
-            send_notification('sct_run_batch: test notification', 'Looks good')
+            if send_test.lower() in ['', 'y']:
+               send_notification('sct_run_batch: test notification', 'Looks good')
 
     # Set up output directories and create them if they don't already exist
     path_output = os.path.abspath(os.path.expanduser(args.path_output))
@@ -296,8 +296,7 @@ def main(argv):
     script = os.path.abspath(os.path.expanduser(args.script))
 
     for pth in [path_output, path_results, path_data_processed, path_log, path_qc]:
-        if not os.path.exists(pth):
-            os.mkdir(pth)
+        os.makedirs(pth, exist_ok=True)
 
     # Check that the script can be found
     if not os.path.exists(script):
@@ -332,8 +331,7 @@ def main(argv):
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
 
     # Display number of CPU cores
-    output = int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))
-    print('CPU cores: Available: {} | Used by SCT: {}'.format(multiprocessing.cpu_count(), output))
+    print('CPU cores: Available: {} | Threads used by ITK Programs: {}'.format(multiprocessing.cpu_count(), args.itk_threads))
 
     # Display RAM available
     print("RAM: Total {} MB | Available {} MB | Used {} MB".format(
@@ -398,6 +396,10 @@ def main(argv):
     else:
         jobs = args.jobs
 
+    print("RUNNING")
+    print("-------")
+    print("Running {} jobs in parallel.\n".format(jobs))
+
     # Run the jobs, recording start and end times
     start = datetime.datetime.now()
 
@@ -415,9 +417,9 @@ def main(argv):
                                                path_qc=path_qc,
                                                itk_threads=args.itk_threads,
                                                continue_on_error=args.continue_on_error)
-            results = p.map(run_single_dir, subject_dirs)
+            results = list(p.imap(run_single_dir, subject_dirs))
     except Exception as e:
-        if do_email is not None:
+        if do_email:
             message = ('Oh no there has been the following error in your pipeline:\n\n'
                        '{}'.format(e))
             try:
