@@ -13,9 +13,9 @@
 
 from __future__ import division, absolute_import
 
-import sys, os
+import sys
+import os
 import numpy as np
-import torch
 import sct_maths
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
@@ -28,7 +28,7 @@ from sct_label_utils import ProcessLabels
 from msct_parser import Parser
 import sct_utils as sct
 import sct_straighten_spinalcord
-import spinalcordtoolbox
+import spinalcordtoolboxs
 
 
 # PARAMETERS
