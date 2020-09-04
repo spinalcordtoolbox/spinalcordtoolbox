@@ -31,13 +31,13 @@ from spinalcordtoolbox.resampling import resample_file
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
-import spinalcordtoolbox.image as msct_image
+import spinalcordtoolbox.image as image
+import spinalcordtoolbox.math as math
 
 # FIXME [AJ] would be nice to get rid of this at some point
 import sct_utils as sct
 
 # FIXME
-import sct_maths
 import sct_label_utils
 
 from msct_parser import Parser
@@ -400,21 +400,21 @@ def main(args=None):
                 cropping_slices[0] = 0
             if cropping_slices[1] > nz:
                 cropping_slices[1] = nz
-            msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, np.int32(np.round(cropping_slices))),))).save(ftmp_seg)
+            image.spatial_crop(Image(ftmp_seg_), dict(((2, np.int32(np.round(cropping_slices))),))).save(ftmp_seg)
         else:
             # if we do not align the vertebral levels, we crop the segmentation from top to bottom
             im_seg_rpi = Image(ftmp_seg_)
             bottom = 0
-            for data in msct_image.SlicerOneAxis(im_seg_rpi, "IS"):
+            for data in image.SlicerOneAxis(im_seg_rpi, "IS"):
                 if (data != 0).any():
                     break
                 bottom += 1
             top = im_seg_rpi.data.shape[2]
-            for data in msct_image.SlicerOneAxis(im_seg_rpi, "SI"):
+            for data in image.SlicerOneAxis(im_seg_rpi, "SI"):
                 if (data != 0).any():
                     break
                 top -= 1
-            msct_image.spatial_crop(im_seg_rpi, dict(((2, (bottom, top)),))).save(ftmp_seg)
+            image.spatial_crop(im_seg_rpi, dict(((2, (bottom, top)),))).save(ftmp_seg)
 
         # straighten segmentation
         sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
@@ -536,32 +536,32 @@ def main(args=None):
             points_straight.append(coord.z)
         min_point, max_point = int(np.round(np.min(points_straight))), int(np.round(np.max(points_straight)))
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_black')
-        msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (min_point,max_point)),))).save(ftmp_seg)
+        image.spatial_crop(Image(ftmp_seg_), dict(((2, (min_point,max_point)),))).save(ftmp_seg)
 
         """
         # open segmentation
         im = Image(ftmp_seg)
-        im_new = msct_image.empty_like(im)
+        im_new = image.empty_like(im)
         # binarize
         im_new.data = im.data > 0.5
         # find min-max of anat2template (for subsequent cropping)
-        zmin_template, zmax_template = msct_image.find_zmin_zmax(im_new, threshold=0.5)
+        zmin_template, zmax_template = image.find_zmin_zmax(im_new, threshold=0.5)
         # save binarized segmentation
         im_new.save(sct.add_suffix(ftmp_seg, '_bin')) # unused?
         # crop template in z-direction (for faster processing)
         # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
         ftmp_template_, ftmp_template = ftmp_template, sct.add_suffix(ftmp_template, '_crop')
-        msct_image.spatial_crop(Image(ftmp_template_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template)
+        image.spatial_crop(Image(ftmp_template_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template)
 
         ftmp_template_seg_, ftmp_template_seg = ftmp_template_seg, sct.add_suffix(ftmp_template_seg, '_crop')
-        msct_image.spatial_crop(Image(ftmp_template_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template_seg)
+        image.spatial_crop(Image(ftmp_template_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template_seg)
 
         ftmp_data_, ftmp_data = ftmp_data, sct.add_suffix(ftmp_data, '_crop')
-        msct_image.spatial_crop(Image(ftmp_data_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_data)
+        image.spatial_crop(Image(ftmp_data_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_data)
 
         ftmp_seg_, ftmp_seg = ftmp_seg, sct.add_suffix(ftmp_seg, '_crop')
-        msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_seg)
+        image.spatial_crop(Image(ftmp_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_seg)
 
         # sub-sample in z-direction
         # TODO: refactor to use python module instead of doing i/o
@@ -720,7 +720,7 @@ def project_labels_on_spinalcord(fname_label, fname_seg, param_centerline):
     # get center of mass of label
     labels = im_label.getCoordinatesAveragedByValue()
     # initialize image of projected labels. Note that we use the space of the seg (not label).
-    im_label_projected = msct_image.zeros_like(im_seg, dtype=np.uint8)
+    im_label_projected = image.zeros_like(im_seg, dtype=np.uint8)
 
     # loop across label values
     for label in labels:
