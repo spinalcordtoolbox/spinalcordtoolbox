@@ -3,11 +3,8 @@
 from __future__ import print_function, absolute_import
 
 import os
-import sys
 
 from spinalcordtoolbox.utils import sct_test_path
-from spinalcordtoolbox import __sct_dir__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
 import sct_compute_mtsat
 
