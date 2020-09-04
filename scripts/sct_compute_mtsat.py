@@ -19,9 +19,9 @@
 import sys
 import os
 import argparse
+import json
 
-from spinalcordtoolbox.bids import get_json_file_name, fetch_metadata
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, splitext
 from spinalcordtoolbox.qmri.mt import compute_mtsat
 from spinalcordtoolbox.image import Image
 
@@ -136,6 +136,43 @@ def get_parser(argv):
         default=1)
 
     return parser
+
+
+def get_json_file_name(fname, check_exist=False):
+    """
+    Get json file name by replacing '.nii' or '.nii.gz' extension by '.json'.
+    Check if input file follows NIFTI extension rules.
+    Optional: check if json file exists.
+    :param fname: str: Input NIFTI file name.
+    check_exist: Bool: Check if json file exists.
+    :return: fname_json
+    """
+    list_ext = ['.nii', '.nii.gz']
+    basename, ext = splitext(fname)
+    if ext not in list_ext:
+        raise ValueError("Problem with file: {}. Extension should be one of {}".format(fname, list_ext))
+    fname_json = basename + '.json'
+
+    if check_exist:
+        if not os.path.isfile(fname_json):
+            FileNotFoundError()
+
+    return fname_json
+
+
+def fetch_metadata(fname_json, field):
+    """
+    Return specific field value from json sidecar.
+    :param fname_json: str: Json file
+    :param field: str: Field to retrieve
+    :return: value of the field.
+    """
+    with open(fname_json) as f:
+        metadata = json.load(f)
+    if field not in metadata:
+        KeyError("Json file {} does not contain the field: {}".format(fname_json, field))
+    else:
+        return metadata[field]
 
 
 def main(argv):
