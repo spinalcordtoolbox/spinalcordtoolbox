@@ -231,7 +231,6 @@ def main(args=None):
 
     path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
 
-
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder...', verbose)
     Image(fname_in).save(os.path.join(path_tmp, "data.nii"))
@@ -283,7 +282,6 @@ def main(args=None):
            )
     # Threshold segmentation at 0.5
     sct.run(['sct_maths', '-i', 'segmentation_straight.nii', '-thr', '0.5', '-o', 'segmentation_straight.nii'], verbose)
-    #sct.run('sct_resample -i segmentation_straight.nii -mm 0.5 -x nn')
 
     # If disc label file is provided, label vertebrae using that file instead of automatically
     if fname_disc:
@@ -295,8 +293,8 @@ def main(args=None):
                  'warp_curve2straight.nii.gz',
                  'labeldisc_straight.nii.gz',
                  'NearestNeighbor'),
-                 verbose=verbose,
-                 is_sct_binary=True,
+                  verbose=verbose,
+                  is_sct_binary=True,
                 )
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
@@ -313,7 +311,7 @@ def main(args=None):
                 initz = [z_center, initcenter]
             # create single label and output as labels.nii.gz
             label = ProcessLabels('segmentation.nii', fname_output='tmp.labelz.nii.gz',
-                                      coordinates=['{},{}'.format(initz[0], initz[1])])
+                                  coordinates=['{},{}'.format(initz[0], initz[1])])
             im_label = label.process('create-seg')
             im_label.data = dilate(im_label.data, 3, 'ball')  # TODO: create a dilation method specific to labels,
             # which does not apply a convolution across all voxels (highly inneficient)
@@ -332,7 +330,8 @@ def main(args=None):
 
             ind_label = np.where(im_label_c2c3.data)
             if not np.size(ind_label) == 0:
-                # subtract "1" to label value because due to legacy, in this code the disc C2-C3 has value "2", whereas in the
+                # subtract "1" to label value because due to legacy,
+                # in this code the disc C2-C3 has value "2", whereas in the
                 # recent version of SCT it is defined as "3".
                 im_label_c2c3.data[ind_label] = 3
             else:
@@ -349,13 +348,14 @@ def main(args=None):
         sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
                 (file_labelz,
                  'data_straightr.nii',
-                'warp_curve2straight.nii.gz',
+                 'warp_curve2straight.nii.gz',
                  'labelz_straight.nii.gz',
                  'NearestNeighbor'),
                 verbose=verbose,
                 is_sct_binary=True,
                )
         # get z value and disk value to initialize labeling
+        # After resampling to match template resolution
         sct.run('sct_resample -i labelz_straight.nii.gz -mm 0.5 -x nn -o labelz_straight_r.nii.gz')
         sct.printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight_r.nii.gz')
@@ -385,9 +385,9 @@ def main(args=None):
              'NearestNeighbor'),
             verbose=verbose,
             is_sct_binary=True,
-           )
+            )
 
-    #un-straighten posterior disc map
+    # un-straighten posterior disc map
     sct.printv('\nUn-straighten posterior disc map...', verbose)
     sct.run('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
             ('disc_posterior_tmp.nii.gz',
@@ -396,7 +396,7 @@ def main(args=None):
              'label_disc_posterior.nii.gz',
              'label'),
             verbose=verbose
-           )
+            )
 
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
@@ -419,7 +419,6 @@ def main(args=None):
     sct.generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose)
     sct.generate_output_file(os.path.join(path_tmp, "warp_straight2curve.nii.gz"), os.path.join(path_output, "warp_straight2curve.nii.gz"), verbose)
     sct.generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "labelz.nii.gz"), os.path.join(path_output, "labelz_ccv3.nii.gz"), verbose)
 
     # Remove temporary files
     if remove_temp_files == 1:
