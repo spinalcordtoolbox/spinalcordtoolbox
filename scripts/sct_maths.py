@@ -342,13 +342,13 @@ def main(args=None):
         # adjust sigma based on voxel size
         sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
-        data_out = smooth(data, sigmas)
+        data_out = math.smooth(data, sigmas)
 
     elif arguments.dilate is not None:
-        data_out = sct.math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
+        data_out = math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.erode is not None:
-        data_out = sct.math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
+        data_out = math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.denoise is not None:
         # parse denoising arguments
