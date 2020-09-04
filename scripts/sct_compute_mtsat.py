@@ -147,11 +147,11 @@ def main(argv):
     else:
         nii_b1map = Image(args.b1map)
 
-    trmt, trpd, trt1, famt, fapd, fat1 = get_tr_and_flipangle(args)
-
     # compute MTsat
-    nii_mtsat, nii_t1map = \
-        compute_mtsat(nii_mt, nii_pd, nii_t1, trmt, trpd, trt1, famt, fapd, fat1, nii_b1map=nii_b1map)
+    nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1,
+                                         args.trmt, args.trpd, args.trt1,
+                                         args.famt, args.fapd, args.fat1,
+                                         nii_b1map=nii_b1map)
 
     # Output MTsat and T1 maps
     # by default, output in the same directory as the input images

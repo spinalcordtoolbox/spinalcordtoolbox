@@ -34,8 +34,6 @@ class InputParam2:
 
 
 def test_with_json_sidecar():
-    sct_compute_mtsat.main(['-mt', sct_test_path('mt', 'mt1.nii.gz'),
-                            '-pd', sct_test_path('mt', 'mt0.nii.gz'),
-                            '-t1', sct_test_path('mt', 't1w.nii.gz')])
+    sct_compute_mtsat.main(InputParam1)
     # Check if output file exists
     assert os.path.isfile(sct_test_path('mt', 'mtsat.nii.gz'))
