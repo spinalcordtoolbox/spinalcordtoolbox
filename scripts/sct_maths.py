@@ -426,6 +426,42 @@ def main(args=None):
     else:
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
 
+def get_data_or_scalar(argument, data_in):
+    """
+    Get data from list of file names (scenario 1) or scalar (scenario 2)
+    :param argument: list of file names of scalar
+    :param data_in: if argument is scalar, use data to get np.shape
+    :return: 3d or 4d numpy array
+    """
+    # try to convert argument in float
+    try:
+        # build data2 with same shape as data
+        data_out = data_in[:, :, :] * 0 + float(argument[0])
+    # if conversion fails, it should be a string (i.e. file name)
+    except ValueError:
+        data_out = get_data(argument)
+    return data_out
+
+def get_data(list_fname):
+    """
+    Get data from list of file names
+    :param list_fname:
+    :return: 3D or 4D numpy array.
+    """
+    try:
+        nii = [Image(f_in) for f_in in list_fname]
+    except Exception as e:
+        printv(str(e), 1, 'error')  # file does not exist, exit program
+    data0 = nii[0].data
+    data = nii[0].data
+    # check that every images have same shape
+    for i in range(1, len(nii)):
+        if not np.shape(nii[i].data) == np.shape(data0):
+            printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(nii[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data0)), 1, 'warning')
+            printv('\nERROR: All input images must have same dimensions.', 1, 'error')
+        else:
+            data = concatenate_along_4th_dimension(data, nii[i].data)
+    return data
 
 def convert_list_str(string_list, type='int'):
     """
