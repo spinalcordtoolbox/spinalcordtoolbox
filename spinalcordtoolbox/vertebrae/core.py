@@ -163,11 +163,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     nib.save(image_mid, fname)
     if contrast=="t2":
         fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct.__deepseg_dir__,
-                                                             'find_disc_t2'),
+                                                             'model_find_disc_t2'),
                                          post=False)
     elif contrast=="t2":
         fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct.__deepseg_dir__,
-                                                                 'find_disc_t1'),
+                                                                 'model_find_disc_t1'),
                                              post=False)
 
 
