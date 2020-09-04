@@ -28,11 +28,10 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
-from spinalcordtoolbox.math import dilate
+from spinalcordtoolbox.math import dilate, binarize
 from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 import spinalcordtoolbox.image as image
-import spinalcordtoolbox.math as math
 
 # FIXME [AJ] would be nice to get rid of this at some point
 import sct_utils as sct
@@ -360,9 +359,10 @@ def main(args=None):
     sct.printv('\nBinarize segmentation', verbose)
     ftmp_seg_, ftmp_seg = ftmp_seg, sct.add_suffix(ftmp_seg, "_bin")
 
-    sct_maths.main(['-i', ftmp_seg_,
-                    '-bin', '0.5',
-                    '-o', ftmp_seg])
+    img = image.Image(ftmp_seg_)
+    binarized_data = binarize(img.data, 0.5)
+    img.data = binarized_data
+    img.save(ftmp_seg)
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
