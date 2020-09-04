@@ -4,12 +4,20 @@
 
 
 import logging
+
 import numpy as np
+import pickle, gzip
 
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
+from skimage.filters import threshold_local, threshold_otsu
+from scipy.ndimage.filters import gaussian_filter, gaussian_laplace
+from scipy.stats import pearsonr, spearmanr
+from dipy.denoise.noise_estimate import estimate_sigma
+from dipy.segment.mask import median_otsu
+from dipy.denoise.nlmeans import nlmeans
+from sklearn.metrics import normalized_mutual_info_score, mutual_info_score
 
 from spinalcordtoolbox.image import Image
-
 
 logger = logging.getLogger(__name__)
 
@@ -124,3 +132,214 @@ def erode(data, size, shape, dim=None):
         return im_out
     else:
         return erosion(data, selem=_get_selem(shape, size, dim), out=None)
+
+
+def mutual_information(x, y, nbins=32, normalized=False):
+    """
+    Compute mutual information
+    :param x: 1D numpy.array : flatten data from an image
+    :param y: 1D numpy.array : flatten data from an image
+    :param nbins: number of bins to compute the contingency matrix (only used if normalized=False)
+    :return: float non negative value : mutual information
+    """
+    if normalized:
+        mi = normalized_mutual_info_score(x, y)
+    else:
+        c_xy = np.histogram2d(x, y, nbins)[0]
+        mi = mutual_info_score(None, None, contingency=c_xy)
+    return mi
+
+
+def correlation(x, y, type='pearson'):
+    """
+    Compute pearson or spearman correlation coeff
+    Pearson's R is parametric whereas Spearman's R is non parametric (less sensitive)
+    :param x: 1D numpy.array : flatten data from an image
+    :param y: 1D numpy.array : flatten data from an image
+    :param type: str:  'pearson' or 'spearman': type of R correlation coeff to compute
+    :return: float value : correlation coefficient (between -1 and 1)
+    """
+
+    if type == 'pearson':
+        corr = pearsonr(x, y)[0]
+    if type == 'spearman':
+        corr = spearmanr(x, y)[0]
+
+    return corr
+
+def smooth(data, sigmas):
+    """
+    Smooth data by convolving Gaussian kernel
+    :param data: input 3D numpy array
+    :param sigmas: Kernel SD in voxel
+    :return:
+    """
+    assert len(data.shape) == len(sigmas)
+    return gaussian_filter(data.astype(float), sigmas, order=0, truncate=4.0)
+
+
+def laplacian(data, sigmas):
+    """
+    Apply Laplacian filter
+    """
+    assert len(data.shape) == len(sigmas)
+    return gaussian_laplace(data.astype(float), sigmas)
+
+
+def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
+    '''
+    Compute a similarity metric between two images data
+    :param data1: numpy.array 3D data
+    :param data2: numpy.array 3D data
+    :param fname_out: file name of the output file. Output file should be either a text file ('.txt') or a pickle file ('.pkl', '.pklz' or '.pickle')
+    :param metric: 'mi' for mutual information or 'corr' for pearson correlation coefficient
+    :return: None
+    '''
+    assert data1.size == data2.size, "\n\nERROR: the data don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
+    data1_1d = data1.ravel()
+    data2_1d = data2.ravel()
+    # get indices of non-null voxels from the intersection of both data
+    data_mult = data1_1d * data2_1d
+    ind_nonnull = np.where(data_mult > ALMOST_ZERO)[0]
+    # set new variables with non-null voxels
+    data1_1d = data1_1d[ind_nonnull]
+    data2_1d = data2_1d[ind_nonnull]
+    # compute similarity metric
+    if metric == 'mi':
+        res = mutual_information(data1_1d, data2_1d, normalized=False)
+        metric_full = 'Mutual information'
+    if metric == 'minorm':
+        res = mutual_information(data1_1d, data2_1d, normalized=True)
+        metric_full = 'Normalized Mutual information'
+    if metric == 'corr':
+        res = correlation(data1_1d, data2_1d)
+        metric_full = 'Pearson correlation coefficient'
+    # qc output
+    if verbose > 1:
+        import matplotlib
+        matplotlib.use('Agg')
+        import matplotlib.pyplot as plt
+        plt.plot(data1_1d, 'b')
+        plt.plot(data2_1d, 'r')
+        plt.grid
+        plt.title('Similarity: ' + metric_full + ' = ' + str(res))
+        plt.savefig('fig_similarity.png')
+
+    printv('\n' + metric_full + ': ' + str(res), verbose, 'info')
+
+    path_out, filename_out, ext_out = extract_fname(fname_out)
+    if ext_out not in ['.txt', '.pkl', '.pklz', '.pickle']:
+        printv('ERROR: the output file should a text file or a pickle file. Received extension: ' + ext_out, 1, 'error')
+
+    elif ext_out == '.txt':
+        file_out = open(fname_out, 'w')
+        file_out.write(metric_full + ': \n' + str(res))
+        file_out.close()
+
+    else:
+        if ext_out == '.pklz':
+            pickle.dump(res, gzip.open(fname_out, 'wb'), protocol=2)
+        else:
+            pickle.dump(res, open(fname_out, 'w'), protocol=2)
+
+
+def otsu(data, nbins):
+    thresh = threshold_otsu(data, nbins)
+    return data > thresh
+
+
+def adap(data, block_size, offset):
+    mask = data
+    for iz in range(data.shape[2]):
+        adaptive_thresh = threshold_local(data[:, :, iz], block_size, method='gaussian', offset=offset)
+        mask[:, :, iz] = mask[:, :, iz] > adaptive_thresh
+    return mask
+
+
+def otsu_median(data, size, n_iter):
+    data, mask = median_otsu(data, size, n_iter)
+    return mask
+
+
+def threshold(data, thr_value):
+    data[data < thr_value] = 0
+    return data
+
+
+def perc(data, perc_value):
+    perc = np.percentile(data, perc_value)
+    return data > perc
+
+
+def binarize(data, bin_thr=0):
+    return data > bin_thr
+
+
+def get_data(list_fname):
+    """
+    Get data from list of file names
+    :param list_fname:
+    :return: 3D or 4D numpy array.
+    """
+    try:
+        nii = [Image(f_in) for f_in in list_fname]
+    except Exception as e:
+        printv(str(e), 1, 'error')  # file does not exist, exit program
+    data0 = nii[0].data
+    data = nii[0].data
+    # check that every images have same shape
+    for i in range(1, len(nii)):
+        if not np.shape(nii[i].data) == np.shape(data0):
+            printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(nii[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data0)), 1, 'warning')
+            printv('\nERROR: All input images must have same dimensions.', 1, 'error')
+        else:
+            data = concatenate_along_4th_dimension(data, nii[i].data)
+    return data
+
+
+def get_data_or_scalar(argument, data_in):
+    """
+    Get data from list of file names (scenario 1) or scalar (scenario 2)
+    :param argument: list of file names of scalar
+    :param data_in: if argument is scalar, use data to get np.shape
+    :return: 3d or 4d numpy array
+    """
+    # try to convert argument in float
+    try:
+        # build data2 with same shape as data
+        data_out = data_in[:, :, :] * 0 + float(argument[0])
+    # if conversion fails, it should be a string (i.e. file name)
+    except ValueError:
+        data_out = get_data(argument)
+    return data_out
+
+
+def concatenate_along_4th_dimension(data1, data2):
+    """
+    Concatenate two data along 4th dimension.
+    :param data1: 3d or 4d array
+    :param data2: 3d or 4d array
+    :return data_concat: concate(data1, data2)
+    """
+    if len(np.shape(data1)) == 3:
+        data1 = data1[..., np.newaxis]
+    if len(np.shape(data2)) == 3:
+        data2 = data2[..., np.newaxis]
+    return np.concatenate((data1, data2), axis=3)
+
+
+def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
+    """
+    data_in: nd_array to denoise
+    for more info about patch_radius and block radius, please refer to the dipy website: http://nipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
+    """
+
+    data_in = np.asarray(data_in)
+
+    block_radius_max = min(data_in.shape) - 1
+    block_radius = block_radius_max if block_radius > block_radius_max else block_radius
+
+    sigma = estimate_sigma(data_in)
+    denoised = nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
+
+    return denoised
