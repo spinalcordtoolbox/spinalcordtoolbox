@@ -21,6 +21,7 @@ from spinalcordtoolbox.image import Image
 
 logger = logging.getLogger(__name__)
 
+ALMOST_ZERO = 0.000000001
 
 def _get_selem(shape, size, dim):
     """
