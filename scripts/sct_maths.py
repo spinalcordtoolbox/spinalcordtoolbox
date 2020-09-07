@@ -17,7 +17,8 @@ import sys
 
 import numpy as np
 import argparse
-import pickle, gzip
+import pickle
+import gzip
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
@@ -172,13 +173,13 @@ def get_parser():
         metavar='',
         help='Gaussian smoothing filter with specified standard deviations in mm for each axis (Example: 2,2,1) or '
              'single value for all axis (Example: 2).',
-        required = False)
+        required=False)
     filtering.add_argument(
         '-laplacian',
         nargs="+",
         metavar='',
         help='Laplacian filtering with specified standard deviations in mm for all axes (Example: 2).',
-        required = False)
+        required=False)
     filtering.add_argument(
         '-denoise',
         help='R|Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with ". Example: p=1,b=3\n'
@@ -424,6 +425,7 @@ def main(args=None):
     else:
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
 
+
 def get_data(list_fname):
     """
     Get data from list of file names
@@ -445,6 +447,7 @@ def get_data(list_fname):
             data = math.concatenate_along_4th_dimension(data, nii[i].data)
     return data
 
+
 def get_data_or_scalar(argument, data_in):
     """
     Get data from list of file names (scenario 1) or scalar (scenario 2)
@@ -460,6 +463,7 @@ def get_data_or_scalar(argument, data_in):
     except ValueError:
         data_out = get_data(argument)
     return data_out
+
 
 def convert_list_str(string_list, type='int'):
     """
@@ -477,6 +481,7 @@ def convert_list_str(string_list, type='int'):
             new_type_list[inew_type_list] = float(ele)
 
     return new_type_list
+
 
 def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, metric_full: str, verbose):
     """
@@ -501,6 +506,7 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
         pickle.dump(res, gzip.open(fname_out, 'wb'), protocol=2)
     else:
         pickle.dump(res, open(fname_out, 'w'), protocol=2)
+
 
 def compute_similarity_qc_func(data1_1d, data2_1d, res, metric):
     import matplotlib
