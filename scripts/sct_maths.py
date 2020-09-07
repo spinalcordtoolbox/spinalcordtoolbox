@@ -424,22 +424,6 @@ def main(args=None):
     else:
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
 
-def get_data_or_scalar(argument, data_in):
-    """
-    Get data from list of file names (scenario 1) or scalar (scenario 2)
-    :param argument: list of file names of scalar
-    :param data_in: if argument is scalar, use data to get np.shape
-    :return: 3d or 4d numpy array
-    """
-    # try to convert argument in float
-    try:
-        # build data2 with same shape as data
-        data_out = data_in[:, :, :] * 0 + float(argument[0])
-    # if conversion fails, it should be a string (i.e. file name)
-    except ValueError:
-        data_out = get_data(argument)
-    return data_out
-
 def get_data(list_fname):
     """
     Get data from list of file names
@@ -460,6 +444,22 @@ def get_data(list_fname):
         else:
             data = math.concatenate_along_4th_dimension(data, nii[i].data)
     return data
+
+def get_data_or_scalar(argument, data_in):
+    """
+    Get data from list of file names (scenario 1) or scalar (scenario 2)
+    :param argument: list of file names of scalar
+    :param data_in: if argument is scalar, use data to get np.shape
+    :return: 3d or 4d numpy array
+    """
+    # try to convert argument in float
+    try:
+        # build data2 with same shape as data
+        data_out = data_in[:, :, :] * 0 + float(argument[0])
+    # if conversion fails, it should be a string (i.e. file name)
+    except ValueError:
+        data_out = get_data(argument)
+    return data_out
 
 def convert_list_str(string_list, type='int'):
     """
