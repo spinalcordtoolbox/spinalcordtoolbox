@@ -19,7 +19,6 @@ import numpy as np
 import argparse
 import pickle, gzip
 
-import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 import spinalcordtoolbox.math as math
