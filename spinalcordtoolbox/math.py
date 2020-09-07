@@ -187,15 +187,14 @@ def laplacian(data, sigmas):
     return gaussian_laplace(data.astype(float), sigmas)
 
 
-def compute_similarity(data1, data2, metric, qc_func=None):
+def compute_similarity(data1, data2, metric):
     '''
     Compute a similarity metric between two images data
     :param data1: numpy.array 3D data
     :param data2: numpy.array 3D data
     :param fname_out: file name of the output file. Output file should be either a text file ('.txt') or a pickle file ('.pkl', '.pklz' or '.pickle')
     :param metric: 'mi' for mutual information or 'corr' for pearson correlation coefficient
-    :param qc_fuc: if provided, run reporting func with computed data
-    :return: computetd results of similarity
+    :return: tuple with computetd results of similarity, data1 flattened array, data2 flattened array
     '''
     data1_1d = data1.ravel()
     data2_1d = data2.ravel()
@@ -218,10 +217,7 @@ def compute_similarity(data1, data2, metric, qc_func=None):
     else:
         raise ValueError(f"Don't know what metric to use! Got unsupported: {metric}")
 
-    if qc_func:
-        qc_func(data1_1d, data2_1d, res, metric)
-
-    return res
+    return res, data1_1d, data2_1d
 
 
 def otsu(data, nbins):
