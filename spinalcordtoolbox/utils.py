@@ -79,7 +79,7 @@ class Metavar(Enum):
         return self.value
 
 
-class SmartFormatter(argparse.HelpFormatter):
+class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
     """
     Custom formatter that inherits from HelpFormatter, which adjusts the default width to the current Terminal size,
     and that gives the possibility to bypass argparse's default formatting by adding "R|" at the beginning of the text.
@@ -133,6 +133,12 @@ class SmartFormatter(argparse.HelpFormatter):
                     wrapped = wrapped + [li]
             return wrapped
         return argparse.HelpFormatter._split_lines(self, text, width)
+
+    def _get_help_string(self, action):
+        if action.default is not None:
+            return super()._get_help_string(action)
+        else:
+            return action.help
 
 
 # Modified from http://shallowsky.com/blog/programming/python-tee.html
