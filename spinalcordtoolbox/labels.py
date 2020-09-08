@@ -96,19 +96,23 @@ def _add_labels(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     return img
 
 
-def create_label_along_segmentation():
+def create_labels_along_segmentation(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     """
     Create an image with labels defined along the spinal cord segmentation (or centerline).
     Input image does **not** need to be RPI (re-orientation is done within this function).
-    Example:
-    object_define=ProcessLabels(fname_segmentation, coordinates=[coord_1, coord_2, coord_i]), where coord_i='z,value'. If z=-1, then use z=nz/2 (i.e. center of FOV in superior-inferior direction)
-    Returns
+    :param img: source segmentation
+    :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
+    :returns: labeled segmentation (Image)
     """
-    # reorient input image to RPI
-    im_rpi = self.image_input.copy().change_orientation('RPI')
-    im_output_rpi = zeros_like(im_rpi)
-    # loop across labels
-    for ilabel, coord in enumerate(self.coordinates):
+
+    if img.orientation != "RPI":
+        img_rpi = img.copy().change_orientation('RPI')
+    else:
+        img_rpi = img.copy()
+
+    out = zeros_like(img_rpi)
+
+    for ilabel, coord in enumerate(coordinates):
 
         # split coord string
         list_coord = coord.split(',')
@@ -120,14 +124,14 @@ def create_label_along_segmentation():
         coord = Coordinate([z, z, z])  # since we don't know which dimension corresponds to the superior-inferior
 
         # axis, we put z in all dimensions (we don't care about x and y here)
-        _, _, z_rpi = coord.permute(self.image_input, 'RPI')
+        _, _, z_rpi = coord.permute(img, 'RPI')
 
         # if z=-1, replace with nz/2
         if z == -1:
-            z_rpi = int(np.round(im_output_rpi.dim[2] / 2.0))
+            z_rpi = int(np.round(out.dim[2] / 2.0))
 
         # get center of mass of segmentation at given z
-        x, y = ndimage.measurements.center_of_mass(np.array(im_rpi.data[:, :, z_rpi]))
+        x, y = ndimage.measurements.center_of_mass(np.array(img_rpi.data[:, :, z_rpi]))
 
         # round values to make indices
         x, y = int(np.round(x)), int(np.round(y))
@@ -135,14 +139,16 @@ def create_label_along_segmentation():
         # display info
         logger.info(f"Label # {str(ilabel)}: {str(x)}, {str(y)}. {str(z_rpi)} --> {str(value)}")
 
-        if len(im_output_rpi.data.shape) == 3:
-            im_output_rpi.data[x, y, z_rpi] = value
-        elif len(im_output_rpi.data.shape) == 2:
-            assert str(z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :" + str(z)
-            im_output_rpi.data[x, y] = value
+        if len(out.data.shape) == 3:
+            out.data[x, y, z_rpi] = value
+        elif len(out.data.shape) == 2:
+            if str(z) != '0':
+                raise ValueError(f"2D coordinates should have a Z value of 0! Current value: {str(coord.z)}")
+
+            out.data[x, y] = value
 
     # change orientation back to native
-    return im_output_rpi.change_orientation(self.image_input.orientation)
+    return out.change_orientation(img.orientation)
 
 
 def plan(width, offset=0, gap=1):
