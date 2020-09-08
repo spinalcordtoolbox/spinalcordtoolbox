@@ -11,7 +11,7 @@
 #########################################################################################
 
 import logging
-from typing import *
+from typing import Sequence
 
 import numpy as np
 from scipy import ndimage
@@ -42,6 +42,8 @@ def add(img: Image, value: float) -> Image:
         out.data[int(coord.x), int(coord.y), int(coord.z)] = out.data[int(coord.x), int(coord.y), int(coord.z)] + float(value)
 
     return out
+
+# FIXME [AJ] is it really needed? Haven't seen a caller use sct_label_utils -create without add
 
 
 def create_labels_empty(img: Image, coordinates: Sequence[Coordinate]) -> Image:
@@ -152,7 +154,7 @@ def create_labels_along_segmentation(img: Image, coordinates: Sequence[Coordinat
 
 
 # FIXME [AJ] better name for this? insert_plane_between_labels() ?
-def plan(img: Image, width: int, offset: int=0, gap: int=1) -> Image:
+def plan(img: Image, width: int, offset: int = 0, gap: int = 1) -> Image:
     """
     Create a plane of thickness="width" and changes its value with an offset and a gap between labels.
     :param img: Source image
@@ -168,6 +170,7 @@ def plan(img: Image, width: int, offset: int=0, gap: int=1) -> Image:
         out.data[:, :, int(coord.z) - width:int(coord.z) + width] = offset + gap * coord.value
 
     return out
+
 
 # FIXME [AJ] better name for this? generate_plane_for_label() ?
 def plan_ref(img: Image, ref: Image) -> Image:
@@ -284,6 +287,7 @@ def labelize_from_disks():
 
     return image_output
 
+
 def label_vertebrae(levels_user=None):
     """
     Find the center of mass of vertebral levels specified by the user.
@@ -307,6 +311,7 @@ def label_vertebrae(levels_user=None):
             image_cubic2point.data[int(list_coordinates[i_label].x), int(list_coordinates[i_label].y), int(list_coordinates[i_label].z)] = 0
 
     return image_cubic2point
+
 
 def MSE(threshold_mse=0):
     """
@@ -352,6 +357,7 @@ def MSE(threshold_mse=0):
 
     return result
 
+
 def remove_label_coord(coord_input, coord_ref, symmetry=False):
     """
     coord_input and coord_ref should be sets of CoordinateValue in order to improve speed of intersection
@@ -373,6 +379,7 @@ def remove_label_coord(coord_input, coord_ref, symmetry=False):
             result_coord_ref = [coord for coord in coord_ref if list(filter(lambda x: x.value == coord.value, result_coord_input))]
 
     return result_coord_input, result_coord_ref
+
 
 def remove_label(symmetry=False):
     """
@@ -397,6 +404,7 @@ def remove_label(symmetry=False):
 
     return image_output
 
+
 def display_voxel():
     """
     Display all the labels that are contained in the input image.
@@ -417,6 +425,7 @@ def display_voxel():
 
     return coordinates_input
 
+
 def get_physical_coordinates():
     """
     This function returns the coordinates of the labels in the physical referential system.
@@ -432,6 +441,7 @@ def get_physical_coordinates():
         phys_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
 
     return phys_coord
+
 
 def get_coordinates_in_destination(im_dest, type='discrete'):
     """
@@ -452,6 +462,7 @@ def get_coordinates_in_destination(im_dest, type='discrete'):
         dest_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
 
     return dest_coord
+
 
 def diff():
     """
@@ -481,6 +492,7 @@ def diff():
         if not isIn:
             sct.printv(coord_ref.value)
 
+
 def distance_interlabels(max_dist):
     """
     Calculate the distances between each label in the input image.
@@ -497,6 +509,7 @@ def distance_interlabels(max_dist):
                 coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i + 1) + '[' + str(
                 coordinates_input[i + 1].x) + ',' + str(coordinates_input[i + 1].y) + ',' + str(coordinates_input[i + 1].z) + ']=' + str(
                 coordinates_input[i + 1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist))
+
 
 def continuous_vertebral_levels():
     """
@@ -559,6 +572,7 @@ def continuous_vertebral_levels():
 
     return im_output
 
+
 def launch_sagittal_viewer(labels, previous_points=None):
     from spinalcordtoolbox.gui import base
     from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
@@ -575,6 +589,7 @@ def launch_sagittal_viewer(labels, previous_points=None):
     launch_sagittal_dialog(self.image_input, output, params, previous_points)
 
     return output
+
 
 def remove_or_keep_labels(labels, action):
     """
