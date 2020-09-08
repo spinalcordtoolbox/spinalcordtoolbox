@@ -464,6 +464,24 @@ def display_voxel():
     return coordinates_input
 
 
+def distance_interlabels(max_dist):
+    """
+    Calculate the distances between each label in the input image.
+    If a distance is larger than max_dist, a warning message is displayed.
+    """
+    coordinates_input = self.image_input.getNonZeroCoordinates()
+
+    # for all points with non-zeros neighbors, force the neighbors to 0
+    for i in range(0, len(coordinates_input) - 1):
+        dist = np.sqrt((coordinates_input[i].x - coordinates_input[i + 1].x)**2 + (coordinates_input[i].y - coordinates_input[i + 1].y)**2 + (coordinates_input[i].z - coordinates_input[i + 1].z)**2)
+
+        if dist < max_dist:
+            sct.printv('Warning: the distance between label ' + str(i) + '[' + str(coordinates_input[i].x) + ',' + str(coordinates_input[i].y) + ',' + str(
+                coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i + 1) + '[' + str(
+                coordinates_input[i + 1].x) + ',' + str(coordinates_input[i + 1].y) + ',' + str(coordinates_input[i + 1].z) + ']=' + str(
+                coordinates_input[i + 1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist))
+
+
 if __name__ == "__main__":
     sct.init_sct()
     # call main function
