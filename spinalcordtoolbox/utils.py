@@ -135,7 +135,7 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         return argparse.HelpFormatter._split_lines(self, text, width)
 
     def _get_help_string(self, action):
-        if action.default is not None:
+        if action.default not in [None, "", [], (), {}]:
             return super()._get_help_string(action)
         else:
             return action.help
