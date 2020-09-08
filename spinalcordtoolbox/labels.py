@@ -378,39 +378,41 @@ def remove_missing_labels(img: Image, ref: Image) -> Image:
     return out
 
 
-def get_physical_coordinates():
+def _get_physical_coordinates(img: Image) -> Sequence[CoordinateValue]:
     """
     This function returns the coordinates of the labels in the physical referential system.
-    :return: a list of CoordinateValue, in the physical (scanner) space
+    :param img: source image
+    :returns: a list of CoordinateValue, in the physical (scanner) space
     """
 
-    coord = self.image_input.getNonZeroCoordinates(sorting='value')
+    coord = img.getNonZeroCoordinates(sorting='value')
     phys_coord = []
 
     for c in coord:
         # convert pixelar coordinates to physical coordinates
-        c_p = self.image_input.transfo_pix2phys([[c.x, c.y, c.z]])[0]
+        c_p = img.transfo_pix2phys([[c.x, c.y, c.z]])[0]
         phys_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
 
     return phys_coord
 
 
-def get_coordinates_in_destination(im_dest, type='discrete'):
+def get_coordinates_in_destination(img: Image, dst: Image, type: str = 'discrete') -> Sequence[CoordinateValue]:
     """
-    This function calculate the position of labels in the pixelar space of a destination image
-    :param im_dest: Object Image
+    This function calculates the position of labels in the pixelar space of a destination image
+    :param img: source Image
+    :param dst: Object Image
     :param type: 'discrete' or 'continuous'
-    :return: a list of CoordinateValue, in the pixelar (image) space of the destination image
+    :returns: a list of CoordinateValue, in the pixelar (image) space of the destination image
     """
-    phys_coord = self.get_physical_coordinates()
+    phys_coord = _get_physical_coordinates(img)
     dest_coord = []
     for c in phys_coord:
         if type is 'discrete':
-            c_p = im_dest.transfo_phys2pix([[c.x, c.y, c.y]])[0]
+            c_p = dst.transfo_phys2pix([[c.x, c.y, c.y]])[0]
         elif type is 'continuous':
-            c_p = im_dest.transfo_phys2pix([[c.x, c.y, c.y]], real=False)[0]
+            c_p = dst.transfo_phys2pix([[c.x, c.y, c.y]], real=False)[0]
         else:
-            raise ValueError("The value of 'type' should either be 'discrete' or 'continuous'.")
+            raise ValueError("The value of 'type' should either be 'discrete' or 'continuous'!")
         dest_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
 
     return dest_coord
