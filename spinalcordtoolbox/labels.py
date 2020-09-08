@@ -11,6 +11,7 @@
 #########################################################################################
 
 import logging
+from typing import *
 
 import numpy as np
 from scipy import ndimage
@@ -26,17 +27,21 @@ logger = logging.getLogger(__name__)
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 
-def add(value):
+def add(img: Image, value: float) -> Image:
     """
-    This function add a specified value to all non-zero voxels.
+    This function adds a specified value to all non-zero voxels.
+    :param img: source image
+    :param value: numeric value to add
+    :returns new image with value added
     """
-    image_output = self.image_input.copy()
-    coordinates_input = self.image_input.getNonZeroCoordinates()
+    out = img.copy()
+    coordinates_input = img.getNonZeroCoordinates()
 
     # for all points with non-zeros neighbors, force the neighbors to 0
-    for i, coord in enumerate(coordinates_input):
-        image_output.data[int(coord.x), int(coord.y), int(coord.z)] = image_output.data[int(coord.x), int(coord.y), int(coord.z)] + float(value)
-    return image_output
+    for coord in coordinates_input:
+        out.data[int(coord.x), int(coord.y), int(coord.z)] = out.data[int(coord.x), int(coord.y), int(coord.z)] + float(value)
+
+    return out
 
 
 def create_label(add=False):
