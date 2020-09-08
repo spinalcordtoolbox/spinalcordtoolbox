@@ -244,20 +244,25 @@ def cubic_to_point(img: Image) -> Image:
     return out
 
 
-def increment_z_inverse():
+def increment_z_inverse(img: Image) -> Image:
     """
     Take all non-zero values, sort them along the inverse z direction, and attributes the values 1,
-    2, 3, etc. This function assuming RPI orientation.
+    2, 3, etc. This function assumes RPI orientation.
+    :param img: source image
+    :returns: image with non-zero balue sorted along inverse z
     """
-    image_output = zeros_like(self.image_input)
+    if img.orientation != "RPI":
+        raise ValueError("Source image needs to be in RPI orientation!")
 
-    coordinates_input = self.image_input.getNonZeroCoordinates(sorting='z', reverse_coord=True)
+    out = zeros_like(img)
+    coordinates_input = img.getNonZeroCoordinates(sorting='z', reverse_coord=True)
 
     # for all points with non-zeros neighbors, force the neighbors to 0
     for i, coord in enumerate(coordinates_input):
-        image_output.data[int(coord.x), int(coord.y), int(coord.z)] = i + 1
+        out.data[int(coord.x), int(coord.y), int(coord.z)] = i + 1
 
-    return image_output
+    return out
+
 
 def labelize_from_disks():
     """
