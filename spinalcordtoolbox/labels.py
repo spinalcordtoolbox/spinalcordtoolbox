@@ -169,34 +169,38 @@ def plan(img: Image, width: int, offset: int=0, gap: int=1) -> Image:
 
     return out
 
-
-def plan_ref():
+# FIXME [AJ] better name for this? generate_plane_for_label() ?
+def plan_ref(img: Image, ref: Image) -> Image:
     """
     Generate a plane in the reference space for each label present in the input image
+    :param img: source image
+    :param ref: reference image
+    :returns: new image with plane in ref space for each label
     """
 
-    image_output = zeros_like(Image(self.image_ref))
+    out = zeros_like(ref)
 
-    image_input_neg = zeros_like(Image(self.image_input))
-    image_input_pos = zeros_like(Image(self.image_input))
+    image_input_neg = zeros_like(img)
+    image_input_pos = zeros_like(img)
 
-    X, Y, Z = (self.image_input.data < 0).nonzero()
+    X, Y, Z = (img.data < 0).nonzero()
     for i in range(len(X)):
-        image_input_neg.data[X[i], Y[i], Z[i]] = -self.image_input.data[X[i], Y[i], Z[i]]  # in order to apply getNonZeroCoordinates
-    X_pos, Y_pos, Z_pos = (self.image_input.data > 0).nonzero()
+        image_input_neg.data[X[i], Y[i], Z[i]] = -img.data[X[i], Y[i], Z[i]]  # in order to apply getNonZeroCoordinates
+
+    X_pos, Y_pos, Z_pos = (img.data > 0).nonzero()
     for i in range(len(X_pos)):
-        image_input_pos.data[X_pos[i], Y_pos[i], Z_pos[i]] = self.image_input.data[X_pos[i], Y_pos[i], Z_pos[i]]
+        image_input_pos.data[X_pos[i], Y_pos[i], Z_pos[i]] = img.data[X_pos[i], Y_pos[i], Z_pos[i]]
 
     coordinates_input_neg = image_input_neg.getNonZeroCoordinates()
     coordinates_input_pos = image_input_pos.getNonZeroCoordinates()
 
-    image_output.change_type('float32')
+    out.change_type('float32')
     for coord in coordinates_input_neg:
-        image_output.data[:, :, int(coord.z)] = -coord.value  # PB: takes the int value of coord.value
+        out.data[:, :, int(coord.z)] = -coord.value  # PB: takes the int value of coord.value
     for coord in coordinates_input_pos:
-        image_output.data[:, :, int(coord.z)] = coord.value
+        out.data[:, :, int(coord.z)] = coord.value
 
-    return image_output
+    return out
 
 
 def cubic_to_point():
