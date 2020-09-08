@@ -357,51 +357,25 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
     return result
 
 
-def remove_label_coord(coord_input, coord_ref, symmetry=False):
+def remove_missing_labels(img: Image, ref: Image) -> Image:
     """
-    coord_input and coord_ref should be sets of CoordinateValue in order to improve speed of intersection
-    :param coord_input: set of CoordinateValue
-    :param coord_ref: set of CoordinateValue
-    :param symmetry: boolean,
-    :return: intersection of CoordinateValue: list
-    """
-    from spinalcordtoolbox.types import CoordinateValue
-
-    if isinstance(coord_input[0], CoordinateValue) and isinstance(coord_ref[0], CoordinateValue) and symmetry:
-        coord_intersection = list(set(coord_input).intersection(set(coord_ref)))
-        result_coord_input = [coord for coord in coord_input if coord in coord_intersection]
-        result_coord_ref = [coord for coord in coord_ref if coord in coord_intersection]
-    else:
-        result_coord_ref = coord_ref
-        result_coord_input = [coord for coord in coord_input if list(filter(lambda x: x.value == coord.value, coord_ref))]
-        if symmetry:
-            result_coord_ref = [coord for coord in coord_ref if list(filter(lambda x: x.value == coord.value, result_coord_input))]
-
-    return result_coord_input, result_coord_ref
-
-
-def remove_label(symmetry=False):
-    """
-    Compare two label images and remove any labels in input image that are not in reference image.
-    The symmetry option enables to remove labels from reference image that are not in input image
+    Compare an input image and a reference image. Remove any label from the input image that doesn't exist in the reference image.
+    :param img: source image
+    :param ref: reference image
+    :returns: image with labels missing from reference removed
     """
 
-    image_output = zeros_like(self.image_input)
-    result_coord_input, result_coord_ref = self.remove_label_coord(self.image_input.getNonZeroCoordinates(coordValue=True),
-                                                                   self.image_ref.getNonZeroCoordinates(coordValue=True), symmetry)
-    for coord in result_coord_input:
-        image_output.data[int(coord.x), int(coord.y), int(coord.z)] = int(np.round(coord.value))
+    out = zeros_like(img)
 
-    if symmetry:
-        # image_output_ref = Image(self.image_ref.dim, orientation=self.image_ref.orientation, hdr=self.image_ref.hdr, verbose=self.verbose)
-        image_output_ref = Image(self.image_ref, verbose=self.verbose)
-        for coord in result_coord_ref:
-            image_output_ref.data[int(coord.x), int(coord.y), int(coord.z)] = int(np.round(coord.value))
-        image_output_ref.absolutepath = self.fname_output[1]
-        image_output_ref.save('minimize_int')
-        self.fname_output = self.fname_output[0]
+    coord_input = img.getNonZeroCoordinates(coordValue=True)
+    coord_ref = ref.getNonZeroCoordinates(coordValue=True)
 
-    return image_output
+    coord_intersection = list(set(coord_input.intersection(set(coord_ref))))
+
+    for coord in coord_intersection:
+        out.data[int(coord.x), int(coord.y), int(coord.z)] = int(np.round(coord.value))
+
+    return out
 
 
 def display_voxel():
