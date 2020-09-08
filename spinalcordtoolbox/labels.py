@@ -522,31 +522,49 @@ def continuous_vertebral_levels(img: Image) -> Image:
     return out
 
 
-
-def remove_or_keep_labels(labels, action):
+def remove_labels_from_image(img: Image, labels: Sequence[Coordinate]) -> Image:
     """
-    Create or remove labels from self.image_input
-    :param list(int): Labels to keep or remove
-    :param str: 'remove': remove specified labels (i.e. set to zero), 'keep': keep specified labels and remove the others
+    Remove specified labels (set to 0) from an image.
+    :param img: source image
+    :param labels: list of specified labels to remove
+    :returns: image with labels specified removed
     """
-    if action == 'keep':
-        image_output = zeros_like(self.image_input)
-    elif action == 'remove':
-        image_output = self.image_input.copy()
-    coordinates_input = self.image_input.getNonZeroCoordinates()
+    out = img.copy()
+    coordinates = img.getNonZeroCoordinates()
 
-    for labelNumber in labels:
-        isInLabels = False
-        for coord in coordinates_input:
-            if labelNumber == coord.value:
+    for x in labels:
+        exists = False
+        for coord in coordinates:
+            if x == coord.value:
                 new_coord = coord
-                isInLabels = True
-        if isInLabels:
-            if action == 'keep':
-                image_output.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = new_coord.value
-            elif action == 'remove':
-                image_output.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = 0.0
+                exists = True
+        if exists:
+            out.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = 0.0
         else:
-            sct.printv("WARNING: Label " + str(float(labelNumber)) + " not found in input image.", type='warning')
+            logger.warning(f"Label {x} not found in input image!")
 
-    return image_output
+    return out
+
+
+def remove_other_labels_from_image(img: Image, labels: Sequence[Coordinate]) -> Image:
+    """
+    Remove labels other than specified from an image
+    :param img: source image
+    :param labels: list of specified labels to keep
+    :returns: image with labels specified kept only
+    """
+    out = zeros_like(img)
+    coordinates = img.getNonZeroCoordinates()
+
+    for x in labels:
+        exists = False
+        for coord in coordinates:
+            if x == coord.value:
+                new_coord = coord
+                exists = True
+        if exists:
+            out.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = new_coord.value
+        else:
+            logger.warning(f"Label {x} not found in input image!")
+
+    return out
