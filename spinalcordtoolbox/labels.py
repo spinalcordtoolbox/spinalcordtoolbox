@@ -151,19 +151,23 @@ def create_labels_along_segmentation(img: Image, coordinates: Sequence[Coordinat
     return out.change_orientation(img.orientation)
 
 
-def plan(width, offset=0, gap=1):
+# FIXME [AJ] better name for this? insert_plane_between_labels() ?
+def plan(img: Image, width: int, offset: int=0, gap: int=1) -> Image:
     """
     Create a plane of thickness="width" and changes its value with an offset and a gap between labels.
+    :param img: Source image
+    :param width: thickness
+    :param offset: offset
+    :param gap: gap
+    :returns: image with plane
     """
-    image_output = zeros_like(self.image_input)
+    out = zeros_like(img)
+    coordinates = img.getNonZeroCoordinates()
 
-    coordinates_input = self.image_input.getNonZeroCoordinates()
+    for coord in coordinates:
+        out.data[:, :, int(coord.z) - width:int(coord.z) + width] = offset + gap * coord.value
 
-    # for all points with non-zeros neighbors, force the neighbors to 0
-    for coord in coordinates_input:
-        image_output.data[:, :, int(coord.z) - width:int(coord.z) + width] = offset + gap * coord.value
-
-    return image_output
+    return out
 
 
 def plan_ref():
