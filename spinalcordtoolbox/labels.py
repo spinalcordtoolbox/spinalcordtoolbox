@@ -203,22 +203,26 @@ def plan_ref(img: Image, ref: Image) -> Image:
     return out
 
 
-def cubic_to_point():
+def cubic_to_point(img: Image) -> Image:
     """
     Calculate the center of mass of each group of labels and returns a file of same size with only a
     label by group at the center of mass of this group.
     It is to be used after applying homothetic warping field to a label file as the labels will be dilated.
-    Be careful: this algorithm computes the center of mass of voxels with same value, if two groups of voxels with
-     the same value are present but separated in space, this algorithm will compute the center of mass of the two
-     groups together.
-    :return: image_output
+
+    .. note::
+        Be careful: this algorithm computes the center of mass of voxels with same value, if two groups of voxels with
+        the same value are present but separated in space, this algorithm will compute the center of mass of the two
+        groups together.
+
+    :param img: source image
+    :return: image with labels at center of mass
     """
 
     # 0. Initialization of output image
-    output_image = zeros_like(self.image_input)
+    out = zeros_like(img)
 
     # 1. Extraction of coordinates from all non-null voxels in the image. Coordinates are sorted by value.
-    coordinates = self.image_input.getNonZeroCoordinates(sorting='value')
+    coordinates = img.getNonZeroCoordinates(sorting='value')
 
     # 2. Separate all coordinates into groups by value
     groups = dict()
@@ -229,12 +233,15 @@ def cubic_to_point():
             groups[coord.value] = [coord]
 
     # 3. Compute the center of mass of each group of voxels and write them into the output image
-    for value, list_coord in groups.items():
+    for _, list_coord in groups.items():
         center_of_mass = sum(list_coord) / float(len(list_coord))
-        sct.printv("Value = " + str(center_of_mass.value) + " : (" + str(center_of_mass.x) + ", " + str(center_of_mass.y) + ", " + str(center_of_mass.z) + ") --> ( " + str(np.round(center_of_mass.x)) + ", " + str(np.round(center_of_mass.y)) + ", " + str(np.round(center_of_mass.z)) + ")", verbose=self.verbose)
-        output_image.data[int(np.round(center_of_mass.x)), int(np.round(center_of_mass.y)), int(np.round(center_of_mass.z))] = center_of_mass.value
+        logger.info(f"Value = {str(center_of_mass.value)} : ({str(center_of_mass.x)},\
+         {str(center_of_mass.y) }, {str(center_of_mass.z)}) --> ({str(np.round(center_of_mass.x))}, \
+         {str(np.round(center_of_mass.y))}, {str(np.round(center_of_mass.z))})")
 
-    return output_image
+        out.data[int(np.round(center_of_mass.x)), int(np.round(center_of_mass.y)), int(np.round(center_of_mass.z))] = center_of_mass.value
+
+    return out
 
 
 def increment_z_inverse():
