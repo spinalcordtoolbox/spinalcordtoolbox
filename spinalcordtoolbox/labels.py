@@ -267,25 +267,28 @@ def increment_z_inverse(img: Image) -> Image:
     return out
 
 
-def labelize_from_disks():
+def labelize_from_disks(img: Image, ref: Image) -> Image:
     """
     Create an image with regions labelized depending on values from reference.
     Typically, user inputs a segmentation image, and labels with disks position, and this function produces
     a segmentation image with vertebral levels labelized.
     Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
+    :param img: segmentation
+    :param ref: reference labels
+    :returns: segmentation image with vertebral levels labelized
     """
-    image_output = zeros_like(self.image_input)
+    out = zeros_like(img)
 
-    coordinates_input = self.image_input.getNonZeroCoordinates()
-    coordinates_ref = self.image_ref.getNonZeroCoordinates(sorting='value')
+    coordinates_input = img.getNonZeroCoordinates()
+    coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
     # for all points in input, find the value that has to be set up, depending on the vertebral level
-    for i, coord in enumerate(coordinates_input):
+    for coord in coordinates_input:
         for j in range(0, len(coordinates_ref) - 1):
             if coordinates_ref[j + 1].z < coord.z <= coordinates_ref[j].z:
-                image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coordinates_ref[j].value
+                out.data[int(coord.x), int(coord.y), int(coord.z)] = coordinates_ref[j].value
 
-    return image_output
+    return out
 
 
 def label_vertebrae(levels_user=None):
