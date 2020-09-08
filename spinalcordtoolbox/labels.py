@@ -291,29 +291,30 @@ def labelize_from_disks(img: Image, ref: Image) -> Image:
     return out
 
 
-def label_vertebrae(levels_user=None):
+def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image:
     """
     Find the center of mass of vertebral levels specified by the user.
-    :return: image_output: Image with labels.
+    :param img: source image
+    :param vertebral_levels: list of vertebral levels
+    :returns: image with labels
     """
     # get center of mass of each vertebral level
-    image_cubic2point = self.cubic_to_point()
+    out = cubic_to_point(img)
 
     # get list of coordinates for each label
-    list_coordinates = image_cubic2point.getNonZeroCoordinates(sorting='value')
+    list_coordinates = out.getNonZeroCoordinates(sorting='value')
 
     # if user did not specify levels, include all:
-    if levels_user[0] == 0:
-        levels_user = [int(i.value) for i in list_coordinates]
+    if not vertebral_levels:
+        vertebral_levels = [int(i.value) for i in list_coordinates]
 
     # loop across labels and remove those that are not listed by the user
-    for i_label in range(len(list_coordinates)):
-        # check if this level is NOT in levels_user
-        if not levels_user.count(int(list_coordinates[i_label].value)):
-            # if not, set value to zero
-            image_cubic2point.data[int(list_coordinates[i_label].x), int(list_coordinates[i_label].y), int(list_coordinates[i_label].z)] = 0
+    for i in range(len(list_coordinates)):
+        # check if this level is NOT in vertebral_levels. if not set value to zero
+        if not vertebral_levels.count(int(list_coordinates[i].value)):
+            out.data[int(list_coordinates[i].x), int(list_coordinates[i].y), int(list_coordinates[i].z)] = 0
 
-    return image_cubic2point
+    return out
 
 
 def MSE(threshold_mse=0):
