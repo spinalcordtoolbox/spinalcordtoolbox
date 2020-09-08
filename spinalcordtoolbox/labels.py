@@ -522,23 +522,6 @@ def continuous_vertebral_levels(img: Image) -> Image:
     return out
 
 
-def launch_sagittal_viewer(labels, previous_points=None):
-    from spinalcordtoolbox.gui import base
-    from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
-
-    params = base.AnatomicalParams()
-    params.vertebraes = labels
-    params.input_file_name = self.image_input.absolutepath
-    params.output_file_name = self.fname_output
-    params.subtitle = self.msg
-    if previous_points is not None:
-        params.message_warn = 'Please select the label you want to add \nor correct in the list below before clicking \non the image'
-    output = zeros_like(self.image_input)
-    output.absolutepath = self.fname_output
-    launch_sagittal_dialog(self.image_input, output, params, previous_points)
-
-    return output
-
 
 def remove_or_keep_labels(labels, action):
     """

@@ -482,6 +482,24 @@ def distance_interlabels(max_dist):
                 coordinates_input[i + 1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist))
 
 
+def launch_sagittal_viewer(labels, previous_points=None):
+    from spinalcordtoolbox.gui import base
+    from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
+
+    params = base.AnatomicalParams()
+    params.vertebraes = labels
+    params.input_file_name = self.image_input.absolutepath
+    params.output_file_name = self.fname_output
+    params.subtitle = self.msg
+    if previous_points is not None:
+        params.message_warn = 'Please select the label you want to add \nor correct in the list below before clicking \non the image'
+    output = zeros_like(self.image_input)
+    output.absolutepath = self.fname_output
+    launch_sagittal_dialog(self.image_input, output, params, previous_points)
+
+    return output
+
+
 if __name__ == "__main__":
     sct.init_sct()
     # call main function
