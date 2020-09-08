@@ -317,47 +317,42 @@ def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image
     return out
 
 
-def MSE(threshold_mse=0):
+def compute_mean_squared_error(img: Image, ref: Image) -> float:
     """
-    Compute the Mean Square Distance Error between two sets of labels (input and ref).
+    Compute the Mean Squared Distance Error between two sets of labels (input and ref).
     Moreover, a warning is generated for each label mismatch.
     If the MSE is above the threshold provided (by default = 0mm), a log is reported with the filenames considered here.
+    :param img: source image
+    :param ref: reference image
+    :returns: computed MSE
     """
-    coordinates_input = self.image_input.getNonZeroCoordinates()
-    coordinates_ref = self.image_ref.getNonZeroCoordinates()
+    coordinates_input = img.getNonZeroCoordinates()
+    coordinates_ref = ref.getNonZeroCoordinates()
 
     # check if all the labels in both the images match
     if len(coordinates_input) != len(coordinates_ref):
-        sct.printv('ERROR: labels mismatch', 1, 'warning')
+        raise ValueError(f"Input and reference image don't have the same number of labels!")
+
+    rounded_coord_ref_values = [np.round(coord_ref.value) for coord_ref in coordinates_ref]
+    rounded_coord_in_values = [np.round(coord.value) for coord in coordinates_input]
 
     for coord in coordinates_input:
-        if np.round(coord.value) not in [np.round(coord_ref.value) for coord_ref in coordinates_ref]:
-            sct.printv('ERROR: labels mismatch', 1, 'warning')
+        if np.round(coord.value) not in rounded_coord_ref_values:
+            raise ValueError("Labels mismatch")  # FIXME [AJ] be more specific
 
     for coord_ref in coordinates_ref:
-        if np.round(coord_ref.value) not in [np.round(coord.value) for coord in coordinates_input]:
-            sct.printv('ERROR: labels mismatch', 1, 'warning')
+        if np.round(coord_ref.value) not in rounded_coord_in_values:
+            raise ValueError("Labels mismatch")  # FIXME [AJ] be more specific
 
     result = 0.0
 
-    for coord in coordinates_input:
-        for coord_ref in coordinates_ref:
-            if np.round(coord_ref.value) == np.round(coord.value):
-                result += (coord_ref.z - coord.z) ** 2
-                break
+    for coord, coord_ref in zip(coordinates_input, coordinates_ref):
+        if np.round(coord_ref.value) == np.round(coord.value):
+            result += (coord_ref.z - coord.z) ** 2
+            break
 
     result = np.sqrt(result / len(coordinates_input))
-
-    sct.printv('MSE error in Z direction = ' + str(result) + ' mm')
-
-    if result > threshold_mse:
-        parent, stem, ext = sct.extract_fname(self.image_input.absolutepath)
-        fname_report = os.path.join(parent, 'error_log_{}.txt'.format(stem))
-        with open(fname_report, 'w') as f:
-            f.write('The labels error (MSE) between {} and {} is: {}\n'.format(
-                os.path.relpath(self.image_input.absolutepath, os.path.dirname(fname_report)),
-                os.path.relpath(self.image_ref.absolutepath, os.path.dirname(fname_report)),
-                result))
+    logger.info(f"MSE error in Z direction = {result}mm")
 
     return result
 
