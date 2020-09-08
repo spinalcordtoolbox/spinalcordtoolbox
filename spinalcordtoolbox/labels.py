@@ -18,6 +18,7 @@ from scipy import ndimage
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate, CoordinateValue
+from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 logger = logging.getLogger(__name__)
 
@@ -456,26 +457,28 @@ def labels_diff(img: Image, ref: Image) -> Tuple[Sequence[Coordinate], Sequence[
     return missing_from_ref, missing_from_src
 
 
-def continuous_vertebral_levels():
+def continuous_vertebral_levels(img: Image) -> Image:
     """
     This function transforms the vertebral levels file from the template into a continuous file.
     Instead of having integer representing the vertebral level on each slice, a continuous value that represents
-    the position of the slice in the vertebral level coordinate system.
-    The image must be RPI
-    :return:
+    the position of the slice in the vertebral level coordinate system. The image must be RPI
+    :param img: input image
+    :returns: image with continuous vertebral levels
     """
-    im_input = Image(self.image_input, self.verbose)
-    im_output = zeros_like(self.image_input)
+    if img.orientation != "RPI":
+        raise ValueError("Input image not in RPI orientation!")
+
+    out = zeros_like(img)
 
     # 1. extract vertebral levels from input image
     #   a. extract centerline
     #   b. for each slice, extract corresponding level
-    nx, ny, nz, nt, px, py, pz, pt = im_input.dim
-    from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-    _, arr_ctl, _, _ = get_centerline(self.image_input, param=ParamCenterline())
+    nx, ny, nz, nt, px, py, pz, pt = img.dim
+    _, arr_ctl, _, _ = get_centerline(img, param=ParamCenterline())
     x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
+
     value_centerline = np.array(
-        [im_input.data[int(x_centerline_fit[it]), int(y_centerline_fit[it]), int(z_centerline[it])]
+        [img.data[int(x_centerline_fit[it]), int(y_centerline_fit[it]), int(z_centerline[it])]
          for it in range(len(z_centerline))])
 
     # 2. compute distance for each vertebral level --> Di for i being the vertebral levels
@@ -509,13 +512,14 @@ def continuous_vertebral_levels():
 
     # 3. saving data
     # for each slice, get all non-zero pixels and replace with continuous values
-    coordinates_input = self.image_input.getNonZeroCoordinates()
-    im_output.change_type(np.float32)
-    # for all points in input, find the value that has to be set up, depending on the vertebral level
-    for i, coord in enumerate(coordinates_input):
-        im_output.data[int(coord.x), int(coord.y), int(coord.z)] = continuous_values[coord.z]
+    coordinates_input = img.getNonZeroCoordinates()
+    out.change_type(np.float32)
 
-    return im_output
+    # for all points in input, find the value that has to be set up, depending on the vertebral level
+    for coord in coordinates_input:
+        out.data[int(coord.x), int(coord.y), int(coord.z)] = continuous_values[coord.z]
+
+    return out
 
 
 def launch_sagittal_viewer(labels, previous_points=None):
