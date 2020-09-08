@@ -44,35 +44,56 @@ def add(img: Image, value: float) -> Image:
     return out
 
 
-def create_label(add=False):
+def create_labels_empty(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     """
-    Create an image with labels listed by the user.
+    Create an empty image with labels listed by the user.
     This method works only if the user inserted correct coordinates.
-
-    self.coordinates is a list of coordinates (class in spinalcordtoolbox.types).
-    a Coordinate contains x, y, z and value.
     If only one label is to be added, coordinates must be completed with '[]'
-    examples:
-    For one label:  object_define=ProcessLabels( fname_label, coordinates=[coordi]) where coordi is a 'Coordinate'
-      object from spinalcordtoolbox.types
-    For two labels: object_define=ProcessLabels( fname_label, coordinates=[coordi1, coordi2]) where coordi1 and
-      coordi2 are 'Coordinate' objects from spinalcordtoolbox.types
+    :param img: source image
+    :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
+    :returns: empty image with labels
     """
-    image_output = self.image_input.copy() if add else zeros_like(self.image_input)
+    out = zeros_like(img)
+    out = _add_labels(img, coordinates)
 
-    # loop across labels
-    for i, coord in enumerate(self.coordinates):
-        if len(image_output.data.shape) == 3:
-            image_output.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
-        elif len(image_output.data.shape) == 2:
-            assert str(coord.z) == '0', "ERROR: 2D coordinates should have a Z value of 0. Z coordinate is :" + str(coord.z)
-            image_output.data[int(coord.x), int(coord.y)] = coord.value
+    return out
+
+
+def create_labels(img: Image, coordinates: Sequence[Coordinate]) -> Image:
+    """
+    Add labels provided by a user to the image.
+    This method works only if the user inserted correct coordinates.
+    If only one label is to be added, coordinates must be completed with '[]'
+    :param img: source image
+    :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
+    :returns: labeled source image
+    """
+    out = img.copy()
+    out = _add_labels(img, coordinates)
+
+    return out
+
+
+def _add_labels(img: Image, coordinates: Sequence[Coordinate]) -> Image:
+    """
+    Given an image and list of coordinates, add the labels to the image and return it.
+    :param img: source image
+    :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
+    :returns: labeled source image
+    """
+    for i, coord in enumerate(coordinates):
+        if len(img.data.shape) == 3:
+            img.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
+        elif len(img.data.shape) == 2:
+            if str(coord.z) != '0':
+                raise ValueError(f"2D coordinates should have a Z value of 0! Current value: {str(coord.z)}")
+            img.data[int(coord.x), int(coord.y)] = coord.value
         else:
-            raise ValueError(f"Data should be 2D or 3D. Current shape is: {str(image_output.data.shape)}")
-        # display info
+            raise ValueError(f"Data should be 2D or 3D. Current shape is: {str(img.data.shape)}")
+
         logger.info(f"Label #{str(i)}: {str(coord.x)}, {str(coord.y)}, {str(coord.z)} --> {str(coord.value)}")
 
-    return image_output
+    return img
 
 
 def create_label_along_segmentation():
