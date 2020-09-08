@@ -11,7 +11,7 @@
 #########################################################################################
 
 import logging
-from typing import Sequence
+from typing import Sequence, Tuple
 
 import numpy as np
 from scipy import ndimage
@@ -418,33 +418,42 @@ def get_coordinates_in_destination(img: Image, dst: Image, type: str = 'discrete
     return dest_coord
 
 
-def diff():
+def labels_diff(img: Image, ref: Image) -> Tuple[Sequence[Coordinate], Sequence[Coordinate]]:
     """
     Detect any label mismatch between input image and reference image
+    :param img: source Image
+    :param ref: reference image
+    :returns: tuple of list of src and ref labels missing as per scheme below:
+    -> (list_of_src_labels_missing_from_ref, list_of_ref_labels_missing_from_src)
     """
 
-    coordinates_input = self.image_input.getNonZeroCoordinates()
-    coordinates_ref = self.image_ref.getNonZeroCoordinates()
-    sct.printv("Label in input image that are not in reference image:")
+    src_coords = img.getNonZeroCoordinates()
+    ref_coords = ref.getNonZeroCoordinates()
 
-    for coord in coordinates_input:
-        isIn = False
-        for coord_ref in coordinates_ref:
-            if coord.value == coord_ref.value:
-                isIn = True
-                break
-        if not isIn:
-            sct.printv(coord.value)
+    missing_from_ref = list()
+    missing_from_src = list()
 
-    sct.printv("Label in ref image that are not in input image:")
-    for coord_ref in coordinates_ref:
-        isIn = False
-        for coord in coordinates_input:
-            if coord.value == coord_ref.value:
-                isIn = True
+    for src_coord in src_coords:
+        exists = False
+        for ref_coord in ref_coords:
+            if src_coord.value == ref_coord.value:
+                exists = True
                 break
-        if not isIn:
-            sct.printv(coord_ref.value)
+        if not exists:
+            missing_from_ref.append(src_coord)
+            logger.info(f"Missing src label: {src_coord.value} from reference image")
+
+    for ref_coord in ref_coords:
+        exists = False
+        for src_coord in src_coords:
+            if src_coord.value == ref_coord.value:
+                exists = True
+                break
+        if not exists:
+            missing_from_src.append(src_coord)
+            logger.info(f"Missing ref label: {ref_coord.value} from src image")
+
+    return missing_from_ref, missing_from_src
 
 
 def distance_interlabels(max_dist):
