@@ -378,27 +378,6 @@ def remove_missing_labels(img: Image, ref: Image) -> Image:
     return out
 
 
-def display_voxel():
-    """
-    Display all the labels that are contained in the input image.
-    The image is suppose to be RPI to display voxels. But works also for other orientations
-    """
-
-    coordinates_input = self.image_input.getNonZeroCoordinates(sorting='value')
-    self.useful_notation = ''
-
-    for coord in coordinates_input:
-        sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose=self.verbose)
-        if self.useful_notation:
-            self.useful_notation = self.useful_notation + ':'
-        self.useful_notation += str(coord)
-
-    sct.printv('All labels (useful syntax):', verbose=self.verbose)
-    sct.printv(self.useful_notation, verbose=self.verbose)
-
-    return coordinates_input
-
-
 def get_physical_coordinates():
     """
     This function returns the coordinates of the labels in the physical referential system.
