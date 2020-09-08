@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-import spinalcordtoolbox.math as math
+import spinalcordtoolbox.math as sct_math
 
 from sct_utils import printv, extract_fname, display_viewer_syntax, init_sct
 
@@ -266,31 +266,31 @@ def main(args=None):
     # run command
     if arguments.otsu is not None:
         param = arguments.otsu
-        data_out = math.otsu(data, param)
+        data_out = sct_math.otsu(data, param)
 
     elif arguments.adap is not None:
         param = convert_list_str(arguments.adap, "int")
-        data_out = math.adap(data, param[0], param[1])
+        data_out = sct_math.adap(data, param[0], param[1])
 
     elif arguments.otsu_median is not None:
         param = convert_list_str(arguments.otsu_median, "int")
-        data_out = math.otsu_median(data, param[0], param[1])
+        data_out = sct_math.otsu_median(data, param[0], param[1])
 
     elif arguments.thr is not None:
         param = arguments.thr
-        data_out = math.threshold(data, param)
+        data_out = sct_math.threshold(data, param)
 
     elif arguments.percent is not None:
         param = arguments.percent
-        data_out = math.perc(data, param)
+        data_out = sct_math.perc(data, param)
 
     elif arguments.bin is not None:
         bin_thr = arguments.bin
-        data_out = math.binarize(data, bin_thr=bin_thr)
+        data_out = sct_math.binarize(data, bin_thr=bin_thr)
 
     elif arguments.add is not None:
         data2 = get_data_or_scalar(arguments.add, data)
-        data_concat = math.concatenate_along_4th_dimension(data, data2)
+        data_concat = sct_math.concatenate_along_4th_dimension(data, data2)
         data_out = np.sum(data_concat, axis=3)
 
     elif arguments.sub is not None:
@@ -306,11 +306,11 @@ def main(args=None):
         # adjust sigma based on voxel size
         sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
-        data_out = math.laplacian(data, sigmas)
+        data_out = sct_math.laplacian(data, sigmas)
 
     elif arguments.mul is not None:
         data2 = get_data_or_scalar(arguments.mul, data)
-        data_concat = math.concatenate_along_4th_dimension(data, data2)
+        data_concat = sct_math.concatenate_along_4th_dimension(data, data2)
         data_out = np.prod(data_concat, axis=3)
 
     elif arguments.div is not None:
@@ -344,13 +344,13 @@ def main(args=None):
         # adjust sigma based on voxel size
         sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
-        data_out = math.smooth(data, sigmas)
+        data_out = sct_math.smooth(data, sigmas)
 
     elif arguments.dilate is not None:
-        data_out = math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
+        data_out = sct_math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.erode is not None:
-        data_out = math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
+        data_out = sct_math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.denoise is not None:
         # parse denoising arguments
@@ -361,7 +361,7 @@ def main(args=None):
                 p = int(i.split('=')[1])
             if 'b' in i:
                 b = int(i.split('=')[1])
-        data_out = math.denoise_nlmeans(data, patch_radius=p, block_radius=b)
+        data_out = sct_math.denoise_nlmeans(data, patch_radius=p, block_radius=b)
 
     elif arguments.symmetrize is not None:
         data_out = (data + data[list(range(data.shape[0] - 1, -1, -1)), :, :]) / float(2)
@@ -446,7 +446,7 @@ def get_data(list_fname):
             printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(nii[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data0)), 1, 'warning')
             printv('\nERROR: All input images must have same dimensions.', 1, 'error')
         else:
-            data = math.concatenate_along_4th_dimension(data, nii[i].data)
+            data = sct_math.concatenate_along_4th_dimension(data, nii[i].data)
     return data
 
 
@@ -492,7 +492,7 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
     if img1.data.size != img2.data.size:
         raise ValueError(f"Input images don't have the same size! \nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space")
 
-    res, data1_1d, data2_1d = math.compute_similarity(img1.data, img2.data, metric=metric)
+    res, data1_1d, data2_1d = sct_math.compute_similarity(img1.data, img2.data, metric=metric)
 
     if verbose > 1:
         matplotlib.use('Agg')
