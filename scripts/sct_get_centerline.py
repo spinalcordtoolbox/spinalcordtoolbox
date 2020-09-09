@@ -37,7 +37,7 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Input image. Example: ti.nii.gz"
+        help="Input image. Example: t1.nii.gz"
     )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
