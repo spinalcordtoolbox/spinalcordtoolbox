@@ -96,7 +96,7 @@ def get_parser(paramregmulti=None):
     optional.add_argument(
         '-dseg',
         metavar=Metavar.file,
-        help="Segmentation destination. dest_seg.nii.gz"
+        help="Segmentation destination. Example: dest_seg.nii.gz"
     )
     optional.add_argument(
         '-ilabel',
