@@ -768,7 +768,7 @@ def get_parser():
         type=list_type(',', int),
         help=("R|From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
               "desired levels with ','. Example: 3,8\n"
-              "To get all levels, enter '0'.")
+              "To get all levels, enter 0.")
     )
     optional.add_argument(
         '-vert-continuous',
