@@ -102,8 +102,8 @@ def get_parser():
 
     header.add_argument(
         '-set-sform-to-qform',
-        help='Set the sform matrix of the output image to the qform matrix '
-             'of the output image.',
+        help='Set the sform matrix of all input images to their respective qform matrix. '
+             'This operation is applied anytime an image is read in by `sct_image`.',
         action='store_true'
     )
 
@@ -167,7 +167,6 @@ def get_parser():
 
     return parser
 
-
 def main(args=None):
     """
     Main function
@@ -187,6 +186,10 @@ def main(args=None):
     n_in = len(fname_in)
     verbose = arguments.v
     sct.init_sct(log_level=verbose, update=True)  # Update log level
+
+    # If the user wants to fix sforms replace `Image` with the sform fixer
+    if arguments.set_sform_to_qform:
+        Image = read_and_fix_sform
 
     if arguments.o is not None:
         fname_out = arguments.o
@@ -210,13 +213,6 @@ def main(args=None):
         im_dest_new.absolutepath = im_dest.absolutepath
         im_out = [im_dest_new]
         fname_out = arguments.copy_header
-
-    elif arguments.set_sform_to_qform:
-        im_in = Image(fname_in[0])
-        im_reaff = im_in.copy()
-        im_reaff.header = im_in.header.copy()
-        im_reaff.header.set_sform(im_reaff.header.get_qform())
-        im_out = [im_reaff]
 
     elif arguments.display_warp:
         im_in = fname_in[0]
@@ -320,6 +316,11 @@ def main(args=None):
         if len(spaces) < 2:
             spaces.append(None)
         im_out = [ displacement_to_abs_fsl(Image(fname_in[0]), spaces[0], spaces[1]) ]
+
+    elif arguments.set_sform_to_qform is not None:
+        # This argument can be used stand alone or with other operations so
+        # it should go last before the else
+        im_out = [Image(fname_in[0])]
 
     else:
         im_out = None
@@ -597,6 +598,14 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     sct.run(['sct_apply_transfo', '-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
     if rm_tmp:
         sct.rmtree(tmp_dir)
+
+
+def read_and_fix_sform(fname):
+    im_in = Image(fname)
+    im_reaff = im_in.copy()
+    im_reaff.header = im_in.header.copy()
+    im_reaff.header.set_sform(im_reaff.header.get_qform())
+    return im_reaff
 
 
 if __name__ == "__main__":
