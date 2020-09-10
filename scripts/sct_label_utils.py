@@ -715,14 +715,14 @@ def get_parser():
         '-create',
         metavar=Metavar.list,
         type=list_type(':', Coordinate),
-        help=("Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2."
+        help=("Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2. "
               "Example: 12,34,32,1:12,35,33,2")
     )
     optional.add_argument(
         '-create-add',
         metavar=Metavar.list,
         type=list_type(':', Coordinate),
-        help=("Same as '-create', but add labels to the input image instead of creating a new image."
+        help=("Same as '-create', but add labels to the input image instead of creating a new image. "
               "Example: 12,34,32,1:12,35,33,2")
     )
     optional.add_argument(
