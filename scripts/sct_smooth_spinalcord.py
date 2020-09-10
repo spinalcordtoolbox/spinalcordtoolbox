@@ -93,12 +93,11 @@ def get_parser():
               "(e.g.: 1,1,3). For no smoothing, set value to 0.")
     )
     optional.add_argument(
-        '-param',
-        metavar=Metavar.list,
-        type=list_type(',', str),
-        help=(f"R|Advanced parameters. Assign value with '='; Separate params with ','\n"
-              f"  - algo_fitting {{bspline, polyfit}}: Algorithm for curve fitting. For more information, "
-              f"see sct_straighten_spinalcord. Default={param_default.algo_fitting}.\n")
+        '-algo-fitting',
+        metavar=Metavar.str,
+        choices=['bspline', 'polyfit'],
+        default=param_default.algo_fitting,
+        help=f"Algorithm for curve fitting. For more information, see sct_straighten_spinalcord."
     )
     optional.add_argument(
         '-r',
@@ -129,10 +128,9 @@ def main(args=None):
 
     fname_anat = arguments.i
     fname_centerline = arguments.s
+    param.algo_fitting = arguments.algo_fitting
     if arguments.smooth is not None:
         sigma = arguments.smooth
-    if arguments.param is not None:
-        param.update(arguments.param)
     if arguments.r is not None:
         remove_temp_files = int(arguments.r)
     verbose = int(arguments.v)
