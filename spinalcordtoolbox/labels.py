@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 
-def add(img: Image, value: float) -> Image:
+def add(img: Image, value: int) -> Image:
     """
     This function adds a specified value to all non-zero voxels.
     :param img: source image
