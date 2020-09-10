@@ -120,7 +120,7 @@ def get_parser():
             "the parameter '-ref subject'.\n"
             "\n"
             "More information about label creation can be found at "
-            "https://www.slideshare.net/neuropoly/sct-course-20190121/42"
+            "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)"
         ),
         formatter_class=SmartFormatter,
         add_help=None,
@@ -154,7 +154,7 @@ def get_parser():
         help=("R|One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
               "Example: anat_labels.nii.gz\n"
               "For more information about label creation, please see: "
-              "https://www.slideshare.net/neuropoly/sct-course-20190121/42")
+              "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)")
     )
     optional.add_argument(
         '-ldisc',
@@ -163,7 +163,7 @@ def get_parser():
               "If you are using more than 2 labels, all disc covering the region of interest should be provided. "
               "(E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7.) "
               "For more information about label creation, please refer to "
-              "https://www.slideshare.net/neuropoly/sct-course-20190121/42")  # TODO: update URL
+              "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)")
     )
     optional.add_argument(
         '-lspinal',
@@ -583,7 +583,7 @@ def main(args=None):
                                    fname_affine='straight2templateAffine.txt', verbose=verbose)
             except RuntimeError:
                 raise('Input labels do not seem to be at the right place. Please check the position of the labels. '
-                      'See documentation for more details: https://www.slideshare.net/neuropoly/sct-course-20190121/42')
+                      'See documentation for more details: https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)')
 
             # Concatenate transformations: curve --> straight --> affine
             sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
