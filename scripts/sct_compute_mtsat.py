@@ -70,48 +70,36 @@ def get_parser(argv):
         help="TR [in ms] for mt image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(
-            get_json_file_name(parser.parse_known_args(argv)[0].mt, check_exist=True), 'RepetitionTime')
         )
     optional.add_argument(
         "-trpd",
         help="TR [in ms] for pd image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(
-            get_json_file_name(parser.parse_known_args(argv)[0].pd, check_exist=True), 'RepetitionTime')
         )
     optional.add_argument(
         "-trt1",
         help="TR [in ms] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(
-            get_json_file_name(parser.parse_known_args(argv)[0].t1, check_exist=True), 'RepetitionTime')
         )
     optional.add_argument(
         "-famt",
         help="Flip angle [in deg] for mt image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(
-            get_json_file_name(parser.parse_known_args(argv)[0].mt, check_exist=True), 'FlipAngle')
         )
     optional.add_argument(
         "-fapd",
         help="Flip angle [in deg] for pd image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(
-            get_json_file_name(parser.parse_known_args(argv)[0].pd, check_exist=True), 'FlipAngle')
         )
     optional.add_argument(
         "-fat1",
         help="Flip angle [in deg] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        default=fetch_metadata(
-            get_json_file_name(parser.parse_known_args(argv)[0].t1, check_exist=True), 'FlipAngle')
         )
     optional.add_argument(
         "-b1map",
@@ -189,6 +177,19 @@ def main(argv):
         nii_b1map = None
     else:
         nii_b1map = Image(args.b1map)
+
+    if args.trmt is None:
+        args.trmt = fetch_metadata(get_json_file_name(args.mt, check_exist=True), 'RepetitionTime')
+    if args.trpd is None:
+        args.trpd = fetch_metadata(get_json_file_name(args.pd, check_exist=True), 'RepetitionTime')
+    if args.trt1 is None:
+        args.trt1 = fetch_metadata(get_json_file_name(args.t1, check_exist=True), 'RepetitionTime')
+    if args.famt is None:
+        args.famt = fetch_metadata(get_json_file_name(args.mt, check_exist=True), 'FlipAngle')
+    if args.fapd is None:
+        args.fapd = fetch_metadata(get_json_file_name(args.pd, check_exist=True), 'FlipAngle')
+    if args.fat1 is None:
+        args.fat1 = fetch_metadata(get_json_file_name(args.t1, check_exist=True), 'FlipAngle')
 
     # compute MTsat
     nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1,
