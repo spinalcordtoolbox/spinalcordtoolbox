@@ -28,6 +28,7 @@ import numpy as np
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
+import spinalcordtoolbox.labels as sct_labels
 
 # TODO: Properly test when first PR (that includes list_type) gets merged
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
@@ -187,18 +188,136 @@ def get_parser():
     param_default = Param()
     # Initialize the parser
     parser = argparse.ArgumentParser(
-        description="Utility function for label images.",
+        description="Utility functions for label images.",
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
     )
 
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatory.add_argument(
+    req_group = parser.add_argument_group("\nREQUIRED")
+    req_group.add_argument(
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Input image. Example: t2_labels.nii.gz"
+        help="Input image (Required) Example: t2_labels.nii.gz"
+    )
+
+    io_group = parser.add_argument_group("\nOPTIONAL I/O")
+
+    io_group.add_argument(
+        '-o',
+        metavar=Metavar.file,
+        help=("Output image. Example: t2_labels.nii.gz"
+              "Note: If no output image is provided, input image will be overwritten!")
+    )
+
+    io_group.add_argument(
+        '-ilabel',
+        metavar=Metavar.file,
+        help="File that contain labels that you want to correct. It is possible to add new points with this option. "
+             "Use with -create-viewer. Example: t2_labels_auto.nii.gz"
+    )
+
+    functions = parser.add_argument_group("\nLABEL FUNCTIONS")
+    func_group = functions.add_mutually_exclusive_group(required=True)
+
+    func_group.add_argument(
+        '-add',
+        metavar=Metavar.int,
+        type=int,
+        help="Add value to all labels. Value can be negative."
+    )
+
+    func_group.add_argument(
+        '-create',
+        metavar=Metavar.list,
+        type=list_type(':', Coordinate),
+        help="Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2. "
+             "Example: 12,34,32,1:12,35,33,2"
+    )
+
+    func_group.add_argument(
+        '-create-add',
+        metavar=Metavar.list,
+        type=list_type(':', Coordinate),
+        help="Same as '-create', but add labels to the input image instead of creating a new image. "
+             "Example: 12,34,32,1:12,35,33,2"
+    )
+
+    func_group.add_argument(
+        '-create-seg',
+        metavar=Metavar.list,
+        type=list_type(':', str),
+        help="R|Create labels along cord segmentation (or centerline) defined by '-i'. First value is 'z', second is "
+             "the value of the label. Separate labels with ':'. Example: 5,1:14,2:23,3. \n"
+             "To select the mid-point in the superior-inferior direction, set z to '-1'. For example if you know that "
+             "C2-C3 disc is centered in the S-I direction, then enter: -1,3"
+    )
+    func_group.add_argument(
+        '-create-viewer',
+        metavar=Metavar.list,
+        type=list_type(',', int),
+        help="Manually label from a GUI a list of labels IDs, separated with ','. Example: 2,3,4,5"
+    )
+
+    func_group.add_argument(
+        '-cubic-to-point',
+        action="store_true",
+        help="Compute the center-of-mass for each label value."
+    )
+
+    func_group.add_argument(
+        '-display',
+        action="store_true",
+        help="Display all labels (i.e. non-zero values)."
+    )
+    func_group.add_argument(
+        '-increment',
+        action="store_true",
+        help="Takes all non-zero values, sort them along the inverse z direction, and attributes the values "
+             "1, 2, 3, etc."
+    )
+    func_group.add_argument(
+        '-vert-body',
+        metavar=Metavar.list,
+        type=list_type(',', int),
+        help="R|From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
+             "desired levels with ','. Example: 3,8\n"
+             "To get all levels, enter 0."
+    )
+
+    func_group.add_argument(
+        '-vert-continuous',
+        action="store_true",
+        help="Convert discrete vertebral labeling to continuous vertebral labeling.",
+    )
+    func_group.add_argument(
+        '-MSE',
+        metavar=Metavar.file,
+        help="Compute Mean Square Error between labels from input and reference image. Specify reference image here."
+    )
+    func_group.add_argument(
+        '-remove-reference',
+        metavar=Metavar.file,
+        help="Remove labels from input image (-i) that are not in reference image (specified here)."
+    )
+    func_group.add_argument(
+        '-remove-sym',
+        metavar=Metavar.file,
+        help="Remove labels from input image (-i) and reference image (specified here) that don't match. You must "
+             "provide two output names separated by ','."
+    )
+    func_group.add_argument(
+        '-remove',
+        metavar=Metavar.list,
+        type=list_type(',', int),
+        help="Remove labels of specific value (specified here) from reference image."
+    )
+    func_group.add_argument(
+        '-keep',
+        metavar=Metavar.list,
+        type=list_type(',', int),
+        help="Keep labels of specific value (specified here) from reference image."
     )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -208,133 +327,33 @@ def get_parser():
         action="help",
         help="Show this help message and exit."
     )
-    optional.add_argument(
-        '-add',
-        metavar=Metavar.int,
-        type=int,
-        help="Add value to all labels. Value can be negative."
-    )
-    optional.add_argument(
-        '-create',
-        metavar=Metavar.list,
-        type=list_type(':', Coordinate),
-        help="Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2. "
-             "Example: 12,34,32,1:12,35,33,2"
-    )
-    optional.add_argument(
-        '-create-add',
-        metavar=Metavar.list,
-        type=list_type(':', Coordinate),
-        help="Same as '-create', but add labels to the input image instead of creating a new image. "
-             "Example: 12,34,32,1:12,35,33,2"
-    )
-    optional.add_argument(
-        '-create-seg',
-        metavar=Metavar.list,
-        type=list_type(':', str),
-        help="R|Create labels along cord segmentation (or centerline) defined by '-i'. First value is 'z', second is "
-             "the value of the label. Separate labels with ':'. Example: 5,1:14,2:23,3. \n"
-             "To select the mid-point in the superior-inferior direction, set z to '-1'. For example if you know that "
-             "C2-C3 disc is centered in the S-I direction, then enter: -1,3"
-    )
-    optional.add_argument(
-        '-create-viewer',
-        metavar=Metavar.list,
-        type=list_type(',', int),
-        help="Manually label from a GUI a list of labels IDs, separated with ','. Example: 2,3,4,5"
-    )
-    optional.add_argument(
-        '-ilabel',
-        metavar=Metavar.file,
-        help="File that contain labels that you want to correct. It is possible to add new points with this option. "
-             "Use with -create-viewer. Example: t2_labels_auto.nii.gz"
-    )
-    optional.add_argument(
-        '-cubic-to-point',
-        action="store_true",
-        help="Compute the center-of-mass for each label value."
-    )
-    optional.add_argument(
-        '-display',
-        action="store_true",
-        help="Display all labels (i.e. non-zero values)."
-    )
-    optional.add_argument(
-        '-increment',
-        action="store_true",
-        help="Takes all non-zero values, sort them along the inverse z direction, and attributes the values "
-             "1, 2, 3, etc."
-    )
-    optional.add_argument(
-        '-vert-body',
-        metavar=Metavar.list,
-        type=list_type(',', int),
-        help="R|From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
-             "desired levels with ','. Example: 3,8\n"
-             "To get all levels, enter 0."
-    )
-    optional.add_argument(
-        '-vert-continuous',
-        action="store_true",
-        help="Convert discrete vertebral labeling to continuous vertebral labeling.",
-    )
-    optional.add_argument(
-        '-MSE',
-        metavar=Metavar.file,
-        help="Compute Mean Square Error between labels from input and reference image. Specify reference image here."
-    )
-    optional.add_argument(
-        '-remove-reference',
-        metavar=Metavar.file,
-        help="Remove labels from input image (-i) that are not in reference image (specified here)."
-    )
-    optional.add_argument(
-        '-remove-sym',
-        metavar=Metavar.file,
-        help="Remove labels from input image (-i) and reference image (specified here) that don't match. You must "
-             "provide two output names separated by ','."
-    )
-    optional.add_argument(
-        '-remove',
-        metavar=Metavar.list,
-        type=list_type(',', int),
-        help="Remove labels of specific value (specified here) from reference image."
-    )
-    optional.add_argument(
-        '-keep',
-        metavar=Metavar.list,
-        type=list_type(',', int),
-        help="Keep labels of specific value (specified here) from reference image."
-    )
+
     optional.add_argument(
         '-msg',
         metavar=Metavar.str,
         help="Display a message to explain the labeling task. Use with -create-viewer"
     )
-    optional.add_argument(
-        '-o',
-        metavar=Metavar.list,
-        type=list_type(',', str),
-        default="labels.nii.gz",
-        help="Output image(s). t2_labels_cross.nii.gz"
-    )
+
     optional.add_argument(
         '-v',
         choices=['0', '1', '2'],
-        default=param_default.verbose,
+        default='1',
         help="Verbose. 0: nothing. 1: basic. 2: extended."
     )
+
     optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved."
     )
+
     optional.add_argument(
         '-qc-dataset',
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
     )
+
     optional.add_argument(
         '-qc-subject',
         metavar=Metavar.str,
