@@ -14,47 +14,54 @@ from __future__ import absolute_import
 
 import os
 import sys
+import argparse
 
 from spinalcordtoolbox.download import install_data
-
-from msct_parser import Parser
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
 import sct_utils as sct
 
 
 def get_parser(dict_url):
-    parser = Parser(__file__)
-    parser.usage.set_description('''Download binaries from the web.''')
-    parser.add_option(
-        name="-d",
-        type_value="multiple_choice",
-        description="Name of the dataset.",
-        mandatory=True,
-        example=sorted(dict_url))
-    parser.add_option(
-        name="-v",
-        type_value="multiple_choice",
-        description="Verbose. 0: nothing. 1: basic. 2: extended.",
-        mandatory=False,
-        default_value=1,
-        example=['0', '1', '2'])
-    parser.add_option(
-        name="-o",
-        type_value="folder_creation",
-        description=("Path where to save the downloaded data"
-         " (defaults to ./${dataset-name})."
-         " Directory will be created."
-         " Warning: existing data in the directory will be erased unless -k is provided."),
-        mandatory=False)
-    parser.add_option(
-        name="-h",
-        type_value=None,
-        description="Display this help",
-        mandatory=False)
-    parser.add_option(
-        name="-k",
-        type_value=None,
-        description="Keep existing data in destination directory",
-        mandatory=False)
+    parser = argparse.ArgumentParser(
+        description="Download binaries from the web.",
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-d',
+        required=True,
+        choices=list(dict_url.keys()),
+        help=f"Name of the dataset."
+    )
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="R|Path to a directory to save the downloaded data.\n"
+             "(Defaults to ./${dataset-name}. Directory will be created if it does not exist. Warning: existing "
+             "data in the directory will be erased unless -k is provided.)\n"
+    )
+    optional.add_argument(
+        '-k',
+        action="store_true",
+        help="Keep existing data in destination directory."
+    )
+    optional.add_argument(
+        '-v',
+        choices=['0', '1', '2'],
+        default='1',
+        help="Verbose. 0: nothing. 1: basic. 2: extended."
+    )
+
     return parser
 
 
@@ -70,9 +77,8 @@ def main(args=None):
             "https://www.neuro.polymtl.ca/_media/downloads/sct/20180525_sct_example_data.zip",
         ],
         "sct_testing_data": [
-            "https://github.com/sct-data/sct_testing_data/releases/download/r20200707232231/sct_testing_data-r20200707232231.zip",
-            "https://osf.io/download/5f053c176cbca300dad363d3/"
-        ],
+            "https://github.com/sct-data/sct_testing_data/releases/download/r20200904/sct_testing_data-r20200904.zip",
+            "https://osf.io/download/5f516b634f1e5e00226f0599/"],
         "PAM50": [
             "https://github.com/sct-data/PAM50/releases/download/r20191029/20191029_pam50.zip",
             "https://osf.io/u79sr/download",
@@ -140,19 +146,22 @@ def main(args=None):
         ],
     }
 
-    if args is None:
-        args = sys.argv[1:]
-
-    # Get parser info
     parser = get_parser(dict_url)
-    arguments = parser.parse(args)
-    data_name = arguments['-d']
-    verbose = int(arguments.get('-v'))
+    if args:
+        arguments = parser.parse_args(args)
+    else:
+        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+
+    data_name = arguments.d
+    verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
-    dest_folder = arguments.get('-o', os.path.join(os.path.abspath(os.curdir), data_name))
+    if arguments.o is not None:
+        dest_folder = arguments.o
+    else:
+        dest_folder = os.path.join(os.path.abspath(os.curdir), data_name)
 
     url = dict_url[data_name]
-    install_data(url, dest_folder, keep=arguments.get("-k", False))
+    install_data(url, dest_folder, keep=arguments.k)
 
     sct.printv('Done!\n', verbose)
     return 0

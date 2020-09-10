@@ -24,14 +24,16 @@ import numpy as np
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 from sct_image import split_data
-from msct_parser import Parser
 from sct_convert import convert
+
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+import argparse
 
 
 class Param:
     def __init__(self):
         self.debug = 0
-        self.average = 0
+        self.average = 1
         self.remove_temp_files = 1
         self.verbose = 1
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.
@@ -40,84 +42,99 @@ class Param:
 def get_parser():
     # Initialize parser
     param_default = Param()
-    parser = Parser(__file__)
+    parser = argparse.ArgumentParser(
+        description="Separate b=0 and DW images from diffusion dataset. The output files will have a suffix "
+                    "(_b0 and _dwi) appended to the input file name.",
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
 
-    # Mandatory arguments
-    parser.usage.set_description("Separate b=0 and DW images from diffusion dataset. The output files will have a suffix (_b0 and _dwi) appended to the input file name.")
-    parser.add_option(name='-i',
-                      type_value='image_nifti',
-                      description='Diffusion data',
-                      mandatory=True,
-                      example='dmri.nii.gz')
-    parser.add_option(name='-bvec',
-                      type_value='file',
-                      description='bvecs file',
-                      mandatory=True,
-                      example='bvecs.txt')
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Diffusion data. Example: dmri.nii.gz"
+    )
+    mandatory.add_argument(
+        '-bvec',
+        metavar=Metavar.file,
+        required=True,
+        help="Bvecs file. Example: bvecs.txt"
+    )
 
-    # Optional arguments
-    parser.add_option(name='-a',
-                      type_value='multiple_choice',
-                      description='average b=0 and DWI data.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value=str(param_default.average))
-    parser.add_option(name='-bval',
-                      type_value='file',
-                      description='bvals file. Used to identify low b-values (in case different from 0).',
-                      mandatory=False)
-    parser.add_option(name='-bvalmin',
-                      type_value='float',
-                      description='B-value threshold (in s/mm2) below which data is considered as b=0.',
-                      mandatory=False,
-                      example='50')
-    parser.add_option(name='-ofolder',
-                      type_value='folder_creation',
-                      description='Output folder.',
-                      mandatory=False,
-                      default_value='./')
-    parser.add_option(name='-v',
-                      type_value='multiple_choice',
-                      description='Verbose.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value=str(param_default.verbose))
-    parser.add_option(name='-r',
-                      type_value='multiple_choice',
-                      description='remove temporary files.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value=str(param_default.remove_temp_files))
-
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-a',
+        type=int,
+        choices=(0, 1),
+        default=param_default.average,
+        help="Average b=0 and DWI data. 0 = no, 1 = yes"
+    )
+    optional.add_argument(
+        '-bval',
+        metavar=Metavar.file,
+        default="",
+        help='bvals file. Used to identify low b-values (in case different from 0). Example: bvals.nii.gz',
+    )
+    optional.add_argument(
+        '-bvalmin',
+        type=float,
+        metavar=Metavar.float,
+        help='B-value threshold (in s/mm2) below which data is considered as b=0. Example: 50.0',
+    )
+    optional.add_argument(
+        '-ofolder',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        default='./',
+        help='Output folder. Example: dmri_separate_results/',
+    )
+    optional.add_argument(
+        "-r",
+        choices=('0', '1'),
+        default=param_default.remove_temp_files,
+        help="Remove temporary files. 0 = no, 1 = yes"
+    )
+    optional.add_argument(
+        '-v',
+        choices=('0', '1'),
+        default=param_default.verbose,
+        help='Verbose. 0 = nothing, 1 = expanded',
+    )
     return parser
 
 
 # MAIN
 # ==========================================================================================
 def main(args=None):
-    if not args:
-        args = sys.argv[1:]
-
     # initialize parameters
     param = Param()
     # call main function
     parser = get_parser()
-    arguments = parser.parse(args)
-
-    fname_data = arguments['-i']
-    fname_bvecs = arguments['-bvec']
-    average = arguments['-a']
-    verbose = int(arguments.get('-v'))
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
-    remove_temp_files = int(arguments['-r'])
-    path_out = arguments['-ofolder']
-
-    if '-bval' in arguments:
-        fname_bvals = arguments['-bval']
+    if args:
+        arguments = parser.parse_args(args)
     else:
-        fname_bvals = ''
-    if '-bvalmin' in arguments:
-        param.bval_min = arguments['-bvalmin']
+        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+
+    fname_data = arguments.i
+    fname_bvecs = arguments.bvec
+    average = arguments.a
+    verbose = int(arguments.v)
+    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    remove_temp_files = arguments.r
+    path_out = arguments.ofolder
+
+    fname_bvals = arguments.bval
+    if arguments.bvalmin:
+        param.bval_min = arguments.bvalmin
 
     # Initialization
     start_time = time.time()
@@ -207,11 +224,11 @@ def main(args=None):
     fname_b0_mean = os.path.abspath(os.path.join(path_out, b0_mean_name + ext_data))
     fname_dwi_mean = os.path.abspath(os.path.join(path_out, dwi_mean_name + ext_data))
     sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, b0_name + ext), fname_b0, verbose)
-    sct.generate_output_file(os.path.join(path_tmp, dwi_name + ext), fname_dwi, verbose)
+    sct.generate_output_file(os.path.join(path_tmp, b0_name + ext), fname_b0, verbose=verbose)
+    sct.generate_output_file(os.path.join(path_tmp, dwi_name + ext), fname_dwi, verbose=verbose)
     if average:
-        sct.generate_output_file(os.path.join(path_tmp, b0_mean_name + ext), fname_b0_mean, verbose)
-        sct.generate_output_file(os.path.join(path_tmp, dwi_mean_name + ext), fname_dwi_mean, verbose)
+        sct.generate_output_file(os.path.join(path_tmp, b0_mean_name + ext), fname_b0_mean, verbose=verbose)
+        sct.generate_output_file(os.path.join(path_tmp, dwi_mean_name + ext), fname_dwi_mean, verbose=verbose)
 
     # Remove temporary files
     if remove_temp_files == 1:
