@@ -56,12 +56,12 @@ def get_parser():
         "-method",
         choices=['optic', 'viewer', 'fitseg'],
         default='optic',
-        help=("R|Method used for extracting the centerline.\n"
-              "  - optic: automatic spinal cord detection method\n"
-              "  - viewer: manual selection a few points followed by interpolation\n"
-              "  - fitseg: fit a regularized centerline on an already-existing cord segmentation. It will "
-              "interpolate if slices are missing and extrapolate beyond the segmentation boundaries (i.e., every "
-              "axial slice will exhibit a centerline pixel).")
+        help="R|Method used for extracting the centerline.\n"
+             "  - optic: automatic spinal cord detection method\n"
+             "  - viewer: manual selection a few points followed by interpolation\n"
+             "  - fitseg: fit a regularized centerline on an already-existing cord segmentation. It will "
+             "interpolate if slices are missing and extrapolate beyond the segmentation boundaries (i.e., every "
+             "axial slice will exhibit a centerline pixel)."
     )
     optional.add_argument(
         "-centerline-algo",
@@ -79,8 +79,8 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help=("File name (without extension) for the centerline output files. By default, output file will be the "
-              "input with suffix '_centerline'. Example: 'centerline_optic'")
+        help="File name (without extension) for the centerline output files. By default, output file will be the "
+             "input with suffix '_centerline'. Example: 'centerline_optic'"
     )
     optional.add_argument(
         "-gap",

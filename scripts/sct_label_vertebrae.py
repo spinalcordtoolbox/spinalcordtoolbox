@@ -113,17 +113,17 @@ def get_parser():
         '-initz',
         metavar=Metavar.list,
         type=list_type(',', int),
-        help=("R|Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). "
-              "Example: 125,3\n"
-              "WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but "
-              "Y in LIP orientation).")
+        help="R|Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). "
+             "Example: 125,3\n"
+             "WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but "
+             "Y in LIP orientation)."
     )
     optional.add_argument(
         '-initcenter',
         metavar=Metavar.int,
         type=int,
-        help=("Initialize using disc value centered in the rostro-caudal direction. If the spine is curved, then "
-              "consider the disc that projects onto the cord at the center of the z-FOV.")
+        help="Initialize using disc value centered in the rostro-caudal direction. If the spine is curved, then "
+             "consider the disc that projects onto the cord at the center of the z-FOV."
     )
     optional.add_argument(
         '-initfile',
@@ -133,24 +133,24 @@ def get_parser():
     optional.add_argument(
         '-initlabel',
         metavar=Metavar.file,
-        help=("Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of "
-              "such file is a single voxel with value '3', which would be located at the posterior tip of C2-C3 disc. "
-              "Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3 ; or by using the "
-              "Python module 'detect_c2c3' implemented in 'spinalcordtoolbox/vertebrae/detect_c2c3.py'.")
+        help="Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of "
+             "such file is a single voxel with value '3', which would be located at the posterior tip of C2-C3 disc. "
+             "Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3 ; or by using the "
+             "Python module 'detect_c2c3' implemented in 'spinalcordtoolbox/vertebrae/detect_c2c3.py'."
     )
     optional.add_argument(
         '-discfile',
         metavar=Metavar.file,
-        help=("File with disc labels, which will be used to transform the input segmentation into a vertebral level "
-              "file. In that case, there will be no disc detection. The convention for disc labels is the following: "
-              "value=3 -> disc C2/C3, value=4 -> disc C3/C4, etc.")
+        help="File with disc labels, which will be used to transform the input segmentation into a vertebral level "
+             "file. In that case, there will be no disc detection. The convention for disc labels is the following: "
+             "value=3 -> disc C2/C3, value=4 -> disc C3/C4, etc."
     )
     optional.add_argument(
         '-ofolder',
         metavar=Metavar.file,
         action=ActionCreateFolder,
         default='',
-        help=("Output folder.")
+        help="Output folder."
     )
     optional.add_argument(
         '-denoise',
@@ -170,23 +170,23 @@ def get_parser():
         metavar=Metavar.float,
         type=float,
         default=1.,
-        help=("Scaling factor to adjust the average distance between two adjacent intervertebral discs. For example, "
-              "if you are dealing with images from pediatric population, the distance should be reduced, so you can "
-              "try a scaling factor of about 0.7.")
+        help="Scaling factor to adjust the average distance between two adjacent intervertebral discs. For example, "
+             "if you are dealing with images from pediatric population, the distance should be reduced, so you can "
+             "try a scaling factor of about 0.7."
     )
     optional.add_argument(
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
-        help=(f"R|Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
-              f"  - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
-              f"  - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
-              f"  - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"
-              f"  - size_IS [mm]: IS window size for disc search. Default={param_default.size_IS}.\n"
-              f"  - gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the "
-              f"image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values "
-              f"to set between 0.1 (strong weighting) and 999 (no weighting). "
-              f"Default={param_default.gaussian_std}.\n")
+        help=f"R|Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
+             f"  - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
+             f"  - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
+             f"  - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"
+             f"  - size_IS [mm]: IS window size for disc search. Default={param_default.size_IS}.\n"
+             f"  - gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the "
+             f"image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values "
+             f"to set between 0.1 (strong weighting) and 999 (no weighting). "
+             f"Default={param_default.gaussian_std}.\n"
     )
     optional.add_argument(
         '-r',

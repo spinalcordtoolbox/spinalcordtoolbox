@@ -68,8 +68,8 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help=("Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
-              "Example: seg.nii.gz")
+        help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
+             "Example: seg.nii.gz"
     )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -94,15 +94,15 @@ def get_parser():
         '-z',
         metavar=Metavar.str,
         type=str,
-        help=("Slice range to compute the metrics across (requires '-p csa'). Example: 5:23")
+        help="Slice range to compute the metrics across (requires '-p csa'). Example: 5:23"
     )
     optional.add_argument(
         '-perslice',
         choices=['0', '1'],
         default='0',
-        help=("Set to 1 to output one metric per slice instead of a single output metric. Please note that when "
-              "methods ml or map is used, outputing a single metric per slice and then averaging them all is not the "
-              "same as outputting a single metric at once across all slices.")
+        help="Set to 1 to output one metric per slice instead of a single output metric. Please note that when "
+             "methods ml or map is used, outputing a single metric per slice and then averaging them all is not the "
+             "same as outputting a single metric at once across all slices."
     )
     optional.add_argument(
         '-vert',
@@ -119,8 +119,8 @@ def get_parser():
         '-perlevel',
         choices=['0', '1'],
         default='0',
-        help=("Set to 1 to output one metric per vertebral level instead of a single output metric. This flag needs "
-              "to be used with flag -vert.")
+        help="Set to 1 to output one metric per vertebral level instead of a single output metric. This flag needs "
+             "to be used with flag -vert."
     )
     optional.add_argument(
         '-r',
@@ -132,10 +132,10 @@ def get_parser():
         '-angle-corr',
         choices=['0', '1'],
         default='1',
-        help=("Angle correction for computing morphometric measures. When angle correction is used, the cord within "
-              "the slice is stretched/expanded by a factor corresponding to the cosine of the angle between the "
-              "centerline and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set "
-              "-angle-corr to 0.")
+        help="Angle correction for computing morphometric measures. When angle correction is used, the cord within "
+             "the slice is stretched/expanded by a factor corresponding to the cosine of the angle between the "
+             "centerline and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set "
+             "-angle-corr to 0."
     )
     optional.add_argument(
         '-centerline-algo',

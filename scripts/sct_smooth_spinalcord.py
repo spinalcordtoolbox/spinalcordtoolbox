@@ -52,10 +52,10 @@ def get_parser():
 
     # Initialize the parser
     parser = argparse.ArgumentParser(
-        description=("Smooth the spinal cord along its centerline. Steps are:\n"
-                     "  1) Spinal cord is straightened (using centerline),\n"
-                     "  2) a Gaussian kernel is applied in the superior-inferior direction,\n"
-                     "  3) then cord is de-straightened as originally.\n"),
+        description="Smooth the spinal cord along its centerline. Steps are:\n"
+                    "  1) Spinal cord is straightened (using centerline),\n"
+                    "  2) a Gaussian kernel is applied in the superior-inferior direction,\n"
+                    "  3) then cord is de-straightened as originally.\n",
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
@@ -87,10 +87,10 @@ def get_parser():
         metavar=Metavar.list,
         type=list_type(',', float),
         default=[0, 0, 3],
-        help=("Sigma (standard deviation) of the smoothing Gaussian kernel (in mm). For isotropic smoothing you only "
-              "need to specify a value (e.g. 2). For anisotropic smoothing specify a value for each axis, separated "
-              "with a comma. The order should follow axes Right-Left, Antero-Posterior, Superior-Inferior "
-              "(e.g.: 1,1,3). For no smoothing, set value to 0.")
+        help="Sigma (standard deviation) of the smoothing Gaussian kernel (in mm). For isotropic smoothing you only "
+             "need to specify a value (e.g. 2). For anisotropic smoothing specify a value for each axis, separated "
+             "with a comma. The order should follow axes Right-Left, Antero-Posterior, Superior-Inferior "
+             "(e.g.: 1,1,3). For no smoothing, set value to 0."
     )
     optional.add_argument(
         '-algo-fitting',

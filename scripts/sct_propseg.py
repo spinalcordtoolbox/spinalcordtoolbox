@@ -185,8 +185,8 @@ def get_parser():
         '-c',
         choices=['t1', 't2', 't2s', 'dwi'],
         required=True,
-        help=("Type of image contrast. If your contrast is not in the available options (t1, t2, t2s, dwi), use "
-              "t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)")
+        help="Type of image contrast. If your contrast is not in the available options (t1, t2, t2s, dwi), use "
+             "t1 (cord bright / CSF dark) or t2 (cord dark / CSF bright)"
     )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -264,10 +264,10 @@ def get_parser():
     optional.add_argument(
         '-init-centerline',
         metavar=Metavar.file,
-        help=("R|Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in "
-              "documentation.\n"
-              "Replace filename by 'viewer' to use interactive viewer for providing centerline. Example: "
-              "-init-centerline viewer")
+        help="R|Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in "
+             "documentation.\n"
+             "Replace filename by 'viewer' to use interactive viewer for providing centerline. Example: "
+             "-init-centerline viewer"
     )
     optional.add_argument(
         '-init',
@@ -278,24 +278,24 @@ def get_parser():
     optional.add_argument(
         '-init-mask',
         metavar=Metavar.file,
-        help=("R|Mask containing three center of the spinal cord, used to initiate the propagation.\n"
-              "Replace filename by 'viewer' to use interactive viewer for providing mask. Example: -init-mask viewer")
+        help="R|Mask containing three center of the spinal cord, used to initiate the propagation.\n"
+             "Replace filename by 'viewer' to use interactive viewer for providing mask. Example: -init-mask viewer"
     )
     optional.add_argument(
         '-mask-correction',
         metavar=Metavar.file,
-        help=("mask containing binary pixels at edges of the spinal cord on which the segmentation algorithm will be "
-              "forced to register the surface. Can be used in case of poor/missing contrast between spinal cord and "
-              "CSF or in the presence of artefacts/pathologies.")
+        help="mask containing binary pixels at edges of the spinal cord on which the segmentation algorithm will be "
+             "forced to register the surface. Can be used in case of poor/missing contrast between spinal cord and "
+             "CSF or in the presence of artefacts/pathologies."
     )
     optional.add_argument(
         '-rescale',
         metavar=Metavar.float,
         type=float,
         default=1.0,
-        help=("Rescale the image (only the header, not the data) in order to enable segmentation on spinal cords with "
-              "dimensions different than that of humans (e.g., mice, rats, elephants, etc.). For example, if the "
-              "spinal cord is 2x smaller than that of human, then use -rescale 2")
+        help="Rescale the image (only the header, not the data) in order to enable segmentation on spinal cords with "
+             "dimensions different than that of humans (e.g., mice, rats, elephants, etc.). For example, if the "
+             "spinal cord is 2x smaller than that of human, then use -rescale 2"
     )
     optional.add_argument(
         '-radius',
@@ -307,8 +307,8 @@ def get_parser():
         '-nbiter',
         metavar=Metavar.int,
         type=int,
-        help=("Stop condition (affects only the Z propogation): number of iteration for the propagation for both "
-              "direction. Default is 200.")
+        help="Stop condition (affects only the Z propogation): number of iteration for the propagation for both "
+             "direction. Default is 200."
     )
     optional.add_argument(
         '-max-area',
@@ -320,37 +320,37 @@ def get_parser():
         '-max-deformation',
         metavar=Metavar.float,
         type=float,
-        help=("[mm], stop condition (affects only the Z propogation): maximum deformation per iteration. Default is "
-              "2.5")
+        help="[mm], stop condition (affects only the Z propogation): maximum deformation per iteration. Default is "
+             "2.5"
     )
     optional.add_argument(
         '-min-contrast',
         metavar=Metavar.float,
         type=float,
-        help=("[intensity value], stop condition (affects only the Z propogation): minimum local SC/CSF contrast, "
-              "default is 50")
+        help="[intensity value], stop condition (affects only the Z propogation): minimum local SC/CSF contrast, "
+             "default is 50"
     )
     optional.add_argument(
         '-d',
         metavar=Metavar.float,
         type=float,
-        help=("trade-off between distance of most promising point (d is high) and feature strength (d is low), "
-              "default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results. Default "
-              "is 10.")
+        help="trade-off between distance of most promising point (d is high) and feature strength (d is low), "
+             "default depend on the contrast. Range of values from 0 to 50. 15-25 values show good results. Default "
+             "is 10."
     )
     optional.add_argument(
         '-distance-search',
         metavar=Metavar.float,
         type=float,
-        help=("maximum distance of optimal points computation along the surface normals. Range of values from 0 to 30. "
-              "Default is 15")
+        help="maximum distance of optimal points computation along the surface normals. Range of values from 0 to 30. "
+             "Default is 15"
     )
     optional.add_argument(
         '-alpha',
         metavar=Metavar.float,
         type=float,
-        help=("Trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 "
-              "to 50. Default is 25.")
+        help="Trade-off between internal (alpha is high) and external (alpha is low) forces. Range of values from 0 "
+             "to 50. Default is 25."
     )
     optional.add_argument(
         '-qc',
@@ -372,9 +372,9 @@ def get_parser():
         '-correct-seg',
         choices=['0', '1'],
         default='1',
-        help=("Enable (1) or disable (0) the algorithm that checks and correct the output segmentation. More "
-              "specifically, the algorithm checks if the segmentation is consistent with the centerline provided by "
-              "isct_propseg.")
+        help="Enable (1) or disable (0) the algorithm that checks and correct the output segmentation. More "
+             "specifically, the algorithm checks if the segmentation is consistent with the centerline provided by "
+             "isct_propseg."
     )
     optional.add_argument(
         '-igt',

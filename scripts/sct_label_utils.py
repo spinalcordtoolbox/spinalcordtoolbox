@@ -715,24 +715,24 @@ def get_parser():
         '-create',
         metavar=Metavar.list,
         type=list_type(':', Coordinate),
-        help=("Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2. "
-              "Example: 12,34,32,1:12,35,33,2")
+        help="Create labels in a new image. List labels as: x1,y1,z1,value1:x2,y2,z2,value2. "
+             "Example: 12,34,32,1:12,35,33,2"
     )
     optional.add_argument(
         '-create-add',
         metavar=Metavar.list,
         type=list_type(':', Coordinate),
-        help=("Same as '-create', but add labels to the input image instead of creating a new image. "
-              "Example: 12,34,32,1:12,35,33,2")
+        help="Same as '-create', but add labels to the input image instead of creating a new image. "
+             "Example: 12,34,32,1:12,35,33,2"
     )
     optional.add_argument(
         '-create-seg',
         metavar=Metavar.list,
         type=list_type(':', str),
-        help=("R|Create labels along cord segmentation (or centerline) defined by '-i'. First value is 'z', second is "
-              "the value of the label. Separate labels with ':'. Example: 5,1:14,2:23,3. \n"
-              "To select the mid-point in the superior-inferior direction, set z to '-1'. For example if you know that "
-              "C2-C3 disc is centered in the S-I direction, then enter: -1,3")
+        help="R|Create labels along cord segmentation (or centerline) defined by '-i'. First value is 'z', second is "
+             "the value of the label. Separate labels with ':'. Example: 5,1:14,2:23,3. \n"
+             "To select the mid-point in the superior-inferior direction, set z to '-1'. For example if you know that "
+             "C2-C3 disc is centered in the S-I direction, then enter: -1,3"
     )
     optional.add_argument(
         '-create-viewer',
@@ -759,16 +759,16 @@ def get_parser():
     optional.add_argument(
         '-increment',
         action="store_true",
-        help=("Takes all non-zero values, sort them along the inverse z direction, and attributes the values "
-              "1, 2, 3, etc.")
+        help="Takes all non-zero values, sort them along the inverse z direction, and attributes the values "
+             "1, 2, 3, etc."
     )
     optional.add_argument(
         '-vert-body',
         metavar=Metavar.list,
         type=list_type(',', int),
-        help=("R|From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
-              "desired levels with ','. Example: 3,8\n"
-              "To get all levels, enter 0.")
+        help="R|From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
+             "desired levels with ','. Example: 3,8\n"
+             "To get all levels, enter 0."
     )
     optional.add_argument(
         '-vert-continuous',
@@ -788,8 +788,8 @@ def get_parser():
     optional.add_argument(
         '-remove-sym',
         metavar=Metavar.file,
-        help=("Remove labels from input image (-i) and reference image (specified here) that don't match. You must "
-              "provide two output names separated by ','.")
+        help="Remove labels from input image (-i) and reference image (specified here) that don't match. You must "
+             "provide two output names separated by ','."
     )
     optional.add_argument(
         '-remove',

@@ -55,13 +55,13 @@ def get_parser(paramregmulti=None):
         paramregmulti = ParamregMultiStep([step0, step1])
 
     parser = argparse.ArgumentParser(
-        description=("This program co-registers two 3D volumes. The deformation is non-rigid and is constrained along "
+        description="This program co-registers two 3D volumes. The deformation is non-rigid and is constrained along "
                     "Z direction (i.e., axial plane). Hence, this function assumes that orientation of the destination "
                     "image is axial (RPI). If you need to register two volumes with large deformations and/or "
                     "different contrasts, it is recommended to input spinal cord segmentations (binary mask) in order "
                     "to achieve maximum robustness. The program outputs a warping field that can be used to register "
                     "other images to the destination image. To apply the warping field to another image, use "
-                    "'sct_apply_transfo'"),
+                    "'sct_apply_transfo'",
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
@@ -116,14 +116,14 @@ def get_parser(paramregmulti=None):
     optional.add_argument(
         '-initwarpinv',
         metavar=Metavar.file,
-        help=("Initial inverse warping field to apply to the destination image (only use if you wish to generate the "
-              "dest->src warping field)")
+        help="Initial inverse warping field to apply to the destination image (only use if you wish to generate the "
+             "dest->src warping field)"
     )
     optional.add_argument(
         '-m',
         metavar=Metavar.file,
-        help=("Mask that can be created with sct_create_mask to improve accuracy over region of interest. This mask "
-              "will be used on the destination image. Example: mask.nii.gz")
+        help="Mask that can be created with sct_create_mask to improve accuracy over region of interest. This mask "
+             "will be used on the destination image. Example: mask.nii.gz"
     )
     optional.add_argument(
         '-o',

@@ -151,29 +151,29 @@ def get_parser():
     optional.add_argument(
         '-l',
         metavar=Metavar.file,
-        help=("R|One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
-              "Example: anat_labels.nii.gz\n"
-              "For more information about label creation, please see: "
-              "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)")
+        help="R|One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
+             "Example: anat_labels.nii.gz\n"
+             "For more information about label creation, please see: "
+             "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)"
     )
     optional.add_argument(
         '-ldisc',
         metavar=Metavar.file,
-        help=("R|Labels located at the posterior edge of the intervertebral discs. Example: anat_labels.nii.gz\n"
-              "If you are using more than 2 labels, all disc covering the region of interest should be provided. "
-              "(E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7.) "
-              "For more information about label creation, please refer to "
-              "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)")
+        help="R|Labels located at the posterior edge of the intervertebral discs. Example: anat_labels.nii.gz\n"
+             "If you are using more than 2 labels, all disc covering the region of interest should be provided. "
+             "(E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7.) "
+             "For more information about label creation, please refer to "
+             "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)"
     )
     optional.add_argument(
         '-lspinal',
         metavar=Metavar.file,
-        help=("R|Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
-              "mid-point of the spinal level. Example: anat_labels.nii.gz\n"
-              "Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). "
-              "If you are using more than 2 labels, all spinal levels covering the region of interest should be "
-              "provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels "
-              "2,3,4,5,6,7).")
+        help="R|Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
+             "mid-point of the spinal level. Example: anat_labels.nii.gz\n"
+             "Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). "
+             "If you are using more than 2 labels, all spinal levels covering the region of interest should be "
+             "provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels "
+             "2,3,4,5,6,7)."
     )
     optional.add_argument(
         '-ofolder',

@@ -214,7 +214,7 @@ def get_parser():
         '-v',
         choices=['0', '1'],
         default='1',
-        help=("Verbose. 0: nothing. 1: basic")
+        help="Verbose. 0: nothing. 1: basic"
     )
 
     return parser
