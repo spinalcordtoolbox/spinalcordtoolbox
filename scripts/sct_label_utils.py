@@ -21,13 +21,12 @@ from __future__ import division, absolute_import
 import os
 import sys
 import argparse
+from typing import Sequence
 
 import numpy as np
-from scipy import ndimage
 
-import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
-from spinalcordtoolbox.types import Coordinate, CoordinateValue
+from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
 
 # TODO: Properly test when first PR (that includes list_type) gets merged
@@ -135,7 +134,7 @@ class ProcessLabels(object):
                 previous_lab = Image(self.fname_previous)
                 # the input image is reoriented to 'SAL' when open by the GUI
                 previous_lab.change_orientation('SAL')
-                mid = int(np.round(previous_lab.data.shape[2]/2))
+                mid = int(np.round(previous_lab.data.shape[2] / 2))
                 previous_points = previous_lab.getNonZeroCoordinates()
                 # boolean used to mark first element to initiate the list.
                 first = True
@@ -414,7 +413,7 @@ def main(args=None):
         # no process chosen
         sct.printv('ERROR: No process was chosen.', 1, 'error')
     if arguments.msg is not None:
-        msg = arguments.msg+"\n"
+        msg = arguments.msg + "\n"
     else:
         msg = ""
     if arguments.o is not None:
@@ -443,59 +442,60 @@ def main(args=None):
                     path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject, process='sct_label_utils')
 
 
-def display_voxel():
+def display_voxel(img: Image, verbose: int):
     """
     Display all the labels that are contained in the input image.
-    The image is suppose to be RPI to display voxels. But works also for other orientations
+    :param img: source image
+    :param verbose: verbosity level
     """
 
-    coordinates_input = self.image_input.getNonZeroCoordinates(sorting='value')
-    self.useful_notation = ''
+    coordinates_input = img.getNonZeroCoordinates(sorting='value')
+    useful_notation = ''
 
     for coord in coordinates_input:
-        sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose=self.verbose)
-        if self.useful_notation:
-            self.useful_notation = self.useful_notation + ':'
-        self.useful_notation += str(coord)
+        sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose=verbose)
+        if useful_notation:
+            useful_notation = useful_notation + ':'
+        useful_notation += str(coord)
 
-    sct.printv('All labels (useful syntax):', verbose=self.verbose)
-    sct.printv(self.useful_notation, verbose=self.verbose)
+    sct.printv('All labels (useful syntax):', verbose=verbose)
+    sct.printv(useful_notation, verbose=verbose)
 
-    return coordinates_input
-
-
-def distance_interlabels(max_dist):
+# TODO [AJ] -> just print warnings or log or raise?
+def check_distance_between_labels(img: Image, max_dist_mm: float):
     """
     Calculate the distances between each label in the input image.
-    If a distance is larger than max_dist, a warning message is displayed.
+    If a distance is larger than max_dist_mm, a warning message is displayed.
+    :param img: input image
+    :param max_dist: maximum distance (in mm) allowed between labels
     """
-    coordinates_input = self.image_input.getNonZeroCoordinates()
+    coordinates_input = img.getNonZeroCoordinates()
 
     # for all points with non-zeros neighbors, force the neighbors to 0
     for i in range(0, len(coordinates_input) - 1):
         dist = np.sqrt((coordinates_input[i].x - coordinates_input[i + 1].x)**2 + (coordinates_input[i].y - coordinates_input[i + 1].y)**2 + (coordinates_input[i].z - coordinates_input[i + 1].z)**2)
 
-        if dist < max_dist:
+        if dist < max_dist_mm:
             sct.printv('Warning: the distance between label ' + str(i) + '[' + str(coordinates_input[i].x) + ',' + str(coordinates_input[i].y) + ',' + str(
                 coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i + 1) + '[' + str(
                 coordinates_input[i + 1].x) + ',' + str(coordinates_input[i + 1].y) + ',' + str(coordinates_input[i + 1].z) + ']=' + str(
-                coordinates_input[i + 1].value) + ' is larger than ' + str(max_dist) + '. Distance=' + str(dist))
+                coordinates_input[i + 1].value) + ' is larger than ' + str(max_dist_mm) + '. Distance=' + str(dist))
 
 
-def launch_sagittal_viewer(labels, previous_points=None):
+def launch_sagittal_viewer(labels: Sequence[Coordinate], previous_points=None):
     from spinalcordtoolbox.gui import base
     from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
 
     params = base.AnatomicalParams()
     params.vertebraes = labels
-    params.input_file_name = self.image_input.absolutepath
+    params.input_file_name = img.absolutepath
     params.output_file_name = self.fname_output
     params.subtitle = self.msg
     if previous_points is not None:
         params.message_warn = 'Please select the label you want to add \nor correct in the list below before clicking \non the image'
-    output = zeros_like(self.image_input)
+    output = zeros_like(img)
     output.absolutepath = self.fname_output
-    launch_sagittal_dialog(self.image_input, output, params, previous_points)
+    launch_sagittal_dialog(img, output, params, previous_points)
 
     return output
 
