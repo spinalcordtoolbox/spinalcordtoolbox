@@ -143,7 +143,8 @@ def get_json_file_name(fname, check_exist=False):
 
     if check_exist:
         if not os.path.isfile(fname_json):
-            FileNotFoundError()
+            raise FileNotFoundError(f"{fname_json} not found. Either provide the file alongside {fname}, or explicitly "
+                                    f"set mt and fa arguments for this image type.")
 
     return fname_json
 
