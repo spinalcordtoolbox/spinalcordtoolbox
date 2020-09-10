@@ -44,9 +44,8 @@ def add(img: Image, value: int) -> Image:
 
     return out
 
+
 # FIXME [AJ] is it really needed? Haven't seen a caller use sct_label_utils -create without add
-
-
 def create_labels_empty(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     """
     Create an empty image with labels listed by the user.
@@ -107,13 +106,12 @@ def create_labels_along_segmentation(img: Image, coordinates: Sequence[Coordinat
     :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
     :returns: labeled segmentation (Image)
     """
+    og_orientation = img.orientation
 
-    if img.orientation != "RPI":
-        img_rpi = img.copy().change_orientation('RPI')
-    else:
-        img_rpi = img.copy()
+    if og_orientation != "RPI":
+        img.change_orientation("RPI")
 
-    out = zeros_like(img_rpi)
+    out = zeros_like(img)
 
     for ilabel, coord in enumerate(coordinates):
 
@@ -150,8 +148,10 @@ def create_labels_along_segmentation(img: Image, coordinates: Sequence[Coordinat
 
             out.data[x, y] = value
 
-    # change orientation back to native
-    return out.change_orientation(img.orientation)
+    if out.orientation != og_orientation:
+        out.change_orientation(og_orientation)
+
+    return out
 
 
 # FIXME [AJ] better name for this? insert_plane_between_labels() ?
@@ -255,8 +255,9 @@ def increment_z_inverse(img: Image) -> Image:
     :param img: source image
     :returns: image with non-zero balue sorted along inverse z
     """
-    if img.orientation != "RPI":
-        raise ValueError("Source image needs to be in RPI orientation!")
+    og_orientation = img.orientation
+    if og_orientation != "RPI":
+        img.change_orientation("RPI")
 
     out = zeros_like(img)
     coordinates_input = img.getNonZeroCoordinates(sorting='z', reverse_coord=True)
@@ -264,6 +265,9 @@ def increment_z_inverse(img: Image) -> Image:
     # for all points with non-zeros neighbors, force the neighbors to 0
     for i, coord in enumerate(coordinates_input):
         out.data[int(coord.x), int(coord.y), int(coord.z)] = i + 1
+
+    if out.orientation != og_orientation:
+        out.change_orientation(og_orientation)
 
     return out
 
@@ -299,6 +303,11 @@ def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image
     :param vertebral_levels: list of vertebral levels
     :returns: image with labels
     """
+
+    og_orientation = img.orientation
+    if og_orientation != "RPI":
+        img.change_orientation("RPI")
+
     # get center of mass of each vertebral level
     out = cubic_to_point(img)
 
@@ -314,6 +323,9 @@ def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image
         # check if this level is NOT in vertebral_levels. if not set value to zero
         if not vertebral_levels.count(int(list_coordinates[i].value)):
             out.data[int(list_coordinates[i].x), int(list_coordinates[i].y), int(list_coordinates[i].z)] = 0
+
+    if out.orientation != og_orientation:
+        out.change_orientation(og_orientation)
 
     return out
 
@@ -465,8 +477,10 @@ def continuous_vertebral_levels(img: Image) -> Image:
     :param img: input image
     :returns: image with continuous vertebral levels
     """
-    if img.orientation != "RPI":
-        raise ValueError("Input image not in RPI orientation!")
+    og_orientation = img.orientation
+
+    if og_orientation != "RPI":
+        img.change_orientation("RPI")
 
     out = zeros_like(img)
 
@@ -518,6 +532,9 @@ def continuous_vertebral_levels(img: Image) -> Image:
     # for all points in input, find the value that has to be set up, depending on the vertebral level
     for coord in coordinates_input:
         out.data[int(coord.x), int(coord.y), int(coord.z)] = continuous_values[coord.z]
+
+    if out.orientation != og_orientation:
+        out.change_orientation(og_orientation)
 
     return out
 
