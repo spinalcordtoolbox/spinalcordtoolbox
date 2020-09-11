@@ -34,16 +34,6 @@ import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 import sct_utils as sct
 
-
-class Param:
-    def __init__(self):
-        self.debug = 0
-        self.fname_label_output = 'labels.nii.gz'
-        self.labels = []
-        self.cross_size = 5  # cross size in mm
-        self.verbose = '1'
-
-
 class ProcessLabels(object):
     def __init__(self, fname_label, fname_output=None, fname_ref=None, cross_radius=5, dilate=False,
                  coordinates=None, verbose=1, vertebral_levels=None, value=None, msg="", fname_previous=None):
