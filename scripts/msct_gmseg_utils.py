@@ -151,7 +151,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         cropper.get_bbox_from_mask(Image(fname_mask))
         im_sc_seg_rpi_crop = cropper.crop()
         # denoising
-        from sct_maths import denoise_nlmeans
+        from spinalcordtoolbox.math import denoise_nlmeans
         block_radius = 3
         block_radius = int(im_target_rpi_crop.data.shape[2] / 2) if im_target_rpi_crop.data.shape[2] < (block_radius*2) else block_radius
         patch_radius = block_radius -1

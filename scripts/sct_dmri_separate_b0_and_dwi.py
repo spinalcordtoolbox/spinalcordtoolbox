@@ -33,7 +33,7 @@ import argparse
 class Param:
     def __init__(self):
         self.debug = 0
-        self.average = 0
+        self.average = 1
         self.remove_temp_files = 1
         self.verbose = 1
         self.bval_min = 100  # in case user does not have min bvalues at 0, set threshold.

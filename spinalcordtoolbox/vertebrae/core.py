@@ -11,11 +11,10 @@ import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
 
 import sct_utils as sct
-from sct_maths import mutual_information
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
-from spinalcordtoolbox.math import dilate
+from spinalcordtoolbox.math import dilate, mutual_information
 
 
 def label_vert(fname_seg, fname_label, verbose=1):
