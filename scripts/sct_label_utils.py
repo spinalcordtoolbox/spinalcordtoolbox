@@ -373,41 +373,32 @@ def main(args=None):
         arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     input_filename = arguments.i
-    input_fname_output = None
-    input_fname_ref = None
-    input_cross_radius = 5
-    input_dilate = False
-    input_coordinates = None
-    vertebral_levels = None
-    value = None
+    img = Image(input_filename)
+
+    # input_fname_output = None
+    # input_fname_ref = None
+    # input_cross_radius = 5
+    # input_dilate = False
+    # input_coordinates = None
+    # vertebral_levels = None
+    # value = None
+
     if arguments.add is not None:
-        process_type = 'add'
-        value = arguments.add
+        out = sct_labels.add(img, arguments.add)
     elif arguments.create is not None:
-        process_type = 'create'
-        input_coordinates = arguments.create
+        out = sct_labels.create_labels_empty(img, arguments.create)
     elif arguments.create_add is not None:
-        process_type = 'create-add'
-        input_coordinates = arguments.create_add
+        out = sct_labels.create_labels(img, arguments.create_add)
     elif arguments.create_seg is not None:
-        process_type = 'create-seg'
-        input_coordinates = arguments.create_seg
-    # TODO: This argument was not present in argparse. Should it be included?
-    # elif arguments.cross is not None:
-    #     process_type = 'cross'
-    #     input_cross_radius = arguments.cross
+        out = sct_labels.create_labels_along_segmentation(img, arguments.create_seg)
     elif arguments.cubic_to_point:
-        process_type = 'cubic-to-point'
+        out = sct_labels.cubic_to_point(img)
     elif arguments.display:
-        process_type = 'display-voxel'
+        display_voxel(img, arguments.v)
     elif arguments.increment:
-        process_type = 'increment'
+        out = sct_labels.increment_z_inverse(img)
     elif arguments.vert_body is not None:
-        process_type = 'vert-body'
-        vertebral_levels = arguments.vert_body
-    # elif '-vert-disc' in arguments:
-    #     process_type = 'vert-disc'
-    #     vertebral_levels = arguments['-vert-disc']
+        out = sct_labels.label_vertebrae(img, arguments.vert_body)
     elif arguments.vert_continuous:
         process_type = 'vert-continuous'
     elif arguments.MSE is not None:
