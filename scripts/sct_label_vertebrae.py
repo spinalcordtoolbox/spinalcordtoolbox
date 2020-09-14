@@ -36,8 +36,8 @@ class Param:
     # The constructor
     def __init__(self):
         self.shift_AP = 32  # 0#32  # shift the centerline towards the spine (in voxel).
-        self.size_AP = 11  # 41#11  # window size in AP direction (=y) (in voxel)
-        self.size_RL = 1  # 1 # window size in RL direction (=x) (in voxel)
+        self.size_AP = 20  # 41#11  # window size in AP direction (=y) (in voxel)
+        self.size_RL = 30  # 1 # window size in RL direction (=x) (in voxel)
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
         self.shift_AP_visu = 15  # 0#15  # shift AP for displaying disc values
         self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
@@ -404,6 +404,7 @@ def main(args=None):
             )
 
     # un-straighten posterior disc map
+    # it won't exist if we don't use the detection since it is based on the network prediction
     if fname_disc is None:
         sct.printv('\nUn-straighten posterior disc map...', verbose)
         sct.run('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %

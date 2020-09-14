@@ -395,20 +395,16 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     :param gaussian_std:
     :return:
     """
-    # parametersi
+    # parameters
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
     src = src[:, :, :, 0]
     print(src.shape)
     # get dimensions from src
     nx, ny, nz = src.shape
-    # zsize=(15)
-    xsize = 30
-    ysize = 20
     # Get pattern from template
     pattern = target[xtarget - xsize:xtarget + xsize,
               ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
               ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
-    # np.save('patt'+str(x)+'.npy',pattern)
     pattern1d = np.sum(pattern, axis=(0, 1))
     # convolve pattern1d with gaussian to get similar curve as input
     a = gaussian(30, std=5)
@@ -429,7 +425,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
                            z + iz - zsize: z + iz + zsize + 1 - padding_size]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant',
                                   constant_values=0)
-            # np.save('dchunk'+str(x)+'.npy',data_chunk3d)
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
         elif z + iz - zsize < 0:
             sct.printv('iz=' + str(iz) + ': padding at bottom')
