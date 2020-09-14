@@ -226,6 +226,8 @@ def main(args=None):
     else:
         arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
+    sct.init_sct(log_level=arguments.v, update=True)  # Update log level
+
     input_filename = arguments.i
     img = Image(input_filename)
 
@@ -284,7 +286,6 @@ def main(args=None):
     else:
         input_fname_previous = None
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
 
 
     # return based on process type
