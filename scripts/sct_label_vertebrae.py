@@ -389,15 +389,16 @@ def main(args=None):
             )
 
     # un-straighten posterior disc map
-    sct.printv('\nUn-straighten posterior disc map...', verbose)
-    sct.run('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
-            ('disc_posterior_tmp.nii.gz',
-             'segmentation.nii',
-             'warp_straight2curve.nii.gz',
-             'label_disc_posterior.nii.gz',
-             'label'),
-            verbose=verbose
-            )
+    if fname_disc is not None:
+        sct.printv('\nUn-straighten posterior disc map...', verbose)
+        sct.run('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
+                ('disc_posterior_tmp.nii.gz',
+                'segmentation.nii',
+                'warp_straight2curve.nii.gz',
+                'label_disc_posterior.nii.gz',
+                'label'),
+                verbose=verbose
+                )
 
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
