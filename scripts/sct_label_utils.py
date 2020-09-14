@@ -263,10 +263,23 @@ def main(args=None):
         mse = sct_labels.compute_mean_squared_error(img, arguments.MSE)
         sct.printv(f"Computed MSE: {mse}")
     elif arguments.remove_reference is not None:
-        out = sct_labels.remove_labels_from_image(img, arguments.remove_reference)
-    elif arguments.remove_sym is not None:  # TODO [AJ]: verify
-        out = sct_labels.remove_labels_from_image(img, arguments.remove_sym)
-        out = sct_labels.remove_labels_from_image(arguments.remove_sym, out)
+        ref = Image(arguments.remove_reference)
+        out = sct_labels.remove_labels_from_image(img, ref)
+    elif arguments.remove_sym is not None:
+        # first pass use img as source
+        ref = Image(arguments.remove_reference)
+        out = sct_labels.remove_labels_from_image(img, ref)
+
+        # second pass use previous pass result as reference
+        ref_out = sct_labels.remove_labels_from_image(ref, out)
+        ref_out.absolutepath = ref.absolutepath
+        ref_out.save()
+    elif arguments.remove is not None:
+        labels = arguments.remove
+        out = sct_labels.remove_labels_from_image(img, labels)
+    elif arguments.keep is not None:
+        labels = arguments.keep
+        out = sct_labels.remove_other_labels_from_image(img, labels)
     elif arguments.create_viewer is not None:
         msg = arguments.msg
         if arguments.ilabel is not None:
@@ -274,26 +287,6 @@ def main(args=None):
             out = launch_manual_label_gui(img, input_labels_img, arguments.create_viewer, msg)
         else:
             out = launch_sagittal_viewer(img, arguments.create_viewer, msg)
-    elif arguments.remove is not None:
-        process_type = 'remove'
-        value = arguments.remove
-    elif arguments.keep is not None:
-        process_type = 'keep'
-        value = arguments.keep
-    else:
-        # no process chosen
-        sct.printv('ERROR: No process was chosen.', 1, 'error')
-    if arguments.msg is not None:
-        msg = arguments.msg + "\n"
-    else:
-        msg = ""
-    if arguments.o is not None:
-        input_fname_output = arguments.o
-    if arguments.ilabel is not None:
-        input_fname_previous = arguments.ilabel
-    else:
-        input_fname_previous = None
-    verbose = int(arguments.v)
 
     out.absolutepath = output_fname
 
@@ -303,12 +296,10 @@ def main(args=None):
 
 
 
-    path_qc = arguments.qc
-    qc_dataset = arguments.qc_dataset
-    qc_subject = arguments.qc_subject
-    if path_qc is not None:
-        generate_qc(fname_in1=input_filename, fname_seg=input_fname_output[0], args=args,
-                    path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject, process='sct_label_utils')
+    if arguments.qc is not None:
+        generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=args,
+                    path_qc=os.path.abspath(arguments.qc), dataset=arguments.qc_dataset,
+                    subject=arguments.qc_subject, process='sct_label_utils')
 
 
 def display_voxel(img: Image, verbose: int):
