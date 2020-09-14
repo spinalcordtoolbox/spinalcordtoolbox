@@ -230,7 +230,8 @@ def main(args=None):
     else:
         arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
-    sct.init_sct(log_level=arguments.v, update=True)  # Update log level
+    verbosity = arguments.v
+    sct.init_sct(log_level=verbosity, update=True)  # Update log level
 
     input_filename = arguments.i
     img = Image(input_filename)
@@ -251,7 +252,7 @@ def main(args=None):
     elif arguments.cubic_to_point:
         out = sct_labels.cubic_to_point(img)
     elif arguments.display:
-        display_voxel(img, arguments.v)
+        display_voxel(img, verbosity)
     elif arguments.increment:
         out = sct_labels.increment_z_inverse(img)
     elif arguments.vert_body is not None:
