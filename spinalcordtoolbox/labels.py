@@ -59,7 +59,6 @@ def add_faster(img: Image, value: int) -> Image:
     return out
 
 
-# FIXME [AJ] is it really needed? Haven't seen a caller use sct_label_utils -create without add
 def create_labels_empty(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     """
     Create an empty image with labels listed by the user.

@@ -272,14 +272,14 @@ def main(args=None):
         sct.printv(f"Computed MSE: {mse}")
     elif arguments.remove_reference is not None:
         ref = Image(arguments.remove_reference)
-        out = sct_labels.remove_labels_from_image(img, ref)
+        out = sct_labels.remove_missing_labels(img, ref)
     elif arguments.remove_sym is not None:
         # first pass use img as source
         ref = Image(arguments.remove_reference)
-        out = sct_labels.remove_labels_from_image(img, ref)
+        out = sct_labels.remove_missing_labels(img, ref)
 
         # second pass use previous pass result as reference
-        ref_out = sct_labels.remove_labels_from_image(ref, out)
+        ref_out = sct_labels.remove_missing_labels(ref, out)
         ref_out.absolutepath = ref.absolutepath
         ref_out.save()
     elif arguments.remove is not None:
