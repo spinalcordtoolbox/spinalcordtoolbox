@@ -167,13 +167,12 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     nib.save(image_mid, fname)
     if contrast == "t2":
         fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct_root.__deepseg_dir__,
-                                                             'model_find_disc_t2'),
-                                         post=False)
+                                                                 'model_find_disc_t2'),
+                                             post=False)
     elif contrast == "t1":
         fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct_root.__deepseg_dir__,
                                                                  'model_find_disc_t1'),
                                              post=False)
-
 
     sct.run('sct_resample -i %s  -mm 0.5x0.5x0.5 -x linear -o hm_tmp_r.nii.gz' % (fname_hm))
     sct.run('sct_resample -i %s -mm 0.5 -x nn -o %s' % (fname_seg, fname_seg))
@@ -472,7 +471,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     if np.any(I_corr_gauss):
         # if I_corr contains at least a non-zero value
         ind_peak = np.argmax(
-            I_corr_gauss) # index of max along z
+            I_corr_gauss)  # index of max along z
         ind_dl = np.argmax(data_chunk1d)
         sct.printv('.. Peak found: z=' + str(zrange[ind_peak]) + ' (correlation = ' + str(I_corr_gauss[ind_peak]) + ')',
                    verbose)
