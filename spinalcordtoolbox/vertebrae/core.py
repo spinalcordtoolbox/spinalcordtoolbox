@@ -19,11 +19,11 @@ from spinalcordtoolbox.math import dilate
 from ivadomed import preprocessing as imed_preprocessing
 import nibabel as nib
 
-# import similaritymeasures as simeas
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
 import logging
 import spinalcordtoolbox.deepseg.core as sct_deepseg
+from scipy.signal import gaussian
 
 logging.getLogger('matplotlib.font_manager').disabled = True
 
@@ -414,7 +414,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     # np.save('patt'+str(x)+'.npy',pattern)
     pattern1d = np.sum(pattern, axis=(0, 1))
     # convolve pattern1d with gaussian to get similar curve as input
-    from scipy.signal import gaussian
     a = gaussian(30, std=5)
     pattern1d = np.convolve(pattern1d, a, 'same')
     # initializations
@@ -462,7 +461,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         sct.printv('.. WARNING: Data contained zero. We probably hit the edge of the image.', verbose)
 
     # adjust correlation with Gaussian function centered at the right edge of the curve (most rostral point of FOV)
-    from scipy.signal import gaussian
 
     gaussian_window = gaussian(len(I_corr) * 2, std=len(I_corr) * gaussian_std)
     I_corr_gauss = np.multiply(I_corr, gaussian_window[0:len(I_corr)])
@@ -603,7 +601,7 @@ def label_discs(fname_seg_labeled, verbose=1):
     """
     Label discs from labeled_segmentation. The convention is C2/C3-->3, C3/C4-->4, etc.
 
-    :param fname_seg_labeld: fname of the labeled segmentation
+    :param fname_seg_labeled: fname of the labeled segmentation
     :param verbose:
     :return:
     """
