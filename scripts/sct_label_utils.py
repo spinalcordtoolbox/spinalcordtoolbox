@@ -253,16 +253,15 @@ def main(args=None):
     elif arguments.vert_body is not None:
         out = sct_labels.label_vertebrae(img, arguments.vert_body)
     elif arguments.vert_continuous:
-        process_type = 'vert-continuous'
+        out = sct_labels.continuous_vertebral_levels(img)
     elif arguments.MSE is not None:
-        process_type = 'MSE'
-        input_fname_ref = arguments.r
+        mse = sct_labels.compute_mean_squared_error(img, arguments.MSE)
+        sct.printv(f"Computed MSE: {mse}")
     elif arguments.remove_reference is not None:
-        process_type = 'remove-reference'
-        input_fname_ref = arguments.remove_reference
-    elif arguments.remove_symm is not None:
-        process_type = 'remove-symm'
-        input_fname_ref = arguments.r
+        out = sct_labels.remove_labels_from_image(img, arguments.remove_reference)
+    elif arguments.remove_sym is not None:  # TODO [AJ]: verify
+        out = sct_labels.remove_labels_from_image(img, arguments.remove_sym)
+        out = sct_labels.remove_labels_from_image(arguments.remove_sym, out)
     elif arguments.create_viewer is not None:
         process_type = 'create-viewer'
         value = arguments.create_viewer
@@ -288,9 +287,6 @@ def main(args=None):
     verbose = int(arguments.v)
 
 
-    # return based on process type
-    if process_type == 'display-voxel':
-        return processor.useful_notation
 
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
