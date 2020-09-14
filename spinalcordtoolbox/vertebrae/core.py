@@ -19,13 +19,14 @@ from spinalcordtoolbox.math import dilate
 from ivadomed import preprocessing as imed_preprocessing
 import nibabel as nib
 
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.metadata import get_file_label
 import logging
 import spinalcordtoolbox.deepseg.core as sct_deepseg
 from scipy.signal import gaussian
 
 logging.getLogger('matplotlib.font_manager').disabled = True
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.metadata import get_file_label
+from spinalcordtoolbox.math import dilate, mutual_information
 
 
 def label_vert(fname_seg, fname_label, verbose=1):
