@@ -11,11 +11,6 @@ import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
 import sct_utils as sct
 import spinalcordtoolbox as sct_root
-from sct_maths import mutual_information
-
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.metadata import get_file_label
-from spinalcordtoolbox.math import dilate
 from ivadomed import preprocessing as imed_preprocessing
 import nibabel as nib
 
@@ -26,7 +21,7 @@ from scipy.signal import gaussian
 logging.getLogger('matplotlib.font_manager').disabled = True
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
-from spinalcordtoolbox.math import dilate, mutual_information
+from spinalcordtoolbox.math import dilate
 
 
 def label_vert(fname_seg, fname_label, verbose=1):
