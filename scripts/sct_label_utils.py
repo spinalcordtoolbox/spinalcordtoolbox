@@ -21,6 +21,7 @@ from __future__ import division, absolute_import
 import os
 import sys
 import argparse
+import logging
 from typing import Sequence
 
 import numpy as np
@@ -28,12 +29,15 @@ import numpy as np
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.gui import base
+from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
 import spinalcordtoolbox.labels as sct_labels
 
 # TODO: Properly test when first PR (that includes list_type) gets merged
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 import sct_utils as sct
 
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -263,8 +267,12 @@ def main(args=None):
         out = sct_labels.remove_labels_from_image(img, arguments.remove_sym)
         out = sct_labels.remove_labels_from_image(arguments.remove_sym, out)
     elif arguments.create_viewer is not None:
-        process_type = 'create-viewer'
-        value = arguments.create_viewer
+        msg = arguments.msg
+        if arguments.ilabel is not None:
+            input_labels_img = Image(arguments.ilabel)
+            out = launch_manual_label_gui(img, input_labels_img, arguments.create_viewer, msg)
+        else:
+            out = launch_sagittal_viewer(img, arguments.create_viewer, msg)
     elif arguments.remove is not None:
         process_type = 'remove'
         value = arguments.remove
@@ -285,6 +293,12 @@ def main(args=None):
     else:
         input_fname_previous = None
     verbose = int(arguments.v)
+
+    out.absolutepath = output_fname
+
+
+    out.save() # TODO [AJ] handle different dtype
+    logger.debug(f"out={out.data}")
 
 
 
@@ -336,22 +350,64 @@ def check_distance_between_labels(img: Image, max_dist_mm: float):
                 coordinates_input[i + 1].value) + ' is larger than ' + str(max_dist_mm) + '. Distance=' + str(dist))
 
 
-def launch_sagittal_viewer(labels: Sequence[Coordinate], previous_points=None):
-    from spinalcordtoolbox.gui import base
-    from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
-
+def launch_sagittal_viewer(img: Image, labels: Sequence[int], previous_points: Sequence[Coordinate] = None, output_img: Image = None, msg: str = "") -> Image:
     params = base.AnatomicalParams()
     params.vertebraes = labels
     params.input_file_name = img.absolutepath
-    params.output_file_name = self.fname_output
-    params.subtitle = self.msg
+
+    if output_img is not None:
+        params.output_file_name = output_img.absolutepath
+    else:
+        params.output_file_name = img.absolutepath
+
+    params.subtitle = msg
+
     if previous_points is not None:
         params.message_warn = 'Please select the label you want to add \nor correct in the list below before clicking \non the image'
-    output = zeros_like(img)
-    output.absolutepath = self.fname_output
-    launch_sagittal_dialog(img, output, params, previous_points)
 
-    return output
+    out = zeros_like(img)
+    out.absolutepath = params.output_file_name
+    launch_sagittal_dialog(img, out, params, previous_points)
+
+    return out
+
+
+def launch_manual_label_gui(img: Image, input_labels_img: Image, labels: Sequence[int], msg: str = None):
+    # the input image is reoriented to 'SAL' when open by the GUI
+    input_labels_img.change_orientation('SAL')
+    mid = int(np.round(input_labels_img.data.shape[2] / 2))
+    previous_points = input_labels_img.getNonZeroCoordinates()
+
+    # boolean used to mark first element to initiate the list.
+    first = True
+
+    previous_label = None
+
+    for i in range(len(previous_points)):
+        if int(previous_points[i].value) in labels:
+            pass
+        else:
+            labels.append(int(previous_points[i].value))
+        if first:
+            points = np.array([previous_points[i]. x, previous_points[i].y, previous_points[i].z, previous_points[i].value])
+            points = np.reshape(points, (1, 4))
+            previous_label = points
+            first = False
+        else:
+            points = np.array([previous_points[i].x, previous_points[i].y, previous_points[i].z, previous_points[i].value])
+            points = np.reshape(points, (1, 4))
+            previous_label = np.append(previous_label, points, axis=0)
+        labels.sort()
+
+    # check if variable was created which means the file was not empty and contains some points asked in labels
+    if previous_label is not None:
+        # project onto mid sagittal plane
+        for i in range(len(previous_label)):
+            previous_label[i][2] = mid
+
+    out = launch_sagittal_viewer(labels, previous_points=previous_label)
+
+    return out
 
 
 if __name__ == "__main__":
