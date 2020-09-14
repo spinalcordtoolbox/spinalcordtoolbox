@@ -644,6 +644,18 @@ def label_discs(fname_seg_labeled, verbose=1):
 
 
 def label_disc_posterior(list_disc_z, list_disc_value, fname_hm):
+    """
+    Function used to put label on the posterior tip for each disc using the previously found cooordinates.
+    This is done using the maximum value in the RL direction of the network prediction (heatmap)
+    for the found IS coordinates.
+
+
+    :param list_disc_z: list of position alongside the IS axis
+    :param list_disc_value: list of label value (e.g., [1,2,3,4]). The index of the value correspond to the index
+    of the position in list_disc_z
+    :param fname_hm: path to the heatmap output by the network
+    :return:
+    """
     im_hm = Image(fname_hm)
     nx, ny, nz = im_hm.dim[0], im_hm.dim[1], im_hm.dim[2]
     data_disc = np.zeros([nx, ny, nz])
