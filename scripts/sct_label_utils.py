@@ -296,8 +296,7 @@ def main(args=None):
         else:
             out = launch_sagittal_viewer(img, arguments.create_viewer, msg)
 
-    out.absolutepath = output_fname
-    out.save(dtype=dtype)
+    out.save(path=output_fname, dtype=dtype)
 
     if arguments.qc is not None:
         generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=args,
