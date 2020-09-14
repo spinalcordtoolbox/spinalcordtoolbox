@@ -404,7 +404,7 @@ def main(args=None):
             )
 
     # un-straighten posterior disc map
-    if fname_disc is not None:
+    if fname_disc is None:
         sct.printv('\nUn-straighten posterior disc map...', verbose)
         sct.run('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
                 ('disc_posterior_tmp.nii.gz',
