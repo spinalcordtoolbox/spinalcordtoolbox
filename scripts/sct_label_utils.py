@@ -265,7 +265,7 @@ def main(args=None):
         out = sct_labels.label_vertebrae(img, levels)
     elif arguments.vert_continuous:
         out = sct_labels.continuous_vertebral_levels(img)
-        dtype='float32'
+        dtype = 'float32'
     elif arguments.MSE is not None:
         ref = Image(arguments.MSE)
         mse = sct_labels.compute_mean_squared_error(img, ref)
@@ -324,6 +324,7 @@ def display_voxel(img: Image, verbose: int):
     sct.printv('All labels (useful syntax):', verbose=verbose)
     sct.printv(useful_notation, verbose=verbose)
 
+
 # TODO [AJ] -> just print warnings or log or raise?
 def check_distance_between_labels(img: Image, max_dist_mm: float):
     """
@@ -345,7 +346,7 @@ def check_distance_between_labels(img: Image, max_dist_mm: float):
                 coordinates_input[i + 1].value) + ' is larger than ' + str(max_dist_mm) + '. Distance=' + str(dist))
 
 
-def launch_sagittal_viewer(img: Image, labels: Sequence[int], previous_points: Sequence[Coordinate] = None, output_img: Image = None, msg: str = "") -> Image:
+def launch_sagittal_viewer(img: Image, labels: Sequence[int], msg: str, previous_points: Sequence[Coordinate] = None, output_img: Image = None) -> Image:
     params = base.AnatomicalParams()
     params.vertebraes = labels
     params.input_file_name = img.absolutepath
@@ -367,7 +368,7 @@ def launch_sagittal_viewer(img: Image, labels: Sequence[int], previous_points: S
     return out
 
 
-def launch_manual_label_gui(img: Image, input_labels_img: Image, labels: Sequence[int], msg: str = None):
+def launch_manual_label_gui(img: Image, input_labels_img: Image, labels: Sequence[int], msg):
     # the input image is reoriented to 'SAL' when open by the GUI
     input_labels_img.change_orientation('SAL')
     mid = int(np.round(input_labels_img.data.shape[2] / 2))
@@ -400,7 +401,7 @@ def launch_manual_label_gui(img: Image, input_labels_img: Image, labels: Sequenc
         for i in range(len(previous_label)):
             previous_label[i][2] = mid
 
-    out = launch_sagittal_viewer(labels, previous_points=previous_label)
+    out = launch_sagittal_viewer(img, labels, msg, previous_points=previous_label)
 
     return out
 
