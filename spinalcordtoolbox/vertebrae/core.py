@@ -65,9 +65,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :param fname_seg: file name of straigthened spinal cord segmentation
     :param contrast: t1 or t2
     :param param:  advanced parameters
-    :param init_disc:
+    :param init_disc: reference coordinates and value for a disc. c2/c3 is often used and
+    automatically detected with sct_label_vertebrae
     :param verbose:
-    :param path_template:
+    :param path_template: path to the used template. Template should be a straighten image with sing-voxel labels
+    on the posterior tip of each disc
     :param path_output: output path for verbose=2 pictures
     :param scale_dist: float: Scaling factor to adjust average distance between two adjacent intervertebral discs
     :return:
