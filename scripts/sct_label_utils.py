@@ -235,6 +235,7 @@ def main(args=None):
 
     input_filename = arguments.i
     img = Image(input_filename)
+    dtype = None
 
     if arguments.o is not None:
         output_fname = arguments.o
@@ -242,13 +243,17 @@ def main(args=None):
         output_fname = input_filename
 
     if arguments.add is not None:
-        out = sct_labels.add(img, arguments.add)
+        value = arguments.add
+        out = sct_labels.add_faster(img, value)
     elif arguments.create is not None:
-        out = sct_labels.create_labels_empty(img, arguments.create)
+        labels = arguments.create
+        out = sct_labels.create_labels_empty(img, labels)
     elif arguments.create_add is not None:
-        out = sct_labels.create_labels(img, arguments.create_add)
+        labels = arguments.create_add
+        out = sct_labels.create_labels(img, labels)
     elif arguments.create_seg is not None:
-        out = sct_labels.create_labels_along_segmentation(img, arguments.create_seg)
+        labels = arguments.create_seg
+        out = sct_labels.create_labels_along_segmentation(img, labels)
     elif arguments.cubic_to_point:
         out = sct_labels.cubic_to_point(img)
     elif arguments.display:
@@ -256,11 +261,14 @@ def main(args=None):
     elif arguments.increment:
         out = sct_labels.increment_z_inverse(img)
     elif arguments.vert_body is not None:
-        out = sct_labels.label_vertebrae(img, arguments.vert_body)
+        levels = arguments.vert_body
+        out = sct_labels.label_vertebrae(img, levels)
     elif arguments.vert_continuous:
         out = sct_labels.continuous_vertebral_levels(img)
+        dtype='float32'
     elif arguments.MSE is not None:
-        mse = sct_labels.compute_mean_squared_error(img, arguments.MSE)
+        ref = Image(arguments.MSE)
+        mse = sct_labels.compute_mean_squared_error(img, ref)
         sct.printv(f"Computed MSE: {mse}")
     elif arguments.remove_reference is not None:
         ref = Image(arguments.remove_reference)
@@ -281,7 +289,7 @@ def main(args=None):
         labels = arguments.keep
         out = sct_labels.remove_other_labels_from_image(img, labels)
     elif arguments.create_viewer is not None:
-        msg = arguments.msg
+        msg = "" if arguments.msg is None else f"{arguments.msg}\n"
         if arguments.ilabel is not None:
             input_labels_img = Image(arguments.ilabel)
             out = launch_manual_label_gui(img, input_labels_img, arguments.create_viewer, msg)
@@ -289,12 +297,7 @@ def main(args=None):
             out = launch_sagittal_viewer(img, arguments.create_viewer, msg)
 
     out.absolutepath = output_fname
-
-
-    out.save() # TODO [AJ] handle different dtype
-    logger.debug(f"out={out.data}")
-
-
+    out.save(dtype=dtype)
 
     if arguments.qc is not None:
         generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=args,
