@@ -38,7 +38,7 @@ import sct_utils as sct
 
 def get_parser():
     # initialize default param
-    param_default = Param()
+    # param_default = Param()
     # Initialize the parser
     parser = argparse.ArgumentParser(
         description="Utility functions for label images.",
@@ -189,9 +189,10 @@ def get_parser():
 
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose. 0: nothing. 1: basic. 2: extended."
+        type=int,
+        help='Verbose. 0: nothing. 1: basic. 2: extended.',
+        default=1,
+        choices=(0, 1, 2),
     )
 
     optional.add_argument(
@@ -228,13 +229,10 @@ def main(args=None):
     input_filename = arguments.i
     img = Image(input_filename)
 
-    # input_fname_output = None
-    # input_fname_ref = None
-    # input_cross_radius = 5
-    # input_dilate = False
-    # input_coordinates = None
-    # vertebral_levels = None
-    # value = None
+    if arguments.o is not None:
+        output_fname = arguments.o
+    else:
+        output_fname = input_filename
 
     if arguments.add is not None:
         out = sct_labels.add(img, arguments.add)
