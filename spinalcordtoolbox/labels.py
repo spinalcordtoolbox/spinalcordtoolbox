@@ -160,58 +160,6 @@ def create_labels_along_segmentation(img: Image, labels: Sequence[Tuple[int, int
     return out
 
 
-# FIXME [AJ] better name for this? insert_plane_between_labels() ?
-def plan(img: Image, width: int, offset: int = 0, gap: int = 1) -> Image:
-    """
-    Create a plane of thickness="width" and changes its value with an offset and a gap between labels.
-    :param img: Source image
-    :param width: thickness
-    :param offset: offset
-    :param gap: gap
-    :returns: image with plane
-    """
-    out = zeros_like(img)
-    coordinates = img.getNonZeroCoordinates()
-
-    for coord in coordinates:
-        out.data[:, :, int(coord.z) - width:int(coord.z) + width] = offset + gap * coord.value
-
-    return out
-
-
-# FIXME [AJ] better name for this? generate_plane_for_label() ?
-def plan_ref(img: Image, ref: Image) -> Image:
-    """
-    Generate a plane in the reference space for each label present in the input image
-    :param img: source image
-    :param ref: reference image
-    :returns: new image with plane in ref space for each label
-    """
-
-    out = zeros_like(ref)
-
-    image_input_neg = zeros_like(img)
-    image_input_pos = zeros_like(img)
-
-    X, Y, Z = (img.data < 0).nonzero()
-    for i in range(len(X)):
-        image_input_neg.data[X[i], Y[i], Z[i]] = -img.data[X[i], Y[i], Z[i]]  # in order to apply getNonZeroCoordinates
-
-    X_pos, Y_pos, Z_pos = (img.data > 0).nonzero()
-    for i in range(len(X_pos)):
-        image_input_pos.data[X_pos[i], Y_pos[i], Z_pos[i]] = img.data[X_pos[i], Y_pos[i], Z_pos[i]]
-
-    coordinates_input_neg = image_input_neg.getNonZeroCoordinates()
-    coordinates_input_pos = image_input_pos.getNonZeroCoordinates()
-
-    out.change_type('float32')
-    for coord in coordinates_input_neg:
-        out.data[:, :, int(coord.z)] = -coord.value  # PB: takes the int value of coord.value
-    for coord in coordinates_input_pos:
-        out.data[:, :, int(coord.z)] = coord.value
-
-    return out
-
 
 def cubic_to_point(img: Image) -> Image:
     """
