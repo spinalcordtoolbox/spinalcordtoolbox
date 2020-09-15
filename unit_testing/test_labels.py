@@ -6,21 +6,31 @@ import logging
 from time import time
 
 import numpy as np
+import pytest
 
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.utils import sct_test_path
 from spinalcordtoolbox.types import Coordinate
+from test_image import fake_3dimage
 
 logger = logging.getLogger(__name__)
 
-src_img = sct_test_path('t2', 't2.nii.gz')
 src_seg = sct_test_path('t2', 't2_seg-manual.nii.gz')
+
+
+def fake_image():
+    i = fake_3dimage()
+    img = Image(i.get_data(), hdr=i.header,
+                orientation="RPI",
+                dim=i.header.get_data_shape(),
+                )
+    return img
 
 
 # AJ remove test if we keep add_faster + refactor caller
 def test_add():
-    a = Image(src_img)
+    a = fake_image()
     val = 4
 
     t1 = time()
@@ -40,12 +50,12 @@ def test_add():
 
 
 def test_create_labels_empty():
-    a = Image(src_img)
+    a = fake_image()
     ref = zeros_like(a)
 
-    labels = [Coordinate(l) for l in [[12, 24, 32, 7], [15, 35, 33, 5]]]
-    ref.data[12][24][32] = 7
-    ref.data[15][35][33] = 5
+    labels = [Coordinate(l) for l in [[1, 2, 3, 7], [4, 5, 6, 5]]]
+    ref.data[1][2][3] = 7
+    ref.data[4][5][6] = 5
 
     b = sct_labels.create_labels_empty(a, labels)
 
@@ -54,13 +64,13 @@ def test_create_labels_empty():
 
 
 def test_create_labels():
-    a = Image(src_img)
-    labels = [Coordinate(l) for l in [[1, 2, 3, 99], [14, 28, 33, 5]]]
+    a = fake_image()
+    labels = [Coordinate(l) for l in [[1, 2, 3, 99], [4, 5, 6, 5]]]
 
     b = sct_labels.create_labels(a, labels)
 
     assert b.data[1][2][3] == 99
-    assert b.data[14][28][33] == 5
+    assert b.data[4][5][6] == 5
 
 
 def test_create_labels_along_segmentation():
@@ -70,5 +80,31 @@ def test_create_labels_along_segmentation():
     og_orientation = a.orientation
     b = sct_labels.create_labels_along_segmentation(a, labels)
 
-    if b.orientation != og_orientation:
-        raise ValueError("Image orientation not maintained")
+    assert b.orientation == og_orientation
+
+    # TODO [AJ] how to validate labels?
+
+
+@pytest.mark.skip(reason="To be implemented")
+def test_cubic_to_point():
+    raise NotImplementedError()
+
+
+@pytest.mark.skip(reason="To be implemented")
+def test_increment_z_inverse():
+    raise NotImplementedError()
+
+
+@pytest.mark.skip(reason="To be implemented")
+def test_labelize_from_disks():
+    raise NotImplementedError()
+
+
+@pytest.mark.skip(reason="To be implemented")
+def test_label_vertebrae():
+    raise NotImplementedError()
+
+
+@pytest.mark.skip(reason="To be implemented")
+def test_compute_mean_squared_error():
+    raise NotImplementedError()
