@@ -296,25 +296,21 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
 
     # check if all the labels in both the images match
     if len(coordinates_input) != len(coordinates_ref):
-        raise ValueError(f"Input and reference image don't have the same number of labels!")
+        raise ValueError(f"Input and reference image don't have the same number of labels! {len(coordinates_input)} vs {len(coordinates_ref)}")
 
-    rounded_coord_ref_values = [np.round(coord_ref.value) for coord_ref in coordinates_ref]
-    rounded_coord_in_values = [np.round(coord.value) for coord in coordinates_input]
-
-    for coord in coordinates_input:
-        if np.round(coord.value) not in rounded_coord_ref_values:
-            raise ValueError("Labels mismatch")  # FIXME [AJ] be more specific
-
-    for coord_ref in coordinates_ref:
-        if np.round(coord_ref.value) not in rounded_coord_in_values:
-            raise ValueError("Labels mismatch")  # FIXME [AJ] be more specific
-
+    rounded_coord_ref_values = [np.round(c.value) for c in coordinates_ref]
+    rounded_coord_in_values = [np.round(c.value) for c in coordinates_input]
     result = 0.0
 
     for coord, coord_ref in zip(coordinates_input, coordinates_ref):
+        if np.round(coord.value) not in rounded_coord_ref_values:
+            logger.warning(f"Missing input label {coord} in reference!")
+
+        if np.round(coord_ref.value) not in rounded_coord_in_values:
+            logger.warning(f"Missing reference label {coord_ref} in reference!")
+
         if np.round(coord_ref.value) == np.round(coord.value):
             result += (coord_ref.z - coord.z) ** 2
-            break
 
     result = np.sqrt(result / len(coordinates_input))
     logger.info(f"MSE error in Z direction = {result}mm")
