@@ -127,3 +127,25 @@ def test_remove_missing_labels():
     # random spot check
     assert src.data[1][1][1] == res.data[1][1][1]
     assert src.data[2][2][2] == res.data[2][2][2]
+
+
+@pytest.mark.skip(reason="To be implemented")
+def test_get_coordinates_in_destination():
+    raise NotImplementedError()
+
+
+def test_labels_diff():
+    src = fake_image()
+    ref = fake_image()
+
+    # change some labels
+    ref.data[1][2][3] = 99
+    ref.data[3][2][1] = 99
+
+    src.data[4][5][6] = 99
+
+    # check that changes appear in diff
+    missing_from_ref, missing_from_src = sct_labels.labels_diff(src, ref)
+    assert missing_from_ref[0] == Coordinate([1, 2, 3, src.data[1][2][3]])
+    assert missing_from_ref[1] == Coordinate([3, 2, 1, src.data[3][2][1]])
+    assert missing_from_src[0] == Coordinate([4, 5, 6, ref.data[4][5][6]])

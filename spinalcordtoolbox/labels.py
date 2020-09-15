@@ -407,11 +407,11 @@ def labels_diff(img: Image, ref: Image) -> Tuple[Sequence[Coordinate], Sequence[
     for ref_coord in ref_coords:
         exists = False
         for src_coord in src_coords:
-            if src_coord.value == ref_coord.value:
+            if ref_coord.value == src_coord.value:
                 exists = True
                 break
         if not exists:
-            missing_from_src.append(src_coord)
+            missing_from_src.append(ref_coord)
             logger.info(f"Missing ref label: {ref_coord.value} from src image")
 
     return missing_from_ref, missing_from_src
