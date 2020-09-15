@@ -108,3 +108,22 @@ def test_label_vertebrae():
 @pytest.mark.skip(reason="To be implemented")
 def test_compute_mean_squared_error():
     raise NotImplementedError()
+
+
+def test_remove_missing_labels():
+    src = fake_image()
+    ref = fake_image()
+
+    # change 2 labels in ref
+    ref.data[1][2][3] = 99
+    ref.data[3][2][1] = 99
+
+    res = sct_labels.remove_missing_labels(src, ref)
+
+    # check that missing labels have been removed
+    assert res.data[1][2][3] == 0
+    assert res.data[3][2][1] == 0
+
+    # random spot check
+    assert src.data[1][1][1] == res.data[1][1][1]
+    assert src.data[2][2][2] == res.data[2][2][2]

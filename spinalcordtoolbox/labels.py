@@ -331,7 +331,7 @@ def remove_missing_labels(img: Image, ref: Image) -> Image:
     coord_input = img.getNonZeroCoordinates(coordValue=True)
     coord_ref = ref.getNonZeroCoordinates(coordValue=True)
 
-    coord_intersection = list(set(coord_input.intersection(set(coord_ref))))
+    coord_intersection = list(set(coord_input).intersection(set(coord_ref)))
 
     for coord in coord_intersection:
         out.data[int(coord.x), int(coord.y), int(coord.z)] = int(np.round(coord.value))
