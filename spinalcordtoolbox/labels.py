@@ -160,7 +160,6 @@ def create_labels_along_segmentation(img: Image, labels: Sequence[Tuple[int, int
     return out
 
 
-
 def cubic_to_point(img: Image) -> Image:
     """
     Calculate the center of mass of each group of labels and returns a file of same size with only a
@@ -205,9 +204,9 @@ def cubic_to_point(img: Image) -> Image:
 def increment_z_inverse(img: Image) -> Image:
     """
     Take all non-zero values, sort them along the inverse z direction, and attributes the values 1,
-    2, 3, etc. This function assumes RPI orientation.
+    2, 3, etc.
     :param img: source image
-    :returns: image with non-zero balue sorted along inverse z
+    :returns: image with non-zero values sorted along inverse z
     """
     og_orientation = img.orientation
     if og_orientation != "RPI":
@@ -288,7 +287,6 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
     """
     Compute the Mean Squared Distance Error between two sets of labels (input and ref).
     Moreover, a warning is generated for each label mismatch.
-    If the MSE is above the threshold provided (by default = 0mm), a log is reported with the filenames considered here.
     :param img: source image
     :param ref: reference image
     :returns: computed MSE
