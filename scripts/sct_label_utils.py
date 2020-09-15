@@ -41,9 +41,6 @@ logger = logging.getLogger(__name__)
 
 
 def get_parser():
-    # initialize default param
-    # param_default = Param()
-    # Initialize the parser
     parser = argparse.ArgumentParser(
         description="Utility functions for label images.",
         formatter_class=SmartFormatter,
