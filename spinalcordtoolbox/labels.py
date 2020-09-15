@@ -68,8 +68,7 @@ def create_labels_empty(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
     :returns: empty image with labels
     """
-    out = zeros_like(img)
-    out = _add_labels(img, coordinates)
+    out = _add_labels(zeros_like(img), coordinates)
 
     return out
 
@@ -83,8 +82,7 @@ def create_labels(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
     :returns: labeled source image
     """
-    out = img.copy()
-    out = _add_labels(img, coordinates)
+    out = _add_labels(img.copy(), coordinates)
 
     return out
 
