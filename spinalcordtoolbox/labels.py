@@ -109,12 +109,12 @@ def _add_labels(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     return img
 
 
-def create_labels_along_segmentation(img: Image, coordinates: Sequence[Coordinate]) -> Image:
+def create_labels_along_segmentation(img: Image, labels: Sequence[Tuple[int, int]]) -> Image:
     """
     Create an image with labels defined along the spinal cord segmentation (or centerline).
     Input image does **not** need to be RPI (re-orientation is done within this function).
     :param img: source segmentation
-    :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
+    :param labels: list of label tuples as (z_value, label_value)
     :returns: labeled segmentation (Image)
     """
     og_orientation = img.orientation
@@ -124,13 +124,8 @@ def create_labels_along_segmentation(img: Image, coordinates: Sequence[Coordinat
 
     out = zeros_like(img)
 
-    for ilabel, coord in enumerate(coordinates):
-
-        # split coord string
-        list_coord = coord.split(',')
-
-        # convert to int() and assign to variable
-        z, value = [int(i) for i in list_coord]
+    for idx_label, label in enumerate(labels):
+        z, value = label
 
         # update z based on native image orientation (z should represent superior-inferior axis)
         coord = Coordinate([z, z, z])  # since we don't know which dimension corresponds to the superior-inferior
@@ -143,13 +138,13 @@ def create_labels_along_segmentation(img: Image, coordinates: Sequence[Coordinat
             z_rpi = int(np.round(out.dim[2] / 2.0))
 
         # get center of mass of segmentation at given z
-        x, y = ndimage.measurements.center_of_mass(np.array(img_rpi.data[:, :, z_rpi]))
+        x, y = ndimage.measurements.center_of_mass(np.array(img.data[:, :, z_rpi]))
 
         # round values to make indices
         x, y = int(np.round(x)), int(np.round(y))
 
         # display info
-        logger.info(f"Label # {str(ilabel)}: {str(x)}, {str(y)}. {str(z_rpi)} --> {str(value)}")
+        logger.info(f"Label # {str(idx_label)}: {str(x)}, {str(y)}. {str(z_rpi)} --> {str(value)}")
 
         if len(out.data.shape) == 3:
             out.data[x, y, z_rpi] = value

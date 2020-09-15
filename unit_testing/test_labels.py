@@ -15,6 +15,7 @@ from spinalcordtoolbox.types import Coordinate
 logger = logging.getLogger(__name__)
 
 src_img = sct_test_path('t2', 't2.nii.gz')
+src_seg = sct_test_path('t2', 't2_seg-manual.nii.gz')
 
 
 # AJ remove test if we keep add_faster + refactor caller
@@ -60,3 +61,14 @@ def test_create_labels():
 
     assert b.data[1][2][3] == 99
     assert b.data[14][28][33] == 5
+
+
+def test_create_labels_along_segmentation():
+    a = Image(src_seg)
+    labels = [(5, 1), (14, 2), (23, 3)]
+
+    og_orientation = a.orientation
+    b = sct_labels.create_labels_along_segmentation(a, labels)
+
+    if b.orientation != og_orientation:
+        raise ValueError("Image orientation not maintained")

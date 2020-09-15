@@ -249,7 +249,10 @@ def main(args=None):
         labels = arguments.create_add
         out = sct_labels.create_labels(img, labels)
     elif arguments.create_seg is not None:
-        labels = arguments.create_seg
+        labels = []
+        for str_pair in arguments.create_seg:
+            z, z_val = str_pair.split(',')
+            labels.append(tuple([int(z), int(z_val)]))
         out = sct_labels.create_labels_along_segmentation(img, labels)
     elif arguments.cubic_to_point:
         out = sct_labels.cubic_to_point(img)
