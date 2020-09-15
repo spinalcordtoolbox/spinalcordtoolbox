@@ -98,13 +98,13 @@ def _add_labels(img: Image, coordinates: Sequence[Coordinate]) -> Image:
         if len(img.data.shape) == 3:
             img.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
         elif len(img.data.shape) == 2:
-            if str(coord.z) != '0':
-                raise ValueError(f"2D coordinates should have a Z value of 0! Current value: {str(coord.z)}")
+            if coord.z != 0:
+                raise ValueError(f"2D coordinates should have a Z value of 0! Current value: {coord.z}")
             img.data[int(coord.x), int(coord.y)] = coord.value
         else:
-            raise ValueError(f"Data should be 2D or 3D. Current shape is: {str(img.data.shape)}")
+            raise ValueError(f"Data should be 2D or 3D. Current shape is: {img.data.shape}")
 
-        logger.info(f"Label #{str(i)}: {str(coord.x)}, {str(coord.y)}, {str(coord.z)} --> {str(coord.value)}")
+        logger.info(f"Label #{i}: {coord.x}, {coord.y}, {coord.z} --> {coord.value}")
 
     return img
 
@@ -144,13 +144,13 @@ def create_labels_along_segmentation(img: Image, labels: Sequence[Tuple[int, int
         x, y = int(np.round(x)), int(np.round(y))
 
         # display info
-        logger.info(f"Label # {str(idx_label)}: {str(x)}, {str(y)}. {str(z_rpi)} --> {str(value)}")
+        logger.info(f"Label # {idx_label}: {x}, {y}. {z_rpi} --> {value}")
 
         if len(out.data.shape) == 3:
             out.data[x, y, z_rpi] = value
         elif len(out.data.shape) == 2:
-            if str(z) != '0':
-                raise ValueError(f"2D coordinates should have a Z value of 0! Current value: {str(coord.z)}")
+            if z != 0:
+                raise ValueError(f"2D coordinates should have a Z value of 0! Current value: {coord.z}")
 
             out.data[x, y] = value
 
@@ -245,9 +245,9 @@ def cubic_to_point(img: Image) -> Image:
     # 3. Compute the center of mass of each group of voxels and write them into the output image
     for _, list_coord in groups.items():
         center_of_mass = sum(list_coord) / float(len(list_coord))
-        logger.info(f"Value = {str(center_of_mass.value)} : ({str(center_of_mass.x)},\
-         {str(center_of_mass.y) }, {str(center_of_mass.z)}) --> ({str(np.round(center_of_mass.x))}, \
-         {str(np.round(center_of_mass.y))}, {str(np.round(center_of_mass.z))})")
+        logger.info(f"Value = {center_of_mass.value} : ({center_of_mass.x},\
+         {center_of_mass.y}, {center_of_mass.z}) --> ({np.round(center_of_mass.x)}, \
+         {np.round(center_of_mass.y)}, {np.round(center_of_mass.z)})")
 
         out.data[int(np.round(center_of_mass.x)), int(np.round(center_of_mass.y)), int(np.round(center_of_mass.z))] = center_of_mass.value
 
