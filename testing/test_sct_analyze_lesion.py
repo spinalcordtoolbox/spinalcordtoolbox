@@ -19,7 +19,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-m t2/t2_seg_manual.nii.gz -s t2/t2_seg_manual.nii.gz']
+    default_args = ['-m t2/t2_seg-manual.nii.gz -s t2/t2_seg-manual.nii.gz']
 
     # assign default params
     if not param_test.args:
@@ -33,7 +33,7 @@ def test_integrity(param_test):
     Test integrity of function
     """
     # Simply check if output pkl file exists
-    if os.path.exists('t2_seg_manual_analyzis.pkl'):
+    if os.path.exists('t2_seg-manual_analyzis.pkl'):
         param_test.output += '--> PASSED'
     else:
         param_test.status = 99

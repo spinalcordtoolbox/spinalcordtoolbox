@@ -349,8 +349,8 @@ done
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Catch SCT version
-if [[ -e "version.txt" ]]; then
-  SCT_VERSION=$(cat version.txt)
+if [[ -e "spinalcordtoolbox/version.txt" ]]; then
+  SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
 else
   die "ERROR: version.txt not found. \n
 The install_sct script must be executed from the source directory"
@@ -489,7 +489,7 @@ fi
 cd $SCT_DIR
 
 # Make sure we are in SCT folder (to avoid deleting folder from user)
-if [[ ! -f "version.txt" ]]; then
+if [[ ! -f "spinalcordtoolbox/version.txt" ]]; then
   die "ERROR: Cannot cd into SCT folder. SCT_DIR="$SCT_DIR
 fi
 
@@ -529,6 +529,10 @@ conda activate venv_sct
 
 # Install Python dependencies
 print info "Installing Python dependencies..."
+# numpy is an undeclared build dependency: https://github.com/scikit-image/scikit-image/issues/4919
+# so explicitly install it as a workaround; note that in releases with requirements-freeze.txt
+# this can cause a strange double-install: https://github.com/neuropoly/spinalcordtoolbox/issues/2750
+# but we can live with that until https://github.com/scikit-image/scikit-image/pull/4920 is merged.
 pip install numpy
 # Check if a frozen version of the requirements exist (for release only)
 if [[ -f "requirements-freeze.txt" ]]; then
@@ -573,8 +577,8 @@ if [[ $NO_SCT_BIN_INSTALL ]]; then
   print warning "WARNING: SCT binaries will not be (re)-installed"
 else
   print info "Installing binaries..."
-  run "sct_download_data -d binaries_"$OS" -o $SCT_DIR/$BIN_DIR" || \
-    die "Unsupported OS $OS: can't install binaries."
+  run "sct_download_data -d binaries_${OS} -o ${SCT_DIR}/${BIN_DIR} -k" || \
+      die "Unsupported OS $OS: can't install binaries."
 fi
 print info "All requirements installed!"
 
@@ -586,9 +590,8 @@ else
   print info "Installing data..."
   run "rm -rf $SCT_DIR/$DATA_DIR"
   run "mkdir -p $SCT_DIR/$DATA_DIR"
-  run "cd $SCT_DIR/$DATA_DIR"
   for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
-    run "sct_download_data -d $data"
+    run "sct_download_data -d $data -o $SCT_DIR/$DATA_DIR/$data"
   done
 fi
 

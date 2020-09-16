@@ -15,7 +15,6 @@ source python/etc/profile.d/conda.sh  # to be able to call conda
 conda activate venv_sct  # reactivate conda for the pip install below
 
 echo *** UNIT TESTS ***
-sct_download_data -d sct_testing_data  # for tests
 pytest
 
 echo *** INTEGRATION TESTS ***

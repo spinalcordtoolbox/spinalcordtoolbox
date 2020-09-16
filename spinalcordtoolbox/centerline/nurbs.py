@@ -673,9 +673,9 @@ class NURBS:
             Tz.append(somme)
         Tz = np.matrix(Tz)
 
-        P_xb = (R.T * W * R).I * Tx.T
-        P_yb = (R.T * W * R).I * Ty.T
-        P_zb = (R.T * W * R).I * Tz.T
+        P_xb = np.linalg.pinv(R.T * W * R) * Tx.T
+        P_yb = np.linalg.pinv(R.T * W * R) * Ty.T
+        P_zb = np.linalg.pinv(R.T * W * R) * Tz.T
 
         # Modification of first and last control points
         P_xb[0], P_yb[0], P_zb[0] = P_x[0], P_y[0], P_z[0]

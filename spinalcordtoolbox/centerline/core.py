@@ -16,18 +16,18 @@ class ParamCenterline:
     """Default parameters for centerline fitting"""
     def __init__(self, algo_fitting='bspline', degree=5, smooth=20, contrast=None, minmax=True):
         """
-        :param algo_fitting:
-          polyfit: Polynomial fitting
-          bspline: b-spline fitting
-          linear: linear interpolation followed by smoothing with Hanning window
-          nurbs: Non-Uniform Rational Basis Splines. See [De Leener et al., MIA, 2016]
-          optic: Automatic segmentation using SVM and HOG. See [Gros et al., MIA 2018].
+
+        :param algo_fitting: str:
+          polyfit: Polynomial fitting\
+          bspline: b-spline fitting\
+          linear: linear interpolation followed by smoothing with Hanning window\
+          nurbs: Non-Uniform Rational Basis Splines. See [De Leener et al., MIA, 2016]\
+          optic: Automatic segmentation using SVM and HOG. See [Gros et al., MIA 2018].\
         :param degree: Degree of polynomial function. Only for polyfit.
         :param smooth: Degree of smoothness. Only for bspline and linear. When using algo_fitting=linear, it corresponds
         :param contrast: Contrast type for algo_fitting=optic.
-        :param minmax: Crop output centerline where the segmentation starts/end. If False, centerline will span all
-          slices.
-        to the size of a Hanning window (in mm).
+        :param minmax: Crop output centerline where the segmentation starts/end. If False, centerline will span all\
+          slices to the size of a Hanning window (in mm).
         """
         self.algo_fitting = algo_fitting
         self.contrast = contrast
@@ -62,6 +62,7 @@ def find_and_sort_coord(img):
     """
     Find x,y,z coordinate of centerline and output an array which is sorted along SI direction. Removes any duplicate
     along the SI direction by averaging across the same ind_SI.
+
     :param img: Image(): Input image. Could be any orientation.
     :return: nx3 numpy array with X, Y, Z coordinates of center of mass
     """
@@ -69,7 +70,7 @@ def find_and_sort_coord(img):
     # Get indices of non-null values
     arr = np.array(np.where(img.data))
     # Sort indices according to SI axis
-    dim_si = [img.orientation.find(x) for x in ['I', 'S'] if img.orientation.find(x) is not -1][0]
+    dim_si = [img.orientation.find(x) for x in ['I', 'S'] if img.orientation.find(x) != -1][0]
     # Loop across SI axis and average coordinates within duplicate SI values
     arr_sorted_avg = [np.array([])] * 3
     for i_si in sorted(set(arr[dim_si])):
@@ -85,6 +86,7 @@ def find_and_sort_coord(img):
 def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
+
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
     :param param: ParamCenterline() class:
     :param verbose: int: verbose level
@@ -235,7 +237,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
         plt.xlabel("Z [mm]")
         plt.legend(['X-deriv', 'Y-deriv'])
 
-        plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '_' + param.algo_fitting + '.png')
+        plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
         plt.close()
 
     return im_centerline, \
@@ -246,7 +248,9 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
 
 def round_and_clip(arr, clip=None):
     """
+    FIXME doc
     Round to closest int, convert to dtype=int and clip to min/max values allowed by the list length
+
     :param arr:
     :param clip: [min, max]: Clip values in arr to min and max
     :return:
@@ -260,7 +264,9 @@ def round_and_clip(arr, clip=None):
 def _call_viewer_centerline(im_data, interslice_gap=20.0):
     # TODO: _call_viewer_centerline should not be "internal" anymore, i.e., remove the "_"
     """
+    FIXME doc
     Call Qt viewer for manually selecting labels.
+
     :param im_data:
     :param interslice_gap:
     :return: Image() of labels.

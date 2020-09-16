@@ -16,11 +16,12 @@ logger = logging.getLogger(__name__)
 def divide_after_removing_zero(dividend, divisor, threshold, replacement=np.nan):
     """
     Mask zero, divide, look for numbers larger than 'threshold', and replace masked elements.
+
     :param dividend: np.array
     :param divisor: np.array
     :param threshold: float
     :param replacement: float: value to replace masked value with.
-    :return:
+    :return: result_full
     """
     ind_nonzero = np.where(divisor)
     n_zero = divisor.size - len(ind_nonzero[0])
@@ -39,6 +40,7 @@ def divide_after_removing_zero(dividend, divisor, threshold, replacement=np.nan)
 def compute_mtr(nii_mt1, nii_mt0, threshold_mtr=100):
     """
     Compute Magnetization Transfer Ratio in percentage.
+
     :param nii_mt1: Image object
     :param nii_mt0: Image object
     :param threshold_mtr: float: value above which number will be clipped
@@ -57,6 +59,7 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
                   nii_b1map=None):
     """
     Compute MTsat (in percent) and T1 map (in s) based on FLASH scans
+
     :param nii_mt: Image object for MTw
     :param nii_pd: Image object for PDw
     :param nii_t1: Image object for T1w

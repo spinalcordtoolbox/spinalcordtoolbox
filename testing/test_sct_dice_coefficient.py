@@ -22,8 +22,8 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2_seg_manual.nii.gz -d t2/t2_seg_manual.nii.gz']  # default parameters
-    param_test.fname_data = 't2/t2_seg_manual.nii.gz'
+    default_args = ['-i t2/t2_seg-manual.nii.gz -d t2/t2_seg-manual.nii.gz']  # default parameters
+    param_test.fname_data = 't2/t2_seg-manual.nii.gz'
     param_test.dice_value = 1.0
 
     # assign default params

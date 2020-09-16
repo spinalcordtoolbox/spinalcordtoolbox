@@ -25,7 +25,8 @@ import pathlib
 
 import numpy as np
 
-from sct_convert import convert
+# backwards compat
+import spinalcordtoolbox.utils as utils
 
 
 logger = logging.getLogger(__name__)
@@ -45,7 +46,7 @@ else:
 
 
 from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
-from spinalcordtoolbox.utils import check_exe
+from spinalcordtoolbox.utils import check_exe, sct_dir_local_path
 
 
 def init_sct(log_level=1, update=False):
@@ -212,8 +213,8 @@ def add_suffix(fname, suffix):
     - add_suffix(t2.nii, _mean) -> t2_mean.nii
     - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
-    parent, stem, ext = extract_fname(fname)
-    return os.path.join(parent, stem + suffix + ext)
+
+    return utils.add_suffix(fname=fname, suffix=suffix)
 
 
 #=======================================================================================================================
@@ -258,10 +259,10 @@ def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=
         name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
         path = None
         #binaries_location_default = os.path.expanduser("~/.cache/spinalcordtoolbox-{}/bin".format(__version__)
-        binaries_location_default = os.path.join(__sct_dir__, "bin")
+        binaries_location_default = sct_dir_local_path("bin")
         for directory in (
          #binaries_location_default,
-         os.path.join(__sct_dir__, "bin"),
+         sct_dir_local_path("bin"),
          ):
             candidate = os.path.join(directory, name)
             if os.path.exists(candidate):
@@ -604,7 +605,7 @@ def create_folder(folder):
 
 def check_dim(fname, dim_lst=[3]):
     """
-    Check if input dimension matches the input dimension requirements specified in the dim list. 
+    Check if input dimension matches the input dimension requirements specified in the dim list.
     Example: to check if an image is 2D or 3D: check_dim(my_file, dim_lst=[2, 3])
     :param fname:
     :return: True or False
@@ -717,6 +718,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     :param verbose:
     :return: fname_out
     """
+    from sct_convert import convert
     path_in, file_in, ext_in = extract_fname(fname_in)
     path_out, file_out, ext_out = extract_fname(fname_out)
     # create output path (ignore if it already exists)
@@ -814,62 +816,6 @@ def printv(string, verbose=1, type='normal'):
         except Exception as e:
             print(string)
 
-
-def send_email(addr_to, addr_from, passwd, subject, message='', filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
-    if smtp_host is None:
-        smtp_host = os.environ.get("SCT_SMTP_SERVER", "smtp.gmail.com")
-    if smtp_port is None:
-        smtp_port = int(os.environ.get("SCT_SMTP_PORT", 587))
-    if login is None:
-        login = addr_from
-
-    import smtplib
-    from email.MIMEMultipart import MIMEMultipart
-    from email.MIMEText import MIMEText
-    from email.MIMEBase import MIMEBase
-    from email import encoders
-
-    if html:
-        msg = MIMEMultipart("alternative")
-    else:
-        msg = MIMEMultipart()
-
-    msg['From'] = addr_from
-    msg['To'] = addr_to
-    msg['Subject'] = subject
-
-    body = message
-    if not isinstance(body, bytes):
-        body = body.encode("utf-8")
-
-    body_html = b"""
-<html><pre style="font: monospace"><body>
-{}
-</body></pre></html>""".format(body)
-
-    if html:
-        msg.attach(MIMEText(body_html, 'html', "utf-8"))
-
-    msg.attach(MIMEText(body, 'plain', "utf-8"))
-
-    # filename = "NAME OF THE FILE WITH ITS EXTENSION"
-    if filename:
-        attachment = open(filename, "rb")
-        part = MIMEBase('application', 'octet-stream')
-        part.set_payload((attachment).read())
-        encoders.encode_base64(part)
-        part.add_header('Content-Disposition', "attachment; filename= %s" % filename)
-        msg.attach(part)
-
-    # send email
-    server = smtplib.SMTP(smtp_host, smtp_port)
-    server.starttls()
-    server.login(login, passwd)
-    text = msg.as_string()
-    server.sendmail(addr_from, addr_to, text)
-    server.quit()
-
-
 #=======================================================================================================================
 # sign
 #=======================================================================================================================
@@ -958,7 +904,7 @@ class Os(object):
     def __init__(self):
         import os
         if os.name != 'posix':
-            raise UnsupportedOs('We only support OS X/Linux')
+            raise UnsupportedOs('We only support macOS/Linux')
         import platform
         self.os = platform.system().lower()
         self.arch = platform.machine()

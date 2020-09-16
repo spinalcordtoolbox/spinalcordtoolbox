@@ -16,7 +16,6 @@ import sys
 import os
 from shutil import copyfile
 import glob
-from tqdm import tqdm
 import numpy as np
 import math
 import scipy.interpolate
@@ -26,6 +25,7 @@ import operator
 import csv
 
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import sct_progress_bar
 
 import sct_utils as sct
 import sct_dmri_separate_b0_and_dwi
@@ -92,6 +92,7 @@ class ParamMoco:
 def copy_mat_files(nt, list_file_mat, index, folder_out, param):
     """
     Copy mat file from the grouped folder to the final folder (will be used by all individual ungrouped volumes)
+
     :param nt: int: Total number of volumes in native 4d data
     :param list_file_mat: list of list: File name of transformations
     :param index: list: Index to associate a given matrix file with a 3d volume (from the 4d native data)
@@ -119,6 +120,7 @@ def copy_mat_files(nt, list_file_mat, index, folder_out, param):
 def moco_wrapper(param):
     """
     Wrapper that performs motion correction.
+
     :param param: ParamMoco class
     :return: None
     """
@@ -261,8 +263,8 @@ def moco_wrapper(param):
     _, file_dwi_basename, file_dwi_ext = sct.extract_fname(file_datasub)
     # Group data
     list_file_group = []
-    for iGroup in tqdm(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False,
-                       ncols=80):
+    for iGroup in sct_progress_bar(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False,
+                                   ncols=80):
         # get index
         index_moco_i = group_indexes[iGroup]
         n_moco_i = len(index_moco_i)
@@ -468,6 +470,7 @@ def moco_wrapper(param):
 def moco(param):
     """
     Main function that performs motion correction.
+
     :param param:
     :return:
     """
@@ -580,8 +583,8 @@ def moco(param):
         failed_transfo = [0 for i in range(nt)]
 
         # Motion correction: Loop across T
-        for indice_index in tqdm(range(nt), unit='iter', unit_scale=False,
-                                 desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=False, ncols=80):
+        for indice_index in sct_progress_bar(range(nt), unit='iter', unit_scale=False,
+                                             desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=False, ncols=80):
 
             # create indices and display stuff
             it = index[indice_index]
@@ -660,6 +663,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
     """
     Register two images by estimating slice-wise Tx and Ty transformations, which are regularized along Z. This function
     uses ANTs' isct_antsSliceRegularizedRegistration.
+
     :param param:
     :param file_src:
     :param file_dest:

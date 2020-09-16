@@ -249,8 +249,8 @@ cd ..
 set +v
 end=`date +%s`
 runtime=$((end-start))
-echo "**`sct_version`**"
 echo "~~~"  # these are used to format as code when copy/pasting in github's markdown
+echo "Version:         `sct_version`"
 echo "Ran on:          `uname -nsr`"
 echo "Duration:        $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 echo "---"

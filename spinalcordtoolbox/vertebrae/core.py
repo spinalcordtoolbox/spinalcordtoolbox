@@ -11,16 +11,16 @@ import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
 
 import sct_utils as sct
-from sct_maths import mutual_information
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.metadata import get_file_label
-from spinalcordtoolbox.math import dilate
+from spinalcordtoolbox.math import dilate, mutual_information
 
 
 def label_vert(fname_seg, fname_label, verbose=1):
     """
     Label segmentation using vertebral labeling information. No orientation expected.
+
     :param fname_seg: file name of segmentation.
     :param fname_label: file name for a labelled segmentation that will be used to label the input segmentation
     :param fname_out: file name of the output labeled segmentation. If empty, will add suffix "_labeled" to fname_seg
@@ -49,6 +49,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
                         scale_dist=1.):
     """
     Find intervertebral discs in straightened image using template matching
+
     :param fname: file name of straigthened spinal cord
     :param fname_seg: file name of straigthened spinal cord segmentation
     :param contrast: t1 or t2
@@ -258,6 +259,7 @@ def center_of_mass(x):
 def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     """
     Create a label at coordinates x_center, y_center, z
+
     :param fname_seg: segmentation
     :param z: int
     :param fname_labelz: string file name of output label
@@ -282,6 +284,7 @@ def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
 def get_z_and_disc_values_from_label(fname_label):
     """
     Find z-value and label-value based on labeled image in RPI orientation
+
     :param fname_label: image in RPI orientation that contains label
     :return: [z_label, value_label] int list
     """
@@ -296,9 +299,11 @@ def get_z_and_disc_values_from_label(fname_label):
 
 def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_new):
     """
-    Clean labeled segmentation by:
-      (i)  removing voxels in segmentation_labeled that are not in segmentation and
+    FIXME doc
+    Clean labeled segmentation by:\
+      (i)  removing voxels in segmentation_labeled that are not in segmentation and\
       (ii) adding voxels in segmentation that are not in segmentation_labeled
+
     :param fname_labeled_seg:
     :param fname_seg:
     :param fname_labeled_seg_new: output
@@ -326,7 +331,9 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
 
 def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, gaussian_std, path_output):
     """
+    FIXME doc
     Find z that maximizes correlation between src and target 3d data.
+
     :param src: 3d source data
     :param target: 3d target data
     :param x:
@@ -457,6 +464,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
 def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     """
     Label segmentation image
+
     :param fname_seg: fname of the segmentation, no orientation expected
     :param list_disc_z: list of z that correspond to a disc
     :param list_disc_value: list of associated disc values
@@ -511,6 +519,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
 def label_discs(fname_seg_labeled, verbose=1):
     """
     Label discs from labeled_segmentation. The convention is C2/C3-->3, C3/C4-->4, etc.
+
     :param fname_seg_labeld: fname of the labeled segmentation
     :param verbose:
     :return:

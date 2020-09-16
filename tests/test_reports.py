@@ -25,7 +25,7 @@ def t2_image():
 @pytest.fixture()
 def t2_seg_image():
     sct_test_data = 'sct_testing_data'
-    t2_seg_file = os.path.join(sct_test_data, 't2', 't2_seg.nii.gz')
+    t2_seg_file = os.path.join(sct_test_data, 't2', 't2_seg-manual.nii.gz')
     return t2_seg_file
 
 
