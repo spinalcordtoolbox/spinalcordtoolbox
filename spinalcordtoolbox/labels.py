@@ -104,7 +104,7 @@ def _add_labels(img: Image, coordinates: Sequence[Coordinate]) -> Image:
         else:
             raise ValueError(f"Data should be 2D or 3D. Current shape is: {img.data.shape}")
 
-        logger.info(f"Label #{i}: {coord.x}, {coord.y}, {coord.z} --> {coord.value}")
+        logger.debug(f"Label #{i}: {coord.x}, {coord.y}, {coord.z} --> {coord.value}")
 
     return img
 
@@ -144,7 +144,7 @@ def create_labels_along_segmentation(img: Image, labels: Sequence[Tuple[int, int
         x, y = int(np.round(x)), int(np.round(y))
 
         # display info
-        logger.info(f"Label # {idx_label}: {x}, {y}. {z_rpi} --> {value}")
+        logger.debug(f"Label # {idx_label}: {x}, {y}. {z_rpi} --> {value}")
 
         if len(out.data.shape) == 3:
             out.data[x, y, z_rpi] = value
@@ -193,7 +193,7 @@ def cubic_to_point(img: Image) -> Image:
     # 3. Compute the center of mass of each group of voxels and write them into the output image
     for _, list_coord in groups.items():
         center_of_mass = sum(list_coord) / float(len(list_coord))
-        logger.info(f"Value = {center_of_mass.value} : ({center_of_mass.x},\
+        logger.debug(f"Value = {center_of_mass.value} : ({center_of_mass.x},\
          {center_of_mass.y}, {center_of_mass.z}) --> ({np.round(center_of_mass.x)}, \
          {np.round(center_of_mass.y)}, {np.round(center_of_mass.z)})")
 
