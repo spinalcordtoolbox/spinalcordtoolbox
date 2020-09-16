@@ -80,8 +80,8 @@ def test_create_labels_empty(test_image):
     expected = zeros_like(a)
 
     labels = [Coordinate(l) for l in [[0, 0, 0, 7], [0, 1, 2, 5]]]
-    expected.data[0][0][0] = 7
-    expected.data[0][1][2] = 5
+    expected.data[0,0,0] = 7
+    expected.data[0,1,2] = 5
 
     b = sct_labels.create_labels_empty(a, labels)
 
@@ -96,8 +96,8 @@ def test_create_labels(test_image):
 
     b = sct_labels.create_labels(a, labels)
 
-    assert b.data[0][1][0] == 99
-    assert b.data[0][1][2] == 5
+    assert b.data[0,1,0] == 99
+    assert b.data[0,1,2] == 5
 
 
 @pytest.mark.parametrize("test_seg", [seg_img])
@@ -196,12 +196,16 @@ def test_continuous_vertebral_levels(test_image):
 def test_remove_labels_from_image(test_image):
     img = test_image.copy()
     expected = test_image.copy()
-    labels = [Coordinate(l) for l in [[0, 0, 0, 7], [0, 1, 2, 5]]]
+
+    labels = [1, 2]
+
+    img.data[0,0,0] = 1
+    img.data[0,1,0] = 2
 
     res = sct_labels.remove_labels_from_image(img, labels)
 
-    expected.data[0][0][0] = 0
-    expected.data[0][1][2] = 0
+    expected.data[0,0,0] = 0
+    expected.data[0,1,0] = 0
 
     diff = res.data == expected.data
     assert diff.all()
@@ -212,11 +216,15 @@ def test_remove_other_labels_from_image(test_image):
     img = test_image.copy()
     expected = zeros_like(test_image)
 
-    labels = [Coordinate(l) for l in [[0, 0, 0, 7], [0, 1, 2, 5]]]
+    labels = [5, 6]
+
+    img.data[0,0,0] = 5
+    img.data[0,1,0] = 6
+
     res = sct_labels.remove_other_labels_from_image(img, labels)
 
-    expected.data[0][0][0] = img.data[0][0][0]
-    expected.data[0][1][2] = img.data[0][1][2]
+    expected.data[0,0,0] = 5
+    expected.data[0,1,0] = 6
 
     diff = res.data == expected.data
 
