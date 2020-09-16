@@ -502,13 +502,10 @@ def remove_labels_from_image(img: Image, labels: Sequence[Coordinate]) -> Image:
     coordinates = img.getNonZeroCoordinates()
 
     for x in labels:
-        exists = False
         for coord in coordinates:
-            if x == coord.value:
-                new_coord = coord
-                exists = True
-        if exists:
-            out.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = 0.0
+            if x == coord:
+                out.data[int(coord.x), int(coord.y), int(coord.z)] = 0.0
+                break
         else:
             logger.warning(f"Label {x} not found in input image!")
 
@@ -526,13 +523,10 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[Coordinate]) -> 
     coordinates = img.getNonZeroCoordinates()
 
     for x in labels:
-        exists = False
         for coord in coordinates:
-            if x == coord.value:
-                new_coord = coord
-                exists = True
-        if exists:
-            out.data[int(new_coord.x), int(new_coord.y), int(new_coord.z)] = new_coord.value
+            if x == coord:
+                out.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
+                break
         else:
             logger.warning(f"Label {x} not found in input image!")
 
