@@ -183,24 +183,6 @@ def test_get_coordinates_in_destination():
 
 
 @pytest.mark.parametrize("test_image", test_images)
-def test_labels_diff(test_image):
-    src = test_image.copy()
-    ref = test_image.copy()
-
-    # change some labels
-    ref.data[0][0][0] = 99
-    ref.data[0][1][2] = 99
-
-    src.data[0][1][1] = 99
-
-    # check that changes appear in diff
-    missing_from_ref, missing_from_src = sct_labels.labels_diff(src, ref)
-    assert missing_from_ref[0] == Coordinate([0, 0, 0, src.data[0][0][0]])
-    assert missing_from_ref[1] == Coordinate([0, 1, 2, src.data[0][1][2]])
-    assert missing_from_src[0] == Coordinate([0, 1, 1, ref.data[0][1][1]])
-
-
-@pytest.mark.parametrize("test_image", test_images)
 def test_continuous_vertebral_levels(test_image):
     a = test_image.copy()
     b = sct_labels.continuous_vertebral_levels(a)

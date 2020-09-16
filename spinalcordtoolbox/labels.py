@@ -382,44 +382,6 @@ def get_coordinates_in_destination(img: Image, dst: Image, tp: str = 'discrete')
     return dest_coord
 
 
-def labels_diff(img: Image, ref: Image) -> Tuple[Sequence[Coordinate], Sequence[Coordinate]]:
-    """
-    Detect any label mismatch between input image and reference image
-    :param img: source Image
-    :param ref: reference image
-    :returns: tuple of list of src and ref labels missing as per scheme below:
-    -> (list_of_src_labels_missing_from_ref, list_of_ref_labels_missing_from_src)
-    """
-
-    src_coords = img.getNonZeroCoordinates()
-    ref_coords = ref.getNonZeroCoordinates()
-
-    missing_from_ref = list()
-    missing_from_src = list()
-
-    for src_coord in src_coords:
-        exists = False
-        for ref_coord in ref_coords:
-            if src_coord.value == ref_coord.value:
-                exists = True
-                break
-        if not exists:
-            missing_from_ref.append(src_coord)
-            logger.info(f"Missing src label: {src_coord.value} from reference image")
-
-    for ref_coord in ref_coords:
-        exists = False
-        for src_coord in src_coords:
-            if ref_coord.value == src_coord.value:
-                exists = True
-                break
-        if not exists:
-            missing_from_src.append(ref_coord)
-            logger.info(f"Missing ref label: {ref_coord.value} from src image")
-
-    return missing_from_ref, missing_from_src
-
-
 def continuous_vertebral_levels(img: Image) -> Image:
     """
     This function transforms the vertebral levels file from the template into a continuous file.
