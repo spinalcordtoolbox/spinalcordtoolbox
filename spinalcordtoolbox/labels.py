@@ -449,7 +449,7 @@ def continuous_vertebral_levels(img: Image) -> Image:
     return out
 
 
-def remove_labels_from_image(img: Image, labels: Sequence[Coordinate]) -> Image:
+def remove_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     """
     Remove specified labels (set to 0) from an image.
     :param img: source image
@@ -457,20 +457,19 @@ def remove_labels_from_image(img: Image, labels: Sequence[Coordinate]) -> Image:
     :returns: image with labels specified removed
     """
     out = img.copy()
-    coordinates = img.getNonZeroCoordinates()
 
-    for x in labels:
-        for coord in coordinates:
-            if x == coord:
-                out.data[int(coord.x), int(coord.y), int(coord.z)] = 0.0
+    for l in labels:
+        for x, y, z, v in img.getNonZeroCoordinates():
+            if l == v:
+                out.data[x,y,z] = 0.0
                 break
         else:
-            logger.warning(f"Label {x} not found in input image!")
+            logger.warning(f"Label {l} not found in input image!")
 
     return out
 
 
-def remove_other_labels_from_image(img: Image, labels: Sequence[Coordinate]) -> Image:
+def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     """
     Remove labels other than specified from an image
     :param img: source image
@@ -478,14 +477,14 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[Coordinate]) -> 
     :returns: image with labels specified kept only
     """
     out = zeros_like(img)
-    coordinates = img.getNonZeroCoordinates()
 
-    for x in labels:
-        for coord in coordinates:
-            if x == coord:
-                out.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
+    for l in labels:
+        for x, y, z, v in img.getNonZeroCoordinates():
+            if l == v:
+                out.data[x,y,z] = v
                 break
         else:
-            logger.warning(f"Label {x} not found in input image!")
+            logger.warning(f"Label {l} not found in input image!")
 
+    logger.debug(f"{out.data}")
     return out
