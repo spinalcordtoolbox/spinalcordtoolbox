@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 seg_img = Image(sct_test_path('t2', 't2_seg-manual.nii.gz'))
 t2_img = Image(sct_test_path('t2', 't2.nii.gz'))
+labels_img = Image(sct_test_path('t2', 'labels.nii.gz'))
 
 
 # TODO [AJ] investigate how to parametrize fixtures from test_image.py
@@ -107,33 +108,52 @@ def test_create_labels_along_segmentation(test_seg):
     b = sct_labels.create_labels_along_segmentation(a, labels)
 
     assert b.orientation == a.orientation
-
     # TODO [AJ] implement test
 
 
-@pytest.mark.skip(reason="To be implemented")
-def test_cubic_to_point():
-    raise NotImplementedError()
+@pytest.mark.parametrize("test_image", test_images)
+def test_cubic_to_point(test_image):
+    a = test_image.copy()
+    sct_labels.cubic_to_point(a)
+    # TODO [AJ] implement test
 
 
-@pytest.mark.skip(reason="To be implemented")
-def test_increment_z_inverse():
-    raise NotImplementedError()
+@pytest.mark.parametrize("test_image", test_images)
+def test_increment_z_inverse(test_image):
+    a = test_image.copy()
+    sct_labels.increment_z_inverse(a)
+    # TODO [AJ] implement test
 
 
-@pytest.mark.skip(reason="To be implemented")
-def test_labelize_from_disks():
-    raise NotImplementedError()
+@pytest.mark.parametrize("test_seg,test_labels", [(seg_img, labels_img)])
+def test_labelize_from_disks(test_seg, test_labels):
+    seg = test_seg.copy()
+    ref = test_labels.copy()
+
+    sct_labels.labelize_from_disks(seg, ref)
+    # TODO [AJ] implement test
 
 
-@pytest.mark.skip(reason="To be implemented")
-def test_label_vertebrae():
-    raise NotImplementedError()
+@pytest.mark.parametrize("test_image", test_images)
+def test_label_vertebrae(test_image):
+    a = test_image.copy()
+    sct_labels.label_vertebrae(a)
+    sct_labels.label_vertebrae(a, [1, 2, 3, 4])
+    # TODO [AJ] implement test
 
 
-@pytest.mark.skip(reason="To be implemented")
-def test_compute_mean_squared_error():
-    raise NotImplementedError()
+@pytest.mark.parametrize("test_image", test_images)
+def test_compute_mean_squared_error(test_image):
+    src = test_image.copy()
+    ref = test_image.copy()
+
+    for z in range(3):
+        for y in range(2):
+            for x in range(1):
+                ref.data[x, y, z] *= 10
+
+    sct_labels.compute_mean_squared_error(src, ref)
+    # TODO [AJ] implement test
 
 
 @pytest.mark.parametrize("test_image", test_images)
@@ -187,7 +207,6 @@ def test_continuous_vertebral_levels(test_image):
 
     # check that orientation is maintained
     assert b.orientation == a.orientation
-
     # TODO [AJ] implement test
 
 
