@@ -23,6 +23,7 @@ from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
+from spinalcordtoolbox.labels import cubic_to_point
 
 import sct_utils as sct
 import sct_image
@@ -298,10 +299,8 @@ class Transform:
 
         if islabel:
             sct.printv("\nTake the center of mass of each registered dilated labels...")
-            sct.run(['sct_label_utils',
-                     '-i', fname_out,
-                     '-o', fname_out,
-                     '-cubic-to-point'])
+            out = cubic_to_point(im_src_reg)
+            out.save(path=fname_out)
             if remove_temp_files:
                 sct.printv('\nRemove temporary files...', verbose)
                 sct.rmtree(path_tmp, verbose=verbose)
