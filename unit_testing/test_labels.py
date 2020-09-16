@@ -12,15 +12,22 @@ import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.utils import sct_test_path
 from spinalcordtoolbox.types import Coordinate
-from test_image import fake_3dimage
+from test_image import fake_3dimage, fake_3dimage2
 
 logger = logging.getLogger(__name__)
 
-src_seg = sct_test_path('t2', 't2_seg-manual.nii.gz')
+seg_img = Image(sct_test_path('t2', 't2_seg-manual.nii.gz'))
+t2_img = Image(sct_test_path('t2', 't2.nii.gz'))
 
 
-def fake_image():
-    i = fake_3dimage()
+# TODO [AJ] investigate how to parametrize fixtures from test_image.py
+# without redefining the function here
+def fake_3dimage_sct2():
+    """
+    :return: an Image (3D) in RAS+ (aka SCT LPI) space
+    shape = (1,2,3)
+    """
+    i = fake_3dimage2()
     img = Image(i.get_data(), hdr=i.header,
                 orientation="RPI",
                 dim=i.header.get_data_shape(),
@@ -28,9 +35,26 @@ def fake_image():
     return img
 
 
+def fake_3dimage_sct():
+    """
+    :return: an Image (3D) in RAS+ (aka SCT LPI) space
+    shape = (7,8,9)
+    """
+    i = fake_3dimage()
+    img = Image(i.get_data(), hdr=i.header,
+                orientation="LPI",
+                dim=i.header.get_data_shape(),
+                )
+    return img
+
+
+test_images = [fake_3dimage_sct(), fake_3dimage_sct2(), t2_img]
+
+
 # AJ remove test if we keep add_faster + refactor caller
-def test_add():
-    a = fake_image()
+@pytest.mark.parametrize("test_image", test_images)
+def test_add(test_image):
+    a = test_image.copy()
     val = 4
 
     t1 = time()
@@ -49,39 +73,42 @@ def test_add():
     logger.debug(f"speed x improvement -> {l1/l2}")
 
 
-def test_create_labels_empty():
-    a = fake_image()
-    ref = zeros_like(a)
+@pytest.mark.parametrize("test_image", test_images)
+def test_create_labels_empty(test_image):
+    a = test_image.copy()
+    expected = zeros_like(a)
 
-    labels = [Coordinate(l) for l in [[1, 2, 3, 7], [4, 5, 6, 5]]]
-    ref.data[1][2][3] = 7
-    ref.data[4][5][6] = 5
+    labels = [Coordinate(l) for l in [[0, 0, 0, 7], [0, 1, 2, 5]]]
+    expected.data[0][0][0] = 7
+    expected.data[0][1][2] = 5
 
     b = sct_labels.create_labels_empty(a, labels)
 
-    c = b.data == ref.data
-    assert c.all()
+    diff = b.data == expected.data
+    assert diff.all()
 
 
-def test_create_labels():
-    a = fake_image()
-    labels = [Coordinate(l) for l in [[1, 2, 3, 99], [4, 5, 6, 5]]]
+@pytest.mark.parametrize("test_image", test_images)
+def test_create_labels(test_image):
+    a = test_image.copy()
+    labels = [Coordinate(l) for l in [[0, 1, 0, 99], [0, 1, 2, 5]]]
 
     b = sct_labels.create_labels(a, labels)
 
-    assert b.data[1][2][3] == 99
-    assert b.data[4][5][6] == 5
+    assert b.data[0][1][0] == 99
+    assert b.data[0][1][2] == 5
 
 
-def test_create_labels_along_segmentation():
-    a = Image(src_seg)
+@pytest.mark.parametrize("test_seg", [seg_img])
+def test_create_labels_along_segmentation(test_seg):
+    a = test_seg.copy()
     labels = [(5, 1), (14, 2), (23, 3)]
 
     b = sct_labels.create_labels_along_segmentation(a, labels)
 
     assert b.orientation == a.orientation
 
-    # TODO [AJ] how to validate labels?
+    # TODO [AJ] implement test
 
 
 @pytest.mark.skip(reason="To be implemented")
@@ -109,23 +136,25 @@ def test_compute_mean_squared_error():
     raise NotImplementedError()
 
 
-def test_remove_missing_labels():
-    src = fake_image()
-    ref = fake_image()
+@pytest.mark.parametrize("test_image", test_images)
+def test_remove_missing_labels(test_image):
+    src = test_image.copy()
+    ref = test_image.copy()
+
+    expected = test_image.copy()
 
     # change 2 labels in ref
-    ref.data[1][2][3] = 99
-    ref.data[3][2][1] = 99
+    ref.data[0][0][0] = 99
+    ref.data[0][1][2] = 99
+
+    # manually set expected
+    expected.data[0][0][0] = 0
+    expected.data[0][1][2] = 0
 
     res = sct_labels.remove_missing_labels(src, ref)
+    diff = res.data == expected.data
 
-    # check that missing labels have been removed
-    assert res.data[1][2][3] == 0
-    assert res.data[3][2][1] == 0
-
-    # random spot check
-    assert src.data[1][1][1] == res.data[1][1][1]
-    assert src.data[2][2][2] == res.data[2][2][2]
+    assert diff.all()
 
 
 @pytest.mark.skip(reason="To be implemented")
@@ -133,18 +162,19 @@ def test_get_coordinates_in_destination():
     raise NotImplementedError()
 
 
-def test_labels_diff():
-    src = fake_image()
-    ref = fake_image()
+@pytest.mark.parametrize("test_image", test_images)
+def test_labels_diff(test_image):
+    src = test_image.copy()
+    ref = test_image.copy()
 
     # change some labels
-    ref.data[1][2][3] = 99
-    ref.data[3][2][1] = 99
+    ref.data[0][0][0] = 99
+    ref.data[0][1][2] = 99
 
-    src.data[4][5][6] = 99
+    src.data[0][1][1] = 99
 
     # check that changes appear in diff
     missing_from_ref, missing_from_src = sct_labels.labels_diff(src, ref)
-    assert missing_from_ref[0] == Coordinate([1, 2, 3, src.data[1][2][3]])
-    assert missing_from_ref[1] == Coordinate([3, 2, 1, src.data[3][2][1]])
-    assert missing_from_src[0] == Coordinate([4, 5, 6, ref.data[4][5][6]])
+    assert missing_from_ref[0] == Coordinate([0, 0, 0, src.data[0][0][0]])
+    assert missing_from_ref[1] == Coordinate([0, 1, 2, src.data[0][1][2]])
+    assert missing_from_src[0] == Coordinate([0, 1, 1, ref.data[0][1][1]])
