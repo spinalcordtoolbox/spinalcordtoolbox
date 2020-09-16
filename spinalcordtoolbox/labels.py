@@ -156,6 +156,7 @@ def create_labels_along_segmentation(img: Image, labels: Sequence[Tuple[int, int
 
     if out.orientation != og_orientation:
         out.change_orientation(og_orientation)
+        img.change_orientation(og_orientation)
 
     return out
 
@@ -221,6 +222,7 @@ def increment_z_inverse(img: Image) -> Image:
 
     if out.orientation != og_orientation:
         out.change_orientation(og_orientation)
+        img.change_orientation(og_orientation)
 
     return out
 
@@ -279,6 +281,7 @@ def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image
 
     if out.orientation != og_orientation:
         out.change_orientation(og_orientation)
+        img.change_orientation(og_orientation)
 
     return out
 
@@ -483,6 +486,7 @@ def continuous_vertebral_levels(img: Image) -> Image:
 
     if out.orientation != og_orientation:
         out.change_orientation(og_orientation)
+        img.change_orientation(og_orientation)
 
     return out
 

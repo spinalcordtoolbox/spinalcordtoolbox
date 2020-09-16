@@ -77,10 +77,9 @@ def test_create_labels_along_segmentation():
     a = Image(src_seg)
     labels = [(5, 1), (14, 2), (23, 3)]
 
-    og_orientation = a.orientation
     b = sct_labels.create_labels_along_segmentation(a, labels)
 
-    assert b.orientation == og_orientation
+    assert b.orientation == a.orientation
 
     # TODO [AJ] how to validate labels?
 
