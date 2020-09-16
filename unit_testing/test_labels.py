@@ -164,12 +164,12 @@ def test_remove_missing_labels(test_image):
     expected = test_image.copy()
 
     # change 2 labels in ref
-    ref.data[0][0][0] = 99
-    ref.data[0][1][2] = 99
+    src.data[0,0,0] = 99
+    src.data[0,1,2] = 99
 
     # manually set expected
-    expected.data[0][0][0] = 0
-    expected.data[0][1][2] = 0
+    expected.data[0,0,0] = 0
+    expected.data[0,1,2] = 0
 
     res = sct_labels.remove_missing_labels(src, ref)
     diff = res.data == expected.data

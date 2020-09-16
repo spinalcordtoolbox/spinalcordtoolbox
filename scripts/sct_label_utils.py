@@ -304,7 +304,7 @@ def main(args=None):
                     subject=arguments.qc_subject, process='sct_label_utils')
 
 
-def display_voxel(img: Image, verbose: int):
+def display_voxel(img: Image, verbose: int) -> Sequence[Coordinate]:
     """
     Display all the labels that are contained in the input image.
     :param img: source image
@@ -322,6 +322,8 @@ def display_voxel(img: Image, verbose: int):
 
     sct.printv('All labels (useful syntax):', verbose=verbose)
     sct.printv(useful_notation, verbose=verbose)
+
+    return coordinates_input
 
 
 # TODO [AJ] -> just print warnings or log or raise?
