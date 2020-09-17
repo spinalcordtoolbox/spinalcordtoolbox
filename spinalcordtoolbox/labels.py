@@ -243,10 +243,10 @@ def labelize_from_disks(img: Image, ref: Image) -> Image:
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
     # for all points in input, find the value that has to be set up, depending on the vertebral level
-    for coord in coordinates_input:
-        for j in range(0, len(coordinates_ref) - 1):
-            if coordinates_ref[j + 1].z < coord.z <= coordinates_ref[j].z:
-                out.data[int(coord.x), int(coord.y), int(coord.z)] = coordinates_ref[j].value
+    for x, y, z, v in coordinates_input:
+        for j in range(len(coordinates_ref) - 1):
+            if coordinates_ref[j + 1].z < z <= coordinates_ref[j].z:
+                out.data[x, y, z] = coordinates_ref[j].value
 
     return out
 
@@ -286,6 +286,7 @@ def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image
     return out
 
 
+# FIXME [AJ]: this is slow on large images
 def compute_mean_squared_error(img: Image, ref: Image) -> float:
     """
     Compute the Mean Squared Distance Error between two sets of labels (input and ref).
@@ -332,8 +333,8 @@ def remove_missing_labels(img: Image, ref: Image) -> Image:
     out = img.copy()
 
     for x, y, z, v in img.getNonZeroCoordinates():
-        if ref.data[x,y,z] != v:
-            out.data[x,y,z] = 0
+        if ref.data[x, y, z] != v:
+            out.data[x, y, z] = 0
 
     return out
 
@@ -461,7 +462,7 @@ def remove_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     for l in labels:
         for x, y, z, v in img.getNonZeroCoordinates():
             if l == v:
-                out.data[x,y,z] = 0.0
+                out.data[x, y, z] = 0.0
                 break
         else:
             logger.warning(f"Label {l} not found in input image!")
@@ -481,10 +482,9 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     for l in labels:
         for x, y, z, v in img.getNonZeroCoordinates():
             if l == v:
-                out.data[x,y,z] = v
+                out.data[x, y, z] = v
                 break
         else:
             logger.warning(f"Label {l} not found in input image!")
 
-    logger.debug(f"{out.data}")
     return out
