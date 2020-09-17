@@ -35,6 +35,7 @@ from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
+from sct_label_utils import display_voxel
 
 import sct_utils as sct
 import sct_maths
@@ -843,22 +844,24 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     IMPORTANT: this function assumes that the origin and FOV of the two images are the SAME.
     """
     # get dimensions of input and destination files
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_labels).dim
-    nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = Image(fname_dest).dim
+    nx, ny, nz, _, _, _, _, _ = Image(fname_labels).dim
+    nxd, nyd, nzd, _, _, _, _, _ = Image(fname_dest).dim
     sampling_factor = [float(nx) / nxd, float(ny) / nyd, float(nz) / nzd]
-    # read labels
-    processor = sct_label_utils.ProcessLabels(fname_labels)
-    label_list = processor.display_voxel()
-    label_new_list = []
-    for label in label_list:
-        label_sub_new = [str(int(np.round(int(label.x) / sampling_factor[0]))),
-                         str(int(np.round(int(label.y) / sampling_factor[1]))),
-                         str(int(np.round(int(label.z) / sampling_factor[2]))),
-                         str(int(float(label.value)))]
-        label_new_list.append(','.join(label_sub_new))
-    label_new_list = ':'.join(label_new_list)
-    # create new labels
-    sct.run(['sct_label_utils', '-i', fname_dest, '-create', label_new_list, '-v', '1', '-o', fname_output])
+
+
+    og_labels = display_voxel(Image(fname_labels))
+    new_labels = []
+
+    for x, y, z, v in og_labels:
+        l = [
+            int(np.round(int(x) / sampling_factor[0])),
+            int(np.round(int(y) / sampling_factor[1])),
+            int(np.round(int(z) / sampling_factor[2])),
+            int(float(v))
+        ]
+        new_labels.append(l)
+
+    sct_labels.create_labels(Image(fname_dest), new_labels).save(path=fname_output)
 
 
 def check_labels(fname_landmarks, label_type='body'):
