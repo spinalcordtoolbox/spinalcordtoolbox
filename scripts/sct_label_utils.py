@@ -300,7 +300,7 @@ def main(args=None):
                     subject=arguments.qc_subject, process='sct_label_utils')
 
 
-def display_voxel(img: Image, verbose: int) -> Sequence[Coordinate]:
+def display_voxel(img: Image, verbose: int = 1) -> Sequence[Coordinate]:
     """
     Display all the labels that are contained in the input image.
     :param img: source image
