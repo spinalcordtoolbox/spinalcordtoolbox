@@ -34,10 +34,10 @@ from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 import spinalcordtoolbox.image as msct_image
+import spinalcordtoolbox.labels as sct_labels
 
 import sct_utils as sct
 import sct_maths
-import sct_label_utils
 from sct_utils import add_suffix
 from sct_convert import convert
 from sct_image import split_data, concat_warp2d
@@ -414,7 +414,7 @@ def main(args=None):
     if label_type == 'body':
         sct.printv('\nGenerate labels from template vertebral labeling', verbose)
         ftmp_template_label_, ftmp_template_label = ftmp_template_label, sct.add_suffix(ftmp_template_label, "_body")
-        sct_label_utils.main(args=['-i', ftmp_template_label_, '-vert-body', '0', '-o', ftmp_template_label])
+        sct_labels.label_vertebrae(Image(ftmp_template_label_), [0]).save(path=ftmp_template_label)
 
     # check if provided labels are available in the template
     sct.printv('\nCheck if provided labels are available in the template', verbose)
@@ -560,7 +560,8 @@ def main(args=None):
             # --------------------------------------------------------------------------------
             # Remove unused label on template. Keep only label present in the input label image
             sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-            sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove-reference', ftmp_label])
+            sct_labels.remove_missing_labels(Image(ftmp_template_label), Image(ftmp_label)).save(path=ftmp_template_label)
+
 
             # Dilating the input label so they can be straighten without losing them
             sct.printv('\nDilating input labels using 3vox ball radius')
@@ -707,7 +708,7 @@ def main(args=None):
 
         # Remove unused label on template. Keep only label present in the input label image
         sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-        sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove-reference', ftmp_label])
+        sct_labels.remove_missing_labels(Image(ftmp_template_label), Image(ftmp_label)).save(path=ftmp_template_label)
 
         # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This
         # new label is added at the level of the upper most label (lowest value), at 1cm to the right.
