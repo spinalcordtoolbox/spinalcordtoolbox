@@ -62,8 +62,8 @@ def get_parser():
     io_group.add_argument(
         '-o',
         metavar=Metavar.file,
-        help=("Output image. Example: t2_labels.nii.gz"
-              "Note: If no output image is provided, input image will be overwritten!")
+        default='labels.nii.gz',
+        help=("Output image. Example: t2_labels.nii.gz")
     )
 
     io_group.add_argument(
@@ -231,13 +231,10 @@ def main(args=None):
     sct.init_sct(log_level=verbosity, update=True)  # Update log level
 
     input_filename = arguments.i
+    output_fname = arguments.o
+
     img = Image(input_filename)
     dtype = None
-
-    if arguments.o is not None:
-        output_fname = arguments.o
-    else:
-        output_fname = input_filename
 
     if arguments.add is not None:
         value = arguments.add
