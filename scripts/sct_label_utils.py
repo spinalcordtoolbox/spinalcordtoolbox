@@ -277,8 +277,7 @@ def main(args=None):
 
         # second pass use previous pass result as reference
         ref_out = sct_labels.remove_missing_labels(ref, out)
-        ref_out.absolutepath = ref.absolutepath
-        ref_out.save()
+        ref_out.save(path=ref.absolutepath)
     elif arguments.remove is not None:
         labels = arguments.remove
         out = sct_labels.remove_labels_from_image(img, labels)
