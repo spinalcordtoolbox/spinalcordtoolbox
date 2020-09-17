@@ -92,10 +92,10 @@ def get_parser():
         default='')
     optional.add_argument(
         "-x",
-        help=""" Interpolation method. The 'label' method is to be used if you would like to apply a transformation 
-        on a file that has single-voxel labels (classical interpolation methods won't work, as resampled labels might 
-        disappear or their values be altered). The function will dilate each label, apply the transformation using 
-        nearest neighbour interpolation, and then take the center-of-mass of each "blob" and output a single voxel per 
+        help=""" Interpolation method. The 'label' method is to be used if you would like to apply a transformation
+        on a file that has single-voxel labels (classical interpolation methods won't work, as resampled labels might
+        disappear or their values be altered). The function will dilate each label, apply the transformation using
+        nearest neighbour interpolation, and then take the center-of-mass of each "blob" and output a single voxel per
         blob.""",
         required=False,
         default='spline',
@@ -299,8 +299,7 @@ class Transform:
 
         if islabel:
             sct.printv("\nTake the center of mass of each registered dilated labels...")
-            out = cubic_to_point(im_src_reg)
-            out.save(path=fname_out)
+            cubic_to_point(im_src_reg).save(path=fname_out)
             if remove_temp_files:
                 sct.printv('\nRemove temporary files...', verbose)
                 sct.rmtree(path_tmp, verbose=verbose)

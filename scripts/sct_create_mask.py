@@ -307,8 +307,7 @@ def create_line(param, fname, coord, nz):
         # compat
         labels = [ Coordinate([coord[0], coord[1], iz, 1]) for iz in range(nz) ]
 
-    out = create_labels(Image("line.nii"), labels)
-    out.save(path="line.nii")
+    create_labels(Image("line.nii"), labels).save(path="line.nii")
 
     return 'line.nii'
 
