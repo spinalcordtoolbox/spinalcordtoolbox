@@ -19,10 +19,10 @@ def get_parser():
     # Initialize the parser
     parser = argparse.ArgumentParser(
         description=(
-            "This function extracts the spinal cord centerline. Three methods are available: OptiC (automatic), "
-            "Viewer (manual), and Fitseg (applied on segmented image). These functions output (i) a NIFTI file with "
-            "labels corresponding to the discrete centerline, and (ii) a csv file containing the float (more precise) "
-            "coordinates of the centerline in the RPI orientation. \n"
+            "This function extracts the spinal cord centerline. Three methods are available: 'optic' (automatic), "
+            "'viewer' (manual), and 'fitseg' (applied on segmented image). These functions output (i) a NIFTI file "
+            "with labels corresponding to the discrete centerline, and (ii) a csv file containing the float (more "
+            "precise) coordinates of the centerline in the RPI orientation. \n"
             "\n"
             "Reference: C Gros, B De Leener, et al. Automatic spinal cord localization, robust to MRI contrast using "
             "global curve optimization (2017). doi.org/10.1016/j.media.2017.12.001"
@@ -135,7 +135,7 @@ def run_main():
     contrast_type = arguments.c
     if method == 'optic' and not contrast_type:
         # Contrast must be
-        error = 'ERROR: -c is a mandatory argument when using Optic method.'
+        error = "ERROR: -c is a mandatory argument when using 'optic' method."
         sct.printv(error, type='error')
         return
 
