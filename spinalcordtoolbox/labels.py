@@ -244,10 +244,10 @@ def labelize_from_disks(img: Image, ref: Image) -> Image:
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
     # for all points in input, find the value that has to be set up, depending on the vertebral level
-    for x, y, z, v in coordinates_input:
+    for x, y, z, _ in coordinates_input:
         for j in range(len(coordinates_ref) - 1):
             if coordinates_ref[j + 1].z < z <= coordinates_ref[j].z:
-                out.data[x, y, z] = coordinates_ref[j].value
+                out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
 
     return out
 
@@ -323,19 +323,22 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
     return result
 
 
-def remove_missing_labels(img: Image, ref: Image) -> Image:
+def remove_missing_labels(img: Image, ref: Image):
     """
     Compare an input image and a reference image. Remove any label from the input image that doesn't exist in the reference image.
     :param img: source image
     :param ref: reference image
     :returns: image with labels missing from reference removed
     """
+    out = zeros_like(img)
 
-    out = img.copy()
+    input_coords = img.getNonZeroCoordinates(coordValue=True)
+    ref_coords = ref.getNonZeroCoordinates(coordValue=True)
 
-    for x, y, z, v in img.getNonZeroCoordinates():
-        if ref.data[x, y, z] != v:
-            out.data[x, y, z] = 0
+    coord_intersection = [c for c in input_coords if list(filter(lambda x: x.value == c.value, ref_coords))]
+
+    for x, y, z, v in coord_intersection:
+        out.data[int(x), int(y), int(z)] = int(np.round(v))
 
     return out
 
@@ -441,8 +444,8 @@ def continuous_vertebral_levels(img: Image) -> Image:
     out.change_type(np.float32)
 
     # for all points in input, find the value that has to be set up, depending on the vertebral level
-    for coord in coordinates_input:
-        out.data[int(coord.x), int(coord.y), int(coord.z)] = continuous_values[coord.z]
+    for x, y, z, v in coordinates_input:
+        out.data[int(x), int(y), int(z)] = continuous_values[z]
 
     if out.orientation != og_orientation:
         out.change_orientation(og_orientation)
@@ -463,7 +466,7 @@ def remove_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     for l in labels:
         for x, y, z, v in img.getNonZeroCoordinates():
             if l == v:
-                out.data[x, y, z] = 0.0
+                out.data[int(x), int(y), int(z)] = 0.0
                 break
         else:
             logger.warning(f"Label {l} not found in input image!")
@@ -483,7 +486,7 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     for l in labels:
         for x, y, z, v in img.getNonZeroCoordinates():
             if l == v:
-                out.data[x, y, z] = v
+                out.data[int(x), int(y), int(z)] = v
                 break
         else:
             logger.warning(f"Label {l} not found in input image!")

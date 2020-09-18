@@ -860,7 +860,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
         v_ = int(float(v))
         new_labels.append(Coordinate([x_, y_, z_, v_]))
 
-    sct_labels.create_labels(Image(fname_dest), new_labels).save(path=fname_output)
+    sct_labels.create_labels_empty(Image(fname_dest), new_labels).save(path=fname_output)
 
 
 def check_labels(fname_landmarks, label_type='body'):
