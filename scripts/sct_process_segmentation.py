@@ -19,11 +19,14 @@
 from __future__ import absolute_import, division
 
 import sys, os
+import argparse
+
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
 import sct_utils as sct
-from msct_parser import Parser
+# TODO: Properly test when first PR (that includes list_type) gets merged
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, _merge_dict
@@ -37,109 +40,142 @@ def get_parser():
     :return: Returns the parser with the command line documentation contained in it.
     """
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description(
-        """Compute the following morphometric measures based on the spinal cord segmentation:
-- area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be accounted for by inputing a mask comprising values within [0,1].
-- angle_AP, angle_RL: Estimated angle between the cord centerline and the axial slice. This angle is used to correct for morphometric information.
-- diameter_AP, diameter_RL: Finds the major and minor axes of the cord and measure their length
-- eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.
-- orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the image
-- solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This metric is interesting for detecting non-convex shape (e.g., in case of strong compression)
-- length: Length of the segmentation, computed by summing the slice thickness (corrected for the centerline angle at each slice) across the specified superior-inferior region.
-""")
-    parser.add_option(name='-i',
-                      type_value='image_nifti',
-                      description='Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation.',
-                      mandatory=True,
-                      example='seg.nii.gz')
-    parser.usage.addSection('Optional Arguments')
-    parser.add_option(name='-o',
-                      type_value='file_output',
-                      description="Output file name (add extension). Default: csa.csv.",
-                      mandatory=False)
-    parser.add_option(name='-append',
-                      type_value='int',
-                      description='Append results as a new line in the output csv file instead of overwriting it.',
-                      mandatory=False,
-                      default_value=0)
-    parser.add_option(name='-z',
-                      type_value='str',
-                      description='Slice range to compute the metrics across (requires \"-p csa\").',
-                      mandatory=False,
-                      example='5:23')
-    parser.add_option(name='-perslice',
-                      type_value='int',
-                      description='Set to 1 to output one metric per slice instead of a single output metric.'
-                                  'Please note that when methods ml or map is used, outputing a single '
-                                  'metric per slice and then averaging them all is not the same as outputting a single'
-                                  'metric at once across all slices.',
-                      mandatory=False,
-                      default_value=None)
-    parser.add_option(name='-vert',
-                      type_value='str',
-                      description='Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2.',
-                      mandatory=False,
-                      example='2:9')
-    parser.add_option(name='-vertfile',
-                      type_value='str',
-                      description='Vertebral labeling file. Only use with flag -vert',
-                      default_value='./label/template/PAM50_levels.nii.gz',
-                      mandatory=False)
-    parser.add_option(name='-perlevel',
-                      type_value='int',
-                      description='Set to 1 to output one metric per vertebral level instead of a single '
-                                  'output metric. This flag needs to be used with flag -vert.',
-                      mandatory=False,
-                      default_value=None)
-    parser.add_option(name='-r',
-                      type_value='multiple_choice',
-                      description='Removes temporary folder used for the algorithm at the end of execution',
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name='-angle-corr',
-                      type_value='multiple_choice',
-                      description='Angle correction for computing morphometric measures. When angle '
-                                  'correction is used, the cord within the slice is stretched/expanded by a factor '
-                                  'corresponding to the cosine of the angle between the centerline and the axial plane.'
-                                  ' If the cord is already quasi-orthogonal to the slab, you can set -angle-corr to 0.',
-                      mandatory=False,
-                      example=['0', '1'],
-                      default_value='1')
-    parser.add_option(name='-centerline-algo',
-                      type_value='multiple_choice',
-                      description='Algorithm for centerline fitting. Only relevant with -angle-corr 1.',
-                      mandatory=False,
-                      example=['polyfit', 'bspline', 'linear', 'nurbs'],
-                      default_value='bspline')
-    parser.add_option(name='-centerline-smooth',
-                      type_value='int',
-                      description='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}.',
-                      mandatory=False,
-                      default_value=30)
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=None)
-    parser.add_option(name='-qc-dataset',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
-                      )
-    parser.add_option(name='-qc-subject',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
-                      )
-    parser.add_option(name='-v',
-                      type_value='multiple_choice',
-                      description='1: display on, 0: display off (default)',
-                      mandatory=False,
-                      example=['0', '1', '2'],
-                      default_value='1')
-    parser.add_option(name='-h',
-                      type_value=None,
-                      description='display this help',
-                      mandatory=False)
+    parser = argparse.ArgumentParser(
+        description=(
+            "Compute the following morphometric measures based on the spinal cord segmentation:\n"
+            "  - area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be "
+            "accounted for by inputing a mask comprising values within [0,1].\n"
+            "  - angle_AP, angle_RL: Estimated angle between the cord centerline and the axial slice. This angle is "
+            "used to correct for morphometric information.\n"
+            "  - diameter_AP, diameter_RL: Finds the major and minor axes of the cord and measure their length.\n"
+            "  - eccentricity: Eccentricity of the ellipse that has the same second-moments as the spinal cord. "
+            "The eccentricity is the ratio of the focal distance (distance between focal points) over the major axis "
+            "length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.\n"
+            "  - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the "
+            "image\n"
+            "  - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This "
+            "metric is interesting for detecting non-convex shape (e.g., in case of strong compression)\n"
+            "  - length: Length of the segmentation, computed by summing the slice thickness (corrected for the "
+            "centerline angle at each slice) across the specified superior-inferior region.\n"
+        ),
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Mask to compute morphometrics from. Could be binary or weighted. E.g., spinal cord segmentation."
+             "Example: seg.nii.gz"
+    )
+
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.file,
+        help="Output file name (add extension). Default: csa.csv."
+    )
+    optional.add_argument(
+        '-append',
+        choices=[0, 1],
+        default=0,
+        help="Append results as a new line in the output csv file instead of overwriting it."
+    )
+    optional.add_argument(
+        '-z',
+        metavar=Metavar.str,
+        type=str,
+        help="Slice range to compute the metrics across (requires '-p csa'). Example: 5:23"
+    )
+    optional.add_argument(
+        '-perslice',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Set to 1 to output one metric per slice instead of a single output metric. Please note that when "
+             "methods ml or map is used, outputing a single metric per slice and then averaging them all is not the "
+             "same as outputting a single metric at once across all slices."
+    )
+    optional.add_argument(
+        '-vert',
+        metavar=Metavar.str,
+        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2."
+    )
+    optional.add_argument(
+        '-vertfile',
+        metavar=Metavar.str,
+        default='./label/template/PAM50_levels.nii.gz',
+        help="Vertebral labeling file. Only use with flag -vert"
+    )
+    optional.add_argument(
+        '-perlevel',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Set to 1 to output one metric per vertebral level instead of a single output metric. This flag needs "
+             "to be used with flag -vert."
+    )
+    optional.add_argument(
+        '-r',
+        choices=['0', '1'],
+        default='1',
+        help="Removes temporary folder used for the algorithm at the end of execution."
+    )
+    optional.add_argument(
+        '-angle-corr',
+        choices=['0', '1'],
+        default='1',
+        help="Angle correction for computing morphometric measures. When angle correction is used, the cord within "
+             "the slice is stretched/expanded by a factor corresponding to the cosine of the angle between the "
+             "centerline and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set "
+             "-angle-corr to 0."
+    )
+    optional.add_argument(
+        '-centerline-algo',
+        choices=['polyfit', 'bspline', 'linear', 'nurbs'],
+        default='bspline',
+        help="Algorithm for centerline fitting. Only relevant with -angle-corr 1."
+    )
+    optional.add_argument(
+        '-centerline-smooth',
+        metavar=Metavar.int,
+        type=int,
+        default=30,
+        help="Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}."
+    )
+    optional.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="The path where the quality control generated content will be saved."
+    )
+    optional.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+    )
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
+    optional.add_argument(
+        '-v',
+        choices=['0', '1', '2'],
+        default='1',
+        help="Verbosity. 1: display on, 0: display off (default)"
+    )
 
     return parser
 
@@ -224,56 +260,59 @@ def _make_figure(metric, fit_results):
     return fname_img
 
 
-def main(args):
+def main(args=None):
     parser = get_parser()
-    arguments = parser.parse(args)
+    if args:
+        arguments = parser.parse_args(args)
+    else:
+        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     # Initialization
     slices = ''
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
-    fname_segmentation = sct.get_absolute_path(arguments['-i'])
+    fname_segmentation = sct.get_absolute_path(arguments.i)
     fname_vert_levels = ''
-    if '-o' in arguments:
-        file_out = os.path.abspath(arguments['-o'])
+    if arguments.o is not None:
+        file_out = os.path.abspath(arguments.o)
     else:
         file_out = ''
-    if '-append' in arguments:
-        append = int(arguments['-append'])
+    if arguments.append is not None:
+        append = int(arguments.append)
     else:
         append = 0
-    if '-vert' in arguments:
-        vert_levels = arguments['-vert']
+    if arguments.vert is not None:
+        vert_levels = arguments.vert
     else:
         vert_levels = ''
-    if '-r' in arguments:
-        remove_temp_files = arguments['-r']
-    if '-vertfile' in arguments:
-        fname_vert_levels = arguments['-vertfile']
-    if '-perlevel' in arguments:
-        perlevel = arguments['-perlevel']
+    if arguments.r is not None:
+        remove_temp_files = arguments.r
+    if arguments.vertfile is not None:
+        fname_vert_levels = arguments.vertfile
+    if arguments.perlevel is not None:
+        perlevel = arguments.perlevel
     else:
         perlevel = None
-    if '-z' in arguments:
-        slices = arguments['-z']
-    if '-perslice' in arguments:
-        perslice = arguments['-perslice']
+    if arguments.z is not None:
+        slices = arguments.z
+    if arguments.perslice is not None:
+        perslice = arguments.perslice
     else:
         perslice = None
-    if '-angle-corr' in arguments:
-        if arguments['-angle-corr'] == '1':
+    if arguments.angle_corr is not None:
+        if arguments.angle_corr == '1':
             angle_correction = True
-        elif arguments['-angle-corr'] == '0':
+        elif arguments.angle_corr == '0':
             angle_correction = False
     param_centerline = ParamCenterline(
-        algo_fitting=arguments['-centerline-algo'],
-        smooth=arguments['-centerline-smooth'],
+        algo_fitting=arguments.centerline_algo,
+        smooth=arguments.centerline_smooth,
         minmax=True)
-    path_qc = arguments.get("-qc", None)
-    qc_dataset = arguments.get("-qc-dataset", None)
-    qc_subject = arguments.get("-qc-subject", None)
+    path_qc = arguments.qc
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
 
-    verbose = int(arguments.get('-v'))
+    verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # update fields
