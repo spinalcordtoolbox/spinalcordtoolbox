@@ -224,7 +224,7 @@ def main(args=None):
     jobs = arguments.jobs
 
     param.verbose = arguments.verbose
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if param.verbose else 1, update=True)
 
     start_time = time.time()
 

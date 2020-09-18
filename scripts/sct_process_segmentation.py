@@ -172,9 +172,8 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbosity. 1: display on, 0: display off (default)"
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
 
     return parser
@@ -312,8 +311,8 @@ def main(args=None):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     # update fields
     metrics_agg = {}

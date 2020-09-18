@@ -204,9 +204,8 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=("0", "1"),
-        default="1",
-        help="Verbose. 0 = nothing, 1 = expanded"
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
 
     advanced = parser.add_argument_group("\nFOR ADVANCED USERS")
@@ -410,8 +409,8 @@ if __name__ == "__main__":
     fname_output_metric_map = arguments.output_map  # TODO: Not used. Why?
     fname_mask_weight = arguments.mask_weighted  # TODO: Not used. Why?
     discard_negative_values = int(arguments.discard_neg_val)  # TODO: Not used. Why?
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     # call main function
     main(fname_data=fname_data, path_label=path_label, method=method, slices=parse_num_list(slices_of_interest),

@@ -135,11 +135,11 @@ def get_parser():
         help="Remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
-        "-v",
-        choices=('0', '1', '2'),
-        default='1',
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expanded",
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
+
     return parser
 
 
@@ -162,10 +162,10 @@ def main():
     param.remove_temp_files = arguments.r
     if arguments.param is not None:
         param.update(arguments.param)
-    param.verbose = int(arguments.v)
+    param.verbose = arguments.v
 
     # Update log level
-    sct.init_sct(log_level=param.verbose, update=True)
+    sct.init_sct(log_level=2 if param.verbose else 1, update=True)
 
     # run moco
     moco_wrapper(param)

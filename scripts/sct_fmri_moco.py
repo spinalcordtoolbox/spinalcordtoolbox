@@ -111,9 +111,8 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose: 0 = nothing, 1 = basic, 2 = extended."
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
 
     return parser
@@ -137,10 +136,10 @@ def main():
         param.fname_mask = arguments.m
     if arguments.param is not None:
         param.update(arguments.param)
-    param.verbose = int(arguments.v)
+    param.verbose = arguments.v
 
     # Update log level
-    sct.init_sct(log_level=param.verbose, update=True)
+    sct.init_sct(log_level=2 if param.verbose else 1, update=True)
 
     # run moco
     moco_wrapper(param)

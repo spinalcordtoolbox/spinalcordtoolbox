@@ -60,11 +60,9 @@ def get_parser():
         )
     optional.add_argument(
         '-v',
-        type=int,
-        choices=(0, 1, 2),
-        help='Verbose: 0 = nothing, 1 = classic, 2 = expended',
-        default=1
-        )
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
     optional.add_argument(
         '-o',
         help='Path to output file.',

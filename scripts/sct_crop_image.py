@@ -129,11 +129,9 @@ def get_parser():
         metavar=Metavar.int,
         )
     optional.add_argument(
-        "-v",
-        type=int,
-        help="0: Verbose off | 1: Verbose on",
-        choices=(0, 1),
-        default=1
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
 
     return parser
@@ -154,7 +152,7 @@ def main(args=None):
     # initialize ImageCropper
     cropper = ImageCropper(Image(arguments.i))
     cropper.verbose = arguments.v
-    sct.init_sct(log_level=cropper.verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if cropper.verbose else 1)
 
     # Switch across cropping methods
     if arguments.g:

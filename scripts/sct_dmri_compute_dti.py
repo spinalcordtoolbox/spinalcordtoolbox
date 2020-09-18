@@ -86,12 +86,10 @@ def get_parser():
         required=False,
         default='dti_')
     optional.add_argument(
-        "-v",
-        help="Verbose. 0: nothing. 1: basic. 2: extended.",
-        type=int,
-        required=False,
-        default=param.verbose,
-        choices=(0, 1, 2))
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
 
     return parser
 
@@ -114,7 +112,7 @@ def main(args=None):
     if arguments.m is not None:
         file_mask = arguments.m
     param.verbose = arguments.v
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if param.verbose else 1, update=True)
 
     # compute DTI
     if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask):

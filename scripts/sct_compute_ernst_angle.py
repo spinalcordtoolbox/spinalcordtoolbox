@@ -124,12 +124,10 @@ def get_parser():
         metavar=Metavar.str,
         default="ernst_angle.png")
     optional.add_argument(
-        "-v",
-        type=int,
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended (graph)",
-        required=False,
-        choices=(0, 1, 2),
-        default=1)
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
 
     return parser
 
@@ -156,7 +154,7 @@ def main():
     if arguments.tr is not None:
         input_tr = arguments.tr
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     graph = ErnstAngle(input_t1, tr=input_tr, fname_output=input_fname_output)
     if input_tr is not None:

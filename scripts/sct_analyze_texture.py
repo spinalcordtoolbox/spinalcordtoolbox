@@ -104,12 +104,10 @@ def get_parser():
         choices=(0, 1),
         default=int(Param().rm_tmp))
     optional.add_argument(
-        "-v",
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
-        required=False,
-        type=int,
-        choices=(0, 1, 2),
-        default=Param().verbose)
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
 
     return parser
 
@@ -351,7 +349,7 @@ def main(args=None):
     if arguments.r is not None:
         param.rm_tmp = bool(arguments.r)
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     # create the GLCM constructor
     glcm = ExtractGLCM(param=param, param_glcm=param_glcm)

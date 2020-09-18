@@ -57,9 +57,11 @@ def get_parser():
                         help='If provided, this string will be mentioned in the QC report as the subject the process '
                              'was run on',
                         required=False)
-    parser.add_argument('-v',
-                        action='store_true',
-                        help="Verbose")
+    parser.add_argument(
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
     return parser
 
 

@@ -222,9 +222,8 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1'],
-        default='1',
-        help="Verbose. 1: display on, 0: display off (default)"
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
     optional.add_argument(
         '-mesh',
@@ -445,8 +444,8 @@ def propseg(img_input, options_dict):
     if arguments.r is not None:
         remove_temp_files = int(arguments.r)
 
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
     # Update for propseg binary
     if verbose > 0:
         cmd += ["-verbose"]

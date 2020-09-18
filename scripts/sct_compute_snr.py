@@ -82,10 +82,9 @@ def get_parser():
         choices=(0, 1))
     optional.add_argument(
         '-v',
-        help="Verbose. 0: nothing, 1: basic, 2: extended.",
-        type=int,
-        choices=(0, 1, 2),
-        default=1)
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
 
     return parser
 
@@ -121,7 +120,7 @@ def main():
     else:
         index_vol_user = ''
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     # Check parameters
     if method == 'diff':

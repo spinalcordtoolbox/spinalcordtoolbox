@@ -196,9 +196,8 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose. 0: nothing. 1: basic. 2: extended."
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
     optional.add_argument(
         '-qc',
@@ -267,8 +266,8 @@ def main(args=None):
         fname_initlabel = os.path.abspath(arguments.initlabel)
     if arguments.param is not None:
         param.update(arguments.param[0])
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
     remove_temp_files = int(arguments.r)
     denoise = int(arguments.denoise)
     laplacian = int(arguments.laplacian)

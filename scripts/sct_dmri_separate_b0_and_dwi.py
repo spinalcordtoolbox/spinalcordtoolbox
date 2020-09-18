@@ -105,9 +105,8 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=('0', '1'),
-        default=param_default.verbose,
-        help='Verbose. 0 = nothing, 1 = expanded',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
     return parser
 
@@ -127,8 +126,8 @@ def main(args=None):
     fname_data = arguments.i
     fname_bvecs = arguments.bvec
     average = arguments.a
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
     remove_temp_files = arguments.r
     path_out = arguments.ofolder
 

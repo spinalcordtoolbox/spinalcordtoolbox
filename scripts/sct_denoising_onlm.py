@@ -82,11 +82,10 @@ def get_parser():
         choices=(0, 1),
         default=1)
     optional.add_argument(
-        "-v",
-        help="Verbose. 0: nothing. 1: basic. 2: extended.",
-        type=int,
-        default=1,
-        choices=(0, 1, 2))
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
 
     return parser
 
@@ -187,7 +186,7 @@ if __name__ == "__main__":
     remove_temp_files = arguments.r
     noise_threshold = arguments.d
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     file_to_denoise = arguments.i
     output_file_name = arguments.o

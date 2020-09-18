@@ -184,12 +184,10 @@ def get_parser():
         choices=(0, 1),
         default=1)
     optional.add_argument(
-        "-v",
-        type=int,
-        help="Verbose. 0: nothing, 1: basic, 2: extended.",
-        required=False,
-        choices=(0, 1, 2),
-        default=1)
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
 
     return parser
 
@@ -236,7 +234,7 @@ def main(args=None):
     sc_straight.path_output = arguments.ofolder
     path_qc = arguments.qc
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
     sc_straight.verbose = verbose
 
     # if "-cpu-nb" in arguments:

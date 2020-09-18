@@ -91,9 +91,8 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1'],
-        default='1',
-        help="Verbosity. 0: None, 1: Verbose"
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
     optional.add_argument(
         '-o',
@@ -118,8 +117,8 @@ def main(args=None):
     else:
         fname_dst = sct.add_suffix(fname_src, "_tsnr")
 
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     # call main function
     tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)

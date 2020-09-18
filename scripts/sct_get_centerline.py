@@ -95,10 +95,9 @@ def get_parser():
         help="File name of ground-truth centerline or segmentation (binary nifti)."
     )
     optional.add_argument(
-        "-v",
-        choices=['0', '1'],
-        default='1',
-        help="Verbose. 1: display on, 0: display off (default)"
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
     optional.add_argument(
         "-qc",
@@ -154,8 +153,8 @@ def run_main():
         path_data, file_data, ext_data = sct.extract_fname(fname_data)
         file_output = os.path.join(path_data, file_data + '_centerline')
 
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     if method == 'viewer':
         # Manual labeling of cord centerline

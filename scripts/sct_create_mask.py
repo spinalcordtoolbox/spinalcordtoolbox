@@ -112,12 +112,10 @@ def get_parser():
         default = 1,
         choices = (0, 1))
     optional.add_argument(
-        "-v",
-        type=int,
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended ",
-        required=False,
-        choices=(0, 1, 2),
-        default = 1)
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
 
     return parser
 
@@ -151,7 +149,7 @@ def main(args=None):
         param.remove_temp_files = arguments.r
 
     param.verbose = arguments.v
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if param.verbose else 1, update=True)
 
     # run main program
     create_mask(param)

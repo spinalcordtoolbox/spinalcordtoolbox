@@ -107,9 +107,8 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended"
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
 
     return parser
@@ -133,8 +132,8 @@ def main(args=None):
         sigma = arguments.smooth
     if arguments.r is not None:
         remove_temp_files = int(arguments.r)
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     # Display arguments
     sct.printv('\nCheck input arguments...')

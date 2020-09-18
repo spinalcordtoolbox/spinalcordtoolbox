@@ -93,11 +93,9 @@ def get_parser():
         choices=(0, 1))
     optional.add_argument(
         '-v',
-        type=int,
-        help='Verbose.',
-        required=False,
-        default=1,
-        choices=(0, 1))
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
 
     return parser
 
@@ -110,7 +108,7 @@ if __name__ == "__main__":
     fname_input2 = arguments.d
 
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     tmp_dir = sct.tmp_create(verbose=verbose)  # create tmp directory
     tmp_dir = os.path.abspath(tmp_dir)

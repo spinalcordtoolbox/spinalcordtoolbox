@@ -97,11 +97,10 @@ def get_parser():
         choices=(0, 1),
         default=1)
     optional.add_argument(
-        "-v",
-        type=int,
-        help="1: Display on (default), 0: Display off, 2: Extended",
-        choices=(0, 1, 2),
-        default=1)
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
     optional.add_argument(
         '-igt',
         metavar=Metavar.str,
@@ -139,7 +138,7 @@ def main():
 
     remove_temp_files = args.r
     verbose = args.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)

@@ -212,9 +212,8 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1'],
-        default='1',
-        help="Verbose. 0: nothing. 1: basic"
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
     )
 
     return parser
@@ -232,8 +231,8 @@ def main(args=None):
     warp_spinal_levels = int(arguments.s)
     folder_out = arguments.ofolder
     path_template = arguments.t
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject

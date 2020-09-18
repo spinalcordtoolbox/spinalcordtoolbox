@@ -101,11 +101,10 @@ def get_parser():
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
-        "-v",
-        type=int,
-        help="Verbose: 0 = no verbosity, 1 = verbose.",
-        choices=(0, 1),
-        default=1)
+        '-v',
+        action="store_true",
+        help="Increase verbosity. Setting this option will enable showing DEBUG messages.",
+    )
     misc.add_argument(
         "-h",
         "--help",
