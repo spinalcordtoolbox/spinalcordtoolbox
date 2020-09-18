@@ -35,6 +35,7 @@ from spinalcordtoolbox.resampling import resample_file
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
+from spinalcordtoolbox.types import Coordinate
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 from sct_label_utils import display_voxel
@@ -849,18 +850,15 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     nxd, nyd, nzd, _, _, _, _, _ = Image(fname_dest).dim
     sampling_factor = [float(nx) / nxd, float(ny) / nyd, float(nz) / nzd]
 
-
     og_labels = display_voxel(Image(fname_labels))
     new_labels = []
 
     for x, y, z, v in og_labels:
-        l = [
-            int(np.round(int(x) / sampling_factor[0])),
-            int(np.round(int(y) / sampling_factor[1])),
-            int(np.round(int(z) / sampling_factor[2])),
-            int(float(v))
-        ]
-        new_labels.append(l)
+        x_ = int(np.round(int(x) / sampling_factor[0]))
+        y_ = int(np.round(int(y) / sampling_factor[1]))
+        z_ = int(np.round(int(z) / sampling_factor[2]))
+        v_ = int(float(v))
+        new_labels.append(Coordinate([x_, y_, z_, v_]))
 
     sct_labels.create_labels(Image(fname_dest), new_labels).save(path=fname_output)
 
