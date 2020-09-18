@@ -259,6 +259,8 @@ def main(args=None):
         out = sct_labels.increment_z_inverse(img)
     elif arguments.vert_body is not None:
         levels = arguments.vert_body
+        if len(levels) == 1 and levels[0] == 0:
+            levels = None # all levels
         out = sct_labels.label_vertebrae(img, levels)
     elif arguments.vert_continuous:
         out = sct_labels.continuous_vertebral_levels(img)

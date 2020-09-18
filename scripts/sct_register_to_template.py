@@ -415,11 +415,12 @@ def main(args=None):
     if label_type == 'body':
         sct.printv('\nGenerate labels from template vertebral labeling', verbose)
         ftmp_template_label_, ftmp_template_label = ftmp_template_label, sct.add_suffix(ftmp_template_label, "_body")
-        sct_labels.label_vertebrae(Image(ftmp_template_label_), [0]).save(path=ftmp_template_label)
+        sct_labels.label_vertebrae(Image(ftmp_template_label_)).save(path=ftmp_template_label)
 
     # check if provided labels are available in the template
     sct.printv('\nCheck if provided labels are available in the template', verbose)
     image_label_template = Image(ftmp_template_label)
+
     labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
     if labels[-1].value > labels_template[-1].value:
         sct.printv('ERROR: Wrong landmarks input. Labels must have correspondence in template space. \nLabel max '
