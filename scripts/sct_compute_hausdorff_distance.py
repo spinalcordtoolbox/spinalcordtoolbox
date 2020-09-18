@@ -484,12 +484,13 @@ def get_parser():
         required=False,
         default='hausdorff_distance.txt')
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose. 0: nothing, 1: basic, 2: extended.",
-        required=False,
-        choices=(0, 1, 2),
-        default = 1)
+        choices=(0, 1),
+        default=1,
+        help="Enable verbose output. 0 = off, 1 = on.",
+    )
 
     return parser
 
@@ -522,7 +523,7 @@ if __name__ == "__main__":
         if arguments.o is not None:
             output_fname = arguments.o
         param.verbose = arguments.v
-        sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+        sct.init_sct(log_level=2 if param.verbose else 1, update=True)
 
         tmp_dir = sct.tmp_create()
         im1_name = "im1.nii.gz"

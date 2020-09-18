@@ -102,12 +102,13 @@ def get_parser():
         default = Param().rm_tmp,
         choices = (0, 1))
     misc.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-        required=False,
-        choices=(0, 1, 2),
-        default = str(Param().verbose))
+        choices=(0, 1),
+        default=Param().verbose,
+        help="Enable verbose output. 0 = off, 1 = on.",
+    )
 
     return parser
 
@@ -212,7 +213,7 @@ def main():
     if arguments.r is not None:
         param.rm_tmp = arguments.r
     param.verbose = arguments.v
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if param.verbose else 1, update=True)
 
     # check if list of input files and warping fields have same length
     assert len(list_fname_src) == len(list_fname_warp), "ERROR: list of files are not of the same length"

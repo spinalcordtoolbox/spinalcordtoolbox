@@ -104,9 +104,11 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended."
+        metavar=Metavar.int,
+        type=int,
+        choices=(0, 1),
+        default=1,
+        help="Enable verbose output. 0 = off, 1 = on.",
     )
 
     return parser
@@ -145,8 +147,8 @@ def run_main():
             param.interpolation = int(arguments.x)
         else:
             param.interpolation = arguments.x
-    param.verbose = int(arguments.v)
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    param.verbose = arguments.v
+    sct.init_sct(log_level=2 if param.verbose else 1, update=True)
 
     spinalcordtoolbox.resampling.resample_file(param.fname_data, param.fname_out, param.new_size, param.new_size_type,
                                                param.interpolation, param.verbose, fname_ref=param.ref)

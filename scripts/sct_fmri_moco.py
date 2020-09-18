@@ -111,9 +111,11 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose: 0 = nothing, 1 = basic, 2 = extended."
+        metavar=Metavar.int,
+        type=int,
+        choices=(0, 1),
+        default=1,
+        help="Enable verbose output. 0 = off, 1 = on.",
     )
 
     return parser
@@ -137,10 +139,10 @@ def main():
         param.fname_mask = arguments.m
     if arguments.param is not None:
         param.update(arguments.param)
-    param.verbose = int(arguments.v)
+    param.verbose = arguments.v
 
     # Update log level
-    sct.init_sct(log_level=param.verbose, update=True)
+    sct.init_sct(log_level=2 if param.verbose else 1, update=True)
 
     # run moco
     moco_wrapper(param)

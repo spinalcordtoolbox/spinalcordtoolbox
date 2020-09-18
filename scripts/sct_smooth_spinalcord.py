@@ -107,9 +107,11 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended"
+        metavar=Metavar.int,
+        type=int,
+        choices=(0, 1),
+        default=1,
+        help="Enable verbose output. 0 = off, 1 = on.",
     )
 
     return parser
@@ -133,8 +135,8 @@ def main(args=None):
         sigma = arguments.smooth
     if arguments.r is not None:
         remove_temp_files = int(arguments.r)
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     # Display arguments
     sct.printv('\nCheck input arguments...')
@@ -216,7 +218,7 @@ def main(args=None):
     sct_maths.main(args=['-i', 'anat_rpi_straight.nii',
                          '-smooth', sigma_smooth,
                          '-o', 'anat_rpi_straight_smooth.nii',
-                         '-v', '0'])
+                         '-v', 0])
     # Apply the reversed warping field to get back the curved spinal cord
     sct.printv('\nApply the reversed warping field to get back the curved spinal cord...')
     sct.run(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)

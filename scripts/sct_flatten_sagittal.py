@@ -137,9 +137,11 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default=str(param_default.verbose),
-        help="Verbosity. 0: no verbose (default), 1: min verbose, 2: verbose + figures"
+        metavar=Metavar.int,
+        type=int,
+        choices=(0, 1),
+        default=param_default.verbose,
+        help="Enable verbose output. 0 = off, 1 = on.",
     )
 
     return parser
@@ -155,8 +157,8 @@ if __name__ == "__main__":
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_anat = arguments.i
     fname_centerline = arguments.s
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     # call main function
     main(fname_anat, fname_centerline, verbose)

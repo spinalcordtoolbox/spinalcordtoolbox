@@ -58,8 +58,12 @@ def get_parser():
                              'was run on',
                         required=False)
     parser.add_argument('-v',
-                        action='store_true',
-                        help="Verbose")
+                        metavar='INT',
+                        type=int,
+                        choices=(0, 1),
+                        default=1,
+                        help="Enable verbose output. 0 = off, 1 = on.",
+                        required=False)
     return parser
 
 

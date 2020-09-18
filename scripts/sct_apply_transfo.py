@@ -107,12 +107,13 @@ def get_parser():
         default=1,
         choices=(0, 1))
     optional.add_argument(
-        "-v",
-        help="Verbose: 0: nothing, 1: classic, 2: expended.",
-        required=False,
+        '-v',
+        metavar=Metavar.int,
         type=int,
+        choices=(0, 1),
         default=1,
-        choices=(0, 1, 2))
+        help="Enable verbose output. 0 = off, 1 = on.",
+    )
 
     return parser
 
@@ -369,7 +370,7 @@ def main(args=None):
     transform.interp = arguments.x
     transform.remove_temp_files = arguments.r
     transform.verbose = arguments.v
-    sct.init_sct(log_level=transform.verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if transform.verbose else 1, update=True)
 
     transform.apply()
 

@@ -224,12 +224,13 @@ def get_parser():
         choices=('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64',
                  'uint64'))
     misc.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose. 0: nothing. 1: basic. 2: extended.",
-        required=False,
+        choices=(0, 1),
         default=1,
-        choices=(0, 1, 2))
+        help="Enable verbose output. 0 = off, 1 = on.",
+    )
 
     return parser
 
@@ -252,7 +253,7 @@ def main(args=None):
     fname_in = arguments.i
     fname_out = arguments.o
     verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=2 if verbose else 1, update=True)
     if '-type' in arguments:
         output_type = arguments.type
     else:

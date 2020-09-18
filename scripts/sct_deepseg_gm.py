@@ -85,11 +85,13 @@ def get_parser():
              "provides non-deterministic results.",
         metavar='')
     misc.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = no verbosity, 1 = verbose.",
         choices=(0, 1),
-        default=1)
+        default=1,
+        help="Enable verbose output. 0 = off, 1 = on.",
+    )
 
     return parser
 
@@ -107,7 +109,7 @@ def run_main():
     model_name = arguments.m
     threshold = arguments.thr
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     if threshold > 1.0 or threshold < 0.0:
         raise RuntimeError("Threshold should be between 0.0 and 1.0.")

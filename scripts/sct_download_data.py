@@ -57,9 +57,11 @@ def get_parser(dict_url):
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose. 0: nothing. 1: basic. 2: extended."
+        metavar=Metavar.int,
+        type=int,
+        choices=(0, 1),
+        default=1,
+        help="Enable verbose output. 0 = off, 1 = on.",
     )
 
     return parser
@@ -153,8 +155,8 @@ def main(args=None):
         arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     data_name = arguments.d
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
     if arguments.o is not None:
         dest_folder = arguments.o
     else:

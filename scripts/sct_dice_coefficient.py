@@ -93,11 +93,12 @@ def get_parser():
         choices=(0, 1))
     optional.add_argument(
         '-v',
+        metavar=Metavar.int,
         type=int,
-        help='Verbose.',
-        required=False,
+        choices=(0, 1),
         default=1,
-        choices=(0, 1))
+        help="Enable verbose output. 0 = off, 1 = on.",
+    )
 
     return parser
 
@@ -110,7 +111,7 @@ if __name__ == "__main__":
     fname_input2 = arguments.d
 
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     tmp_dir = sct.tmp_create(verbose=verbose)  # create tmp directory
     tmp_dir = os.path.abspath(tmp_dir)

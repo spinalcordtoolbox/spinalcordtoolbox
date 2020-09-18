@@ -101,11 +101,12 @@ def get_parser():
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
-        "-v",
+        '-v',
         type=int,
-        help="Verbose: 0 = no verbosity, 1 = verbose.",
         choices=(0, 1),
-        default=1)
+        default=1,
+        help="Enable verbose output. 0 = off, 1 = on.",
+    )
     misc.add_argument(
         "-h",
         "--help",

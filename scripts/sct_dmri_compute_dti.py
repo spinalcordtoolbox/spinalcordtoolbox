@@ -86,12 +86,13 @@ def get_parser():
         required=False,
         default='dti_')
     optional.add_argument(
-        "-v",
-        help="Verbose. 0: nothing. 1: basic. 2: extended.",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        required=False,
+        choices=(0, 1),
         default=param.verbose,
-        choices=(0, 1, 2))
+        help="Enable verbose output. 0 = off, 1 = on.",
+    )
 
     return parser
 
@@ -114,7 +115,7 @@ def main(args=None):
     if arguments.m is not None:
         file_mask = arguments.m
     param.verbose = arguments.v
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if param.verbose else 1, update=True)
 
     # compute DTI
     if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask):

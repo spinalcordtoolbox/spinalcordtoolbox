@@ -117,11 +117,13 @@ def get_parser(argv):
         help="Output file for T1map. Default is t1map.nii.gz",
         default=None)
     optional.add_argument(
-        "-v",
-        help="Verbose: 0 = no verbosity, 1 = verbose (default).",
+        '-v',
+        metavar=Metavar.int,
         type=int,
         choices=(0, 1),
-        default=1)
+        default=1,
+        help="Enable verbose output. 0 = off, 1 = on.",
+    )
 
     return parser
 
@@ -168,7 +170,7 @@ def main(argv):
     parser = get_parser(argv)
     args = parser.parse_args(argv if argv else ['--help'])
     verbose = args.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     sct.printv('Load data...', verbose)
     nii_mt = Image(args.mt)

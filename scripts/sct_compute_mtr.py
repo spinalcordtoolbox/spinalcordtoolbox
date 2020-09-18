@@ -60,11 +60,12 @@ def get_parser():
         )
     optional.add_argument(
         '-v',
+        metavar=Metavar.int,
         type=int,
-        choices=(0, 1, 2),
-        help='Verbose: 0 = nothing, 1 = classic, 2 = expended',
-        default=1
-        )
+        choices=(0, 1),
+        default=1,
+        help="Enable verbose output. 0 = off, 1 = on.",
+    )
     optional.add_argument(
         '-o',
         help='Path to output file.',

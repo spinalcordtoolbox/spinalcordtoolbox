@@ -41,7 +41,7 @@ class Param:
         self.fname_label_output = 'labels.nii.gz'
         self.labels = []
         self.cross_size = 5  # cross size in mm
-        self.verbose = '1'
+        self.verbose = 1
 
 
 class ProcessLabels(object):
@@ -817,9 +817,11 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
+        metavar=Metavar.int,
+        type=int,
+        choices=(0, 1),
         default=param_default.verbose,
-        help="Verbose. 0: nothing. 1: basic. 2: extended."
+        help="Enable verbose output. 0 = off, 1 = on.",
     )
     optional.add_argument(
         '-qc',
@@ -919,8 +921,8 @@ def main(args=None):
         input_fname_previous = arguments.ilabel
     else:
         input_fname_previous = None
-    verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    verbose = arguments.v
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     processor = ProcessLabels(input_filename, fname_output=input_fname_output, fname_ref=input_fname_ref,
                               cross_radius=input_cross_radius, dilate=input_dilate, coordinates=input_coordinates,

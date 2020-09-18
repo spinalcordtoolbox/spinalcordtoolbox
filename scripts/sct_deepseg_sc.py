@@ -98,11 +98,13 @@ def get_parser():
         choices=(0, 1),
         default=1)
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="1: display on (default), 0: display off, 2: extended",
-        choices=(0, 1, 2),
-        default=1)
+        choices=(0, 1),
+        default=1,
+        help="Enable verbose output. 0 = off, 1 = on.",
+    )
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
@@ -169,7 +171,7 @@ def main():
 
     remove_temp_files = args.r
     verbose = args.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    sct.init_sct(log_level=2 if verbose else 1, update=True)
 
     path_qc = args.qc
     qc_dataset = args.qc_dataset
