@@ -25,6 +25,7 @@ import logging
 from typing import Sequence
 
 import numpy as np
+from scipy import ndimage
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
@@ -190,10 +191,9 @@ def get_parser():
 
     optional.add_argument(
         '-v',
-        type=int,
-        help='Verbose. 0: nothing. 1: basic. 2: extended.',
-        default=1,
-        choices=(0, 1, 2),
+        choices=['0', '1', '2'],
+        default=param_default.verbose,
+        help="Verbose. 0: nothing. 1: basic. 2: extended."
     )
 
     optional.add_argument(
