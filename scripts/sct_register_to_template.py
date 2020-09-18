@@ -16,7 +16,9 @@
 
 from __future__ import division, absolute_import
 
-import sys, os, time
+import sys
+import os
+import time
 import argparse
 
 import numpy as np
@@ -466,7 +468,6 @@ def main(args=None):
         ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
         ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
 
-
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if level_alignment:
             # cropping the segmentation based on the label coverage to ensure good registration with level alignment
@@ -508,12 +509,12 @@ def main(args=None):
         cache_input_files = [ftmp_seg]
         if level_alignment:
             cache_input_files += [
-             ftmp_template_seg,
-             ftmp_label,
-             ftmp_template_label,
+                ftmp_template_seg,
+                ftmp_label,
+                ftmp_template_label,
             ]
         cache_sig = sct.cache_signature(
-         input_files=cache_input_files,
+            input_files=cache_input_files,
         )
         cachefile = os.path.join(curdir, "straightening.cache")
         if sct.cache_valid(cachefile, cache_sig) and os.path.isfile(fn_warp_curve2straight) and os.path.isfile(fn_warp_straight2curve) and os.path.isfile(fn_straight_ref):
@@ -563,7 +564,6 @@ def main(args=None):
             # Remove unused label on template. Keep only label present in the input label image
             sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
             sct_labels.remove_missing_labels(Image(ftmp_template_label), Image(ftmp_label)).save(path=ftmp_template_label)
-
 
             # Dilating the input label so they can be straighten without losing them
             sct.printv('\nDilating input labels using 3vox ball radius')
@@ -633,21 +633,21 @@ def main(args=None):
         # find min-max of anat2template (for subsequent cropping)
         zmin_template, zmax_template = msct_image.find_zmin_zmax(im_new, threshold=0.5)
         # save binarized segmentation
-        im_new.save(add_suffix(ftmp_seg, '_bin')) # unused?
+        im_new.save(add_suffix(ftmp_seg, '_bin'))  # unused?
         # crop template in z-direction (for faster processing)
         # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
         ftmp_template_, ftmp_template = ftmp_template, add_suffix(ftmp_template, '_crop')
-        msct_image.spatial_crop(Image(ftmp_template_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template)
+        msct_image.spatial_crop(Image(ftmp_template_), dict(((2, (zmin_template, zmax_template)),))).save(ftmp_template)
 
         ftmp_template_seg_, ftmp_template_seg = ftmp_template_seg, add_suffix(ftmp_template_seg, '_crop')
-        msct_image.spatial_crop(Image(ftmp_template_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template_seg)
+        msct_image.spatial_crop(Image(ftmp_template_seg_), dict(((2, (zmin_template, zmax_template)),))).save(ftmp_template_seg)
 
         ftmp_data_, ftmp_data = ftmp_data, add_suffix(ftmp_data, '_crop')
-        msct_image.spatial_crop(Image(ftmp_data_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_data)
+        msct_image.spatial_crop(Image(ftmp_data_), dict(((2, (zmin_template, zmax_template)),))).save(ftmp_data)
 
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
-        msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_seg)
+        msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (zmin_template, zmax_template)),))).save(ftmp_seg)
 
         # sub-sample in z-direction
         # TODO: refactor to use python module instead of doing i/o
@@ -666,7 +666,7 @@ def main(args=None):
 
         # TODO: find a way to input initwarp, corresponding to straightening warp
         # Set the angle of the template orientation to 0 (destination image)
-        for key in list(paramregmulti.steps.keys()) :
+        for key in list(paramregmulti.steps.keys()):
             paramregmulti.steps[key].rot_dest = 0
         fname_src2dest, fname_dest2src, warp_forward, warp_inverse = register_wrapper(
             ftmp_data, ftmp_template, param, paramregmulti, fname_src_seg=ftmp_seg, fname_dest_seg=ftmp_template_seg,
@@ -731,7 +731,7 @@ def main(args=None):
             # im_label.absolutepath = 'label_rpi_modif.nii.gz'
             im_label.save()
         # Set the angle of the template orientation to 0 (source image)
-        for key in list(paramregmulti.steps.keys()) :
+        for key in list(paramregmulti.steps.keys()):
             paramregmulti.steps[key].rot_src = 0
         fname_src2dest, fname_dest2src, warp_forward, warp_inverse = register_wrapper(
             ftmp_template, ftmp_data, param, paramregmulti, fname_src_seg=ftmp_template_seg, fname_dest_seg=ftmp_seg,
@@ -802,7 +802,7 @@ def project_labels_on_spinalcord(fname_label, fname_seg, param_centerline):
     # convert pixel into physical coordinates
     centerline_xyz_transposed = \
         [im_seg.transfo_pix2phys([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]]])[0]
-                                 for i in range(len(x_centerline_fit))]
+         for i in range(len(x_centerline_fit))]
     # transpose list
     centerline_phys_x = [i[0] for i in centerline_xyz_transposed]
     centerline_phys_y = [i[1] for i in centerline_xyz_transposed]
@@ -891,11 +891,12 @@ def check_labels(fname_landmarks, label_type='body'):
             sct.printv('ERROR: Label should be integer.', 1, 'error')
     # check if there are duplicates in label values
     n_labels = len(labels)
-    list_values = [labels[i].value for i in range(0,n_labels)]
+    list_values = [labels[i].value for i in range(0, n_labels)]
     list_duplicates = [x for x in list_values if list_values.count(x) > 1]
     if not list_duplicates == []:
         sct.printv('ERROR: Found two labels with same value.', 1, 'error')
     return labels
+
 
 def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg='', fname_dest_seg='', fname_src_label='',
                      fname_dest_label='', fname_mask='', fname_initwarp='', fname_initwarpinv='', identity=False,
@@ -924,7 +925,6 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     """
     # TODO: move interp inside param.
     # TODO: merge param inside paramregmulti by having a "global" sets of parameters that apply to all steps
-
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -1203,45 +1203,45 @@ def register(src, dest, step, param):
     # # landmark-based registration
     if step.type in ['label']:
         warp_forward_out, warp_inverse_out = register_step_label(
-         src=src,
-         dest=dest,
-         step=step,
-         verbose=param.verbose,
+            src=src,
+            dest=dest,
+            step=step,
+            verbose=param.verbose,
         )
 
     elif step.algo == 'slicereg':
         warp_forward_out, warp_inverse_out = register_step_ants_slice_regularized_registration(
-         src=src,
-         dest=dest,
-         step=step,
-         metricSize=metricSize,
-         fname_mask=fname_mask,
-         verbose=param.verbose,
+            src=src,
+            dest=dest,
+            step=step,
+            metricSize=metricSize,
+            fname_mask=fname_mask,
+            verbose=param.verbose,
         )
 
     # ANTS 3d
-    elif step.algo.lower() in ants_registration_params and step.slicewise == '0': # FIXME [AJ]
+    elif step.algo.lower() in ants_registration_params and step.slicewise == '0':  # FIXME [AJ]
         warp_forward_out, warp_inverse_out = register_step_ants_registration(
-         src=src,
-         dest=dest,
-         step=step,
-         masking=masking,
-         ants_registration_params=ants_registration_params,
-         padding=param.padding,
-         metricSize=metricSize,
-         verbose=param.verbose,
+            src=src,
+            dest=dest,
+            step=step,
+            masking=masking,
+            ants_registration_params=ants_registration_params,
+            padding=param.padding,
+            metricSize=metricSize,
+            verbose=param.verbose,
         )
 
     # ANTS 2d
-    elif step.algo.lower() in ants_registration_params and step.slicewise == '1': # FIXME [AJ]
+    elif step.algo.lower() in ants_registration_params and step.slicewise == '1':  # FIXME [AJ]
         warp_forward_out, warp_inverse_out = register_step_slicewise_ants(
-         src=src,
-         dest=dest,
-         step=step,
-         ants_registration_params=ants_registration_params,
-         fname_mask=fname_mask,
-         remove_temp_files=param.remove_temp_files,
-         verbose=param.verbose,
+            src=src,
+            dest=dest,
+            step=step,
+            ants_registration_params=ants_registration_params,
+            fname_mask=fname_mask,
+            remove_temp_files=param.remove_temp_files,
+            verbose=param.verbose,
         )
 
     # slice-wise transfo
@@ -1251,12 +1251,12 @@ def register(src, dest, step, param):
             sct.printv('\nWARNING: algo ' + step.algo + ' will ignore the provided mask.\n', 1, 'warning')
 
         warp_forward_out, warp_inverse_out = register_step_slicewise(
-         src=src,
-         dest=dest,
-         step=step,
-         ants_registration_params=ants_registration_params,
-         remove_temp_files=param.remove_temp_files,
-         verbose=param.verbose,
+            src=src,
+            dest=dest,
+            step=step,
+            ants_registration_params=ants_registration_params,
+            remove_temp_files=param.remove_temp_files,
+            verbose=param.verbose,
         )
 
     else:
