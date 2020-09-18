@@ -175,7 +175,7 @@ def main():
         except:
             sct.printv('\nERROR: Cannot open file'+fname_output_file, '1', 'error')
 
-    if verbose == 2:
+    if verbose:
         graph.draw(input_tr_min, input_tr_max)
 
 

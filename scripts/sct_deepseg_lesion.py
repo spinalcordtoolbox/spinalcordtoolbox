@@ -166,7 +166,7 @@ def main():
                                                sct.extract_fname(fname_image)[2]))
         im_labels_viewer.save(fname_labels)
 
-    if verbose == 2:
+    if verbose:
         # Save ctr
         fname_ctr = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_centerline' +
                                                sct.extract_fname(fname_image)[2]))
