@@ -94,17 +94,18 @@ def _add_labels(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
     :returns: labeled source image
     """
-    for i, coord in enumerate(coordinates):
+
+    for i, (x, y, z, v) in enumerate(coordinates):
         if len(img.data.shape) == 3:
-            img.data[int(coord.x), int(coord.y), int(coord.z)] = coord.value
+            img.data[int(x), int(y), int(z)] = v
         elif len(img.data.shape) == 2:
-            if coord.z != 0:
-                raise ValueError(f"2D coordinates should have a Z value of 0! Current value: {coord.z}")
-            img.data[int(coord.x), int(coord.y)] = coord.value
+            if z != 0:
+                raise ValueError(f"2D coordinates should have a Z value of 0! Current value: {z}")
+            img.data[x, y] = v
         else:
             raise ValueError(f"Data should be 2D or 3D. Current shape is: {img.data.shape}")
 
-        logger.debug(f"Label #{i}: {coord.x}, {coord.y}, {coord.z} --> {coord.value}")
+        logger.debug(f"Label #{i}: {x}, {y}, {z} --> {v}")
 
     return img
 
@@ -217,8 +218,8 @@ def increment_z_inverse(img: Image) -> Image:
     coordinates_input = img.getNonZeroCoordinates(sorting='z', reverse_coord=True)
 
     # for all points with non-zeros neighbors, force the neighbors to 0
-    for i, coord in enumerate(coordinates_input):
-        out.data[int(coord.x), int(coord.y), int(coord.z)] = i + 1
+    for i, (x, y, z, _) in enumerate(coordinates_input):
+        out.data[int(x), int(y), int(z)] = i + 1
 
     if out.orientation != og_orientation:
         out.change_orientation(og_orientation)
