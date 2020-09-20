@@ -216,8 +216,10 @@ def get_parser():
     )
     optional.add_argument(
         '-r',
-        choices=['0', '1'],
-        default='1',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,
         help="Whether to remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
@@ -370,8 +372,10 @@ def get_parser():
     )
     optional.add_argument(
         '-correct-seg',
-        choices=['0', '1'],
-        default='1',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,
         help="Enable (1) or disable (0) the algorithm that checks and correct the output segmentation. More "
              "specifically, the algorithm checks if the segmentation is consistent with the centerline provided by "
              "isct_propseg."
@@ -441,9 +445,7 @@ def propseg(img_input, options_dict):
     if arguments.up is not None:
         cmd += ["-up", str(arguments.up)]
 
-    remove_temp_files = 1
-    if arguments.r is not None:
-        remove_temp_files = int(arguments.r)
+    remove_temp_files = arguments.r
 
     verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
@@ -628,7 +630,7 @@ def propseg(img_input, options_dict):
             fname_labels_viewer = fname_labels_viewer_new
 
     # check consistency of segmentation
-    if arguments.correct_seg == "1":
+    if arguments.correct_seg:
         check_and_correct_segmentation(fname_seg, fname_centerline, folder_output=folder_output, threshold_distance=3.0,
                                        remove_temp_files=remove_temp_files, verbose=verbose)
 

@@ -268,7 +268,9 @@ def get_parser():
     )
     optional.add_argument(
         '-r',
-        choices=['0', '1'],
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
         default=param.remove_temp_files,
         help="Whether to remove temporary files. 0 = no, 1 = yes"
     )
@@ -320,7 +322,7 @@ def main(args=None):
     path_template = arguments.t
     contrast_template = arguments.c
     ref = arguments.ref
-    param.remove_temp_files = int(arguments.r)
+    param.remove_temp_files = arguments.r
     verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both

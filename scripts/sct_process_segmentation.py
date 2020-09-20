@@ -128,14 +128,18 @@ def get_parser():
     )
     optional.add_argument(
         '-r',
-        choices=['0', '1'],
-        default='1',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,
         help="Removes temporary folder used for the algorithm at the end of execution."
     )
     optional.add_argument(
         '-angle-corr',
-        choices=['0', '1'],
-        default='1',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,
         help="Angle correction for computing morphometric measures. When angle correction is used, the cord within "
              "the slice is stretched/expanded by a factor corresponding to the cosine of the angle between the "
              "centerline and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set "
@@ -278,15 +282,14 @@ def main(args=None):
     else:
         file_out = ''
     if arguments.append is not None:
-        append = int(arguments.append)
+        append = arguments.append
     else:
         append = 0
     if arguments.vert is not None:
         vert_levels = arguments.vert
     else:
         vert_levels = ''
-    if arguments.r is not None:
-        remove_temp_files = arguments.r
+    remove_temp_files = arguments.r
     if arguments.vertfile is not None:
         fname_vert_levels = arguments.vertfile
     if arguments.perlevel is not None:
@@ -299,11 +302,7 @@ def main(args=None):
         perslice = arguments.perslice
     else:
         perslice = None
-    if arguments.angle_corr is not None:
-        if arguments.angle_corr == '1':
-            angle_correction = True
-        elif arguments.angle_corr == '0':
-            angle_correction = False
+    angle_correction = arguments.angle_corr
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,

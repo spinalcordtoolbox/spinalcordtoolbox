@@ -101,8 +101,8 @@ def get_parser():
     )
     optional.add_argument(
         '-r',
-        choices=['0', '1'],
-        default='1',
+        choices=[0, 1],
+        default=1,
         help="Whether to remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
@@ -131,8 +131,7 @@ def main(args=None):
     param.algo_fitting = arguments.algo_fitting
     if arguments.smooth is not None:
         sigma = arguments.smooth
-    if arguments.r is not None:
-        remove_temp_files = int(arguments.r)
+    remove_temp_files = arguments.r
     verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
