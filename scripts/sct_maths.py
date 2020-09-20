@@ -23,7 +23,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type
 import spinalcordtoolbox.math as sct_math
 
 from sct_utils import printv, extract_fname, display_viewer_syntax, init_sct
@@ -114,16 +114,18 @@ def get_parser():
     thresholding.add_argument(
         "-adap",
         metavar=Metavar.list,
+        type=list_type(',', int),
         help="R|Threshold image using Adaptive algorithm (from skimage). Separate following arguments with ',':"
              "\n Block size: Odd size of pixel neighborhood which is used to calculate the threshold value (e.g. 3, 7, 21, ...)"
              "\n Offset: Constant subtracted from weighted mean of neighborhood to calculate the local threshold value. Suggested offset is 0.",
         required=False)
     thresholding.add_argument(
         "-otsu-median",
+        metavar=Metavar.list,
+        type=list_type(',', int),
         help="R|Threshold image using Median Otsu algorithm. Separate following arguments with ',':"
              "\n Size of the median filter (e.g. 2, 3)"
              "\n Number of iterations (e.g. 3, 4, 5)\n",
-        metavar=Metavar.list,
         required=False)
     thresholding.add_argument(
         '-percent',
@@ -172,14 +174,15 @@ def get_parser():
     filtering = parser.add_argument_group("FILTERING METHODS")
     filtering.add_argument(
         "-smooth",
-        metavar='',
+        metavar=Metavar.list,
+        type=list_type(',', float),
         help='Gaussian smoothing filter with specified standard deviations in mm for each axis (Example: 2,2,1) or '
              'single value for all axis (Example: 2).',
         required=False)
     filtering.add_argument(
         '-laplacian',
-        nargs="+",
-        metavar='',
+        metavar=Metavar.list,
+        type=list_type(',', float),
         help='Laplacian filtering with specified standard deviations in mm for all axes (Example: 2).',
         required=False)
     filtering.add_argument(
@@ -269,11 +272,11 @@ def main(args=None):
         data_out = sct_math.otsu(data, param)
 
     elif arguments.adap is not None:
-        param = convert_list_str(arguments.adap, "int")
+        param = arguments.adap
         data_out = sct_math.adap(data, param[0], param[1])
 
     elif arguments.otsu_median is not None:
-        param = convert_list_str(arguments.otsu_median, "int")
+        param = arguments.otsu_median
         data_out = sct_math.otsu_median(data, param[0], param[1])
 
     elif arguments.thr is not None:
@@ -298,7 +301,7 @@ def main(args=None):
         data_out = data - data2
 
     elif arguments.laplacian is not None:
-        sigmas = convert_list_str(arguments.laplacian, "float")
+        sigmas = arguments.laplacian
         if len(sigmas) == 1:
             sigmas = [sigmas for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
@@ -336,7 +339,7 @@ def main(args=None):
         data_out = np.std(data, dim, ddof=1)
 
     elif arguments.smooth is not None:
-        sigmas = convert_list_str(arguments.smooth, "float")
+        sigmas = arguments.smooth
         if len(sigmas) == 1:
             sigmas = [sigmas[0] for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
@@ -465,24 +468,6 @@ def get_data_or_scalar(argument, data_in):
     except ValueError:
         data_out = get_data(argument)
     return data_out
-
-
-def convert_list_str(string_list, type='int'):
-    """
-    Receive a string and then converts it into a list of selected type.
-    Example: "2,2,3" --> [2, 2, 3]
-    :param string_list: List of comma-separated string
-    :param type: string: int, float
-    :return:
-    """
-    new_type_list = (string_list).split(",")
-    for inew_type_list, ele in enumerate(new_type_list):
-        if type is "int":
-            new_type_list[inew_type_list] = int(ele)
-        elif type is "float":
-            new_type_list[inew_type_list] = float(ele)
-
-    return new_type_list
 
 
 def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, metric_full: str, verbose):
