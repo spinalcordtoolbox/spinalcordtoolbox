@@ -457,8 +457,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     # Find global maximum
     if np.any(I_corr_gauss):
         # if I_corr contains at least a non-zero value
-        ind_peak = np.argmax(
-            I_corr_gauss)  # index of max along z
+        ind_peak = np.argmax(I_corr_gauss)  # index of max along z
         ind_dl = np.argmax(data_chunk1d)
         sct.printv('.. Peak found: z=' + str(zrange[ind_peak]) + ' (correlation = ' + str(I_corr_gauss[ind_peak]) + ')',
                    verbose)
