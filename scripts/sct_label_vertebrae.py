@@ -251,10 +251,10 @@ def main(args=None):
         input_files=[fname_in, fname_seg],
     )
     cachefile = os.path.join(curdir, "straightening.cache")
-    if sct.cache_valid(cachefile, cache_sig) and os.path.isfile(
-            os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(
-            os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(
-            os.path.join(curdir, "straight_ref.nii.gz")):
+    if (sct.cache_valid(cachefile, cache_sig) and 
+        os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and 
+        os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and 
+        os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz"))):
         # if they exist, copy them into current folder
         sct.printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
         sct.copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
