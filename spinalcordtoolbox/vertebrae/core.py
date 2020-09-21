@@ -327,7 +327,6 @@ def get_z_and_disc_values_from_label(fname_label):
     :param fname_label: image in RPI orientation that contains label
     :return: [z_label, value_label] int list
     """
-    # sct.run('sct_resample -i %s -mm 1x1x1 -x nn -o %s'%(fname_label,fname_label))
     nii = Image(fname_label)
     # get center of mass of label
     x_label, y_label, z_label = center_of_mass(nii.data)
@@ -398,7 +397,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     # parameters
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
     src = src[:, :, :, 0]
-    print(src.shape)
     # get dimensions from src
     nx, ny, nz = src.shape
     # Get pattern from template
