@@ -203,7 +203,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # append to main list
         if direction == 'superior':
             # append at the beginning
-            print(list_disc_z)
             list_disc_z.insert(0, current_z)
             list_disc_value.insert(0, current_disc)
         elif direction == 'inferior':
