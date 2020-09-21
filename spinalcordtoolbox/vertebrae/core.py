@@ -209,7 +209,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             # append at the end
             list_disc_z.append(current_z)
             list_disc_value.append(current_disc)
-            print(list_disc_z)
 
         # adjust correcting factor based on already-identified discs
         if len(list_disc_z) > 1:
