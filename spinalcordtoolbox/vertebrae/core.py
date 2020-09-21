@@ -539,8 +539,6 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     """
 
     # open segmentation
-    # sct.run('sct_resample -i %s -mm 1x1x1 -x nn -o segmentation_straight.nii'%(fname_seg))
-    # fname_seg = 'segmentation_straight.nii'
     seg = Image(fname_seg)
     init_orientation = seg.orientation
     seg.change_orientation("RPI")
