@@ -401,8 +401,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     nx, ny, nz = src.shape
     # Get pattern from template
     pattern = target[xtarget - xsize:xtarget + xsize,
-              ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
-              ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
+                     ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
+                     ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
     pattern1d = np.sum(pattern, axis=(0, 1))
     # convolve pattern1d with gaussian to get similar curve as input
     a = gaussian(30, std=5)
@@ -419,8 +419,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
             sct.printv('iz=' + str(iz) + ': padding on top')
             padding_size = z + iz + zsize + 1 - nz
             data_chunk3d = src[xtarget - 10:xtarget + 10,
-                           y + yshift: y + yshift + ysize + 1,
-                           z + iz - zsize: z + iz + zsize + 1 - padding_size]
+                               y + yshift: y + yshift + ysize + 1,
+                               z + iz - zsize: z + iz + zsize + 1 - padding_size]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant',
                                   constant_values=0)
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
