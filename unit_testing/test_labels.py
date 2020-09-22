@@ -134,6 +134,7 @@ def test_compute_mean_squared_error(test_image):
     # TODO [AJ] implement test
 
 
+@pytest.mark.skip(reason="Too long to run on large image!")
 @pytest.mark.parametrize("test_image", test_images)
 def test_remove_missing_labels(test_image):
     src = test_image.copy()
@@ -141,9 +142,12 @@ def test_remove_missing_labels(test_image):
 
     expected = test_image.copy()
 
-    # change 2 labels in ref
+    # introduce 2 discrepancies
     src.data[0, 0, 0] = 99
     src.data[0, 1, 2] = 99
+
+    ref.data[0, 0, 0] = 1
+    ref.data[0, 1, 2] = 1
 
     # manually set expected
     expected.data[0, 0, 0] = 0
