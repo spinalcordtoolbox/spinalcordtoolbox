@@ -14,18 +14,19 @@ from __future__ import division, absolute_import
 
 import os
 import sys
+
 import numpy as np
 import argparse
+import pickle
+import gzip
+import matplotlib
+import matplotlib.pyplot as plt
 
-import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-import spinalcordtoolbox.math
+import spinalcordtoolbox.math as sct_math
 
 from sct_utils import printv, extract_fname, display_viewer_syntax, init_sct
-
-
-ALMOST_ZERO = 0.000000001
 
 
 def get_parser():
@@ -163,7 +164,6 @@ def get_parser():
     mathematical.add_argument(
         '-dim',
         type=int,
-        metavar=Metavar.int,
         help="Dimension of the array which 2D structural element will be orthogonal to. For example, if you wish to "
              "apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.",
         required=False,
@@ -175,13 +175,13 @@ def get_parser():
         metavar='',
         help='Gaussian smoothing filter with specified standard deviations in mm for each axis (Example: 2,2,1) or '
              'single value for all axis (Example: 2).',
-        required = False)
+        required=False)
     filtering.add_argument(
         '-laplacian',
         nargs="+",
         metavar='',
         help='Laplacian filtering with specified standard deviations in mm for all axes (Example: 2).',
-        required = False)
+        required=False)
     filtering.add_argument(
         '-denoise',
         help='R|Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with ". Example: p=1,b=3\n'
@@ -266,33 +266,32 @@ def main(args=None):
     # run command
     if arguments.otsu is not None:
         param = arguments.otsu
-        data_out = otsu(data, param)
+        data_out = sct_math.otsu(data, param)
 
     elif arguments.adap is not None:
         param = convert_list_str(arguments.adap, "int")
-        data_out = adap(data, param[0], param[1])
+        data_out = sct_math.adap(data, param[0], param[1])
 
     elif arguments.otsu_median is not None:
         param = convert_list_str(arguments.otsu_median, "int")
-        data_out = otsu_median(data, param[0], param[1])
+        data_out = sct_math.otsu_median(data, param[0], param[1])
 
     elif arguments.thr is not None:
         param = arguments.thr
-        data_out = threshold(data, param)
+        data_out = sct_math.threshold(data, param)
 
     elif arguments.percent is not None:
         param = arguments.percent
-        data_out = perc(data, param)
+        data_out = sct_math.perc(data, param)
 
     elif arguments.bin is not None:
         bin_thr = arguments.bin
-        data_out = binarise(data, bin_thr=bin_thr)
+        data_out = sct_math.binarize(data, bin_thr=bin_thr)
 
     elif arguments.add is not None:
-        from numpy import sum
         data2 = get_data_or_scalar(arguments.add, data)
-        data_concat = concatenate_along_4th_dimension(data, data2)
-        data_out = sum(data_concat, axis=3)
+        data_concat = sct_math.concatenate_along_4th_dimension(data, data2)
+        data_out = np.sum(data_concat, axis=3)
 
     elif arguments.sub is not None:
         data2 = get_data_or_scalar(arguments.sub, data)
@@ -307,39 +306,34 @@ def main(args=None):
         # adjust sigma based on voxel size
         sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
-        data_out = laplacian(data, sigmas)
+        data_out = sct_math.laplacian(data, sigmas)
 
     elif arguments.mul is not None:
-        from numpy import prod
         data2 = get_data_or_scalar(arguments.mul, data)
-        data_concat = concatenate_along_4th_dimension(data, data2)
-        data_out = prod(data_concat, axis=3)
+        data_concat = sct_math.concatenate_along_4th_dimension(data, data2)
+        data_out = np.prod(data_concat, axis=3)
 
     elif arguments.div is not None:
-        from numpy import divide
         data2 = get_data_or_scalar(arguments.div, data)
-        data_out = divide(data, data2)
+        data_out = np.divide(data, data2)
 
     elif arguments.mean is not None:
-        from numpy import mean
         dim = dim_list.index(arguments.mean)
         if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
-        data_out = mean(data, dim)
+        data_out = np.mean(data, dim)
 
     elif arguments.rms is not None:
-        from numpy import mean, sqrt, square
         dim = dim_list.index(arguments.rms)
         if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
-        data_out = sqrt(mean(square(data.astype(float)), dim))
+        data_out = np.sqrt(np.mean(np.square(data.astype(float)), dim))
 
     elif arguments.std is not None:
-        from numpy import std
         dim = dim_list.index(arguments.std)
         if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
-        data_out = std(data, dim, ddof=1)
+        data_out = np.std(data, dim, ddof=1)
 
     elif arguments.smooth is not None:
         sigmas = convert_list_str(arguments.smooth, "float")
@@ -350,13 +344,13 @@ def main(args=None):
         # adjust sigma based on voxel size
         sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
         # smooth data
-        data_out = smooth(data, sigmas)
+        data_out = sct_math.smooth(data, sigmas)
 
     elif arguments.dilate is not None:
-        data_out = sct.math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
+        data_out = sct_math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.erode is not None:
-        data_out = sct.math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
+        data_out = sct_math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
 
     elif arguments.denoise is not None:
         # parse denoising arguments
@@ -367,7 +361,7 @@ def main(args=None):
                 p = int(i.split('=')[1])
             if 'b' in i:
                 b = int(i.split('=')[1])
-        data_out = denoise_nlmeans(data, patch_radius=p, block_radius=b)
+        data_out = sct_math.denoise_nlmeans(data, patch_radius=p, block_radius=b)
 
     elif arguments.symmetrize is not None:
         data_out = (data + data[list(range(data.shape[0] - 1, -1, -1)), :, :]) / float(2)
@@ -376,19 +370,19 @@ def main(args=None):
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
         im_2 = Image(arguments.mi)
-        compute_similarity(im.data, im_2.data, fname_out, metric='mi', verbose=verbose)
+        compute_similarity(im, im_2, fname_out, metric='mi', metric_full='Mutual information', verbose=verbose)
         data_out = None
 
     elif arguments.minorm is not None:
         im_2 = Image(arguments.minorm)
-        compute_similarity(im.data, im_2.data, fname_out, metric='minorm', verbose=verbose)
+        compute_similarity(im, im_2, fname_out, metric='minorm', metric_full='Normalized Mutual information', verbose=verbose)
         data_out = None
 
     elif arguments.corr is not None:
         # input 1 = from flag -i --> im
         # input 2 = from flag -mi
         im_2 = Image(arguments.corr)
-        compute_similarity(im.data, im_2.data, fname_out, metric='corr', verbose=verbose)
+        compute_similarity(im, im_2, fname_out, metric='corr', metric_full='Pearson correlation coefficient', verbose=verbose)
         data_out = None
 
     # if no flag is set
@@ -434,60 +428,6 @@ def main(args=None):
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
 
 
-def convert_list_str(string_list, type='int'):
-    """
-    Receive a string and then converts it into a list of selected type.
-    Example: "2,2,3" --> [2, 2, 3]
-    :param string_list: List of comma-separated string
-    :param type: string: int, float
-    :return:
-    """
-    new_type_list = (string_list).split(",")
-    for inew_type_list, ele in enumerate(new_type_list):
-        if type is "int":
-            new_type_list[inew_type_list] = int(ele)
-        elif type is "float":
-            new_type_list[inew_type_list] = float(ele)
-
-    return new_type_list
-
-
-def otsu(data, nbins):
-    from skimage.filters import threshold_otsu
-    thresh = threshold_otsu(data, nbins)
-    return data > thresh
-
-
-def adap(data, block_size, offset):
-    from skimage.filters import threshold_local
-    mask = data
-    for iz in range(data.shape[2]):
-        adaptive_thresh = threshold_local(data[:, :, iz], block_size, method='gaussian', offset=offset)
-        mask[:, :, iz] = mask[:, :, iz] > adaptive_thresh
-    return mask
-
-
-def otsu_median(data, size, n_iter):
-    from dipy.segment.mask import median_otsu
-    data, mask = median_otsu(data, size, n_iter)
-    return mask
-
-
-def threshold(data, thr_value):
-    data[data < thr_value] = 0
-    return data
-
-
-def perc(data, perc_value):
-    from numpy import percentile
-    perc = percentile(data, perc_value)
-    return data > perc
-
-
-def binarise(data, bin_thr=0):
-    return data > bin_thr
-
-
 def get_data(list_fname):
     """
     Get data from list of file names
@@ -506,7 +446,7 @@ def get_data(list_fname):
             printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(nii[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data0)), 1, 'warning')
             printv('\nERROR: All input images must have same dimensions.', 1, 'error')
         else:
-            data = concatenate_along_4th_dimension(data, nii[i].data)
+            data = sct_math.concatenate_along_4th_dimension(data, nii[i].data)
     return data
 
 
@@ -527,233 +467,52 @@ def get_data_or_scalar(argument, data_in):
     return data_out
 
 
-def concatenate_along_4th_dimension(data1, data2):
+def convert_list_str(string_list, type='int'):
     """
-    Concatenate two data along 4th dimension.
-    :param data1: 3d or 4d array
-    :param data2: 3d or 4d array
-    :return data_concat: concate(data1, data2)
-    """
-    if len(np.shape(data1)) == 3:
-        data1 = data1[..., np.newaxis]
-    if len(np.shape(data2)) == 3:
-        data2 = data2[..., np.newaxis]
-    return np.concatenate((data1, data2), axis=3)
-
-
-def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
-    """
-    data_in: nd_array to denoise
-    for more info about patch_radius and block radius, please refer to the dipy website: http://nipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
-    """
-    from dipy.denoise.nlmeans import nlmeans
-    from dipy.denoise.noise_estimate import estimate_sigma
-    from numpy import asarray
-    data_in = asarray(data_in)
-
-    block_radius_max = min(data_in.shape) - 1
-    block_radius = block_radius_max if block_radius > block_radius_max else block_radius
-
-    sigma = estimate_sigma(data_in)
-    denoised = nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
-
-    return denoised
-
-
-def smooth(data, sigmas):
-    """
-    Smooth data by convolving Gaussian kernel
-    :param data: input 3D numpy array
-    :param sigmas: Kernel SD in voxel
+    Receive a string and then converts it into a list of selected type.
+    Example: "2,2,3" --> [2, 2, 3]
+    :param string_list: List of comma-separated string
+    :param type: string: int, float
     :return:
     """
-    assert len(data.shape) == len(sigmas)
-    from scipy.ndimage.filters import gaussian_filter
-    return gaussian_filter(data.astype(float), sigmas, order=0, truncate=4.0)
+    new_type_list = (string_list).split(",")
+    for inew_type_list, ele in enumerate(new_type_list):
+        if type is "int":
+            new_type_list[inew_type_list] = int(ele)
+        elif type is "float":
+            new_type_list[inew_type_list] = float(ele)
+
+    return new_type_list
 
 
-def laplacian(data, sigmas):
+def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, metric_full: str, verbose):
     """
-    Apply Laplacian filter
+    Sanitize input and compute similarity metric between two images data.
     """
-    assert len(data.shape) == len(sigmas)
-    from scipy.ndimage.filters import gaussian_laplace
-    return gaussian_laplace(data.astype(float), sigmas)
-    # from scipy.ndimage.filters import laplace
-    # return laplace(data.astype(float))
+    if img1.data.size != img2.data.size:
+        raise ValueError(f"Input images don't have the same size! \nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space")
 
+    res, data1_1d, data2_1d = sct_math.compute_similarity(img1.data, img2.data, metric=metric)
 
-def compute_similarity(data1, data2, fname_out='', metric='', verbose=1):
-    '''
-    Compute a similarity metric between two images data
-    :param data1: numpy.array 3D data
-    :param data2: numpy.array 3D data
-    :param fname_out: file name of the output file. Output file should be either a text file ('.txt') or a pickle file ('.pkl', '.pklz' or '.pickle')
-    :param metric: 'mi' for mutual information or 'corr' for pearson correlation coefficient
-    :return: None
-    '''
-    assert data1.size == data2.size, "\n\nERROR: the data don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
-    data1_1d = data1.ravel()
-    data2_1d = data2.ravel()
-    # get indices of non-null voxels from the intersection of both data
-    data_mult = data1_1d * data2_1d
-    ind_nonnull = np.where(data_mult > ALMOST_ZERO)[0]
-    # set new variables with non-null voxels
-    data1_1d = data1_1d[ind_nonnull]
-    data2_1d = data2_1d[ind_nonnull]
-    # compute similarity metric
-    if metric == 'mi':
-        res = mutual_information(data1_1d, data2_1d, normalized=False)
-        metric_full = 'Mutual information'
-    if metric == 'minorm':
-        res = mutual_information(data1_1d, data2_1d, normalized=True)
-        metric_full = 'Normalized Mutual information'
-    if metric == 'corr':
-        res = correlation(data1_1d, data2_1d)
-        metric_full = 'Pearson correlation coefficient'
-    # qc output
     if verbose > 1:
-        import matplotlib
         matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
         plt.plot(data1_1d, 'b')
         plt.plot(data2_1d, 'r')
         plt.grid
         plt.title('Similarity: ' + metric_full + ' = ' + str(res))
         plt.savefig('fig_similarity.png')
 
-    printv('\n' + metric_full + ': ' + str(res), verbose, 'info')
-
     path_out, filename_out, ext_out = extract_fname(fname_out)
     if ext_out not in ['.txt', '.pkl', '.pklz', '.pickle']:
-        printv('ERROR: the output file should a text file or a pickle file. Received extension: ' + ext_out, 1, 'error')
+        raise ValueError(f"The output file should a text file or a pickle file. Received extension: {ext_out}")
 
-    elif ext_out == '.txt':
-        file_out = open(fname_out, 'w')
-        file_out.write(metric_full + ': \n' + str(res))
-        file_out.close()
-
+    if ext_out == '.txt':
+        with open(fname_out, 'w') as f:
+            f.write(metric_full + ': \n' + str(res))
+    elif ext_out == '.pklz':
+        pickle.dump(res, gzip.open(fname_out, 'wb'), protocol=2)
     else:
-        import pickle, gzip
-        if ext_out == '.pklz':
-            pickle.dump(res, gzip.open(fname_out, 'wb'), protocol=2)
-        else:
-            pickle.dump(res, open(fname_out, 'w'), protocol=2)
-
-
-def mutual_information(x, y, nbins=32, normalized=False):
-    """
-    Compute mutual information
-    :param x: 1D numpy.array : flatten data from an image
-    :param y: 1D numpy.array : flatten data from an image
-    :param nbins: number of bins to compute the contingency matrix (only used if normalized=False)
-    :return: float non negative value : mutual information
-    """
-    import sklearn.metrics
-    if normalized:
-        mi = sklearn.metrics.normalized_mutual_info_score(x, y)
-    else:
-        c_xy = np.histogram2d(x, y, nbins)[0]
-        mi = sklearn.metrics.mutual_info_score(None, None, contingency=c_xy)
-    # mi = adjusted_mutual_info_score(None, None, contingency=c_xy)
-    return mi
-
-
-def correlation(x, y, type='pearson'):
-    """
-    Compute pearson or spearman correlation coeff
-    Pearson's R is parametric whereas Spearman's R is non parametric (less sensitive)
-    :param x: 1D numpy.array : flatten data from an image
-    :param y: 1D numpy.array : flatten data from an image
-    :param type: str:  'pearson' or 'spearman': type of R correlation coeff to compute
-    :return: float value : correlation coefficient (between -1 and 1)
-    """
-    from scipy.stats import pearsonr, spearmanr
-
-    if type == 'pearson':
-        corr = pearsonr(x, y)[0]
-    if type == 'spearman':
-        corr = spearmanr(x, y)[0]
-
-    return corr
-
-
-# def check_shape(data):
-#     """
-#     Make sure all elements of the list (given by first axis) have same shape. If data is 4d, convert to list and switch first and last axis.
-#     :param data_list:
-#     :return: data_list_out
-#     """
-#     from numpy import shape
-#     # check that element of the list have same shape
-#     for i in range(1, shape(data)[0]):
-#         if not shape(data[0]) == shape(data[i]):
-#             printv('ERROR: all input images must have same dimensions.', 1, 'error')
-#     # if data are 4d (hence giving 5d list), rearrange to list of 3d data
-#     if len(shape(data)) == 5:
-#         from numpy import squeeze
-#         from scipy import swapaxes
-#         data = squeeze(swapaxes(data, 0, 4)).tolist()
-#     return data
-
-    # # random_walker
-    # from skimage.segmentation import random_walker
-    # import numpy as np
-    # markers = np.zeros(data.shape, dtype=np.uint)
-    # perc = np.percentile(data, 95)
-    # markers[data < perc] = 1
-    # markers[data > perc] = 2
-    # mask = random_walker(data, markers, beta=10, mode='bf')
-
-    # # spectral clustering
-    # from sklearn.feature_extraction import image
-    # from sklearn.cluster import spectral_clustering
-    # import numpy as np
-    # data2d = data[:, :, 8]
-    # graph = image.img_to_graph(data2d)
-    # graph.data = np.exp(-graph.data / graph.data.std())
-    # mask = spectral_clustering(graph, n_clusters=2, eigen_solver='arpack')
-    # # label_im = -np.ones(data.shape)
-    # # label_im[mask] = labels
-
-    # Hough transform for ellipse
-    # from skimage import data, color
-    # from skimage.feature import canny, morphology
-    # from skimage.transform import hough_ellipse
-    # # detect edges
-    # data2d = data3d[:, :, 8]
-    # edges = canny(data2d, sigma=3.0)
-    # Perform a Hough Transform
-    # The accuracy corresponds to the bin size of a major axis.
-    # The value is chosen in order to get a single high accumulator.
-    # The threshold eliminates low accumulators
-    # result = hough_ellipse(edges, accuracy=20, threshold=250, min_size=100, max_size=120)
-    # result = hough_ellipse(edges, accuracy=20, min_size=5, max_size=20)
-    # result.sort(order='accumulator')
-    # # Estimated parameters for the ellipse
-    # best = list(result[-1])
-    # yc, xc, a, b = [int(round(x)) for x in best[1:5]]
-    # orientation = best[5]
-    # # Draw the ellipse on the original image
-    # from matplotlib.pylab import *
-    # from skimage.draw import ellipse_perimeter
-    # cy, cx = ellipse_perimeter(yc, xc, a, b, orientation)
-    # # image_rgb[cy, cx] = (0, 0, 255)
-    # # Draw the edge (white) and the resulting ellipse (red)
-    # # edges = color.gray2rgb(edges)
-    # data2d[cy, cx] = 1000
-
-    # # detect edges
-    # from skimage.feature import canny
-    # from skimage import morphology, measure
-    # data2d = data3d[:, :, 8]
-    # edges = canny(data2d, sigma=3.0)
-    # contours = measure.find_contours(edges, 1, fully_connected='low')
-
-    # mask = morphology.closing(edges, morphology.square(3), out=None)
-
-    # k-means clustering
-    # from sklearn.cluster import KMeans
+        pickle.dump(res, open(fname_out, 'w'), protocol=2)
 
 
 if __name__ == "__main__":

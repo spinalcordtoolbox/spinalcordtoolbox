@@ -25,6 +25,9 @@ import pathlib
 
 import numpy as np
 
+# backwards compat
+import spinalcordtoolbox.utils as utils
+
 
 logger = logging.getLogger(__name__)
 
@@ -210,8 +213,8 @@ def add_suffix(fname, suffix):
     - add_suffix(t2.nii, _mean) -> t2_mean.nii
     - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
-    parent, stem, ext = extract_fname(fname)
-    return os.path.join(parent, stem + suffix + ext)
+
+    return utils.add_suffix(fname=fname, suffix=suffix)
 
 
 #=======================================================================================================================
@@ -602,7 +605,7 @@ def create_folder(folder):
 
 def check_dim(fname, dim_lst=[3]):
     """
-    Check if input dimension matches the input dimension requirements specified in the dim list. 
+    Check if input dimension matches the input dimension requirements specified in the dim list.
     Example: to check if an image is 2D or 3D: check_dim(my_file, dim_lst=[2, 3])
     :param fname:
     :return: True or False

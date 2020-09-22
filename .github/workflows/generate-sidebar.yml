@@ -1,0 +1,24 @@
+name: Update wiki sidebar if page titles have changed
+
+on:
+  # See https://docs.github.com/en/actions/reference/events-that-trigger-workflows#gollum
+  gollum
+
+jobs:
+  generate-sidebar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # Each repo with at least 1 wiki page has a corresponding <repo>.wiki repo
+          repository: "${{ github.repository }}.wiki"  
+
+      - uses: actions/setup-node@v1
+      - run: npm install github-wiki-sidebar -g
+      
+      # Dummy credentials to be listed in _Sidebar.md update commit for Wiki 
+      - run: git config --global user.name "github-actions"
+      - run: git config --global user.email "github-actions@github.com"
+        
+      # --silent uses the options.json file added to the SCT Wiki git repo
+      - run: github-wiki-sidebar --silent --git-push

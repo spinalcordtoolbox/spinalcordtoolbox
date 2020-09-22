@@ -34,13 +34,15 @@
 from __future__ import division, absolute_import
 
 import sys, os, time
+import argparse
 import numpy as np
 
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.registration.register import Paramreg, ParamregMultiStep
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 
 import sct_utils as sct
-from msct_parser import Parser
-from msct_register import Paramreg, ParamregMultiStep, register_wrapper
+from sct_register_to_template import register_wrapper
 
 
 def get_parser(paramregmulti=None):
@@ -52,162 +54,194 @@ def get_parser(paramregmulti=None):
         step1 = Paramreg(step='1', type='im')
         paramregmulti = ParamregMultiStep([step0, step1])
 
-    parser = Parser(__file__)
-    parser.usage.set_description('This program co-registers two 3D volumes. The deformation is non-rigid and is '
-                                 'constrained along Z direction (i.e., axial plane). Hence, this function assumes '
-                                 'that orientation of the destination image is axial (RPI). If you need to register '
-                                 'two volumes with large deformations and/or different contrasts, it is recommended to '
-                                 'input spinal cord segmentations (binary mask) in order to achieve maximum robustness.'
-                                 ' The program outputs a warping field that can be used to register other images to the'
-                                 ' destination image. To apply the warping field to another image, use '
-                                 'sct_apply_transfo')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="Image source.",
-                      mandatory=True,
-                      example="src.nii.gz")
-    parser.add_option(name="-d",
-                      type_value="file",
-                      description="Image destination.",
-                      mandatory=True,
-                      example="dest.nii.gz")
-    parser.add_option(name="-iseg",
-                      type_value="file",
-                      description="Segmentation source.",
-                      mandatory=False,
-                      example="src_seg.nii.gz")
-    parser.add_option(name="-dseg",
-                      type_value="file",
-                      description="Segmentation destination.",
-                      mandatory=False,
-                      example="dest_seg.nii.gz")
-    parser.add_option(name="-ilabel",
-                      type_value="file",
-                      description="Labels source.",
-                      mandatory=False)
-    parser.add_option(name="-dlabel",
-                      type_value="file",
-                      description="Labels destination.",
-                      mandatory=False)
-    parser.add_option(name='-initwarp',
-                      type_value='file',
-                      description='Initial warping field to apply to the source image.',
-                      mandatory=False)
-    parser.add_option(name='-initwarpinv',
-                      type_value='file',
-                      description='Initial inverse warping field to apply to the destination image (only use if you wish to generate the dest->src warping field).',
-                      mandatory=False)
-    parser.add_option(name="-m",
-                      type_value="file",
-                      description="Mask that can be created with sct_create_mask to improve accuracy over region of interest. "
-                                  "This mask will be used on the destination image.",
-                      mandatory=False,
-                      example="mask.nii.gz")
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="Name of output file.",
-                      mandatory=False,
-                      example="src_reg.nii.gz")
-    parser.add_option(name='-owarp',
-                      type_value="file_output",
-                      description="Name of output forward warping field.",
-                      mandatory=False)
-    parser.add_option(name="-param",
-                      type_value=[[':'], 'str'],
-                      description="Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
-                                  "step: <int> Step number (starts at 1, except for type=label).\n"
-                                  "type: {im, seg, imseg, label} type of data used for registration. Use type=label only at step=0.\n"
-                                  "algo: Default=" + paramregmulti.steps['1'].algo + "\n"
-                                                                                "  translation: translation in X-Y plane (2dof)\n"
-                                                                                "  rigid: translation + rotation in X-Y plane (4dof)\n"
-                                                                                "  affine: translation + rotation + scaling in X-Y plane (6dof)\n"
-                                                                                "  syn: non-linear symmetric normalization\n"
-                                                                                "  bsplinesyn: syn regularized with b-splines\n"
-                                                                                "  slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
-                                                                                "  centermass: slicewise center of mass alignment (seg only).\n"
-                                                                                "  centermassrot: slicewise center of mass and rotation alignment using method specified in 'rot_method'\n"
-                                                                                "  columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
-                                                                                "slicewise: <int> Slice-by-slice 2d transformation. Default=" +
-                                  paramregmulti.steps['1'].slicewise + "\n"
-                                                                  "metric: {CC,MI,MeanSquares}. Default=" +
-                                  paramregmulti.steps['1'].metric + "\n"
-                                                               "iter: <int> Number of iterations. Default=" +
-                                  paramregmulti.steps['1'].iter + "\n"
-                                                             "shrink: <int> Shrink factor (only for syn/bsplinesyn). Default=" +
-                                  paramregmulti.steps['1'].shrink + "\n"
-                                                               "smooth: <int> Smooth factor (in mm). Note: if algo={centermassrot,columnwise} the smoothing kernel is: SxSx0. Otherwise it is SxSxS. Default=" +
-                                  paramregmulti.steps['1'].smooth + "\n"
-                                                               "laplacian: <int> Laplacian filter. Default=" +
-                                  paramregmulti.steps['1'].laplacian + "\n"
-                                                                  "gradStep: <float> Gradient step. Default=" +
-                                  paramregmulti.steps['1'].gradStep + "\n"
-                                                                 "deformation: ?x?x?: Restrict deformation (for ANTs algo). Replace ? by 0 (no deformation) or 1 (deformation). Default=" +
-                                  paramregmulti.steps['1'].deformation + "\n"
-                                                                    "init: Initial translation alignment based on:\n"
-                                                                    "  geometric: Geometric center of images\n"
-                                                                    "  centermass: Center of mass of images\n"
-                                                                    "  origin: Physical origin of images\n"
-                                                                    "poly: <int> Polynomial degree of regularization (only for algo=slicereg). Default=" +
-                                  paramregmulti.steps['1'].poly + "\n"
-                                                                    "filter_size: <float> Filter size for regularization (only for algo=centermassrot). Default=" +
-                                  str(paramregmulti.steps['1'].filter_size) + "\n"
-                                                             "smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). Default=" +
-                                  paramregmulti.steps['1'].smoothWarpXY + "\n"
-                                                                     "pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment (only for algo=centermassrot and rot_method=pca). Default=" +
-                                  paramregmulti.steps['1'].pca_eigenratio_th + "\n"
-                                                                          "dof: <str> Degree of freedom for type=label. Separate with '_'. Default=" +
-                                  paramregmulti.steps['0'].dof + "\n" +
-                                  paramregmulti.steps['1'].rot_method + "\n"
-                                                                    "rot_method {pca, hog, pcahog}: rotation method to be used with algo=centermassrot. pca: approximate cord segmentation by an ellipse and finds it orientation using PCA's eigenvectors; hog: finds the orientation using the symmetry of the image; pcahog: tries method pca and if it fails, uses method hog. If using hog or pcahog, type should be set to imseg.",
-                      mandatory=False,
-                      example="step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,shrink=2")
-    parser.add_option(name="-identity",
-                      type_value="multiple_choice",
-                      description="just put source into destination (no optimization).",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1'])
-    parser.add_option(name="-z",
-                      type_value="int",
-                      description="""size of z-padding to enable deformation at edges when using SyN.""",
-                      mandatory=False,
-                      default_value=Param().padding)
-    parser.add_option(name="-x",
-                      type_value="multiple_choice",
-                      description="""Final interpolation.""",
-                      mandatory=False,
-                      default_value='linear',
-                      example=['nn', 'linear', 'spline'])
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="Output folder",
-                      mandatory=False,
-                      example='reg_results/')
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=None)
-    parser.add_option(name='-qc-dataset',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
-                      )
-    parser.add_option(name='-qc-subject',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
-                      )
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="""Remove temporary files.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1', '2'])
+    parser = argparse.ArgumentParser(
+        description="This program co-registers two 3D volumes. The deformation is non-rigid and is constrained along "
+                    "Z direction (i.e., axial plane). Hence, this function assumes that orientation of the destination "
+                    "image is axial (RPI). If you need to register two volumes with large deformations and/or "
+                    "different contrasts, it is recommended to input spinal cord segmentations (binary mask) in order "
+                    "to achieve maximum robustness. The program outputs a warping field that can be used to register "
+                    "other images to the destination image. To apply the warping field to another image, use "
+                    "'sct_apply_transfo'",
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
 
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Image source. Example: src.nii.gz"
+    )
+    mandatory.add_argument(
+        '-d',
+        metavar=Metavar.file,
+        required=True,
+        help="Image destination. Example: dest.nii.gz"
+    )
+
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-iseg',
+        metavar=Metavar.file,
+        help="Segmentation source. Example: src_seg.nii.gz"
+    )
+    optional.add_argument(
+        '-dseg',
+        metavar=Metavar.file,
+        help="Segmentation destination. Example: dest_seg.nii.gz"
+    )
+    optional.add_argument(
+        '-ilabel',
+        metavar=Metavar.file,
+        help="Labels source."
+    )
+    optional.add_argument(
+        '-dlabel',
+        metavar=Metavar.file,
+        help="Labels destination."
+    )
+    optional.add_argument(
+        '-initwarp',
+        metavar=Metavar.file,
+        help="Initial warping field to apply to the source image."
+    )
+    optional.add_argument(
+        '-initwarpinv',
+        metavar=Metavar.file,
+        help="Initial inverse warping field to apply to the destination image (only use if you wish to generate the "
+             "dest->src warping field)"
+    )
+    optional.add_argument(
+        '-m',
+        metavar=Metavar.file,
+        help="Mask that can be created with sct_create_mask to improve accuracy over region of interest. This mask "
+             "will be used on the destination image. Example: mask.nii.gz"
+    )
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.file,
+        help="Name of output file. Example: src_reg.nii.gz"
+    )
+    optional.add_argument(
+        '-owarp',
+        metavar=Metavar.file,
+        help="Name of output forward warping field."
+    )
+    optional.add_argument(
+        '-param',
+        metavar=Metavar.list,
+        type=list_type(':', str),
+        help=(f"R|Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
+              f"Example: step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,"
+              f"shrink=2\n"
+              f"  - step: <int> Step number (starts at 1, except for type=label).\n"
+              f"  - type: {{im, seg, imseg, label}} type of data used for registration. Use type=label only at "
+              f"step=0.\n"
+              f"  - algo: Default={paramregmulti.steps['1'].algo}\n"
+              f"  - translation: translation in X-Y plane (2dof)\n"
+              f"  - rigid: translation + rotation in X-Y plane (4dof)\n"
+              f"  - affine: translation + rotation + scaling in X-Y plane (6dof)\n"
+              f"  - syn: non-linear symmetric normalization\n"
+              f"  - bsplinesyn: syn regularized with b-splines\n"
+              f"  - slicereg: regularized translations (see: goo.gl/Sj3ZeU)\n"
+              f"  - centermass: slicewise center of mass alignment (seg only).\n"
+              f"  - centermassrot: slicewise center of mass and rotation alignment using method specified in "
+              f"'rot_method'\n"
+              f"  - columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
+              f"  - slicewise: <int> Slice-by-slice 2d transformation. "
+              f"Default={paramregmulti.steps['1'].slicewise}.\n"
+              f"  - metric: {{CC,MI,MeanSquares}}. Default={paramregmulti.steps['1'].metric}.\n"
+              f"  - iter: <int> Number of iterations. Default={paramregmulti.steps['1'].iter}.\n"
+              f"  - shrink: <int> Shrink factor (only for syn/bsplinesyn). "
+              f"Default={paramregmulti.steps['1'].shrink}.\n"
+              f"  - smooth: <int> Smooth factor (in mm). Note: if algo={{centermassrot,columnwise}} the smoothing "
+              f"kernel is: SxSx0. Otherwise it is SxSxS. Default={paramregmulti.steps['1'].smooth}.\n"
+              f"  - laplacian: <int> Laplacian filter. Default={paramregmulti.steps['1'].laplacian}.\n"
+              f"  - gradStep: <float> Gradient step. Default={paramregmulti.steps['1'].gradStep}.\n"
+              f"  - deformation: ?x?x?: Restrict deformation (for ANTs algo). Replace ? by 0 (no deformation) or 1 "
+              f"(deformation). Default={paramregmulti.steps['1'].deformation}.\n"
+              f"  - init: Initial translation alignment based on:\n"
+              f"    * geometric: Geometric center of images\n"
+              f"    * centermass: Center of mass of images\n"
+              f"    * origin: Physical origin of images\n"
+              f"  - poly: <int> Polynomial degree of regularization (only for algo=slicereg). "
+              f"Default={paramregmulti.steps['1'].poly}.\n"
+              f"  - filter_size: <float> Filter size for regularization (only for algo=centermassrot). "
+              f"Default={paramregmulti.steps['1'].filter_size}.\n"
+              f"  - smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). "
+              f"Default={paramregmulti.steps['1'].smoothWarpXY}.\n"
+              f"  - pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment "
+              f"(only for algo=centermassrot and rot_method=pca). "
+              f"Default={paramregmulti.steps['1'].pca_eigenratio_th}.\n"
+              f"  - dof: <str> Degree of freedom for type=label. Separate with '_'. "
+              f"Default={paramregmulti.steps['0'].dof}.\n"
+              f"  - rot_method {{pca, hog, pcahog}}: rotation method to be used with algo=centermassrot. pca: "
+              f"approximate cord segmentation by an ellipse and finds it orientation using PCA's eigenvectors; hog: "
+              f"finds the orientation using the symmetry of the image; pcahog: tries method pca and if it fails, uses "
+              f"method hog. If using hog or pcahog, type should be set to imseg."
+              f"Default={paramregmulti.steps['1'].rot_method}\n")
+    )
+    optional.add_argument(
+        '-identity',
+        choices=['0', '1'],
+        default='0',
+        help="Just put source into destination (no optimization)."
+    )
+    optional.add_argument(
+        '-z',
+        metavar=Metavar.int,
+        type=int,
+        default=Param().padding,
+        help="Size of z-padding to enable deformation at edges when using SyN."
+    )
+    optional.add_argument(
+        '-x',
+        choices=['nn', 'linear', 'spline'],
+        default='linear',
+        help="Final interpolation."
+    )
+    optional.add_argument(
+        '-ofolder',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="Output folder. Example: reg_results/"
+    )
+    optional.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="The path where the quality control generated content will be saved."
+    )
+    optional.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+    )
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
+    optional.add_argument(
+        '-r',
+        choices=['0', '1'],
+        default='1',
+        help="Whether to remove temporary files. 0 = no, 1 = yes"
+    )
+    optional.add_argument(
+        '-v',
+        choices=['0', '1', '2'],
+        default='1',
+        help="Verbose. 0: nothing, 1: basic, 2: extended."
+    )
     return parser
 
 
@@ -251,53 +285,53 @@ def main(args=None):
 
     parser = get_parser(paramregmulti=paramregmulti)
 
-    arguments = parser.parse(args)
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     # get arguments
-    fname_src = arguments['-i']
-    fname_dest = arguments['-d']
-    if '-iseg' in arguments:
-        fname_src_seg = arguments['-iseg']
-    if '-dseg' in arguments:
-        fname_dest_seg = arguments['-dseg']
-    if '-ilabel' in arguments:
-        fname_src_label = arguments['-ilabel']
-    if '-dlabel' in arguments:
-        fname_dest_label = arguments['-dlabel']
-    if '-o' in arguments:
-        fname_output = arguments['-o']
-    if '-ofolder' in arguments:
-        path_out = arguments['-ofolder']
-    if '-owarp' in arguments:
-        fname_output_warp = arguments['-owarp']
+    fname_src = arguments.i
+    fname_dest = arguments.d
+    if arguments.iseg is not None:
+        fname_src_seg = arguments.iseg
+    if arguments.dseg is not None:
+        fname_dest_seg = arguments.dseg
+    if arguments.ilabel is not None:
+        fname_src_label = arguments.ilabel
+    if arguments.dlabel is not None:
+        fname_dest_label = arguments.dlabel
+    if arguments.o is not None:
+        fname_output = arguments.o
+    if arguments.ofolder is not None:
+        path_out = arguments.ofolder
+    if arguments.owarp is not None:
+        fname_output_warp = arguments.owarp
     else:
         fname_output_warp = ''
-    if '-initwarp' in arguments:
-        fname_initwarp = os.path.abspath(arguments['-initwarp'])
+    if arguments.initwarp is not None:
+        fname_initwarp = os.path.abspath(arguments.initwarp)
     else:
         fname_initwarp = ''
-    if '-initwarpinv' in arguments:
-        fname_initwarpinv = os.path.abspath(arguments['-initwarpinv'])
+    if arguments.initwarpinv is not None:
+        fname_initwarpinv = os.path.abspath(arguments.initwarpinv)
     else:
         fname_initwarpinv = ''
-    if '-m' in arguments:
-        fname_mask = arguments['-m']
+    if arguments.m is not None:
+        fname_mask = arguments.m
     else:
         fname_mask = ''
-    padding = arguments['-z']
-    if "-param" in arguments:
-        paramregmulti_user = arguments['-param']
+    padding = arguments.z
+    if arguments.param is not None:
+        paramregmulti_user = arguments.param
         # update registration parameters
         for paramStep in paramregmulti_user:
             paramregmulti.addStep(paramStep)
-    path_qc = arguments.get("-qc", None)
-    qc_dataset = arguments.get("-qc-dataset", None)
-    qc_subject = arguments.get("-qc-subject", None)
+    path_qc = arguments.qc
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
 
-    identity = int(arguments['-identity'])
-    interp = arguments['-x']
-    remove_temp_files = int(arguments['-r'])
-    verbose = int(arguments.get('-v'))
+    identity = int(arguments.identity)
+    interp = arguments.x
+    remove_temp_files = int(arguments.r)
+    verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 
     # sct.printv(arguments)
