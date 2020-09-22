@@ -13,13 +13,8 @@
 
 from __future__ import division, absolute_import
 
-<<<<<<< HEAD
-import sys
-import os
-=======
 import sys, os
 import argparse
->>>>>>> master
 import numpy as np
 import sct_maths
 from spinalcordtoolbox.image import Image
