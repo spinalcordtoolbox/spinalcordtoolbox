@@ -28,25 +28,7 @@ logger = logging.getLogger(__name__)
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
 
-# TODO [AJ]: deprecate this in favor of add_faster if it ok in code review
 def add(img: Image, value: int) -> Image:
-    """
-    This function adds a specified value to all non-zero voxels.
-    :param img: source image
-    :param value: numeric value to add
-    :returns new image with value added
-    """
-    out = img.copy()
-    coordinates_input = img.getNonZeroCoordinates()
-
-    # for all points with non-zeros neighbors, force the neighbors to 0
-    for coord in coordinates_input:
-        out.data[int(coord.x), int(coord.y), int(coord.z)] = out.data[int(coord.x), int(coord.y), int(coord.z)] + float(value)
-
-    return out
-
-
-def add_faster(img: Image, value: int) -> Image:
     """
     This function adds a specified value to all non-zero voxels.
     :param img: source image

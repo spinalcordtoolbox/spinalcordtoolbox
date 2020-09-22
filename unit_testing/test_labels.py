@@ -52,28 +52,6 @@ def fake_3dimage_sct():
 test_images = [fake_3dimage_sct(), fake_3dimage_sct2(), t2_img]
 
 
-# AJ remove test if we keep add_faster + refactor caller
-@pytest.mark.parametrize("test_image", test_images)
-def test_add(test_image):
-    a = test_image.copy()
-    val = 4
-
-    t1 = time()
-    sct_added = sct_labels.add(a, val)
-    t2 = time()
-    np_added = sct_labels.add_faster(a, val)
-    t3 = time()
-
-    c = sct_added.data == np_added.data
-    assert c.all()
-
-    l1 = t2 - t1
-    l2 = t3 - t2
-    logger.debug(f"time to run sct_labels.add() -> {l1}")
-    logger.debug(f"time to run np add -> {l2}")
-    logger.debug(f"speed x improvement -> {l1/l2}")
-
-
 @pytest.mark.parametrize("test_image", test_images)
 def test_create_labels_empty(test_image):
     a = test_image.copy()

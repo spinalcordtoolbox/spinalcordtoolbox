@@ -238,7 +238,7 @@ def main(args=None):
 
     if arguments.add is not None:
         value = arguments.add
-        out = sct_labels.add_faster(img, value)
+        out = sct_labels.add(img, value)
     elif arguments.create is not None:
         labels = arguments.create
         out = sct_labels.create_labels_empty(img, labels)
