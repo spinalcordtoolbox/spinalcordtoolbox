@@ -11,6 +11,7 @@
 ###############################################################################
 
 import sys
+import os
 
 from spinalcordtoolbox.utils import sct_dir_local_path, sct_test_path
 sys.path.append(sct_dir_local_path('scripts'))
@@ -19,12 +20,8 @@ import pytest
 import sct_download_data as downloader
 
 
-@pytest.fixture(scope='session', autouse=True)
-def download_data(request):
-    # This is a hack because the capsys fixture can't be used with
-    # session scope at the moment.
-    # https://github.com/pytest-dev/pytest/issues/2704#issuecomment-603387680
-    capmanager = request.config.pluginmanager.getplugin("capturemanager")
-    with capmanager.global_and_fixture_disabled():
+def pytest_collectstart():
+    # TODO [AJ] check integrity eventually
+    if not os.path.exists(sct_test_path()):
         print('\nDownloading sct testing data.')
         downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
