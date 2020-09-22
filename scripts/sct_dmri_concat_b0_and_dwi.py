@@ -65,7 +65,6 @@ def get_parser():
         required=True,
         help="Order of b=0 and DWI files entered in flag '-i', separated by space. Example: b0 dwi dwi",
         choices=['b0', 'dwi'],
-        metavar=Metavar.str,
     )
     mandatory.add_argument(
         '-o',

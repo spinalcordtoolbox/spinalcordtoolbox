@@ -13,8 +13,13 @@
 
 from __future__ import division, absolute_import
 
+<<<<<<< HEAD
 import sys
 import os
+=======
+import sys, os
+import argparse
+>>>>>>> master
 import numpy as np
 import sct_maths
 from spinalcordtoolbox.image import Image
@@ -25,7 +30,8 @@ from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 
 from sct_label_utils import ProcessLabels
-from msct_parser import Parser
+# TODO: Properly test when first PR (that includes list_type) gets merged
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 import sct_utils as sct
 import sct_straighten_spinalcord
 import spinalcordtoolbox
@@ -61,121 +67,163 @@ def get_parser():
     # initialize default param
     param_default = Param()
     # parser initialisation
-    parser = Parser(__file__)
-    parser.usage.set_description('''This function takes an anatomical image and its cord segmentation (binary file), and outputs the cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and then performs a disc search in the superior, then inferior direction, using template disc matching based on mutual information score. The automatic method uses the module implemented in "spinalcordtoolbox/vertebrae/detect_c2c3.py" to detect the C2-C3 disc.
-    Tips: To run the function with init txt file that includes flags -initz/-initcenter:
-    sct_label_vertebrae -i t2.nii.gz -s t2_seg-manual.nii.gz  "$(< init_label_vertebrae.txt)"
-    ''')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="input image.",
-                      mandatory=True,
-                      example="t2.nii.gz")
-    parser.add_option(name="-s",
-                      type_value="file",
-                      description="Segmentation of the spinal cord.",
-                      mandatory=True,
-                      example="t2_seg.nii.gz")
-    parser.add_option(name="-c",
-                      type_value="multiple_choice",
-                      description="type of image contrast, t2: cord dark / CSF bright ; t1: cord bright / CSF dark",
-                      mandatory=True,
-                      example=['t1', 't2'])
-    parser.add_option(name="-t",
-                      type_value="folder",
-                      description="Path to template.",
-                      mandatory=False,
-                      default_value=os.path.join(sct.__data_dir__, "PAM50"))
-    parser.add_option(name="-initz",
-                      type_value=[[','], 'int'],
-                      description='Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but Y in LIP orientation).',
-                      mandatory=False,
-                      example=['125,3'])
-    parser.add_option(name="-initcenter",
-                      type_value='int',
-                      description='Initialize using disc value centered in the rostro-caudal direction. If the spine is curved, then consider the disc that projects onto the cord at the center of the z-FOV',
-                      mandatory=False)
-    parser.add_option(name="-initfile",
-                      type_value='file',
-                      description='Initialize labeling by providing a text file which includes either -initz or -initcenter flag.',
-                      mandatory=False)
-    parser.add_option(name="-initlabel",
-                      type_value='file',
-                      description='Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of such file is a single voxel with value "3", which would be located at the posterior tip of C2-C3 disc. Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3 ; or by using the Python module "detect_c2c3" implemented in "spinalcordtoolbox/vertebrae/detect_c2c3.py".',
-                      mandatory=False)
-    parser.add_option(name='-discfile',
-                      type_value='image_nifti',
-                      description='File with disc labels, which will be used to transform the input segmentation into a vertebral level file. In that case, there will be no disc detection. The convention for disc labels is the following: value=3 -> disc C2/C3, value=4 -> disc C3/C4, etc.',
-                      mandatory=False)
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="Output folder.",
-                      mandatory=False,
-                      default_value='')
-    parser.add_option(name="-denoise",
-                      type_value="multiple_choice",
-                      description="Apply denoising filter to the data. Sometimes denoising is too aggressive, so use with care.",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1'])
-    parser.add_option(name="-laplacian",
-                      type_value="multiple_choice",
-                      description="Apply Laplacian filtering. More accuracy but could mistake disc depending on anatomy.",
-                      mandatory=False,
-                      default_value='0',
-                      example=['0', '1'])
-    parser.add_option(name="-scale-dist",
-                      type_value="float",
-                      description="Scaling factor to adjust the average distance between two adjacent intervertebral "
-                                  "discs. For example, if you are dealing with images from pediatric population, the "
-                                  "distance should be reduced, so you can try a scaling factor of about 0.7.",
-                      mandatory=False,
-                      default_value=1.,
-                      example=1.)
-    parser.add_option(name="-param",
-                      type_value=[[','], 'str'],
-                      description="Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
-                                  "shift_AP [mm]: AP shift of centerline for disc search. Default=" +
-                                  str(param_default.shift_AP) + ".\n" +
-                                  "size_AP [mm]: AP window size for disc search. Default="
-                                  + str(param_default.size_AP) + ".\n" +
-                                  "size_RL [mm]: RL window size for disc search. Default=" +
-                                  str(param_default.size_RL) + ".\n" +
-                                  "size_IS [mm]: IS window size for disc search. Default=" +
-                                  str(param_default.size_IS) + ".\n" +
-                                  "gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the image, "
-                                  "and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set "
-                                  "between 0.1 (strong weighting) and 999 (no weighting). Default="
-                                  + str(param_default.gaussian_std) + ".\n",
-                      mandatory=False)
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="Remove temporary files.",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1', '2'])
-    parser.add_option(name="-h",
-                      type_value=None,
-                      description="display this help",
-                      mandatory=False)
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=param_default.path_qc)
-    parser.add_option(name='-qc-dataset',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
-                      )
-    parser.add_option(name='-qc-subject',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
-                      )
+    parser = argparse.ArgumentParser(
+        description=(
+            "This function takes an anatomical image and its cord segmentation (binary file), and outputs the "
+            "cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and "
+            "then performs a disc search in the superior, then inferior direction, using template disc matching based "
+            "on mutual information score. The automatic method uses the module implemented in "
+            "'spinalcordtoolbox/vertebrae/detect_c2c3.py' to detect the C2-C3 disc.\n"
+            "Tips: To run the function with init txt file that includes flags -initz/-initcenter:\n"
+            "  sct_label_vertebrae -i t2.nii.gz -s t2_seg-manual.nii.gz  '$(< init_label_vertebrae.txt)'"
+        ),
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Input image. Example: t2.nii.gz"
+    )
+    mandatory.add_argument(
+        '-s',
+        metavar=Metavar.file,
+        required=True,
+        help="Segmentation of the spinal cord. Example: t2_seg.nii.gz"
+    )
+    mandatory.add_argument(
+        '-c',
+        choices=['t1', 't2'],
+        required=True,
+        help="Type of image contrast. 't2': cord dark / CSF bright. 't1': cord bright / CSF dark"
+    )
+
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-t',
+        metavar=Metavar.folder,
+        default=os.path.join(sct.__data_dir__, "PAM50"),
+        help="Path to template."
+    )
+    optional.add_argument(
+        '-initz',
+        metavar=Metavar.list,
+        type=list_type(',', int),
+        help="R|Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). "
+             "Example: 125,3\n"
+             "WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but "
+             "Y in LIP orientation)."
+    )
+    optional.add_argument(
+        '-initcenter',
+        metavar=Metavar.int,
+        type=int,
+        help="Initialize using disc value centered in the rostro-caudal direction. If the spine is curved, then "
+             "consider the disc that projects onto the cord at the center of the z-FOV."
+    )
+    optional.add_argument(
+        '-initfile',
+        metavar=Metavar.file,
+        help="Initialize labeling by providing a text file which includes either -initz or -initcenter flag."
+    )
+    optional.add_argument(
+        '-initlabel',
+        metavar=Metavar.file,
+        help="Initialize vertebral labeling by providing a nifti file that has a single disc label. An example of "
+             "such file is a single voxel with value '3', which would be located at the posterior tip of C2-C3 disc. "
+             "Such label file can be created using: sct_label_utils -i IMAGE_REF -create-viewer 3 ; or by using the "
+             "Python module 'detect_c2c3' implemented in 'spinalcordtoolbox/vertebrae/detect_c2c3.py'."
+    )
+    optional.add_argument(
+        '-discfile',
+        metavar=Metavar.file,
+        help="File with disc labels, which will be used to transform the input segmentation into a vertebral level "
+             "file. In that case, there will be no disc detection. The convention for disc labels is the following: "
+             "value=3 -> disc C2/C3, value=4 -> disc C3/C4, etc."
+    )
+    optional.add_argument(
+        '-ofolder',
+        metavar=Metavar.file,
+        action=ActionCreateFolder,
+        default='',
+        help="Output folder."
+    )
+    optional.add_argument(
+        '-denoise',
+        choices=['0', '1'],
+        default='0',
+        help="Apply denoising filter (non-local means adaptative denoising) to the data. Sometimes denoising is too "
+             "aggressive, so use with care."
+    )
+    optional.add_argument(
+        '-laplacian',
+        choices=['0', '1'],
+        default='0',
+        help="Apply Laplacian filtering. More accurate but could mistake disc depending on anatomy."
+    )
+    optional.add_argument(
+        '-scale-dist',
+        metavar=Metavar.float,
+        type=float,
+        default=1.,
+        help="Scaling factor to adjust the average distance between two adjacent intervertebral discs. For example, "
+             "if you are dealing with images from pediatric population, the distance should be reduced, so you can "
+             "try a scaling factor of about 0.7."
+    )
+    optional.add_argument(
+        '-param',
+        metavar=Metavar.list,
+        type=list_type(',', str),
+        help=f"R|Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
+             f"  - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
+             f"  - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
+             f"  - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"
+             f"  - size_IS [mm]: IS window size for disc search. Default={param_default.size_IS}.\n"
+             f"  - gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the "
+             f"image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values "
+             f"to set between 0.1 (strong weighting) and 999 (no weighting). "
+             f"Default={param_default.gaussian_std}.\n"
+    )
+    optional.add_argument(
+        '-r',
+        choices=['0', '1'],
+        default='1',
+        help="Remove temporary files."
+    )
+    optional.add_argument(
+        '-v',
+        choices=['0', '1', '2'],
+        default='1',
+        help="Verbose. 0: nothing. 1: basic. 2: extended."
+    )
+    optional.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        default=param_default.path_qc,
+        help="The path where the quality control generated content will be saved."
+    )
+    optional.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+    )
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
+
     return parser
 
 
@@ -188,33 +236,30 @@ def main(args=None):
     param = Param()
 
     # check user arguments
-    if not args:
-        args = sys.argv[1:]
-
-    # Get parser info
     parser = get_parser()
-    arguments = parser.parse(args)
-    fname_in = os.path.abspath(arguments["-i"])
-    fname_seg = os.path.abspath(arguments['-s'])
-    contrast = arguments['-c']
-    path_template = os.path.abspath(arguments['-t'])
-    scale_dist = arguments['-scale-dist']
-    if '-ofolder' in arguments:
-        path_output = arguments['-ofolder']
+    if args:
+        arguments = parser.parse_args(args)
     else:
-        path_output = os.curdir
-    param.path_qc = arguments.get("-qc", None)
-    if '-discfile' in arguments:
-        fname_disc = os.path.abspath(arguments['-discfile'])
+        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+
+    fname_in = os.path.abspath(arguments.i)
+    fname_seg = os.path.abspath(arguments.s)
+    contrast = arguments.c
+    path_template = os.path.abspath(arguments.t)
+    scale_dist = arguments.scale_dist
+    path_output = arguments.ofolder
+    param.path_qc = arguments.qc
+    if arguments.discfile is not None:
+        fname_disc = os.path.abspath(arguments.discfile)
     else:
         fname_disc = None
-    if '-initz' in arguments:
-        initz = arguments['-initz']
-    if '-initcenter' in arguments:
-        initcenter = arguments['-initcenter']
+    if arguments.initz is not None:
+        initz = arguments.initz
+    if arguments.initcenter is not None:
+        initcenter = arguments.initcenter
     # if user provided text file, parse and overwrite arguments
-    if '-initfile' in arguments:
-        file = open(arguments['-initfile'], 'r')
+    if arguments.initfile is not None:
+        file = open(arguments.initfile, 'r')
         initfile = ' ' + file.read().replace('\n', '')
         arg_initfile = initfile.split(' ')
         for idx_arg, arg in enumerate(arg_initfile):
@@ -222,16 +267,16 @@ def main(args=None):
                 initz = [int(x) for x in arg_initfile[idx_arg + 1].split(',')]
             if arg == '-initcenter':
                 initcenter = int(arg_initfile[idx_arg + 1])
-    if '-initlabel' in arguments:
+    if arguments.initlabel is not None:
         # get absolute path of label
-        fname_initlabel = os.path.abspath(arguments['-initlabel'])
-    if '-param' in arguments:
-        param.update(arguments['-param'][0])
-    verbose = int(arguments.get('-v'))
+        fname_initlabel = os.path.abspath(arguments.initlabel)
+    if arguments.param is not None:
+        param.update(arguments.param[0])
+    verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
-    remove_temp_files = int(arguments['-r'])
-    denoise = int(arguments['-denoise'])
-    laplacian = int(arguments['-laplacian'])
+    remove_temp_files = int(arguments.r)
+    denoise = int(arguments.denoise)
+    laplacian = int(arguments.laplacian)
 
     path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
 
@@ -448,9 +493,9 @@ def main(args=None):
 
     # Generate QC report
     if param.path_qc is not None:
-        path_qc = os.path.abspath(param.path_qc)
-        qc_dataset = arguments.get("-qc-dataset", None)
-        qc_subject = arguments.get("-qc-subject", None)
+        path_qc = os.path.abspath(arguments.qc)
+        qc_dataset = arguments.qc_dataset
+        qc_subject = arguments.qc_subject
         labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
         generate_qc(fname_in, fname_seg=labeled_seg_file, args=args, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_label_vertebrae')

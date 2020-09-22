@@ -17,6 +17,8 @@
 from __future__ import division, absolute_import
 
 import sys, os, time
+import argparse
+
 import numpy as np
 from scipy import ndimage
 from scipy.signal import argrelmax, medfilt
@@ -40,7 +42,8 @@ from sct_utils import add_suffix
 from sct_convert import convert
 from sct_image import split_data, concat_warp2d
 
-from msct_parser import Parser
+# TODO: Properly test when first PR (that includes list_type) gets merged
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 import sct_apply_transfo
 import sct_concat_transfo
 
@@ -72,133 +75,210 @@ paramregmulti = ParamregMultiStep([step0, step1, step2])
 # ==========================================================================================
 def get_parser():
     param = Param()
-    parser = Parser(__file__)
-    parser.usage.set_description('Register an anatomical image to the spinal cord MRI template (default: PAM50).\n\n'
-                                 'The registration process includes three main registration steps:\n'
-                                   '1. straightening of the image using the spinal cord segmentation (see sct_straighten_spinalcord for details);\n'
-                                   '2. vertebral alignment between the image and the template, using labels along the spine;\n'
-                                   '3. iterative slice-wise non-linear registration (see sct_register_multimodal for details)\n\n'
-                                 'To register a subject to the template, try the default command:\n'
-                                   'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n\n'
-                                 'If this default command does not produce satisfactory results, please refer to:\n'
-                                   'https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n\n'
-                                 'The default registration method brings the subject image to the template, which can be problematic with highly non-isotropic images as it would induce large interpolation errors during the straightening procedure. Although the default method is recommended, you may want to register the template to the subject (instead of the subject to the template) by skipping the straightening procedure. To do so, use the parameter "-ref subject". Example below:\n'
-                                   'sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2\n\n'
-                                 'Vertebral alignment (step 2) consists in aligning the vertebrae between the subject and the template. Two types of labels are possible:\n'
-                                   '- Vertebrae mid-body labels, created at the center of the spinal cord using the parameter "-l";\n'
-                                   '- Posterior edge of the intervertebral discs, using the parameter "-ldisc".\n\n'
-                                 'If only one label is provided, a simple translation will be applied between the subject label and the template label. No scaling will be performed. \n\n'
-                                 'If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear scaling) will be applied. The strategy here is to defined labels that cover the region of interest. For example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a mis-alignment of discs because a subject''s intervertebral discs distance might differ from that of the template.\n\n'
-                                 'If more than two labels (only with the parameter "-disc") are used, a non-linear registration will be applied to align the each intervertebral disc between the subject and the template, as described in sct_straighten_spinalcord. This the most accurate and preferred method. This feature does not work with the parameter "-ref subject".\n\n'
-                                 'More information about label creation can be found at https://www.slideshare.net/neuropoly/sct-course-20190121/42'
-      )
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="Anatomical image.",
-                      mandatory=True,
-                      example="anat.nii.gz")
-    parser.add_option(name="-s",
-                      type_value="file",
-                      description="Spinal cord segmentation.",
-                      mandatory=True,
-                      example="anat_seg.nii.gz")
-    parser.add_option(name="-l",
-                      type_value="file",
-                      description="One or two labels (preferred) located at the center of the spinal cord, on the "
-                                  "mid-vertebral slice. For more information about label creation, please see: "
-                                  "https://www.slideshare.net/neuropoly/sct-course-20190121/42",
-                      mandatory=False,
-                      default_value='',
-                      example="anat_labels.nii.gz")
-    parser.add_option(name="-ldisc",
-                      type_value="file",
-                      description="Labels located at the posterior edge of the intervertebral discs. If you are using "
-                                  "more than 2 labels, all disc covering the region of interest should be provided. "
-                                  "E.g., if you are interested in levels C2 to C7, then you should provide disc labels "
-                                  "2,3,4,5,6,7). For more information about label creation, please refer to "
-                                  "https://www.slideshare.net/neuropoly/sct-course-20190121/42",  # TODO: update URL
-                      mandatory=False,
-                      default_value='',
-                      example="anat_labels.nii.gz")
-    parser.add_option(name="-lspinal",
-                      type_value="file",
-                      description="Labels located in the center of the spinal cord, at the superior-inferior level "
-                                  "corresponding to the mid-point of the spinal level. Each label is a single voxel, "
-                                  "which value corresponds to the spinal level (e.g.: 2 for spinal level 2). If you "
-                                  "are using more than 2 labels, all spinal levels covering the region of interest "
-                                  "should be provided (e.g., if you are interested in levels C2 to C7, then you "
-                                  "should provide spinal level labels 2,3,4,5,6,7).",
-                      mandatory=False,
-                      default_value='',
-                      example="anat_labels.nii.gz")
-    parser.add_option(name="-ofolder",
-                      type_value="folder_creation",
-                      description="Output folder.",
-                      mandatory=False,
-                      default_value='')
-    parser.add_option(name="-t",
-                      type_value="folder",
-                      description="Path to template.",
-                      mandatory=False,
-                      default_value=param.path_template)
-    parser.add_option(name='-c',
-                      type_value='multiple_choice',
-                      description='Contrast to use for registration.',
-                      mandatory=False,
-                      default_value='t2',
-                      example=['t1', 't2', 't2s'])
-    parser.add_option(name='-ref',
-                      type_value='multiple_choice',
-                      description='Reference for registration: template: subject->template, subject: template->subject.',
-                      mandatory=False,
-                      default_value='template',
-                      example=['template', 'subject'])
-    parser.add_option(name="-param",
-                      type_value=[[':'], 'str'],
-                      description='Parameters for registration (see sct_register_multimodal). Default: \
-                      \n--\nstep=0\ntype=' + paramregmulti.steps['0'].type + '\ndof=' + paramregmulti.steps['0'].dof + '\
-                      \n--\nstep=1\ntype=' + paramregmulti.steps['1'].type + '\nalgo=' + paramregmulti.steps['1'].algo + '\nmetric=' + paramregmulti.steps['1'].metric + '\niter=' + paramregmulti.steps['1'].iter + '\nsmooth=' + paramregmulti.steps['1'].smooth + '\ngradStep=' + paramregmulti.steps['1'].gradStep + '\nslicewise=' + paramregmulti.steps['1'].slicewise + '\nsmoothWarpXY=' + paramregmulti.steps['1'].smoothWarpXY + '\npca_eigenratio_th=' + paramregmulti.steps['1'].pca_eigenratio_th + '\
-                      \n--\nstep=2\ntype=' + paramregmulti.steps['2'].type + '\nalgo=' + paramregmulti.steps['2'].algo + '\nmetric=' + paramregmulti.steps['2'].metric + '\niter=' + paramregmulti.steps['2'].iter + '\nsmooth=' + paramregmulti.steps['2'].smooth + '\ngradStep=' + paramregmulti.steps['2'].gradStep + '\nslicewise=' + paramregmulti.steps['2'].slicewise + '\nsmoothWarpXY=' + paramregmulti.steps['2'].smoothWarpXY + '\npca_eigenratio_th=' + paramregmulti.steps['1'].pca_eigenratio_th,
-                      mandatory=False)
-    parser.add_option(name='-centerline-algo',
-                      type_value='multiple_choice',
-                      description='Algorithm for centerline fitting (when straightening the spinal cord).',
-                      mandatory=False,
-                      example=['polyfit', 'bspline', 'linear', 'nurbs'],
-                      default_value=ParamCenterline().algo_fitting)
-    parser.add_option(name='-centerline-smooth',
-                      type_value='int',
-                      description='Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}.',
-                      mandatory=False,
-                      default_value=ParamCenterline().smooth)
-    parser.add_option(name='-qc',
-                      type_value='folder_creation',
-                      description='The path where the quality control generated content will be saved',
-                      default_value=param.path_qc)
-    parser.add_option(name='-qc-dataset',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the dataset the process was run on',
-                      )
-    parser.add_option(name='-qc-subject',
-                      type_value='str',
-                      description='If provided, this string will be mentioned in the QC report as the subject the process was run on',
-                      )
-    parser.add_option(name="-igt",
-                      type_value="image_nifti",
-                      description="File name of ground-truth template cord segmentation (binary nifti).",
-                      mandatory=False)
-    parser.add_option(name="-r",
-                      type_value="multiple_choice",
-                      description="""Remove temporary files.""",
-                      mandatory=False,
-                      default_value=param.remove_temp_files,
-                      example=['0', '1'])
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
-                      mandatory=False,
-                      default_value=param.verbose,
-                      example=['0', '1', '2'])
+    parser = argparse.ArgumentParser(
+        description=(
+            "Register an anatomical image to the spinal cord MRI template (default: PAM50).\n"
+            "\n"
+            "The registration process includes three main registration steps:\n"
+            "  1. straightening of the image using the spinal cord segmentation (see sct_straighten_spinalcord for "
+            "details);\n"
+            "  2. vertebral alignment between the image and the template, using labels along the spine;\n"
+            "  3. iterative slice-wise non-linear registration (see sct_register_multimodal for details)\n"
+            "\n"
+            "To register a subject to the template, try the default command:\n"
+            "  sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n"
+            "\n"
+            "If this default command does not produce satisfactory results, please refer to:\n"
+            "  https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n"
+            "\n"
+            "The default registration method brings the subject image to the template, which can be problematic with "
+            "highly non-isotropic images as it would induce large interpolation errors during the straightening "
+            "procedure. Although the default method is recommended, you may want to register the template to the "
+            "subject (instead of the subject to the template) by skipping the straightening procedure. To do so, use "
+            "the parameter '-ref subject'. Example below:\n"
+            "  sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz -ref subject -param "
+            "step=1,type=seg,algo=centermassrot,smooth=0:step=2,type=seg,algo=columnwise,smooth=0,smoothWarpXY=2\n"
+            "\n"
+            "Vertebral alignment (step 2) consists in aligning the vertebrae between the subject and the template. "
+            "Two types of labels are possible:\n"
+            "  - Vertebrae mid-body labels, created at the center of the spinal cord using the parameter '-l';\n"
+            "  - Posterior edge of the intervertebral discs, using the parameter '-ldisc'.\n"
+            "\n"
+            "If only one label is provided, a simple translation will be applied between the subject label and the "
+            "template label. No scaling will be performed. \n"
+            "\n"
+            "If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear "
+            "scaling) will be applied. The strategy here is to defined labels that cover the region of interest. For "
+            "example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at "
+            "C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a "
+            "mis-alignment of discs because a subject''s intervertebral discs distance might differ from that of the "
+            "template.\n"
+            "\n"
+            "If more than two labels (only with the parameter '-disc') are used, a non-linear registration will be "
+            "applied to align the each intervertebral disc between the subject and the template, as described in "
+            "sct_straighten_spinalcord. This the most accurate and preferred method. This feature does not work with "
+            "the parameter '-ref subject'.\n"
+            "\n"
+            "More information about label creation can be found at "
+            "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)"
+        ),
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Input anatomical image. Example: anat.nii.gz"
+    )
+    mandatory.add_argument(
+        '-s',
+        metavar=Metavar.file,
+        required=True,
+        help="Spinal cord segmentation. Example: anat_seg.nii.gz"
+    )
+
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-l',
+        metavar=Metavar.file,
+        help="R|One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
+             "Example: anat_labels.nii.gz\n"
+             "For more information about label creation, please see: "
+             "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)"
+    )
+    optional.add_argument(
+        '-ldisc',
+        metavar=Metavar.file,
+        help="R|Labels located at the posterior edge of the intervertebral discs. Example: anat_labels.nii.gz\n"
+             "If you are using more than 2 labels, all disc covering the region of interest should be provided. "
+             "(E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7.) "
+             "For more information about label creation, please refer to "
+             "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)"
+    )
+    optional.add_argument(
+        '-lspinal',
+        metavar=Metavar.file,
+        help="R|Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
+             "mid-point of the spinal level. Example: anat_labels.nii.gz\n"
+             "Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). "
+             "If you are using more than 2 labels, all spinal levels covering the region of interest should be "
+             "provided (e.g., if you are interested in levels C2 to C7, then you should provide spinal level labels "
+             "2,3,4,5,6,7)."
+    )
+    optional.add_argument(
+        '-ofolder',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="Output folder."
+    )
+    optional.add_argument(
+        '-t',
+        metavar=Metavar.folder,
+        default=param.path_template,
+        help="Path to template"
+    )
+    optional.add_argument(
+        '-c',
+        choices=['t1', 't2', 't2s'],
+        default='t2',
+        help="Contrast to use for registration."
+    )
+    optional.add_argument(
+        '-ref',
+        choices=['template', 'subject'],
+        default='template',
+        help="Reference for registration: template: subject->template, subject: template->subject."
+    )
+    optional.add_argument(
+        '-param',
+        metavar=Metavar.list,
+        type=list_type(':', str),
+        help=(f"R|Parameters for registration (see sct_register_multimodal). Default:"
+              f"\n"
+              f"step=0\n"
+              f"  - type={paramregmulti.steps['0'].type}\n"
+              f"  - dof={paramregmulti.steps['0'].dof}\n"
+              f"\n"
+              f"step=1\n"
+              f"  - type={paramregmulti.steps['1'].type}\n"
+              f"  - algo={paramregmulti.steps['1'].algo}\n"
+              f"  - metric={paramregmulti.steps['1'].metric}\n"
+              f"  - iter={paramregmulti.steps['1'].iter}\n"
+              f"  - smooth={paramregmulti.steps['1'].smooth}\n"
+              f"  - gradStep={paramregmulti.steps['1'].gradStep}\n"
+              f"  - slicewise={paramregmulti.steps['1'].slicewise}\n"
+              f"  - smoothWarpXY={paramregmulti.steps['1'].smoothWarpXY}\n"
+              f"  - pca_eigenratio_th={paramregmulti.steps['1'].pca_eigenratio_th}\n"
+              f"\n"
+              f"step=2\n"
+              f"  - type={paramregmulti.steps['2'].type}\n"
+              f"  - algo={paramregmulti.steps['2'].algo}\n"
+              f"  - metric={paramregmulti.steps['2'].metric}\n"
+              f"  - iter={paramregmulti.steps['2'].iter}\n"
+              f"  - smooth={paramregmulti.steps['2'].smooth}\n"
+              f"  - gradStep={paramregmulti.steps['2'].gradStep}\n"
+              f"  - slicewise={paramregmulti.steps['2'].slicewise}\n"
+              f"  - smoothWarpXY={paramregmulti.steps['2'].smoothWarpXY}\n"
+              f"  - pca_eigenratio_th={paramregmulti.steps['1'].pca_eigenratio_th}")
+    )
+    optional.add_argument(
+        '-centerline-algo',
+        choices=['polyfit', 'bspline', 'linear', 'nurbs'],
+        default=ParamCenterline().algo_fitting,
+        help="Algorithm for centerline fitting (when straightening the spinal cord)."
+    )
+    optional.add_argument(
+        '-centerline-smooth',
+        metavar=Metavar.int,
+        type=int,
+        default=ParamCenterline().smooth,
+        help="Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}."
+    )
+    optional.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        default=param.path_qc,
+        help="The path where the quality control generated content will be saved."
+    )
+    optional.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+    )
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
+    optional.add_argument(
+        '-igt',
+        metavar=Metavar.file,
+        help="File name of ground-truth template cord segmentation (binary nifti)."
+    )
+    optional.add_argument(
+        '-r',
+        choices=['0', '1'],
+        default=param.remove_temp_files,
+        help="Whether to remove temporary files. 0 = no, 1 = yes"
+    )
+    optional.add_argument(
+        '-v',
+        choices=['0', '1', '2'],
+        default=param.verbose,
+        help="Verbose. 0: nothing. 1: basic. 2: extended."
+    )
+
     return parser
 
 
@@ -210,50 +290,51 @@ def main(args=None):
     param = Param()
 
     # check user arguments
-    if not args:
-        args = sys.argv[1:]
-
-    # Get parser info
     parser = get_parser()
-    arguments = parser.parse(args)
-    fname_data = arguments['-i']
-    fname_seg = arguments['-s']
-    if '-l' in arguments:
-        fname_landmarks = arguments['-l']
+    if args:
+        arguments = parser.parse_args(args)
+    else:
+        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+
+    fname_data = arguments.i
+    fname_seg = arguments.s
+    if arguments.l is not None:
+        fname_landmarks = arguments.l
         label_type = 'body'
-    elif '-ldisc' in arguments:
-        fname_landmarks = arguments['-ldisc']
+    elif arguments.ldisc is not None:
+        fname_landmarks = arguments.ldisc
         label_type = 'disc'
-    elif '-lspinal' in arguments:
-        fname_landmarks = arguments['-lspinal']
+    elif arguments.lspinal is not None:
+        fname_landmarks = arguments.lspinal
         label_type = 'spinal'
     else:
         sct.printv('ERROR: Labels should be provided.', 1, 'error')
-    if '-ofolder' in arguments:
-        path_output = arguments['-ofolder']
+
+    if arguments.ofolder is not None:
+        path_output = arguments.ofolder
     else:
         path_output = ''
 
-    param.path_qc = arguments.get("-qc", None)
+    param.path_qc = arguments.qc
 
-    path_template = arguments['-t']
-    contrast_template = arguments['-c']
-    ref = arguments['-ref']
-    param.remove_temp_files = int(arguments.get('-r'))
-    verbose = int(arguments.get('-v'))
+    path_template = arguments.t
+    contrast_template = arguments.c
+    ref = arguments.ref
+    param.remove_temp_files = int(arguments.r)
+    verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
     param_centerline = ParamCenterline(
-        algo_fitting=arguments['-centerline-algo'],
-        smooth=arguments['-centerline-smooth'])
+        algo_fitting=arguments.centerline_algo,
+        smooth=arguments.centerline_smooth)
     # registration parameters
-    if '-param' in arguments:
+    if arguments.param is not None:
         # reset parameters but keep step=0 (might be overwritten if user specified step=0)
         paramregmulti = ParamregMultiStep([step0])
         if ref == 'subject':
             paramregmulti.steps['0'].dof = 'Tx_Ty_Tz_Rx_Ry_Rz_Sz'
         # add user parameters
-        for paramStep in arguments['-param']:
+        for paramStep in arguments.param:
             paramregmulti.addStep(paramStep)
     else:
         paramregmulti = ParamregMultiStep([step0, step1, step2])
@@ -502,7 +583,7 @@ def main(args=None):
                                    fname_affine='straight2templateAffine.txt', verbose=verbose)
             except RuntimeError:
                 raise('Input labels do not seem to be at the right place. Please check the position of the labels. '
-                      'See documentation for more details: https://www.slideshare.net/neuropoly/sct-course-20190121/42')
+                      'See documentation for more details: https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)')
 
             # Concatenate transformations: curve --> straight --> affine
             sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
@@ -679,8 +760,8 @@ def main(args=None):
     elapsed_time = time.time() - start_time
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
-    qc_dataset = arguments.get("-qc-dataset", None)
-    qc_subject = arguments.get("-qc-subject", None)
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
     if param.path_qc is not None:
         generate_qc(fname_data, fname_in2=fname_template2anat, fname_seg=fname_seg, args=args,
                     path_qc=os.path.abspath(param.path_qc), dataset=qc_dataset, subject=qc_subject,
