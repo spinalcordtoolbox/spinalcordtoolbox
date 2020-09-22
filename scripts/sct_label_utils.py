@@ -187,8 +187,10 @@ def get_parser():
 
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
+        choices=[0, 1, 2],
         default=1,
+        metavar=Metavar.int,
+        type=int,
         help="Verbose. 0: nothing. 1: basic. 2: extended."
     )
 
