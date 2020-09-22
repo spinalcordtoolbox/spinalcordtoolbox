@@ -30,11 +30,7 @@ from scipy import ndimage
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.gui import base
-from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
 import spinalcordtoolbox.labels as sct_labels
-
-# TODO: Properly test when first PR (that includes list_type) gets merged
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 import sct_utils as sct
 
@@ -346,6 +342,8 @@ def check_distance_between_labels(img: Image, max_dist_mm: float):
 
 
 def launch_sagittal_viewer(img: Image, labels: Sequence[int], msg: str, previous_points: Sequence[Coordinate] = None, output_img: Image = None) -> Image:
+    from spinalcordtoolbox.gui import base
+    from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
     params = base.AnatomicalParams()
     params.vertebraes = labels
     params.input_file_name = img.absolutepath
