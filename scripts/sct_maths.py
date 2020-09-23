@@ -115,9 +115,12 @@ def get_parser():
         "-adap",
         metavar=Metavar.list,
         type=list_type(',', int),
-        help="R|Threshold image using Adaptive algorithm (from skimage). Separate following arguments with ',':"
-             "\n Block size: Odd size of pixel neighborhood which is used to calculate the threshold value (e.g. 3, 7, 21, ...)"
-             "\n Offset: Constant subtracted from weighted mean of neighborhood to calculate the local threshold value. Suggested offset is 0.",
+        help="R|Threshold image using Adaptive algorithm (from skimage). Provide 2 values separated by ',' that "
+             "correspond to the parameters below. For example, '-adap 7,0' corresponds to a block size of 7 and an "
+             "offset of 0.\n"
+             "  - Block size: Odd size of pixel neighborhood which is used to calculate the threshold value. \n"
+             "  - Offset: Constant subtracted from weighted mean of neighborhood to calculate the local threshold "
+             "value. Suggested offset is 0.",
         required=False)
     thresholding.add_argument(
         "-otsu-median",
