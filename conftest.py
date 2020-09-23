@@ -27,11 +27,10 @@ import sct_download_data as downloader
 logger = logging.getLogger(__name__)
 
 
-def pytest_collectstart():
+def pytest_sessionstart():
     """ Download sct_testing_data prior to test collection. """
-    if not os.path.exists(sct_test_path()):
-        print('\nDownloading sct testing data.')
-        downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
+    logger.info("Downloading sct test data")
+    downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
 
 
 @pytest.fixture(scope="session", autouse=True)
