@@ -358,9 +358,9 @@ def main(args=None):
             im_label.data = dilate(im_label.data, 3, 'ball')
             im_label.save(fname_labelz)
 
-
         elif fname_initlabel:
             Image(fname_initlabel).save(fname_labelz)
+
         else:
             # automatically finds C2-C3 disc
             im_data = Image('data.nii')

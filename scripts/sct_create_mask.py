@@ -214,13 +214,9 @@ def create_mask(param):
         coord = [x for x in map(int, method_val.split('x'))]
 
     if method_type == 'point':
-        # get file name
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
         coord = display_voxel(Image("point_RPI.nii"), verbose=param.verbose)
-        # parse to get coordinate
-        # TODO fixup... this is quite magic
-        # coord = output[output.find('Position=') + 10:-17].split(',')
 
     if method_type == 'center':
         # set coordinate at center of FOV
