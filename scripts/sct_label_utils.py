@@ -267,6 +267,7 @@ def main(args=None):
         ref = Image(arguments.MSE)
         mse = sct_labels.compute_mean_squared_error(img, ref)
         sct.printv(f"Computed MSE: {mse}")
+        return
     elif arguments.remove_reference is not None:
         ref = Image(arguments.remove_reference)
         out = sct_labels.remove_missing_labels(img, ref)
