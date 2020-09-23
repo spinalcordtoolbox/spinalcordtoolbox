@@ -30,6 +30,12 @@ echo *** ANALYZE CODE ***
 pip install pylint
 bash -c 'PYTHONPATH="$PWD/scripts:$PWD" pylint -j3 --py3k --output-format=parseable --errors-only $(git ls-tree --name-only -r HEAD | sort | grep -E "(spinalcordtoolbox|scripts|testing).*\.py" | xargs); exit $(((($?&3))!=0))'
 
+branch=`git symbolic-ref --short -q HEAD`
+if [[ "$branch" == "master" ]]; then
+  echo "*** Running batch_processing.sh ***"
+  ./batch_processing.sh
+fi
+
 #
 # echo *** BUILD DOCUMENTATION ***
 # pip install sphinx sphinxcontrib.programoutput sphinx_rtd_theme
