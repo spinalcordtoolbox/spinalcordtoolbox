@@ -894,8 +894,8 @@ def main(args=None):
     elif arguments.remove_reference is not None:
         process_type = 'remove-reference'
         input_fname_ref = arguments.remove_reference
-    elif arguments.remove_symm is not None:
-        process_type = 'remove-symm'
+    elif arguments.remove_sym is not None:
+        process_type = 'remove-sym'
         input_fname_ref = arguments.r
     elif arguments.create_viewer is not None:
         process_type = 'create-viewer'
