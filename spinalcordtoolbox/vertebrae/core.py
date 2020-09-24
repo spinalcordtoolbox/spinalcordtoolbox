@@ -159,13 +159,13 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # image is straighten and oriented according to RPI convention before.
     mid_index = int(np.round(nib.load(fname).header.get_data_shape()[0]/2.0))
     image_mid = imed_preprocessing.get_midslice_average(fname, mid_index)
-    nib.save(image_mid, fname)
+    nib.save(image_mid, "input_image.nii.gz")
     if contrast == "t2":
-        fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct_root.__deepseg_dir__,
+        fname_hm = sct_deepseg.segment_nifti("input_image.nii.gz", os.path.join(sct_root.__deepseg_dir__,
                                                                  'model_find_disc_t2'),
                                              post=False)
     elif contrast == "t1":
-        fname_hm = sct_deepseg.segment_nifti(fname, os.path.join(sct_root.__deepseg_dir__,
+        fname_hm = sct_deepseg.segment_nifti("input_image.nii.gz", os.path.join(sct_root.__deepseg_dir__,
                                                                  'model_find_disc_t1'),
                                              post=False)
 
