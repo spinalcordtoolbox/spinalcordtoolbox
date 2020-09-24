@@ -321,3 +321,14 @@ Applications
 -  `Bonacci et al. Clinical Relevance of Multiparametric MRI Assessment
    of Cervical Cord Damage in Multiple Sclerosis. Radiology,
    2020 <https://pubmed.ncbi.nlm.nih.gov/32573387/>`__
+-  `Hori. Sodium in the Relapsing - Remitting Multiple Sclerosis Spinal 
+   Cord: Increased Concentrations and Associations With Microstructural 
+   Tissue Anisotropy. JMRI, 2020 
+   <https://onlinelibrary.wiley.com/doi/abs/10.1002/jmri.27253>`__
+-  `Lersy et al. Identification and measurement of cervical spinal cord 
+   atrophy in neuromyelitis optica spectrum disorders (NMOSD) and correlation 
+   with clinical characteristics and cervical spinal cord MRI data. 
+   Revue Neurologique, 2020 
+   <https://www.sciencedirect.com/science/article/pii/S0035378720306159>`__
+-  `Dahlberg et al. Heritability of cervical spinal cord structure. 
+   Neurol Genet, 2020 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7061306/>`__
