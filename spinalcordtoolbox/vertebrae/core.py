@@ -485,8 +485,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         ax = fig.add_subplot(132)
         iz = zrange[ind_peak]
         data_chunk3d = src[:,
-                       y + yshift - ysize: y + yshift + ysize + 1,
-                       z - iz - zsize: z + iz + zsize + 1]
+                           y + yshift - ysize: y + yshift + ysize + 1,
+                           z - iz - zsize: z + iz + zsize + 1]
         ax.plot(np.sum(data_chunk3d, axis=(0, 1)))
         ax.set_title('Subject accross all iz')
         # display correlation curve
@@ -512,8 +512,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
             ax = fig.add_subplot(4, 5, ind)
             iz = zrange[ind_peak]
             data_chunk3d = src[:,
-                           y + yshift - ysize: y + yshift + ysize + 1,
-                           z + indic - zsize: z + indic + zsize + 1]
+                               y + yshift - ysize: y + yshift + ysize + 1,
+                               z + indic - zsize: z + indic + zsize + 1]
             ax.plot(np.sum(data_chunk3d, axis=(0, 1)))
             np.save('profiz' + str(indic) + save_suffix + '.npy', np.sum(data_chunk3d, axis=(0, 1)))
             ax.set_title('Subject at iz' + str(indic))
