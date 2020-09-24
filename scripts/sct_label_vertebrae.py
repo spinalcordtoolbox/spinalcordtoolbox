@@ -310,19 +310,12 @@ def main(args=None):
         ])
         sct.cache_save(cachefile, cache_sig)
 
-    # resample to 1mm isotropic for network prediction
-    sct.printv('\nResample to 1mm isotropic...', verbose)
-    s, o = sct.run(
-        ['sct_resample', '-i', 'data_straight.nii', '-mm', '1x1x1', '-x', 'linear', '-o', 'data_straightr.nii'],
-        verbose=verbose)
-    s, o = sct.run(['sct_resample', '-i', 'data.nii', '-mm', '1x1x1', '-x', 'linear', '-o', 'datar.nii'],
-                   verbose=verbose)
     # Apply straightening to segmentation
     # N.B. Output is RPI
     sct.printv('\nApply straightening to segmentation...', verbose)
     sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
             ('segmentation.nii',
-             'data_straightr.nii',
+             'data_straight.nii',
              'warp_curve2straight.nii.gz',
              'segmentation_straight.nii',
              'Linear'),
@@ -338,7 +331,7 @@ def main(args=None):
         sct.printv('\nApply straightening to disc labels...', verbose)
         sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
                 (fname_disc,
-                 'data_straightr.nii',
+                 'data_straight.nii',
                  'warp_curve2straight.nii.gz',
                  'labeldisc_straight.nii.gz',
                  'NearestNeighbor'),
@@ -398,7 +391,7 @@ def main(args=None):
         sct.printv('\nAnd apply straightening to label...', verbose)
         sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
                 (file_labelz,
-                 'data_straightr.nii',
+                 'data_straight.nii',
                  'warp_curve2straight.nii.gz',
                  'labelz_straight.nii.gz',
                  'NearestNeighbor'),
@@ -415,16 +408,16 @@ def main(args=None):
         # denoise data
         if denoise:
             sct.printv('\nDenoise data...', verbose)
-            sct.run(['sct_maths', '-i', 'data_straightr.nii', '-denoise', 'h=0.05', '-o', 'data_straightr.nii'],
+            sct.run(['sct_maths', '-i', 'data_straight.nii', '-denoise', 'h=0.05', '-o', 'data_straight.nii'],
                     verbose)
 
         # apply laplacian filtering
         if laplacian:
             sct.printv('\nApply Laplacian filter...', verbose)
-            sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
+            sct.run(['sct_maths', '-i', 'data_straight.nii', '-laplacian', '1', '-o', 'data_straight.nii'], verbose)
 
         # detect vertebral levels on straight spinal cord
-        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
+        vertebral_detection('data_straight.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
                             verbose=verbose, path_template=path_template, path_output=path_output,
                             scale_dist=scale_dist)
 
@@ -442,16 +435,16 @@ def main(args=None):
 
     # un-straighten posterior disc map
     # it won't exist if we don't use the detection since it is based on the network prediction
-    if fname_disc is None:
-        sct.printv('\nUn-straighten posterior disc map...', verbose)
-        sct.run('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
-                ('disc_posterior_tmp.nii.gz',
-                 'segmentation.nii',
-                 'warp_straight2curve.nii.gz',
-                 'label_disc_posterior.nii.gz',
-                 'label'),
-                verbose=verbose
-                )
+    #if fname_disc is None:
+     #   sct.printv('\nUn-straighten posterior disc map...', verbose)
+      #  sct.run('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
+       #         ('disc_posterior_tmp.nii.gz',
+        #         'segmentation.nii',
+         #        'warp_straight2curve.nii.gz',
+          #       'label_disc_posterior.nii.gz',
+           #      'label'),
+            #    verbose=verbose
+             #   )
 
     # Clean labeled segmentation
     sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
