@@ -280,7 +280,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # Label segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
-    label_disc_posterior(list_disc_z, list_disc_value, 'hm_tmp_r.nii.gz')
+    #label_disc_posterior(list_disc_z, list_disc_value, 'hm_tmp_r.nii.gz')
 
 
 def center_of_mass(x):
