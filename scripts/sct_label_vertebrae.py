@@ -16,7 +16,6 @@ from __future__ import division, absolute_import
 import sys, os
 import argparse
 import numpy as np
-import sct_maths
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
     clean_labeled_segmentation, label_discs, label_vert
@@ -29,7 +28,6 @@ from sct_label_utils import ProcessLabels
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 import sct_utils as sct
 import sct_straighten_spinalcord
-import spinalcordtoolbox
 
 
 # PARAMETERS
