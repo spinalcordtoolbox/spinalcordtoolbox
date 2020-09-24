@@ -153,7 +153,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # create list for z and disc
     list_disc_z = []
     list_disc_value = []
-    zrange = list(range(-9, 10))
+    zrange = list(range(-10, 10))
     direction = 'superior'
     search_next_disc = True
     # image is straighten and oriented according to RPI convention before.
