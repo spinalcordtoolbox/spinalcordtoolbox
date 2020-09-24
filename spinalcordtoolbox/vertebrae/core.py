@@ -426,14 +426,14 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
             sct.printv('iz=' + str(iz) + ': padding at bottom')
             padding_size = abs(iz - zsize)
             data_chunk3d = src[xtarget - 10:xtarget + 10,
-                           y + yshift - ysize: y + yshift + ysize + 1,
-                           z + iz - zsize + padding_size: z + iz + zsize + 1]
+                               y + yshift - ysize: y + yshift + ysize + 1,
+                               z + iz - zsize + padding_size: z + iz + zsize + 1]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
                                   constant_values=0)
         else:
             data_chunk3d = src[:,
-                           :ytarget + ysize,
-                           z + iz - zsize: z + iz + zsize + 1]
+                               :ytarget + ysize,
+                               z + iz - zsize: z + iz + zsize + 1]
 
         # convert subject pattern to 1d profile
         data_chunk1d = np.sum(data_chunk3d, axis=(0, 1))
@@ -644,7 +644,9 @@ def label_disc_posterior(list_disc_z, list_disc_value, fname_hm):
     AP_profile = np.sum(im_hm.data[:, :, :], axis=(0, 2))
     default = np.argmax(AP_profile)
     for iz in range(len(list_disc_z)):
-        slice = im_hm.data[:, :, list_disc_z[iz] - 1]
+        # some point are added to the list based on the template distance (might be out of bounds)
+        if list_disc_z[iz] <nz:
+            slice = im_hm.data[:, :, list_disc_z[iz] - 1]
 
         if np.any(slice):
             pos = np.where(slice == np.max(slice))
