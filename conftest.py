@@ -17,6 +17,7 @@ sys.path.append(sct_dir_local_path('scripts'))
 
 import pytest
 import sct_download_data as downloader
+from scripts.sct_testing import Param
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -28,3 +29,9 @@ def download_data(request):
     with capmanager.global_and_fixture_disabled():
         print('\nDownloading sct testing data.')
         downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
+
+
+@pytest.fixture()
+def param_test():
+    param = Param()
+    return param
