@@ -60,7 +60,12 @@ MODELS = {
     },
     "model_find_disc_t2": {
         "url": ["https://github.com/ivadomed/model_find_disc_t2/archive/r20200904.zip"],
-        "description": "intevertebral disc localisation model, trained on T2-weighted images",
+        "description": "intervertebral disc localisation model, trained on T2-weighted images",
+        "default": True,
+    },
+    "model_find_disc_t1": {
+        "url": ["https://github.com/ivadomed/model_find_disc_t1/archive/r20200925.zip"],
+        "description": "intervertebral disc localisation model, trained on T1-weighted images",
         "default": True,
     }
 }
