@@ -217,7 +217,12 @@ class SlicerMany(object):
 def check_affines_match(im):
     hdr = im.hdr
     hdr2 = hdr.copy()
-    hdr2.set_qform(hdr.get_sform())
+
+    try:
+        hdr2.set_qform(hdr.get_sform())
+    except np.linalg.LinAlgError:
+        return(False)
+
     return np.allclose(hdr.get_qform(), hdr2.get_qform())
 
 
