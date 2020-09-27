@@ -79,7 +79,7 @@ class Metavar(Enum):
         return self.value
 
 
-class SmartFormatter(argparse.HelpFormatter):
+class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
     """
     Custom formatter that inherits from HelpFormatter, which adjusts the default width to the current Terminal size,
     and that gives the possibility to bypass argparse's default formatting by adding "R|" at the beginning of the text.
@@ -133,6 +133,12 @@ class SmartFormatter(argparse.HelpFormatter):
                     wrapped = wrapped + [li]
             return wrapped
         return argparse.HelpFormatter._split_lines(self, text, width)
+
+    def _get_help_string(self, action):
+        if action.default not in [None, "", [], (), {}]:
+            return super()._get_help_string(action)
+        else:
+            return action.help
 
 
 # Modified from http://shallowsky.com/blog/programming/python-tee.html
@@ -432,6 +438,25 @@ def __get_commit(path_to_git_folder=None):
 
     return commit
 
+def __get_git_origin(path_to_git_folder=None):
+    """
+    :return: git origin url if available
+    """
+    if path_to_git_folder is None:
+        path_to_git_folder = __sct_dir__
+    else:
+        path_to_git_folder = abspath(path_to_git_folder)
+
+    p = subprocess.Popen(["git", "remote", "get-url", "origin"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=path_to_git_folder)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        origin = output.decode().strip()
+    else:
+        origin = "?!?"
+
+    return origin
 
 def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
 

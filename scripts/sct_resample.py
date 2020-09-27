@@ -16,10 +16,10 @@ from __future__ import division, absolute_import
 
 import os
 import sys
-
+import argparse
 
 import sct_utils as sct
-from msct_parser import Parser
+from spinalcordtoolbox.utils import Metavar, SmartFormatter
 import spinalcordtoolbox.resampling
 
 # DEFAULT PARAMETERS
@@ -43,75 +43,94 @@ param = Param()
 
 
 def get_parser():
-    parser = Parser(__file__)
-    parser.usage.set_description('Anisotropic resampling of 3D or 4D data.')
-    parser.add_option(name="-i",
-                      type_value="file",
-                      description="Image to segment. Can be 3D or 4D. (Cannot be 2D)",
-                      mandatory=True,
-                      example='dwi.nii.gz')
-    parser.usage.addSection('TYPE OF THE NEW SIZE INPUT : with a factor of resampling, in mm or in number of voxels\n'
-                            'Please choose only one of the 3 options.')
-    parser.add_option(name="-f",
-                      type_value="str",
-                      description="Resampling factor in each dimensions (x,y,z). Separate with \"x\"\n"
-                                  "For 2x upsampling, set to 2. For 2x downsampling set to 0.5",
-                      mandatory=False,
-                      example='0.5x0.5x1')
-    parser.add_option(name="-mm",
-                      type_value="str",
-                      description="New resolution in mm. Separate dimension with \"x\"",
-                      mandatory=False,
-                      example='0.1x0.1x5')
-    parser.add_option(name="-vox",
-                      type_value="str",
-                      description="Resampling size in number of voxels in each dimensions (x,y,z). Separate with \"x\"",
-                      mandatory=False)
-    parser.add_option(name="-ref",
-                      type_value="str",
-                      description="Reference image to resample input image to. Uses world coordinates.",
-                      mandatory=False)
-    parser.usage.addSection('MISC')
-    parser.add_option(name="-x",
-                      type_value='multiple_choice',
-                      description='Interpolation method.',
-                      mandatory=False,
-                      default_value='linear',
-                      example=['nn', 'linear', 'spline'])
+    parser = argparse.ArgumentParser(
+        description="Anisotropic resampling of 3D or 4D data.",
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
 
-    parser.add_option(name="-o",
-                      type_value="file_output",
-                      description="Output file name",
-                      mandatory=False,
-                      example='dwi_resampled.nii.gz')
-    parser.add_option(name="-v",
-                      type_value='multiple_choice',
-                      description="verbose: 0 = nothing, 1 = classic, 2 = expended.",
-                      mandatory=False,
-                      default_value=1,
-                      example=['0', '1', '2'])
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Image to segment. Can be 3D or 4D. (Cannot be 2D) Example: dwi.nii.gz"
+    )
+
+    resample_types = parser.add_argument_group(
+        "\nTYPE OF THE NEW SIZE INPUT: with a factor of resampling, in mm or in number of voxels\n"
+        "Please choose only one of the 3 options"
+    )
+    resample_types.add_argument(
+        '-f',
+        metavar=Metavar.str,
+        help="R|Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1\n"
+             "For 2x upsampling, set to 2. For 2x downsampling set to 0.5"
+    )
+    resample_types.add_argument(
+        '-mm',
+        metavar=Metavar.str,
+        help="New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5"
+    )
+    resample_types.add_argument(
+        '-vox',
+        metavar=Metavar.str,
+        help="Resampling size in number of voxels in each dimensions (x,y,z). Separate with 'x'."
+    )
+
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-ref',
+        metavar=Metavar.file,
+        help="Reference image to resample input image to. Uses world coordinates."
+    )
+    optional.add_argument(
+        '-x',
+        choices=['nn', 'linear', 'spline'],
+        default='linear',
+        help="Interpolation method."
+    )
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.file,
+        help="Output file name. Example: dwi_resampled.nii.gz"
+    )
+    optional.add_argument(
+        '-v',
+        choices=['0', '1', '2'],
+        default='1',
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended."
+    )
+
     return parser
 
 
 def run_main():
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    param.fname_data = arguments["-i"]
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    param.fname_data = arguments.i
     arg = 0
-    if "-f" in arguments:
-        param.new_size = arguments["-f"]
+    if arguments.f is not None:
+        param.new_size = arguments.f
         param.new_size_type = 'factor'
         arg += 1
-    elif "-mm" in arguments:
-        param.new_size = arguments["-mm"]
+    elif arguments.mm is not None:
+        param.new_size = arguments.mm
         param.new_size_type = 'mm'
         arg += 1
-    elif "-vox" in arguments:
-        param.new_size = arguments["-vox"]
+    elif arguments.vox is not None:
+        param.new_size = arguments.vox
         param.new_size_type = 'vox'
         arg += 1
-    elif "-ref" in arguments:
-        param.ref = arguments["-ref"]
+    elif arguments.ref is not None:
+        param.ref = arguments.ref
         arg += 1
     else:
         sct.printv(parser.error('ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
@@ -119,14 +138,14 @@ def run_main():
     if arg > 1:
         sct.printv(parser.error('ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
 
-    if "-o" in arguments:
-        param.fname_out = arguments["-o"]
-    if "-x" in arguments:
-        if len(arguments["-x"]) == 1:
-            param.interpolation = int(arguments["-x"])
+    if arguments.o is not None:
+        param.fname_out = arguments.o
+    if arguments.x is not None:
+        if len(arguments.x) == 1:
+            param.interpolation = int(arguments.x)
         else:
-            param.interpolation = arguments["-x"]
-    param.verbose = int(arguments.get('-v'))
+            param.interpolation = arguments.x
+    param.verbose = int(arguments.v)
     sct.init_sct(log_level=param.verbose, update=True)  # Update log level
 
     spinalcordtoolbox.resampling.resample_file(param.fname_data, param.fname_out, param.new_size, param.new_size_type,
