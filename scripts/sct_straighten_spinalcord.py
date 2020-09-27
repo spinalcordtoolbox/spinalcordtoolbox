@@ -196,18 +196,6 @@ def get_parser():
 
     return parser
 
-
-def check_affines_match(filename, parser):
-    im = Image(filename)
-    if not np.allclose(im.header.get_qform(), im.header.get_sform()):
-        dummy_reaffined = re.sub("\\.(.*)", "_same-affine.\\1", filename)
-        parser.error("Image {} has different qform and sform matrices. "
-                     "This can produce incorrect results. Consider setting "
-                     "the two matrices to be equal using "
-                     "`sct_image -i {} -set-sform-to-qform -o {}`.".format(
-                         filename, filename, dummy_reaffined))
-
-
 # MAIN
 # ==========================================================================================
 def main(args=None):
@@ -223,9 +211,6 @@ def main(args=None):
     arguments = parser.parse_args(args=args)
     input_filename = arguments.i
     centerline_file = arguments.s
-
-    check_affines_match(input_filename, parser)
-    check_affines_match(centerline_file, parser)
 
     sc_straight = SpinalCordStraightener(input_filename, centerline_file)
 

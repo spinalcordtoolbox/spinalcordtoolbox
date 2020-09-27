@@ -22,6 +22,7 @@ from spinalcordtoolbox.image import Image, concat_data
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from nibabel                 import Nifti1Image
 from nibabel.processing      import resample_from_to
+import spinalcordtoolbox.image
 
 
 import sct_utils as sct
@@ -190,6 +191,8 @@ def main(args=None):
     # If the user wants to fix sforms replace `Image` with the sform fixer
     if arguments.set_sform_to_qform:
         Image = read_and_fix_sform
+    else:
+        Image = spinalcordtoolbox.image.Image
 
     if arguments.o is not None:
         fname_out = arguments.o
@@ -601,7 +604,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
 
 
 def read_and_fix_sform(fname):
-    im_in = Image(fname)
+    im_in = Image(fname, check_sform=False)
     im_reaff = im_in.copy()
     im_reaff.header = im_in.header.copy()
     im_reaff.header.set_sform(im_reaff.header.get_qform())

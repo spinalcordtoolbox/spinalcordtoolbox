@@ -18,6 +18,7 @@ import sys, os, itertools, warnings, logging
 import nibabel as nib
 import numpy as np
 import transforms3d.affines as affines
+import re
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
@@ -70,7 +71,7 @@ class Slicer(object):
         """
 
         :param im: image to iterate through
-        :param spec: "from" letters to indicate how to slice the image.
+        :param orientation: "from" letters to indicate how to slice the image.
                      The slices are done on the last letter axis,
                      and they are defined as the first/second letter.
         """
@@ -213,12 +214,31 @@ class SlicerMany(object):
         return [ x[idx] for x in self.slicers ]
 
 
+def check_affines_match(im):
+    hdr = im.hdr
+    hdr2 = hdr.copy()
+    hdr2.set_qform(hdr.get_sform())
+    return np.allclose(hdr.get_qform(), hdr2.get_qform())
+
+
 class Image(object):
     """
 
     """
 
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1):
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1, check_sform=True):
+        """
+        :param param: string indicating a path to a image file or an `Image` object.
+        :param hdr: a nibabel header object to use as the header for the image (overwritten if `param` is provided)
+        :param orientation: a three character orientation code (e.g. RPI).
+        :param absolutepath: a relative path to associate with the image.
+        :param dim: The dimensions of the image, defaults to automatically determined.
+        :param verbose: integer how verbose to be 0 is silent 1 is chatty.
+        :param check_sform: whether or not to check whether the sform matches 
+        the qform. If this is set to `True`, `Image` will fail raise an
+        error if they don't match.
+        """ 
+
         # initialization of all parameters
         self.im_file = None
         self.data = None
@@ -251,6 +271,22 @@ class Image(object):
             self.hdr = hdr
         else:
             raise TypeError('Image constructor takes at least one argument.')
+
+        if check_sform and \
+           not check_affines_match(self):
+            if self.absolutepath is None:
+                logger.error("Internal code has produced an image with inconsistent qform and sform "
+                           "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
+                           " or on the SCT forums https://forum.spinalcordmri.org/.")
+            else:
+                dummy_reaffined = re.sub("\\.(.*)", "_same-affine.\\1", self.absolutepath)
+                logger.error("Image {} has different qform and sform matrices. "
+                             "This can produce incorrect results. Consider setting "
+                             "the two matrices to be equal using "
+                             "`sct_image -i {} -set-sform-to-qform -o {}`.".format(
+                                 self._path, self._path, dummy_reaffined))
+            raise ValueError("Image sform does not match qform")
+
 
         # TODO: In the future, we might want to check qform_code and enforce its value. Related to #2454
         # Check qform_code

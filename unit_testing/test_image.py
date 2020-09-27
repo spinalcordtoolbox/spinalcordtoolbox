@@ -418,6 +418,7 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
 
         affine[0,0] *= 2
         im_ref.header.set_sform(affine, code='scanner')
+        im_ref.header.set_qform(affine, code='scanner')
 
         orientations = msct_image.all_refspace_strings()
         for ori_src in orientations:
