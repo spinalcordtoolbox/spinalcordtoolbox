@@ -510,10 +510,10 @@ run "mkdir -p $SCT_DIR/$PYTHON_DIR"
 # Download miniconda
 case $OS in
 linux*)
-  download $TMP_DIR/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  download $TMP_DIR/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
   ;;
 osx)
-  download $TMP_DIR/miniconda.sh https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+  download $TMP_DIR/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
   ;;
 esac
 
