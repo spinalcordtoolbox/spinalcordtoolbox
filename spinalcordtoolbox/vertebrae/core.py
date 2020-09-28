@@ -657,7 +657,7 @@ def label_disc_posterior(list_disc_z, list_disc_value, fname_hm, fname_data):
                 if abs(ap_pos - default) < 20:
                     data_disc[int(np.round(nx / 2.0)), ap_pos, list_disc_z[iz] - 1] = list_disc_value[iz]
                 else:
-                    data_disc[int(nx / 2), default, list_disc_z[iz] - 1] = list_disc_value[iz]
+                    data_disc[int(np.round(nx / 2)), default, list_disc_z[iz] - 1] = list_disc_value[iz]
             else:
                 # Since the image is supposedly straighten, we can assume that most of the disc are aligned
                 # therefore if the heatmap missed one, we can just use the a default, aligned with the other
