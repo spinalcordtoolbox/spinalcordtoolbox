@@ -65,7 +65,7 @@ def check_testing_data_integrity(files_checksums: Mapping[os.PathLike, str]):
             after.append(fname)
 
             if fname not in files_checksums:
-                logger.error(f"Discovered new file in sct_testing_data that didn't exist before: {(fname, chksum)}")
+                logger.warning(f"Discovered new file in sct_testing_data that didn't exist before: {(fname, chksum)}")
                 new.append((fname, chksum))
 
             elif files_checksums[fname] != chksum:
@@ -78,5 +78,5 @@ def check_testing_data_integrity(files_checksums: Mapping[os.PathLike, str]):
             missing.append((fname, chksum))
 
     assert not changed
-    assert not new
+    # assert not new
     assert not missing
