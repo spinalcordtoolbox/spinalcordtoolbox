@@ -851,14 +851,11 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     sampling_factor = [float(nx) / nxd, float(ny) / nyd, float(nz) / nzd]
 
     og_labels = display_voxel(Image(fname_labels))
-    new_labels = []
-
-    for x, y, z, v in og_labels:
-        x_ = int(np.round(int(x) / sampling_factor[0]))
-        y_ = int(np.round(int(y) / sampling_factor[1]))
-        z_ = int(np.round(int(z) / sampling_factor[2]))
-        v_ = int(float(v))
-        new_labels.append(Coordinate([x_, y_, z_, v_]))
+    new_labels = [Coordinate([int(np.round(int(x) / sampling_factor[0])),
+                              int(np.round(int(y) / sampling_factor[1])),
+                              int(np.round(int(z) / sampling_factor[2])),
+                              int(float(v))])
+                  for x, y, z, v in og_labels]
 
     sct_labels.create_labels_empty(Image(fname_dest), new_labels).save(path=fname_output)
 
