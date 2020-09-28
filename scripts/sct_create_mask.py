@@ -30,7 +30,6 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from sct_image import concat_data
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
-from sct_label_utils import display_voxel
 from spinalcordtoolbox.labels import create_labels
 from spinalcordtoolbox.types import Coordinate
 
@@ -216,7 +215,7 @@ def create_mask(param):
     if method_type == 'point':
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
-        coord = display_voxel(Image("point_RPI.nii"), verbose=param.verbose)
+        coord = Image("point_RPI.nii").getNonZeroCoordinates()
 
     if method_type == 'center':
         # set coordinate at center of FOV

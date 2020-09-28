@@ -38,7 +38,6 @@ from spinalcordtoolbox.registration.landmarks import *
 from spinalcordtoolbox.types import Coordinate
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
-from sct_label_utils import display_voxel
 
 import sct_utils as sct
 import sct_maths
@@ -850,7 +849,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     nxd, nyd, nzd, _, _, _, _, _ = Image(fname_dest).dim
     sampling_factor = [float(nx) / nxd, float(ny) / nyd, float(nz) / nzd]
 
-    og_labels = display_voxel(Image(fname_labels))
+    og_labels = Image(fname_labels).getNonZeroCoordinates()
     new_labels = [Coordinate([int(np.round(int(x) / sampling_factor[0])),
                               int(np.round(int(y) / sampling_factor[1])),
                               int(np.round(int(z) / sampling_factor[2])),

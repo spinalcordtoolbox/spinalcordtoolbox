@@ -320,8 +320,6 @@ def display_voxel(img: Image, verbose: int = 1) -> Sequence[Coordinate]:
     sct.printv('All labels (useful syntax):', verbose=verbose)
     sct.printv(useful_notation, verbose=verbose)
 
-    return coordinates_input
-
 
 # TODO [AJ] -> just print warnings or log or raise?
 def check_distance_between_labels(img: Image, max_dist_mm: float):
