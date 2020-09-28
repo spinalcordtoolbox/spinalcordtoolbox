@@ -299,7 +299,8 @@ class Transform:
 
         if islabel:
             sct.printv("\nTake the center of mass of each registered dilated labels...")
-            cubic_to_point(im_src_reg).save(path=fname_out)
+            labeled_img = cubic_to_point(im_src_reg)
+            labeled_img.save(path=fname_out)
             if remove_temp_files:
                 sct.printv('\nRemove temporary files...', verbose)
                 sct.rmtree(path_tmp, verbose=verbose)
