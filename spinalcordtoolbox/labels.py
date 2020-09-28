@@ -322,46 +322,6 @@ def remove_missing_labels(img: Image, ref: Image):
     return out
 
 
-def _get_physical_coordinates(img: Image) -> Sequence[CoordinateValue]:
-    """
-    This function returns the coordinates of the labels in the physical referential system.
-    :param img: source image
-    :returns: a list of CoordinateValue, in the physical (scanner) space
-    """
-
-    coord = img.getNonZeroCoordinates(sorting='value')
-    phys_coord = []
-
-    for c in coord:
-        # convert pixelar coordinates to physical coordinates
-        c_p = img.transfo_pix2phys([[c.x, c.y, c.z]])[0]
-        phys_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
-
-    return phys_coord
-
-
-def get_coordinates_in_destination(img: Image, dst: Image, tp: str = 'discrete') -> Sequence[CoordinateValue]:
-    """
-    This function calculates the position of labels in the pixelar space of a destination image
-    :param img: source Image
-    :param dst: Object Image
-    :param type: 'discrete' or 'continuous'
-    :returns: a list of CoordinateValue, in the pixelar (image) space of the destination image
-    """
-    phys_coord = _get_physical_coordinates(img)
-    dest_coord = []
-    for c in phys_coord:
-        if tp == 'discrete':
-            c_p = dst.transfo_phys2pix([[c.x, c.y, c.y]])[0]
-        elif tp == 'continuous':
-            c_p = dst.transfo_phys2pix([[c.x, c.y, c.y]], real=False)[0]
-        else:
-            raise ValueError("The value of 'type' should either be 'discrete' or 'continuous'!")
-        dest_coord.append(CoordinateValue([c_p[0], c_p[1], c_p[2], c.value]))
-
-    return dest_coord
-
-
 def continuous_vertebral_levels(img: Image) -> Image:
     """
     This function transforms the vertebral levels file from the template into a continuous file.

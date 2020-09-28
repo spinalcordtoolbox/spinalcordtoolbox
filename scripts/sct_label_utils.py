@@ -321,27 +321,6 @@ def display_voxel(img: Image, verbose: int = 1) -> Sequence[Coordinate]:
     sct.printv(useful_notation, verbose=verbose)
 
 
-# TODO [AJ] -> just print warnings or log or raise?
-def check_distance_between_labels(img: Image, max_dist_mm: float):
-    """
-    Calculate the distances between each label in the input image.
-    If a distance is larger than max_dist_mm, a warning message is displayed.
-    :param img: input image
-    :param max_dist: maximum distance (in mm) allowed between labels
-    """
-    coordinates_input = img.getNonZeroCoordinates()
-
-    # for all points with non-zeros neighbors, force the neighbors to 0
-    for i in range(0, len(coordinates_input) - 1):
-        dist = np.sqrt((coordinates_input[i].x - coordinates_input[i + 1].x)**2 + (coordinates_input[i].y - coordinates_input[i + 1].y)**2 + (coordinates_input[i].z - coordinates_input[i + 1].z)**2)
-
-        if dist < max_dist_mm:
-            sct.printv('Warning: the distance between label ' + str(i) + '[' + str(coordinates_input[i].x) + ',' + str(coordinates_input[i].y) + ',' + str(
-                coordinates_input[i].z) + ']=' + str(coordinates_input[i].value) + ' and label ' + str(i + 1) + '[' + str(
-                coordinates_input[i + 1].x) + ',' + str(coordinates_input[i + 1].y) + ',' + str(coordinates_input[i + 1].z) + ']=' + str(
-                coordinates_input[i + 1].value) + ' is larger than ' + str(max_dist_mm) + '. Distance=' + str(dist))
-
-
 def launch_sagittal_viewer(img: Image, labels: Sequence[int], msg: str, previous_points: Sequence[Coordinate] = None, output_img: Image = None) -> Image:
     from spinalcordtoolbox.gui import base
     from spinalcordtoolbox.gui.sagittal import launch_sagittal_dialog
