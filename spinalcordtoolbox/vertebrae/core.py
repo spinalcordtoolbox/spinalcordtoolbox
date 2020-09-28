@@ -654,6 +654,6 @@ def label_disc_posterior(list_disc_z, list_disc_value, fname_hm, fname_data):
             else:
                 # Since the image is supposedly straighten, we can assume that most of the disc are aligned
                 # therefore if the heatmap missed one, we can just use the a default, aligned with the other
-                data_disc[np.round(nx/2.0), default, list_disc_z[iz] - 1] = list_disc_value[iz]
+                data_disc[int(np.round(nx/2.0)), default, list_disc_z[iz] - 1] = list_disc_value[iz]
     image_out.data = data_disc
     image_out.save('disc_posterior_tmp.nii.gz')
