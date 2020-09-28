@@ -280,7 +280,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # Label segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
-    #label_disc_posterior(list_disc_z, list_disc_value, 'hm_tmp_r.nii.gz')
+    label_disc_posterior(list_disc_z, list_disc_value, 'hm_tmp_r.nii.gz', fname_seg)
 
 
 def center_of_mass(x):
@@ -625,7 +625,7 @@ def label_discs(fname_seg_labeled, verbose=1):
     im_seg_labeled.change_orientation(orientation_native).save(sct.add_suffix(fname_seg_labeled, '_disc'))
 
 
-def label_disc_posterior(list_disc_z, list_disc_value, fname_hm):
+def label_disc_posterior(list_disc_z, list_disc_value, fname_hm, fname_data):
     """
     Function used to put label on the posterior tip for each disc using the previously found cooordinates.
     This is done using the maximum value in the RL direction of the network prediction (heatmap)
@@ -636,24 +636,26 @@ def label_disc_posterior(list_disc_z, list_disc_value, fname_hm):
     :param list_disc_value: list of label value (e.g., [1,2,3,4]). The index of the value correspond to the index
     of the position in list_disc_z
     :param fname_hm: path to the heatmap output by the network
+    :param fname_data: Path to sgementation data with same resolution as the heatmap (fname_hm)
     :return:
     """
     im_hm = Image(fname_hm)
-    nx, ny, nz = im_hm.dim[0], im_hm.dim[1], im_hm.dim[2]
+    image_out = Image(fname_data)
+    nx, ny, nz = image_out.dim[0], image_out.dim[1], image_out.dim[2]
     data_disc = np.zeros([nx, ny, nz])
+    print(nx)
     AP_profile = np.sum(im_hm.data[:, :, :], axis=(0, 2))
     default = np.argmax(AP_profile)
     for iz in range(len(list_disc_z)):
         # some point are added to the list based on the template distance (might be out of bounds)
-        if list_disc_z[iz] <nz:
+        if list_disc_z[iz] < nz:
             slice = im_hm.data[:, :, list_disc_z[iz] - 1]
-
-        if np.any(slice):
-            pos = np.where(slice == np.max(slice))
-            data_disc[pos[0], pos[1], list_disc_z[iz] - 1] = list_disc_value[iz]
-        else:
-            # Since the image is supposedly straighten, we can assume that most of the disc are aligned
-            # therefore if the heatmap missed one, we can just use the a default, aligned with the other
-            data_disc[int(nx / 2), default, list_disc_z[iz] - 1] = list_disc_value[iz]
-    im_hm.data = data_disc
-    im_hm.save('disc_posterior_tmp.nii.gz')
+            if np.any(slice) and list_disc_value[iz] > 2:
+                pos = np.where(slice == np.max(slice))
+                data_disc[int(np.round(nx/2.0)), pos[1], list_disc_z[iz] - 1] = list_disc_value[iz]
+            else:
+                # Since the image is supposedly straighten, we can assume that most of the disc are aligned
+                # therefore if the heatmap missed one, we can just use the a default, aligned with the other
+                data_disc[np.round(nx/2.0), default, list_disc_z[iz] - 1] = list_disc_value[iz]
+    image_out.data = data_disc
+    image_out.save('disc_posterior_tmp.nii.gz')
