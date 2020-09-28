@@ -9,11 +9,6 @@
 
 set -e # Error build immediately if install script exits with non-zero
 
-# export the current travis branch to $BRANCH
-# https://unhashable.com/getting-the-current-branch-name-during-a-pull-request-in-travis-ci/#thetravisymlrecipe
-export BRANCH=$(if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then echo $TRAVIS_BRANCH; else echo $TRAVIS_PULL_REQUEST_BRANCH; fi)
-echo "TRAVIS_BRANCH=$TRAVIS_BRANCH, PR=$PR, BRANCH=$BRANCH"
-
 # if this is a docker job, run in the container instead; but if not just run it here.
 if [ -n "$DOCKER_IMAGE" ]; then
     ./util/dockerize.sh ./.ci.sh
