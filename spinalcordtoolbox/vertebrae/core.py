@@ -510,12 +510,10 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         FigureCanvas(fig)
         for indic in zrange:
             ax = fig.add_subplot(4, 5, ind)
-            iz = zrange[ind_peak]
             data_chunk3d = src[:,
                                y + yshift - ysize: y + yshift + ysize + 1,
                                z + indic - zsize: z + indic + zsize + 1]
             ax.plot(np.sum(data_chunk3d, axis=(0, 1)))
-            np.save('profiz' + str(indic) + save_suffix + '.npy', np.sum(data_chunk3d, axis=(0, 1)))
             ax.set_title('Subject at iz' + str(indic))
             ind = ind + 1
         fig.savefig('alliz' + save_suffix + 'png')
