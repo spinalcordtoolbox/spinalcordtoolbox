@@ -319,7 +319,7 @@ def main(args=None):
     if im_out is not None:
         sct.printv('Generate output files...', verbose)
         # if only one output
-        if len(im_out) == 1 and not '-split' in arguments:
+        if len(im_out) == 1 and arguments.split is None:
             im_out[0].save(fname_out, dtype=output_type, verbose=verbose)
             sct.display_viewer_syntax([fname_out], verbose=verbose)
         if arguments.mcs:

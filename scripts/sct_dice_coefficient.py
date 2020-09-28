@@ -125,7 +125,7 @@ if __name__ == "__main__":
     curdir = os.getcwd()
     os.chdir(tmp_dir) # go to tmp directory
 
-    if '-bin' in arguments:
+    if arguments.bin is not None:
         fname_input1_bin = sct.add_suffix(fname_input1, '_bin')
         sct.run(['sct_maths', '-i', fname_input1, '-bin', '0', '-o', fname_input1_bin])
         fname_input1 = fname_input1_bin

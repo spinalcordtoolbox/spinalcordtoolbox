@@ -113,7 +113,7 @@ def main(args=None):
 
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_src = arguments.i
-    if "-o" in arguments:
+    if arguments.o is not None:
         fname_dst = arguments.o
     else:
         fname_dst = sct.add_suffix(fname_src, "_tsnr")
