@@ -45,7 +45,7 @@ def get_parser():
         prog=os.path.basename(__file__).strip(".py")
     )
 
-    req_group = parser.add_argument_group("\nREQUIRED")
+    req_group = parser.add_argument_group("\nREQUIRED I/O")
     req_group.add_argument(
         '-i',
         metavar=Metavar.file,
