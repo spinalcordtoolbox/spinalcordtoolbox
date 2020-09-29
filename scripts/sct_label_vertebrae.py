@@ -465,8 +465,9 @@ def main(args=None):
     sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii"), fname_seg_labeled)
     sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii"),
                              os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
-    sct.generate_output_file(os.path.join(path_tmp, "label_disc_posterior.nii.gz"),
-                             os.path.join(path_output, file_in + '_labels-disc' + ext_in), verbose=verbose)
+    if fname_disc is None:
+        sct.generate_output_file(os.path.join(path_tmp, "label_disc_posterior.nii.gz"),
+                                 os.path.join(path_output, file_in + '_labels-disc' + ext_in), verbose=verbose)
     # copy straightening files in case subsequent SCT functions need them
     sct.generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"),
                              os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose=verbose)
