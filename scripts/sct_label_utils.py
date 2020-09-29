@@ -250,6 +250,7 @@ def main(args=None):
         out = sct_labels.cubic_to_point(img)
     elif arguments.display:
         display_voxel(img, verbosity)
+        return
     elif arguments.increment:
         out = sct_labels.increment_z_inverse(img)
     elif arguments.vert_body is not None:
