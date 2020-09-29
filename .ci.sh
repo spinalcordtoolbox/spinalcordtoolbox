@@ -19,7 +19,7 @@ pip install coverage
 echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
 echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
 COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" \
-  pytest -n auto --dist=loadscope
+  pytest
 coverage combine
 
 # TODO: move this part to a separate travis job; there's no need for each platform to lint the code
