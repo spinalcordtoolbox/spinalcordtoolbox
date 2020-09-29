@@ -296,11 +296,14 @@ def create_line(param, fname, coord, nz):
     # set all voxels to zero
     sct.run(['sct_maths', '-i', 'line.nii', '-mul', '0', '-o', 'line.nii'], param.verbose)
 
+    labels = []
+
     if isinstance(coord[0], Coordinate):
-        labels = coord
+        for x, y, _, _ in coord:
+            labels.extend([ Coordinate([x, y, iz, 1]) for iz in range(nz) ])
     else:
-        # compat
-        labels = [ Coordinate([coord[0], coord[1], iz, 1]) for iz in range(nz) ]
+        # backwards compat
+        labels.extend([ Coordinate([coord[0], coord[1], iz, 1]) for iz in range(nz) ])
 
     create_labels(Image("line.nii"), labels).save(path="line.nii")
 
