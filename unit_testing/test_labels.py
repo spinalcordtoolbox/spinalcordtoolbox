@@ -104,11 +104,11 @@ def test_increment_z_inverse(test_image):
 
 
 @pytest.mark.parametrize("test_seg,test_labels", [(seg_img, labels_img)])
-def test_labelize_from_disks(test_seg, test_labels):
+def test_labelize_from_discs(test_seg, test_labels):
     seg = test_seg.copy()
     ref = test_labels.copy()
 
-    sct_labels.labelize_from_disks(seg, ref)
+    sct_labels.labelize_from_discs(seg, ref)
     # TODO [AJ] implement test
 
 

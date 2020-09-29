@@ -118,6 +118,12 @@ def get_parser():
     )
 
     func_group.add_argument(
+        '-disc',
+        metavar=Metavar.file,
+        help="Create an image with regions labelized depending on values from reference"
+    )
+
+    func_group.add_argument(
         '-display',
         action="store_true",
         help="Display all labels (i.e. non-zero values)."
@@ -253,6 +259,9 @@ def main(args=None):
         return
     elif arguments.increment:
         out = sct_labels.increment_z_inverse(img)
+    elif arguments.disc is not None:
+        ref = Image(arguments.disc)
+        out = sct_labels.labelize_from_discs(img, ref)
     elif arguments.vert_body is not None:
         levels = arguments.vert_body
         if len(levels) == 1 and levels[0] == 0:

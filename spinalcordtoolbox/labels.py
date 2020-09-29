@@ -208,7 +208,7 @@ def increment_z_inverse(img: Image) -> Image:
     return out
 
 
-def labelize_from_disks(img: Image, ref: Image) -> Image:
+def labelize_from_discs(img: Image, ref: Image) -> Image:
     """
     Create an image with regions labelized depending on values from reference.
     Typically, user inputs a segmentation image, and labels with disks position, and this function produces
