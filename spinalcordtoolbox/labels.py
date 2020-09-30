@@ -287,15 +287,18 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
     rounded_coord_in_values = [np.round(c.value) for c in coordinates_input]
     result = 0.0
 
-    for coord, coord_ref in zip(coordinates_input, coordinates_ref):
-        if np.round(coord.value) not in rounded_coord_ref_values:
-            logger.warning(f"Missing input label {coord} in reference!")
 
-        if np.round(coord_ref.value) not in rounded_coord_in_values:
-            logger.warning(f"Missing reference label {coord_ref} in reference!")
+    for coord in coordinates_input:
+        for coord_ref in coordinates_ref:
+            if np.round(coord.value) not in rounded_coord_in_values:
+                logger.warning(f"Missing input label {coord} in reference!")
 
-        if np.round(coord_ref.value) == np.round(coord.value):
-            result += (coord_ref.z - coord.z) ** 2
+            if np.round(coord_ref.value) not in rounded_coord_ref_values:
+                logger.warning(f"Missing reference label {coord_ref} in reference!")
+
+            if np.round(coord_ref.value) == np.round(coord.value):
+                result += (coord_ref.z - coord.z) ** 2
+                break
 
     result = np.sqrt(result / len(coordinates_input))
     logger.info(f"MSE error in Z direction = {result}mm")
