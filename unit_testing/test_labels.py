@@ -130,18 +130,17 @@ def test_label_vertebrae(test_image):
     # TODO [AJ] implement test
 
 
-@pytest.mark.parametrize("test_image", test_images)
-def test_compute_mean_squared_error(test_image):
-    src = test_image.copy()
-    ref = test_image.copy()
 
-    for z in range(3):
-        for y in range(2):
-            for x in range(1):
-                ref.data[x, y, z] *= 10
+def test_compute_mean_squared_error():
+    src = fake_3dimage_sct()
+    ref = src.copy()
 
-    sct_labels.compute_mean_squared_error(src, ref)
-    # TODO [AJ] implement test
+    for x, y, z, _ in src.getNonZeroCoordinates():
+        if z < 5:
+            ref.data[x, y, z+2] = src.data[x, y, z]
+
+    mse = sct_labels.compute_mean_squared_error(src, ref)
+    assert mse == 1.1547005383792515
 
 
 @pytest.mark.skip(reason="Too long to run on large image!")
