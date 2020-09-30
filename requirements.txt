@@ -7,6 +7,7 @@ Keras==2.1.5
 matplotlib
 nibabel
 numpy
+onnxruntime==1.4.0
 pandas
 psutil
 pyqt5==5.11.3
