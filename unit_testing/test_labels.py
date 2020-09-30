@@ -95,12 +95,22 @@ def test_cubic_to_point(test_image):
     sct_labels.cubic_to_point(a)
     # TODO [AJ] implement test
 
-
 @pytest.mark.parametrize("test_image", test_images)
 def test_increment_z_inverse(test_image):
-    a = test_image.copy()
-    sct_labels.increment_z_inverse(a)
-    # TODO [AJ] implement test
+    a = zeros_like(test_image.copy())
+    a.data[0, 1, 0] = 1
+    a.data[0, 1, 1] = 5
+    a.data[0, 1, 2] = 2
+
+    expected = a.copy()
+    expected.data[0, 1, 0] = 3
+    expected.data[0, 1, 1] = 2
+    expected.data[0, 1, 2] = 1
+
+    b = sct_labels.increment_z_inverse(a)
+
+    diff = b.data == expected.data
+    assert diff.all()
 
 
 @pytest.mark.parametrize("test_seg,test_labels", [(seg_img, labels_img)])
