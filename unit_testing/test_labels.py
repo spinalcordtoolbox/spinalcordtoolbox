@@ -122,13 +122,14 @@ def test_labelize_from_discs(test_seg, test_labels):
     # TODO [AJ] implement test
 
 
-@pytest.mark.parametrize("test_image", test_images)
-def test_label_vertebrae(test_image):
-    a = test_image.copy()
-    sct_labels.label_vertebrae(a)
-    sct_labels.label_vertebrae(a, [1, 2, 3, 4])
-    # TODO [AJ] implement test
+def test_label_vertebrae():
+    a = fake_3dimage_sct2()
+    expected = zeros_like(a)
+    expected.data[0, 0, 0] = 111
+    b = sct_labels.label_vertebrae(a, [111])
 
+    diff = b.data == expected.data
+    assert diff.all()
 
 
 def test_compute_mean_squared_error():
