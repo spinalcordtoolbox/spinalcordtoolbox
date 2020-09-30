@@ -90,6 +90,7 @@ class Coordinate(Point):
             raise TypeError("All coordinates must be int and the value can be a float or a int. x=" + str(self.x) + ", y=" + str(self.y) + ", z=" + str(self.z) + ", value=" + str(self.value))
 
     def __iter__(self):
+        # Allows for this usage: "for x, y, z, v in [list of Coordinate]"
         return iter((self.x, self.y, self.z, self.value))
 
     def __repr__(self):
