@@ -7,7 +7,10 @@ Keras==2.1.5
 matplotlib
 nibabel
 numpy
-onnxruntime==1.4.0
+# Note: If a newer version (1.5.1) is installed, Mojave CI jobs will fail
+# This is temporary until a better upstream fix can be determined. (See #2930)
+onnxruntime; sys_platform != "darwin"
+onnxruntime==1.4.0; sys_platform == "darwin"
 pandas
 psutil
 pyqt5==5.11.3
