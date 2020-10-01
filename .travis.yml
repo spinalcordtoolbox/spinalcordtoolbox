@@ -103,6 +103,10 @@ matrix:
       # runs on all branches
       os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
       osx_image: xcode11.2
+      addons:
+        homebrew:
+          packages:
+            - libomp
     - name: "OSX 10.13 (High Sierra)"
       if: branch = release or type = cron
       os: osx
