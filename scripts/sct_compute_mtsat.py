@@ -109,13 +109,13 @@ def get_parser(argv):
     optional.add_argument(
         "-omtsat",
         metavar=Metavar.str,
-        help="Output file for MTsat. Default is mtsat.nii.gz",
-        default=None)
+        help="Output file for MTsat",
+        default="mtsat.nii.gz")
     optional.add_argument(
         "-ot1map",
         metavar=Metavar.str,
-        help="Output file for T1map. Default is t1map.nii.gz",
-        default=None)
+        help="Output file for T1map",
+        default="t1map.nii.gz")
     optional.add_argument(
         "-v",
         help="Verbose: 0 = no verbosity, 1 = verbose (default).",
@@ -199,20 +199,11 @@ def main(argv):
                                          nii_b1map=nii_b1map)
 
     # Output MTsat and T1 maps
-    # by default, output in the same directory as the input images
     sct.printv('Generate output files...', verbose)
-    if args.omtsat is None:
-        fname_mtsat = os.path.join(os.path.dirname(nii_mt.absolutepath), "mtsat.nii.gz")
-    else:
-        fname_mtsat = args.omtsat
-    nii_mtsat.save(fname_mtsat)
-    if args.ot1map is None:
-        fname_t1map = os.path.join(os.path.dirname(nii_mt.absolutepath), "t1map.nii.gz")
-    else:
-        fname_t1map = args.ot1map
-    nii_t1map.save(fname_t1map)
+    nii_mtsat.save(args.omtsat)
+    nii_t1map.save(args.ot1map)
 
-    sct.display_viewer_syntax([fname_mtsat, fname_t1map],
+    sct.display_viewer_syntax([args.omtsat, args.ot1map],
                               colormaps=['gray', 'gray'],
                               minmax=['-10,10', '0, 3'],
                               opacities=['1', '1'],

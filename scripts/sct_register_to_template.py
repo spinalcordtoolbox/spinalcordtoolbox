@@ -45,7 +45,6 @@ from sct_image import split_data, concat_warp2d
 # TODO: Properly test when first PR (that includes list_type) gets merged
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 import sct_apply_transfo
-import sct_concat_transfo
 
 
 class Param:
@@ -547,10 +546,12 @@ def main(args=None):
 
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
-        sct_concat_transfo.main(args=[
-            '-w', 'warp_straight2curve.nii.gz',
-            '-d', ftmp_data,
-            '-o', 'warp_straight2curve.nii.gz'])
+
+        dimensionality = len(Image(ftmp_data).hdr.get_data_shape())
+        cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_straight2curve.nii.gz', '-R', ftmp_data, 'warp_straight2curve.nii.gz']
+        status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
+        if status != 0:
+            raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
         if level_alignment:
             sct.copy('warp_curve2straight.nii.gz', 'warp_curve2straightAffine.nii.gz')
@@ -587,10 +588,12 @@ def main(args=None):
 
             # Concatenate transformations: curve --> straight --> affine
             sct.printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
-            sct_concat_transfo.main(args=[
-                '-w', ['warp_curve2straight.nii.gz', 'straight2templateAffine.txt'],
-                '-d', 'template.nii',
-                '-o', 'warp_curve2straightAffine.nii.gz'])
+
+            dimensionality = len(Image("template.nii").hdr.get_data_shape())
+            cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_curve2straightAffine.nii.gz', '-R', 'template.nii', 'straight2templateAffine.txt', 'warp_curve2straight.nii.gz']
+            status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
         # Apply transformation
         sct.printv('\nApply transformation...', verbose)
@@ -668,26 +671,30 @@ def main(args=None):
 
         # Concatenate transformations: anat --> template
         sct.printv('\nConcatenate transformations: anat --> template...', verbose)
-        sct_concat_transfo.main(args=[
-            '-w', ['warp_curve2straightAffine.nii.gz', warp_forward],
-            '-d', 'template.nii',
-            '-o', 'warp_anat2template.nii.gz'])
+
+        dimensionality = len(Image("template.nii").hdr.get_data_shape())
+        cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_anat2template.nii.gz', '-R', 'template.nii', warp_forward, 'warp_curve2straightAffine.nii.gz']
+        status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
+        if status != 0:
+            raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
         # Concatenate transformations: template --> anat
         sct.printv('\nConcatenate transformations: template --> anat...', verbose)
         # TODO: make sure the commented code below is consistent with the new implementation
         # warp_inverse.reverse()
         if level_alignment:
-            sct_concat_transfo.main(args=[
-                '-w', [warp_inverse, 'warp_straight2curve.nii.gz'],
-                '-d', 'data.nii',
-                '-o', 'warp_template2anat.nii.gz'])
+            dimensionality = len(Image("data.nii").hdr.get_data_shape())
+            cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_template2anat.nii.gz', '-R', 'data.nii', 'warp_straight2curve.nii.gz', warp_inverse]
+            status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+
         else:
-            sct_concat_transfo.main(args=[
-                '-w', [warp_inverse, 'straight2templateAffine.txt', 'warp_straight2curve.nii.gz'],
-                '-winv', ['straight2templateAffine.txt'],
-                '-d', 'data.nii',
-                '-o', 'warp_template2anat.nii.gz'])
+            dimensionality = len(Image("data.nii").hdr.get_data_shape())
+            cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_template2anat.nii.gz', '-R', 'data.nii', 'warp_straight2curve.nii.gz', '-i', 'straight2templateAffine.txt', warp_inverse]
+            status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
     # register template->subject
     elif ref == 'subject':
@@ -1039,7 +1046,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         # register src --> dest
         warp_forward_out, warp_inverse_out = register(src=src, dest=dest, step=step, param=param)
 
-        # deal with transformations with "-" as prefix. They should be inverted with calling sct_concat_transfo.
+        # deal with transformations with "-" as prefix. They should be inverted with calling isct_ComposeMultiTransform.
         if warp_forward_out[0] == "-":
             warp_forward_out = warp_forward_out[1:]
             warp_forward_winv.append(warp_forward_out)
@@ -1053,16 +1060,37 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
 
     # Concatenate transformations
     sct.printv('\nConcatenate transformations...', param.verbose)
-    sct_concat_transfo.main(args=[
-        '-w', warp_forward,
-        '-winv', warp_forward_winv,
-        '-d', 'dest.nii',
-        '-o', 'warp_src2dest.nii.gz'])
-    sct_concat_transfo.main(args=[
-        '-w', warp_inverse,
-        '-winv', warp_inverse_winv,
-        '-d', 'src.nii',
-        '-o', 'warp_dest2src.nii.gz'])
+
+    # if a warping field needs to be inverted, remove it from warp_forward
+    warp_forward = [ f for f in warp_forward if f not in warp_forward_winv]
+    dimensionality = len(Image("dest.nii").hdr.get_data_shape())
+    cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_src2dest.nii.gz', '-R', 'dest.nii']
+
+    if warp_forward_winv:
+        cmd.append('-i')
+        cmd += reversed(warp_forward_winv)
+    if warp_forward:
+        cmd += reversed(warp_forward)
+
+    status, output = sct.run(cmd, is_sct_binary=True)
+    if status != 0:
+        raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+
+    # if an inverse warping field needs to be inverted, remove it from warp_inverse_winv
+    warp_inverse = [ f for f in warp_inverse if f not in warp_inverse_winv]
+    cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_dest2src.nii.gz', '-R', 'src.nii']
+    dimensionality = len(Image("dest.nii").hdr.get_data_shape())
+
+    if warp_inverse_winv:
+        cmd.append('-i')
+        cmd += reversed(warp_inverse_winv)
+    if warp_inverse:
+        cmd += reversed(warp_inverse)
+
+    status, output = sct.run(cmd, is_sct_binary=True)
+    if status != 0:
+        raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+
 
     # TODO: make the following code optional (or move it to sct_register_multimodal)
     # Apply warping field to src data
