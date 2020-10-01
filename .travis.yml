@@ -106,7 +106,7 @@ matrix:
       addons:
         homebrew:
           packages:
-            - libomp
+            - libomp  # Needed for onnxruntime Python package, see issue #2930
     - name: "OSX 10.13 (High Sierra)"
       if: branch = release or type = cron
       os: osx
