@@ -74,15 +74,12 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     sct.printv('Path template: ' + path_template, verbose)
 
     # adjust file names if MNI-Poly-AMU template is used (by default: PAM50)
-    fname_level = get_file_label(os.path.join(path_template, 'template'), id_label=7,
-                                 output='filewithpath')  # label = spinal cord mask with discrete vertebral levels
     fname_template = get_file_label(os.path.join(path_template, 'template'), id_label=11,
                                     output='filewithpath')  # label = intevertebral dic label template (PAM50)
 
     # Open template and vertebral levels
     sct.printv('\nOpen template and vertebral levels...', verbose)
     data_template = Image(fname_template).data
-    data_disc_template = Image(fname_level).data
 
     # open anatomical volume
     im_input = Image(fname)
@@ -104,18 +101,16 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     yct = int(np.round(nyt / 2))  # direction AP
 
     # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
-    centerline_level = data_disc_template[xct, yct, :]
     # attribute value to each disc. Starts from max level, then decrease.
-    min_level = centerline_level[centerline_level.nonzero()].min()
-    max_level = centerline_level[centerline_level.nonzero()].max()
+    min_level = data_template[data_template.nonzero()].min()
+    max_level = data_template[data_template.nonzero()].max()
     list_disc_value_template = list(range(min_level, max_level))
     # add disc above top one
     list_disc_value_template.insert(int(0), min_level - 1)
     sct.printv('\nDisc values from template: ' + str(list_disc_value_template), verbose)
-    # get diff to find transitions (i.e., discs)
-    diff_centerline_level = np.diff(centerline_level)
     # get disc z-values
-    list_disc_z_template = diff_centerline_level.nonzero()[0].tolist()
+    list_disc_z_template = data_template.nonzero()[2].tolist()
+    list_disc_z_template.sort()
     list_disc_z_template.reverse()
     sct.printv('Z-values for each disc: ' + str(list_disc_z_template), verbose)
     list_distance_template = (
