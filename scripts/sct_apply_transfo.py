@@ -23,6 +23,7 @@ from spinalcordtoolbox.utils import Metavar, SmartFormatter
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
+from spinalcordtoolbox.labels import cubic_to_point
 
 import sct_utils as sct
 import sct_image
@@ -91,10 +92,10 @@ def get_parser():
         default='')
     optional.add_argument(
         "-x",
-        help=""" Interpolation method. The 'label' method is to be used if you would like to apply a transformation 
-        on a file that has single-voxel labels (classical interpolation methods won't work, as resampled labels might 
-        disappear or their values be altered). The function will dilate each label, apply the transformation using 
-        nearest neighbour interpolation, and then take the center-of-mass of each "blob" and output a single voxel per 
+        help=""" Interpolation method. The 'label' method is to be used if you would like to apply a transformation
+        on a file that has single-voxel labels (classical interpolation methods won't work, as resampled labels might
+        disappear or their values be altered). The function will dilate each label, apply the transformation using
+        nearest neighbour interpolation, and then take the center-of-mass of each "blob" and output a single voxel per
         blob.""",
         required=False,
         default='spline',
@@ -298,10 +299,8 @@ class Transform:
 
         if islabel:
             sct.printv("\nTake the center of mass of each registered dilated labels...")
-            sct.run(['sct_label_utils',
-                     '-i', fname_out,
-                     '-o', fname_out,
-                     '-cubic-to-point'])
+            labeled_img = cubic_to_point(im_src_reg)
+            labeled_img.save(path=fname_out)
             if remove_temp_files:
                 sct.printv('\nRemove temporary files...', verbose)
                 sct.rmtree(path_tmp, verbose=verbose)

@@ -16,7 +16,9 @@
 
 from __future__ import division, absolute_import
 
-import sys, os, time
+import sys
+import os
+import time
 import argparse
 
 import numpy as np
@@ -33,11 +35,12 @@ from spinalcordtoolbox.resampling import resample_file
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
+from spinalcordtoolbox.types import Coordinate
 import spinalcordtoolbox.image as msct_image
+import spinalcordtoolbox.labels as sct_labels
 
 import sct_utils as sct
 import sct_maths
-import sct_label_utils
 from sct_utils import add_suffix
 from sct_convert import convert
 from sct_image import split_data, concat_warp2d
@@ -414,11 +417,12 @@ def main(args=None):
     if label_type == 'body':
         sct.printv('\nGenerate labels from template vertebral labeling', verbose)
         ftmp_template_label_, ftmp_template_label = ftmp_template_label, sct.add_suffix(ftmp_template_label, "_body")
-        sct_label_utils.main(args=['-i', ftmp_template_label_, '-vert-body', '0', '-o', ftmp_template_label])
+        sct_labels.label_vertebrae(Image(ftmp_template_label_)).save(path=ftmp_template_label)
 
     # check if provided labels are available in the template
     sct.printv('\nCheck if provided labels are available in the template', verbose)
     image_label_template = Image(ftmp_template_label)
+
     labels_template = image_label_template.getNonZeroCoordinates(sorting='value')
     if labels[-1].value > labels_template[-1].value:
         sct.printv('ERROR: Wrong landmarks input. Labels must have correspondence in template space. \nLabel max '
@@ -464,7 +468,6 @@ def main(args=None):
         ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
         ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
 
-
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if level_alignment:
             # cropping the segmentation based on the label coverage to ensure good registration with level alignment
@@ -506,12 +509,12 @@ def main(args=None):
         cache_input_files = [ftmp_seg]
         if level_alignment:
             cache_input_files += [
-             ftmp_template_seg,
-             ftmp_label,
-             ftmp_template_label,
+                ftmp_template_seg,
+                ftmp_label,
+                ftmp_template_label,
             ]
         cache_sig = sct.cache_signature(
-         input_files=cache_input_files,
+            input_files=cache_input_files,
         )
         cachefile = os.path.join(curdir, "straightening.cache")
         if sct.cache_valid(cachefile, cache_sig) and os.path.isfile(fn_warp_curve2straight) and os.path.isfile(fn_warp_straight2curve) and os.path.isfile(fn_straight_ref):
@@ -560,7 +563,7 @@ def main(args=None):
             # --------------------------------------------------------------------------------
             # Remove unused label on template. Keep only label present in the input label image
             sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-            sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove-reference', ftmp_label])
+            sct_labels.remove_missing_labels(Image(ftmp_template_label), Image(ftmp_label)).save(path=ftmp_template_label)
 
             # Dilating the input label so they can be straighten without losing them
             sct.printv('\nDilating input labels using 3vox ball radius')
@@ -630,21 +633,21 @@ def main(args=None):
         # find min-max of anat2template (for subsequent cropping)
         zmin_template, zmax_template = msct_image.find_zmin_zmax(im_new, threshold=0.5)
         # save binarized segmentation
-        im_new.save(add_suffix(ftmp_seg, '_bin')) # unused?
+        im_new.save(add_suffix(ftmp_seg, '_bin'))  # unused?
         # crop template in z-direction (for faster processing)
         # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nCrop data in template space (for faster processing)...', verbose)
         ftmp_template_, ftmp_template = ftmp_template, add_suffix(ftmp_template, '_crop')
-        msct_image.spatial_crop(Image(ftmp_template_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template)
+        msct_image.spatial_crop(Image(ftmp_template_), dict(((2, (zmin_template, zmax_template)),))).save(ftmp_template)
 
         ftmp_template_seg_, ftmp_template_seg = ftmp_template_seg, add_suffix(ftmp_template_seg, '_crop')
-        msct_image.spatial_crop(Image(ftmp_template_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_template_seg)
+        msct_image.spatial_crop(Image(ftmp_template_seg_), dict(((2, (zmin_template, zmax_template)),))).save(ftmp_template_seg)
 
         ftmp_data_, ftmp_data = ftmp_data, add_suffix(ftmp_data, '_crop')
-        msct_image.spatial_crop(Image(ftmp_data_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_data)
+        msct_image.spatial_crop(Image(ftmp_data_), dict(((2, (zmin_template, zmax_template)),))).save(ftmp_data)
 
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
-        msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (zmin_template,zmax_template)),))).save(ftmp_seg)
+        msct_image.spatial_crop(Image(ftmp_seg_), dict(((2, (zmin_template, zmax_template)),))).save(ftmp_seg)
 
         # sub-sample in z-direction
         # TODO: refactor to use python module instead of doing i/o
@@ -663,7 +666,7 @@ def main(args=None):
 
         # TODO: find a way to input initwarp, corresponding to straightening warp
         # Set the angle of the template orientation to 0 (destination image)
-        for key in list(paramregmulti.steps.keys()) :
+        for key in list(paramregmulti.steps.keys()):
             paramregmulti.steps[key].rot_dest = 0
         fname_src2dest, fname_dest2src, warp_forward, warp_inverse = register_wrapper(
             ftmp_data, ftmp_template, param, paramregmulti, fname_src_seg=ftmp_seg, fname_dest_seg=ftmp_template_seg,
@@ -707,7 +710,7 @@ def main(args=None):
 
         # Remove unused label on template. Keep only label present in the input label image
         sct.printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
-        sct.run(['sct_label_utils', '-i', ftmp_template_label, '-o', ftmp_template_label, '-remove-reference', ftmp_label])
+        sct_labels.remove_missing_labels(Image(ftmp_template_label), Image(ftmp_label)).save(path=ftmp_template_label)
 
         # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This
         # new label is added at the level of the upper most label (lowest value), at 1cm to the right.
@@ -728,7 +731,7 @@ def main(args=None):
             # im_label.absolutepath = 'label_rpi_modif.nii.gz'
             im_label.save()
         # Set the angle of the template orientation to 0 (source image)
-        for key in list(paramregmulti.steps.keys()) :
+        for key in list(paramregmulti.steps.keys()):
             paramregmulti.steps[key].rot_src = 0
         fname_src2dest, fname_dest2src, warp_forward, warp_inverse = register_wrapper(
             ftmp_template, ftmp_data, param, paramregmulti, fname_src_seg=ftmp_template_seg, fname_dest_seg=ftmp_seg,
@@ -799,7 +802,7 @@ def project_labels_on_spinalcord(fname_label, fname_seg, param_centerline):
     # convert pixel into physical coordinates
     centerline_xyz_transposed = \
         [im_seg.transfo_pix2phys([[x_centerline_fit[i], y_centerline_fit[i], z_centerline[i]]])[0]
-                                 for i in range(len(x_centerline_fit))]
+         for i in range(len(x_centerline_fit))]
     # transpose list
     centerline_phys_x = [i[0] for i in centerline_xyz_transposed]
     centerline_phys_y = [i[1] for i in centerline_xyz_transposed]
@@ -842,22 +845,18 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     IMPORTANT: this function assumes that the origin and FOV of the two images are the SAME.
     """
     # get dimensions of input and destination files
-    nx, ny, nz, nt, px, py, pz, pt = Image(fname_labels).dim
-    nxd, nyd, nzd, ntd, pxd, pyd, pzd, ptd = Image(fname_dest).dim
+    nx, ny, nz, _, _, _, _, _ = Image(fname_labels).dim
+    nxd, nyd, nzd, _, _, _, _, _ = Image(fname_dest).dim
     sampling_factor = [float(nx) / nxd, float(ny) / nyd, float(nz) / nzd]
-    # read labels
-    processor = sct_label_utils.ProcessLabels(fname_labels)
-    label_list = processor.display_voxel()
-    label_new_list = []
-    for label in label_list:
-        label_sub_new = [str(int(np.round(int(label.x) / sampling_factor[0]))),
-                         str(int(np.round(int(label.y) / sampling_factor[1]))),
-                         str(int(np.round(int(label.z) / sampling_factor[2]))),
-                         str(int(float(label.value)))]
-        label_new_list.append(','.join(label_sub_new))
-    label_new_list = ':'.join(label_new_list)
-    # create new labels
-    sct.run(['sct_label_utils', '-i', fname_dest, '-create', label_new_list, '-v', '1', '-o', fname_output])
+
+    og_labels = Image(fname_labels).getNonZeroCoordinates()
+    new_labels = [Coordinate([int(np.round(int(x) / sampling_factor[0])),
+                              int(np.round(int(y) / sampling_factor[1])),
+                              int(np.round(int(z) / sampling_factor[2])),
+                              int(float(v))])
+                  for x, y, z, v in og_labels]
+
+    sct_labels.create_labels_empty(Image(fname_dest), new_labels).save(path=fname_output)
 
 
 def check_labels(fname_landmarks, label_type='body'):
@@ -886,11 +885,12 @@ def check_labels(fname_landmarks, label_type='body'):
             sct.printv('ERROR: Label should be integer.', 1, 'error')
     # check if there are duplicates in label values
     n_labels = len(labels)
-    list_values = [labels[i].value for i in range(0,n_labels)]
+    list_values = [labels[i].value for i in range(0, n_labels)]
     list_duplicates = [x for x in list_values if list_values.count(x) > 1]
     if not list_duplicates == []:
         sct.printv('ERROR: Found two labels with same value.', 1, 'error')
     return labels
+
 
 def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg='', fname_dest_seg='', fname_src_label='',
                      fname_dest_label='', fname_mask='', fname_initwarp='', fname_initwarpinv='', identity=False,
@@ -919,7 +919,6 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     """
     # TODO: move interp inside param.
     # TODO: merge param inside paramregmulti by having a "global" sets of parameters that apply to all steps
-
 
     # Extract path, file and extension
     path_src, file_src, ext_src = sct.extract_fname(fname_src)
@@ -1198,45 +1197,45 @@ def register(src, dest, step, param):
     # # landmark-based registration
     if step.type in ['label']:
         warp_forward_out, warp_inverse_out = register_step_label(
-         src=src,
-         dest=dest,
-         step=step,
-         verbose=param.verbose,
+            src=src,
+            dest=dest,
+            step=step,
+            verbose=param.verbose,
         )
 
     elif step.algo == 'slicereg':
         warp_forward_out, warp_inverse_out = register_step_ants_slice_regularized_registration(
-         src=src,
-         dest=dest,
-         step=step,
-         metricSize=metricSize,
-         fname_mask=fname_mask,
-         verbose=param.verbose,
+            src=src,
+            dest=dest,
+            step=step,
+            metricSize=metricSize,
+            fname_mask=fname_mask,
+            verbose=param.verbose,
         )
 
     # ANTS 3d
-    elif step.algo.lower() in ants_registration_params and step.slicewise == '0': # FIXME [AJ]
+    elif step.algo.lower() in ants_registration_params and step.slicewise == '0':  # FIXME [AJ]
         warp_forward_out, warp_inverse_out = register_step_ants_registration(
-         src=src,
-         dest=dest,
-         step=step,
-         masking=masking,
-         ants_registration_params=ants_registration_params,
-         padding=param.padding,
-         metricSize=metricSize,
-         verbose=param.verbose,
+            src=src,
+            dest=dest,
+            step=step,
+            masking=masking,
+            ants_registration_params=ants_registration_params,
+            padding=param.padding,
+            metricSize=metricSize,
+            verbose=param.verbose,
         )
 
     # ANTS 2d
-    elif step.algo.lower() in ants_registration_params and step.slicewise == '1': # FIXME [AJ]
+    elif step.algo.lower() in ants_registration_params and step.slicewise == '1':  # FIXME [AJ]
         warp_forward_out, warp_inverse_out = register_step_slicewise_ants(
-         src=src,
-         dest=dest,
-         step=step,
-         ants_registration_params=ants_registration_params,
-         fname_mask=fname_mask,
-         remove_temp_files=param.remove_temp_files,
-         verbose=param.verbose,
+            src=src,
+            dest=dest,
+            step=step,
+            ants_registration_params=ants_registration_params,
+            fname_mask=fname_mask,
+            remove_temp_files=param.remove_temp_files,
+            verbose=param.verbose,
         )
 
     # slice-wise transfo
@@ -1246,12 +1245,12 @@ def register(src, dest, step, param):
             sct.printv('\nWARNING: algo ' + step.algo + ' will ignore the provided mask.\n', 1, 'warning')
 
         warp_forward_out, warp_inverse_out = register_step_slicewise(
-         src=src,
-         dest=dest,
-         step=step,
-         ants_registration_params=ants_registration_params,
-         remove_temp_files=param.remove_temp_files,
-         verbose=param.verbose,
+            src=src,
+            dest=dest,
+            step=step,
+            ants_registration_params=ants_registration_params,
+            remove_temp_files=param.remove_temp_files,
+            verbose=param.verbose,
         )
 
     else:
