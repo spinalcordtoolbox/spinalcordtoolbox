@@ -438,8 +438,11 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         # convert subject pattern to 1d profile
         data_chunk1d = np.sum(data_chunk3d, axis=(0, 1))
         # check if data_chunk1d contains at least one non-zero value
-        if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d):
-            a = np.correlate(data_chunk1d, pattern1d) / np.correlate(pattern1d, pattern1d)
+        if (data_chunk1d.size == pattern1d.size) and np.any(data_chunk1d) and np.any(pattern1d):
+            # Normalize value before correlation (correlation tends to diminish otherwise since label value increases)
+            pattern1d_norm = pattern1d / (max(pattern1d))
+            data_chunk1d_norm = data_chunk1d / (max(data_chunk1d))
+            a = np.correlate(data_chunk1d_norm, pattern1d_norm)
             I_corr[ind_I] = a
         else:
             allzeros = 1
