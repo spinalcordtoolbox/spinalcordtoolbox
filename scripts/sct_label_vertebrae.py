@@ -310,12 +310,17 @@ def main(args=None):
         ])
         sct.cache_save(cachefile, cache_sig)
 
+    # resample to 0.5mm isotropic to match template resolution
+    sct.printv('\nResample to 0.5mm isotropic...', verbose)
+    s, o = sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o',
+                        'data_straightr.nii'], verbose=verbose)
+
     # Apply straightening to segmentation
     # N.B. Output is RPI
     sct.printv('\nApply straightening to segmentation...', verbose)
     sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
             ('segmentation.nii',
-             'data_straight.nii',
+             'data_straightr.nii',
              'warp_curve2straight.nii.gz',
              'segmentation_straight.nii',
              'Linear'),
@@ -351,7 +356,7 @@ def main(args=None):
                 nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
                 z_center = int(np.round(nz / 2))  # get z_center
                 initz = [z_center, initcenter]
-                
+
             im_label = create_labels_along_segmentation(Image('segmentation.nii'), [(initz[0],initz[1])])
             im_label.data = dilate(im_label.data, 3, 'ball')
             im_label.save(fname_labelz)
@@ -385,7 +390,7 @@ def main(args=None):
         sct.printv('\nAnd apply straightening to label...', verbose)
         sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
                 (file_labelz,
-                 'data_straight.nii',
+                 'data_straightr.nii',
                  'warp_curve2straight.nii.gz',
                  'labelz_straight.nii.gz',
                  'NearestNeighbor'),
@@ -402,16 +407,16 @@ def main(args=None):
         # denoise data
         if denoise:
             sct.printv('\nDenoise data...', verbose)
-            sct.run(['sct_maths', '-i', 'data_straight.nii', '-denoise', 'h=0.05', '-o', 'data_straight.nii'],
+            sct.run(['sct_maths', '-i', 'data_straightr.nii', '-denoise', 'h=0.05', '-o', 'data_straightr.nii'],
                     verbose)
 
         # apply laplacian filtering
         if laplacian:
             sct.printv('\nApply Laplacian filter...', verbose)
-            sct.run(['sct_maths', '-i', 'data_straight.nii', '-laplacian', '1', '-o', 'data_straight.nii'], verbose)
+            sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
 
         # detect vertebral levels on straight spinal cord
-        vertebral_detection('data_straight.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
+        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
                             verbose=verbose, path_template=path_template, path_output=path_output,
                             scale_dist=scale_dist)
 

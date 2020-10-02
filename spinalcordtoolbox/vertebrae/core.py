@@ -90,7 +90,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # get dimension of src
     nx, ny, nz = data.shape
-    nz = nz * 2
     # define xc and yc (centered in the field of view)
     xc = int(np.round(nx / 2))  # direction RL
     yc = int(np.round(ny / 2))  # direction AP
@@ -548,7 +547,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
             vertebral_level = 0
         else:
             # assign vertebral level (add one because iz is BELOW the disk)
-            vertebral_level = list_disc_value[ind_above_iz]
+            vertebral_level = list_disc_value[ind_above_iz] + 1
             # sct.printv(vertebral_level)
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
