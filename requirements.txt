@@ -35,3 +35,5 @@ xlwt
 tqdm
 transforms3d
 urllib3[secure]
+pytest_console_scripts
+pytest-xdist

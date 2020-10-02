@@ -22,8 +22,8 @@ from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_valu
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
+from spinalcordtoolbox.labels import create_labels_along_segmentation
 
-from sct_label_utils import ProcessLabels
 # TODO: Properly test when first PR (that includes list_type) gets merged
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
 import sct_utils as sct
@@ -351,15 +351,13 @@ def main(args=None):
                 nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
                 z_center = int(np.round(nz / 2))  # get z_center
                 initz = [z_center, initcenter]
-            # create single label and output as labels.nii.gz
-            label = ProcessLabels('segmentation.nii', fname_output='tmp.labelz.nii.gz',
-                                  coordinates=['{},{}'.format(initz[0], initz[1])])
-            im_label = label.process('create-seg')
-            im_label.data = dilate(im_label.data, 3, 'ball')  # TODO: create a dilation method specific to labels,
-            # which does not apply a convolution across all voxels (highly inneficient)
-            im_label.save(fname_labelz)
+                im_label = create_labels_along_segmentation(Image('segmentation.nii'), [(initz[0],initz[1])])
+                im_label.data = dilate(im_label.data, 3, 'ball')
+                im_label.save(fname_labelz)
+
         elif fname_initlabel:
             Image(fname_initlabel).save(fname_labelz)
+
         else:
             # automatically finds C2-C3 disc
             im_data = Image('data.nii')

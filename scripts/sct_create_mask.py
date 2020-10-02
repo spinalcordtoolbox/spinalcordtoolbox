@@ -30,6 +30,8 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from sct_image import concat_data
 from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.labels import create_labels
+from spinalcordtoolbox.types import Coordinate
 
 
 # DEFAULT PARAMETERS
@@ -211,14 +213,9 @@ def create_mask(param):
         coord = [x for x in map(int, method_val.split('x'))]
 
     if method_type == 'point':
-        # get file name
         # extract coordinate of point
         sct.printv('\nExtract coordinate of point...', param.verbose)
-        # TODO: change this way to remove dependence to sct.run. ProcessLabels.display_voxel returns list of coordinates
-        status, output = sct.run(['sct_label_utils', '-i', 'point_RPI.nii', '-display'], verbose=param.verbose)
-        # parse to get coordinate
-        # TODO fixup... this is quite magic
-        coord = output[output.find('Position=') + 10:-17].split(',')
+        coord = Image("point_RPI.nii").getNonZeroCoordinates()
 
     if method_type == 'center':
         # set coordinate at center of FOV
@@ -299,15 +296,16 @@ def create_line(param, fname, coord, nz):
     # set all voxels to zero
     sct.run(['sct_maths', '-i', 'line.nii', '-mul', '0', '-o', 'line.nii'], param.verbose)
 
-    create_add_str = ""
-    for iz in range(nz):
-        if iz == nz - 1:
-            create_add_str += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1'
-        else:
-            create_add_str += str(int(coord[0])) + ',' + str(int(coord[1])) + ',' + str(iz) + ',1:'
+    labels = []
 
-    cmd = ['sct_label_utils', '-i', 'line.nii', '-o', 'line.nii', '-create-add', create_add_str]
-    sct.run(cmd, param.verbose)
+    if isinstance(coord[0], Coordinate):
+        for x, y, _, _ in coord:
+            labels.extend([ Coordinate([x, y, iz, 1]) for iz in range(nz) ])
+    else:
+        # backwards compat
+        labels.extend([ Coordinate([coord[0], coord[1], iz, 1]) for iz in range(nz) ])
+
+    create_labels(Image("line.nii"), labels).save(path="line.nii")
 
     return 'line.nii'
 
