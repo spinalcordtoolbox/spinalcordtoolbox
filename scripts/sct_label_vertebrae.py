@@ -351,9 +351,10 @@ def main(args=None):
                 nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
                 z_center = int(np.round(nz / 2))  # get z_center
                 initz = [z_center, initcenter]
-                im_label = create_labels_along_segmentation(Image('segmentation.nii'), [(initz[0],initz[1])])
-                im_label.data = dilate(im_label.data, 3, 'ball')
-                im_label.save(fname_labelz)
+                
+            im_label = create_labels_along_segmentation(Image('segmentation.nii'), [(initz[0],initz[1])])
+            im_label.data = dilate(im_label.data, 3, 'ball')
+            im_label.save(fname_labelz)
 
         elif fname_initlabel:
             Image(fname_initlabel).save(fname_labelz)
