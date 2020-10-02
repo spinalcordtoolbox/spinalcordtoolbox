@@ -366,21 +366,16 @@ def main(args=None):
                 verbose_detect_c2c3 = 2
             else:
                 verbose_detect_c2c3 = 0
-
             im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose_detect_c2c3)
             ind_label = np.where(im_label_c2c3.data)
-
             if not np.size(ind_label) == 0:
-                # subtract "1" to label value because due to legacy,
-                # in this code the disc C2-C3 has value "2", whereas in the
-                # recent version of SCT it is defined as "3".
+                # Disc C2/C3 has value 3.
                 im_label_c2c3.data[ind_label] = 3
             else:
                 sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1,
                            'error')
                 sys.exit()
             im_label_c2c3.save(fname_labelz)
-            # end of tested part
 
         # dilate label so it is not lost when applying warping
         dilate(Image(fname_labelz), 5, 'ball').save(fname_labelz)

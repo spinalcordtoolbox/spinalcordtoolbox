@@ -168,7 +168,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     sct.run('sct_resample -i %s -mm 0.5 -x nn -o %s' % (fname_seg, fname_seg))
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
-    im_lab = Image(fname_template)
     while search_next_disc:
         sct.printv('Current disc: ' + str(current_disc) + ' (z=' + str(current_z) + '). Direction: ' + direction,
                    verbose)
@@ -182,7 +181,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
         if current_disc != 1 and current_disc != 2:
-            current_z = compute_corr_3d(data_hm, im_lab.data, x=xc, xshift=0, xsize=param.size_RL,
+            current_z = compute_corr_3d(data_hm, data_template, x=xc, xshift=0, xsize=param.size_RL,
                                         y=yc, yshift=param.shift_AP, ysize=param.size_AP,
                                         z=current_z, zshift=0, zsize=param.size_IS,
                                         xtarget=xct, ytarget=yct, ztarget=current_z_template,
