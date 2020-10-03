@@ -179,14 +179,17 @@ def get_parser():
         "-smooth",
         metavar=Metavar.list,
         type=list_type(',', float),
-        help='Gaussian smoothing filter with specified standard deviations in mm for each axis (Example: 2,2,1) or '
-             'single value for all axis (Example: 2).',
+        help='Gaussian smoothing filtering. Supply values for standard deviations in mm. If a single value is provided, '
+             'it will be applied to each axis of the image. If multiple values are provided, there must be one value '
+             'per image axis. (Examples: "-smooth 2,3,2" (3D image), "-smooth 2" (any-D image)).',
         required=False)
     filtering.add_argument(
         '-laplacian',
         metavar=Metavar.list,
         type=list_type(',', float),
-        help='Laplacian filtering with specified standard deviations in mm for all axes (Example: 2).',
+        help='Laplacian filtering. Supply values for standard deviations in mm. If a single value is provided, it will '
+             'be applied to each axis of the image. If multiple values are provided, there must be one value per '
+             'image axis. (Examples: "-laplacian 2,3,2" (3D image), "-laplacian 2" (any-D image)).',
         required=False)
     filtering.add_argument(
         '-denoise',
