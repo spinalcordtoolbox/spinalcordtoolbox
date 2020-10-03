@@ -126,9 +126,11 @@ def get_parser():
         "-otsu-median",
         metavar=Metavar.list,
         type=list_type(',', int),
-        help="R|Threshold image using Median Otsu algorithm. Separate following arguments with ',':"
-             "\n Size of the median filter (e.g. 2, 3)"
-             "\n Number of iterations (e.g. 3, 4, 5)\n",
+        help="R|Threshold image using Median Otsu algorithm (from dipy). Provide 2 values separated by ',' that "
+             "correspond to the parameters below. For example, '-otsu-median 3,5' corresponds to a filter size of 3 "
+             "repeated over 5 iterations.\n"
+             "  - Size: Radius (in voxels) of the applied median filter.\n"
+             "  - Iterations: Number of passes of the median filter.",
         required=False)
     thresholding.add_argument(
         '-percent',
