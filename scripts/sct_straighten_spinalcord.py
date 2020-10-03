@@ -239,7 +239,7 @@ def main(args=None):
     sct.init_sct(log_level=verbose, update=True)  # Update log level
     sc_straight.verbose = verbose
 
-    # if "-cpu-nb" in arguments:
+    # if arguments.cpu_nb is not None:
     #     sc_straight.cpu_number = arguments.cpu-nb)
     if arguments.disable_straight2curved:
         sc_straight.straight2curved = False

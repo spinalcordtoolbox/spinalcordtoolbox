@@ -35,6 +35,7 @@ def get_parser():
     input_output = parser.add_argument_group("\nINPUT/OUTPUT")
     input_output.add_argument(
         "-i",
+        required=True,
         help="Image to segment.",
         metavar=sct.utils.Metavar.file)
     input_output.add_argument(
@@ -118,41 +119,38 @@ def get_parser():
 def main():
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    args = {k: v for k, v in vars(args).items() if v is not None}
 
     # Deal with model
-    if args['list_models']:
+    if args.list_models is not None:
         sct.deepseg.models.display_list_models()
 
     # Deal with task
-    if args['list_tasks']:
+    if args.list_tasks is not None:
         sct.deepseg.models.display_list_tasks()
 
-    if 'install_model' in args:
-        sct.deepseg.models.install_model(args['install_model'])
+    if args.install_model is not None:
+        sct.deepseg.models.install_model(args.install_model)
         exit(0)
 
-    if 'install_task' in args:
-        for name_model in sct.deepseg.models.TASKS[args['install_task']]['models']:
+    if args.install_task is not None:
+        for name_model in sct.deepseg.models.TASKS[args.install_task]['models']:
             sct.deepseg.models.install_model(name_model)
         exit(0)
 
     # Deal with input/output
-    if 'i' not in args:
-        parser.error("The following arguments is required: -i")
-    if not os.path.isfile(args['i']):
-        parser.error("This file does not exist: {}".format(args['i']))
+    if not os.path.isfile(args.i):
+        parser.error("This file does not exist: {}".format(args.i))
 
     # Check if at least a model or task has been specified
-    if 'model' not in args and 'task' not in args:
+    if args.model is None and args.task is None:
         parser.error("You need to specify a model or a task.")
 
     # Get pipeline model names
-    if 'task' in args:
-        name_models = sct.deepseg.models.TASKS[args['task']]['models']
+    if args.task is not None:
+        name_models = sct.deepseg.models.TASKS[args.task]['models']
 
-    if 'model' in args:
-        name_models = args['model']
+    if args.model is not None:
+        name_models = args.model
 
     # Run pipeline by iterating through the models
     fname_prior = None
@@ -171,11 +169,11 @@ def main():
                 parser.error("The input model is invalid: {}".format(path_model))
 
         # Call segment_nifti
-        fname_seg = sct.deepseg.core.segment_nifti(args['i'], path_model, fname_prior, args)
+        fname_seg = sct.deepseg.core.segment_nifti(args.i, path_model, fname_prior, args)
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
 
-    display_viewer_syntax([args['i'], fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    display_viewer_syntax([args.i, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == '__main__':
