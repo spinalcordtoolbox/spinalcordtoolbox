@@ -43,7 +43,9 @@ class WarpingField(Image):
 
 if __name__ == "__main__":
     sct.init_sct()
-    from msct_parser import Parser
+
+    # TODO: Convert to argparse when fixing this script
+    # from msct_parser import Parser
     import sys
 
     parser = Parser(__file__)
