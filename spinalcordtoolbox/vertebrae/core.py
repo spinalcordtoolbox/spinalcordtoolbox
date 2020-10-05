@@ -637,7 +637,6 @@ def label_disc_posterior(list_disc_z, list_disc_value, fname_hm, fname_data):
     image_out = Image(fname_data)
     nx, ny, nz = image_out.dim[0], image_out.dim[1], image_out.dim[2]
     data_disc = np.zeros([nx, ny, nz])
-    print(nx)
     AP_profile = np.sum(im_hm.data[:, :, :], axis=(0, 2))
     default = np.argmax(AP_profile)
     for iz in range(len(list_disc_z)):
