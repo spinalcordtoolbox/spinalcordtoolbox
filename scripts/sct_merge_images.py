@@ -205,7 +205,7 @@ def main():
     list_fname_warp = arguments.w
     param.fname_out = arguments.o
 
-    # if '-ofolder' in arguments:
+    # if arguments.ofolder is not None
     #     path_results = arguments.ofolder
     if arguments.x is not None:
         param.interp = arguments.x

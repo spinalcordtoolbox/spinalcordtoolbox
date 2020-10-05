@@ -254,10 +254,7 @@ def main(args=None):
     fname_out = arguments.o
     verbose = arguments.v
     init_sct(log_level=verbose, update=True)  # Update log level
-    if '-type' in arguments:
-        output_type = arguments.type
-    else:
-        output_type = None
+    output_type = arguments.type
 
     # Open file(s)
     im = Image(fname_in)
@@ -406,13 +403,13 @@ def main(args=None):
     #     for im_in, d_out, fn_out in zip(nii, data_out, fname_out):
     #         im_in.data = d_out
     #         im_in.absolutepath = fn_out
-    #         if "-w" in arguments:
+    #         if arguments.w is not None:
     #             im_in.hdr.set_intent('vector', (), '')
     #         im_in.save()
     # elif n_out == 1:
     #     nii[0].data = data_out[0]
     #     nii[0].absolutepath = fname_out[0]
-    #     if "-w" in arguments:
+    #     if arguments.w is not None:
     #             nii[0].hdr.set_intent('vector', (), '')
     #     nii[0].save()
     # elif n_out > n_in:
@@ -420,7 +417,7 @@ def main(args=None):
     #         im_out = nii[0].copy()
     #         im_out.data = dat_out
     #         im_out.absolutepath = name_out
-    #         if "-w" in arguments:
+    #         if arguments.w is not None:
     #             im_out.hdr.set_intent('vector', (), '')
     #         im_out.save()
     # else:
