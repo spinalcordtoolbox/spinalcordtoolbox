@@ -409,7 +409,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         if z + iz + zsize + 1 > nz:
             sct.printv('iz=' + str(iz) + ': padding on top')
             padding_size = z + iz + zsize + 1 - nz
-            data_chunk3d = src[xtarget - xsize:xtarget + xsize,
+            data_chunk3d = src[:,
                                y + yshift: y + yshift + ysize + 1,
                                z + iz - zsize: z + iz + zsize + 1 - padding_size]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant',
@@ -418,7 +418,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         elif z + iz - zsize < 0:
             sct.printv('iz=' + str(iz) + ': padding at bottom')
             padding_size = abs(iz - zsize)
-            data_chunk3d = src[xtarget - xsize:xtarget + xsize,
+            data_chunk3d = src[:,
                                y + yshift - ysize: y + yshift + ysize + 1,
                                z + iz - zsize + padding_size: z + iz + zsize + 1]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
