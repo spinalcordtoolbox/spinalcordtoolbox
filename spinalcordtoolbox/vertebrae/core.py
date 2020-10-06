@@ -307,7 +307,6 @@ def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
     nii.data = dilate(nii.data, 3, 'ball')
     nii.change_orientation(orientation_origin)  # put back in original orientation
     nii.save(fname_labelz)
-    sct.run('sct_resample -i %s -mm 1x1x1 -x nn ' % (fname_labelz))
     return fname_labelz
 
 
@@ -572,7 +571,6 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     # write file
 
     seg.change_orientation(init_orientation).save(sct.add_suffix(fname_seg, '_labeled'))
-    sct.run('sct_resample -i segmentation_straight_labeled.nii -mm 1x1x1 -x nn -o segmentation_straight_labeled.nii')
 
 
 def label_discs(fname_seg_labeled, verbose=1):
