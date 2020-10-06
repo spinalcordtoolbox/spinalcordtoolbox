@@ -179,7 +179,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             break
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
-        if current_disc != 1 and current_disc != 2:
+        if current_disc != 1:
             current_z = compute_corr_3d(data_hm, data_template, x=xc, xshift=0, xsize=param.size_RL,
                                         y=yc, yshift=param.shift_AP, ysize=param.size_AP,
                                         z=current_z, zshift=0, zsize=param.size_IS,
