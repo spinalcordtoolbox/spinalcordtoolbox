@@ -191,8 +191,10 @@ def get_parser(paramregmulti=None):
     )
     optional.add_argument(
         '-identity',
-        choices=['0', '1'],
-        default='0',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
         help="Just put source into destination (no optimization)."
     )
     optional.add_argument(
@@ -232,8 +234,10 @@ def get_parser(paramregmulti=None):
     )
     optional.add_argument(
         '-r',
-        choices=['0', '1'],
-        default='1',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,
         help="Whether to remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
@@ -328,9 +332,9 @@ def main(args=None):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
-    identity = int(arguments.identity)
+    identity = arguments.identity
     interp = arguments.x
-    remove_temp_files = int(arguments.r)
+    remove_temp_files = arguments.r
     verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
 

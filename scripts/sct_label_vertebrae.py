@@ -154,15 +154,19 @@ def get_parser():
     )
     optional.add_argument(
         '-denoise',
-        choices=['0', '1'],
-        default='0',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
         help="Apply denoising filter (non-local means adaptative denoising) to the data. Sometimes denoising is too "
              "aggressive, so use with care."
     )
     optional.add_argument(
         '-laplacian',
-        choices=['0', '1'],
-        default='0',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
         help="Apply Laplacian filtering. More accurate but could mistake disc depending on anatomy."
     )
     optional.add_argument(
@@ -190,8 +194,10 @@ def get_parser():
     )
     optional.add_argument(
         '-r',
-        choices=['0', '1'],
-        default='1',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,
         help="Remove temporary files."
     )
     optional.add_argument(
@@ -269,9 +275,9 @@ def main(args=None):
         param.update(arguments.param[0])
     verbose = int(arguments.v)
     sct.init_sct(log_level=verbose, update=True)  # Update log level
-    remove_temp_files = int(arguments.r)
-    denoise = int(arguments.denoise)
-    laplacian = int(arguments.laplacian)
+    remove_temp_files = arguments.r
+    denoise = arguments.denoise
+    laplacian = arguments.laplacian
 
     path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
 
