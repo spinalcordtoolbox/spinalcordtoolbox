@@ -337,4 +337,8 @@ Applications
    Internal Medicine, 2020 <https://pubmed.ncbi.nlm.nih.gov/33006411/>`__
 -  `Azzarito et al. Simultaneous voxel‐wise analysis of brain and 
    spinal cord morphometry and microstructure within the SPM framework. 
-   Human Brain Mapping. 2020 <https://pubmed.ncbi.nlm.nih.gov/32991031/>`__
+   Human Brain Mapping, 2020 <https://pubmed.ncbi.nlm.nih.gov/32991031/>`__
+-  `Paliwal et al. Magnetization Transfer Ratio and Morphometrics Of the 
+   Spinal Cord Associates withSurgical Recovery in Patients with 
+   Degenerative Cervical Myelopathy. World Neurosurgery, 2020 
+   <https://pubmed.ncbi.nlm.nih.gov/33010502/>`__
