@@ -332,3 +332,13 @@ Applications
    <https://www.sciencedirect.com/science/article/pii/S0035378720306159>`__
 -  `Dahlberg et al. Heritability of cervical spinal cord structure. 
    Neurol Genet, 2020 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7061306/>`__
+-  `Shinn et al. Magnetization transfer and diffusion tensor imaging in dogs
+   with intervertebral disk herniation. Journal of Veterinary 
+   Internal Medicine, 2020 <https://pubmed.ncbi.nlm.nih.gov/33006411/>`__
+-  `Azzarito et al. Simultaneous voxel‐wise analysis of brain and 
+   spinal cord morphometry and microstructure within the SPM framework. 
+   Human Brain Mapping, 2020 <https://pubmed.ncbi.nlm.nih.gov/32991031/>`__
+-  `Paliwal et al. Magnetization Transfer Ratio and Morphometrics Of the 
+   Spinal Cord Associates withSurgical Recovery in Patients with 
+   Degenerative Cervical Myelopathy. World Neurosurgery, 2020 
+   <https://pubmed.ncbi.nlm.nih.gov/33010502/>`__
