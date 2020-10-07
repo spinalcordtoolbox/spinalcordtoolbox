@@ -202,7 +202,6 @@ def main(args=None):
         # im_dest.header = im_in.header
         im_dest_new.absolutepath = im_dest.absolutepath
         im_out = [im_dest_new]
-        fname_out = fname_out
 
     elif arguments.display_warp:
         im_in = fname_in[0]
