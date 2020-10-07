@@ -425,7 +425,7 @@ class TabPanelPropSeg(SCTPanel):
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
         fname_out = "{}_seg.{}".format(fname, fext)
-        cmd_line = "sct_propseg -i {} -c {}".format(fname_input, contrast)
+        cmd_line = f"sct_propseg -i {fname_input} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
@@ -491,7 +491,7 @@ class TabPanelSCSeg(SCTPanel):
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
         fname_out = "{}_seg.{}".format(fname, fext)
-        cmd_line = "sct_deepseg_sc -i {} -c {}".format(fname_input, contrast)
+        cmd_line = f"sct_deepseg_sc -i {fname_input} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
@@ -548,8 +548,8 @@ class TabPanelGMSeg(SCTPanel):
 
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
-        fname_out = "{}_gmseg.{}".format(fname, fext)
-        cmd_line = "sct_deepseg_gm -i {} -o {}".format(fname_input, fname_out)
+        default_fname_out = "{}_gmseg.{}".format(fname, fext)
+        cmd_line = f"sct_deepseg_gm -i {fname_input} -o {os.path.join(self.hbox_ofolder.get_output_folder(), default_fname_out)}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
@@ -631,7 +631,7 @@ class TabPanelVertLB(SCTPanel):
         base_name = os.path.basename(fname_seg)
         fname, fext = base_name.split(os.extsep, 1)
         fname_out = "{}_labeled.{}".format(fname, fext)
-        cmd_line = "sct_label_vertebrae -i {} -s {} -c {}".format(fname_im, fname_seg, contrast)
+        cmd_line = f"sct_label_vertebrae -i {fname_im} -s {fname_seg} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
@@ -724,8 +724,7 @@ class TabPanelRegisterToTemplate(SCTPanel):
             return
 
         contrast = self.rbox_contrast.GetStringSelection()
-        cmd_line = \
-            "sct_register_to_template -i {} -s {} -ldisc {} -c {}".format(fname_im, fname_seg, fname_label, contrast)
+        cmd_line = f"sct_register_to_template -i {fname_im} -s {fname_seg} -ldisc {fname_label} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
