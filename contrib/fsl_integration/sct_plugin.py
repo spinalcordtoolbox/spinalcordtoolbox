@@ -35,6 +35,10 @@ import wx.html as html
 logger = logging.getLogger(__name__)
 aui_manager = frame.getAuiManager() # from FSLeyes context
 
+# keep track of all output folder text inputs so that we can update
+# all of them if one changes
+ofolder_txt_ctrls = []
+
 class ErrorDialog(wx.Dialog):
     """
     Panel to display if there is an error, instructing user what to do.
@@ -203,6 +207,46 @@ class TextBox:
         return self.textctrl.GetValue()
 
 
+class OutputFolderWidget():
+    """
+    Custom widget to allow selecting the output folder and displaying it.
+    """
+    def __init__(self, sctpanel):
+        self.sct_panel = sctpanel
+        self.hbox = wx.BoxSizer(wx.HORIZONTAL)
+        self.textctrl = wx.TextCtrl(sctpanel)
+        self.textctrl.SetValue(self.sct_panel.ofolder)
+
+        button_select_ofolder = wx.Button(self.sct_panel, -1, label="Set Output Folder")
+        button_select_ofolder.Bind(wx.EVT_BUTTON, self.on_button_select_ofolder)
+
+        self.hbox.Add(button_select_ofolder, 0, wx.ALIGN_LEFT| wx.RIGHT, 10)
+        self.hbox.Add(self.textctrl, 1, wx.ALIGN_LEFT|wx.LEFT, 10)
+        ofolder_txt_ctrls.append(self)
+
+    def on_button_select_ofolder(self, event):
+        """
+        Select a dir dialog
+        """
+        dlg = wx.DirDialog (None, "Choose output directory", "",
+                    wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            ofolder = dlg.GetPath()
+            self.update_all_ofolders(ofolder)
+            logger.info(f"Output folder set to: {ofolder}")
+
+    def get_output_folder(self):
+        return self.textctrl.GetValue()
+
+    def update_all_ofolders(self, ofolder):
+        """
+        Update all ofolder text controls for convenience.
+        """
+        for ctrl in ofolder_txt_ctrls:
+            ctrl.textctrl.SetValue(ofolder)
+
+
 # Creates the standard panel for each tool
 class SCTPanel(wx.Panel):
     """
@@ -223,6 +267,8 @@ class SCTPanel(wx.Panel):
 
     def __init__(self, parent, id_):
         super(SCTPanel, self).__init__(parent=parent, id=id_)
+
+        self.ofolder = os.getcwd()
 
         # main layout consists of one row with 3 main columns
         self.main_row = wx.BoxSizer(wx.HORIZONTAL)
@@ -348,6 +394,7 @@ class TabPanelPropSeg(SCTPanel):
         super(TabPanelPropSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
         self.hbox_filein = TextBox(self, label="Input file")
+        self.hbox_ofolder = OutputFolderWidget(self)
         lbl_contrasts = ['t1', 't2', 't2s', 'dwi']
 
         self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
@@ -360,6 +407,7 @@ class TabPanelPropSeg(SCTPanel):
 
         self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND|wx.ALL, 5)
         self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
+        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND|wx.ALL, 5)
         self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
@@ -387,6 +435,7 @@ class TabPanelPropSeg(SCTPanel):
         opts.cmap = 'red'
 
 
+
 class TabPanelSCSeg(SCTPanel):
     """
     sct_deepseg_sc
@@ -412,6 +461,7 @@ class TabPanelSCSeg(SCTPanel):
         super(TabPanelSCSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
         self.hbox_filein = TextBox(self, label="Input file")
+        self.hbox_ofolder = OutputFolderWidget(self)
         lbl_contrasts = ['t1', 't2', 't2s', 'dwi']
         self.rbox_contrast = wx.RadioBox(self, label='Select contrast:',
                                          choices=lbl_contrasts,
@@ -423,6 +473,7 @@ class TabPanelSCSeg(SCTPanel):
 
         self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND|wx.ALL, 5)
         self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
+        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND|wx.ALL, 5)
         self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
@@ -475,11 +526,13 @@ class TabPanelGMSeg(SCTPanel):
         super(TabPanelGMSeg, self).__init__(parent=parent, id_=wx.ID_ANY)
 
         self.hbox_filein = TextBox(self, label="Input file")
+        self.hbox_ofolder = OutputFolderWidget(self)
 
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
         button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
 
         self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND|wx.ALL, 5)
         self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
@@ -532,6 +585,7 @@ class TabPanelVertLB(SCTPanel):
         super(TabPanelVertLB, self).__init__(parent=parent, id_=wx.ID_ANY)
 
         self.hbox_im = TextBox(self, label="Input image")
+        self.hbox_ofolder = OutputFolderWidget(self)
         self.hbox_seg = TextBox(self, label="Input segmentation")
 
         lbl_contrasts = ['t1', 't2']
@@ -547,6 +601,7 @@ class TabPanelVertLB(SCTPanel):
         self.column_center.Add(self.hbox_im.hbox, 0, wx.EXPAND|wx.ALL, 5)
         self.column_center.Add(self.hbox_seg.hbox, 0, wx.EXPAND|wx.ALL, 5)
         self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
+        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND|wx.ALL, 5)
         self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
@@ -614,6 +669,7 @@ class TabPanelRegisterToTemplate(SCTPanel):
         super(TabPanelRegisterToTemplate, self).__init__(parent=parent, id_=wx.ID_ANY)
 
         self.hbox_im = TextBox(self, label="Input image")
+        self.hbox_ofolder = OutputFolderWidget(self)
         self.hbox_seg = TextBox(self, label="Input segmentation")
         self.hbox_label = TextBox(self, label="Input labels")
 
@@ -630,6 +686,7 @@ class TabPanelRegisterToTemplate(SCTPanel):
         self.column_center.Add(self.hbox_seg.hbox, 0, wx.EXPAND|wx.ALL, 5)
         self.column_center.Add(self.hbox_label.hbox, 0, wx.EXPAND|wx.ALL, 5)
         self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
+        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND|wx.ALL, 5)
         self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
