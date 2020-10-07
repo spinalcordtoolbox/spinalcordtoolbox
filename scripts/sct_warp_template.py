@@ -170,14 +170,18 @@ def get_parser():
     )
     optional.add_argument(
         '-a',
-        choices=['0', '1'],
-        default=str(param_default.warp_atlas),
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=param_default.warp_atlas,
         help="Warp atlas of white matter."
     )
     optional.add_argument(
         '-s',
-        choices=['0', '1'],
-        default=str(param_default.warp_spinal_levels),
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=param_default.warp_spinal_levels,
         help="Warp spinal levels."
     )
     optional.add_argument(
@@ -228,8 +232,8 @@ def main(args=None):
 
     fname_src = arguments.d
     fname_transfo = arguments.w
-    warp_atlas = int(arguments.a)
-    warp_spinal_levels = int(arguments.s)
+    warp_atlas = arguments.a
+    warp_spinal_levels = arguments.s
     folder_out = arguments.ofolder
     path_template = arguments.t
     verbose = int(arguments.v)

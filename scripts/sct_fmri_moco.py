@@ -105,8 +105,10 @@ def get_parser():
     )
     optional.add_argument(
         '-r',
-        choices=['0', '1'],
-        default='1',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,
         help="Remove temporary files. O = no, 1 = yes"
     )
     optional.add_argument(
@@ -129,7 +131,7 @@ def main():
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     param.fname_data = arguments.i
     param.path_out = arguments.ofolder
-    param.remove_temp_files = int(arguments.r)
+    param.remove_temp_files = arguments.r
     param.interp = arguments.x
     if arguments.g is not None:
         param.group_size = arguments.g
