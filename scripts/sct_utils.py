@@ -31,9 +31,6 @@ import spinalcordtoolbox.utils as utils
 
 logger = logging.getLogger(__name__)
 
-if os.getenv('SENTRY_DSN', None):
-    # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
-    import raven
 
 if sys.hexversion < 0x03030000:
     import pipes
@@ -44,102 +41,8 @@ else:
     def list2cmdline(lst):
         return " ".join(shlex.quote(x) for x in lst)
 
-
 from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
 from spinalcordtoolbox.utils import check_exe, sct_dir_local_path
-
-
-def add_elapsed_time_counter():
-    """
-    """
-    import atexit
-    class Timer():
-        def __init__(self):
-            self._t0 = time.time()
-        def atexit(self):
-            print("Elapsed time: %.3f seconds" % (time.time()-self._t0))
-    t = Timer()
-    atexit.register(t.atexit)
-
-
-def init_error_client():
-    """ Send traceback to neuropoly servers
-
-    :return:
-    """
-    if os.getenv('SENTRY_DSN'):
-        logger.debug('Configuring sentry report')
-        try:
-            client = raven.Client(
-             release=__version__,
-             processors=(
-              'raven.processors.RemoveStackLocalsProcessor',
-              'raven.processors.SanitizePasswordsProcessor'),
-            )
-            server_log_handler(client)
-            traceback_to_server(client)
-
-            old_exitfunc = sys.exitfunc
-            def exitfunc():
-                sent_something = False
-                try:
-                    # implementation-specific
-                    import atexit
-                    for handler, args, kw in atexit._exithandlers:
-                        if handler.__module__.startswith("raven."):
-                            sent_something = True
-                except:
-                    pass
-                old_exitfunc()
-                if sent_something:
-                    print("Note: you can opt out of Sentry reporting by editing the file ${SCT_DIR}/bin/sct_launcher and delete the line starting with \"export SENTRY_DSN\"")
-
-            sys.exitfunc = exitfunc
-        except raven.exceptions.InvalidDsn:
-            # This could happen if sct staff change the dsn
-            logger.debug('Sentry DSN not valid anymore, not reporting errors')
-
-
-def traceback_to_server(client):
-    """
-        Send all traceback children of Exception to sentry
-    """
-
-    def excepthook(exctype, value, traceback):
-        if issubclass(exctype, Exception):
-            client.captureException(exc_info=(exctype, value, traceback))
-        sys.__excepthook__(exctype, value, traceback)
-
-    sys.excepthook = excepthook
-
-
-def server_log_handler(client):
-    """ Adds sentry log handler to the logger
-
-    :return: the sentry handler
-    """
-    from raven.handlers.logging import SentryHandler
-
-    sh = SentryHandler(client=client, level=logging.ERROR)
-
-    # Don't send Sentry events for command-line usage errors
-    old_emit = sh.emit
-    def emit(self, record):
-        if record.message.startswith("Command-line usage error:"):
-            return
-        return old_emit(record)
-
-    sh.emit = lambda x: emit(sh, x)
-
-
-    fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
-            "%(message)s")
-    formatter = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
-    formatter.converter = time.gmtime
-    sh.setFormatter(formatter)
-
-    logger.addHandler(sh)
-    return sh
 
 
 # define class color
