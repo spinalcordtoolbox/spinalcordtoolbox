@@ -95,7 +95,9 @@ def get_parser():
     header = parser.add_argument_group('HEADER OPERATIONS')
     header.add_argument(
         '-copy-header',
-        help='Copy the header of the source image (specified in -i) to the destination image (specified in -o). ',
+        metavar=Metavar.file,
+        help='Copy the header of the source image (specified in -i) to the destination image (specified here) '
+             'and save it into a new image (specified in -o)',
         required = False)
 
     orientation = parser.add_argument_group('ORIENTATION OPERATIONS')
@@ -196,7 +198,7 @@ def main(args=None):
         if fname_out is None:
             raise ValueError("Need to specify output image with -o!")
         im_in = Image(fname_in[0])
-        im_dest = Image(fname_out)
+        im_dest = Image(arguments.copy_header)
         im_dest_new = im_in.copy()
         im_dest_new.data = im_dest.data.copy()
         # im_dest.header = im_in.header
