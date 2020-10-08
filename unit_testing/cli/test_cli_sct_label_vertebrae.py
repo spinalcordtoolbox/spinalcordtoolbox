@@ -23,7 +23,6 @@ def test_sct_label_vertebrae_backwards_compat(script_runner):
 def test_sct_label_vertebrae_disc(tmp_path, is_coordinates_gt):
     d = tmp_path / "sub"
     d.mkdir()
-    print(d)
     subprocess.run("sct_label_vertebrae -i sct_testing_data/t2/t2.nii.gz "
                    "-s sct_testing_data/t2/t2_seg-manual.nii.gz "
                    "-initfile sct_testing_data/t2/init_label_vertebrae.txt -c t2 -ofolder " + str(d), shell=True)
