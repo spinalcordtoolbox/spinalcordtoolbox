@@ -96,8 +96,8 @@ def get_parser():
     header.add_argument(
         '-copy-header',
         metavar=Metavar.file,
-        help='Copy the header of the source image (specified in -i) to the destination image (specified here). '
-             'Example: data_dest.nii.gz',
+        help='Copy the header of the source image (specified in -i) to the destination image (specified here) '
+             'and save it into a new image (specified in -o)',
         required = False)
 
     orientation = parser.add_argument_group('ORIENTATION OPERATIONS')
@@ -195,6 +195,8 @@ def main(args=None):
         im_out = [concat_data(fname_in, dim)]  # TODO: adapt to fname_in
 
     elif arguments.copy_header is not None:
+        if fname_out is None:
+            raise ValueError("Need to specify output image with -o!")
         im_in = Image(fname_in[0])
         im_dest = Image(arguments.copy_header)
         im_dest_new = im_in.copy()
@@ -202,7 +204,6 @@ def main(args=None):
         # im_dest.header = im_in.header
         im_dest_new.absolutepath = im_dest.absolutepath
         im_out = [im_dest_new]
-        fname_out = arguments.copy_header
 
     elif arguments.display_warp:
         im_in = fname_in[0]
