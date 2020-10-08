@@ -30,4 +30,7 @@ def test_sct_label_vertebrae_disc(tmpdir, is_coordinates_gt):
     IS_coordinates = np.nonzero(image_label)[1]  # image is AIL
     IS_coordinates.sort()
     assert np.allclose(is_coordinates_gt, IS_coordinates, atol=2)
+    assert os.path.isfile(str(p) + "/warp_straight2curve.nii.gz")
+    assert os.path.isfile(str(p) + "/warp_curve2straight.nii.gz")
+    assert os.path.isfile(str(p) + "/straight_ref.nii.gz")
 
