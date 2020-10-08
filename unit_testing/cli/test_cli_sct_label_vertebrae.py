@@ -22,7 +22,7 @@ def test_sct_label_vertebrae_backwards_compat(script_runner):
 @pytest.mark.parametrize("is_coordinates_gt", [[2, 17, 34, 48]])
 def test_sct_label_vertebrae_disc(tmpdir, is_coordinates_gt):
     p = tmpdir.mkdir("label_test")
-    subprocess.check_output("sct_label_vertebrae -i sct_testing_data/t2/t2.nii.gz "
+    subprocess.run("sct_label_vertebrae -i sct_testing_data/t2/t2.nii.gz "
                             "-s sct_testing_data/t2/t2_seg-manual.nii.gz "
                             "-initfile sct_testing_data/t2/init_label_vertebrae.txt -c t2 -ofolder " + str(p), shell=True)
     nifti_label = nib.load(str(p) + "/t2_labels-disc.nii.gz")
