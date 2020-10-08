@@ -31,7 +31,7 @@ from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
 import spinalcordtoolbox.labels as sct_labels
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct
 import sct_utils as sct
 
 logger = logging.getLogger(__name__)
@@ -232,7 +232,7 @@ def main(args=None):
         arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     verbosity = arguments.v
-    sct.init_sct(log_level=verbosity, update=True)  # Update log level
+    init_sct(log_level=verbosity, update=True)  # Update log level
 
     input_filename = arguments.i
     output_fname = arguments.o
@@ -391,6 +391,6 @@ def launch_manual_label_gui(img: Image, input_labels_img: Image, labels: Sequenc
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

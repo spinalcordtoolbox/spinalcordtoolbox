@@ -39,7 +39,7 @@ import numpy as np
 
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.registration.register import Paramreg, ParamregMultiStep
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct
 
 import sct_utils as sct
 from sct_register_to_template import register_wrapper
@@ -336,7 +336,7 @@ def main(args=None):
     interp = arguments.x
     remove_temp_files = arguments.r
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # sct.printv(arguments)
     sct.printv('\nInput parameters:')
@@ -405,6 +405,6 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

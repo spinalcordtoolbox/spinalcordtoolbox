@@ -18,7 +18,7 @@ import argparse
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct
 
 
 def get_parser():
@@ -142,12 +142,12 @@ def main():
     param.verbose = int(arguments.v)
 
     # Update log level
-    sct.init_sct(log_level=param.verbose, update=True)
+    init_sct(log_level=param.verbose, update=True)
 
     # run moco
     moco_wrapper(param)
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

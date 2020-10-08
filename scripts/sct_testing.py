@@ -18,6 +18,7 @@ import signal
 import numpy as np
 from pandas import DataFrame
 
+from spinalcordtoolbox.utils import init_sct
 import sct_utils as sct
 
 sys.path.append(os.path.join(sct.__sct_dir__, 'testing'))
@@ -224,7 +225,7 @@ def main(args=None):
     jobs = arguments.jobs
 
     param.verbose = arguments.verbose
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    init_sct(log_level=param.verbose, update=True)  # Update log level
 
     start_time = time.time()
 
@@ -608,7 +609,7 @@ def update_param(param):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     # call main function

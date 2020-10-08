@@ -22,7 +22,7 @@ import numpy as np
 
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 from spinalcordtoolbox.image import Image
 
 
@@ -119,7 +119,7 @@ def main(args=None):
         fname_dst = sct.add_suffix(fname_src, "_tsnr")
 
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # call main function
     tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)
@@ -129,6 +129,6 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     param = Param()
     main()

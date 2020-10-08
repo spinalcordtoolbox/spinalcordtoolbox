@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad, Sara Dupont
-# 
+#
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
@@ -19,7 +19,7 @@ import sys
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 import spinalcordtoolbox.resampling
 
 # DEFAULT PARAMETERS
@@ -146,12 +146,12 @@ def run_main():
         else:
             param.interpolation = arguments.x
     param.verbose = int(arguments.v)
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    init_sct(log_level=param.verbose, update=True)  # Update log level
 
     spinalcordtoolbox.resampling.resample_file(param.fname_data, param.fname_out, param.new_size, param.new_size_type,
                                                param.interpolation, param.verbose, fname_ref=param.ref)
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     run_main()

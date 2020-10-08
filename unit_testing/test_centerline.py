@@ -17,10 +17,9 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, f
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 import spinalcordtoolbox.math
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils import sct_test_path, init_sct
 
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
-from sct_utils import init_sct
 
 
 init_sct(log_level=2)  # Set logger in debug mode

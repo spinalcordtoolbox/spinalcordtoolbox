@@ -441,7 +441,7 @@ def make_a_string(item):
         return item
 
 
-def _merge_dict(dict_in):
+def merge_dict(dict_in):
     """
     Merge n dictionaries that are contained at the root key
     Example:

@@ -17,7 +17,7 @@ import os
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 
 
 def get_parser():
@@ -102,7 +102,7 @@ def get_parser():
     return parser
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     fname_input2 = arguments.d
 
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     tmp_dir = sct.tmp_create(verbose=verbose)  # create tmp directory
     tmp_dir = os.path.abspath(tmp_dir)

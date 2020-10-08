@@ -18,7 +18,7 @@ import os
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 
 
 # DEFAULT PARAMETERS
@@ -156,7 +156,7 @@ def main():
     if arguments.tr is not None:
         input_tr = arguments.tr
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     graph = ErnstAngle(input_t1, tr=input_tr, fname_output=input_fname_output)
     if input_tr is not None:
@@ -182,5 +182,5 @@ def main():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

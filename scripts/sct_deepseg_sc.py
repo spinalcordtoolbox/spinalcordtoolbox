@@ -18,7 +18,7 @@ import sys
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
 
 
 def get_parser():
@@ -169,7 +169,7 @@ def main():
 
     remove_temp_files = args.r
     verbose = args.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     path_qc = args.qc
     qc_dataset = args.qc_dataset
@@ -204,5 +204,5 @@ def main():
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

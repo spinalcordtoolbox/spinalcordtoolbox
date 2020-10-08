@@ -19,8 +19,9 @@ import getopt
 import os
 
 import numpy as np
-
 import nibabel as nib
+
+from spinalcordtoolbox.utils import init_sct
 
 import sct_utils as sct
 
@@ -169,6 +170,6 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

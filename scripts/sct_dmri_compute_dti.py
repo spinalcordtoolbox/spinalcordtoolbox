@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import os, sys, argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 
 
 class Param:
@@ -114,7 +114,7 @@ def main(args=None):
     if arguments.m is not None:
         file_mask = arguments.m
     param.verbose = arguments.v
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    init_sct(log_level=param.verbose, update=True)  # Update log level
 
     # compute DTI
     if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask):
@@ -201,7 +201,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     # call main function

@@ -19,7 +19,7 @@ from __future__ import division, absolute_import
 import sys, io, os, time, functools
 import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
@@ -368,7 +368,7 @@ def main(args=None):
     transform.interp = arguments.x
     transform.remove_temp_files = arguments.r
     transform.verbose = arguments.v
-    sct.init_sct(log_level=transform.verbose, update=True)  # Update log level
+    init_sct(log_level=transform.verbose, update=True)  # Update log level
 
     transform.apply()
 
@@ -376,6 +376,6 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

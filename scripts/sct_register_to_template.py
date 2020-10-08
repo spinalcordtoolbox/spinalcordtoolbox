@@ -46,7 +46,7 @@ from sct_convert import convert
 from sct_image import split_data, concat_warp2d
 
 # TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct
 import sct_apply_transfo
 
 
@@ -326,7 +326,7 @@ def main(args=None):
     ref = arguments.ref
     param.remove_temp_files = arguments.r
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
@@ -1293,6 +1293,6 @@ def register(src, dest, step, param):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

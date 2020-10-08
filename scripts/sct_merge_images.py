@@ -27,7 +27,7 @@ import sct_utils as sct
 import sct_apply_transfo
 import spinalcordtoolbox.image as msct_image
 import sct_maths
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 
 
 class Param:
@@ -212,7 +212,7 @@ def main():
     if arguments.r is not None:
         param.rm_tmp = arguments.r
     param.verbose = arguments.v
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    init_sct(log_level=param.verbose, update=True)  # Update log level
 
     # check if list of input files and warping fields have same length
     assert len(list_fname_src) == len(list_fname_warp), "ERROR: list of files are not of the same length"
@@ -227,5 +227,5 @@ def main():
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

@@ -20,8 +20,8 @@ import argparse
 
 import numpy as np
 
-from sct_utils import init_sct, printv
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from sct_utils import printv
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 import spinalcordtoolbox.image as image
 
 
