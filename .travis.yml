@@ -117,7 +117,8 @@ matrix:
           update: true  # Fixes issue w/outdated Homebrew in older MacOS images
       osx_image: xcode9.4
     - name: "OSX 10.12 (Sierra)"
-      if: branch = release or type = cron
+      # Temporarily comment this out to test on push (for debugging)
+      # if: branch = release or type = cron
       os: osx
       osx_image: xcode9.2
       addons:
