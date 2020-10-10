@@ -127,11 +127,8 @@ matrix:
       # if: branch = release or type = cron
       os: osx
       osx_image: xcode9.2
-      addons:
-        homebrew:
-          packages:
-            - libomp  # Needed for onnxruntime Python package, see issue #2930
-          update: true  # Fixes issue w/outdated Homebrew in older MacOS images
+      before_install:
+        - brew install limomp
       # Testing this: https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
       cache:
         directories:
