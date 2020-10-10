@@ -126,6 +126,12 @@ matrix:
           packages:
             - libomp  # Needed for onnxruntime Python package, see issue #2930
           update: true  # Fixes issue w/outdated Homebrew in older MacOS images
+      # Testing this: https://stackoverflow.com/questions/39930171/cache-brew-builds-with-travis-ci
+      cache:
+        directories:
+          - $HOME/Library/Caches/Homebrew
+      before_cache:
+        - brew cleanup
     - name: "Windows Server, 1809"
       # runs on all branches
       language: bash
