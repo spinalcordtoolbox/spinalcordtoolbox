@@ -108,7 +108,7 @@ matrix:
           packages:
             - libomp  # Needed for onnxruntime Python package, see issue #2930
     - name: "OSX 10.13 (High Sierra)"
-      if: branch = release or type = cron
+      # if: branch = release or type = cron
       os: osx
       osx_image: xcode9.4
       addons:
