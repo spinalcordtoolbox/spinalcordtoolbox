@@ -180,10 +180,6 @@ def process_function(fname, param):
         # test function
         try:
             param_test = test_function(param_test)
-        except sct.RunError as e:
-            list_status_function.append(1)
-            list_output.append("Got SCT exception:")
-            list_output.append(e.args[0])
         except Exception as e:
             list_status_function.append(1)
             list_output.append("Got exception: %s" % e)
