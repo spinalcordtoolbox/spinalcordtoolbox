@@ -1388,11 +1388,12 @@ def splitext(fname):
     Note: for .nii.gz the extension is understandably .nii.gz, not .gz
     (``os.path.splitext()`` would want to do the latter, hence the special case).
     """
-    dir, filename = os.path.split(fname)
+    dir_, filename = os.path.split(fname)
     for special_ext in ['.nii.gz', '.tar.gz']:
         if filename.endswith(special_ext):
             stem, ext = filename[:-len(special_ext)], special_ext
-            return os.path.join(dir, stem), ext
-    # If no special case, behaves like the regular splitext
-    stem, ext = os.path.splitext(filename)
-    return os.path.join(dir, stem), ext
+            break
+    else:
+        stem, ext = os.path.splitext(filename)
+
+    return os.path.join(dir_, stem), ext
