@@ -184,11 +184,8 @@ def rm(path, verbose=1):
 def mv(src, dst, verbose=1):
     """Move a file from src to dst, almost like os.rename
     """
-    try:
-        printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
-        os.rename(src, dst)
-    except Exception as e:
-        raise
+    printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
+    os.rename(src, dst)
 
 def copy(src, dst, verbose=1):
     """Copy src to dst, almost like shutil.copy
@@ -214,11 +211,8 @@ def copy(src, dst, verbose=1):
 def rmtree(folder, verbose=1):
     """Recursively remove folder, almost like shutil.rmtree
     """
-    try:
-        printv("rm -rf %s" % (folder), verbose=verbose, type="code")
-        shutil.rmtree(folder, ignore_errors=True)
-    except Exception as e:
-        raise # Must be another error
+    printv("rm -rf %s" % (folder), verbose=verbose, type="code")
+    shutil.rmtree(folder, ignore_errors=True)
 
 
 #=======================================================================================================================
