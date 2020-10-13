@@ -21,9 +21,9 @@ import os
 import argparse
 import json
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, splitext, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 from spinalcordtoolbox.qmri.mt import compute_mtsat
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, splitext
 
 import sct_utils as sct
 

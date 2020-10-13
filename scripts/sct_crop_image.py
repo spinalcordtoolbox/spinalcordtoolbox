@@ -14,7 +14,7 @@ import os
 import argparse
 
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 import sct_utils as sct
 
@@ -175,7 +175,7 @@ def main(args=None):
 
     # Write cropped image to file
     if arguments.o is None:
-        fname_out = sct.add_suffix(arguments.i, '_crop')
+        fname_out = add_suffix(arguments.i, '_crop')
     else:
         fname_out = arguments.o
     img_crop.save(fname_out)

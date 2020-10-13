@@ -21,7 +21,7 @@ from skimage.feature import greycomatrix, greycoprops
 
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.utils import *
 
 def get_parser():
@@ -230,7 +230,7 @@ class ExtractGLCM:
     #     # create Image objects with zeros values for each output image needed
     #     for m in self.metric_lst:
     #         im_2save = msct_image.zeros_like(im_tmp, dtype=np.float64)
-    #         fname_out = sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
+    #         fname_out = add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
     #         im_2save.save(fname_out)
     #         self.fname_metric_lst[m] = fname_out
 
@@ -280,14 +280,14 @@ class ExtractGLCM:
                         pbar.update(1)
 
         for m in self.metric_lst:
-            fname_out = sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
+            fname_out = add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
             dct_metric[m].save(fname_out)
             self.fname_metric_lst[m] = fname_out
 
     def reorient_data(self):
         for f in self.fname_metric_lst:
-            os.rename(self.fname_metric_lst[f], sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient'))
-            im = Image(sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient')) \
+            os.rename(self.fname_metric_lst[f], add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient'))
+            im = Image(add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient')) \
              .change_orientation(self.orientation_im) \
              .save(self.fname_metric_lst[f])
 

@@ -23,7 +23,7 @@ import numpy as np
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 
 
 class Param:
@@ -116,7 +116,7 @@ def main(args=None):
     if arguments.o is not None:
         fname_dst = arguments.o
     else:
-        fname_dst = sct.add_suffix(fname_src, "_tsnr")
+        fname_dst = add_suffix(fname_src, "_tsnr")
 
     verbose = int(arguments.v)
     init_sct(log_level=verbose, update=True)  # Update log level

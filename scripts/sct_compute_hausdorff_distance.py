@@ -18,7 +18,7 @@ import numpy as np
 
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
@@ -47,7 +47,7 @@ class Thinning:
         if self.dim_im == 2:
             self.thinned_image = msct_image.empty_like(self.image)
             self.thinned_image.data = self.zhang_suen(self.image.data)
-            self.thinned_image.absolutepath = sct.add_suffix(self.image.absolutepath, "_thinned")
+            self.thinned_image.absolutepath = add_suffix(self.image.absolutepath, "_thinned")
 
         elif self.dim_im == 3:
             if not self.image.orientation == 'IRP':
@@ -58,7 +58,7 @@ class Thinning:
 
             self.thinned_image = msct_image.empty_like(self.image)
             self.thinned_image.data = thinned_data
-            self.thinned_image.absolutepath = sct.add_suffix(self.image.absolutepath, "_thinned")
+            self.thinned_image.absolutepath = add_suffix(self.image.absolutepath, "_thinned")
 
     # ------------------------------------------------------------------------------------------------------------------
     def get_neighbours(self, x, y, image):
@@ -412,7 +412,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         return name_resample
     else:
         if orientation != 'RPI':
-            fname = sct.add_suffix(fname, "_RPI")
+            fname = add_suffix(fname, "_RPI")
             im_in = msct_image.change_orientation(im_in, orientation).save(fname)
 
         sct.printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
@@ -550,10 +550,10 @@ if __name__ == "__main__":
         # TODO change back the orientatin of the thinned image
         if param.thinning:
             computation.thinning1.thinned_image.save(
-                os.path.join(curdir, sct.add_suffix(os.path.basename(input_fname), '_thinned')))
+                os.path.join(curdir, add_suffix(os.path.basename(input_fname), '_thinned')))
             if im2_name is not None:
                 computation.thinning2.thinned_image.save(
-                    os.path.join(curdir, sct.add_suffix(os.path.basename(input_second_fname), '_thinned')))
+                    os.path.join(curdir, add_suffix(os.path.basename(input_second_fname), '_thinned')))
 
         os.chdir(curdir)
 

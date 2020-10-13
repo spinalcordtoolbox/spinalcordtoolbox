@@ -12,7 +12,7 @@ from scipy.ndimage.filters import gaussian_filter
 
 import sct_utils as sct
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.math import dilate, mutual_information
 
@@ -513,7 +513,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
         #     plt.scatter(int(np.round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
 
     # write file
-    seg.change_orientation(init_orientation).save(sct.add_suffix(fname_seg, '_labeled'))
+    seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled'))
 
 
 def label_discs(fname_seg_labeled, verbose=1):
@@ -557,4 +557,4 @@ def label_discs(fname_seg_labeled, verbose=1):
             vertebral_level_previous = vertebral_level
     # save disc labeled file
     im_seg_labeled.data = data_disc
-    im_seg_labeled.change_orientation(orientation_native).save(sct.add_suffix(fname_seg_labeled, '_disc'))
+    im_seg_labeled.change_orientation(orientation_native).save(add_suffix(fname_seg_labeled, '_disc'))

@@ -18,10 +18,10 @@ import sys, io, os, time, random, shutil
 
 import numpy as np
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
 
-from sct_utils import extract_fname, printv, add_suffix
+from sct_utils import extract_fname, printv
 import sct_utils as sct
 import sct_create_mask
 import sct_register_multimodal, sct_apply_transfo

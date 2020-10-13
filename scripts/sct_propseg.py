@@ -21,7 +21,7 @@ import numpy as np
 from scipy import ndimage as ndi
 
 import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 import sct_image
 import sct_utils as sct
 # TODO: Properly test when first PR (that includes list_type) gets merged
@@ -408,7 +408,7 @@ def func_rescale_header(fname_data, rescale_factor, verbose=0):
     # the data are the same-- only the header changes
     img_rescaled = nib.nifti1.Nifti1Image(img.get_data(), None, header=header_rescaled)
     path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
-    fname_data_rescaled = os.path.join(path_tmp, os.path.basename(sct.add_suffix(fname_data, "_rescaled")))
+    fname_data_rescaled = os.path.join(path_tmp, os.path.basename(add_suffix(fname_data, "_rescaled")))
     nib.save(img_rescaled, fname_data_rescaled)
     return fname_data_rescaled
 
@@ -572,9 +572,9 @@ def propseg(img_input, options_dict):
         im_data = Image(fname_data_propseg)
 
         im_mask_viewer = msct_image.zeros_like(im_data)
-        # im_mask_viewer.absolutepath = sct.add_suffix(fname_data_propseg, '_labels_viewer')
+        # im_mask_viewer.absolutepath = add_suffix(fname_data_propseg, '_labels_viewer')
         controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
-        fname_labels_viewer = sct.add_suffix(fname_data_propseg, '_labels_viewer')
+        fname_labels_viewer = add_suffix(fname_data_propseg, '_labels_viewer')
 
         if not controller.saved:
             sct.printv('The viewer has been closed before entering all manual points. Please try again.', 1, 'error')
@@ -613,17 +613,17 @@ def propseg(img_input, options_dict):
         sys.exit(1)
 
     # build output filename
-    fname_seg = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data, "_seg")))
-    fname_centerline = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data, "_centerline")))
+    fname_seg = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_seg")))
+    fname_centerline = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_centerline")))
     # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
     if rescale_header is not 1:
-        sct.mv(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_seg")),
+        sct.mv(os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_seg")),
                   fname_seg)
-        sct.mv(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
+        sct.mv(os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
                   fname_centerline)
         # if user was used, copy the labelled points to the output folder (they will then be scaled back)
         if use_viewer:
-            fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data,
+            fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(add_suffix(fname_data,
                                                                                                   "_labels_viewer")))
             sct.copy(fname_labels_viewer, fname_labels_viewer_new)
             # update variable (used later)

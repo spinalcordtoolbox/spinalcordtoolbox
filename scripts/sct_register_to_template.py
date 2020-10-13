@@ -28,7 +28,7 @@ from scipy.io import loadmat
 from nibabel import load, Nifti1Image, save
 
 from spinalcordtoolbox.metadata import get_file_label
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
@@ -42,7 +42,6 @@ import spinalcordtoolbox.labels as sct_labels
 
 import sct_utils as sct
 import sct_maths
-from sct_utils import add_suffix
 from sct_convert import convert
 from sct_image import split_data, concat_warp2d
 
@@ -419,7 +418,7 @@ def main(args=None):
     # Generate labels from template vertebral labeling
     if label_type == 'body':
         sct.printv('\nGenerate labels from template vertebral labeling', verbose)
-        ftmp_template_label_, ftmp_template_label = ftmp_template_label, sct.add_suffix(ftmp_template_label, "_body")
+        ftmp_template_label_, ftmp_template_label = ftmp_template_label, add_suffix(ftmp_template_label, "_body")
         sct_labels.label_vertebrae(Image(ftmp_template_label_)).save(path=ftmp_template_label)
 
     # check if provided labels are available in the template
@@ -445,7 +444,7 @@ def main(args=None):
 
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     sct.printv('\nBinarize segmentation', verbose)
-    ftmp_seg_, ftmp_seg = ftmp_seg, sct.add_suffix(ftmp_seg, "_bin")
+    ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, "_bin")
     sct_maths.main(['-i', ftmp_seg_,
                     '-bin', '0.5',
                     '-o', ftmp_seg])
@@ -792,7 +791,7 @@ def project_labels_on_spinalcord(fname_label, fname_seg, param_centerline):
     :return: file name of projected labels
     """
     # build output name
-    fname_label_projected = sct.add_suffix(fname_label, "_projected")
+    fname_label_projected = add_suffix(fname_label, "_projected")
     # open labels and segmentation
     im_label = Image(fname_label).change_orientation("RPI")
     im_seg = Image(fname_seg)
@@ -1041,9 +1040,9 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
                     '-i', src[ifile],
                     '-d', dest[ifile],
                     '-w', warp_forward,
-                    '-o', sct.add_suffix(src[ifile], '_reg'),
+                    '-o', add_suffix(src[ifile], '_reg'),
                     '-x', interp_step[ifile]])
-                src[ifile] = sct.add_suffix(src[ifile], '_reg')
+                src[ifile] = add_suffix(src[ifile], '_reg')
 
         # register src --> dest
         warp_forward_out, warp_inverse_out = register(src=src, dest=dest, step=step, param=param)

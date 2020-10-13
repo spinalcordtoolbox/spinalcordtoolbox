@@ -22,7 +22,7 @@ from skimage import transform, img_as_float
 
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 
@@ -100,7 +100,7 @@ def main(fname_anat, fname_centerline, verbose):
     im_anat_flattened = flatten_sagittal(im_anat, im_centerline, verbose)
 
     # save output
-    fname_out = sct.add_suffix(fname_anat, '_flatten')
+    fname_out = add_suffix(fname_anat, '_flatten')
     im_anat_flattened.save(fname_out)
 
     sct.display_viewer_syntax([fname_anat, fname_out])

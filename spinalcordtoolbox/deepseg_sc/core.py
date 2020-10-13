@@ -13,7 +13,7 @@ import nibabel as nib
 from spinalcordtoolbox import resampling
 from .cnn_models import nn_architecture_seg, nn_architecture_ctr
 from .postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
-from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like
+from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, add_suffix
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.utils import sct_dir_local_path
 
@@ -47,7 +47,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
     """
 
     im = Image(image_fname)
-    ctl_absolute_path = sct.add_suffix(im.absolutepath, "_ctr")
+    ctl_absolute_path = add_suffix(im.absolutepath, "_ctr")
 
     # isct_spine_detect requires nz > 1
     if im.dim[2] == 1:
@@ -541,7 +541,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                           x_crop_lst=X_CROP_LST,
                           y_crop_lst=Y_CROP_LST,
                           z_crop_lst=Z_CROP_LST)
-    # seg_uncrop_nii.save(sct.add_suffix(fname_res, '_seg'))  # for debugging
+    # seg_uncrop_nii.save(add_suffix(fname_res, '_seg'))  # for debugging
     del seg_crop, seg_crop_postproc, im_norm_in
 
     # resample to initial resolution
@@ -549,7 +549,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
 
     if ctr_algo == 'viewer':  # for debugging
-        im_labels_viewer.save(sct.add_suffix(fname_orient, '_labels-viewer'))
+        im_labels_viewer.save(add_suffix(fname_orient, '_labels-viewer'))
 
     # Binarize the resampled image (except for soft segmentation, defined by threshold_seg=-1)
     if threshold_seg >= 0:

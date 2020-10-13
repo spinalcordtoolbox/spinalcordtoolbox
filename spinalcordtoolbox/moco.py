@@ -24,7 +24,7 @@ import functools
 import operator
 import csv
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.utils import sct_progress_bar, run_proc
 
 import sct_utils as sct
@@ -240,7 +240,7 @@ def moco_wrapper(param):
             im_b0_list.append(im_data_split_list[index_b0[it]])
         im_b0 = concat_data(im_b0_list, 3).save(file_b0, verbose=0)
         # Average across time
-        im_b0.mean(dim=3).save(sct.add_suffix(file_b0, '_mean'))
+        im_b0.mean(dim=3).save(add_suffix(file_b0, '_mean'))
 
         n_moco = nb_dwi  # set number of data to perform moco on (using grouping)
         index_moco = index_dwi
@@ -384,7 +384,7 @@ def moco_wrapper(param):
             args += ['-bval', param.fname_bvals]
         fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(args=args)
     else:
-        fname_moco_mean = sct.add_suffix(im_moco.absolutepath, '_mean')
+        fname_moco_mean = add_suffix(im_moco.absolutepath, '_mean')
         im_moco.mean(dim=3).save(fname_moco_mean)
 
     # Extract and output the motion parameters (doesn't work for sagittal orientation)
@@ -439,13 +439,13 @@ def moco_wrapper(param):
 
     # Generate output files
     sct.printv('\nGenerate output files...', param.verbose)
-    fname_moco = os.path.join(path_out_abs, sct.add_suffix(os.path.basename(param.fname_data), param.suffix))
+    fname_moco = os.path.join(path_out_abs, add_suffix(os.path.basename(param.fname_data), param.suffix))
     sct.generate_output_file(im_moco.absolutepath, fname_moco)
     if param.is_diffusion:
-        sct.generate_output_file(fname_b0_mean, sct.add_suffix(fname_moco, '_b0_mean'))
-        sct.generate_output_file(fname_dwi_mean, sct.add_suffix(fname_moco, '_dwi_mean'))
+        sct.generate_output_file(fname_b0_mean, add_suffix(fname_moco, '_b0_mean'))
+        sct.generate_output_file(fname_dwi_mean, add_suffix(fname_moco, '_dwi_mean'))
     else:
-        sct.generate_output_file(fname_moco_mean, sct.add_suffix(fname_moco, '_mean'))
+        sct.generate_output_file(fname_moco_mean, add_suffix(fname_moco, '_mean'))
     if os.path.exists(file_moco_params_csv):
         sct.generate_output_file(file_moco_params_x, os.path.join(path_out_abs, file_moco_params_x),
                                  squeeze_data=False)
@@ -466,7 +466,7 @@ def moco_wrapper(param):
     sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
 
     sct.display_viewer_syntax(
-        [os.path.join(param.path_out, sct.add_suffix(os.path.basename(param.fname_data), param.suffix)),
+        [os.path.join(param.path_out, add_suffix(os.path.basename(param.fname_data), param.suffix)),
          param.fname_data], mode='ortho,ortho')
 
 
@@ -594,7 +594,7 @@ def moco(param):
             # create indices and display stuff
             it = index[indice_index]
             file_mat[iz][it] = os.path.join(folder_mat, "mat.Z") + str(iz).zfill(4) + 'T' + str(it).zfill(4)
-            file_data_splitZ_splitT_moco.append(sct.add_suffix(file_data_splitZ_splitT[it], '_moco'))
+            file_data_splitZ_splitT_moco.append(add_suffix(file_data_splitZ_splitT[it], '_moco'))
             # deal with masking (except in the 'apply' case, where masking is irrelevant)
             input_mask = None
             if not param.fname_mask == '' and not param.todo == 'apply':
@@ -646,7 +646,7 @@ def moco(param):
                 sys.exit(2)
 
         # Merge data along T
-        file_data_splitZ_moco.append(sct.add_suffix(file, suffix))
+        file_data_splitZ_moco.append(add_suffix(file, suffix))
         if todo != 'estimate':
             im_out = concat_data(file_data_splitZ_splitT_moco, 3)
             im_out.absolutepath = file_data_splitZ_moco[iz]

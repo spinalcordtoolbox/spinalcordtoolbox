@@ -18,7 +18,7 @@ import numpy as np
 import nibabel as nib
 from nibabel.processing import resample_from_to
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 
 import sct_utils as sct
 
@@ -157,7 +157,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
 
     # build output file name
     if fname_out == '':
-        fname_out = sct.add_suffix(fname_data, '_r')
+        fname_out = add_suffix(fname_data, '_r')
     else:
         fname_out = fname_out
 

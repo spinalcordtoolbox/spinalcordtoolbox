@@ -18,7 +18,7 @@ import sys
 import numpy as np
 import os
 import argparse
-from spinalcordtoolbox.image import Image, empty_like
+from spinalcordtoolbox.image import Image, empty_like, add_suffix
 import sct_utils as sct
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, parse_num_list, init_sct
 
@@ -155,12 +155,12 @@ def main():
         snr_map = np.zeros_like(data_mean)
         snr_map[mask_std_nonzero] = data_mean[mask_std_nonzero] / data_std[mask_std_nonzero]
         # Output SNR map
-        fname_snr = sct.add_suffix(fname_data, '_SNR-' + method)
+        fname_snr = add_suffix(fname_data, '_SNR-' + method)
         im_snr = empty_like(im_data)
         im_snr.data = snr_map
         im_snr.save(fname_snr, dtype=np.float32)
         # Output non-zero mask
-        fname_stdnonzero = sct.add_suffix(fname_data, '_mask-STD-nonzero' + method)
+        fname_stdnonzero = add_suffix(fname_data, '_mask-STD-nonzero' + method)
         im_stdnonzero = empty_like(im_data)
         data_stdnonzero = np.zeros_like(data_mean)
         data_stdnonzero[mask_std_nonzero] = 1

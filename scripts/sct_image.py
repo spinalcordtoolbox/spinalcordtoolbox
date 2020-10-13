@@ -18,7 +18,7 @@ import argparse
 import numpy as np
 
 import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image, concat_data
+from spinalcordtoolbox.image import Image, concat_data, add_suffix
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
 from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
@@ -327,14 +327,14 @@ def main(args=None):
             # use input file name and add _X, _Y _Z. Keep the same extension
             l_fname_out = []
             for i_dim in range(3):
-                l_fname_out.append(sct.add_suffix(fname_out or fname_in[0], '_' + dim_list[i_dim].upper()))
+                l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].save(l_fname_out[i_dim], verbose=verbose)
             sct.display_viewer_syntax(fname_out)
         if arguments.split is not None:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []
             for i, im in enumerate(im_out):
-                l_fname_out.append(sct.add_suffix(fname_out or fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
+                l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.save(l_fname_out[i])
             sct.display_viewer_syntax(l_fname_out)
 
@@ -438,7 +438,7 @@ def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f
     # TODO: Do not copy the Image(), because the dim field and hdr.get_data_shape() will not be updated properly.
     #   better to just create a new Image() from scratch.
     im_out.data = padded_data  # done after the call of the function
-    im_out.absolutepath = sct.add_suffix(im_out.absolutepath, "_pad")
+    im_out.absolutepath = add_suffix(im_out.absolutepath, "_pad")
 
     # adapt the origin in the sform and qform matrix
     new_origin = np.dot(im_out.hdr.get_qform(), [-pad_x_i, -pad_y_i, -pad_z_i, 1])
@@ -512,7 +512,7 @@ def multicomponent_split(im):
     for i, im in enumerate(im_out):
         im.data = data_out[i]
         im.hdr.set_intent('vector', (), '')
-        im.absolutepath = sct.add_suffix(im.absolutepath, '_{}'.format(i))
+        im.absolutepath = add_suffix(im.absolutepath, '_{}'.format(i))
     return im_out
 
 
@@ -542,7 +542,7 @@ def multicomponent_merge(fname_list):
     im_out = im_0.copy()
     im_out.data = data_out.astype('float32')
     im_out.hdr.set_intent('vector', (), '')
-    im_out.absolutepath = sct.add_suffix(im_out.absolutepath, '_multicomponent')
+    im_out.absolutepath = add_suffix(im_out.absolutepath, '_multicomponent')
     return im_out
 
 
@@ -575,7 +575,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         im_grid.hdr = grid_hdr
         im_grid.absolutepath = fname_grid
         im_grid.save()
-        fname_grid_resample = sct.add_suffix(fname_grid, '_resample')
+        fname_grid_resample = add_suffix(fname_grid, '_resample')
         run_proc(['sct_resample', '-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
         fname_grid = os.path.join(tmp_dir, fname_grid_resample)
         os.chdir(curdir)

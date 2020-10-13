@@ -11,7 +11,7 @@ from scipy.interpolate.interpolate import interp1d
 import sct_utils as sct
 
 import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.deepseg_sc.core import find_centerline, crop_image_around_centerline, uncrop_image, _normalize_data
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.utils import sct_dir_local_path
@@ -185,9 +185,9 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     del im_crop_nii
 
     # resample to 0.5mm isotropic
-    fname_norm = sct.add_suffix(fname_orient, '_norm')
+    fname_norm = add_suffix(fname_orient, '_norm')
     im_norm_in.save(fname_norm)
-    fname_res3d = sct.add_suffix(fname_norm, '_resampled3d')
+    fname_res3d = add_suffix(fname_norm, '_resampled3d')
     resampling.resample_file(fname_norm, fname_res3d, '0.5x0.5x0.5', 'mm', 'linear',
                              verbose=0)
 
@@ -195,7 +195,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     logger.info("\nSegmenting the MS lesions using deep learning on 3D patches...")
     segmentation_model_fname = sct_dir_local_path('data', 'deepseg_lesion_models',
                                             '{}_lesion.h5'.format(contrast_type))
-    fname_seg_crop_res = sct.add_suffix(fname_res3d, '_lesionseg')
+    fname_seg_crop_res = add_suffix(fname_res3d, '_lesionseg')
     im_res3d = Image(fname_res3d)
     seg_im = segment_3d(model_fname=segmentation_model_fname,
                         contrast_type=contrast_type,
@@ -204,7 +204,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     del im_res3d, seg_im
 
     # resample to the initial pz resolution
-    fname_seg_res2d = sct.add_suffix(fname_seg_crop_res, '_resampled2d')
+    fname_seg_res2d = add_suffix(fname_seg_crop_res, '_resampled2d')
     initial_2d_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
     resampling.resample_file(fname_seg_crop_res, fname_seg_res2d, initial_2d_resolution,
                                                            'mm', 'linear', verbose=0)
@@ -214,14 +214,14 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     logger.info("\nReassembling the image...")
     seg_uncrop_nii = uncrop_image(ref_in=im_image_res, data_crop=seg_crop.copy().data, x_crop_lst=X_CROP_LST,
                                   y_crop_lst=Y_CROP_LST, z_crop_lst=Z_CROP_LST)
-    fname_seg_res_RPI = sct.add_suffix(fname_in, '_res_RPI_seg')
+    fname_seg_res_RPI = add_suffix(fname_in, '_res_RPI_seg')
     seg_uncrop_nii.save(fname_seg_res_RPI)
     del seg_crop
 
     # resample to initial resolution
     logger.info("Resampling the segmentation to the original image resolution...")
     initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
-    fname_seg_RPI = sct.add_suffix(fname_in, '_RPI_seg')
+    fname_seg_RPI = add_suffix(fname_in, '_RPI_seg')
     resampling.resample_file(fname_seg_res_RPI, fname_seg_RPI, initial_resolution,
                                                            'mm', 'linear', verbose=0)
     seg_initres_nii = Image(fname_seg_RPI)
@@ -237,7 +237,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
         im_viewer = None
 
     if verbose == 2:
-        fname_res_ctr = sct.add_suffix(fname_orient, '_ctr')
+        fname_res_ctr = add_suffix(fname_orient, '_ctr')
         resampling.resample_file(fname_res_ctr, fname_res_ctr, initial_resolution,
                                                            'mm', 'linear', verbose=0)
         im_image_res_ctr_downsamp = Image(fname_res_ctr).change_orientation(original_orientation)

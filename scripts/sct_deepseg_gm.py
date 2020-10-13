@@ -16,7 +16,7 @@ import argparse
 
 import sct_utils as sct
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
-
+from spinalcordtoolbox.image import add_suffix
 from spinalcordtoolbox.reports.qc import generate_qc
 
 
@@ -101,7 +101,7 @@ def run_main():
     if arguments.o is not None:
         output_filename = arguments.o
     else:
-        output_filename = sct.add_suffix(input_filename, '_gmseg')
+        output_filename = add_suffix(input_filename, '_gmseg')
 
     use_tta = arguments.t
     model_name = arguments.m

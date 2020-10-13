@@ -18,6 +18,7 @@ import argparse
 
 import sct_utils as sct
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
+from spinalcordtoolbox.image import add_suffix
 
 
 def get_parser():
@@ -126,10 +127,10 @@ if __name__ == "__main__":
     os.chdir(tmp_dir) # go to tmp directory
 
     if arguments.bin is not None:
-        fname_input1_bin = sct.add_suffix(fname_input1, '_bin')
+        fname_input1_bin = add_suffix(fname_input1, '_bin')
         run_proc(['sct_maths', '-i', fname_input1, '-bin', '0', '-o', fname_input1_bin])
         fname_input1 = fname_input1_bin
-        fname_input2_bin = sct.add_suffix(fname_input2, '_bin')
+        fname_input2_bin = add_suffix(fname_input2, '_bin')
         run_proc(['sct_maths', '-i', fname_input2, '-bin', '0', '-o', fname_input2_bin])
         fname_input2 = fname_input2_bin
 
