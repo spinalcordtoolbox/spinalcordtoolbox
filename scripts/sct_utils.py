@@ -81,16 +81,6 @@ def add_suffix(fname, suffix):
 #=======================================================================================================================
 # run
 #=======================================================================================================================
-# Run UNIX command
-def run_old(cmd, verbose=1):
-    if verbose:
-        printv(bcolors.blue + cmd + bcolors.normal)
-    status, output = run(cmd)
-    if status != 0:
-        printv('\nERROR! \n' + output + '\nExit program.\n', 1, 'error')
-    else:
-        return status, output
-
 def which_sct_binaries():
     """
     :return name of the sct binaries to use on this platform
