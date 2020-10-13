@@ -349,28 +349,9 @@ def check_write_permission(fname, verbose=1):
         path_fname, file_fname, ext_fname = extract_fname(os.path.abspath(fname))
         return os.access(path_fname, os.W_OK)
 
-
-#=======================================================================================================================
-# create_folder:  create folder (check if exists before creating it)
-#   output: 0 -> folder created
-#           1 -> folder already exist
-#           2 -> permission denied
-#=======================================================================================================================
-def create_folder(folder):
-    if not os.path.exists(folder):
-        try:
-            os.makedirs(folder)
-            return 0
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                return 2
-    else:
-        return 1
-
 #=======================================================================================================================
 # check_dim
 #=======================================================================================================================
-
 def check_dim(fname, dim_lst=[3]):
     """
     Check if input dimension matches the input dimension requirements specified in the dim list.

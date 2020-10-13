@@ -101,7 +101,10 @@ def copy_mat_files(nt, list_file_mat, index, folder_out, param):
     :return: None
     """
     # create final mat folder
-    sct.create_folder(folder_out)
+    try:
+        os.makedirs(folder_out)
+    except FileExistsError:
+        pass
     # Loop across registration matrices and copy to mat_final folder
     # First loop is accross z. If axial orientation, there is only one z (i.e., len(file_mat)=1)
     for iz in range(len(list_file_mat)):
@@ -497,8 +500,10 @@ def moco(param):
     sct.printv('  Mask  ................. ' + param.fname_mask, param.verbose)
     sct.printv('  Output mat folder ..... ' + folder_mat, param.verbose)
 
-    # create folder for mat files
-    sct.create_folder(folder_mat)
+    try:
+        os.makedirs(folder_mat)
+    except FileExistsError:
+        pass
 
     # Get size of data
     sct.printv('\nData dimensions:', verbose)
@@ -794,8 +799,11 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
 
     # Copying the existing Matrices to another folder
     old_mat = os.path.join(folder_mat, "old")
-    if not os.path.exists(old_mat):
+    try:
         os.makedirs(old_mat)
+    except FileExistsError:
+        pass
+
     # TODO
     for mat in glob.glob(os.path.join(folder_mat, '*.txt')):
         sct.copy(mat, old_mat)
