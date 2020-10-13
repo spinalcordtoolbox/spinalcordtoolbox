@@ -81,17 +81,6 @@ def add_suffix(fname, suffix):
 #=======================================================================================================================
 # run
 #=======================================================================================================================
-def which_sct_binaries():
-    """
-    :return name of the sct binaries to use on this platform
-    """
-
-    if sys.platform.startswith("linux"):
-        return "binaries_linux"
-    else:
-        return "binaries_osx"
-
-
 def display_open(file):
     """Print the syntax to open a file based on the platform."""
     if sys.platform == 'linux':
