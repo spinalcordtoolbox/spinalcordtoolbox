@@ -17,7 +17,7 @@ Requirements
 
 * Operating System (OS):
 
-  * macOS >= 10.12
+  * macOS >= 10.13
   * Debian >=9
   * Ubuntu >= 16.04
   * Fedora >= 19
