@@ -21,7 +21,7 @@ import transforms3d.affines as affines
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import sct_dir_local_path, add_suffix
+from spinalcordtoolbox.utils import sct_dir_local_path
 
 logger = logging.getLogger(__name__)
 
@@ -1362,3 +1362,37 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     # set "intent" code to vector, to be interpreted as warping field
     im_warp3d.header.set_intent('vector', (), '')
     nib.save(im_warp3d, fname_warp3d)
+
+def add_suffix(fname, suffix):
+    """
+    Add suffix between end of file name and extension.
+
+    :param fname: absolute or relative file name. Example: t2.nii
+    :param suffix: suffix. Example: _mean
+    :return: file name with suffix. Example: t2_mean.nii
+
+    Examples:
+    .. code:: python
+
+        add_suffix(t2.nii, _mean) -> t2_mean.nii
+        add_suffix(t2.nii.gz, a) -> t2a.nii.gz
+    """
+    stem, ext = splitext(fname)
+    return os.path.join(stem + suffix + ext)
+
+
+def splitext(fname):
+    """
+    Split a fname (folder/file + ext) into a folder/file and extension.
+
+    Note: for .nii.gz the extension is understandably .nii.gz, not .gz
+    (``os.path.splitext()`` would want to do the latter, hence the special case).
+    """
+    dir, filename = os.path.split(fname)
+    for special_ext in ['.nii.gz', '.tar.gz']:
+        if filename.endswith(special_ext):
+            stem, ext = filename[:-len(special_ext)], special_ext
+            return os.path.join(dir, stem), ext
+    # If no special case, behaves like the regular splitext
+    stem, ext = os.path.splitext(filename)
+    return os.path.join(dir, stem), ext

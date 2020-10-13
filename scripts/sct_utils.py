@@ -61,26 +61,6 @@ class bcolors(object):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]
 
 
-def add_suffix(fname, suffix):
-    """
-    Add suffix between end of file name and extension.
-
-    :param fname: absolute or relative file name. Example: t2.nii
-    :param suffix: suffix. Example: _mean
-    :return: file name with suffix. Example: t2_mean.nii
-
-    Examples:
-
-    - add_suffix(t2.nii, _mean) -> t2_mean.nii
-    - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
-    """
-
-    return utils.add_suffix(fname=fname, suffix=suffix)
-
-
-#=======================================================================================================================
-# run
-#=======================================================================================================================
 def display_open(file):
     """Print the syntax to open a file based on the platform."""
     if sys.platform == 'linux':
