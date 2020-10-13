@@ -28,7 +28,8 @@ import sct_utils as sct
 # TODO: Properly test when first PR (that includes list_type) gets merged
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, parse_num_list, init_sct
 from spinalcordtoolbox import process_seg
-from spinalcordtoolbox.aggregate_slicewise import *
+from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
+    func_sum, merge_dict
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 

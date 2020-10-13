@@ -24,7 +24,6 @@ if os.getenv('SENTRY_DSN', None):
     import raven
 
 # TODO: add test
-
 def init_sct(log_level=1, update=False):
     """
     Initialize the sct for typical terminal usage
