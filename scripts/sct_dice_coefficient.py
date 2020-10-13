@@ -17,7 +17,7 @@ import os
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
 
 
 def get_parser():
@@ -127,10 +127,10 @@ if __name__ == "__main__":
 
     if arguments.bin is not None:
         fname_input1_bin = sct.add_suffix(fname_input1, '_bin')
-        sct.run(['sct_maths', '-i', fname_input1, '-bin', '0', '-o', fname_input1_bin])
+        run_proc(['sct_maths', '-i', fname_input1, '-bin', '0', '-o', fname_input1_bin])
         fname_input1 = fname_input1_bin
         fname_input2_bin = sct.add_suffix(fname_input2, '_bin')
-        sct.run(['sct_maths', '-i', fname_input2, '-bin', '0', '-o', fname_input2_bin])
+        run_proc(['sct_maths', '-i', fname_input2, '-bin', '0', '-o', fname_input2_bin])
         fname_input2 = fname_input2_bin
 
     # copy header of im_1 to im_2
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     # #dice = compute_dice(Image(fname_input1), Image(fname_input2), mode='3d', zboundaries=False)
     # #sct.printv('Dice (python-based) = ' + str(dice), verbose)
 
-    status, output = sct.run(cmd, verbose, is_sct_binary=True)
+    status, output = run_proc(cmd, verbose, is_sct_binary=True)
 
     os.chdir(curdir) # go back to original directory
 

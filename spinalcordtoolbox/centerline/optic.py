@@ -10,7 +10,7 @@ import numpy as np
 
 import sct_utils as sct
 from ..image import Image
-from spinalcordtoolbox.utils import sct_dir_local_path
+from spinalcordtoolbox.utils import sct_dir_local_path, run_proc
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +118,7 @@ def detect_centerline(img, contrast, verbose=1):
     ]
     # TODO: output coordinates, for each slice, in continuous (not discrete) values.
 
-    sct.run(cmd_optic, is_sct_binary=True, verbose=0)
+    run_proc(cmd_optic, is_sct_binary=True, verbose=0)
 
     # convert .img and .hdr files to .nii.gz
     img_ctl = Image(file_img + '_optic_ctr.hdr')

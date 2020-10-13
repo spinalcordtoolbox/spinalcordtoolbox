@@ -92,78 +92,6 @@ def which_sct_binaries():
         return "binaries_osx"
 
 
-def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=False):
-    # if verbose == 2:
-    #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
-
-    if cwd is None:
-        cwd = os.getcwd()
-
-    if env is None:
-        env = os.environ
-
-    if sys.hexversion < 0x03000000 and isinstance(cmd, unicode):
-        cmd = str(cmd)
-
-
-    if is_sct_binary:
-        name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
-        path = None
-        #binaries_location_default = os.path.expanduser("~/.cache/spinalcordtoolbox-{}/bin".format(__version__)
-        binaries_location_default = sct_dir_local_path("bin")
-        for directory in (
-         #binaries_location_default,
-         sct_dir_local_path("bin"),
-         ):
-            candidate = os.path.join(directory, name)
-            if os.path.exists(candidate):
-                path = candidate
-        if path is None:
-            run(["sct_download_data", "-d", which_sct_binaries(), "-o", binaries_location_default])
-            path = os.path.join(binaries_location_default, name)
-
-        if isinstance(cmd, list):
-            cmd[0] = path
-        elif isinstance(cmd, str):
-            rem = cmd.split(" ", 1)[1:]
-            cmd = path if len(rem) == 0 else "{} {}".format(path, rem[0])
-
-    if isinstance(cmd, str):
-        cmdline = cmd
-    else:
-        cmdline = list2cmdline(cmd)
-
-
-    if verbose:
-        printv("%s # in %s" % (cmdline, cwd), 1, 'code')
-
-    shell = isinstance(cmd, str)
-
-    process = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
-    output_final = ''
-    while True:
-        # Watch out for deadlock!!!
-        output = process.stdout.readline().decode("utf-8")
-        if output == '' and process.poll() is not None:
-            break
-        if output:
-            if verbose == 2:
-                printv(output.strip())
-            output_final += output.strip() + '\n'
-
-    status = process.returncode
-    output = output_final.rstrip()
-
-    # process.stdin.close()
-    # process.stdout.close()
-    # process.terminate()
-
-    if status != 0 and raise_exception:
-        raise RunError(output)
-
-    return status, output
-
-
 def display_open(file):
     """Print the syntax to open a file based on the platform."""
     if sys.platform == 'linux':
@@ -310,16 +238,16 @@ def rmtree(folder, verbose=1):
 #=======================================================================================================================
 def checkRAM(os, verbose=1):
     if (os == 'linux'):
-        status, output = run('grep MemTotal /proc/meminfo', 0)
+        status, output = utils.run_proc('grep MemTotal /proc/meminfo', 0)
         printv('RAM: ' + output)
         ram_split = output.split()
         ram_total = float(ram_split[1])
-        status, output = run('free -m', 0)
+        status, output = utils.run_proc('free -m', 0)
         printv(output)
         return ram_total / 1024
 
     elif (os == 'osx'):
-        status, output = run('hostinfo | grep memory', 0)
+        status, output = utils.run_proc('hostinfo | grep memory', 0)
         printv('RAM: ' + output)
         ram_split = output.split(' ')
         ram_total = float(ram_split[3])
@@ -549,11 +477,11 @@ def tmp_copy_nifti(fname, path_tmp, fname_out='data.nii', verbose=0):
     path_fname, file_fname, ext_fname = extract_fname(fname)
     path_fname_out, file_fname_out, ext_fname_out = extract_fname(fname_out)
 
-    run('cp ' + fname + ' ' + path_tmp + file_fname_out + ext_fname)
+    utils.run_proc('cp ' + fname + ' ' + path_tmp + file_fname_out + ext_fname)
     if ext_fname_out == '.nii':
-        run('fslchfiletype NIFTI ' + path_tmp + file_fname_out, 0)
+        utils.run_proc('fslchfiletype NIFTI ' + path_tmp + file_fname_out, 0)
     elif ext_fname_out == '.nii.gz':
-        run('fslchfiletype NIFTI_GZ ' + path_tmp + file_fname_out, 0)
+        utils.run_proc('fslchfiletype NIFTI_GZ ' + path_tmp + file_fname_out, 0)
 
 
 #=======================================================================================================================
@@ -592,7 +520,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
         '''
         # TRY TO UNCOMMENT THIS LINES AND RUN IT IN AN OTHER STATION THAN EVANS (testing of sct_label_vertebrae and sct_smooth_spinalcord never stops with this lines on evans)
         if ext_in == '.nii.gz' and ext_out == '.nii':  # added to resolve issue #728
-            run('gunzip -f ' + fname_in)
+            utils.run_proc('gunzip -f ' + fname_in)
             os.rename(os.path.join(path_in, file_in + '.nii'), fname_out)
         else:
         '''
@@ -623,7 +551,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
 #=======================================================================================================================
 # check if dependant software is installed
 def check_if_installed(cmd, name_software):
-    status, output = run(cmd)
+    status, output = utils.run_proc(cmd)
     if status != 0:
         printv('\nERROR: ' + name_software + ' is not installed.\nExit program.\n')
         sys.exit(2)

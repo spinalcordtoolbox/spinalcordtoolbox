@@ -22,7 +22,7 @@ from skimage.feature import greycomatrix, greycoprops
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, sct_progress_bar, init_sct
+from spinalcordtoolbox.utils import *
 
 def get_parser():
     # Initialize the parser
@@ -207,8 +207,8 @@ class ExtractGLCM:
 
             # Average across angles and save it as wrk_folder/fnameIn_feature_distance_mean.extension
             fname_out = im_m + str(self.param_glcm.distance) + '_mean' + extension
-            sct.run('sct_image -i ' + ' '.join(im2mean_lst) + ' -concat t -o ' + fname_out)
-            sct.run('sct_maths -i ' + fname_out + ' -mean t -o ' + fname_out)
+            run_proc('sct_image -i ' + ' '.join(im2mean_lst) + ' -concat t -o ' + fname_out)
+            run_proc('sct_maths -i ' + fname_out + ' -mean t -o ' + fname_out)
             self.fname_metric_lst[im_m + str(self.param_glcm.distance) + '_mean'] = fname_out
 
     def extract_slices(self):

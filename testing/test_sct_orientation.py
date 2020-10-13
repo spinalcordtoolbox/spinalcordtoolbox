@@ -15,6 +15,7 @@
 
 from __future__ import absolute_import
 
+from spinalcordtoolbox.utils import run_proc
 import sct_utils as sct
 
 def test(data_path):
@@ -25,12 +26,12 @@ def test(data_path):
 
     # test 3d data
     cmd = 'sct_orientation -i ' + data_path + folder_data[0] + file_data[0]
-    status, output = sct.run(cmd)
+    status, output = run_proc(cmd)
 
     # test 4d data
     if status == 0:
         cmd = 'sct_orientation -i ' + data_path + folder_data[1] + file_data[1]
-        status, output = sct.run(cmd)
+        status, output = run_proc(cmd)
 
     # return
     return status, output

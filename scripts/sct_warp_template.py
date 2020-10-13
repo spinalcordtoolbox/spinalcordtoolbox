@@ -18,7 +18,7 @@ import argparse
 
 import spinalcordtoolbox.metadata
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct, run_proc
 import sct_utils as sct
 
 
@@ -110,7 +110,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
         for i in range(0, len(template_label_file)):
             fname_label = os.path.join(path_label, folder_label, template_label_file[i])
             # apply transfo
-            sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+            run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
                     (fname_label,
                      fname_src,
                      fname_transfo,

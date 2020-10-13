@@ -23,7 +23,7 @@ import time
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import init_sct
+from spinalcordtoolbox.utils import init_sct, run_proc
 
 import sct_utils as sct
 
@@ -112,7 +112,7 @@ def main():
 
     # upsample data
     sct.printv('\nUpsample data...', verbose)
-    sct.run(["sct_resample",
+    run_proc(["sct_resample",
      "-i", "data.nii",
      "-x", "linear",
      "-vox", str(nx * interp_factor) + 'x' + str(ny * interp_factor) + 'x' + str(nz * interp_factor),
@@ -120,7 +120,7 @@ def main():
 
     # Smooth along centerline
     sct.printv('\nSmooth along centerline...', verbose)
-    sct.run(["sct_smooth_spinalcord",
+    run_proc(["sct_smooth_spinalcord",
      "-i", "data_up.nii",
      "-s", "data_up.nii",
      "-smooth", str(smoothing_sigma),
@@ -129,7 +129,7 @@ def main():
 
     # downsample data
     sct.printv('\nDownsample data...', verbose)
-    sct.run(["sct_resample",
+    run_proc(["sct_resample",
      "-i", "data_up_smooth.nii",
      "-x", "linear",
      "-vox", str(nx) + 'x' + str(ny) + 'x' + str(nz),

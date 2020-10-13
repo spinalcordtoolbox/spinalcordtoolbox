@@ -25,7 +25,7 @@ import operator
 import csv
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import sct_progress_bar
+from spinalcordtoolbox.utils import sct_progress_bar, run_proc
 
 import sct_utils as sct
 import sct_dmri_separate_b0_and_dwi
@@ -747,7 +747,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
             kw.update(dict(is_sct_binary=True))
             # reducing the number of CPU used for moco (see issue #201 and #2642)
             env = {**os.environ, **{"ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS": "1"}}
-            status, output = sct.run(cmd, verbose=1 if param.verbose == 2 else 0, env=env, **kw)
+            status, output = run_proc(cmd, verbose=1 if param.verbose == 2 else 0, env=env, **kw)
 
     elif param.todo == 'apply':
         sct_apply_transfo.main(args=['-i', file_src,

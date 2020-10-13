@@ -26,7 +26,7 @@ from spinalcordtoolbox.image import Image
 from sct_image import split_data
 from sct_convert import convert
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct, run_proc
 import argparse
 
 
@@ -202,7 +202,7 @@ def main(args=None):
     # Average b=0 images
     if average:
         sct.printv('\nAverage b=0...', verbose)
-        sct.run(['sct_maths', '-i', b0_name + ext, '-o', b0_mean_name + ext, '-mean', 't'], verbose)
+        run_proc(['sct_maths', '-i', b0_name + ext, '-o', b0_mean_name + ext, '-mean', 't'], verbose)
 
     # Merge DWI
     l = []
@@ -213,7 +213,7 @@ def main(args=None):
     # Average DWI images
     if average:
         sct.printv('\nAverage DWI...', verbose)
-        sct.run(['sct_maths', '-i', dwi_name + ext, '-o', dwi_mean_name + ext, '-mean', 't'], verbose)
+        run_proc(['sct_maths', '-i', dwi_name + ext, '-o', dwi_mean_name + ext, '-mean', 't'], verbose)
 
     # come back
     os.chdir(curdir)
