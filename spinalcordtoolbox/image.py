@@ -1397,3 +1397,16 @@ def splitext(fname):
         stem, ext = os.path.splitext(filename)
 
     return os.path.join(dir_, stem), ext
+
+
+def check_dim(fname, dim_lst=[3]):
+    """
+    Check if input dimension matches the input dimension requirements specified in the dim list.
+    Example: to check if an image is 2D or 3D: check_dim(my_file, dim_lst=[2, 3])
+    :param fname:
+    :return: True or False
+    """
+    dim = Image(fname).hdr['dim'][:4]
+
+    if not dim[0] in dim_lst:
+        raise ValueError(f"File {fname} has {dim[0]} dimensions! Accepted dimensions are: {dim_lst}.")

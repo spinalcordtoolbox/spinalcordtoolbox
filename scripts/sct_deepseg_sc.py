@@ -19,6 +19,7 @@ import argparse
 
 import sct_utils as sct
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
+from spinalcordtoolbox.image import Image, check_dim
 
 
 def get_parser():
@@ -177,10 +178,9 @@ def main():
     output_folder = args.ofolder
 
     # check if input image is 2D or 3D
-    sct.check_dim(fname_image, dim_lst=[2, 3])
+    check_dim(fname_image, dim_lst=[2, 3])
 
     # Segment image
-    from spinalcordtoolbox.image import Image
     from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
     from spinalcordtoolbox.reports.qc import generate_qc
 

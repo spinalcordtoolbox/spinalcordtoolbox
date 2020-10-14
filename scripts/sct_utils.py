@@ -196,26 +196,7 @@ def check_file_exist(fname, verbose=1):
         return False
 
 
-def check_dim(fname, dim_lst=[3]):
-    """
-    Check if input dimension matches the input dimension requirements specified in the dim list.
-    Example: to check if an image is 2D or 3D: check_dim(my_file, dim_lst=[2, 3])
-    :param fname:
-    :return: True or False
-    """
-    from spinalcordtoolbox.image import Image
-    dim = Image(fname).hdr['dim'][:4]
-
-    if not dim[0] in dim_lst:
-        printv('\nERROR: File ' + fname + ' has {} dimensions. Authorized dimensions are: {}. '
-               'Exit program.\n'.format(dim[0], dim_lst), 1, 'error')
-        sys.exit(2)
-    else:
-        return True
-
 # FIXME: chdir()
-
-
 class TempFolder(object):
     """This class will create a temporary folder."""
 

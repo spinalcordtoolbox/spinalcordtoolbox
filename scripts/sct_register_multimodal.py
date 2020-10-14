@@ -40,6 +40,7 @@ import numpy as np
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.registration.register import Paramreg, ParamregMultiStep
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, run_proc
+from spinalcordtoolbox.image import check_dim
 
 import sct_utils as sct
 from sct_register_to_template import register_wrapper
@@ -359,8 +360,8 @@ def main(args=None):
 
     # Get if input is 3D
     sct.printv('\nCheck if input data are 3D...', verbose)
-    sct.check_dim(fname_src, dim_lst=[3])
-    sct.check_dim(fname_dest, dim_lst=[3])
+    check_dim(fname_src, dim_lst=[3])
+    check_dim(fname_dest, dim_lst=[3])
 
     # Check if user selected type=seg, but did not input segmentation data
     if 'paramregmulti_user' in locals():
