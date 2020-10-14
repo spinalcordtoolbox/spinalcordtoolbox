@@ -30,7 +30,7 @@ import matplotlib.colors as color
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
-from spinalcordtoolbox.utils import sct_dir_local_path
+from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline
 
 logger = logging.getLogger(__name__)
 
@@ -412,7 +412,7 @@ class Params(object):
         if subject is None:
             subject = subject_tmp
         if isinstance(args, list):
-            args = sct.list2cmdline(args)
+            args = list2cmdline(args)
         self.fname_in = file_in+ext_in
         self.dataset = dataset
         self.subject = subject

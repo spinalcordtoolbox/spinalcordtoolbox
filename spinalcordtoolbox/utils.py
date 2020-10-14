@@ -14,6 +14,8 @@ import shutil
 import tqdm
 import zipfile
 import time
+import shlex
+
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -619,14 +621,8 @@ def which_sct_binaries():
     else:
         return "binaries_osx"
 
-if sys.hexversion < 0x03030000:
-    import pipes
-    def list2cmdline(lst):
-        return " ".join(pipes.quote(x) for x in lst)
-else:
-    import shlex
-    def list2cmdline(lst):
-        return " ".join(shlex.quote(x) for x in lst)
+def list2cmdline(lst):
+    return " ".join(shlex.quote(x) for x in lst)
 
 def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=False):
     if cwd is None:

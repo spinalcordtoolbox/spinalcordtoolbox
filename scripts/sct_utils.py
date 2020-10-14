@@ -32,15 +32,6 @@ import spinalcordtoolbox.utils as utils
 logger = logging.getLogger(__name__)
 
 
-if sys.hexversion < 0x03030000:
-    import pipes
-    def list2cmdline(lst):
-        return " ".join(pipes.quote(x) for x in lst)
-else:
-    import shlex
-    def list2cmdline(lst):
-        return " ".join(shlex.quote(x) for x in lst)
-
 from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
 from spinalcordtoolbox.utils import check_exe, sct_dir_local_path
 
