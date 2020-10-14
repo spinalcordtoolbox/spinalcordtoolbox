@@ -221,7 +221,14 @@ def check_affines_match(im):
     try:
         hdr2.set_qform(hdr.get_sform())
     except np.linalg.LinAlgError:
-        return(False)
+        if im.absolutepath is None:
+            logger.error("Internal code has produced an image with inconsistent qform and sform "
+                         "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
+                         "or on the SCT forums https://forum.spinalcordmri.org/.")
+
+        logger.warning("The sform for {} is uninitialized and may cause unexpected behaviour."
+                       ''.format(im.absolutepath))
+        return(True)
 
     return np.allclose(hdr.get_qform(), hdr2.get_qform())
 
