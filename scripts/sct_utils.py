@@ -13,20 +13,16 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys, io, os, re, time, datetime, platform
-import errno
+import sys
+import io
+import os
 import logging
 import shutil
-import subprocess
-import tempfile
 import pathlib
 
-import numpy as np
+from spinalcordtoolbox.utils import check_exe, tmp_create
 
 logger = logging.getLogger(__name__)
-
-from spinalcordtoolbox.utils import check_exe, run_proc, tmp_create
-
 
 # define class color
 class bcolors(object):
@@ -133,6 +129,7 @@ def mv(src, dst, verbose=1):
     printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
     os.rename(src, dst)
 
+
 def copy(src, dst, verbose=1):
     """Copy src to dst, almost like shutil.copy
     If src and dst are the same files, don't crash.
@@ -140,8 +137,8 @@ def copy(src, dst, verbose=1):
     if not os.path.isfile(src):
         folder = os.path.dirname(src)
         contents = os.listdir(folder)
-        raise Exception("Couldn't find %s in %s (contents: %s)" \
-         % (os.path.basename(src), folder, contents))
+        raise Exception("Couldn't find %s in %s (contents: %s)"
+                        % (os.path.basename(src), folder, contents))
     try:
         printv("cp %s %s" % (src, dst), verbose=verbose, type="code")
         shutil.copy(src, dst)
@@ -152,7 +149,8 @@ def copy(src, dst, verbose=1):
         else:
             if isinstance(e, shutil.SameFileError):
                 return
-        raise # Must be another error
+        raise  # Must be another error
+
 
 def rmtree(folder, verbose=1):
     """Recursively remove folder, almost like shutil.rmtree
@@ -176,10 +174,6 @@ def extract_fname(fpath):
     return parent, stem, ext
 
 
-#=======================================================================================================================
-# get_absolute_path
-#=======================================================================================================================
-# Return the absolute path of a file or a directory
 def get_absolute_path(fname):
     if os.path.isfile(fname) or os.path.isdir(fname):
         return os.path.realpath(fname)
@@ -187,9 +181,6 @@ def get_absolute_path(fname):
         printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
 
 
-#=======================================================================================================================
-# check_file_exist:  Check existence of a file or path
-#=======================================================================================================================
 def check_file_exist(fname, verbose=1):
     if fname[0] == '-':
         # fname should be a warping field that will be inverted, ignore the "-"
@@ -205,9 +196,6 @@ def check_file_exist(fname, verbose=1):
         return False
 
 
-#=======================================================================================================================
-# check_dim
-#=======================================================================================================================
 def check_dim(fname, dim_lst=[3]):
     """
     Check if input dimension matches the input dimension requirements specified in the dim list.
@@ -220,12 +208,14 @@ def check_dim(fname, dim_lst=[3]):
 
     if not dim[0] in dim_lst:
         printv('\nERROR: File ' + fname + ' has {} dimensions. Authorized dimensions are: {}. '
-                'Exit program.\n'.format(dim[0], dim_lst), 1, 'error')
+               'Exit program.\n'.format(dim[0], dim_lst), 1, 'error')
         sys.exit(2)
     else:
         return True
 
 # FIXME: chdir()
+
+
 class TempFolder(object):
     """This class will create a temporary folder."""
 
@@ -262,9 +252,6 @@ class TempFolder(object):
         rmtree(self.path_tmp)
 
 
-#=======================================================================================================================
-# generate_output_file
-#=======================================================================================================================
 def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     """
     Copy fname_in to fname_out with a few convenient checks: make sure input file exists, if fname_out exists send a
@@ -307,20 +294,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
         # Generate output file without changing the extension
         shutil.move(fname_in, fname_out)
 
-    # # Move file to output folder (keep the same extension as input)
-    # shutil.move(fname_in, path_out+file_out+ext_in)
-    # # convert to nii (only if necessary)
-    # if ext_out == '.nii' and ext_in != '.nii':
-    #     convert(os.path.join(path_out, file_out+ext_in), os.path.join(path_out, file_out+ext_out))
-    #     os.remove(os.path.join(path_out, file_out+ext_in))  # remove nii.gz file
-    # # convert to nii.gz (only if necessary)
-    # if ext_out == '.nii.gz' and ext_in != '.nii.gz':
-    #     convert(os.path.join(path_out, file_out+ext_in), os.path.join(path_out, file_out+ext_out))
-    #     os.remove(os.path.join(path_out, file_out+ext_in))  # remove nii file
-    # display message
     printv('  File created: ' + os.path.join(path_out, file_out + ext_out), verbose)
-    # if verbose:
-    #     printv('  File created: '+ os.path.join(path_out, file_out+ext_out))
     return os.path.join(path_out, file_out + ext_out)
 
 
@@ -378,14 +352,6 @@ def get_interpolation(program, interp):
         interp_program = ' -n Linear'
     # return
     return interp_program.strip().split()
-
-
-class UnsupportedOs(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
 
 
 def cache_signature(input_files=[], input_data=[], input_params={}):
@@ -452,4 +418,3 @@ def cache_save(cachefile, sig):
     """
     with io.open(cachefile, "wb") as f:
         f.write(sig)
-
