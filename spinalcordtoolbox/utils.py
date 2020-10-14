@@ -709,15 +709,4 @@ def copy_helper(src, dst, verbose=1):
         else:
             if isinstance(e, shutil.SameFileError):
                 return
-        raise # Must be another error
-
-def create_folder(folder):
-    if not os.path.exists(folder):
-        try:
-            os.makedirs(folder)
-            return 0
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                return 2
-    else:
-        return 1
+        raise  # Must be another error
