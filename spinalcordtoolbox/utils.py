@@ -2,24 +2,29 @@
 # -*- coding: utf-8
 # Collection of useful functions
 
-
-import io, sys, os
-import re, shutil
+import io
+import sys
+import os
+import re
+import shutil
 import tempfile
 import datetime
 import logging
 import argparse
 import subprocess
-import shutil
-import tqdm
-import zipfile
 import time
 import shlex
-
+import atexit
 from enum import Enum
+
+import tqdm
 
 logger = logging.getLogger(__name__)
 
+__sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+__version__ = _version_string()
+__data_dir__ = os.path.join(__sct_dir__, 'data')
+__deepseg_dir__ = os.path.join(__data_dir__, 'deepseg_models')
 
 if os.getenv('SENTRY_DSN', None):
     # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
@@ -47,7 +52,6 @@ def init_sct(log_level=1, update=False):
             return res
         return _format
 
-
     # Set logging level for logger and increase level for global config (to avoid logging when calling child functions)
     logger.setLevel(getattr(logging, dict_log_levels[log_level]))
     logging.root.setLevel(getattr(logging, dict_log_levels[log_level]))
@@ -70,14 +74,15 @@ def init_sct(log_level=1, update=False):
 
 
 def add_elapsed_time_counter():
-        import atexit
-        class Timer():
-            def __init__(self):
-                self._t0 = time.time()
-            def atexit(self):
-                print("Elapsed time: %.3f seconds" % (time.time()-self._t0))
-        t = Timer()
-        atexit.register(t.atexit)
+
+    class Timer():
+        def __init__(self):
+            self._t0 = time.time()
+
+        def atexit(self):
+            print("Elapsed time: %.3f seconds" % (time.time() - self._t0))
+    t = Timer()
+    atexit.register(t.atexit)
 
 
 def traceback_to_server(client):
@@ -98,19 +103,19 @@ def init_error_client():
         logger.debug('Configuring sentry report')
         try:
             client = raven.Client(
-            release=__version__,
-            processors=(
-            'raven.processors.RemoveStackLocalsProcessor',
-            'raven.processors.SanitizePasswordsProcessor'),
+                release=__version__,
+                processors=(
+                    'raven.processors.RemoveStackLocalsProcessor',
+                    'raven.processors.SanitizePasswordsProcessor'),
             )
             server_log_handler(client)
             traceback_to_server(client)
             old_exitfunc = sys.exitfunc
+
             def exitfunc():
                 sent_something = False
                 try:
                     # implementation-specific
-                    import atexit
                     for handler, args, kw in atexit._exithandlers:
                         if handler.__module__.startswith("raven."):
                             sent_something = True
@@ -136,6 +141,7 @@ def server_log_handler(client):
 
     # Don't send Sentry events for command-line usage errors
     old_emit = sh.emit
+
     def emit(self, record):
         if record.message.startswith("Command-line usage error:"):
             return
@@ -143,15 +149,15 @@ def server_log_handler(client):
 
     sh.emit = lambda x: emit(sh, x)
 
-
     fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
-            "%(message)s")
+           "%(message)s")
     formatter = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
     formatter.converter = time.gmtime
     sh.setFormatter(formatter)
 
     logger.addHandler(sh)
     return sh
+
 
 class ActionCreateFolder(argparse.Action):
     """
@@ -217,6 +223,7 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
     and that gives the possibility to bypass argparse's default formatting by adding "R|" at the beginning of the text.
     Inspired from: https://pythonhosted.org/skaff/_modules/skaff/cli.html
     """
+
     def __init__(self, *args, **kw):
         self._add_defaults = None
         super(SmartFormatter, self).__init__(*args, **kw)
@@ -325,7 +332,7 @@ def check_exe(name):
     def is_exe(fpath):
         return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
-    fpath, fname = os.path.split(name)
+    fpath, _ = os.path.split(name)
     if fpath and is_exe(name):
         return fpath
     else:
@@ -535,6 +542,7 @@ def __get_commit(path_to_git_folder=None):
 
     return commit
 
+
 def __get_git_origin(path_to_git_folder=None):
     """
     :return: git origin url if available
@@ -554,6 +562,7 @@ def __get_git_origin(path_to_git_folder=None):
         origin = "?!?"
 
     return origin
+
 
 def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
 
@@ -592,12 +601,6 @@ def sct_progress_bar(*args, **kwargs):
     return tqdm.tqdm(*args, **kwargs)
 
 
-__sct_dir__ = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-__version__ = _version_string()
-__data_dir__ = os.path.join(__sct_dir__, 'data')
-__deepseg_dir__ = os.path.join(__data_dir__, 'deepseg_models')
-
-
 def sct_dir_local_path(*args):
     """Construct a directory path relative to __sct_dir__"""
     return os.path.join(__sct_dir__, *args)
@@ -611,7 +614,8 @@ def sct_test_path(*args):
     test_path = os.environ.get('SCT_TESTING_DATA', '')
     return os.path.join(test_path, 'sct_testing_data', *args)
 
-def which_sct_binaries():
+
+def _which_sct_binaries():
     """
     :return name of the sct binaries to use on this platform
     """
@@ -621,8 +625,10 @@ def which_sct_binaries():
     else:
         return "binaries_osx"
 
+
 def list2cmdline(lst):
     return " ".join(shlex.quote(x) for x in lst)
+
 
 def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=False):
     if cwd is None:
@@ -639,13 +645,13 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         path = None
         binaries_location_default = sct_dir_local_path("bin")
         for directory in (
-         sct_dir_local_path("bin"),
-         ):
+            sct_dir_local_path("bin"),
+        ):
             candidate = os.path.join(directory, name)
             if os.path.exists(candidate):
                 path = candidate
         if path is None:
-            run_proc(["sct_download_data", "-d", which_sct_binaries(), "-o", binaries_location_default])
+            run_proc(["sct_download_data", "-d", _which_sct_binaries(), "-o", binaries_location_default])
             path = os.path.join(binaries_location_default, name)
 
         if isinstance(cmd, list):
@@ -682,6 +688,7 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         raise RuntimeError(output)
 
     return status, output
+
 
 def copy_helper(src, dst, verbose=1):
     """Copy src to dst, almost like shutil.copy
