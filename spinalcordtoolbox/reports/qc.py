@@ -28,6 +28,7 @@ from matplotlib.figure import Figure
 import matplotlib.colors as color
 
 import sct_utils as sct
+from spinalcordtoolbox import __version__
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
 from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline
@@ -419,7 +420,7 @@ class Params(object):
         self.cwd = os.getcwd()
         self.contrast = contrast
         self.command = command
-        self.sct_version = sct.__version__
+        self.sct_version = __version__
         self.args = args
         self.orientation = orientation
         self.dpi = dpi

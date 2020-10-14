@@ -39,6 +39,7 @@ from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils import run_proc
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
+from spinalcordtoolbox import __data_dir__
 
 import sct_utils as sct
 import sct_maths
@@ -58,7 +59,7 @@ class Param:
         self.fname_mask = ''  # this field is needed in the function register@sct_register_multimodal
         self.padding = 10  # this field is needed in the function register@sct_register_multimodal
         self.verbose = 1  # verbose
-        self.path_template = os.path.join(sct.__data_dir__, 'PAM50')
+        self.path_template = os.path.join(__data_dir__, 'PAM50')
         self.path_qc = None
         self.zsubsample = '0.25'
         self.rot_src = None

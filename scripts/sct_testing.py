@@ -19,9 +19,10 @@ import numpy as np
 from pandas import DataFrame
 
 from spinalcordtoolbox.utils import init_sct, run_proc
+from spinalcordtoolbox import __sct_dir__
 import sct_utils as sct
 
-sys.path.append(os.path.join(sct.__sct_dir__, 'testing'))
+sys.path.append(os.path.join(__sct_dir__, 'testing'))
 
 
 def fs_signature(root):

@@ -24,6 +24,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import init_sct, run_proc
+from spinalcordtoolbox import __data_dir__
 
 import sct_utils as sct
 
@@ -55,7 +56,7 @@ def main():
 
     # Parameters for debug mode
     if param.debug:
-        fname_data = os.path.join(sct.__data_dir__, 'sct_testing_data', 't2', 't2_seg.nii.gz')
+        fname_data = os.path.join(__data_dir__, 'sct_testing_data', 't2', 't2_seg.nii.gz')
         remove_temp_files = 0
         param.mask_size = 10
     else:

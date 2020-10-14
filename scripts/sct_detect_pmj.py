@@ -21,9 +21,9 @@ import argparse
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-
-import sct_utils as sct
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct, run_proc
+from spinalcordtoolbox import __data_dir__
+import sct_utils as sct
 
 
 def get_parser():
@@ -122,7 +122,7 @@ class DetectPMJ:
         self.dection_map_pmj = sct.extract_fname(self.fname_im)[1] + '_map_pmj'  # file resulting from the detection
 
         # path to the pmj detector
-        self.pmj_model = os.path.join(sct.__data_dir__, 'pmj_models', '{}_model'.format(self.contrast))
+        self.pmj_model = os.path.join(__data_dir__, 'pmj_models', '{}_model'.format(self.contrast))
 
         self.threshold = -0.75 if self.contrast == 't1' else 0.8  # detection map threshold, depends on the contrast
 

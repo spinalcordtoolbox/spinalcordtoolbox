@@ -19,6 +19,7 @@ import argparse
 import spinalcordtoolbox.metadata
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct, run_proc
+from spinalcordtoolbox import __data_dir__
 import sct_utils as sct
 
 
@@ -28,7 +29,7 @@ class Param:
     def __init__(self):
         self.debug = 0
         self.folder_out = 'label'  # name of output folder
-        self.path_template = os.path.join(sct.__data_dir__, "PAM50")
+        self.path_template = os.path.join(__data_dir__, "PAM50")
         self.folder_template = 'template'
         self.folder_atlas = 'atlas'
         self.folder_spinal_levels = 'spinal_levels'

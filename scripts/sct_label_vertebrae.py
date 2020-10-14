@@ -24,9 +24,8 @@ from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
-
-# TODO: Properly test when first PR (that includes list_type) gets merged
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, run_proc
+from spinalcordtoolbox import __data_dir__
 import sct_utils as sct
 import sct_straighten_spinalcord
 
@@ -106,7 +105,7 @@ def get_parser():
     optional.add_argument(
         '-t',
         metavar=Metavar.folder,
-        default=os.path.join(sct.__data_dir__, "PAM50"),
+        default=os.path.join(__data_dir__, "PAM50"),
         help="Path to template."
     )
     optional.add_argument(

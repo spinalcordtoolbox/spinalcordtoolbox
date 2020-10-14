@@ -13,8 +13,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import print_function, division, absolute_import
-
 import sys, io, os, re, time, datetime, platform
 import errno
 import logging
@@ -25,15 +23,9 @@ import pathlib
 
 import numpy as np
 
-# backwards compat
-import spinalcordtoolbox.utils as utils
-
-
 logger = logging.getLogger(__name__)
 
-
-from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
-from spinalcordtoolbox.utils import check_exe, sct_dir_local_path
+from spinalcordtoolbox.utils import check_exe, run_proc
 
 
 # define class color
@@ -47,6 +39,7 @@ class bcolors(object):
     cyan = '\033[96m'
     bold = '\033[1m'
     underline = '\033[4m'
+
     @classmethod
     def colors(cls):
         return [v for k, v in cls.__dict__.items() if not k.startswith("_") and k is not "colors"]

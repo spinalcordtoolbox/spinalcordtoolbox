@@ -32,9 +32,8 @@ except Exception as e:
 else:
     sys.stderr = original_stderr
 
-from spinalcordtoolbox import resampling
+from spinalcordtoolbox import resampling, __data_dir__
 from . import model
-from ..utils import __data_dir__
 
 
 # Suppress warnings and TensorFlow logging

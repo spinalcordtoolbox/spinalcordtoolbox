@@ -30,6 +30,7 @@ from skimage.measure import label as label_regions
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.utils import run_proc
+from spinalcordtoolbox import __data_dir__
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     :return:
     """
     # path to the pmj detector
-    path_model = os.path.join(sct.__data_dir__, 'c2c3_disc_models', '{}_model'.format(contrast))
+    path_model = os.path.join(__data_dir__, 'c2c3_disc_models', '{}_model'.format(contrast))
     # check if model exists
     if not os.path.isfile(path_model+'.yml'):
         raise FileNotFoundError(

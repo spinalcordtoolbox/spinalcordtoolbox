@@ -32,6 +32,7 @@ import requirements
 
 import sct_utils as sct
 from spinalcordtoolbox.utils import SmartFormatter, sct_dir_local_path, init_sct, run_proc
+from spinalcordtoolbox import __version__, __sct_dir__, __data_dir__
 
 
 # DEFAULT PARAMETERS
@@ -215,8 +216,8 @@ def get_parser():
 
 def main():
     print("SCT info:")
-    print("- version: {}".format(sct.__version__))
-    print("- path: {0}".format(sct.__sct_dir__))
+    print("- version: {}".format(__version__))
+    print("- path: {0}".format(__sct_dir__))
 
     # initialization
     install_software = 0
@@ -270,7 +271,7 @@ def main():
     # check if Python path is within SCT path
     print_line('Check Python executable')
     path_python = sys.executable
-    if sct.__sct_dir__ in path_python:
+    if __sct_dir__ in path_python:
         print_ok()
         print('  Using bundled python {} at {}'.format(sys.version, path_python))
     else:
@@ -279,7 +280,7 @@ def main():
 
     # check if data folder is empty
     print_line('Check if data are installed')
-    if os.path.isdir(sct.__data_dir__):
+    if os.path.isdir(__data_dir__):
         print_ok()
     else:
         print_fail()
