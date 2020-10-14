@@ -23,7 +23,7 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
 
 
 def get_parser():
@@ -293,7 +293,7 @@ def main():
     rm_tmp = bool(arguments.r)
 
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # Initialize DetectPMJ
     detector = DetectPMJ(fname_im=fname_in,
@@ -319,5 +319,5 @@ def main():
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

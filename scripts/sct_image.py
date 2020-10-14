@@ -19,9 +19,9 @@ import numpy as np
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, concat_data
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
-from nibabel                 import Nifti1Image
-from nibabel.processing      import resample_from_to
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from nibabel import Nifti1Image
+from nibabel.processing import resample_from_to
 
 
 import sct_utils as sct
@@ -179,7 +179,7 @@ def main(args=None):
     fname_in = arguments.i
     n_in = len(fname_in)
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     if arguments.o is not None:
         fname_out = arguments.o
@@ -587,5 +587,5 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

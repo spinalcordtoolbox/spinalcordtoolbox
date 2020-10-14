@@ -22,7 +22,7 @@ from skimage.feature import greycomatrix, greycoprops
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, sct_progress_bar
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, sct_progress_bar, init_sct
 
 def get_parser():
     # Initialize the parser
@@ -351,7 +351,7 @@ def main(args=None):
     if arguments.r is not None:
         param.rm_tmp = bool(arguments.r)
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # create the GLCM constructor
     glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
@@ -366,5 +366,5 @@ def main(args=None):
     sct.printv('fsleyes ' + arguments.i + ' ' + ' -cm red-yellow -a 70.0 '.join(fname_out_lst) + ' -cm Red-Yellow -a 70.0 & \n', param.verbose, 'info')
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

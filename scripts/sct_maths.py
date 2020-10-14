@@ -23,10 +23,10 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type, init_sct
 import spinalcordtoolbox.math as sct_math
 
-from sct_utils import printv, extract_fname, display_viewer_syntax, init_sct
+from sct_utils import printv, extract_fname, display_viewer_syntax
 
 
 def get_parser():

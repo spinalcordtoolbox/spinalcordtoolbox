@@ -26,7 +26,7 @@ import sct_maths
 import spinalcordtoolbox.image as msct_image
 from sct_convert import convert
 # TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type, init_sct
 
 # PARAMETERS
 class Param:
@@ -133,7 +133,7 @@ def main(args=None):
         sigma = arguments.smooth
     remove_temp_files = arguments.r
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # Display arguments
     sct.printv('\nCheck input arguments...')
@@ -253,5 +253,5 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

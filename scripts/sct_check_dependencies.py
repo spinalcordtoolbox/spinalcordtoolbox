@@ -31,7 +31,7 @@ import warnings
 import requirements
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import SmartFormatter, sct_dir_local_path
+from spinalcordtoolbox.utils import SmartFormatter, sct_dir_local_path, init_sct
 
 
 # DEFAULT PARAMETERS
@@ -367,7 +367,7 @@ def main():
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     # call main function

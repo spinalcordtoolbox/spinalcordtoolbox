@@ -26,11 +26,10 @@ from matplotlib.ticker import MaxNLocator
 
 import sct_utils as sct
 # TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, parse_num_list, init_sct
 from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
-    func_sum, _merge_dict
-from spinalcordtoolbox.utils import parse_num_list
+    func_sum, merge_dict
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 
@@ -312,7 +311,7 @@ def main(args=None):
     qc_subject = arguments.qc_subject
 
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # update fields
     metrics_agg = {}
@@ -336,7 +335,7 @@ def main(args=None):
                                                             levels=parse_num_list(vert_levels), perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=group_funcs)
-    metrics_agg_merged = _merge_dict(metrics_agg)
+    metrics_agg_merged = merge_dict(metrics_agg)
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
 
     # QC report (only show CSA for clarity)
@@ -349,6 +348,6 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main(sys.argv[1:])

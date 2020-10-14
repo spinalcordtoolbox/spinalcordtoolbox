@@ -29,7 +29,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from sct_image import concat_data
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 from spinalcordtoolbox.labels import create_labels
 from spinalcordtoolbox.types import Coordinate
 
@@ -153,7 +153,7 @@ def main(args=None):
         param.remove_temp_files = arguments.r
 
     param.verbose = arguments.v
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    init_sct(log_level=param.verbose, update=True)  # Update log level
 
     # run main program
     create_mask(param)
@@ -355,5 +355,5 @@ def create_mask2d(param, center, shape, size, im_data):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

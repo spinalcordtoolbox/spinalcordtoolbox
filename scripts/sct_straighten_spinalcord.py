@@ -22,7 +22,7 @@ import argparse
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
 
 import sct_utils as sct
 
@@ -236,7 +236,7 @@ def main(args=None):
     sc_straight.path_output = arguments.ofolder
     path_qc = arguments.qc
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     sc_straight.verbose = verbose
 
     # if arguments.cpu_nb is not None:
@@ -285,5 +285,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

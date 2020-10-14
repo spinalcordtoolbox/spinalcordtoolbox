@@ -18,7 +18,7 @@ import argparse
 
 import sct_utils as sct
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 
 
 # PARSER
@@ -94,6 +94,6 @@ def main():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

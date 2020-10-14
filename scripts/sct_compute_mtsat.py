@@ -21,7 +21,7 @@ import os
 import argparse
 import json
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, splitext
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, splitext, init_sct
 from spinalcordtoolbox.qmri.mt import compute_mtsat
 from spinalcordtoolbox.image import Image
 
@@ -168,7 +168,7 @@ def main(argv):
     parser = get_parser(argv)
     args = parser.parse_args(argv if argv else ['--help'])
     verbose = args.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     sct.printv('Load data...', verbose)
     nii_mt = Image(args.mt)

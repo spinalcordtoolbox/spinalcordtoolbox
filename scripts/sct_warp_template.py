@@ -18,7 +18,7 @@ import argparse
 
 import spinalcordtoolbox.metadata
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
 import sct_utils as sct
 
 
@@ -237,7 +237,7 @@ def main(args=None):
     folder_out = arguments.ofolder
     path_template = arguments.t
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
@@ -276,6 +276,6 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     param = Param()
     main()

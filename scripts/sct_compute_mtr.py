@@ -18,7 +18,7 @@ import os
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.qmri.mt import compute_mtr
 
@@ -48,7 +48,7 @@ def get_parser():
     optional.add_argument(
         "-thr",
         type=float,
-        help="Threshold to clip MTR output values in case of division by small number. This implies that the output image" 
+        help="Threshold to clip MTR output values in case of division by small number. This implies that the output image"
              "range will be [-thr, +thr]. Default: 100.",
         default=100
         )
@@ -92,5 +92,5 @@ def main():
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

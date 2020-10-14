@@ -18,7 +18,7 @@ import os
 import sys
 import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
 
 import sct_utils as sct
 
@@ -139,7 +139,7 @@ def main():
 
     remove_temp_files = args.r
     verbose = args.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
@@ -174,5 +174,5 @@ def main():
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

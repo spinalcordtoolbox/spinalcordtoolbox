@@ -9,7 +9,7 @@ import argparse
 import numpy as np
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -120,7 +120,7 @@ def get_parser():
 
 
 def run_main():
-    sct.init_sct()
+    init_sct()
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
@@ -155,7 +155,7 @@ def run_main():
         file_output = os.path.join(path_data, file_data + '_centerline')
 
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     if method == 'viewer':
         # Manual labeling of cord centerline
@@ -182,7 +182,7 @@ def run_main():
     np.savetxt(file_output + '.csv', arr_centerline.transpose(), delimiter=",")
 
     sct.display_viewer_syntax([fname_input_data, file_output+'.nii.gz'], colormaps=['gray', 'red'], opacities=['', '1'])
-    
+
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject

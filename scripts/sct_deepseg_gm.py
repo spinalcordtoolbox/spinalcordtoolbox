@@ -15,7 +15,7 @@ import os
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 
 from spinalcordtoolbox.reports.qc import generate_qc
 
@@ -107,7 +107,7 @@ def run_main():
     model_name = arguments.m
     threshold = arguments.thr
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     if threshold > 1.0 or threshold < 0.0:
         raise RuntimeError("Threshold should be between 0.0 and 1.0.")
@@ -137,5 +137,5 @@ def run_main():
 
 
 if __name__ == '__main__':
-    sct.init_sct()
+    init_sct()
     run_main()

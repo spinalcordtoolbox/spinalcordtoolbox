@@ -17,7 +17,7 @@ import sys
 import argparse
 
 from spinalcordtoolbox.download import install_data
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
 import sct_utils as sct
 
 
@@ -154,7 +154,7 @@ def main(args=None):
 
     data_name = arguments.d
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     if arguments.o is not None:
         dest_folder = arguments.o
     else:
@@ -168,6 +168,6 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     res = main()
     raise SystemExit(res)

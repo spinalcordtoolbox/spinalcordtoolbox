@@ -35,7 +35,7 @@ import psutil
 from textwrap import dedent
 from types import SimpleNamespace
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit, __get_git_origin
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit, __get_git_origin, init_sct
 from spinalcordtoolbox import __version__
 
 import sct_utils as sct
@@ -220,7 +220,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
 
 def main(argv):
     # Print the sct startup info
-    sct.init_sct()
+    init_sct()
 
     # Parse the command line arguments
     parser = get_parser()

@@ -22,8 +22,10 @@ import time
 
 import numpy as np
 
-import sct_utils as sct
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import init_sct
+
+import sct_utils as sct
 
 
 class Param:
@@ -177,9 +179,9 @@ def usage():
         '  -s                sigma of the smoothing Gaussian kernel (in voxel). Default=' + str(param_default.smoothing_sigma) + '\n'
         '  -r {0,1}          remove temporary files. Default=' + str(param_default.remove_temp_files) + '\n'
         '  -v {0,1}          verbose. Default=' + str(param_default.verbose) + '\n'
-        '  -h                help. Show this message\n' 
+        '  -h                help. Show this message\n'
         '\n'
-        'EXAMPLE\n' 
+        'EXAMPLE\n'
         '  ' + os.path.basename(__file__) + ' -i segmentation.nii \n')
 
     # exit program
@@ -190,7 +192,7 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     param_default = Param()

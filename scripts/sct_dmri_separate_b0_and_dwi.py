@@ -26,7 +26,7 @@ from spinalcordtoolbox.image import Image
 from sct_image import split_data
 from sct_convert import convert
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
 import argparse
 
 
@@ -128,7 +128,7 @@ def main(args=None):
     fname_bvecs = arguments.bvec
     average = arguments.a
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     remove_temp_files = arguments.r
     path_out = arguments.ofolder
 
@@ -314,5 +314,5 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

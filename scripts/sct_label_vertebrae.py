@@ -26,7 +26,7 @@ from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
 
 # TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct
 import sct_utils as sct
 import sct_straighten_spinalcord
 
@@ -274,7 +274,7 @@ def main(args=None):
     if arguments.param is not None:
         param.update(arguments.param[0])
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     remove_temp_files = arguments.r
     denoise = arguments.denoise
     laplacian = arguments.laplacian
@@ -469,6 +469,6 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()
