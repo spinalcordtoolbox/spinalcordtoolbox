@@ -3,6 +3,7 @@
 # Convenience/shell related utilites
 
 import os
+import sys
 import re
 import shutil
 import logging
@@ -10,7 +11,91 @@ import argparse
 
 from enum import Enum
 
+from .sys import printv
+
 logger = logging.getLogger(__name__)
+
+
+def display_open(file):
+    """Print the syntax to open a file based on the platform."""
+    if sys.platform == 'linux':
+        printv('\nDone! To view results, type:')
+        printv('xdg-open ' + file + '\n', verbose=1, type='info')
+    elif sys.platform == 'darwin':
+        printv('\nDone! To view results, type:')
+        printv('open ' + file + '\n', verbose=1, type='info')
+    else:
+        printv('\nDone! To view results, open the following file:')
+        printv(file + '\n', verbose=1, type='info')
+
+
+def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
+    """
+    Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
+    Parameters
+    ----------
+    files [list:string]: list of NIFTI file names
+    colormaps [list:string]: list of colormaps associated with each file. Available colour maps: see dict_fsleyes
+    minmax [list:string]: list of min,max brightness scale associated with each file. Separate with comma.
+    opacities [list:string]: list of opacity associated with each file. Between 0 and 1.
+
+    Returns
+    -------
+    None
+
+    Example
+    -------
+    sct.display_viewer_syntax([file1, file2, file3])
+    sct.display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
+    """
+    list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview']  # list of known viewers. Can add more.
+    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
+                    'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
+    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
+                    'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
+    selected_viewer = None
+
+    # find viewer
+    exe_viewers = [viewer for viewer in list_viewer if check_exe(viewer)]
+    if exe_viewers:
+        selected_viewer = exe_viewers[0]
+    else:
+        return
+
+    # loop across files and build syntax
+    cmd = selected_viewer
+    # add mode (only supported by fslview for the moment)
+    if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
+        cmd += ' -m ' + mode
+    for i in range(len(files)):
+        # add viewer-specific options
+        if selected_viewer in ['fslview', 'fslview_deprecated']:
+            cmd += ' ' + files[i]
+            if colormaps:
+                if colormaps[i]:
+                    cmd += ' -l ' + dict_fslview[colormaps[i]]
+            if minmax:
+                if minmax[i]:
+                    cmd += ' -b ' + minmax[i]  # a,b
+            if opacities:
+                if opacities[i]:
+                    cmd += ' -t ' + opacities[i]
+        if selected_viewer in ['fsleyes']:
+            cmd += ' ' + files[i]
+            if colormaps:
+                if colormaps[i]:
+                    cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
+            if minmax:
+                if minmax[i]:
+                    cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
+            if opacities:
+                if opacities[i]:
+                    cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
+    cmd += ' &'
+    # display
+    if verbose:
+        printv('\nDone! To view results, type:')
+        printv(cmd + '\n', verbose=1, type='info')
 
 
 class ActionCreateFolder(argparse.Action):
@@ -169,6 +254,40 @@ def parse_num_list(str_num):
         raise ValueError("unexpected group element {} group spec {}".format(element, str_num))
 
     return list_num
+
+
+def get_interpolation(program, interp):
+    """
+    Get syntax on interpolation field depending on program. Supported programs: ants, flirt, WarpImageMultiTransform
+    :param program:
+    :param interp:
+    :return:
+    """
+    # TODO: check if field and program exists
+    interp_program = ''
+    # FLIRT
+    if program == 'flirt':
+        if interp == 'nn':
+            interp_program = ' -interp nearestneighbour'
+        elif interp == 'linear':
+            interp_program = ' -interp trilinear'
+        elif interp == 'spline':
+            interp_program = ' -interp spline'
+    # ANTs
+    elif program == 'ants' or program == 'ants_affine' or program == 'isct_antsApplyTransforms' \
+            or program == 'isct_antsSliceRegularizedRegistration' or program == 'isct_antsRegistration':
+        if interp == 'nn':
+            interp_program = ' -n NearestNeighbor'
+        elif interp == 'linear':
+            interp_program = ' -n Linear'
+        elif interp == 'spline':
+            interp_program = ' -n BSpline[3]'
+    # check if not assigned
+    if interp_program == '':
+        printv('WARNING (' + os.path.basename(__file__) + '): interp_program not assigned. Using linear for ants_affine.', 1, 'warning')
+        interp_program = ' -n Linear'
+    # return
+    return interp_program.strip().split()
 
 
 def parse_num_list_inv(list_int):

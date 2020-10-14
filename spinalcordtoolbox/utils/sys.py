@@ -18,9 +18,21 @@ from email import encoders
 
 import tqdm
 
-from .fs import __version__, sct_dir_local_path
 
 logger = logging.getLogger(__name__)
+
+
+class bcolors(object):
+    normal = '\033[0m'
+    red = '\033[91m'
+    green = '\033[92m'
+    yellow = '\033[93m'
+    blue = '\033[94m'
+    magenta = '\033[95m'
+    cyan = '\033[96m'
+    bold = '\033[1m'
+    underline = '\033[4m'
+
 
 if os.getenv('SENTRY_DSN', None):
     # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
@@ -284,3 +296,167 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         raise RuntimeError(output)
 
     return status, output
+
+
+def printv(string, verbose=1, type='normal'):
+    """
+    Enables to print color-coded messages, depending on verbose status. Only use in command-line programs (e.g.,
+    sct_propseg).
+    """
+
+    colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
+              'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
+
+    if verbose:
+        # The try/except is there in case stdout does not have isatty field (it did happen to me)
+        try:
+            # Print color only if the output is the terminal
+            if sys.stdout.isatty():
+                color = colors.get(type, bcolors.normal)
+                print(color + string + bcolors.normal)
+            else:
+                print(string)
+        except Exception as e:
+            print(string)
+
+
+def sct_dir_local_path(*args):
+    """Construct a directory path relative to __sct_dir__"""
+    return os.path.join(__sct_dir__, *args)
+
+
+def sct_test_path(*args):
+    """Construct a directory path relative to the sct testing data. Consults the
+    SCT_TESTING_DATA environment variable, if unset, paths are relative to the
+    current directory."""
+
+    test_path = os.environ.get('SCT_TESTING_DATA', '')
+    return os.path.join(test_path, 'sct_testing_data', *args)
+
+
+def check_exe(name):
+    """
+    Ensure that a program exists
+
+    :param name: str: name or path to program
+    :return: path of the program or None
+    """
+    def is_exe(fpath):
+        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+    fpath, _ = os.path.split(name)
+    if fpath and is_exe(name):
+        return fpath
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, name)
+            if is_exe(exe_file):
+                return exe_file
+
+    return None
+
+
+def _version_string():
+    install_type, sct_commit, sct_branch, version_sct = _git_info()
+    if install_type == "package":
+        return version_sct
+    return "{install_type}-{sct_branch}-{sct_commit}".format(**locals())
+
+
+def _git_info(commit_env='SCT_COMMIT', branch_env='SCT_BRANCH'):
+
+    sct_commit = os.getenv(commit_env, "unknown")
+    sct_branch = os.getenv(branch_env, "unknown")
+    if check_exe("git") and os.path.isdir(os.path.join(__sct_dir__, ".git")):
+        sct_commit = __get_commit() or sct_commit
+        sct_branch = __get_branch() or sct_branch
+
+    if sct_commit != 'unknown':
+        install_type = 'git'
+    else:
+        install_type = 'package'
+
+    with io.open(os.path.join(__sct_dir__, 'spinalcordtoolbox', 'version.txt'), 'r') as f:
+        version_sct = f.read().rstrip()
+
+    return install_type, sct_commit, sct_branch, version_sct
+
+
+def __get_branch():
+    """
+    Fallback if for some reason the value vas no set by sct_launcher
+    :return:
+    """
+
+    p = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE, cwd=__sct_dir__)
+    output, _ = p.communicate()
+    status = p.returncode
+
+    if status == 0:
+        return output.decode().strip()
+
+
+def __get_commit(path_to_git_folder=None):
+    """
+    :return: git commit ID, with trailing '*' if modified
+    """
+    if path_to_git_folder is None:
+        path_to_git_folder = __sct_dir__
+    else:
+        path_to_git_folder = abspath(path_to_git_folder)
+
+    p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=path_to_git_folder)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        commit = output.decode().strip()
+    else:
+        commit = "?!?"
+
+    p = subprocess.Popen(["git", "status", "--porcelain"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=path_to_git_folder)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        unclean = True
+        for line in output.decode().strip().splitlines():
+            line = line.rstrip()
+            if line.startswith("??"):  # ignore ignored files, they can't hurt
+                continue
+            break
+        else:
+            unclean = False
+        if unclean:
+            commit += "*"
+
+    return commit
+
+
+def __get_git_origin(path_to_git_folder=None):
+    """
+    :return: git origin url if available
+    """
+    if path_to_git_folder is None:
+        path_to_git_folder = __sct_dir__
+    else:
+        path_to_git_folder = os.path.abspath(os.path.expanduser(path_to_git_folder))
+
+    p = subprocess.Popen(["git", "remote", "get-url", "origin"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         cwd=path_to_git_folder)
+    output, _ = p.communicate()
+    status = p.returncode
+    if status == 0:
+        origin = output.decode().strip()
+    else:
+        origin = "?!?"
+
+    return origin
+
+
+__sct_dir__ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+__version__ = _version_string()
+__data_dir__ = os.path.join(__sct_dir__, 'data')
+__deepseg_dir__ = os.path.join(__data_dir__, 'deepseg_models')
