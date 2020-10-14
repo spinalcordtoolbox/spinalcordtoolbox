@@ -19,7 +19,7 @@ from __future__ import division, absolute_import
 import sys, io, os, time, functools
 import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
@@ -220,7 +220,7 @@ class Transform:
                 fname_src = fname_dilated_labels
 
             sct.printv("\nApply transformation and resample to destination space...", verbose)
-            sct.run(['isct_antsApplyTransforms',
+            run_proc(['isct_antsApplyTransforms',
                      '-d', dim,
                      '-i', fname_src,
                      '-o', fname_out,
@@ -264,7 +264,7 @@ class Transform:
                 file_data_split = 'data_T' + str(it).zfill(4) + '.nii'
                 file_data_split_reg = 'data_reg_T' + str(it).zfill(4) + '.nii'
 
-                status, output = sct.run(['isct_antsApplyTransforms',
+                status, output = run_proc(['isct_antsApplyTransforms',
                                           '-d', '3',
                                           '-i', file_data_split,
                                           '-o', file_data_split_reg,

@@ -19,7 +19,7 @@ import numpy as np
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
@@ -391,17 +391,17 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if nz == 1:
             # when data is 2d: we convert it to a 3d image in order to avoid conversion problem with 2d data
             # TODO: check if this above problem is still present (now that we are using nibabel instead of nipy)
-            sct.run(['sct_image', '-i', ','.join([fname, fname]), '-concat', 'z', '-o', fname])
+            run_proc(['sct_image', '-i', ','.join([fname, fname]), '-concat', 'z', '-o', fname])
 
-        sct.run(['sct_resample', '-i', fname, '-mm', str(npx) + 'x' + str(npy) + 'x' + str(pz), '-o', name_resample, '-x', interpolation])
+        run_proc(['sct_resample', '-i', fname, '-mm', str(npx) + 'x' + str(npy) + 'x' + str(pz), '-o', name_resample, '-x', interpolation])
 
         if nz == 1:  # when input data was 2d: re-convert data 3d-->2d
-            sct.run(['sct_image', '-i', name_resample, '-split', 'z'])
+            run_proc(['sct_image', '-i', name_resample, '-split', 'z'])
             im_split = Image(name_resample.split('.nii.gz')[0] + '_Z0000.nii.gz')
             im_split.save(name_resample)
 
         if binary:
-            sct.run(['sct_maths', '-i', name_resample, '-bin', str(thr), '-o', name_resample])
+            run_proc(['sct_maths', '-i', name_resample, '-bin', str(thr), '-o', name_resample])
 
         if orientation != 'RPI':
             name_resample = Image(name_resample) \

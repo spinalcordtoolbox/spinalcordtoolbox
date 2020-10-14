@@ -36,6 +36,7 @@ from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 from spinalcordtoolbox.types import Coordinate
+from spinalcordtoolbox.utils import run_proc
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 
@@ -554,7 +555,7 @@ def main(args=None):
 
         dimensionality = len(Image(ftmp_data).hdr.get_data_shape())
         cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_straight2curve.nii.gz', '-R', ftmp_data, 'warp_straight2curve.nii.gz']
-        status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
+        status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
         if status != 0:
             raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
@@ -596,7 +597,7 @@ def main(args=None):
 
             dimensionality = len(Image("template.nii").hdr.get_data_shape())
             cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_curve2straightAffine.nii.gz', '-R', 'template.nii', 'straight2templateAffine.txt', 'warp_curve2straight.nii.gz']
-            status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
+            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
@@ -654,13 +655,13 @@ def main(args=None):
         # sub-sample in z-direction
         # TODO: refactor to use python module instead of doing i/o
         sct.printv('\nSub-sample in z-direction (for faster processing)...', verbose)
-        sct.run(['sct_resample', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        run_proc(['sct_resample', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample], verbose)
         ftmp_template = add_suffix(ftmp_template, '_sub')
-        sct.run(['sct_resample', '-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        run_proc(['sct_resample', '-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
         ftmp_template_seg = add_suffix(ftmp_template_seg, '_sub')
-        sct.run(['sct_resample', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        run_proc(['sct_resample', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', '1x1x' + zsubsample], verbose)
         ftmp_data = add_suffix(ftmp_data, '_sub')
-        sct.run(['sct_resample', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        run_proc(['sct_resample', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
         ftmp_seg = add_suffix(ftmp_seg, '_sub')
 
         # Registration straight spinal cord to template
@@ -679,7 +680,7 @@ def main(args=None):
 
         dimensionality = len(Image("template.nii").hdr.get_data_shape())
         cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_anat2template.nii.gz', '-R', 'template.nii', warp_forward, 'warp_curve2straightAffine.nii.gz']
-        status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
+        status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
         if status != 0:
             raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
@@ -690,14 +691,14 @@ def main(args=None):
         if level_alignment:
             dimensionality = len(Image("data.nii").hdr.get_data_shape())
             cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_template2anat.nii.gz', '-R', 'data.nii', 'warp_straight2curve.nii.gz', warp_inverse]
-            status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
+            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
         else:
             dimensionality = len(Image("data.nii").hdr.get_data_shape())
             cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_template2anat.nii.gz', '-R', 'data.nii', 'warp_straight2curve.nii.gz', '-i', 'straight2templateAffine.txt', warp_inverse]
-            status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
+            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
@@ -743,8 +744,8 @@ def main(args=None):
         os.rename(warp_inverse, 'warp_anat2template.nii.gz')
 
     # Apply warping fields to anat and template
-    sct.run(['sct_apply_transfo', '-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '0'], verbose)
-    sct.run(['sct_apply_transfo', '-i', 'data.nii', '-o', 'anat2template.nii.gz', '-d', 'template.nii', '-w', 'warp_anat2template.nii.gz', '-crop', '0'], verbose)
+    run_proc(['sct_apply_transfo', '-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '0'], verbose)
+    run_proc(['sct_apply_transfo', '-i', 'data.nii', '-o', 'anat2template.nii.gz', '-d', 'template.nii', '-w', 'warp_anat2template.nii.gz', '-crop', '0'], verbose)
 
     # come back
     os.chdir(curdir)
@@ -1073,7 +1074,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     if warp_forward:
         cmd += reversed(warp_forward)
 
-    status, output = sct.run(cmd, is_sct_binary=True)
+    status, output = run_proc(cmd, is_sct_binary=True)
     if status != 0:
         raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
@@ -1088,7 +1089,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     if warp_inverse:
         cmd += reversed(warp_inverse)
 
-    status, output = sct.run(cmd, is_sct_binary=True)
+    status, output = run_proc(cmd, is_sct_binary=True)
     if status != 0:
         raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 

@@ -29,7 +29,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from sct_image import concat_data
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
 from spinalcordtoolbox.labels import create_labels
 from spinalcordtoolbox.types import Coordinate
 
@@ -294,7 +294,7 @@ def create_line(param, fname, coord, nz):
     sct.copy(fname, 'line.nii', verbose=param.verbose)
 
     # set all voxels to zero
-    sct.run(['sct_maths', '-i', 'line.nii', '-mul', '0', '-o', 'line.nii'], param.verbose)
+    run_proc(['sct_maths', '-i', 'line.nii', '-mul', '0', '-o', 'line.nii'], param.verbose)
 
     labels = []
 

@@ -26,7 +26,7 @@ import sct_maths
 import spinalcordtoolbox.image as msct_image
 from sct_convert import convert
 # TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type, init_sct, run_proc
 
 # PARAMETERS
 class Param:
@@ -201,9 +201,9 @@ def main(args=None):
         sct.copy(os.path.join(curdir, 'warp_straight2curve.nii.gz'), 'warp_straight2curve.nii.gz')
         sct.copy(os.path.join(curdir, 'straight_ref.nii.gz'), 'straight_ref.nii.gz')
         # apply straightening
-        sct.run(['sct_apply_transfo', '-i', fname_anat_rpi, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
+        run_proc(['sct_apply_transfo', '-i', fname_anat_rpi, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
     else:
-        sct.run(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting='+param.algo_fitting], verbose)
+        run_proc(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting='+param.algo_fitting], verbose)
         sct.cache_save(cachefile, cache_sig)
         # move warping fields locally (to use caching next time)
         sct.copy('warp_curve2straight.nii.gz', os.path.join(curdir, 'warp_curve2straight.nii.gz'))
@@ -218,7 +218,7 @@ def main(args=None):
                          '-v', '0'])
     # Apply the reversed warping field to get back the curved spinal cord
     sct.printv('\nApply the reversed warping field to get back the curved spinal cord...')
-    sct.run(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)
+    run_proc(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)
 
     # replace zeroed voxels by original image (issue #937)
     sct.printv('\nReplace zeroed voxels by original image...', verbose)

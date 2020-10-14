@@ -81,99 +81,6 @@ def add_suffix(fname, suffix):
 #=======================================================================================================================
 # run
 #=======================================================================================================================
-# Run UNIX command
-def run_old(cmd, verbose=1):
-    if verbose:
-        printv(bcolors.blue + cmd + bcolors.normal)
-    status, output = run(cmd)
-    if status != 0:
-        printv('\nERROR! \n' + output + '\nExit program.\n', 1, 'error')
-    else:
-        return status, output
-
-def which_sct_binaries():
-    """
-    :return name of the sct binaries to use on this platform
-    """
-
-    if sys.platform.startswith("linux"):
-        return "binaries_linux"
-    else:
-        return "binaries_osx"
-
-
-def run(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_binary=False):
-    # if verbose == 2:
-    #     printv(sys._getframe().f_back.f_code.co_name, 1, 'process')
-
-    if cwd is None:
-        cwd = os.getcwd()
-
-    if env is None:
-        env = os.environ
-
-    if sys.hexversion < 0x03000000 and isinstance(cmd, unicode):
-        cmd = str(cmd)
-
-
-    if is_sct_binary:
-        name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
-        path = None
-        #binaries_location_default = os.path.expanduser("~/.cache/spinalcordtoolbox-{}/bin".format(__version__)
-        binaries_location_default = sct_dir_local_path("bin")
-        for directory in (
-         #binaries_location_default,
-         sct_dir_local_path("bin"),
-         ):
-            candidate = os.path.join(directory, name)
-            if os.path.exists(candidate):
-                path = candidate
-        if path is None:
-            run(["sct_download_data", "-d", which_sct_binaries(), "-o", binaries_location_default])
-            path = os.path.join(binaries_location_default, name)
-
-        if isinstance(cmd, list):
-            cmd[0] = path
-        elif isinstance(cmd, str):
-            rem = cmd.split(" ", 1)[1:]
-            cmd = path if len(rem) == 0 else "{} {}".format(path, rem[0])
-
-    if isinstance(cmd, str):
-        cmdline = cmd
-    else:
-        cmdline = list2cmdline(cmd)
-
-
-    if verbose:
-        printv("%s # in %s" % (cmdline, cwd), 1, 'code')
-
-    shell = isinstance(cmd, str)
-
-    process = subprocess.Popen(cmd, shell=shell, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
-    output_final = ''
-    while True:
-        # Watch out for deadlock!!!
-        output = process.stdout.readline().decode("utf-8")
-        if output == '' and process.poll() is not None:
-            break
-        if output:
-            if verbose == 2:
-                printv(output.strip())
-            output_final += output.strip() + '\n'
-
-    status = process.returncode
-    output = output_final.rstrip()
-
-    # process.stdin.close()
-    # process.stdout.close()
-    # process.terminate()
-
-    if status != 0 and raise_exception:
-        raise RunError(output)
-
-    return status, output
-
-
 def display_open(file):
     """Print the syntax to open a file based on the platform."""
     if sys.platform == 'linux':
@@ -256,32 +163,11 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
         printv(cmd + '\n', verbose=1, type='info')
 
 
-def mkdir(path, verbose=1):
-    """Create a folder, like os.mkdir
-    """
-    try:
-        printv("mkdir %s" % (path), verbose=verbose, type="code")
-        os.mkdir(path)
-    except Exception as e:
-        raise
-
-def rm(path, verbose=1):
-    """Remove a file, almost like os.remove
-    """
-    try:
-        printv("rm %s" % (path), verbose=verbose, type="code")
-        os.remove(path)
-    except Exception as e:
-        raise
-
 def mv(src, dst, verbose=1):
     """Move a file from src to dst, almost like os.rename
     """
-    try:
-        printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
-        os.rename(src, dst)
-    except Exception as e:
-        raise
+    printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
+    os.rename(src, dst)
 
 def copy(src, dst, verbose=1):
     """Copy src to dst, almost like shutil.copy
@@ -307,11 +193,8 @@ def copy(src, dst, verbose=1):
 def rmtree(folder, verbose=1):
     """Recursively remove folder, almost like shutil.rmtree
     """
-    try:
-        printv("rm -rf %s" % (folder), verbose=verbose, type="code")
-        shutil.rmtree(folder, ignore_errors=True)
-    except Exception as e:
-        raise # Must be another error
+    printv("rm -rf %s" % (folder), verbose=verbose, type="code")
+    shutil.rmtree(folder, ignore_errors=True)
 
 
 #=======================================================================================================================
@@ -320,16 +203,16 @@ def rmtree(folder, verbose=1):
 #=======================================================================================================================
 def checkRAM(os, verbose=1):
     if (os == 'linux'):
-        status, output = run('grep MemTotal /proc/meminfo', 0)
+        status, output = utils.run_proc('grep MemTotal /proc/meminfo', 0)
         printv('RAM: ' + output)
         ram_split = output.split()
         ram_total = float(ram_split[1])
-        status, output = run('free -m', 0)
+        status, output = utils.run_proc('free -m', 0)
         printv(output)
         return ram_total / 1024
 
     elif (os == 'osx'):
-        status, output = run('hostinfo | grep memory', 0)
+        status, output = utils.run_proc('hostinfo | grep memory', 0)
         printv('RAM: ' + output)
         ram_split = output.split(' ')
         ram_total = float(ram_split[3])
@@ -395,11 +278,10 @@ def get_absolute_path(fname):
     else:
         printv('\nERROR: ' + fname + ' does not exist. Exit program.\n', 1, 'error')
 
+
 #=======================================================================================================================
 # check_file_exist:  Check existence of a file or path
 #=======================================================================================================================
-
-
 def check_file_exist(fname, verbose=1):
     if fname[0] == '-':
         # fname should be a warping field that will be inverted, ignore the "-"
@@ -416,54 +298,8 @@ def check_file_exist(fname, verbose=1):
 
 
 #=======================================================================================================================
-# check_folder_exist:  Check existence of a folder.
-#   Does not create it. If you want to create a folder, use create_folder
-#=======================================================================================================================
-def check_folder_exist(fname, verbose=1):
-    if os.path.isdir(fname):
-        printv('  OK: ' + fname, verbose, 'normal')
-        return True
-    else:
-        printv('\nWarning: The directory ' + str(fname) + ' does not exist.\n', 1, 'warning')
-        return False
-
-
-#=======================================================================================================================
-# check_write_permission:  Check existence of a folder.
-#   Does not create it. If you want to create a folder, use create_folder
-#=======================================================================================================================
-def check_write_permission(fname, verbose=1):
-    if os.path.isdir(fname):
-        if os.path.isdir(fname):
-            return os.access(fname, os.W_OK)
-        else:
-            printv('\nERROR: The directory ' + fname + ' does not exist. Exit program.\n', 1, 'error')
-    else:
-        path_fname, file_fname, ext_fname = extract_fname(os.path.abspath(fname))
-        return os.access(path_fname, os.W_OK)
-
-
-#=======================================================================================================================
-# create_folder:  create folder (check if exists before creating it)
-#   output: 0 -> folder created
-#           1 -> folder already exist
-#           2 -> permission denied
-#=======================================================================================================================
-def create_folder(folder):
-    if not os.path.exists(folder):
-        try:
-            os.makedirs(folder)
-            return 0
-        except OSError as e:
-            if e.errno != errno.EEXIST:
-                return 2
-    else:
-        return 1
-
-#=======================================================================================================================
 # check_dim
 #=======================================================================================================================
-
 def check_dim(fname, dim_lst=[3]):
     """
     Check if input dimension matches the input dimension requirements specified in the dim list.
@@ -480,28 +316,6 @@ def check_dim(fname, dim_lst=[3]):
         sys.exit(2)
     else:
         return True
-
-
-#=======================================================================================================================
-# find_file_within_folder
-#=======================================================================================================================
-def find_file_within_folder(fname, directory, seek_type='file'):
-    """Find file (or part of file, e.g. 'my_file*.txt') within folder tree recursively - fname and directory must be
-    strings
-    seek_type: 'file' or 'dir' to look for either a file or a directory respectively."""
-    import fnmatch
-
-    all_path = []
-    for root, dirs, files in os.walk(directory):
-        if seek_type == 'dir':
-            for folder in dirs:
-                if fnmatch.fnmatch(folder, fname):
-                    all_path.append(os.path.join(root, folder))
-        else:
-            for file in files:
-                if fnmatch.fnmatch(file, fname):
-                    all_path.append(os.path.join(root, file))
-    return all_path
 
 
 def tmp_create(basename=None, verbose=1):
@@ -552,21 +366,6 @@ class TempFolder(object):
 
 
 #=======================================================================================================================
-# copy a nifti file to (temporary) folder and convert to .nii or .nii.gz
-#=======================================================================================================================
-def tmp_copy_nifti(fname, path_tmp, fname_out='data.nii', verbose=0):
-    # tmp_copy_nifti('input.nii', path_tmp, 'raw.nii')
-    path_fname, file_fname, ext_fname = extract_fname(fname)
-    path_fname_out, file_fname_out, ext_fname_out = extract_fname(fname_out)
-
-    run('cp ' + fname + ' ' + path_tmp + file_fname_out + ext_fname)
-    if ext_fname_out == '.nii':
-        run('fslchfiletype NIFTI ' + path_tmp + file_fname_out, 0)
-    elif ext_fname_out == '.nii.gz':
-        run('fslchfiletype NIFTI_GZ ' + path_tmp + file_fname_out, 0)
-
-
-#=======================================================================================================================
 # generate_output_file
 #=======================================================================================================================
 def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
@@ -602,7 +401,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
         '''
         # TRY TO UNCOMMENT THIS LINES AND RUN IT IN AN OTHER STATION THAN EVANS (testing of sct_label_vertebrae and sct_smooth_spinalcord never stops with this lines on evans)
         if ext_in == '.nii.gz' and ext_out == '.nii':  # added to resolve issue #728
-            run('gunzip -f ' + fname_in)
+            utils.run_proc('gunzip -f ' + fname_in)
             os.rename(os.path.join(path_in, file_in + '.nii'), fname_out)
         else:
         '''
@@ -626,34 +425,6 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
     # if verbose:
     #     printv('  File created: '+ os.path.join(path_out, file_out+ext_out))
     return os.path.join(path_out, file_out + ext_out)
-
-
-#=======================================================================================================================
-# check_if_installed
-#=======================================================================================================================
-# check if dependant software is installed
-def check_if_installed(cmd, name_software):
-    status, output = run(cmd)
-    if status != 0:
-        printv('\nERROR: ' + name_software + ' is not installed.\nExit program.\n')
-        sys.exit(2)
-
-
-#=======================================================================================================================
-# check_if_same_space
-#=======================================================================================================================
-# check if two images are in the same space and same orientation
-def check_if_same_space(fname_1, fname_2):
-    from spinalcordtoolbox.image import Image
-
-    im_1 = Image(fname_1)
-    im_2 = Image(fname_2)
-    q1 = im_1.hdr.get_qform()
-    q2 = im_2.hdr.get_qform()
-
-    dec = int(np.abs(np.round(np.log10(np.min(np.abs(q1[np.nonzero(q1)]))))) + 1)
-    dec = 4 if dec > 4 else dec
-    return np.all(np.around(q1, dec) == np.around(q2, dec))
 
 
 def printv(string, verbose=1, type='normal'):
@@ -686,20 +457,6 @@ def sign(x):
         return 1
     else:
         return -1
-
-
-#=======================================================================================================================
-# delete_nifti: delete nifti file(s)
-#=======================================================================================================================
-def delete_nifti(fname_in):
-    # extract input file extension
-    path_in, file_in, ext_in = extract_fname(fname_in)
-    # delete nifti if exist
-    if os.path.isfile(os.path.join(path_in, file_in + '.nii')):
-        os.system('rm ' + os.path.join(path_in, file_in + '.nii'))
-    # delete nifti if exist
-    if os.path.isfile(os.path.join(path_in, file_in + '.nii.gz')):
-        os.system('rm ' + os.path.join(path_in, file_in + '.nii.gz'))
 
 
 def get_interpolation(program, interp):
@@ -736,330 +493,12 @@ def get_interpolation(program, interp):
     return interp_program.strip().split()
 
 
-#=======================================================================================================================
-# template file dictionary
-#=======================================================================================================================
-def template_dict(template):
-    """
-    Dictionary of file names for template
-    :param template:
-    :return: dict_template
-    """
-    if template == 'PAM50':
-        dict_template = {'t2': 'template/PAM50_t2.nii.gz',
-                         't1': 'template/PAM50_t1.nii.gz'}
-    return dict_template
-
-
 class UnsupportedOs(Exception):
     def __init__(self, value):
         self.value = value
 
     def __str__(self):
         return repr(self.value)
-
-
-class Os(object):
-    '''Work out which platform we are running on'''
-
-    def __init__(self):
-        import os
-        if os.name != 'posix':
-            raise UnsupportedOs('We only support macOS/Linux')
-        import platform
-        self.os = platform.system().lower()
-        self.arch = platform.machine()
-        self.applever = ''
-
-        if self.os == 'darwin':
-            self.os = 'osx'
-            self.vendor = 'apple'
-            self.version = Version(platform.release())
-            (self.applever, _, _) = platform.mac_ver()
-            if self.arch == 'Power Macintosh':
-                raise UnsupportedOs('We do not support PowerPC')
-            self.glibc = ''
-            self.bits = ''
-        elif self.os == 'linux':
-            if hasattr(platform, 'linux_distribution'):
-                # We have a modern python (>2.4)
-                (self.vendor, version, _) = platform.linux_distribution(full_distribution_name=0)
-            else:
-                (self.vendor, version, _) = platform.dist()
-            self.vendor = self.vendor.lower()
-            self.version = Version(version)
-            self.glibc = platform.libc_ver()
-            if self.arch == 'x86_64':
-                self.bits = '64'
-            else:
-                self.bits = '32'
-                # raise UnsupportedOs("We no longer support 32 bit Linux. If you must use 32 bit Linux then try building from our sources.")
-        else:
-            raise UnsupportedOs("We do not support this OS.")
-
-
-class Version(object):
-    def __init__(self, version_sct):
-        self.version_sct = version_sct
-
-        if not isinstance(version_sct, basestring):
-            printv(version_sct)
-            raise Exception('Version is not a string.')
-
-        # detect beta, if it exist
-        version_sct_beta = version_sct.split('_')
-        try:
-            self.beta = version_sct_beta[1]
-            version_sct_main = version_sct_beta[0]
-            self.isbeta = True
-        except IndexError:
-            self.beta = ""
-            version_sct_main = version_sct
-            self.isbeta = False
-
-        version_sct_split = version_sct_main.split('.')
-
-        for v in version_sct_split:
-            if not v.isdigit():
-                raise ValueError('Bad version string.')
-        self.major = int(version_sct_split[0])
-        try:
-            self.minor = int(version_sct_split[1])
-        except IndexError:
-            self.minor = 0
-        try:
-            self.patch = int(version_sct_split[2])
-        except IndexError:
-            self.patch = 0
-        try:
-            self.hotfix = int(version_sct_split[3])
-        except IndexError:
-            self.hotfix = 0
-
-    def __repr__(self):
-        return "Version(%s,%s,%s,%s,%r)" % (self.major, self.minor, self.patch, self.hotfix, self.beta)
-
-    def __str__(self):
-        result = str(self.major) + "." + str(self.minor)
-        if self.patch != 0:
-            result = result + "." + str(self.patch)
-        if self.hotfix != 0:
-            result = result + "." + str(self.hotfix)
-        if self.beta != "":
-            result = result + "_" + self.beta
-        return result
-
-    def __ge__(self, other):
-        if not isinstance(other, Version):
-            return NotImplemented
-        if self > other or self == other:
-            return True
-        return False
-
-    def __le__(self, other):
-        if not isinstance(other, Version):
-            return NotImplemented
-        if self < other or self == other:
-            return True
-        return False
-
-    def __cmp__(self, other):
-        if not isinstance(other, Version):
-            return NotImplemented
-        if self.__lt__(other):
-            return -1
-        if self.__gt__(other):
-            return 1
-        return 0
-
-    def __lt__(self, other):
-        if not isinstance(other, Version):
-            return NotImplemented
-        if self.major < other.major:
-            return True
-        if self.major > other.major:
-            return False
-        if self.minor < other.minor:
-            return True
-        if self.minor > other.minor:
-            return False
-        if self.patch < other.patch:
-            return True
-        if self.patch > other.patch:
-            return False
-        if self.hotfix < other.hotfix:
-            return True
-        if self.hotfix > other.hotfix:
-            return False
-        if self.isbeta and not other.isbeta:
-            return True
-        if not self.isbeta and other.isbeta:
-            return False
-        # major, minor and patch all match so this is not less than
-        return False
-
-    def __gt__(self, other):
-        if not isinstance(other, Version):
-            return NotImplemented
-        if self.major > other.major:
-            return True
-        if self.major < other.major:
-            return False
-        if self.minor > other.minor:
-            return True
-        if self.minor < other.minor:
-            return False
-        if self.patch > other.patch:
-            return True
-        if self.patch < other.patch:
-            return False
-        if self.hotfix > other.hotfix:
-            return True
-        if self.hotfix < other.hotfix:
-            return False
-        if not self.isbeta and other.isbeta:
-            return True
-        if self.isbeta and not other.isbeta:
-            return False
-        # major, minor and patch all match so this is not less than
-        return False
-
-    def __eq__(self, other):
-        if not isinstance(other, Version):
-            return NotImplemented
-        if self.major == other.major and self.minor == other.minor and self.patch == other.patch and self.hotfix == other.hotfix and self.beta == other.beta:
-            return True
-        return False
-
-    def __ne__(self, other):
-        if not isinstance(other, Version):
-            return NotImplemented
-        if self.__eq__(other):
-            return False
-        return True
-
-    def isLessThan_MajorMinor(self, other):
-        if self.major < other.major:
-            return True
-        if self.major > other.major:
-            return False
-        if self.minor < other.minor:
-            return True
-        else:
-            return False
-
-    def isGreaterOrEqualThan_MajorMinor(self, other):
-        if self.major > other.major:
-            return True
-        if self.major < other.major:
-            return False
-        if self.minor >= other.minor:
-            return True
-        else:
-            return False
-
-    def isEqualTo_MajorMinor(self, other):
-        return self.major == other.major and self.minor == other.minor
-
-    def isLessPatchThan_MajorMinor(self, other):
-        if self.isEqualTo_MajorMinor(other):
-            if self.patch < other.patch:
-                return True
-        return False
-
-    def getFolderName(self):
-        result = str(self.major) + "." + str(self.minor)
-        if self.patch != 0:
-            result = result + "." + str(self.patch)
-        if self.hotfix != 0:
-            result = result + "." + str(self.hotfix)
-        result = result + "_" + self.beta
-        return result
-
-
-class MsgUser(object):
-    # TODO: check if should be removed
-    __debug = False
-    __quiet = False
-
-    @classmethod
-    def debugOn(cls):
-        cls.__debug = True
-
-    @classmethod
-    def debugOff(cls):
-        cls.__debug = False
-
-    @classmethod
-    def quietOn(cls):
-        cls.__quiet = True
-
-    @classmethod
-    def quietOff(cls):
-        cls.__quiet = False
-
-    @classmethod
-    def isquiet(cls):
-        return cls.__quiet
-
-    @classmethod
-    def isdebug(cls):
-        return cls.__debug
-
-    @classmethod
-    def debug(cls, message, newline=True):
-        if cls.__debug:
-            from sys import stderr
-            mess = str(message)
-            if newline:
-                mess += "\n"
-            stderr.write(mess)
-
-    @classmethod
-    def message(cls, msg):
-        if cls.__quiet:
-            return
-        printv(msg)
-
-    @classmethod
-    def question(cls, msg):
-        printv(msg,)
-
-    @classmethod
-    def skipped(cls, msg):
-        if cls.__quiet:
-            return
-        printv("".join((bcolors.magenta, "[Skipped] ", bcolors.normal, msg)))
-
-    @classmethod
-    def ok(cls, msg):
-        if cls.__quiet:
-            return
-        log.info("".join((bcolors.green, "[OK] ", bcolors.normal, msg)))
-
-    @classmethod
-    def failed(cls, msg):
-        log.error("".join((bcolors.red, "[FAILED] ", bcolors.normal, msg)))
-
-    @classmethod
-    def warning(cls, msg):
-        if cls.__quiet:
-            return
-        log.warning("".join((bcolors.yellow, bcolors.bold, "[Warning]", bcolors.normal, " ", msg)))
-
-
-class Error(Exception):
-    """
-    The sct Basic error class
-    """
-    pass
-
-
-class RunError(Error):
-    """
-    sct runtime error
-    """
-    pass
 
 
 def cache_signature(input_files=[], input_data=[], input_params={}):
