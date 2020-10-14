@@ -25,7 +25,7 @@ import operator
 import csv
 
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import sct_progress_bar, run_proc
+from spinalcordtoolbox.utils import sct_progress_bar, run_proc, tmp_create
 
 import sct_utils as sct
 import sct_dmri_separate_b0_and_dwi
@@ -158,7 +158,7 @@ def moco_wrapper(param):
     # path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
     # path_mask, file_mask, ext_mask = sct.extract_fname(param.fname_mask)
 
-    path_tmp = sct.tmp_create(basename="moco", verbose=param.verbose)
+    path_tmp = tmp_create(basename="moco")
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)

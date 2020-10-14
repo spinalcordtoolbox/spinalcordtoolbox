@@ -12,7 +12,8 @@ import numpy as np
 import nibabel
 import nibabel.orientations
 
-from spinalcordtoolbox.utils import __sct_dir__
+from spinalcordtoolbox import __sct_dir__
+from spinalcordtoolbox.utils import tmp_create
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
@@ -343,7 +344,7 @@ def test_nibabel_reorient(fake_3dimage):
 
 def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
 
-    path_tmp = sct.tmp_create(basename="test_reorient")
+    path_tmp = tmp_create(basename="test_reorient")
     path_tmp = "."
 
     print("Spot-checking that physical coordinates don't change")
@@ -450,7 +451,7 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
                     assert np.allclose(pos_src, pos_dst, atol=1e-3)
 
 def test_more_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
-    path_tmp = sct.tmp_create(basename="test_reorient")
+    path_tmp = tmp_create(basename="test_reorient")
     path_tmp = "."
 
     im_src = fake_3dimage_sct.copy()
@@ -575,7 +576,7 @@ def test_change_nd_orientation(fake_4dimage_sct):
     import sct_image
 
     im_src = fake_4dimage_sct.copy()
-    path_tmp = sct.tmp_create(basename="test_reorient")
+    path_tmp = tmp_create(basename="test_reorient")
     im_src.save(os.path.join(path_tmp, "src.nii"), mutable=True)
 
     print(im_src.orientation, im_src.data.shape)
@@ -628,7 +629,7 @@ def test_change_shape(fake_3dimage_sct):
     im_src = fake_3dimage_sct
     shape = tuple(list(im_src.data.shape) + [1])
     im_dst = msct_image.change_shape(im_src, shape)
-    path_tmp = sct.tmp_create(basename="test_reshape")
+    path_tmp = tmp_create(basename="test_reshape")
     src_path = os.path.join(path_tmp, "src.nii")
     dst_path = os.path.join(path_tmp, "dst.nii")
     im_src.save(src_path)
@@ -655,7 +656,7 @@ def test_sequences(fake_3dimage_sct):
 
     img = fake_3dimage_sct.copy()
 
-    path_tmp = sct.tmp_create(basename="test_sequences")
+    path_tmp = tmp_create(basename="test_sequences")
 
     path_a = os.path.join(path_tmp, 'a.nii')
     path_b = os.path.join(path_tmp, 'b.nii')

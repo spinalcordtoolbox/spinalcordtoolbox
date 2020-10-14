@@ -17,7 +17,7 @@ import os
 import argparse
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc, tmp_create
 from spinalcordtoolbox.image import add_suffix
 
 
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     verbose = arguments.v
     init_sct(log_level=verbose, update=True)  # Update log level
 
-    tmp_dir = sct.tmp_create(verbose=verbose)  # create tmp directory
+    tmp_dir = tmp_create()  # create tmp directory
     tmp_dir = os.path.abspath(tmp_dir)
 
     # copy input files to tmp directory

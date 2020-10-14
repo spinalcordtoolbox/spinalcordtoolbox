@@ -29,7 +29,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from sct_image import concat_data
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc, tmp_create
 from spinalcordtoolbox.labels import create_labels
 from spinalcordtoolbox.types import Coordinate
 
@@ -177,7 +177,7 @@ def create_mask(param):
     if param.fname_out == '':
         param.fname_out = os.path.abspath(param.file_prefix + file_data + ext_data)
 
-    path_tmp = sct.tmp_create(basename="create_mask", verbose=param.verbose)
+    path_tmp = tmp_create(basename="create_mask")
 
     sct.printv('\nOrientation:', param.verbose)
     orientation_input = Image(param.fname_data).orientation

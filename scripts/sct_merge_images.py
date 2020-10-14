@@ -27,7 +27,7 @@ import sct_utils as sct
 import sct_apply_transfo
 import spinalcordtoolbox.image as msct_image
 import sct_maths
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, tmp_create
 
 
 class Param:
@@ -135,7 +135,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 
     """
     # create temporary folder
-    path_tmp = sct.tmp_create()
+    path_tmp = tmp_create()
 
     # get dimensions of destination file
     nii_dest = msct_image.Image(fname_dest)

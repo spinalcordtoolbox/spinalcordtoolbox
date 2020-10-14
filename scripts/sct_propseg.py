@@ -25,7 +25,7 @@ from spinalcordtoolbox.image import Image, add_suffix
 import sct_image
 import sct_utils as sct
 # TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, run_proc
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, run_proc, tmp_create
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
 
@@ -46,7 +46,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     """
     sct.printv('\nCheck consistency of segmentation...', verbose)
     # creating a temporary folder in which all temporary files will be placed and deleted afterwards
-    path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
+    path_tmp = tmp_create(basename="propseg")
     from sct_convert import convert
     convert(fname_segmentation, os.path.join(path_tmp, "tmp.segmentation.nii.gz"), verbose=0)
     convert(fname_centerline, os.path.join(path_tmp, "tmp.centerline.nii.gz"), verbose=0)
@@ -407,7 +407,7 @@ def func_rescale_header(fname_data, rescale_factor, verbose=0):
     header_rescaled.set_qform(qform)
     # the data are the same-- only the header changes
     img_rescaled = nib.nifti1.Nifti1Image(img.get_data(), None, header=header_rescaled)
-    path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
+    path_tmp = tmp_create(basename="propseg")
     fname_data_rescaled = os.path.join(path_tmp, os.path.basename(add_suffix(fname_data, "_rescaled")))
     nib.save(img_rescaled, fname_data_rescaled)
     return fname_data_rescaled
@@ -543,7 +543,7 @@ def propseg(img_input, options_dict):
         sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
 
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
-    path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
+    path_tmp = tmp_create(basename="label_vertebrae")
 
     # rescale header (see issue #1406)
     if rescale_header is not 1:

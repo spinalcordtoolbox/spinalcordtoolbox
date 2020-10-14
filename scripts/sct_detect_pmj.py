@@ -21,7 +21,7 @@ import argparse
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct, run_proc
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct, run_proc, tmp_create
 from spinalcordtoolbox import __data_dir__
 import sct_utils as sct
 
@@ -114,7 +114,7 @@ class DetectPMJ:
 
         self.verbose = verbose
 
-        self.tmp_dir = sct.tmp_create(verbose=self.verbose)  # path to tmp directory
+        self.tmp_dir = tmp_create()  # path to tmp directory
 
         self.orientation_im = Image(self.fname_im).orientation  # to re-orient the data at the end
 

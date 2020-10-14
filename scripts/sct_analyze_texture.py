@@ -120,7 +120,7 @@ class ExtractGLCM:
         self.param_glcm = param_glcm if param_glcm is not None else ParamGLCM()
 
         # create tmp directory
-        self.tmp_dir = sct.tmp_create(verbose=self.param.verbose)  # path to tmp directory
+        self.tmp_dir = tmp_create()  # path to tmp directory
 
         if self.param.dim == 'ax':
             self.orientation_extraction = 'RPI'

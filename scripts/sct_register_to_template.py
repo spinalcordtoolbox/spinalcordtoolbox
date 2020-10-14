@@ -36,7 +36,7 @@ from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import run_proc
+from spinalcordtoolbox.utils import run_proc, tmp_create
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox import __data_dir__
@@ -391,7 +391,7 @@ def main(args=None):
     if len(labels) > 2 and label_type in ['disc', 'spinal']:
         level_alignment = True
 
-    path_tmp = sct.tmp_create(basename="register_to_template", verbose=verbose)
+    path_tmp = tmp_create(basename="register_to_template")
 
     # set temporary file names
     ftmp_data = 'data.nii'
@@ -945,7 +945,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         file_out_inv = file_out + '_inv'
 
     # create temporary folder
-    path_tmp = sct.tmp_create(basename="register")
+    path_tmp = tmp_create(basename="register")
 
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     Image(fname_src).save(os.path.join(path_tmp, "src.nii"))

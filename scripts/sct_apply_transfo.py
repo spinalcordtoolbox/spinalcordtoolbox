@@ -19,7 +19,7 @@ from __future__ import division, absolute_import
 import sys, io, os, time, functools
 import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc, tmp_create
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
@@ -213,7 +213,7 @@ class Transform:
             # if labels, dilate before resampling
             if islabel:
                 sct.printv("\nDilate labels before warping...")
-                path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
+                path_tmp = tmp_create(basename="apply_transfo")
                 fname_dilated_labels = os.path.join(path_tmp, "dilated_data.nii")
                 # dilate points
                 dilate(Image(fname_src), 2, 'ball').save(fname_dilated_labels)
@@ -233,7 +233,7 @@ class Transform:
                 raise NotImplementedError
 
             dim = '4'
-            path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
+            path_tmp = tmp_create(basename="apply_transfo")
 
             # convert to nifti into temp folder
             sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)

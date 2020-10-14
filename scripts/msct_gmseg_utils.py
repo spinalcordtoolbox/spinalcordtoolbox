@@ -20,6 +20,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
+from spinalcordtoolbox.utils import tmp_create
 
 from sct_utils import extract_fname, printv
 import sct_utils as sct
@@ -106,7 +107,7 @@ class Slice:
 def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, square_size_size_mm=22.5, denoising=True, verbose=1, rm_tmp=True, for_model=False):
     printv('\nPre-process data...', verbose, 'normal')
 
-    tmp_dir = sct.tmp_create()
+    tmp_dir = tmp_create()
 
     sct.copy(fname_target, tmp_dir)
     fname_target = ''.join(extract_fname(fname_target)[1:])
@@ -437,7 +438,7 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
     im_src_seg = binarize(im_src, thr_min=1, thr_max=1)
     im_dest_seg = binarize(im_dest)
     # create tmp dir and go in it
-    tmp_dir = sct.tmp_create()
+    tmp_dir = tmp_create()
     curdir = os.getcwd()
     os.chdir(tmp_dir)
     # save image and seg
@@ -481,7 +482,7 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
 
 def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     # create tmp dir and go in it
-    tmp_dir = sct.tmp_create()
+    tmp_dir = tmp_create()
     # copy warping field to tmp dir
     sct.copy(warp, tmp_dir)
     warp = ''.join(extract_fname(warp)[1:])

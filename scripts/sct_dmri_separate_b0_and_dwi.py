@@ -26,7 +26,7 @@ from spinalcordtoolbox.image import Image
 from sct_image import split_data
 from sct_convert import convert
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct, run_proc
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct, run_proc, tmp_create
 import argparse
 
 
@@ -156,7 +156,7 @@ def main(args=None):
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
     # create temporary folder
-    path_tmp = sct.tmp_create(basename="dmri_separate", verbose=verbose)
+    path_tmp = tmp_create(basename="dmri_separate")
 
     # copy files into tmp folder and convert to nifti
     sct.printv('\nCopy files into temporary folder...', verbose)

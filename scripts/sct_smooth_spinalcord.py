@@ -25,8 +25,7 @@ import sct_utils as sct
 import sct_maths
 import spinalcordtoolbox.image as msct_image
 from sct_convert import convert
-# TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type, init_sct, run_proc
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type, init_sct, run_proc, tmp_create
 
 # PARAMETERS
 class Param:
@@ -159,7 +158,7 @@ def main(args=None):
     path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
     path_centerline, file_centerline, ext_centerline = sct.extract_fname(fname_centerline)
 
-    path_tmp = sct.tmp_create(basename="smooth_spinalcord", verbose=verbose)
+    path_tmp = tmp_create(basename="smooth_spinalcord")
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)

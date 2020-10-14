@@ -17,7 +17,7 @@ from spinalcordtoolbox.types import Centerline
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils import sct_progress_bar, run_proc
+from spinalcordtoolbox.utils import sct_progress_bar, run_proc, tmp_create
 
 import sct_utils as sct
 from sct_image import pad_image
@@ -103,7 +103,7 @@ class SpinalCordStraightener(object):
         # Extract path/file/extension
         path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
 
-        path_tmp = sct.tmp_create(basename="straighten_spinalcord", verbose=verbose)
+        path_tmp = tmp_create(basename="straighten_spinalcord")
 
         # Copying input data to tmp folder
         sct.printv('\nCopy files to tmp folder...', verbose)

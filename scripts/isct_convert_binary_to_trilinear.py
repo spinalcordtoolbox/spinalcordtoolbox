@@ -23,7 +23,7 @@ import time
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import init_sct, run_proc
+from spinalcordtoolbox.utils import init_sct, run_proc, tmp_create
 from spinalcordtoolbox import __data_dir__
 
 import sct_utils as sct
@@ -96,7 +96,7 @@ def main():
     # Extract path, file and extension
     path_data, file_data, ext_data = sct.extract_fname(fname_data)
 
-    path_tmp = sct.tmp_create(basename="binary_to_trilinear", verbose=verbose)
+    path_tmp = tmp_create(basename="binary_to_trilinear")
 
     from sct_convert import convert
     sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)

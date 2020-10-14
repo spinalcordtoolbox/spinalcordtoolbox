@@ -18,7 +18,7 @@ import signal
 import numpy as np
 from pandas import DataFrame
 
-from spinalcordtoolbox.utils import init_sct, run_proc
+from spinalcordtoolbox.utils import init_sct, run_proc, tmp_create
 from spinalcordtoolbox import __sct_dir__
 import sct_utils as sct
 
@@ -237,7 +237,7 @@ def main(args=None):
     sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
 
     # create temp folder that will have all results
-    path_tmp = os.path.abspath(arguments.execution_folder or sct.tmp_create(verbose=param.verbose))
+    path_tmp = os.path.abspath(arguments.execution_folder or tmp_create())
 
     # go in path data (where all scripts will be run)
     curdir = os.getcwd()
@@ -498,7 +498,7 @@ def test_function(param_test):
     path_testing = os.getcwd()
 
     # if not param_test.path_output:
-    #     param_test.path_output = sct.tmp_create(basename=(param_test.function_to_test + '_' + subject_folder), verbose=0)
+    #     param_test.path_output = tmp_create(basename=(param_test.function_to_test + '_' + subject_folder), verbose=0)
     # elif not os.path.isdir(param_test.path_output):
     #     os.makedirs(param_test.path_output)
 

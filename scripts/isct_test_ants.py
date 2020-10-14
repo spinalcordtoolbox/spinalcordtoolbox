@@ -21,7 +21,7 @@ import os
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils import init_sct, run_proc
+from spinalcordtoolbox.utils import init_sct, run_proc, tmp_create
 
 import sct_utils as sct
 
@@ -51,7 +51,7 @@ def main():
         elif opt in ('-r'):
             remove_temp_files = int(arg)
 
-    path_tmp = sct.tmp_create(basename="test_ants", verbose=verbose)
+    path_tmp = tmp_create(basename="test_ants")
 
     # go to tmp folder
     curdir = os.getcwd()

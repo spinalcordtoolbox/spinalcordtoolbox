@@ -20,10 +20,10 @@ from skimage.measure import label
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
-from spinalcordtoolbox.utils import init_sct
+from spinalcordtoolbox.utils import init_sct, tmp_create
 
 import sct_utils as sct
-from sct_utils import extract_fname, printv, tmp_create
+from sct_utils import extract_fname, printv
 
 
 def get_parser():
@@ -123,7 +123,7 @@ class AnalyzeLeion:
                 printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
         # create tmp directory
-        self.tmp_dir = tmp_create(verbose=verbose)  # path to tmp directory
+        self.tmp_dir = tmp_create()  # path to tmp directory
 
         # lesion file where each lesion has a different value
         self.fname_label = extract_fname(self.fname_mask)[1] + '_label' + extract_fname(self.fname_mask)[2]

@@ -19,7 +19,7 @@ import numpy as np
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, concat_data, add_suffix
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc, tmp_create
 from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 
@@ -549,7 +549,7 @@ def multicomponent_merge(fname_list):
 def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
     if fname_grid is None:
         from numpy import zeros
-        tmp_dir = sct.tmp_create()
+        tmp_dir = tmp_create()
         im_warp = Image(fname_warp)
         status, out = run_proc(['fslhd', fname_warp])
         curdir = os.getcwd()

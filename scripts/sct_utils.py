@@ -25,7 +25,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-from spinalcordtoolbox.utils import check_exe, run_proc
+from spinalcordtoolbox.utils import check_exe, run_proc, tmp_create
 
 
 # define class color
@@ -226,22 +226,11 @@ def check_dim(fname, dim_lst=[3]):
         return True
 
 
-def tmp_create(basename=None, verbose=1):
-    """Create temporary folder and return its path
-    """
-    prefix = "sct-%s-" % datetime.datetime.now().strftime("%Y%m%d%H%M%S.%f")
-    if basename:
-        prefix += "%s-" % basename
-    tmpdir = tempfile.mkdtemp(prefix=prefix)
-    printv('\nCreate temporary folder (%s)...' % tmpdir, verbose)
-    return tmpdir
-
-
 class TempFolder(object):
     """This class will create a temporary folder."""
 
     def __init__(self, verbose=0):
-        self.path_tmp = tmp_create(verbose=verbose)
+        self.path_tmp = tmp_create()
         self.previous_path = None
 
     def chdir(self):

@@ -24,7 +24,7 @@ from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, run_proc
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, run_proc, tmp_create
 from spinalcordtoolbox import __data_dir__
 import sct_utils as sct
 import sct_straighten_spinalcord
@@ -278,7 +278,7 @@ def main(args=None):
     denoise = arguments.denoise
     laplacian = arguments.laplacian
 
-    path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
+    path_tmp = tmp_create(basename="label_vertebrae")
 
     # Copying input data to tmp folder
     sct.printv('\nCopying input data to tmp folder...', verbose)

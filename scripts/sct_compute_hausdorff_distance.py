@@ -19,7 +19,7 @@ import numpy as np
 import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc, tmp_create
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
@@ -524,7 +524,7 @@ if __name__ == "__main__":
         param.verbose = arguments.v
         init_sct(log_level=param.verbose, update=True)  # Update log level
 
-        tmp_dir = sct.tmp_create()
+        tmp_dir = tmp_create()
         im1_name = "im1.nii.gz"
         sct.copy(input_fname, os.path.join(tmp_dir, im1_name))
         if input_second_fname != '':
