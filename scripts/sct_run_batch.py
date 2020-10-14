@@ -35,7 +35,8 @@ import psutil
 from textwrap import dedent
 from types import SimpleNamespace
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, __get_commit, __get_git_origin, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, init_sct
+from spinalcordtoolbox.utils.fs import __get_commit, __get_git_origin
 from spinalcordtoolbox import __version__
 
 import sct_utils as sct
