@@ -225,7 +225,7 @@ def check_dim(fname, dim_lst=[3]):
     else:
         return True
 
-
+# FIXME: chdir()
 class TempFolder(object):
     """This class will create a temporary folder."""
 
@@ -344,16 +344,6 @@ def printv(string, verbose=1, type='normal'):
                 print(string)
         except Exception as e:
             print(string)
-
-#=======================================================================================================================
-# sign
-#=======================================================================================================================
-# Get the sign of a number. Returns 1 if x>=0 and -1 if x<0
-def sign(x):
-    if x >= 0:
-        return 1
-    else:
-        return -1
 
 
 def get_interpolation(program, interp):
