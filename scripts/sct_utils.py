@@ -161,62 +161,6 @@ def rmtree(folder, verbose=1):
     shutil.rmtree(folder, ignore_errors=True)
 
 
-#=======================================================================================================================
-# check RAM usage
-# work only on Mac OSX
-#=======================================================================================================================
-def checkRAM(os, verbose=1):
-    if (os == 'linux'):
-        status, output = utils.run_proc('grep MemTotal /proc/meminfo', 0)
-        printv('RAM: ' + output)
-        ram_split = output.split()
-        ram_total = float(ram_split[1])
-        status, output = utils.run_proc('free -m', 0)
-        printv(output)
-        return ram_total / 1024
-
-    elif (os == 'osx'):
-        status, output = utils.run_proc('hostinfo | grep memory', 0)
-        printv('RAM: ' + output)
-        ram_split = output.split(' ')
-        ram_total = float(ram_split[3])
-
-        # Get process info
-        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0].decode(sys.stdout.encoding)
-        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0].decode(sys.stdout.encoding)
-
-        # Iterate processes
-        processLines = ps.split('\n')
-        sep = re.compile(r'[\s]+')
-        rssTotal = 0  # kB
-        for row in range(1, len(processLines)):
-            rowText = processLines[row].strip()
-            rowElements = sep.split(rowText)
-            try:
-                rss = float(rowElements[0]) * 1024
-            except:
-                rss = 0  # ignore...
-            rssTotal += rss
-
-        # Process vm_stat
-        vmLines = vm.split('\n')
-        sep = re.compile(r':[\s]+')
-        vmStats = {}
-        for row in range(1, len(vmLines) - 2):
-            rowText = vmLines[row].strip()
-            rowElements = sep.split(rowText)
-            vmStats[(rowElements[0])] = int(rowElements[1].strip(r'\.')) * 4096
-
-        if verbose:
-            printv('  Wired Memory:\t\t%d MB' % (vmStats["Pages wired down"] / 1024 / 1024))
-            printv('  Active Memory:\t%d MB' % (vmStats["Pages active"] / 1024 / 1024))
-            printv('  Inactive Memory:\t%d MB' % (vmStats["Pages inactive"] / 1024 / 1024))
-            printv('  Free Memory:\t\t%d MB' % (vmStats["Pages free"] / 1024 / 1024))
-            # printv('Real Mem Total (ps):\t%.3f MB' % ( rssTotal/1024/1024 ))
-
-        return ram_total
-
-
 def extract_fname(fpath):
     """
     Split a full path into a parent folder component, filename stem and extension.

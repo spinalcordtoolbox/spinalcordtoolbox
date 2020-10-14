@@ -27,6 +27,7 @@ import re
 import platform
 import importlib
 import warnings
+import subprocess
 
 import requirements
 
@@ -121,6 +122,56 @@ def module_import(module_name, suppress_stderr=False):
     else:
         module = importlib.import_module(module_name)
     return module
+
+def check_ram(os, verbose=1):
+    if (os == 'linux'):
+        status, output = run_proc('grep MemTotal /proc/meminfo', 0)
+        sct.printv('RAM: ' + output)
+        ram_split = output.split()
+        ram_total = float(ram_split[1])
+        status, output = run_proc('free -m', 0)
+        sct.printv(output)
+        return ram_total / 1024
+
+    elif (os == 'osx'):
+        status, output = run_proc('hostinfo | grep memory', 0)
+        sct.printv('RAM: ' + output)
+        ram_split = output.split(' ')
+        ram_total = float(ram_split[3])
+
+        # Get process info
+        ps = subprocess.Popen(['ps', '-caxm', '-orss,comm'], stdout=subprocess.PIPE).communicate()[0].decode(sys.stdout.encoding)
+        vm = subprocess.Popen(['vm_stat'], stdout=subprocess.PIPE).communicate()[0].decode(sys.stdout.encoding)
+
+        # Iterate processes
+        processLines = ps.split('\n')
+        sep = re.compile(r'[\s]+')
+        rssTotal = 0  # kB
+        for row in range(1, len(processLines)):
+            rowText = processLines[row].strip()
+            rowElements = sep.split(rowText)
+            try:
+                rss = float(rowElements[0]) * 1024
+            except:
+                rss = 0  # ignore...
+            rssTotal += rss
+
+        # Process vm_stat
+        vmLines = vm.split('\n')
+        sep = re.compile(r':[\s]+')
+        vmStats = {}
+        for row in range(1, len(vmLines) - 2):
+            rowText = vmLines[row].strip()
+            rowElements = sep.split(rowText)
+            vmStats[(rowElements[0])] = int(rowElements[1].strip(r'\.')) * 4096
+
+        if verbose:
+            sct.printv('  Wired Memory:\t\t%d MB' % (vmStats["Pages wired down"] / 1024 / 1024))
+            sct.printv('  Active Memory:\t%d MB' % (vmStats["Pages active"] / 1024 / 1024))
+            sct.printv('  Inactive Memory:\t%d MB' % (vmStats["Pages inactive"] / 1024 / 1024))
+            sct.printv('  Free Memory:\t\t%d MB' % (vmStats["Pages free"] / 1024 / 1024))
+
+        return ram_total
 
 
 def get_version(module):
@@ -263,7 +314,7 @@ def main():
     print('CPU cores: Available: {}, Used by SCT: {}'.format(cpu_count(), output))
 
     # check RAM
-    sct.checkRAM(os_running, 0)
+    check_ram(os_running, 0)
 
     if arguments.short:
         sys.exit()
