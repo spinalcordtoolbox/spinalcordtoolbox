@@ -8,8 +8,6 @@
 #
 # About the license: see the file LICENSE.TXT
 
-from __future__ import absolute_import, division
-
 import argparse
 
 from spinalcordtoolbox.utils import init_sct

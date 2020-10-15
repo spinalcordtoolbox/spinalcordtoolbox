@@ -11,7 +11,7 @@ import argparse
 
 from enum import Enum
 
-from .sys import printv
+from .sys import printv, check_exe
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +45,8 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
 
     Example
     -------
-    sct.display_viewer_syntax([file1, file2, file3])
-    sct.display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
+    display_viewer_syntax([file1, file2, file3])
+    display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
     list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview']  # list of known viewers. Can add more.
     dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
@@ -170,7 +170,7 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         try:
             self._width = shutil.get_terminal_size()[0]
         except (KeyError, ValueError):
-            logger.warning('Not able to fetch Terminal width. Using default: %s'.format(self._width))
+            logger.warning('Not able to fetch Terminal width. Using default: %s', self._width)
 
     # this is the RawTextHelpFormatter._fill_text
     def _fill_text(self, text, width, indent):

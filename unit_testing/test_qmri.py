@@ -2,9 +2,6 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.qmri
 
-
-from __future__ import print_function, absolute_import
-
 import numpy as np
 import nibabel
 import pytest

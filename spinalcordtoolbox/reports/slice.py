@@ -2,9 +2,6 @@
 
 # TODO: Replace slice by spinalcordtoolbox.image.Slicer
 
-
-from __future__ import print_function, absolute_import, division
-
 import abc
 import logging
 import math

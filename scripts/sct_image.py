@@ -10,21 +10,18 @@
 # About the license: see the file LICENSE.TXT
 ##############################################################################
 
-from __future__ import absolute_import
-
 import os
 import sys
 import argparse
-import numpy as np
 
-import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image, concat_data, add_suffix
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc, tmp_create
+import numpy as np
 from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 
-
-import sct_utils as sct
+from spinalcordtoolbox.image import Image, concat_data, add_suffix, change_orientation, concat_warp2d, split_img_data
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
 
 def get_parser():
@@ -225,9 +222,9 @@ def main(args=None):
     elif arguments.mcs:
         im_in = Image(fname_in[0])
         if n_in != 1:
-            sct.printv(parser.error('ERROR: -mcs need only one input'))
+            printv(parser.error('ERROR: -mcs need only one input'))
         if len(im_in.data.shape) != 5:
-            sct.printv(parser.error('ERROR: -mcs input need to be a multi-component image'))
+            printv(parser.error('ERROR: -mcs input need to be a multi-component image'))
         im_out = multicomponent_split(im_in)
 
     elif arguments.omc:
@@ -235,7 +232,7 @@ def main(args=None):
         for fname in fname_in:
             im = Image(fname)
             if im.data.shape != im_ref.data.shape:
-                sct.printv(parser.error('ERROR: -omc inputs need to have all the same shapes'))
+                printv(parser.error('ERROR: -omc inputs need to have all the same shapes'))
             del im
         im_out = [multicomponent_merge(fname_in)]  # TODO: adapt to fname_in
 
@@ -243,12 +240,12 @@ def main(args=None):
         im_in = Image(fname_in[0])
         ndims = len(im_in.data.shape)
         if ndims != 3:
-            sct.printv('ERROR: you need to specify a 3D input file.', 1, 'error')
+            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
             return
 
         pad_arguments = arguments.pad.split(',')
         if len(pad_arguments) != 3:
-            sct.printv('ERROR: you need to specify 3 padding values.', 1, 'error')
+            printv('ERROR: you need to specify 3 padding values.', 1, 'error')
 
         padx, pady, padz = pad_arguments
         padx, pady, padz = int(padx), int(pady), int(padz)
@@ -259,12 +256,12 @@ def main(args=None):
         im_in = Image(fname_in[0])
         ndims = len(im_in.data.shape)
         if ndims != 3:
-            sct.printv('ERROR: you need to specify a 3D input file.', 1, 'error')
+            printv('ERROR: you need to specify a 3D input file.', 1, 'error')
             return
 
         pad_arguments = arguments.pad_asym.split(',')
         if len(pad_arguments) != 6:
-            sct.printv('ERROR: you need to specify 6 padding values.', 1, 'error')
+            printv('ERROR: you need to specify 6 padding values.', 1, 'error')
 
         padxi, padxf, padyi, padyf, padzi, padzf = pad_arguments
         padxi, padxf, padyi, padyf, padzi, padzf = int(padxi), int(padxf), int(padyi), int(padyf), int(padzi), int(padzf)
@@ -278,13 +275,13 @@ def main(args=None):
         im_out = [remove_vol(im_in, index_vol, todo='remove')]
 
     elif arguments.setorient is not None:
-        sct.printv(fname_in[0])
+        printv(fname_in[0])
         im_in = Image(fname_in[0])
-        im_out = [msct_image.change_orientation(im_in, arguments.setorient)]
+        im_out = [change_orientation(im_in, arguments.setorient)]
 
     elif arguments.setorient_data is not None:
         im_in = Image(fname_in[0])
-        im_out = [msct_image.change_orientation(im_in, arguments.setorient_data, data_only=True)]
+        im_out = [change_orientation(im_in, arguments.setorient_data, data_only=True)]
 
     elif arguments.split is not None:
         dim = arguments.split
@@ -301,7 +298,7 @@ def main(args=None):
     elif arguments.to_fsl is not None:
         space_files = arguments.to_fsl
         if len(space_files) > 2 or len(space_files) < 1:
-            sct.printv(parser.error('ERROR: -to-fsl expects 1 or 2 arguments'))
+            printv(parser.error('ERROR: -to-fsl expects 1 or 2 arguments'))
             return
         spaces = [ Image(s) for s in space_files ]
         if len(spaces) < 2:
@@ -310,7 +307,7 @@ def main(args=None):
 
     else:
         im_out = None
-        sct.printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
+        printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
 
     # in case fname_out is not defined, use first element of input file name list
     if fname_out is None:
@@ -318,31 +315,31 @@ def main(args=None):
 
     # Write output
     if im_out is not None:
-        sct.printv('Generate output files...', verbose)
+        printv('Generate output files...', verbose)
         # if only one output
         if len(im_out) == 1 and arguments.split is None:
             im_out[0].save(fname_out, dtype=output_type, verbose=verbose)
-            sct.display_viewer_syntax([fname_out], verbose=verbose)
+            display_viewer_syntax([fname_out], verbose=verbose)
         if arguments.mcs:
             # use input file name and add _X, _Y _Z. Keep the same extension
             l_fname_out = []
             for i_dim in range(3):
                 l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].save(l_fname_out[i_dim], verbose=verbose)
-            sct.display_viewer_syntax(fname_out)
+            display_viewer_syntax(fname_out)
         if arguments.split is not None:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []
             for i, im in enumerate(im_out):
                 l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.save(l_fname_out[i])
-            sct.display_viewer_syntax(l_fname_out)
+            display_viewer_syntax(l_fname_out)
 
     elif arguments.getorient:
-        sct.printv(orient)
+        printv(orient)
 
     elif arguments.display_warp:
-        sct.printv('Warping grid generated.', verbose, 'info')
+        printv('Warping grid generated.', verbose, 'info')
 
 def displacement_to_abs_fsl(disp_im, src, tgt = None):
     """ Convert an ITK style displacement field to an FSL compatible absolute coordinate field.
@@ -457,7 +454,7 @@ def split_data(im_in, dim, squeeze_data=True):
     """
     """
     # backwards compat
-    return msct_image.split_img_data(src_img=im_in, dim=dim, squeeze_data=squeeze_data)
+    return split_img_data(src_img=im_in, dim=dim, squeeze_data=squeeze_data)
 
 def remove_vol(im_in, index_vol_user, todo):
     """
@@ -476,20 +473,13 @@ def remove_vol(im_in, index_vol_user, todo):
     elif todo == 'keep':
         index_vol = index_vol_user
     else:
-        sct.printv('ERROR: wrong assignment of variable "todo"', 1, 'error')
+        printv('ERROR: wrong assignment of variable "todo"', 1, 'error')
     # define new 4d matrix with selected volumes
     data_out = data[:, :, :, index_vol]
     # save matrix inside new Image object
     im_out = im_in.copy()
     im_out.data = data_out
     return im_out
-
-
-def concat_warp2d(fname_list, fname_warp3d, fname_dest):
-    """
-    """
-    # backwards compat
-    return msct_image.concat_warp2d(fname_list, fname_warp3d, fname_dest)
 
 def multicomponent_split(im):
     """
@@ -579,11 +569,11 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         run_proc(['sct_resample', '-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
         fname_grid = os.path.join(tmp_dir, fname_grid_resample)
         os.chdir(curdir)
-    path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
-    grid_warped = os.path.join(path_warp, sct.extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp)
+    path_warp, file_warp, ext_warp = extract_fname(fname_warp)
+    grid_warped = os.path.join(path_warp, extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp)
     run_proc(['sct_apply_transfo', '-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
     if rm_tmp:
-        sct.rmtree(tmp_dir)
+        rmtree(tmp_dir)
 
 
 if __name__ == "__main__":

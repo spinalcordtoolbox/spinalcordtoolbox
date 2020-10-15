@@ -18,7 +18,7 @@ from hashlib import md5
 
 import pytest
 
-from spinalcordtoolbox.utils import sct_dir_local_path, sct_test_path
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, sct_test_path
 
 # FIXME: APIFY
 sys.path.append(sct_dir_local_path('scripts'))

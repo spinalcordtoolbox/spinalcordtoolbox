@@ -2,24 +2,25 @@
 # -*- coding: utf-8
 # Functions dealing with deepseg_sc
 
-import os, sys, logging
+import os
+import sys
+import logging
 
 import numpy as np
 from scipy.ndimage.measurements import center_of_mass, label
 from skimage.exposure import rescale_intensity
 from scipy.ndimage import distance_transform_edt
-import nibabel as nib
 
 from spinalcordtoolbox import resampling
 from .cnn_models import nn_architecture_seg, nn_architecture_ctr
 from .postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, add_suffix
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
-from spinalcordtoolbox.utils import sct_dir_local_path
+from spinalcordtoolbox.utils import sct_dir_local_path, printv, TempFolder
 
-import sct_utils as sct
+
+# FIXME: don't import from scripts!
 from sct_image import concat_data, split_data
-
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -63,7 +64,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         # optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         # # TODO: replace with get_centerline(method=optic)
         im_ctl, _, _, _ = get_centerline(im,
-                                        ParamCenterline(algo_fitting='optic', contrast=contrast_type))
+                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type))
 
     elif algo == 'cnn':
         # CNN parameters
@@ -99,10 +100,10 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                                     std_train=dct_patch_ctr[contrast_type]['std'],
                                     brain_bool=brain_bool)
         im_ctl, _, _, _ = get_centerline(im_heatmap,
-                                        ParamCenterline(algo_fitting='optic', contrast=contrast_type))
+                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type))
 
         if z_max is not None:
-            sct.printv('Cropping brain section.')
+            printv('Cropping brain section.')
             im_ctl.data[:, :, z_max:] = 0
 
     elif algo == 'viewer':
@@ -305,7 +306,7 @@ def heatmap(im, model, patch_shape, mean_train, std_train, brain_bool=True):
             z_sc_notDetected_cmpt += 1
             # if the SC has not been detected on 10 consecutive z_slices, we stop the SC investigation
             if z_sc_notDetected_cmpt > 10 and brain_bool:
-                sct.printv('Brain section detected.')
+                printv('Brain section detected.')
                 break
 
         # distance transform to deal with the harsh edges of the prediction boundaries (Dice)
@@ -450,7 +451,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     logger.info("  Threshold: {}".format(threshold_seg))
 
     # create temporary folder with intermediate results
-    tmp_folder = sct.TempFolder(verbose=verbose)
+    tmp_folder = TempFolder(verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
     if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)
@@ -475,12 +476,12 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # find the spinal cord centerline - execute OptiC binary
     logger.info("Finding the spinal cord centerline...")
     _, im_ctl, im_labels_viewer = find_centerline(algo=ctr_algo,
-                                                    image_fname=fname_orient,
-                                                    contrast_type=contrast_type,
-                                                    brain_bool=brain_bool,
-                                                    folder_output=tmp_folder_path,
-                                                    remove_temp_files=remove_temp_files,
-                                                    centerline_fname=file_ctr)
+                                                  image_fname=fname_orient,
+                                                  contrast_type=contrast_type,
+                                                  brain_bool=brain_bool,
+                                                  folder_output=tmp_folder_path,
+                                                  remove_temp_files=remove_temp_files,
+                                                  centerline_fname=file_ctr)
 
     if ctr_algo == 'file':
         im_ctl = \

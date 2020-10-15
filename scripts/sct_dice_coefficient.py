@@ -10,14 +10,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
 import sys
 import os
 import argparse
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc, tmp_create
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
 from spinalcordtoolbox.image import add_suffix
 
 
@@ -36,13 +35,13 @@ def get_parser():
         required=True,
         metavar=Metavar.file,
         help='First input image. Example: t2_seg.nii.gz',
-        )
+    )
     mandatory.add_argument(
         '-d',
         required=True,
         help='Second input image. Example: t2_manual_seg.nii.gz',
         metavar=Metavar.file,
-        )
+    )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -102,6 +101,7 @@ def get_parser():
 
     return parser
 
+
 if __name__ == "__main__":
     init_sct()
     parser = get_parser()
@@ -118,13 +118,13 @@ if __name__ == "__main__":
 
     # copy input files to tmp directory
     # for fname in [fname_input1, fname_input2]:
-    sct.copy(fname_input1, tmp_dir)
-    sct.copy(fname_input2, tmp_dir)
-    fname_input1 = ''.join(sct.extract_fname(fname_input1)[1:])
-    fname_input2 = ''.join(sct.extract_fname(fname_input2)[1:])
+    copy(fname_input1, tmp_dir)
+    copy(fname_input2, tmp_dir)
+    fname_input1 = ''.join(extract_fname(fname_input1)[1:])
+    fname_input2 = ''.join(extract_fname(fname_input2)[1:])
 
     curdir = os.getcwd()
-    os.chdir(tmp_dir) # go to tmp directory
+    os.chdir(tmp_dir)  # go to tmp directory
 
     if arguments.bin is not None:
         fname_input1_bin = add_suffix(fname_input1, '_bin')
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     if arguments.bzmax is not None and arguments.bzmax == 1:
         cmd += ['-bzmax']
     if arguments.o is not None:
-        path_output, fname_output, ext = sct.extract_fname(arguments.o)
+        path_output, fname_output, ext = extract_fname(arguments.o)
         cmd += ['-o', fname_output + ext]
 
     rm_tmp = bool(arguments.r)
@@ -162,18 +162,18 @@ if __name__ == "__main__":
     # # commented for now as it does not cover all the feature of isct_dice_coefficient
     # #from spinalcordtoolbox.image import Image, compute_dice
     # #dice = compute_dice(Image(fname_input1), Image(fname_input2), mode='3d', zboundaries=False)
-    # #sct.printv('Dice (python-based) = ' + str(dice), verbose)
+    # #printv('Dice (python-based) = ' + str(dice), verbose)
 
     status, output = run_proc(cmd, verbose, is_sct_binary=True)
 
-    os.chdir(curdir) # go back to original directory
+    os.chdir(curdir)  # go back to original directory
 
     # copy output file into original directory
     if arguments.o is not None:
-        sct.copy(os.path.join(tmp_dir, fname_output + ext), os.path.join(path_output, fname_output + ext))
+        copy(os.path.join(tmp_dir, fname_output + ext), os.path.join(path_output, fname_output + ext))
 
     # remove tmp_dir
     if rm_tmp:
-        sct.rmtree(tmp_dir)
+        rmtree(tmp_dir)
 
-    sct.printv(output, verbose)
+    printv(output, verbose)

@@ -2,20 +2,18 @@
 # -*- coding: utf-8
 # pytest unit tests for transform stuff
 
-from __future__ import print_function, absolute_import, division
-
-import sys, io, os, time, itertools
-
-import pytest
+import sys
+import os
 
 import numpy as np
 import nibabel
 import nibabel.orientations
 
 from spinalcordtoolbox.utils import __sct_dir__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
-import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
+
+# FIXME: don't import from scripts!
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 import sct_image
 import sct_apply_transfo
 
@@ -34,9 +32,9 @@ def fake_image_sct_custom(data):
     """
     i = fake_image_custom(data)
     img = msct_image.Image(i.get_data(), hdr=i.header,
-     orientation="LPI",
-     dim=i.header.get_data_shape(),
-    )
+                           orientation="LPI",
+                           dim=i.header.get_data_shape(),
+                           )
     return img
 
 
@@ -50,19 +48,19 @@ def fake_3dimage():
     - shape[PA] = 20
     - shape[IS] = 30
     """
-    shape = (10,20,30)
+    shape = (10, 20, 30)
     data = np.zeros(shape, dtype=np.float32, order="F")
 
     for z in range(shape[2]):
         for y in range(shape[1]):
             for x in range(shape[0]):
-                data[x,y,z] = (1+x)*1 + (1+y)*100 + (1+z)*10000
+                data[x, y, z] = (1 + x) * 1 + (1 + y) * 100 + (1 + z) * 10000
 
     if 0:
         for z in range(shape[2]):
             for y in range(shape[1]):
                 for x in range(shape[0]):
-                    sys.stdout.write(" % 3d" % data[x,y,z])
+                    sys.stdout.write(" % 3d" % data[x, y, z])
                 sys.stdout.write("\n")
             sys.stdout.write("\n")
 
@@ -76,9 +74,9 @@ def fake_3dimage_sct():
     """
     i = fake_3dimage()
     img = msct_image.Image(i.get_data(), hdr=i.header,
-     orientation="LPI",
-     dim=i.header.get_data_shape(),
-    )
+                           orientation="LPI",
+                           dim=i.header.get_data_shape(),
+                           )
     return img
 
 
@@ -88,12 +86,12 @@ def test_transfo_null():
     print("Null warping field")
 
     print(" Create some recognizable data")
-    data = np.ones((7,8,9), order="F")
+    data = np.ones((7, 8, 9), order="F")
     path_src = "warp-src.nii"
     img_src = fake_image_sct_custom(data).save(path_src)
 
     print(" Create a null warping field")
-    data = np.zeros((7,8,9,1,3), order="F")
+    data = np.zeros((7, 8, 9, 1, 3), order="F")
     path_warp = "warp-field.nii"
     img_warp = fake_image_sct_custom(data)
     img_warp.header.set_intent('vector', (), '')
@@ -126,7 +124,6 @@ def test_transfo_null():
     assert np.allclose(dat_src, dat_dst)
 
 
-
 def test_transfo_figure_out_ants_frame_exhaustive():
 
     dir_tmp = "."
@@ -135,7 +132,7 @@ def test_transfo_figure_out_ants_frame_exhaustive():
 
     print("Wondering which orientation is native to ANTs")
 
-    working_orientations = [] # there can't be only one...
+    working_orientations = []  # there can't be only one...
 
     for orientation in all_orientations:
         print(" Shifting +1,+1,+1 (in {})".format(orientation))
@@ -144,7 +141,7 @@ def test_transfo_figure_out_ants_frame_exhaustive():
         img_src = fake_3dimage_sct().change_orientation(orientation).save(path_src)
 
         # Create warping field
-        shape = tuple(list(img_src.data.shape) + [1,3])
+        shape = tuple(list(img_src.data.shape) + [1, 3])
         data = np.ones(shape, order="F")
         path_warp = "warp-{}-field.nii".format(orientation)
         img_warp = fake_image_sct_custom(data)
@@ -169,12 +166,12 @@ def test_transfo_figure_out_ants_frame_exhaustive():
         value = 222
         aff_src = img_dst.header.get_best_affine()
         aff_dst = img_dst.header.get_best_affine()
-        pt_src = np.array(np.unravel_index(np.argmin(np.abs(dat_src - value)), dat_src.shape))#, order="F"))
-        pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))#, order="F"))
+        pt_src = np.array(np.unravel_index(np.argmin(np.abs(dat_src - value)), dat_src.shape))  # , order="F"))
+        pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))  # , order="F"))
         print("Point %s -> %s" % (pt_src, pt_dst))
 
-        pos_src = np.matmul(aff_src, np.hstack((pt_src, [1])).reshape((4,1)))
-        pos_dst = np.matmul(aff_dst, np.hstack((pt_dst, [1])).reshape((4,1)))
+        pos_src = np.matmul(aff_src, np.hstack((pt_src, [1])).reshape((4, 1)))
+        pos_dst = np.matmul(aff_dst, np.hstack((pt_dst, [1])).reshape((4, 1)))
 
         displacement = (pos_dst - pos_src).T[:3]
         print("Displacement (physical): %s" % (displacement))
@@ -185,23 +182,23 @@ def test_transfo_figure_out_ants_frame_exhaustive():
 
         if 0:
             for idx_slice in range(9):
-                print(dat_src[...,idx_slice])
-                print(dat_dst[...,idx_slice])
+                print(dat_src[..., idx_slice])
+                print(dat_dst[..., idx_slice])
                 print("")
 
         try:
             # Check same as before
-            assert np.allclose(dat_dst[0,:,:], 0)
-            assert np.allclose(dat_dst[:,0,:], 0)
-            assert np.allclose(dat_dst[:,:,0], 0)
-            assert np.allclose(dat_src[:-1,:-1,:-1], dat_dst[1:,1:,1:])
+            assert np.allclose(dat_dst[0, :, :], 0)
+            assert np.allclose(dat_dst[:, 0, :], 0)
+            assert np.allclose(dat_dst[:, :, 0], 0)
+            assert np.allclose(dat_src[:-1, :-1, :-1], dat_dst[1:, 1:, 1:])
             working_orientations.append(orientation)
         except AssertionError as e:
             continue
             print("\x1B[31;1m Failed in {}\x1B[0m".format(orientation))
             for idx_slice in range(shape[2]):
-                print(dat_src[...,idx_slice])
-                print(dat_dst[...,idx_slice])
+                print(dat_src[..., idx_slice])
+                print(dat_dst[..., idx_slice])
                 print("")
 
     print("-> Working orientation: {}".format(" ".join(working_orientations)))
@@ -220,9 +217,9 @@ def test_transfo_exhaustive_wrt_orientations():
     orientations_dk = []
 
     for orientation in all_orientations:
-        shift = np.array([1,2,3])
+        shift = np.array([1, 2, 3])
         shift_wanted = shift.copy()
-        shift[2] *= -1 # ANTs / ITK reference frame is LPS, ours is LPI
+        shift[2] *= -1  # ANTs / ITK reference frame is LPS, ours is LPI
         # (see docs or test_transfo_figure_out_ants_frame_exhaustive())
 
         print(" Shifting {} in {}".format(shift_wanted, orientation))
@@ -234,9 +231,9 @@ def test_transfo_exhaustive_wrt_orientations():
         img_ref = img_src
 
         # Create warping field
-        shape = tuple(list(img_src.data.shape) + [1,3])
+        shape = tuple(list(img_src.data.shape) + [1, 3])
         data = np.zeros(shape, order="F")
-        data[:,:,:,0] = shift
+        data[:, :, :, 0] = shift
 
         path_warp = "warp-{}-field.nii".format(orientation)
         img_warp = fake_image_sct_custom(data)
@@ -265,18 +262,18 @@ def test_transfo_exhaustive_wrt_orientations():
         pt_src = np.argwhere(dat_src == value)[0]
         try:
             pt_dst = np.argwhere(dat_dst == value)[0]
-            1/0
+            1 / 0
         except:
             min_ = np.round(np.min(np.abs(dat_dst - value)), 2)
-            pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))#, order="F"))
+            pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))  # , order="F"))
 
         print(" Point %s -> %s (%s) %s" % (pt_src, pt_dst, dat_dst[tuple(pt_dst)], min_))
         if min_ != 0:
             orientations_dk.append(orientation)
             continue
 
-        pos_src = np.matmul(aff_src, np.hstack((pt_src, [1])).reshape((4,1)))
-        pos_dst = np.matmul(aff_dst, np.hstack((pt_dst, [1])).reshape((4,1)))
+        pos_src = np.matmul(aff_src, np.hstack((pt_src, [1])).reshape((4, 1)))
+        pos_dst = np.matmul(aff_dst, np.hstack((pt_dst, [1])).reshape((4, 1)))
 
         displacement = (pos_dst - pos_src).reshape((-1))[:3]
         displacement_log = pt_dst - pt_src
@@ -308,9 +305,9 @@ def notest_transfo_more_exhaustive_wrt_orientations():
 
     for orientation_src in all_orientations:
         for orientation_ref in all_orientations:
-            shift = np.array([1,2,3])
+            shift = np.array([1, 2, 3])
             shift_wanted = shift.copy()
-            shift[2] *= -1 # ANTs / ITK reference frame is LPS, ours is LPI
+            shift[2] *= -1  # ANTs / ITK reference frame is LPS, ours is LPI
             # (see docs or test_transfo_figure_out_ants_frame_exhaustive())
 
             print(" Shifting {} in {} ref {}".format(shift_wanted, orientation_src, orientation_ref))
@@ -321,11 +318,10 @@ def notest_transfo_more_exhaustive_wrt_orientations():
             path_ref = "warp2-{}.nii".format(orientation_ref)
             img_ref = fake_3dimage_sct().change_orientation(orientation_ref).save(path_ref)
 
-
             # Create warping field
-            shape = tuple(list(img_src.data.shape) + [1,3])
+            shape = tuple(list(img_src.data.shape) + [1, 3])
             data = np.zeros(shape, order="F")
-            data[:,:,:,0] = shift
+            data[:, :, :, 0] = shift
 
             path_warp = "warp-{}-{}-field.nii".format(orientation_src, orientation_ref)
             img_warp = fake_image_sct_custom(data)
@@ -354,19 +350,19 @@ def notest_transfo_more_exhaustive_wrt_orientations():
             pt_src = np.argwhere(dat_src == value)[0]
             try:
                 pt_dst = np.argwhere(dat_dst == value)[0]
-                1/0
+                1 / 0
             except:
                 # Work around numerical inaccuracy, that is somehow introduced by ANTs
                 min_ = np.round(np.min(np.abs(dat_dst - value)), 1)
-                pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))#, order="F"))
+                pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))  # , order="F"))
 
             print(" Point %s -> %s (%s) %s" % (pt_src, pt_dst, dat_dst[tuple(pt_dst)], min_))
             if min_ != 0:
                 orientations_dk.append((orientation_src, orientation_ref))
                 continue
 
-            pos_src = np.matmul(aff_src, np.hstack((pt_src, [1])).reshape((4,1)))
-            pos_dst = np.matmul(aff_dst, np.hstack((pt_dst, [1])).reshape((4,1)))
+            pos_src = np.matmul(aff_src, np.hstack((pt_src, [1])).reshape((4, 1)))
+            pos_dst = np.matmul(aff_dst, np.hstack((pt_dst, [1])).reshape((4, 1)))
 
             displacement = (pos_dst - pos_src).reshape((-1))[:3]
             displacement_log = pt_dst - pt_src
@@ -380,12 +376,11 @@ def notest_transfo_more_exhaustive_wrt_orientations():
             print("")
 
     def ori_str(x):
-        return " ".join(["{}->{}".format(x,y) for (x,y) in x])
+        return " ".join(["{}->{}".format(x, y) for (x, y) in x])
 
     print("Orientations OK: {}".format(ori_str(orientations_ok)))
     print("Orientations NG: {}".format(ori_str(orientations_ng)))
     print("Orientations DK: {}".format(ori_str(orientations_dk)))
-
 
 
 def test_transfo_skip_pix2phys():
@@ -400,18 +395,17 @@ def test_transfo_skip_pix2phys():
     path_src = "warp-src.nii"
     img_src = fake_3dimage_sct().save(path_src)
 
-
-    print(" Create a warping field" \
-"""
+    print(" Create a warping field"
+          """
   Now we want to shift things by (+1,+1,+1), meaning
   that a destination voxel at position (x_1, y_1, z_1)
   contains the stuff that was in the source voxel at position
   (x_1-1, y_1-1, z_1-1).
 """)
-    shape = tuple(list(img_src.data.shape) + [1,3])
+    shape = tuple(list(img_src.data.shape) + [1, 3])
 
     data = np.ones(shape, order="F")
-    data[...,2] *= -1 # invert Z so that the result is what we expect
+    data[..., 2] *= -1  # invert Z so that the result is what we expect
     # See test_transfo_exhaustive_wrt_orientations()
 
     path_warp = "warp-field111.nii"
@@ -440,16 +434,12 @@ def test_transfo_skip_pix2phys():
     if 0:
         for idx_slice in range(shape[2]):
             print("")
-            print(dat_src[...,idx_slice])
-            print(dat_dst[...,idx_slice])
+            print(dat_src[..., idx_slice])
+            print(dat_dst[..., idx_slice])
 
     # The volume should be shifted by 1 and the "lowest faces" of the destination
     # should be empty
-    assert np.allclose(dat_dst[0,:,:], 0)
-    assert np.allclose(dat_dst[:,0,:], 0)
-    assert np.allclose(dat_dst[:,:,0], 0)
-    assert np.allclose(dat_src[:-1,:-1,:-1], dat_dst[1:,1:,1:])
-
-
-
-
+    assert np.allclose(dat_dst[0, :, :], 0)
+    assert np.allclose(dat_dst[:, 0, :], 0)
+    assert np.allclose(dat_dst[:, :, 0], 0)
+    assert np.allclose(dat_src[:-1, :-1, :-1], dat_dst[1:, 1:, 1:])

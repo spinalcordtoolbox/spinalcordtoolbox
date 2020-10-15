@@ -10,24 +10,18 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
+import os
 import sys
+import argparse
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from dipy.data.fetcher import read_bvals_bvecs
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
-import argparse
-import os
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
 
 bzero = 0.0001  # b-zero threshold
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
 
     # Initialize the parser
@@ -69,6 +63,8 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
 
 # MAIN
 # ==========================================================================================
+
+
 def main():
 
     # Get parser info
@@ -108,7 +104,7 @@ def main():
 
     # Display scatter plot
     fig = plt.figure(facecolor='white', figsize=(9, 8))
-    fig.suptitle('Number of b=0: '+str(n_b0)+', Number of b!=0: '+str(n_dir-n_b0)+', Number of effective directions (without duplicates): '+str(n_dir_eff))
+    fig.suptitle('Number of b=0: ' + str(n_b0) + ', Number of b!=0: ' + str(n_dir - n_b0) + ', Number of effective directions (without duplicates): ' + str(n_dir_eff))
     # plt.ion()
 
     # Display three views
@@ -132,7 +128,7 @@ def main():
     # plt.draw()
 
     # Save image
-    sct.printv("Saving figure: bvecs.png\n")
+    printv("Saving figure: bvecs.png\n")
     plt.savefig('bvecs.png')
     plt.show()
 

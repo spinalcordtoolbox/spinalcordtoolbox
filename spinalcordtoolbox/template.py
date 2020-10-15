@@ -2,8 +2,6 @@
 # -*- coding: utf-8
 # Functions that utilize the template (e.g., PAM50)
 
-from __future__ import absolute_import
-
 import logging
 import numpy as np
 

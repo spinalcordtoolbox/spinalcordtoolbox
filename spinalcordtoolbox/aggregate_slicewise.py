@@ -4,8 +4,6 @@
 
 # TODO: when mask is empty, raise specific message instead of throwing "Weight sum to zero..."
 
-from __future__ import absolute_import
-
 import os
 import numpy as np
 import math

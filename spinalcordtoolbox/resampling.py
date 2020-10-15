@@ -11,16 +11,14 @@
 
 # TODO: remove resample_file (not needed)
 
-from __future__ import division, absolute_import
-
 import logging
+
 import numpy as np
 import nibabel as nib
 from nibabel.processing import resample_from_to
 
 from spinalcordtoolbox.image import Image, add_suffix
-
-import sct_utils as sct
+from spinalcordtoolbox.utils import display_viewer_syntax
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +163,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     nib.save(nii_r, fname_out)
 
     # to view results
-    sct.display_viewer_syntax([fname_out], verbose=verbose)
+    display_viewer_syntax([fname_out], verbose=verbose)
 
     return nii_r
 

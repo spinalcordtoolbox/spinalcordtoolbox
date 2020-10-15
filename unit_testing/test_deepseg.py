@@ -4,9 +4,9 @@
 
 
 import os
+
 import pytest
 import numpy as np
-
 import nibabel
 
 import spinalcordtoolbox as sct

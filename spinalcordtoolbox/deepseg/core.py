@@ -13,6 +13,7 @@ import ivadomed.utils
 import ivadomed.postprocessing
 import nibabel as nib
 import numpy as np
+
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.deepseg.models
 

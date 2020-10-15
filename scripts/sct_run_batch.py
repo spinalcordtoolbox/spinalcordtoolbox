@@ -13,8 +13,6 @@
 # About the license: see the file LICENSE.TXT
 ##############################################################################
 
-from __future__ import absolute_import
-
 import os
 import sys
 import argparse
@@ -29,17 +27,16 @@ import functools
 import json
 import tempfile
 import warnings
-import yaml
 import shutil
-import psutil
-from textwrap import dedent
 from types import SimpleNamespace
+from textwrap import dedent
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, Tee, send_email, init_sct
-from spinalcordtoolbox.utils.fs import __get_commit, __get_git_origin
-from spinalcordtoolbox import __version__
+import yaml
+import psutil
 
-import sct_utils as sct
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
+from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__
+from spinalcordtoolbox.utils.fs import Tee
 
 
 def get_parser():
@@ -285,7 +282,7 @@ def main(argv):
                 print('Please input y or n')
 
             if send_test.lower() in ['', 'y']:
-               send_notification('sct_run_batch: test notification', 'Looks good')
+                send_notification('sct_run_batch: test notification', 'Looks good')
 
     # Set up output directories and create them if they don't already exist
     path_output = os.path.abspath(os.path.expanduser(args.path_output))
@@ -340,7 +337,7 @@ def main(argv):
         int(psutil.virtual_memory().total / 1024 / 1024),
         int(psutil.virtual_memory().available / 1024 / 1024),
         int(psutil.virtual_memory().used / 1024 / 1024),
-        ))
+    ))
 
     # Log the current arguments (in yaml because it's cleaner)
     print('\nINPUT ARGUMENTS')

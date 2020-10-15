@@ -11,17 +11,22 @@
 
 # TODO: Sort out the use of Image.hdr and Image.header --> they seem to carry duplicated information.
 
-from __future__ import division, absolute_import
-
-import sys, os, itertools, warnings, logging
+import sys
+import os
+import itertools
+import warnings
+import logging
+import shutil
 
 import nibabel as nib
 import numpy as np
+import pathlib
+
 import transforms3d.affines as affines
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import sct_dir_local_path
+from spinalcordtoolbox.utils import sct_dir_local_path, extract_fname, printv
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +71,7 @@ class Slicer(object):
            print(slice)
 
     """
+
     def __init__(self, im, orientation="LPI"):
         """
 
@@ -111,21 +117,21 @@ class Slicer(object):
         self._nb_slices = data.shape[2]
 
     def __len__(self):
-       return self._nb_slices
+        return self._nb_slices
 
     def __getitem__(self, idx):
-       """
+        """
 
-       :return: an image slice, at slicing index idx
-       :param idx: slicing index (according to the slicing direction)
-       """
-       if not isinstance(idx, int):
-           raise NotImplementedError()
+        :return: an image slice, at slicing index idx
+        :param idx: slicing index (according to the slicing direction)
+        """
+        if not isinstance(idx, int):
+            raise NotImplementedError()
 
-       if idx >= self._nb_slices:
-           raise IndexError("I just have {} slices!".format(self._nb_slices))
+        if idx >= self._nb_slices:
+            raise IndexError("I just have {} slices!".format(self._nb_slices))
 
-       return self._data[:,:,idx]
+        return self._data[:, :, idx]
 
 
 class SlicerOneAxis(object):
@@ -166,24 +172,24 @@ class SlicerOneAxis(object):
         self._slice = lambda idx: tuple([(idx if x in axis else slice(None)) for x in im.orientation])
 
     def __len__(self):
-       return self.nb_slices
+        return self.nb_slices
 
     def __getitem__(self, idx):
-       """
+        """
 
-       :return: an image slice, at slicing index idx
-       :param idx: slicing index (according to the slicing direction)
-       """
-       if isinstance(idx, slice):
-           raise NotImplementedError()
+        :return: an image slice, at slicing index idx
+        :param idx: slicing index (according to the slicing direction)
+        """
+        if isinstance(idx, slice):
+            raise NotImplementedError()
 
-       if idx >= self.nb_slices:
-           raise IndexError("I just have {} slices!".format(self.nb_slices))
+        if idx >= self.nb_slices:
+            raise IndexError("I just have {} slices!".format(self.nb_slices))
 
-       if self.direction == -1:
-           idx = self.nb_slices - 1 - idx
+        if self.direction == -1:
+            idx = self.nb_slices - 1 - idx
 
-       return self.im.data[self._slice(idx)]
+        return self.im.data[self._slice(idx)]
 
 
 class SlicerMany(object):
@@ -195,13 +201,14 @@ class SlicerMany(object):
 
     Use with great care for now, that it's not very documented.
     """
+
     def __init__(self, images, slicerclass, *args, **kw):
         if len(images) == 0:
             raise ValueError("Don't expect me to work on 0 images!")
 
-        self.slicers = [ slicerclass(im, *args, **kw) for im in images ]
+        self.slicers = [slicerclass(im, *args, **kw) for im in images]
 
-        nb_slices = [ x._nb_slices for x in self.slicers ]
+        nb_slices = [x._nb_slices for x in self.slicers]
         if len(set(nb_slices)) != 1:
             raise ValueError("All images must have the same number of slices along the slicing axis!")
         self._nb_slices = nb_slices[0]
@@ -210,7 +217,7 @@ class SlicerMany(object):
         return self._nb_slices
 
     def __getitem__(self, idx):
-        return [ x[idx] for x in self.slicers ]
+        return [x[idx] for x in self.slicers]
 
 
 class Image(object):
@@ -474,10 +481,10 @@ class Image(object):
         # save file
         if os.path.isabs(path):
             logger.debug("Saving image to %s orientation %s shape %s",
-             path, self.orientation, data.shape)
+                         path, self.orientation, data.shape)
         else:
             logger.debug("Saving image to %s (%s) orientation %s shape %s",
-             path, os.path.abspath(path), self.orientation, data.shape)
+                         path, os.path.abspath(path), self.orientation, data.shape)
 
         nib.save(img, path)
 
@@ -563,7 +570,6 @@ class Image(object):
         averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
         return averaged_coordinates
 
-
     def transfo_pix2phys(self, coordi=None):
         """
         This function returns the physical coordinates of all points of 'coordi'.
@@ -590,7 +596,6 @@ class Image(object):
             ret[idx_coord] = phys[:3]
         return ret
 
-
     def transfo_phys2pix(self, coordi, real=True):
         """
         This function returns the pixels coordinates of all points of 'coordi'
@@ -611,7 +616,6 @@ class Image(object):
             return np.int32(np.round(ret))
         else:
             return ret
-
 
     def get_values(self, coordi=None, interpolation_mode=0, border='constant', cval=0.0):
         """
@@ -898,7 +902,7 @@ def find_zmin_zmax(im, threshold=0.1):
             break
 
     # Conversely from top to bottom
-    for zmax in range(len(slicer)-1, zmin, -1):
+    for zmax in range(len(slicer) - 1, zmin, -1):
         dataz = slicer[zmax]
         if np.any(slicer[zmax] > threshold):
             break
@@ -942,7 +946,7 @@ def all_refspace_strings():
 
     :return: all possible orientation strings ['RAI', 'RAS', 'RPI', 'RPS', ...]
     """
-    return [x for x in itertools.chain(*[ [ "".join(x) for x in itertools.product(*seq) ] for seq in itertools.permutations(("RL", "AP", "IS"), 3)])]
+    return [x for x in itertools.chain(*[["".join(x) for x in itertools.product(*seq)] for seq in itertools.permutations(("RL", "AP", "IS"), 3)])]
 
 
 def get_orientation(im):
@@ -953,7 +957,7 @@ def get_orientation(im):
     """
     res = "".join(nib.orientations.aff2axcodes(im.hdr.get_best_affine()))
     return orientation_string_nib2sct(res)
-    return res # for later ;)
+    return res  # for later ;)
 
 
 def orientation_string_nib2sct(s):
@@ -1016,13 +1020,13 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
 
     # TODO: make sure to cover all cases for setorient-data
     if len(im_src.data.shape) < 3:
-        pass # Will reshape to 3D
+        pass  # Will reshape to 3D
     elif len(im_src.data.shape) == 3:
-        pass # OK, standard 3D volume
+        pass  # OK, standard 3D volume
     elif len(im_src.data.shape) == 4:
-        pass # OK, standard 4D volume
+        pass  # OK, standard 4D volume
     elif len(im_src.data.shape) == 5 and im_src.header.get_intent()[0] == "vector":
-        pass # OK, physical displacement field
+        pass  # OK, physical displacement field
     else:
         raise NotImplementedError("Don't know how to change orientation for this image")
 
@@ -1030,7 +1034,6 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
     im_dst_orientation = orientation
     if inverse:
         im_src_orientation, im_dst_orientation = im_dst_orientation, im_src_orientation
-
 
     perm, inversion = _get_permutations(im_src_orientation, im_dst_orientation)
 
@@ -1040,7 +1043,7 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
 
     im_src_data = im_src.data
     if len(im_src_data.shape) < 3:
-        im_src_data = im_src_data.reshape(tuple(list(im_src_data.shape) + ([1]*(3-len(im_src_data.shape)))))
+        im_src_data = im_src_data.reshape(tuple(list(im_src_data.shape) + ([1] * (3 - len(im_src_data.shape)))))
 
     # Update data by performing inversions and swaps
 
@@ -1070,8 +1073,8 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
 
     im_src_aff = im_src.hdr.get_best_affine()
     aff = nib.orientations.inv_ornt_aff(
-     np.array((perm, inversion)).T,
-     im_src_data.shape)
+        np.array((perm, inversion)).T,
+        im_src_data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
 
     if not data_only:
@@ -1177,7 +1180,7 @@ def change_type(im_src, dtype, im_dst=None):
                 logger.warning(f"To avoid intensity overflow due to convertion to +{dtype.name}+, intensity will be rescaled to the maximum quantization scale")
                 # rescale intensity
                 data_rescaled = im_src.data * (max_out - min_out) / (max_in - min_in)
-                im_dst.data = data_rescaled - ( data_rescaled.min() - min_out )
+                im_dst.data = data_rescaled - (data_rescaled.min() - min_out)
 
     # change type of data in both numpy array and nifti header
     im_dst.data = getattr(np, dtype.name)(im_dst.data)
@@ -1199,8 +1202,8 @@ def to_dtype(dtype):
     if isinstance(dtype, type):
         try:
             if isinstance(dtype(0).dtype, np.dtype):
-                 return dtype(0).dtype
-        except: # TODO
+                return dtype(0).dtype
+        except:  # TODO
             raise
     if isinstance(dtype, np.dtype):
         return dtype
@@ -1250,11 +1253,11 @@ def spatial_crop(im_src, spec, im_dst=None):
     """
 
     # Compute bounds
-    bounds = [ (0, x-1) for x in im_src.data.shape ]
+    bounds = [(0, x - 1) for x in im_src.data.shape]
     for k, v in spec.items():
         bounds[k] = v
 
-    bounds_ndslice = tuple([ slice(a,b+1) for (a,b) in bounds ])
+    bounds_ndslice = tuple([slice(a, b + 1) for (a, b) in bounds])
 
     bounds = np.array(bounds)
 
@@ -1283,6 +1286,7 @@ def spatial_crop(im_src, spec, im_dst=None):
 
     return im_dst
 
+
 def convert(img: Image, squeeze_data=True, dtype=None):
     """
     """
@@ -1291,6 +1295,7 @@ def convert(img: Image, squeeze_data=True, dtype=None):
     if dtype:
         img.change_type(dtype)
     return img
+
 
 def split_img_data(src_img: Image, dim, squeeze_data=True):
     """
@@ -1325,13 +1330,14 @@ def split_img_data(src_img: Image, dim, squeeze_data=True):
     for idx_img, dat in enumerate(data_split):
         im_out = empty_like(src_img)
         if do_reshape:
-            im_out.data = dat.reshape(tuple([ x for (idx_shape, x) in enumerate(data.shape) if idx_shape != dim]))
+            im_out.data = dat.reshape(tuple([x for (idx_shape, x) in enumerate(data.shape) if idx_shape != dim]))
         else:
             im_out.data = dat
         im_out.absolutepath = add_suffix(src_img.absolutepath, "_{}{}".format(dim_list[dim].upper(), str(idx_img).zfill(4)))
         im_out_list.append(im_out)
 
     return im_out_list
+
 
 def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     """
@@ -1362,6 +1368,7 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     # set "intent" code to vector, to be interpreted as warping field
     im_warp3d.header.set_intent('vector', (), '')
     nib.save(im_warp3d, fname_warp3d)
+
 
 def add_suffix(fname, suffix):
     """

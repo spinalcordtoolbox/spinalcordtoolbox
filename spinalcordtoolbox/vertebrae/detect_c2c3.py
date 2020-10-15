@@ -16,21 +16,18 @@
 # Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
 # About the license: see the file LICENSE.TXT
 
-from __future__ import absolute_import
-
 import os
-import sys
 import logging
-import sct_utils as sct
-from sct_flatten_sagittal import flatten_sagittal
+
 import numpy as np
 import nibabel as nib
 from scipy.ndimage.measurements import center_of_mass
-from skimage.measure import label as label_regions
 
 from spinalcordtoolbox.image import Image, zeros_like
-from spinalcordtoolbox.utils import run_proc
-from spinalcordtoolbox import __data_dir__
+from spinalcordtoolbox.utils import run_proc, TempFolder, __data_dir__
+
+# FIXME: don't import from scripts!
+from sct_flatten_sagittal import flatten_sagittal
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +58,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
 
     # create temporary folder with intermediate results
     logger.info("Creating temporary folder...")
-    tmp_folder = sct.TempFolder()
+    tmp_folder = TempFolder()
     tmp_folder.chdir()
 
     # Extract mid-slice

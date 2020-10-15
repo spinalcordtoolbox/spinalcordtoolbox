@@ -3,7 +3,7 @@
 # pytest unit tests for spinalcordtoolbox.aggregate_slicewise
 
 
-from __future__ import absolute_import
+
 
 import sys
 import os

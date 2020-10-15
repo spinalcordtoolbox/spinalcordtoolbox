@@ -8,14 +8,11 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
-from __future__ import absolute_import
-
 import sys
 import os
 import argparse
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax
 from spinalcordtoolbox.image import add_suffix
 from spinalcordtoolbox.reports.qc import generate_qc
 
@@ -130,7 +127,7 @@ def run_main():
         generate_qc(fname_in1=input_filename, fname_seg=out_fname, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_gm')
 
-    sct.display_viewer_syntax([input_filename, format(out_fname)],
+    display_viewer_syntax([input_filename, format(out_fname)],
                               colormaps=['gray', 'red'],
                               opacities=['1', '0.7'],
                               verbose=verbose)

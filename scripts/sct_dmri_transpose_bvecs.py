@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#=======================================================================================================================
+# =======================================================================================================================
 #
 # Transpose bvecs file (if necessary) to get nx3 structure
 #
@@ -22,19 +22,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import, division
-
 import os
 import sys
 import argparse
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 
-from sct_utils import extract_fname, printv
-import sct_utils as sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, extract_fname, printv
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
     # Initialize the parser
     parser = argparse.ArgumentParser(
@@ -112,7 +106,7 @@ def main(args=None):
 
 
 # Start program
-#=======================================================================================================================
+# =======================================================================================================================
 if __name__ == "__main__":
     init_sct()
     # call main function

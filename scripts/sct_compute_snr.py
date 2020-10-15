@@ -12,15 +12,14 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################
 
-from __future__ import division, absolute_import
-
 import sys
-import numpy as np
 import os
 import argparse
+
+import numpy as np
+
 from spinalcordtoolbox.image import Image, empty_like, add_suffix
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, parse_num_list, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, parse_num_list, init_sct, printv
 
 
 # PARAMETERS
@@ -31,6 +30,8 @@ class Param(object):
 
 # PARSER
 # ==========================================================================================
+
+
 def get_parser():
 
     # Initialize the parser
@@ -125,7 +126,7 @@ def main():
     # Check parameters
     if method == 'diff':
         if not fname_mask:
-            sct.printv('You need to provide a mask with -method diff. Exit.', 1, type='error')
+            printv('You need to provide a mask with -method diff. Exit.', 1, type='error')
 
     # Load data and orient to RPI
     im_data = Image(fname_data).change_orientation('RPI')
@@ -142,7 +143,7 @@ def main():
     # Make sure user selected 2 volumes with diff method
     if method == 'diff':
         if not len(index_vol) == 2:
-            sct.printv('Method "diff" should be used with exactly two volumes (specify with flag "-vol").', 1, 'error')
+            printv('Method "diff" should be used with exactly two volumes (specify with flag "-vol").', 1, 'error')
 
     # Compute SNR
     # NB: "time" is assumed to be the 4th dimension of the variable "data"
@@ -181,11 +182,11 @@ def main():
         data_sub = np.subtract(data_2vol[:, :, :, 1], data_2vol[:, :, :, 0])
         _, std_in_roi = weighted_avg_and_std(data_sub, mask)
         # Compute SNR, correcting for Rayleigh noise (see eq. 7 in Dietrich et al.)
-        snr_roi = (2/np.sqrt(2)) * mean_in_roi / std_in_roi
+        snr_roi = (2 / np.sqrt(2)) * mean_in_roi / std_in_roi
 
     # Display result
     if fname_mask:
-        sct.printv('\nSNR_' + method + ' = ' + str(snr_roi) + '\n', type='info')
+        printv('\nSNR_' + method + ' = ' + str(snr_roi) + '\n', type='info')
 
 
 # START PROGRAM

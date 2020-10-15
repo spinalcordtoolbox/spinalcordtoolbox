@@ -12,18 +12,14 @@
 # About the license: see the file LICENSE.TXT
 # ######################################################################################################################
 
-from __future__ import absolute_import, division
-
 import sys
 import os
 import argparse
 
 import numpy as np
 
-import sct_utils as sct
-import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
-from spinalcordtoolbox.image import Image, add_suffix
+from spinalcordtoolbox.image import Image, add_suffix, empty_like
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax
 
 
 class Param:
@@ -59,11 +55,11 @@ class Tsnr:
 
         # save TSNR
         fname_tsnr = self.out
-        nii_tsnr = msct_image.empty_like(nii_data)
+        nii_tsnr = empty_like(nii_data)
         nii_tsnr.data = data_tsnr
         nii_tsnr.save(fname_tsnr, dtype=np.float32)
 
-        sct.display_viewer_syntax([fname_tsnr])
+        display_viewer_syntax([fname_tsnr])
 
 
 # PARSER

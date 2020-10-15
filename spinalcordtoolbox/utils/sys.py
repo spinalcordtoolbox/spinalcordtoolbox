@@ -18,7 +18,6 @@ from email import encoders
 
 import tqdm
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -405,7 +404,7 @@ def __get_commit(path_to_git_folder=None):
     if path_to_git_folder is None:
         path_to_git_folder = __sct_dir__
     else:
-        path_to_git_folder = abspath(path_to_git_folder)
+        path_to_git_folder = os.path.abspath(os.path.expanduser(path_to_git_folder))
 
     p = subprocess.Popen(["git", "rev-parse", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                          cwd=path_to_git_folder)

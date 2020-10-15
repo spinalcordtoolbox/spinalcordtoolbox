@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 
-from __future__ import division, absolute_import
-
 import os
 import sys
 import argparse
 
 import numpy as np
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.fs import extract_fname
 
 
 def get_parser():
@@ -136,7 +135,7 @@ def run_main():
     if method == 'optic' and not contrast_type:
         # Contrast must be
         error = "ERROR: -c is a mandatory argument when using 'optic' method."
-        sct.printv(error, type='error')
+        printv(error, type='error')
         return
 
     # Gap between slices
@@ -151,7 +150,7 @@ def run_main():
     if arguments.o is not None:
         file_output = arguments.o
     else:
-        path_data, file_data, ext_data = sct.extract_fname(fname_data)
+        path_data, file_data, ext_data = extract_fname(fname_data)
         file_output = os.path.join(path_data, file_data + '_centerline')
 
     verbose = int(arguments.v)
@@ -168,9 +167,8 @@ def run_main():
         param_centerline.algo_fitting = 'optic'
         param_centerline.contrast = contrast_type
     else:
-        sct.printv("ERROR: The selected method is not available: {}. Please look at the help.".format(method), type='error')
+        printv("ERROR: The selected method is not available: {}. Please look at the help.".format(method), type='error')
         return
-
 
     # Extrapolate and regularize (or detect if optic) cord centerline
     im_centerline, arr_centerline, _, _ = get_centerline(im_labels,
@@ -181,7 +179,7 @@ def run_main():
     im_centerline.save(file_output + '.nii.gz')
     np.savetxt(file_output + '.csv', arr_centerline.transpose(), delimiter=",")
 
-    sct.display_viewer_syntax([fname_input_data, file_output+'.nii.gz'], colormaps=['gray', 'red'], opacities=['', '1'])
+    display_viewer_syntax([fname_input_data, file_output + '.nii.gz'], colormaps=['gray', 'red'], opacities=['', '1'])
 
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
@@ -189,9 +187,10 @@ def run_main():
 
     # Generate QC report
     if path_qc is not None:
-        generate_qc(fname_input_data, fname_seg=file_output+'.nii.gz', args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_input_data, fname_seg=file_output + '.nii.gz', args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_get_centerline')
-    sct.display_viewer_syntax([fname_input_data, file_output+'.nii.gz'], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    display_viewer_syntax([fname_input_data, file_output + '.nii.gz'], colormaps=['gray', 'red'], opacities=['', '0.7'])
+
 
 if __name__ == '__main__':
     run_main()
