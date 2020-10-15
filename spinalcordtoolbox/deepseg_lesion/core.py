@@ -13,7 +13,6 @@ from spinalcordtoolbox.image import Image, add_suffix, zeros_like, empty_like
 from spinalcordtoolbox.deepseg_sc.core import find_centerline, crop_image_around_centerline, uncrop_image, _normalize_data
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.utils import sct_dir_local_path, TempFolder
-from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
 
 
 logger = logging.getLogger(__name__)
@@ -79,6 +78,7 @@ def apply_intensity_normalization(img, contrast):
 
 
 def segment_3d(model_fname, contrast_type, im):
+    from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
     """Perform segmentation with 3D convolutions."""
     dct_patch_3d = {'t2': {'size': (48, 48, 48), 'mean': 871.309, 'std': 557.916},
                     't2_ax': {'size': (48, 48, 48), 'mean': 835.592, 'std': 528.386},
