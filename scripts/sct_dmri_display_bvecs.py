@@ -19,7 +19,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from dipy.data.fetcher import read_bvals_bvecs
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 import argparse
 import os
 
@@ -140,6 +140,6 @@ def main():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

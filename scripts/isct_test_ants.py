@@ -19,8 +19,9 @@ import getopt
 import os
 
 import numpy as np
-
 import nibabel as nib
+
+from spinalcordtoolbox.utils import init_sct, run_proc
 
 import sct_utils as sct
 
@@ -81,7 +82,7 @@ def main():
     # Estimate rigid transformation
     sct.printv('\nEstimate rigid transformation between paired landmarks...', verbose)
     # TODO fixup isct_ants* parsers
-    sct.run(['isct_antsRegistration',
+    run_proc(['isct_antsRegistration',
      '-d', '3',
      '-t', 'syn[1,3,1]',
      '-m', 'MeanSquares[data_dest.nii.gz,data_src.nii.gz,1,3]',
@@ -94,25 +95,25 @@ def main():
 
     # # Apply rigid transformation
     # sct.printv('\nApply rigid transformation to curved landmarks...', verbose)
-    # sct.run('sct_apply_transfo -i data_src.nii.gz -o data_src_rigid.nii.gz -d data_dest.nii.gz -w curve2straight_rigid.txt -p nn', verbose)
+    # run_proc('sct_apply_transfo -i data_src.nii.gz -o data_src_rigid.nii.gz -d data_dest.nii.gz -w curve2straight_rigid.txt -p nn', verbose)
     #
     # # Estimate b-spline transformation curve --> straight
     # sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
-    # sct.run('isct_ANTSLandmarksBSplineTransform data_dest.nii.gz data_src_rigid.nii.gz warp_curve2straight_intermediate.nii.gz 5x5x5 3 2 0', verbose)
+    # run_proc('isct_ANTSLandmarksBSplineTransform data_dest.nii.gz data_src_rigid.nii.gz warp_curve2straight_intermediate.nii.gz 5x5x5 3 2 0', verbose)
     #
     # # Concatenate rigid and non-linear transformations...
     # sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
     # cmd = 'isct_ComposeMultiTransform 3 warp_curve2straight.nii.gz -R data_dest.nii.gz warp_curve2straight_intermediate.nii.gz curve2straight_rigid.txt'
     # sct.printv('>> '+cmd, verbose)
-    # sct.run(cmd)
+    # run_proc(cmd)
     #
     # # Apply deformation to input image
     # sct.printv('\nApply transformation to input image...', verbose)
-    # sct.run('sct_apply_transfo -i data_src.nii.gz -o data_src_warp.nii.gz -d data_dest.nii.gz -w warp_curve2straight.nii.gz -p nn', verbose)
+    # run_proc('sct_apply_transfo -i data_src.nii.gz -o data_src_warp.nii.gz -d data_dest.nii.gz -w warp_curve2straight.nii.gz -p nn', verbose)
     #
     # Compute DICE coefficient between src and dest
     sct.printv('\nCompute DICE coefficient...', verbose)
-    sct.run(["sct_dice_coefficient",
+    run_proc(["sct_dice_coefficient",
      "-i", "data_dest.nii.gz",
      "-d", "data_src_reg.nii.gz",
      "-o", "dice.txt"], verbose)
@@ -169,6 +170,6 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

@@ -17,7 +17,7 @@ from spinalcordtoolbox.types import Centerline
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils import sct_progress_bar
+from spinalcordtoolbox.utils import sct_progress_bar, run_proc
 
 import sct_utils as sct
 from sct_image import pad_image
@@ -137,7 +137,7 @@ class SpinalCordStraightener(object):
             sct.mv('centerline_rpi.nii.gz', 'centerline_rpi_native.nii.gz')
             pz_native = pz
             # TODO: remove system call
-            sct.run(['sct_resample', '-i', 'centerline_rpi_native.nii.gz', '-mm',
+            run_proc(['sct_resample', '-i', 'centerline_rpi_native.nii.gz', '-mm',
                      str(px_r) + 'x' + str(py_r) + 'x' + str(pz_r), '-o', 'centerline_rpi.nii.gz'])
             image_centerline = Image('centerline_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
@@ -256,7 +256,7 @@ class SpinalCordStraightener(object):
             # TODO: Maybe this if case is not needed?
             if intermediate_resampling:
                 padding_z = int(np.ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz_native))
-                sct.run(
+                run_proc(
                     ['sct_image', '-i', 'centerline_rpi_native.nii.gz', '-o', 'tmp.centerline_pad_native.nii.gz',
                      '-pad', '0,0,' + str(padding_z)])
                 image_centerline_pad = Image('centerline_rpi_native.nii.gz')
@@ -522,7 +522,7 @@ class SpinalCordStraightener(object):
         image_centerline_straight.save(fname_ref)
         if self.curved2straight:
             logger.info('Apply transformation to input image...')
-            sct.run(['isct_antsApplyTransforms',
+            run_proc(['isct_antsApplyTransforms',
                      '-d', '3',
                      '-r', fname_ref,
                      '-i', 'data.nii',
@@ -538,7 +538,7 @@ class SpinalCordStraightener(object):
             # Ideally, the error should be zero.
             # Apply deformation to input image
             logger.info('Apply transformation to centerline image...')
-            sct.run(['isct_antsApplyTransforms',
+            run_proc(['isct_antsApplyTransforms',
                      '-d', '3',
                      '-r', fname_ref,
                      '-i', 'centerline.nii.gz',

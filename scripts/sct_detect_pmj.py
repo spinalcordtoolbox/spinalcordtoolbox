@@ -23,7 +23,7 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct, run_proc
 
 
 def get_parser():
@@ -201,7 +201,7 @@ class DetectPMJ:
         os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
         cmd_pmj = ['isct_spine_detect', self.pmj_model, self.slice2D_im.split('.nii')[0], self.dection_map_pmj]
         print(cmd_pmj)
-        sct.run(cmd_pmj, verbose=0, is_sct_binary=True)
+        run_proc(cmd_pmj, verbose=0, is_sct_binary=True)
 
         img = nib.load(self.dection_map_pmj + '_svm.hdr')  # convert .img and .hdr files to .nii
         nib.save(img, self.dection_map_pmj + '.nii')
@@ -234,7 +234,7 @@ class DetectPMJ:
             self.rl_coord = int(img.dim[2] / 2)  # Right_left coordinate
             del img
 
-        sct.run(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
+        run_proc(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
 
     def orient2pir(self):
         """Orient input data to PIR orientation."""
@@ -293,7 +293,7 @@ def main():
     rm_tmp = bool(arguments.r)
 
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # Initialize DetectPMJ
     detector = DetectPMJ(fname_im=fname_in,
@@ -319,5 +319,5 @@ def main():
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

@@ -27,11 +27,10 @@ import argparse
 import numpy as np
 
 from spinalcordtoolbox.metadata import read_label_file
-from spinalcordtoolbox.utils import parse_num_list
 from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric, LabelStruc
 import sct_utils as sct
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type, parse_num_list, init_sct
 
 # get path of the script and the toolbox
 # TODO: is that useful??
@@ -117,7 +116,7 @@ def get_parser():
         '-l',
         metavar=Metavar.str,
         default='',
-        help="Label IDs to extract the metric from. Default = all labels. Separate labels with ','. To select a group " 
+        help="Label IDs to extract the metric from. Default = all labels. Separate labels with ','. To select a group "
              "of consecutive labels use ':'. Example: 1:3 is equivalent to 1,2,3. Maximum Likelihood (or MAP) is "
              "computed using all tracts, but only values of the selected tracts are reported."
     )
@@ -127,7 +126,7 @@ def get_parser():
         default=param_default.method,
         help="R|Method to extract metrics.\n"
              "  - ml: maximum likelihood (only use with well-defined regions and low noise)\n"
-             "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in " 
+             "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in "
              "all voxels (the algorithm doesn't normalize the atlas).\n"
              "  - map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters "
              "(white matter, gray matter and CSF). Tract and noise variance are set with flag -p.\n"
@@ -383,7 +382,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
 
 if __name__ == "__main__":
 
-    sct.init_sct()
+    init_sct()
 
     param_default = Param()
 
@@ -411,7 +410,7 @@ if __name__ == "__main__":
     fname_mask_weight = arguments.mask_weighted  # TODO: Not used. Why?
     discard_negative_values = int(arguments.discard_neg_val)  # TODO: Not used. Why?
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # call main function
     main(fname_data=fname_data, path_label=path_label, method=method, slices=parse_num_list(slices_of_interest),

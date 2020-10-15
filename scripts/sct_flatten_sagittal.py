@@ -24,7 +24,7 @@ import sct_utils as sct
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 
 
 # Default parameters
@@ -146,7 +146,7 @@ def get_parser():
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     param_default = Param()
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     fname_anat = arguments.i
     fname_centerline = arguments.s
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # call main function
     main(fname_anat, fname_centerline, verbose)

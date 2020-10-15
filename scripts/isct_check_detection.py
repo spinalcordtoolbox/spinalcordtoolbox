@@ -17,7 +17,9 @@ import getopt
 
 import nibabel
 import numpy as np
+
 from spinalcordtoolbox import sct_test_path
+from spinalcordtoolbox.utils import init_sct
 
 import sct_utils as sct
 
@@ -116,7 +118,7 @@ def usage():
 # Start program
 #=======================================================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     # call main function

@@ -31,7 +31,7 @@ import warnings
 import requirements
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import SmartFormatter, sct_dir_local_path
+from spinalcordtoolbox.utils import SmartFormatter, sct_dir_local_path, init_sct, run_proc
 
 
 # DEFAULT PARAMETERS
@@ -235,9 +235,9 @@ def main():
 
     # complete test
     if complete_test:
-        print(sct.run('date', verbose))
-        print(sct.run('whoami', verbose))
-        print(sct.run('pwd', verbose))
+        print(run_proc('date', verbose))
+        print(run_proc('whoami', verbose))
+        print(run_proc('pwd', verbose))
         bash_profile = os.path.expanduser("~/.bash_profile")
         if os.path.isfile(bash_profile):
             with io.open(bash_profile, "r") as f:
@@ -318,7 +318,7 @@ def main():
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
     cmd = 'isct_test_ants'
-    status, output = sct.run(cmd, verbose=0, raise_exception=False)
+    status, output = run_proc(cmd, verbose=0, raise_exception=False)
     if status == 0:
         print_ok()
     else:
@@ -331,7 +331,7 @@ def main():
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
-    status, output = sct.run('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
+    status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
     if status in (0, 1):
         print_ok()
     else:
@@ -367,7 +367,7 @@ def main():
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     # call main function

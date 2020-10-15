@@ -19,9 +19,8 @@ import numpy as np
 import os
 import argparse
 from spinalcordtoolbox.image import Image, empty_like
-from spinalcordtoolbox.utils import parse_num_list
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, parse_num_list, init_sct
 
 
 # PARAMETERS
@@ -121,7 +120,7 @@ def main():
     else:
         index_vol_user = ''
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # Check parameters
     if method == 'diff':
@@ -192,6 +191,6 @@ def main():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

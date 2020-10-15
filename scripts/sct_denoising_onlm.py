@@ -9,7 +9,7 @@ from time import time
 import nibabel as nib
 
 import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 
 
 # DEFAULT PARAMETERS
@@ -178,7 +178,7 @@ def main(file_to_denoise, param, output_file_name) :
 # Start program
 # =======================================================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     parser = get_parser()
     # initialize parameters
     arguments = parser.parse_args(args = None if sys.argv[1:] else ['--help'])
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     remove_temp_files = arguments.r
     noise_threshold = arguments.d
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     file_to_denoise = arguments.i
     output_file_name = arguments.o

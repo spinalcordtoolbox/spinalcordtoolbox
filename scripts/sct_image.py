@@ -19,9 +19,9 @@ import numpy as np
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, concat_data
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
-from nibabel                 import Nifti1Image
-from nibabel.processing      import resample_from_to
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
+from nibabel import Nifti1Image
+from nibabel.processing import resample_from_to
 
 
 import sct_utils as sct
@@ -179,7 +179,7 @@ def main(args=None):
     fname_in = arguments.i
     n_in = len(fname_in)
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     if arguments.o is not None:
         fname_out = arguments.o
@@ -551,7 +551,7 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         from numpy import zeros
         tmp_dir = sct.tmp_create()
         im_warp = Image(fname_warp)
-        status, out = sct.run(['fslhd', fname_warp])
+        status, out = run_proc(['fslhd', fname_warp])
         curdir = os.getcwd()
         os.chdir(tmp_dir)
         dim1 = 'dim1           '
@@ -576,16 +576,16 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
         im_grid.absolutepath = fname_grid
         im_grid.save()
         fname_grid_resample = sct.add_suffix(fname_grid, '_resample')
-        sct.run(['sct_resample', '-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
+        run_proc(['sct_resample', '-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
         fname_grid = os.path.join(tmp_dir, fname_grid_resample)
         os.chdir(curdir)
     path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
     grid_warped = os.path.join(path_warp, sct.extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp)
-    sct.run(['sct_apply_transfo', '-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
+    run_proc(['sct_apply_transfo', '-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
     if rm_tmp:
         sct.rmtree(tmp_dir)
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

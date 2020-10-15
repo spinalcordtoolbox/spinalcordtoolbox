@@ -25,7 +25,7 @@ from spinalcordtoolbox.image import Image
 import sct_image
 import sct_utils as sct
 # TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, run_proc
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
 
@@ -448,7 +448,7 @@ def propseg(img_input, options_dict):
     remove_temp_files = arguments.r
 
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     # Update for propseg binary
     if verbose > 0:
         cmd += ["-verbose"]
@@ -604,7 +604,7 @@ def propseg(img_input, options_dict):
     cmd += ['-centerline-binary']
 
     # run propseg
-    status, output = sct.run(cmd, verbose, raise_exception=False, is_sct_binary=True)
+    status, output = run_proc(cmd, verbose, raise_exception=False, is_sct_binary=True)
 
     # check status is not 0
     if not status == 0:
@@ -662,7 +662,7 @@ def main(arguments):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     res = main(arguments)

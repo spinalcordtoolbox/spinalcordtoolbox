@@ -18,6 +18,7 @@ import signal
 import numpy as np
 from pandas import DataFrame
 
+from spinalcordtoolbox.utils import init_sct, run_proc
 import sct_utils as sct
 
 sys.path.append(os.path.join(sct.__sct_dir__, 'testing'))
@@ -179,10 +180,6 @@ def process_function(fname, param):
         # test function
         try:
             param_test = test_function(param_test)
-        except sct.RunError as e:
-            list_status_function.append(1)
-            list_output.append("Got SCT exception:")
-            list_output.append(e.args[0])
         except Exception as e:
             list_status_function.append(1)
             list_output.append("Got exception: %s" % e)
@@ -224,7 +221,7 @@ def main(args=None):
     jobs = arguments.jobs
 
     param.verbose = arguments.verbose
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    init_sct(log_level=param.verbose, update=True)  # Update log level
 
     start_time = time.time()
 
@@ -567,7 +564,7 @@ def test_function(param_test):
         #     # in case of relative path, we want a subfolder too
         #     os.makedirs(param_test.path_output)
         # os.chdir(path_testing)
-        param_test.status, o = sct.run(cmd, verbose=0)
+        param_test.status, o = run_proc(cmd, verbose=0)
         if param_test.status:
             raise Exception
     except Exception as err:
@@ -607,7 +604,7 @@ def update_param(param):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     # call main function

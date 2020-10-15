@@ -39,7 +39,7 @@ import numpy as np
 
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.registration.register import Paramreg, ParamregMultiStep
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, run_proc
 
 import sct_utils as sct
 from sct_register_to_template import register_wrapper
@@ -336,7 +336,7 @@ def main(args=None):
     interp = arguments.x
     remove_temp_files = arguments.r
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # sct.printv(arguments)
     sct.printv('\nInput parameters:')
@@ -372,7 +372,7 @@ def main(args=None):
     # TODO: Check if necessary to do that
     # TODO: use that as step=0
     # sct.printv('\nPut source into destination space using header...', verbose)
-    # sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o
+    # run_proc('isct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o
     # [regAffine,src_regAffine.nii] -n BSpline[3]', verbose)
     # if segmentation, also do it for seg
 
@@ -405,6 +405,6 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

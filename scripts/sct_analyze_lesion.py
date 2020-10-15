@@ -20,6 +20,7 @@ from skimage.measure import label
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import init_sct
 
 import sct_utils as sct
 from sct_utils import extract_fname, printv, tmp_create
@@ -548,7 +549,7 @@ def main(args=None):
 
     # Verbosity
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # create the Lesion constructor
     lesion_obj = AnalyzeLeion(fname_mask=fname_mask,
@@ -573,5 +574,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

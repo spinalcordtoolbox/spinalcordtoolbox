@@ -18,7 +18,7 @@ import argparse
 
 import spinalcordtoolbox.metadata
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct, run_proc
 import sct_utils as sct
 
 
@@ -110,7 +110,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
         for i in range(0, len(template_label_file)):
             fname_label = os.path.join(path_label, folder_label, template_label_file[i])
             # apply transfo
-            sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+            run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
                     (fname_label,
                      fname_src,
                      fname_transfo,
@@ -237,7 +237,7 @@ def main(args=None):
     folder_out = arguments.ofolder
     path_template = arguments.t
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
@@ -276,6 +276,6 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     param = Param()
     main()

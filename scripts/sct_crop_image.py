@@ -15,7 +15,7 @@ import argparse
 
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
 import sct_utils as sct
 
 
@@ -154,7 +154,7 @@ def main(args=None):
     # initialize ImageCropper
     cropper = ImageCropper(Image(arguments.i))
     cropper.verbose = arguments.v
-    sct.init_sct(log_level=cropper.verbose, update=True)  # Update log level
+    init_sct(log_level=cropper.verbose, update=True)  # Update log level
 
     # Switch across cropping methods
     if arguments.g:
@@ -184,5 +184,5 @@ def main(args=None):
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()
