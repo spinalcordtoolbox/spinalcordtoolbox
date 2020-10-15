@@ -9,6 +9,7 @@ import shutil
 import tempfile
 import datetime
 import logging
+import pathlib
 
 from .sys import printv
 
@@ -248,49 +249,3 @@ def copy(src, dst, verbose=1):
             if isinstance(e, shutil.SameFileError):
                 return
         raise  # Must be another error
-
-
-def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
-    """
-    Copy fname_in to fname_out with a few convenient checks: make sure input file exists, if fname_out exists send a
-    warning, if input and output NIFTI format are different (nii vs. nii.gz) convert by unzipping or zipping, and
-    display nice message at the end.
-    :param fname_in:
-    :param fname_out:
-    :param verbose:
-    :return: fname_out
-    """
-    from sct_convert import convert
-    path_in, file_in, ext_in = extract_fname(fname_in)
-    path_out, file_out, ext_out = extract_fname(fname_out)
-    # create output path (ignore if it already exists)
-    pathlib.Path(path_out).mkdir(parents=True, exist_ok=True)
-    # if input image does not exist, give error
-    if not os.path.isfile(fname_in):
-        printv('  ERROR: File ' + fname_in + ' is not a regular file. Exit program.', 1, 'error')
-        sys.exit(2)
-    # if input and output fnames are the same, do nothing and exit function
-    if fname_in == fname_out:
-        printv('  WARNING: fname_in and fname_out are the same. Do nothing.', verbose, 'warning')
-        printv('  File created: ' + os.path.join(path_out, file_out + ext_out))
-        return os.path.join(path_out, file_out + ext_out)
-    # if fname_out already exists in nii or nii.gz format
-    if os.path.isfile(os.path.join(path_out, file_out + ext_out)):
-        printv('  WARNING: File ' + os.path.join(path_out, file_out + ext_out) + ' already exists. Deleting it...', 1, 'warning')
-        os.remove(os.path.join(path_out, file_out + ext_out))
-    if ext_in != ext_out:
-        # Generate output file
-        '''
-        # TRY TO UNCOMMENT THIS LINES AND RUN IT IN AN OTHER STATION THAN EVANS (testing of sct_label_vertebrae and sct_smooth_spinalcord never stops with this lines on evans)
-        if ext_in == '.nii.gz' and ext_out == '.nii':  # added to resolve issue #728
-            utils.run_proc('gunzip -f ' + fname_in)
-            os.rename(os.path.join(path_in, file_in + '.nii'), fname_out)
-        else:
-        '''
-        convert(fname_in, fname_out, squeeze_data=squeeze_data, verbose=0)
-    else:
-        # Generate output file without changing the extension
-        shutil.move(fname_in, fname_out)
-
-    printv('  File created: ' + os.path.join(path_out, file_out + ext_out), verbose)
-    return os.path.join(path_out, file_out + ext_out)

@@ -1410,3 +1410,45 @@ def check_dim(fname, dim_lst=[3]):
 
     if not dim[0] in dim_lst:
         raise ValueError(f"File {fname} has {dim[0]} dimensions! Accepted dimensions are: {dim_lst}.")
+
+
+def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
+    """
+    Copy fname_in to fname_out with a few convenient checks: make sure input file exists, if fname_out exists send a
+    warning, if input and output NIFTI format are different (nii vs. nii.gz) convert by unzipping or zipping, and
+    display nice message at the end.
+    :param fname_in:
+    :param fname_out:
+    :param verbose:
+    :return: fname_out
+    """
+    path_in, file_in, ext_in = extract_fname(fname_in)
+    path_out, file_out, ext_out = extract_fname(fname_out)
+
+    # create output path (ignore if it already exists)
+    pathlib.Path(path_out).mkdir(parents=True, exist_ok=True)
+
+    # if input image does not exist, give error
+    if not os.path.isfile(fname_in):
+        raise IOError(f"File {fname_in} is not a regular file!")
+
+    # if input and output fnames are the same, do nothing and exit function
+    if fname_in == fname_out:
+        logger.info("File created: %s", os.path.join(path_out, file_out + ext_out))
+        return os.path.join(path_out, file_out + ext_out)
+
+    # if fname_out already exists in nii or nii.gz format
+    if os.path.isfile(os.path.join(path_out, file_out + ext_out)):
+        logger.warning(f"File {os.path.join(path_out, file_out + ext_out)} already exists. Deleting it..")
+        os.remove(os.path.join(path_out, file_out + ext_out))
+
+    if ext_in != ext_out:
+        img = Image(fname_in)
+        img = convert(img, squeeze_data=squeeze_data)
+        img.save(fname_out)
+    else:
+        # Generate output file without changing the extension
+        shutil.move(fname_in, fname_out)
+
+    printv('  File created: ' + os.path.join(path_out, file_out + ext_out), verbose)
+    return os.path.join(path_out, file_out + ext_out)
