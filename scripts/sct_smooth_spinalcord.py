@@ -11,24 +11,24 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
 # TODO: maybe no need to convert RPI at the beginning because strainghten spinal cord already does it!
-
-from __future__ import absolute_import
-
-import sys, os, time
+import sys
+import os
+import time
 import argparse
 
 import numpy as np
 
-import sct_utils as sct
-import sct_maths
-import spinalcordtoolbox.image as msct_image
-from sct_convert import convert
-# TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type, init_sct, run_proc
+from spinalcordtoolbox.image import Image, generate_output_file
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.fs import tmp_create, cache_save, cache_signature, cache_valid, copy, \
+    extract_fname, rmtree
 
-# PARAMETERS
+from sct_convert import convert
+import sct_maths
+
+
 class Param:
     # The constructor
     def __init__(self):
@@ -39,7 +39,7 @@ class Param:
         # list_objects = param_user.split(',')
         for object in param_user:
             if len(object) < 2:
-                sct.printv('ERROR: Wrong usage.', 1, type='error')
+                printv('ERROR: Wrong usage.', 1, type='error')
             obj = object.split('=')
             setattr(self, obj[0], obj[1])
 
@@ -136,14 +136,13 @@ def main(args=None):
     init_sct(log_level=verbose, update=True)  # Update log level
 
     # Display arguments
-    sct.printv('\nCheck input arguments...')
-    sct.printv('  Volume to smooth .................. ' + fname_anat)
-    sct.printv('  Centerline ........................ ' + fname_centerline)
-    sct.printv('  Sigma (mm) ........................ ' + str(sigma))
-    sct.printv('  Verbose ........................... ' + str(verbose))
+    printv('\nCheck input arguments...')
+    printv('  Volume to smooth .................. ' + fname_anat)
+    printv('  Centerline ........................ ' + fname_centerline)
+    printv('  Sigma (mm) ........................ ' + str(sigma))
+    printv('  Verbose ........................... ' + str(verbose))
 
     # Check that input is 3D:
-    from spinalcordtoolbox.image import Image
     nx, ny, nz, nt, px, py, pz, pt = Image(fname_anat).dim
     dim = 4  # by default, will be adjusted later
     if nt == 1:
@@ -151,20 +150,20 @@ def main(args=None):
     if nz == 1:
         dim = 2
     if dim == 4:
-        sct.printv('WARNING: the input image is 4D, please split your image to 3D before smoothing spinalcord using :\n'
-                   'sct_image -i ' + fname_anat + ' -split t -o ' + fname_anat, verbose, 'warning')
-        sct.printv('4D images not supported, aborting ...', verbose, 'error')
+        printv('WARNING: the input image is 4D, please split your image to 3D before smoothing spinalcord using :\n'
+               'sct_image -i ' + fname_anat + ' -split t -o ' + fname_anat, verbose, 'warning')
+        printv('4D images not supported, aborting ...', verbose, 'error')
 
     # Extract path/file/extension
-    path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
-    path_centerline, file_centerline, ext_centerline = sct.extract_fname(fname_centerline)
+    path_anat, file_anat, ext_anat = extract_fname(fname_anat)
+    path_centerline, file_centerline, ext_centerline = extract_fname(fname_centerline)
 
-    path_tmp = sct.tmp_create(basename="smooth_spinalcord", verbose=verbose)
+    path_tmp = tmp_create(basename="smooth_spinalcord")
 
     # Copying input data to tmp folder
-    sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    sct.copy(fname_anat, os.path.join(path_tmp, "anat" + ext_anat))
-    sct.copy(fname_centerline, os.path.join(path_tmp, "centerline" + ext_centerline))
+    printv('\nCopying input data to tmp folder and convert to nii...', verbose)
+    copy(fname_anat, os.path.join(path_tmp, "anat" + ext_anat))
+    copy(fname_centerline, os.path.join(path_tmp, "centerline" + ext_centerline))
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -175,53 +174,53 @@ def main(args=None):
     convert('centerline' + ext_centerline, 'centerline.nii')
 
     # Change orientation of the input image into RPI
-    sct.printv('\nOrient input volume to RPI orientation...')
-    fname_anat_rpi = msct_image.Image("anat.nii") \
-     .change_orientation("RPI", generate_path=True) \
-     .save() \
-     .absolutepath
+    printv('\nOrient input volume to RPI orientation...')
+    fname_anat_rpi = Image("anat.nii") \
+        .change_orientation("RPI", generate_path=True) \
+        .save() \
+        .absolutepath
 
     # Change orientation of the input image into RPI
-    sct.printv('\nOrient centerline to RPI orientation...')
-    fname_centerline_rpi = msct_image.Image("centerline.nii") \
-     .change_orientation("RPI", generate_path=True) \
-     .save() \
-     .absolutepath
+    printv('\nOrient centerline to RPI orientation...')
+    fname_centerline_rpi = Image("centerline.nii") \
+        .change_orientation("RPI", generate_path=True) \
+        .save() \
+        .absolutepath
 
     # Straighten the spinal cord
     # straighten segmentation
-    sct.printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
-    cache_sig = sct.cache_signature(input_files=[fname_anat_rpi, fname_centerline_rpi],
-                                    input_params={"x": "spline"})
+    printv('\nStraighten the spinal cord using centerline/segmentation...', verbose)
+    cache_sig = cache_signature(input_files=[fname_anat_rpi, fname_centerline_rpi],
+                                input_params={"x": "spline"})
     cachefile = os.path.join(curdir, "straightening.cache")
-    if sct.cache_valid(cachefile, cache_sig) and os.path.isfile(os.path.join(curdir, 'warp_curve2straight.nii.gz')) and os.path.isfile(os.path.join(curdir, 'warp_straight2curve.nii.gz')) and os.path.isfile(os.path.join(curdir, 'straight_ref.nii.gz')):
+    if cache_valid(cachefile, cache_sig) and os.path.isfile(os.path.join(curdir, 'warp_curve2straight.nii.gz')) and os.path.isfile(os.path.join(curdir, 'warp_straight2curve.nii.gz')) and os.path.isfile(os.path.join(curdir, 'straight_ref.nii.gz')):
         # if they exist, copy them into current folder
-        sct.printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
-        sct.copy(os.path.join(curdir, 'warp_curve2straight.nii.gz'), 'warp_curve2straight.nii.gz')
-        sct.copy(os.path.join(curdir, 'warp_straight2curve.nii.gz'), 'warp_straight2curve.nii.gz')
-        sct.copy(os.path.join(curdir, 'straight_ref.nii.gz'), 'straight_ref.nii.gz')
+        printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
+        copy(os.path.join(curdir, 'warp_curve2straight.nii.gz'), 'warp_curve2straight.nii.gz')
+        copy(os.path.join(curdir, 'warp_straight2curve.nii.gz'), 'warp_straight2curve.nii.gz')
+        copy(os.path.join(curdir, 'straight_ref.nii.gz'), 'straight_ref.nii.gz')
         # apply straightening
         run_proc(['sct_apply_transfo', '-i', fname_anat_rpi, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
     else:
-        run_proc(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting='+param.algo_fitting], verbose)
-        sct.cache_save(cachefile, cache_sig)
+        run_proc(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting=' + param.algo_fitting], verbose)
+        cache_save(cachefile, cache_sig)
         # move warping fields locally (to use caching next time)
-        sct.copy('warp_curve2straight.nii.gz', os.path.join(curdir, 'warp_curve2straight.nii.gz'))
-        sct.copy('warp_straight2curve.nii.gz', os.path.join(curdir, 'warp_straight2curve.nii.gz'))
+        copy('warp_curve2straight.nii.gz', os.path.join(curdir, 'warp_curve2straight.nii.gz'))
+        copy('warp_straight2curve.nii.gz', os.path.join(curdir, 'warp_straight2curve.nii.gz'))
 
     # Smooth the straightened image along z
-    sct.printv('\nSmooth the straightened image...')
+    printv('\nSmooth the straightened image...')
     sigma_smooth = ",".join([str(i) for i in sigma])
     sct_maths.main(args=['-i', 'anat_rpi_straight.nii',
                          '-smooth', sigma_smooth,
                          '-o', 'anat_rpi_straight_smooth.nii',
                          '-v', '0'])
     # Apply the reversed warping field to get back the curved spinal cord
-    sct.printv('\nApply the reversed warping field to get back the curved spinal cord...')
+    printv('\nApply the reversed warping field to get back the curved spinal cord...')
     run_proc(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)
 
     # replace zeroed voxels by original image (issue #937)
-    sct.printv('\nReplace zeroed voxels by original image...', verbose)
+    printv('\nReplace zeroed voxels by original image...', verbose)
     nii_smooth = Image('anat_rpi_straight_smooth_curved.nii')
     data_smooth = nii_smooth.data
     data_input = Image('anat.nii').data
@@ -234,20 +233,20 @@ def main(args=None):
     os.chdir(curdir)
 
     # Generate output file
-    sct.printv('\nGenerate output file...')
-    sct.generate_output_file(os.path.join(path_tmp, "anat_rpi_straight_smooth_curved_nonzero.nii"),
-                             file_anat + '_smooth' + ext_anat)
+    printv('\nGenerate output file...')
+    generate_output_file(os.path.join(path_tmp, "anat_rpi_straight_smooth_curved_nonzero.nii"),
+                         file_anat + '_smooth' + ext_anat)
 
     # Remove temporary files
     if remove_temp_files == 1:
-        sct.printv('\nRemove temporary files...')
-        sct.rmtree(path_tmp)
+        printv('\nRemove temporary files...')
+        rmtree(path_tmp)
 
     # Display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's\n')
+    printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's\n')
 
-    sct.display_viewer_syntax([file_anat, file_anat + '_smooth'], verbose=verbose)
+    display_viewer_syntax([file_anat, file_anat + '_smooth'], verbose=verbose)
 
 
 # START PROGRAM

@@ -2,14 +2,12 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.math
 
-
-from __future__ import absolute_import
 import os
-import numpy as np
 import datetime
 
+import numpy as np
+
 import spinalcordtoolbox as sct
-import spinalcordtoolbox.math
 from spinalcordtoolbox.testing.create_test_data import dummy_blob
 
 
@@ -23,7 +21,7 @@ def test_dilate():
     # Create dummy image with single pixel in the middle
     im = dummy_blob(size_arr=(9, 9, 9), coordvox=(4, 4, 4))
     if DUMP_IMAGES:
-        im.save('tmp_dummy_im_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
+        im.save('tmp_dummy_im_' + datetime.now().strftime("%Y%m%d%H%M%S%f") + '.nii.gz')
 
     # cube (only asserting along one dimension for convenience)
     data_dil = sct.math.dilate(im.data, size=1, shape='cube')

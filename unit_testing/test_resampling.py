@@ -4,7 +4,7 @@
 
 # TODO: add test for 2d image
 
-from __future__ import absolute_import
+
 
 import sys, os
 import pytest

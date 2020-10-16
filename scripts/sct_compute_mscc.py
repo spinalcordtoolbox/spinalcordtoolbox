@@ -10,15 +10,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import, division
-
 import sys
 import os
 import argparse
 
-import sct_utils as sct
-
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
 
 
 # PARSER
@@ -42,21 +38,21 @@ def get_parser():
         required=True,
         help='Anteroposterior cord distance (in mm) at the level of maximum injury. Example: 6.85',
         metavar=Metavar.float,
-        )
+    )
     mandatoryArguments.add_argument(
         '-da',
         type=float,
         required=True,
         help='Anteroposterior cord distance (in mm) at the nearest normal level above the level of injury.',
         metavar=Metavar.float,
-        )
+    )
     mandatoryArguments.add_argument(
         '-db',
         type=float,
         required=True,
         help='Anteroposterior cord distance (in mm) at the nearest normal level below the level of injury.',
         metavar=Metavar.float,
-        )
+    )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -88,7 +84,7 @@ def main():
     MSCC = mscc(di, da, db)
 
     # Display results
-    sct.printv('\nMSCC = ' + str(MSCC) + '\n', verbose, 'info')
+    printv('\nMSCC = ' + str(MSCC) + '\n', verbose, 'info')
 
 
 # START PROGRAM

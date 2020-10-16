@@ -11,16 +11,13 @@ ivadomed package.
 # TODO: Fetch default value (and display) depending on the model that is used.
 # TODO: accommodate multiclass segmentation
 
-
-from __future__ import absolute_import
-
 import argparse
 import os
 import sys
 
 import spinalcordtoolbox.deepseg as deepseg
-from spinalcordtoolbox.utils import SmartFormatter, Metavar, init_sct
-from sct_utils import printv, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SmartFormatter, Metavar, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv
 
 
 def get_parser():
@@ -156,10 +153,10 @@ def main():
         # Check if this is an official model
         if name_model in list(deepseg.models.MODELS.keys()):
             # If it is, check if it is installed
-            path_model = spinalcordtoolbox.deepseg.models.folder(name_model)
-            if not spinalcordtoolbox.deepseg.models.is_valid(path_model):
+            path_model = deepseg.models.folder(name_model)
+            if not deepseg.models.is_valid(path_model):
                 printv("Model {} is not installed. Installing it now...".format(name_model))
-                spinalcordtoolbox.deepseg.models.install_model(name_model)
+                deepseg.models.install_model(name_model)
         # If it is not, check if this is a path to a valid model
         else:
             path_model = os.path.abspath(name_model)

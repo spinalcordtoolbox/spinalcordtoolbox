@@ -13,22 +13,25 @@
 
 # TODO: remove temp files in case rescaled is not "1"
 
-from __future__ import division, absolute_import
-
-import os, sys
+import os
+import sys
 import argparse
+import logging
+
 import numpy as np
 from scipy import ndimage as ndi
 
-import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
-import sct_image
-import sct_utils as sct
-# TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, run_proc
+from spinalcordtoolbox.image import Image, add_suffix, zeros_like
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, mv, copy
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
 
+import sct_image
+from sct_convert import convert
+
+logger = logging.getLogger(__name__)
 
 def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_output='', threshold_distance=5.0,
                                    remove_temp_files=1, verbose=0):
@@ -44,10 +47,9 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 
     Returns: None
     """
-    sct.printv('\nCheck consistency of segmentation...', verbose)
+    printv('\nCheck consistency of segmentation...', verbose)
     # creating a temporary folder in which all temporary files will be placed and deleted afterwards
-    path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
-    from sct_convert import convert
+    path_tmp = tmp_create(basename="propseg")
     convert(fname_segmentation, os.path.join(path_tmp, "tmp.segmentation.nii.gz"), verbose=0)
     convert(fname_centerline, os.path.join(path_tmp, "tmp.centerline.nii.gz"), verbose=0)
     fname_seg_absolute = os.path.abspath(fname_segmentation)
@@ -68,7 +70,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_centerline = Image('tmp.centerline_RPI.nii.gz')
 
     # Get size of data
-    sct.printv('\nGet data dimensions...', verbose)
+    printv('\nGet data dimensions...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
 
     # extraction of centerline provided by isct_propseg and computation of center of mass for each slice
@@ -141,8 +143,8 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 
     # remove temporary files
     if remove_temp_files:
-        # sct.printv("\nRemove temporary files...", verbose)
-        sct.rmtree(path_tmp)
+        # printv("\nRemove temporary files...", verbose)
+        rmtree(path_tmp)
 
 
 def get_parser():
@@ -407,11 +409,10 @@ def func_rescale_header(fname_data, rescale_factor, verbose=0):
     header_rescaled.set_qform(qform)
     # the data are the same-- only the header changes
     img_rescaled = nib.nifti1.Nifti1Image(img.get_data(), None, header=header_rescaled)
-    path_tmp = sct.tmp_create(basename="propseg", verbose=verbose)
-    fname_data_rescaled = os.path.join(path_tmp, os.path.basename(sct.add_suffix(fname_data, "_rescaled")))
+    path_tmp = tmp_create(basename="propseg")
+    fname_data_rescaled = os.path.join(path_tmp, os.path.basename(add_suffix(fname_data, "_rescaled")))
     nib.save(img_rescaled, fname_data_rescaled)
     return fname_data_rescaled
-
 
 
 def propseg(img_input, options_dict):
@@ -483,7 +484,7 @@ def propseg(img_input, options_dict):
     if arguments.init is not None:
         init_option = float(arguments.init)
         if init_option < 0:
-            sct.printv('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'", 1, 'error')
+            printv('Command-line usage error: ' + str(init_option) + " is not a valid value for '-init'", 1, 'error')
             sys.exit(1)
     if arguments.init_centerline is not None:
         if str(arguments.init_centerline) == "viewer":
@@ -540,10 +541,10 @@ def propseg(img_input, options_dict):
     image_input_rpi = image_input.copy().change_orientation('RPI')
     nx, ny, nz, nt, px, py, pz, pt = image_input_rpi.dim
     if nt > 1:
-        sct.printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
+        printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
 
-    path_data, file_data, ext_data = sct.extract_fname(fname_data)
-    path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
+    path_data, file_data, ext_data = extract_fname(fname_data)
+    path_tmp = tmp_create(basename="label_vertebrae")
 
     # rescale header (see issue #1406)
     if rescale_header is not 1:
@@ -571,13 +572,13 @@ def propseg(img_input, options_dict):
             params.starting_slice = 'top'
         im_data = Image(fname_data_propseg)
 
-        im_mask_viewer = msct_image.zeros_like(im_data)
-        # im_mask_viewer.absolutepath = sct.add_suffix(fname_data_propseg, '_labels_viewer')
+        im_mask_viewer = zeros_like(im_data)
+        # im_mask_viewer.absolutepath = add_suffix(fname_data_propseg, '_labels_viewer')
         controller = launch_centerline_dialog(im_data, im_mask_viewer, params)
-        fname_labels_viewer = sct.add_suffix(fname_data_propseg, '_labels_viewer')
+        fname_labels_viewer = add_suffix(fname_data_propseg, '_labels_viewer')
 
         if not controller.saved:
-            sct.printv('The viewer has been closed before entering all manual points. Please try again.', 1, 'error')
+            printv('The viewer has been closed before entering all manual points. Please try again.', 1, 'error')
             sys.exit(1)
         # save labels
         controller.as_niftii(fname_labels_viewer)
@@ -608,24 +609,24 @@ def propseg(img_input, options_dict):
 
     # check status is not 0
     if not status == 0:
-        sct.printv('Automatic cord detection failed. Please initialize using -init-centerline or -init-mask (see help)',
+        printv('Automatic cord detection failed. Please initialize using -init-centerline or -init-mask (see help)',
                    1, 'error')
         sys.exit(1)
 
     # build output filename
-    fname_seg = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data, "_seg")))
-    fname_centerline = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data, "_centerline")))
+    fname_seg = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_seg")))
+    fname_centerline = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_centerline")))
     # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
     if rescale_header is not 1:
-        sct.mv(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_seg")),
-                  fname_seg)
-        sct.mv(os.path.join(folder_output, sct.add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
-                  fname_centerline)
+        mv(os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_seg")),
+               fname_seg)
+        mv(os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
+               fname_centerline)
         # if user was used, copy the labelled points to the output folder (they will then be scaled back)
         if use_viewer:
-            fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(sct.add_suffix(fname_data,
-                                                                                                  "_labels_viewer")))
-            sct.copy(fname_labels_viewer, fname_labels_viewer_new)
+            fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(add_suffix(fname_data,
+                                                                                              "_labels_viewer")))
+            copy(fname_labels_viewer, fname_labels_viewer_new)
             # update variable (used later)
             fname_labels_viewer = fname_labels_viewer_new
 
@@ -635,7 +636,7 @@ def propseg(img_input, options_dict):
                                        remove_temp_files=remove_temp_files, verbose=verbose)
 
     # copy header from input to segmentation to make sure qform is the same
-    sct.printv("Copy header input --> output(s) to make sure qform is the same.", verbose)
+    printv("Copy header input --> output(s) to make sure qform is the same.", verbose)
     list_fname = [fname_seg, fname_centerline]
     if use_viewer:
         list_fname.append(fname_labels_viewer)
@@ -658,7 +659,7 @@ def main(arguments):
     if path_qc is not None:
         generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=arguments, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_propseg')
-    sct.display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'])
+    display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'])
 
 
 if __name__ == "__main__":

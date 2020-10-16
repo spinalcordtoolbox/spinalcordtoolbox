@@ -3,7 +3,7 @@
 # pytest unit tests for spinalcordtoolbox.aggregate_slicewise
 
 
-from __future__ import absolute_import
+
 
 import sys
 import os
@@ -13,7 +13,7 @@ import csv
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils import __sct_dir__, __version__
+from spinalcordtoolbox import __sct_dir__, __version__
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
 from spinalcordtoolbox import aggregate_slicewise

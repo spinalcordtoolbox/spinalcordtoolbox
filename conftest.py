@@ -13,14 +13,15 @@
 import sys
 import os
 import logging
-
-import pytest
 from typing import Mapping
 from hashlib import md5
 
-from spinalcordtoolbox.utils import sct_dir_local_path, sct_test_path
-sys.path.append(sct_dir_local_path('scripts'))
+import pytest
 
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, sct_test_path
+
+# FIXME: APIFY
+sys.path.append(sct_dir_local_path('scripts'))
 import sct_download_data as downloader
 
 

@@ -5,7 +5,7 @@
 # TODO: add test with known angle (i.e. not found with fitting)
 # TODO: test empty slices and slices with two objects
 
-from __future__ import absolute_import
+
 import sys
 import os
 import pytest

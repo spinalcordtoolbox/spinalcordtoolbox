@@ -10,16 +10,16 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import, division
-
-import sys, io, os, time, shutil, argparse
+import sys
+import os
+import argparse
 
 import numpy as np
 
-import sct_utils as sct
-import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
+from spinalcordtoolbox.image import Image, add_suffix, empty_like, change_orientation
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
@@ -39,26 +39,26 @@ class Param:
 # THINNING -------------------------------------------------------------------------------------------------------------
 class Thinning:
     def __init__(self, im, v=1):
-        sct.printv('Thinning ... ', v, 'normal')
+        printv('Thinning ... ', v, 'normal')
         self.image = im
         self.image.data = bin_data(self.image.data)
         self.dim_im = len(self.image.data.shape)
 
         if self.dim_im == 2:
-            self.thinned_image = msct_image.empty_like(self.image)
+            self.thinned_image = empty_like(self.image)
             self.thinned_image.data = self.zhang_suen(self.image.data)
-            self.thinned_image.absolutepath = sct.add_suffix(self.image.absolutepath, "_thinned")
+            self.thinned_image.absolutepath = add_suffix(self.image.absolutepath, "_thinned")
 
         elif self.dim_im == 3:
             if not self.image.orientation == 'IRP':
-                sct.printv('-- changing orientation ...')
+                printv('-- changing orientation ...')
                 self.image.change_orientation('IRP')
 
             thinned_data = np.asarray([self.zhang_suen(im_slice) for im_slice in self.image.data])
 
-            self.thinned_image = msct_image.empty_like(self.image)
+            self.thinned_image = empty_like(self.image)
             self.thinned_image.data = thinned_data
-            self.thinned_image.absolutepath = sct.add_suffix(self.image.absolutepath, "_thinned")
+            self.thinned_image.absolutepath = add_suffix(self.image.absolutepath, "_thinned")
 
     # ------------------------------------------------------------------------------------------------------------------
     def get_neighbours(self, x, y, image):
@@ -75,7 +75,7 @@ class Thinning:
         neighbours = [image[x_1][y], image[x_1][y1], image[x][y1], image[x1][y1],     # P2,P3,P4,P5
                       image[x1][y], image[x1][y_1], image[x][y_1], image[x_1][y_1]]    # P6,P7,P8,P9
         # t = time.time() - now
-        # sct.printv('t neighbours: ', t)
+        # printv('t neighbours: ', t)
         return neighbours
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -90,7 +90,7 @@ class Thinning:
         n = neighbours + neighbours[0:1]      # P2, P3, ... , P8, P9, P2
         s = np.sum((n1, n2) == (0, 1) for n1, n2 in zip(n, n[1:]))  # (P2,P3), (P3,P4), ... , (P8,P9), (P9,P2)
         # t = time.time() - now
-        # sct.printv('t transitions sum: ', t)
+        # printv('t transitions sum: ', t)
         return s
 
     # ------------------------------------------------------------------------------------------------------------------
@@ -120,7 +120,7 @@ class Thinning:
                     if (2 <= sum(n) <= 6 and    # Condition 1: 2<= N(P1) <= 6
                         P2 * P4 * P6 == 0 and    # Condition 3
                         P4 * P6 * P8 == 0 and   # Condition 4
-                        self.transitions(n) == 1):    # Condition 2: S(P1)=1
+                            self.transitions(n) == 1):    # Condition 2: S(P1)=1
                         changing1.append((x, y))
             for x, y in changing1:
                 image_thinned[x][y] = 0
@@ -136,12 +136,12 @@ class Thinning:
                     if (2 <= sum(n) <= 6 and       # Condition 1
                         P2 * P4 * P8 == 0 and       # Condition 3
                         P2 * P6 * P8 == 0 and  # Condition 4
-                        self.transitions(n) == 1):    # Condition 2
+                            self.transitions(n) == 1):    # Condition 2
                         changing2.append((x, y))
             for x, y in changing2:
                 image_thinned[x][y] = 0
         # t = time.time() - now
-        # sct.printv('t thinning: ', t)
+        # printv('t thinning: ', t)
         return image_thinned
 
 
@@ -154,7 +154,7 @@ class HausdorffDistance:
         :return:
         """
         # now = time.time()
-        sct.printv('Computing 2D Hausdorff\'s distance ... ', v, 'normal')
+        printv('Computing 2D Hausdorff\'s distance ... ', v, 'normal')
         self.data1 = bin_data(data1)
         self.data2 = bin_data(data2)
 
@@ -168,14 +168,14 @@ class HausdorffDistance:
         # Hausdorff's distance in pixel
         self.H = max(self.h1, self.h2)
         # t = time.time() - now
-        # sct.printv('Hausdorff dist time :', t)
+        # printv('Hausdorff dist time :', t)
 
     # ------------------------------------------------------------------------------------------------------------------
     def relative_hausdorff_dist(self, dat1, dat2, v=1):
         h = np.zeros(dat1.shape)
         nz_coord_1 = non_zero_coord(dat1)
         nz_coord_2 = non_zero_coord(dat2)
-        if len(nz_coord_1) != 0 and len(nz_coord_2) != 0 :
+        if len(nz_coord_1) != 0 and len(nz_coord_2) != 0:
             for x1, y1 in nz_coord_1:
                 # for x1 in range(dat1.shape[0]):
                 # for y1 in range(dat1.shape[1]):
@@ -190,7 +190,7 @@ class HausdorffDistance:
                     d_p1_dat2.append(np.linalg.norm(p1 - p2))  # Euclidean distance between p1 and p2
                 h[x1, y1] = min(d_p1_dat2)
         else:
-            sct.printv('Warning: an image is empty', v, 'warning')
+            printv('Warning: an image is empty', v, 'warning')
         return h
 
 
@@ -261,7 +261,7 @@ class ComputeDistances:
                 else:
                     self.res += 'Slice ' + str(i) + ': ' + str(d.H * self.dim_pix) + '  -  ' + str(med1 * self.dim_pix) + '  -  ' + str(med2 * self.dim_pix) + ' \n'
 
-        sct.printv('-----------------------------------------------------------------------------\n' +
+        printv('-----------------------------------------------------------------------------\n' +
                    self.res, self.param.verbose, 'normal')
 
         if self.param.verbose == 2:
@@ -384,7 +384,7 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     nx, ny, nz, nt, px, py, pz, pt = im_in.dim
 
     if np.round(px, 2) != np.round(npx, 2) or np.round(py, 2) != np.round(npy, 2):
-        name_resample = sct.extract_fname(fname)[1] + suffix
+        name_resample = extract_fname(fname)[1] + suffix
         if binary:
             interpolation = 'nn'
 
@@ -405,17 +405,17 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
 
         if orientation != 'RPI':
             name_resample = Image(name_resample) \
-             .change_orientation(orientation, generate_path=True) \
-             .save() \
-             .absolutepath
+                .change_orientation(orientation, generate_path=True) \
+                .save() \
+                .absolutepath
 
         return name_resample
     else:
         if orientation != 'RPI':
-            fname = sct.add_suffix(fname, "_RPI")
-            im_in = msct_image.change_orientation(im_in, orientation).save(fname)
+            fname = add_suffix(fname, "_RPI")
+            im_in = change_orientation(im_in, orientation).save(fname)
 
-        sct.printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
+        printv('Image resolution already ' + str(npx) + 'x' + str(npy) + 'xpz')
         return fname
 
 
@@ -448,7 +448,7 @@ def get_parser():
         required=True,
         help='First Image on which you want to find the skeleton Example: t2star_manual_gmseg.nii.gz',
         metavar=Metavar.file,
-        )
+    )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -489,7 +489,7 @@ def get_parser():
         help="Verbose. 0: nothing, 1: basic, 2: extended.",
         required=False,
         choices=(0, 1, 2),
-        default = 1)
+        default=1)
 
     return parser
 
@@ -503,7 +503,7 @@ if __name__ == "__main__":
     param = Param()
     input_fname = None
     if param.debug:
-        sct.printv('\n*** WARNING: DEBUG MODE ON ***\n')
+        printv('\n*** WARNING: DEBUG MODE ON ***\n')
     else:
         param_default = Param()
         parser = get_parser()
@@ -524,12 +524,12 @@ if __name__ == "__main__":
         param.verbose = arguments.v
         init_sct(log_level=param.verbose, update=True)  # Update log level
 
-        tmp_dir = sct.tmp_create()
+        tmp_dir = tmp_create()
         im1_name = "im1.nii.gz"
-        sct.copy(input_fname, os.path.join(tmp_dir, im1_name))
+        copy(input_fname, os.path.join(tmp_dir, im1_name))
         if input_second_fname != '':
             im2_name = 'im2.nii.gz'
-            sct.copy(input_second_fname, os.path.join(tmp_dir, im2_name))
+            copy(input_second_fname, os.path.join(tmp_dir, im2_name))
         else:
             im2_name = None
 
@@ -550,10 +550,10 @@ if __name__ == "__main__":
         # TODO change back the orientatin of the thinned image
         if param.thinning:
             computation.thinning1.thinned_image.save(
-                os.path.join(curdir, sct.add_suffix(os.path.basename(input_fname), '_thinned')))
+                os.path.join(curdir, add_suffix(os.path.basename(input_fname), '_thinned')))
             if im2_name is not None:
                 computation.thinning2.thinned_image.save(
-                    os.path.join(curdir, sct.add_suffix(os.path.basename(input_second_fname), '_thinned')))
+                    os.path.join(curdir, add_suffix(os.path.basename(input_second_fname), '_thinned')))
 
         os.chdir(curdir)
 
@@ -563,4 +563,4 @@ if __name__ == "__main__":
         res_fic.write('\nInput 2: ' + input_second_fname)
         res_fic.close()
 
-        # sct.printv('Total time: ', time.time() - now)
+        # printv('Total time: ', time.time() - now)

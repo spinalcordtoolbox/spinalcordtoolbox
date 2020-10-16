@@ -7,8 +7,6 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
-from __future__ import absolute_import, division
-
 import keras.backend as K
 from keras.models import Model
 from keras.layers import Input

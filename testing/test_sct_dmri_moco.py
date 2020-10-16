@@ -14,7 +14,6 @@ from pandas import read_csv
 from numpy import allclose
 
 from spinalcordtoolbox.utils import run_proc
-import sct_utils as sct
 
 
 def init(param_test):
@@ -32,23 +31,23 @@ def init(param_test):
         '-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -x nn -ofolder dmri_test1 -r 0',
         '-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -m dmri/mask.nii -ofolder dmri_test2 -r 0',
         '-i dmri/dmri_AIL_crop.nii -bvec dmri/bvecs.txt -x nn -ofolder dmri_test3 -r 0',
-        ]
+    ]
 
     # Output moco param files
     param_test.file_mocoparam = [
         'dmri_test1/moco_params.tsv',
         'dmri_test2/moco_params.tsv',
         None,
-        ]
+    ]
 
     # Ground truth value for integrity testing (corresponds to X motion parameters column)
     param_test.groundtruth = [
         [0.00047529041677414337, -1.1970542445283172e-05, -1.1970542445283172e-05, -1.1970542445283172e-05, -0.1296642741802682,
-        -0.1296642741802682, -0.1296642741802682],
+         -0.1296642741802682, -0.1296642741802682],
         [0.008491259664160821, 0.0029020670607778237, 0.0029020670607778237, 0.0029020670607778237, -0.014405996135095476,
-        -0.014405996135095476, -0.014405996135095476],
+         -0.014405996135095476, -0.014405996135095476],
         None,
-        ]
+    ]
 
     # assign default params
     if not param_test.args:

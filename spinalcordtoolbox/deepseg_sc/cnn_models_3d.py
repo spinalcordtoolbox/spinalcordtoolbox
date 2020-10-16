@@ -5,8 +5,6 @@ Last changes: 2018-05-23
 Contributors: charley
 """
 
-from __future__ import absolute_import, division
-
 import numpy as np
 import tensorflow as tf
 

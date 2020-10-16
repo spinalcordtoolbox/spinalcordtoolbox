@@ -5,8 +5,6 @@
 
 """ Qt dialog for manual labeling of an image """
 
-from __future__ import absolute_import, division, print_function
-
 import logging
 
 import numpy as np

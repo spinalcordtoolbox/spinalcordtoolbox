@@ -10,23 +10,21 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import division, absolute_import
-
 import os
 import sys
-
-import numpy as np
 import argparse
 import pickle
 import gzip
+
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type, init_sct
 import spinalcordtoolbox.math as sct_math
-
-from sct_utils import printv, extract_fname, display_viewer_syntax
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.fs import extract_fname
 
 
 def get_parser():
@@ -493,7 +491,6 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
         matplotlib.use('Agg')
         plt.plot(data1_1d, 'b')
         plt.plot(data2_1d, 'r')
-        plt.grid
         plt.title('Similarity: ' + metric_full + ' = ' + str(res))
         plt.savefig('fig_similarity.png')
 

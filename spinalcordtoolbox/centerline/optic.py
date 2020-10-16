@@ -2,15 +2,15 @@
 # -*- coding: utf-8
 # Functions dealing with centerline detection and manipulation
 
-from __future__ import absolute_import, division
-
-import os, datetime, logging
+import os
+import datetime
+import logging
 
 import numpy as np
 
-import sct_utils as sct
-from ..image import Image
-from spinalcordtoolbox.utils import sct_dir_local_path, run_proc
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, run_proc, printv
+from spinalcordtoolbox.utils.fs import extract_fname, copy, TempFolder
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     :returns: filename of the .roi centerline that has been created
     """
     # TODO: change folder_output to fname_out
-    path_data, file_data, ext_data = sct.extract_fname(fname_image)
+    path_data, file_data, ext_data = extract_fname(fname_image)
     fname_output = file_data + '.roi'
 
     date_now = datetime.datetime.now()
@@ -46,7 +46,7 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     coordinates_centerline = im.getNonZeroCoordinates(sorting='z')
 
     f = open(fname_output, "w")
-    sct.printv('\nWriting ROI file...', verbose)
+    printv('\nWriting ROI file...', verbose)
 
     for coord in coordinates_centerline:
         coord_phys_center = im.transfo_pix2phys([[(nx - 1) / 2.0, (ny - 1) / 2.0, coord.z]])[0]
@@ -60,7 +60,7 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     f.close()
 
     if os.path.abspath(folder_output) != os.getcwd():
-        sct.copy(fname_output, folder_output)
+        copy(fname_output, folder_output)
 
     return fname_output
 
@@ -79,7 +79,7 @@ def detect_centerline(img, contrast, verbose=1):
     logger.debug('Detecting the spinal cord using OptiC')
     img_orientation = img.orientation
 
-    temp_folder = sct.TempFolder()
+    temp_folder = TempFolder()
     temp_folder.chdir()
 
     # convert image data type to int16, as required by opencv (backend in OptiC)
@@ -102,19 +102,19 @@ def detect_centerline(img, contrast, verbose=1):
     # reorient the input image to RPI + convert to .nii
     img_int16.change_orientation('RPI')
     file_img = 'img_rpi_uint16'
-    img_int16.save(file_img+'.nii')
+    img_int16.save(file_img + '.nii')
 
     # call the OptiC method to generate the spinal cord centerline
     optic_input = file_img
     optic_filename = file_img + '_optic'
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
     cmd_optic = [
-     'isct_spine_detect',
-     '-ctype=dpdt',
-     '-lambda=1',
-     optic_models_path,
-     optic_input,
-     optic_filename,
+        'isct_spine_detect',
+        '-ctype=dpdt',
+        '-lambda=1',
+        optic_models_path,
+        optic_input,
+        optic_filename,
     ]
     # TODO: output coordinates, for each slice, in continuous (not discrete) values.
 

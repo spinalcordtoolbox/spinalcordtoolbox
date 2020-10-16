@@ -5,8 +5,6 @@
 
 """ Qt dialog for manually segmenting a spinalcord image """
 
-from __future__ import absolute_import, division
-
 import logging
 
 import numpy as np
@@ -24,7 +22,7 @@ class SagittalController(base.BaseController):
         super(SagittalController, self).__init__(image, params, init_values)
 
         if previous_point is not None:
-            for i in range (len(previous_point)): 
+            for i in range (len(previous_point)):
                 self.points.append(previous_point[i])
 
     def select_point(self, x, y, z, label):
@@ -70,7 +68,7 @@ class SagittalDialog(base.BaseDialog):
             self._controller.select_point(x, y, z, label)
             self.labels.refresh()
             self.sagittal.refresh()
-            
+
             index = self.params.vertebraes.index(label)
             if index + 1 < len(self.params.vertebraes):
                 self.labels.label = self.params.vertebraes[index + 1]

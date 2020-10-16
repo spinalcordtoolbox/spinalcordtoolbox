@@ -10,15 +10,13 @@
 # About the license: see the file LICENSE.TXT
 ###############################################################################
 
-from __future__ import absolute_import
-
 import os
 import sys
 import argparse
 
 from spinalcordtoolbox.download import install_data
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, init_sct
-import sct_utils as sct
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils.sys import init_sct, printv
 
 
 def get_parser(dict_url):
@@ -163,7 +161,7 @@ def main(args=None):
     url = dict_url[data_name]
     install_data(url, dest_folder, keep=arguments.k)
 
-    sct.printv('Done!\n', verbose)
+    printv('Done!\n', verbose)
     return 0
 
 

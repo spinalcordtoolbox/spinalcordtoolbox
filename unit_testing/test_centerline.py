@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.centerline
-
-
-from __future__ import print_function, absolute_import
-
 import os
 import sys
 import pytest

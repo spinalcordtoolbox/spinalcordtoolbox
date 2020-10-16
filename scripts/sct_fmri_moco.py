@@ -16,8 +16,6 @@ import os
 import argparse
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
-
-import sct_utils as sct
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct
 
 
