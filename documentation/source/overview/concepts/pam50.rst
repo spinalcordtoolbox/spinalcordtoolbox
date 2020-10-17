@@ -3,17 +3,49 @@
 PAM50 Template
 **************
 
-.. warning:: TODO: Write a PAM50 template guide that is an analog to the older, outdated guide found here: https://sourceforge.net/p/spinalcordtoolbox/wiki/MNI-Poly-AMU/
+Introduction
+============
 
-Background information on templates:
+Template-based analysis of multi-parametric MRI data of the spinal cord sets
+the foundation for standardization and reproducibility. Particularly, it
+allows researchers to process their data with minimum bias, perform
+multi-center studies, with the goal of improving patient diagnosis and
+prognosis and helping the discovery of new biomarkers of spinal-related
+diseases.
 
-- `*A Brief History of Advanced Normalization Tools (ANTs)*
-  by Brian B. Avants (PENN) and Nicholas J. Tustison (UVA)
-  <https://stnava.github.io/ANTsTalk/#/>`_
+PAM50 is an MRI template of the full spinal cord and brainstem. It possesses
+the following features:
 
-Here is the relevant section of the SCT repository which generated this template:
-`PAM50 anatomical template <https://github.com/neuropoly/template>`_
+  * It is available for T1-, T2-and T2*-weighted MRI contrast.
+  * It is compatible with the ICBM152 brain template, allowing cerebrospinal studies.
+  * It includes atlases of white matter pathways and gray matter subregions.
 
+The PAM50 template is provided in the `data/PAM50` template. Included are the
+following files and directories:
+  * `PAM50/atlas`: Contains label images for the white matter atlas. These labels include WM and GM regions, a CSF contour label, and combined labels that group individual labels into categories (e.g. dorsal columns, funiculi, etc.).
+  * `PAM50/spinal_levels`: Contains 20 label images corresponding to different spinal cord levels, including both C1:C8 and T1:T12.
+  * `PAM50/template`: Contains image files representing different template diffusion weightings, binary/probablistic masks (for the spinal cord, WM/GM tracts, etc.), and point-wise labels for vertebral levels and intervertebral discs.
+  * `PAM50/CHANGES.md`: A changelog for the template, including changes made after publication.
+
+For further context, the PAM50 template is used extensively in Spinal Cord Toolbox scripts:
+
+  * `sct_register_to_template`: Registers an anatomical image to the spinal cord MRI template. PAM50 is the default template to register images to.
+  * `sct_analyze_legion`: Computes statistics on segmented lesions. PAM50 template is used to compute lesion volume across vertebral levels, GM, WM, within WM/GM tracts, etc.
+  * `sct_label_vertebrae`: Takes an anatomical image and its cord segmentation and outputs the cord segmentation labeled with vertebral levels. PAM50 vertebral levels are used to detect vertebral levels via template matching.
+  * `sct_process_segmentation`: Computes morphometric measures based on spinal cord segmentation. Vertebral levels from the PAM50 template are used by default when aggregating measures across vertebral levels.
+  * `sct_extract_metric`: Extracts metrics (e.g., DTI or MTR) within labels. The label file from the PAM50 white matter atlas is used by default.
+
+The PAM50 template was generated using a framework for creating unbiased MRI templates of the spinal cord. This framework can be found at the `neurpoly/template GitHub repository <https://github.com/neuropoly/template>`_
+
+
+References
+++++++++++
+
+`De Leener B, Fonov V, Collins DL, Callot V, Stikov N, Cohen-Adad J. PAM50:
+Multimodal template of the brainstem and spinal cord compatible with the
+ICBM152 space. Proceedings of the 25th Annual Meeting of ISMRM, Honolulu, USA.
+2017.
+<https://www.sciencedirect.com/science/article/abs/pii/S1053811917308686>`_
 
 
 White matter atlas
