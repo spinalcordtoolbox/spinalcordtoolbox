@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#=======================================================================================================================
+# =======================================================================================================================
 #
 # Transpose bvecs file (if necessary) to get nx3 structure
 #
@@ -22,19 +22,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import, division
-
 import os
 import sys
 import argparse
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
-from sct_utils import extract_fname, printv
-import sct_utils as sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, extract_fname, printv
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
     # Initialize the parser
     parser = argparse.ArgumentParser(
@@ -87,7 +81,7 @@ def main(args=None):
     fname_in = arguments.bvec
     fname_out = arguments.o
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # get bvecs in proper orientation
     from dipy.io import read_bvals_bvecs
@@ -112,8 +106,8 @@ def main(args=None):
 
 
 # Start program
-#=======================================================================================================================
+# =======================================================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

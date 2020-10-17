@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
-from __future__ import absolute_import, division
-
-import sys, io, os, argparse
+import sys
+import os
+import argparse
+from time import time
 
 import numpy as np
-from time import time
 import nibabel as nib
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, extract_fname
 
 
 # DEFAULT PARAMETERS
@@ -22,6 +21,7 @@ class Param:
         self.parameter = "Rician"
         self.file_to_denoise = ''
         self.output_file_name = ''
+
 
 def get_parser():
     # Initialize the parser
@@ -91,9 +91,9 @@ def get_parser():
     return parser
 
 
-def main(file_to_denoise, param, output_file_name) :
+def main(file_to_denoise, param, output_file_name):
 
-    path, file, ext = sct.extract_fname(file_to_denoise)
+    path, file, ext = extract_fname(file_to_denoise)
 
     img = nib.load(file_to_denoise)
     hdr_0 = img.get_header()
@@ -102,7 +102,7 @@ def main(file_to_denoise, param, output_file_name) :
     aff = img.get_affine()
 
     if min(data.shape) <= 5:
-        sct.printv('One of the image dimensions is <= 5 : reducing the size of the block radius.')
+        printv('One of the image dimensions is <= 5 : reducing the size of the block radius.')
         block_radius = min(data.shape) - 1
     else:
         block_radius = 5  # default value
@@ -116,25 +116,25 @@ def main(file_to_denoise, param, output_file_name) :
     if arguments.std is not None:
         sigma = std_noise
         # Application of NLM filter to the image
-        sct.printv('Applying Non-local mean filter...')
+        printv('Applying Non-local mean filter...')
         if param.parameter == 'Rician':
             den = nlmeans(data, sigma=sigma, mask=None, rician=True, block_radius=block_radius)
-        else :
+        else:
             den = nlmeans(data, sigma=sigma, mask=None, rician=False, block_radius=block_radius)
     else:
         # # Process for manual detecting of background
         mask = data > noise_threshold
         sigma = np.std(data[~mask])
         # Application of NLM filter to the image
-        sct.printv('Applying Non-local mean filter...')
+        printv('Applying Non-local mean filter...')
         if param.parameter == 'Rician':
             den = nlmeans(data, sigma=sigma, mask=mask, rician=True, block_radius=block_radius)
         else:
             den = nlmeans(data, sigma=sigma, mask=mask, rician=False, block_radius=block_radius)
 
     t = time()
-    sct.printv("total time: %s" % (time() - t))
-    sct.printv("vol size", den.shape)
+    printv("total time: %s" % (time() - t))
+    printv("vol size", den.shape)
 
     axial_middle = int(data.shape[2] / 2)
 
@@ -170,24 +170,24 @@ def main(file_to_denoise, param, output_file_name) :
     nib.save(img_denoise, output_file_name)
     nib.save(img_diff, file + '_difference' + ext)
 
-    sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fsleyes ' + file_to_denoise + ' ' + output_file_name + ' & \n', param.verbose, 'info')
+    printv('\nDone! To view results, type:', param.verbose)
+    printv('fsleyes ' + file_to_denoise + ' ' + output_file_name + ' & \n', param.verbose, 'info')
 
 
 # =======================================================================================================================
 # Start program
 # =======================================================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     parser = get_parser()
     # initialize parameters
-    arguments = parser.parse_args(args = None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     parameter = arguments.p
     remove_temp_files = arguments.r
     noise_threshold = arguments.d
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     file_to_denoise = arguments.i
     output_file_name = arguments.o

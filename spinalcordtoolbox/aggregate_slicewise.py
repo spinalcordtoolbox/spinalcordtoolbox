@@ -4,8 +4,6 @@
 
 # TODO: when mask is empty, raise specific message instead of throwing "Weight sum to zero..."
 
-from __future__ import absolute_import
-
 import os
 import numpy as np
 import math
@@ -441,7 +439,7 @@ def make_a_string(item):
         return item
 
 
-def _merge_dict(dict_in):
+def merge_dict(dict_in):
     """
     Merge n dictionaries that are contained at the root key
     Example:

@@ -11,14 +11,12 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
 import os
 
 import numpy as np
 
-import sct_utils as sct
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import extract_fname
 
 
 def init(param_test):
@@ -33,7 +31,7 @@ def init(param_test):
     param_test.pad = 2
 
     # test concatenation of data
-    path_fname, file_fname, ext_fname = sct.extract_fname(param_test.file_data[2])
+    path_fname, file_fname, ext_fname = extract_fname(param_test.file_data[2])
     param_test.dmri_t_slices = [os.path.join(param_test.folder_data[2], file_fname + '_T' + str(i).zfill(4) + ext_fname) for i in range(7)]
     input_concat = ' '.join(param_test.dmri_t_slices)
 
@@ -71,7 +69,7 @@ def test_integrity(param_test):
     elif index_args == 3:
         threshold = 1e-3
         try:
-            path_fname, file_fname, ext_fname = sct.extract_fname(os.path.join(param_test.folder_data[2], param_test.file_data[2]))
+            path_fname, file_fname, ext_fname = extract_fname(os.path.join(param_test.folder_data[2], param_test.file_data[2]))
             ref = Image(param_test.dmri_t_slices[0])
             new = Image(file_fname + '_T0000' + ext_fname)
             diff = ref.data - new.data

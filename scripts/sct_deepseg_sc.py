@@ -11,14 +11,17 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import division, absolute_import
-
 import os
 import sys
 import argparse
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.fs import extract_fname
+from spinalcordtoolbox.image import Image, check_dim
+from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
+from spinalcordtoolbox.reports.qc import generate_qc
+
 
 
 def get_parser():
@@ -143,17 +146,17 @@ def main():
         brain_bool = bool(args.brain)
 
     if bool(args.brain) and ctr_algo == 'svm':
-        sct.printv('Please only use the flag "-brain 1" with "-centerline cnn".', 1, 'warning')
+        printv('Please only use the flag "-brain 1" with "-centerline cnn".', 1, 'warning')
         sys.exit(1)
 
     kernel_size = args.kernel
     if kernel_size == '3d' and contrast_type == 'dwi':
         kernel_size = '2d'
-        sct.printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.',
+        printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.',
                    type="warning")
 
     if ctr_algo == 'file' and args.file_centerline is None:
-        sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')
+        printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')
         sys.exit(1)
 
     if args.file_centerline is not None:
@@ -169,7 +172,7 @@ def main():
 
     remove_temp_files = args.r
     verbose = args.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     path_qc = args.qc
     qc_dataset = args.qc_dataset
@@ -177,12 +180,9 @@ def main():
     output_folder = args.ofolder
 
     # check if input image is 2D or 3D
-    sct.check_dim(fname_image, dim_lst=[2, 3])
+    check_dim(fname_image, dim_lst=[2, 3])
 
     # Segment image
-    from spinalcordtoolbox.image import Image
-    from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
-    from spinalcordtoolbox.reports.qc import generate_qc
 
     im_image = Image(fname_image)
     # note: below we pass im_image.copy() otherwise the field absolutepath becomes None after execution of this function
@@ -192,17 +192,17 @@ def main():
                                      threshold_seg=threshold, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # Save segmentation
-    fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_seg' +
-                                             sct.extract_fname(fname_image)[2]))
+    fname_seg = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_seg' +
+                                             extract_fname(fname_image)[2]))
     im_seg.save(fname_seg)
 
     # Generate QC report
     if path_qc is not None:
         generate_qc(fname_image, fname_seg=fname_seg, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
-    sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

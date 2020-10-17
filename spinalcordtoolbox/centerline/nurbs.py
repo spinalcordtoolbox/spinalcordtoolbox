@@ -36,9 +36,6 @@
 # Copyright (c) 2014 NeuroPoly, Polytechnique Montreal <www.neuropoly.info>
 # Authors: Benjamin De Leener, Julien Touati
 
-
-from __future__ import division, absolute_import
-
 import os
 import numpy as np
 import logging

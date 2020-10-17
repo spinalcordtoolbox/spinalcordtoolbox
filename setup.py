@@ -68,7 +68,6 @@ setup(
                 'sct_compute_mtr',
                 'sct_compute_mtsat',
                 'sct_compute_snr',
-                'sct_concat_transfo',
                 'sct_convert',
                 'sct_create_mask',
                 'sct_crop_image',

@@ -2,9 +2,6 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.deepseg_sc
 
-
-from __future__ import absolute_import
-
 import pytest
 import numpy as np
 import nibabel as nib
@@ -25,6 +22,7 @@ param_deepseg = [
         sct_test_path('t2', 't2_seg-deepseg_sc-3d.nii.gz'),
         'contrast': 't2', 'kernel': '3d'}),
 ]
+
 
 # noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('params', param_deepseg)
@@ -68,14 +66,14 @@ def test_crop_image_around_centerline():
     _, _, _, img_out = sct.deepseg_sc.core.crop_image_around_centerline(
         im_in=img.copy(), ctr_in=ctr.copy(), crop_size=crop_size)
 
-    img_in_z0 = img.data[:,:,0]
-    x_ctr_z0, y_ctr_z0 = np.where(ctr.data[:,:,0])[0][0], np.where(ctr.data[:,:,0])[1][0]
+    img_in_z0 = img.data[:, :, 0]
+    x_ctr_z0, y_ctr_z0 = np.where(ctr.data[:, :, 0])[0][0], np.where(ctr.data[:, :, 0])[1][0]
     x_start, x_end = sct.deepseg_sc.core._find_crop_start_end(x_ctr_z0, crop_size, img.dim[0])
     y_start, y_end = sct.deepseg_sc.core._find_crop_start_end(y_ctr_z0, crop_size, img.dim[1])
     img_in_z0_crop = img_in_z0[x_start:x_end, y_start:y_end]
 
     assert img_out.data.shape == (crop_size, crop_size, input_shape[2])
-    assert np.allclose(img_in_z0_crop, img_out.data[:,:,0])
+    assert np.allclose(img_in_z0_crop, img_out.data[:, :, 0])
 
 
 def test_uncrop_image():
@@ -84,8 +82,8 @@ def test_uncrop_image():
     data_crop = np.random.randint(0, 2, size=(crop_size, crop_size, input_shape[2]))
     data_in = np.random.randint(0, 1000, size=input_shape)
 
-    x_crop_lst = list(np.random.randint(0, input_shape[0]-crop_size, input_shape[2]))
-    y_crop_lst = list(np.random.randint(0,input_shape[1]-crop_size, input_shape[2]))
+    x_crop_lst = list(np.random.randint(0, input_shape[0] - crop_size, input_shape[2]))
+    y_crop_lst = list(np.random.randint(0, input_shape[1] - crop_size, input_shape[2]))
     z_crop_lst = range(input_shape[2])
 
     affine = np.eye(4)
@@ -97,7 +95,7 @@ def test_uncrop_image():
 
     assert img_uncrop.data.shape == input_shape
     z_rand = np.random.randint(0, input_shape[2])
-    assert np.allclose(img_uncrop.data[x_crop_lst[z_rand]:x_crop_lst[z_rand]+crop_size,
-                       y_crop_lst[z_rand]:y_crop_lst[z_rand]+crop_size,
-                       z_rand],
+    assert np.allclose(img_uncrop.data[x_crop_lst[z_rand]:x_crop_lst[z_rand] + crop_size,
+                                       y_crop_lst[z_rand]:y_crop_lst[z_rand] + crop_size,
+                                       z_rand],
                        data_crop[:, :, z_rand])

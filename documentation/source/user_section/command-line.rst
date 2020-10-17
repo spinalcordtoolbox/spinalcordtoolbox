@@ -50,7 +50,6 @@ Registration
 ============
 
 - sct_apply_transfo_ - Apply transformations.
-- sct_concat_transfo_ - Concatenate transformations.
 - sct_get_centerline_ - Reconstruct spinal cord centerline.
 - sct_register_multimodal_ - Register two images together (non-linear, constrained in axial plane)
 - sct_register_to_template_ - Register an image with an anatomical template (eg. the `PAM50 template
@@ -177,12 +176,6 @@ sct_compute_snr
 ===============
 
 .. program-output:: sct_compute_snr -h
-
-
-sct_concat_transfo
-==================
-
-.. program-output:: sct_concat_transfo -h
 
 
 sct_convert
