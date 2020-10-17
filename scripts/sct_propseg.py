@@ -169,7 +169,14 @@ def get_parser():
             "If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit "
             "your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values "
             "around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the "
-            "segmentation again."
+            "segmentation again.\n"
+            "\n"
+            "References:\n"
+            "  - De Leener B, Kadoury S, Cohen-Adad J. Robust, accurate and fast automatic segmentation of the spinal "
+            "cord. Neuroimage 98, 2014. pp 528-536. DOI: 10.1016/j.neuroimage.2014.04.051\n"
+            "  - De Leener B, Cohen-Adad J, Kadoury S. Automatic segmentation of the spinal cord and spinal canal "
+            "coupled with vertebral labeling. Medical Imaging, IEEE Transactions on (in press). "
+            "DOI: 10.1109/TMI.2015.2437192"
         ),
         formatter_class=SmartFormatter,
         add_help=None,
