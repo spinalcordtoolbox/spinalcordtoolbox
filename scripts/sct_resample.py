@@ -6,23 +6,20 @@
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad, Sara Dupont
-# 
+#
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
 # TODO: add possiblity to resample to destination image
 
-from __future__ import division, absolute_import
-
 import os
 import sys
 import argparse
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
 import spinalcordtoolbox.resampling
 
-# DEFAULT PARAMETERS
+
 class Param:
     # The constructor
     def __init__(self):
@@ -37,6 +34,7 @@ class Param:
         # constant put the superior edges to 0, wrap does something weird with the superior edges, nearest and reflect are fine
         self.file_suffix = '_resampled'  # output suffix
         self.verbose = 1
+
 
 # initialize parameters
 param = Param()
@@ -133,10 +131,10 @@ def run_main():
         param.ref = arguments.ref
         arg += 1
     else:
-        sct.printv(parser.error('ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
+        printv(parser.error('ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
 
     if arg > 1:
-        sct.printv(parser.error('ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
+        printv(parser.error('ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
 
     if arguments.o is not None:
         param.fname_out = arguments.o
@@ -146,12 +144,12 @@ def run_main():
         else:
             param.interpolation = arguments.x
     param.verbose = int(arguments.v)
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    init_sct(log_level=param.verbose, update=True)  # Update log level
 
     spinalcordtoolbox.resampling.resample_file(param.fname_data, param.fname_out, param.new_size, param.new_size_type,
                                                param.interpolation, param.verbose, fname_ref=param.ref)
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     run_main()

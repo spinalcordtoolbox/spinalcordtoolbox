@@ -22,7 +22,7 @@ from scipy.io import loadmat
 
 import spinalcordtoolbox.image as image
 from spinalcordtoolbox.registration.landmarks import register_landmarks
-from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, add_suffix, tmp_create
+from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp_create
 
 # TODO [AJ]
 # introduce potential cleanup functions in case exceptions occur and
@@ -147,15 +147,15 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
             zmax_global = zmax
 
     # crop images (see issue #293)
-    src_crop = add_suffix(src, '_crop')
+    src_crop = image.add_suffix(src, '_crop')
     image.spatial_crop(image.Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
-    dest_crop = add_suffix(dest, '_crop')
+    dest_crop = image.add_suffix(dest, '_crop')
     image.spatial_crop(image.Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
 
     # update variables
     src = src_crop
     dest = dest_crop
-    scr_regStep = add_suffix(src, '_regStep' + str(step.step))
+    scr_regStep = image.add_suffix(src, '_regStep' + str(step.step))
 
     # estimate transfo
     cmd = ['isct_antsSliceRegularizedRegistration',
@@ -185,7 +185,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
     # Pad the destination image (because ants doesn't deform the extremities)
     # N.B. no need to pad if iter = 0
     if not step.iter == '0':
-        dest_pad = add_suffix(dest, '_pad')
+        dest_pad = image.add_suffix(dest, '_pad')
         run_proc(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(padding)])
         dest = dest_pad
 
@@ -193,15 +193,15 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
     if not step.laplacian == '0':
         logger.info(f"\nApply Laplacian filter")
         run_proc(['sct_maths', '-i', src, '-laplacian', step.laplacian + ','
-                 + step.laplacian + ',0', '-o', add_suffix(src, '_laplacian')])
+                 + step.laplacian + ',0', '-o', image.add_suffix(src, '_laplacian')])
         run_proc(['sct_maths', '-i', dest, '-laplacian', step.laplacian + ','
-                 + step.laplacian + ',0', '-o', add_suffix(dest, '_laplacian')])
-        src = add_suffix(src, '_laplacian')
-        dest = add_suffix(dest, '_laplacian')
+                 + step.laplacian + ',0', '-o', image.add_suffix(dest, '_laplacian')])
+        src = image.add_suffix(src, '_laplacian')
+        dest = image.add_suffix(dest, '_laplacian')
 
     # Estimate transformation
     logger.info(f"\nEstimate transformation")
-    scr_regStep = add_suffix(src, '_regStep' + str(step.step))
+    scr_regStep = image.add_suffix(src, '_regStep' + str(step.step))
 
     cmd = ['isct_antsRegistration',
            '--dimensionality', '3',

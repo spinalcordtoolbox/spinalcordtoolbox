@@ -13,15 +13,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
-import sys, io, os
-
-from pandas import DataFrame
-
-import sct_utils as sct
-
-
 def init(param_test):
     """
     Initialize class: param_test

@@ -2,17 +2,13 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.qmri
 
-
-from __future__ import print_function, absolute_import
-
 import numpy as np
 import nibabel
 import pytest
 
 from spinalcordtoolbox.qmri import mt
 from spinalcordtoolbox.image import Image
-
-from sct_utils import init_sct
+from spinalcordtoolbox.utils import init_sct
 
 init_sct(log_level=2)  # Set logger in debug mode
 VERBOSE = 0  # Set to 2 to save images, 0 otherwise

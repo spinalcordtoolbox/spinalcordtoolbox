@@ -13,7 +13,7 @@
 from pandas import read_csv
 from numpy import allclose
 
-import sct_utils as sct
+from spinalcordtoolbox.utils import run_proc
 
 
 def init(param_test):
@@ -21,33 +21,33 @@ def init(param_test):
     Initialize class: param_test
     """
     # Reorient image to sagittal for testing another orientation (and crop to save time)
-    sct.run('sct_image -i dmri/dmri.nii.gz -setorient AIL -o dmri/dmri_AIL.nii', verbose=0)
-    sct.run('sct_crop_image -i dmri/dmri_AIL.nii -zmin 19 -zmax 21 -o dmri/dmri_AIL_crop.nii', verbose=0)
+    run_proc('sct_image -i dmri/dmri.nii.gz -setorient AIL -o dmri/dmri_AIL.nii', verbose=0)
+    run_proc('sct_crop_image -i dmri/dmri_AIL.nii -zmin 19 -zmax 21 -o dmri/dmri_AIL_crop.nii', verbose=0)
     # Create Gaussian mask for testing
-    sct.run('sct_create_mask -i dmri/dmri_T0000.nii.gz -p center -size 5mm -f gaussian -o dmri/mask.nii', verbose=0)
+    run_proc('sct_create_mask -i dmri/dmri_T0000.nii.gz -p center -size 5mm -f gaussian -o dmri/mask.nii', verbose=0)
 
     # initialization
     default_args = [
         '-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -x nn -ofolder dmri_test1 -r 0',
         '-i dmri/dmri.nii.gz -bvec dmri/bvecs.txt -g 3 -m dmri/mask.nii -ofolder dmri_test2 -r 0',
         '-i dmri/dmri_AIL_crop.nii -bvec dmri/bvecs.txt -x nn -ofolder dmri_test3 -r 0',
-        ]
+    ]
 
     # Output moco param files
     param_test.file_mocoparam = [
         'dmri_test1/moco_params.tsv',
         'dmri_test2/moco_params.tsv',
         None,
-        ]
+    ]
 
     # Ground truth value for integrity testing (corresponds to X motion parameters column)
     param_test.groundtruth = [
         [0.00047529041677414337, -1.1970542445283172e-05, -1.1970542445283172e-05, -1.1970542445283172e-05, -0.1296642741802682,
-        -0.1296642741802682, -0.1296642741802682],
+         -0.1296642741802682, -0.1296642741802682],
         [0.008491259664160821, 0.0029020670607778237, 0.0029020670607778237, 0.0029020670607778237, -0.014405996135095476,
-        -0.014405996135095476, -0.014405996135095476],
+         -0.014405996135095476, -0.014405996135095476],
         None,
-        ]
+    ]
 
     # assign default params
     if not param_test.args:

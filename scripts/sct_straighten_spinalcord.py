@@ -12,9 +12,6 @@
 # License: see the LICENSE.TXT
 # ======================================================================================================================
 
-
-from __future__ import division, absolute_import
-
 import sys
 import os
 import argparse
@@ -24,11 +21,8 @@ import re
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
-from spinalcordtoolbox.image import Image
-
-import sct_utils as sct
-
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv
 
 def get_parser():
 
@@ -220,13 +214,13 @@ def main(args=None):
 
     if arguments.ldisc_input is not None:
         if not sc_straight.use_straight_reference:
-            sct.printv('Warning: discs position are not taken into account if reference is not provided.')
+            printv('Warning: discs position are not taken into account if reference is not provided.')
         else:
             sc_straight.discs_input_filename = str(arguments.ldisc_input)
             sc_straight.precision = 4.0
     if arguments.ldisc_dest is not None:
         if not sc_straight.use_straight_reference:
-            sct.printv('Warning: discs position are not taken into account if reference is not provided.')
+            printv('Warning: discs position are not taken into account if reference is not provided.')
         else:
             sc_straight.discs_ref_filename = str(arguments.ldisc_dest)
             sc_straight.precision = 4.0
@@ -238,10 +232,10 @@ def main(args=None):
     sc_straight.path_output = arguments.ofolder
     path_qc = arguments.qc
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     sc_straight.verbose = verbose
 
-    # if "-cpu-nb" in arguments:
+    # if arguments.cpu_nb is not None:
     #     sc_straight.cpu_number = arguments.cpu-nb)
     if arguments.disable_straight2curved:
         sc_straight.straight2curved = False
@@ -255,8 +249,8 @@ def main(args=None):
         sc_straight.xy_size = arguments.xy_size
 
     sc_straight.param_centerline = ParamCenterline(
-    algo_fitting = arguments.centerline_algo,
-    smooth = arguments.centerline_smooth)
+        algo_fitting=arguments.centerline_algo,
+        smooth=arguments.centerline_smooth)
     if arguments.param is not None:
         params_user = arguments.param
         # update registration parameters
@@ -273,7 +267,7 @@ def main(args=None):
 
     fname_straight = sc_straight.straighten()
 
-    sct.printv("\nFinished! Elapsed time: {} s".format(sc_straight.elapsed_time), verbose)
+    printv("\nFinished! Elapsed time: {} s".format(sc_straight.elapsed_time), verbose)
 
     # Generate QC report
     if path_qc is not None:
@@ -281,11 +275,11 @@ def main(args=None):
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
         generate_qc(fname_straight, args=arguments, path_qc=os.path.abspath(path_qc),
-                    dataset = qc_dataset, subject = qc_subject, process = os.path.basename(__file__.strip('.py')))
+                    dataset=qc_dataset, subject=qc_subject, process=os.path.basename(__file__.strip('.py')))
 
-    sct.display_viewer_syntax([fname_straight], verbose=verbose)
+    display_viewer_syntax([fname_straight], verbose=verbose)
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

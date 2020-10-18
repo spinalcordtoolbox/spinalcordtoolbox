@@ -8,21 +8,19 @@
 #
 # About the license: see the file LICENSE.TXT
 
-from __future__ import absolute_import
-
 import os
-import shutil
 import sys
-import numpy as np
 import itertools
 import argparse
 
+import numpy as np
 from skimage.feature import greycomatrix, greycoprops
 
-import sct_utils as sct
-import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, sct_progress_bar
+from spinalcordtoolbox.image import Image, add_suffix, zeros_like
+from spinalcordtoolbox.utils.shell import Metavar, ActionCreateFolder, SmartFormatter
+from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, run_proc
+from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
+
 
 def get_parser():
     # Initialize the parser
@@ -120,7 +118,7 @@ class ExtractGLCM:
         self.param_glcm = param_glcm if param_glcm is not None else ParamGLCM()
 
         # create tmp directory
-        self.tmp_dir = sct.tmp_create(verbose=self.param.verbose)  # path to tmp directory
+        self.tmp_dir = tmp_create()  # path to tmp directory
 
         if self.param.dim == 'ax':
             self.orientation_extraction = 'RPI'
@@ -171,26 +169,26 @@ class ExtractGLCM:
 
         os.chdir(self.curdir)  # go back to original directory
 
-        sct.printv('\nSave resulting files...', self.param.verbose, 'normal')
+        printv('\nSave resulting files...', self.param.verbose, 'normal')
         for f in self.fname_metric_lst:  # Copy from tmp folder to ofolder
-            sct.copy(os.path.join(self.tmp_dir, self.fname_metric_lst[f]),
-                        os.path.join(self.param.path_results, self.fname_metric_lst[f]))
+            copy(os.path.join(self.tmp_dir, self.fname_metric_lst[f]),
+                     os.path.join(self.param.path_results, self.fname_metric_lst[f]))
 
     def ifolder2tmp(self):
         self.curdir = os.getcwd()
         # copy input image
         if self.param.fname_im is not None:
-            sct.copy(self.param.fname_im, self.tmp_dir)
-            self.param.fname_im = ''.join(sct.extract_fname(self.param.fname_im)[1:])
+            copy(self.param.fname_im, self.tmp_dir)
+            self.param.fname_im = ''.join(extract_fname(self.param.fname_im)[1:])
         else:
-            sct.printv('ERROR: No input image', self.param.verbose, 'error')
+            printv('ERROR: No input image', self.param.verbose, 'error')
 
         # copy masked image
         if self.param.fname_seg is not None:
-            sct.copy(self.param.fname_seg, self.tmp_dir)
-            self.param.fname_seg = ''.join(sct.extract_fname(self.param.fname_seg)[1:])
+            copy(self.param.fname_seg, self.tmp_dir)
+            self.param.fname_seg = ''.join(extract_fname(self.param.fname_seg)[1:])
         else:
-            sct.printv('ERROR: No mask image', self.param.verbose, 'error')
+            printv('ERROR: No mask image', self.param.verbose, 'error')
 
         os.chdir(self.tmp_dir)  # go to tmp directory
 
@@ -199,16 +197,16 @@ class ExtractGLCM:
         im_metric_lst = [self.fname_metric_lst[f].split('_' + str(self.param_glcm.distance) + '_')[0] + '_' for f in self.fname_metric_lst]
         im_metric_lst = list(set(im_metric_lst))
 
-        sct.printv('\nMean across angles...', self.param.verbose, 'normal')
-        extension = sct.extract_fname(self.param.fname_im)[2]
+        printv('\nMean across angles...', self.param.verbose, 'normal')
+        extension = extract_fname(self.param.fname_im)[2]
         for im_m in im_metric_lst:     # Loop across GLCM texture properties
             # List images to mean
             im2mean_lst = [im_m + str(self.param_glcm.distance) + '_' + a + extension for a in self.param_glcm.angle.split(',')]
 
             # Average across angles and save it as wrk_folder/fnameIn_feature_distance_mean.extension
             fname_out = im_m + str(self.param_glcm.distance) + '_mean' + extension
-            sct.run('sct_image -i ' + ' '.join(im2mean_lst) + ' -concat t -o ' + fname_out)
-            sct.run('sct_maths -i ' + fname_out + ' -mean t -o ' + fname_out)
+            run_proc('sct_image -i ' + ' '.join(im2mean_lst) + ' -concat t -o ' + fname_out)
+            run_proc('sct_maths -i ' + fname_out + ' -mean t -o ' + fname_out)
             self.fname_metric_lst[im_m + str(self.param_glcm.distance) + '_mean'] = fname_out
 
     def extract_slices(self):
@@ -230,14 +228,14 @@ class ExtractGLCM:
     #     # create Image objects with zeros values for each output image needed
     #     for m in self.metric_lst:
     #         im_2save = msct_image.zeros_like(im_tmp, dtype=np.float64)
-    #         fname_out = sct.add_suffix(''.join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
+    #         fname_out = add_suffix(''.join(extract_fname(self.param.fname_im)[1:]), '_' + m)
     #         im_2save.save(fname_out)
     #         self.fname_metric_lst[m] = fname_out
 
     def compute_texture(self):
 
         offset = int(self.param_glcm.distance)
-        sct.printv('\nCompute texture metrics...', self.param.verbose, 'normal')
+        printv('\nCompute texture metrics...', self.param.verbose, 'normal')
 
         # open image and re-orient it to RPI if needed
         im_tmp = Image(self.param.fname_im)
@@ -246,7 +244,7 @@ class ExtractGLCM:
 
         dct_metric = {}
         for m in self.metric_lst:
-            im_2save = msct_image.zeros_like(im_tmp, dtype='float64')
+            im_2save = zeros_like(im_tmp, dtype='float64')
             dct_metric[m] = im_2save
             # dct_metric[m] = Image(self.fname_metric_lst[m])
 
@@ -280,16 +278,16 @@ class ExtractGLCM:
                         pbar.update(1)
 
         for m in self.metric_lst:
-            fname_out = sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_' + m)
+            fname_out = add_suffix("".join(extract_fname(self.param.fname_im)[1:]), '_' + m)
             dct_metric[m].save(fname_out)
             self.fname_metric_lst[m] = fname_out
 
     def reorient_data(self):
         for f in self.fname_metric_lst:
-            os.rename(self.fname_metric_lst[f], sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient'))
-            im = Image(sct.add_suffix("".join(sct.extract_fname(self.param.fname_im)[1:]), '_2reorient')) \
-             .change_orientation(self.orientation_im) \
-             .save(self.fname_metric_lst[f])
+            os.rename(self.fname_metric_lst[f], add_suffix("".join(extract_fname(self.param.fname_im)[1:]), '_2reorient'))
+            im = Image(add_suffix("".join(extract_fname(self.param.fname_im)[1:]), '_2reorient')) \
+                .change_orientation(self.orientation_im) \
+                .save(self.fname_metric_lst[f])
 
 
 class Param:
@@ -335,7 +333,7 @@ def main(args=None):
         param.path_results = arguments.ofolder
 
     if not os.path.isdir(param.path_results) and os.path.exists(param.path_results):
-        sct.printv("ERROR output directory %s is not a valid directory" % param.path_results, 1, 'error')
+        printv("ERROR output directory %s is not a valid directory" % param.path_results, 1, 'error')
     if not os.path.exists(param.path_results):
         os.makedirs(param.path_results)
 
@@ -351,7 +349,7 @@ def main(args=None):
     if arguments.r is not None:
         param.rm_tmp = bool(arguments.r)
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # create the GLCM constructor
     glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
@@ -360,11 +358,12 @@ def main(args=None):
 
     # remove tmp_dir
     if param.rm_tmp:
-        sct.rmtree(glcm.tmp_dir)
+        rmtree(glcm.tmp_dir)
 
-    sct.printv('\nDone! To view results, type:', param.verbose)
-    sct.printv('fsleyes ' + arguments.i + ' ' + ' -cm red-yellow -a 70.0 '.join(fname_out_lst) + ' -cm Red-Yellow -a 70.0 & \n', param.verbose, 'info')
+    printv('\nDone! To view results, type:', param.verbose)
+    printv('fsleyes ' + arguments.i + ' ' + ' -cm red-yellow -a 70.0 '.join(fname_out_lst) + ' -cm Red-Yellow -a 70.0 & \n', param.verbose, 'info')
+
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

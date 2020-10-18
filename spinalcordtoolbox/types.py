@@ -13,8 +13,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import division, absolute_import
-
 from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis, zeros
 from numpy.linalg import norm, inv
 import numpy as np
@@ -88,6 +86,10 @@ class Coordinate(Point):
                 float(self.x), float(self.y), float(self.z), float(self.value)
         except ValueError:
             raise TypeError("All coordinates must be int and the value can be a float or a int. x=" + str(self.x) + ", y=" + str(self.y) + ", z=" + str(self.z) + ", value=" + str(self.value))
+
+    def __iter__(self):
+        # Allows for this usage: "for x, y, z, v in [list of Coordinate]"
+        return iter((self.x, self.y, self.z, self.value))
 
     def __repr__(self):
         return "(" + str(self.x) + ", " + str(self.y) + ", " + str(self.z) + ", " + str(self.value) + ")"

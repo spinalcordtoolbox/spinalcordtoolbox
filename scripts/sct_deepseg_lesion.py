@@ -12,15 +12,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import print_function, absolute_import, division
-
 import os
 import sys
 import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
-
-import sct_utils as sct
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.fs import extract_fname
 
 
 def get_parser():
@@ -128,7 +126,7 @@ def main():
     output_folder = args.ofolder
 
     if ctr_algo == 'file' and args.file_centerline is None:
-        sct.printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'error')
+        printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'error')
         sys.exit(1)
 
     if args.file_centerline is not None:
@@ -139,12 +137,12 @@ def main():
 
     remove_temp_files = args.r
     verbose = args.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
     algo_config_stg += '\n\tAssumes brain section included in the image: ' + str(brain_bool) + '\n'
-    sct.printv(algo_config_stg)
+    printv(algo_config_stg)
 
     # Segment image
     from spinalcordtoolbox.image import Image
@@ -154,25 +152,25 @@ def main():
                                         brain_bool=brain_bool, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # Save segmentation
-    fname_seg = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_lesionseg' +
-                                             sct.extract_fname(fname_image)[2]))
+    fname_seg = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_lesionseg' +
+                                             extract_fname(fname_image)[2]))
     im_seg.save(fname_seg)
 
     if ctr_algo == 'viewer':
         # Save labels
-        fname_labels = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_labels-centerline' +
-                                               sct.extract_fname(fname_image)[2]))
+        fname_labels = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_labels-centerline' +
+                                               extract_fname(fname_image)[2]))
         im_labels_viewer.save(fname_labels)
 
     if verbose == 2:
         # Save ctr
-        fname_ctr = os.path.abspath(os.path.join(output_folder, sct.extract_fname(fname_image)[1] + '_centerline' +
-                                               sct.extract_fname(fname_image)[2]))
+        fname_ctr = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_centerline' +
+                                               extract_fname(fname_image)[2]))
         im_ctr.save(fname_ctr)
 
-    sct.display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

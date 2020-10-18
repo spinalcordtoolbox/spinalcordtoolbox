@@ -32,7 +32,6 @@ import numpy as np
 from scipy.optimize import minimize
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import create_folder
 
 logger = logging.getLogger(__name__)
 
@@ -256,7 +255,10 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     logger.info(f"Translation:\n {translation_array}")
 
     if verbose == 2 and path_qc is not None:
-        create_folder(path_qc)
+        try:
+            os.makedirs(path_qc)
+        except FileExistsError:
+            pass
 
         import matplotlib
         # use Agg to prevent display

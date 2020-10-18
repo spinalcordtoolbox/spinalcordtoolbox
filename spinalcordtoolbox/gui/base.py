@@ -11,9 +11,6 @@ The definition of X,Y axis is the following:
 
 """
 
-from __future__ import absolute_import
-from __future__ import division
-
 from collections import namedtuple
 
 import logging
