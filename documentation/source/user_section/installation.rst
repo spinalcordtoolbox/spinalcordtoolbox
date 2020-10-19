@@ -127,15 +127,29 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
       yes | ./install_sct
 
-#. Install FSL
+#. Install FSLeyes
 
-   FSL contains fsleyes which is the default viewer for NIfTI image in SCT.
-   Download and execute the installer:
-
+   FSLeyes is the default viewer for NIfTI image in SCT.
+   
+   Install the C/C++ compilers required to use wxPython:
+   
    .. code-block:: sh
 
-      wget https://fsl.fmrib.ox.ac.uk/fsldownloads/fslinstaller.py
-      python fslinstaller.py
+           sudo apt-get install build-essential
+           sudo apt-get install libgtk2.0-dev libgtk-3-dev libwebkitgtk-dev libwebkitgtk-3.0-dev
+           sudo apt-get install libjpeg-turbo8-dev libtiff5-dev libsdl1.2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libnotify-dev freeglut3-dev
+           
+   Install wxPython using conda:
+   
+   .. code-block:: sh
+
+           yes | conda install -c anaconda wxpython
+           
+   Install FSLeyes using conda-forge:
+   
+   .. code-block:: sh
+
+           yes | conda install -c conda-forge fsleyes
 
    to complete the installation of these software run:
 
