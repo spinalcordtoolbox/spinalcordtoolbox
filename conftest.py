@@ -28,10 +28,18 @@ import sct_download_data as downloader
 logger = logging.getLogger(__name__)
 
 
-def pytest_sessionstart():
+def pytest_addoption(parser):
+    parser.addoption(
+        "--no-sct-download",
+        action="store_true",
+    )
+
+
+def pytest_sessionstart(session):
     """ Download sct_testing_data prior to test collection. """
-    logger.info("Downloading sct test data")
-    downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
+    if not session.config.getoption("--no-sct-download"):
+        logger.info("Downloading sct test data")
+        downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
 
 
 @pytest.fixture(scope="session", autouse=True)
