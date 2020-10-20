@@ -20,16 +20,15 @@ import argparse
 import sys
 import io
 import os
-import re
 import platform
 import importlib
 import warnings
-import subprocess
+import psutil
 
 import requirements
 
 from spinalcordtoolbox.utils.shell import SmartFormatter
-from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__, printv
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__
 
 
 # DEFAULT PARAMETERS
