@@ -26,7 +26,7 @@ import transforms3d.affines as affines
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import sct_dir_local_path, extract_fname, printv
+from spinalcordtoolbox.utils import sct_dir_local_path, extract_fname
 
 logger = logging.getLogger(__name__)
 
@@ -1457,5 +1457,5 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
         # Generate output file without changing the extension
         shutil.move(fname_in, fname_out)
 
-    printv('  File created: ' + os.path.join(path_out, file_out + ext_out), verbose)
+    logger.info("File created: %s", os.path.join(path_out, file_out + ext_out))
     return os.path.join(path_out, file_out + ext_out)
