@@ -252,7 +252,7 @@ def main():
         os_running = 'linux'
 
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
-    print('CPU cores: Available: {}, Used by SCT: {}'.format(psutil.cpu_count(), int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))))
+    print('CPU cores: Available: {}, Used by ITK functions: {}'.format(psutil.cpu_count(), int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))))
 
     ram = psutil.virtual_memory()
     factor_MB = 1024 * 1024
