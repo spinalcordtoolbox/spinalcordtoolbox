@@ -17,6 +17,7 @@ from .postprocessing import post_processing_volume_wise, keep_largest_object, fi
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, add_suffix
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.utils import sct_dir_local_path, printv, TempFolder
+from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
 
 
 # FIXME: don't import from scripts!
@@ -368,7 +369,6 @@ def segment_3d(model_fname, contrast_type, im_in):
 
     :return: seg_crop.data: ndarray float32: Output prediction
     """
-    from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
     dct_patch_sc_3d = {'t2': {'size': (64, 64, 48), 'mean': 65.8562, 'std': 59.7999},
                        't2s': {'size': (96, 96, 48), 'mean': 87.0212, 'std': 64.425},
                        't1': {'size': (64, 64, 48), 'mean': 88.5001, 'std': 66.275}}
