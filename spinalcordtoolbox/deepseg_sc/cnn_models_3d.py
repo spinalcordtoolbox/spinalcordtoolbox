@@ -13,9 +13,6 @@ from keras.engine import Input, Model
 from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, Activation, BatchNormalization
 from keras.optimizers import Adam
 from keras.models import load_model
-
-K.set_image_data_format("channels_first")
-
 from keras.layers.merge import concatenate
 
 

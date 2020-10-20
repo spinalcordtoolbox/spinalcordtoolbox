@@ -30,8 +30,7 @@ def test_deep_segmentation_spinalcord(params):
     """High level segmentation API"""
     fname_im = sct_test_path('t2', 't2.nii.gz')
     fname_centerline_manual = sct_test_path('t2', 't2_centerline-manual.nii.gz')
-    # Set at channels_first in test_deepseg_lesion.test_segment()
-    K.set_image_data_format("channels_last")
+
     # Call segmentation function
     im_seg, _, _ = sct.deepseg_sc.core.deep_segmentation_spinalcord(
         Image(fname_im), params['contrast'], ctr_algo='file', ctr_file=fname_centerline_manual, brain_bool=False,
@@ -39,6 +38,7 @@ def test_deep_segmentation_spinalcord(params):
     assert im_seg.data.dtype == np.dtype('uint8')
     # Compare with ground-truth segmentation
     assert np.all(im_seg.data == Image(params['fname_seg_manual']).data)
+
 
 
 def test_intensity_normalization():
