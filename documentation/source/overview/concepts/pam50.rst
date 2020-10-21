@@ -40,7 +40,7 @@ White matter atlas (``PAM50/atlas``)
     :figwidth: 40%
     :align: right
 
-The White Matter atlas will be a useful tool for your studies of specific spinal cord tracts. It consists of 30 nifti
+The White Matter atlas will be a useful tool for your studies of specific spinal cord tracts. It consists of 36 nifti
 volumes named ``PAM50_atlas_<tract_number>.nii.gz`` where ``<tract_number>`` is the number identifying the tract.
 Fifteen tracts for each side are available. The values of each voxel of the files ``PAM50_atlas_<tract_number>.nii.gz``
 are the voxel volume proportions occupied by the corresponding tract.
