@@ -59,7 +59,12 @@ Fifteen tracts for each side are available. The values of each voxel of the file
 are the voxel volume proportions occupied by the corresponding tract.
 
 The atlas is stored in the ``data/PAM50/atlas`` folder, and comes with a text file (``info_label.txt``) that provides a
-more detailed breakdown of each tract.
+more detailed breakdown of each tract. The contents of this file are listed below.
+
+.. include:: ../../../../data/PAM50/atlas/info_label.txt
+   :start-line: 4
+   :end-line: 40
+   :code:
 
 As well, here is the relevant section of the SCT repository which generated this template:
 `White matter atlas <https://github.com/neuropoly/spinalcordtoolbox/tree/master/dev/atlas>`_
@@ -83,6 +88,10 @@ the spinal cord from C3 to T5. On the illustration above, you can see the spinal
 (blue-lightblue). In each nifti file, the value of each voxel is the probability for this voxel to belong to the
 spinal level.
 
+.. include:: ../../../../data/PAM50/spinal_levels/info_label.txt
+   :start-line: 3
+   :code:
+
 As well, here is the relevant section of the SCT repository which generated this template:
 `Spinal levels <https://github.com/neuropoly/spinalcordtoolbox/tree/master/dev/spinal_level>`_
 
@@ -93,3 +102,11 @@ References
 variability of the human cervical spinal cord: a solution to facilitate advanced neural imaging. Proceedings of the
 22th Annual Meeting of ISMRM, Milan, Italy 2014:1719
 <https://dl.dropboxusercontent.com/u/20592661/publications/cadotte_ismrm14.pdf>`_.
+
+
+Template
+========
+
+.. include:: ../../../../data/PAM50/template/info_label.txt
+   :start-line: 3
+   :code:
