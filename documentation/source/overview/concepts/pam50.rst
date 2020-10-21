@@ -51,7 +51,9 @@ ICBM152 space. Proceedings of the 25th Annual Meeting of ISMRM, Honolulu, USA.
 White matter atlas
 ==================
 
-.. image:: ../../imgs/white_matter_atlas_illustration.png
+.. figure:: ../../../imgs/white_matter_atlas_illustration.png
+    :figwidth: 60%
+    :align: right
 
 The White Matter atlas will be a useful tool for your studies of specific spinal cord tracts. It consists of 30 nifti
 volumes named ``PAM50_atlas_<tract_number>.nii.gz`` where ``<tract_number>`` is the number identifying the tract.
@@ -81,7 +83,9 @@ white-matter tracts in the human spinal cord. Proceedings of the 22th Annual Mee
 Spinal levels
 =============
 
-.. image:: ../../imgs/spinal_levels_illustration.png
+.. figure:: ../../../imgs/spinal_levels_illustration.png
+    :figwidth: 60%
+    :align: right
 
 In the folder ``data/PAM50/spinal_levels``, you will find 11 nifti files, each one corresponding to one spinal level of
 the spinal cord from C3 to T5. On the illustration above, you can see the spinal levels C4 (red-yellow) and T1
