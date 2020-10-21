@@ -24,7 +24,9 @@ the following features:
 Template (``PAM50/template``)
 =============================
 
-Contains image files representing different template diffusion weightings, binary/probablistic masks (for the spinal cord, WM/GM tracts, etc.), and point-wise labels for vertebral levels and intervertebral discs.
+The template folder contains image files representing different template diffusion weightings, binary/probablistic masks (for the spinal cord, WM/GM tracts, etc.), and point-wise labels for vertebral levels and intervertebral discs.
+
+The template folder also contains an ``info_label.txt`` file to explain what each file represents:
 
 .. include:: ../../../../data/PAM50/template/info_label.txt
    :start-line: 3
@@ -43,8 +45,7 @@ volumes named ``PAM50_atlas_<tract_number>.nii.gz`` where ``<tract_number>`` is 
 Fifteen tracts for each side are available. The values of each voxel of the files ``PAM50_atlas_<tract_number>.nii.gz``
 are the voxel volume proportions occupied by the corresponding tract.
 
-The atlas is stored in the ``data/PAM50/atlas`` folder, and comes with a text file (``info_label.txt``) that provides a
-more detailed breakdown of each tract. The contents of this file are listed below.
+The atlas folder also contains an ``info_label.txt`` file to explain what each file represents:
 
 .. include:: ../../../../data/PAM50/atlas/info_label.txt
    :start-line: 4
@@ -59,17 +60,20 @@ Spinal levels (``PAM50/spinal_levels``)
     :figwidth: 40%
     :align: right
 
-Contains 20 label images corresponding to different spinal cord levels, including both C1:C8 and T1:T12.
-
-In the folder ``data/PAM50/spinal_levels``, you will find 11 nifti files, each one corresponding to one spinal level of
-the spinal cord from C3 to T5. On the illustration above, you can see the spinal levels C4 (red-yellow) and T1
-(blue-lightblue). In each nifti file, the value of each voxel is the probability for this voxel to belong to the
+In the folder ``data/PAM50/spinal_levels``, you will find 20 label images corresponding to different spinal cord levels, including both C1:C8 and T1:T12. In each nifti file, the value of each voxel is the probability for this voxel to belong to the
 spinal level.
+
+The spinal_levels folder also contains an ``info_label.txt`` file to explain what each file represents:
 
 .. include:: ../../../../data/PAM50/spinal_levels/info_label.txt
    :start-line: 3
    :code:
 
+
+Changelog
+=========
+
+A history of changes made to the PAM50 template can be found in the :download:`Changelog <../../../../data/PAM50/CHANGES.md>`.
 
 References
 ==========
@@ -83,5 +87,3 @@ Additionally, the template was generated using the following tools:
 * `neurpoly/template GitHub repository <https://github.com/neuropoly/template>`_
 * `White matter atlas script <https://github.com/neuropoly/spinalcordtoolbox/tree/master/dev/atlas>`_
 * `Spinal levels script <https://github.com/neuropoly/spinalcordtoolbox/tree/master/dev/spinal_level>`_
-
-A history of changes made to the PAM50 template can be found in the :download:`Changelog <../../../../data/PAM50/CHANGES.md>`.
