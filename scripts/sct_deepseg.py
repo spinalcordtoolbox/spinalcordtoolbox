@@ -16,6 +16,8 @@ import os
 import sys
 
 import spinalcordtoolbox.deepseg as deepseg
+import spinalcordtoolbox.deepseg.models
+import spinalcordtoolbox.deepseg.core
 from spinalcordtoolbox.utils.shell import SmartFormatter, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv
 
@@ -30,7 +32,6 @@ def get_parser():
     input_output = parser.add_argument_group("\nINPUT/OUTPUT")
     input_output.add_argument(
         "-i",
-        required=True,
         help="Image to segment.",
         metavar=Metavar.file)
     input_output.add_argument(
