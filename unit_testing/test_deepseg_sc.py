@@ -40,7 +40,6 @@ def test_deep_segmentation_spinalcord(params):
     assert np.all(im_seg.data == Image(params['fname_seg_manual']).data)
 
 
-
 def test_intensity_normalization():
     data_in = np.random.rand(10, 10)
     min_out, max_out = 0, 255

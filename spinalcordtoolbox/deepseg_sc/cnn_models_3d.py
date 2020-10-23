@@ -15,6 +15,8 @@ from keras.optimizers import Adam
 from keras.models import load_model
 from keras.layers.merge import concatenate
 
+# Note: `K.set_image_data_format("channels_first")` was removed from this file because it interfered
+# with other tests. It may need to be re-added for this function to work properly. (See #2954)
 
 def dice_coefficient(y_true, y_pred, smooth=1.):
     y_true_f = K.flatten(y_true)

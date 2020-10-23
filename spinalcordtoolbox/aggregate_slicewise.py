@@ -443,7 +443,7 @@ def merge_dict(dict_in):
     """
     Merge n dictionaries that are contained at the root key
 
-    code::
+    .. code-block:: python
 
       dict_in = {
           'area': {(0): {'Level': 0, 'Mean(area)': 0.5}, (1): {'Level': 1, 'Mean(area)': 0.2}}
@@ -453,6 +453,9 @@ def merge_dict(dict_in):
           (0): {'Level': 0, 'Mean(area): 0.5, 'Mean(angle_RL): 15}
           (1): {'Level': 1, 'Mean(area): 0.2, 'Mean(angle_RL): 12}
       }
+
+    :param dict_in: input dict.
+    :return: normalized dict with sub-dicts at root level
 
     """
     dict_merged = {}
