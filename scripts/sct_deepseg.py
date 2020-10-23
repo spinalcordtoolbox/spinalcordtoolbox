@@ -95,6 +95,11 @@ def get_parser():
         help="Fill small holes in the segmentation.",
         choices=(0, 1),
         default=deepseg.core.DEFAULTS['fill_holes'])
+    misc.add_argument(
+        "-remove-small",
+        type=str,
+        help="Minimal object size to keep with unit (mm or vox). Example: 3mm, 5vox. (default: 0mm)",
+        default=deepseg.core.DEFAULTS['remove_small'])
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
