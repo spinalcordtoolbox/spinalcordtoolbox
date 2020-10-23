@@ -24,6 +24,7 @@ DEFAULTS = {
     'thr': 0.9,
     'largest': 1,
     'fill_holes': 1,
+    'remove_small': None
 }
 
 
@@ -41,7 +42,7 @@ def segment_nifti(fname_image, folder_model, fname_prior=None, param=None):
         param = {}
 
     options = {**DEFAULTS, **vars(param)}
-    nii_seg = imed.utils.segment_volume(folder_model, fname_image, fname_prior, options)
+    nii_seg = imed.utils.segment_volume(folder_model, fname_image, fname_prior, options=options)
 
     # Save output seg
     if 'o' in options:
