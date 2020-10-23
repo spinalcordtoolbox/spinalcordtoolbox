@@ -117,11 +117,11 @@ def main():
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     # Deal with model
-    if args.list_models is not None:
+    if args.list_models:
         deepseg.models.display_list_models()
 
     # Deal with task
-    if args.list_tasks is not None:
+    if args.list_tasks:
         deepseg.models.display_list_tasks()
 
     if args.install_model is not None:
