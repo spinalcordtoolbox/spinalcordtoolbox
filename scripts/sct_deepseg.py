@@ -98,7 +98,7 @@ def get_parser():
     misc.add_argument(
         "-remove-small",
         type=str,
-        help="Minimal object size to keep with unit (mm3 or vox). Example: 1mm3, 5vox. (default: 0vox)",
+        help="Minimal object size to keep with unit (mm3 or vox). Example: 1mm3, 5vox.",
         default=deepseg.core.DEFAULTS['remove_small'])
 
     misc = parser.add_argument_group('\nMISC')

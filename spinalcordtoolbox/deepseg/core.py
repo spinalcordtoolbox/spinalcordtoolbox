@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 # Default values if not asked during CLI call and if not present in json metadata.
 DEFAULTS = {
     'thr': 0.9,
-    'largest': 1,
-    'fill_holes': 1,
+    'largest': 0,
+    'fill_holes': 0,
     'remove_small': '0vox'
 }
 
