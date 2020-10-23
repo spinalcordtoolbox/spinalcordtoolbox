@@ -24,7 +24,7 @@ DEFAULTS = {
     'thr': 0.9,
     'largest': 1,
     'fill_holes': 1,
-    'remove_small': None
+    'remove_small': '0mm'
 }
 
 
