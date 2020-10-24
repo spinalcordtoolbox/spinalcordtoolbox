@@ -127,9 +127,24 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
       yes | ./install_sct
 
-#. Install FSLeyes
+   To complete the installation of these software run:
 
-   FSLeyes is the default viewer for NIfTI image in SCT.
+   .. code:: sh
+
+      cd ~
+      source .profile
+      source .bashrc
+
+   You can now use SCT. Your local C drive is located under ``/mnt/c``. You can access it by running:
+
+   .. code:: sh
+
+      cd /mnt/c
+
+#. OPTIONAL: Install FSLeyes
+
+   FSLeyes is a viewer for NIfTI images. SCT features a plugin script to make SCT functions integrated into 
+   FSLeyes' graphical user interface. To benefit from this functionality, you will need to install FSLeyes.
    
    Install the C/C++ compilers required to use wxPython:
    
@@ -139,6 +154,13 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
            sudo apt-get install libgtk2.0-dev libgtk-3-dev libwebkitgtk-dev libwebkitgtk-3.0-dev
            sudo apt-get install libjpeg-turbo8-dev libtiff5-dev libsdl1.2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libnotify-dev freeglut3-dev
            
+   Activate SCT's conda environment (to run each time you wish to use FSLeyes):
+   
+   .. code-block:: sh
+   
+           source ${SCT_DIR}/python/etc/profile.d/conda.sh
+           conda activate venv_sct
+
    Install wxPython using conda:
    
    .. code-block:: sh
@@ -151,21 +173,12 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
            yes | conda install -c conda-forge fsleyes
 
-   to complete the installation of these software run:
+   To use FSLeyes, run Xming from your computer before entering the fsleyes command.
+   
+   .. important::
 
-   .. code:: sh
+      Each time you wish to use FSLeyes, you first need to activate SCT's conda environment (see above).
 
-      cd ~
-      source .profile
-      source .bashrc
-
-   You can now use SCT. To use FSLeyes, run Xming from your computer before entering the fsleyes command.
-
-   Your local C drive is located under '/mnt/c'. You can access it by running
-
-   .. code:: sh
-
-      cd /mnt/c
 
 Install with Docker
 -------------------
