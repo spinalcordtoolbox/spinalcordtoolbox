@@ -88,7 +88,9 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
    - Install  `Windows subsystem for linux and initialize it <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_.
 
-       - Please install the Ubuntu 18.04 LTS distro.
+     .. important::
+        
+        Make sure to install the Ubuntu 18.04 LTS distro.
 
 #. Environment preparation
 
