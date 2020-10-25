@@ -99,48 +99,55 @@ In the context of SCT, it can be used:
 Option 1: Without GUI
 =====================
 
-First, `install Docker`_. Then, follow instructions below for creating an OS-specific SCT installation and testing.
+First, `install Docker <https://docs.docker.com/install/>`_. Then, follow the examples below to create an OS-specific SCT installation.
 
-Run Docker image
-~~~~~~~~~~~~~~~~
 
-**For Ubuntu:**
+Ubuntu-based installation
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code:: bash
 
-   # in the Terminal
+   # Start from the Terminal
    docker pull ubuntu:16.04
+   # Launch interactive mode (command-line inside container)
    docker run -it ubuntu
-   # in docker container
+   # Now, inside Docker container, install dependencies
    apt-get update
    yes | apt install git curl bzip2 libglib2.0-0 gcc
-   # Note: libglib2.0-0 is required by PyQt
-
-**For CentOS7:**
-
-.. code:: bash
-
-   # in the Terminal
-   docker pull centos:centos7
-   docker run -it centos:centos7
-   # in docker container
-   yum install -y which gcc git curl
-   # save the state of the container. Open a new Terminal and run:
-   docker ps -a  # list all containers
-   docker commit <CONTAINER_ID> <YOUR_NAME>/centos:centos7
-
-Install SCT
-~~~~~~~~~~~
-
-After having installed your favorite OS, run SCT installer and test it:
-
-.. code:: bash
-
+   # Note for above: libglib2.0-0 is required by PyQt
+   # Install SCT
    git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
    cd sct
    yes | ./install_sct
    export PATH="/sct/bin:${PATH}"
+   # Test SCT
    sct_testing
+   # save the state of the container. Open a new Terminal and run:
+   docker ps -a  # list all containers
+   docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu16.04
+
+CentOS7-based installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: bash
+
+   # Start from the Terminal
+   docker pull centos:centos7
+   # Launch interactive mode (command-line inside container)
+   docker run -it centos:centos7
+   # Now, inside Docker container, install dependencies
+   yum install -y which gcc git curl
+   # Install SCT
+   git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+   cd sct
+   yes | ./install_sct
+   export PATH="/sct/bin:${PATH}"
+   # Test SCT
+   sct_testing
+   # save the state of the container. Open a new Terminal and run:
+   docker ps -a  # list all containers
+   docker commit <CONTAINER_ID> <YOUR_NAME>/centos:centos7
+
 
 Option 2: With GUI
 ==================
@@ -209,7 +216,6 @@ The graphic terminal emulator LXterminal should appear (if not check the
 task bar at the bottom of the screen), which allows copying and pasting
 commands, which makes it easi
 
-.. _install Docker: https://docs.docker.com/install/
 
 Install with pip (experimental)
 -------------------------------
