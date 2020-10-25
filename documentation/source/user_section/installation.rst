@@ -96,9 +96,120 @@ In the context of SCT, it can be used:
   virtual machine
 - <your reason here>
 
-See https://github.com/neuropoly/sct_docker for more information. We also provide a
-`tutorial to install SCT via Docker <https://github.com/neuropoly/spinalcordtoolbox/wiki/testing#run-docker-image>`_.
+Option 1: Without GUI
+=====================
 
+First, `install Docker`_. Then, follow instructions below for creating an OS-specific SCT installation and testing.
+
+Run Docker image
+~~~~~~~~~~~~~~~~
+
+**For Ubuntu:**
+
+.. code:: bash
+
+   # in the Terminal
+   docker pull ubuntu:16.04
+   docker run -it ubuntu
+   # in docker container
+   apt-get update
+   yes | apt install git curl bzip2 libglib2.0-0 gcc
+   # Note: libglib2.0-0 is required by PyQt
+
+**For CentOS7:**
+
+.. code:: bash
+
+   # in the Terminal
+   docker pull centos:centos7
+   docker run -it centos:centos7
+   # in docker container
+   yum install -y which gcc git curl
+   # save the state of the container. Open a new Terminal and run:
+   docker ps -a  # list all containers
+   docker commit <CONTAINER_ID> <YOUR_NAME>/centos:centos7
+
+Install SCT
+~~~~~~~~~~~
+
+After having installed your favorite OS, run SCT installer and test it:
+
+.. code:: bash
+
+   git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+   cd sct
+   yes | ./install_sct
+   export PATH="/sct/bin:${PATH}"
+   sct_testing
+
+Option 2: With GUI
+==================
+
+In order to run scripts with GUI you need to allow X11 redirection.
+First, save your Docker image:
+
+1. Open another Terminal
+2. List current docker images
+
+.. code:: bash
+
+   docker ps -a
+
+3. Save container as new image
+
+.. code:: bash
+
+   docker commit <CONTAINER_ID> <YOUR_NAME>/<DISTROS>:<VERSION>
+
+For OSX and Linux users
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Create an X11 server for handling display:
+
+1. Install XQuartz X11 server.
+2. Check ‘Allow connections from network clientsoption inXQuartz\`
+   settings.
+3. Quit and restart XQuartz.
+4. In XQuartz window xhost + 127.0.0.1
+5. In your other Terminal window, run:
+
+   -  On OSX:
+      ``docker run -e DISPLAY=host.docker.internal:0 -it <CONTAINER_ID>``
+   -  On Linux:
+      ``docker run -ti --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <CONTAINER_ID>``
+
+For windows users
+~~~~~~~~~~~~~~~~~
+
+| 1.Install Xming
+| 2.Connect to it using Xming/SSH:
+| Open a new CMD window and clone this repository:
+| ``git clone https://github.com/neuropoly/sct_docker.git``
+
+| If you are using Docker Desktop, run (double click)
+  windows/sct-win.xlaunch. If you are using Docker Toolbox, run
+  windows/sct-win_docker_toolbox.xlaunch
+| If this is the first time you have done this procedure, the system
+  will ask you if you want to add the remote PC (the docker container)
+  as trust pc, type yes. Then type the password to enter the docker
+  container (by default sct).
+
+**Troubleshooting:**
+
+| If there is no new open windows :
+| - Double click on the ‘windows/Erase_fingerprint_docker’ program
+| - Try again
+| - if it is still not working :
+| - Open the file manager and go to C:/Users/Your_username - In the
+  searchbar type ‘.ssh’ - Open the found ‘.ssh’ folder. - Open the
+  ‘known_hosts’ file with a text editor - Remove line starting with
+  ``192.168.99.100`` or ``localhost`` - try again
+
+The graphic terminal emulator LXterminal should appear (if not check the
+task bar at the bottom of the screen), which allows copying and pasting
+commands, which makes it easi
+
+.. _install Docker: https://docs.docker.com/install/
 
 Install with pip (experimental)
 -------------------------------
