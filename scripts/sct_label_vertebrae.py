@@ -435,7 +435,7 @@ def main(args=None):
 
     # label discs
     printv('\nLabel discs...', verbose)
-    label_discs('segmentation_labeled.nii', verbose=verbose)
+    label_discs('segmentation_labeled.nii', verbose=verbose, top_disc=fname_disc)
 
     # come back
     os.chdir(curdir)
