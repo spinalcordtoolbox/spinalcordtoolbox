@@ -558,11 +558,11 @@ def label_discs(fname_seg_labeled, verbose=1, top_disc=None):
     # save disc labeled file
     if top_disc is not None:
         last_value = max(np.nonzero(im_seg_labeled.data)[2])
-        slice = im_seg_labeled.data[:, :, max]
+        slice = im_seg_labeled.data[:, :, last_value]
         slice_one[slice.nonzero()] = 1
         # compute center of mass
         cx, cy = [int(x) for x in np.round(center_of_mass(slice_one)).tolist()]
-        data_disc[cx, cy, max] = vertebral_level
+        data_disc[cx, cy, last_value] = vertebral_level
 
     im_seg_labeled.data = data_disc
     im_seg_labeled.change_orientation(orientation_native).save(add_suffix(fname_seg_labeled, '_disc'))
