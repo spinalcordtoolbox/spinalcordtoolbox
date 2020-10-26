@@ -90,7 +90,10 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
      .. important::
         
-        Make sure to install the Ubuntu 18.04 LTS distro.
+        Make sure to install WSL1. SCT can work with WSL2, but the installation procedure described here refers to WSL1. 
+        If you are comfortable with installing SCT with WSL2, please feel free to do so.
+        
+        When asked what Linux versin to install, select the Ubuntu 18.04 LTS distro.
 
 #. Environment preparation
 
