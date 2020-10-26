@@ -10,14 +10,14 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
 import sys
 import os
 import argparse
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
+from spinalcordtoolbox.image import add_suffix
 
 
 def get_parser():
@@ -35,13 +35,13 @@ def get_parser():
         required=True,
         metavar=Metavar.file,
         help='First input image. Example: t2_seg.nii.gz',
-        )
+    )
     mandatory.add_argument(
         '-d',
         required=True,
         help='Second input image. Example: t2_manual_seg.nii.gz',
         metavar=Metavar.file,
-        )
+    )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -101,8 +101,9 @@ def get_parser():
 
     return parser
 
+
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     parser = get_parser()
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
@@ -110,27 +111,27 @@ if __name__ == "__main__":
     fname_input2 = arguments.d
 
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
-    tmp_dir = sct.tmp_create(verbose=verbose)  # create tmp directory
+    tmp_dir = tmp_create()  # create tmp directory
     tmp_dir = os.path.abspath(tmp_dir)
 
     # copy input files to tmp directory
     # for fname in [fname_input1, fname_input2]:
-    sct.copy(fname_input1, tmp_dir)
-    sct.copy(fname_input2, tmp_dir)
-    fname_input1 = ''.join(sct.extract_fname(fname_input1)[1:])
-    fname_input2 = ''.join(sct.extract_fname(fname_input2)[1:])
+    copy(fname_input1, tmp_dir)
+    copy(fname_input2, tmp_dir)
+    fname_input1 = ''.join(extract_fname(fname_input1)[1:])
+    fname_input2 = ''.join(extract_fname(fname_input2)[1:])
 
     curdir = os.getcwd()
-    os.chdir(tmp_dir) # go to tmp directory
+    os.chdir(tmp_dir)  # go to tmp directory
 
     if arguments.bin is not None:
-        fname_input1_bin = sct.add_suffix(fname_input1, '_bin')
-        sct.run(['sct_maths', '-i', fname_input1, '-bin', '0', '-o', fname_input1_bin])
+        fname_input1_bin = add_suffix(fname_input1, '_bin')
+        run_proc(['sct_maths', '-i', fname_input1, '-bin', '0', '-o', fname_input1_bin])
         fname_input1 = fname_input1_bin
-        fname_input2_bin = sct.add_suffix(fname_input2, '_bin')
-        sct.run(['sct_maths', '-i', fname_input2, '-bin', '0', '-o', fname_input2_bin])
+        fname_input2_bin = add_suffix(fname_input2, '_bin')
+        run_proc(['sct_maths', '-i', fname_input2, '-bin', '0', '-o', fname_input2_bin])
         fname_input2 = fname_input2_bin
 
     # copy header of im_1 to im_2
@@ -152,7 +153,7 @@ if __name__ == "__main__":
     if arguments.bzmax is not None and arguments.bzmax == 1:
         cmd += ['-bzmax']
     if arguments.o is not None:
-        path_output, fname_output, ext = sct.extract_fname(arguments.o)
+        path_output, fname_output, ext = extract_fname(arguments.o)
         cmd += ['-o', fname_output + ext]
 
     rm_tmp = bool(arguments.r)
@@ -161,18 +162,18 @@ if __name__ == "__main__":
     # # commented for now as it does not cover all the feature of isct_dice_coefficient
     # #from spinalcordtoolbox.image import Image, compute_dice
     # #dice = compute_dice(Image(fname_input1), Image(fname_input2), mode='3d', zboundaries=False)
-    # #sct.printv('Dice (python-based) = ' + str(dice), verbose)
+    # #printv('Dice (python-based) = ' + str(dice), verbose)
 
-    status, output = sct.run(cmd, verbose, is_sct_binary=True)
+    status, output = run_proc(cmd, verbose, is_sct_binary=True)
 
-    os.chdir(curdir) # go back to original directory
+    os.chdir(curdir)  # go back to original directory
 
     # copy output file into original directory
     if arguments.o is not None:
-        sct.copy(os.path.join(tmp_dir, fname_output + ext), os.path.join(path_output, fname_output + ext))
+        copy(os.path.join(tmp_dir, fname_output + ext), os.path.join(path_output, fname_output + ext))
 
     # remove tmp_dir
     if rm_tmp:
-        sct.rmtree(tmp_dir)
+        rmtree(tmp_dir)
 
-    sct.printv(output, verbose)
+    printv(output, verbose)

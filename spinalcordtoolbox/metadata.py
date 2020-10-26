@@ -2,8 +2,6 @@
 # -*- coding: utf-8
 # Deal with SCT dataset metadata
 
-from __future__ import absolute_import
-
 import io, os, re
 from operator import itemgetter
 

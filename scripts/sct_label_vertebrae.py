@@ -10,23 +10,25 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-
-from __future__ import division, absolute_import
-
-import sys, os
+import sys
+import os
 import argparse
+
 import numpy as np
-from spinalcordtoolbox.image import Image
+
+from spinalcordtoolbox.image import Image, generate_output_file
+
 from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
     clean_labeled_segmentation, label_discs, label_vert
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__
+from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
+    copy, extract_fname, rmtree
 
-# TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
-import sct_utils as sct
 import sct_straighten_spinalcord
 
 
@@ -48,7 +50,7 @@ class Param:
         list_objects = param_user.split(',')
         for object in list_objects:
             if len(object) < 2:
-                sct.printv('ERROR: Wrong usage.', 1, type='error')
+                printv('ERROR: Wrong usage.', 1, type='error')
             obj = object.split('=')
             if obj[0] == 'gaussian_std':
                 setattr(self, obj[0], float(obj[1]))
@@ -105,7 +107,7 @@ def get_parser():
     optional.add_argument(
         '-t',
         metavar=Metavar.folder,
-        default=os.path.join(sct.__data_dir__, "PAM50"),
+        default=os.path.join(__data_dir__, "PAM50"),
         help="Path to template."
     )
     optional.add_argument(
@@ -272,15 +274,15 @@ def main(args=None):
     if arguments.param is not None:
         param.update(arguments.param[0])
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
     remove_temp_files = arguments.r
     denoise = arguments.denoise
     laplacian = arguments.laplacian
 
-    path_tmp = sct.tmp_create(basename="label_vertebrae", verbose=verbose)
+    path_tmp = tmp_create(basename="label_vertebrae")
 
     # Copying input data to tmp folder
-    sct.printv('\nCopying input data to tmp folder...', verbose)
+    printv('\nCopying input data to tmp folder...', verbose)
     Image(fname_in).save(os.path.join(path_tmp, "data.nii"))
     Image(fname_seg).save(os.path.join(path_tmp, "segmentation.nii"))
 
@@ -289,8 +291,9 @@ def main(args=None):
     os.chdir(path_tmp)
 
     # Straighten spinal cord
-    sct.printv('\nStraighten spinal cord...', verbose)
+    printv('\nStraighten spinal cord...', verbose)
     # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
+
     cache_sig = sct.cache_signature(
         input_files=[fname_in, fname_seg],
     )
@@ -299,12 +302,14 @@ def main(args=None):
         os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and 
         os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and 
         os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz"))):
+
         # if they exist, copy them into current folder
-        sct.printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
-        sct.copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
-        sct.copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
-        sct.copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
+        printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
+        copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
+        copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
+        copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
         # apply straightening
+
         s, o = sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz',
                                '-o', 'data_straight.nii'])
     else:
@@ -314,7 +319,7 @@ def main(args=None):
             '-r', str(remove_temp_files),
             '-v', str(verbose),
         ])
-        sct.cache_save(cachefile, cache_sig)
+        cache_save(cachefile, cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution
     sct.printv('\nResample to 0.5mm isotropic...', verbose)
@@ -334,7 +339,7 @@ def main(args=None):
             is_sct_binary=True,
             )
     # Threshold segmentation at 0.5
-    sct.run(['sct_maths', '-i', 'segmentation_straight.nii', '-thr', '0.5', '-o', 'segmentation_straight.nii'], verbose)
+    run_proc(['sct_maths', '-i', 'segmentation_straight.nii', '-thr', '0.5', '-o', 'segmentation_straight.nii'], verbose)
 
     # If disc label file is provided, label vertebrae using that file instead of automatically
     if fname_disc:
@@ -349,11 +354,12 @@ def main(args=None):
                 verbose=verbose,
                 is_sct_binary=True,
                 )
+
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
     else:
         # create label to identify disc
-        sct.printv('\nCreate label to identify disc...', verbose)
+        printv('\nCreate label to identify disc...', verbose)
         fname_labelz = os.path.join(path_tmp, file_labelz)
         if initz or initcenter:
             if initcenter:
@@ -363,7 +369,7 @@ def main(args=None):
                 z_center = int(np.round(nz / 2))  # get z_center
                 initz = [z_center, initcenter]
 
-            im_label = create_labels_along_segmentation(Image('segmentation.nii'), [(initz[0],initz[1])])
+            im_label = create_labels_along_segmentation(Image('segmentation.nii'), [(initz[0], initz[1])])
             im_label.data = dilate(im_label.data, 3, 'ball')
             im_label.save(fname_labelz)
 
@@ -393,6 +399,7 @@ def main(args=None):
         dilate(Image(fname_labelz), 5, 'ball').save(fname_labelz)
 
         # Apply straightening to z-label
+
         sct.printv('\nAnd apply straightening to label...', verbose)
         sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
                 (file_labelz,
@@ -418,8 +425,8 @@ def main(args=None):
 
         # apply laplacian filtering
         if laplacian:
-            sct.printv('\nApply Laplacian filter...', verbose)
-            sct.run(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
+            printv('\nApply Laplacian filter...', verbose)
+            run_proc(['sct_maths', '-i', 'data_straightr.nii', '-laplacian', '1', '-o', 'data_straightr.nii'], verbose)
 
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1
@@ -453,39 +460,38 @@ def main(args=None):
                 )
 
     # Clean labeled segmentation
-    sct.printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
+    printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
     clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
 
     # label discs
-    sct.printv('\nLabel discs...', verbose)
+    printv('\nLabel discs...', verbose)
     label_discs('segmentation_labeled.nii', verbose=verbose)
 
     # come back
     os.chdir(curdir)
 
     # Generate output files
-    path_seg, file_seg, ext_seg = sct.extract_fname(fname_seg)
-    path_in, file_in, ext_in = sct.extract_fname(fname_in)
+
+
+
+    path_seg, file_seg, ext_seg = extract_fname(fname_seg)
+    path_in, file_in, ext_in = extract_fname(fname_in)
     fname_seg_labeled = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
-    sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii"), fname_seg_labeled)
-    sct.generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii"),
-                             os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
+    printv('\nGenerate output files...', verbose)
+    generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii"), fname_seg_labeled)
+    generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii"), os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
     if fname_disc is None:
-        sct.generate_output_file(os.path.join(path_tmp, "label_disc_posterior.nii.gz"),
-                                 os.path.join(path_output, file_in + '_labels-disc' + ext_in), verbose=verbose)
+        generate_output_file(os.path.join(path_tmp, "label_disc_posterior.nii.gz"),
+                             os.path.join(path_output, file_in + '_labels-disc' + ext_in), verbose=verbose)
     # copy straightening files in case subsequent SCT functions need them
-    sct.generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"),
-                             os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose=verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "warp_straight2curve.nii.gz"),
-                             os.path.join(path_output, "warp_straight2curve.nii.gz"), verbose=verbose)
-    sct.generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"),
-                             os.path.join(path_output, "straight_ref.nii.gz"), verbose=verbose)
+    generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose=verbose)
+    generate_output_file(os.path.join(path_tmp, "warp_straight2curve.nii.gz"), os.path.join(path_output, "warp_straight2curve.nii.gz"), verbose=verbose)
+    generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose=verbose)
 
     # Remove temporary files
     if remove_temp_files == 1:
-        sct.printv('\nRemove temporary files...', verbose)
-        sct.rmtree(path_tmp)
+        printv('\nRemove temporary files...', verbose)
+        rmtree(path_tmp)
 
     # Generate QC report
     if param.path_qc is not None:
@@ -496,10 +502,10 @@ def main(args=None):
         generate_qc(fname_in, fname_seg=labeled_seg_file, args=args, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_label_vertebrae')
 
-    sct.display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'])
+    display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'])
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

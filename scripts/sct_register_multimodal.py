@@ -31,17 +31,20 @@
 # second the image registration (and allow the choice of algo, metric, etc.)
 # - two-step registration, using only segmentation-based registration
 
-from __future__ import division, absolute_import
-
-import sys, os, time
+import sys
+import os
+import time
 import argparse
+
 import numpy as np
 
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.registration.register import Paramreg, ParamregMultiStep
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.fs import extract_fname
+from spinalcordtoolbox.image import check_dim
 
-import sct_utils as sct
 from sct_register_to_template import register_wrapper
 
 
@@ -336,20 +339,20 @@ def main(args=None):
     interp = arguments.x
     remove_temp_files = arguments.r
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
-    # sct.printv(arguments)
-    sct.printv('\nInput parameters:')
-    sct.printv('  Source .............. ' + fname_src)
-    sct.printv('  Destination ......... ' + fname_dest)
-    sct.printv('  Init transfo ........ ' + fname_initwarp)
-    sct.printv('  Mask ................ ' + fname_mask)
-    sct.printv('  Output name ......... ' + fname_output)
-    # sct.printv('  Algorithm ........... '+paramregmulti.algo)
-    # sct.printv('  Number of iterations  '+paramregmulti.iter)
-    # sct.printv('  Metric .............. '+paramregmulti.metric)
-    sct.printv('  Remove temp files ... ' + str(remove_temp_files))
-    sct.printv('  Verbose ............. ' + str(verbose))
+    # printv(arguments)
+    printv('\nInput parameters:')
+    printv('  Source .............. ' + fname_src)
+    printv('  Destination ......... ' + fname_dest)
+    printv('  Init transfo ........ ' + fname_initwarp)
+    printv('  Mask ................ ' + fname_mask)
+    printv('  Output name ......... ' + fname_output)
+    # printv('  Algorithm ........... '+paramregmulti.algo)
+    # printv('  Number of iterations  '+paramregmulti.iter)
+    # printv('  Metric .............. '+paramregmulti.metric)
+    printv('  Remove temp files ... ' + str(remove_temp_files))
+    printv('  Verbose ............. ' + str(verbose))
 
     # update param
     param.verbose = verbose
@@ -358,21 +361,21 @@ def main(args=None):
     param.remove_temp_files = remove_temp_files
 
     # Get if input is 3D
-    sct.printv('\nCheck if input data are 3D...', verbose)
-    sct.check_dim(fname_src, dim_lst=[3])
-    sct.check_dim(fname_dest, dim_lst=[3])
+    printv('\nCheck if input data are 3D...', verbose)
+    check_dim(fname_src, dim_lst=[3])
+    check_dim(fname_dest, dim_lst=[3])
 
     # Check if user selected type=seg, but did not input segmentation data
     if 'paramregmulti_user' in locals():
         if True in ['type=seg' in paramregmulti_user[i] for i in range(len(paramregmulti_user))]:
             if fname_src_seg == '' or fname_dest_seg == '':
-                sct.printv('\nERROR: if you select type=seg you must specify -iseg and -dseg flags.\n', 1, 'error')
+                printv('\nERROR: if you select type=seg you must specify -iseg and -dseg flags.\n', 1, 'error')
 
     # Put source into destination space using header (no estimation -- purely based on header)
     # TODO: Check if necessary to do that
     # TODO: use that as step=0
-    # sct.printv('\nPut source into destination space using header...', verbose)
-    # sct.run('isct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o
+    # printv('\nPut source into destination space using header...', verbose)
+    # run_proc('isct_antsRegistration -d 3 -t Translation[0] -m MI[dest_pad.nii,src.nii,1,16] -c 0 -f 1 -s 0 -o
     # [regAffine,src_regAffine.nii] -n BSpline[3]', verbose)
     # if segmentation, also do it for seg
 
@@ -387,7 +390,7 @@ def main(args=None):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
+    printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
     if path_qc is not None:
         if fname_dest_seg:
@@ -395,16 +398,16 @@ def main(args=None):
                         path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject,
                         process='sct_register_multimodal')
         else:
-            sct.printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
+            printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
 
     if generate_warpinv:
-        sct.display_viewer_syntax([fname_src, fname_dest2src], verbose=verbose)
-    sct.display_viewer_syntax([fname_dest, fname_src2dest], verbose=verbose)
+        display_viewer_syntax([fname_src, fname_dest2src], verbose=verbose)
+    display_viewer_syntax([fname_dest, fname_src2dest], verbose=verbose)
 
 
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

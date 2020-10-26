@@ -16,23 +16,21 @@
 
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
-from __future__ import absolute_import, division
-
-import sys, os
+import sys
+import os
 import argparse
 
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
-import sct_utils as sct
-# TODO: Properly test when first PR (that includes list_type) gets merged
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
-from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
-    func_sum, _merge_dict
-from spinalcordtoolbox.utils import parse_num_list
+    func_sum, merge_dict
+from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, parse_num_list, display_open
+from spinalcordtoolbox.utils.sys import init_sct
+from spinalcordtoolbox.utils.fs import get_absolute_path
 
 
 def get_parser():
@@ -234,7 +232,7 @@ def _make_figure(metric, fit_results):
 
         ax = fig.add_subplot(313)
         ax.grid(True)
-        #find a way to condense the following lines
+        # find a way to condense the following lines
         zmean_list, xmean_list, xfit_list, ymean_list, yfit_list, zref_list = [], [], [], [], [], []
         for i, value in enumerate(fit_results.data.zref):
             if value in z:
@@ -275,7 +273,7 @@ def main(args=None):
     slices = ''
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
-    fname_segmentation = sct.get_absolute_path(arguments.i)
+    fname_segmentation = get_absolute_path(arguments.i)
     fname_vert_levels = ''
     if arguments.o is not None:
         file_out = os.path.abspath(arguments.o)
@@ -312,17 +310,17 @@ def main(args=None):
     qc_subject = arguments.qc_subject
 
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # update fields
     metrics_agg = {}
     if not file_out:
         file_out = 'csa.csv'
 
-    metrics, fit_results = process_seg.compute_shape(fname_segmentation,
-                                                     angle_correction=angle_correction,
-                                                     param_centerline=param_centerline,
-                                                     verbose=verbose)
+    metrics, fit_results = compute_shape(fname_segmentation,
+                                         angle_correction=angle_correction,
+                                         param_centerline=param_centerline,
+                                         verbose=verbose)
     for key in metrics:
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
@@ -336,7 +334,7 @@ def main(args=None):
                                                             levels=parse_num_list(vert_levels), perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=group_funcs)
-    metrics_agg_merged = _merge_dict(metrics_agg)
+    metrics_agg_merged = merge_dict(metrics_agg)
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
 
     # QC report (only show CSA for clarity)
@@ -345,10 +343,10 @@ def main(args=None):
                     subject=qc_subject, path_img=_make_figure(metrics_agg_merged, fit_results),
                     process='sct_process_segmentation')
 
-    sct.display_open(file_out)
+    display_open(file_out)
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main(sys.argv[1:])

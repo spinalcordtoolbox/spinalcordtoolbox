@@ -10,29 +10,29 @@
 
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
-from __future__ import print_function, absolute_import
-
-import os, sys
+import sys
 import getopt
+import logging
 
 import nibabel
-import numpy as np
-from spinalcordtoolbox import sct_test_path
 
-import sct_utils as sct
+from spinalcordtoolbox.utils.sys import init_sct, sct_test_path, printv
+from spinalcordtoolbox.utils.fs import check_file_exist
+
+
+logger = logging.getLogger(__name__)
+
 
 # DEFAULT PARAMETERS
-
-
 class Param:
     # The constructor
     def __init__(self):
-        self.debug               = 0
+        self.debug = 0
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # main
-#=======================================================================================================================
+# =======================================================================================================================
 def main():
 
     # Initialization
@@ -40,12 +40,11 @@ def main():
     fname_segmentation = ''
 
     if param.debug:
-        sct.printv( '\n*** WARNING: DEBUG MODE ON ***\n')
-        path_sct_data = sct_test_path()
+        printv('\n*** WARNING: DEBUG MODE ON ***\n')
         fname_input = ''
         fname_segmentation = sct_test_path('t2', 't2_seg.nii.gz')
     else:
-    # Check input param
+        # Check input param
         try:
             opts, args = getopt.getopt(sys.argv[1:], 'hi:t:')
         except getopt.GetoptError as err:
@@ -64,8 +63,8 @@ def main():
         usage()
 
     # check existence of input files
-    sct.check_file_exist(fname_input)
-    sct.check_file_exist(fname_segmentation)
+    check_file_exist(fname_input)
+    check_file_exist(fname_segmentation)
 
     # read nifti input file
     img = nibabel.load(fname_input)
@@ -82,41 +81,41 @@ def main():
     for i in range(0, len(X)):
         if data_seg[X[i], Y[i], Z[i]] == 0:
             status = 1
-            break;
+            break
 
     if status is not 0:
-        sct.printv('ERROR: detected point is not in segmentation', 1, 'warning')
+        printv('ERROR: detected point is not in segmentation', 1, 'warning')
     else:
-        sct.printv('OK: detected point is in segmentation')
+        printv('OK: detected point is in segmentation')
 
     sys.exit(status)
 
-#=======================================================================================================================
+# =======================================================================================================================
 # usage
-#=======================================================================================================================
+# =======================================================================================================================
 
 
 def usage():
-    print( 'USAGE: \n' \
-        'This script check if the point contained in inputdata is in the spinal cord segmentation.\n'\
-        '  isct_check_detection -i <inputdata> -t <segmentationdata>\n' \
-        '\n'\
-        'MANDATORY ARGUMENTS\n' \
-        '  -i           input volume. Contains one point\n' \
-        '  -t           segmentation volume.\n' \
-        '\n'\
-        'OPTIONAL ARGUMENTS\n' \
-        '  -h           help. Show this message.\n' \
-        '\n')
+    print('USAGE: \n'
+          'This script check if the point contained in inputdata is in the spinal cord segmentation.\n'
+          '  isct_check_detection -i <inputdata> -t <segmentationdata>\n'
+          '\n'
+          'MANDATORY ARGUMENTS\n'
+          '  -i           input volume. Contains one point\n'
+          '  -t           segmentation volume.\n'
+          '\n'
+          'OPTIONAL ARGUMENTS\n'
+          '  -h           help. Show this message.\n'
+          '\n')
 
     sys.exit(2)
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # Start program
-#=======================================================================================================================
+# =======================================================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     # call main function

@@ -12,18 +12,14 @@
 # About the license: see the file LICENSE.TXT
 # ######################################################################################################################
 
-from __future__ import absolute_import, division
-
 import sys
 import os
 import argparse
 
 import numpy as np
 
-import sct_utils as sct
-import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix, empty_like
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax
 
 
 class Param:
@@ -59,11 +55,11 @@ class Tsnr:
 
         # save TSNR
         fname_tsnr = self.out
-        nii_tsnr = msct_image.empty_like(nii_data)
+        nii_tsnr = empty_like(nii_data)
         nii_tsnr.data = data_tsnr
         nii_tsnr.save(fname_tsnr, dtype=np.float32)
 
-        sct.display_viewer_syntax([fname_tsnr])
+        display_viewer_syntax([fname_tsnr])
 
 
 # PARSER
@@ -116,10 +112,10 @@ def main(args=None):
     if arguments.o is not None:
         fname_dst = arguments.o
     else:
-        fname_dst = sct.add_suffix(fname_src, "_tsnr")
+        fname_dst = add_suffix(fname_src, "_tsnr")
 
     verbose = int(arguments.v)
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # call main function
     tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)
@@ -129,6 +125,6 @@ def main(args=None):
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     param = Param()
     main()

@@ -21,11 +21,9 @@ import os
 import argparse
 import json
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, splitext
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, display_viewer_syntax
 from spinalcordtoolbox.qmri.mt import compute_mtsat
-from spinalcordtoolbox.image import Image
-
-import sct_utils as sct
+from spinalcordtoolbox.image import Image, splitext
 
 
 def get_parser(argv):
@@ -45,19 +43,19 @@ def get_parser(argv):
         required=True,
         help="Image with MT_ON",
         metavar=Metavar.file,
-        )
+    )
     mandatoryArguments.add_argument(
         "-pd",
         required=True,
         help="Image PD weighted (typically, the MT_OFF)",
         metavar=Metavar.file,
-        )
+    )
     mandatoryArguments.add_argument(
         "-t1",
         required=True,
         help="Image T1-weighted",
         metavar=Metavar.file,
-        )
+    )
 
     optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
     optional.add_argument(
@@ -70,37 +68,37 @@ def get_parser(argv):
         help="TR [in ms] for mt image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        )
+    )
     optional.add_argument(
         "-trpd",
         help="TR [in ms] for pd image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        )
+    )
     optional.add_argument(
         "-trt1",
         help="TR [in ms] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        )
+    )
     optional.add_argument(
         "-famt",
         help="Flip angle [in deg] for mt image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        )
+    )
     optional.add_argument(
         "-fapd",
         help="Flip angle [in deg] for pd image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        )
+    )
     optional.add_argument(
         "-fat1",
         help="Flip angle [in deg] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
-        )
+    )
     optional.add_argument(
         "-b1map",
         help="B1 map",
@@ -168,9 +166,9 @@ def main(argv):
     parser = get_parser(argv)
     args = parser.parse_args(argv if argv else ['--help'])
     verbose = args.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct(log_level=verbose, update=True)  # Update log level
 
-    sct.printv('Load data...', verbose)
+    printv('Load data...', verbose)
     nii_mt = Image(args.mt)
     nii_pd = Image(args.pd)
     nii_t1 = Image(args.t1)
@@ -199,11 +197,11 @@ def main(argv):
                                          nii_b1map=nii_b1map)
 
     # Output MTsat and T1 maps
-    sct.printv('Generate output files...', verbose)
+    printv('Generate output files...', verbose)
     nii_mtsat.save(args.omtsat)
     nii_t1map.save(args.ot1map)
 
-    sct.display_viewer_syntax([args.omtsat, args.ot1map],
+    display_viewer_syntax([args.omtsat, args.ot1map],
                               colormaps=['gray', 'gray'],
                               minmax=['-10,10', '0, 3'],
                               opacities=['1', '1'],

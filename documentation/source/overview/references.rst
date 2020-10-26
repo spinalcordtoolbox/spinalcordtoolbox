@@ -342,3 +342,9 @@ Applications
    Spinal Cord Associates withSurgical Recovery in Patients with 
    Degenerative Cervical Myelopathy. World Neurosurgery, 2020 
    <https://pubmed.ncbi.nlm.nih.gov/33010502/>`__
+-  `Tinnermann et al. Cortico-spinal imaging to study pain. NeuroImage.2020
+   <https://www.sciencedirect.com/science/article/pii/S1053811920309241?via%3Dihub>`__
+-  `Rejc et al. Spinal Cord Imaging Markers and Recovery of Volitional
+   Leg Movement With Spinal Cord Epidural Stimulation in Individuals
+   With Clinically Motor Complete Spinal Cord Injury. Front. Syst. Neurosci.,
+   2020 <https://www.frontiersin.org/articles/10.3389/fnsys.2020.559313/full>`__

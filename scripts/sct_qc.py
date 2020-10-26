@@ -8,10 +8,9 @@
 #
 # About the license: see the file LICENSE.TXT
 
-from __future__ import absolute_import, division
-
 import argparse
-import sct_utils as sct
+
+from spinalcordtoolbox.utils import init_sct
 
 
 def get_parser():
@@ -84,5 +83,5 @@ def main(args):
 
 if __name__ == '__main__':
     arguments = get_parser().parse_args()
-    sct.init_sct(log_level=2 if arguments.v else 1)
+    init_sct(log_level=2 if arguments.v else 1)
     main(arguments)

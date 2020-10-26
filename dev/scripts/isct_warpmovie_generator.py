@@ -15,6 +15,7 @@
 from __future__ import absolute_import, division
 
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import init_sct
 from scipy.misc import toimage
 
 import sct_utils as sct
@@ -42,7 +43,7 @@ class WarpingField(Image):
             raise StopIteration()
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
 
     # TODO: Convert to argparse when fixing this script
     # from msct_parser import Parser

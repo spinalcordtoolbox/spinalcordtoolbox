@@ -11,8 +11,6 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 
-from __future__ import absolute_import
-
 from spinalcordtoolbox.metadata import read_label_file
 
 def get_fractional_volume_per_label(atlas_folder, file_label, nb_RL_labels=15):

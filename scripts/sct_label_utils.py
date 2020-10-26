@@ -16,8 +16,6 @@
 # TODO: check if use specified several processes.
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
 
-from __future__ import division, absolute_import
-
 import os
 import sys
 import argparse
@@ -25,14 +23,12 @@ import logging
 from typing import Sequence
 
 import numpy as np
-from scipy import ndimage
 
+import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
-import spinalcordtoolbox.labels as sct_labels
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type
-import sct_utils as sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, printv
 
 logger = logging.getLogger(__name__)
 
@@ -232,7 +228,7 @@ def main(args=None):
         arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     verbosity = arguments.v
-    sct.init_sct(log_level=verbosity, update=True)  # Update log level
+    init_sct(log_level=verbosity, update=True)  # Update log level
 
     input_filename = arguments.i
     output_fname = arguments.o
@@ -265,7 +261,7 @@ def main(args=None):
     elif arguments.vert_body is not None:
         levels = arguments.vert_body
         if len(levels) == 1 and levels[0] == 0:
-            levels = None # all levels
+            levels = None  # all levels
         out = sct_labels.label_vertebrae(img, levels)
     elif arguments.vert_continuous:
         out = sct_labels.continuous_vertebral_levels(img)
@@ -273,7 +269,7 @@ def main(args=None):
     elif arguments.MSE is not None:
         ref = Image(arguments.MSE)
         mse = sct_labels.compute_mean_squared_error(img, ref)
-        sct.printv(f"Computed MSE: {mse}")
+        printv(f"Computed MSE: {mse}")
         return
     elif arguments.remove_reference is not None:
         ref = Image(arguments.remove_reference)
@@ -319,13 +315,13 @@ def display_voxel(img: Image, verbose: int = 1) -> Sequence[Coordinate]:
     useful_notation = ''
 
     for coord in coordinates_input:
-        sct.printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose=verbose)
+        printv('Position=(' + str(coord.x) + ',' + str(coord.y) + ',' + str(coord.z) + ') -- Value= ' + str(coord.value), verbose=verbose)
         if useful_notation:
             useful_notation = useful_notation + ':'
         useful_notation += str(coord)
 
-    sct.printv('All labels (useful syntax):', verbose=verbose)
-    sct.printv(useful_notation, verbose=verbose)
+    printv('All labels (useful syntax):', verbose=verbose)
+    printv(useful_notation, verbose=verbose)
 
 
 def launch_sagittal_viewer(img: Image, labels: Sequence[int], msg: str, previous_points: Sequence[Coordinate] = None, output_img: Image = None) -> Image:
@@ -391,6 +387,6 @@ def launch_manual_label_gui(img: Image, input_labels_img: Image, labels: Sequenc
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

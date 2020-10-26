@@ -2,15 +2,7 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.straightening
 
-
-from __future__ import absolute_import
-
-import os, sys
-
-from spinalcordtoolbox.utils import __sct_dir__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 from spinalcordtoolbox.straightening import SpinalCordStraightener
-import sct_utils as sct
 from spinalcordtoolbox.utils import sct_test_path
 
 VERBOSE = 0  # Set to 2 to save images, 0 otherwise

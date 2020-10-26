@@ -13,25 +13,22 @@
 
 # TODO: if fail, run with log and display message to send to sourceforge.
 # TODO: check chmod of binaries
-# TODO: find another way to create log file. E.g. sct.print(). For color as well.
+# TODO: find another way to create log file. E.g. print(). For color as well.
 # TODO: manage .cshrc files
 
-from __future__ import print_function, absolute_import
-
 import argparse
-
 import sys
 import io
 import os
-import re
 import platform
 import importlib
 import warnings
+import psutil
 
 import requirements
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import SmartFormatter, sct_dir_local_path
+from spinalcordtoolbox.utils.shell import SmartFormatter
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__
 
 
 # DEFAULT PARAMETERS
@@ -128,7 +125,7 @@ def get_version(module):
     :param module: the module to get version from
     :return: string: the version of the module
     """
-    if module.__name__  == 'PyQt5.QtCore':
+    if module.__name__ == 'PyQt5.QtCore':
         # Unfortunately importing PyQt5.Qt makes sklearn import crash on Ubuntu 14.04 (corresponding to Debian's jessie)
         # so we don't display the version for this distros.
         # See: https://github.com/neuropoly/spinalcordtoolbox/pull/2522#issuecomment-559310454
@@ -176,8 +173,8 @@ def get_dependencies(requirements_txt=None):
     warnings.filterwarnings(action='ignore', module='requirements')
 
     for req in requirements.parse(requirements_txt):
-        if ';' in req.line: # handle environment markers; TODO: move this upstream into requirements-parser
-            condition = req.line.split(';',1)[-1].strip()
+        if ';' in req.line:  # handle environment markers; TODO: move this upstream into requirements-parser
+            condition = req.line.split(';', 1)[-1].strip()
             if not _test_condition(condition):
                 continue
         pkg = req.name
@@ -215,8 +212,8 @@ def get_parser():
 
 def main():
     print("SCT info:")
-    print("- version: {}".format(sct.__version__))
-    print("- path: {0}".format(sct.__sct_dir__))
+    print("- version: {}".format(__version__))
+    print("- path: {0}".format(__sct_dir__))
 
     # initialization
     install_software = 0
@@ -230,14 +227,14 @@ def main():
     if arguments.complete:
         complete_test = 1
 
-    # use variable "verbose" when calling sct.run for more clarity
+    # use variable "verbose" when calling run for more clarity
     verbose = complete_test
 
     # complete test
     if complete_test:
-        print(sct.run('date', verbose))
-        print(sct.run('whoami', verbose))
-        print(sct.run('pwd', verbose))
+        print(run_proc('date', verbose))
+        print(run_proc('whoami', verbose))
+        print(run_proc('pwd', verbose))
         bash_profile = os.path.expanduser("~/.bash_profile")
         if os.path.isfile(bash_profile):
             with io.open(bash_profile, "r") as f:
@@ -255,14 +252,11 @@ def main():
         os_running = 'linux'
 
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
+    print('CPU cores: Available: {}, Used by ITK functions: {}'.format(psutil.cpu_count(), int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))))
 
-    # Check number of CPU cores
-    from multiprocessing import cpu_count
-    output = int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))
-    print('CPU cores: Available: {}, Used by SCT: {}'.format(cpu_count(), output))
-
-    # check RAM
-    sct.checkRAM(os_running, 0)
+    ram = psutil.virtual_memory()
+    factor_MB = 1024 * 1024
+    print('RAM: Total: {}MB, Used: {}MB, Available: {}MB'.format(ram.total // factor_MB, ram.used // factor_MB, ram.available // factor_MB))
 
     if arguments.short:
         sys.exit()
@@ -270,7 +264,7 @@ def main():
     # check if Python path is within SCT path
     print_line('Check Python executable')
     path_python = sys.executable
-    if sct.__sct_dir__ in path_python:
+    if __sct_dir__ in path_python:
         print_ok()
         print('  Using bundled python {} at {}'.format(sys.version, path_python))
     else:
@@ -279,7 +273,7 @@ def main():
 
     # check if data folder is empty
     print_line('Check if data are installed')
-    if os.path.isdir(sct.__data_dir__):
+    if os.path.isdir(__data_dir__):
         print_ok()
     else:
         print_fail()
@@ -318,7 +312,7 @@ def main():
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
     cmd = 'isct_test_ants'
-    status, output = sct.run(cmd, verbose=0, raise_exception=False)
+    status, output = run_proc(cmd, verbose=0, raise_exception=False)
     if status == 0:
         print_ok()
     else:
@@ -331,7 +325,7 @@ def main():
 
     # check PropSeg compatibility with OS
     print_line('Check PropSeg compatibility with OS ')
-    status, output = sct.run('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
+    status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
     if status in (0, 1):
         print_ok()
     else:
@@ -367,7 +361,7 @@ def main():
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     # call main function

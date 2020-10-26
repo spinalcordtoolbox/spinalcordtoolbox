@@ -10,23 +10,21 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import division, absolute_import
-
 import os
 import sys
-
-import numpy as np
 import argparse
 import pickle
 import gzip
+
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
 import spinalcordtoolbox.math as sct_math
-
-from sct_utils import printv, extract_fname, display_viewer_syntax, init_sct
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.fs import extract_fname
 
 
 def get_parser():
@@ -114,16 +112,23 @@ def get_parser():
     thresholding.add_argument(
         "-adap",
         metavar=Metavar.list,
-        help="R|Threshold image using Adaptive algorithm (from skimage). Separate following arguments with ',':"
-             "\n Block size: Odd size of pixel neighborhood which is used to calculate the threshold value (e.g. 3, 7, 21, ...)"
-             "\n Offset: Constant subtracted from weighted mean of neighborhood to calculate the local threshold value. Suggested offset is 0.",
+        type=list_type(',', int),
+        help="R|Threshold image using Adaptive algorithm (from skimage). Provide 2 values separated by ',' that "
+             "correspond to the parameters below. For example, '-adap 7,0' corresponds to a block size of 7 and an "
+             "offset of 0.\n"
+             "  - Block size: Odd size of pixel neighborhood which is used to calculate the threshold value. \n"
+             "  - Offset: Constant subtracted from weighted mean of neighborhood to calculate the local threshold "
+             "value. Suggested offset is 0.",
         required=False)
     thresholding.add_argument(
         "-otsu-median",
-        help="R|Threshold image using Median Otsu algorithm. Separate following arguments with ',':"
-             "\n Size of the median filter (e.g. 2, 3)"
-             "\n Number of iterations (e.g. 3, 4, 5)\n",
         metavar=Metavar.list,
+        type=list_type(',', int),
+        help="R|Threshold image using Median Otsu algorithm (from dipy). Provide 2 values separated by ',' that "
+             "correspond to the parameters below. For example, '-otsu-median 3,5' corresponds to a filter size of 3 "
+             "repeated over 5 iterations.\n"
+             "  - Size: Radius (in voxels) of the applied median filter.\n"
+             "  - Iterations: Number of passes of the median filter.",
         required=False)
     thresholding.add_argument(
         '-percent',
@@ -173,15 +178,19 @@ def get_parser():
     filtering = parser.add_argument_group("FILTERING METHODS")
     filtering.add_argument(
         "-smooth",
-        metavar='',
-        help='Gaussian smoothing filter with specified standard deviations in mm for each axis (Example: 2,2,1) or '
-             'single value for all axis (Example: 2).',
+        metavar=Metavar.list,
+        type=list_type(',', float),
+        help='Gaussian smoothing filtering. Supply values for standard deviations in mm. If a single value is provided, '
+             'it will be applied to each axis of the image. If multiple values are provided, there must be one value '
+             'per image axis. (Examples: "-smooth 2.0,3.0,2.0" (3D image), "-smooth 2.0" (any-D image)).',
         required=False)
     filtering.add_argument(
         '-laplacian',
-        nargs="+",
-        metavar='',
-        help='Laplacian filtering with specified standard deviations in mm for all axes (Example: 2).',
+        metavar=Metavar.list,
+        type=list_type(',', float),
+        help='Laplacian filtering. Supply values for standard deviations in mm. If a single value is provided, it will '
+             'be applied to each axis of the image. If multiple values are provided, there must be one value per '
+             'image axis. (Examples: "-laplacian 2.0,3.0,2.0" (3D image), "-laplacian 2.0" (any-D image)).',
         required=False)
     filtering.add_argument(
         '-denoise',
@@ -267,11 +276,11 @@ def main(args=None):
         data_out = sct_math.otsu(data, param)
 
     elif arguments.adap is not None:
-        param = convert_list_str(arguments.adap, "int")
+        param = arguments.adap
         data_out = sct_math.adap(data, param[0], param[1])
 
     elif arguments.otsu_median is not None:
-        param = convert_list_str(arguments.otsu_median, "int")
+        param = arguments.otsu_median
         data_out = sct_math.otsu_median(data, param[0], param[1])
 
     elif arguments.thr is not None:
@@ -296,7 +305,7 @@ def main(args=None):
         data_out = data - data2
 
     elif arguments.laplacian is not None:
-        sigmas = convert_list_str(arguments.laplacian, "float")
+        sigmas = arguments.laplacian
         if len(sigmas) == 1:
             sigmas = [sigmas for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
@@ -334,7 +343,7 @@ def main(args=None):
         data_out = np.std(data, dim, ddof=1)
 
     elif arguments.smooth is not None:
-        sigmas = convert_list_str(arguments.smooth, "float")
+        sigmas = arguments.smooth
         if len(sigmas) == 1:
             sigmas = [sigmas[0] for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
@@ -469,24 +478,6 @@ def get_data_or_scalar(argument, data_in):
     return data_out
 
 
-def convert_list_str(string_list, type='int'):
-    """
-    Receive a string and then converts it into a list of selected type.
-    Example: "2,2,3" --> [2, 2, 3]
-    :param string_list: List of comma-separated string
-    :param type: string: int, float
-    :return:
-    """
-    new_type_list = (string_list).split(",")
-    for inew_type_list, ele in enumerate(new_type_list):
-        if type is "int":
-            new_type_list[inew_type_list] = int(ele)
-        elif type is "float":
-            new_type_list[inew_type_list] = float(ele)
-
-    return new_type_list
-
-
 def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, metric_full: str, verbose):
     """
     Sanitize input and compute similarity metric between two images data.
@@ -500,7 +491,6 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
         matplotlib.use('Agg')
         plt.plot(data1_1d, 'b')
         plt.plot(data2_1d, 'r')
-        plt.grid
         plt.title('Similarity: ' + metric_full + ' = ' + str(res))
         plt.savefig('fig_similarity.png')
 
