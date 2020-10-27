@@ -13,8 +13,8 @@ multi-center studies, with the goal of improving patient diagnosis and
 prognosis and helping the discovery of new biomarkers of spinal-related
 diseases.
 
-PAM50 is one such template for MRI of the full spinal cord and brainstem. It possesses
-the following features:
+PAM50 is one such template for MRI of the full spinal cord and brainstem, and
+is included in your installation of SCT. It has the following features:
 
 * It is available for T1-, T2-and T2*-weighted MRI contrast.
 * It is compatible with the ICBM152 brain template, allowing cerebrospinal studies.
@@ -42,7 +42,7 @@ White matter atlas (``PAM50/atlas``)
 
 The White Matter atlas will be a useful tool for your studies of specific spinal cord tracts. It consists of 36 nifti
 volumes named ``PAM50_atlas_<tract_number>.nii.gz`` where ``<tract_number>`` is the number identifying the tract.
-Fifteen tracts for each side are available. The values of each voxel of the files ``PAM50_atlas_<tract_number>.nii.gz``
+Fifteen WM tracts and three GM regions are available for each side. The values of each voxel of the files ``PAM50_atlas_<tract_number>.nii.gz``
 are the voxel volume proportions occupied by the corresponding tract.
 
 The atlas folder also contains an ``info_label.txt`` file to explain what each file represents:
