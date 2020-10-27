@@ -185,7 +185,7 @@ Create an X11 server for handling display:
    -  On Linux:
       ``docker run -ti --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <CONTAINER_ID>``
 
-For windows users
+For Windows users
 ~~~~~~~~~~~~~~~~~
 
 | 1.Install Xming
