@@ -36,7 +36,7 @@ The template folder also contains an ``info_label.txt`` file to explain what eac
 White matter atlas (``PAM50/atlas``)
 ====================================
 
-.. figure:: ../../../imgs/white_matter_atlas_illustration.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/white_matter_atlas_illustration.png
     :figwidth: 40%
     :align: right
 
@@ -56,7 +56,7 @@ The atlas folder also contains an ``info_label.txt`` file to explain what each f
 Spinal levels (``PAM50/spinal_levels``)
 =======================================
 
-.. figure:: ../../../imgs/spinal_levels_illustration.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinal_levels_illustration.png
     :figwidth: 40%
     :align: right
 
