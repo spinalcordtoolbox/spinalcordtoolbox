@@ -96,8 +96,8 @@ In the context of SCT, it can be used:
   virtual machine
 - <your reason here>
 
-Option 1: Without GUI
-=====================
+Basic Installation (No GUI)
+===========================
 
 First, `install Docker <https://docs.docker.com/install/>`_. Then, follow the examples below to create an OS-specific SCT installation.
 
@@ -149,8 +149,8 @@ CentOS7-based installation
    docker commit <CONTAINER_ID> <YOUR_NAME>/centos:centos7
 
 
-Option 2: With GUI
-==================
+Using GUI Scripts (Optional)
+============================
 
 In order to run scripts with GUI you need to allow X11 redirection.
 First, save your Docker image:
