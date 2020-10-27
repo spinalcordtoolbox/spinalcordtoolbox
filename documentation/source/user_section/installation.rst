@@ -168,7 +168,7 @@ First, save your Docker image:
 
    docker commit <CONTAINER_ID> <YOUR_NAME>/<DISTROS>:<VERSION>
 
-For OSX and Linux users
+For macOS and Linux users
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 Create an X11 server for handling display:
@@ -180,7 +180,7 @@ Create an X11 server for handling display:
 4. In XQuartz window xhost + 127.0.0.1
 5. In your other Terminal window, run:
 
-   -  On OSX:
+   -  On macOS:
       ``docker run -e DISPLAY=host.docker.internal:0 -it <CONTAINER_ID>``
    -  On Linux:
       ``docker run -ti --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <CONTAINER_ID>``
