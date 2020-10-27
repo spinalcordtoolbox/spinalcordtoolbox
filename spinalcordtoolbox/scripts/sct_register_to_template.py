@@ -35,9 +35,9 @@ from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 
-import sct_maths
-import sct_apply_transfo
-from sct_image import split_data
+from spinalcordtoolbox.scripts import sct_maths
+from spinalcordtoolbox.scripts import sct_apply_transfo
+from spinalcordtoolbox.scripts.sct_image import split_data
 
 
 class Param:

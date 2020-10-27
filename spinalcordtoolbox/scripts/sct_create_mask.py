@@ -30,7 +30,7 @@ from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, extract_fna
 from spinalcordtoolbox.labels import create_labels
 from spinalcordtoolbox.types import Coordinate
 
-from sct_image import concat_data
+from spinalcordtoolbox.scripts.sct_image import concat_data
 
 
 # DEFAULT PARAMETERS

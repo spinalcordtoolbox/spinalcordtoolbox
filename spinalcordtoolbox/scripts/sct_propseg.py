@@ -28,8 +28,8 @@ from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, mv, co
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
 
-import sct_image
-from sct_convert import convert
+from spinalcordtoolbox.scripts import sct_image
+from spinalcordtoolbox.scripts.sct_convert import convert
 
 logger = logging.getLogger(__name__)
 
