@@ -67,7 +67,7 @@ below:
 .. _SCT course (v4.0.0_beta.4), London, 2019-01-22: https://osf.io/gvs6f/
 .. _SCT course (v3.2.2), Paris, 2018-06-12: https://osf.io/386h7/
 .. _SCT course (v3.0.3), Honolulu, 2017-04-28: https://osf.io/fvnjq/
-.. _SCT course (v3.0_beta14), Geneva, 2016-06-28: https://sourceforge.net/p/spinalcordtoolbox/wiki/Home/attachment/SCT_Course_20160628.pdf
+.. _SCT course (v3.0_beta14), Geneva, 2016-06-28: https://drive.google.com/file/d/0Bx3A13n3Q_EAOXktWmNVNGRhdUk/view?usp=sharing
 .. _SCT course (v3.0_beta9), Singapore, 2016-05-13: https://drive.google.com/file/d/0Bx3A13n3Q_EAa3NQYjBOWjhjZm8/view?usp=sharing
 .. _SCT course (v3.0_beta1), Montreal, 2016-04-19: https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing
 .. _SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15: https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0
