@@ -29,7 +29,6 @@ The template folder contains image files representing different template diffusi
 The template folder also contains an ``info_label.txt`` file to explain what each file represents:
 
 .. include:: info_label-template.txt
-   :start-line: 3
    :code:
 
 
@@ -48,8 +47,6 @@ are the voxel volume proportions occupied by the corresponding tract.
 The atlas folder also contains an ``info_label.txt`` file to explain what each file represents:
 
 .. include:: info_label-atlas.txt
-   :start-line: 4
-   :end-line: 40
    :code:
 
 
@@ -66,7 +63,6 @@ spinal level.
 The spinal_levels folder also contains an ``info_label.txt`` file to explain what each file represents:
 
 .. include:: info_label-spinal_levels.txt
-   :start-line: 3
    :code:
 
 
