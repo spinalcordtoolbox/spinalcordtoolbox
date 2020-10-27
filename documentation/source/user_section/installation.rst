@@ -188,23 +188,18 @@ Create an X11 server for handling display:
 For Windows users
 ~~~~~~~~~~~~~~~~~
 
-| 1.Install Xming
-| 2.Connect to it using Xming/SSH:
-| Open a new CMD window and clone this repository:
-| ``git clone https://github.com/neuropoly/sct_docker.git``
+1. Install Xming
+2. Connect to it using Xming/SSH:
 
-| If you are using Docker Desktop, run (double click)
-  windows/sct-win.xlaunch. If you are using Docker Toolbox, run
-  windows/sct-win_docker_toolbox.xlaunch
-| If this is the first time you have done this procedure, the system
-  will ask you if you want to add the remote PC (the docker container)
-  as trust pc, type yes. Then type the password to enter the docker
-  container (by default sct).
+  - If you are using Docker Desktop, please download and run (double click) the following script: :download:`sct-win.xlaunch<../../../contrib/docker/sct-win.xlaunch>`.
+  - If you are using Docker Toolbox, please download and run the following script instead: :download:`sct-win_docker_toolbox.xlaunch<../../../contrib/docker/sct-win_docker_toolbox.xlaunch>`
+  - If this is the first time you have done this procedure, the system will ask you if you want to add the remote PC (the docker container) as trust pc, type yes. Then type the password to enter the docker container (by default sct).
 
 **Troubleshooting:**
 
-| If there is no new open windows :
-| - Double click on the ‘windows/Erase_fingerprint_docker’ program
+| If there are no new open windows:
+| - Please download and run the following file:
+  :download:`Erase_fingerprint_docker.sh<../../../contrib/docker/Erase_fingerprint_docker.sh>`
 | - Try again
 | - if it is still not working :
 | - Open the file manager and go to C:/Users/Your_username - In the
