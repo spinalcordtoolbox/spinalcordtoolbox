@@ -291,12 +291,9 @@ def find_missing_label(img,ref):
             if np.round(coord_ref.value) not in rounded_coord_in_values:
                 FN.append(np.round(coord_ref.value))
 
-    logger.warning("False positive label {}, False Negative label {}".format(' '.join(map(str, FP)),
-                                                                             ' '.join(map(str, FN))))
+    logger.info("False positive label {}, False Negative label {}".format(' '.join(map(str, FP)),
+                                                                          ' '.join(map(str, FN))))
     return FP, FN
-
-
-
 
 
 # FIXME [AJ]: this is slow on large images
@@ -310,20 +307,12 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
     """
     coordinates_input = img.getNonZeroCoordinates()
     coordinates_ref = ref.getNonZeroCoordinates()
-
-    rounded_coord_ref_values = [np.round(c.value) for c in coordinates_ref]
-    rounded_coord_in_values = [np.round(c.value) for c in coordinates_input]
     result = 0.0
 
+    find_missing_label(img, ref)
 
     for coord in coordinates_input:
         for coord_ref in coordinates_ref:
-            if np.round(coord.value) not in rounded_coord_in_values:
-                logger.warning(f"Missing input label {coord} in reference!")
-
-            if np.round(coord_ref.value) not in rounded_coord_ref_values:
-                logger.warning(f"Missing reference label {coord_ref} in reference!")
-
             if np.round(coord_ref.value) == np.round(coord.value):
                 result += (coord_ref.z - coord.z) ** 2
                 break
