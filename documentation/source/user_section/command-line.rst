@@ -367,12 +367,6 @@ sct_propseg
 
 .. program-output:: sct_propseg -h
 
-Notes:
-
-- https://sourceforge.net/p/spinalcordtoolbox/wiki/correction_PropSeg/
-
-  .. TODO
-
 
 sct_qc
 ======
