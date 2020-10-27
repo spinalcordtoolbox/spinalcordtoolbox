@@ -148,7 +148,13 @@ Then run (replace with your correct file names)::
 Note, if you are working with compressed cord in the AP direction, then only modify the Y parameter. Example::
 
     Parameters: 1 0 0 0 0.7 0 0 0 1 0 0 0
-    Propagation problem
-    Parameter "-max-deformation"
-    .. image:: ../../../imgs/correcting_sct_propseg/
+
+Propagation problem
+*******************
+
+Parameter "-max-deformation"
+============================
+
+.. image:: https://raw.githubusercontent.com//spinalcordtoolbox/doc-figures/master/correcting_sct_propseg/propseg_max-deformation.png
+  :width: 600
 
