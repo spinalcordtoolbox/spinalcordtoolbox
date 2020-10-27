@@ -24,7 +24,7 @@ DEFAULTS = {
     'thr': 0.9,
     'largest': 0,
     'fill_holes': 0,
-    'remove_small': '0vox'
+    'remove_small': None
 }
 
 
