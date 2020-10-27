@@ -277,7 +277,7 @@ sct_dmri_moco
 sct_dmri_separate_b0_and_dwi
 ============================
 
-.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_dmri_separate_b0_and_dwi_example.png
+.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/command-line/sct_dmri_separate_b0_and_dwi_example.png
 
 .. program-output:: sct_dmri_separate_b0_and_dwi -h
 
@@ -363,7 +363,7 @@ sct_process_segmentation
 sct_propseg
 ===========
 
-.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/sct_segmentation_propagation_example.png
+.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/command-line/sct_propseg_example.png
 
 .. program-output:: sct_propseg -h
 
