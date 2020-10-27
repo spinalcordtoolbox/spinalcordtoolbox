@@ -267,6 +267,38 @@ def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image
     return out
 
 
+def find_missing_label(img,ref):
+    """
+    Function that return the list of label that are present in ref and not in img.
+    This is useful to compute false negative (label that are in ref and not img) and false positive
+    (labels that are present in img and not ref)
+    :param img: source image
+    :param ref: reference image
+    :return: list of missing label
+    """
+    coordinates_input = img.getNonZeroCoordinates()
+    coordinates_ref = ref.getNonZeroCoordinates()
+
+    rounded_coord_ref_values = [np.round(c.value) for c in coordinates_ref]
+    rounded_coord_in_values = [np.round(c.value) for c in coordinates_input]
+    FP, FN = [], []
+
+    for coord in coordinates_input:
+            if np.round(coord.value) not in rounded_coord_ref_values:
+                FP.append(np.round(coord.value))
+
+    for coord_ref in coordinates_ref:
+            if np.round(coord_ref.value) not in rounded_coord_in_values:
+                FN.append(np.round(coord_ref.value))
+
+    logger.warning("False positive label {}, False Negative label {}".format(' '.join(map(str, FP)),
+                                                                             ' '.join(map(str, FN))))
+    return FP, FN
+
+
+
+
+
 # FIXME [AJ]: this is slow on large images
 def compute_mean_squared_error(img: Image, ref: Image) -> float:
     """
@@ -278,10 +310,6 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
     """
     coordinates_input = img.getNonZeroCoordinates()
     coordinates_ref = ref.getNonZeroCoordinates()
-
-    # check if all the labels in both the images match
-    if len(coordinates_input) != len(coordinates_ref):
-        raise ValueError(f"Input and reference image don't have the same number of labels! {len(coordinates_input)} vs {len(coordinates_ref)}")
 
     rounded_coord_ref_values = [np.round(c.value) for c in coordinates_ref]
     rounded_coord_in_values = [np.round(c.value) for c in coordinates_input]
