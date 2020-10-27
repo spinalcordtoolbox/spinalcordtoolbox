@@ -21,7 +21,7 @@ PAM50 is one such template for MRI of the full spinal cord and brainstem, and
 is included in your installation of SCT. It has the following features:
 
 * It is available for T1-, T2-and T2*-weighted MRI contrast.
-* It is compatible with the ICBM152 brain template, allowing cerebrospinal studies.
+* It is compatible with the ICBM152 brain template (a.k.a. MNI template), allowing to conduct simultaneous brain/spine studies within the same coordinate system.
 * It includes atlases of white matter pathways and gray matter subregions.
 
 
