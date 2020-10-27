@@ -12,8 +12,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import print_function, absolute_import
-
 import sys
 import getopt
 import os
@@ -21,13 +19,11 @@ import os
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils import init_sct, run_proc
-
-import sct_utils as sct
-
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.fs import tmp_create, rmtree
 
 # main
-#=======================================================================================================================
+# =======================================================================================================================
 def main():
 
     # Initialization
@@ -51,7 +47,7 @@ def main():
         elif opt in ('-r'):
             remove_temp_files = int(arg)
 
-    path_tmp = sct.tmp_create(basename="test_ants", verbose=verbose)
+    path_tmp = tmp_create(basename="test_ants")
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -80,46 +76,46 @@ def main():
     nib.save(img_dest, 'data_dest.nii.gz')
 
     # Estimate rigid transformation
-    sct.printv('\nEstimate rigid transformation between paired landmarks...', verbose)
+    printv('\nEstimate rigid transformation between paired landmarks...', verbose)
     # TODO fixup isct_ants* parsers
     run_proc(['isct_antsRegistration',
-     '-d', '3',
-     '-t', 'syn[1,3,1]',
-     '-m', 'MeanSquares[data_dest.nii.gz,data_src.nii.gz,1,3]',
-     '-f', '2',
-     '-s', '0',
-     '-o', '[src2reg,data_src_reg.nii.gz]',
-     '-c', '5',
-     '-v', '1',
-     '-n', 'NearestNeighbor'], verbose, is_sct_binary=True)
+              '-d', '3',
+              '-t', 'syn[1,3,1]',
+              '-m', 'MeanSquares[data_dest.nii.gz,data_src.nii.gz,1,3]',
+              '-f', '2',
+              '-s', '0',
+              '-o', '[src2reg,data_src_reg.nii.gz]',
+              '-c', '5',
+              '-v', '1',
+              '-n', 'NearestNeighbor'], verbose, is_sct_binary=True)
 
     # # Apply rigid transformation
-    # sct.printv('\nApply rigid transformation to curved landmarks...', verbose)
+    # printv('\nApply rigid transformation to curved landmarks...', verbose)
     # run_proc('sct_apply_transfo -i data_src.nii.gz -o data_src_rigid.nii.gz -d data_dest.nii.gz -w curve2straight_rigid.txt -p nn', verbose)
     #
     # # Estimate b-spline transformation curve --> straight
-    # sct.printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
+    # printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
     # run_proc('isct_ANTSLandmarksBSplineTransform data_dest.nii.gz data_src_rigid.nii.gz warp_curve2straight_intermediate.nii.gz 5x5x5 3 2 0', verbose)
     #
     # # Concatenate rigid and non-linear transformations...
-    # sct.printv('\nConcatenate rigid and non-linear transformations...', verbose)
+    # printv('\nConcatenate rigid and non-linear transformations...', verbose)
     # cmd = 'isct_ComposeMultiTransform 3 warp_curve2straight.nii.gz -R data_dest.nii.gz warp_curve2straight_intermediate.nii.gz curve2straight_rigid.txt'
-    # sct.printv('>> '+cmd, verbose)
+    # printv('>> '+cmd, verbose)
     # run_proc(cmd)
     #
     # # Apply deformation to input image
-    # sct.printv('\nApply transformation to input image...', verbose)
+    # printv('\nApply transformation to input image...', verbose)
     # run_proc('sct_apply_transfo -i data_src.nii.gz -o data_src_warp.nii.gz -d data_dest.nii.gz -w warp_curve2straight.nii.gz -p nn', verbose)
     #
     # Compute DICE coefficient between src and dest
-    sct.printv('\nCompute DICE coefficient...', verbose)
+    printv('\nCompute DICE coefficient...', verbose)
     run_proc(["sct_dice_coefficient",
-     "-i", "data_dest.nii.gz",
-     "-d", "data_src_reg.nii.gz",
-     "-o", "dice.txt"], verbose)
+              "-i", "data_dest.nii.gz",
+              "-d", "data_src_reg.nii.gz",
+              "-o", "dice.txt"], verbose)
     with open("dice.txt", "r") as file_dice:
         dice = float(file_dice.read().replace('3D Dice coefficient = ', ''))
-    sct.printv('Dice coeff = ' + str(dice) + ' (should be above ' + str(dice_acceptable) + ')', verbose)
+    printv('Dice coeff = ' + str(dice) + ' (should be above ' + str(dice_acceptable) + ')', verbose)
 
     # Check if DICE coefficient is above acceptable value
     if dice > dice_acceptable:
@@ -130,45 +126,45 @@ def main():
 
     # Delete temporary files
     if remove_temp_files == 1:
-        sct.printv('\nDelete temporary files...', verbose)
-        sct.rmtree(path_tmp)
+        printv('\nDelete temporary files...', verbose)
+        rmtree(path_tmp)
 
     # output result for parent function
     if test_passed:
-        sct.printv('\nTest passed!\n', verbose)
+        printv('\nTest passed!\n', verbose)
         sys.exit(0)
     else:
-        sct.printv('\nTest failed!\n', verbose)
+        printv('\nTest failed!\n', verbose)
         sys.exit(1)
 
 
-# sct.sct.printv(usage)
+# printv(usage)
 # ==========================================================================================
 def usage():
-    print('\n' \
-        '' + os.path.basename(__file__) + '\n' \
-        '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n' \
-        'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n' \
-        '\n'\
-        'DESCRIPTION\n' \
-        '  This function test the integrity of ANTs output, given that some versions of ANTs give a wrong BSpline ' \
-        '  transform notably when using sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField..\n' \
-        '\n' \
-        'USAGE\n' \
-        '  ' + os.path.basename(__file__) + '\n' \
-        '\n' \
-        'OPTIONAL ARGUMENTS\n' \
-        '  -h                         show this help\n' \
-        '  -r {0, 1}                  remove temp files. Default=1\n' \
-        '  -v {0, 1}                  verbose. Default=1\n' \
-        '\n')
+    print('\n'
+          '' + os.path.basename(__file__) + '\n'
+          '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
+          'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n'
+          '\n'
+          'DESCRIPTION\n'
+          '  This function test the integrity of ANTs output, given that some versions of ANTs give a wrong BSpline '
+          '  transform notably when using sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField..\n'
+          '\n'
+          'USAGE\n'
+          '  ' + os.path.basename(__file__) + '\n'
+          '\n'
+          'OPTIONAL ARGUMENTS\n'
+          '  -h                         show this help\n'
+          '  -r {0, 1}                  remove temp files. Default=1\n'
+          '  -v {0, 1}                  verbose. Default=1\n'
+          '\n')
 
     # exit program
     sys.exit(2)
 
 
 # Start program
-#=======================================================================================================================
+# =======================================================================================================================
 if __name__ == "__main__":
     init_sct()
     # call main function

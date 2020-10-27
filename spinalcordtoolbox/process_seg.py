@@ -2,8 +2,6 @@
 # -*- coding: utf-8
 # Functions processing segmentation data
 
-from __future__ import absolute_import
-
 import math
 import platform
 import numpy as np

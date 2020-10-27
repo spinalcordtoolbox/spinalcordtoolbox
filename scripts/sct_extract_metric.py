@@ -18,8 +18,6 @@
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where
 #  two different vertebral levels coexist (and not the whole slice)
 
-from __future__ import division, absolute_import
-
 import sys
 import os
 import argparse
@@ -28,20 +26,16 @@ import numpy as np
 
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric, LabelStruc
-import sct_utils as sct
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, list_type, parse_num_list, init_sct
-
-# get path of the script and the toolbox
-# TODO: is that useful??
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, parse_num_list, display_open
+from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__
+from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path
 
 
 class Param:
     def __init__(self):
         self.method = 'wa'
-        self.path_label = os.path.join(path_sct, "data", "PAM50", "atlas")
+        self.path_label = os.path.join(__data_dir__, "PAM50", "atlas")
         self.verbose = 1
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave empty.
@@ -59,7 +53,7 @@ def get_parser():
     # Read .txt files referencing the labels (for extended usage description)
     file_label = os.path.join(param_default.path_label,
                               param_default.file_info_label)
-    sct.check_file_exist(file_label, 0)
+    check_file_exist(file_label, 0)
     default_info_label = open(file_label, 'r')
     label_references = default_info_label.read()
     default_info_label.close()
@@ -70,7 +64,7 @@ def get_parser():
                    f"input image.\n"
                    f"\n"
                    f"To list white matter atlas labels: {os.path.basename(__file__)} -f "
-                   f"{os.path.join(path_sct, 'data', 'atlas')}\n"
+                   f"{os.path.join(__data_dir__, 'atlas')}\n"
                    f"\n"
                    f"To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method: "
                    f"{os.path.basename(__file__)} -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin\n")
@@ -110,7 +104,7 @@ def get_parser():
         metavar=Metavar.folder,
         default=os.path.join("label", "atlas"),
         help=(f"Single label file, or folder that contains WM tract labels."
-              f"Example: {os.path.join(path_sct, 'data', 'atlas')}")
+              f"Example: {os.path.join(__data_dir__, 'atlas')}")
     )
     optional.add_argument(
         '-l',
@@ -291,7 +285,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         indiv_labels_files = [path_label]
         combined_labels_ids = []
         label_struc = {0: LabelStruc(id=0,
-                                     name=sct.extract_fname(path_label)[1],
+                                     name=extract_fname(path_label)[1],
                                      filename=path_label)}
         # set path_label to empty string, because indiv_labels_files will replace it from now on
         path_label = ''
@@ -311,7 +305,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         #     label_struc[51].name = "White Matter"
         #     label_struc[51].filename = ""  # no name because it is combined
         indiv_labels_ids, indiv_labels_names, indiv_labels_files, \
-        combined_labels_ids, combined_labels_names, combined_labels_id_groups, map_clusters \
+            combined_labels_ids, combined_labels_names, combined_labels_id_groups, map_clusters \
             = read_label_file(path_label, param_default.file_info_label)
 
         label_struc = {}
@@ -338,7 +332,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     nb_labels = len(indiv_labels_files)
 
     # Load data and systematically reorient to RPI because we need the 3rd dimension to be z
-    sct.printv('\nLoad metric image...', verbose)
+    printv('\nLoad metric image...', verbose)
     input_im = Image(fname_data).change_orientation("RPI")
 
     data = Metric(data=input_im.data, label='')
@@ -360,7 +354,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
 
     # Check dimensions consistency between atlas and data
     if (nx, ny, nz) != (nx_atlas, ny_atlas, nz_atlas):
-        sct.printv('\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
+        printv('\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
 
     # Combine individual labels for estimation
     if combine_labels:
@@ -370,14 +364,14 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         labels_id_user = [99]
 
     for id_label in labels_id_user:
-        sct.printv('Estimation for label: '+label_struc[id_label].name, verbose)
+        printv('Estimation for label: ' + label_struc[id_label].name, verbose)
         agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
                                     perlevel=perlevel, vert_level=im_vertebral_labeling, method=method,
                                     label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
         append_csv = True  # when looping across labels, need to append results in the same file
-    sct.display_open(fname_output)
+    display_open(fname_output)
 
 
 if __name__ == "__main__":
@@ -390,7 +384,7 @@ if __name__ == "__main__":
     arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     overwrite = 0  # TODO: Not used. Why?
-    fname_data = sct.get_absolute_path(arguments.i)
+    fname_data = get_absolute_path(arguments.i)
     path_label = arguments.f
     method = arguments.method
     fname_output = arguments.o

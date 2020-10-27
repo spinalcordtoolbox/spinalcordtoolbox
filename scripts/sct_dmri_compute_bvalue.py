@@ -13,22 +13,18 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import, division
-
 import sys
 import os
 import math
 import argparse
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
 
-# main
-# =======================================================================================================================
+
 def main():
     # Initialization
     parser = get_parser()
-    arguments = parser.parse_args(args = None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     GYRO = float(42.576 * 10 ** 6)  # gyromagnetic ratio (in Hz.T^-1)
     gradamp = []
     bigdelta = []
@@ -37,18 +33,18 @@ def main():
     bigdelta = arguments.b
     smalldelta = arguments.d
 
-    # sct.printv(arguments)
-    sct.printv('\nCheck parameters:')
-    sct.printv('  gradient amplitude ..... ' + str(gradamp) + ' mT/m')
-    sct.printv('  big delta .............. ' + str(bigdelta) + ' ms')
-    sct.printv('  small delta ............ ' + str(smalldelta) + ' ms')
-    sct.printv('  gyromagnetic ratio ..... ' + str(GYRO) + ' Hz/T')
-    sct.printv('')
+    # printv(arguments)
+    printv('\nCheck parameters:')
+    printv('  gradient amplitude ..... ' + str(gradamp) + ' mT/m')
+    printv('  big delta .............. ' + str(bigdelta) + ' ms')
+    printv('  small delta ............ ' + str(smalldelta) + ' ms')
+    printv('  gyromagnetic ratio ..... ' + str(GYRO) + ' Hz/T')
+    printv('')
 
     bvalue = (2 * math.pi * GYRO * gradamp * 0.001 * smalldelta * 0.001) ** 2 * (
-    bigdelta * 0.001 - smalldelta * 0.001 / 3)
+        bigdelta * 0.001 - smalldelta * 0.001 / 3)
 
-    sct.printv('b-value = ' + str(bvalue / 10 ** 6) + ' mm^2/s\n')
+    printv('b-value = ' + str(bvalue / 10 ** 6) + ' mm^2/s\n')
     return bvalue
 
 
@@ -67,21 +63,21 @@ def get_parser():
         required=True,
         help="Amplitude of diffusion gradients (in mT/m). Example: 40",
         metavar=Metavar.float,
-        )
+    )
     mandatory.add_argument(
         "-b",
         type=float,
         required=True,
         help="Big delta: time between both diffusion gradients (in ms). Example: 40",
         metavar=Metavar.float,
-        )
+    )
     mandatory.add_argument(
         "-d",
         type=float,
         required=True,
         help="Small delta: duration of each diffusion gradient (in ms). Example: 30",
         metavar=Metavar.float,
-        )
+    )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -93,9 +89,9 @@ def get_parser():
     return parser
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # Start program
-#=======================================================================================================================
+# =======================================================================================================================
 if __name__ == "__main__":
     init_sct()
     # call main function

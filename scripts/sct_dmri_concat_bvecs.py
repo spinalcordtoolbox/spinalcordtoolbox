@@ -10,16 +10,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
+import sys
+import os
+import argparse
 
-import sys, os, argparse
-
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
-
-
-# PARSER
-# ==========================================================================================
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, extract_fname
 
 
 def get_parser():
@@ -40,7 +35,7 @@ def get_parser():
         required=True,
         help='List of the bvec files to concatenate. Example: dmri_b700.bvec dmri_b2000.bvec',
         metavar=Metavar.file,
-        )
+    )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -67,7 +62,7 @@ def main():
     if arguments.o is not None:
         fname_out = arguments.o
     else:
-        path_in, file_in, ext_in = sct.extract_fname(fname_bvecs_list[0])
+        path_in, file_in, ext_in = extract_fname(fname_bvecs_list[0])
         fname_out = path_in + 'bvecs_concat' + ext_in
 
     # # Open bvec files and collect values

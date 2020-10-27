@@ -13,8 +13,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import division, absolute_import
-
 from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis, zeros
 from numpy.linalg import norm, inv
 import numpy as np

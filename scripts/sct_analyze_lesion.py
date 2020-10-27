@@ -8,9 +8,11 @@
 #
 # About the license: see the file LICENSE.TXT
 
-from __future__ import print_function, absolute_import, division
-
-import os, math, sys, pickle, shutil
+import os
+import math
+import sys
+import pickle
+import shutil
 import argparse
 
 import numpy as np
@@ -19,11 +21,9 @@ from skimage.measure import label
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder
-from spinalcordtoolbox.utils import init_sct
-
-import sct_utils as sct
-from sct_utils import extract_fname, printv, tmp_create
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
 def get_parser():
@@ -123,7 +123,7 @@ class AnalyzeLeion:
                 printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
         # create tmp directory
-        self.tmp_dir = tmp_create(verbose=verbose)  # path to tmp directory
+        self.tmp_dir = tmp_create()  # path to tmp directory
 
         # lesion file where each lesion has a different value
         self.fname_label = extract_fname(self.fname_mask)[1] + '_label' + extract_fname(self.fname_mask)[2]
@@ -194,7 +194,7 @@ class AnalyzeLeion:
         printv('\n... measures saved in the files:', self.verbose, 'normal')
         for file_ in [self.fname_label, self.excel_name, self.pickle_name]:
             printv('\n  - ' + os.path.join(self.path_ofolder, file_), self.verbose, 'normal')
-            sct.copy(os.path.join(self.tmp_dir, file_), os.path.join(self.path_ofolder, file_))
+            copy(os.path.join(self.tmp_dir, file_), os.path.join(self.path_ofolder, file_))
 
     def pack_measures(self):
         writer = pd.ExcelWriter(self.excel_name, engine='xlwt')
@@ -368,7 +368,7 @@ class AnalyzeLeion:
     def measure(self):
         im_lesion = Image(self.fname_label)
         im_lesion_data = im_lesion.data
-        p_lst = im_lesion.dim[4:7] # voxel size
+        p_lst = im_lesion.dim[4:7]  # voxel size
 
         label_lst = [l for l in np.unique(im_lesion_data) if l]  # lesion label IDs list
 
@@ -480,24 +480,24 @@ class AnalyzeLeion:
     def ifolder2tmp(self):
         # copy input image
         if self.fname_mask is not None:
-            sct.copy(self.fname_mask, self.tmp_dir)
+            copy(self.fname_mask, self.tmp_dir)
             self.fname_mask = ''.join(extract_fname(self.fname_mask)[1:])
         else:
             printv('ERROR: No input image', self.verbose, 'error')
 
         # copy seg image
         if self.fname_sc is not None:
-            sct.copy(self.fname_sc, self.tmp_dir)
+            copy(self.fname_sc, self.tmp_dir)
             self.fname_sc = ''.join(extract_fname(self.fname_sc)[1:])
 
         # copy ref image
         if self.fname_ref is not None:
-            sct.copy(self.fname_ref, self.tmp_dir)
+            copy(self.fname_ref, self.tmp_dir)
             self.fname_ref = ''.join(extract_fname(self.fname_ref)[1:])
 
         # copy registered template
         if self.path_template is not None:
-            sct.copy(self.path_levels, self.tmp_dir)
+            copy(self.path_levels, self.tmp_dir)
             self.path_levels = ''.join(extract_fname(self.path_levels)[1:])
 
             self.atlas_roi_lst = []
@@ -505,7 +505,7 @@ class AnalyzeLeion:
                 if fname_atlas_roi.endswith('.nii.gz'):
                     tract_id = int(fname_atlas_roi.split('_')[-1].split('.nii.gz')[0])
                     if tract_id < 36:  # Not interested in CSF
-                        sct.copy(os.path.join(self.path_atlas, fname_atlas_roi), self.tmp_dir)
+                        copy(os.path.join(self.path_atlas, fname_atlas_roi), self.tmp_dir)
                         self.atlas_roi_lst.append(fname_atlas_roi)
 
         os.chdir(self.tmp_dir)  # go to tmp directory
@@ -564,7 +564,7 @@ def main(args=None):
 
     # remove tmp_dir
     if rm_tmp:
-        sct.rmtree(lesion_obj.tmp_dir)
+        rmtree(lesion_obj.tmp_dir)
 
     printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
     if fname_ref is not None:

@@ -2,7 +2,7 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.metadata
 
-from __future__ import absolute_import
+
 
 import sys, io, os
 

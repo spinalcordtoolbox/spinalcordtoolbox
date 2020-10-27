@@ -10,24 +10,26 @@
 # TODO: params for ANTS: CC/MI, shrink fact, nb_it
 # TODO: ants: explore optin  --float  for faster computation
 
-
 from copy import deepcopy
 import sys
 import os
 from shutil import copyfile
 import glob
-import numpy as np
 import math
-import scipy.interpolate
 import time
 import functools
 import operator
 import csv
 
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import sct_progress_bar, run_proc
+import numpy as np
+import scipy.interpolate
 
-import sct_utils as sct
+from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
+from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolation
+from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
+from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
+
+# FIXME: don't import from scripts!
 import sct_dmri_separate_b0_and_dwi
 from sct_convert import convert
 from sct_image import split_data, concat_data, multicomponent_split
@@ -39,6 +41,7 @@ class ParamMoco:
     Class with a bunch of moco-specific parameters
     """
     # The constructor
+
     def __init__(self, is_diffusion=None, group_size=1, metric='MeanSquares', smooth='1'):
         """
 
@@ -84,7 +87,7 @@ class ParamMoco:
         # list_objects = param_user.split(',')
         for object in param_user:
             if len(object) < 2:
-                sct.printv('ERROR: Wrong usage.', 1, type='error')
+                printv('ERROR: Wrong usage.', 1, type='error')
             obj = object.split('=')
             setattr(self, obj[0], obj[1])
 
@@ -128,7 +131,7 @@ def moco_wrapper(param):
     :return: None
     """
     file_data = 'data.nii'  # corresponds to the full input data (e.g. dmri or fmri)
-    file_data_dirname, file_data_basename, file_data_ext = sct.extract_fname(file_data)
+    file_data_dirname, file_data_basename, file_data_ext = extract_fname(file_data)
     file_b0 = 'b0.nii'
     file_datasub = 'datasub.nii'  # corresponds to the full input data minus the b=0 scans (if param.is_diffusion=True)
     file_datasubgroup = 'datasub-groups.nii'  # concatenation of the average of each file_datasub
@@ -144,9 +147,9 @@ def moco_wrapper(param):
     # Start timer
     start_time = time.time()
 
-    sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  Input file ............ ' + param.fname_data, param.verbose)
-    sct.printv('  Group size ............ {}'.format(param.group_size), param.verbose)
+    printv('\nInput parameters:', param.verbose)
+    printv('  Input file ............ ' + param.fname_data, param.verbose)
+    printv('  Group size ............ {}'.format(param.group_size), param.verbose)
 
     # Get full path
     # param.fname_data = os.path.abspath(param.fname_data)
@@ -155,13 +158,13 @@ def moco_wrapper(param):
     #     param.fname_bvals = os.path.abspath(param.fname_bvals)
 
     # Extract path, file and extension
-    # path_data, file_data, ext_data = sct.extract_fname(param.fname_data)
-    # path_mask, file_mask, ext_mask = sct.extract_fname(param.fname_mask)
+    # path_data, file_data, ext_data = extract_fname(param.fname_data)
+    # path_mask, file_mask, ext_mask = extract_fname(param.fname_mask)
 
-    path_tmp = sct.tmp_create(basename="moco", verbose=param.verbose)
+    path_tmp = tmp_create(basename="moco")
 
     # Copying input data to tmp folder
-    sct.printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
+    printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(param.fname_data, os.path.join(path_tmp, file_data))
     if param.fname_mask != '':
         convert(param.fname_mask, os.path.join(path_tmp, file_mask), verbose=param.verbose)
@@ -174,37 +177,37 @@ def moco_wrapper(param):
     os.chdir(path_tmp)
 
     # Get dimensions of data
-    sct.printv('\nGet dimensions of data...', param.verbose)
+    printv('\nGet dimensions of data...', param.verbose)
     im_data = Image(file_data)
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
-    sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
+    printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
     # Get orientation
-    sct.printv('\nData orientation: ' + im_data.orientation, param.verbose)
+    printv('\nData orientation: ' + im_data.orientation, param.verbose)
     if im_data.orientation[2] in 'LR':
         param.is_sagittal = True
-        sct.printv('  Treated as sagittal')
+        printv('  Treated as sagittal')
     elif im_data.orientation[2] in 'IS':
         param.is_sagittal = False
-        sct.printv('  Treated as axial')
+        printv('  Treated as axial')
     else:
         param.is_sagittal = False
-        sct.printv('WARNING: Orientation seems to be neither axial nor sagittal. Treated as axial.')
+        printv('WARNING: Orientation seems to be neither axial nor sagittal. Treated as axial.')
 
-    sct.printv("\nSet suffix of transformation file name, which depends on the orientation:")
+    printv("\nSet suffix of transformation file name, which depends on the orientation:")
     if param.is_sagittal:
         param.suffix_mat = '0GenericAffine.mat'
-        sct.printv("Orientation is sagittal, suffix is '{}'. The image is split across the R-L direction, and the "
-                   "estimated transformation is a 2D affine transfo.".format(param.suffix_mat))
+        printv("Orientation is sagittal, suffix is '{}'. The image is split across the R-L direction, and the "
+               "estimated transformation is a 2D affine transfo.".format(param.suffix_mat))
     else:
         param.suffix_mat = 'Warp.nii.gz'
-        sct.printv("Orientation is axial, suffix is '{}'. The estimated transformation is a 3D warping field, which is "
-                   "composed of a stack of 2D Tx-Ty transformations".format(param.suffix_mat))
+        printv("Orientation is axial, suffix is '{}'. The estimated transformation is a 3D warping field, which is "
+               "composed of a stack of 2D Tx-Ty transformations".format(param.suffix_mat))
 
     # Adjust group size in case of sagittal scan
     if param.is_sagittal and param.group_size != 1:
-        sct.printv('For sagittal data group_size should be one for more robustness. Forcing group_size=1.', 1,
-                   'warning')
+        printv('For sagittal data group_size should be one for more robustness. Forcing group_size=1.', 1,
+               'warning')
         param.group_size = 1
 
     if param.is_diffusion:
@@ -215,7 +218,7 @@ def moco_wrapper(param):
 
         # check if dmri and bvecs are the same size
         if not nb_b0 + nb_dwi == nt:
-            sct.printv(
+            printv(
                 '\nERROR in ' + os.path.basename(__file__) + ': Size of data (' + str(nt) + ') and size of bvecs (' + str(
                     nb_b0 + nb_dwi) + ') are not the same. Check your bvecs file.\n', 1, 'error')
             sys.exit(2)
@@ -225,22 +228,22 @@ def moco_wrapper(param):
     # ==================================================================================================================
 
     # Split into T dimension
-    sct.printv('\nSplit along T dimension...', param.verbose)
+    printv('\nSplit along T dimension...', param.verbose)
     im_data_split_list = split_data(im_data, 3)
     for im in im_data_split_list:
-        x_dirname, x_basename, x_ext = sct.extract_fname(im.absolutepath)
+        x_dirname, x_basename, x_ext = extract_fname(im.absolutepath)
         im.absolutepath = os.path.join(x_dirname, x_basename + ".nii.gz")
         im.save()
 
     if param.is_diffusion:
         # Merge and average b=0 images
-        sct.printv('\nMerge and average b=0 data...', param.verbose)
+        printv('\nMerge and average b=0 data...', param.verbose)
         im_b0_list = []
         for it in range(nb_b0):
             im_b0_list.append(im_data_split_list[index_b0[it]])
         im_b0 = concat_data(im_b0_list, 3).save(file_b0, verbose=0)
         # Average across time
-        im_b0.mean(dim=3).save(sct.add_suffix(file_b0, '_mean'))
+        im_b0.mean(dim=3).save(add_suffix(file_b0, '_mean'))
 
         n_moco = nb_dwi  # set number of data to perform moco on (using grouping)
         index_moco = index_dwi
@@ -263,7 +266,7 @@ def moco_wrapper(param):
         nb_groups += 1
         group_indexes.append(index_moco[len(index_moco) - nb_remaining:len(index_moco)])
 
-    _, file_dwi_basename, file_dwi_ext = sct.extract_fname(file_datasub)
+    _, file_dwi_basename, file_dwi_ext = extract_fname(file_datasub)
     # Group data
     list_file_group = []
     for iGroup in sct_progress_bar(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False,
@@ -282,7 +285,7 @@ def moco_wrapper(param):
         im_dwi_out.mean(dim=3).save(list_file_group[-1])
 
     # Merge across groups
-    sct.printv('\nMerge across groups...', param.verbose)
+    printv('\nMerge across groups...', param.verbose)
     # file_dwi_groups_means_merge = 'dwi_averaged_groups'
     im_dw_list = []
     for iGroup in range(nb_groups):
@@ -301,9 +304,9 @@ def moco_wrapper(param):
 
     if param.is_diffusion:
         # Estimate moco on b0 groups
-        sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
-        sct.printv('  Estimating motion on b=0 images...', param.verbose)
-        sct.printv('-------------------------------------------------------------------------------', param.verbose)
+        printv('\n-------------------------------------------------------------------------------', param.verbose)
+        printv('  Estimating motion on b=0 images...', param.verbose)
+        printv('-------------------------------------------------------------------------------', param.verbose)
         param_moco.file_data = 'b0.nii'
         # Identify target image
         if index_moco[0] != 0:
@@ -323,9 +326,9 @@ def moco_wrapper(param):
         file_mat_b0, _ = moco(param_moco)
 
     # Estimate moco across groups
-    sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
-    sct.printv('  Estimating motion across groups...', param.verbose)
-    sct.printv('-------------------------------------------------------------------------------', param.verbose)
+    printv('\n-------------------------------------------------------------------------------', param.verbose)
+    printv('  Estimating motion across groups...', param.verbose)
+    printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_datasubgroup
     param_moco.file_target = list_file_group[0]  # target is the first volume (closest to the first b=0 if DWI scan)
     param_moco.path_out = ''
@@ -360,9 +363,9 @@ def moco_wrapper(param):
         copy_mat_files(nt, file_mat_b0, index_b0, mat_final, param)
 
     # Apply moco on all dmri data
-    sct.printv('\n-------------------------------------------------------------------------------', param.verbose)
-    sct.printv('  Apply moco', param.verbose)
-    sct.printv('-------------------------------------------------------------------------------', param.verbose)
+    printv('\n-------------------------------------------------------------------------------', param.verbose)
+    printv('  Apply moco', param.verbose)
+    printv('-------------------------------------------------------------------------------', param.verbose)
     param_moco.file_data = file_data
     param_moco.file_target = list_file_group[0]  # reference for reslicing into proper coordinate system
     param_moco.path_out = ''  # TODO not used in moco()
@@ -384,14 +387,14 @@ def moco_wrapper(param):
             args += ['-bval', param.fname_bvals]
         fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(args=args)
     else:
-        fname_moco_mean = sct.add_suffix(im_moco.absolutepath, '_mean')
+        fname_moco_mean = add_suffix(im_moco.absolutepath, '_mean')
         im_moco.mean(dim=3).save(fname_moco_mean)
 
     # Extract and output the motion parameters (doesn't work for sagittal orientation)
-    sct.printv('Extract motion parameters...')
+    printv('Extract motion parameters...')
     if param.output_motion_param:
         if param.is_sagittal:
-            sct.printv('Motion parameters cannot be generated for sagittal images.', 1, 'warning')
+            printv('Motion parameters cannot be generated for sagittal images.', 1, 'warning')
         else:
             files_warp_X, files_warp_Y = [], []
             moco_param = []
@@ -402,8 +405,8 @@ def moco_wrapper(param):
 
                 # These three lines allow to generate one file instead of two, containing X, Y and Z moco parameters
                 #fname_warp_crop = fname_warp + '_crop_' + ext_mat
-                #files_warp.append(fname_warp_crop)
-                #im_warp.save(fname_warp_crop)
+                # files_warp.append(fname_warp_crop)
+                # im_warp.save(fname_warp_crop)
 
                 # Separating the three components and saving X and Y only (Z is equal to 0 by default).
                 im_warp_XYZ = multicomponent_split(im_warp)
@@ -421,7 +424,7 @@ def moco_wrapper(param):
 
             # These two lines allow to generate one file instead of two, containing X, Y and Z moco parameters
             #im_warp_concat = concat_data(files_warp, dim=3)
-            #im_warp_concat.save('fmri_moco_params.nii')
+            # im_warp_concat.save('fmri_moco_params.nii')
 
             # Concatenating the moco parameters into a time series for X and Y components.
             im_warp_concat = concat_data(files_warp_X, dim=3)
@@ -438,35 +441,35 @@ def moco_wrapper(param):
                     tsv_writer.writerow([mocop[0], mocop[1]])
 
     # Generate output files
-    sct.printv('\nGenerate output files...', param.verbose)
-    fname_moco = os.path.join(path_out_abs, sct.add_suffix(os.path.basename(param.fname_data), param.suffix))
-    sct.generate_output_file(im_moco.absolutepath, fname_moco)
+    printv('\nGenerate output files...', param.verbose)
+    fname_moco = os.path.join(path_out_abs, add_suffix(os.path.basename(param.fname_data), param.suffix))
+    generate_output_file(im_moco.absolutepath, fname_moco)
     if param.is_diffusion:
-        sct.generate_output_file(fname_b0_mean, sct.add_suffix(fname_moco, '_b0_mean'))
-        sct.generate_output_file(fname_dwi_mean, sct.add_suffix(fname_moco, '_dwi_mean'))
+        generate_output_file(fname_b0_mean, add_suffix(fname_moco, '_b0_mean'))
+        generate_output_file(fname_dwi_mean, add_suffix(fname_moco, '_dwi_mean'))
     else:
-        sct.generate_output_file(fname_moco_mean, sct.add_suffix(fname_moco, '_mean'))
+        generate_output_file(fname_moco_mean, add_suffix(fname_moco, '_mean'))
     if os.path.exists(file_moco_params_csv):
-        sct.generate_output_file(file_moco_params_x, os.path.join(path_out_abs, file_moco_params_x),
-                                 squeeze_data=False)
-        sct.generate_output_file(file_moco_params_y, os.path.join(path_out_abs, file_moco_params_y),
-                                 squeeze_data=False)
-        sct.generate_output_file(file_moco_params_csv, os.path.join(path_out_abs, file_moco_params_csv))
+        generate_output_file(file_moco_params_x, os.path.join(path_out_abs, file_moco_params_x),
+                             squeeze_data=False)
+        generate_output_file(file_moco_params_y, os.path.join(path_out_abs, file_moco_params_y),
+                             squeeze_data=False)
+        generate_output_file(file_moco_params_csv, os.path.join(path_out_abs, file_moco_params_csv))
 
     # Delete temporary files
     if param.remove_temp_files == 1:
-        sct.printv('\nDelete temporary files...', param.verbose)
-        sct.rmtree(path_tmp, verbose=param.verbose)
+        printv('\nDelete temporary files...', param.verbose)
+        rmtree(path_tmp, verbose=param.verbose)
 
     # come back to working directory
     os.chdir(curdir)
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
+    printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
 
-    sct.display_viewer_syntax(
-        [os.path.join(param.path_out, sct.add_suffix(os.path.basename(param.fname_data), param.suffix)),
+    display_viewer_syntax(
+        [os.path.join(param.path_out, add_suffix(os.path.basename(param.fname_data), param.suffix)),
          param.fname_data], mode='ortho,ortho')
 
 
@@ -488,17 +491,17 @@ def moco(param):
     # other parameters
     file_mask = 'mask.nii'
 
-    sct.printv('\nInput parameters:', param.verbose)
-    sct.printv('  Input file ............ ' + file_data, param.verbose)
-    sct.printv('  Reference file ........ ' + file_target, param.verbose)
-    sct.printv('  Polynomial degree ..... ' + param.poly, param.verbose)
-    sct.printv('  Smoothing kernel ...... ' + param.smooth, param.verbose)
-    sct.printv('  Gradient step ......... ' + param.gradStep, param.verbose)
-    sct.printv('  Metric ................ ' + param.metric, param.verbose)
-    sct.printv('  Sampling .............. ' + param.sampling, param.verbose)
-    sct.printv('  Todo .................. ' + todo, param.verbose)
-    sct.printv('  Mask  ................. ' + param.fname_mask, param.verbose)
-    sct.printv('  Output mat folder ..... ' + folder_mat, param.verbose)
+    printv('\nInput parameters:', param.verbose)
+    printv('  Input file ............ ' + file_data, param.verbose)
+    printv('  Reference file ........ ' + file_target, param.verbose)
+    printv('  Polynomial degree ..... ' + param.poly, param.verbose)
+    printv('  Smoothing kernel ...... ' + param.smooth, param.verbose)
+    printv('  Gradient step ......... ' + param.gradStep, param.verbose)
+    printv('  Metric ................ ' + param.metric, param.verbose)
+    printv('  Sampling .............. ' + param.sampling, param.verbose)
+    printv('  Todo .................. ' + todo, param.verbose)
+    printv('  Mask  ................. ' + param.fname_mask, param.verbose)
+    printv('  Output mat folder ..... ' + folder_mat, param.verbose)
 
     try:
         os.makedirs(folder_mat)
@@ -506,13 +509,13 @@ def moco(param):
         pass
 
     # Get size of data
-    sct.printv('\nData dimensions:', verbose)
+    printv('\nData dimensions:', verbose)
     im_data = Image(param.file_data)
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
-    sct.printv(('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt)), verbose)
+    printv(('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt)), verbose)
 
     # copy file_target to a temporary file
-    sct.printv('\nCopy file_target to a temporary file...', verbose)
+    printv('\nCopy file_target to a temporary file...', verbose)
     file_target = "target.nii.gz"
     convert(param.file_target, file_target, verbose=0)
 
@@ -568,11 +571,11 @@ def moco(param):
     # file_mat = tuple([[[] for i in range(nt)] for i in range(nz)])
 
     file_data_splitZ_moco = []
-    sct.printv('\nRegister. Loop across Z (note: there is only one Z if orientation is axial)')
+    printv('\nRegister. Loop across Z (note: there is only one Z if orientation is axial)')
     for file in file_data_splitZ:
         iz = file_data_splitZ.index(file)
         # Split data along T dimension
-        # sct.printv('\nSplit data along T dimension.', verbose)
+        # printv('\nSplit data along T dimension.', verbose)
         im_z = Image(file)
         list_im_zt = split_data(im_z, dim=3)
         file_data_splitZ_splitT = []
@@ -589,12 +592,12 @@ def moco(param):
 
         # Motion correction: Loop across T
         for indice_index in sct_progress_bar(range(nt), unit='iter', unit_scale=False,
-                                             desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ)-1), ascii=False, ncols=80):
+                                             desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ) - 1), ascii=False, ncols=80):
 
             # create indices and display stuff
             it = index[indice_index]
             file_mat[iz][it] = os.path.join(folder_mat, "mat.Z") + str(iz).zfill(4) + 'T' + str(it).zfill(4)
-            file_data_splitZ_splitT_moco.append(sct.add_suffix(file_data_splitZ_splitT[it], '_moco'))
+            file_data_splitZ_splitT_moco.append(add_suffix(file_data_splitZ_splitT[it], '_moco'))
             # deal with masking (except in the 'apply' case, where masking is irrelevant)
             input_mask = None
             if not param.fname_mask == '' and not param.todo == 'apply':
@@ -631,9 +634,9 @@ def moco(param):
             abs_dist = [np.abs(gT[i] - fT[it]) for i in range(len(gT))]
             if not abs_dist == []:
                 index_good = abs_dist.index(min(abs_dist))
-                sct.printv('  transfo #' + str(fT[it]) + ' --> use transfo #' + str(gT[index_good]), verbose)
+                printv('  transfo #' + str(fT[it]) + ' --> use transfo #' + str(gT[index_good]), verbose)
                 # copy transformation
-                sct.copy(file_mat[iz][gT[index_good]] + 'Warp.nii.gz', file_mat[iz][fT[it]] + 'Warp.nii.gz')
+                copy(file_mat[iz][gT[index_good]] + 'Warp.nii.gz', file_mat[iz][fT[it]] + 'Warp.nii.gz')
                 # apply transformation
                 sct_apply_transfo.main(args=['-i', file_data_splitZ_splitT[fT[it]],
                                              '-d', file_target,
@@ -642,11 +645,11 @@ def moco(param):
                                              '-x', param.interp])
             else:
                 # exit program if no transformation exists.
-                sct.printv('\nERROR in ' + os.path.basename(__file__) + ': No good transformation exist. Exit program.\n', verbose, 'error')
+                printv('\nERROR in ' + os.path.basename(__file__) + ': No good transformation exist. Exit program.\n', verbose, 'error')
                 sys.exit(2)
 
         # Merge data along T
-        file_data_splitZ_moco.append(sct.add_suffix(file, suffix))
+        file_data_splitZ_moco.append(add_suffix(file, suffix))
         if todo != 'estimate':
             im_out = concat_data(file_data_splitZ_splitT_moco, 3)
             im_out.absolutepath = file_data_splitZ_moco[iz]
@@ -656,7 +659,7 @@ def moco(param):
     if param.is_sagittal:
         # TODO: im_out.dim is incorrect: Z value is one
         im_out = concat_data(file_data_splitZ_moco, 2)
-        dirname, basename, ext = sct.extract_fname(file_data)
+        dirname, basename, ext = extract_fname(file_data)
         path_out = os.path.join(dirname, basename + suffix + ext)
         im_out.absolutepath = path_out
         im_out.save(verbose=0)
@@ -716,35 +719,35 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
         if im_data.orientation[2] in 'LR':
             cmd = ['isct_antsRegistration',
                    '-d', '2',
-                   '--transform', 'Affine[%s]' %param.gradStep,
+                   '--transform', 'Affine[%s]' % param.gradStep,
                    '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',' + sampling + ']',
                    '--convergence', param.iter,
                    '--shrink-factors', '1',
                    '--smoothing-sigmas', param.smooth,
                    '--verbose', '1',
                    '--output', '[' + file_mat + ',' + file_out_concat + ']']
-            cmd += sct.get_interpolation('isct_antsRegistration', param.interp)
+            cmd += get_interpolation('isct_antsRegistration', param.interp)
             if im_mask is not None:
                 # if user specified a mask, make sure there are non-null voxels in the image before running the registration
                 if np.count_nonzero(im_mask.data):
                     cmd += ['--masks', im_mask.absolutepath]
                 else:
                     # Mask only contains zeros. Copying the image instead of estimating registration.
-                    sct.copy(file_src, file_out_concat, verbose=0)
+                    copy(file_src, file_out_concat, verbose=0)
                     do_registration = False
                     # TODO: create affine mat file with identity, in case used by -g 2
         # 3D mode
         else:
             cmd = ['isct_antsSliceRegularizedRegistration',
                    '--polydegree', param.poly,
-                   '--transform', 'Translation[%s]' %param.gradStep,
+                   '--transform', 'Translation[%s]' % param.gradStep,
                    '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',' + sampling + ']',
                    '--iterations', param.iter,
                    '--shrinkFactors', '1',
                    '--smoothingSigmas', param.smooth,
                    '--verbose', '1',
                    '--output', '[' + file_mat + ',' + file_out_concat + ']']
-            cmd += sct.get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
+            cmd += get_interpolation('isct_antsSliceRegularizedRegistration', param.interp)
             if im_mask is not None:
                 cmd += ['--mask', im_mask.absolutepath]
         # run command
@@ -767,13 +770,13 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
     # but in some OSs, the function can fail while outputing zero. So as a pragmatic approach, I decided to go with
     # the "output file checking" approach, which is 100% sensitive.
     if not os.path.isfile(file_out_concat):
-        # sct.printv(output, verbose, 'error')
-        sct.printv('WARNING in ' + os.path.basename(__file__) + ': No output. Maybe related to improper calculation of '
-                                                                'mutual information. Either the mask you provided is '
-                                                                'too small, or the subject moved a lot. If you see too '
-                                                                'many messages like this try with a bigger mask. '
-                                                                'Using previous transformation for this volume (if it'
-                                                                'exists).', param.verbose, 'warning')
+        # printv(output, verbose, 'error')
+        printv('WARNING in ' + os.path.basename(__file__) + ': No output. Maybe related to improper calculation of '
+               'mutual information. Either the mask you provided is '
+               'too small, or the subject moved a lot. If you see too '
+               'many messages like this try with a bigger mask. '
+               'Using previous transformation for this volume (if it'
+               'exists).', param.verbose, 'warning')
         failed_transfo = 1
 
     # If sagittal, copy header (because ANTs screws it) and add singleton in 3rd dimension (for z-concatenation)
@@ -787,10 +790,10 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
     return failed_transfo
 
 
-def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
+def spline(folder_mat, nt, nz, verbose, index_b0=[], graph=0):
 
-    sct.printv('\n\n\n------------------------------------------------------------------------------', verbose)
-    sct.printv('Spline Regularization along T: Smoothing Patient Motion...', verbose)
+    printv('\n\n\n------------------------------------------------------------------------------', verbose)
+    printv('Spline Regularization along T: Smoothing Patient Motion...', verbose)
 
     file_mat = [[[] for i in range(nz)] for i in range(nt)]
     for it in range(nt):
@@ -806,16 +809,16 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
 
     # TODO
     for mat in glob.glob(os.path.join(folder_mat, '*.txt')):
-        sct.copy(mat, old_mat)
+        copy(mat, old_mat)
 
-    sct.printv('\nloading matrices...', verbose)
+    printv('\nloading matrices...', verbose)
     X = [[[] for i in range(nt)] for i in range(nz)]
     Y = [[[] for i in range(nt)] for i in range(nz)]
     X_smooth = [[[] for i in range(nt)] for i in range(nz)]
     Y_smooth = [[[] for i in range(nt)] for i in range(nz)]
     for iz in range(nz):
         for it in range(nt):
-            file =  open(file_mat[it][iz])
+            file = open(file_mat[it][iz])
             Matrix = np.loadtxt(file)
             file.close()
 
@@ -823,7 +826,7 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
             Y[iz][it] = Matrix[1, 3]
 
     # Generate motion splines
-    sct.printv('\nGenerate motion splines...', verbose)
+    printv('\nGenerate motion splines...', verbose)
     T = np.arange(nt)
     if graph:
         import pylab as pl
@@ -861,19 +864,19 @@ def spline(folder_mat, nt, nz, verbose, index_b0 = [], graph=0):
             pl.show()
 
     # Storing the final Matrices
-    sct.printv('\nStoring the final Matrices...', verbose)
+    printv('\nStoring the final Matrices...', verbose)
     for iz in range(nz):
         for it in range(nt):
-            file =  open(file_mat[it][iz])
+            file = open(file_mat[it][iz])
             Matrix = np.loadtxt(file)
             file.close()
 
             Matrix[0, 3] = X_smooth[iz][it]
             Matrix[1, 3] = Y_smooth[iz][it]
 
-            file =  open(file_mat[it][iz], 'w')
+            file = open(file_mat[it][iz], 'w')
             np.savetxt(file_mat[it][iz], Matrix, fmt="%s", delimiter='  ', newline='\n')
             file.close()
 
-    sct.printv('\n...Done. Patient motion has been smoothed', verbose)
-    sct.printv('------------------------------------------------------------------------------\n', verbose)
+    printv('\n...Done. Patient motion has been smoothed', verbose)
+    printv('------------------------------------------------------------------------------\n', verbose)

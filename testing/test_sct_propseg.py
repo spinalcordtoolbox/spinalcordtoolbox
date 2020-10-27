@@ -10,11 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
-import sct_utils as sct
 from spinalcordtoolbox.image import Image, compute_dice
-from spinalcordtoolbox.utils import run_proc
+from spinalcordtoolbox.utils import run_proc, mv
 
 
 def init(param_test):
@@ -56,8 +53,8 @@ def test_integrity(param_test):
     # compute dice coefficient between generated image and image from database
     dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
     # display
-    param_test.output += 'Computed dice: '+str(dice_segmentation)
-    param_test.output += '\nDice threshold (if computed Dice smaller: fail): '+str(param_test.dice_threshold)
+    param_test.output += 'Computed dice: ' + str(dice_segmentation)
+    param_test.output += '\nDice threshold (if computed Dice smaller: fail): ' + str(param_test.dice_threshold)
 
     if dice_segmentation < param_test.dice_threshold:
         param_test.status = 99

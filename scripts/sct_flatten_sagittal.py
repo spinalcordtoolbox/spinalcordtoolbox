@@ -11,8 +11,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import, division
-
 import sys
 import os
 import argparse
@@ -20,11 +18,9 @@ import argparse
 import numpy as np
 from skimage import transform, img_as_float
 
-import sct_utils as sct
-import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix, change_type
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax
 
 
 # Default parameters
@@ -59,17 +55,17 @@ def flatten_sagittal(im_anat, im_centerline, verbose):
     zmin, zmax = z_centerline.min().astype(int), z_centerline.max().astype(int)
     x_centerline_extended = np.concatenate([np.ones(zmin) * x_centerline_fit[0],
                                             x_centerline_fit,
-                                            np.ones(nz-zmax) * x_centerline_fit[-1]])
+                                            np.ones(nz - zmax) * x_centerline_fit[-1]])
 
     # change type to float32 and scale between -1 and 1 as requested by img_as_float(). See #1790, #2069
-    im_anat_flattened = msct_image.change_type(im_anat, np.float32)
+    im_anat_flattened = change_type(im_anat, np.float32)
     min_data, max_data = np.min(im_anat_flattened.data), np.max(im_anat_flattened.data)
-    im_anat_flattened.data = 2 * im_anat_flattened.data/(max_data - min_data) - 1
+    im_anat_flattened.data = 2 * im_anat_flattened.data / (max_data - min_data) - 1
 
     # loop and translate each axial slice, such that the flattened centerline is centered in the medial plane (R-L)
     for iz in range(nz):
         # compute translation along x (R-L)
-        translation_x = x_centerline_extended[iz] - np.round(nx/2.0)
+        translation_x = x_centerline_extended[iz] - np.round(nx / 2.0)
         # apply transformation to 2D image with linear interpolation
         # tform = tf.SimilarityTransform(scale=1, rotation=0, translation=(translation_x, 0))
         tform = transform.SimilarityTransform(translation=(0, translation_x))
@@ -100,10 +96,10 @@ def main(fname_anat, fname_centerline, verbose):
     im_anat_flattened = flatten_sagittal(im_anat, im_centerline, verbose)
 
     # save output
-    fname_out = sct.add_suffix(fname_anat, '_flatten')
+    fname_out = add_suffix(fname_anat, '_flatten')
     im_anat_flattened.save(fname_out)
 
-    sct.display_viewer_syntax([fname_anat, fname_out])
+    display_viewer_syntax([fname_anat, fname_out])
 
 
 def get_parser():

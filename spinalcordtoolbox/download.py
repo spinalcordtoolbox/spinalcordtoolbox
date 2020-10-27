@@ -14,11 +14,10 @@ import zipfile
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
-from spinalcordtoolbox.utils import sct_progress_bar
+
+from spinalcordtoolbox.utils import sct_progress_bar, tmp_create
 
 import spinalcordtoolbox as sct
-import spinalcordtoolbox.utils
-
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +99,7 @@ def unzip(compressed, dest_folder):
     try:
         open(compressed).extractall(dest_folder)
     except:
-        sct.printv('ERROR: ZIP package corrupted. Please try downloading again.', verbose, 'error')
+        logger.error('ERROR: ZIP package corrupted. Please try downloading again.')
         raise
 
 
@@ -145,7 +144,7 @@ def install_data(url, dest_folder, keep=False):
 
     tmp_file = download_data(url)
 
-    extraction_folder = sct.utils.tmp_create()
+    extraction_folder = tmp_create()
 
     unzip(tmp_file, extraction_folder)
 

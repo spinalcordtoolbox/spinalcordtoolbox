@@ -5,8 +5,6 @@ Last changes: 2018-01-24
 Contributors: charley
 """
 
-from __future__ import division, print_function, absolute_import
-
 import sys, io
 
 original_stderr = sys.stderr

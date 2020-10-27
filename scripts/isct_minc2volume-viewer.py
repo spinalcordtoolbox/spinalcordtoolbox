@@ -24,19 +24,19 @@
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Modified by : Benjamin De Leener
 
-from __future__ import print_function, absolute_import
-
 import os.path
 import argparse
 import subprocess
 import json
-import sct_utils as sct
+
+from spinalcordtoolbox.utils.sys import printv
+from spinalcordtoolbox.utils.fs import extract_fname
 
 required_minc_cmdline_tools = ['mincinfo', 'minctoraw']
 
 
 def console_log(message):
-    sct.printv(message)
+    printv(message)
 
 
 def cmd(command):
@@ -45,9 +45,9 @@ def cmd(command):
 
 def get_space(mincfile, space):
     header = {
-        "start" : float(cmd("mincinfo -attval {}:start {}".format(space, mincfile))),
-        "space_length" : float(cmd("mincinfo -dimlength {} {}".format(space, mincfile))),
-        "step" : float(cmd("mincinfo -attval {}:step {}".format(space, mincfile))),
+        "start": float(cmd("mincinfo -attval {}:start {}".format(space, mincfile))),
+        "space_length": float(cmd("mincinfo -dimlength {} {}".format(space, mincfile))),
+        "step": float(cmd("mincinfo -attval {}:step {}".format(space, mincfile))),
     }
 
     cosines = cmd("mincinfo -attval {}:direction_cosines {}".format(space, mincfile))
@@ -72,11 +72,11 @@ def make_header(mincfile, headerfile):
     header["order"] = order
 
     if len(order) == 4:
-        time_start  = cmd("mincinfo -attval time:start {}".format(mincfile))
+        time_start = cmd("mincinfo -attval time:start {}".format(mincfile))
         time_length = cmd("mincinfo -dimlength time {}".format(mincfile))
 
-        header["time"] = {"start" : float(time_start),
-                           "space_length" : float(time_length)}
+        header["time"] = {"start": float(time_start),
+                          "space_length": float(time_length)}
 
     # find space
     header["xspace"] = get_space(mincfile, "xspace")
@@ -101,7 +101,7 @@ def main(filename, fname_out=''):
         console_log("File {} does not exist.".format(filename))
 
     if fname_out != '':
-        path_out, file_out, ext_out = sct.extract_fname(fname_out)
+        path_out, file_out, ext_out = extract_fname(fname_out)
         basename = path_out + file_out
     else:
         basename = os.path.basename(filename)
@@ -116,6 +116,7 @@ def main(filename, fname_out=''):
 
     console_log("Creating raw data file: {}".format(rawname))
     make_raw(filename, rawname)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

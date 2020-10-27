@@ -13,21 +13,19 @@
 
 # TODO: parameter "almost_zero" might case problem if merging data with very low values (e.g. MD from diffusion)
 
-from __future__ import absolute_import
-
-# Python imports
 import sys
 import os
-import shutil
-import numpy as np
 import argparse
 
-# SCT imports
-import sct_utils as sct
-import sct_apply_transfo
-import spinalcordtoolbox.image as msct_image
+import numpy as np
+
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.fs import tmp_create, rmtree
+
 import sct_maths
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+import sct_apply_transfo
 
 
 class Param:
@@ -86,28 +84,21 @@ def get_parser():
         required=False,
         default=Param().fname_out)
 
-    '''
-    optional.add_argument(
-		"-ofolder",
-                      type="folder_creation",
-                      help="Output folder",
-                      required=False)
-    '''
     misc = parser.add_argument_group('MISC')
     misc.add_argument(
         "-r",
         type=bool,
         help='Remove temporary files.',
-        required = False,
-        default = Param().rm_tmp,
-        choices = (0, 1))
+        required=False,
+        default=Param().rm_tmp,
+        choices=(0, 1))
     misc.add_argument(
         "-v",
         type=int,
         help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
         required=False,
         choices=(0, 1, 2),
-        default = str(Param().verbose))
+        default=str(Param().verbose))
 
     return parser
 
@@ -135,10 +126,10 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 
     """
     # create temporary folder
-    path_tmp = sct.tmp_create()
+    path_tmp = tmp_create()
 
     # get dimensions of destination file
-    nii_dest = msct_image.Image(fname_dest)
+    nii_dest = Image(fname_dest)
 
     # initialize variables
     data = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2], len(list_fname_src)])
@@ -172,8 +163,8 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-o', 'src_' + str(i_file) + '_template_partialVolume.nii.gz'])
 
         # open data
-        data[:, :, :, i_file] = msct_image.Image('src_' + str(i_file) + '_template.nii.gz').data
-        partial_volume[:, :, :, i_file] = msct_image.Image('src_' + str(i_file) + '_template_partialVolume.nii.gz').data
+        data[:, :, :, i_file] = Image('src_' + str(i_file) + '_template.nii.gz').data
+        partial_volume[:, :, :, i_file] = Image('src_' + str(i_file) + '_template_partialVolume.nii.gz').data
         i_file += 1
 
     # merge files using partial volume information (and convert nan resulting from division by zero to zeros)
@@ -186,7 +177,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 
     # remove temporary folder
     if param.rm_tmp:
-        sct.rmtree(path_tmp)
+        rmtree(path_tmp)
 
 
 # MAIN
@@ -221,9 +212,9 @@ def main():
     try:
         merge_images(list_fname_src, fname_dest, list_fname_warp, param)
     except Exception as e:
-        sct.printv(str(e), 1, 'error')
+        printv(str(e), 1, 'error')
 
-    sct.display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)])
+    display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)])
 
 
 if __name__ == "__main__":

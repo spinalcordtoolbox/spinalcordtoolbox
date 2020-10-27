@@ -14,18 +14,19 @@
 # TODO: display message at the end
 # TODO: interpolation methods
 
-from __future__ import division, absolute_import
-
-import sys, io, os, time, functools
+import sys
+import os
+import functools
 import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, run_proc
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import cubic_to_point
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, get_interpolation, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, copy
 
-import sct_utils as sct
 import sct_image
 
 
@@ -147,10 +148,10 @@ class Transform:
             islabel = True
             self.interp = 'nn'
 
-        interp = sct.get_interpolation('isct_antsApplyTransforms', self.interp)
+        interp = get_interpolation('isct_antsApplyTransforms', self.interp)
 
         # Parse list of warping fields
-        sct.printv('\nParse list of warping fields...', verbose)
+        printv('\nParse list of warping fields...', verbose)
         use_inverse = []
         fname_warp_list_invert = []
         # list_warp = list_warp.replace(' ', '')  # remove spaces
@@ -166,27 +167,27 @@ class Transform:
                 fname_warp_list_invert += [[path_warp]]
             path_warp = list_warp[idx_warp]
             if path_warp.endswith((".nii", ".nii.gz")) \
-             and Image(list_warp[idx_warp]).header.get_intent()[0] != 'vector':
-                raise ValueError("Displacement field in {} is invalid: should be encoded" \
-                 " in a 5D file with vector intent code" \
-                 " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h" \
-                 .format(path_warp))
+                    and Image(list_warp[idx_warp]).header.get_intent()[0] != 'vector':
+                raise ValueError("Displacement field in {} is invalid: should be encoded"
+                                 " in a 5D file with vector intent code"
+                                 " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"
+                                 .format(path_warp))
         # need to check if last warping field is an affine transfo
         isLastAffine = False
-        path_fname, file_fname, ext_fname = sct.extract_fname(fname_warp_list_invert[-1][-1])
+        path_fname, file_fname, ext_fname = extract_fname(fname_warp_list_invert[-1][-1])
         if ext_fname in ['.txt', '.mat']:
             isLastAffine = True
 
-        ## check if destination file is 3d
-        # sct.check_dim(fname_dest, dim_lst=[3]) # PR 2598: we decided to skip this line.
+        # check if destination file is 3d
+        # check_dim(fname_dest, dim_lst=[3]) # PR 2598: we decided to skip this line.
 
         # N.B. Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
         fname_warp_list_invert.reverse()
         fname_warp_list_invert = functools.reduce(lambda x, y: x + y, fname_warp_list_invert)
 
         # Extract path, file and extension
-        path_src, file_src, ext_src = sct.extract_fname(fname_src)
-        path_dest, file_dest, ext_dest = sct.extract_fname(fname_dest)
+        path_src, file_src, ext_src = extract_fname(fname_src)
+        path_dest, file_dest, ext_dest = extract_fname(fname_dest)
 
         # Get output folder and file name
         if fname_out == '':
@@ -196,36 +197,36 @@ class Transform:
             fname_out = os.path.join(path_out, file_out + ext_out)
 
         # Get dimensions of data
-        sct.printv('\nGet dimensions of data...', verbose)
+        printv('\nGet dimensions of data...', verbose)
         img_src = Image(fname_src)
         nx, ny, nz, nt, px, py, pz, pt = img_src.dim
-        # nx, ny, nz, nt, px, py, pz, pt = sct.get_dimension(fname_src)
-        sct.printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
+        # nx, ny, nz, nt, px, py, pz, pt = get_dimension(fname_src)
+        printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
 
         # if 3d
         if nt == 1:
             # Apply transformation
-            sct.printv('\nApply transformation...', verbose)
+            printv('\nApply transformation...', verbose)
             if nz in [0, 1]:
                 dim = '2'
             else:
                 dim = '3'
             # if labels, dilate before resampling
             if islabel:
-                sct.printv("\nDilate labels before warping...")
-                path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
+                printv("\nDilate labels before warping...")
+                path_tmp = tmp_create(basename="apply_transfo")
                 fname_dilated_labels = os.path.join(path_tmp, "dilated_data.nii")
                 # dilate points
                 dilate(Image(fname_src), 2, 'ball').save(fname_dilated_labels)
                 fname_src = fname_dilated_labels
 
-            sct.printv("\nApply transformation and resample to destination space...", verbose)
+            printv("\nApply transformation and resample to destination space...", verbose)
             run_proc(['isct_antsApplyTransforms',
-                     '-d', dim,
-                     '-i', fname_src,
-                     '-o', fname_out,
-                     '-t'
-                     ] + fname_warp_list_invert + ['-r', fname_dest] + interp, verbose=verbose, is_sct_binary=True)
+                      '-d', dim,
+                      '-i', fname_src,
+                      '-o', fname_out,
+                      '-t'
+                      ] + fname_warp_list_invert + ['-r', fname_dest] + interp, verbose=verbose, is_sct_binary=True)
 
         # if 4d, loop across the T dimension
         else:
@@ -233,16 +234,16 @@ class Transform:
                 raise NotImplementedError
 
             dim = '4'
-            path_tmp = sct.tmp_create(basename="apply_transfo", verbose=verbose)
+            path_tmp = tmp_create(basename="apply_transfo")
 
             # convert to nifti into temp folder
-            sct.printv('\nCopying input data to tmp folder and convert to nii...', verbose)
+            printv('\nCopying input data to tmp folder and convert to nii...', verbose)
             img_src.save(os.path.join(path_tmp, "data.nii"))
-            sct.copy(fname_dest, os.path.join(path_tmp, file_dest + ext_dest))
+            copy(fname_dest, os.path.join(path_tmp, file_dest + ext_dest))
             fname_warp_list_tmp = []
             for fname_warp in list_warp:
-                path_warp, file_warp, ext_warp = sct.extract_fname(fname_warp)
-                sct.copy(fname_warp, os.path.join(path_tmp, file_warp + ext_warp))
+                path_warp, file_warp, ext_warp = extract_fname(fname_warp)
+                copy(fname_warp, os.path.join(path_tmp, file_warp + ext_warp))
                 fname_warp_list_tmp.append(file_warp + ext_warp)
             fname_warp_list_invert_tmp = fname_warp_list_tmp[::-1]
 
@@ -250,7 +251,7 @@ class Transform:
             os.chdir(path_tmp)
 
             # split along T dimension
-            sct.printv('\nSplit along T dimension...', verbose)
+            printv('\nSplit along T dimension...', verbose)
 
             im_dat = Image('data.nii')
             im_header = im_dat.hdr
@@ -259,24 +260,24 @@ class Transform:
                 im.save()
 
             # apply transfo
-            sct.printv('\nApply transformation to each 3D volume...', verbose)
+            printv('\nApply transformation to each 3D volume...', verbose)
             for it in range(nt):
                 file_data_split = 'data_T' + str(it).zfill(4) + '.nii'
                 file_data_split_reg = 'data_reg_T' + str(it).zfill(4) + '.nii'
 
                 status, output = run_proc(['isct_antsApplyTransforms',
-                                          '-d', '3',
-                                          '-i', file_data_split,
-                                          '-o', file_data_split_reg,
-                                          '-t',
-                                          ] + fname_warp_list_invert_tmp + [
+                                           '-d', '3',
+                                           '-i', file_data_split,
+                                           '-o', file_data_split_reg,
+                                           '-t',
+                                           ] + fname_warp_list_invert_tmp + [
                     '-r', file_dest + ext_dest,
                 ] + interp, verbose, is_sct_binary=True)
 
             # Merge files back
-            sct.printv('\nMerge file back...', verbose)
+            printv('\nMerge file back...', verbose)
             import glob
-            path_out, name_out, ext_out = sct.extract_fname(fname_out)
+            path_out, name_out, ext_out = extract_fname(fname_out)
             # im_list = [Image(file_name) for file_name in glob.glob('data_reg_T*.nii')]
             # concat_data use to take a list of image in input, now takes a list of file names to open the files one by one (see issue #715)
             fname_list = glob.glob('data_reg_T*.nii')
@@ -285,32 +286,32 @@ class Transform:
             im_out.save(name_out + ext_out)
 
             os.chdir(curdir)
-            sct.generate_output_file(os.path.join(path_tmp, name_out + ext_out), fname_out)
+            generate_output_file(os.path.join(path_tmp, name_out + ext_out), fname_out)
             # Delete temporary folder if specified
             if remove_temp_files:
-                sct.printv('\nRemove temporary files...', verbose)
-                sct.rmtree(path_tmp, verbose=verbose)
+                printv('\nRemove temporary files...', verbose)
+                rmtree(path_tmp, verbose=verbose)
 
         # Copy affine matrix from destination space to make sure qform/sform are the same
-        sct.printv("Copy affine matrix from destination space to make sure qform/sform are the same.", verbose)
+        printv("Copy affine matrix from destination space to make sure qform/sform are the same.", verbose)
         im_src_reg = Image(fname_out)
         im_src_reg.copy_qform_from_ref(Image(fname_dest))
         im_src_reg.save(verbose=0)  # set verbose=0 to avoid warning message about rewriting file
 
         if islabel:
-            sct.printv("\nTake the center of mass of each registered dilated labels...")
+            printv("\nTake the center of mass of each registered dilated labels...")
             labeled_img = cubic_to_point(im_src_reg)
             labeled_img.save(path=fname_out)
             if remove_temp_files:
-                sct.printv('\nRemove temporary files...', verbose)
-                sct.rmtree(path_tmp, verbose=verbose)
+                printv('\nRemove temporary files...', verbose)
+                rmtree(path_tmp, verbose=verbose)
 
         # Crop the resulting image using dimensions from the warping field
         warping_field = fname_warp_list_invert[-1]
         # If the last transformation is not an affine transfo, we need to compute the matrix space of the concatenated
         # warping field
         if not isLastAffine and crop_reference in [1, 2]:
-            sct.printv('Last transformation is not affine.')
+            printv('Last transformation is not affine.')
             if crop_reference in [1, 2]:
                 # Extract only the first ndim of the warping field
                 img_warp = Image(warping_field)
@@ -322,15 +323,15 @@ class Transform:
                 cropper = ImageCropper(Image(fname_out))
                 cropper.get_bbox_from_ref(img_warp_ndim)
                 if crop_reference == 1:
-                    sct.printv('Cropping strategy is: keep same matrix size, put 0 everywhere around warping field')
+                    printv('Cropping strategy is: keep same matrix size, put 0 everywhere around warping field')
                     img_out = cropper.crop(background=0)
                 elif crop_reference == 2:
-                    sct.printv('Cropping strategy is: crop around warping field (the size of warping field will '
+                    printv('Cropping strategy is: crop around warping field (the size of warping field will '
                                'change)')
                     img_out = cropper.crop()
                 img_out.save(fname_out)
 
-        sct.display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
+        display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
 
 
 # MAIN

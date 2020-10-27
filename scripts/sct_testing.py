@@ -9,19 +9,24 @@
 
 # TODO: list functions to test in help (do a search in testing folder)
 
-from __future__ import print_function, absolute_import
-
-import sys, os, time, copy, shlex, importlib, multiprocessing, tempfile, shutil
+import sys
+import os
+import time
+import copy
+import importlib
+import multiprocessing
+import tempfile
+import shutil
 import traceback
 import signal
 
 import numpy as np
 from pandas import DataFrame
 
-from spinalcordtoolbox.utils import init_sct, run_proc
-import sct_utils as sct
+from spinalcordtoolbox.utils import init_sct, run_proc, tmp_create, printv, rmtree, __sct_dir__
 
-sys.path.append(os.path.join(sct.__sct_dir__, 'testing'))
+# FIXME
+sys.path.append(os.path.join(__sct_dir__, 'testing'))
 
 
 def fs_signature(root):
@@ -53,13 +58,15 @@ def fs_ok(sig_a, sig_b, exclude=()):
             continue
         if sig_a[path] != data:
             errors.append((path, "modified: {}".format(path)))
-    errors = [ (x,y) for (x,y) in errors if not x.startswith(exclude) ]
+    errors = [(x, y) for (x, y) in errors if not x.startswith(exclude)]
     if errors:
         for error in errors:
-            sct.printv("Error: %s", 1, type='error')
+            printv("Error: %s", 1, type='error')
         raise RuntimeError()
 
 # Parameters
+
+
 class Param:
     def __init__(self):
         self.download = False
@@ -96,13 +103,13 @@ def get_parser():
     param_default = Param()
 
     parser = argparse.ArgumentParser(
-     description="Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.",
+        description="Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.",
     )
 
     parser.add_argument("--function", "-f",
-     help="Test this specific script (eg. 'sct_propseg').",
-     nargs="+",
-    )
+                        help="Test this specific script (eg. 'sct_propseg').",
+                        nargs="+",
+                        )
 
     def arg_jobs(s):
         jobs = int(s)
@@ -115,41 +122,41 @@ def get_parser():
         return jobs
 
     parser.add_argument("--download", "-d",
-     action="store_true",
-     default=param_default.download,
-    )
+                        action="store_true",
+                        default=param_default.download,
+                        )
     parser.add_argument("--path", "-p",
-     help='Path to testing data. NB: no need to set if using "-d 1"',
-     default=param_default.path_data,
-    )
+                        help='Path to testing data. NB: no need to set if using "-d 1"',
+                        default=param_default.path_data,
+                        )
     parser.add_argument("--remove-temps", "-r",
-     help='Remove temporary files.',
-     action="store_true",
-     default=param_default.remove_tmp_file,
-    )
+                        help='Remove temporary files.',
+                        action="store_true",
+                        default=param_default.remove_tmp_file,
+                        )
     parser.add_argument("--jobs", "-j",
-     type=arg_jobs,
-     help="# of simultaneous tests to run (jobs). 0 or unspecified means # of available CPU threads ({})".format(multiprocessing.cpu_count()),
-     default=arg_jobs(0),
-    )
+                        type=arg_jobs,
+                        help="# of simultaneous tests to run (jobs). 0 or unspecified means # of available CPU threads ({})".format(multiprocessing.cpu_count()),
+                        default=arg_jobs(0),
+                        )
     parser.add_argument("--verbose", "-v",
-     action="store_true",
-     default=param_default.verbose,
-    )
+                        action="store_true",
+                        default=param_default.verbose,
+                        )
     parser.add_argument("--abort-on-failure",
-     help="Instead of iterating through all tests, abort at the first one that would fail.",
-     action="store_true",
-    )
+                        help="Instead of iterating through all tests, abort at the first one that would fail.",
+                        action="store_true",
+                        )
     parser.add_argument("--continue-from",
-     help="Instead of running all tests (or those specified by --function, start from this one",
-    )
+                        help="Instead of running all tests (or those specified by --function, start from this one",
+                        )
     parser.add_argument("--check-filesystem",
-     help="Check filesystem for unwanted modifications",
-     action="store_true",
-    )
+                        help="Check filesystem for unwanted modifications",
+                        action="store_true",
+                        )
     parser.add_argument("--execution-folder",
-     help="Folder where to run tests from (default. temporary)",
-    )
+                        help="Folder where to run tests from (default. temporary)",
+                        )
 
     return parser
 
@@ -233,10 +240,10 @@ def main(args=None):
         downloaddata(param)
 
     # display path to data
-    sct.printv('\nPath to testing data: ' + param.path_data, param.verbose)
+    printv('\nPath to testing data: ' + param.path_data, param.verbose)
 
     # create temp folder that will have all results
-    path_tmp = os.path.abspath(arguments.execution_folder or sct.tmp_create(verbose=param.verbose))
+    path_tmp = os.path.abspath(arguments.execution_folder or tmp_create())
 
     # go in path data (where all scripts will be run)
     curdir = os.getcwd()
@@ -251,7 +258,7 @@ def main(args=None):
             elif f in get_functions_nonparallelizable():
                 functions_serial.append(f)
             else:
-                sct.printv('Command-line usage error: Function "%s" is not part of the list of testing functions' % f, type='error')
+                printv('Command-line usage error: Function "%s" is not part of the list of testing functions' % f, type='error')
         jobs = min(jobs, len(functions_parallel))
     else:
         functions_parallel = get_functions_parallelizable()
@@ -277,9 +284,9 @@ def main(args=None):
 
     list_status = []
     for name, functions in (
-      ("serial", functions_serial),
-      ("parallel", functions_parallel),
-     ):
+        ("serial", functions_serial),
+        ("parallel", functions_parallel),
+    ):
         if not functions:
             continue
 
@@ -355,15 +362,15 @@ def main(args=None):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    sct.printv('Finished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's\n')
+    printv('Finished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's\n')
 
     # come back
     os.chdir(curdir)
 
     # remove temp files
     if param.remove_tmp_file and arguments.execution_folder is None:
-        sct.printv('\nRemove temporary files...', 0)
-        sct.rmtree(path_tmp)
+        printv('\nRemove temporary files...', 0)
+        rmtree(path_tmp)
 
     e = 0
     if any([s for (f, s) in list_status]):
@@ -384,7 +391,7 @@ def downloaddata(param):
     -------
     None
     """
-    sct.printv('\nDownloading testing data...', param.verbose)
+    printv('\nDownloading testing data...', param.verbose)
     import sct_download_data
     sct_download_data.main(['-d', 'sct_testing_data'])
 
@@ -395,6 +402,7 @@ def get_functions_nonparallelizable():
         'sct_deepseg_lesion',
         'sct_deepseg_sc',
     ]
+
 
 def get_functions_parallelizable():
     return [
@@ -407,7 +415,6 @@ def get_functions_parallelizable():
         'sct_compute_mtr',
         'sct_compute_mscc',
         'sct_compute_snr',
-        # 'sct_convert_binary_to_trilinear',  # not useful
         'sct_create_mask',
         'sct_crop_image',
         'sct_dice_coefficient',
@@ -437,7 +444,7 @@ def get_functions_parallelizable():
         'sct_register_to_template',
         'sct_resample',
         'sct_smooth_spinalcord',
-        'sct_straighten_spinalcord', # deps: sct_apply_transfo
+        'sct_straighten_spinalcord',  # deps: sct_apply_transfo
         'sct_warp_template',
     ]
 
@@ -462,15 +469,15 @@ def make_dot_lines(string):
 # print in color
 # ==========================================================================================
 def print_ok():
-    sct.printv("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
+    printv("[" + bcolors.OKGREEN + "OK" + bcolors.ENDC + "]")
 
 
 def print_warning():
-    sct.printv("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
+    printv("[" + bcolors.WARNING + "WARNING" + bcolors.ENDC + "]")
 
 
 def print_fail():
-    sct.printv("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
+    printv("[" + bcolors.FAIL + "FAIL" + bcolors.ENDC + "]")
 
 
 # init_testing
@@ -498,7 +505,7 @@ def test_function(param_test):
     path_testing = os.getcwd()
 
     # if not param_test.path_output:
-    #     param_test.path_output = sct.tmp_create(basename=(param_test.function_to_test + '_' + subject_folder), verbose=0)
+    #     param_test.path_output = tmp_create(basename=(param_test.function_to_test + '_' + subject_folder), verbose=0)
     # elif not os.path.isdir(param_test.path_output):
     #     os.makedirs(param_test.path_output)
 

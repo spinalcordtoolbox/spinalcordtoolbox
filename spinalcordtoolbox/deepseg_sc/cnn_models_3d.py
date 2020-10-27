@@ -5,8 +5,6 @@ Last changes: 2018-05-23
 Contributors: charley
 """
 
-from __future__ import absolute_import, division
-
 import numpy as np
 import tensorflow as tf
 
@@ -15,11 +13,10 @@ from keras.engine import Input, Model
 from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, Activation, BatchNormalization
 from keras.optimizers import Adam
 from keras.models import load_model
-
-K.set_image_data_format("channels_first")
-
 from keras.layers.merge import concatenate
 
+# Note: `K.set_image_data_format("channels_first")` was removed from this file because it interfered
+# with other tests. It may need to be re-added for this function to work properly. (See #2954)
 
 def dice_coefficient(y_true, y_pred, smooth=1.):
     y_true_f = K.flatten(y_true)

@@ -11,14 +11,12 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import, division
-
 import sys
 import os
 import argparse
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
+from spinalcordtoolbox.utils.sys import init_sct, printv
 
 
 # DEFAULT PARAMETERS
@@ -56,7 +54,7 @@ class ErnstAngle:
         tr_range = arange(tr_min, tr_max, step)
         theta_E = self.getErnstAngle(tr_range)
 
-        sct.printv("\nDrawing", type='info')
+        printv("\nDrawing", type='info')
         plt.plot(tr_range, theta_E, linewidth=1.0)
         plt.xlabel("TR (in $ms$)")
         plt.ylabel("$\Theta_E$ (in degree)")
@@ -67,7 +65,7 @@ class ErnstAngle:
         if self.tr is not None:
             plt.plot(self.tr, self.getErnstAngle(self.tr), 'ro')
         if self.fname_output is not None :
-            sct.printv("\nSaving figure", type='info')
+            printv("\nSaving figure", type='info')
             plt.savefig(self.fname_output, format='png')
         plt.show()
 
@@ -160,8 +158,8 @@ def main():
 
     graph = ErnstAngle(input_t1, tr=input_tr, fname_output=input_fname_output)
     if input_tr is not None:
-        sct.printv("\nValue of the Ernst Angle with T1=" + str(graph.t1) + "ms and TR=" + str(input_tr) + "ms :", verbose=verbose, type='info')
-        sct.printv(str(graph.getErnstAngle(input_tr)))
+        printv("\nValue of the Ernst Angle with T1=" + str(graph.t1) + "ms and TR=" + str(input_tr) + "ms :", verbose=verbose, type='info')
+        printv(str(graph.getErnstAngle(input_tr)))
         if input_tr > input_tr_max:
             input_tr_max = input_tr + 500
         elif input_tr < input_tr_min:
@@ -172,7 +170,7 @@ def main():
             f.write(str(graph.getErnstAngle(input_tr)))
             f.close()
         except:
-            sct.printv('\nERROR: Cannot open file'+fname_output_file, '1', 'error')
+            printv('\nERROR: Cannot open file'+fname_output_file, '1', 'error')
 
     if verbose == 2:
         graph.draw(input_tr_min, input_tr_max)

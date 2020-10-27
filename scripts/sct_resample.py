@@ -12,17 +12,14 @@
 
 # TODO: add possiblity to resample to destination image
 
-from __future__ import division, absolute_import
-
 import os
 import sys
 import argparse
 
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
 import spinalcordtoolbox.resampling
 
-# DEFAULT PARAMETERS
+
 class Param:
     # The constructor
     def __init__(self):
@@ -37,6 +34,7 @@ class Param:
         # constant put the superior edges to 0, wrap does something weird with the superior edges, nearest and reflect are fine
         self.file_suffix = '_resampled'  # output suffix
         self.verbose = 1
+
 
 # initialize parameters
 param = Param()
@@ -133,10 +131,10 @@ def run_main():
         param.ref = arguments.ref
         arg += 1
     else:
-        sct.printv(parser.error('ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
+        printv(parser.error('ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
 
     if arg > 1:
-        sct.printv(parser.error('ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
+        printv(parser.error('ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
 
     if arguments.o is not None:
         param.fname_out = arguments.o
