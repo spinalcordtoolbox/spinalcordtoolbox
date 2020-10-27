@@ -64,7 +64,7 @@ the center of the centerline (this can be change using "-init" parameter) and st
 provided by a text file, where each row contain x, y and z world coordinates (not pixel coordinates) of a point of the
 spinal cord, from the bottom to the top of the spinal cord.
 
-.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/correcting_sct_propseg/propseg_centerline.png
+.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/correcting_sct_propseg/centerline_creation_3.png
   :width: 600
 
 Segmentation problem
