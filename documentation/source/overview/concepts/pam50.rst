@@ -6,6 +6,10 @@ PAM50 Template
 Introduction
 ============
 
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/pam50/pam50_template.png
+    :figwidth: 40%
+    :align: right
+
 Template-based analysis of multi-parametric MRI data of the spinal cord sets
 the foundation for standardization and reproducibility. Particularly, it
 allows researchers to process their data with minimum bias, perform
