@@ -169,7 +169,7 @@ First, save your Docker image:
    docker commit <CONTAINER_ID> <YOUR_NAME>/<DISTROS>:<VERSION>
 
 For macOS and Linux users
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create an X11 server for handling display:
 
