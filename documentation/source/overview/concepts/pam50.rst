@@ -32,8 +32,8 @@ The template folder also contains an ``info_label.txt`` file to explain what eac
    :code:
 
 
-White matter atlas (``PAM50/atlas``)
-====================================
+White and grey matter atlas (``PAM50/atlas``)
+=============================================
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/white_matter_atlas_illustration.png
     :figwidth: 40%
