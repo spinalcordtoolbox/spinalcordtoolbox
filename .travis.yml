@@ -21,6 +21,12 @@ branches:
   - master
   - release
 
+# See: https://garbers.co.za/2017/11/01/code-folding-and-timing-in-travis-ci/
+before_install:
+  - export -f travis_fold
+  - export -f travis_time_start
+  - export -f travis_time_finish
+
 matrix:
   include:
     # To support OSes that Travis doesn't, we mix in Docker images.

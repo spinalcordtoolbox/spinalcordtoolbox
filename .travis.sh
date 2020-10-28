@@ -13,7 +13,12 @@ set -e # Error build immediately if install script exits with non-zero
 if [ -n "$DOCKER_IMAGE" ]; then
     ./util/dockerize.sh ./.ci.sh
 elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
-    choco install wsl-ubuntu-1804 -y --ignore-checksums
+    travis_fold start "install.wsl-ubuntu-1804"
+	      travis_time_start
+            choco install wsl-ubuntu-1804 -y --ignore-checksums
+        travis_time_finish
+    travis_fold end "install.wsl-ubuntu-1804"
+
      # or, instead of choco, use curl + powershell:
      # https://docs.microsoft.com/en-us/windows/wsl/install-manual#downloading-distros-via-the-command-line
     # wsl --setdefault "Ubuntu-18.04"
@@ -29,9 +34,18 @@ elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
     # https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
     export WSLENV=DEBIAN_FRONTEND
 
-    wsl apt-get update
-    #wsl apt-get -y upgrade  # this step is probably important, but it's also sooo slow
-    wsl apt-get install -y gcc git curl
+    travis_fold start "install.ubuntu-updates"
+	      travis_time_start
+            wsl apt-get update
+        travis_time_finish
+    travis_fold end "install.ubuntu-updates"
+
+    travis_fold start "install.ubuntu-dependencies"
+	      travis_time_start
+            wsl apt-get install -y gcc git curl
+            #wsl apt-get -y upgrade  # this step is probably important, but it's also sooo slow
+        travis_time_finish
+    travis_fold end "install.ubuntu-dependencies"
     wsl ./.ci.sh
 else
     ./.ci.sh
