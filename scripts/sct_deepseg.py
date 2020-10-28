@@ -16,8 +16,6 @@ import os
 import sys
 
 import spinalcordtoolbox.deepseg as deepseg
-import spinalcordtoolbox.deepseg.models
-import spinalcordtoolbox.deepseg.core
 from spinalcordtoolbox.utils.shell import SmartFormatter, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv
 
