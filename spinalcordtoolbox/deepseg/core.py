@@ -41,7 +41,7 @@ def segment_nifti(fname_image, folder_model, fname_prior=None, param=None):
     if param is None:
         param = {}
 
-    options = {**DEFAULTS, **vars(param), "fname_prior": fname_prior}
+    options = {**DEFAULTS, **param, "fname_prior": fname_prior}
     nii_seg = imed.utils.segment_volume(folder_model, fname_image, options=options)
 
     # Save output seg

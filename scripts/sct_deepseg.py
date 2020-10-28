@@ -170,7 +170,7 @@ def main():
                 parser.error("The input model is invalid: {}".format(path_model))
 
         # Call segment_nifti
-        fname_seg = deepseg.core.segment_nifti(args.i, path_model, fname_prior, args)
+        fname_seg = deepseg.core.segment_nifti(args.i, path_model, fname_prior, vars(args))
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
 
