@@ -158,15 +158,15 @@ First, save your Docker image:
 1. Open another Terminal
 2. List current docker images
 
-.. code:: bash
+   .. code:: bash
 
-   docker ps -a
+      docker ps -a
 
 3. Save container as new image
 
-.. code:: bash
+   .. code:: bash
 
-   docker commit <CONTAINER_ID> <YOUR_NAME>/<DISTROS>:<VERSION>
+      docker commit <CONTAINER_ID> <YOUR_NAME>/<DISTROS>:<VERSION>
 
 For macOS and Linux users
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -188,28 +188,37 @@ Create an X11 server for handling display:
 For Windows users
 ~~~~~~~~~~~~~~~~~
 
-1. Install Xming
-2. Connect to it using Xming/SSH:
+#. Install Xming
+#. Connect to it using Xming/SSH:
 
-  - If you are using Docker Desktop, please download and run (double click) the following script: :download:`sct-win.xlaunch<../../../contrib/docker/sct-win.xlaunch>`.
-  - If you are using Docker Toolbox, please download and run the following script instead: :download:`sct-win_docker_toolbox.xlaunch<../../../contrib/docker/sct-win_docker_toolbox.xlaunch>`
-  - If this is the first time you have done this procedure, the system will ask you if you want to add the remote PC (the docker container) as trust pc, type yes. Then type the password to enter the docker container (by default sct).
+   - If you are using Docker Desktop, please download and run (double click) the following script: :download:`sct-win.xlaunch<../../../contrib/docker/sct-win.xlaunch>`.
+   - If you are using Docker Toolbox, please download and run the following script instead: :download:`sct-win_docker_toolbox.xlaunch<../../../contrib/docker/sct-win_docker_toolbox.xlaunch>`
+   - If this is the first time you have done this procedure, the system will ask you if you want to add the remote PC (the docker container) as trust pc, type yes. Then type the password to enter the docker container (by default sct).
 
 **Troubleshooting:**
 
-| If there are no new open windows:
-| - Please download and run the following file:
-  :download:`Erase_fingerprint_docker.sh<../../../contrib/docker/Erase_fingerprint_docker.sh>`
-| - Try again
-| - if it is still not working :
-| - Open the file manager and go to C:/Users/Your_username - In the
-  searchbar type ‘.ssh’ - Open the found ‘.ssh’ folder. - Open the
-  ‘known_hosts’ file with a text editor - Remove line starting with
-  ``192.168.99.100`` or ``localhost`` - try again
+The graphic terminal emulator LXterminal should appear (if not check the task bar at the bottom of the screen), which allows copying and pasting commands, which makes it easier for users to use it. If there are no new open windows:
 
-The graphic terminal emulator LXterminal should appear (if not check the
-task bar at the bottom of the screen), which allows copying and pasting
-commands, which makes it easi
+- Please download and run the following file: :download:`Erase_fingerprint_docker.sh<../../../contrib/docker/Erase_fingerprint_docker.sh>`
+- Try again
+- If it is still not working:
+
+  - Open the file manager and go to C:/Users/Your_username
+  - In the searchbar type ‘.ssh’ - Open the found ‘.ssh’ folder.
+  - Open the ‘known_hosts’ file with a text editor
+  - Remove line starting with ``192.168.99.100`` or ``localhost``
+  - Try again
+
+To check that X forwarding is working well write ``fsleyes &`` in LXterminal and FSLeyes should open, depending on how fast your computer is FSLeyes may take a few seconds to open. If fsleyes is not working in the LXterminal:
+
+- Check if it's working on the docker machine by running ``fsleyes &`` in the docker quickstart terminal
+- If it works, run all the commands in the docker terminal.
+- If it throws the error ``Unable to access the X Display, is $DISPLAY set properly?`` follow these next steps:
+
+  - Run ``echo $DISPLAY`` in the LXterminal
+  - Copy the output address
+  - Run ``export DISPLAY=<previously obtained address>`` in the docker quickstart terminal
+  - Run ``fsleyes &`` (in the docker quickstart terminal) to check if it is working. A new Xming window with fsleyes should appear.
 
 
 Install with pip (experimental)
