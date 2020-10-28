@@ -73,9 +73,9 @@ The spinal_levels folder also contains an ``info_label.txt`` file to explain wha
 References
 ==========
 
-* `De Leener B, Fonov V, Collins DL, Callot V, Stikov N, Cohen-Adad J. PAM50: Multimodal template of the brainstem and spinal cord compatible with the ICBM152 space. Proceedings of the 25th Annual Meeting of ISMRM, Honolulu, USA. 2017. <https://www.sciencedirect.com/science/article/abs/pii/S1053811917308686>`_.
-* `Benhamou M, Fonov V, Taso M, Le Troter A, Sdika M, Collins DL, Callot V, Cohen-Adad J. Atlas of white-matter tracts in the human spinal cord. Proceedings of the 22th Annual Meeting of ISMRM, Milan, Italy 2014:0013 <https://dl.dropboxusercontent.com/u/20592661/publications/benhamou_irmsm14.pdf>`_.
-* `Cadotte DW, Cadotte A, Cohen-Adad J, Fleet D, Livne M, Mikulis D, Fehlings MG. Resolving the anatomic variability of the human cervical spinal cord: a solution to facilitate advanced neural imaging. Proceedings of the 22th Annual Meeting of ISMRM, Milan, Italy 2014:1719 <https://dl.dropboxusercontent.com/u/20592661/publications/cadotte_ismrm14.pdf>`_.
+* `De Leener B, Fonov VS, Collins DL, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage, 2018, 165:170-179. <https://paperpile.com/app/p/e74eced0-7d51-08e2-9c18-a34328fb4a86>`_.
+* `Levy S, Benhamou M, Naaman C, Rainville P, Callot V, Cohen-Adad J. White matter atlas of the human spinal cord with estimation of partial volume effect. Neuroimage, 2015, 119:262-271.<https://paperpile.com/app/p/e74eced0-7d51-08e2-9c18-a34328fb4a86>`_.
+* `Cadotte DW, Cadotte A, Cohen-Adad J, Fleet D, Livne M, Wilson JR, Mikulis D, Nugaeva N, Fehlings MG. Characterizing the location of spinal and vertebral levels in the human cervical spinal cord. AJNR Am J Neuroradiol, 2015, 36(4):803-810.<https://paperpile.com/app/p/5b580317-6921-06c8-a2ee-685d4dbaa44c>`_.
 
 Additionally, the template was generated using the following tools:
 
