@@ -2,7 +2,7 @@ colored
 dipy
 futures
 h5py
-ivadomed==2.0.2
+ivadomed==2.4.0
 Keras==2.1.5
 matplotlib
 nibabel
