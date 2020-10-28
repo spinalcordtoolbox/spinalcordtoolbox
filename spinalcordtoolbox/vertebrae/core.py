@@ -5,16 +5,18 @@
 # TODO: remove i/o as much as possible
 
 import os
+import logging
 
 import numpy as np
 import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
+from scipy.signal import gaussian
 
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.math import dilate, mutual_information
-from spinalcordtoolbox.utils import printv
 
+logger = logging.getLogger(__name__)
 
 def label_vert(fname_seg, fname_label, verbose=1):
     """
@@ -60,8 +62,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :param scale_dist: float: Scaling factor to adjust average distance between two adjacent intervertebral discs
     :return:
     """
-    printv('\nLook for template...', verbose)
-    printv('Path template: ' + path_template, verbose)
+    logger.info('Look for template...')
+    logger.info('Path template: %s', path_template)
 
     # adjust file names if MNI-Poly-AMU template is used (by default: PAM50)
     fname_level = get_file_label(os.path.join(path_template, 'template'), id_label=7, output='filewithpath')  # label = spinal cord mask with discrete vertebral levels
@@ -69,7 +71,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     fname_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast.upper()], output='filewithpath')  # label = *-weighted template
 
     # Open template and vertebral levels
-    printv('\nOpen template and vertebral levels...', verbose)
+    logger.info('Open template and vertebral levels...')
     data_template = Image(fname_template).data
     data_disc_template = Image(fname_level).data
 
@@ -99,18 +101,18 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     list_disc_value_template = list(range(min_level, max_level))
     # add disc above top one
     list_disc_value_template.insert(int(0), min_level - 1)
-    printv('\nDisc values from template: ' + str(list_disc_value_template), verbose)
+    logger.info('Disc values from template: %s', list_disc_value_template)
     # get diff to find transitions (i.e., discs)
     diff_centerline_level = np.diff(centerline_level)
     # get disc z-values
     list_disc_z_template = diff_centerline_level.nonzero()[0].tolist()
     list_disc_z_template.reverse()
-    printv('Z-values for each disc: ' + str(list_disc_z_template), verbose)
+    logger.info('Z-values for each disc: %s', list_disc_z_template)
     list_distance_template = (
         np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
     # Update distance with scaling factor
     list_distance_template = [i * scale_dist for i in list_distance_template]
-    printv('Distances between discs (in voxel): ' + str(list_distance_template), verbose)
+    logger.info('Distances between discs (in voxel): %s', list_distance_template)
 
     # display init disc
     if verbose == 2:
@@ -134,7 +136,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # FIND DISCS
     # ===========================================================================
-    printv('\nDetect intervertebral discs...', verbose)
+    logger.info('Detect intervertebral discs...')
     # assign initial z and disc
     current_z = init_disc[0]
     current_disc = init_disc[1]
@@ -145,13 +147,13 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     direction = 'superior'
     search_next_disc = True
     while search_next_disc:
-        printv('Current disc: ' + str(current_disc) + ' (z=' + str(current_z) + '). Direction: ' + direction, verbose)
+        logger.info('Current disc: %s (z=%s). Direction: %s', current_disc, current_z, direction)
         try:
             # get z corresponding to current disc on template
             current_z_template = list_disc_z_template[current_disc]
         except:
             # in case reached the bottom (see issue #849)
-            printv('WARNING: Reached the bottom of the template. Stop searching.', verbose, 'warning')
+            logger.warning('Reached the bottom of the template. Stop searching.')
             break
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
@@ -189,7 +191,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             list_subject_to_template_distance = [float(list_distance_current[i]) / list_distance_template_identified[i] for i in range(len(list_distance_current))]
             # average across identified discs to obtain an average correcting factor
             correcting_factor = np.mean(list_subject_to_template_distance)
-            printv('.. correcting factor: ' + str(correcting_factor), verbose)
+            logger.info('.. correcting factor: %s', correcting_factor)
         else:
             correcting_factor = 1
         # update list_distance specific for the subject
@@ -199,16 +201,16 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         if direction == 'superior':
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc - 1)]
-            except ValueError:
-                printv('WARNING: Disc value not included in template. Using previously-calculated distance: ' + str(approx_distance_to_next_disc))
+            except IndexError:
+                logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z + approx_distance_to_next_disc
             current_disc = current_disc - 1
         elif direction == 'inferior':
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
-            except:
-                printv('WARNING: Disc value not included in template. Using previously-calculated distance: ' + str(approx_distance_to_next_disc))
+            except IndexError:
+                logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z - approx_distance_to_next_disc
             current_disc = current_disc + 1
@@ -216,7 +218,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # if current_z is larger than searching zone, switch direction (and start from initial z minus approximate
         # distance from updated template distance)
         if current_z >= nz or current_disc == 0:
-            printv('.. Switching to inferior direction.', verbose)
+            logger.info('.. Switching to inferior direction.')
             direction = 'inferior'
             current_disc = init_disc[1] + 1
             current_z = init_disc[0] - list_distance[list_disc_value_template.index(current_disc)]
@@ -230,10 +232,10 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # if upper disc is not 1, add disc above top disc based on mean_distance_adjusted
     upper_disc = min(list_disc_value)
     # if not upper_disc == 1:
-    printv('Adding top disc based on adjusted template distance: #' + str(upper_disc - 1), verbose)
+    logger.info('Adding top disc based on adjusted template distance: #%s', upper_disc - 1)
     approx_distance_to_next_disc = list_distance[list_disc_value_template.index(upper_disc - 1)]
     next_z = max(list_disc_z) + approx_distance_to_next_disc
-    printv('.. approximate distance: ' + str(approx_distance_to_next_disc), verbose)
+    logger.info('.. approximate distance: %s', approx_distance_to_next_disc)
     # make sure next disc does not go beyond FOV in superior direction
     if next_z > nz:
         list_disc_z.insert(0, nz)
@@ -371,7 +373,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     for iz in zrange:
         # if pattern extends towards the top part of the image, then crop and pad with zeros
         if z + iz + zsize + 1 > nz:
-            # printv('iz='+str(iz)+': padding on top')
             padding_size = z + iz + zsize + 1 - nz
             data_chunk3d = src[x - xsize: x + xsize + 1,
                                y + yshift - ysize: y + yshift + ysize + 1,
@@ -380,7 +381,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
                                   constant_values=0)
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
         elif z + iz - zsize < 0:
-            # printv('iz='+str(iz)+': padding at bottom')
             padding_size = abs(iz - zsize)
             data_chunk3d = src[x - xsize: x + xsize + 1,
                                y + yshift - ysize: y + yshift + ysize + 1,
@@ -402,10 +402,9 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         ind_I = ind_I + 1
     # ind_y = ind_y + 1
     if allzeros:
-        printv('.. WARNING: Data contained zero. We probably hit the edge of the image.', verbose)
+        logger.warning('Data contained zero. We probably hit the edge of the image.')
 
     # adjust correlation with Gaussian function centered at the right edge of the curve (most rostral point of FOV)
-    from scipy.signal import gaussian
     gaussian_window = gaussian(len(I_corr) * 2, std=len(I_corr) * gaussian_std)
     I_corr_gauss = np.multiply(I_corr, gaussian_window[0:len(I_corr)])
 
@@ -413,14 +412,14 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     if np.any(I_corr_gauss):
         # if I_corr contains at least a non-zero value
         ind_peak = [i for i in range(len(I_corr_gauss)) if I_corr_gauss[i] == max(I_corr_gauss)][0]  # index of max along z
-        printv('.. Peak found: z=' + str(zrange[ind_peak]) + ' (correlation = ' + str(I_corr_gauss[ind_peak]) + ')', verbose)
+        logger.info('.. Peak found: z=%s (correlation = %s)', zrange[ind_peak], I_corr_gauss[ind_peak])
         # check if correlation is high enough
         if I_corr_gauss[ind_peak] < thr_corr:
-            printv('.. WARNING: Correlation is too low. Using adjusted template distance.', verbose)
+            logger.warning('Correlation is too low. Using adjusted template distance.')
             ind_peak = zrange.index(0)  # approx_distance_to_next_disc
     else:
         # if I_corr contains only zeros
-        printv('.. WARNING: Correlation vector only contains zeros. Using adjusted template distance.', verbose)
+        logger.warning('Correlation vector only contains zeros. Using adjusted template distance.')
         ind_peak = zrange.index(0)  # approx_distance_to_next_disc
 
     # display patterns and correlation
@@ -490,26 +489,9 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
         else:
             # assign vertebral level (add one because iz is BELOW the disk)
             vertebral_level = list_disc_value[ind_above_iz] + 1
-            # printv(vertebral_level)
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
-        # if verbose == 2:
-        #     # move to OO. No time to finish... (JCA)
-        #     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-        #     from matplotlib.figure import Figure
-        #     fig = Figure()
-        #     FigureCanvas(fig)
-        #     ax = fig.add_subplot(111)
-        #     ax.scatter(int(np.round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value),
-        #                vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
-        #
-        #     # TODO: the thing below crashes with the py3k move. Fix it when i have time...
-        #     import matplotlib
-        #     matplotlib.use('Agg')
-        #     import matplotlib.pyplot as plt
-        #     plt.figure(50)
-        #     plt.scatter(int(np.round(ny / 2)), iz, c=vertebral_level, vmin=min(list_disc_value), vmax=max(list_disc_value), cmap='prism', marker='_', s=200)
 
     # write file
     seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled'))
