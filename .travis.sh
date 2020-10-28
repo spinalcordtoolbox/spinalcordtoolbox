@@ -14,7 +14,7 @@ if [ -n "$DOCKER_IMAGE" ]; then
     ./util/dockerize.sh ./.ci.sh
 elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
     travis_fold start "install.wsl-ubuntu-1804"
-	      travis_time_start
+        travis_time_start
             choco install wsl-ubuntu-1804 -y --ignore-checksums
         travis_time_finish
     travis_fold end "install.wsl-ubuntu-1804"
@@ -35,13 +35,13 @@ elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
     export WSLENV=DEBIAN_FRONTEND
 
     travis_fold start "install.ubuntu-updates"
-	      travis_time_start
+        travis_time_start
             wsl apt-get update
         travis_time_finish
     travis_fold end "install.ubuntu-updates"
 
     travis_fold start "install.ubuntu-dependencies"
-	      travis_time_start
+        travis_time_start
             wsl apt-get install -y gcc git curl
             #wsl apt-get -y upgrade  # this step is probably important, but it's also sooo slow
         travis_time_finish
