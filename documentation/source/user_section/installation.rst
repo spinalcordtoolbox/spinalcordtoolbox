@@ -35,7 +35,7 @@ Install from package (recommended)
 
 The simplest way to install SCT is to do it via a stable release. First, download the
 `latest release <https://github.com/neuropoly/spinalcordtoolbox/releases>`_. Major changes to
-each release are listed in the `CHANGES.md <https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md>`_ file.
+each release are listed in the :doc:`/dev_section/CHANGES`.
 
 Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal,
 go into the created folder and launch the installer:
