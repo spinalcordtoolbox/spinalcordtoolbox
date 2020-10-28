@@ -11,7 +11,7 @@ import argparse
 
 from enum import Enum
 
-from .sys import printv, check_exe
+from .sys import check_exe
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +19,14 @@ logger = logging.getLogger(__name__)
 def display_open(file):
     """Print the syntax to open a file based on the platform."""
     if sys.platform == 'linux':
-        printv('\nDone! To view results, type:')
-        printv('xdg-open ' + file + '\n', verbose=1, type='info')
+        logger.info('Done! To view results, type:')
+        logger.info('xdg-open %s', file)
     elif sys.platform == 'darwin':
-        printv('\nDone! To view results, type:')
-        printv('open ' + file + '\n', verbose=1, type='info')
+        logger.info('Done! To view results, type:')
+        logger.info('open %s', file)
     else:
-        printv('\nDone! To view results, open the following file:')
-        printv(file + '\n', verbose=1, type='info')
+        logger.info('Done! To view results, open the following file:')
+        logger.info('%s', file)
 
 
 def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
@@ -92,10 +92,9 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
                 if opacities[i]:
                     cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
     cmd += ' &'
-    # display
-    if verbose:
-        printv('\nDone! To view results, type:')
-        printv(cmd + '\n', verbose=1, type='info')
+
+    logger.info('Done! To view results, type:')
+    logger.info('%s', cmd)
 
 
 class ActionCreateFolder(argparse.Action):
@@ -284,7 +283,7 @@ def get_interpolation(program, interp):
             interp_program = ' -n BSpline[3]'
     # check if not assigned
     if interp_program == '':
-        printv('WARNING (' + os.path.basename(__file__) + '): interp_program not assigned. Using linear for ants_affine.', 1, 'warning')
+        logger.warning('%s: interp_program not assigned. Using linear for ants_affine.', os.path.basename(__file__))
         interp_program = ' -n Linear'
     # return
     return interp_program.strip().split()

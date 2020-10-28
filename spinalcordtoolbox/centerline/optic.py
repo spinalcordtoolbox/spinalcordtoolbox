@@ -9,7 +9,7 @@ import logging
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.sys import sct_dir_local_path, run_proc, printv
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, run_proc
 from spinalcordtoolbox.utils.fs import extract_fname, copy, TempFolder
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ def centerline2roi(fname_image, folder_output='./', verbose=0):
     coordinates_centerline = im.getNonZeroCoordinates(sorting='z')
 
     f = open(fname_output, "w")
-    printv('\nWriting ROI file...', verbose)
+    logger.info("Writing ROI file...")
 
     for coord in coordinates_centerline:
         coord_phys_center = im.transfo_pix2phys([[(nx - 1) / 2.0, (ny - 1) / 2.0, coord.z]])[0]

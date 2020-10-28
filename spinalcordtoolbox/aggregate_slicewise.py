@@ -442,7 +442,9 @@ def make_a_string(item):
 def merge_dict(dict_in):
     """
     Merge n dictionaries that are contained at the root key
-    Example:
+
+    .. code-block:: python
+
       dict_in = {
           'area': {(0): {'Level': 0, 'Mean(area)': 0.5}, (1): {'Level': 1, 'Mean(area)': 0.2}}
           'angle_RL': {(0): {'Level': 0, 'Mean(angle_RL)': 15}, (1): {'Level': 1, 'Mean(angle_RL)': 12}}
@@ -452,8 +454,9 @@ def merge_dict(dict_in):
           (1): {'Level': 1, 'Mean(area): 0.2, 'Mean(angle_RL): 12}
       }
 
-    :param dict_in:
-    :return:
+    :param dict_in: input dict.
+    :return: normalized dict with sub-dicts at root level
+
     """
     dict_merged = {}
     metrics = [k for i, (k, v) in enumerate(dict_in.items())]

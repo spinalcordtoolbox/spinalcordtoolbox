@@ -17,7 +17,7 @@ from nibabel import Nifti1Image, save
 from spinalcordtoolbox.types import Centerline
 from spinalcordtoolbox.image import Image, spatial_crop, generate_output_file
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
+from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, copy, mv, extract_fname
 
 # FIXME: don't import from scripts!
@@ -106,7 +106,7 @@ class SpinalCordStraightener(object):
         path_tmp = tmp_create(basename="straighten_spinalcord")
 
         # Copying input data to tmp folder
-        printv('\nCopy files to tmp folder...', verbose)
+        logger.info('Copy files to tmp folder...')
         Image(fname_anat).save(os.path.join(path_tmp, "data.nii"))
         Image(fname_centerline).save(os.path.join(path_tmp, "centerline.nii.gz"))
 
@@ -433,7 +433,6 @@ class SpinalCordStraightener(object):
         # 5. compute transformations
         # Curved and straight images and the same dimensions, so we compute both warping fields at the same time.
         # b. determine which plane of spinal cord centreline it is included
-        # printv(nx * ny * nz, nx_s * ny_s * nz_s)
 
         if self.curved2straight:
             for u in sct_progress_bar(range(nz_s)):

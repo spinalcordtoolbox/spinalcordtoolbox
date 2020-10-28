@@ -35,7 +35,7 @@ Install from package (recommended)
 
 The simplest way to install SCT is to do it via a stable release. First, download the
 `latest release <https://github.com/neuropoly/spinalcordtoolbox/releases>`_. Major changes to
-each release are listed in the `CHANGES.md <https://github.com/neuropoly/spinalcordtoolbox/blob/master/CHANGES.md>`_ file.
+each release are listed in the :doc:`/dev_section/CHANGES`.
 
 Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal,
 go into the created folder and launch the installer:
@@ -80,8 +80,109 @@ recommend you download the Github version.
 Install on Windows 10 with WSL
 ------------------------------
 
-Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it possible to run native Linux programs,
-such as SCT. Checkout the `installation tutorial for WSL <https://github.com/neuropoly/spinalcordtoolbox/wiki/SCT-on-Windows-10:-Installation-instruction-for-SCT-on-Windows-subsytem-for-linux>`_.
+Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it possible to run native Linux programs, such as SCT.
+
+#. Install Windows Subsystem for Linux (WSL)
+
+   - Install `Xming <https://sourceforge.net/projects/xming/>`_.
+
+   - Install  `Windows subsystem for linux and initialize it <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_.
+
+     .. important::
+        
+        Make sure to install WSL1. SCT can work with WSL2, but the installation procedure described here refers to WSL1. 
+        If you are comfortable with installing SCT with WSL2, please feel free to do so.
+        
+        When asked what Linux versin to install, select the Ubuntu 18.04 LTS distro.
+
+#. Environment preparation
+
+   Run the following command to install various packages that will be needed to install FSL and SCT. This will require your password
+
+   .. code-block:: sh
+
+      sudo apt-get -y update
+      sudo apt-get -y install gcc
+      sudo apt-get -y install unzip
+      sudo apt-get install -y python-pip python
+      sudo apt-get install -y psmisc net-tools
+      sudo apt-get install -y git
+      sudo apt-get install -y gfortran
+      sudo apt-get install -y libjpeg-dev
+      echo 'export DISPLAY=127.0.0.1:0.0' >> .profile
+
+#. Install SCT
+
+   Download SCT:
+
+   .. code-block:: sh
+
+      git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+      cd sct
+
+   To select a `specific release <https://github.com/neuropoly/spinalcordtoolbox/releases>`_, replace X.Y.Z below with the proper release number. If you prefer to use the development version, you can skip this step.
+
+   .. code-block:: sh
+
+      git checkout X.Y.Z
+
+   Install SCT:
+
+   .. code:: sh
+
+      yes | ./install_sct
+
+   To complete the installation of these software run:
+
+   .. code:: sh
+
+      cd ~
+      source .profile
+      source .bashrc
+
+   You can now use SCT. Your local C drive is located under ``/mnt/c``. You can access it by running:
+
+   .. code:: sh
+
+      cd /mnt/c
+
+#. OPTIONAL: Install FSLeyes
+
+   FSLeyes is a viewer for NIfTI images. SCT features a plugin script to make SCT functions integrated into 
+   FSLeyes' graphical user interface. To benefit from this functionality, you will need to install FSLeyes.
+   
+   Install the C/C++ compilers required to use wxPython:
+   
+   .. code-block:: sh
+
+           sudo apt-get install build-essential
+           sudo apt-get install libgtk2.0-dev libgtk-3-dev libwebkitgtk-dev libwebkitgtk-3.0-dev
+           sudo apt-get install libjpeg-turbo8-dev libtiff5-dev libsdl1.2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libnotify-dev freeglut3-dev
+           
+   Activate SCT's conda environment (to run each time you wish to use FSLeyes):
+   
+   .. code-block:: sh
+   
+           source ${SCT_DIR}/python/etc/profile.d/conda.sh
+           conda activate venv_sct
+
+   Install wxPython using conda:
+   
+   .. code-block:: sh
+
+           yes | conda install -c anaconda wxpython
+           
+   Install FSLeyes using conda-forge:
+   
+   .. code-block:: sh
+
+           yes | conda install -c conda-forge fsleyes
+
+   To use FSLeyes, run Xming from your computer before entering the fsleyes command.
+   
+   .. important::
+
+      Each time you wish to use FSLeyes, you first need to activate SCT's conda environment (see above).
 
 
 Install with Docker
