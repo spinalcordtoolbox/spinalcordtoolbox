@@ -220,6 +220,23 @@ To check that X forwarding is working well write ``fsleyes &`` in LXterminal and
   - Run ``export DISPLAY=<previously obtained address>`` in the docker quickstart terminal
   - Run ``fsleyes &`` (in the docker quickstart terminal) to check if it is working. A new Xming window with fsleyes should appear.
 
+Notes:
+
+- If after closing a program with graphical interface (i.e. FSLeyes) LXterminal does not raise the shell ($) prompt then press Ctrl + C to finish closing the program.
+- Docker exposes the forwarded SSH server at different endpoints depending on whether Docker Desktop or Docker Toolbox is installed.
+
+  - Docker Desktop:
+
+    .. code:: bash
+
+       ssh -Y -p 2222 sct@127.0.0.1
+
+  - Docker Toolbox:
+
+    .. code:: bash
+
+       ssh -Y -p 2222 sct@192.168.99.100
+
 
 Install with pip (experimental)
 -------------------------------
