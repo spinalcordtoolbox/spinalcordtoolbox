@@ -348,3 +348,6 @@ Applications
    Leg Movement With Spinal Cord Epidural Stimulation in Individuals
    With Clinically Motor Complete Spinal Cord Injury. Front. Syst. Neurosci.,
    2020 <https://www.frontiersin.org/articles/10.3389/fnsys.2020.559313/full>`__
+-  `Labounek et al. HARDI-ZOOMit protocol improves specificity to
+   microstructural changes in presymptomatic myelopathy. Scientific
+   Reports, 2020  <https://www.nature.com/articles/s41598-020-70297-3>`__
