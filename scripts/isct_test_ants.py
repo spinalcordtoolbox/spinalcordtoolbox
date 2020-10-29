@@ -160,7 +160,7 @@ def usage():
           '\n')
 
     # exit program
-    sys.exit(2)
+    sys.exit(0)
 
 
 # Start program
