@@ -181,6 +181,9 @@ def usage():
           'EXAMPLE\n'
           '  ' + os.path.basename(__file__) + ' -i segmentation.nii \n')
 
+    # exit program
+    sys.exit(2)
+
 
 # =======================================================================================================================
 # Start program
