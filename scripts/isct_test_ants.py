@@ -42,6 +42,7 @@ def main():
     for opt, arg in opts:
         if opt == '-h':
             usage()
+            return
         elif opt in ('-v'):
             verbose = int(arg)
         elif opt in ('-r'):
