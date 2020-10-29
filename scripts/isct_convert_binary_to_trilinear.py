@@ -68,6 +68,7 @@ def main():
         for opt, arg in opts:
             if opt == '-h':
                 usage()
+                return
             elif opt in ('-i'):
                 fname_data = arg
             elif opt in ('-r'):
@@ -80,6 +81,7 @@ def main():
     # display usage if a mandatory argument is not provided
     if fname_data == '':
         usage()
+        raise SystemExit(2)
 
     # printv(arguments)
     printv('\nCheck parameters:')
