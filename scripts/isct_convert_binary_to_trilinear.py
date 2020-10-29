@@ -61,8 +61,10 @@ def main():
             opts, args = getopt.getopt(sys.argv[1:], 'hi:v:r:s:')
         except getopt.GetoptError:
             usage()
+            raise SystemExit(2)
         if not opts:
             usage()
+            raise SystemExit(2)
         for opt, arg in opts:
             if opt == '-h':
                 usage()
@@ -180,9 +182,6 @@ def usage():
           '\n'
           'EXAMPLE\n'
           '  ' + os.path.basename(__file__) + ' -i segmentation.nii \n')
-
-    # exit program
-    sys.exit(0)
 
 
 # =======================================================================================================================
