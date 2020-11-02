@@ -536,6 +536,16 @@ def label_discs(fname_seg_labeled, verbose=1):
                 data_disc[cx, cy, iz] = vertebral_level + 1
             # update variable
             vertebral_level_previous = vertebral_level
+    # Add top disc
+    # We retrieve the last positive slices.
+    last_value = max(np.nonzero(im_seg_labeled.data)[2])  # We use mas because the image is oriented in RPI
+    # (this will represent the top of the segmentation)
+    slice = im_seg_labeled.data[:, :, last_value-4:last_value]  # we take a few slices below because the last slice
+    # can be incomplete (and since the slices above ar all 0, the label could not be in the middle of the SC)
+    slice_one[slice.nonzero()] = 1
+    # compute center of mass
+    cx, cy, cz = [int(x) for x in np.round(center_of_mass(slice_one)).tolist()]
+    data_disc[cx, cy, last_value] = vertebral_level
     # save disc labeled file
     im_seg_labeled.data = data_disc
     im_seg_labeled.change_orientation(orientation_native).save(add_suffix(fname_seg_labeled, '_disc'))
