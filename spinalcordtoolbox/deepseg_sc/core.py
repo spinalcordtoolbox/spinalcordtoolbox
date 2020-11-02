@@ -7,8 +7,8 @@ import sys
 import logging
 
 import numpy as np
-from scipy.ndimage.measurements import center_of_mass, label
 from skimage.exposure import rescale_intensity
+from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage import distance_transform_edt
 
 from spinalcordtoolbox import resampling
@@ -16,9 +16,8 @@ from .cnn_models import nn_architecture_seg, nn_architecture_ctr
 from .postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, add_suffix
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
-from spinalcordtoolbox.utils import sct_dir_local_path, printv, TempFolder
+from spinalcordtoolbox.utils import sct_dir_local_path, TempFolder
 from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
-
 
 # FIXME: don't import from scripts!
 from sct_image import concat_data, split_data
@@ -104,7 +103,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                                          ParamCenterline(algo_fitting='optic', contrast=contrast_type))
 
         if z_max is not None:
-            printv('Cropping brain section.')
+            logger.info('Cropping brain section.')
             im_ctl.data[:, :, z_max:] = 0
 
     elif algo == 'viewer':
@@ -307,7 +306,7 @@ def heatmap(im, model, patch_shape, mean_train, std_train, brain_bool=True):
             z_sc_notDetected_cmpt += 1
             # if the SC has not been detected on 10 consecutive z_slices, we stop the SC investigation
             if z_sc_notDetected_cmpt > 10 and brain_bool:
-                printv('Brain section detected.')
+                logger.info('Brain section detected.')
                 break
 
         # distance transform to deal with the harsh edges of the prediction boundaries (Dice)
