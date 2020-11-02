@@ -351,3 +351,6 @@ Applications
 -  `Labounek et al. HARDI-ZOOMit protocol improves specificity to
    microstructural changes in presymptomatic myelopathy. Scientific
    Reports, 2020  <https://www.nature.com/articles/s41598-020-70297-3>`__
+-  `Henmar et al. What are the gray and white matter volumes of the
+   human spinal cord? J Neurophysiol, 2020
+   <https://pubmed.ncbi.nlm.nih.gov/33085549/>`__
