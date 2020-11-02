@@ -542,6 +542,7 @@ def label_discs(fname_seg_labeled, verbose=1):
     # (this will represent the top of the segmentation)
     slice = im_seg_labeled.data[:, :, last_value-4:last_value]  # we take a few slices below because the last slice
     # can be incomplete (and since the slices above ar all 0, the label could not be in the middle of the SC)
+    slice_one = np.copy(slice)
     slice_one[slice.nonzero()] = 1
     # compute center of mass
     cx, cy, cz = [int(x) for x in np.round(center_of_mass(slice_one)).tolist()]
