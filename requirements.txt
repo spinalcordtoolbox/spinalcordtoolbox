@@ -1,7 +1,9 @@
 colored
 dipy
 futures
-h5py
+# h5py is pinned to minor than 3 due to issues with Keras/TF
+# https://github.com/tensorflow/tensorflow/issues/44467
+h5py~=2.10.0
 ivadomed==2.0.2
 Keras==2.1.5
 matplotlib
