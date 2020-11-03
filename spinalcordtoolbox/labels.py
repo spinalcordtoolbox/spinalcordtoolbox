@@ -291,8 +291,12 @@ def find_missing_label(img,ref):
             if np.round(coord_ref.value) not in rounded_coord_in_values:
                 FN.append(np.round(coord_ref.value))
 
-    logger.info("False positive label {}, False Negative label {}".format(' '.join(map(str, FP)),
-                                                                          ' '.join(map(str, FN))))
+    if len(FP) > 0:
+        logger.warning("False positive label {}".format(' '.join(map(str, FP))))
+
+    if len(FN) > 0:
+        logger.warning("False negative label {}".format(' '.join(map(str, FN))))
+
     return FP, FN
 
 
@@ -309,6 +313,7 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
     coordinates_ref = ref.getNonZeroCoordinates()
     result = 0.0
 
+    # This line will add warning in the log if there are missing label.
     find_missing_label(img, ref)
 
     for coord in coordinates_input:
