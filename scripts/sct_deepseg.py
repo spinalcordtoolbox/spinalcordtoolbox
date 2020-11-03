@@ -95,6 +95,11 @@ def get_parser():
         help="Fill small holes in the segmentation.",
         choices=(0, 1),
         default=deepseg.core.DEFAULTS['fill_holes'])
+    misc.add_argument(
+        "-remove-small",
+        type=str,
+        help="Minimal object size to keep with unit (mm3 or vox). Example: 1mm3, 5vox.",
+        default=deepseg.core.DEFAULTS['remove_small'])
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
@@ -117,11 +122,11 @@ def main():
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     # Deal with model
-    if args.list_models is not None:
+    if args.list_models:
         deepseg.models.display_list_models()
 
     # Deal with task
-    if args.list_tasks is not None:
+    if args.list_tasks:
         deepseg.models.display_list_tasks()
 
     if args.install_model is not None:
@@ -165,7 +170,7 @@ def main():
                 parser.error("The input model is invalid: {}".format(path_model))
 
         # Call segment_nifti
-        fname_seg = deepseg.core.segment_nifti(args.i, path_model, fname_prior, args)
+        fname_seg = deepseg.core.segment_nifti(args.i, path_model, fname_prior, vars(args))
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
 
