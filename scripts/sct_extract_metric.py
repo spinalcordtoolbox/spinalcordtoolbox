@@ -62,11 +62,11 @@ def get_parser():
             f"https://spinalcordtoolbox.com/en/latest/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas\n"
             f"\n"
             f"To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:\n"
-            f"{os.path.basename(__file__)} -i dti_FA.nii.gz -l 0,2,3 -v 2:7 -m bin\n"
+            f"sct_extract_metric -i dti_FA.nii.gz -l 0,2,3 -v 2:7 -m bin\n"
             f"\n"
             f"To compute average MTR in a region defined by a single label file (could be binary or 0-1 "
             f"weighted mask) between slices 1 and 4:\n"
-            f"{os.path.basename(__file__)} -i mtr.nii.gz -f "
+            f"sct_extract_metric -i mtr.nii.gz -f "
             f"my_mask.nii.gz -z 1:4 -m wa"
         ),
         formatter_class=SmartFormatter,
