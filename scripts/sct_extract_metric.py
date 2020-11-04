@@ -50,25 +50,25 @@ def get_parser():
 
     param_default = Param()
 
-    description = (f"This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or "
-                   f"a folder generated with 'sct_warp_template' containing multiple label files and a label "
-                   f"description file (info_label.txt). The labels should be in the same space coordinates as the "
-                   f"input image.\n"
-                   f"\n"
-                   f"The labels used by default are taken from the PAM50 template. To learn about the available PAM50 "
-                   f"white/grey matter atlas labels and their corresponding ID values, please refer to: "
-                   f"https://spinalcordtoolbox.com/en/latest/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas \n"
-                   f"\n"
-                   f"To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:\n"
-                   f"{os.path.basename(__file__)} -i dti_FA.nii.gz -l 0,2,3 -v 2:7 -m bin\n"
-                   f"\n"
-                   f"To compute average MTR in a region defined by a single label file (could be binary or 0-1 "
-                   f"weighted mask) between slices 1 and 4:\n"
-                   f"{os.path.basename(__file__)} -i mtr.nii.gz -f "
-                   f"my_mask.nii.gz -z 1:4 -m wa")
-
     parser = argparse.ArgumentParser(
-        description=description,
+        description=(
+            f"This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or "
+            f"a folder generated with 'sct_warp_template' containing multiple label files and a label "
+            f"description file (info_label.txt). The labels should be in the same space coordinates as the "
+            f"input image.\n"
+            f"\n"
+            f"The labels used by default are taken from the PAM50 template. To learn about the available PAM50 "
+            f"white/grey matter atlas labels and their corresponding ID values, please refer to: "
+            f"https://spinalcordtoolbox.com/en/latest/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas\n"
+            f"\n"
+            f"To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:\n"
+            f"{os.path.basename(__file__)} -i dti_FA.nii.gz -l 0,2,3 -v 2:7 -m bin\n"
+            f"\n"
+            f"To compute average MTR in a region defined by a single label file (could be binary or 0-1 "
+            f"weighted mask) between slices 1 and 4:\n"
+            f"{os.path.basename(__file__)} -i mtr.nii.gz -f "
+            f"my_mask.nii.gz -z 1:4 -m wa"
+        ),
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
