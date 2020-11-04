@@ -435,7 +435,17 @@ def main(args=None):
 
     # label discs
     printv('\nLabel discs...', verbose)
-    label_discs('segmentation_labeled.nii', verbose=verbose)
+    printv('\nUn-straighten labeling...', verbose)
+    run_proc('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
+             ('segmentation_straight_labeled.nii',
+              'segmentation.nii',
+              'warp_straight2curve.nii.gz',
+              'segmentation_labeled_disc.nii',
+              'label'),
+             verbose=verbose,
+             is_sct_binary=True,
+             )
+
 
     # come back
     os.chdir(curdir)
