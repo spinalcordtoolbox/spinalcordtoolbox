@@ -560,9 +560,10 @@ def label_disc_v2(fname_seg, list_disc_z, list_disc_value, verbose=1):
     disc_data = np.zeros_like(seg.data)
 
     for i in range(len(list_disc_z)):
-        slices = seg.data[:, :, list_disc_z[i]]
+        # detected point is just above the disc
+        slices = seg.data[:, :, list_disc_z[i]-1]
         cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
-        disc_data[cx, cy, list_disc_z[i]] = list_disc_value[i]
+        disc_data[cx, cy, list_disc_z[i]-1] = list_disc_value[i] + 1
 
     seg.data = disc_data
     seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled_disc'))
