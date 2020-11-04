@@ -216,3 +216,16 @@ def test_remove_other_labels_from_image(test_image):
     diff = res.data == expected.data
 
     assert diff.all()
+
+
+@pytest.mark.parametrize("test_image", test_images)
+def test_find_missing_label(test_image):
+    img = test_image.copy()
+    false_positive = test_image.copy()
+
+    # modifying [0,0,0] will create one false negative and one false positive (label is not in test_image originally)
+    false_positive[1, 1, 1] = 95
+    FP, FN = sct_labels.find_missing_label(false_positive,img)
+
+    assert FP == 95
+    assert FN == 111
