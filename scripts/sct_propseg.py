@@ -163,13 +163,20 @@ def get_parser():
             "(-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).\n"
             "\n"
             "Cross-sectional areas along the spinal cord can be available (-cross). Several tips on segmentation "
-            "correction can be found on the 'Correction Tips' page of the documentation while advices on parameters "
-            "adjustments can be found on the 'Parameters' page.\n"
+            "correction can be found on the 'Correcting sct_propseg' page in the Tutorials section of the "
+            "documentation.\n"
             "\n"
             "If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit "
             "your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values "
             "around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the "
-            "segmentation again."
+            "segmentation again.\n"
+            "\n"
+            "References:\n"
+            "  - De Leener B, Kadoury S, Cohen-Adad J. Robust, accurate and fast automatic segmentation of the spinal "
+            "cord. Neuroimage 98, 2014. pp 528-536. DOI: 10.1016/j.neuroimage.2014.04.051\n"
+            "  - De Leener B, Cohen-Adad J, Kadoury S. Automatic segmentation of the spinal cord and spinal canal "
+            "coupled with vertebral labeling. Medical Imaging, IEEE Transactions on (in press). "
+            "DOI: 10.1109/TMI.2015.2437192"
         ),
         formatter_class=SmartFormatter,
         add_help=None,

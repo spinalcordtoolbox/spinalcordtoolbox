@@ -39,9 +39,11 @@ def main():
         opts, args = getopt.getopt(sys.argv[1:], 'hvr:')
     except getopt.GetoptError:
         usage()
+        raise SystemExit(2)
     for opt, arg in opts:
         if opt == '-h':
             usage()
+            return
         elif opt in ('-v'):
             verbose = int(arg)
         elif opt in ('-r'):
@@ -132,10 +134,9 @@ def main():
     # output result for parent function
     if test_passed:
         printv('\nTest passed!\n', verbose)
-        sys.exit(0)
     else:
         printv('\nTest failed!\n', verbose)
-        sys.exit(1)
+        raise SystemExit(1)
 
 
 # printv(usage)
@@ -158,9 +159,6 @@ def usage():
           '  -r {0, 1}                  remove temp files. Default=1\n'
           '  -v {0, 1}                  verbose. Default=1\n'
           '\n')
-
-    # exit program
-    sys.exit(2)
 
 
 # Start program
