@@ -17,7 +17,7 @@ import sys
 
 import spinalcordtoolbox.deepseg as deepseg
 from spinalcordtoolbox.utils.shell import SmartFormatter, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import printv, init_sct
+from spinalcordtoolbox.utils.sys import init_sct, printv
 
 
 def get_parser():
@@ -99,9 +99,6 @@ def get_parser():
 def main():
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-
-    # Update log_level
-    init_sct(log_level=args.v, update=True)
 
     # Deal with task
     if args.list_tasks:
