@@ -135,7 +135,6 @@ def display_list_tasks():
     tasks = sct.deepseg.models.list_tasks()
     # Display beautiful output
     color = {True: 'green', False: 'red'}
-    default = {True: '[*]', False: ''}
     print("{:<20s}{:<50s}MODELS".format("TASK", "DESCRIPTION"))
     print("-" * 80)
     for name_task, value in tasks.items():
@@ -151,10 +150,9 @@ def display_list_tasks():
         print("{}{}{}".format(task_status, description_status, models_status))
 
     print(
-        '\nLegend: {} | {} | default: {}\n'.format(
+        '\nLegend: {} | {}\n'.format(
             colored.stylize("installed", colored.fg(color[True])),
-            colored.stylize("not installed", colored.fg(color[False])),
-            default[True]))
+            colored.stylize("not installed", colored.fg(color[False]))))
     exit(0)
 
 
