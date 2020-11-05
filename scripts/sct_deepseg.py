@@ -100,6 +100,9 @@ def main():
     parser = get_parser()
     args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
+    # Update log_level
+    init_sct(log_level=args.v, update=True)
+
     # Deal with task
     if args.list_tasks:
         deepseg.models.display_list_tasks()
