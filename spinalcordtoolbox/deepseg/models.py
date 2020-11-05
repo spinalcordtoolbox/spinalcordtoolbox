@@ -119,8 +119,8 @@ def is_valid(path_model):
     """
     name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
     return (os.path.exists(os.path.join(path_model, name_model + '.pt')) or
-           os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and \
-           os.path.exists(os.path.join(path_model, name_model + '.json'))
+            os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and os.path.exists(
+        os.path.join(path_model, name_model + '.json'))
 
 
 def list_tasks():
