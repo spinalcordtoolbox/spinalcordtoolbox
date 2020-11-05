@@ -22,7 +22,7 @@ import matplotlib.colors as color
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
-from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline, __version__, printv, copy, extract_fname
+from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline, __version__, copy, extract_fname
 
 logger = logging.getLogger(__name__)
 
