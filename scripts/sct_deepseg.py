@@ -17,7 +17,7 @@ import sys
 
 import spinalcordtoolbox.deepseg as deepseg
 from spinalcordtoolbox.utils.shell import SmartFormatter, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import printv
+from spinalcordtoolbox.utils.sys import printv, init_sct
 
 
 def get_parser():
@@ -145,4 +145,5 @@ def main():
 
 
 if __name__ == '__main__':
+    init_sct()
     main()
