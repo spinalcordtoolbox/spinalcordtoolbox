@@ -224,7 +224,7 @@ def test_find_missing_label(test_image):
     false_positive = test_image.copy()
 
     # modifying [0,0,0] will create one false negative and one false positive (label is not in test_image originally)
-    false_positive[1, 1, 1] = 95
+    false_positive.data[1, 1, 1] = 95
     FP, FN = sct_labels.find_missing_label(false_positive,img)
 
     assert FP == 95
