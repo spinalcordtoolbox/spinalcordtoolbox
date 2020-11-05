@@ -18,6 +18,7 @@ from spinalcordtoolbox.math import dilate, mutual_information
 
 logger = logging.getLogger(__name__)
 
+
 def label_vert(fname_seg, fname_label, verbose=1):
     """
     Label segmentation using vertebral labeling information. No orientation expected.
@@ -44,6 +45,7 @@ def label_vert(fname_seg, fname_label, verbose=1):
     list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
     # label segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    label_disc(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
 
 def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../',
@@ -498,62 +500,16 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled'))
 
 
-def label_discs(fname_seg_labeled, verbose=1):
+def label_disc(fname_seg, list_disc_z, list_disc_value, verbose=1):
     """
-    Label discs from labeled_segmentation. The convention is C2/C3-->3, C3/C4-->4, etc.
+    Create file with single voxel label in the middle of the spinal cord for each disc.
 
-    :param fname_seg_labeld: fname of the labeled segmentation
+    :param fname_seg: fname of the segmentation, no orientation expected
+    :param list_disc_z: list of z that correspond to a disc
+    :param list_disc_value: list of associated disc values
     :param verbose:
     :return:
     """
-    # open labeled segmentation
-    im_seg_labeled = Image(fname_seg_labeled)
-    orientation_native = im_seg_labeled.orientation
-    im_seg_labeled.change_orientation("RPI")
-    nx, ny, nz = im_seg_labeled.dim[0], im_seg_labeled.dim[1], im_seg_labeled.dim[2]
-    data_disc = np.zeros([nx, ny, nz])
-    vertebral_level_previous = np.max(im_seg_labeled.data)  # initialize with the max label value
-    # loop across z in the superior direction (i.e. starts with the bottom slice), and each time the i/i+1 interface
-    # between two levels is found, create a label at the center of the cord with the value corresponding to the
-    # vertebral level below the point. E.g., at interface C3/C4, the value would be 4.
-    for iz in range(nz):
-        # get 2d slice
-        slice = im_seg_labeled.data[:, :, iz]
-        # check if at least one voxel is non-zero
-        if np.any(slice):
-            slice_one = np.copy(slice)
-            # set all non-zero values to 1 (to compute center of mass)
-            # Note: the reason we do this is because if one slice includes part of vertebral level i and i+1, the
-            # center of mass will be shifted towards the i+1 level.We don't want that here (i.e. the goal is to be at
-            # the center of the cord)
-            slice_one[slice.nonzero()] = 1
-            # compute center of mass
-            cx, cy = [int(x) for x in np.round(center_of_mass(slice_one)).tolist()]
-            # retrieve vertebral level
-            vertebral_level = slice[cx, cy]
-            # if smaller than previous level, then labeled as a disc
-            if vertebral_level < vertebral_level_previous:
-                # label disc
-                data_disc[cx, cy, iz] = vertebral_level + 1
-            # update variable
-            vertebral_level_previous = vertebral_level
-    # Add top disc
-    # We retrieve the last positive slices.
-    last_value = max(np.nonzero(im_seg_labeled.data)[2])  # We use mas because the image is oriented in RPI
-    # (this will represent the top of the segmentation)
-    slice = im_seg_labeled.data[:, :, last_value-4:last_value]  # we take a few slices below because the last slice
-    # can be incomplete (and since the slices above ar all 0, the label could not be in the middle of the SC)
-    slice_one = np.copy(slice)
-    slice_one[slice.nonzero()] = 1
-    # compute center of mass
-    cx, cy, cz = [int(x) for x in np.round(center_of_mass(slice_one)).tolist()]
-    data_disc[cx, cy, last_value] = vertebral_level
-    # save disc labeled file
-    im_seg_labeled.data = data_disc
-    im_seg_labeled.change_orientation(orientation_native).save(add_suffix(fname_seg_labeled, '_disc'))
-
-
-def label_disc_v2(fname_seg, list_disc_z, list_disc_value, verbose=1):
     seg = Image(fname_seg)
     init_orientation = seg.orientation
     seg.change_orientation("RPI")
