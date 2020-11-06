@@ -272,7 +272,8 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
     else:
         cmdline = list2cmdline(cmd)
 
-    logger.debug(f"{cmdline} # in {cwd}")
+    if verbose:
+        printv("%s # in %s" % (cmdline, cwd), 1, 'code')
 
     shell = isinstance(cmd, str)
 
