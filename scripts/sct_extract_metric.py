@@ -14,7 +14,6 @@
 #########################################################################################
 
 # TODO: fetch vert level in atlas by default-- would be nice to output in csv
-# TODO: use argparse
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where
 #  two different vertebral levels coexist (and not the whole slice)
 
