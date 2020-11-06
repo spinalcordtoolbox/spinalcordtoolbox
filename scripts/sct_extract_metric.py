@@ -103,6 +103,12 @@ def get_parser():
              "computed using all tracts, but only values of the selected tracts are reported."
     )
     optional.add_argument(
+        '-list-labels',
+        action='store_true',
+        help="List available labels. These labels are defined in the file 'info_label.txt' located in the folder "
+             "specified by the flag '-f'."
+    )
+    optional.add_argument(
         '-method',
         choices=['ml', 'map', 'wa', 'bin', 'max'],
         default=param_default.method,
@@ -314,6 +320,9 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
                                                                                 map_cluster in map_clusters].index(True))
     else:
         raise RuntimeError(path_label + ' does not exist')
+
+    if arguments.list_labels:
+        raise NotImplementedError
 
     # check syntax of labels asked by user
     labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_num_list(labels_user))
