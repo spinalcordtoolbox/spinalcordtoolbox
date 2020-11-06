@@ -119,41 +119,8 @@ def is_valid(path_model):
     """
     name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
     return (os.path.exists(os.path.join(path_model, name_model + '.pt')) or
-           os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and \
-           os.path.exists(os.path.join(path_model, name_model + '.json'))
-
-
-def list_models():
-    """
-    Display available models with description. Color is used to indicate if model is installed or not. For default
-    models, a '*' is added next to the model name.
-
-    :return: dict: Models that are installed
-    """
-    return {name: value for name, value in MODELS.items()}
-
-
-def display_list_models():
-    models = sct.deepseg.models.list_models()
-    # Display beautiful output
-    color = {True: 'green', False: 'red'}
-    default = {True: '[*]', False: ''}
-    print("{:<25s}DESCRIPTION".format("MODEL"))
-    print("-" * 80)
-    for name_model, value in models.items():
-        path_model = sct.deepseg.models.folder(name_model)
-        print("{}{}".format(
-            colored.stylize(''.join((name_model, default[value['default']])).ljust(25),
-                            colored.fg(color[sct.deepseg.models.is_valid(path_model)])),
-            colored.stylize(value['description'],
-                            colored.fg(color[sct.deepseg.models.is_valid(path_model)]))
-        ))
-    print(
-        '\nLegend: {} | {} | default: {}\n'.format(
-            colored.stylize("installed", colored.fg(color[True])),
-            colored.stylize("not installed", colored.fg(color[False])),
-            default[True]))
-    exit(0)
+            os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and os.path.exists(
+        os.path.join(path_model, name_model + '.json'))
 
 
 def list_tasks():
@@ -168,7 +135,6 @@ def display_list_tasks():
     tasks = sct.deepseg.models.list_tasks()
     # Display beautiful output
     color = {True: 'green', False: 'red'}
-    default = {True: '[*]', False: ''}
     print("{:<20s}{:<50s}MODELS".format("TASK", "DESCRIPTION"))
     print("-" * 80)
     for name_task, value in tasks.items():
@@ -184,10 +150,9 @@ def display_list_tasks():
         print("{}{}{}".format(task_status, description_status, models_status))
 
     print(
-        '\nLegend: {} | {} | default: {}\n'.format(
+        '\nLegend: {} | {}\n'.format(
             colored.stylize("installed", colored.fg(color[True])),
-            colored.stylize("not installed", colored.fg(color[False])),
-            default[True]))
+            colored.stylize("not installed", colored.fg(color[False]))))
     exit(0)
 
 

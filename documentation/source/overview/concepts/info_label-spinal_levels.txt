@@ -1,0 +1,23 @@
+# Spinal levels labels - generated on 2016-11-28
+# Keyword=IndivLabels (Please DO NOT change this line)
+# ID, name, file
+0, Spinal level C1, spinal_level_01.nii.gz
+1, Spinal level C2, spinal_level_02.nii.gz
+2, Spinal level C3, spinal_level_03.nii.gz
+3, Spinal level C4, spinal_level_04.nii.gz
+4, Spinal level C5, spinal_level_05.nii.gz
+5, Spinal level C6, spinal_level_06.nii.gz
+6, Spinal level C7, spinal_level_07.nii.gz
+7, Spinal level C8, spinal_level_08.nii.gz
+8, Spinal level T1, spinal_level_09.nii.gz
+9, Spinal level T2, spinal_level_10.nii.gz
+10, Spinal level T3, spinal_level_11.nii.gz
+11, Spinal level T4, spinal_level_12.nii.gz
+12, Spinal level T5, spinal_level_13.nii.gz
+13, Spinal level T6, spinal_level_14.nii.gz
+14, Spinal level T7, spinal_level_15.nii.gz
+15, Spinal level T8, spinal_level_16.nii.gz
+16, Spinal level T9, spinal_level_17.nii.gz
+17, Spinal level T10, spinal_level_18.nii.gz
+18, Spinal level T11, spinal_level_19.nii.gz
+19, Spinal level T12, spinal_level_20.nii.gz

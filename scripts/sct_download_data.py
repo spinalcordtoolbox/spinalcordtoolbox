@@ -75,13 +75,11 @@ def main(args=None):
             "https://www.neuro.polymtl.ca/_media/downloads/sct/20180525_sct_example_data.zip",
         ],
         "sct_testing_data": [
-            "https://github.com/sct-data/sct_testing_data/releases/download/r20200904/sct_testing_data-r20200904.zip",
-            "https://osf.io/download/5f516b634f1e5e00226f0599/"],
+            "https://github.com/sct-data/sct_testing_data/releases/download/r20201030/sct_testing_data-r20201030.zip",
+            "https://osf.io/download/5f9c271187b7df04593b03e0/"],
         "PAM50": [
-            "https://github.com/sct-data/PAM50/releases/download/r20191029/20191029_pam50.zip",
-            "https://osf.io/u79sr/download",
-            "https://www.neuro.polymtl.ca/_media/downloads/sct/20191029_PAM50.zip",
-        ],
+            "https://github.com/sct-data/PAM50/releases/download/r20201104/PAM50-r20201104.zip", 
+            "https://osf.io/download/5fa21326a5bb9d00610a5a21/"],
         "MNI-Poly-AMU": [
             "https://github.com/sct-data/MNI-Poly-AMU/releases/download/r20170310/20170310_MNI-Poly-AMU.zip",
             "https://osf.io/sh6h4/?action=download",
