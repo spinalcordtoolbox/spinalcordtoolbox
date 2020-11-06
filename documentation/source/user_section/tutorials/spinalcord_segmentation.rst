@@ -120,7 +120,7 @@ Running this command in your Terminal window will open up a page in your default
 Inspecting the results using FSLeyes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you have FSLeyes installed, the script will also output a second command to inspect the results. This will be true for all commands run in this tutorial. (**Note:** The exact filepath will vary depending on your filesystem.)
+If you have `FSLeyes <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes>`_ installed, the script will also output a second command to inspect the results. This will be true for all commands run in this tutorial. (**Note:** The exact filepath will vary depending on your filesystem.)
 
 .. code:: sh
 
@@ -244,4 +244,4 @@ Choosing between ``sct_propseg`` and ``sct_deepseg_sc``
 
 Although ``sct_deepseg_sc`` was introduced as a follow-up to the original ``sct_propseg``, choosing between the two is not as straightfoward as it may seem. Neither algorithm is strictly superior in all cases; whether one works better than the other is data-dependent. Given the variation in imaging data (imaging centers, sizes, ages, coil strengths, contrasts, scanner vendors, etc.) SCT recommends to try both algorithms with your pilot scans to evaluate the merit of each on your specific dataset, then stick with a single method throughout your study.
 
-Development of these approaches is an iterative process, and the data used to develop these approaches evolves over time. If you have input regarding what has worked (or hasn't worked) for you, we would be happy to hear your thoughts in the `Spinal Cord MRI forums <https://forum.spinalcordmri.org/>`_, as it could help to improve the toolbox for future users.
+Development of these approaches is an iterative process, and the data used to develop these approaches evolves over time. If you have input regarding what has worked (or hasn't worked) for you, we would be happy to hear your thoughts in the `SCT forum <http://forum.spinalcordmri.org/c/sct>`_ as it could help to improve the toolbox for future users.
