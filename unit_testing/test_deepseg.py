@@ -11,6 +11,8 @@ import nibabel
 
 import spinalcordtoolbox as sct
 from spinalcordtoolbox.utils import sct_test_path
+import spinalcordtoolbox.deepseg.core
+import spinalcordtoolbox.deepseg.models
 
 
 param_deepseg = [
