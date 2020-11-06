@@ -352,9 +352,6 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     else:
         raise RuntimeError(path_label + ' does not exist')
 
-    if arguments.list_labels:
-        raise NotImplementedError
-
     # check syntax of labels asked by user
     labels_id_user = check_labels(indiv_labels_ids + combined_labels_ids, parse_num_list(labels_user))
     nb_labels = len(indiv_labels_files)
