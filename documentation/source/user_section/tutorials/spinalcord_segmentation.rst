@@ -7,20 +7,22 @@ This tutorial demonstrates how to use SCT's command-line scripts to segment spin
 
 .. warning::
 
-   This tutorial uses sample MRI images that must be retrieved beforehand. Please download and unzip `sct_course_london20.zip <https://osf.io/bze7v/?action=download>`_ , then open up the unzipped folder in your terminal and verify its contents.
+   This tutorial uses sample MRI images that must be retrieved beforehand. Please download and unzip `sct_course_london20.zip <https://osf.io/bze7v/?action=download>`_ , then open up the unzipped folder in your terminal and verify its contents using ``ls``.
 
    .. code:: sh
 
-      $ ls
-      multi_subject single_subject
+      ls
+      # Output:
+      # multi_subject single_subject
 
-   We will be using images from the ``single_subject/data`` directory, so navigate there and verify that it contains subdirectories for various MRI image contrasts.
+   We will be using images from the ``single_subject/data`` directory, so navigate there and verify that it contains subdirectories for various MRI image contrasts using ``ls``.
 
    .. code:: sh
 
-      $ cd single_subject/data
-      $ ls
-      dmri  fmri  LICENSE.txt  mt  README.txt  t1  t2  t2s
+      cd single_subject/data
+      ls
+      # Output:
+      # dmri  fmri  LICENSE.txt  mt  README.txt  t1  t2  t2s
 
 .. note::
 
@@ -75,9 +77,10 @@ From the ``single_subject/data`` folder, navigate to the ``t2`` directory, and v
 
 .. code:: sh
 
-   $ cd t2
-   $ ls
-   t2.nii.gz
+   cd t2
+   ls
+   # Output:
+   # t2.nii.gz
 
 Running the script
 ^^^^^^^^^^^^^^^^^^
@@ -92,7 +95,7 @@ Next, run the following command to process the image:
 
 .. code:: sh
 
-   $ sct_propseg -i t2.nii.gz -c t2 -qc ~/qc_singleSubj
+   sct_propseg -i t2.nii.gz -c t2 -qc ~/qc_singleSubj
 
 Note that we have provided three arguments:
 
@@ -145,9 +148,10 @@ Next, we will navigate to the T1 directory and verify that it contains a single 
 
 .. code:: sh
 
-   $ cd ../t1
-   $ ls
-   t1.nii.gz
+   cd ../t1
+   ls
+   # Output
+   # t1.nii.gz
 
 Running the script
 ^^^^^^^^^^^^^^^^^^
@@ -156,7 +160,7 @@ Once here, we can run the ``sct_propseg`` command to process the image:
 
 .. code:: sh
 
-   $ sct_propseg -i t1.nii.gz -c t1 -qc ~/qc_singleSubj
+   sct_propseg -i t1.nii.gz -c t1 -qc ~/qc_singleSubj
 
 This command is identical to the previous step, apart from the ``-c`` argument to indicate a different contrast.
 
@@ -224,7 +228,7 @@ Since we aim to improve the T1 segmentation, ensure that you are still in the T1
 
 .. code:: sh
 
-   $ sct_deepseg_sc -i t1.nii.gz -c t1 -qc ~/qc_singleSubj -ofolder deepseg
+   sct_deepseg_sc -i t1.nii.gz -c t1 -qc ~/qc_singleSubj -ofolder deepseg
 
 Much like ``sct_propseg``, we use the same values for ``-i``, ``-c``, and ``-qc``. In this case, however, we have added an additional ``-ofolder`` command. This is so that we do not overwrite the results generated in the previous steps, which allows us to compare the output of both algorithms. ``-ofolder`` is not strictly necessary, however.
 
