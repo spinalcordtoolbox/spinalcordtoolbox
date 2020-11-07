@@ -62,9 +62,8 @@ class _ListLabelsAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         file_label = os.path.join(namespace.f, param_default.file_info_label)
         check_file_exist(file_label, 0)
-        default_info_label = open(file_label, 'r')
-        label_references = default_info_label.read()
-        default_info_label.close()
+        with open(file_label, 'r') as default_info_label:
+            label_references = default_info_label.read()
         txt_label = (
             f"List of labels in {file_label}:\n"
             f"--------------------------------------------------------------------------------------\n"
