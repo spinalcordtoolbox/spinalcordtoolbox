@@ -10,32 +10,42 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
+import os
 import sys
+import argparse
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from dipy.data.fetcher import read_bvals_bvecs
 
-import sct_utils as sct
-from msct_parser import Parser
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
 
 bzero = 0.0001  # b-zero threshold
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
 
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Display scatter plot of gradient directions from bvecs file.')
-    parser.add_option(name='-bvec',
-                      type_value='file',
-                      description='bvecs file.',
-                      mandatory=True,
-                      example='bvecs.txt')
+    parser = argparse.ArgumentParser(
+        description='Display scatter plot of gradient directions from bvecs file.',
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-bvec',
+        metavar=Metavar.file,
+        required=True,
+        help="Input bvecs file. Example: bvecs.txt",
+    )
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+
     return parser
 
 
@@ -53,12 +63,14 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
 
 # MAIN
 # ==========================================================================================
+
+
 def main():
 
     # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    fname_bvecs = arguments['-bvec']
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    fname_bvecs = arguments.bvec
 
     # Read bvecs
     bvecs = read_bvals_bvecs(fname_bvecs, None)
@@ -92,7 +104,7 @@ def main():
 
     # Display scatter plot
     fig = plt.figure(facecolor='white', figsize=(9, 8))
-    fig.suptitle('Number of b=0: '+str(n_b0)+', Number of b!=0: '+str(n_dir-n_b0)+', Number of effective directions (without duplicates): '+str(n_dir_eff))
+    fig.suptitle('Number of b=0: ' + str(n_b0) + ', Number of b!=0: ' + str(n_dir - n_b0) + ', Number of effective directions (without duplicates): ' + str(n_dir_eff))
     # plt.ion()
 
     # Display three views
@@ -116,7 +128,7 @@ def main():
     # plt.draw()
 
     # Save image
-    sct.printv("Saving figure: bvecs.png\n")
+    printv("Saving figure: bvecs.png\n")
     plt.savefig('bvecs.png')
     plt.show()
 
@@ -124,6 +136,6 @@ def main():
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

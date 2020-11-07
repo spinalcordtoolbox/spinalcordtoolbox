@@ -2,19 +2,17 @@
 
 # TODO: Replace slice by spinalcordtoolbox.image.Slicer
 
-
-from __future__ import print_function, absolute_import, division
-
 import abc
 import logging
 import math
 
 import numpy as np
 from scipy import ndimage
+from nibabel.nifti1 import Nifti1Image
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.resampling import resample_nib
-from nibabel.nifti1 import Nifti1Image
+from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 logger = logging.getLogger(__name__)
 
@@ -281,17 +279,16 @@ class Slice(object):
         """
         assert len(set([x.data.shape for x in self._images])) == 1, "Volumes don't have the same size"
 
-        image = self._images[0]
-        dim = self.get_dim(image)
-
         matrices = list()
+        # Retrieve the L-R center of the slice for each row (i.e. in the S-I direction).
         index = self.get_center_spit()
+        # Loop across images and generate matrices for the image and the overlay
         for image in self._images:
-            # Fetch mid-sagittal plane
-            matrix = self.get_slice(image.data, dim / 2)
-            for j in range(len(index)):
+            # Initialize matrix with zeros. This matrix corresponds to the 2d slice shown on the QC report.
+            matrix = np.zeros(image.dim[0:2])
+            for row in range(len(index)):
                 # For each slice, translate in the R-L direction to center the cord
-                matrix[j] = self.get_slice(image.data, int(np.round(index[j])))[j]
+                matrix[row] = self.get_slice(image.data, int(np.round(index[row])))[row]
             matrices.append(matrix)
 
         return matrices
@@ -347,11 +344,6 @@ class Axial(Slice):
     def get_dim(self, image):
         return self.axial_dim(image)
 
-    def get_center_spit(self, img_idx=-1):
-        image = self._images[img_idx]
-        size = self.axial_dim(image)
-        return np.ones(size) * size / 2
-
     def get_center(self, img_idx=-1):
         """Get the center of mass of each slice. By default, it assumes that self._images is a list of images, and the
         last item is the segmentation from which the center of mass is computed."""
@@ -375,64 +367,40 @@ class Sagittal(Slice):
         return self.sagittal_dim(image)
 
     def get_center_spit(self, img_idx=-1):
-        """Retrieve index of the medial plane (in the R-L direction) for each slice (in the I-S direction) in order
-        to center the spinal cord in the sagittal view.
-        Exception: if the input mask only has a single label (e.g., for sct_detect_pmj), then output the index that has
-        the sagittal slice centered at that label."""
+        """
+        Retrieve index along in the R-L direction for each S-I slice in order to center the spinal cord in the
+        medial plane, around the labels or segmentation.
+
+        By default, it looks at the latest image in the input list of images, assuming the latest is the labels or
+        segmentation.
+
+        If only one label is found, the cord will be centered at that label.
+
+        :return: index: [int] * n_SI
+        """
         image = self._images[img_idx].copy()
+        assert image.orientation == 'SAL'
         # If mask is empty, raise error
         if np.argwhere(image.data).shape[0] == 0:
             logging.error('Mask is empty')
         # If mask only has one label (e.g., in sct_detect_pmj), return the repmat of the R-L index (assuming SAL orient)
         elif np.argwhere(image.data).shape[0] == 1:
             return [np.argwhere(image.data)[0][2]] * image.data.shape[2]
-        # Otherwise, find the center of mass per slice and return the R-L index
+        # Otherwise, find the center of mass of each label (per axial plane) and extrapolate linearly
         else:
-            from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
             image.change_orientation('RPI')  # need to do that because get_centerline operates in RPI orientation
             # Get coordinate of centerline
-            _, arr_ctl_RPI, _, _ = get_centerline(image, param=ParamCenterline())
-            # Extend the centerline by copying values below zmin and above zmax to avoid discontinuities
-            zmin, zmax = arr_ctl_RPI[2, :].min().astype(int), arr_ctl_RPI[2, :].max().astype(int)
-            index_RL_in_RPI = np.concatenate([np.ones(zmin) * arr_ctl_RPI[0, 0],
-                                              arr_ctl_RPI[0, 1:],
-                                              np.ones(image.data.shape[2] - zmax) * arr_ctl_RPI[0, -1]])
-            # reorient R-L index to go from RPI to SAL
-            index_RL_in_SAL = image.data.shape[0] - index_RL_in_RPI
-            # then reverse to go from RL to LR
-            index_RL_in_SAL = index_RL_in_SAL[::-1]
-            return index_RL_in_SAL
+            # Here we use smooth=0 because we want the centerline to pass through the labels, and minmax=True extends
+            # the centerline below zmin and above zmax to avoid discontinuities
+            data_ctl_RPI, _, _, _ = get_centerline(
+                image, param=ParamCenterline(algo_fitting='linear', smooth=0, minmax=False))
+            data_ctl_RPI.change_orientation('SAL')
+            index_RL = np.argwhere(data_ctl_RPI.data)
+            return [index_RL[i][2] for i in range(len(index_RL))]
 
     def get_center(self, img_idx=-1):
         image = self._images[img_idx]
         dim = self.get_dim(image)
         size_y = self.axial_dim(image)
         size_x = self.coronal_dim(image)
-        return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
-
-
-class Coronal(Slice):
-    """The coronal representation of a slice"""
-    def get_name(self):
-        return Coronal.__name__
-
-    def get_aspect(self, image):
-        return Slice.coronal_aspect(image)
-
-    def get_slice(self, data, i):
-        return self.coronal_slice(data, i)
-
-    def get_dim(self, image):
-        return self.coronal_dim(image)
-
-    def get_center_spit(self, img_idx=-1):
-        image = self._images[img_idx]
-        x, y = self._axial_center(image)
-        return x
-
-    def get_center(self, img_idx=-1):
-        image = self._images[img_idx]
-        dim = self.get_dim(image)
-        size_y = self.axial_dim(image)
-        size_x = self.sagittal_dim(image)
         return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2

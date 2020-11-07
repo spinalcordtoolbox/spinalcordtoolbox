@@ -11,28 +11,29 @@
 
 # TODO: Sort out the use of Image.hdr and Image.header --> they seem to carry duplicated information.
 
-from __future__ import division, absolute_import
+import sys
+import os
+import itertools
+import warnings
+import logging
+import shutil
 
-import sys, os, itertools, warnings, logging
-
-import nibabel
-import nibabel.orientations
-
+import nibabel as nib
 import numpy as np
-from scipy.ndimage import map_coordinates
+import pathlib
 
 import transforms3d.affines as affines
-from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import __sct_dir__
+from scipy.ndimage import map_coordinates
 
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
-import sct_utils as sct
+from spinalcordtoolbox.types import Coordinate
+from spinalcordtoolbox.utils import sct_dir_local_path, extract_fname
 
 logger = logging.getLogger(__name__)
 
 
 def _get_permutations(im_src_orientation, im_dst_orientation):
     """
+
     :param im_src_orientation str: Orientation of source image. Example: 'RPI'
     :param im_dest_orientation str: Orientation of destination image. Example: 'SAL'
     :return: list of axes permutations and list of inversions to achieve an orientation change
@@ -70,8 +71,10 @@ class Slicer(object):
            print(slice)
 
     """
+
     def __init__(self, im, orientation="LPI"):
         """
+
         :param im: image to iterate through
         :param spec: "from" letters to indicate how to slice the image.
                      The slices are done on the last letter axis,
@@ -114,20 +117,21 @@ class Slicer(object):
         self._nb_slices = data.shape[2]
 
     def __len__(self):
-       return self._nb_slices
+        return self._nb_slices
 
     def __getitem__(self, idx):
-       """
-       :return: an image slice, at slicing index idx
-       :param idx: slicing index (according to the slicing direction)
-       """
-       if not isinstance(idx, int):
-           raise NotImplementedError()
+        """
 
-       if idx >= self._nb_slices:
-           raise IndexError("I just have {} slices!".format(self._nb_slices))
+        :return: an image slice, at slicing index idx
+        :param idx: slicing index (according to the slicing direction)
+        """
+        if not isinstance(idx, int):
+            raise NotImplementedError()
 
-       return self._data[:,:,idx]
+        if idx >= self._nb_slices:
+            raise IndexError("I just have {} slices!".format(self._nb_slices))
+
+        return self._data[:, :, idx]
 
 
 class SlicerOneAxis(object):
@@ -168,23 +172,24 @@ class SlicerOneAxis(object):
         self._slice = lambda idx: tuple([(idx if x in axis else slice(None)) for x in im.orientation])
 
     def __len__(self):
-       return self.nb_slices
+        return self.nb_slices
 
     def __getitem__(self, idx):
-       """
-       :return: an image slice, at slicing index idx
-       :param idx: slicing index (according to the slicing direction)
-       """
-       if isinstance(idx, slice):
-           raise NotImplementedError()
+        """
 
-       if idx >= self.nb_slices:
-           raise IndexError("I just have {} slices!".format(self.nb_slices))
+        :return: an image slice, at slicing index idx
+        :param idx: slicing index (according to the slicing direction)
+        """
+        if isinstance(idx, slice):
+            raise NotImplementedError()
 
-       if self.direction == -1:
-           idx = self.nb_slices - 1 - idx
+        if idx >= self.nb_slices:
+            raise IndexError("I just have {} slices!".format(self.nb_slices))
 
-       return self.im.data[self._slice(idx)]
+        if self.direction == -1:
+            idx = self.nb_slices - 1 - idx
+
+        return self.im.data[self._slice(idx)]
 
 
 class SlicerMany(object):
@@ -196,13 +201,14 @@ class SlicerMany(object):
 
     Use with great care for now, that it's not very documented.
     """
+
     def __init__(self, images, slicerclass, *args, **kw):
         if len(images) == 0:
             raise ValueError("Don't expect me to work on 0 images!")
 
-        self.slicers = [ slicerclass(im, *args, **kw) for im in images ]
+        self.slicers = [slicerclass(im, *args, **kw) for im in images]
 
-        nb_slices = [ x._nb_slices for x in self.slicers ]
+        nb_slices = [x._nb_slices for x in self.slicers]
         if len(set(nb_slices)) != 1:
             raise ValueError("All images must have the same number of slices along the slicing axis!")
         self._nb_slices = nb_slices[0]
@@ -211,7 +217,7 @@ class SlicerMany(object):
         return self._nb_slices
 
     def __getitem__(self, idx):
-        return [ x[idx] for x in self.slicers ]
+        return [x[idx] for x in self.slicers]
 
 
 class Image(object):
@@ -220,8 +226,6 @@ class Image(object):
     """
 
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1):
-        from nibabel import Nifti1Header
-
         # initialization of all parameters
         self.im_file = None
         self.data = None
@@ -229,7 +233,7 @@ class Image(object):
         self.ext = ""
 
         if hdr is None:
-            hdr = self.hdr = Nifti1Header()  # an empty header
+            hdr = self.hdr = nib.Nifti1Header()  # an empty header
         else:
             self.hdr = hdr
 
@@ -324,6 +328,7 @@ class Image(object):
     def copy_qform_from_ref(self, im_ref):
         """
         Copy qform and sform and associated codes from a reference Image object
+
         :param im_ref:
         :return:
         """
@@ -336,14 +341,12 @@ class Image(object):
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library
+
         :param path: path of the file from which the image will be loaded
         :return:
         """
 
-        try:
-            self.im_file = nibabel.load(path)
-        except nibabel.spatialimages.ImageFileError:
-            sct.printv('Error: make sure ' + path + ' is an image.', 1, 'error')
+        self.im_file = nib.load(path)
         self.data = self.im_file.get_data()
         self.hdr = self.im_file.header
         self.absolutepath = path
@@ -356,10 +359,10 @@ class Image(object):
         """
         Change data shape (in-place)
 
-        :param generate_path: whether to create a derived path name from the
-                              original absolutepath (note: while it will generate
-                              a file suffix, don't expect the suffix but rather
-                              use the Image's absolutepath.
+        :param generate_path: whether to create a derived path name from the\
+                              original absolutepath (note: while it will generate\
+                              a file suffix, don't expect the suffix but rather\
+                              use the Image's absolutepath.\
                               If not set, the absolutepath is voided.
 
         This is mostly useful for adding/removing a fourth dimension,
@@ -370,7 +373,7 @@ class Image(object):
             change_shape(self, shape, self)
 
         if generate_path and self._path is not None:
-            self._path = sct.add_suffix(self._path, "_shape-{}".format("-".join([str(x) for x in shape])))
+            self._path = add_suffix(self._path, "_shape-{}".format("-".join([str(x) for x in shape])))
         else:
             # safe option: remove path to avoid overwrites
             self._path = None
@@ -382,20 +385,20 @@ class Image(object):
 
         :param orientation: orientation string (SCT "from" convention)
 
-        :param inverse: if you think backwards, use this to specify that you actually
-                        want to transform *from* the specified orientation, not *to*
+        :param inverse: if you think backwards, use this to specify that you actually\
+                        want to transform *from* the specified orientation, not *to*\
                         it.
-        :param generate_path: whether to create a derived path name from the
-                              original absolutepath (note: while it will generate
-                              a file suffix, don't expect the suffix but rather
-                              use the Image's absolutepath.
+        :param generate_path: whether to create a derived path name from the\
+                              original absolutepath (note: while it will generate\
+                              a file suffix, don't expect the suffix but rather\
+                              use the Image's absolutepath.\
                               If not set, the absolutepath is voided.
 
         """
         if orientation is not None:
             change_orientation(self, orientation, self, inverse=inverse)
         if generate_path and self._path is not None:
-            self._path = sct.add_suffix(self._path, "_{}".format(orientation.lower()))
+            self._path = add_suffix(self._path, "_{}".format(orientation.lower()))
         else:
             # safe option: remove path to avoid overwrites
             self._path = None
@@ -410,7 +413,7 @@ class Image(object):
         if dtype is not None:
             change_type(self, dtype, self)
         if generate_path and self._path is not None:
-            self._path = sct.add_suffix(self._path, "_{}".format(dtype.name))
+            self._path = add_suffix(self._path, "_{}".format(dtype.name))
         else:
             # safe option: remove path to avoid overwrites
             self._path = None
@@ -420,26 +423,26 @@ class Image(object):
         """
         Write an image in a nifti file
 
-        :param path: Where to save the data, if None it will be taken from the
-                     absolutepath member.
-                     If path is a directory, will save to a file under this directory
+        :param path: Where to save the data, if None it will be taken from the\
+                     absolutepath member.\
+                     If path is a directory, will save to a file under this directory\
                      with the basename from the absolutepath member.
 
-        :param dtype: if not set, the image is saved in the same type as input data
-                      if 'minimize', image storage space is minimized
-                        (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
-                        (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
-                        (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
-                        (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),
-                        (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),
-                        (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),
-                        (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),
-                        (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),
-                        (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),
-                        (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),
-                        (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),
-                        (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
-                        (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
+        :param dtype: if not set, the image is saved in the same type as input data\
+                      if 'minimize', image storage space is minimized\
+                        (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),\
+                        (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),\
+                        (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),\
+                        (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),\
+                        (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),\
+                        (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),\
+                        (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),\
+                        (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),\
+                        (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),\
+                        (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),\
+                        (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),\
+                        (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),\
+                        (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),\
                         (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
 
         :param mutable: whether to update members with newly created path or dtype
@@ -452,8 +455,6 @@ class Image(object):
             path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
 
         path = path or self.absolutepath
-
-        from nibabel import Nifti1Image
 
         if dtype is not None:
             dst = self.copy()
@@ -472,7 +473,7 @@ class Image(object):
 
         # nb. that copy() is important because if it were a memory map, save()
         # would corrupt it
-        img = Nifti1Image(data.copy(), None, hdr)
+        img = nib.nifti1.Nifti1Image(data.copy(), None, hdr)
         if os.path.isfile(path):
             if verbose:
                 logger.warning('File ' + path + ' already exists. Will overwrite it.')
@@ -480,12 +481,12 @@ class Image(object):
         # save file
         if os.path.isabs(path):
             logger.debug("Saving image to %s orientation %s shape %s",
-             path, self.orientation, data.shape)
+                         path, self.orientation, data.shape)
         else:
             logger.debug("Saving image to %s (%s) orientation %s shape %s",
-             path, os.path.abspath(path), self.orientation, data.shape)
+                         path, os.path.abspath(path), self.orientation, data.shape)
 
-        nibabel.save(img, path)
+        nib.save(img, path)
 
         if mutable:
             self.absolutepath = path
@@ -510,19 +511,16 @@ class Image(object):
         if self.dim[2] == 1:
             n_dim = 2
 
-        try:
-            if n_dim == 3:
+        if n_dim == 3:
+            X, Y, Z = (self.data > 0).nonzero()
+            list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
+        elif n_dim == 2:
+            try:
+                X, Y = (self.data > 0).nonzero()
+                list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
+            except ValueError:
                 X, Y, Z = (self.data > 0).nonzero()
-                list_coordinates = [Coordinate([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-            elif n_dim == 2:
-                try:
-                    X, Y = (self.data > 0).nonzero()
-                    list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
-                except ValueError:
-                    X, Y, Z = (self.data > 0).nonzero()
-                    list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
-        except Exception as e:
-            sct.printv('ERROR: Exception ' + str(e) + ' caught while geting non Zeros coordinates', 1, 'error')
+                list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
 
         if coordValue:
             from spinalcordtoolbox.types import CoordinateValue
@@ -550,6 +548,7 @@ class Image(object):
     def getCoordinatesAveragedByValue(self):
         """
         This function computes the mean coordinate of group of labels in the image. This is especially useful for label's images.
+
         :return: list of coordinates that represent the center of mass of each group of value.
         """
         # 1. Extraction of coordinates from all non-null voxels in the image. Coordinates are sorted by value.
@@ -571,7 +570,6 @@ class Image(object):
         averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
         return averaged_coordinates
 
-
     def transfo_pix2phys(self, coordi=None):
         """
         This function returns the physical coordinates of all points of 'coordi'.
@@ -580,10 +578,13 @@ class Image(object):
         :return: sequence with the physical coordinates of the points in the space of the image.
 
         Example:
-        img = Image('file.nii.gz')
-        coordi_pix = [[1,1,1]]   # for points: (1,1,1). N.B. Important to write [[x,y,z]] instead of [x,y,z]
-        coordi_pix = [[1,1,1],[2,2,2],[4,4,4]]   # for points: (1,1,1), (2,2,2) and (4,4,4)
-        coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
+
+        .. code:: python
+
+            img = Image('file.nii.gz')
+            coordi_pix = [[1,1,1]]   # for points: (1,1,1). N.B. Important to write [[x,y,z]] instead of [x,y,z]
+            coordi_pix = [[1,1,1],[2,2,2],[4,4,4]]   # for points: (1,1,1), (2,2,2) and (4,4,4)
+            coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
 
         """
 
@@ -594,7 +595,6 @@ class Image(object):
             phys = np.matmul(m_p2f, coord)
             ret[idx_coord] = phys[:3]
         return ret
-
 
     def transfo_phys2pix(self, coordi, real=True):
         """
@@ -617,10 +617,10 @@ class Image(object):
         else:
             return ret
 
-
     def get_values(self, coordi=None, interpolation_mode=0, border='constant', cval=0.0):
         """
         This function returns the intensity value of the image at the position coordi (can be a list of coordinates).
+
         :param coordi: continuouspix
         :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline, 4= 2nd-order spline, 5= 5th-order spline
         :return: intensity values at continuouspix with interpolation_mode
@@ -686,8 +686,8 @@ class Image(object):
     def get_directions(self):
         """
         This function return the X, Y, and Z axes of the image
-        Returns:
-            X, Y and Z axes of the image
+
+        return: X, Y and Z axes of the image
         """
         direction_matrix = self.header.get_best_affine()
         T_self, R_self, Sc_self, Sh_self = affines.decompose44(direction_matrix)
@@ -698,13 +698,15 @@ class Image(object):
         This function interpolates an image by following the grid of a reference image.
         Example of use:
 
-        from spinalcordtoolbox.image import Image
-        im_input = Image(fname_input)
-        im_ref = Image(fname_ref)
-        im_input.interpolate_from_image(im_ref, fname_output, interpolation_mode=1)
+        .. code:: python
+
+            from spinalcordtoolbox.image import Image
+            im_input = Image(fname_input)
+            im_ref = Image(fname_ref)
+            im_input.interpolate_from_image(im_ref, fname_output, interpolation_mode=1)
 
         :param im_ref: reference Image that contains the grid on which interpolate.
-        :param border: Points outside the boundaries of the input are filled according
+        :param border: Points outside the boundaries of the input are filled according\
         to the given mode ('constant', 'nearest', 'reflect' or 'wrap')
         :return: a new image that has the same dimensions/grid of the reference image but the data of self image.
         """
@@ -735,6 +737,7 @@ class Image(object):
     def mean(self, dim):
         """
         Average across specified dimension
+
         :param dim: int: axis used for averaging
         :return: Image object
         """
@@ -749,18 +752,16 @@ class Image(object):
 def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     """
     This function computes the Dice coefficient between two binary images.
-    Args:
-        image1: object Image
-        image2: object Image
-        mode: mode of computation of Dice.
-                3d: compute Dice coefficient over the full 3D volume
-                2d-slices: compute the 2D Dice coefficient for each slice of the volumes
-        label: binary label for which Dice coefficient will be computed. Default=1
-        zboundaries: True/False. If True, the Dice coefficient is computed over a Z-ROI where both segmentations are
-                     present. Default=False.
+    :param image1: object Image
+    :param image2: object Image
+    :param mode: mode of computation of Dice.\
+            3d: compute Dice coefficient over the full 3D volume\
+            2d-slices: compute the 2D Dice coefficient for each slice of the volumes\
+    :param: label: binary label for which Dice coefficient will be computed. Default=1
+    :paaram: zboundaries: True/False. If True, the Dice coefficient is computed over a Z-ROI where both segmentations are\
+                 present. Default=False.
 
-    Returns: Dice coefficient as a float between 0 and 1. Raises ValueError exception if an error occurred.
-
+    :return: Dice coefficient as a float between 0 and 1. Raises ValueError exception if an error occurred.
     """
     MODES = ['3d', '2d-slices']
     if mode not in MODES:
@@ -815,6 +816,7 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
 def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     """
     Concatenate data
+
     :param im_in_list: list of Images or image filenames
     :param dim: dimension: 0, 1, 2, 3.
     :param pixdim: pixel resolution to join to image header
@@ -857,10 +859,10 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     im_out = empty_like(Image(fname_in_list[0]))
     im_out.data = data_concat
     if isinstance(fname_in_list[0], str):
-        im_out.absolutepath = sct.add_suffix(fname_in_list[0], '_concat')
+        im_out.absolutepath = add_suffix(fname_in_list[0], '_concat')
     else:
         if fname_in_list[0].absolutepath:
-            im_out.absolutepath = sct.add_suffix(fname_in_list[0].absolutepath, '_concat')
+            im_out.absolutepath = add_suffix(fname_in_list[0].absolutepath, '_concat')
 
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim
@@ -883,6 +885,7 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
 def find_zmin_zmax(im, threshold=0.1):
     """
     Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given threshold.
+
     :param im: Image object
     :param threshold: threshold to apply before looking for zmin/zmax, typically corresponding to noise level.
     :return: [zmin, zmax]
@@ -899,7 +902,7 @@ def find_zmin_zmax(im, threshold=0.1):
             break
 
     # Conversely from top to bottom
-    for zmax in range(len(slicer)-1, zmin, -1):
+    for zmax in range(len(slicer) - 1, zmin, -1):
         dataz = slicer[zmax]
         if np.any(slicer[zmax] > threshold):
             break
@@ -910,13 +913,13 @@ def find_zmin_zmax(im, threshold=0.1):
 def get_dimension(im_file, verbose=1):
     """
     Get dimension from Image or nibabel object. Manages 2D, 3D or 4D images.
+
     :param: im_file: Image or nibabel object
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-    import nibabel.nifti1
     # initialization
     nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
-    if type(im_file) is nibabel.nifti1.Nifti1Image:
+    if type(im_file) is nib.nifti1.Nifti1Image:
         header = im_file.header
     elif type(im_file) is Image:
         header = im_file.hdr
@@ -940,23 +943,26 @@ def get_dimension(im_file, verbose=1):
 
 def all_refspace_strings():
     """
+
     :return: all possible orientation strings ['RAI', 'RAS', 'RPI', 'RPS', ...]
     """
-    return [x for x in itertools.chain(*[ [ "".join(x) for x in itertools.product(*seq) ] for seq in itertools.permutations(("RL", "AP", "IS"), 3)])]
+    return [x for x in itertools.chain(*[["".join(x) for x in itertools.product(*seq)] for seq in itertools.permutations(("RL", "AP", "IS"), 3)])]
 
 
 def get_orientation(im):
     """
+
     :param im: an Image
     :return: reference space string (ie. what's in Image.orientation)
     """
-    res = "".join(nibabel.orientations.aff2axcodes(im.hdr.get_best_affine()))
+    res = "".join(nib.orientations.aff2axcodes(im.hdr.get_best_affine()))
     return orientation_string_nib2sct(res)
-    return res # for later ;)
+    return res  # for later ;)
 
 
 def orientation_string_nib2sct(s):
     """
+
     :return: SCT reference space code from nibabel one
     """
     opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
@@ -968,12 +974,12 @@ orientation_string_sct2nib = orientation_string_nib2sct
 
 def change_shape(im_src, shape, im_dst=None):
     """
-    :return: an image with changed shape
+
     :param shape: shape to obtain (must be compatible with original one)
+    :return: an image with changed shape
 
-    Notes:
-
-    - the resulting image has no path
+    .. note::
+        The resulting image has no path
     """
 
     if im_dst is None:
@@ -989,14 +995,14 @@ def change_shape(im_src, shape, im_dst=None):
         # image data may be a view
         im_dst_data = im_src.data.copy().reshape(shape, order="F")
 
-    pair = nibabel.nifti1.Nifti1Pair(im_dst.data, im_dst.hdr.get_best_affine(), im_dst.hdr)
+    pair = nib.nifti1.Nifti1Pair(im_dst.data, im_dst.hdr.get_best_affine(), im_dst.hdr)
     im_dst.hdr = pair.header
     return im_dst
 
 
 def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_only=False):
     """
-    :return: an image with changed orientation
+
     :param im_src: source image
     :param orientation: orientation string (SCT "from" convention)
     :param im_dst: destination image (can be the source image for in-place
@@ -1005,21 +1011,22 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
                     want to transform *from* the specified orientation, not *to* it.
     :param data_only: If you want to only permute the data, not the header. Only use if you know there is a problem
                       with the native orientation of the input data.
-    Notes:
+    :return: an image with changed orientation
 
-    - the resulting image has no path member set
-    - if the source image is < 3D, it is reshaped to 3D and the destination is 3D
+    .. note::
+        - the resulting image has no path member set
+        - if the source image is < 3D, it is reshaped to 3D and the destination is 3D
     """
 
     # TODO: make sure to cover all cases for setorient-data
     if len(im_src.data.shape) < 3:
-        pass # Will reshape to 3D
+        pass  # Will reshape to 3D
     elif len(im_src.data.shape) == 3:
-        pass # OK, standard 3D volume
+        pass  # OK, standard 3D volume
     elif len(im_src.data.shape) == 4:
-        pass # OK, standard 4D volume
+        pass  # OK, standard 4D volume
     elif len(im_src.data.shape) == 5 and im_src.header.get_intent()[0] == "vector":
-        pass # OK, physical displacement field
+        pass  # OK, physical displacement field
     else:
         raise NotImplementedError("Don't know how to change orientation for this image")
 
@@ -1027,7 +1034,6 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
     im_dst_orientation = orientation
     if inverse:
         im_src_orientation, im_dst_orientation = im_dst_orientation, im_src_orientation
-
 
     perm, inversion = _get_permutations(im_src_orientation, im_dst_orientation)
 
@@ -1037,7 +1043,7 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
 
     im_src_data = im_src.data
     if len(im_src_data.shape) < 3:
-        im_src_data = im_src_data.reshape(tuple(list(im_src_data.shape) + ([1]*(3-len(im_src_data.shape)))))
+        im_src_data = im_src_data.reshape(tuple(list(im_src_data.shape) + ([1] * (3 - len(im_src_data.shape)))))
 
     # Update data by performing inversions and swaps
 
@@ -1066,9 +1072,9 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
     # Update header
 
     im_src_aff = im_src.hdr.get_best_affine()
-    aff = nibabel.orientations.inv_ornt_aff(
-     np.array((perm, inversion)).T,
-     im_src_data.shape)
+    aff = nib.orientations.inv_ornt_aff(
+        np.array((perm, inversion)).T,
+        im_src_data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
 
     if not data_only:
@@ -1083,22 +1089,23 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
 def change_type(im_src, dtype, im_dst=None):
     """
     Change the voxel type of the image
-    :param dtype:    if not set, the image is saved in standard type
-                    if 'minimize', image space is minimize
-                    if 'minimize_int', image space is minimize and values are approximated to integers
-                    (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),
-                    (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),
-                    (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),
-                    (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),
-                    (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),
-                    (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),
-                    (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),
-                    (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),
-                    (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),
-                    (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),
-                    (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),
-                    (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),
-                    (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),
+
+    :param dtype:    if not set, the image is saved in standard type\
+                    if 'minimize', image space is minimize\
+                    if 'minimize_int', image space is minimize and values are approximated to integers\
+                    (2, 'uint8', np.uint8, "NIFTI_TYPE_UINT8"),\
+                    (4, 'int16', np.int16, "NIFTI_TYPE_INT16"),\
+                    (8, 'int32', np.int32, "NIFTI_TYPE_INT32"),\
+                    (16, 'float32', np.float32, "NIFTI_TYPE_FLOAT32"),\
+                    (32, 'complex64', np.complex64, "NIFTI_TYPE_COMPLEX64"),\
+                    (64, 'float64', np.float64, "NIFTI_TYPE_FLOAT64"),\
+                    (256, 'int8', np.int8, "NIFTI_TYPE_INT8"),\
+                    (512, 'uint16', np.uint16, "NIFTI_TYPE_UINT16"),\
+                    (768, 'uint32', np.uint32, "NIFTI_TYPE_UINT32"),\
+                    (1024,'int64', np.int64, "NIFTI_TYPE_INT64"),\
+                    (1280, 'uint64', np.uint64, "NIFTI_TYPE_UINT64"),\
+                    (1536, 'float128', _float128t, "NIFTI_TYPE_FLOAT128"),\
+                    (1792, 'complex128', np.complex128, "NIFTI_TYPE_COMPLEX128"),\
                     (2048, 'complex256', _complex256t, "NIFTI_TYPE_COMPLEX256"),
     :return:
     """
@@ -1170,10 +1177,10 @@ def change_type(im_src, dtype, im_dst=None):
 
             if (min_in < min_out) or (max_in > max_out):
                 # This condition is important for binary images since we do not want to scale them
-                sct.printv('WARNING: To avoid intensity overflow due to convertion to '+dtype.name+', intensity will be rescaled to the maximum quantization scale.', 1, 'warning')
+                logger.warning(f"To avoid intensity overflow due to convertion to +{dtype.name}+, intensity will be rescaled to the maximum quantization scale")
                 # rescale intensity
                 data_rescaled = im_src.data * (max_out - min_out) / (max_in - min_in)
-                im_dst.data = data_rescaled - ( data_rescaled.min() - min_out )
+                im_dst.data = data_rescaled - (data_rescaled.min() - min_out)
 
     # change type of data in both numpy array and nifti header
     im_dst.data = getattr(np, dtype.name)(im_dst.data)
@@ -1195,8 +1202,8 @@ def to_dtype(dtype):
     if isinstance(dtype, type):
         try:
             if isinstance(dtype(0).dtype, np.dtype):
-                 return dtype(0).dtype
-        except: # TODO
+                return dtype(0).dtype
+        except:  # TODO
             raise
     if isinstance(dtype, np.dtype):
         return dtype
@@ -1208,14 +1215,14 @@ def to_dtype(dtype):
 
 def zeros_like(img, dtype=None):
     """
-    :return: an Image with the same shape and header, filled with zeros
+
     :param img: reference image
     :param dtype: desired data type (optional)
+    :return: an Image with the same shape and header, filled with zeros
 
     Similar to numpy.zeros_like(), the goal of the function is to show the developer's
     intent and avoid doing a copy, which is slower than initialization with a constant.
 
-    Feel free to improve the implementation ;)
     """
     dst = change_type(img, dtype)
     dst.data[:] = 0
@@ -1224,15 +1231,14 @@ def zeros_like(img, dtype=None):
 
 def empty_like(img, dtype=None):
     """
-    :return: an Image with the same shape and header, whose data is uninitialized
     :param img: reference image
     :param dtype: desired data type (optional)
+    :return: an Image with the same shape and header, whose data is uninitialized
 
     Similar to numpy.empty_like(), the goal of the function is to show the developer's
     intent and avoid touching the allocated memory, because it will be written to
     afterwards.
 
-    Feel free to improve the implementation ;)
     """
     dst = change_type(img, dtype)
     return dst
@@ -1247,11 +1253,11 @@ def spatial_crop(im_src, spec, im_dst=None):
     """
 
     # Compute bounds
-    bounds = [ (0, x-1) for x in im_src.data.shape ]
+    bounds = [(0, x - 1) for x in im_src.data.shape]
     for k, v in spec.items():
         bounds[k] = v
 
-    bounds_ndslice = tuple([ slice(a,b+1) for (a,b) in bounds ])
+    bounds_ndslice = tuple([slice(a, b + 1) for (a, b) in bounds])
 
     bounds = np.array(bounds)
 
@@ -1270,7 +1276,7 @@ def spatial_crop(im_src, spec, im_dst=None):
     new_aff = aff.copy()
     new_aff[:, [3]] = aff.dot(np.vstack((bounds[:, [0]], [1])))
 
-    new_img = nibabel.Nifti1Image(new_data, new_aff, im_src.header)
+    new_img = nib.nifti1.Nifti1Image(new_data, new_aff, im_src.header)
 
     if im_dst is None:
         im_dst = im_src.copy()
@@ -1279,3 +1285,177 @@ def spatial_crop(im_src, spec, im_dst=None):
     im_dst.data = new_data
 
     return im_dst
+
+
+def convert(img: Image, squeeze_data=True, dtype=None):
+    """
+    """
+    if squeeze_data:
+        img.data = np.squeeze(img.data)
+    if dtype:
+        img.change_type(dtype)
+    return img
+
+
+def split_img_data(src_img: Image, dim, squeeze_data=True):
+    """
+    Split data
+
+    :param src_img: input image.
+    :param dim: dimension: 0, 1, 2, 3.
+    :return: list of split images
+    """
+
+    dim_list = ['x', 'y', 'z', 't']
+    data = src_img.data
+
+    # in case input volume is 3d and dim=t, create new axis
+    if dim + 1 > len(np.shape(data)):
+        data = data[..., np.newaxis]
+
+    # in case splitting along the last dim, make sure to remove the last dim to avoid singleton
+    if dim + 1 == len(np.shape(data)):
+        if squeeze_data:
+            do_reshape = True
+        else:
+            do_reshape = False
+    else:
+        do_reshape = False
+
+    # Split data into list
+    data_split = np.array_split(data, data.shape[dim], dim)
+
+    # Write each file
+    im_out_list = []
+    for idx_img, dat in enumerate(data_split):
+        im_out = empty_like(src_img)
+        if do_reshape:
+            im_out.data = dat.reshape(tuple([x for (idx_shape, x) in enumerate(data.shape) if idx_shape != dim]))
+        else:
+            im_out.data = dat
+        im_out.absolutepath = add_suffix(src_img.absolutepath, "_{}{}".format(dim_list[dim].upper(), str(idx_img).zfill(4)))
+        im_out_list.append(im_out)
+
+    return im_out_list
+
+
+def concat_warp2d(fname_list, fname_warp3d, fname_dest):
+    """
+    Concatenate 2d warping fields into a 3d warping field along z dimension. The 3rd dimension of the resulting warping
+    field will be zeroed.
+
+    :param fname_list: list of 2d warping fields (along X and Y).
+    :param fname_warp3d: output name of 3d warping field
+    :param fname_dest: 3d destination file (used to copy header information)
+    :return: none
+    """
+
+    nx, ny = nib.load(fname_list[0]).shape[0:2]
+    nz = len(fname_list)
+    warp3d = np.zeros([nx, ny, nz, 1, 3])
+
+    for iz, fname in enumerate(fname_list):
+        warp2d = nib.load(fname).get_data()
+        warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
+        warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
+        del warp2d
+
+    # save new image
+    im_dest = nib.load(fname_dest)
+    affine_dest = im_dest.get_affine()
+    im_warp3d = nib.nifti1.Nifti1Image(warp3d, affine_dest)
+
+    # set "intent" code to vector, to be interpreted as warping field
+    im_warp3d.header.set_intent('vector', (), '')
+    nib.save(im_warp3d, fname_warp3d)
+
+
+def add_suffix(fname, suffix):
+    """
+    Add suffix between end of file name and extension.
+
+    :param fname: absolute or relative file name. Example: t2.nii
+    :param suffix: suffix. Example: _mean
+    :return: file name with suffix. Example: t2_mean.nii
+
+    Examples:
+    .. code:: python
+
+        add_suffix(t2.nii, _mean) -> t2_mean.nii
+        add_suffix(t2.nii.gz, a) -> t2a.nii.gz
+    """
+    stem, ext = splitext(fname)
+    return os.path.join(stem + suffix + ext)
+
+
+def splitext(fname):
+    """
+    Split a fname (folder/file + ext) into a folder/file and extension.
+
+    Note: for .nii.gz the extension is understandably .nii.gz, not .gz
+    (``os.path.splitext()`` would want to do the latter, hence the special case).
+    """
+    dir_, filename = os.path.split(fname)
+    for special_ext in ['.nii.gz', '.tar.gz']:
+        if filename.endswith(special_ext):
+            stem, ext = filename[:-len(special_ext)], special_ext
+            break
+    else:
+        stem, ext = os.path.splitext(filename)
+
+    return os.path.join(dir_, stem), ext
+
+
+def check_dim(fname, dim_lst=[3]):
+    """
+    Check if input dimension matches the input dimension requirements specified in the dim list.
+    Example: to check if an image is 2D or 3D: check_dim(my_file, dim_lst=[2, 3])
+    :param fname:
+    :return: True or False
+    """
+    dim = Image(fname).hdr['dim'][:4]
+
+    if not dim[0] in dim_lst:
+        raise ValueError(f"File {fname} has {dim[0]} dimensions! Accepted dimensions are: {dim_lst}.")
+
+
+def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
+    """
+    Copy fname_in to fname_out with a few convenient checks: make sure input file exists, if fname_out exists send a
+    warning, if input and output NIFTI format are different (nii vs. nii.gz) convert by unzipping or zipping, and
+    display nice message at the end.
+    :param fname_in:
+    :param fname_out:
+    :param verbose:
+    :return: fname_out
+    """
+    path_in, file_in, ext_in = extract_fname(fname_in)
+    path_out, file_out, ext_out = extract_fname(fname_out)
+
+    # create output path (ignore if it already exists)
+    pathlib.Path(path_out).mkdir(parents=True, exist_ok=True)
+
+    # if input image does not exist, give error
+    if not os.path.isfile(fname_in):
+        raise IOError(f"File {fname_in} is not a regular file!")
+
+    # if input and output fnames are the same, do nothing and exit function
+    if fname_in == fname_out:
+        logger.info("File created: %s", os.path.join(path_out, file_out + ext_out))
+        return os.path.join(path_out, file_out + ext_out)
+
+    # if fname_out already exists in nii or nii.gz format
+    if os.path.isfile(os.path.join(path_out, file_out + ext_out)):
+        logger.warning(f"File {os.path.join(path_out, file_out + ext_out)} already exists. Deleting it..")
+        os.remove(os.path.join(path_out, file_out + ext_out))
+
+    if ext_in != ext_out:
+        img = Image(fname_in)
+        img = convert(img, squeeze_data=squeeze_data)
+        img.save(fname_out)
+    else:
+        # Generate output file without changing the extension
+        shutil.move(fname_in, fname_out)
+
+    logger.info("File created: %s", os.path.join(path_out, file_out + ext_out))
+    return os.path.join(path_out, file_out + ext_out)

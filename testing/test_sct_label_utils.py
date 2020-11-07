@@ -13,14 +13,7 @@
 
 # TODO: add test to other processes.
 
-from __future__ import absolute_import
-
 import os
-
-from pandas import DataFrame
-
-import sct_utils as sct
-import sct_label_utils
 
 
 def init(param_test):
@@ -29,7 +22,7 @@ def init(param_test):
     """
     # initialization
     folder_data = ['t2']
-    file_data = ['t2_seg.nii.gz', 't2_seg_labeled.nii.gz']
+    file_data = ['t2_seg-manual.nii.gz', 't2_seg_labeled.nii.gz']
 
     default_args = ['-i ' + os.path.join(folder_data[0], file_data[0]) + ' -create 1,1,1,1:2,2,2,2',
                     '-i ' + os.path.join(folder_data[0], file_data[0]) + ' -cubic-to-point -o test_centerofmass.nii.gz']

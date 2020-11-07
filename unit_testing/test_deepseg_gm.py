@@ -1,22 +1,13 @@
-from __future__ import absolute_import
-
 import os
 import sys
 
 import pytest
-
 import nibabel as nib
-
 import numpy as np
-
 import keras.backend as K
-
-from spinalcordtoolbox.utils import __sct_dir__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
 from spinalcordtoolbox.deepseg_gm import model as gm_model
 from spinalcordtoolbox.deepseg_gm import deepseg_gm as gm_core
-
 
 
 class TestModel(object):

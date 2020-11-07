@@ -10,12 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
-import sys, io, os
-
-import sct_utils as sct
 from spinalcordtoolbox.image import Image, compute_dice
+from spinalcordtoolbox.utils import run_proc, mv
 
 
 def init(param_test):
@@ -24,13 +20,15 @@ def init(param_test):
     """
     # initialization
     default_args = ['-i t2/t2.nii.gz -c t2 -qc testing-qc']  # default parameters
-    param_test.fname_seg = 't2_seg.nii.gz'
-    param_test.fname_gt = 't2/t2_seg_manual.nii.gz'
+    param_test.fname_seg = 't2_seg.nii.gz'  # output segmentation
+    param_test.fname_gt = 't2/t2_seg-manual.nii.gz'
+    # note: propseg does *not* produce the same results across platforms, hence the 0.9 Dice threahold.
+    # For more details, see: https://github.com/neuropoly/spinalcordtoolbox/issues/2769
     param_test.dice_threshold = 0.9
 
     # check if isct_propseg compatibility
     # TODO: MAKE SURE THIS CASE WORKS AFTER MAJOR REFACTORING
-    status_isct_propseg, output_isct_propseg = sct.run('isct_propseg', verbose=0, raise_exception=False)
+    status_isct_propseg, output_isct_propseg = run_proc('isct_propseg', verbose=0, raise_exception=False)
     isct_propseg_version = output_isct_propseg.split('\n')[0]
     if isct_propseg_version != 'sct_propseg - Version 1.1 (2015-03-24)':
         status = 99
@@ -55,8 +53,8 @@ def test_integrity(param_test):
     # compute dice coefficient between generated image and image from database
     dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
     # display
-    param_test.output += 'Computed dice: '+str(dice_segmentation)
-    param_test.output += '\nDice threshold (if computed Dice smaller: fail): '+str(param_test.dice_threshold)
+    param_test.output += 'Computed dice: ' + str(dice_segmentation)
+    param_test.output += '\nDice threshold (if computed Dice smaller: fail): ' + str(param_test.dice_threshold)
 
     if dice_segmentation < param_test.dice_threshold:
         param_test.status = 99

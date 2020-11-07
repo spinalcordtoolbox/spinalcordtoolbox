@@ -8,15 +8,13 @@
 #
 # About the license: see the file LICENSE.TXT
 
-
 import sys
 import os
 import argparse
 
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
-import sct_utils as sct
+from spinalcordtoolbox.image import Image, add_suffix
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax
 
 
 def get_parser():
@@ -45,7 +43,7 @@ def get_parser():
         required=True,
         help="Input image. Example: t2.nii.gz",
         metavar=Metavar.file,
-        )
+    )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -69,7 +67,7 @@ def get_parser():
         '-m',
         help="Binary mask that will be used to extract bounding box for cropping the image. Has priority over -ref.",
         metavar=Metavar.file,
-        )
+    )
     optional.add_argument(
         '-ref',
         help="Image which dimensions (in the physical coordinate system) will be used as a reference to crop the "
@@ -82,7 +80,7 @@ def get_parser():
         default=0,
         help="Lower bound for cropping along X.",
         metavar=Metavar.int,
-        )
+    )
     optional.add_argument(
         '-xmax',
         type=int,
@@ -90,35 +88,35 @@ def get_parser():
         help="Higher bound for cropping along X. Setting '-1' will crop to the maximum dimension (i.e. no change), "
              "'-2' will crop to the maximum dimension minus 1 slice, etc.",
         metavar=Metavar.int,
-        )
+    )
     optional.add_argument(
         '-ymin',
         type=int,
         default=0,
         help="Lower bound for cropping along Y.",
         metavar=Metavar.int,
-        )
+    )
     optional.add_argument(
         '-ymax',
         type=int,
         default=-1,
         help="Higher bound for cropping along Y. Follows the same rules as xmax.",
         metavar=Metavar.int,
-        )
+    )
     optional.add_argument(
         '-zmin',
         type=int,
         default=0,
         help="Lower bound for cropping along Z.",
         metavar=Metavar.int,
-        )
+    )
     optional.add_argument(
         '-zmax',
         type=int,
         default=-1,
         help="Higher bound for cropping along Z. Follows the same rules as xmax.",
         metavar=Metavar.int,
-        )
+    )
     optional.add_argument(
         '-b',
         type=int,
@@ -127,7 +125,7 @@ def get_parser():
              "voxels outside the bounding box will be set to the value specified by this flag. For example, to have "
              "zeros outside the bounding box, use: '-b 0'",
         metavar=Metavar.int,
-        )
+    )
     optional.add_argument(
         "-v",
         type=int,
@@ -154,7 +152,7 @@ def main(args=None):
     # initialize ImageCropper
     cropper = ImageCropper(Image(arguments.i))
     cropper.verbose = arguments.v
-    sct.init_sct(log_level=cropper.verbose, update=True)  # Update log level
+    init_sct(log_level=cropper.verbose, update=True)  # Update log level
 
     # Switch across cropping methods
     if arguments.g:
@@ -175,14 +173,14 @@ def main(args=None):
 
     # Write cropped image to file
     if arguments.o is None:
-        fname_out = sct.add_suffix(arguments.i, '_crop')
+        fname_out = add_suffix(arguments.i, '_crop')
     else:
         fname_out = arguments.o
     img_crop.save(fname_out)
 
-    sct.display_viewer_syntax([arguments.i, fname_out])
+    display_viewer_syntax([arguments.i, fname_out])
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     main()

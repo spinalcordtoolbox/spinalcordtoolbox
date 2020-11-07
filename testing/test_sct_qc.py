@@ -10,7 +10,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
+
 
 
 def init(param_test):
@@ -18,7 +18,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg_manual.nii.gz -p sct_deepseg_sc -qc-dataset sct_testing_data -qc-subject dummy']  # default parameters
+    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg-manual.nii.gz -p sct_deepseg_sc -qc-dataset sct_testing_data -qc-subject dummy']  # default parameters
 
     # assign default params
     if not param_test.args:

@@ -7,8 +7,6 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
-from __future__ import absolute_import, print_function
-
 import warnings
 import json
 import os
@@ -32,9 +30,8 @@ except Exception as e:
 else:
     sys.stderr = original_stderr
 
-from spinalcordtoolbox import resampling
+from spinalcordtoolbox import resampling, __data_dir__
 from . import model
-from ..utils import __data_dir__
 
 
 # Suppress warnings and TensorFlow logging
@@ -119,6 +116,7 @@ class StandardizationTransform(object):
     """This transformation will standardize the volume
     according to the specified mean/std.dev.
     """
+
     def __init__(self, mean, std):
         """Constructor for the normalization transformation.
 

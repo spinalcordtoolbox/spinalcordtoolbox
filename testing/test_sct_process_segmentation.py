@@ -15,7 +15,7 @@
 # TODO: make it compatible with isct_test_function
 # TODO: add log file
 
-from __future__ import absolute_import
+
 
 
 def init(param_test):
@@ -23,7 +23,7 @@ def init(param_test):
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2_seg.nii.gz']
+    default_args = ['-i t2/t2_seg-manual.nii.gz']
 
     # assign default params
     if not param_test.args:

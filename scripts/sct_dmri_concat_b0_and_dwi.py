@@ -8,18 +8,15 @@
 # About the license: see the file LICENSE.TXT
 
 
-from __future__ import absolute_import
-
 import os
 import sys
 import argparse
+
 import numpy as np
-
 from dipy.data.fetcher import read_bvals_bvecs
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
-from spinalcordtoolbox.image import Image, concat_data
 
-import sct_utils as sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
+from spinalcordtoolbox.image import Image, concat_data
 
 
 def get_parser():
@@ -65,7 +62,6 @@ def get_parser():
         required=True,
         help="Order of b=0 and DWI files entered in flag '-i', separated by space. Example: b0 dwi dwi",
         choices=['b0', 'dwi'],
-        metavar=Metavar.str,
     )
     mandatory.add_argument(
         '-o',
@@ -118,7 +114,7 @@ def main(args=None):
     # Concatenate NIFTI files
     im_concat = concat_data(fname_in_list=arguments.i, dim=3, squeeze_data=False)
     im_concat.save(arguments.o)
-    sct.printv("Generated file: {}".format(arguments.o))
+    printv("Generated file: {}".format(arguments.o))
 
     # Concatenate bvals and bvecs
     bvals_concat = ''
@@ -146,14 +142,14 @@ def main(args=None):
     new_f = open(arguments.obval, 'w')
     new_f.write(bvals_concat)
     new_f.close()
-    sct.printv("Generated file: {}".format(arguments.obval))
+    printv("Generated file: {}".format(arguments.obval))
     new_f = open(arguments.obvec, 'w')
     new_f.write(bvecs_concat)
     new_f.close()
-    sct.printv("Generated file: {}".format(arguments.obvec))
+    printv("Generated file: {}".format(arguments.obvec))
 
 
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

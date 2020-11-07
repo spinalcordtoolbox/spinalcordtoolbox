@@ -13,22 +13,13 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
-import sys, io, os
-
-from pandas import DataFrame
-
-import sct_utils as sct
-
-
 def init(param_test):
     """
     Initialize class: param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg.nii.gz']
-    param_test.fname_segmentation = 't2/t2_seg.nii.gz'
+    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg-manual.nii.gz']
+    param_test.fname_segmentation = 't2/t2_seg-manual.nii.gz'
 
     # assign default params
     if not param_test.args:

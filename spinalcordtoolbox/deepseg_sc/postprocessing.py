@@ -102,6 +102,7 @@ def _remove_extrem_holes(z_lst, end_z, start_z=0):
 def _remove_isolated_voxels_on_the_edge(im_seg, n_slices=5):
     """
     Remove isolated voxels on the edge if the CSA of the edge slice is smaller than half the median of adjacent slices.
+
     :param im_seg:
     :param n_slices: Number of adjacent slices to consider. If not enough slices, this test will be bypassed.
     :return:
@@ -150,6 +151,7 @@ def keep_largest_object(z_slice_bin, x_cOm, y_cOm):
     """
     Keep the largest connected object per z_slice and fill little holes.
     Note: This function only works for binary segmentation.
+
     :param z_slice: int 2d-array: Input 2d segmentation
     :param x_cOm: int: X center of mass of the segmentation for the previous 2d slice
     :param y_cOm: int: Y center of mass of the segmentation for the previous 2d slice
@@ -177,6 +179,7 @@ def keep_largest_object(z_slice_bin, x_cOm, y_cOm):
 def fill_holes_2d(z_slice):
     """
     Fill holes in the segmentation.
+
     :param z_slice: int 2d-array: Input 2D segmentation.
     :return: int 2d-array: Output segmentation with holes filled
     """

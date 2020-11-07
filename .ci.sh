@@ -15,15 +15,11 @@ source python/etc/profile.d/conda.sh  # to be able to call conda
 conda activate venv_sct  # reactivate conda for the pip install below
 
 echo *** UNIT TESTS ***
-sct_download_data -d sct_testing_data  # for tests
-pytest
-
-echo *** INTEGRATION TESTS ***
 pip install coverage
 echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
 echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
 COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" \
-  sct_testing --abort-on-failure
+  pytest
 coverage combine
 
 # TODO: move this part to a separate travis job; there's no need for each platform to lint the code

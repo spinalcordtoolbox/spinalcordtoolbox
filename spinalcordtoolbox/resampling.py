@@ -11,16 +11,14 @@
 
 # TODO: remove resample_file (not needed)
 
-from __future__ import division, absolute_import
-
 import logging
+
 import numpy as np
 import nibabel as nib
 from nibabel.processing import resample_from_to
 
-from spinalcordtoolbox.image import Image
-
-import sct_utils as sct
+from spinalcordtoolbox.image import Image, add_suffix
+from spinalcordtoolbox.utils import display_viewer_syntax
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +134,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     """This function will resample the specified input
     image file to the target size.
     Can deal with 2d, 3d or 4d image objects.
+
     :param fname_data: The input image filename.
     :param fname_out: The output image filename.
     :param new_size: The target size, i.e. 0.25x0.25
@@ -156,7 +155,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
 
     # build output file name
     if fname_out == '':
-        fname_out = sct.add_suffix(fname_data, '_r')
+        fname_out = add_suffix(fname_data, '_r')
     else:
         fname_out = fname_out
 
@@ -164,7 +163,7 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     nib.save(nii_r, fname_out)
 
     # to view results
-    sct.display_viewer_syntax([fname_out], verbose=verbose)
+    display_viewer_syntax([fname_out], verbose=verbose)
 
     return nii_r
 

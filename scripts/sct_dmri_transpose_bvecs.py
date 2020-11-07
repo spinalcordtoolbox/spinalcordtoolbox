@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#=======================================================================================================================
+# =======================================================================================================================
 #
 # Transpose bvecs file (if necessary) to get nx3 structure
 #
@@ -22,49 +22,49 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import, division
-
+import os
 import sys
-from msct_parser import Parser
-from sct_utils import extract_fname, printv
-import sct_utils as sct
+import argparse
+
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, extract_fname, printv
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
-    # parser initialisation
-    parser = Parser(__file__)
-
-    # # initialize parameters
-    # param = Param()
-    # param_default = Param()
-
     # Initialize the parser
-    parser = Parser(__file__)
-    parser.usage.set_description('Transpose bvecs file (if necessary) to get nx3 structure.')
-    parser.add_option(name='-bvec',
-                      type_value='file',
-                      description='Input bvecs file.',
-                      mandatory=True,
-                      example='bvecs.txt')
-    parser.add_option(name='-i',
-                      type_value='file',
-                      description='Input bvecs file.',
-                      mandatory=False,
-                      example='bvecs.txt',
-                      deprecated_by='-bvec')
-    parser.add_option(name='-o',
-                      type_value='file_output',
-                      description='Output bvecs file. By default input file is overwritten.',
-                      mandatory=False,
-                      example='bvecs_t.txt')
-    parser.add_option(name='-v',
-                      type_value='multiple_choice',
-                      description="""Verbose. 0: nothing. 1: basic. 2: extended.""",
-                      mandatory=False,
-                      default_value='1',
-                      example=['0', '1', '2'])
+    parser = argparse.ArgumentParser(
+        description='Transpose bvecs file (if necessary) to get nx3 structure.',
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-bvec',
+        metavar=Metavar.file,
+        required=True,
+        help="Input bvecs file. Example: bvecs.txt"
+    )
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.file,
+        default='',
+        help="Output bvecs file. By default, input file is overwritten. Example: bvecs_t.txt"
+    )
+    optional.add_argument(
+        '-v',
+        choices=['0', '1', '2'],
+        default='1',
+        help="Verbose: 0 = nothing, 1 = basic, 2 = extended."
+    )
+
     return parser
 
 
@@ -72,19 +72,16 @@ def get_parser():
 # ==========================================================================================
 def main(args=None):
 
-    if not args:
-        args = sys.argv[1:]
-
-    # Get parser info
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
-    fname_in = arguments['-bvec']
-    if '-o' in arguments:
-        fname_out = arguments['-o']
+    if args:
+        arguments = parser.parse_args(args)
     else:
-        fname_out = ''
-    verbose = int(arguments.get('-v'))
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+
+    fname_in = arguments.bvec
+    fname_out = arguments.o
+    verbose = int(arguments.v)
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # get bvecs in proper orientation
     from dipy.io import read_bvals_bvecs
@@ -109,8 +106,8 @@ def main(args=None):
 
 
 # Start program
-#=======================================================================================================================
+# =======================================================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # call main function
     main()

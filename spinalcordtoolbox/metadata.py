@@ -2,8 +2,6 @@
 # -*- coding: utf-8
 # Deal with SCT dataset metadata
 
-from __future__ import absolute_import
-
 import io, os, re
 from operator import itemgetter
 
@@ -104,7 +102,7 @@ class InfoLabel(object):
                     raise ValueError("Unexpected at line {}, in MAPLabels section: {}".format(idx_line+1, line))
 
                 _name = m.group("name")
-                
+
                 try:
                     _group = parse_num_list(m.group("group"))
                 except ValueError as e:
@@ -216,8 +214,8 @@ def get_indiv_label_info(directory):
     """
     Get all individual label info (id, name, filename) in a folder
     :param directory: folder containing info_label.txt and the files
-    :return: dictionary containing "id" the label IDs (int),
-                                    "name" the labels (string),
+    :return: dictionary containing "id" the label IDs (int),\
+                                    "name" the labels (string),\
                                     "file" the label filename (string)
     """
 

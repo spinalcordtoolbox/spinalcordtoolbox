@@ -36,9 +36,6 @@
 # Copyright (c) 2014 NeuroPoly, Polytechnique Montreal <www.neuropoly.info>
 # Authors: Benjamin De Leener, Julien Touati
 
-
-from __future__ import division, absolute_import
-
 import os
 import numpy as np
 import logging
@@ -108,14 +105,6 @@ class NURBS:
                     raise ArithmeticError('There are too few points to compute. The number of points of the curve must '
                                           'be strictly superior to degre + 2, in this case: ' + str(self.nbControle)
                                           + '. Either change degree to a lower value, or add points to the curve.')
-                    # self.nbControle = nb_points - 1
-                    # self.degre = self.nbControle - 1
-                    # sct.printv(
-                    #     'ERROR : There are too few points to compute. The number of points of the curve must be '
-                    #     'strictly superior to degre +2 which is: '
-                    #     + str(self.nbControle)
-                    #     + '. Either change degre to a lower value, either add points to the curve.',
-                    #     type="error")
 
                 # compute weights based on curve density
                 w = [1.0] * len(P_x)
@@ -673,9 +662,9 @@ class NURBS:
             Tz.append(somme)
         Tz = np.matrix(Tz)
 
-        P_xb = (R.T * W * R).I * Tx.T
-        P_yb = (R.T * W * R).I * Ty.T
-        P_zb = (R.T * W * R).I * Tz.T
+        P_xb = np.linalg.pinv(R.T * W * R) * Tx.T
+        P_yb = np.linalg.pinv(R.T * W * R) * Ty.T
+        P_zb = np.linalg.pinv(R.T * W * R) * Tz.T
 
         # Modification of first and last control points
         P_xb[0], P_yb[0], P_zb[0] = P_x[0], P_y[0], P_z[0]
@@ -1053,12 +1042,6 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
         data = [[x[n], y[n], z[n]] for n in range(len(x))]
     else:
         data = [[x[n], y[n]] for n in range(len(x))]
-
-    # if control_points == 0:
-    #     nurbs = NURBS(degree, point_number, data) # BE very careful with the spline order that you choose : if order is too high ( > 4 or 5) you need to set a higher number of Control Points (cf sct_nurbs ). For the third argument (number of points), give at least len(z_centerline)+500 or higher
-    # else:
-    #     sct.printv('In b_spline_nurbs we get control_point = ', control_points)
-    #     nurbs = NURBS(degree, point_number, data, False, control_points)
 
     if nbControl == -1:
         centerlineSize = getSize(x, y, z, fname_centerline)

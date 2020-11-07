@@ -11,8 +11,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
 import numpy as np
 
 import sct_compute_mscc

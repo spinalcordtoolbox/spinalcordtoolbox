@@ -11,11 +11,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
-import sct_utils as sct
-
-
 def init(param_test):
     """
     Initialize testing.
@@ -28,7 +23,7 @@ def init(param_test):
     param_test
     """
     # initialization
-    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg.nii.gz']  # default parameters
+    default_args = ['-i t2/t2.nii.gz -s t2/t2_seg-manual.nii.gz']  # default parameters
 
     # assign default params
     if not param_test.args:

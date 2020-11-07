@@ -14,33 +14,27 @@
 #########################################################################################
 
 # TODO: fetch vert level in atlas by default-- would be nice to output in csv
-# TODO: use argparse
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where
 #  two different vertebral levels coexist (and not the whole slice)
 
-from __future__ import division, absolute_import
-
-import sys, os
+import sys
+import os
+import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.metadata import read_label_file
-from spinalcordtoolbox.utils import parse_num_list
 from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric, LabelStruc
-import sct_utils as sct
 from spinalcordtoolbox.image import Image
-from msct_parser import Parser
-
-# get path of the script and the toolbox
-# TODO: is that useful??
-path_script = os.path.dirname(__file__)
-path_sct = os.path.dirname(path_script)
+from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, parse_num_list, display_open
+from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__
+from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path
 
 
 class Param:
     def __init__(self):
         self.method = 'wa'
-        self.path_label = os.path.join(path_sct, "data", "PAM50", "atlas")
+        self.path_label = os.path.join(__data_dir__, "PAM50", "atlas")
         self.verbose = 1
         self.vertebral_levels = ''
         self.slices_of_interest = ''  # 2-element list corresponding to zmin:zmax. example: '5:8'. For all slices, leave empty.
@@ -51,173 +45,221 @@ class Param:
         self.perlevel = None
 
 
+class _ListLabelsAction(argparse.Action):
+    """This class makes it possible to call the flag '-list-labels' without the need to input the required '-i'."""
+    def __call__(self, parser, namespace, values, option_string=None):
+        file_label = os.path.join(namespace.f, param_default.file_info_label)
+        check_file_exist(file_label, 0)
+        with open(file_label, 'r') as default_info_label:
+            label_references = default_info_label.read()
+        txt_label = (
+            f"List of labels in {file_label}:\n"
+            f"--------------------------------------------------------------------------------------\n"
+            f"{label_references}"
+            f"--------------------------------------------------------------------------------------\n")
+        print(txt_label)
+        parser.exit()
+
+
 def get_parser():
 
     param_default = Param()
 
-    parser = Parser(__file__)
-    parser.usage.set_description("""This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or a folder generated with 'sct_warp_template' and containing multiple label files and a label description file (info_label.txt). The labels should be in the same space coordinates as the input image.""")
-    # Mandatory arguments
-    parser.add_option(name='-i',
-                      type_value='image_nifti',
-                      description='File to extract metrics from.',
-                      mandatory=True,
-                      example='FA.nii.gz')
-    # Optional arguments
-    parser.add_option(name='-f',
-                      type_value='folder',
-                      description='Single label file, or folder that contains WM tract labels.',
-                      mandatory=False,
-                      default_value=os.path.join("label", "atlas"),
-                      check_file_exist=False,
-                      example=os.path.join(path_sct, 'data', 'atlas'))
-    parser.add_option(name='-l',
-                      type_value='str',
-                      description='Label IDs to extract the metric from. Default = all labels. Separate labels with ",". To select a group of consecutive labels use ":". Example: 1:3 is equivalent to 1,2,3. Maximum Likelihood (or MAP) is computed using all tracts, but only values of the selected tracts are reported.',
-                      mandatory=False,
-                      default_value='')
-    parser.add_option(name='-method',
-                      type_value='multiple_choice',
-                      description="""Method to extract metrics.
-ml: maximum likelihood (only use with well-defined regions and low noise)
-  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in all voxels (the algorithm doesn't normalize the atlas).
-map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters (white matter, gray matter and CSF). Tract and  noise variance are set with flag -p.
-  N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in all voxels (the algorithm doesn't normalize the atlas).
-wa: weighted average
-bin: binarize mask (threshold=0.5)
-max: for each z-slice of the input data, extract the max value for each slice of the input data.""",
-                      example=['ml', 'map', 'wa', 'bin', 'max'],
-                      mandatory=False,
-                      default_value=param_default.method)
-    parser.add_option(name='-append',
-                      type_value='int',
-                      description='Append results as a new line in the output csv file instead of overwriting it.',
-                      mandatory=False,
-                      default_value=0)
-    parser.add_option(name='-combine',
-                      type_value='int',
-                      description='Combine multiple labels into a single estimation.',
-                      mandatory=False,
-                      default_value=0)
-    parser.add_option(name='-o',
-                      type_value='file_output',
-                      description="""File name (including the file extension) of the output result file collecting the metric estimation results. \nThree file types are available: a CSV text file (extension .txt), a MS Excel file (extension .xls) and a pickle file (extension .pickle). Default: """ + param_default.fname_output,
-                      mandatory=False,
-                      default_value=param_default.fname_output)
-    parser.add_option(name='-output-map',
-                      type_value='file_output',
-                      description="""File name for an image consisting of the atlas labels multiplied by the estimated metric values yielding the metric value map, useful to assess the metric estimation and especially partial volume effects.""",
-                      mandatory=False,
-                      default_value='')
-    parser.add_option(name='-z',
-                      type_value='str',
-                      description='Slice range to estimate the metric from. First slice is 0. Example: 5:23\nYou can also select specific slices using commas. Example: 0,2,3,5,12',
-                      mandatory=False,
-                      default_value=param_default.slices_of_interest)
-    parser.add_option(name='-perslice',
-                      type_value='int',
-                      description='Set to 1 to output one metric per slice instead of a single output metric.'
-                                  'Please note that when methods ml or map is used, outputing a single '
-                                  'metric per slice and then averaging them all is not the same as outputting a single'
-                                  'metric at once across all slices.',
-                      mandatory=False,
-                      default_value=param_default.perslice)
-    parser.add_option(name='-vert',
-                      type_value='str',
-                      description='Vertebral levels to estimate the metric across. Example: 2:9 for C2 to T2.',
-                      mandatory=False,
-                      example='2:5',
-                      default_value=param_default.vertebral_levels)
-    parser.add_option(name='-vertfile',
-                      type_value='str',  # note: even though it's a file, we cannot put the type='file' otherwise the full path will be added in sct_testing and it will crash
-                      description='Vertebral labeling file. Only use with flag -vert',
-                      default_value='./label/template/PAM50_levels.nii.gz',
-                      mandatory=False)
-    parser.add_option(name='-perlevel',
-                      type_value='int',
-                      description='Set to 1 to output one metric per vertebral level instead of a single '
-                                  'output metric. This flag needs to be used with flag -vert.',
-                      mandatory=False,
-                      default_value=0)
-    parser.add_option(name="-v",
-                      type_value="multiple_choice",
-                      description="1: display on, 0: display off (default)",
-                      mandatory=False,
-                      example=["0", "1"],
-                      default_value="1")
-    parser.usage.addSection("\nFOR ADVANCED USERS")
-    parser.add_option(name='-param',
-                      type_value='str',
-                      description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
-    #1: standard deviation of metrics across labels
-    #2: standard deviation of the noise (assumed Gaussian)""",
-                      mandatory=False)
-    parser.add_option(name='-p',
-                      type_value=None,
-                      description="""Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated with comma).
-    #1: standard deviation of metrics across labels
-    #2: standard deviation of the noise (assumed Gaussian)""",
-                      mandatory=False,
-                      deprecated_by='-param')
-    parser.add_option(name='-fix-label',
-                      type_value=[[','], 'str'],
-                      description='When using ML or MAP estimations, if you do not want to estimate the metric in one label and fix its value to avoid effects on other labels, specify <label_ID>,<metric_value. Example to fix the CSF value to 0: -fix-label 36,0.',
-                      mandatory=False,
-                      default_value='')
-    parser.add_option(name='-norm-file',
-                      type_value='image_nifti',
-                      description='Filename of the label by which the user wants to normalize',
-                      mandatory=False)
-    parser.add_option(name='-n',
-                      type_value='image_nifti',
-                      description='Filename of the label by which the user wants to normalize',
-                      mandatory=False,
-                      deprecated_by='-norm-file')
-    parser.add_option(name='-norm-method',
-                      type_value='multiple_choice',
-                      description='Method to use for normalization:\n- sbs: normalization slice-by-slice\n- whole: normalization by the metric value in the whole label for all slices.',
-                      example=['sbs', 'whole'],
-                      mandatory=False)
-    parser.add_option(name='-mask-weighted',
-                      type_value='image_nifti',
-                      description='Nifti mask to weight each voxel during ML or MAP estimation.',
-                      example='PAM50_wm.nii.gz',
-                      mandatory=False)
-    parser.add_option(name='-discard-neg-val',
-                      type_value='multiple_choice',
-                      mandatory=False,
-                      description='Discard voxels with negative value when computing metrics statistics.',
-                      example=["0", "1"],
-                      default_value="0")
+    parser = argparse.ArgumentParser(
+        description=(
+            f"This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or "
+            f"a folder generated with 'sct_warp_template' containing multiple label files and a label "
+            f"description file (info_label.txt). The labels should be in the same space coordinates as the "
+            f"input image.\n"
+            f"\n"
+            f"The labels used by default are taken from the PAM50 template. To learn about the available PAM50 "
+            f"white/grey matter atlas labels and their corresponding ID values, please refer to: "
+            f"https://spinalcordtoolbox.com/en/latest/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas\n"
+            f"\n"
+            f"To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:\n"
+            f"sct_extract_metric -i dti_FA.nii.gz -l 0,2,3 -vert 2:7 -method bin\n"
+            f"\n"
+            f"To compute average MTR in a region defined by a single label file (could be binary or 0-1 "
+            f"weighted mask) between slices 1 and 4:\n"
+            f"sct_extract_metric -i mtr.nii.gz -f "
+            f"my_mask.nii.gz -z 1:4 -method wa"
+        ),
+        formatter_class=SmartFormatter,
+        add_help=None,
+        prog=os.path.basename(__file__).strip(".py")
+    )
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
+        '-i',
+        metavar=Metavar.file,
+        required=True,
+        help="Image file to extract metrics from. Example: FA.nii.gz"
+    )
 
-    # read the .txt files referencing the labels
-    file_label = os.path.join(param_default.path_label, param_default.file_info_label)
-    sct.check_file_exist(file_label, 0)
-    default_info_label = open(file_label, 'r')
-    label_references = default_info_label.read()
-    default_info_label.close()
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        "-h",
+        "--help",
+        action="help",
+        help="Show this help message and exit."
+    )
+    optional.add_argument(
+        '-f',
+        metavar=Metavar.folder,
+        default=os.path.join("label", "atlas"),
+        help=(f"Single label file, or folder that contains WM tract labels."
+              f"Example: {os.path.join(__data_dir__, 'atlas')}")
+    )
+    optional.add_argument(
+        '-l',
+        metavar=Metavar.str,
+        default='',
+        help="Label IDs to extract the metric from. Default = all labels. Separate labels with ','. To select a group "
+             "of consecutive labels use ':'. Example: 1:3 is equivalent to 1,2,3. Maximum Likelihood (or MAP) is "
+             "computed using all tracts, but only values of the selected tracts are reported."
+    )
+    optional.add_argument(
+        '-list-labels',
+        action=_ListLabelsAction,
+        nargs=0,
+        help="List available labels. These labels are defined in the file 'info_label.txt' located in the folder "
+             "specified by the flag '-f'."
+    )
+    optional.add_argument(
+        '-method',
+        choices=['ml', 'map', 'wa', 'bin', 'max'],
+        default=param_default.method,
+        help="R|Method to extract metrics.\n"
+             "  - ml: maximum likelihood.\n"
+             "    This method is recommended for large labels and low noise. Also, this method should only be used"
+             " with the PAM50 white/gray matter atlas, or with any custom atlas as long as the sum across all labels"
+             " equals 1, in each voxel part of the atlas.\n"
+             "  - map: maximum a posteriori.\n"
+             "    Mean priors are estimated by maximum likelihood within three clusters"
+             " (white matter, gray matter and CSF). Tract and noise variance are set with flag -p."
+             " This method should only be used with the PAM50 white/gray matter atlas, or with any custom atlas"
+             " as long as the sum across all labels equals 1, in each voxel part of the atlas.\n"
+             "  - wa: weighted average\n"
+             "  - bin: binarize mask (threshold=0.5)\n"
+             "  - max: for each z-slice of the input data, extract the max value for each slice of the input data."
+    )
+    optional.add_argument(
+        '-append',
+        type=int,
+        choices=(0, 1),
+        default=0,
+        help="Whether to append results as a new line in the output csv file instead of overwriting it. 0 = no, 1 = yes"
+    )
+    optional.add_argument(
+        '-combine',
+        type=int,
+        choices=(0, 1),
+        default=0,
+        help="Whether to combine multiple labels into a single estimation. 0 = no, 1 = yes"
+    )
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.file,
+        default=param_default.fname_output,
+        help="R|File name of the output result file collecting the metric estimation results. Include the '.csv' "
+             "file extension in the file name. Example: extract_metric.csv"
+    )
+    optional.add_argument(
+        '-output-map',
+        metavar=Metavar.file,
+        default='',
+        help="File name for an image consisting of the atlas labels multiplied by the estimated metric values "
+             "yielding the metric value map, useful to assess the metric estimation and especially partial volume "
+             "effects."
+    )
+    optional.add_argument(
+        '-z',
+        metavar=Metavar.str,
+        default=param_default.slices_of_interest,
+        help="R|Slice range to estimate the metric from. First slice is 0. Example: 5:23\n"
+             "You can also select specific slices using commas. Example: 0,2,3,5,12'"
+    )
+    optional.add_argument(
+        '-perslice',
+        type=int,
+        choices=(0, 1),
+        default=param_default.perslice,
+        help="R|Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.\n"
+             "Please note that when methods ml or map are used, outputting a single metric per slice and then "
+             "averaging them all is not the same as outputting a single metric at once across all slices."
+    )
+    optional.add_argument(
+        '-vert',
+        metavar=Metavar.str,
+        default=param_default.vertebral_levels,
+        help="Vertebral levels to estimate the metric across. Example: 2:9 (for C2 to T2)"
+    )
+    optional.add_argument(
+        '-vertfile',
+        metavar=Metavar.file,
+        default="./label/template/PAM50_levels.nii.gz",
+        help="Vertebral labeling file. Only use with flag -vert. Example: PAM50_levels.nii.gz"
+    )
+    optional.add_argument(
+        '-perlevel',
+        type=int,
+        metavar=Metavar.int,
+        default=0,
+        help="R|Whether to output one metric per vertebral level instead of a single output metric. 0 = no, 1 = yes.\n"
+             "Please note that this flag needs to be used with the -vert option."
+    )
+    optional.add_argument(
+        '-v',
+        choices=("0", "1"),
+        default="1",
+        help="Verbose. 0 = nothing, 1 = expanded"
+    )
 
-    str_section = """\n
-To list white matter atlas labels:
-""" + os.path.basename(__file__) + """ -f """ + os.path.join(path_sct, "data", "atlas") + """
-
-To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:
-""" + os.path.basename(__file__) + """ -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin"""
-    if label_references != '':
-        str_section += """
-
-To compute average MTR in a region defined by a single label file (could be binary or 0-1 weighted mask) between slices 1 and 4:
-""" + os.path.basename(__file__) + """ -i mtr.nii.gz -f my_mask.nii.gz -z 1:4 -m wa"""
-    if label_references != '':
-        str_section += """
-
-\nList of labels in """ + file_label + """:
---------------------------------------------------------------------------------------
-""" + label_references + """
---------------------------------------------------------------------------------------
-"""
-
-    parser.usage.addSection(str_section)
+    advanced = parser.add_argument_group("\nFOR ADVANCED USERS")
+    advanced.add_argument(
+        '-param',
+        metavar=Metavar.str,
+        default='',
+        help="R|Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated "
+             "with comma).\n"
+             "  - #1: standard deviation of metrics across labels\n"
+             "  - #2: standard deviation of the noise (assumed Gaussian)"
+    )
+    advanced.add_argument(
+        '-fix-label',
+        metavar=Metavar.list,
+        type=list_type(',', str),
+        default='',
+        help="When using ML or MAP estimations, if you do not want to estimate the metric in one label and fix its "
+             "value to avoid effects on other labels, specify <label_ID>,<metric_value. Example: -fix-label 36,0 "
+             "(Fix the CSF value)"
+    )
+    advanced.add_argument(
+        '-norm-file',
+        metavar=Metavar.file,
+        default='',
+        help='Filename of the label by which the user wants to normalize.'
+    )
+    advanced.add_argument(
+        '-norm-method',
+        choices=['sbs', 'whole'],
+        default='',
+        help="R|Method to use for normalization:\n"
+             "  - sbs: normalization slice-by-slice\n"
+             "  - whole: normalization by the metric value in the whole label for all slices."
+    )
+    advanced.add_argument(
+        '-mask-weighted',
+        metavar=Metavar.file,
+        default='',
+        help="Nifti mask to weight each voxel during ML or MAP estimation. Example: PAM50_wm.nii.gz"
+    )
+    advanced.add_argument(
+        '-discard-neg-val',
+        choices=('0', '1'),
+        default='0',
+        help='Whether to discard voxels with negative value when computing metrics statistics. 0 = no, 1 = yes'
+    )
 
     return parser
 
@@ -256,7 +298,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         indiv_labels_files = [path_label]
         combined_labels_ids = []
         label_struc = {0: LabelStruc(id=0,
-                                     name=sct.extract_fname(path_label)[1],
+                                     name=extract_fname(path_label)[1],
                                      filename=path_label)}
         # set path_label to empty string, because indiv_labels_files will replace it from now on
         path_label = ''
@@ -276,7 +318,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         #     label_struc[51].name = "White Matter"
         #     label_struc[51].filename = ""  # no name because it is combined
         indiv_labels_ids, indiv_labels_names, indiv_labels_files, \
-        combined_labels_ids, combined_labels_names, combined_labels_id_groups, map_clusters \
+            combined_labels_ids, combined_labels_names, combined_labels_id_groups, map_clusters \
             = read_label_file(path_label, param_default.file_info_label)
 
         label_struc = {}
@@ -303,7 +345,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     nb_labels = len(indiv_labels_files)
 
     # Load data and systematically reorient to RPI because we need the 3rd dimension to be z
-    sct.printv('\nLoad metric image...', verbose)
+    printv('\nLoad metric image...', verbose)
     input_im = Image(fname_data).change_orientation("RPI")
 
     data = Metric(data=input_im.data, label='')
@@ -325,7 +367,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
 
     # Check dimensions consistency between atlas and data
     if (nx, ny, nz) != (nx_atlas, ny_atlas, nz_atlas):
-        sct.printv('\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
+        printv('\nERROR: Metric data and labels DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
 
     # Combine individual labels for estimation
     if combine_labels:
@@ -335,88 +377,47 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         labels_id_user = [99]
 
     for id_label in labels_id_user:
-        sct.printv('Estimation for label: '+label_struc[id_label].name, verbose)
+        printv('Estimation for label: ' + label_struc[id_label].name, verbose)
         agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
                                     perlevel=perlevel, vert_level=im_vertebral_labeling, method=method,
                                     label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
         append_csv = True  # when looping across labels, need to append results in the same file
-    sct.display_open(fname_output)
+    display_open(fname_output)
 
 
 if __name__ == "__main__":
 
-    sct.init_sct()
+    init_sct()
 
     param_default = Param()
 
     parser = get_parser()
-    arguments = parser.parse(sys.argv[1:])
+    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
-    overwrite = 0
-    fname_data = sct.get_absolute_path(arguments['-i'])
-    path_label = arguments['-f']
-    method = arguments['-method']
-    fname_output = arguments['-o']
-    if '-append' in arguments:
-        append_csv = int(arguments['-append'])
-    else:
-        append_csv = 0
-    if '-combine' in arguments:
-        combine_labels = arguments['-combine']
-    else:
-        combine_labels = 0
-    if '-l' in arguments:
-        labels_user = arguments['-l']
-    else:
-        labels_user = ''
-    if '-param' in arguments:
-        adv_param_user = arguments['-param']
-    else:
-        adv_param_user = ''
-    if '-z' in arguments:
-        slices_of_interest = arguments['-z']
-    else:
-        slices_of_interest = ''
-    if '-vert' in arguments:
-        vertebral_levels = arguments['-vert']
-    else:
-        vertebral_levels = ''
-    if '-vertfile' in arguments:
-        fname_vertebral_labeling = arguments['-vertfile']
-    else:
-        fname_vertebral_labeling = ""
-    if '-perslice' in arguments:
-        perslice = arguments['-perslice']
-    else:
-        perslice = param_default.perslice
-    if '-perlevel' in arguments:
-        perlevel = arguments['-perlevel']
-    else:
-        perlevel = 0
-    fname_normalizing_label = ''
-    if '-norm-file' in arguments:
-        fname_normalizing_label = arguments['-norm-file']
-    normalization_method = ''
-    if '-norm-method' in arguments:
-        normalization_method = arguments['-norm-method']
-    if '-fix-label' in arguments:
-        label_to_fix = arguments['-fix-label']
-    else:
-        label_to_fix = ''
-    if '-output-map' in arguments:
-        fname_output_metric_map = arguments['-output-map']
-    else:
-        fname_output_metric_map = ''
-    if '-mask-weighted' in arguments:
-        fname_mask_weight = arguments['-mask-weighted']
-    else:
-        fname_mask_weight = ''
-    # if 'discard_negative_values' in arguments:
-    discard_negative_values = int(arguments['-discard-neg-val'])
-    verbose = int(arguments.get('-v'))
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    overwrite = 0  # TODO: Not used. Why?
+    fname_data = get_absolute_path(arguments.i)
+    path_label = arguments.f
+    method = arguments.method
+    fname_output = arguments.o
+    append_csv = arguments.append
+    combine_labels = arguments.combine
+    labels_user = arguments.l
+    adv_param_user = arguments.param  # TODO: Not used. Why?
+    slices_of_interest = arguments.z
+    vertebral_levels = arguments.vert
+    fname_vertebral_labeling = arguments.vertfile
+    perslice = arguments.perslice
+    perlevel = arguments.perlevel
+    fname_normalizing_label = arguments.norm_file  # TODO: Not used. Why?
+    normalization_method = arguments.norm_method  # TODO: Not used. Why?
+    label_to_fix = arguments.fix_label  # TODO: Not used. Why?
+    fname_output_metric_map = arguments.output_map  # TODO: Not used. Why?
+    fname_mask_weight = arguments.mask_weighted  # TODO: Not used. Why?
+    discard_negative_values = int(arguments.discard_neg_val)  # TODO: Not used. Why?
+    verbose = int(arguments.v)
+    init_sct(log_level=verbose, update=True)  # Update log level
 
     # call main function
     main(fname_data=fname_data, path_label=path_label, method=method, slices=parse_num_list(slices_of_interest),

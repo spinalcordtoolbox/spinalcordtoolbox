@@ -2,21 +2,24 @@
 # -*- coding: utf-8
 # Functions dealing with deepseg_sc
 
-import os, sys, logging
+import os
+import sys
+import logging
 
 import numpy as np
-from scipy.ndimage.measurements import center_of_mass, label
 from skimage.exposure import rescale_intensity
+from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage import distance_transform_edt
-import nibabel as nib
 
 from spinalcordtoolbox import resampling
 from .cnn_models import nn_architecture_seg, nn_architecture_ctr
 from .postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
-from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like
+from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, add_suffix
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
+from spinalcordtoolbox.utils import sct_dir_local_path, TempFolder
+from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
 
-import sct_utils as sct
+# FIXME: don't import from scripts!
 from sct_image import concat_data, split_data
 
 
@@ -33,6 +36,7 @@ logger = logging.getLogger(__name__)
 def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output, remove_temp_files, centerline_fname):
     """
     Assumes RPI orientation
+
     :param algo:
     :param image_fname:
     :param contrast_type:
@@ -44,7 +48,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
     """
 
     im = Image(image_fname)
-    ctl_absolute_path = sct.add_suffix(im.absolutepath, "_ctr")
+    ctl_absolute_path = add_suffix(im.absolutepath, "_ctr")
 
     # isct_spine_detect requires nz > 1
     if im.dim[2] == 1:
@@ -60,7 +64,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         # optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         # # TODO: replace with get_centerline(method=optic)
         im_ctl, _, _, _ = get_centerline(im,
-                                        ParamCenterline(algo_fitting='optic', contrast=contrast_type))
+                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type))
 
     elif algo == 'cnn':
         # CNN parameters
@@ -74,7 +78,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                           'dwi': {'features': 8, 'dilation_layers': 2}}
 
         # load model
-        ctr_model_fname = os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type))
+        ctr_model_fname = sct_dir_local_path('data', 'deepseg_sc_models', '{}_ctr.h5'.format(contrast_type))
         ctr_model = nn_architecture_ctr(height=dct_patch_ctr[contrast_type]['size'][0],
                                         width=dct_patch_ctr[contrast_type]['size'][1],
                                         channels=1,
@@ -96,10 +100,10 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                                     std_train=dct_patch_ctr[contrast_type]['std'],
                                     brain_bool=brain_bool)
         im_ctl, _, _, _ = get_centerline(im_heatmap,
-                                        ParamCenterline(algo_fitting='optic', contrast=contrast_type))
+                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type))
 
         if z_max is not None:
-            sct.printv('Cropping brain section.')
+            logger.info('Cropping brain section.')
             im_ctl.data[:, :, z_max:] = 0
 
     elif algo == 'viewer':
@@ -302,7 +306,7 @@ def heatmap(im, model, patch_shape, mean_train, std_train, brain_bool=True):
             z_sc_notDetected_cmpt += 1
             # if the SC has not been detected on 10 consecutive z_slices, we stop the SC investigation
             if z_sc_notDetected_cmpt > 10 and brain_bool:
-                sct.printv('Brain section detected.')
+                logger.info('Brain section detected.')
                 break
 
         # distance transform to deal with the harsh edges of the prediction boundaries (Dice)
@@ -334,6 +338,7 @@ def _normalize_data(data, mean, std):
 def segment_2d(model_fname, contrast_type, input_size, im_in):
     """
     Segment data using 2D convolutions.
+
     :return: seg_crop.data: ndarray float32: Output prediction
     """
     seg_model = nn_architecture_seg(height=input_size[0],
@@ -347,7 +352,7 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
     seg_crop = zeros_like(im_in, dtype=np.float32)
 
     data_norm = im_in.data
-    # TODO: use tqdm
+    # TODO: use sct_progress_bar
     for zz in range(im_in.dim[2]):
         # 2D CNN prediction
         pred_seg = seg_model.predict(np.expand_dims(np.expand_dims(data_norm[:, :, zz], -1), 0),
@@ -360,9 +365,9 @@ def segment_2d(model_fname, contrast_type, input_size, im_in):
 def segment_3d(model_fname, contrast_type, im_in):
     """
     Perform segmentation with 3D convolutions.
+
     :return: seg_crop.data: ndarray float32: Output prediction
     """
-    from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
     dct_patch_sc_3d = {'t2': {'size': (64, 64, 48), 'mean': 65.8562, 'std': 59.7999},
                        't2s': {'size': (96, 96, 48), 'mean': 87.0212, 'std': 64.425},
                        't1': {'size': (64, 64, 48), 'mean': 88.5001, 'std': 66.275}}
@@ -374,7 +379,7 @@ def segment_3d(model_fname, contrast_type, im_in):
     # segment the spinal cord
     z_patch_size = dct_patch_sc_3d[contrast_type]['size'][2]
     z_step_keep = list(range(0, im_in.data.shape[2], z_patch_size))
-    # TODO: use tqdm
+    # TODO: use sct_progress_bar
     for zz in z_step_keep:
         if zz == z_step_keep[-1]:  # deal with instances where the im.data.shape[2] % patch_size_z != 0
             patch_im = np.zeros(dct_patch_sc_3d[contrast_type]['size'])
@@ -420,6 +425,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                                  kernel_size='2d', threshold_seg=None, remove_temp_files=1, verbose=1):
     """
     Main pipeline for CNN-based segmentation of the spinal cord.
+
     :param im_image:
     :param contrast_type: {'t1', 't2', t2s', 'dwi'}
     :param ctr_algo:
@@ -444,7 +450,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     logger.info("  Threshold: {}".format(threshold_seg))
 
     # create temporary folder with intermediate results
-    tmp_folder = sct.TempFolder(verbose=verbose)
+    tmp_folder = TempFolder(verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
     if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)
@@ -469,12 +475,12 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     # find the spinal cord centerline - execute OptiC binary
     logger.info("Finding the spinal cord centerline...")
     _, im_ctl, im_labels_viewer = find_centerline(algo=ctr_algo,
-                                                    image_fname=fname_orient,
-                                                    contrast_type=contrast_type,
-                                                    brain_bool=brain_bool,
-                                                    folder_output=tmp_folder_path,
-                                                    remove_temp_files=remove_temp_files,
-                                                    centerline_fname=file_ctr)
+                                                  image_fname=fname_orient,
+                                                  contrast_type=contrast_type,
+                                                  brain_bool=brain_bool,
+                                                  folder_output=tmp_folder_path,
+                                                  remove_temp_files=remove_temp_files,
+                                                  centerline_fname=file_ctr)
 
     if ctr_algo == 'file':
         im_ctl = \
@@ -496,7 +502,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         # segment data using 2D convolutions
         logger.info("Segmenting the spinal cord using deep learning on 2D patches...")
         segmentation_model_fname = \
-            os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
+            sct_dir_local_path('data', 'deepseg_sc_models', '{}_sc.h5'.format(contrast_type))
         seg_crop = segment_2d(model_fname=segmentation_model_fname,
                               contrast_type=contrast_type,
                               input_size=(crop_size, crop_size),
@@ -505,7 +511,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         # segment data using 3D convolutions
         logger.info("Segmenting the spinal cord using deep learning on 3D patches...")
         segmentation_model_fname = \
-            os.path.join(sct.__sct_dir__, 'data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_type))
+            sct_dir_local_path('data', 'deepseg_sc_models', '{}_sc_3D.h5'.format(contrast_type))
         seg_crop = segment_3d(model_fname=segmentation_model_fname,
                               contrast_type=contrast_type,
                               im_in=im_norm_in)
@@ -535,7 +541,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
                           x_crop_lst=X_CROP_LST,
                           y_crop_lst=Y_CROP_LST,
                           z_crop_lst=Z_CROP_LST)
-    # seg_uncrop_nii.save(sct.add_suffix(fname_res, '_seg'))  # for debugging
+    # seg_uncrop_nii.save(add_suffix(fname_res, '_seg'))  # for debugging
     del seg_crop, seg_crop_postproc, im_norm_in
 
     # resample to initial resolution
@@ -543,7 +549,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
 
     if ctr_algo == 'viewer':  # for debugging
-        im_labels_viewer.save(sct.add_suffix(fname_orient, '_labels-viewer'))
+        im_labels_viewer.save(add_suffix(fname_orient, '_labels-viewer'))
 
     # Binarize the resampled image (except for soft segmentation, defined by threshold_seg=-1)
     if threshold_seg >= 0:

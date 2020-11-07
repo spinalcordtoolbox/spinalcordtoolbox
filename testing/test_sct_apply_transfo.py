@@ -12,8 +12,6 @@
 
 # TODO: generate warping field for dmri that makes sense (dmri --> T2).
 
-from __future__ import absolute_import
-
 from spinalcordtoolbox.image import Image
 
 

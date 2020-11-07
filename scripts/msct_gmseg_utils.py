@@ -12,23 +12,29 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 
-from __future__ import absolute_import, division
-
-import sys, io, os, time, random, shutil
+import sys
+import io
+import os
+import time
+import random
+import shutil
 
 import numpy as np
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
+from spinalcordtoolbox.utils.sys import printv
+from spinalcordtoolbox.utils.fs import extract_fname, tmp_create, copy, rmtree
 
-from sct_utils import extract_fname, printv, add_suffix
-import sct_utils as sct
 import sct_create_mask
-import sct_register_multimodal, sct_apply_transfo
+import sct_register_multimodal
+import sct_apply_transfo
 
 ########################################################################################################################
 #                                   CLASS SLICE
 ########################################################################################################################
+
+
 class Slice:
     """
     Slice instance used in the model dictionary for the segmentation of the gray matter
@@ -106,11 +112,11 @@ class Slice:
 def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gmseg=None, new_res=0.3, square_size_size_mm=22.5, denoising=True, verbose=1, rm_tmp=True, for_model=False):
     printv('\nPre-process data...', verbose, 'normal')
 
-    tmp_dir = sct.tmp_create()
+    tmp_dir = tmp_create()
 
-    sct.copy(fname_target, tmp_dir)
+    copy(fname_target, tmp_dir)
     fname_target = ''.join(extract_fname(fname_target)[1:])
-    sct.copy(fname_sc_seg, tmp_dir)
+    copy(fname_sc_seg, tmp_dir)
     fname_sc_seg = ''.join(extract_fname(fname_sc_seg)[1:])
 
     curdir = os.getcwd()
@@ -151,10 +157,10 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         cropper.get_bbox_from_mask(Image(fname_mask))
         im_sc_seg_rpi_crop = cropper.crop()
         # denoising
-        from sct_maths import denoise_nlmeans
+        from spinalcordtoolbox.math import denoise_nlmeans
         block_radius = 3
-        block_radius = int(im_target_rpi_crop.data.shape[2] / 2) if im_target_rpi_crop.data.shape[2] < (block_radius*2) else block_radius
-        patch_radius = block_radius -1
+        block_radius = int(im_target_rpi_crop.data.shape[2] / 2) if im_target_rpi_crop.data.shape[2] < (block_radius * 2) else block_radius
+        patch_radius = block_radius - 1
         data_denoised = denoise_nlmeans(im_target_rpi_crop.data, block_radius=block_radius, patch_radius=patch_radius)
         im_target_rpi_crop.data = data_denoised
 
@@ -166,7 +172,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     # interpolate image to reference square image (resample and square crop centered on SC)
     printv('  Interpolate data to the model space...', verbose, 'normal')
     list_im_slices = interpolate_im_to_ref(im_target_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm)
-    original_info['interpolated_images'] = list_im_slices # list of images (not Slice() objects)
+    original_info['interpolated_images'] = list_im_slices  # list of images (not Slice() objects)
 
     printv('  Mask data using the spinal cord segmentation...', verbose, 'normal')
     list_sc_seg_slices = interpolate_im_to_ref(im_sc_seg_rpi, im_sc_seg_rpi, new_res=new_res, sq_size_size_mm=square_size_size_mm, interpolation_mode=1)
@@ -183,7 +189,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         printv('  Load vertebral levels...', verbose, 'normal')
         # copy level file to tmp dir
         os.chdir(curdir)
-        sct.copy(fname_level, tmp_dir)
+        copy(fname_level, tmp_dir)
         os.chdir(tmp_dir)
         # change fname level to only file name (path = tmp dir now)
         fname_level = ''.join(extract_fname(fname_level)[1:])
@@ -199,7 +205,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
 
     if rm_tmp:
         # remove tmp folder
-        sct.rmtree(tmp_dir)
+        rmtree(tmp_dir)
     return list_slices_target, original_info
 
 
@@ -375,7 +381,7 @@ def load_manual_gmseg(list_slices_target, list_fname_manual_gmseg, tmp_dir, im_s
     curdir = os.getcwd()
 
     for fname_manual_gmseg in list_fname_manual_gmseg:
-        sct.copy(fname_manual_gmseg, tmp_dir)
+        copy(fname_manual_gmseg, tmp_dir)
         # change fname level to only file name (path = tmp dir now)
         path_gm, file_gm, ext_gm = extract_fname(fname_manual_gmseg)
         fname_manual_gmseg = file_gm + ext_gm
@@ -437,7 +443,7 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
     im_src_seg = binarize(im_src, thr_min=1, thr_max=1)
     im_dest_seg = binarize(im_dest)
     # create tmp dir and go in it
-    tmp_dir = sct.tmp_create()
+    tmp_dir = tmp_create()
     curdir = os.getcwd()
     os.chdir(tmp_dir)
     # save image and seg
@@ -469,21 +475,21 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
         file_dest = extract_fname(fname_dest)[1]
         fname_src2dest = 'warp_' + file_src + '2' + file_dest + '.nii.gz'
         fname_dest2src = 'warp_' + file_dest + '2' + file_src + '.nii.gz'
-        sct.copy(os.path.join(tmp_dir, fname_src2dest), path_copy_warp)
-        sct.copy(os.path.join(tmp_dir, fname_dest2src), path_copy_warp)
+        copy(os.path.join(tmp_dir, fname_src2dest), path_copy_warp)
+        copy(os.path.join(tmp_dir, fname_dest2src), path_copy_warp)
 
     if rm_tmp:
         # remove tmp dir
-        sct.rmtree(tmp_dir)
+        rmtree(tmp_dir)
     # return res image
     return im_src_reg, fname_src2dest, fname_dest2src
 
 
 def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     # create tmp dir and go in it
-    tmp_dir = sct.tmp_create()
+    tmp_dir = tmp_create()
     # copy warping field to tmp dir
-    sct.copy(warp, tmp_dir)
+    copy(warp, tmp_dir)
     warp = ''.join(extract_fname(warp)[1:])
     # go to tmp dir
     curdir = os.getcwd()
@@ -496,16 +502,16 @@ def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     # apply warping field
     fname_src_reg = add_suffix(fname_src, '_reg')
     sct_apply_transfo.main(args=['-i', fname_src,
-                                  '-d', fname_dest,
-                                  '-w', warp,
-                                  '-x', interp])
+                                 '-d', fname_dest,
+                                 '-w', warp,
+                                 '-x', interp])
 
     im_src_reg = Image(fname_src_reg)
     # get out of tmp dir
     os.chdir(curdir)
     if rm_tmp:
         # remove tmp dir
-        sct.rmtree(tmp_dir)
+        rmtree(tmp_dir)
     # return res image
     return im_src_reg
 

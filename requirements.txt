@@ -1,13 +1,16 @@
-numpy # need to install first otherwise dependency issues
 colored
 dipy
 futures
-h5py
-ivadomed==1.2.1
+# h5py is pinned to minor than 3 due to issues with Keras/TF
+# https://github.com/tensorflow/tensorflow/issues/44467
+h5py~=2.10.0
+ivadomed==2.4.0
 Keras==2.1.5
 matplotlib
 nibabel
+numpy
 pandas
+psutil
 pyqt5==5.11.3
 pytest
 pytest-cov
@@ -21,7 +24,7 @@ tensorflow==1.5.0
 # PyTorch's Linux/Windows distribution is very large due to its GPU support,
 # but we only need that for training models. For users, use the CPU-only version
 # (only available directly from the PyTorch project).
-# The OS X version has never had GPU support, so doesn't need the workaround.
+# The macOS version has never had GPU support, so doesn't need the workaround.
 -f https://download.pytorch.org/whl/cpu/torch_stable.html
 torch==1.5.0+cpu; sys_platform != "darwin"
 torch==1.5.0; sys_platform == "darwin"
@@ -31,3 +34,5 @@ xlwt
 tqdm
 transforms3d
 urllib3[secure]
+pytest_console_scripts
+pytest-xdist

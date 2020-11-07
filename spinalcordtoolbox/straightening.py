@@ -5,23 +5,23 @@
 # TODO: move _get_centerline inside Class
 # TODO: only input Image instead of file names
 
-
-from __future__ import absolute_import
-
-import os, time, logging, inspect
+import os
+import time
+import logging
+import inspect
 import bisect
+
 import numpy as np
-from tqdm import tqdm
 from nibabel import Nifti1Image, save
 
 from spinalcordtoolbox.types import Centerline
-import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, spatial_crop, generate_output_file
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc
+from spinalcordtoolbox.utils.fs import tmp_create, rmtree, copy, mv, extract_fname
 
-import sct_utils as sct
+# FIXME: don't import from scripts!
 from sct_image import pad_image
-
 
 logger = logging.getLogger(__name__)
 
@@ -101,12 +101,12 @@ class SpinalCordStraightener(object):
         start_time = time.time()
 
         # Extract path/file/extension
-        path_anat, file_anat, ext_anat = sct.extract_fname(fname_anat)
+        path_anat, file_anat, ext_anat = extract_fname(fname_anat)
 
-        path_tmp = sct.tmp_create(basename="straighten_spinalcord", verbose=verbose)
+        path_tmp = tmp_create(basename="straighten_spinalcord")
 
         # Copying input data to tmp folder
-        sct.printv('\nCopy files to tmp folder...', verbose)
+        logger.info('Copy files to tmp folder...')
         Image(fname_anat).save(os.path.join(path_tmp, "data.nii"))
         Image(fname_centerline).save(os.path.join(path_tmp, "centerline.nii.gz"))
 
@@ -134,11 +134,11 @@ class SpinalCordStraightener(object):
             intermediate_resampling = False
 
         if intermediate_resampling:
-            sct.mv('centerline_rpi.nii.gz', 'centerline_rpi_native.nii.gz')
+            mv('centerline_rpi.nii.gz', 'centerline_rpi_native.nii.gz')
             pz_native = pz
             # TODO: remove system call
-            sct.run(['sct_resample', '-i', 'centerline_rpi_native.nii.gz', '-mm',
-                     str(px_r) + 'x' + str(py_r) + 'x' + str(pz_r), '-o', 'centerline_rpi.nii.gz'])
+            run_proc(['sct_resample', '-i', 'centerline_rpi_native.nii.gz', '-mm',
+                      str(px_r) + 'x' + str(py_r) + 'x' + str(pz_r), '-o', 'centerline_rpi.nii.gz'])
             image_centerline = Image('centerline_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
 
@@ -256,7 +256,7 @@ class SpinalCordStraightener(object):
             # TODO: Maybe this if case is not needed?
             if intermediate_resampling:
                 padding_z = int(np.ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz_native))
-                sct.run(
+                run_proc(
                     ['sct_image', '-i', 'centerline_rpi_native.nii.gz', '-o', 'tmp.centerline_pad_native.nii.gz',
                      '-pad', '0,0,' + str(padding_z)])
                 image_centerline_pad = Image('centerline_rpi_native.nii.gz')
@@ -279,7 +279,7 @@ class SpinalCordStraightener(object):
                     (1, warp_space_y),
                     (2, (0, end_point_coord_native[2] - start_point_coord_native[2])),
                 ))
-                msct_image.spatial_crop(Image("tmp.centerline_pad_native.nii.gz"), spec).save(
+                spatial_crop(Image("tmp.centerline_pad_native.nii.gz"), spec).save(
                     "tmp.centerline_pad_crop_native.nii.gz")
 
                 fname_ref = 'tmp.centerline_pad_crop_native.nii.gz'
@@ -317,7 +317,7 @@ class SpinalCordStraightener(object):
                 (1, warp_space_y),
                 (2, (0, end_point_coord[2] - start_point_coord[2] + offset_z)),
             ))
-            image_centerline_straight = msct_image.spatial_crop(image_centerline_pad, spec)
+            image_centerline_straight = spatial_crop(image_centerline_pad, spec)
 
             nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
             hdr_warp_s = image_centerline_straight.hdr.copy()
@@ -433,10 +433,9 @@ class SpinalCordStraightener(object):
         # 5. compute transformations
         # Curved and straight images and the same dimensions, so we compute both warping fields at the same time.
         # b. determine which plane of spinal cord centreline it is included
-        # sct.printv(nx * ny * nz, nx_s * ny_s * nz_s)
 
         if self.curved2straight:
-            for u in tqdm(range(nz_s)):
+            for u in sct_progress_bar(range(nz_s)):
                 x_s, y_s, z_s = np.mgrid[0:nx_s, 0:ny_s, u:u + 1]
                 indexes_straight = np.array(list(zip(x_s.ravel(), y_s.ravel(), z_s.ravel())))
                 physical_coordinates_straight = image_centerline_straight.transfo_pix2phys(indexes_straight)
@@ -465,7 +464,7 @@ class SpinalCordStraightener(object):
                     = -displacements_straight
 
         if self.straight2curved:
-            for u in tqdm(range(nz)):
+            for u in sct_progress_bar(range(nz)):
                 x, y, z = np.mgrid[0:nx, 0:ny, u:u + 1]
                 indexes = np.array(list(zip(x.ravel(), y.ravel(), z.ravel())))
                 physical_coordinates = image_centerline_pad.transfo_pix2phys(indexes)
@@ -522,15 +521,15 @@ class SpinalCordStraightener(object):
         image_centerline_straight.save(fname_ref)
         if self.curved2straight:
             logger.info('Apply transformation to input image...')
-            sct.run(['isct_antsApplyTransforms',
-                     '-d', '3',
-                     '-r', fname_ref,
-                     '-i', 'data.nii',
-                     '-o', 'tmp.anat_rigid_warp.nii.gz',
-                     '-t', 'tmp.curve2straight.nii.gz',
-                     '-n', 'BSpline[3]'],
-                    is_sct_binary=True,
-                    verbose=verbose)
+            run_proc(['isct_antsApplyTransforms',
+                      '-d', '3',
+                      '-r', fname_ref,
+                      '-i', 'data.nii',
+                      '-o', 'tmp.anat_rigid_warp.nii.gz',
+                      '-t', 'tmp.curve2straight.nii.gz',
+                      '-n', 'BSpline[3]'],
+                     is_sct_binary=True,
+                     verbose=verbose)
 
         if self.accuracy_results:
             time_accuracy_results = time.time()
@@ -538,15 +537,15 @@ class SpinalCordStraightener(object):
             # Ideally, the error should be zero.
             # Apply deformation to input image
             logger.info('Apply transformation to centerline image...')
-            sct.run(['isct_antsApplyTransforms',
-                     '-d', '3',
-                     '-r', fname_ref,
-                     '-i', 'centerline.nii.gz',
-                     '-o', 'tmp.centerline_straight.nii.gz',
-                     '-t', 'tmp.curve2straight.nii.gz',
-                     '-n', 'NearestNeighbor'],
-                    is_sct_binary=True,
-                    verbose=verbose)
+            run_proc(['isct_antsApplyTransforms',
+                      '-d', '3',
+                      '-r', fname_ref,
+                      '-i', 'centerline.nii.gz',
+                      '-o', 'tmp.centerline_straight.nii.gz',
+                      '-t', 'tmp.curve2straight.nii.gz',
+                      '-n', 'NearestNeighbor'],
+                     is_sct_binary=True,
+                     verbose=verbose)
             file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
             nx, ny, nz, nt, px, py, pz, pt = file_centerline_straight.dim
             coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
@@ -585,30 +584,30 @@ class SpinalCordStraightener(object):
         # TODO: do not uncompress the warping field, it is too time consuming!
         logger.info('Generate output files...')
         if self.curved2straight:
-            sct.generate_output_file(os.path.join(path_tmp, "tmp.curve2straight.nii.gz"),
+            generate_output_file(os.path.join(path_tmp, "tmp.curve2straight.nii.gz"),
                                      os.path.join(self.path_output, "warp_curve2straight.nii.gz"), verbose)
         if self.straight2curved:
-            sct.generate_output_file(os.path.join(path_tmp, "tmp.straight2curve.nii.gz"),
+            generate_output_file(os.path.join(path_tmp, "tmp.straight2curve.nii.gz"),
                                      os.path.join(self.path_output, "warp_straight2curve.nii.gz"), verbose)
 
         # create ref_straight.nii.gz file that can be used by other SCT functions that need a straight reference space
         if self.curved2straight:
-            sct.copy(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
+            copy(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
                      os.path.join(self.path_output, "straight_ref.nii.gz"))
             # move straightened input file
             if fname_output == '':
-                fname_straight = sct.generate_output_file(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
+                fname_straight = generate_output_file(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
                                                           os.path.join(self.path_output,
                                                                        file_anat + "_straight" + ext_anat), verbose)
             else:
-                fname_straight = sct.generate_output_file(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
+                fname_straight = generate_output_file(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
                                                           os.path.join(self.path_output, fname_output),
                                                           verbose)  # straightened anatomic
 
         # Remove temporary files
         if remove_temp_files:
             logger.info('Remove temporary files...')
-            sct.rmtree(path_tmp)
+            rmtree(path_tmp)
 
         if self.accuracy_results:
             logger.info('Maximum x-y error: {} mm'.format(self.max_distance_straightening))
@@ -629,8 +628,8 @@ def _get_centerline(img, param_centerline, verbose):
     x_centerline, y_centerline, z_centerline = arr_ctl_phys[:, 0], arr_ctl_phys[:, 1], arr_ctl_phys[:, 2]
     # Adjust derivatives with pixel size
     x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der[0][:] * px, \
-                                                                 arr_ctl_der[1][:] * py, \
-                                                                 arr_ctl_der[2][:] * pz
+        arr_ctl_der[1][:] * py, \
+        arr_ctl_der[2][:] * pz
     # Construct centerline object
     return Centerline(x_centerline.tolist(), y_centerline.tolist(), z_centerline.tolist(),
                       x_centerline_deriv.tolist(), y_centerline_deriv.tolist(), z_centerline_deriv.tolist())

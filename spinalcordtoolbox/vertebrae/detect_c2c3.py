@@ -16,20 +16,18 @@
 # Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
 # About the license: see the file LICENSE.TXT
 
-from __future__ import absolute_import
-
 import os
-import sys
 import logging
-import sct_utils as sct
-from sct_flatten_sagittal import flatten_sagittal
+
 import numpy as np
 import nibabel as nib
 from scipy.ndimage.measurements import center_of_mass
-from skimage.measure import label as label_regions
 
-import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image, zeros_like
+from spinalcordtoolbox.utils import run_proc, TempFolder, __data_dir__
+
+# FIXME: don't import from scripts!
+from sct_flatten_sagittal import flatten_sagittal
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +35,7 @@ logger = logging.getLogger(__name__)
 def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     """
     Detect the posterior edge of C2-C3 disc.
+
     :param nii_im:
     :param nii_seg:
     :param contrast:
@@ -44,7 +43,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     :return:
     """
     # path to the pmj detector
-    path_model = os.path.join(sct.__data_dir__, 'c2c3_disc_models', '{}_model'.format(contrast))
+    path_model = os.path.join(__data_dir__, 'c2c3_disc_models', '{}_model'.format(contrast))
     # check if model exists
     if not os.path.isfile(path_model+'.yml'):
         raise FileNotFoundError(
@@ -59,7 +58,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
 
     # create temporary folder with intermediate results
     logger.info("Creating temporary folder...")
-    tmp_folder = sct.TempFolder()
+    tmp_folder = TempFolder()
     tmp_folder.chdir()
 
     # Extract mid-slice
@@ -69,7 +68,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     nb_sag_avg_half = int(nb_sag_avg / 2 / nii_im.dim[6])
     midSlice = np.mean(nii_im.data[:, :, mid_RL-nb_sag_avg_half:mid_RL+nb_sag_avg_half+1], 2) # average 7 slices
     midSlice_seg = nii_seg_flat.data[:, :, mid_RL]
-    nii_midSlice = msct_image.zeros_like(nii_im)
+    nii_midSlice = zeros_like(nii_im)
     nii_midSlice.data = midSlice
     nii_midSlice.save('data_midSlice.nii')
 
@@ -80,7 +79,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
                     (path_model, 'data_midSlice', 'data_midSlice_pred')
     # The command below will fail, but we don't care because it will output an image (prediction), which we
     # will use later on.
-    s, o = sct.run(cmd_detection, verbose=0, is_sct_binary=True, raise_exception=False)
+    s, o = run_proc(cmd_detection, verbose=0, is_sct_binary=True, raise_exception=False)
     pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
     if verbose >= 2:
         # copy the "prediction data before post-processing" in an Image object
@@ -142,6 +141,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
 def detect_c2c3_from_file(fname_im, fname_seg, contrast, fname_c2c3=None, verbose=1):
     """
     Detect the posterior edge of C2-C3 disc.
+
     :param fname_im:
     :param fname_seg:
     :param contrast:

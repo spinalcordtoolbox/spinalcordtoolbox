@@ -10,12 +10,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
+import os
+import sys
+import argparse
 
-import os, sys, argparse
-
-import sct_utils as sct
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
 
 
 class Param:
@@ -23,8 +22,6 @@ class Param:
         self.verbose = 1
 
 
-# PARSER
-# ==========================================================================================
 def get_parser():
     param = Param()
 
@@ -42,19 +39,19 @@ def get_parser():
         required=True,
         help='Input 4d file. Example: dmri.nii.gz',
         metavar=Metavar.file,
-        )
+    )
     mandatory.add_argument(
         "-bval",
         required=True,
         help='Bvals file. Example: bvals.txt',
         metavar=Metavar.file,
-        )
+    )
     mandatory.add_argument(
         "-bvec",
         required=True,
         help='Bvecs file. Example: bvecs.txt',
         metavar=Metavar.file,
-        )
+    )
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -114,11 +111,11 @@ def main(args=None):
     if arguments.m is not None:
         file_mask = arguments.m
     param.verbose = arguments.v
-    sct.init_sct(log_level=param.verbose, update=True)  # Update log level
+    init_sct(log_level=param.verbose, update=True)  # Update log level
 
     # compute DTI
     if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask):
-        sct.printv('ERROR in compute_dti()', 1, 'error')
+        printv('ERROR in compute_dti()', 1, 'error')
 
 
 # compute_dti
@@ -138,7 +135,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     from spinalcordtoolbox.image import Image
     nii = Image(fname_in)
     data = nii.data
-    sct.printv('data.shape (%d, %d, %d, %d)' % data.shape)
+    printv('data.shape (%d, %d, %d, %d)' % data.shape)
 
     # open bvecs/bvals
     from dipy.io import read_bvals_bvecs
@@ -148,13 +145,13 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
 
     # mask and crop the data. This is a quick way to avoid calculating Tensors on the background of the image.
     if not file_mask == '':
-        sct.printv('Open mask file...', param.verbose)
+        printv('Open mask file...', param.verbose)
         # open mask file
         nii_mask = Image(file_mask)
         mask = nii_mask.data
 
     # fit tensor model
-    sct.printv('Computing tensor using "' + method + '" method...', param.verbose)
+    printv('Computing tensor using "' + method + '" method...', param.verbose)
     import dipy.reconst.dti as dti
     if method == 'standard':
         tenmodel = dti.TensorModel(gtab)
@@ -172,7 +169,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
             tenfit = dti_restore.fit(data, mask)
 
     # Compute metrics
-    sct.printv('Computing metrics...', param.verbose)
+    printv('Computing metrics...', param.verbose)
     # FA
     nii.data = tenfit.fa
     nii.save(prefix + 'FA.nii.gz', dtype='float32')
@@ -201,7 +198,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
 # START PROGRAM
 # ==========================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     # initialize parameters
     param = Param()
     # call main function

@@ -5,8 +5,6 @@
 # Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
 # About the license: see the file LICENSE.TXT
 
-from __future__ import absolute_import, division
-
 import logging
 import numpy as np
 
@@ -16,11 +14,12 @@ logger = logging.getLogger(__name__)
 def divide_after_removing_zero(dividend, divisor, threshold, replacement=np.nan):
     """
     Mask zero, divide, look for numbers larger than 'threshold', and replace masked elements.
+
     :param dividend: np.array
     :param divisor: np.array
     :param threshold: float
     :param replacement: float: value to replace masked value with.
-    :return:
+    :return: result_full
     """
     ind_nonzero = np.where(divisor)
     n_zero = divisor.size - len(ind_nonzero[0])
@@ -39,6 +38,7 @@ def divide_after_removing_zero(dividend, divisor, threshold, replacement=np.nan)
 def compute_mtr(nii_mt1, nii_mt0, threshold_mtr=100):
     """
     Compute Magnetization Transfer Ratio in percentage.
+
     :param nii_mt1: Image object
     :param nii_mt0: Image object
     :param threshold_mtr: float: value above which number will be clipped
@@ -57,6 +57,7 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
                   nii_b1map=None):
     """
     Compute MTsat (in percent) and T1 map (in s) based on FLASH scans
+
     :param nii_mt: Image object for MTw
     :param nii_pd: Image object for PDw
     :param nii_t1: Image object for T1w
@@ -124,7 +125,6 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     nii_mtsat = nii_mt.copy()
     nii_mtsat.data = tr_mt * np.multiply((fa_mt_rad * np.true_divide(a, nii_mt.data) - 1),
                                          r1map, dtype=float) - (fa_mt_rad ** 2) / 2.
-    # sct.printv('nii_mtsat.data[95,89,14]' + str(nii_mtsat.data[95,89,14]), type='info')
     # remove nans and clip unrelistic values
     nii_mtsat.data = np.nan_to_num(nii_mtsat.data)
     ind_unrealistic = np.where(np.abs(nii_mtsat.data) > mtsat_threshold)

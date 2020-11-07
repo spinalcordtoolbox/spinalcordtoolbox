@@ -10,8 +10,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from __future__ import absolute_import
-
 from spinalcordtoolbox.image import Image
 
 
@@ -27,7 +25,7 @@ def init(param_test):
     ]
     default_args = [
         '-i t2/t2.nii.gz -o {} -xmin 1 -xmax -3 -ymin 2 -ymax 10'.format(param_test.fname_out[0]),
-        '-i t2/t2.nii.gz -o {} -m t2/t2_seg.nii.gz'.format(param_test.fname_out[1]),
+        '-i t2/t2.nii.gz -o {} -m t2/t2_seg-manual.nii.gz'.format(param_test.fname_out[1]),
         '-i t2/t2.nii.gz -o {} -ref mt/mt0.nii.gz'.format(param_test.fname_out[2]),
     ]
     # assign default params
@@ -47,7 +45,7 @@ def test_integrity(param_test):
     if index_args == 0:
         xyz = (57, 9, 52)
     elif index_args == 1:
-        xyz = (10, 55, 13)
+        xyz = (11, 55, 13)
     elif index_args == 2:
         xyz = (37, 55, 34)
 
