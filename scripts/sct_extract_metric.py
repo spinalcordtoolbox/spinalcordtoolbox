@@ -14,7 +14,6 @@
 #########################################################################################
 
 # TODO: fetch vert level in atlas by default-- would be nice to output in csv
-# TODO: use argparse
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where
 #  two different vertebral levels coexist (and not the whole slice)
 
@@ -44,6 +43,22 @@ class Param:
         self.file_info_label = 'info_label.txt'
         self.perslice = None
         self.perlevel = None
+
+
+class _ListLabelsAction(argparse.Action):
+    """This class makes it possible to call the flag '-list-labels' without the need to input the required '-i'."""
+    def __call__(self, parser, namespace, values, option_string=None):
+        file_label = os.path.join(namespace.f, param_default.file_info_label)
+        check_file_exist(file_label, 0)
+        with open(file_label, 'r') as default_info_label:
+            label_references = default_info_label.read()
+        txt_label = (
+            f"List of labels in {file_label}:\n"
+            f"--------------------------------------------------------------------------------------\n"
+            f"{label_references}"
+            f"--------------------------------------------------------------------------------------\n")
+        print(txt_label)
+        parser.exit()
 
 
 def get_parser():
@@ -104,17 +119,26 @@ def get_parser():
              "computed using all tracts, but only values of the selected tracts are reported."
     )
     optional.add_argument(
+        '-list-labels',
+        action=_ListLabelsAction,
+        nargs=0,
+        help="List available labels. These labels are defined in the file 'info_label.txt' located in the folder "
+             "specified by the flag '-f'."
+    )
+    optional.add_argument(
         '-method',
         choices=['ml', 'map', 'wa', 'bin', 'max'],
         default=param_default.method,
         help="R|Method to extract metrics.\n"
-             "  - ml: maximum likelihood (only use with well-defined regions and low noise)\n"
-             "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in "
-             "all voxels (the algorithm doesn't normalize the atlas).\n"
-             "  - map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters "
-             "(white matter, gray matter and CSF). Tract and noise variance are set with flag -p.\n"
-             "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in "
-             "all voxels (the algorithm doesn't normalize the atlas).\n"
+             "  - ml: maximum likelihood.\n"
+             "    This method is recommended for large labels and low noise. Also, this method should only be used"
+             " with the PAM50 white/gray matter atlas, or with any custom atlas as long as the sum across all labels"
+             " equals 1, in each voxel part of the atlas.\n"
+             "  - map: maximum a posteriori.\n"
+             "    Mean priors are estimated by maximum likelihood within three clusters"
+             " (white matter, gray matter and CSF). Tract and noise variance are set with flag -p."
+             " This method should only be used with the PAM50 white/gray matter atlas, or with any custom atlas"
+             " as long as the sum across all labels equals 1, in each voxel part of the atlas.\n"
              "  - wa: weighted average\n"
              "  - bin: binarize mask (threshold=0.5)\n"
              "  - max: for each z-slice of the input data, extract the max value for each slice of the input data."
