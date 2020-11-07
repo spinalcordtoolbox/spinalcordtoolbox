@@ -1,5 +1,62 @@
 # Changelog
 
+## 5.0.0 (2020-11-07)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.3...5.0.0)
+
+**FEATURE**
+
+ - **sct_get_centerline,sct_qc:** Implement QC sct_get_centerline.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2784)
+ - **sct_run_batch:** Disabling progress bars.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2763)
+ - **sct_label_utils,sct_qc:** Implemented QC report for sct_label_utils.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2734)
+
+**BUG**
+
+ - Logging and printing fixes.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3011)
+ - Restore subpackage module imports to fix test errors.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3010)
+ - Fix incorrect checking of input arguments.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2933)
+ - **sct_register_to_template:** sct_register_to_template: Fix '%' in argparse iCloud help links.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2928)
+
+**INSTALLATION**
+
+ - **sct_utils:** Explicit listing of console scripts.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2759)
+ - Retrieve data bundles from their new location.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2733)
+
+**DOCUMENTATION**
+
+ - Update sct_extract_metric help to fix RTD error + fix outdated usage.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3000)
+ - Add "Segmentation" tutorial to RTD that mirrors SCT course contents.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2991)
+ - fix doc build warnings + associated bug.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2955)
+ - Update Win10 WSL installation information (Move from Wiki to RTD, update recommendations for FSLEyes/WSL1).  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2952)
+ - Update LICENSE to LGPLv3.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2899)
+ - Automatically show defaults in argparse help descriptions.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2886)
+
+**ENHANCEMENT**
+
+ - **sct_extract_metric:** Introduce flag to list labels.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3012)
+ - **sct_register_to_template:** Fixes inconsistencies between PAM50 levels and cord.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2998)
+ - Use SystemExit not sys.exit & only on error paths..  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2983)
+ - fsleyes: allow user to specify output folder.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2941)
+ - **sct_image:** sct_image: -copy-header should use -o as output file.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2940)
+ - **sct_concat_transfo:** Deprecate sct_concat_transfo + refactor callers.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2914)
+ - **sct_maths:** sct_maths: Convert usage of convert_list_str to use list_type.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2901)
+ - **sct_run_batch:** Prevent crash if folder already exists.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2867)
+ - **msct_parser:** Convert 11-20 out of 20 remaining scripts from msct_parser to argparse.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2842)
+ - **sct_run_batch:** Fix thread reporting, early termination, and indentation error in sct_run_batch.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2827)
+ - **msct_parser:** Convert 1-10 out of 20 remaining scripts from msct_parser to argparse.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2819)
+ - **sct_apply_transfo:** Clarified cropping strategy for sct_apply_transfo; remove warning.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2811)
+ - **sct_run_batch:** Various improvements.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2795)
+ - **sct_run_batch:** Introduced variable PATH_DATA_PROCESSED.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2787)
+ - **sct_deepseg:** Accommodate a cascade of deep learning models.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2748)
+ - Improvements for the FSLeyes plugin.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2741)
+ - **sct_run_batch:** Various improvements: create log, send email, config file, include/exclude list of subjects.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2732)
+
+**REFACTORING**
+
+ - **msct_parser:** Remove msct_parser and clean up remaning usage.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2936)
+ - Convert argparse '0'/'1' options to be typed as ints rather than strings.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2900)
+
+
+
 ## 4.3 (2020-06-11)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.2.2...4.3)
 
