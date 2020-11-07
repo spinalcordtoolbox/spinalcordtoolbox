@@ -47,18 +47,6 @@ class Param:
 
 class _ListLabelsAction(argparse.Action):
     """This class makes it possible to call the flag '-list-labels' without the need to input the required '-i'."""
-    def __init__(self,
-                 option_strings,
-                 dest=argparse.SUPPRESS,
-                 default=argparse.SUPPRESS,
-                 help=None):
-        super(_ListLabelsAction, self).__init__(
-            option_strings=option_strings,
-            dest=dest,
-            default=default,
-            nargs=0,
-            help=help)
-
     def __call__(self, parser, namespace, values, option_string=None):
         file_label = os.path.join(namespace.f, param_default.file_info_label)
         check_file_exist(file_label, 0)
@@ -133,6 +121,7 @@ def get_parser():
     optional.add_argument(
         '-list-labels',
         action=_ListLabelsAction,
+        nargs=0,
         help="List available labels. These labels are defined in the file 'info_label.txt' located in the folder "
              "specified by the flag '-f'."
     )
