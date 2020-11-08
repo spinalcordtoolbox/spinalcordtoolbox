@@ -100,7 +100,7 @@ matrix:
       if: branch = release or type = cron
       dist: xenial
     - name: "OSX 10.14 (Mojave)"
-      # runs on all branches
+      if: branch = release or type = cron
       os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
       osx_image: xcode11.2
       addons:
