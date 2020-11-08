@@ -99,9 +99,17 @@ matrix:
       name: "Ubuntu 16.04 (Xenial)"
       if: branch = release or type = cron
       dist: xenial
+    - name: "OSX 10.15 (Catalina)"
+      # runs on all branches
+      os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
+      osx_image: xcode12.2
+#      addons:
+#        homebrew:
+#          packages:
+#            - libomp  # Needed for onnxruntime Python package, see issue #2930
     - name: "OSX 10.14 (Mojave)"
       if: branch = release or type = cron
-      os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
+      os: osx
       osx_image: xcode11.2
       addons:
         homebrew:
