@@ -98,7 +98,7 @@ def get_parser():
         help="R|Create labels on a cord segmentation (or centerline) image defined by '-i'. Each label should be "
              "specified using the form 'v1,v2' where 'v1' is value of the slice index along the inferior-superior "
              "axis, and 'v2' is the value of the label. Separate each label with ':'. \n"
-             "Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from the most inferior slice)Z.\n"
+             "Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from the most inferior slice).\n"
              "You can also choose a slice value of '-1' to automatically select the mid-point in the "
              "inferior-superior direction. For example, if you know that the C2-C3 disc is centered in the I-S "
              "direction, then you can enter '-1,3' for that label instead."
