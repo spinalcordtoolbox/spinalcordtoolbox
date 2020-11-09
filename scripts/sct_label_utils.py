@@ -29,6 +29,7 @@ from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, printv
+from spinalcordtoolbox.utils.shell import display_viewer_syntax
 
 logger = logging.getLogger(__name__)
 
@@ -296,7 +297,9 @@ def main(args=None):
         else:
             out = launch_sagittal_viewer(img, arguments.create_viewer, msg)
 
+    logger.info("Generating output files...")
     out.save(path=output_fname, dtype=dtype)
+    display_viewer_syntax([input_filename, output_fname])
 
     if arguments.qc is not None:
         generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=args,
