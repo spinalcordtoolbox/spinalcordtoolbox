@@ -99,9 +99,9 @@ def get_parser():
     return parser
 
 
-def main():
+def main(argv):
     parser = get_parser()
-    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    args = parser.parse_args(argv if argv else ['--help'])
 
     # Deal with task
     if args.list_tasks:
@@ -149,4 +149,4 @@ def main():
 
 if __name__ == '__main__':
     init_sct()
-    main()
+    main(sys.argv[1:])
