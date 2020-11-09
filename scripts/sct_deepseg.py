@@ -15,9 +15,13 @@ import argparse
 import os
 import sys
 
+import ivadomed as imed
+import nibabel as nib
+
+import spinalcordtoolbox as sct
+from spinalcordtoolbox import image
 import spinalcordtoolbox.deepseg as deepseg
 import spinalcordtoolbox.deepseg.models
-import spinalcordtoolbox.deepseg.core
 
 from spinalcordtoolbox.utils.shell import SmartFormatter, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv
@@ -64,24 +68,24 @@ def get_parser():
              "Default value is model-specific and was set during optimization "
              "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
         metavar=Metavar.float,
-        default=deepseg.core.DEFAULTS['thr'])
+        default=0.9)
     misc.add_argument(
         "-largest",
         type=int,
         help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
              "To keep all objects, set to 0",
-        default=deepseg.core.DEFAULTS['largest'])
+        default=0)
     misc.add_argument(
         "-fill-holes",
         type=int,
         help="Fill small holes in the segmentation.",
         choices=(0, 1),
-        default=deepseg.core.DEFAULTS['fill_holes'])
+        default=0)
     misc.add_argument(
         "-remove-small",
         type=str,
         help="Minimal object size to keep with unit (mm3 or vox). Example: 1mm3, 5vox.",
-        default=deepseg.core.DEFAULTS['remove_small'])
+        default='0vox')
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
@@ -140,7 +144,21 @@ def main(argv):
                 parser.error("The input model is invalid: {}".format(path_model))
 
         # Call segment_nifti
-        fname_seg = deepseg.core.segment_nifti(args.i, path_model, fname_prior, vars(args))
+        options = {**vars(args), "fname_prior": fname_prior}
+        nii_seg = imed.utils.segment_volume(path_model, args.i, options=options)
+
+        # Save output seg
+        if 'o' in options and options['o'] is not None:
+            fname_seg = options['o']
+        else:
+            fname_seg = ''.join(
+                [sct.image.splitext(args.i)[0], '_seg.nii.gz'])
+        # If output folder does not exist, create it
+        path_out = os.path.dirname(fname_seg)
+        if not (path_out == '' or os.path.exists(path_out)):
+            os.makedirs(path_out)
+        nib.save(nii_seg, fname_seg)
+
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
 
