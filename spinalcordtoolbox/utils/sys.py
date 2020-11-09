@@ -85,7 +85,7 @@ def init_sct(log_level=1, update=False):
         if '.py' in next(iter(sys.argv), None):
             script = os.path.basename(sys.argv[0]).strip(".py")
             arguments = ' '.join(sys.argv[1:])
-            logger.info(f"Command run: {script} {arguments}\n"
+            logger.info(f"{script} {arguments}\n"
                         f"--\n")
 
 
