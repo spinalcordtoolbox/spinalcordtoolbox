@@ -354,3 +354,6 @@ Applications
 -  `Henmar et al. What are the gray and white matter volumes of the
    human spinal cord? J Neurophysiol, 2020
    <https://pubmed.ncbi.nlm.nih.gov/33085549/>`__
+-  `Burke et al. Injury Volume Extracted from MRI Predicts Neurologic
+   Outcome in Acute Spinal Cord Injury: A Prospective TRACK-SCI Pilot
+   Study. J Clin Neurosci, 2020 <https://>`__
