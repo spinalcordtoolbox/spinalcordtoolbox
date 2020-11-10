@@ -19,7 +19,6 @@
 import os
 import sys
 import argparse
-import logging
 from typing import Sequence
 
 import numpy as np
@@ -30,8 +29,6 @@ from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, printv
 from spinalcordtoolbox.utils.shell import display_viewer_syntax
-
-logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -297,7 +294,7 @@ def main(args=None):
         else:
             out = launch_sagittal_viewer(img, arguments.create_viewer, msg)
 
-    logger.info("Generating output files...")
+    printv("Generating output files...")
     out.save(path=output_fname, dtype=dtype)
     display_viewer_syntax([input_filename, output_fname])
 
