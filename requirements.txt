@@ -21,7 +21,6 @@ scipy
 scikit-image
 scikit-learn
 tensorflow==1.5.0
-tensorboard==2.3.0
 # PyTorch's Linux/Windows distribution is very large due to its GPU support,
 # but we only need that for training models. For users, use the CPU-only version
 # (only available directly from the PyTorch project).
@@ -37,3 +36,4 @@ transforms3d
 urllib3[secure]
 pytest_console_scripts
 pytest-xdist
+tensorboard==2.3.0
