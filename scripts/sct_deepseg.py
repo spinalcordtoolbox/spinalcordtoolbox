@@ -145,7 +145,7 @@ def main(argv):
 
         # Call segment_nifti
         options = {**vars(args), "fname_prior": fname_prior}
-        nii_seg = imed.utils.segment_volume(path_model, args.i, options=options)
+        nii_seg = imed.inference.segment_volume(path_model, args.i, options=options)
 
         # Save output seg
         if 'o' in options and options['o'] is not None:
