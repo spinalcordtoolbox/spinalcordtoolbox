@@ -151,8 +151,8 @@ def main(argv):
         if 'o' in options and options['o'] is not None:
             fname_seg = options['o']
         else:
-            fname_seg = ''.join(
-                [sct.image.splitext(args.i)[0], '_seg.nii.gz'])
+            fname_seg = ''.join([sct.image.splitext(args.i)[0], '_seg.nii.gz'])
+
         # If output folder does not exist, create it
         path_out = os.path.dirname(fname_seg)
         if not (path_out == '' or os.path.exists(path_out)):
