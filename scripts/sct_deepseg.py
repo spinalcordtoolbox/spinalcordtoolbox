@@ -15,7 +15,7 @@ import argparse
 import os
 import sys
 
-import ivadomed as imed
+from ivadomed import inference as imed_inference
 import nibabel as nib
 
 import spinalcordtoolbox as sct
@@ -145,7 +145,7 @@ def main(argv):
 
         # Call segment_nifti
         options = {**vars(args), "fname_prior": fname_prior}
-        nii_lst, target_lst = imed.utils.segment_volume(path_model, args.i, options=options)
+        nii_lst, target_lst = imed_inference.segment_volume(path_model, args.i, options=options)
 
         # Save output seg
         for nii_seg, target in zip(nii_lst, target_lst):
