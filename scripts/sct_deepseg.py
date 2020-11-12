@@ -145,19 +145,20 @@ def main(argv):
 
         # Call segment_nifti
         options = {**vars(args), "fname_prior": fname_prior}
-        nii_seg = imed.utils.segment_volume(path_model, args.i, options=options)
+        nii_lst, target_lst = imed.utils.segment_volume(path_model, args.i, options=options)
 
         # Save output seg
-        if 'o' in options and options['o'] is not None:
-            fname_seg = options['o']
-        else:
-            fname_seg = ''.join([sct.image.splitext(args.i)[0], '_seg.nii.gz'])
+        for nii_seg, target in zip(nii_lst, target_lst):
+            if 'o' in options and options['o'] is not None:
+                fname_seg = options['o']
+            else:
+                fname_seg = ''.join([sct.image.splitext(args.i)[0], target + '.nii.gz'])
 
-        # If output folder does not exist, create it
-        path_out = os.path.dirname(fname_seg)
-        if not (path_out == '' or os.path.exists(path_out)):
-            os.makedirs(path_out)
-        nib.save(nii_seg, fname_seg)
+            # If output folder does not exist, create it
+            path_out = os.path.dirname(fname_seg)
+            if not (path_out == '' or os.path.exists(path_out)):
+                os.makedirs(path_out)
+            nib.save(nii_seg, fname_seg)
 
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
