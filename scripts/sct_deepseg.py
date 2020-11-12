@@ -70,6 +70,11 @@ def get_parser():
         metavar=Metavar.float,
         default=0.9)
     misc.add_argument(
+        "-r",
+        type=int,
+        help="Whether to remove temporary files. 0 = no, 1 = yes (default: 1)",
+        default=1)
+    misc.add_argument(
         "-largest",
         type=int,
         help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
@@ -147,10 +152,14 @@ def main(argv):
         options = {**vars(args), "fname_prior": fname_prior}
         nii_lst, target_lst = imed_inference.segment_volume(path_model, args.i, options=options)
 
+        # Delete intermediate outputs
+        if fname_prior and os.path.isfile(fname_prior) and args.r:
+            os.remove(fname_prior)
+
         # Save output seg
         for nii_seg, target in zip(nii_lst, target_lst):
             if 'o' in options and options['o'] is not None:
-                fname_seg = options['o']
+                fname_seg = options['o'].replace(".nii.gz", target + ".nii.gz")
             else:
                 fname_seg = ''.join([sct.image.splitext(args.i)[0], target + '.nii.gz'])
 
@@ -158,6 +167,7 @@ def main(argv):
             path_out = os.path.dirname(fname_seg)
             if not (path_out == '' or os.path.exists(path_out)):
                 os.makedirs(path_out)
+
             nib.save(nii_seg, fname_seg)
 
         # Use the result of the current model as additional input of the next model
