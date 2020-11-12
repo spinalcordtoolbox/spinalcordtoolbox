@@ -36,4 +36,4 @@ transforms3d
 urllib3[secure]
 pytest_console_scripts
 pytest-xdist
-tensorboard==2.3.0
+tensorboard==1.14.0
