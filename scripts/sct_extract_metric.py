@@ -14,7 +14,6 @@
 #########################################################################################
 
 # TODO: fetch vert level in atlas by default-- would be nice to output in csv
-# TODO: use argparse
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where
 #  two different vertebral levels coexist (and not the whole slice)
 
@@ -46,40 +45,45 @@ class Param:
         self.perlevel = None
 
 
+class _ListLabelsAction(argparse.Action):
+    """This class makes it possible to call the flag '-list-labels' without the need to input the required '-i'."""
+    def __call__(self, parser, namespace, values, option_string=None):
+        file_label = os.path.join(namespace.f, param_default.file_info_label)
+        check_file_exist(file_label, 0)
+        with open(file_label, 'r') as default_info_label:
+            label_references = default_info_label.read()
+        txt_label = (
+            f"List of labels in {file_label}:\n"
+            f"--------------------------------------------------------------------------------------\n"
+            f"{label_references}"
+            f"--------------------------------------------------------------------------------------\n")
+        print(txt_label)
+        parser.exit()
+
+
 def get_parser():
 
     param_default = Param()
 
-    # Read .txt files referencing the labels (for extended usage description)
-    file_label = os.path.join(param_default.path_label,
-                              param_default.file_info_label)
-    check_file_exist(file_label, 0)
-    default_info_label = open(file_label, 'r')
-    label_references = default_info_label.read()
-    default_info_label.close()
-
-    description = (f"This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or "
-                   f"a folder generated with 'sct_warp_template' and containing multiple label files and a label "
-                   f"description file (info_label.txt). The labels should be in the same space coordinates as the "
-                   f"input image.\n"
-                   f"\n"
-                   f"To list white matter atlas labels: {os.path.basename(__file__)} -f "
-                   f"{os.path.join(__data_dir__, 'atlas')}\n"
-                   f"\n"
-                   f"To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method: "
-                   f"{os.path.basename(__file__)} -i dti_FA.nii.gz -f label/atlas -l 0,2,3 -v 2:7 -m bin\n")
-
-    if label_references != '':
-        description += (f"\nTo compute average MTR in a region defined by a single label file (could be binary or 0-1 "
-                        f"weighted mask) between slices 1 and 4: {os.path.basename(__file__)} -i mtr.nii.gz -f "
-                        f"my_mask.nii.gz -z 1:4 -m wa\n"
-                        f"List of labels in {file_label}:\n"
-                        f"--------------------------------------------------------------------------------------\n"
-                        f"{label_references}\n"
-                        f"--------------------------------------------------------------------------------------\n")
-
     parser = argparse.ArgumentParser(
-        description=description,
+        description=(
+            f"This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or "
+            f"a folder generated with 'sct_warp_template' containing multiple label files and a label "
+            f"description file (info_label.txt). The labels should be in the same space coordinates as the "
+            f"input image.\n"
+            f"\n"
+            f"The labels used by default are taken from the PAM50 template. To learn about the available PAM50 "
+            f"white/grey matter atlas labels and their corresponding ID values, please refer to: "
+            f"https://spinalcordtoolbox.com/en/latest/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas\n"
+            f"\n"
+            f"To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:\n"
+            f"sct_extract_metric -i dti_FA.nii.gz -l 0,2,3 -vert 2:7 -method bin\n"
+            f"\n"
+            f"To compute average MTR in a region defined by a single label file (could be binary or 0-1 "
+            f"weighted mask) between slices 1 and 4:\n"
+            f"sct_extract_metric -i mtr.nii.gz -f "
+            f"my_mask.nii.gz -z 1:4 -method wa"
+        ),
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py")
@@ -115,17 +119,26 @@ def get_parser():
              "computed using all tracts, but only values of the selected tracts are reported."
     )
     optional.add_argument(
+        '-list-labels',
+        action=_ListLabelsAction,
+        nargs=0,
+        help="List available labels. These labels are defined in the file 'info_label.txt' located in the folder "
+             "specified by the flag '-f'."
+    )
+    optional.add_argument(
         '-method',
         choices=['ml', 'map', 'wa', 'bin', 'max'],
         default=param_default.method,
         help="R|Method to extract metrics.\n"
-             "  - ml: maximum likelihood (only use with well-defined regions and low noise)\n"
-             "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in "
-             "all voxels (the algorithm doesn't normalize the atlas).\n"
-             "  - map: maximum a posteriori. Mean priors are estimated by maximum likelihood within three clusters "
-             "(white matter, gray matter and CSF). Tract and noise variance are set with flag -p.\n"
-             "    N.B. ONLY USE THIS METHOD WITH THE WHITE MATTER ATLAS! The sum of all tracts should be 1 in "
-             "all voxels (the algorithm doesn't normalize the atlas).\n"
+             "  - ml: maximum likelihood.\n"
+             "    This method is recommended for large labels and low noise. Also, this method should only be used"
+             " with the PAM50 white/gray matter atlas, or with any custom atlas as long as the sum across all labels"
+             " equals 1, in each voxel part of the atlas.\n"
+             "  - map: maximum a posteriori.\n"
+             "    Mean priors are estimated by maximum likelihood within three clusters"
+             " (white matter, gray matter and CSF). Tract and noise variance are set with flag -p."
+             " This method should only be used with the PAM50 white/gray matter atlas, or with any custom atlas"
+             " as long as the sum across all labels equals 1, in each voxel part of the atlas.\n"
              "  - wa: weighted average\n"
              "  - bin: binarize mask (threshold=0.5)\n"
              "  - max: for each z-slice of the input data, extract the max value for each slice of the input data."

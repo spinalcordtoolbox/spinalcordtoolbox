@@ -15,9 +15,14 @@ import argparse
 import os
 import sys
 
+import ivadomed as imed
+import nibabel as nib
+
+import spinalcordtoolbox as sct
+from spinalcordtoolbox import image
 import spinalcordtoolbox.deepseg as deepseg
 import spinalcordtoolbox.deepseg.models
-import spinalcordtoolbox.deepseg.core
+
 from spinalcordtoolbox.utils.shell import SmartFormatter, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv
 
@@ -55,25 +60,6 @@ def get_parser():
         help="Install models that are required for specified task.",
         choices=list(deepseg.models.TASKS.keys()))
 
-    seg = parser.add_argument_group('\nMODELS')
-    seg.add_argument(
-        "-model",
-        # TODO: add instructions at: https://github.com/neuropoly/ivado-medical-imaging
-        help="Model to use. It could either be an official SCT model (in that case, simply enter the name of the "
-             "model, example: -model t2_sc), or a path to the directory that contains a model, example: "
-             "-model my_models/model. To list official models, run: sct_deepseg -list-models."
-             "To build your own model, follow instructions at: https://github.com/neuropoly/ivado-medical-imaging",
-        nargs='+',
-        metavar=Metavar.str)
-    seg.add_argument(
-        "-list-models",
-        action='store_true',
-        help="Display a list of available models.")
-    seg.add_argument(
-        "-install-model",
-        help="Install specified model.",
-        choices=list(deepseg.models.MODELS.keys()))
-
     misc = parser.add_argument_group('\nPARAMETERS')
     misc.add_argument(
         "-thr",
@@ -82,24 +68,24 @@ def get_parser():
              "Default value is model-specific and was set during optimization "
              "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
         metavar=Metavar.float,
-        default=deepseg.core.DEFAULTS['thr'])
+        default=0.9)
     misc.add_argument(
         "-largest",
         type=int,
         help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
              "To keep all objects, set to 0",
-        default=deepseg.core.DEFAULTS['largest'])
+        default=0)
     misc.add_argument(
         "-fill-holes",
         type=int,
         help="Fill small holes in the segmentation.",
         choices=(0, 1),
-        default=deepseg.core.DEFAULTS['fill_holes'])
+        default=0)
     misc.add_argument(
         "-remove-small",
         type=str,
         help="Minimal object size to keep with unit (mm3 or vox). Example: 1mm3, 5vox.",
-        default=deepseg.core.DEFAULTS['remove_small'])
+        default='0vox')
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
@@ -117,21 +103,13 @@ def get_parser():
     return parser
 
 
-def main():
+def main(argv):
     parser = get_parser()
-    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-
-    # Deal with model
-    if args.list_models:
-        deepseg.models.display_list_models()
+    args = parser.parse_args(argv if argv else ['--help'])
 
     # Deal with task
     if args.list_tasks:
         deepseg.models.display_list_tasks()
-
-    if args.install_model is not None:
-        deepseg.models.install_model(args.install_model)
-        exit(0)
 
     if args.install_task is not None:
         for name_model in deepseg.models.TASKS[args.install_task]['models']:
@@ -143,15 +121,11 @@ def main():
         parser.error("This file does not exist: {}".format(args.i))
 
     # Check if at least a model or task has been specified
-    if args.model is None and args.task is None:
-        parser.error("You need to specify a model or a task.")
+    if args.task is None:
+        parser.error("You need to specify a task.")
 
     # Get pipeline model names
-    if args.task is not None:
-        name_models = deepseg.models.TASKS[args.task]['models']
-
-    if args.model is not None:
-        name_models = args.model
+    name_models = deepseg.models.TASKS[args.task]['models']
 
     # Run pipeline by iterating through the models
     fname_prior = None
@@ -170,7 +144,21 @@ def main():
                 parser.error("The input model is invalid: {}".format(path_model))
 
         # Call segment_nifti
-        fname_seg = deepseg.core.segment_nifti(args.i, path_model, fname_prior, vars(args))
+        options = {**vars(args), "fname_prior": fname_prior}
+        nii_seg = imed.utils.segment_volume(path_model, args.i, options=options)
+
+        # Save output seg
+        if 'o' in options and options['o'] is not None:
+            fname_seg = options['o']
+        else:
+            fname_seg = ''.join([sct.image.splitext(args.i)[0], '_seg.nii.gz'])
+
+        # If output folder does not exist, create it
+        path_out = os.path.dirname(fname_seg)
+        if not (path_out == '' or os.path.exists(path_out)):
+            os.makedirs(path_out)
+        nib.save(nii_seg, fname_seg)
+
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
 
@@ -179,4 +167,4 @@ def main():
 
 if __name__ == '__main__':
     init_sct()
-    main()
+    main(sys.argv[1:])
