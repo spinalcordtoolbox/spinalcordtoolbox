@@ -45,7 +45,7 @@ def label_vert(fname_seg, fname_label, verbose=1):
     list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
     # label segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
-    label_disc(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
 
 def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../',
@@ -248,7 +248,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
     # Label segmentation
     label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
-    label_disc(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
 
 def center_of_mass(x):
@@ -500,7 +500,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled'))
 
 
-def label_disc(fname_seg, list_disc_z, list_disc_value, verbose=1):
+def label_discs(fname_seg, list_disc_z, list_disc_value, verbose=1):
     """
     Create file with single voxel label in the middle of the spinal cord for each disc.
 
@@ -516,9 +516,9 @@ def label_disc(fname_seg, list_disc_z, list_disc_value, verbose=1):
     disc_data = np.zeros_like(seg.data)
 
     for i in range(len(list_disc_z)):
-        # detected point is just above the disc
-        slices = seg.data[:, :, list_disc_z[i]-1]
+        slices = seg.data[:, :, list_disc_z[i]]
         cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
+        # Disc value are offset by one due to legacy code
         disc_data[cx, cy, list_disc_z[i]-1] = list_disc_value[i] + 1
 
     seg.data = disc_data
