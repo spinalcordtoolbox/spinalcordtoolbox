@@ -37,6 +37,7 @@ def get_parser():
     input_output = parser.add_argument_group("\nINPUT/OUTPUT")
     input_output.add_argument(
         "-i",
+        nargs="+",
         help="Image to segment.",
         metavar=Metavar.file)
     input_output.add_argument(
@@ -122,8 +123,9 @@ def main(argv):
         exit(0)
 
     # Deal with input/output
-    if not os.path.isfile(args.i):
-        parser.error("This file does not exist: {}".format(args.i))
+    for file in args.i:
+        if not os.path.isfile(file):
+            parser.error("This file does not exist: {}".format(file))
 
     # Check if at least a model or task has been specified
     if args.task is None:
