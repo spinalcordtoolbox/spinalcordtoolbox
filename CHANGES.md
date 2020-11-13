@@ -1,5 +1,32 @@
 # Changelog
 
+## 5.0.1 (2020-11-12)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/5.0.0...5.0.1)
+
+**CI**
+
+ - Travis: Add 10.15 (Catalina), update 10.14 (Mojave) image.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3018)
+
+**BUG**
+
+ - **sct_process_segmentation:** Add missing type information to argument in sct_process_segmentation.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3039)
+ - Pin onnxruntime==1.4.0 to avoid libomp issue on macOS.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3037)
+
+**DOCUMENTATION**
+
+ - **sct_label_utils:** sct_label_utils.py: Clarify -create-seg usage description.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3023)
+ - RTD: Re-enable showing version text underneath logo.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3021)
+
+**ENHANCEMENT**
+
+ - **sct_run_batch:** sct_run_batch: handle the case of unexecutable script.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3031)
+ - **sct_label_utils:** sct_label_utils.py: Add message for generated files.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3026)
+ - Display command when scripts are called from the command-line.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3020)
+
+**REFACTORING**
+
+ - **sct_deepseg:** Refactor deepseg/core.py into sct_deepseg and update relevant test.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3022)# Changelog
+
 ## 5.0.0 (2020-11-07)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.3...5.0.0)
 
