@@ -84,6 +84,8 @@ def get_parser():
     )
     optional.add_argument(
         '-append',
+        metavar=Metavar.int,
+        type=int,
         choices=[0, 1],
         default=0,
         help="Append results as a new line in the output csv file instead of overwriting it."
