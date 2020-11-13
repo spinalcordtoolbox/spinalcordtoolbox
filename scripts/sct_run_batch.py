@@ -38,6 +38,7 @@ from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
 from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__
 from spinalcordtoolbox.utils.fs import Tee
 
+from stat import S_IEXEC
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -351,14 +352,20 @@ def main(argv):
     print("git origin: {}".format(__get_git_origin(path_to_git_folder=os.path.dirname(script))))
     print("Copying script to output folder...")
     try:
-        shutil.copy(args.script, args.path_output)
-        print("{} -> {}".format(args.script, os.path.abspath(args.path_output)))
+        # Copy the script and record the new location
+        script_copy = os.path.abspath(shutil.copy(script, args.path_output))
+        print("{} -> {}".format(script, script_copy))
+        script = script_copy
     except shutil.SameFileError:
         print("Input and output folder are the same. Skipping copy.")
         pass
     except IsADirectoryError:
         print("Input folder is a directory (not a file). Skipping copy.")
         pass
+
+    print("Setting execute permissions for script file {} ...".format(args.script))
+    script_stat = os.stat(script)
+    os.chmod(script, script_stat.st_mode | S_IEXEC)
 
     # Display data version info
     print("\nDATA")
