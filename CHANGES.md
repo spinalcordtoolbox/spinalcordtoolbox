@@ -25,7 +25,7 @@
 
 **REFACTORING**
 
- - **sct_deepseg:** Refactor deepseg/core.py into sct_deepseg and update relevant test.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3022)# Changelog
+ - **sct_deepseg:** Refactor deepseg/core.py into sct_deepseg and update relevant test.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3022)
 
 ## 5.0.0 (2020-11-07)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/4.3...5.0.0)
