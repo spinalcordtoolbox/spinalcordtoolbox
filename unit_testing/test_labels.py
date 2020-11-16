@@ -144,6 +144,17 @@ def test_compute_mean_squared_error():
     assert mse == 1.1547005383792515
 
 
+def test_compute_mean_squared_error_warning(caplog):
+    src = fake_3dimage_sct()
+    ref = src.copy()
+
+    src.data[0, 0, 0] = 95
+
+    sct_labels.compute_mean_squared_error(src, ref)
+    assert 'False positive value for label 95.0' in caplog.text
+    assert 'False negative value for label 111.0' in caplog.text
+
+
 @pytest.mark.skip(reason="Too long to run on large image!")
 @pytest.mark.parametrize("test_image", test_images)
 def test_remove_missing_labels(test_image):
