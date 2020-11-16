@@ -139,7 +139,6 @@ def test_compute_mean_squared_error():
     for x, y, z, _ in src.getNonZeroCoordinates():
         if z < 5:
             ref.data[x, y, z+2] = src.data[x, y, z]
-
     mse = sct_labels.compute_mean_squared_error(src, ref)
     assert mse == 1.1547005383792515
 
@@ -153,6 +152,13 @@ def test_compute_mean_squared_error_warning(caplog):
     sct_labels.compute_mean_squared_error(src, ref)
     assert 'False positive value for label 95.0' in caplog.text
     assert 'False negative value for label 111.0' in caplog.text
+    
+
+def test_compute_mean_squared_error_no_warning(caplog):
+    src = fake_3dimage_sct()
+    ref = src.copy()
+    sct_labels.compute_mean_squared_error(src, ref)
+    assert 'WARNING' not in caplog.text
 
 
 @pytest.mark.skip(reason="Too long to run on large image!")
