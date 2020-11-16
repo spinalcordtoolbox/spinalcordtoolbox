@@ -6,6 +6,7 @@
 - [ ] I've added relevant tests for my contribution
 - [ ] I've updated the documentation and/or added correct docstrings
 - [ ] I've assigned a reviewer
+- [ ] I've consulted [SCT's internal developer documentation](https://github.com/neuropoly/spinalcordtoolbox/wiki) to ensure my contribution is in line with any relevant design decisions
 
 <!--- For the title, please observe the following rules:
 	- Provide a concise and self-descriptive title
