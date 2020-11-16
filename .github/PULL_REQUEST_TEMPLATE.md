@@ -1,18 +1,23 @@
 ## Checklist
 
+#### GitHub
+
 - [ ] I've given this PR a concise, self-descriptive, and meaningful title
 - [ ] I've linked relevant issues in the PR body
 - [ ] I've applied the relevant labels to this PR
-- [ ] I've added relevant tests for my contribution
-- [ ] I've updated the documentation and/or added correct docstrings
 - [ ] I've assigned a reviewer
-- [ ] I've consulted [SCT's internal developer documentation](https://github.com/neuropoly/spinalcordtoolbox/wiki) to ensure my contribution is in line with any relevant design decisions
 
 <!--- For the title, please observe the following rules:
 	- Provide a concise and self-descriptive title
 	- Do not include the applicable issue number in the title, do it in the PR body
 	- If the PR is not ready for review, convert it to a draft.
 -->
+
+#### PR contents
+
+- [ ] I've consulted [SCT's internal developer documentation](https://github.com/neuropoly/spinalcordtoolbox/wiki) to ensure my contribution is in line with any relevant design decisions
+- [ ] I've added relevant tests for my contribution
+- [ ] I've updated the documentation and/or added correct docstrings
 
 ## Description
 <!-- describe what the PR is about. Explain the approach and possible drawbacks.It's ok to repeat some text from the related issue. -->
