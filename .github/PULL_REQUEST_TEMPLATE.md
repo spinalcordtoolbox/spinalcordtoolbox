@@ -19,7 +19,7 @@
 #### PR contents
 
 - [ ] I've consulted [SCT's internal developer documentation](https://github.com/neuropoly/spinalcordtoolbox/wiki) to ensure my contribution is in line with any relevant design decisions
-- [ ] I've added relevant tests for my contribution
+- [ ] I've added [relevant tests](https://github.com/neuropoly/spinalcordtoolbox/wiki/Programming%3A-Tests) for my contribution
 - [ ] I've updated the documentation and/or added correct docstrings
 
 ## Description
