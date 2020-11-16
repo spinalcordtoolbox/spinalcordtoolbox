@@ -32,9 +32,10 @@ logger = logging.getLogger(__name__)
 
 
 class Paramreg(object):
-    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
-                 gradStep='0.5', deformation='1x1x0', init='', filter_size=5, poly='5', slicewise='0', laplacian='0',
-                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
+    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', samplingStrategy='Regular',
+                 samplingPercentage='0.2', iter='10', shrink='1', smooth='0', gradStep='0.5', deformation='1x1x0',
+                 init='', filter_size=5, poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz',
+                 smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
         """
         Class to define registration method.
 
@@ -42,6 +43,8 @@ class Paramreg(object):
         :param type: {im, seg, imseg, label} Type of data used for registration. Use type=label only at step=0.
         :param algo:
         :param metric:
+        :param samplingStrategy: {'Regular', 'Random', 'None'}
+        :param samplingPercentage: [0, 1]
         :param iter:
         :param shrink:
         :param smooth:
@@ -64,6 +67,8 @@ class Paramreg(object):
         self.type = type
         self.algo = algo
         self.metric = metric
+        self.samplingStrategy = samplingStrategy
+        self.samplingPercentage = samplingPercentage
         self.iter = iter
         self.shrink = shrink
         self.smooth = smooth
@@ -161,8 +166,8 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
     # estimate transfo
     cmd = ['isct_antsSliceRegularizedRegistration',
            '-t', 'Translation[' + step.gradStep + ']',
-           '-m',
-           step.metric + '[' + dest + ',' + src + ',1,' + metricSize + ',Regular,0.2]',
+           '-m', step.metric + '['
+           + ','.join([dest, src, '1', metricSize, step.samplingStrategy, step.samplingPercentage]) + ']',
            '-p', step.poly,
            '-i', step.iter,
            '-f', step.shrink,
