@@ -4,7 +4,7 @@
 
 - [ ] I've given this PR a concise, self-descriptive, and meaningful title
 - [ ] I've linked relevant issues in the PR body
-- [ ] I've applied the relevant labels to this PR
+- [ ] I've applied [the relevant labels](https://www.neuro.polymtl.ca/software/contributing#pr_labels) to this PR
 - [ ] I've assigned a reviewer
 
 <!--- For the title, please observe the following rules:
