@@ -1,3 +1,6 @@
+<!-- Hi, and thank you for submitting a Pull Request! The checklist below is a brief summary of steps found in the NeuroPoly Contributing Guidelines, which can be found here: https://www.neuro.polymtl.ca/software/contributing. 
+-->
+
 ## Checklist
 
 #### GitHub
@@ -7,7 +10,7 @@
 - [ ] I've applied [the relevant labels](https://www.neuro.polymtl.ca/software/contributing#pr_labels) to this PR
 - [ ] I've assigned a reviewer
 
-<!--- For the title, please observe the following rules:
+<!-- For the title, please observe the following rules:
 	- Provide a concise and self-descriptive title
 	- Do not include the applicable issue number in the title, do it in the PR body
 	- If the PR is not ready for review, convert it to a draft.
