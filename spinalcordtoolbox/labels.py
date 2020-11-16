@@ -282,9 +282,9 @@ def find_missing_label(img, ref):
     rounded_coord_ref_values = [np.round(c.value) for c in coordinates_ref]
     rounded_coord_in_values = [np.round(c.value) for c in coordinates_input]
 
-    FP = [[x for x in rounded_coord_in_values if x not in rounded_coord_ref_values]]
+    FP = [x for x in rounded_coord_in_values if x not in rounded_coord_ref_values]
     FN = [x for x in rounded_coord_ref_values if x not in rounded_coord_in_values]
-    
+
     if len(FP) > 0:
         logger.warning("False positive value for label {}".format(' '.join(map(str, FP))))
 
