@@ -282,8 +282,8 @@ def check_missing_label(img, ref):
     rounded_coord_ref_values = [np.round(c.value) for c in coordinates_ref]
     rounded_coord_in_values = [np.round(c.value) for c in coordinates_input]
 
-    FP = [x for x in rounded_coord_in_values if x not in rounded_coord_ref_values]
-    FN = [x for x in rounded_coord_ref_values if x not in rounded_coord_in_values]
+    missing_labels_ref = [x for x in rounded_coord_in_values if x not in rounded_coord_ref_values]
+    missing_labels_inp = [x for x in rounded_coord_ref_values if x not in rounded_coord_in_values]
 
     if missing_labels_ref:
         logger.warning(f"Label mismatch: Labels {missing_labels_ref} present in input image but missing from reference image.")
@@ -291,7 +291,7 @@ def check_missing_label(img, ref):
     if missing_labels_inp:
         logger.warning(f"Label mismatch: Labels {missing_labels_inp} present in reference image but missing from input image.)
 
-    return FP, FN
+    return missing_labels_ref, missing_labels_inp
 
 
 # FIXME [AJ]: this is slow on large images
@@ -308,7 +308,7 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
     result = 0.0
 
     # This line will add warning in the log if there are missing label.
-    _, _ = find_missing_label(img, ref)
+    _, _ = check_missing_label(img, ref)
 
     for coord in coordinates_input:
         for coord_ref in coordinates_ref:
