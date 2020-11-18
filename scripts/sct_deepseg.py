@@ -16,6 +16,7 @@ import os
 import sys
 
 from ivadomed import inference as imed_inference
+from ivadomed.loader.film import GENERIC_CONTRAST
 import nibabel as nib
 
 import spinalcordtoolbox as sct
@@ -39,6 +40,13 @@ def get_parser():
         "-i",
         nargs="+",
         help="Image to segment. Can be multiple images (separated with space).",
+        metavar=Metavar.file)
+    input_output.add_argument(
+        "-c",
+        nargs="+",
+        help="Type of image contrast. Indicates the order in which the images have been presented with -i. "
+             "The contrasts should be separated by spaces (e.g., -c t1 t2).",
+        choices=('t1', 't2', 't2star'),
         metavar=Metavar.file)
     input_output.add_argument(
         "-o",
