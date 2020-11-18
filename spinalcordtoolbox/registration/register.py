@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 class Paramreg(object):
-    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', samplingStrategy='Regular',
+    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', samplingStrategy='None',
                  samplingPercentage='0.2', iter='10', shrink='1', smooth='0', gradStep='0.5', deformation='1x1x0',
                  init='', filter_size=5, poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz',
                  smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
@@ -976,6 +976,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             warps.
     """
     # set metricSize
+    # TODO: create internal function get_metricSize()
     if paramreg.metric == 'MI':
         metricSize = '32'  # corresponds to number of bins
     else:
