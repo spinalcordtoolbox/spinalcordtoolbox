@@ -147,7 +147,7 @@ def test_compute_mean_squared_error_warning(caplog):
     src = fake_3dimage_sct()
     ref = src.copy()
 
-    src.data = np.where(src.data == ref[0, 0, 0], 1500, ref.data)
+    src.data = np.where(src.data == ref.data[0, 0, 0], 1500, ref.data)
 
     sct_labels.compute_mean_squared_error(src, ref)
     assert 'Label mismatch: Labels 1500 present in input image but missing from reference image.' in caplog.text
@@ -241,7 +241,7 @@ def test_find_missing_label():
 
     # modifying the data to create one false negative and one false positive
     # label 1500 is not in test_image originally, and label 111 is.
-    false_positive.data = np.where(false_positive.data == img[0, 0, 0], 1500, false_positive.data)
+    false_positive.data = np.where(false_positive.data == img.data[0, 0, 0], 1500, false_positive.data)
     FP, FN = sct_labels.check_missing_label(false_positive, img)
 
     assert int(FP[0]) == 1500
