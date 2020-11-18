@@ -172,11 +172,10 @@ def get_parser():
             "segmentation again.\n"
             "\n"
             "References:\n"
-            "  - De Leener B, Kadoury S, Cohen-Adad J. Robust, accurate and fast automatic segmentation of the spinal "
-            "cord. Neuroimage 98, 2014. pp 528-536. DOI: 10.1016/j.neuroimage.2014.04.051\n"
-            "  - De Leener B, Cohen-Adad J, Kadoury S. Automatic segmentation of the spinal cord and spinal canal "
-            "coupled with vertebral labeling. Medical Imaging, IEEE Transactions on (in press). "
-            "DOI: 10.1109/TMI.2015.2437192"
+            "  - [De Leener B, Kadoury S, Cohen-Adad J. Robust, accurate and fast automatic segmentation of the spinal "
+            "cord. Neuroimage 98, 2014. pp 528-536. DOI: 10.1016/j.neuroimage.2014.04.051](https://pubmed.ncbi.nlm.nih.gov/24780696/)\n"
+            "  - [De Leener B, Cohen-Adad J, Kadoury S. Automatic segmentation of the spinal cord and spinal canal "
+            "coupled with vertebral labeling. IEEE Trans Med Imaging. 2015 Aug;34(8):1705-18.](https://pubmed.ncbi.nlm.nih.gov/26011879/)"
         ),
         formatter_class=SmartFormatter,
         add_help=None,
