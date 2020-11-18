@@ -143,22 +143,14 @@ def main(argv):
         parser.error("You need to specify a task.")
 
     # Check if all input images are provided
-    if len(args.i) != len(deepseg.models.TASKS[args.task]['contrasts']):
+    required_contrasts = deepseg.models.get_required_contrasts(args.task)
+    if len(args.i) != len(required_contrasts):
         parser.error("You need to provide all required input files for the task {}. Contrasts {} are required."
-                     .format(args.task, ', '.join(deepseg.models.TASKS[args.task]['contrasts'])))
+                     .format(args.task, ', '.join(required_contrasts)))
 
     # Check modality order
-    input_filenames = []
-    if len(args.i) > 1:
-        if args.c is None:
-            parser.error("You need to specify the contrasts order used when specifying images to segment with flag -c.")
-
-        for required_contrast in deepseg.models.TASKS[args.task]['contrasts']:
-            for provided_contrast, input_img in zip(args.c, args.i):
-                if required_contrast == provided_contrast:
-                    input_filenames.append(input_img)
-    else:
-        input_filenames = args.i
+    if len(args.i) > 1 and args.c is None:
+        parser.error("You need to specify the order in which you put the contrasts in the input images with flag -c.")
 
     # Get pipeline model names
     name_models = deepseg.models.TASKS[args.task]['models']
@@ -180,6 +172,13 @@ def main(argv):
             if not deepseg.models.is_valid(path_model):
                 parser.error("The input model is invalid: {}".format(path_model))
 
+        # Order input images
+        input_filenames = []
+        for required_contrasts in deepseg.models.MODELS[name_model]['contrasts']:
+            for provided_contrasts, input_filename in zip(args.c, args.i):
+                if required_contrasts == provided_contrasts:
+                    input_filenames.append(input_filename)
+
         # Call segment_nifti
         options = {**vars(args), "fname_prior": fname_prior}
         nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, options=options)
@@ -191,11 +190,11 @@ def main(argv):
 
         output_filenames = []
         # Save output seg
-        for nii_seg, target, input_filename in zip(nii_lst, target_lst, input_filenames):
+        for nii_seg, target in zip(nii_lst, target_lst):
             if 'o' in options and options['o'] is not None:
                 fname_seg = options['o'].replace(".nii.gz", target + ".nii.gz")
             else:
-                fname_seg = ''.join([sct.image.splitext(input_filename)[0], target + '.nii.gz'])
+                fname_seg = ''.join([sct.image.splitext(input_filenames[0])[0], target + '.nii.gz'])
 
             # If output folder does not exist, create it
             path_out = os.path.dirname(fname_seg)
@@ -208,8 +207,8 @@ def main(argv):
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
 
-    for input_filename, output_filename in zip(input_filenames, output_filenames):
-        display_viewer_syntax([input_filename, output_filename], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    for output_filename in output_filenames:
+        display_viewer_syntax([args.i[0], output_filename], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == '__main__':
