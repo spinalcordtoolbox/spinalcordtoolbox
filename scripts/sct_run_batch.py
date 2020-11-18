@@ -120,9 +120,12 @@ def get_parser():
                         help='R|Setting for environment variable: PATH_SEGMANUAL\n'
                         'A path containing manual segmentations to be used by the script program.')
     parser.add_argument('-itk-threads', type=int, default=1,
-                        help='R|Setting for environment variable: ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS\n'
-                        'Number of threads to use for ITK based programs including ANTs. Set to a low '
-                        'number to avoid a large increase in memory. Defaults to 1',
+                        help='R|Sets the environment variable "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS".\n'
+                        'Number of threads to use for ITK based programs including ANTs. Increasing this can '
+                        'provide a performance boost for high-performance (multi-core) computing environments. '
+                        'However, increasing the number of threads may also result in a large increase in memory.\n'
+                        'This argument enables thread-based parallelism, while \'-jobs\' enables process-based '
+                        'parallelism. You may need to tweak both to find a balance that works best for your system.',
                         metavar=Metavar.int)
     parser.add_argument('-script-args', default='',
                         help='A quoted string with extra flags and arguments to pass to the script. '
