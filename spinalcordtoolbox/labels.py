@@ -274,7 +274,8 @@ def check_missing_label(img, ref):
     (labels that are present in img and not ref)
     :param img: source image
     :param ref: reference image
-    :return: list of missing label
+    :return: two lists. The first one is the list of label present in the input and not in the ref image, the second one
+    gives the labels presents in the ref and not in the input.  
     """
     coordinates_input = img.getNonZeroCoordinates()
     coordinates_ref = ref.getNonZeroCoordinates()
