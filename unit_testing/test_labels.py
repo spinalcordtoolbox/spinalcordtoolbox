@@ -147,12 +147,12 @@ def test_compute_mean_squared_error_warning(caplog):
     src = fake_3dimage_sct()
     ref = src.copy()
 
-    src.data[0, 0, 0] = 95
+    src.data = np.where(src.data == ref[0, 0, 0], 1500, ref.data)
 
     sct_labels.compute_mean_squared_error(src, ref)
-    assert 'False positive value for label 95.0' in caplog.text
-    assert 'False negative value for label 111.0' in caplog.text
-    
+    assert 'Label mismatch: Labels 1500 present in input image but missing from reference image.' in caplog.text
+    assert f'Label mismatch: Labels {ref[0,0,0]} present in reference image but missing from input image.' in caplog.text
+
 
 def test_compute_mean_squared_error_no_warning(caplog):
     src = fake_3dimage_sct()
@@ -235,15 +235,14 @@ def test_remove_other_labels_from_image(test_image):
     assert diff.all()
 
 
-@pytest.mark.parametrize("test_image", test_images)
-def test_find_missing_label(test_image):
-    img = test_image.copy()
-    false_positive = test_image.copy()
+def test_find_missing_label():
+    img = fake_3dimage_sct()
+    false_positive = img.copy()
 
     # modifying the data to create one false negative and one false positive
     # label 1500 is not in test_image originally, and label 111 is.
-    false_positive.data = np.where(false_positive.data == 111, 1500, false_positive.data)
+    false_positive.data = np.where(false_positive.data == img[0, 0, 0], 1500, false_positive.data)
     FP, FN = sct_labels.find_missing_label(false_positive, img)
 
     assert int(FP[0]) == 1500
-    assert int(FN[0]) == 111
+    assert int(FN[0]) == img[0, 0, 0]
