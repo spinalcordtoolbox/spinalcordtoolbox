@@ -242,7 +242,7 @@ def test_find_missing_label():
     # modifying the data to create one false negative and one false positive
     # label 1500 is not in test_image originally, and label 111 is.
     false_positive.data = np.where(false_positive.data == img[0, 0, 0], 1500, false_positive.data)
-    FP, FN = sct_labels.find_missing_label(false_positive, img)
+    FP, FN = sct_labels.check_missing_label(false_positive, img)
 
     assert int(FP[0]) == 1500
     assert int(FN[0]) == img[0, 0, 0]
