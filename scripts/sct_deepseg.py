@@ -140,6 +140,16 @@ def main(argv):
     if args.task is None:
         parser.error("You need to specify a task.")
 
+    # Check if all input images are provided
+    if len(args.i) != len(deepseg.models.TASKS[args.task]['contrasts']):
+        parser.error("You need to provide all required input files for the task {}. Contrasts {} are required."
+                     .format(args.task, ', '.join(deepseg.models.TASKS[args.task]['contrasts'])))
+
+    # Check modality order
+    if len(args.i) > 1:
+        if args.c is None:
+            parser.error("You need to specify the contrasts order used when specifying images to segment with flag -c.")
+
     # Get pipeline model names
     name_models = deepseg.models.TASKS[args.task]['models']
 
