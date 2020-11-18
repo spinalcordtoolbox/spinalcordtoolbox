@@ -65,16 +65,20 @@ MODELS = {
 TASKS = {
     'seg_sc_t2star':
         {'description': 'Cord segmentation on T2*-weighted contrast.',
-         'models': ['t2star_sc']},
+         'models': ['t2star_sc'],
+         'contrasts': ['t2star']},
     'seg_mice_sc':
         {'description': 'Cord segmentation on mouse MRI.',
-         'models': ['mice_uqueensland_sc']},
+         'models': ['mice_uqueensland_sc'],
+         'contrasts': ['t1']},
     'seg_mice_gm':
         {'description': 'Gray matter segmentation on mouse MRI.',
-         'models': ['mice_uqueensland_gm']},
+         'models': ['mice_uqueensland_gm'],
+         'contrasts': ['t1']},
     'seg_tumor_t2':
         {'description': 'Cord tumor segmentation on T2-weighted contrast.',
-         'models': ['findcord_tumor', 't2_tumor']}
+         'models': ['findcord_tumor', 't2_tumor'],
+         'contrasts': ['t2']}
 }
 
 
@@ -135,8 +139,8 @@ def display_list_tasks():
     tasks = sct.deepseg.models.list_tasks()
     # Display beautiful output
     color = {True: 'green', False: 'red'}
-    print("{:<20s}{:<50s}MODELS".format("TASK", "DESCRIPTION"))
-    print("-" * 80)
+    print("{:<20s}{:<50s}{:<20s}MODELS".format("TASK", "DESCRIPTION", "INPUT CONTRASTS"))
+    print("-" * 120)
     for name_task, value in tasks.items():
         path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
         are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
@@ -147,7 +151,10 @@ def display_list_tasks():
         models_status = ', '.join([colored.stylize(model_name,
                                                    colored.fg(color[is_valid]))
                                    for model_name, is_valid in zip(value['models'], are_models_valid)])
-        print("{}{}{}".format(task_status, description_status, models_status))
+        input_contrasts = colored.stylize(str(', '.join(model_name for model_name in value['contrasts'])).ljust(20),
+                                          colored.fg(color[all(are_models_valid)]))
+
+        print("{}{}{}{}".format(task_status, description_status, input_contrasts, models_status))
 
     print(
         '\nLegend: {} | {}\n'.format(
