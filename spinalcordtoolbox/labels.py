@@ -285,11 +285,11 @@ def check_missing_label(img, ref):
     missing_labels_ref = [x for x in rounded_coord_in_values if x not in rounded_coord_ref_values]
     missing_labels_inp = [x for x in rounded_coord_ref_values if x not in rounded_coord_in_values]
 
-    if missing_labels_ref:
-        logger.warning(f"Label mismatch: Labels {missing_labels_ref} present in input image but missing from reference image.")
-
     if missing_labels_inp:
-        logger.warning(f"Label mismatch: Labels {missing_labels_inp} present in reference image but missing from input image.")
+        logger.warning(f"Label mismatch: Labels {missing_labels_inp} present in input image but missing from reference image.")
+
+    if missing_labels_ref:
+        logger.warning(f"Label mismatch: Labels {missing_labels_ref} present in reference image but missing from input image.")
 
     return missing_labels_ref, missing_labels_inp
 
