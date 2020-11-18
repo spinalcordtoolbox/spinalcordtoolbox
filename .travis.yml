@@ -111,6 +111,10 @@ matrix:
       if: branch = release or type = cron
       os: osx
       osx_image: xcode9.4
+    # Enable just to check that install dies midway"
+    - name: "OSX 10.12 (Sierra)"
+      os: osx
+      osx_image: xcode9.2
     - name: "Windows Server, 1809"
       # runs on all branches
       language: bash
