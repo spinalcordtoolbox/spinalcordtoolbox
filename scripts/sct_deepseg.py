@@ -14,6 +14,7 @@ ivadomed package.
 import argparse
 import os
 import sys
+import logging
 
 from ivadomed import inference as imed_inference
 import nibabel as nib
@@ -25,6 +26,8 @@ import spinalcordtoolbox.deepseg.models
 
 from spinalcordtoolbox.utils.shell import SmartFormatter, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
