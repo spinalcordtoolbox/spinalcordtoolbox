@@ -82,6 +82,14 @@ def get_parser():
                         'This argument enables process-based parallelism, while \'-itk-threads\' enables thread-based '
                         'parallelism. You may need to tweak both to find a balance that works best for your system.',
                         metavar=Metavar.int)
+    parser.add_argument('-itk-threads', type=int, default=1,
+                        help='R|Sets the environment variable "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS".\n'
+                        'Number of threads to use for ITK based programs including ANTs. Increasing this can '
+                        'provide a performance boost for high-performance (multi-core) computing environments. '
+                        'However, increasing the number of threads may also result in a large increase in memory.\n'
+                        'This argument enables thread-based parallelism, while \'-jobs\' enables process-based '
+                        'parallelism. You may need to tweak both to find a balance that works best for your system.',
+                        metavar=Metavar.int)
     parser.add_argument('-path-data', help='R|Setting for environment variable: PATH_DATA\n'
                         'Path containing subject directories in a consistent format')
     parser.add_argument('-subject-prefix', default='sub-',
@@ -119,14 +127,6 @@ def get_parser():
     parser.add_argument('-path-segmanual', default='.',
                         help='R|Setting for environment variable: PATH_SEGMANUAL\n'
                         'A path containing manual segmentations to be used by the script program.')
-    parser.add_argument('-itk-threads', type=int, default=1,
-                        help='R|Sets the environment variable "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS".\n'
-                        'Number of threads to use for ITK based programs including ANTs. Increasing this can '
-                        'provide a performance boost for high-performance (multi-core) computing environments. '
-                        'However, increasing the number of threads may also result in a large increase in memory.\n'
-                        'This argument enables thread-based parallelism, while \'-jobs\' enables process-based '
-                        'parallelism. You may need to tweak both to find a balance that works best for your system.',
-                        metavar=Metavar.int)
     parser.add_argument('-script-args', default='',
                         help='A quoted string with extra flags and arguments to pass to the script. '
                         'For example \'sct_run_batch -path-data data/ -script-args "-foo bar -baz /qux" process_data.sh \'')
