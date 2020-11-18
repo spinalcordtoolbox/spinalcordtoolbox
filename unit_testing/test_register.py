@@ -5,6 +5,7 @@
 import logging
 
 import pytest
+import csv
 
 # FIXME should not use stuff from scripts. Ok for now
 from sct_register_to_template import Param, register
@@ -201,6 +202,20 @@ def test_register_step_ants_slice_regularized_registration(step_axial_data_in_sa
         dest=dest,
         step=step,
         metricSize='4')
+
+    # Verify integrity of the output Tx Ty file.
+    with open('step1TxTy_poly.csv', newline='') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=',')
+        txty_result = []
+        for row in spamreader:
+            txty_result.append(row)
+    assert txty_result == [
+        ['Tx', 'Ty'],
+        ['1.00439255454324', '-0.151760183772956'],
+        ['1.04645709177172', '-0.621178997815087'],
+        ['0.904949339396005', '-0.862157494292993'],
+        ['0.784728781515325', '-0.893095039021259'],
+        ['0.890654902228898', '-0.732390997814474']]
 
 
 # higher level tests for step registration, regardless of step)
