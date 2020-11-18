@@ -75,12 +75,12 @@ def get_parser():
                             }\n
                             """))
     parser.add_argument('-jobs', type=int, default=1,
-                        help='The number of jobs to run in parallel. '
-                        'Either an integer greater than or equal to one '
-                        'specifying the number of cores, 0 or a negative integer '
-                        'specifying number of cores minus that number. For example '
-                        '\'-jobs -1\' will run will all the available cores minus one '
-                        'job in parallel. Set \'-jobs 0\' to use all available cores.',
+                        help='R|The number of jobs to run in parallel. Either an integer greater than or equal to one '
+                        'specifying the number of cores, 0 or a negative integer specifying number of cores minus '
+                        'that number. For example \'-jobs -1\' will run will all the available cores minus one job in '
+                        'parallel. Set \'-jobs 0\' to use all available cores.\n'
+                        'This argument enables process-based parallelism, while \'-itk-threads\' enables thread-based '
+                        'parallelism. You may need to tweak both to find a balance that works best for your system.',
                         metavar=Metavar.int)
     parser.add_argument('-path-data', help='R|Setting for environment variable: PATH_DATA\n'
                         'Path containing subject directories in a consistent format')
