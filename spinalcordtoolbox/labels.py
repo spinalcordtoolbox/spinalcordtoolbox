@@ -267,7 +267,7 @@ def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image
     return out
 
 
-def find_missing_label(img, ref):
+def check_missing_label(img, ref):
     """
     Function that return the list of label that are present in ref and not in img.
     This is useful to compute false negative (label that are in ref and not img) and false positive
@@ -285,11 +285,11 @@ def find_missing_label(img, ref):
     FP = [x for x in rounded_coord_in_values if x not in rounded_coord_ref_values]
     FN = [x for x in rounded_coord_ref_values if x not in rounded_coord_in_values]
 
-    if len(FP) > 0:
-        logger.warning("False positive value for label {}".format(' '.join(map(str, FP))))
+    if missing_labels_ref:
+        logger.warning(f"Label mismatch: Labels {missing_labels_ref} present in input image but missing from reference image.")
 
-    if len(FN) > 0:
-        logger.warning("False negative value for label {}".format(' '.join(map(str, FN))))
+    if missing_labels_inp:
+        logger.warning(f"Label mismatch: Labels {missing_labels_inp} present in reference image but missing from input image.)
 
     return FP, FN
 
@@ -308,7 +308,7 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
     result = 0.0
 
     # This line will add warning in the log if there are missing label.
-    find_missing_label(img, ref)
+    _, _ = find_missing_label(img, ref)
 
     for coord in coordinates_input:
         for coord_ref in coordinates_ref:
