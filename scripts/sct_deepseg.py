@@ -16,7 +16,6 @@ import os
 import sys
 
 from ivadomed import inference as imed_inference
-from ivadomed.loader.film import GENERIC_CONTRAST
 import nibabel as nib
 
 import spinalcordtoolbox as sct
@@ -146,15 +145,24 @@ def main(argv):
                      .format(args.task, ', '.join(deepseg.models.TASKS[args.task]['contrasts'])))
 
     # Check modality order
+    input_filenames = []
     if len(args.i) > 1:
         if args.c is None:
             parser.error("You need to specify the contrasts order used when specifying images to segment with flag -c.")
+
+        for required_contrast in deepseg.models.TASKS[args.task]['contrasts']:
+            for provided_contrast, input_img in zip(args.c, args.i):
+                if required_contrast == provided_contrast:
+                    input_filenames.append(input_img)
+    else:
+        input_filenames = args.i
 
     # Get pipeline model names
     name_models = deepseg.models.TASKS[args.task]['models']
 
     # Run pipeline by iterating through the models
     fname_prior = None
+    output_filenames = None
     for name_model in name_models:
         # Check if this is an official model
         if name_model in list(deepseg.models.MODELS.keys()):
@@ -171,19 +179,20 @@ def main(argv):
 
         # Call segment_nifti
         options = {**vars(args), "fname_prior": fname_prior}
-        nii_lst, target_lst = imed_inference.segment_volume(path_model, args.i, options=options)
+        nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, options=options)
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and args.r:
             logger.info("Remove temporary files...")
             os.remove(fname_prior)
 
+        output_filenames = []
         # Save output seg
-        for nii_seg, target in zip(nii_lst, target_lst):
+        for nii_seg, target, input_filename in zip(nii_lst, target_lst, input_filenames):
             if 'o' in options and options['o'] is not None:
                 fname_seg = options['o'].replace(".nii.gz", target + ".nii.gz")
             else:
-                fname_seg = ''.join([sct.image.splitext(args.i)[0], target + '.nii.gz'])
+                fname_seg = ''.join([sct.image.splitext(input_filename)[0], target + '.nii.gz'])
 
             # If output folder does not exist, create it
             path_out = os.path.dirname(fname_seg)
@@ -191,11 +200,13 @@ def main(argv):
                 os.makedirs(path_out)
 
             nib.save(nii_seg, fname_seg)
+            output_filenames.append(fname_seg)
 
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
 
-    display_viewer_syntax([args.i, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    for input_filename, output_filename in zip(input_filenames, output_filenames):
+        display_viewer_syntax([input_filename, output_filename], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == '__main__':
