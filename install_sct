@@ -537,6 +537,10 @@ else
   # Not a package
   print info "Using requirements.txt (git installation)"
   pip install -r requirements.txt
+  yes | pip uninstall tensorflow-tensorboard
+  yes | pip uninstall tensorboard
+  pip install tensorboard
+
 fi
 if [[ $? != 0 ]]; then
   die "Failed running pip install: $?"
