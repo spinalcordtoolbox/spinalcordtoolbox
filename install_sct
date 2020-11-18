@@ -121,9 +121,9 @@ function fetch_os_type() {
   OSver="unknown"  # default value
   uname_output=`uname -a`
   echo $uname_output
-  # OSX
+  # macOS
   if echo $uname_output | grep -i darwin >/dev/null 2>&1; then
-    # Fetch OSX version
+    # Fetch macOS version
     sw_vers_output=`sw_vers | grep -e ProductVersion`
     echo "$sw_vers_output"
     OSver=$(echo $sw_vers_output | cut -c 17-)
@@ -149,7 +149,7 @@ function fetch_os_type() {
   elif echo $uname_output | grep -i linux >/dev/null 2>&1; then
     OS=linux
   else
-    die "Sorry, the installer only supports Linux and OSX, quitting installer"
+    die "Sorry, the installer only supports Linux and macOS, quitting installer"
   fi
 }
 
