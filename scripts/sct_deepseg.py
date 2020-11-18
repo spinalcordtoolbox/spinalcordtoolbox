@@ -157,6 +157,7 @@ def main(argv):
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and args.r:
+            logger.info("Remove temporary files...")
             os.remove(fname_prior)
 
         # Save output seg
