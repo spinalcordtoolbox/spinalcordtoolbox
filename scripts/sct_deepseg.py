@@ -73,7 +73,8 @@ def get_parser():
     misc.add_argument(
         "-r",
         type=int,
-        help="Whether to remove temporary files. 0 = no, 1 = yes (default: 1)",
+        help="Remove temporary files.",
+        choices=(0, 1),
         default=1)
     misc.add_argument(
         "-largest",
