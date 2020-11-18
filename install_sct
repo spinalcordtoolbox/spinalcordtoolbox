@@ -131,8 +131,7 @@ function fetch_os_type() {
     macOSminor=$(echo $OSver | cut -f 2 -d '.')
     # Make sure OSver is supported
     if [[ "${macOSmajor}" = 10 ]] && [[ "${macOSminor}" < "${MACOSSUPPORTED}" ]]; then
-      die "Sorry, this version of macOS (10.$macOSminor) is not supported.
-           The minimum version is 10.$MACOSMINORSUPPORTED."
+      die "Sorry, this version of macOS (10.$macOSminor) is not supported. The minimum version is 10.$MACOSSUPPORTED."
     fi
     # Fix for non-English Unicode systems on MAC
     if [[ -z $LC_ALL ]]; then
