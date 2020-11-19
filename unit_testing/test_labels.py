@@ -161,7 +161,7 @@ def test_compute_mse_no_label_warning(caplog):
     src = fake_3dimage_sct()
     ref = src.copy()
     sct_labels.compute_mean_squared_error(src, ref)
-    assert 'WARNING' not in caplog.text
+    assert 'Label mismatch' not in caplog.text
 
 
 @pytest.mark.skip(reason="Too long to run on large image!")
