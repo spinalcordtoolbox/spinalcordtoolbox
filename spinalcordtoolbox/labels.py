@@ -270,8 +270,8 @@ def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image
 def check_missing_label(img, ref):
     """
     Function that return the list of label that are present in ref and not in img.
-    This is useful to compute false negative (label that are in ref and not img) and false positive
-    (labels that are present in img and not ref)
+    This is useful to find label that are in img and not in the ref (first output) and
+    labels that are present in the ref and not in img (second output)
     :param img: source image
     :param ref: reference image
     :return: two lists. The first one is the list of label present in the input and not in the ref image, the second one
