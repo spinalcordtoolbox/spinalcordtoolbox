@@ -151,9 +151,10 @@ def test_compute_mean_squared_error_warning(caplog):
 
     sct_labels.compute_mean_squared_error(src, ref)
     # Cannot use f-string in assert, I needed to create a variable before
-    string_form = f'Label mismatch: Labels [{ref.data[0,0,0]}] present in reference image but missing from input image.'
-    assert 'Label mismatch: Labels [1500.0] present in input image but missing from reference image.' in caplog.text
-    assert string_form in caplog.text
+    string_form_inp = f'Label mismatch: Labels [{src.data[0,0,0]}] present in input image but missing from reference image.'
+    string_form_ref = f'Label mismatch: Labels [{ref.data[0,0,0]}] present in reference image but missing from input image.'
+    assert string_form_inp in caplog.text
+    assert string_form_ref in caplog.text
 
 
 def test_compute_mean_squared_error_no_warning(caplog):
