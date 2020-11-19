@@ -47,7 +47,8 @@ def get_parser():
         "-c",
         nargs="+",
         help="Type of image contrast. Indicates the order in which the images have been presented with -i. "
-             "The contrasts should be separated by spaces (e.g., -c t1 t2).",
+             "Optional if only one image is specified with -i. The contrasts should be separated by spaces "
+             "(e.g., -c t1 t2).",
         choices=('t1', 't2', 't2star'),
         metavar=Metavar.file)
     input_output.add_argument(
