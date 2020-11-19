@@ -143,7 +143,7 @@ def test_compute_mean_squared_error():
     assert mse == 1.1547005383792515
 
 
-def test_compute_mean_squared_error_warning(caplog):
+def test_compute_mse_label_warning(caplog):
     src = fake_3dimage_sct()
     ref = src.copy()
 
@@ -157,7 +157,7 @@ def test_compute_mean_squared_error_warning(caplog):
     assert string_form_ref in caplog.text
 
 
-def test_compute_mean_squared_error_no_warning(caplog):
+def test_compute_mse_no_label_warning(caplog):
     src = fake_3dimage_sct()
     ref = src.copy()
     sct_labels.compute_mean_squared_error(src, ref)
