@@ -316,6 +316,7 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     # remove voxels in segmentation_labeled that are not in segmentation
     img_labeled_seg = Image(fname_labeled_seg)
     img_labeled_seg.change_orientation('RPI')
+    native_or = img_labeled_seg.orientation
     img_seg = Image(fname_seg)
     img_seg.change_orientation('RPI')
     data_labeled_seg_mul = img_labeled_seg.data * img_seg.data
@@ -337,6 +338,7 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
             img_labeled_seg_corr.data[ix, iy, iz] = data_labeled_seg_dil[ix, iy, iz]
     # save new label file (overwrite)
     img_labeled_seg_corr.absolutepath = fname_labeled_seg_new
+    img_labeled_seg.change_orientation(native_or)
     img_labeled_seg_corr.save()
 
 
