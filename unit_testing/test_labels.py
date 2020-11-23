@@ -147,7 +147,7 @@ def test_compute_mse_label_warning(caplog):
     src = fake_3dimage_sct()
     ref = src.copy()
     # Label 1500 is not in the reference image. The label present at [0,0,0] will be missing from the input image
-    # This will triggers the warning that we are looking fors
+    # This will triggers the warning that we are looking for
     src.data = np.where(src.data == ref.data[0, 0, 0], 1500, ref.data)
 
     sct_labels.compute_mean_squared_error(src, ref)
