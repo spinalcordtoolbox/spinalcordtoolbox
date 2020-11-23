@@ -360,3 +360,6 @@ Applications
 -  `Mossa-Basha et al. Segmented quantitative diffusion tensor imaging
    evaluation of acute traumatic cervical spinal cord injury.
    Br J Radiol, 2020 <https://pubmed.ncbi.nlm.nih.gov/33180553/>`__
+-  `Mariano et al. Quantitative spinal cord MRI in MOG-antibody disease,
+   neuromyelitis optica and multiple sclerosis. Brain, 2020
+   <https://pubmed.ncbi.nlm.nih.gov/33206944/>`__
