@@ -31,8 +31,7 @@ SCRIPT_DIR="scripts"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
-# Misc
-OSXVERSUPPORTED=12  # minimum version of OSX supported
+MACOSSUPPORTED=13  # Minimum version of macOS 10 supported
 
 
 # ======================================================================================================================
@@ -122,15 +121,17 @@ function fetch_os_type() {
   OSver="unknown"  # default value
   uname_output=`uname -a`
   echo $uname_output
-  # OSX
+  # macOS
   if echo $uname_output | grep -i darwin >/dev/null 2>&1; then
-    # Fetch OSX version
+    # Fetch macOS version
     sw_vers_output=`sw_vers | grep -e ProductVersion`
     echo "$sw_vers_output"
-    OSver=`echo $sw_vers_output | cut -c 20- | cut -c -2`
-    # Make sure OSver us supported
-    if (("$OSver" < "$OSXVERSUPPORTED")); then
-      die "Sorry, this version of OSX (10.$OSver) is no more supported. The minimum version is 10.$OSXVERSUPPORTED".
+    OSver=$(echo $sw_vers_output | cut -c 17-)
+    macOSmajor=$(echo $OSver | cut -f 1 -d '.')
+    macOSminor=$(echo $OSver | cut -f 2 -d '.')
+    # Make sure OSver is supported
+    if [[ "${macOSmajor}" = 10 ]] && [[ "${macOSminor}" < "${MACOSSUPPORTED}" ]]; then
+      die "Sorry, this version of macOS (10.$macOSminor) is not supported. The minimum version is 10.$MACOSSUPPORTED."
     fi
     # Fix for non-English Unicode systems on MAC
     if [[ -z $LC_ALL ]]; then
@@ -147,7 +148,7 @@ function fetch_os_type() {
   elif echo $uname_output | grep -i linux >/dev/null 2>&1; then
     OS=linux
   else
-    die "Sorry, the installer only supports Linux and OSX, quitting installer"
+    die "Sorry, the installer only supports Linux and macOS, quitting installer"
   fi
 }
 
@@ -537,6 +538,10 @@ else
   # Not a package
   print info "Using requirements.txt (git installation)"
   pip install -r requirements.txt
+  yes | pip uninstall tensorflow-tensorboard
+  yes | pip uninstall tensorboard
+  pip install tensorboard
+
 fi
 if [[ $? != 0 ]]; then
   die "Failed running pip install: $?"
