@@ -174,11 +174,14 @@ def main(argv):
                 parser.error("The input model is invalid: {}".format(path_model))
 
         # Order input images
-        input_filenames = []
-        for required_contrasts in deepseg.models.MODELS[name_model]['contrasts']:
-            for provided_contrasts, input_filename in zip(args.c, args.i):
-                if required_contrasts == provided_contrasts:
-                    input_filenames.append(input_filename)
+        if args.c is not None:
+            input_filenames = []
+            for required_contrasts in deepseg.models.MODELS[name_model]['contrasts']:
+                for provided_contrasts, input_filename in zip(args.c, args.i):
+                    if required_contrasts == provided_contrasts:
+                        input_filenames.append(input_filename)
+        else:
+            input_filenames = args.i
 
         # Call segment_nifti
         options = {**vars(args), "fname_prior": fname_prior}
@@ -193,7 +196,7 @@ def main(argv):
         # Save output seg
         for nii_seg, target in zip(nii_lst, target_lst):
             if 'o' in options and options['o'] is not None:
-                fname_seg = options['o'].replace(".nii.gz", target + ".nii.gz")
+                fname_seg = options['o'].replace(".nii.gz", target + ".nii.gz") if len(target_lst) > 1 else options['o']
             else:
                 fname_seg = ''.join([sct.image.splitext(input_filenames[0])[0], target + '.nii.gz'])
 

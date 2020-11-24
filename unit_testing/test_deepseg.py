@@ -52,10 +52,10 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task,
     Uses the locally-installed sct_testing_data
     """
     fname_out = str(tmp_path/fname_out)  # tmp_path for automatic cleanup
-    sct_deepseg.main(['-i', [fname_image], '-task', task, '-o', fname_out])
+    sct_deepseg.main(['-i', fname_image, '-task', task, '-o', fname_out])
     # TODO: implement integrity test (for now, just checking if output segmentation file exists)
     # Make sure output file exists
     assert os.path.isfile(fname_out)
     # Compare with ground-truth segmentation
     assert np.all(nibabel.load(fname_out).get_fdata() ==
-                  nibabel.load(fname_seg_manual).get_fdata())
+                  nibabel.load(fname_seg_manual).get_fdata()[..., 0])
