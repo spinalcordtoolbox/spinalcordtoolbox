@@ -2,7 +2,7 @@ from pytest_console_scripts import script_runner
 import pytest
 import logging
 import subprocess
-from spinalcordtoolbox.utils import init_sct, run_proc
+import sct_label_vertebrae
 logger = logging.getLogger(__name__)
 
 
@@ -16,10 +16,6 @@ def test_sct_label_vertebrae_backwards_compat(script_runner):
 
 
 def test_sct_label_vertebrae_initz_error():
-    a = 'sct_label_vertebrae -i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40'
-    proc = subprocess.Popen(a.split(' '),
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            )
-    out, err = proc.communicate()
-    assert 'ValueError: --initz takes two arguments: position in superior-inferior direction, label value' in str(err)
+    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40'
+    with pytest.raises(ValueError):
+        sct_label_vertebrae.main(command.split())
