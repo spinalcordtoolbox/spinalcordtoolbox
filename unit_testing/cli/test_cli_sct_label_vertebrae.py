@@ -1,7 +1,6 @@
 from pytest_console_scripts import script_runner
 import pytest
 import logging
-import subprocess
 import sct_label_vertebrae
 logger = logging.getLogger(__name__)
 
