@@ -170,6 +170,14 @@ def get_parser():
         help="Apply Laplacian filtering. More accurate but could mistake disc depending on anatomy."
     )
     optional.add_argument(
+        '-clean-labels',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help=" Clean output labeled segmentation to resemble original segmentation."
+    )
+    optional.add_argument(
         '-scale-dist',
         metavar=Metavar.float,
         type=float,
@@ -277,6 +285,7 @@ def main(args=None):
     init_sct(log_level=verbose, update=True)  # Update log level
     remove_temp_files = arguments.r
     denoise = arguments.denoise
+    clean_labels = arguments.clean_labels
     laplacian = arguments.laplacian
 
     path_tmp = tmp_create(basename="label_vertebrae")
@@ -429,9 +438,11 @@ def main(args=None):
              verbose=verbose,
              is_sct_binary=True,
              )
-    # Clean labeled segmentation
-    printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
-    clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
+
+    if clean_labels:
+        # Clean labeled segmentation
+        printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
+        clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
 
     # label discs
     printv('\nLabel discs...', verbose)
