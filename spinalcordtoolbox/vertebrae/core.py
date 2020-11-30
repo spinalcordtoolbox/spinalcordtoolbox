@@ -315,30 +315,21 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     """
     # remove voxels in segmentation_labeled that are not in segmentation
     img_labeled_seg = Image(fname_labeled_seg)
-    img_labeled_seg.change_orientation('RPI')
-    native_or = img_labeled_seg.orientation
     img_seg = Image(fname_seg)
-    img_seg.change_orientation('RPI')
     data_labeled_seg_mul = img_labeled_seg.data * img_seg.data
-
-    # locate 'holes' in the labeled spinal cord segmentation
+    # dilate to add voxels in segmentation that are not in segmentation_labeled
+    data_labeled_seg_dil = dilate(img_labeled_seg.data, 2, 'ball')
     data_labeled_seg_mul_bin = data_labeled_seg_mul > 0
     data_diff = img_seg.data - data_labeled_seg_mul_bin
     ind_nonzero = np.where(data_diff)
     img_labeled_seg_corr = img_labeled_seg.copy()
     img_labeled_seg_corr.data = data_labeled_seg_mul
-
-    # We dilate the labeled seg to wind the value of of the voxel in the 'holes'
-    data_labeled_seg_dil = dilate(img_labeled_seg.data, 2, 'ball')
-    last_slice = max(np.nonzero(data_labeled_seg_mul)[2])
     for i_vox in range(len(ind_nonzero[0])):
-        if ind_nonzero[2][i_vox]< last_slice :
-            # assign closest label value for this voxel
-            ix, iy, iz = ind_nonzero[0][i_vox], ind_nonzero[1][i_vox], ind_nonzero[2][i_vox]
-            img_labeled_seg_corr.data[ix, iy, iz] = data_labeled_seg_dil[ix, iy, iz]
+        # assign closest label value for this voxel
+        ix, iy, iz = ind_nonzero[0][i_vox], ind_nonzero[1][i_vox], ind_nonzero[2][i_vox]
+        img_labeled_seg_corr.data[ix, iy, iz] = data_labeled_seg_dil[ix, iy, iz]
     # save new label file (overwrite)
     img_labeled_seg_corr.absolutepath = fname_labeled_seg_new
-    img_labeled_seg.change_orientation(native_or)
     img_labeled_seg_corr.save()
 
 
