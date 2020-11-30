@@ -1,12 +1,18 @@
 colored
 dipy
 futures
-h5py
-ivadomed==2.0.2
+# h5py is pinned to minor than 3 due to issues with Keras/TF
+# https://github.com/tensorflow/tensorflow/issues/44467
+h5py~=2.10.0
+ivadomed==2.4.0
 Keras==2.1.5
 matplotlib
 nibabel
 numpy
+# onnxruntime>=1.5.1 requires `brew install libomp` on macOS.
+# So, pin to 1.4.0 to avoid having to ask users to install libomp.
+# ivadomed==2.5.0 would also do this, but #3035 is preventing that.
+onnxruntime==1.4.0
 pandas
 psutil
 pyqt5==5.11.3

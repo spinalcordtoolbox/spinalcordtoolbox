@@ -1,0 +1,2 @@
+<?xml version="1.0"?>
+<XLaunch xmlns="http://www.straightrunning.com/XmingNotes" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.straightrunning.com/XmingNotes XLaunch.xsd" WindowMode="MultiWindow" ClientMode="StartProgram" Program="lxterminal" ClientStart="OpenSSH" PathToProtocol="C:\\Program Files\\Git\\usr\\bin\\" RemoteHost="192.168.99.100" RemoteUser="sct" ExtraSSH="-p 2222 -Y" Display="0" Clipboard="true"/>

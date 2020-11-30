@@ -11,7 +11,7 @@ import argparse
 
 from enum import Enum
 
-from .sys import printv, check_exe
+from .sys import check_exe, printv
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
                 if opacities[i]:
                     cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
     cmd += ' &'
-    # display
+
     if verbose:
         printv('\nDone! To view results, type:')
         printv(cmd + '\n', verbose=1, type='info')
@@ -284,7 +284,7 @@ def get_interpolation(program, interp):
             interp_program = ' -n BSpline[3]'
     # check if not assigned
     if interp_program == '':
-        printv('WARNING (' + os.path.basename(__file__) + '): interp_program not assigned. Using linear for ants_affine.', 1, 'warning')
+        logger.warning('%s: interp_program not assigned. Using linear for ants_affine.', os.path.basename(__file__))
         interp_program = ' -n Linear'
     # return
     return interp_program.strip().split()

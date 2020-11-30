@@ -1,0 +1,19 @@
+# Template labels
+# Keyword=IndivLabels (Please DO NOT change this line)
+# ID, name, file
+0, T1-weighted template, PAM50_t1.nii.gz
+1, T2-weighted template, PAM50_t2.nii.gz
+2, T2S-weighted template, PAM50_t2s.nii.gz
+3, spinal cord mask (binary), PAM50_cord.nii.gz
+4, white matter mask (probabilistic), PAM50_wm.nii.gz
+5, gray matter mask (probabilistic), PAM50_gm.nii.gz
+6, cerebrospinal fluid mask (binary), PAM50_csf.nii.gz
+7, spinal cord mask with discrete vertebral levels, PAM50_levels.nii.gz
+8, spinal cord mask with continuous vertebral levels, PAM50_levels_continuous.nii.gz
+9, point-wise vertebral body labels, PAM50_label_body.nii.gz
+10, point-wise intervertebral disc labels, PAM50_label_disc.nii.gz
+11, point-wise posterior intervertebral disc labels, PAM50_label_discPosterior.nii.gz
+12, spine mask (binary), PAM50_spine.nii.gz
+13, spinal cord centerline, PAM50_centerline.nii.gz
+14, point-wise spinal level labels, PAM50_label_spinal_levels.nii.gz
+

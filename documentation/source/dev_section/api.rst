@@ -22,9 +22,6 @@ Spinal Cord Segmentation
 deepseg
 +++++++
 
-.. automodule:: spinalcordtoolbox.deepseg.core
-   :members:
-
 .. automodule:: spinalcordtoolbox.deepseg.models
    :members:
 

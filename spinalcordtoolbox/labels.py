@@ -267,6 +267,34 @@ def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image
     return out
 
 
+def check_missing_label(img, ref):
+    """
+    Function that return the list of label that are present in ref and not in img.
+    This is useful to find label that are in img and not in the ref (first output) and
+    labels that are present in the ref and not in img (second output)
+    :param img: source image
+    :param ref: reference image
+    :return: two lists. The first one is the list of label present in the input and not in the ref image, the second one
+    gives the labels presents in the ref and not in the input.  
+    """
+    coordinates_input = img.getNonZeroCoordinates()
+    coordinates_ref = ref.getNonZeroCoordinates()
+
+    rounded_coord_ref_values = [np.round(c.value) for c in coordinates_ref]
+    rounded_coord_in_values = [np.round(c.value) for c in coordinates_input]
+
+    missing_labels_ref = [x for x in rounded_coord_in_values if x not in rounded_coord_ref_values]
+    missing_labels_inp = [x for x in rounded_coord_ref_values if x not in rounded_coord_in_values]
+
+    if missing_labels_ref:
+        logger.warning(f"Label mismatch: Labels {missing_labels_ref} present in input image but missing from reference image.")
+
+    if missing_labels_inp:
+        logger.warning(f"Label mismatch: Labels {missing_labels_inp} present in reference image but missing from input image.")
+
+    return missing_labels_ref, missing_labels_inp
+
+
 # FIXME [AJ]: this is slow on large images
 def compute_mean_squared_error(img: Image, ref: Image) -> float:
     """
@@ -278,24 +306,13 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
     """
     coordinates_input = img.getNonZeroCoordinates()
     coordinates_ref = ref.getNonZeroCoordinates()
-
-    # check if all the labels in both the images match
-    if len(coordinates_input) != len(coordinates_ref):
-        raise ValueError(f"Input and reference image don't have the same number of labels! {len(coordinates_input)} vs {len(coordinates_ref)}")
-
-    rounded_coord_ref_values = [np.round(c.value) for c in coordinates_ref]
-    rounded_coord_in_values = [np.round(c.value) for c in coordinates_input]
     result = 0.0
 
+    # This line will add warning in the log if there are missing label.
+    _, _ = check_missing_label(img, ref)
 
     for coord in coordinates_input:
         for coord_ref in coordinates_ref:
-            if np.round(coord.value) not in rounded_coord_in_values:
-                logger.warning(f"Missing input label {coord} in reference!")
-
-            if np.round(coord_ref.value) not in rounded_coord_ref_values:
-                logger.warning(f"Missing reference label {coord_ref} in reference!")
-
             if np.round(coord_ref.value) == np.round(coord.value):
                 result += (coord_ref.z - coord.z) ** 2
                 break

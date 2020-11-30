@@ -61,11 +61,14 @@ def main():
             opts, args = getopt.getopt(sys.argv[1:], 'hi:v:r:s:')
         except getopt.GetoptError:
             usage()
+            raise SystemExit(2)
         if not opts:
             usage()
+            raise SystemExit(2)
         for opt, arg in opts:
             if opt == '-h':
                 usage()
+                return
             elif opt in ('-i'):
                 fname_data = arg
             elif opt in ('-r'):
@@ -78,6 +81,7 @@ def main():
     # display usage if a mandatory argument is not provided
     if fname_data == '':
         usage()
+        raise SystemExit(2)
 
     # printv(arguments)
     printv('\nCheck parameters:')
@@ -180,9 +184,6 @@ def usage():
           '\n'
           'EXAMPLE\n'
           '  ' + os.path.basename(__file__) + ' -i segmentation.nii \n')
-
-    # exit program
-    sys.exit(2)
 
 
 # =======================================================================================================================

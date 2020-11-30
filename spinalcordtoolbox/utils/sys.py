@@ -80,6 +80,14 @@ def init_sct(log_level=1, update=False):
         # Display SCT version
         logger.info('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__))
 
+        # Display command (Only if called from CLI: check for .py in first arg)
+        # Use next(iter()) to not fail on empty list (vs. sys.argv[0])
+        if '.py' in next(iter(sys.argv), None):
+            script = os.path.basename(sys.argv[0]).strip(".py")
+            arguments = ' '.join(sys.argv[1:])
+            logger.info(f"{script} {arguments}\n"
+                        f"--\n")
+
 
 def add_elapsed_time_counter():
     class Timer():
@@ -272,7 +280,8 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
     else:
         cmdline = list2cmdline(cmd)
 
-    logger.debug(f"{cmdline} # in {cwd}")
+    if verbose:
+        printv("%s # in %s" % (cmdline, cwd), 1, 'code')
 
     shell = isinstance(cmd, str)
 

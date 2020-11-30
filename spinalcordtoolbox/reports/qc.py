@@ -21,8 +21,8 @@ from matplotlib.figure import Figure
 import matplotlib.colors as color
 
 from spinalcordtoolbox.image import Image
-from . import slice as qcslice
-from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline, __version__, printv, copy, extract_fname
+import spinalcordtoolbox.reports.slice as qcslice
+from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline, __version__, copy, extract_fname
 
 logger = logging.getLogger(__name__)
 
@@ -582,8 +582,8 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
             #  flip between two images).
             copyfile(path_img, qc_param.abs_overlay_img_path())
 
-    printv('Successfully generated the QC results in %s' % qc_param.qc_results)
-    printv('Use the following command to see the results in a browser:')
+    logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
+    logger.info('Use the following command to see the results in a browser:')
     try:
         from sys import platform as _platform
         if _platform == "linux" or _platform == "linux2":
@@ -593,14 +593,14 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
                 # if user runs SCT within the official Docker distribution, the variable below is defined. More info at:
                 # https://github.com/neuropoly/sct_docker/blob/master/sct_docker.py#L84
                 os.environ["DOCKER"]
-                printv('please go to "{}/" and double click on the "index.html" file'.format(path_qc), type='info')
+                logger.info('please go to "%s/" and double click on the "index.html" file', path_qc)
             except KeyError:
-                printv('xdg-open "{}/index.html"'.format(path_qc), type='info')
+                logger.info('xdg-open "%s/index.html"', path_qc)
 
         elif _platform == "darwin":
-            printv('open "{}/index.html"'.format(path_qc), type='info')
+            logger.info('open "%s/index.html"', path_qc)
         else:
-            printv('open file "{}/index.html"'.format(path_qc), type='info')
+            logger.info('open file "%s/index.html"', path_qc)
     except ImportError:
         print("WARNING! Platform undetectable.")
 
