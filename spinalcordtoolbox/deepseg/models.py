@@ -84,7 +84,14 @@ TASKS = {
          'models': ['mice_uqueensland_gm']},
     'seg_tumor_t2':
         {'description': 'Cord tumor segmentation on T2-weighted contrast.',
-         'models': ['findcord_tumor', 't2_tumor']}
+         'models': ['findcord_tumor', 't2_tumor']},
+    'find_disc_t2':
+        {'description': 'locate posterior poit of each disc on T2 straighten image',
+         'models': ["model_find_disc_t2"]},
+    'find_disc_t1':
+        {'description': 'locate posterior poit of each disc on T1 straighten image',
+         'models': ["model_find_disc_t1"]}
+
 }
 
 
