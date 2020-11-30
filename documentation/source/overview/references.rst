@@ -364,3 +364,6 @@ Applications
 -  `Mariano et al. Quantitative spinal cord MRI in MOG-antibody disease,
    neuromyelitis optica and multiple sclerosis. Brain, 2020
    <https://pubmed.ncbi.nlm.nih.gov/33206944/>`__
+-  `Fratini et al. Multiscale Imaging Approach for Studying the Central
+   Nervous System: Methodology and Perspective. Front Neurosci, 2020
+   <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7019007/>`__
