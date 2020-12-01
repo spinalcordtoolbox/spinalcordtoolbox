@@ -153,15 +153,6 @@ def get_parser():
         help="Output folder."
     )
     optional.add_argument(
-        '-denoise',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=0,
-        help="Apply denoising filter (non-local means adaptative denoising) to the data. Sometimes denoising is too "
-             "aggressive, so use with care."
-    )
-    optional.add_argument(
         '-laplacian',
         metavar=Metavar.int,
         type=int,
@@ -276,7 +267,6 @@ def main(args=None):
     verbose = int(arguments.v)
     init_sct(log_level=verbose, update=True)  # Update log level
     remove_temp_files = arguments.r
-    denoise = arguments.denoise
     laplacian = arguments.laplacian
 
     path_tmp = tmp_create(basename="label_vertebrae")
@@ -402,11 +392,6 @@ def main(args=None):
         printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
         printv('.. ' + str(init_disc), verbose)
-
-        # denoise data
-        if denoise:
-            printv('\nDenoise data...', verbose)
-            run_proc(['sct_maths', '-i', 'data_straightr.nii', '-denoise', 'h=0.05', '-o', 'data_straightr.nii'], verbose)
 
         # apply laplacian filtering
         if laplacian:
