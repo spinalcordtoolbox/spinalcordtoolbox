@@ -147,7 +147,7 @@ def main(argv):
     required_contrasts = deepseg.models.get_required_contrasts(args.task)
     if len(args.i) != len(required_contrasts):
         parser.error("{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
-                     .format(args.task, ', '.join(required_contrasts)))
+                     .format(len(args.i), args.task, ', '.join(required_contrasts)))
 
     # Check modality order
     if len(args.i) > 1 and args.c is None:
