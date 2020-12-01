@@ -1,7 +1,7 @@
 from pytest_console_scripts import script_runner
 import pytest
 import logging
-import sct_label_vertebrae
+import spinalcordtoolbox.scripts.sct_label_vertebrae as sct_label_vertebrae
 logger = logging.getLogger(__name__)
 
 
