@@ -24,8 +24,8 @@ from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, display_viewe
 from spinalcordtoolbox.utils.sys import init_sct, printv
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree
 
-import sct_maths
-import sct_apply_transfo
+from spinalcordtoolbox.scripts import sct_maths
+from spinalcordtoolbox.scripts import sct_apply_transfo
 
 
 class Param:
