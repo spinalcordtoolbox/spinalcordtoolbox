@@ -28,7 +28,7 @@ from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
     copy, extract_fname, rmtree
 
-import sct_straighten_spinalcord
+from spinalcordtoolbox.scripts import sct_straighten_spinalcord
 
 
 # PARAMETERS

@@ -26,9 +26,9 @@ from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.utils.sys import printv
 from spinalcordtoolbox.utils.fs import extract_fname, tmp_create, copy, rmtree
 
-import sct_create_mask
-import sct_register_multimodal
-import sct_apply_transfo
+from spinalcordtoolbox.scripts import sct_create_mask
+from spinalcordtoolbox.scripts import sct_register_multimodal
+from spinalcordtoolbox.scripts import sct_apply_transfo
 
 ########################################################################################################################
 #                                   CLASS SLICE

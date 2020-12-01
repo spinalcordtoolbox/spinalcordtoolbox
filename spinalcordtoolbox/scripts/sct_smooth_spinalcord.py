@@ -25,8 +25,8 @@ from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, cache_save, cache_signature, cache_valid, copy, \
     extract_fname, rmtree
 
-from sct_convert import convert
-import sct_maths
+from spinalcordtoolbox.scripts.sct_convert import convert
+from spinalcordtoolbox.scripts import sct_maths
 
 
 class Param:

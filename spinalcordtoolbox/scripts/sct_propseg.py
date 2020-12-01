@@ -28,8 +28,8 @@ from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, mv, co
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
 
-import sct_image
-from sct_convert import convert
+from spinalcordtoolbox.scripts import sct_image
+from spinalcordtoolbox.scripts.sct_convert import convert
 
 logger = logging.getLogger(__name__)
 
@@ -163,13 +163,19 @@ def get_parser():
             "(-centerline-binary) or a text file with coordinates in world referential (-centerline-coord).\n"
             "\n"
             "Cross-sectional areas along the spinal cord can be available (-cross). Several tips on segmentation "
-            "correction can be found on the 'Correction Tips' page of the documentation while advices on parameters "
-            "adjustments can be found on the 'Parameters' page.\n"
+            "correction can be found on the 'Correcting sct_propseg' page in the Tutorials section of the "
+            "documentation.\n"
             "\n"
             "If the segmentation fails at some location (e.g. due to poor contrast between spinal cord and CSF), edit "
             "your anatomical image (e.g. with fslview) and manually enhance the contrast by adding bright values "
             "around the spinal cord for T2-weighted images (dark values for T1-weighted). Then, launch the "
-            "segmentation again."
+            "segmentation again.\n"
+            "\n"
+            "References:\n"
+            "  - [De Leener B, Kadoury S, Cohen-Adad J. Robust, accurate and fast automatic segmentation of the spinal "
+            "cord. Neuroimage 98, 2014. pp 528-536. DOI: 10.1016/j.neuroimage.2014.04.051](https://pubmed.ncbi.nlm.nih.gov/24780696/)\n"
+            "  - [De Leener B, Cohen-Adad J, Kadoury S. Automatic segmentation of the spinal cord and spinal canal "
+            "coupled with vertebral labeling. IEEE Trans Med Imaging. 2015 Aug;34(8):1705-18.](https://pubmed.ncbi.nlm.nih.gov/26011879/)"
         ),
         formatter_class=SmartFormatter,
         add_help=None,

@@ -35,9 +35,9 @@ from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 
-import sct_maths
-import sct_apply_transfo
-from sct_image import split_data
+from spinalcordtoolbox.scripts import sct_maths
+from spinalcordtoolbox.scripts import sct_apply_transfo
+from spinalcordtoolbox.scripts.sct_image import split_data
 
 
 class Param:
@@ -80,8 +80,9 @@ def get_parser():
             "To register a subject to the template, try the default command:\n"
             "  sct_register_to_template -i data.nii.gz -s data_seg.nii.gz -l data_labels.nii.gz\n"
             "\n"
-            "If this default command does not produce satisfactory results, please refer to:\n"
-            "  https://sourceforge.net/p/spinalcordtoolbox/wiki/registration_tricks/\n"
+            "If this default command does not produce satisfactory results, the '-param' "
+            "argument should be tweaked according to the tips given here:\n"
+            "  https://spinalcordtoolbox.com/en/latest/user_section/command-line.html#sct-register-multimodal\n"
             "\n"
             "The default registration method brings the subject image to the template, which can be problematic with "
             "highly non-isotropic images as it would induce large interpolation errors during the straightening "

@@ -11,7 +11,7 @@ import argparse
 
 from enum import Enum
 
-from .sys import check_exe
+from .sys import check_exe, printv
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +19,14 @@ logger = logging.getLogger(__name__)
 def display_open(file):
     """Print the syntax to open a file based on the platform."""
     if sys.platform == 'linux':
-        logger.info('Done! To view results, type:')
-        logger.info('xdg-open %s', file)
+        printv('\nDone! To view results, type:')
+        printv('xdg-open ' + file + '\n', verbose=1, type='info')
     elif sys.platform == 'darwin':
-        logger.info('Done! To view results, type:')
-        logger.info('open %s', file)
+        printv('\nDone! To view results, type:')
+        printv('open ' + file + '\n', verbose=1, type='info')
     else:
-        logger.info('Done! To view results, open the following file:')
-        logger.info('%s', file)
+        printv('\nDone! To view results, open the following file:')
+        printv(file + '\n', verbose=1, type='info')
 
 
 def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
@@ -93,8 +93,9 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
                     cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
     cmd += ' &'
 
-    logger.info('Done! To view results, type:')
-    logger.info('%s', cmd)
+    if verbose:
+        printv('\nDone! To view results, type:')
+        printv(cmd + '\n', verbose=1, type='info')
 
 
 class ActionCreateFolder(argparse.Action):

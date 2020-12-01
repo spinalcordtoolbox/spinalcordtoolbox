@@ -348,3 +348,22 @@ Applications
    Leg Movement With Spinal Cord Epidural Stimulation in Individuals
    With Clinically Motor Complete Spinal Cord Injury. Front. Syst. Neurosci.,
    2020 <https://www.frontiersin.org/articles/10.3389/fnsys.2020.559313/full>`__
+-  `Labounek et al. HARDI-ZOOMit protocol improves specificity to
+   microstructural changes in presymptomatic myelopathy. Scientific
+   Reports, 2020  <https://www.nature.com/articles/s41598-020-70297-3>`__
+-  `Henmar et al. What are the gray and white matter volumes of the
+   human spinal cord? J Neurophysiol, 2020
+   <https://pubmed.ncbi.nlm.nih.gov/33085549/>`__
+-  `Burke et al. Injury Volume Extracted from MRI Predicts Neurologic
+   Outcome in Acute Spinal Cord Injury: A Prospective TRACK-SCI Pilot
+   Study. J Clin Neurosci, 2020
+   <https://www.sciencedirect.com/science/article/abs/pii/S0967586820316192>`__
+-  `Mossa-Basha et al. Segmented quantitative diffusion tensor imaging
+   evaluation of acute traumatic cervical spinal cord injury.
+   Br J Radiol, 2020 <https://pubmed.ncbi.nlm.nih.gov/33180553/>`__
+-  `Mariano et al. Quantitative spinal cord MRI in MOG-antibody disease,
+   neuromyelitis optica and multiple sclerosis. Brain, 2020
+   <https://pubmed.ncbi.nlm.nih.gov/33206944/>`__
+-  `Fratini et al. Multiscale Imaging Approach for Studying the Central
+   Nervous System: Methodology and Perspective. Front Neurosci, 2020
+   <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7019007/>`__

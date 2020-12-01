@@ -18,11 +18,9 @@
 #
 import os
 import sys
-# sys.path.insert(0, os.path.abspath('.'))
 
+# allows sphinx to call CLI scripts and capture --help output
 sct_root = os.path.abspath('../../')
-print("sct_root: {}".format(sct_root))
-
 sys.path.insert(0, sct_root)
 
 # -- General configuration ------------------------------------------------
@@ -106,7 +104,7 @@ html_logo = '../imgs/logo_sct.png'
 
 html_theme_options = {
     "collapse_navigation": True,
-    "display_version": False,
+    "display_version": True,
     "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
     "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
     "style_nav_header_background": "#FFFFFF",  # background of the logo (top left)

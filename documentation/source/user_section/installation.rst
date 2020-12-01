@@ -89,10 +89,10 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
    - Install  `Windows subsystem for linux and initialize it <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_.
 
      .. important::
-        
-        Make sure to install WSL1. SCT can work with WSL2, but the installation procedure described here refers to WSL1. 
+
+        Make sure to install WSL1. SCT can work with WSL2, but the installation procedure described here refers to WSL1.
         If you are comfortable with installing SCT with WSL2, please feel free to do so.
-        
+
         When asked what Linux versin to install, select the Ubuntu 18.04 LTS distro.
 
 #. Environment preparation
@@ -148,38 +148,38 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
 #. OPTIONAL: Install FSLeyes
 
-   FSLeyes is a viewer for NIfTI images. SCT features a plugin script to make SCT functions integrated into 
+   FSLeyes is a viewer for NIfTI images. SCT features a plugin script to make SCT functions integrated into
    FSLeyes' graphical user interface. To benefit from this functionality, you will need to install FSLeyes.
-   
+
    Install the C/C++ compilers required to use wxPython:
-   
+
    .. code-block:: sh
 
            sudo apt-get install build-essential
            sudo apt-get install libgtk2.0-dev libgtk-3-dev libwebkitgtk-dev libwebkitgtk-3.0-dev
            sudo apt-get install libjpeg-turbo8-dev libtiff5-dev libsdl1.2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libnotify-dev freeglut3-dev
-           
+
    Activate SCT's conda environment (to run each time you wish to use FSLeyes):
-   
+
    .. code-block:: sh
-   
+
            source ${SCT_DIR}/python/etc/profile.d/conda.sh
            conda activate venv_sct
 
    Install wxPython using conda:
-   
+
    .. code-block:: sh
 
            yes | conda install -c anaconda wxpython
-           
+
    Install FSLeyes using conda-forge:
-   
+
    .. code-block:: sh
 
            yes | conda install -c conda-forge fsleyes
 
    To use FSLeyes, run Xming from your computer before entering the fsleyes command.
-   
+
    .. important::
 
       Each time you wish to use FSLeyes, you first need to activate SCT's conda environment (see above).
@@ -197,8 +197,146 @@ In the context of SCT, it can be used:
   virtual machine
 - <your reason here>
 
-See https://github.com/neuropoly/sct_docker for more information. We also provide a
-`tutorial to install SCT via Docker <https://github.com/neuropoly/spinalcordtoolbox/wiki/testing#run-docker-image>`_.
+Basic Installation (No GUI)
+===========================
+
+First, `install Docker <https://docs.docker.com/install/>`_. Then, follow the examples below to create an OS-specific SCT installation.
+
+
+Ubuntu-based installation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: bash
+
+   # Start from the Terminal
+   docker pull ubuntu:16.04
+   # Launch interactive mode (command-line inside container)
+   docker run -it ubuntu
+   # Now, inside Docker container, install dependencies
+   apt-get update
+   yes | apt install git curl bzip2 libglib2.0-0 gcc
+   # Note for above: libglib2.0-0 is required by PyQt
+   # Install SCT
+   git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+   cd sct
+   yes | ./install_sct
+   export PATH="/sct/bin:${PATH}"
+   # Test SCT
+   sct_testing
+   # save the state of the container. Open a new Terminal and run:
+   docker ps -a  # list all containers
+   docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu16.04
+
+CentOS7-based installation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: bash
+
+   # Start from the Terminal
+   docker pull centos:centos7
+   # Launch interactive mode (command-line inside container)
+   docker run -it centos:centos7
+   # Now, inside Docker container, install dependencies
+   yum install -y which gcc git curl
+   # Install SCT
+   git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+   cd sct
+   yes | ./install_sct
+   export PATH="/sct/bin:${PATH}"
+   # Test SCT
+   sct_testing
+   # save the state of the container. Open a new Terminal and run:
+   docker ps -a  # list all containers
+   docker commit <CONTAINER_ID> <YOUR_NAME>/centos:centos7
+
+
+Using GUI Scripts (Optional)
+============================
+
+In order to run scripts with GUI you need to allow X11 redirection.
+First, save your Docker image:
+
+1. Open another Terminal
+2. List current docker images
+
+   .. code:: bash
+
+      docker ps -a
+
+3. Save container as new image
+
+   .. code:: bash
+
+      docker commit <CONTAINER_ID> <YOUR_NAME>/<DISTROS>:<VERSION>
+
+For macOS and Linux users
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Create an X11 server for handling display:
+
+1. Install XQuartz X11 server.
+2. Check ‘Allow connections from network clientsoption inXQuartz\`
+   settings.
+3. Quit and restart XQuartz.
+4. In XQuartz window xhost + 127.0.0.1
+5. In your other Terminal window, run:
+
+   -  On macOS:
+      ``docker run -e DISPLAY=host.docker.internal:0 -it <CONTAINER_ID>``
+   -  On Linux:
+      ``docker run -ti --rm -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <CONTAINER_ID>``
+
+For Windows users
+~~~~~~~~~~~~~~~~~
+
+#. Install Xming
+#. Connect to it using Xming/SSH:
+
+   - If you are using Docker Desktop, please download and run (double click) the following script: :download:`sct-win.xlaunch<../../../contrib/docker/sct-win.xlaunch>`.
+   - If you are using Docker Toolbox, please download and run the following script instead: :download:`sct-win_docker_toolbox.xlaunch<../../../contrib/docker/sct-win_docker_toolbox.xlaunch>`
+   - If this is the first time you have done this procedure, the system will ask you if you want to add the remote PC (the docker container) as trust pc, type yes. Then type the password to enter the docker container (by default sct).
+
+**Troubleshooting:**
+
+The graphic terminal emulator LXterminal should appear (if not check the task bar at the bottom of the screen), which allows copying and pasting commands, which makes it easier for users to use it. If there are no new open windows:
+
+- Please download and run the following file: :download:`Erase_fingerprint_docker.sh<../../../contrib/docker/Erase_fingerprint_docker.sh>`
+- Try again
+- If it is still not working:
+
+  - Open the file manager and go to C:/Users/Your_username
+  - In the searchbar type ‘.ssh’ - Open the found ‘.ssh’ folder.
+  - Open the ‘known_hosts’ file with a text editor
+  - Remove line starting with ``192.168.99.100`` or ``localhost``
+  - Try again
+
+To check that X forwarding is working well write ``fsleyes &`` in LXterminal and FSLeyes should open, depending on how fast your computer is FSLeyes may take a few seconds to open. If fsleyes is not working in the LXterminal:
+
+- Check if it's working on the docker machine by running ``fsleyes &`` in the docker quickstart terminal
+- If it works, run all the commands in the docker terminal.
+- If it throws the error ``Unable to access the X Display, is $DISPLAY set properly?`` follow these next steps:
+
+  - Run ``echo $DISPLAY`` in the LXterminal
+  - Copy the output address
+  - Run ``export DISPLAY=<previously obtained address>`` in the docker quickstart terminal
+  - Run ``fsleyes &`` (in the docker quickstart terminal) to check if it is working. A new Xming window with fsleyes should appear.
+
+Notes:
+
+- If after closing a program with graphical interface (i.e. FSLeyes) LXterminal does not raise the shell ($) prompt then press Ctrl + C to finish closing the program.
+- Docker exposes the forwarded SSH server at different endpoints depending on whether Docker Desktop or Docker Toolbox is installed.
+
+  - Docker Desktop:
+
+    .. code:: bash
+
+       ssh -Y -p 2222 sct@127.0.0.1
+
+  - Docker Toolbox:
+
+    .. code:: bash
+
+       ssh -Y -p 2222 sct@192.168.99.100
 
 
 Install with pip (experimental)

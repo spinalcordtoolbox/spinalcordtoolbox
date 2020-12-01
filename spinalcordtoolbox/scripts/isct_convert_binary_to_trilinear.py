@@ -23,6 +23,8 @@ import numpy as np
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, __data_dir__, printv
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, rmtree
+from spinalcordtoolbox.scripts.sct_convert import convert
+
 
 
 class Param:
@@ -61,11 +63,14 @@ def main():
             opts, args = getopt.getopt(sys.argv[1:], 'hi:v:r:s:')
         except getopt.GetoptError:
             usage()
+            raise SystemExit(2)
         if not opts:
             usage()
+            raise SystemExit(2)
         for opt, arg in opts:
             if opt == '-h':
                 usage()
+                return
             elif opt in ('-i'):
                 fname_data = arg
             elif opt in ('-r'):
@@ -78,6 +83,7 @@ def main():
     # display usage if a mandatory argument is not provided
     if fname_data == '':
         usage()
+        raise SystemExit(2)
 
     # printv(arguments)
     printv('\nCheck parameters:')
@@ -94,7 +100,6 @@ def main():
 
     path_tmp = tmp_create(basename="binary_to_trilinear")
 
-    from sct_convert import convert
     printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(fname_data, os.path.join(path_tmp, "data.nii"))
 
@@ -180,9 +185,6 @@ def usage():
           '\n'
           'EXAMPLE\n'
           '  ' + os.path.basename(__file__) + ' -i segmentation.nii \n')
-
-    # exit program
-    sys.exit(2)
 
 
 # =======================================================================================================================

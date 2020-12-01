@@ -3,19 +3,14 @@
 # pytest unit tests for transform stuff
 
 import sys
-import os
 
 import numpy as np
 import nibabel
 import nibabel.orientations
 
-from spinalcordtoolbox.utils import __sct_dir__
 import spinalcordtoolbox.image as msct_image
 
-# FIXME: don't import from scripts!
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
-import sct_image
-import sct_apply_transfo
+from spinalcordtoolbox.scripts import sct_apply_transfo
 
 
 def fake_image_custom(data):
