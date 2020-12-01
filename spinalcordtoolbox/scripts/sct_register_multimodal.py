@@ -45,7 +45,7 @@ from spinalcordtoolbox.utils.sys import init_sct, printv
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import check_dim
 
-from sct_register_to_template import register_wrapper
+from spinalcordtoolbox.scripts.sct_register_to_template import register_wrapper
 
 
 def get_parser(paramregmulti=None):

@@ -10,8 +10,12 @@
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
+import nibabel
+import numpy
 
 from spinalcordtoolbox.metadata import read_label_file
+from spinalcordtoolbox.scripts import sct_extract_metric
+
 
 def get_fractional_volume_per_label(atlas_folder, file_label, nb_RL_labels=15):
     """This function takes as input the path to the folder containing an atlas and the name of the file gathering the
@@ -20,10 +24,6 @@ def get_fractional_volume_per_label(atlas_folder, file_label, nb_RL_labels=15):
     - a list of the labels' ID,
     - a list of the labels' name,
     - a 1D-numpy array containing the fractional volume of each label in the same order as the previous lists."""
-
-    import sct_extract_metric
-    import nibabel
-    import numpy
 
     label_id, label_name, label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, _ = read_label_file(atlas_folder, file_label)
     nb_label = len(label_file)
@@ -57,10 +57,6 @@ def get_fractional_volume_per_label(atlas_folder, file_label, nb_RL_labels=15):
 def get_nb_voxel_in_WM(atlas_folder, file_label):
     """This function takes as input the path to the folder containing an atlas and the name of the file gathering the
     labels' file name of this atlas. It returns the number of voxels including at least one label."""
-
-    import sct_extract_metric
-    import nibabel
-    import numpy
 
     label_id, label_name, label_file, combined_labels_ids, combined_labels_names, combined_labels_id_groups, _ = read_label_file(atlas_folder, file_label)
     nb_label = len(label_file)

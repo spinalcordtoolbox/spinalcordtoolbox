@@ -29,11 +29,11 @@ from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolati
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
 
-# FIXME: don't import from scripts!
-import sct_dmri_separate_b0_and_dwi
-from sct_convert import convert
-from sct_image import split_data, concat_data, multicomponent_split
-import sct_apply_transfo
+# FIXME don't import from scripts in API
+from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
+from spinalcordtoolbox.scripts.sct_convert import convert
+from spinalcordtoolbox.scripts.sct_image import split_data, concat_data, multicomponent_split
+from spinalcordtoolbox.scripts import sct_apply_transfo
 
 
 class ParamMoco:
