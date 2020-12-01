@@ -176,9 +176,9 @@ def main(argv):
         # Order input images
         if args.c is not None:
             input_filenames = []
-            for required_contrasts in deepseg.models.MODELS[name_model]['contrasts']:
-                for provided_contrasts, input_filename in zip(args.c, args.i):
-                    if required_contrasts == provided_contrasts:
+            for required_contrast in deepseg.models.MODELS[name_model]['contrasts']:
+                for provided_contrast, input_filename in zip(args.c, args.i):
+                    if required_contrast == provided_contrast:
                         input_filenames.append(input_filename)
         else:
             input_filenames = args.i
