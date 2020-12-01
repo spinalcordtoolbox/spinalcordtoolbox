@@ -8,7 +8,7 @@ from spinalcordtoolbox import __sct_dir__
 from spinalcordtoolbox.utils.sys import sct_test_path
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
-import sct_run_batch
+from spinalcordtoolbox.scripts import sct_run_batch
 
 
 def test_config_with_args_warning():

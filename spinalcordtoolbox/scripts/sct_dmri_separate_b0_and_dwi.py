@@ -25,8 +25,8 @@ from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateF
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
 
-from sct_image import split_data
-from sct_convert import convert
+from spinalcordtoolbox.scripts.sct_image import split_data, concat_data
+from spinalcordtoolbox.scripts.sct_convert import convert
 
 
 class Param:
@@ -192,7 +192,6 @@ def main(args=None):
 
     # Merge b=0 images
     printv('\nMerge b=0...', verbose)
-    from sct_image import concat_data
     l = []
     for it in range(nb_b0):
         l.append(dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext)

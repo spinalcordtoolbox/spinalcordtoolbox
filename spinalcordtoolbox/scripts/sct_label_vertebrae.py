@@ -28,7 +28,7 @@ from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
     copy, extract_fname, rmtree
 
-import sct_straighten_spinalcord
+from spinalcordtoolbox.scripts import sct_straighten_spinalcord
 
 
 # PARAMETERS
@@ -151,15 +151,6 @@ def get_parser():
         action=ActionCreateFolder,
         default='',
         help="Output folder."
-    )
-    optional.add_argument(
-        '-denoise',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=0,
-        help="Apply denoising filter (non-local means adaptative denoising) to the data. Sometimes denoising is too "
-             "aggressive, so use with care."
     )
     optional.add_argument(
         '-laplacian',
@@ -411,11 +402,6 @@ def main(args=None):
         printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
         printv('.. ' + str(init_disc), verbose)
-
-        # denoise data
-        if denoise:
-            printv('\nDenoise data...', verbose)
-            run_proc(['sct_maths', '-i', 'data_straightr.nii', '-denoise', 'h=0.05', '-o', 'data_straightr.nii'], verbose)
 
         # apply laplacian filtering
         if laplacian:
