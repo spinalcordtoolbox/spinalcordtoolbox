@@ -151,7 +151,7 @@ def main(argv):
 
     # Check modality order
     if len(args.i) > 1 and args.c is None:
-        parser.error("You need to specify the order in which you put the contrasts in the input images with flag -c.")
+        parser.error("Please specify the order in which you put the contrasts in the input images (-i) with flag -c, e.g., -c t1 t2")
 
     # Get pipeline model names
     name_models = deepseg.models.TASKS[args.task]['models']
