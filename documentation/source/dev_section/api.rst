@@ -165,6 +165,15 @@ spinalcordtoolbox.resampling
 .. automodule:: spinalcordtoolbox.resampling
    :members:
 
+Image Labelling
+***************
+
+spinalcordtoolbox.labels
+========================
+
+.. automodule:: spinalcordtoolbox.labels
+   :members:
+
 
 Motion Correction
 *****************
@@ -203,8 +212,3 @@ spinalcordtoolbox.template
 .. automodule:: spinalcordtoolbox.template
    :members:
 
-spinalcordtoolbox.utils
-=======================
-
-.. automodule:: spinalcordtoolbox.utils
-   :members:
