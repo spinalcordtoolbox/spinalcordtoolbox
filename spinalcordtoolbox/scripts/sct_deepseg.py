@@ -196,7 +196,13 @@ def main(argv):
         # Save output seg
         for nii_seg, target in zip(nii_lst, target_lst):
             if 'o' in options and options['o'] is not None:
-                fname_seg = options['o'].replace(".nii.gz", target + ".nii.gz") if len(target_lst) > 1 else options['o']
+                # To support if the user adds the extension or not
+                extension = ".nii.gz" if ".nii.gz" in options['o'] else ".nii" if ".nii" in options['o'] else ""
+                if extension == "":
+                    fname_seg = options['o'] + target if len(target_lst) > 1 else options['o']
+                else:
+                    fname_seg = options['o'].replace(extension, target + extension) if len(target_lst) > 1 \
+                        else options['o']
             else:
                 fname_seg = ''.join([sct.image.splitext(input_filenames[0])[0], target + '.nii.gz'])
 
