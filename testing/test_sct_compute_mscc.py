@@ -13,7 +13,7 @@
 
 import numpy as np
 
-import sct_compute_mscc
+from spinalcordtoolbox.scripts import sct_compute_mscc
 
 def init(param_test):
     """

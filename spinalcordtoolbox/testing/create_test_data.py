@@ -13,10 +13,9 @@ import copy
 
 import nibabel as nib
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, concat_data
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.centerline.curve_fitting import bspline, polyfit_1d
-from sct_image import concat_data
 
 # TODO: retrieve os.environ['SCT_DEBUG']
 DEBUG = False  # Save img_sub

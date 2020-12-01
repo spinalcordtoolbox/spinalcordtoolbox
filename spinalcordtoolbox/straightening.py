@@ -15,13 +15,10 @@ import numpy as np
 from nibabel import Nifti1Image, save
 
 from spinalcordtoolbox.types import Centerline
-from spinalcordtoolbox.image import Image, spatial_crop, generate_output_file
+from spinalcordtoolbox.image import Image, spatial_crop, generate_output_file, pad_image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, copy, mv, extract_fname
-
-# FIXME: don't import from scripts!
-from sct_image import pad_image
 
 logger = logging.getLogger(__name__)
 

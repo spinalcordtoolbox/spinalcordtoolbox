@@ -6,9 +6,7 @@ import logging
 
 import pytest
 
-# FIXME should not use stuff from scripts. Ok for now
-from sct_register_to_template import Param, register
-
+from spinalcordtoolbox.scripts.sct_register_to_template import Param, register
 from spinalcordtoolbox.registration.register import *
 
 logger = logging.getLogger(__name__)
