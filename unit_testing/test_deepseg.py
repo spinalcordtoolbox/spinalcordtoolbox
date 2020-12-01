@@ -13,7 +13,7 @@ import spinalcordtoolbox as sct
 from spinalcordtoolbox.utils import sct_test_path
 import spinalcordtoolbox.deepseg.models
 
-import sct_deepseg
+from spinalcordtoolbox.scripts import sct_deepseg
 
 
 def test_install_model():

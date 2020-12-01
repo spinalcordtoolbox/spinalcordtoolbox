@@ -27,7 +27,7 @@ from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, get_interpola
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, copy
 
-import sct_image
+from spinalcordtoolbox.scripts import sct_image
 
 
 # PARSER

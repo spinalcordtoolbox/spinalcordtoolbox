@@ -12,7 +12,7 @@ import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.utils import sct_test_path
 from spinalcordtoolbox.types import Coordinate
-from test_image import fake_3dimage, fake_3dimage2
+from .test_image import fake_3dimage, fake_3dimage2
 
 logger = logging.getLogger(__name__)
 
@@ -139,9 +139,30 @@ def test_compute_mean_squared_error():
     for x, y, z, _ in src.getNonZeroCoordinates():
         if z < 5:
             ref.data[x, y, z+2] = src.data[x, y, z]
-
     mse = sct_labels.compute_mean_squared_error(src, ref)
     assert mse == 1.1547005383792515
+
+
+def test_compute_mse_label_warning(caplog):
+    src = fake_3dimage_sct()
+    ref = src.copy()
+    # Label 1500 is not in the reference image. The label present at [0,0,0] will be missing from the input image
+    # This will triggers the warning that we are looking for
+    src.data = np.where(src.data == ref.data[0, 0, 0], 1500, ref.data)
+
+    sct_labels.compute_mean_squared_error(src, ref)
+    # Cannot use f-string in assert, I needed to create a variable before
+    string_form_inp = f'Label mismatch: Labels [{src.data[0,0,0]}] present in input image but missing from reference image.'
+    string_form_ref = f'Label mismatch: Labels [{ref.data[0,0,0]}] present in reference image but missing from input image.'
+    assert string_form_inp in caplog.text
+    assert string_form_ref in caplog.text
+
+
+def test_compute_mse_no_label_warning(caplog):
+    src = fake_3dimage_sct()
+    ref = src.copy()
+    sct_labels.compute_mean_squared_error(src, ref)
+    assert 'Label mismatch' not in caplog.text
 
 
 @pytest.mark.skip(reason="Too long to run on large image!")
@@ -216,3 +237,16 @@ def test_remove_other_labels_from_image(test_image):
     diff = res.data == expected.data
 
     assert diff.all()
+
+
+def test_check_missing_label():
+    img = fake_3dimage_sct()
+    false_positive = img.copy()
+
+    # modifying the data to create one false negative and one false positive
+    # label 1500 is not in test_image originally, and label 111 is.
+    false_positive.data = np.where(false_positive.data == img.data[0, 0, 0], 1500, false_positive.data)
+    FP, FN = sct_labels.check_missing_label(false_positive, img)
+
+    assert int(FP[0]) == 1500
+    assert int(FN[0]) == img.data[0, 0, 0]

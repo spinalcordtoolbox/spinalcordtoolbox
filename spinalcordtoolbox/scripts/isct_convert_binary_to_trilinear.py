@@ -23,6 +23,8 @@ import numpy as np
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, __data_dir__, printv
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, rmtree
+from spinalcordtoolbox.scripts.sct_convert import convert
+
 
 
 class Param:
@@ -98,7 +100,6 @@ def main():
 
     path_tmp = tmp_create(basename="binary_to_trilinear")
 
-    from sct_convert import convert
     printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     convert(fname_data, os.path.join(path_tmp, "data.nii"))
 

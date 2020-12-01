@@ -24,6 +24,7 @@ import numpy as np
 from pandas import DataFrame
 
 from spinalcordtoolbox.utils import init_sct, run_proc, tmp_create, printv, rmtree, __sct_dir__
+from spinalcordtoolbox.scripts import sct_download_data
 
 # FIXME
 sys.path.append(os.path.join(__sct_dir__, 'testing'))
@@ -392,7 +393,6 @@ def downloaddata(param):
     None
     """
     printv('\nDownloading testing data...', param.verbose)
-    import sct_download_data
     sct_download_data.main(['-d', 'sct_testing_data'])
 
 
