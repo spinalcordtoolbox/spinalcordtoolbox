@@ -255,6 +255,8 @@ def main(args=None):
         fname_disc = None
     if arguments.initz is not None:
         initz = arguments.initz
+        if len(initz) != 2:
+            raise ValueError('--initz takes two arguments: position in superior-inferior direction, label value')
     if arguments.initcenter is not None:
         initcenter = arguments.initcenter
     # if user provided text file, parse and overwrite arguments
@@ -265,6 +267,8 @@ def main(args=None):
         for idx_arg, arg in enumerate(arg_initfile):
             if arg == '-initz':
                 initz = [int(x) for x in arg_initfile[idx_arg + 1].split(',')]
+                if len(initz) != 2:
+                    raise ValueError('--initz takes two arguments: position in superior-inferior direction, label value')
             if arg == '-initcenter':
                 initcenter = int(arg_initfile[idx_arg + 1])
     if arguments.initlabel is not None:
