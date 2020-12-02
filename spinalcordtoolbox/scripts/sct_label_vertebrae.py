@@ -279,7 +279,6 @@ def main(args=None):
     verbose = int(arguments.v)
     init_sct(log_level=verbose, update=True)  # Update log level
     remove_temp_files = arguments.r
-    denoise = arguments.denoise
     clean_labels = arguments.clean_labels
     laplacian = arguments.laplacian
 
