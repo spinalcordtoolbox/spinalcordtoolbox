@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 def flatten_sagittal(im_anat, im_centerline, verbose):
     """
     Flatten a 3D volume using the segmentation, such that the spinal cord is centered in the R-L medial plane.
+
     :param im_anat:
     :param im_centerline:
     :param verbose:
