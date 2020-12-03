@@ -24,6 +24,7 @@ MODELS = {
             "https://osf.io/v9hs8/download?version=5",
         ],
         "description": "Cord segmentation model on T2*-weighted contrast.",
+        "contrasts": ["t2star"],
         "default": True,
     },
     "mice_uqueensland_sc": {
@@ -32,6 +33,7 @@ MODELS = {
             "https://osf.io/nu3ma/download?version=6",
         ],
         "description": "Cord segmentation model on mouse MRI. Data from University of Queensland.",
+        "contrasts": ["t1"],
         "default": False,
     },
     "mice_uqueensland_gm": {
@@ -40,6 +42,7 @@ MODELS = {
             "https://osf.io/mfxwg/download?version=6",
         ],
         "description": "Gray matter segmentation model on mouse MRI. Data from University of Queensland.",
+        "contrasts": ["t1"],
         "default": False,
     },
     "t2_tumor": {
@@ -48,6 +51,7 @@ MODELS = {
             "https://osf.io/uwe7k/download?version=2",
         ],
         "description": "Cord tumor segmentation model, trained on T2-weighted contrast.",
+        "contrasts": ["t2"],
         "default": False,
     },
     "findcord_tumor": {
@@ -56,9 +60,11 @@ MODELS = {
             "https://osf.io/qj6d5/download?version=1",
         ],
         "description": "Cord localisation model, trained on T2-weighted images with tumor.",
+        "contrasts": ["t2"],
         "default": False,
     },
 }
+
 
 # List of task. The convention for task names is: action_(animal)_region_(contrast)
 # Regions could be: sc, gm, lesion, tumor
@@ -76,6 +82,20 @@ TASKS = {
         {'description': 'Cord tumor segmentation on T2-weighted contrast.',
          'models': ['findcord_tumor', 't2_tumor']}
 }
+
+
+def get_required_contrasts(task):
+    """
+    Get required contrasts according to models in tasks.
+
+    :return: list: List of required contrasts
+    """
+    contrasts_required = set()
+    for model in TASKS[task]['models']:
+        for contrast in MODELS[model]['contrasts']:
+            contrasts_required.add(contrast)
+
+    return list(contrasts_required)
 
 
 def folder(name_model):
@@ -135,8 +155,8 @@ def display_list_tasks():
     tasks = sct.deepseg.models.list_tasks()
     # Display beautiful output
     color = {True: 'green', False: 'red'}
-    print("{:<20s}{:<50s}MODELS".format("TASK", "DESCRIPTION"))
-    print("-" * 80)
+    print("{:<20s}{:<50s}{:<20s}MODELS".format("TASK", "DESCRIPTION", "INPUT CONTRASTS"))
+    print("-" * 120)
     for name_task, value in tasks.items():
         path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
         are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
@@ -147,7 +167,11 @@ def display_list_tasks():
         models_status = ', '.join([colored.stylize(model_name,
                                                    colored.fg(color[is_valid]))
                                    for model_name, is_valid in zip(value['models'], are_models_valid)])
-        print("{}{}{}".format(task_status, description_status, models_status))
+        input_contrasts = colored.stylize(str(', '.join(model_name for model_name in
+                                                        get_required_contrasts(name_task))).ljust(20),
+                                          colored.fg(color[all(are_models_valid)]))
+
+        print("{}{}{}{}".format(task_status, description_status, input_contrasts, models_status))
 
     print(
         '\nLegend: {} | {}\n'.format(

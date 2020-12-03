@@ -58,4 +58,4 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task,
     assert os.path.isfile(fname_out)
     # Compare with ground-truth segmentation
     assert np.all(nibabel.load(fname_out).get_fdata() ==
-                  nibabel.load(fname_seg_manual).get_fdata())
+                  nibabel.load(fname_seg_manual).get_fdata()[..., 0])

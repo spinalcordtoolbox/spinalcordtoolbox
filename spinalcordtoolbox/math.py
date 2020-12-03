@@ -137,6 +137,7 @@ def erode(data, size, shape, dim=None):
 def mutual_information(x, y, nbins=32, normalized=False):
     """
     Compute mutual information
+
     :param x: 1D numpy.array : flatten data from an image
     :param y: 1D numpy.array : flatten data from an image
     :param nbins: number of bins to compute the contingency matrix (only used if normalized=False)
@@ -154,6 +155,7 @@ def correlation(x, y, type='pearson'):
     """
     Compute pearson or spearman correlation coeff
     Pearson's R is parametric whereas Spearman's R is non parametric (less sensitive)
+
     :param x: 1D numpy.array : flatten data from an image
     :param y: 1D numpy.array : flatten data from an image
     :param type: str:  'pearson' or 'spearman': type of R correlation coeff to compute
@@ -190,6 +192,7 @@ def laplacian(data, sigmas):
 def compute_similarity(data1, data2, metric):
     '''
     Compute a similarity metric between two images data
+
     :param data1: numpy.array 3D data
     :param data2: numpy.array 3D data
     :param fname_out: file name of the output file. Output file should be either a text file ('.txt') or a pickle file ('.pkl', '.pklz' or '.pickle')
@@ -255,6 +258,7 @@ def binarize(data, bin_thr=0):
 def concatenate_along_4th_dimension(data1, data2):
     """
     Concatenate two data along 4th dimension.
+
     :param data1: 3d or 4d array
     :param data2: 3d or 4d array
     :return data_concat: concate(data1, data2)
@@ -268,8 +272,10 @@ def concatenate_along_4th_dimension(data1, data2):
 
 def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     """
-    data_in: nd_array to denoise
-    for more info about patch_radius and block radius, please refer to the dipy website: http://nipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
+    :param data_in: nd_array to denoise
+
+    .. note::
+        for more info about patch_radius and block radius, please refer to the dipy website: http://nipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
     """
 
     data_in = np.asarray(data_in)
