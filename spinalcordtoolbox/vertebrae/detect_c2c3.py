@@ -25,9 +25,7 @@ from scipy.ndimage.measurements import center_of_mass
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.utils import run_proc, TempFolder, __data_dir__
-
-# FIXME: don't import from scripts!
-from sct_flatten_sagittal import flatten_sagittal
+from spinalcordtoolbox.flattening import flatten_sagittal
 
 logger = logging.getLogger(__name__)
 

@@ -18,7 +18,7 @@ import numpy as np
 from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 
-from spinalcordtoolbox.image import Image, concat_data, add_suffix, change_orientation, concat_warp2d, split_img_data
+from spinalcordtoolbox.image import Image, concat_data, add_suffix, change_orientation, concat_warp2d, split_img_data, pad_image
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
@@ -403,51 +403,6 @@ def displacement_to_abs_fsl(disp_im, src, tgt = None):
     out_im = disp_im.copy()
     out_im.data = src_coords_mm
     return out_im
-
-def pad_image(im, pad_x_i=0, pad_x_f=0, pad_y_i=0, pad_y_f=0, pad_z_i=0, pad_z_f=0):
-
-    nx, ny, nz, nt, px, py, pz, pt = im.dim
-    pad_x_i, pad_x_f, pad_y_i, pad_y_f, pad_z_i, pad_z_f = int(pad_x_i), int(pad_x_f), int(pad_y_i), int(pad_y_f), int(pad_z_i), int(pad_z_f)
-
-    if len(im.data.shape) == 2:
-        new_shape = list(im.data.shape)
-        new_shape.append(1)
-        im.data = im.data.reshape(new_shape)
-
-    # initialize padded_data, with same type as im.data
-    padded_data = np.zeros((nx + pad_x_i + pad_x_f, ny + pad_y_i + pad_y_f, nz + pad_z_i + pad_z_f), dtype=im.data.dtype)
-
-    if pad_x_f == 0:
-        pad_x_f = None
-    elif pad_x_f > 0:
-        pad_x_f *= -1
-    if pad_y_f == 0:
-        pad_y_f = None
-    elif pad_y_f > 0:
-        pad_y_f *= -1
-    if pad_z_f == 0:
-        pad_z_f = None
-    elif pad_z_f > 0:
-        pad_z_f *= -1
-
-    padded_data[pad_x_i:pad_x_f, pad_y_i:pad_y_f, pad_z_i:pad_z_f] = im.data
-    im_out = im.copy()
-    # TODO: Do not copy the Image(), because the dim field and hdr.get_data_shape() will not be updated properly.
-    #   better to just create a new Image() from scratch.
-    im_out.data = padded_data  # done after the call of the function
-    im_out.absolutepath = add_suffix(im_out.absolutepath, "_pad")
-
-    # adapt the origin in the sform and qform matrix
-    new_origin = np.dot(im_out.hdr.get_qform(), [-pad_x_i, -pad_y_i, -pad_z_i, 1])
-
-    im_out.hdr.structarr['qoffset_x'] = new_origin[0]
-    im_out.hdr.structarr['qoffset_y'] = new_origin[1]
-    im_out.hdr.structarr['qoffset_z'] = new_origin[2]
-    im_out.hdr.structarr['srow_x'][-1] = new_origin[0]
-    im_out.hdr.structarr['srow_y'][-1] = new_origin[1]
-    im_out.hdr.structarr['srow_z'][-1] = new_origin[2]
-
-    return im_out
 
 
 def split_data(im_in, dim, squeeze_data=True):

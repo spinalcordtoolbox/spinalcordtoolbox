@@ -5,7 +5,7 @@ import pytest
 
 from spinalcordtoolbox.utils import sct_test_path
 
-import sct_compute_mtsat
+from spinalcordtoolbox.scripts import sct_compute_mtsat
 
 out_mstat = "out_mtsat.nii.gz"
 out_t1map = "out_t1map.nii.gz"

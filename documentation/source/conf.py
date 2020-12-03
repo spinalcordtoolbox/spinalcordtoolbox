@@ -18,11 +18,9 @@
 #
 import os
 import sys
-# sys.path.insert(0, os.path.abspath('.'))
 
+# allows sphinx to call CLI scripts and capture --help output
 sct_root = os.path.abspath('../../')
-print("sct_root: {}".format(sct_root))
-
 sys.path.insert(0, sct_root)
 
 # -- General configuration ------------------------------------------------
