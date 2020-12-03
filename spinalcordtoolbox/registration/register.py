@@ -132,9 +132,6 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
     list_fname = [src, dest]
     if fname_mask:
         list_fname.append(fname_mask)
-        mask_options = ['-x', fname_mask]
-    else:
-        mask_options = []
 
     zmin_global, zmax_global = 0, 99999  # this is assuming that typical image has less slice than 99999
 
@@ -151,6 +148,12 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
     image.spatial_crop(image.Image(src), dict(((2, (zmin_global, zmax_global)),))).save(src_crop)
     dest_crop = image.add_suffix(dest, '_crop')
     image.spatial_crop(image.Image(dest), dict(((2, (zmin_global, zmax_global)),))).save(dest_crop)
+    if fname_mask:
+        mask_crop = image.add_suffix(fname_mask, '_crop')
+        image.spatial_crop(image.Image(fname_mask), dict(((2, (zmin_global, zmax_global)),))).save(mask_crop)
+        mask_options = ['-x', mask_crop]
+    else:
+        mask_options = []
 
     # update variables
     src = src_crop
