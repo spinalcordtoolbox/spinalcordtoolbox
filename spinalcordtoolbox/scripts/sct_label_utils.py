@@ -27,7 +27,7 @@ import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, printv
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, printv,parse_num_list
 from spinalcordtoolbox.utils.shell import display_viewer_syntax
 
 
@@ -104,7 +104,6 @@ def get_parser():
     func_group.add_argument(
         '-create-viewer',
         metavar=Metavar.list,
-        type=list_type(',', int),
         help="Manually label from a GUI a list of labels IDs, separated with ','. Example: 2,3,4,5"
     )
 
@@ -293,9 +292,9 @@ def main(args=None):
         msg = "" if arguments.msg is None else f"{arguments.msg}\n"
         if arguments.ilabel is not None:
             input_labels_img = Image(arguments.ilabel)
-            out = launch_manual_label_gui(img, input_labels_img, arguments.create_viewer, msg)
+            out = launch_manual_label_gui(img, input_labels_img, parse_num_list(arguments.create_viewer), msg)
         else:
-            out = launch_sagittal_viewer(img, arguments.create_viewer, msg)
+            out = launch_sagittal_viewer(img, parse_num_list(arguments.create_viewer), msg)
 
     printv("Generating output files...")
     out.save(path=output_fname, dtype=dtype)
