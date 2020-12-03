@@ -165,6 +165,24 @@ spinalcordtoolbox.resampling
 .. automodule:: spinalcordtoolbox.resampling
    :members:
 
+Image Labelling
+***************
+
+spinalcordtoolbox.labels
+========================
+
+.. automodule:: spinalcordtoolbox.labels
+   :members:
+
+Spinal Cord Flattening
+**********************
+
+spinalcordtoolbox.flattening
+============================
+
+.. automodule:: spinalcordtoolbox.flattening
+   :members:
+
 
 Motion Correction
 *****************
@@ -203,8 +221,3 @@ spinalcordtoolbox.template
 .. automodule:: spinalcordtoolbox.template
    :members:
 
-spinalcordtoolbox.utils
-=======================
-
-.. automodule:: spinalcordtoolbox.utils
-   :members:
