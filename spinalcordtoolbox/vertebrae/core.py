@@ -222,7 +222,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             direction = 'inferior'
             current_disc = init_disc[1] + 1
             current_z = init_disc[0] - list_distance[list_disc_value_template.index(current_disc)]
-
         # if current_z is lower than searching zone, stop searching
         if current_z <= 0:
             search_next_disc = False
