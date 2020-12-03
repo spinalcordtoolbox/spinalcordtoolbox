@@ -105,7 +105,7 @@ def get_parser():
         '-create-viewer',
         metavar=Metavar.list,
         help="Manually label from a GUI a list of labels IDs. Provide a comma-separated list"
-             "containing individual values and/or intervals. Example: '-create-viewer 1:4,6,8'
+             "containing individual values and/or intervals. Example: '-create-viewer 1:4,6,8' "
              "will allow you to add labels [1,2,3,4,6,8] using the GUI."
     )
 
