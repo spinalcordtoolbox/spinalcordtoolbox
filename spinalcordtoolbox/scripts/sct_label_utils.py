@@ -104,7 +104,8 @@ def get_parser():
     func_group.add_argument(
         '-create-viewer',
         metavar=Metavar.list,
-        help="Manually label from a GUI a list of labels IDs, separated with ','. Example: 2,3,4,5"
+        help="Manually label from a GUI a list of labels IDs. List of lables car either be a slice (e.g, 2:5)"
+             "or separated by ',' (e.g, 2,3,4,5)"
     )
 
     func_group.add_argument(
