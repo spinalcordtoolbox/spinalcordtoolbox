@@ -75,7 +75,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help='Output filename. Example: spinal_seg.nii.gz '),
+        help='Output filename. Example: pmj.nii.gz '),
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
