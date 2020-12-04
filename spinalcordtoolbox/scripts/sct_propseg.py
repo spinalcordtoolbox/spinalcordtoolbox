@@ -211,6 +211,10 @@ def get_parser():
         help="Output folder."
     )
     optional.add_argument(
+        "-o",
+        metavar=Metavar.file,
+        help='Output filename. Example: spinal_seg.nii.gz '),
+    optional.add_argument(
         '-down',
         metavar=Metavar.int,
         type=int,
@@ -447,6 +451,11 @@ def propseg(img_input, options_dict):
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
 
+    if arguments.o is not None:
+        fname_out = arguments.o
+    else:
+        fname_out = os.path.basename(add_suffix(fname_data, "_seg"))
+
     if arguments.down is not None:
         cmd += ["-down", str(arguments.down)]
     if arguments.up is not None:
@@ -620,7 +629,7 @@ def propseg(img_input, options_dict):
         sys.exit(1)
 
     # build output filename
-    fname_seg = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_seg")))
+    fname_seg = os.path.join(folder_output,fname_out)
     fname_centerline = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_centerline")))
     # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
     if rescale_header is not 1:
