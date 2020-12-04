@@ -96,7 +96,7 @@ def get_parser():
         default=os.getcwd())
     optional.add_argument(
         "-o",
-        metavar=Metavar.str,
+        metavar=Metavar.file,
         help='Output filename. Example: spinal_seg.nii.gz '),
     optional.add_argument(
         "-r",
