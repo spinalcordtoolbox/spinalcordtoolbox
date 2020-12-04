@@ -95,6 +95,10 @@ def get_parser():
         action=ActionCreateFolder,
         default=os.getcwd())
     optional.add_argument(
+        "-o",
+        metavar=Metavar.str,
+        help='Output filename. Example: spinal_seg.nii.gz '),
+    optional.add_argument(
         "-r",
         type=int,
         help="Remove temporary files.",
@@ -165,6 +169,11 @@ def main():
     else:
         manual_centerline_fname = None
 
+    if args.o is not None:
+        fname_out = args.o
+    else:
+        fname_out = extract_fname(fname_image)[1] + '_seg' + extract_fname(fname_image)[2]
+
     threshold = args.thr
     if threshold is not None:
         if threshold > 1.0 or (threshold < 0.0 and threshold != -1.0):
@@ -192,8 +201,7 @@ def main():
                                      threshold_seg=threshold, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # Save segmentation
-    fname_seg = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_seg' +
-                                             extract_fname(fname_image)[2]))
+    fname_seg = os.path.abspath(os.path.join(output_folder, fname_out))
     im_seg.save(fname_seg)
 
     # Generate QC report
