@@ -172,7 +172,8 @@ def main():
     if args.o is not None:
         fname_out = args.o
     else:
-        fname_out = extract_fname(fname_image)[1] + '_seg' + extract_fname(fname_image)[2]
+        path, file_name, ext = extract_fname(fname_image)
+        fname_out = file_name + '_seg' + ext
 
     threshold = args.thr
     if threshold is not None:
