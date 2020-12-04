@@ -102,7 +102,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help='Output filename. Example: smooth_sc.nii.gz '),
+        help='Output filename. Example: smooth_sc.nii '),
     optional.add_argument(
         '-r',
         choices=[0, 1],
@@ -140,7 +140,7 @@ def main(args=None):
     if arguments.o is not None:
         fname_out = arguments.o
     else:
-        fname_out = extract_fname(fname_anat)[1] + '_smooth.nii.gz'
+        fname_out = extract_fname(fname_anat)[1] + '_smooth.nii'
     init_sct(log_level=verbose, update=True)  # Update log level
 
     # Display arguments
