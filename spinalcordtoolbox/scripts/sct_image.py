@@ -84,6 +84,11 @@ def get_parser():
         help='Keep specific volumes from a 4d volume (remove others). Separate with ",". Example: "1,2,3,11"',
         required=False)
     image.add_argument(
+        '-header',
+        action="store_true",
+        help="display the header of the image"
+    ),
+    image.add_argument(
         '-type',
         help='Change file type',
         required = False,
@@ -304,6 +309,10 @@ def main(args=None):
         if len(spaces) < 2:
             spaces.append(None)
         im_out = [ displacement_to_abs_fsl(Image(fname_in[0]), spaces[0], spaces[1]) ]
+    elif arguments.header:
+        image = Image(fname_in[0])
+        printv(image.hdr)
+        return
 
     else:
         im_out = None
