@@ -539,7 +539,7 @@ else
   print info "Using requirements.txt (git installation)"
   export REQUIREMENTS_FILE="requirements.txt"
 fi
-pip install -r REQUIREMENTS_FILE &&
+pip install -r $REQUIREMENTS_FILE &&
   # `tensorflow-tensorboard` is installed by `tensorflow==1.5.0` but is not needed,
   # and conflicts with the other installation of `tensorboard`. So, we uninstall here.
   # This is hacky, and should be removed as soon as we stop using `tensorflow==1.5.0`.
