@@ -533,16 +533,18 @@ print info "Installing Python dependencies..."
 # Check if a frozen version of the requirements exist (for release only)
 if [[ -f "requirements-freeze.txt" ]]; then
   print info "Using requirements-freeze.txt (release installation)"
-  pip install -r requirements-freeze.txt
+  export REQUIREMENTS_FILE="requirements-freeze.txt"
 else
   # Not a package
   print info "Using requirements.txt (git installation)"
-  pip install -r requirements.txt
-  yes | pip uninstall tensorflow-tensorboard
-  yes | pip uninstall tensorboard
-  pip install tensorboard
-
+  export REQUIREMENTS_FILE="requirements.txt"
 fi
+pip install -r REQUIREMENTS_FILE &&
+  # `tensorflow-tensorboard` is installed by `tensorflow==1.5.0` but is not needed,
+  # and conflicts with the other installation of `tensorboard`. So, we uninstall here.
+  # This is hacky, and should be removed as soon as we stop using `tensorflow==1.5.0`.
+  # See https://github.com/neuropoly/spinalcordtoolbox/issues/3035 for more info.
+  yes | pip uninstall tensorflow-tensorboard
 if [[ $? != 0 ]]; then
   die "Failed running pip install: $?"
 fi
