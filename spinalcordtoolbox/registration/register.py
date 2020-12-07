@@ -132,7 +132,20 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
     list_fname = [src, dest]
     if fname_mask:
         list_fname.append(fname_mask)
-        mask_options = ['-x', fname_mask]
+        # Check if this mask is soft (i.e. non-binary, such as a Gaussian mask)
+        mask = image.Image(fname_mask)
+        if not np.array_equal(mask.data, mask.data.astype(bool)):
+            # If it is, multiply the target by the soft mask and do not pass
+            # mask options to register() (this is a workaround for ANTS
+            # not supporting non-binary masks).
+            mask_options = []
+            im = image.Image(dest)
+            im_masked = im.copy()
+            im_masked.data = im.data * mask.data
+            im_masked.save()
+        else:
+            # If not, pass it to register() like normal
+            mask_options = ['-x', fname_mask]
     else:
         mask_options = []
 
