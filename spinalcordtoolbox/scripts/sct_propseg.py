@@ -630,7 +630,7 @@ def propseg(img_input, options_dict):
         sys.exit(1)
 
     # build output filename
-    fname_seg = os.path.join(folder_output,fname_out)
+    fname_seg = os.path.join(folder_output, fname_out)
     fname_centerline = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_centerline")))
     # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
     if rescale_header is not 1:
