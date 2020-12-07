@@ -15,8 +15,7 @@ def test_sct_detect_pmj_backwards_compat(script_runner):
     assert ret.success
     assert ret.stderr == ''
 
-def test_sct_detect_pmj_o_flag():
-    command = 'sct_detect_pmj -i sct_testing_data/template/template//PAM50_small_t2.nii.gz -igt sct_testing_data/template/template/PAM50_small_t2_pmj_manual.nii.gz  -c t2 -o test_pmj.nii.gz'
+def test_sct_detect_pmj_o_flag(tmp_path):
+    command = 'sct_detect_pmj -i sct_testing_data/template/template//PAM50_small_t2.nii.gz -igt sct_testing_data/template/template/PAM50_small_t2_pmj_manual.nii.gz  -c t2 -o' + os.path.join(tmp_path, 'test_pmj.nii.gz')
     subprocess.check_output(command, shell=True)
-    assert os.path.isfile('test_pmj.nii.gz')
-    os.remove('test_pmj.nii.gz')
+    assert os.path.isfile(os.path.join(tmp_path, 'test_pmj.nii.gz'))
