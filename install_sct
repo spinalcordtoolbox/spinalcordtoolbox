@@ -544,7 +544,9 @@ pip install -r $REQUIREMENTS_FILE &&
   # and conflicts with the other installation of `tensorboard`. So, we uninstall here.
   # This is hacky, and should be removed as soon as we stop using `tensorflow==1.5.0`.
   # See https://github.com/neuropoly/spinalcordtoolbox/issues/3035 for more info.
-  yes | pip uninstall tensorflow-tensorboard
+  yes | pip uninstall tensorflow-tensorboard &&
+  yes | pip uninstall tensorboard &&
+  pip install tensorboard
 if [[ $? != 0 ]]; then
   die "Failed running pip install: $?"
 fi
