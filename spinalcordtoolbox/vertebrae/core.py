@@ -514,6 +514,7 @@ def label_discs(fname_seg, list_disc_z, list_disc_value, verbose=1):
     init_orientation = seg.orientation
     seg.change_orientation("RPI")
     disc_data = np.zeros_like(seg.data)
+    nx, ny, nz = seg.data.shape
 
     for i in range(len(list_disc_z)):
         if list_disc_z[i] < nz:
