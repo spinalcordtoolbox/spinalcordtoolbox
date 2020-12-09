@@ -76,6 +76,7 @@ def get_parser():
     misc.add_argument(
         "-thr",
         type=float,
+        dest='binarize_prediction',
         help="Binarize segmentation with specified threshold. Set to 0 for no thresholding (i.e., soft segmentation). "
              "Default value is model-specific and was set during optimization "
              "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
@@ -89,21 +90,22 @@ def get_parser():
         default=1)
     misc.add_argument(
         "-largest",
+        dest='keep_largest',
         type=int,
         help="Keep the largest connected-objects from the output segmentation. Specify the number of objects to keep."
              "To keep all objects, set to 0",
-        default=0)
+        default=None)
     misc.add_argument(
         "-fill-holes",
         type=int,
         help="Fill small holes in the segmentation.",
         choices=(0, 1),
-        default=0)
+        default=None)
     misc.add_argument(
         "-remove-small",
         type=str,
         help="Minimal object size to keep with unit (mm3 or vox). Example: 1mm3, 5vox.",
-        default='0vox')
+        default=None)
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
@@ -146,12 +148,15 @@ def main(argv):
     # Check if all input images are provided
     required_contrasts = deepseg.models.get_required_contrasts(args.task)
     if len(args.i) != len(required_contrasts):
-        parser.error("{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
-                     .format(len(args.i), args.task, ', '.join(required_contrasts)))
+        parser.error(
+            "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
+            .format(len(args.i), args.task, ', '.join(required_contrasts)))
 
     # Check modality order
     if len(args.i) > 1 and args.c is None:
-        parser.error("Please specify the order in which you put the contrasts in the input images (-i) with flag -c, e.g., -c t1 t2")
+        parser.error(
+            "Please specify the order in which you put the contrasts in the input images (-i) with flag -c, e.g.,"
+            " -c t1 t2")
 
     # Get pipeline model names
     name_models = deepseg.models.TASKS[args.task]['models']
