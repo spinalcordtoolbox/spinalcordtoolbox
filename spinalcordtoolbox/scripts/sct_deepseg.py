@@ -81,7 +81,7 @@ def get_parser():
              "Default value is model-specific and was set during optimization "
              "(more info at https://github.com/sct-pipeline/deepseg-threshold).",
         metavar=Metavar.float,
-        default=0.9)
+        default=None)
     misc.add_argument(
         "-r",
         type=int,
