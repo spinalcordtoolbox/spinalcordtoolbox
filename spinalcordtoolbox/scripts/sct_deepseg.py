@@ -104,7 +104,10 @@ def get_parser():
     misc.add_argument(
         "-remove-small",
         type=str,
-        help="Minimal object size to keep with unit (mm3 or vox). Example: 1mm3, 5vox.",
+        nargs="+",
+        help="Minimal object size to keep with unit (mm3 or vox). A single value can be provided or one value per "
+             "prediction class. Single value example: 1mm3, 5vox. Multiple values example: 10 20 10vox (remove objects "
+             "smaller than 10 voxels for class 1 and 3, and smaller than 20 voxels for class 2).",
         default=None)
 
     misc = parser.add_argument_group('\nMISC')
