@@ -3,7 +3,9 @@ import pytest
 import logging
 import spinalcordtoolbox.scripts.sct_label_vertebrae as sct_label_vertebrae
 logger = logging.getLogger(__name__)
-
+import os
+import nibabel as nib
+from spinalcordtoolbox.image import Image, compute_dice
 
 @pytest.mark.script_launch_mode('subprocess')
 def test_sct_label_vertebrae_backwards_compat(script_runner):
@@ -27,8 +29,27 @@ def test_sct_label_vertebrae_high_value_warning(caplog, tmp_path):
 
 
 def test_sct_label_vertebrae_clean_labels(tmp_path):
-    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,19 -clean-labels 1 -ofolder tmp_path'
+    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,19 -clean-labels 1 -ofolder ' + str(os.path.join(str(tmp_path), 'clean'))
     sct_label_vertebrae.main(command.split())
+    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,19 -ofolder ' + str(os.path.join(str(tmp_path), 'no_clean'))
+    sct_label_vertebrae.main(command.split())
+    image_clean = Image(os.path.join(str(tmp_path), 'clean', 't2_seg-manual_labeled.nii.gz'))
+    image_no_clean = Image(os.path.join(str(tmp_path), 'no_clean', 't2_seg-manual_labeled.nii.gz'))
+    image_seg = Image(os.path.join('sct_testing_data', 't2', 't2_seg-manual.nii.gz'))
+    # binarization (because label are between 3 and 6)
+    image_clean.data = image_clean.data > 0.5
+    image_no_clean.data = image_no_clean.data > 0.5
+    dice_clean = compute_dice(image_clean, image_seg)
+    dice_no_clean = compute_dice(image_no_clean, image_seg)
+    # The cleaned version should be closer to the segmentation
+    assert dice_clean >= dice_no_clean
+
+
+
+
+
+
+
 
 
 
