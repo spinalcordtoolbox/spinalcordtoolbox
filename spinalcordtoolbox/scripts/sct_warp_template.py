@@ -18,7 +18,7 @@ import argparse
 import spinalcordtoolbox.metadata
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import copy
 
 
@@ -42,7 +42,8 @@ class Param:
 
 
 class WarpTemplate:
-    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose):
+    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
+                 folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn, verbose):
 
         # Initialization
         self.fname_src = fname_src
@@ -51,9 +52,11 @@ class WarpTemplate:
         self.warp_spinal_levels = warp_spinal_levels
         self.folder_out = folder_out
         self.path_template = path_template
-        self.folder_template = param.folder_template
-        self.folder_atlas = param.folder_atlas
-        self.folder_spinal_levels = param.folder_spinal_levels
+        self.folder_template = folder_template
+        self.folder_atlas = folder_atlas
+        self.folder_spinal_levels = folder_spinal_levels
+        self.file_info_label = file_info_label
+        self.list_labels_nn = list_labels_nn
         self.verbose = verbose
 
         # printv(arguments)
@@ -70,20 +73,23 @@ class WarpTemplate:
 
         # Warp template objects
         printv('\nWARP TEMPLATE:', self.verbose)
-        warp_label(self.path_template, self.folder_template, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
+        warp_label(self.path_template, self.folder_template, self.file_info_label, self.fname_src,
+                   self.fname_transfo, self.folder_out, self.list_labels_nn, self.verbose)
 
         # Warp atlas
         if self.warp_atlas == 1:
             printv('\nWARP ATLAS OF WHITE MATTER TRACTS:', self.verbose)
-            warp_label(self.path_template, self.folder_atlas, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
+            warp_label(self.path_template, self.folder_atlas, self.file_info_label, self.fname_src,
+                       self.fname_transfo, self.folder_out, self.list_labels_nn, self.verbose)
 
         # Warp spinal levels
         if self.warp_spinal_levels == 1:
             printv('\nWARP SPINAL LEVELS:', self.verbose)
-            warp_label(self.path_template, self.folder_spinal_levels, param.file_info_label, self.fname_src, self.fname_transfo, self.folder_out)
+            warp_label(self.path_template, self.folder_spinal_levels, self.file_info_label, self.fname_src,
+                       self.fname_transfo, self.folder_out, self.list_labels_nn, self.verbose)
 
 
-def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out):
+def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, path_out, list_labels_nn, verbose):
     """
     Warp label files according to info_label.txt file
     :param path_label:
@@ -92,6 +98,8 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
     :param fname_src:
     :param fname_transfo:
     :param path_out:
+    :param list_labels_nn:
+    :param verbose:
     :return:
     """
     try:
@@ -115,20 +123,20 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
                       fname_src,
                       fname_transfo,
                       os.path.join(path_out, folder_label, template_label_file[i]),
-                      get_interp(template_label_file[i])),
+                      get_interp(template_label_file[i], list_labels_nn)),
                      is_sct_binary=True,
-                     verbose=param.verbose)
+                     verbose=verbose)
         # Copy list.txt
-        copy(os.path.join(path_label, folder_label, param.file_info_label), os.path.join(path_out, folder_label))
+        copy(os.path.join(path_label, folder_label, file_label), os.path.join(path_out, folder_label))
 
 
 # Get interpolation method
 # ==========================================================================================
-def get_interp(file_label):
+def get_interp(file_label, list_labels_nn):
     # default interp
     interp = 'Linear'
     # NN interp
-    if any(substring in file_label for substring in param.list_labels_nn):
+    if any(substring in file_label for substring in list_labels_nn):
         interp = 'NearestNeighbor'
     # output
     return interp
@@ -224,11 +232,13 @@ def get_parser():
     return parser
 
 
-def main(args=None):
-
+def main(argv=None):
     parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    param = Param()
 
     fname_src = arguments.d
     fname_transfo = arguments.w
@@ -236,14 +246,18 @@ def main(args=None):
     warp_spinal_levels = arguments.s
     folder_out = arguments.ofolder
     path_template = arguments.t
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
+    folder_template = param.folder_template
+    folder_atlas = param.folder_atlas
+    folder_spinal_levels = param.folder_spinal_levels
+    file_info_label = param.file_info_label
+    list_labels_nn = param.list_labels_nn
 
     # call main function
-    w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template, verbose)
+    w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
+                     folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn, verbose)
 
     path_template = os.path.join(w.folder_out, w.folder_template)
 
@@ -277,5 +291,5 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    param = Param()
-    main()
+    main(sys.argv[1:])
+

@@ -29,7 +29,7 @@ from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, parse_num_list, display_open
-from spinalcordtoolbox.utils.sys import init_sct
+from spinalcordtoolbox.utils.sys import init_sct, set_global_loglevel
 from spinalcordtoolbox.utils.fs import get_absolute_path
 
 
@@ -264,12 +264,11 @@ def _make_figure(metric, fit_results):
     return fname_img
 
 
-def main(args=None):
+def main(argv=None):
     parser = get_parser()
-    if args:
-        arguments = parser.parse_args(args)
-    else:
-        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # Initialization
     slices = ''
@@ -311,9 +310,6 @@ def main(args=None):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
-
     # update fields
     metrics_agg = {}
     if not file_out:
@@ -350,5 +346,4 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    # call main function
     main(sys.argv[1:])

@@ -20,7 +20,7 @@ from nibabel.processing import resample_from_to
 
 from spinalcordtoolbox.image import Image, concat_data, add_suffix, change_orientation, concat_warp2d, split_img_data, pad_image
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
 
@@ -158,25 +158,23 @@ def get_parser():
     return parser
 
 
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     # initializations
     output_type = None
     dim_list = ['x', 'y', 'z', 't']
 
-    # Get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
-    parser = get_parser()
-    arguments = parser.parse_args(args=args)
     fname_in = arguments.i
     n_in = len(fname_in)
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     if arguments.o is not None:
         fname_out = arguments.o
@@ -533,4 +531,5 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

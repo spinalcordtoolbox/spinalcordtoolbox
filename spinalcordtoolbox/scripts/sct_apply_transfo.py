@@ -24,7 +24,7 @@ from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import cubic_to_point
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, get_interpolation, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, copy
 
 from spinalcordtoolbox.scripts import sct_image
@@ -336,25 +336,16 @@ class Transform:
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
     """
     Entry point for sct_apply_transfo
-    :param args: list of input arguments. For parameters -w and -winv, args list should include a nested list for every
-    item. Example: args=['-i', 'file.nii', '-w', ['warp1.nii', 'warp2.nii']]
+    :param argv: list of input arguments.
     :return:
     """
-
-    # get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
-    else:
-        # flatten the list of input arguments because -w and -winv carry a nested list
-        lst = []
-        for line in args:
-            lst.append(line) if isinstance(line, str) else lst.extend(line)
-        args = lst
     parser = get_parser()
-    arguments = parser.parse_args(args=args)
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     input_filename = arguments.i
     fname_dest = arguments.d
@@ -368,15 +359,12 @@ def main(args=None):
     transform.output_filename = arguments.o
     transform.interp = arguments.x
     transform.remove_temp_files = arguments.r
-    transform.verbose = arguments.v
-    init_sct(log_level=transform.verbose, update=True)  # Update log level
+    transform.verbose = verbose
 
     transform.apply()
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

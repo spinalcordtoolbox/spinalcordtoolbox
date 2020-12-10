@@ -19,7 +19,7 @@ import argparse
 import numpy as np
 
 from spinalcordtoolbox.image import Image, empty_like, add_suffix
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, parse_num_list, init_sct, printv
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, parse_num_list, init_sct, printv, set_global_loglevel
 
 
 # PARAMETERS
@@ -102,14 +102,16 @@ def weighted_avg_and_std(values, weights):
     return (average, np.sqrt(variance))
 
 
-def main():
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # Default params
     param = Param()
 
     # Get parser info
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_data = arguments.i
     if arguments.m is not None:
         fname_mask = arguments.m
@@ -120,8 +122,6 @@ def main():
         index_vol_user = arguments.vol
     else:
         index_vol_user = ''
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     # Check parameters
     if method == 'diff':
@@ -189,9 +189,6 @@ def main():
         printv('\nSNR_' + method + ' = ' + str(snr_roi) + '\n', type='info')
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])

@@ -18,13 +18,15 @@ import os
 import math
 import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, set_global_loglevel
 
 
-def main():
-    # Initialization
+def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     GYRO = float(42.576 * 10 ** 6)  # gyromagnetic ratio (in Hz.T^-1)
     gradamp = []
     bigdelta = []
@@ -85,6 +87,13 @@ def get_parser():
         "--help",
         action="help",
         help="Show this help message and exit")
+    optional.add_argument(
+        "-v",
+        type=int,
+        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
+        required=False,
+        choices=(0, 1, 2),
+        default=1)
 
     return parser
 
@@ -94,5 +103,5 @@ def get_parser():
 # =======================================================================================================================
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

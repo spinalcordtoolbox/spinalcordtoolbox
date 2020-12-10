@@ -22,7 +22,7 @@ from skimage.measure import label
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
@@ -511,17 +511,16 @@ class AnalyzeLeion:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
-    # get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=args)
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     fname_mask = arguments.m
     fname_sc = arguments.s
@@ -547,10 +546,6 @@ def main(args=None):
     else:
         rm_tmp = True
 
-    # Verbosity
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
-
     # create the Lesion constructor
     lesion_obj = AnalyzeLeion(fname_mask=fname_mask,
                               fname_sc=fname_sc,
@@ -575,4 +570,4 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])

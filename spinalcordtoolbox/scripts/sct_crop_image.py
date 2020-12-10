@@ -14,7 +14,7 @@ import argparse
 
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax, set_global_loglevel
 
 
 def get_parser():
@@ -137,22 +137,20 @@ def get_parser():
     return parser
 
 
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
-    # get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=args)
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # initialize ImageCropper
     cropper = ImageCropper(Image(arguments.i))
-    cropper.verbose = arguments.v
-    init_sct(log_level=cropper.verbose, update=True)  # Update log level
+    cropper.verbose = verbose
 
     # Switch across cropping methods
     if arguments.g:
@@ -183,4 +181,5 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

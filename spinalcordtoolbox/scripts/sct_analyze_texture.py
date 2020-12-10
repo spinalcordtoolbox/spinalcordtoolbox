@@ -18,7 +18,7 @@ from skimage.feature import greycomatrix, greycoprops
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like
 from spinalcordtoolbox.utils.shell import Metavar, ActionCreateFolder, SmartFormatter
-from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, run_proc
+from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, run_proc, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
@@ -309,17 +309,16 @@ class ParamGLCM(object):
         self.angle = '0,45,90,135'  # Rotation angles for co-occurrence matrix
 
 
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
-    # get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=args)
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # create param object
     param = Param()
@@ -348,8 +347,6 @@ def main(args=None):
         param.dim = arguments.dim
     if arguments.r is not None:
         param.rm_tmp = bool(arguments.r)
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     # create the GLCM constructor
     glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
@@ -366,4 +363,4 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])

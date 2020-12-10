@@ -21,7 +21,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_save, cache_signature, cache_valid, copy, \
     extract_fname, rmtree
 
@@ -117,14 +117,15 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # Initialization
     param = Param()
     start_time = time.time()
-
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     fname_anat = arguments.i
     fname_centerline = arguments.s
@@ -132,8 +133,6 @@ def main(args=None):
     if arguments.smooth is not None:
         sigma = arguments.smooth
     remove_temp_files = arguments.r
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     # Display arguments
     printv('\nCheck input arguments...')
@@ -211,7 +210,7 @@ def main(args=None):
     # Smooth the straightened image along z
     printv('\nSmooth the straightened image...')
     sigma_smooth = ",".join([str(i) for i in sigma])
-    sct_maths.main(args=['-i', 'anat_rpi_straight.nii',
+    sct_maths.main(argv=['-i', 'anat_rpi_straight.nii',
                          '-smooth', sigma_smooth,
                          '-o', 'anat_rpi_straight_smooth.nii',
                          '-v', '0'])
@@ -249,8 +248,7 @@ def main(args=None):
     display_viewer_syntax([file_anat, file_anat + '_smooth'], verbose=verbose)
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

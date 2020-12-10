@@ -19,7 +19,7 @@ import argparse
 import numpy as np
 
 from spinalcordtoolbox.image import Image, add_suffix, empty_like
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax, set_global_loglevel
 
 
 class Param:
@@ -102,29 +102,26 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
-
+def main(argv=None):
     parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     param = Param()
 
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_src = arguments.i
     if arguments.o is not None:
         fname_dst = arguments.o
     else:
         fname_dst = add_suffix(fname_src, "_tsnr")
 
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
-
     # call main function
     tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)
     tsnr.compute()
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    param = Param()
-    main()
+    main(sys.argv[1:])
+

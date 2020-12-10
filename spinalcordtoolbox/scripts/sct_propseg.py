@@ -23,7 +23,7 @@ from scipy import ndimage as ndi
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, mv, copy
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -455,7 +455,6 @@ def propseg(img_input, options_dict):
     remove_temp_files = arguments.r
 
     verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
     # Update for propseg binary
     if verbose > 0:
         cmd += ["-verbose"]
@@ -654,7 +653,12 @@ def propseg(img_input, options_dict):
     return Image(fname_seg)
 
 
-def main(arguments):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     fname_input_data = os.path.abspath(arguments.i)
     img_input = Image(fname_input_data)
     img_seg = propseg(img_input, arguments)
@@ -670,7 +674,5 @@ def main(arguments):
 
 if __name__ == "__main__":
     init_sct()
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    res = main(arguments)
-    raise SystemExit(res)
+    main(sys.argv[1:])
+

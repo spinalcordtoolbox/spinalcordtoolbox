@@ -18,7 +18,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, add_suffix, empty_like, change_orientation
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
@@ -494,12 +494,12 @@ def get_parser():
     return parser
 
 
-########################################################################################################################
-# ------------------------------------------------------  MAIN ------------------------------------------------------- #
-########################################################################################################################
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
-if __name__ == "__main__":
-    init_sct()
     param = Param()
     input_fname = None
     if param.debug:
@@ -521,8 +521,7 @@ if __name__ == "__main__":
             resample_to = arguments.resampling
         if arguments.o is not None:
             output_fname = arguments.o
-        param.verbose = arguments.v
-        init_sct(log_level=param.verbose, update=True)  # Update log level
+        param.verbose = verbose
 
         tmp_dir = tmp_create()
         im1_name = "im1.nii.gz"
@@ -564,3 +563,8 @@ if __name__ == "__main__":
         res_fic.close()
 
         # printv('Total time: ', time.time() - now)
+
+
+if __name__ == "__main__":
+    init_sct()
+    main(sys.argv[1:])

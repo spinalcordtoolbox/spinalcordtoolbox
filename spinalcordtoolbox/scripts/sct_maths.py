@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import spinalcordtoolbox.math as sct_math
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 
 
@@ -246,23 +246,21 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     dim_list = ['x', 'y', 'z', 't']
 
-    # Get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
-    parser = get_parser()
-    arguments = parser.parse_args(args=args)
     fname_in = arguments.i
     fname_out = arguments.o
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
     output_type = arguments.type
 
     # Open file(s)
@@ -509,4 +507,5 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

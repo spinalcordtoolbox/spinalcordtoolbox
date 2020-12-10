@@ -8,7 +8,7 @@ from time import time
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, extract_fname
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, extract_fname, set_global_loglevel
 
 
 # DEFAULT PARAMETERS
@@ -91,7 +91,24 @@ def get_parser():
     return parser
 
 
-def main(file_to_denoise, param, output_file_name):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
+    parameter = arguments.p
+    remove_temp_files = arguments.r
+    noise_threshold = arguments.d
+
+    file_to_denoise = arguments.i
+    output_file_name = arguments.o
+    std_noise = arguments.std
+
+    param = Param()
+    param.verbose = verbose
+    param.remove_temp_files = remove_temp_files
+    param.parameter = parameter
 
     path, file, ext = extract_fname(file_to_denoise)
 
@@ -179,23 +196,5 @@ def main(file_to_denoise, param, output_file_name):
 # =======================================================================================================================
 if __name__ == "__main__":
     init_sct()
-    parser = get_parser()
-    # initialize parameters
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    main(sys.argv[1:])
 
-    parameter = arguments.p
-    remove_temp_files = arguments.r
-    noise_threshold = arguments.d
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
-
-    file_to_denoise = arguments.i
-    output_file_name = arguments.o
-    std_noise = arguments.std
-
-    param = Param()
-    param.verbose = verbose
-    param.remove_temp_files = remove_temp_files
-    param.parameter = parameter
-
-    main(file_to_denoise, param, output_file_name)

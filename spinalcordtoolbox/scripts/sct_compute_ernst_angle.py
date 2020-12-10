@@ -16,7 +16,7 @@ import os
 import argparse
 
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 
 
 # DEFAULT PARAMETERS
@@ -134,9 +134,12 @@ def get_parser():
 
 # main
 #=======================================================================================================================
-def main():
+def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     # Initialization
     param = Param()
     input_t1 = arguments.t1
@@ -144,7 +147,6 @@ def main():
     input_tr_min = 500
     input_tr_max = 3500
     input_tr = None
-    verbose = 1
     fname_output_file = arguments.o
     if arguments.ofig is not None:
         input_fname_output = arguments.ofig
@@ -153,8 +155,6 @@ def main():
         input_tr_max = arguments.b[1]
     if arguments.tr is not None:
         input_tr = arguments.tr
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     graph = ErnstAngle(input_t1, tr=input_tr, fname_output=input_fname_output)
     if input_tr is not None:
@@ -181,4 +181,5 @@ def main():
 #=======================================================================================================================
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+
