@@ -59,7 +59,7 @@ def get_parser():
         metavar=Metavar.file,
         help="Spinal cord centerline (or segmentation) of a destination image (which could be "
              "straight or curved). An algorithm scales the length of the input centerline to match that of the "
-             "destination centerline. If using -ldisc_input and -ldisc_dest with this parameter, "
+             "destination centerline. If using -ldisc-input and -ldisc-dest with this parameter, "
              "instead of linear scaling, the source centerline will be non-linearly matched so "
              "that the inter-vertebral discs of the input image will match that of the "
              "destination image. This feature is particularly useful for registering to a "
@@ -73,13 +73,13 @@ def get_parser():
         "you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,"
         "6,7). More details about label creation at "
         "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/. "  # TODO (Julien) update this link
-        "This option must be used with the -ldisc_dest parameter.",
+        "This option must be used with the -ldisc-dest parameter.",
         required=False)
     optional.add_argument(
         "-ldisc-dest",
         metavar=Metavar.file,
         help="Labels located at the posterior edge of the intervertebral discs, for the destination file (-dest). "
-             "The same comments as in -ldisc_input apply. This option must be used with the -ldisc_input parameter.",
+             "The same comments as in -ldisc-input apply. This option must be used with the -ldisc-input parameter.",
         required=False)
     optional.add_argument(
         "-disable-straight2curved",
@@ -143,11 +143,11 @@ def get_parser():
     optional.add_argument(
         "-param",
         metavar=Metavar.list,
-        help="R|Parameters for spinal cord straightening. Separate arguments with ','."
-             "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2"
-             "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
-             "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
-             "\ntemplate_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
+        help="R|Parameters for spinal cord straightening. Separate arguments with \",\".\n"
+             "  - precision: [1.0,inf] Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2\n"
+             "  - threshold_distance: [0.0,inf] Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10\n"
+             "  - accuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0\n"
+             "  - template_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
         required=False)
 
     optional.add_argument(
