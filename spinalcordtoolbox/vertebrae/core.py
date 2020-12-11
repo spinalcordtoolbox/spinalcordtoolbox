@@ -72,7 +72,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     on the posterior tip of each disc
     :param path_output: output path for verbose=2 pictures
     :param scale_dist: float: Scaling factor to adjust average distance between two adjacent intervertebral discs
-    :return:
+    :return: None
     """
     logger.info('Look for template...')
     logger.info('Path template: %s', path_template)
@@ -605,7 +605,7 @@ def label_disc_posterior(list_disc_z, list_disc_value, fname_hm, fname_data):
     of the position in list_disc_z
     :param fname_hm: path to the heatmap output by the network
     :param fname_data: Path to sgementation data with same resolution as the heatmap (fname_hm)
-    :return:
+    :return: None
     """
     im_hm = Image(fname_hm)
     image_out = Image(fname_data)
