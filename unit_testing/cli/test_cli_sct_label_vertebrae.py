@@ -43,16 +43,3 @@ def test_sct_label_vertebrae_clean_labels(tmp_path):
     dice_no_clean = compute_dice(image_no_clean, image_seg)
     # The cleaned version should be closer to the segmentation
     assert dice_clean >= dice_no_clean
-
-
-
-
-
-
-
-
-
-
-
-
-
