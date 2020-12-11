@@ -384,7 +384,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     """
     # parameters
     thr_corr = 0.2  # disc correlation threshold. Below this value, use template distance.
-    src = src[:, :, :, 0]
+    src = src[:, :, :]
     # get dimensions from src
     nx, ny, nz = src.shape
     # Get pattern from template
