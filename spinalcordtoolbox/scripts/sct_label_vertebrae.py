@@ -411,15 +411,6 @@ def main(args=None):
         init_disc = get_z_and_disc_values_from_label('labelz_straight_r.nii.gz')
         sct.printv('.. ' + str(init_disc), verbose)
 
-<<<<<<< HEAD:scripts/sct_label_vertebrae.py
-        # denoise data
-        if denoise:
-            sct.printv('\nDenoise data...', verbose)
-            sct.run(['sct_maths', '-i', 'data_straightr.nii', '-denoise', 'h=0.05', '-o', 'data_straightr.nii'],
-                    verbose)
-
-=======
->>>>>>> master:spinalcordtoolbox/scripts/sct_label_vertebrae.py
         # apply laplacian filtering
         if laplacian:
             printv('\nApply Laplacian filter...', verbose)
