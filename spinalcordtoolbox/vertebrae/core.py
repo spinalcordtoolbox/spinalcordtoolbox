@@ -159,11 +159,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     image_mid = imed_preprocessing.get_midslice_average(fname, mid_index)
     nib.save(image_mid, "input_image.nii.gz")
     if contrast == "t2":
-        fname_hm = sct_deepseg.main(['-i', 'input_image.nii.gz', '-task', 'find_disc_t2'])
+        sct_deepseg.main(['-i', 'input_image.nii.gz', '-task', 'find_disc_t2', '-o', 'hm_tmp.nii.gz'])
     elif contrast == "t1":
-        fname_hm = sct_deepseg.main(['-i', 'input_image.nii.gz', '-task', 'find_disc_t1'])
+        sct_deepseg.main(['-i', 'input_image.nii.gz', '-task', 'find_disc_t1', '-o', 'hm_tmp.nii.gz'])
 
-    run_proc(['sct_resample', '-i', fname_hm, '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'hm_tmp_r.nii.gz'])
+    run_proc(['sct_resample', '-i', 'hm_tmp.nii.gz', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'hm_tmp_r.nii.gz'])
     run_proc(['sct_resample', '-i', fname_seg, '-mm', '0.5x0.5x0.5', '-x', 'nn', '-o', fname_seg])
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
