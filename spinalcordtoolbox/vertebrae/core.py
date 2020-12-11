@@ -163,8 +163,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     elif contrast == "t1":
         fname_hm = sct_deepseg.main(['-i', 'input_image.nii.gz', '-task', 'find_disc_t1'])
 
-    run_proc('sct_resample -i %s  -mm 0.5x0.5x0.5 -x linear -o hm_tmp_r.nii.gz' % (fname_hm))
-    run_proc('sct_resample -i %s -mm 0.5 -x nn -o %s' % (fname_seg, fname_seg))
+    run_proc(['sct_resample', '-i', fname_hm, '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'hm_tmp_r.nii.gz'])
+    run_proc(['sct_resample', '-i', fname_seg, '-mm', '0.5x0.5x0.5', '-x', 'nn', '-o', fname_seg])
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
     while search_next_disc:
