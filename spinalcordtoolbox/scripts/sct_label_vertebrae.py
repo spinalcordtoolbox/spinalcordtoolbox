@@ -29,7 +29,7 @@ from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
     copy, extract_fname, rmtree
 
-import sct_straighten_spinalcord
+from spinalcordtoolbox.scripts import sct_straighten_spinalcord
 
 
 # PARAMETERS
@@ -154,15 +154,6 @@ def get_parser():
         help="Output folder."
     )
     optional.add_argument(
-        '-denoise',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=0,
-        help="Apply denoising filter (non-local means adaptative denoising) to the data. Sometimes denoising is too "
-             "aggressive, so use with care."
-    )
-    optional.add_argument(
         '-laplacian',
         metavar=Metavar.int,
         type=int,
@@ -256,6 +247,8 @@ def main(args=None):
         fname_disc = None
     if arguments.initz is not None:
         initz = arguments.initz
+        if len(initz) != 2:
+            raise ValueError('--initz takes two arguments: position in superior-inferior direction, label value')
     if arguments.initcenter is not None:
         initcenter = arguments.initcenter
     # if user provided text file, parse and overwrite arguments
@@ -266,6 +259,8 @@ def main(args=None):
         for idx_arg, arg in enumerate(arg_initfile):
             if arg == '-initz':
                 initz = [int(x) for x in arg_initfile[idx_arg + 1].split(',')]
+                if len(initz) != 2:
+                    raise ValueError('--initz takes two arguments: position in superior-inferior direction, label value')
             if arg == '-initcenter':
                 initcenter = int(arg_initfile[idx_arg + 1])
     if arguments.initlabel is not None:
@@ -276,7 +271,6 @@ def main(args=None):
     verbose = int(arguments.v)
     init_sct(log_level=verbose, update=True)  # Update log level
     remove_temp_files = arguments.r
-    denoise = arguments.denoise
     laplacian = arguments.laplacian
 
     path_tmp = tmp_create(basename="label_vertebrae")
@@ -417,12 +411,15 @@ def main(args=None):
         init_disc = get_z_and_disc_values_from_label('labelz_straight_r.nii.gz')
         sct.printv('.. ' + str(init_disc), verbose)
 
+<<<<<<< HEAD:scripts/sct_label_vertebrae.py
         # denoise data
         if denoise:
             sct.printv('\nDenoise data...', verbose)
             sct.run(['sct_maths', '-i', 'data_straightr.nii', '-denoise', 'h=0.05', '-o', 'data_straightr.nii'],
                     verbose)
 
+=======
+>>>>>>> master:spinalcordtoolbox/scripts/sct_label_vertebrae.py
         # apply laplacian filtering
         if laplacian:
             printv('\nApply Laplacian filter...', verbose)

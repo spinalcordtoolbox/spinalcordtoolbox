@@ -18,7 +18,7 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox import __sct_dir__
 
-import sct_apply_transfo
+from spinalcordtoolbox.scripts import sct_apply_transfo
 
 
 def init(param_test):

@@ -228,17 +228,15 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc - 1)]
             except ValueError:
-                sct.printv('WARNING: Disc value not included in template. Using previously-calculated distance: ' + str(
-                    approx_distance_to_next_disc))
+                logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z + approx_distance_to_next_disc
             current_disc = current_disc - 1
         elif direction == 'inferior':
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
-            except:
-                sct.printv('WARNING: Disc value not included in template. Using previously-calculated distance: ' + str(
-                    approx_distance_to_next_disc))
+            except ValueError:
+                logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z - approx_distance_to_next_disc
             current_disc = current_disc + 1

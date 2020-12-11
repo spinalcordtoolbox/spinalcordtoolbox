@@ -5,7 +5,7 @@ import os
 import subprocess
 import numpy as np
 from spinalcordtoolbox.image import Image
-
+import spinalcordtoolbox.scripts.sct_label_vertebrae as sct_label_vertebrae
 logger = logging.getLogger(__name__)
 
 
@@ -38,4 +38,17 @@ def test_sct_label_vertebrae_disc(tmp_path, is_coordinates_gt, contrast, pref):
     assert os.path.isfile(str(d) + "/warp_straight2curve.nii.gz")
     assert os.path.isfile(str(d) + "/warp_curve2straight.nii.gz")
     assert os.path.isfile(str(d) + "/straight_ref.nii.gz")
+
+
+def test_sct_label_vertebrae_initz_error():
+    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40'
+    with pytest.raises(ValueError):
+        sct_label_vertebrae.main(command.split())
+
+
+def test_sct_label_vertebrae_high_value_warning(caplog):
+    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,19'
+    sct_label_vertebrae.main(command.split())
+    assert 'Disc value not included in template.' in caplog.text
+
 
