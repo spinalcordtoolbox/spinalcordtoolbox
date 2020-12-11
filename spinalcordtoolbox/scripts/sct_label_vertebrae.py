@@ -288,11 +288,11 @@ def main(args=None):
     printv('\nStraighten spinal cord...', verbose)
     # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
 
-    cache_sig = sct.cache_signature(
+    cache_sig = cache_signature(
         input_files=[fname_in, fname_seg],
     )
     cachefile = os.path.join(curdir, "straightening.cache")
-    if (sct.cache_valid(cachefile, cache_sig) and 
+    if (cache_valid(cachefile, cache_sig) and
         os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and 
         os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and 
         os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz"))):
@@ -304,7 +304,7 @@ def main(args=None):
         copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
         # apply straightening
 
-        s, o = sct.run(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz',
+        s, o = run_proc(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz',
                                '-o', 'data_straight.nii'])
     else:
         sct_straighten_spinalcord.main(args=[
@@ -316,14 +316,14 @@ def main(args=None):
         cache_save(cachefile, cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution
-    sct.printv('\nResample to 0.5mm isotropic...', verbose)
-    s, o = sct.run(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o',
+    printv('\nResample to 0.5mm isotropic...', verbose)
+    s, o = run_proc(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o',
                         'data_straightr.nii'], verbose=verbose)
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
-    sct.printv('\nApply straightening to segmentation...', verbose)
-    sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+    printv('\nApply straightening to segmentation...', verbose)
+    run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
             ('segmentation.nii',
              'data_straightr.nii',
              'warp_curve2straight.nii.gz',
@@ -338,8 +338,8 @@ def main(args=None):
     # If disc label file is provided, label vertebrae using that file instead of automatically
     if fname_disc:
         # Apply straightening to disc-label
-        sct.printv('\nApply straightening to disc labels...', verbose)
-        sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+        printv('\nApply straightening to disc labels...', verbose)
+        run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
                 (fname_disc,
                  'data_straight.nii',
                  'warp_curve2straight.nii.gz',
@@ -384,7 +384,7 @@ def main(args=None):
                 # Disc C2/C3 has value 3.
                 im_label_c2c3.data[ind_label] = 3
             else:
-                sct.printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1,
+                printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1,
                            'error')
                 sys.exit()
             im_label_c2c3.save(fname_labelz)
@@ -394,8 +394,8 @@ def main(args=None):
 
         # Apply straightening to z-label
 
-        sct.printv('\nAnd apply straightening to label...', verbose)
-        sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+        printv('\nAnd apply straightening to label...', verbose)
+        run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
                 (file_labelz,
                  'data_straightr.nii',
                  'warp_curve2straight.nii.gz',
@@ -406,10 +406,10 @@ def main(args=None):
                 )
         # get z value and disk value to initialize labeling
         # After resampling to match template resolution
-        sct.run('sct_resample -i labelz_straight.nii.gz -mm 0.5 -x nn -o labelz_straight_r.nii.gz')
-        sct.printv('\nGet z and disc values from straight label...', verbose)
+        run_proc('sct_resample -i labelz_straight.nii.gz -mm 0.5 -x nn -o labelz_straight_r.nii.gz')
+        printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight_r.nii.gz')
-        sct.printv('.. ' + str(init_disc), verbose)
+        printv('.. ' + str(init_disc), verbose)
 
         # apply laplacian filtering
         if laplacian:
@@ -423,8 +423,8 @@ def main(args=None):
                             scale_dist=scale_dist)
 
     # un-straighten labeled spinal cord
-    sct.printv('\nUn-straighten labeling...', verbose)
-    sct.run('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+    printv('\nUn-straighten labeling...', verbose)
+    run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
             ('segmentation_straight_labeled.nii',
              'segmentation.nii',
              'warp_straight2curve.nii.gz',
@@ -437,8 +437,8 @@ def main(args=None):
     # un-straighten posterior disc map
     # it won't exist if we don't use the detection since it is based on the network prediction
     if fname_disc is None:
-        sct.printv('\nUn-straighten posterior disc map...', verbose)
-        sct.run('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
+        printv('\nUn-straighten posterior disc map...', verbose)
+        run_proc('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
                 ('disc_posterior_tmp.nii.gz',
                  'segmentation.nii',
                  'warp_straight2curve.nii.gz',

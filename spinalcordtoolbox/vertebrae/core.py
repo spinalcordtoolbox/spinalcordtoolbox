@@ -10,20 +10,20 @@ import logging
 import numpy as np
 import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
-import sct_utils as sct
 import spinalcordtoolbox as sct_root
 from ivadomed import preprocessing as imed_preprocessing
 import nibabel as nib
 
 import logging
-import sct_deepseg
+import spinalcordtoolbox.scripts.sct_deepseg as sct_deepseg
 from scipy.signal import gaussian
 
 logging.getLogger('matplotlib.font_manager').disabled = True
 
-from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.math import dilate, mutual_information
+from spinalcordtoolbox.utils.sys import run_proc, printv
+from spinalcordtoolbox.image import Image, add_suffix
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +110,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     list_disc_value_template = list(range(min_level, max_level))
     # add disc above top one
     list_disc_value_template.insert(int(0), min_level - 1)
-    sct.printv('\nDisc values from template: ' + str(list_disc_value_template), verbose)
+    printv('\nDisc values from template: ' + str(list_disc_value_template), verbose)
     # get disc z-values
     list_disc_z_template = data_template.nonzero()[2].tolist()
     list_disc_z_template.sort()
@@ -163,13 +163,12 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     elif contrast == "t1":
         fname_hm = sct_deepseg.main(['-i', 'input_image.nii.gz', '-task', 'find_disc_t1'])
 
-    sct.run('sct_resample -i %s  -mm 0.5x0.5x0.5 -x linear -o hm_tmp_r.nii.gz' % (fname_hm))
-    sct.run('sct_resample -i %s -mm 0.5 -x nn -o %s' % (fname_seg, fname_seg))
+    run_proc('sct_resample -i %s  -mm 0.5x0.5x0.5 -x linear -o hm_tmp_r.nii.gz' % (fname_hm))
+    run_proc('sct_resample -i %s -mm 0.5 -x nn -o %s' % (fname_seg, fname_seg))
     im_hm = Image('hm_tmp_r.nii.gz')
     data_hm = im_hm.data
     while search_next_disc:
-        sct.printv('Current disc: ' + str(current_disc) + ' (z=' + str(current_z) + '). Direction: ' + direction,
-                   verbose)
+        logger.info('Current disc: %s (z=%s). Direction: %s', current_disc, current_z, direction)
 
         try:
             # get z corresponding to current disc on template
@@ -449,8 +448,7 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         # if I_corr contains at least a non-zero value
         ind_peak = np.argmax(I_corr_gauss)  # index of max along z
         ind_dl = np.argmax(data_chunk1d)
-        sct.printv('.. Peak found: z=' + str(zrange[ind_peak]) + ' (correlation = ' + str(I_corr_gauss[ind_peak]) + ')',
-                   verbose)
+        logger.info('.. Peak found: z=%s (correlation = %s)', zrange[ind_peak], I_corr_gauss[ind_peak])
         # check if correlation is high enough
         if I_corr_gauss[ind_peak] < thr_corr:
             logger.warning('Correlation is too low. Using adjusted template distance.')
