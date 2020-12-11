@@ -19,7 +19,7 @@ def test_sct_label_vertebrae_backwards_compat(script_runner):
 
 
 @pytest.mark.parametrize("contrast,is_coordinates_gt, pref", [("t2", [2, 17, 34, 48], "t2"),
-                                                               ("t1", [2, 17, 35, 55, 68], "t1w")])
+                                                               ("t1", [17, 35, 55, 68], "t1w")])
 def test_sct_label_vertebrae_disc(tmp_path, is_coordinates_gt, contrast, pref):
     d = tmp_path / "sub"
     print(is_coordinates_gt)
@@ -48,7 +48,7 @@ def test_sct_label_vertebrae_initz_error():
 
 def test_sct_label_vertebrae_high_value_warning(caplog):
     command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,19'
-    sct_label_vertebrae.main(command.split())
+    s,o = sct_label_vertebrae.main(command.split())
     assert 'Disc value not included in template.' in caplog.text
 
 
