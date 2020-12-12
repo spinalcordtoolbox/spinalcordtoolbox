@@ -19,7 +19,7 @@ def test_sct_label_vertebrae_backwards_compat(script_runner):
 
 
 @pytest.mark.parametrize("contrast,is_coordinates_gt, pref", [("t2", [2, 17, 34, 48], "t2"),
-                                                               ("t1", [17, 35, 55, 68], "t1w")])
+                                                               ("t1", [2, 17, 35, 55, 68], "t1w")])
 def test_sct_label_vertebrae_disc(tmp_path, is_coordinates_gt, contrast, pref):
     d = tmp_path / "sub"
     print(is_coordinates_gt)
