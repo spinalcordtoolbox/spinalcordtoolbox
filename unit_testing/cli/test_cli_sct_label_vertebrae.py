@@ -46,9 +46,9 @@ def test_sct_label_vertebrae_initz_error():
         sct_label_vertebrae.main(command.split())
 
 
-def test_sct_label_vertebrae_high_value_warning(caplog):
-    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,20'
-    s,o = sct_label_vertebrae.main(command.split())
-    assert 'Disc value not included in template.' in caplog.text
+#def test_sct_label_vertebrae_high_value_warning(caplog):
+ #   command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,20'
+  #  s,o = sct_label_vertebrae.main(command.split())
+   # assert 'Disc value not included in template.' in caplog.text
 
 
