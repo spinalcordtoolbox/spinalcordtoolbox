@@ -1022,16 +1022,13 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         if (not same_space and i_step > 0) or (same_space and i_step > 1):
             printv('\nApply transformation from previous step', param.verbose)
             for ifile in range(len(src)):
-                argv = ['-i', src[ifile],
-                        '-d', dest[ifile],
-                        '-o', add_suffix(src[ifile], '_reg'),
-                        '-x', interp_step[ifile],
-                        '-w']
-                if type(warp_forward) is list:
-                    argv.extend(warp_forward)
-                else:
-                    argv.append(warp_forward)
-                sct_apply_transfo.main(argv=argv)
+                sct_apply_transfo.main(argv=[
+                    '-i', src[ifile],
+                    '-d', dest[ifile],
+                    '-o', add_suffix(src[ifile], '_reg'),
+                    '-x', interp_step[ifile],
+                    '-w'] + warp_forward
+                )
                 src[ifile] = add_suffix(src[ifile], '_reg')
 
         # register src --> dest
