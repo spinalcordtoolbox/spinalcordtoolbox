@@ -345,8 +345,7 @@ def main(args=None):
                  'warp_curve2straight.nii.gz',
                  'labeldisc_straight.nii.gz',
                  'label'),
-                verbose=verbose,
-                is_sct_binary=True,
+                verbose=verbose
                 )
 
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
