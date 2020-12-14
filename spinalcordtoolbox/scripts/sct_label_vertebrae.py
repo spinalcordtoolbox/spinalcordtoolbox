@@ -339,12 +339,12 @@ def main(args=None):
     if fname_disc:
         # Apply straightening to disc-label
         printv('\nApply straightening to disc labels...', verbose)
-        run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+        run_proc('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
                 (fname_disc,
                  'data_straight.nii',
                  'warp_curve2straight.nii.gz',
                  'labeldisc_straight.nii.gz',
-                 'NearestNeighbor'),
+                 'label'),
                 verbose=verbose,
                 is_sct_binary=True,
                 )
