@@ -63,6 +63,14 @@ MODELS = {
         "contrasts": ["t2"],
         "default": False,
     },
+    "model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel": {
+        "url": [
+            "https://github.com/ivadomed/model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel/archive/r20201215.zip"
+        ],
+        "description": "Multiclass cord tumor segmentation model.",
+        "contrasts": ["t2", "t1"],
+        "default": False,
+    }
 }
 
 
@@ -80,7 +88,10 @@ TASKS = {
          'models': ['mice_uqueensland_gm']},
     'seg_tumor_t2':
         {'description': 'Cord tumor segmentation on T2-weighted contrast.',
-         'models': ['findcord_tumor', 't2_tumor']}
+         'models': ['findcord_tumor', 't2_tumor']},
+    'seg_tumor-edema-cavity_t1-t2':
+        {'description': 'Multiclass cord tumor segmentation.',
+         'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']}
 }
 
 
@@ -155,12 +166,12 @@ def display_list_tasks():
     tasks = sct.deepseg.models.list_tasks()
     # Display beautiful output
     color = {True: 'green', False: 'red'}
-    print("{:<20s}{:<50s}{:<20s}MODELS".format("TASK", "DESCRIPTION", "INPUT CONTRASTS"))
+    print("{:<30s}{:<50s}{:<20s}MODELS".format("TASK", "DESCRIPTION", "INPUT CONTRASTS"))
     print("-" * 120)
     for name_task, value in tasks.items():
         path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
         are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
-        task_status = colored.stylize(name_task.ljust(20),
+        task_status = colored.stylize(name_task.ljust(30),
                                       colored.fg(color[all(are_models_valid)]))
         description_status = colored.stylize(value['description'].ljust(50),
                                              colored.fg(color[all(are_models_valid)]))
