@@ -345,7 +345,7 @@ def launch_sagittal_viewer(img: Image, labels: Sequence[int], msg: str, previous
     if previous_points is not None:
         params.message_warn = 'Please select the label you want to add \nor correct in the list below before clicking \non the image'
 
-    out = zeros_like(img)
+    out = zeros_like(img, dtype='uint8')
     out.absolutepath = params.output_file_name
     launch_sagittal_dialog(img, out, params, previous_points)
 
