@@ -550,7 +550,10 @@ yes | python/bin/conda create -n venv_sct python=3.6
 
 # activate miniconda
 source python/etc/profile.d/conda.sh
+set +u #disable safeties, for conda is not written to their standard.
 conda activate venv_sct
+set -u # reactivate safeties
+
 # double-check conda activated (it can be glitchy): https://github.com/neuropoly/spinalcordtoolbox/issues/3029
 EXPECTED_PYTHON="$(realpath "$(command -v python/envs/venv_sct/bin/python)")"
 ACTUAL_PYTHON="$(realpath "$(command -v python)")"
