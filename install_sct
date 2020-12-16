@@ -20,8 +20,14 @@
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
 
-# set -v  # v: verbose, e: exit if non-zero output is encountered. Using set -e will exit even when trying to remove
-# a folder that already exists, therefore, it should only be used for debugging mode.
+# stricter shell mode
+# https://sipb.mit.edu/doc/safe-shell/
+set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
+set -u            # exit if unset variables used
+shopt -s failglob # error if a glob fails
+
+# set -v  # v: verbose
+
 
 # Where tmp file are stored
 TMP_DIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR')
@@ -102,7 +108,7 @@ Please copy the historic of this Terminal (starting with the command install_sct
 --> http://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
-  rm -r $TMP_DIR
+  rm -rf $TMP_DIR
   exit $value
 }
 
