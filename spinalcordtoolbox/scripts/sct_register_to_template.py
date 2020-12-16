@@ -269,9 +269,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default=param.verbose,
-        help="Verbose. 0: nothing. 1: basic. 2: extended."
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to log levels [WARNING, INFO, DEBUG]
+        help="Verbosity. 0: Minimal, 1: Default, 2: Expanded (Display figures)"
     )
 
     return parser

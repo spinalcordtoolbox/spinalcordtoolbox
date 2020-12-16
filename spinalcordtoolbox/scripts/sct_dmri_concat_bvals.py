@@ -45,12 +45,13 @@ def get_parser():
         help='Output file with bvals merged. Example: dmri_b700_b2000_concat.bval',
         metavar=Metavar.file)
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-        required=False,
-        choices=(0, 1, 2),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to log levels [WARNING, INFO, DEBUG]
+        help="Verbosity. 0: Minimal, 1: Default, 2: Expanded (Display figures)")
 
     return parser
 

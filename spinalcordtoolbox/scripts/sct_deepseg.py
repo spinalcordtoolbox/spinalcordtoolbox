@@ -112,11 +112,13 @@ def get_parser():
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = no verbosity, 1 = verbose.",
-        choices=(0, 1),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to log levels [WARNING, INFO, DEBUG]
+        help="Verbosity. 0: Minimal, 1: Default, 2: Expanded (Display figures)")
     misc.add_argument(
         "-h",
         "--help",

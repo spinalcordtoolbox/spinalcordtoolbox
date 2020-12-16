@@ -82,11 +82,13 @@ def get_parser():
              "provides non-deterministic results.",
         metavar='')
     misc.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = no verbosity, 1 = verbose.",
-        choices=(0, 1),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to log levels [WARNING, INFO, DEBUG]
+        help="Verbosity. 0: Minimal, 1: Default, 2: Expanded (Display figures)")
 
     return parser
 

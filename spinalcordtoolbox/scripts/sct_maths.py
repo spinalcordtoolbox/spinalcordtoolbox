@@ -233,13 +233,14 @@ def get_parser():
         help='Output type.',
         choices=('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64',
                  'uint64'))
-    misc.add_argument(
-        "-v",
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose. 0: nothing. 1: basic. 2: extended.",
-        required=False,
+        choices=[0, 1, 2],
         default=1,
-        choices=(0, 1, 2))
+        # Values [0, 1, 2] map to log levels [WARNING, INFO, DEBUG]
+        help="Verbosity. 0: Minimal, 1: Default, 2: Expanded (Display figures)")
 
     return parser
 
