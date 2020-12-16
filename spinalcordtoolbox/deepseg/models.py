@@ -47,8 +47,7 @@ MODELS = {
     },
     "t2_tumor": {
         "url": [
-            "https://github.com/ivadomed/t2_tumor/releases/download/r20200621/r20200621_t2_tumor.zip",
-            "https://osf.io/uwe7k/download?version=2",
+            "https://github.com/ivadomed/t2_tumor/archive/r20201215.zip"
         ],
         "description": "Cord tumor segmentation model, trained on T2-weighted contrast.",
         "contrasts": ["t2"],
@@ -56,8 +55,7 @@ MODELS = {
     },
     "findcord_tumor": {
         "url": [
-            "https://github.com/ivadomed/findcord_tumor/releases/download/r20200621/r20200621_findcord_tumor.zip",
-            "https://osf.io/qj6d5/download?version=1",
+            "https://github.com/ivadomed/findcord_tumor/archive/r20201215.zip"
         ],
         "description": "Cord localisation model, trained on T2-weighted images with tumor.",
         "contrasts": ["t2"],
