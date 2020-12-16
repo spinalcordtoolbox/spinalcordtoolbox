@@ -380,7 +380,7 @@ The install_sct script must be executed from the source directory"
 fi
 
 # Get installation type (from git or from package)
-if [[ "x$SCT_INSTALL_TYPE" == "x" ]]; then
+if [[ -z "${SCT_INSTALL_TYPE:-}" ]]; then
   if [[ -d ".git" ]]; then
     # folder .git exist, therefore it is a git installation
     SCT_INSTALL_TYPE="in-place"
@@ -401,6 +401,7 @@ echo -e "Shell config ........ "$RC_FILE_PATH
 # If you do not want the crash reports question to be ask,
 # set ASK_REPORT_QUESTION at installation time like this:
 # >>> ASK_REPORT_QUESTION=false ./install_sct
+: ${ASK_REPORT_QUESTION:=Yes}
 REPORT_STATS=no
 if [[ ! $ASK_REPORT_QUESTION =~ ^([[Ff]alse?|[Nn]o?)$ ]]; then
 # Send crash statistic and error logs to developers, that is the question:
@@ -429,6 +430,7 @@ fi
 # Set install dir
 while true; do
 #  print info "SCT will be installed here: [$SCT_DIR]"
+  change_default_path=""
   while [[ ! $change_default_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
     print question "SCT will be installed here: [$SCT_DIR]
 
@@ -489,14 +491,14 @@ else
 fi
 
 # Update MPLBACKEND on headless system. See: https://github.com/neuropoly/spinalcordtoolbox/issues/2137
-if [[ -z $MPLBACKEND ]]; then
+if [[ -z ${MLBACKEND:-} ]]; then
   export MPLBACKEND=Agg
 fi
 
 # Copy files to destination directory
 if [[ "$SCT_DIR" != "$SCT_SOURCE" ]]; then
   print info "Copying source files from $SCT_SOURCE to $SCT_DIR"
-  cp -vR $SCT_INSTALL_CP_OPTIONS "$SCT_SOURCE/"* "$SCT_DIR/" | while read line; do echo -n "."; done
+  cp -vR "$SCT_SOURCE/"* "$SCT_DIR/" | while read line; do echo -n "."; done
 else
   print info "Skipping copy of source files (source and destination folders are the same)"
 fi
@@ -607,7 +609,7 @@ export PATH="$SCT_DIR/$BIN_DIR:$PATH"
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Install binaries
-if [[ $NO_SCT_BIN_INSTALL ]]; then
+if [[ -n ${NO_SCT_BIN_INSTALL:-} ]]; then
   print warning "WARNING: SCT binaries will not be (re)-installed"
 else
   print info "Installing binaries..."
@@ -617,7 +619,7 @@ fi
 print info "All requirements installed!"
 
 # Install data
-if [[ $NO_DATA_INSTALL ]]; then
+if [[ -n ${NO_DATA_INSTALL:-} ]]; then
   print warning "WARNING: data/ will not be (re)-install"
 else
   # Download data
@@ -649,6 +651,7 @@ else
 fi
 
 # update PATH environment
+add_to_path=""
 while [[ ! $add_to_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
   print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
   read add_to_path
