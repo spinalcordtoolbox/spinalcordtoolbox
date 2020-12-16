@@ -30,9 +30,9 @@ def test_sct_label_vertebrae_high_value_warning(caplog, tmp_path):
 
 
 def test_sct_label_vertebrae_clean_labels(tmp_path):
-    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,19 -clean-labels 1 -ofolder ' + str(os.path.join(str(tmp_path), 'clean'))
+    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -clean-labels 1 -ofolder ' + str(os.path.join(str(tmp_path), 'clean'))
     sct_label_vertebrae.main(command.split())
-    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,19 -ofolder ' + str(os.path.join(str(tmp_path), 'no_clean'))
+    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -ofolder ' + str(os.path.join(str(tmp_path), 'no_clean'))
     sct_label_vertebrae.main(command.split())
     image_clean = Image(os.path.join(str(tmp_path), 'clean', 't2_seg-manual_labeled.nii.gz'))
     image_no_clean = Image(os.path.join(str(tmp_path), 'no_clean', 't2_seg-manual_labeled.nii.gz'))
