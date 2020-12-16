@@ -49,8 +49,8 @@ def test_sct_label_vertebrae_clean_labels(tmp_path):
 def test_sct_label_vertebrae_consistent_disc(tmp_path):
     command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -discfile sct_testing_data/t2/labels.nii.gz -ofolder ' + str(tmp_path)
     sct_label_vertebrae.main(command.split())
-    ref = Image('sct_testing_data/t2/t2_seg-manual.nii.gz')
-    pred = Image(os.path.join(tmp_path,'t2_seg-manual_labeled_discs.nii.gz'))
+    ref = Image('sct_testing_data/t2/labels.nii.gz')
+    pred = Image(os.path.join(tmp_path, 't2_seg-manual_labeled_discs.nii.gz'))
     fp, fn = check_missing_label(pred, ref)
     assert fp == []
     assert fn == []
