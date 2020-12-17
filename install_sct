@@ -527,8 +527,9 @@ yes | python/bin/conda create -n venv_sct python=3.6
 # activate miniconda
 source python/etc/profile.d/conda.sh
 conda activate venv_sct
+# double-check conda activated (it can be glitchy): https://github.com/neuropoly/spinalcordtoolbox/issues/3029
 if [ "$(command -v python)" != "$(command -v python/envs/venv_sct/bin/python)" ]; then
-  echo "error: venv_sct failed to activate." >&2
+  echo "error: venv_sct failed to activate. Do you have a conflicting python installation?" >&2
   exit 1
 fi
 
