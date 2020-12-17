@@ -176,9 +176,9 @@ function check_requirements() {
       done
       if [[ $GCC_INSTALL =~ [Yy](es)? ]]; then
         if [[ ! $(which brew) ]]; then
-          yes | /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+          NONINTERACTIVE=1 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
         fi
-        yes | brew install gcc
+        brew install -f gcc
         # check if gcc install ran properly
         gcc --version > /dev/null 2>&1  # run silently, then check output status
         if [[ $? -ne 0 ]]; then
@@ -546,7 +546,7 @@ esac
 run "bash $TMP_DIR/miniconda.sh -p $SCT_DIR/$PYTHON_DIR -b -f"
 
 # create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
-yes | python/bin/conda create -n venv_sct python=3.6
+python/bin/conda create -y -n venv_sct python=3.6
 
 # activate miniconda
 source python/etc/profile.d/conda.sh
@@ -579,8 +579,8 @@ pip install -r $REQUIREMENTS_FILE &&
   # and conflicts with the other installation of `tensorboard`. So, we uninstall here.
   # This is hacky, and should be removed as soon as we stop using `tensorflow==1.5.0`.
   # See https://github.com/neuropoly/spinalcordtoolbox/issues/3035 for more info.
-  yes | pip uninstall tensorflow-tensorboard &&
-  yes | pip uninstall tensorboard &&
+  pip uninstall -y tensorflow-tensorboard &&
+  pip uninstall -y tensorboard &&
   pip install tensorboard
 if [[ $? != 0 ]]; then
   die "Failed running pip install: $?"
