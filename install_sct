@@ -179,8 +179,8 @@ function check_requirements() {
       done
       if [[ $GCC_INSTALL =~ [Yy](es)? ]]; then
         if [[ ! $(command -v brew) ]]; then
-          # NB: this is a different NONINTERACTIVE, for the brew installer
-          (NONINTERACTIVE=1 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)")
+          # NB: this is a different NONINTERACTIVE than ours above; it's for the brew installer
+          (NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)")
         fi
         brew install -f gcc
         # check if gcc install ran properly
