@@ -515,8 +515,8 @@ fi
 # Clean old install setup in bin/ if existing
 if [[ -x $SCT_DIR/$BIN_DIR ]]; then
   print info "Removing sct and isct softlink from $SCT_DIR/$BIN_DIR"
-  find $SCT_DIR/$BIN_DIR -type l -name \"sct_*\" -exec rm {} \;
-  find $SCT_DIR/$BIN_DIR -type l -name \"isct_*\" -exec rm {} \;
+  find $SCT_DIR/$BIN_DIR -type l -name 'sct_*' -exec rm {} \;
+  find $SCT_DIR/$BIN_DIR -type l -name 'isct_*' -exec rm {} \;
 fi
 
 # Go to installation folder
