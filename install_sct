@@ -14,7 +14,7 @@
 #
 # USAGE
 #   ./install_sct
-#   yes | ./install_sct   # will install without interruption with 'yes' as default answer
+#   ./install_sct -y  # will install without interruption with 'yes' as default answer
 #
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
@@ -171,12 +171,16 @@ function check_requirements() {
     print warning "WARNING: \"gcc\" is not installed."
     if [[ $OS == "osx" ]]; then
       while [[ ! $GCC_INSTALL =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-        print question "Do you want to install it now? (accepting to install \"gcc\" will also install \"brew\" in case it is not installed already)? [y]es/[n]o: "
-        read GCC_INSTALL
+        GCC_INSTALL=yes # rude?
+        if [ -z "$NONINTERACTIVE" ]; then
+          print question "Do you want to install it now? (accepting to install \"gcc\" will also install \"brew\" in case it is not installed already)? [y]es/[n]o: "
+          read GCC_INSTALL
+        fi
       done
       if [[ $GCC_INSTALL =~ [Yy](es)? ]]; then
         if [[ ! $(which brew) ]]; then
-          NONINTERACTIVE=1 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+          # NB: this is a different NONINTERACTIVE, for the brew installer
+          (NONINTERACTIVE=1 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)")
         fi
         brew install -f gcc
         # check if gcc install ran properly
@@ -341,7 +345,8 @@ for arg in "$@"; do
   esac
 done
 
-while getopts ":dhbpv" opt; do
+NONINTERACTIVE=""
+while getopts ":dhbpvy" opt; do
   case $opt in
   d)
     echo " data directory will not be (re)-installed"
@@ -358,6 +363,9 @@ while getopts ":dhbpv" opt; do
   h)
     usage
     exit 99
+    ;;
+  y)
+    NONINTERACTIVE=yes
     ;;
   \?)
     usage
@@ -398,13 +406,9 @@ echo -e "Installation type ... "$SCT_INSTALL_TYPE
 echo -e "Operating system .... $OS ($OSver)"
 echo -e "Shell config ........ "$RC_FILE_PATH
 
-# If you do not want the crash reports question to be ask,
-# set ASK_REPORT_QUESTION at installation time like this:
-# >>> ASK_REPORT_QUESTION=false ./install_sct
-: ${ASK_REPORT_QUESTION:=Yes}
 REPORT_STATS=no
-if [[ ! $ASK_REPORT_QUESTION =~ ^([[Ff]alse?|[Nn]o?)$ ]]; then
-# Send crash statistic and error logs to developers, that is the question:
+if [ -z "$NONINTERACTIVE" ]; then
+  # Send crash statistic and error logs to developers, that is the question:
   print question "To improve user experience and fix bugs, the SCT development team is using a
 report system to automatically receive crash reports and errors from users.
 These reports are anonymous.
@@ -429,18 +433,23 @@ fi
 
 # Set install dir
 while true; do
-#  print info "SCT will be installed here: [$SCT_DIR]"
   change_default_path=""
   while [[ ! $change_default_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-    print question "SCT will be installed here: [$SCT_DIR]
-
+    print info "SCT will be installed here: [$SCT_DIR]"
+    change_default_path=no
+    if [ -z "$NONINTERACTIVE"]; then
+      print question "
 Do you agree? [y]es/[n]o: "
-    read change_default_path
+      read change_default_path
+    fi
   done
   if [[ $change_default_path =~ ^[Yy] ]]; then
     # user accepts default path --> exit loop
     break
   fi
+
+  # ASSUMPTION: the rest of these are not guarded by $NONINTERACTIVE because this loop should have been broken already in that case.
+
   print question "Choose install directory. Warning! Give full path (e.g. /usr/django/sct_v3.0): \n"
   # user enters new path
   read new_install
@@ -656,8 +665,11 @@ fi
 # update PATH environment
 add_to_path=""
 while [[ ! $add_to_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-  print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
-  read add_to_path
+  add_to_path=yes
+  if [ -z "$NONINTERACTIVE" ]; then
+    print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
+    read add_to_path
+  fi
 done
 
 if [[ $add_to_path =~ ^[Yy] ]]; then
