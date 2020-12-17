@@ -527,7 +527,7 @@ yes | python/bin/conda create -n venv_sct python=3.6
 # activate miniconda
 source python/etc/profile.d/conda.sh
 conda activate venv_sct
-if [ "$(which python)" != "$(which python/envs/venv_sct/bin/python)" ]; then
+if [ "$(command -v python)" != "$(command -v python/envs/venv_sct/bin/python)" ]; then
   echo "error: venv_sct failed to activate." >&2
   exit 1
 fi
