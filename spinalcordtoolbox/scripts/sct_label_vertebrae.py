@@ -303,9 +303,15 @@ def main(args=None):
         copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
         copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
         # apply straightening
-
-        s, o = run_proc(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz',
-                               '-o', 'data_straight.nii'])
+        run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+                 ('data.nii',
+                  'straight_ref.nii.gz',
+                  'warp_curve2straight.nii.gz',
+                  'data_straight.nii',
+                  'Linear'),
+                 verbose=verbose,
+                 is_sct_binary=True,
+                 )
     else:
         sct_straighten_spinalcord.main(args=[
             '-i', 'data.nii',
