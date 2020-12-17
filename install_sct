@@ -288,6 +288,22 @@ function usage() {
   echo -e "\n\t-v \v Full verbose"
 }
 
+if [ "$(uname)" = "Darwin" ]; then
+  # macOS polyfills
+
+  # Linux has `realpath` and `readlink -f`.
+  # BSD has `readlink -f`.
+  # macOS has neither: https://izziswift.com/how-can-i-get-the-behavior-of-gnus-readlink-f-on-a-mac/
+  # even though it *has* the function in its libc: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/realpath.3.html
+  # Someone even wrote a whole C program just for this: https://github.com/harto/realpath-osx/.
+  # https://stackoverflow.com/a/3572105 suggests some bash trickery but it
+  # seems pretty fragile and that it probably doesn't actually expand symlinks.
+  # So here, solve it with python. It's not a great either, but since much of
+  # this script already is just calling python it's fairly safe.
+  realpath() {
+    python -c 'import sys, path; for f in sys.argv[1:]: print(os.path.realpath(f))' "$@"
+  }
+fi
 
 # ======================================================================================================================
 # SCRIPT STARTS HERE
