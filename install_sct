@@ -433,17 +433,17 @@ fi
 
 # Set install dir
 while true; do
-  change_default_path=""
-  while [[ ! $change_default_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+  keep_default_path=""
+  while [[ ! $keep_default_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
     print info "SCT will be installed here: [$SCT_DIR]"
-    change_default_path=no
-    if [ -z "$NONINTERACTIVE"]; then
+    keep_default_path=yes
+    if [ -z "$NONINTERACTIVE" ]; then
       print question "
 Do you agree? [y]es/[n]o: "
-      read change_default_path
+      read keep_default_path
     fi
   done
-  if [[ $change_default_path =~ ^[Yy] ]]; then
+  if [[ $keep_default_path =~ ^[Yy] ]]; then
     # user accepts default path --> exit loop
     break
   fi
