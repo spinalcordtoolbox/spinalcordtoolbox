@@ -65,15 +65,13 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :param fname_seg: file name of straigthened spinal cord segmentation
     :param contrast: t1 or t2
     :param param:  advanced parameters
-    :param init_disc: reference coordinates and value for a disc. c2/c3 is often used and
-    automatically detected with sct_label_vertebrae
+    :param init_disc: reference coordinates and value for a disc. c2/c3 is often used and automatically detected with sct_label_vertebrae
     :param verbose:
-    :param path_template: path to the used template. Template should be a straighten image with sing-voxel labels
-    on the posterior tip of each disc
+    :param path_template: path to the used template. Template should be a straighten image with sing-voxel labels on the posterior tip of each disc
     :param path_output: output path for verbose=2 pictures
     :param scale_dist: float: Scaling factor to adjust average distance between two adjacent intervertebral discs
     :return: None
-    
+
     """
     logger.info('Look for template...')
     logger.info('Path template: %s', path_template)
@@ -602,8 +600,7 @@ def label_disc_posterior(list_disc_z, list_disc_value, fname_hm, fname_data):
 
 
     :param list_disc_z: list of position alongside the IS axis
-    :param list_disc_value: list of label value (e.g., [1,2,3,4]). The index of the value correspond to the index
-    of the position in list_disc_z
+    :param list_disc_value: list of label value (e.g., [1,2,3,4]). The index of the value correspond to the index of the position in list_disc_z
     :param fname_hm: path to the heatmap output by the network
     :param fname_data: Path to sgementation data with same resolution as the heatmap (fname_hm)
     :return: None
