@@ -18,7 +18,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
-    clean_labeled_segmentation, label_discs, label_vert
+    clean_labeled_segmentation, label_vert
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
@@ -161,6 +161,14 @@ def get_parser():
         help="Apply Laplacian filtering. More accurate but could mistake disc depending on anatomy."
     )
     optional.add_argument(
+        '-clean-labels',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help=" Clean output labeled segmentation to resemble original segmentation."
+    )
+    optional.add_argument(
         '-scale-dist',
         metavar=Metavar.float,
         type=float,
@@ -269,6 +277,7 @@ def main(argv=None):
     if arguments.param is not None:
         param.update(arguments.param[0])
     remove_temp_files = arguments.r
+    clean_labels = arguments.clean_labels
     laplacian = arguments.laplacian
 
     path_tmp = tmp_create(basename="label_vertebrae")
@@ -329,14 +338,13 @@ def main(argv=None):
     if fname_disc:
         # Apply straightening to disc-label
         printv('\nApply straightening to disc labels...', verbose)
-        run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+        run_proc('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
                  (fname_disc,
                   'data_straightr.nii',
                   'warp_curve2straight.nii.gz',
                   'labeldisc_straight.nii.gz',
-                  'NearestNeighbor'),
-                 verbose=verbose,
-                 is_sct_binary=True,
+                  'label'),
+                 verbose=verbose
                  )
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
@@ -416,13 +424,25 @@ def main(argv=None):
              verbose=verbose,
              is_sct_binary=True,
              )
-    # Clean labeled segmentation
-    printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
-    clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
+
+    if clean_labels:
+        # Clean labeled segmentation
+        printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
+        clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
 
     # label discs
     printv('\nLabel discs...', verbose)
-    label_discs('segmentation_labeled.nii', verbose=verbose)
+    printv('\nUn-straighten labeled discs...', verbose)
+    run_proc('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
+             ('segmentation_straight_labeled_disc.nii',
+              'segmentation.nii',
+              'warp_straight2curve.nii.gz',
+              'segmentation_labeled_disc.nii',
+              'label'),
+             verbose=verbose,
+             is_sct_binary=True,
+             )
+
 
     # come back
     os.chdir(curdir)

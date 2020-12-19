@@ -410,7 +410,7 @@ def main(argv=None):
 
     print("RUNNING")
     print("-------")
-    print("Running {} jobs in parallel.\n".format(jobs))
+    print("Processing {} subjects in parallel. (Worker processes used: {}).".format(len(subject_dirs), jobs))
 
     # Run the jobs, recording start and end times
     start = datetime.datetime.now()
