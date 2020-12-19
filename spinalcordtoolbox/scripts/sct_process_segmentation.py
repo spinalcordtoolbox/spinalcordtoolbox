@@ -340,7 +340,7 @@ def main(argv=None):
 
     # QC report (only show CSA for clarity)
     if path_qc is not None:
-        generate_qc(fname_segmentation, args=args, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
+        generate_qc(fname_segmentation, args=arguments, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
                     subject=qc_subject, path_img=_make_figure(metrics_agg_merged, fit_results),
                     process='sct_process_segmentation')
 
