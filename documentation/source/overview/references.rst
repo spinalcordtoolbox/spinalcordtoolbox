@@ -370,3 +370,6 @@ Applications
 -  `Hoggarth et al. Macromolecular changes in spinal cord white matter characterize 
    whiplash outcome at 1-year post motor vehicle collision. Scientific Reports, 2020 
    <https://www.nature.com/articles/s41598-020-79190-5>`__
+-  `Stroman et al. A comparison of the effectiveness of functional MRI analysis methods 
+   for pain research: The new normal. PLoS One, 2020 
+   <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0243723>`__
