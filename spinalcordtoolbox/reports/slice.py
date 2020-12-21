@@ -382,7 +382,7 @@ class Sagittal(Slice):
         assert image.orientation == 'SAL'
         # If mask is empty, raise error
         if np.argwhere(image.data).shape[0] == 0:
-            logging.error('Mask is empty')
+            raise ValueError("Label/segmentation image is empty. Can't retrieve RL slice indices.")
         # If mask only has one label (e.g., in sct_detect_pmj), return the R-L index (repeated n_SI times)
         elif np.argwhere(image.data).shape[0] == 1:
             return [np.argwhere(image.data)[0][2]] * image.data.shape[0]  # SAL orientation, so shape[0] -> SI axis
