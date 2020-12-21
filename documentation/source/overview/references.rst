@@ -367,3 +367,6 @@ Applications
 -  `Fratini et al. Multiscale Imaging Approach for Studying the Central
    Nervous System: Methodology and Perspective. Front Neurosci, 2020
    <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7019007/>`__
+-  `Hoggarth et al. Macromolecular changes in spinal cord white matter characterize 
+   whiplash outcome at 1-year post motor vehicle collision. Scientific Reports, 2020 
+   <https://www.nature.com/articles/s41598-020-79190-5>`__
