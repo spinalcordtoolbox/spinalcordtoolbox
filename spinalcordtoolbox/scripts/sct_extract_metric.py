@@ -198,7 +198,7 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.file,
         default="./label/template/PAM50_levels.nii.gz",
-        help="Vertebral labeling file. Only use with flag -vert. Example: PAM50_levels.nii.gz"
+        help="Vertebral labeling file. Only use with flag -vert. The input Image and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other. Example: PAM50_levels.nii.gz"
     )
     optional.add_argument(
         '-perlevel',
@@ -358,6 +358,14 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     # Load vertebral levels
     if vertebral_levels:
         im_vertebral_labeling = Image(fname_vertebral_labeling).change_orientation("RPI")
+
+        # Get dimensions of input Image and the vertebral labeling file
+        nx, ny, nz = input_im.data.shape
+        nx_vertebral, ny_vertebral, nz_vertebral = im_vertebral_labeling.data.shape
+
+        # Check dimensions consistency between the input Image and the vertebral labeling file
+        if (nx, ny, nz) != (nx_vertebral, ny_vertebral, nz_vertebral):
+            printv('\nERROR: Metric data and vertebral labeling file DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
     else:
         im_vertebral_labeling = None
 
