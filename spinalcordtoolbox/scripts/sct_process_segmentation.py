@@ -293,14 +293,14 @@ def main(args=None):
     remove_temp_files = arguments.r
     if arguments.vertfile is not None:
         fname_vert_levels = arguments.vertfile
+        if arguments.vert is not None:
+            # Get dimensions of input and the vertebral labeling file
+            nx, ny, nz = Image(fname_segmentation).change_orientation('RPI').data.shape
+            nx_vertebral, ny_vertebral, nz_vertebral =  Image(fname_vert_levels).change_orientation('RPI').data.shape
 
-        # Get dimensions of input and the vertebral labeling file
-        nx, ny, nz = Image(fname_segmentation).change_orientation('RPI').data.shape
-        nx_vertebral, ny_vertebral, nz_vertebral =  Image(fname_vert_levels).change_orientation('RPI').data.shape
-
-        # Check dimensions consistency between the input and the vertebral labeling file
-        if (nx, ny, nz) != (nx_vertebral, ny_vertebral, nz_vertebral):
-            print('\nERROR: Input data and vertebral labeling file DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
+            # Check dimensions consistency between the input and the vertebral labeling file
+            if (nx, ny, nz) != (nx_vertebral, ny_vertebral, nz_vertebral):
+                print('\nERROR: Input data and vertebral labeling file DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
     if arguments.perlevel is not None:
         perlevel = arguments.perlevel
     else:
