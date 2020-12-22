@@ -31,6 +31,7 @@ from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct
 from spinalcordtoolbox.utils.fs import get_absolute_path
+from spinalcordtoolbox.image import Image
 
 
 def get_parser():
@@ -115,7 +116,7 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.str,
         default='./label/template/PAM50_levels.nii.gz',
-        help="Vertebral labeling file. Only use with flag -vert"
+        help="Vertebral labeling file. Only use with flag -vert. The input and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other. "
     )
     optional.add_argument(
         '-perlevel',
@@ -318,6 +319,14 @@ def main(args=None):
     metrics_agg = {}
     if not file_out:
         file_out = 'csa.csv'
+    
+    # Get dimensions of input and the vertebral labeling file
+    nx, ny, nz = Image(fname_segmentation).change_orientation('RPI').data.shape
+    nx_vertebral, ny_vertebral, nz_vertebral =  Image(fname_vert_levels).change_orientation('RPI').data.shape
+
+    # Check dimensions consistency between the input and the vertebral labeling file
+    if (nx, ny, nz) != (nx_vertebral, ny_vertebral, nz_vertebral):
+        print('\nERROR: Input data and vertebral labeling file DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
 
     metrics, fit_results = compute_shape(fname_segmentation,
                                          angle_correction=angle_correction,
