@@ -75,6 +75,7 @@ matrix:
       env:
         - DOCKER_IMAGE="debian:9"       DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
     - name: "CentOS 8"
+      if: branch = release or type = cron
       # runs on all branches
       os: linux
       dist: bionic # kernel ~= Centos8
@@ -93,6 +94,7 @@ matrix:
     # The rest of the OSes can use Travis's built-in images:
     - name: "Ubuntu 18.04 (Bionic Beaver)"
       # runs on all branches
+      if: branch = release or type = cron
       os: linux  # list of Linux env: https://docs.travis-ci.com/user/reference/overview/
       dist: bionic
     - os: linux
@@ -101,6 +103,7 @@ matrix:
       dist: xenial
     - name: "OSX 10.15 (Catalina)"
       # runs on all branches
+      if: branch = release or type = cron
       os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
       osx_image: xcode12.2
     - name: "OSX 10.14 (Mojave)"
@@ -108,11 +111,12 @@ matrix:
       os: osx
       osx_image: xcode11.3
     - name: "OSX 10.13 (High Sierra)"
-      if: branch = release or type = cron
+      # if: branch = release or type = cron
       os: osx
       osx_image: xcode9.4
     - name: "Windows Server, 1809"
       # runs on all branches
+      if: branch = release or type = cron
       language: bash
       os: windows
 
