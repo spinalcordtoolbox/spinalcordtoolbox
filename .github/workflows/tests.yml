@@ -1,0 +1,175 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - master
+      - release
+  pull_request:
+    branches:
+      - '*'
+  schedule:
+    # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#onschedule
+    # > Scheduled workflows run on the latest commit on the default or base branch
+    # i.e. this can only run on master
+    - cron:  '0 11 * * *'
+
+# caveats
+# - the nightlies; i've marked them all with `nightly: true` or `nightly: false` to keep them straight but that variable is actually used anywhere which means it's bug-prone
+# - the extra matrix.dependencies step is awkward; i don't know how to avoid it though
+# - `which` should be removed from this when #3102 gets merged
+# - when the nightlies don't run they still show up in the UI as a single job, but with name "    name: ${{matrix.name || matrix.os || 'Nightlies' }}
+#   sooo that sucks
+# - annoying that test-wsl can't be inlined with the other tests
+#   it seems like it should be possible: it should work the same way as the `container:` cases; except specifying `container` when `runs-on: windows-2019` crashes, even if the value of container is empty?
+# - the linting step in .ci.sh should become a separate .lint.sh with a separate workflows/lint.yml
+
+# The set of available runners on Github's infra is generous but
+# will never be complete: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+# to cover other Linux distros, we use docker images.
+# This isn't a perfect test but it's pretty good.
+
+env:
+    # To keep feedback fast, we only run a selection of common platforms in CI
+    # The others run nightly, or on changes to one of the special branches mentioned in `on:`.
+    NIGHTLY: ${{ !!(github.event_name == 'schedule' || (github.event_name == 'push')) }}
+    # Even when given -y, apt will still sometimes hang at a prompt if a package
+    # has clarifications to ask; DEBIAN_FRONTEND=noninteractive prevents that,
+    # This will be defined for non-debian platforms below too, but there's no harm in that.
+    # (TravisCI quietly defined this on all their platforms, but we have to give it manually on GithubCI.)
+    DEBIAN_FRONTEND: 'noninteractive'
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        include:
+          - name: Ubuntu 18.04 (Bionic Beaver)
+            os: ubuntu-18.04
+            nightly: false
+            # github runners come with dev-tools pre-installed
+            #dependencies: ...
+          - name: macOS 10.15 (Catalina)
+            os: macos-10.15
+            nightly: false
+            # github runners come with dev-tools pre-installed
+            #dependencies: ...
+          - name: CentOS 8
+            os: ubuntu-18.04
+            container: centos:8
+            dependencies: 'yum install -y which gcc git curl'
+            nightly: false
+    name: ${{matrix.name || matrix.os || 'Tests' }}
+    runs-on: ${{matrix.os}}
+    container: ${{matrix.container}}
+    # I want to be able to use this condition to filter out the nightly builds from the regular day-to-day checks.
+    # but Actions currently doesn't support referencing`matrix` inside an `if:` on a `job:`: https://github.community/t/conditional-matrices/17206/2
+    # (despite it being legal for `container:`, `runs-on:`, `name:`, etc)
+    #if: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) || !matrix.nightly }}
+    steps:
+    - name: Installer's dependencies
+      if: ${{matrix.dependencies}}
+      run: ${{matrix.dependencies}}
+    - uses: actions/checkout@v2
+    - name: CI
+      run: |
+        ./.ci.sh
+
+  test-wsl:
+    # with the help of https://github.com/marketplace/actions/setup-wsl
+    strategy:
+      matrix:
+        include:
+          # container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
+          #- container: Debian
+          #  nightly: true
+          - container: Ubuntu-18.04
+            dependencies: 'sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl'
+            nightly: false
+          #- container: Ubuntu-20.10
+          #  nightly: true
+    name: WSL-${{matrix.container}} (Windows Subsystem for Linux)
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
+    steps:
+    - uses: Vampire/setup-wsl@v1
+      with:
+        distribution: ${{matrix.container}}
+    - name: Use unix line endings
+      shell: bash
+      run: |
+        # Github's actions/checkout@v2 when run on Windows mangles the line-endings to DOS-style
+        # but we're running Linux *on top* of Windows, so we need to not mangle them!
+        # https://github.com/actions/checkout/issues/135#issuecomment-602171132
+        # https://github.com/actions/virtual-environments/issues/50#issuecomment-663920265
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+    - name: Installer's dependencies
+      if: ${{matrix.dependencies}}
+      run: ${{matrix.dependencies}}
+    - uses: actions/checkout@v2
+    - name: CI
+      run: |
+        ./.ci.sh
+
+  test-nightlies:
+    strategy:
+      matrix:
+        include:
+          - name: Ubuntu 16.04 (Xenial)
+            os: ubuntu-16.04
+            nightly: true
+            # github runners come with dev-tools pre-installed
+            #dependencies: ...
+          #- name: macOS 11.0 (Big Sur)
+          # # overloaded on Github currently
+          #  os: macos-11.0
+          #  nightly: true
+          - name: ArchLinux
+            os: ubuntu-18.04
+            container: archlinux
+            nightly: true
+            dependencies: 'pacman -Syu --noconfirm which gcc git curl'
+          - name: Debian Rolling Release
+            os: ubuntu-18.04
+            container: debian:sid
+            nightly: true
+            dependencies: 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y libglib2.0-0 procps gcc git curl'
+          - name: Debian Testing
+            os: ubuntu-18.04
+            container: debian:testing
+            nightly: true
+            dependencies: 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y libglib2.0-0 procps gcc git curl'
+          - name: Debian 10
+            os: ubuntu-18.04
+            container: debian:10
+            nightly: true
+            dependencies: 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y libglib2.0-0 procps gcc git curl'
+          - name: Debian 9
+            os: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
+            container: debian:9
+            nightly: true
+            dependencies: 'apt update && DEBIAN_FRONTEND=noninteractive apt install -y libglib2.0-0 procps gcc git curl'
+          - name: CentOS 7
+            os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
+            container: centos:7
+            nightly: true
+            dependencies: 'yum install -y which gcc git curl'
+    name: ${{matrix.name || matrix.os || 'Nightlies' }}
+    runs-on: ${{matrix.os}}
+    container: ${{matrix.container}} # XXX if undefined this is ignored hopefully?
+    # I want to be able to use this condition to filter out the nightly builds from the regular day-to-day checks.
+    # but Actions currently doesn't support referencing`matrix` inside an `if:` on a `job:`
+    # (despite it being legal for `container:`, `runs-on:`, `name:`, etc)
+    #if: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) || !matrix.nightly }}
+    if: ${{ (github.event_name == 'schedule' || github.event_name == 'push') }}
+    steps:
+    - name: Installer's dependencies
+      if: ${{matrix.dependencies}}
+      run: ${{matrix.dependencies}}
+    - uses: actions/checkout@v2
+    - name: CI
+      run: |
+        ./.ci.sh
