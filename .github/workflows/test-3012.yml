@@ -32,7 +32,4 @@ jobs:
       - name: SpinalCord Toolbox installation
         run: |
           bash
-          cd ../..
-          git clone --depth 1 https://github.com/neuropoly/spinalcordtoolbox
-          cd spinalcordtoolbox
           yes | ASK_REPORT_QUESTION=false PIP_PROGRESS_BAR=off ./install_sct
