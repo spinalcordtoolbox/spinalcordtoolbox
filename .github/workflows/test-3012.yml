@@ -1,0 +1,38 @@
+name: CI-Tests
+
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  test:
+    env:
+      FSLOUTPUTTYPE: NIFTI_GZ
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - 'macos-10.15'
+          - 'macos-11.0'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set XCode version
+        if: contains(matrix.os, 'macos-11.0')
+        run: sudo xcode-select -s "/Applications/Xcode_12.2.app"
+
+      - name: SpinalCord Toolbox installation
+        run: |
+          bash
+          cd ../..
+          git clone --depth 1 https://github.com/neuropoly/spinalcordtoolbox
+          cd spinalcordtoolbox
+          yes | ASK_REPORT_QUESTION=false PIP_PROGRESS_BAR=off ./install_sct
