@@ -1,0 +1,22 @@
+name: Tests
+
+on:
+  push:
+    branches: [ master, release ]
+  pull_request:
+    branches: [ '*' ]
+  schedule:
+    - cron:  '0 11 * * *'
+
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{matrix.os}}
+    steps:
+    - uses: actions/checkout@v2
+    - name: CI
+      run: |
+        ./ci.sh
