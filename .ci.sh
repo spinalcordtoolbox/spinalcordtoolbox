@@ -5,7 +5,7 @@
 set -e # Error build immediately if install script exits with non-zero
 
 echo Installing SCT
-yes | ASK_REPORT_QUESTION=false PIP_PROGRESS_BAR=off ./install_sct
+PIP_PROGRESS_BAR=off ./install_sct -y
 echo $?
 echo "... STATUS"
 
