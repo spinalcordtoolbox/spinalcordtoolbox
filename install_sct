@@ -300,7 +300,7 @@ if [ "$(uname)" = "Darwin" ]; then
   # seems pretty fragile and that it probably doesn't actually expand symlinks.
   # So here, solve it with python. It's not great either, but since much of
   # this script already is just calling python at least it's reliable.
-  realpath() {
+  (command -v realpath >/dev/null) || realpath() {
     python -c 'import sys, path; for f in sys.argv[1:]: print(os.path.realpath(f))' "$@"
   }
 fi
