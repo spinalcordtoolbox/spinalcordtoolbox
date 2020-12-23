@@ -298,8 +298,8 @@ if [ "$(uname)" = "Darwin" ]; then
   # Someone even wrote a whole C program just for this: https://github.com/harto/realpath-osx/.
   # https://stackoverflow.com/a/3572105 suggests some bash trickery but it
   # seems pretty fragile and that it probably doesn't actually expand symlinks.
-  # So here, solve it with python. It's not a great either, but since much of
-  # this script already is just calling python it's fairly safe.
+  # So here, solve it with python. It's not great either, but since much of
+  # this script already is just calling python at least it's reliable.
   realpath() {
     python -c 'import sys, path; for f in sys.argv[1:]: print(os.path.realpath(f))' "$@"
   }
@@ -544,8 +544,10 @@ yes | python/bin/conda create -n venv_sct python=3.6
 source python/etc/profile.d/conda.sh
 conda activate venv_sct
 # double-check conda activated (it can be glitchy): https://github.com/neuropoly/spinalcordtoolbox/issues/3029
-if [ "$(realpath "$(command -v python)")" != "$(realpath "$(command -v python/envs/venv_sct/bin/python)")" ]; then
-  echo "error: venv_sct failed to activate. Do you have a conflicting python installation?" >&2
+EXPECTED_PYTHON="$(realpath "$(command -v python/envs/venv_sct/bin/python)")"
+ACTUAL_PYTHON="$(realpath "$(command -v python)")"
+if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
+  echo "Error: Activating venv_sct failed to switch Python interpreter to Miniconda. (Incorrect interpreter loaded: $ACTUAL_PYTHON)" >&2
   exit 1
 fi
 
