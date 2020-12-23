@@ -23,6 +23,7 @@ requests
 requirements-parser
 scipy
 scikit-image
+scikit-learn
 tensorflow==1.5.0
 # PyTorch's Linux/Windows distribution is very large due to its GPU support,
 # but we only need that for training models. For users, use the CPU-only version
