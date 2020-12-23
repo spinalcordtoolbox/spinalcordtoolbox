@@ -538,7 +538,7 @@ esac
 run "bash $TMP_DIR/miniconda.sh -p $SCT_DIR/$PYTHON_DIR -b -f"
 
 # create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
-yes | python/bin/conda create -n venv_sct python=3.6
+31yes | python/bin/conda create -n venv_sct python=3.6
 
 # activate miniconda
 source python/etc/profile.d/conda.sh
@@ -570,7 +570,9 @@ pip install -r $REQUIREMENTS_FILE &&
   # See https://github.com/neuropoly/spinalcordtoolbox/issues/3035 for more info.
   yes | pip uninstall tensorflow-tensorboard &&
   yes | pip uninstall tensorboard &&
-  pip install tensorboard
+  pip install tensorboard &&
+  yes | pip uninstall scikit-learn &&
+  pip install --pre --upgrade  -f artifact scikit-learn
 if [[ $? != 0 ]]; then
   die "Failed running pip install: $?"
 fi
