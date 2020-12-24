@@ -162,7 +162,7 @@ function fetch_os_type() {
 function check_requirements() {
   print info "Checking requirements..."
   # check curl
-  if [[ ! $(which curl) && ! $(which wget) ]]; then
+  if [[ ! ( $(command -v curl) || $(command -v wget) ) ]]; then
     die "ERROR: neither \"curl\" nor \"wget\" is installed. Please install either of them and restart SCT installation."
   fi
   # check gcc
@@ -178,7 +178,7 @@ function check_requirements() {
         fi
       done
       if [[ $GCC_INSTALL =~ [Yy](es)? ]]; then
-        if [[ ! $(which brew) ]]; then
+        if [[ ! $(command -v brew) ]]; then
           # NB: this is a different NONINTERACTIVE, for the brew installer
           (NONINTERACTIVE=1 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)")
         fi
@@ -267,7 +267,7 @@ function download() {
   # Use curl or wget to download goodies
   e_status=0
   # Try with wget
-  if [[ $(which wget) ]]; then
+  if [[ $(command -v wget) ]]; then
     cmd="wget -O $1 $2"
     print code "$cmd"
     $cmd
@@ -275,7 +275,7 @@ function download() {
     echo exit status is $e_status
   fi
   # Try with curl
-  if [[ $(which curl) && ! -e $1 ]]; then
+  if [[ $(command -v curl) && ! -e $1 ]]; then
     cmd="curl -o $1 -L $2"
     print code "$cmd"
     $cmd
