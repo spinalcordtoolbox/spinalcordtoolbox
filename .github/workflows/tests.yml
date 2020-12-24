@@ -24,7 +24,7 @@ jobs:
           - name: Ubuntu 16.04 (Xenial)
             os: ubuntu-16.04
             nightly: true
-            installer: 'apt-get install -y'
+            installer: 'sudo apt-get install -y'
             deps: 'which gcc git curl'
           - name: macOS 11.0 (Big Sur)
             os: macos-11.0
@@ -33,37 +33,37 @@ jobs:
             os: ubuntu-18.04
             container: archlinux
             nightly: true
-            installer: 'pacman -S --noconfirm'
+            installer: 'sudo pacman -S --noconfirm'
             deps: 'which gcc git curl'
           - name: Debian Rolling Release
             os: ubuntu-18.04
             container: debian:sid
             nightly: true
-            installer: 'apt-get install -y'
+            installer: 'sudo apt-get install -y'
             deps: 'which gcc git curl'
           - name: Debian Testing
             os: ubuntu-18.04
             container: debian:testing
             nightly: true
-            installer: 'apt-get install -y'
+            installer: 'sudo apt-get install -y'
             deps: 'which gcc git curl'
           - name: Debian 10
             os: ubuntu-18.04
             container: debian:10
             nightly: true
-            installer: 'apt-get install -y'
+            installer: 'sudo apt-get install -y'
             deps: 'which gcc git curl'
           - name: Debian 9
             os: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
             container: debian:9
             nightly: true
-            installer: 'apt-get install -y'
+            installer: 'sudo apt-get install -y'
             deps: 'which gcc git curl'
           - name: CentOS 7
             os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
             container: centos:7
             nightly: true
-            installer: 'yum install -y'
+            installer: 'sudo yum install -y'
             deps: 'which gcc git curl'
     name: ${{matrix.name || matrix.os || 'Nightlies' }}
     runs-on: ${{matrix.os}}
@@ -93,7 +93,7 @@ jobs:
           - name: Ubuntu 18.04 (Bionic Beaver)
             os: ubuntu-18.04
             nightly: false
-            installer: 'apt-get install -y'
+            installer: 'sudo apt-get install -y'
             deps: 'which gcc git curl'
           - name: macOS 10.15 (Catalina)
             os: macos-10.15
@@ -102,7 +102,7 @@ jobs:
           - name: CentOS 8
             os: ubuntu-18.04
             container: centos:8
-            installer: 'yum install -y'
+            installer: 'sudo yum install -y'
             deps: 'which gcc git curl'
             nightly: false
     name: ${{matrix.name || matrix.os || 'Tests' }}
