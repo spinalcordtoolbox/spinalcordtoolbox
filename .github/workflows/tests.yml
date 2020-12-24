@@ -13,8 +13,51 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        # The set of available runners on Github's infra is generous but
+        # will never be complete: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+        # to glue over this, we use docker images to emulate distros they don't have.
+        # This isn't a perfect test but it's pretty good.
+        # TODO: integrate WSL in this scheme too.
+        os: [ubuntu-18.04, macos-10.15, windows-2019]
+        nightly: [false] # we only 
+        include:
+          - name: ArchLinux
+            os: ubuntu-18.04
+            docker_image: archlinux
+            nightly: true
+          - name: Debian Rolling Release
+            os: ubuntu-18.04
+            docker_image: debian:sid
+            nightly: true
+          - name: Debian Testing
+            os: ubuntu-18.04
+            docker_image: debian:testing
+            nightly: true
+          - name: Debian 10
+            os: ubuntu-18.04
+            docker_image: debian:10
+            nightly: true
+          - name: Debian 9
+            os: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
+            docker_image: debian:9
+            nightly: true
+          - name: CentOS 8
+            os: ubuntu-18.04
+            docker_image: centos:8
+            nightly: true
+          - name: CentOS 7
+            os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
+            docker_image: centos:7
+            nightly: true
+          - os: ubuntu-18.04
+            docker_image: centos:8
+            nightly: true
+          - os: ubuntu-18.04
+            docker_image: centos:8
+            nightly: true
+    name: ${{matrix.name || matrix.os}}
     runs-on: ${{matrix.os}}
+    container: ${{matrix.docker_image}} # XXX if undefined this is ignored hopefully?
     steps:
     - uses: actions/checkout@v2
     - name: CI
