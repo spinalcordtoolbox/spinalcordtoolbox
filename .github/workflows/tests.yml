@@ -9,8 +9,7 @@ on:
     - cron:  '0 11 * * *'
 
 jobs:
-  build:
-
+  test-nightlies:
     strategy:
       matrix:
         # The set of available runners on Github's infra is generous but
@@ -18,45 +17,84 @@ jobs:
         # to glue over this, we use docker images to emulate distros they don't have.
         # This isn't a perfect test but it's pretty good.
         # TODO: integrate WSL in this scheme too.
-        os: [ubuntu-18.04, macos-10.15, windows-2019]
-        z: [false]
+        # os: [ubuntu-18.04, macos10.15, windows-2019]
         # To keep feedback fast, we only run a selection of common platforms in CI
         # The others run nightly, or 
-        #nightly: ${{ [(github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))] }}
-        exclude:
-          - z: false # does this cancel ALL?
         include:
+          - name: Ubuntu 16.04 (Xenial)
+            os: ubuntu-16.04
+            nightly: true
+          - name: macOS 11.0 (Big Sur)
+            os: macos-11.0
+            nightly: true
           - name: ArchLinux
             os: ubuntu-18.04
             docker_image: archlinux
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
+            nightly: true
           - name: Debian Rolling Release
             os: ubuntu-18.04
             docker_image: debian:sid
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
+            nightly: true
           - name: Debian Testing
             os: ubuntu-18.04
             docker_image: debian:testing
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
+            nightly: true
           - name: Debian 10
             os: ubuntu-18.04
             docker_image: debian:10
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
+            nightly: true
           - name: Debian 9
             os: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
             docker_image: debian:9
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
-          - name: CentOS 8
-            os: ubuntu-18.04
-            docker_image: centos:8
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
+            nightly: true
           - name: CentOS 7
             os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
             docker_image: centos:7
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
+            nightly: true
     name: ${{matrix.name || matrix.os}}
     runs-on: ${{matrix.os}}
     container: ${{matrix.docker_image}} # XXX if undefined this is ignored hopefully?
+    # I want to be able to use this condition to filter out the nightly builds from the regular day-to-day checks.
+    # but Actions currently doesn't support referencing`matrix` inside an `if:` on a `job:`
+    # (despite it being legal for `container:`, `runs-on:`, `name:`, etc)
+    #if: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) || !matrix.nightly }}
+    if: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
+    steps:
+    - uses: actions/checkout@v2
+    - name: CI
+      if: ${{ matrix.nightly }}
+      run: |
+        ./.ci.sh
+  test:
+    strategy:
+      matrix:
+        # The set of available runners on Github's infra is generous but
+        # will never be complete: https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+        # to glue over this, we use docker images to emulate distros they don't have.
+        # This isn't a perfect test but it's pretty good.
+        # TODO: integrate WSL in this scheme too.
+        # os: [ubuntu-18.04, macos-10.15, windows-2019]
+        # To keep feedback fast, we only run a selection of common platforms in CI
+        # The others run nightly, or 
+        include:
+          - name: Ubuntu 18.04 (Bionic Beaver)
+            os: ubuntu-18.04
+            nightly: false
+          - name: macOS 10.15 (Catalina)
+            os: macos-10.15
+            nightly: false
+          - name: CentOS 8
+            os: ubuntu-18.04
+            docker_image: centos:8
+            nightly: false
+    name: ${{matrix.name || matrix.os}}
+    runs-on: ${{matrix.os}}
+    container: ${{matrix.docker_image}} # XXX if undefined this is ignored hopefully?
+    # I want to be able to use this condition to filter out the nightly builds from the regular day-to-day checks.
+    # but Actions currently doesn't support referencing`matrix` inside an `if:` on a `job:`
+    # (despite it being legal for `container:`, `runs-on:`, `name:`, etc)
+    #if: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) || !matrix.nightly }}
+    if: ${{ true }}
     steps:
     - uses: actions/checkout@v2
     - name: CI
