@@ -105,15 +105,6 @@ jobs:
             installer: 'yum install -y'
             deps: 'which gcc git curl'
             nightly: false
-          - name: WSL-Ubuntu-18.04 (Windows Subsystem for Linux) #
-            os: windows-2019
-            shell: wsl-bash # there's also wsl-bash_Ubuntu-20.04, probably others
-            # here's setup-wsl's list of supported container images:
-            # https://github.com/marketplace/actions/setup-wsl#distribution
-            wslcontainer: Ubuntu-18.04
-            installer: 'apt-get install -y'
-            deps: 'which gcc git curl'
-            nightly: false
     name: ${{matrix.name || matrix.os || 'Tests' }}
     runs-on: ${{matrix.os}}
     container: ${{matrix.container}} # XXX if undefined this is ignored hopefully?
@@ -136,11 +127,12 @@ jobs:
     strategy:
       matrix:
         include:
-          #- name: Debian
+          # container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
+          #- container: Debian
           #  nightly: true
-          - name: Ubuntu-18.04
+          - container: Ubuntu-18.04
             nightly: false
-          #- name: Ubuntu-20.10
+          #- container: Ubuntu-20.10
           #  nightly: true
     name: WSL-${{matrix.container}} (Windows Subsystem for Linux)
     runs-on: windows-2019
