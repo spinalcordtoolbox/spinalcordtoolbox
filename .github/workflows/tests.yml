@@ -12,7 +12,7 @@ env:
   # Even when given -y, apt will still sometimes hang at a ncurses
   # prompt if a package has clarifications to ask; this ensures it doesn't.
   # This will be defined even for non-apt platforms but that's okay.
-  DEBIAN_FRONTEND: noninteractive
+  DEBIAN_FRONTEND: 'noninteractive'
 
 # caveats
 # - the nightlies; i've marked them all with `nightly: true` or `nightly: false` to keep them straight but that variable is actually used anywhere which means it's bug-prone
@@ -110,7 +110,7 @@ jobs:
         echo ----
         set | grep DEBIAN
         echo ----
-        echo $DEBIAN_FRONTEND
+        echo "|$DEBIAN_FRONTEND|"
         #export DEBIAN_FRONTEND # ???
         ${{matrix.dependencies}}
     - uses: actions/checkout@v2
