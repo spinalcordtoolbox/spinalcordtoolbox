@@ -51,7 +51,7 @@ jobs:
             os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
             docker_image: centos:7
             nightly: true
-    name: ${{matrix.name || matrix.os}}
+    name: ${{matrix.name || matrix.os || "Nightlies" }}
     runs-on: ${{matrix.os}}
     container: ${{matrix.docker_image}} # XXX if undefined this is ignored hopefully?
     # I want to be able to use this condition to filter out the nightly builds from the regular day-to-day checks.
@@ -62,7 +62,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: CI
-      if: ${{ matrix.nightly }}
       run: |
         ./.ci.sh
   test:
@@ -87,7 +86,7 @@ jobs:
             os: ubuntu-18.04
             docker_image: centos:8
             nightly: false
-    name: ${{matrix.name || matrix.os}}
+    name: ${{matrix.name || matrix.os || "Tests" }}
     runs-on: ${{matrix.os}}
     container: ${{matrix.docker_image}} # XXX if undefined this is ignored hopefully?
     # I want to be able to use this condition to filter out the nightly builds from the regular day-to-day checks.
@@ -98,6 +97,5 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: CI
-      if: ${{ matrix.nightly }}
       run: |
         ./.ci.sh
