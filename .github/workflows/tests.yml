@@ -54,7 +54,8 @@ jobs:
     name: ${{matrix.name || matrix.os}}
     runs-on: ${{matrix.os}}
     container: ${{matrix.docker_image}} # XXX if undefined this is ignored hopefully?
-    if: ${{ !(matrix.nightly) || (matrix.nightly && (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))) }}
+    #if: ${{ !(matrix.nightly) || (matrix.nightly && (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))) }}
+    if: ${{ matrix.nightly }}
     steps:
     - uses: actions/checkout@v2
     - name: CI
