@@ -48,6 +48,7 @@ jobs:
             dependencies: 'yum install -y which gcc git curl'
             nightly: false
     name: ${{matrix.name || matrix.os || 'Tests' }}
+    if: ${{false}}
     runs-on: ${{matrix.os}}
     container: ${{matrix.container}} # XXX if undefined this is ignored hopefully?
     # I want to be able to use this condition to filter out the nightly builds from the regular day-to-day checks.
@@ -67,6 +68,7 @@ jobs:
     # with the help of https://github.com/marketplace/actions/setup-wsl
     env:
       # this is needed for WSL to pick up these vars inside the container
+      # https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
       WSLENV: DEBIAN_FRONTEND
     strategy:
       matrix:
@@ -102,7 +104,15 @@ jobs:
         set
     - name: Installer's dependencies
       if: ${{matrix.dependencies}}
-      run: ${{matrix.dependencies}}
+      run: |
+        set -x
+        set
+        echo ----
+        set | grep DEBIAN
+        echo ----
+        echo $DEBIAN_FRONTEND
+        #export DEBIAN_FRONTEND # ???
+        ${{matrix.dependencies}}
     - uses: actions/checkout@v2
     - name: CI
       run: |
