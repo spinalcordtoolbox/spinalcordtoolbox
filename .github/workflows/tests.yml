@@ -8,6 +8,12 @@ on:
   schedule:
     - cron:  '0 11 * * *'
 
+env:
+  # apt is annoying; even when given -y it will still sometimes hang with
+  # a ncurses prompt if a package wants to ask questions; this ensures it doesn't do that.
+  # This will be defined even for non-apt platforms but that's okay.
+  DEBIAN_FRONTEND: noninteractive
+
 jobs:
   test-nightlies:
     strategy:
@@ -145,7 +151,7 @@ jobs:
         distribution: ${{matrix.container}}
     - name: Installer's dependencies
       run: |
-        sudo apt-get install -y gcc git curl
+        sudo apt-get update && sudo apt-get install -y gcc git curl
     - uses: actions/checkout@v2
     - name: CI
       run: |
