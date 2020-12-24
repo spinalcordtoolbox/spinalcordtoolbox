@@ -65,6 +65,9 @@ jobs:
         
   test-wsl:
     # with the help of https://github.com/marketplace/actions/setup-wsl
+    env:
+      # this is needed for WSL to pick up these vars inside the container
+      WSLENV: DEBIAN_FRONTEND
     strategy:
       matrix:
         include:
@@ -72,7 +75,7 @@ jobs:
           #- container: Debian
           #  nightly: true
           - container: Ubuntu-18.04
-            dependencies: sudo apt-get update && sudo apt-get install -y gcc git curl
+            dependencies: 'sudo apt update && sudo apt install -y gcc git curl'
             nightly: false
           #- container: Ubuntu-20.10
           #  nightly: true
@@ -108,7 +111,7 @@ jobs:
           - name: Ubuntu 16.04 (Xenial)
             os: ubuntu-16.04
             nightly: true
-            dependencies: 'sudo apt update && apt install -y gcc git curl'
+            dependencies: 'sudo apt update && sudo apt install -y gcc git curl'
           - name: macOS 11.0 (Big Sur)
             os: macos-11.0
             nightly: true
@@ -121,22 +124,22 @@ jobs:
             os: ubuntu-18.04
             container: debian:sid
             nightly: true
-            dependencies: 'sudo apt-get install -y libglib2.0-0 procps gcc git curl'
+            dependencies: 'sudo apt update && sudo apt install -y libglib2.0-0 procps gcc git curl'
           - name: Debian Testing
             os: ubuntu-18.04
             container: debian:testing
             nightly: true
-            dependencies: 'sudo apt-get install -y libglib2.0-0 procps gcc git curl'
+            dependencies: 'sudo apt update && sudo apt install -y libglib2.0-0 procps gcc git curl'
           - name: Debian 10
             os: ubuntu-18.04
             container: debian:10
             nightly: true
-            dependencies: 'sudo apt-get install -y libglib2.0-0 procps gcc git curl'
+            dependencies: 'sudo apt update && sudo apt install -y libglib2.0-0 procps gcc git curl'
           - name: Debian 9
             os: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
             container: debian:9
             nightly: true
-            dependencies: 'sudo apt-get install -y libglib2.0-0 procps gcc git curl'
+            dependencies: 'sudo apt update && sudo apt install -y libglib2.0-0 procps gcc git curl'
           - name: CentOS 7
             os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
             container: centos:7
