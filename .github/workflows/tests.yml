@@ -88,6 +88,18 @@ jobs:
     - uses: Vampire/setup-wsl@v1
       with:
         distribution: ${{matrix.container}}
+    - name: external-env
+      shell: bash
+      run: |
+        set -x
+        uname -a
+        set
+    - name: env
+      shell: wsl-bash {0}
+      run: |
+        set -x
+        uname -a
+        set
     - name: Installer's dependencies
       if: ${{matrix.dependencies}}
       run: ${{matrix.dependencies}}
