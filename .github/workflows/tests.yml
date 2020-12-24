@@ -133,6 +133,16 @@ jobs:
         ./.ci.sh
   test-wsl:
     # with the help of https://github.com/marketplace/actions/setup-wsl
+    strategy:
+      matrix:
+        include:
+          #- name: Debian
+          #  nightly: true
+          - name: Ubuntu-18.04
+            nightly: false
+          #- name: Ubuntu-20.10
+          #  nightly: true
+    name: WSL-${{matrix.container}} (Windows Subsystem for Linux)
     runs-on: windows-2019
     defaults:
       run:
@@ -140,12 +150,11 @@ jobs:
     steps:
     - uses: Vampire/setup-wsl@v1
       with:
-        distribution: Ubuntu-18.04
+        distribution: ${{matrix.container}}
     - uses: actions/checkout@v2
     - name: Installer's dependencies
       run: |
         sudo apt-get install -y which gcc git curl
     - name: CI
-      #shell: ${{contains(matrix.shell, 'WSL') && 'wsl-bash'}} # invoke WSL if on WSL
       run: |
         ./.ci.sh
