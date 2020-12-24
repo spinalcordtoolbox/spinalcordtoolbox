@@ -19,9 +19,12 @@ jobs:
         # This isn't a perfect test but it's pretty good.
         # TODO: integrate WSL in this scheme too.
         os: [ubuntu-18.04, macos-10.15, windows-2019]
+        z: [false]
         # To keep feedback fast, we only run a selection of common platforms in CI
         # The others run nightly, or 
-        p: [true]
+        nightly: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
+        exclude:
+          - z: false # does this cancel ALL?
         include:
           - name: ArchLinux
             os: ubuntu-18.04
@@ -51,8 +54,6 @@ jobs:
             os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
             docker_image: centos:7
             p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
-        exclude:
-          - p: false
     name: ${{matrix.name || matrix.os}}
     runs-on: ${{matrix.os}}
     container: ${{matrix.docker_image}} # XXX if undefined this is ignored hopefully?
