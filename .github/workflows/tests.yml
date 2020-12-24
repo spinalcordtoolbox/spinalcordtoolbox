@@ -139,7 +139,7 @@ jobs:
       if: ${{matrix.deps}}
       shell: ${{contains(matrix.shell, 'WSL') && 'wsl-bash'}} # invoke WSL if on WSL
       run: |
-        command ${{matrix.installer} ${{matrix.deps}}
+        command ${{matrix.installer}} ${{matrix.deps}}
     - name: CI
       shell: ${{contains(matrix.shell, 'WSL') && 'wsl-bash'}} # invoke WSL if on WSL
       run: |
