@@ -25,7 +25,7 @@ jobs:
             os: ubuntu-16.04
             nightly: true
             installer: 'sudo apt-get install -y'
-            deps: 'which gcc git curl'
+            deps: 'gcc git curl'
           - name: macOS 11.0 (Big Sur)
             os: macos-11.0
             nightly: true
@@ -40,25 +40,25 @@ jobs:
             container: debian:sid
             nightly: true
             installer: 'sudo apt-get install -y'
-            deps: 'which gcc git curl'
+            deps: 'libglib2.0-0 procps gcc git curl'
           - name: Debian Testing
             os: ubuntu-18.04
             container: debian:testing
             nightly: true
             installer: 'sudo apt-get install -y'
-            deps: 'which gcc git curl'
+            deps: 'libglib2.0-0 procps gcc git curl'
           - name: Debian 10
             os: ubuntu-18.04
             container: debian:10
             nightly: true
             installer: 'sudo apt-get install -y'
-            deps: 'which gcc git curl'
+            deps: 'libglib2.0-0 procps gcc git curl'
           - name: Debian 9
             os: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
             container: debian:9
             nightly: true
             installer: 'sudo apt-get install -y'
-            deps: 'which gcc git curl'
+            deps: 'libglib2.0-0 procps gcc git curl'
           - name: CentOS 7
             os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
             container: centos:7
@@ -94,7 +94,7 @@ jobs:
             os: ubuntu-18.04
             nightly: false
             installer: 'sudo apt-get install -y'
-            deps: 'which gcc git curl'
+            deps: 'gcc git curl'
           - name: macOS 10.15 (Catalina)
             os: macos-10.15
             nightly: false
