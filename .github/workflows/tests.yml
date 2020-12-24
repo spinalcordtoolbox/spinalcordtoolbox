@@ -137,10 +137,10 @@ jobs:
     - name: Installer's dependencies
       # hmm maybe these should be done inside our install script? hm hm hm
       if: ${{matrix.deps}}
-      shell: ${{contains(matrix.shell, 'WSL') && 'wsl-bash'}} # invoke WSL if on WSL
+      #shell: ${{contains(matrix.shell, 'WSL') && 'wsl-bash'}} # invoke WSL if on WSL
       run: |
         command ${{matrix.installer}} ${{matrix.deps}}
     - name: CI
-      shell: ${{contains(matrix.shell, 'WSL') && 'wsl-bash'}} # invoke WSL if on WSL
+      #shell: ${{contains(matrix.shell, 'WSL') && 'wsl-bash'}} # invoke WSL if on WSL
       run: |
-        ./.ci.sh
+        ${{contains(matrix.shell, 'WSL') && 'wsl-bash' || bash}} ./.ci.sh
