@@ -113,12 +113,12 @@ jobs:
     # (despite it being legal for `container:`, `runs-on:`, `name:`, etc)
     #if: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) || !matrix.nightly }}
     steps:
-    - uses: actions/checkout@v2
     - name: Installer's dependencies
       # hmm maybe these should be done inside our install script? hm hm hm
       if: ${{matrix.deps}}
       run: |
         command ${{matrix.installer}} ${{matrix.deps}}
+    - uses: actions/checkout@v2
     - name: CI
       run: |
         ./.ci.sh
@@ -138,15 +138,15 @@ jobs:
     runs-on: windows-2019
     defaults:
       run:
-        shell: wsl-bash # https://github.com/marketplace/actions/setup-wsl#default-shell
+        shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
     steps:
     - uses: Vampire/setup-wsl@v1
       with:
         distribution: ${{matrix.container}}
-    - uses: actions/checkout@v2
     - name: Installer's dependencies
       run: |
         sudo apt-get install -y which gcc git curl
+    - uses: actions/checkout@v2
     - name: CI
       run: |
         ./.ci.sh
