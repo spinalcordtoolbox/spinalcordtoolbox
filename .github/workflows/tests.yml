@@ -143,4 +143,4 @@ jobs:
     - name: CI
       #shell: ${{contains(matrix.shell, 'WSL') && 'wsl-bash'}} # invoke WSL if on WSL
       run: |
-        ${{contains(matrix.shell, 'WSL') && 'wsl-bash' || bash}} ./.ci.sh
+        ${{contains(matrix.shell, 'WSL') && 'wsl-bash' || 'bash'}} ./.ci.sh
