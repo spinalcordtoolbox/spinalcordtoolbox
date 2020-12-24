@@ -63,7 +63,7 @@ jobs:
             os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
             container: centos:7
             nightly: true
-            installer: 'sudo yum install -y'
+            installer: 'yum install -y'
             deps: 'which gcc git curl'
     name: ${{matrix.name || matrix.os || 'Nightlies' }}
     runs-on: ${{matrix.os}}
@@ -102,7 +102,7 @@ jobs:
           - name: CentOS 8
             os: ubuntu-18.04
             container: centos:8
-            installer: 'sudo yum install -y'
+            installer: 'yum install -y'
             deps: 'which gcc git curl'
             nightly: false
     name: ${{matrix.name || matrix.os || 'Tests' }}
