@@ -26,31 +26,31 @@ jobs:
           - name: ArchLinux
             os: ubuntu-18.04
             docker_image: archlinux
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))) }}
+            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
           - name: Debian Rolling Release
             os: ubuntu-18.04
             docker_image: debian:sid
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))) }}
+            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
           - name: Debian Testing
             os: ubuntu-18.04
             docker_image: debian:testing
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))) }}
+            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
           - name: Debian 10
             os: ubuntu-18.04
             docker_image: debian:10
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))) }}
+            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
           - name: Debian 9
             os: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
             docker_image: debian:9
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))) }}
+            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
           - name: CentOS 8
             os: ubuntu-18.04
             docker_image: centos:8
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))) }}
+            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
           - name: CentOS 7
             os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
             docker_image: centos:7
-            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))) }}
+            p: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) }}
         exclude:
           - p: false
     name: ${{matrix.name || matrix.os}}
