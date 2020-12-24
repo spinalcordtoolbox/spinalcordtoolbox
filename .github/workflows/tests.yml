@@ -59,6 +59,9 @@ jobs:
     runs-on: ${{matrix.os}}
     container: ${{matrix.docker_image}} # XXX if undefined this is ignored hopefully?
     steps:
+    - name: env
+      run: |
+        echo ${{matrix.name}} and ${{matrix.os}} and ${{matrix.docker_image}} and ${{matrix.nightly}} and thats all
     - uses: actions/checkout@v2
     - name: CI
       run: |
