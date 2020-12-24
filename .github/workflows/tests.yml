@@ -145,7 +145,7 @@ jobs:
         distribution: ${{matrix.container}}
     - name: Installer's dependencies
       run: |
-        sudo apt-get install -y which gcc git curl
+        sudo apt-get install -y gcc git curl
     - uses: actions/checkout@v2
     - name: CI
       run: |
