@@ -106,7 +106,6 @@ jobs:
             deps: 'which gcc git curl'
             nightly: false
           - name: WSL-Ubuntu-18.04 (Windows Subsystem for Linux) #
-            # with the help of https://github.com/marketplace/actions/setup-wsl
             os: windows-2019
             shell: wsl-bash # there's also wsl-bash_Ubuntu-20.04, probably others
             # here's setup-wsl's list of supported container images:
@@ -117,30 +116,36 @@ jobs:
             nightly: false
     name: ${{matrix.name || matrix.os || 'Tests' }}
     runs-on: ${{matrix.os}}
-    container: ${{!contains(matrix.name, 'WSL') && matrix.container}} # XXX if undefined this is ignored hopefully?
+    container: ${{!contains(matrix.name, 'WSL') && matrix.container || undefined}} # XXX if undefined this is ignored hopefully?
     # I want to be able to use this condition to filter out the nightly builds from the regular day-to-day checks.
     # but Actions currently doesn't support referencing`matrix` inside an `if:` on a `job:`
     # (despite it being legal for `container:`, `runs-on:`, `name:`, etc)
     #if: ${{ (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release')) || !matrix.nightly }}
-    if: ${{ true }}
     steps:
-    - uses: Vampire/setup-wsl@v1
-      if: ${{contains(matrix.shell, 'WSL')}}
-      with:
-        distribution: ${{matrix.wslcontainer}}
     - uses: actions/checkout@v2
-    # there's a way to set WSL as the default shell,
-    # https://github.com/marketplace/actions/setup-wsl#default-shell
-    # but https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#defaultsrun
-    # > You cannot use contexts or expressions in this keyword.
-    # so there's no way to set it conditionally
     - name: Installer's dependencies
       # hmm maybe these should be done inside our install script? hm hm hm
       if: ${{matrix.deps}}
-      #shell: ${{contains(matrix.shell, 'WSL') && 'wsl-bash'}} # invoke WSL if on WSL
       run: |
         command ${{matrix.installer}} ${{matrix.deps}}
     - name: CI
+      run: |
+        ./.ci.sh
+  test-wsl:
+    # with the help of https://github.com/marketplace/actions/setup-wsl
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: wsl-bash # https://github.com/marketplace/actions/setup-wsl#default-shell
+    steps:
+    - uses: Vampire/setup-wsl@v1
+      with:
+        distribution: Ubuntu-18.04
+    - uses: actions/checkout@v2
+    - name: Installer's dependencies
+      run: |
+        sudo apt-get install -y which gcc git curl
+    - name: CI
       #shell: ${{contains(matrix.shell, 'WSL') && 'wsl-bash'}} # invoke WSL if on WSL
       run: |
-        ${{contains(matrix.shell, 'WSL') && 'wsl-bash' || 'bash'}} ./.ci.sh
+        ./.ci.sh
