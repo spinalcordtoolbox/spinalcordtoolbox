@@ -22,7 +22,7 @@ jobs:
         z: [false]
         # To keep feedback fast, we only run a selection of common platforms in CI
         # The others run nightly, or 
-        nightly: ${{ [(github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))] }}
+        #nightly: ${{ [(github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))] }}
         exclude:
           - z: false # does this cancel ALL?
         include:
