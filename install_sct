@@ -171,7 +171,7 @@ function check_requirements() {
     print warning "WARNING: \"gcc\" is not installed."
     if [[ $OS == "osx" ]]; then
       while [[ ! $GCC_INSTALL =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-        GCC_INSTALL=yes # rude?
+        GCC_INSTALL=no
         if [ -z "$NONINTERACTIVE" ]; then
           print question "Do you want to install it now? (accepting to install \"gcc\" will also install \"brew\" in case it is not installed already)? [y]es/[n]o: "
           read GCC_INSTALL
