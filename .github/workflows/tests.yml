@@ -111,7 +111,7 @@ jobs:
             shell: wsl-bash # there's also wsl-bash_Ubuntu-20.04, probably others
             # here's setup-wsl's list of supported container images:
             # https://github.com/marketplace/actions/setup-wsl#distribution
-            container: Ubuntu-18.04
+            wslcontainer: Ubuntu-18.04
             installer: 'apt-get install -y'
             deps: 'which gcc git curl'
             nightly: false
@@ -127,7 +127,7 @@ jobs:
     - uses: Vampire/setup-wsl@v1
       if: ${{contains(matrix.shell, 'WSL')}}
       with:
-        distribution: ${{matrix.container}}
+        distribution: ${{matrix.wslcontainer}}
     - uses: actions/checkout@v2
     # there's a way to set WSL as the default shell,
     # https://github.com/marketplace/actions/setup-wsl#default-shell
