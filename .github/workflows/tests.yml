@@ -51,14 +51,14 @@ jobs:
             os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
             docker_image: centos:7
             nightly: true
+    if: ${{ matrix.nightly == 1 }}
     name: ${{matrix.name || matrix.os}}
     runs-on: ${{matrix.os}}
     container: ${{matrix.docker_image}} # XXX if undefined this is ignored hopefully?
     #if: ${{ !(matrix.nightly) || (matrix.nightly && (github.event_name == 'schedule' || (github.event_name == 'push' && github.ref == 'refs/heads/release'))) }}
-    
+
     steps:
     - uses: actions/checkout@v2
     - name: CI
-      if: ${{ matrix.nightly }}
       run: |
         ./.ci.sh
