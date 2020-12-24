@@ -116,7 +116,7 @@ jobs:
             nightly: false
     name: ${{matrix.name || matrix.os || 'Tests' }}
     runs-on: ${{matrix.os}}
-    container: ${{!contains(matrix.name, 'WSL') && matrix.container || undefined}} # XXX if undefined this is ignored hopefully?
+    container: ${{matrix.container}} # XXX if undefined this is ignored hopefully?
     # I want to be able to use this condition to filter out the nightly builds from the regular day-to-day checks.
     # but Actions currently doesn't support referencing`matrix` inside an `if:` on a `job:`
     # (despite it being legal for `container:`, `runs-on:`, `name:`, etc)
