@@ -301,7 +301,7 @@ if [ "$(uname)" = "Darwin" ]; then
   # So here, solve it with python. It's not great either, but since much of
   # this script already is just calling python at least it's reliable.
   (command -v realpath >/dev/null) || realpath() {
-    python -c 'import sys, path; for f in sys.argv[1:]: print(os.path.realpath(f))' "$@"
+    python3 -c 'import sys, os; [print(os.path.realpath(f)) for f in sys.argv[1:]]' "$@"
   }
 fi
 
