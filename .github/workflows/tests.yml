@@ -110,8 +110,11 @@ jobs:
         echo ----
         set | grep DEBIAN
         echo ----
-        echo "|$DEBIAN_FRONTEND|"
+        echo "DEBIAN_FRONTEND=|$DEBIAN_FRONTEND|"
         #export DEBIAN_FRONTEND # ???
+        ( echo in a subshell; echo "DEBIAN_FRONTEND=|$DEBIAN_FRONTEND|" )
+        #export DEBIAN_FRONTEND # ???
+        ( echo in a subshell after export; echo "DEBIAN_FRONTEND=|$DEBIAN_FRONTEND|" )
         ${{matrix.dependencies}}
     - uses: actions/checkout@v2
     - name: CI
