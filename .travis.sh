@@ -7,7 +7,7 @@
 #
 # e.g. DOCKER_IMAGE="centos:8" .travis.sh
 
-set -e # Error build immediately if install script exits with non-zero
+set -ueo pipefail # stricter shell rules
 
 # if this is a docker job, run in the container instead; but if not just run it here.
 if [ -n "$DOCKER_IMAGE" ]; then
