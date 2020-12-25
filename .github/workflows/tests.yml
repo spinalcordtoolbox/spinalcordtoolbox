@@ -8,11 +8,6 @@ on:
   schedule:
     - cron:  '0 11 * * *'
 
-env:
-  # Even when given -y, apt will still sometimes hang at a ncurses
-  # prompt if a package has clarifications to ask; this ensures it doesn't.
-  # This will be defined even for non-apt platforms but that's okay.
-  DEBIAN_FRONTEND: 'noninteractive'
 
 # caveats
 # - the nightlies; i've marked them all with `nightly: true` or `nightly: false` to keep them straight but that variable is actually used anywhere which means it's bug-prone
@@ -20,6 +15,11 @@ env:
 # - `which` should be removed from this when #3102 gets merged
 # - when the nightlies don't run they still show up in the UI as a single job, but with name "    name: ${{matrix.name || matrix.os || 'Nightlies' }}
 #   sooo that sucks
+
+# Note:
+# Even when given -y, apt will still sometimes hang at a prompt if a package
+# has clarifications to ask; DEBIAN_FRONTEND=noninteractive prevents that,
+# on platforms that use apt.
 
 jobs:
   test:
@@ -37,7 +37,7 @@ jobs:
           - name: Ubuntu 18.04 (Bionic Beaver)
             os: ubuntu-18.04
             nightly: false
-            dependencies: 'sudo apt update && sudo apt install -y gcc git curl'
+            dependencies: 'sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl'
           - name: macOS 10.15 (Catalina)
             os: macos-10.15
             nightly: false
@@ -66,10 +66,6 @@ jobs:
         
   test-wsl:
     # with the help of https://github.com/marketplace/actions/setup-wsl
-    env:
-      # this is needed for WSL to pick up these vars inside the container
-      # https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
-      WSLENV: DEBIAN_FRONTEND
     strategy:
       matrix:
         include:
@@ -77,7 +73,7 @@ jobs:
           #- container: Debian
           #  nightly: true
           - container: Ubuntu-18.04
-            dependencies: 'sudo -E apt update && sudo -E apt install -y gcc git curl'
+            dependencies: 'sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl'
             nightly: false
           #- container: Ubuntu-20.10
           #  nightly: true
@@ -90,32 +86,9 @@ jobs:
     - uses: Vampire/setup-wsl@v1
       with:
         distribution: ${{matrix.container}}
-    - name: external-env
-      shell: bash
-      run: |
-        set -x
-        uname -a
-        set
-    - name: env
-      shell: wsl-bash {0}
-      run: |
-        set -x
-        uname -a
-        set
     - name: Installer's dependencies
       if: ${{matrix.dependencies}}
-      run: |
-        set -x
-        set
-        echo ----
-        set | grep DEBIAN
-        echo ----
-        echo "DEBIAN_FRONTEND=|$DEBIAN_FRONTEND|"
-        #export DEBIAN_FRONTEND # ???
-        ( echo in a subshell; echo "DEBIAN_FRONTEND=|$DEBIAN_FRONTEND|" )
-        #export DEBIAN_FRONTEND # ???
-        ( echo in a subshell after export; echo "DEBIAN_FRONTEND=|$DEBIAN_FRONTEND|" )
-        ${{matrix.dependencies}}
+      run: ${{matrix.dependencies}}
     - uses: actions/checkout@v2
     - name: CI
       run: |
@@ -136,7 +109,7 @@ jobs:
           - name: Ubuntu 16.04 (Xenial)
             os: ubuntu-16.04
             nightly: true
-            dependencies: 'sudo apt update && sudo apt install -y gcc git curl'
+            dependencies: 'sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl'
           - name: macOS 11.0 (Big Sur)
             os: macos-11.0
             nightly: true
@@ -149,22 +122,22 @@ jobs:
             os: ubuntu-18.04
             container: debian:sid
             nightly: true
-            dependencies: 'sudo apt update && sudo apt install -y libglib2.0-0 procps gcc git curl'
+            dependencies: 'sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y libglib2.0-0 procps gcc git curl'
           - name: Debian Testing
             os: ubuntu-18.04
             container: debian:testing
             nightly: true
-            dependencies: 'sudo apt update && sudo apt install -y libglib2.0-0 procps gcc git curl'
+            dependencies: 'sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y libglib2.0-0 procps gcc git curl'
           - name: Debian 10
             os: ubuntu-18.04
             container: debian:10
             nightly: true
-            dependencies: 'sudo apt update && sudo apt install -y libglib2.0-0 procps gcc git curl'
+            dependencies: 'sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y libglib2.0-0 procps gcc git curl'
           - name: Debian 9
             os: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
             container: debian:9
             nightly: true
-            dependencies: 'sudo apt update && sudo apt install -y libglib2.0-0 procps gcc git curl'
+            dependencies: 'sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y libglib2.0-0 procps gcc git curl'
           - name: CentOS 7
             os: ubuntu-16.04 # use an older ubuntu to closer emulate the older centos
             container: centos:7
