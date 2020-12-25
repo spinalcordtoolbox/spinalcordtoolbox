@@ -35,7 +35,7 @@ matrix:
     # identical to freshly installed VMs, and by using docker we're
     # mismatching kernels, but it is a lot better than not testing.
     - name: "ArchLinux"
-      if: branch = release or type = cron
+      #if: branch = release or type = cron
       os: linux
       dist: bionic  # Arch needs a recent kernel
       services:
@@ -43,7 +43,7 @@ matrix:
       env:
         - DOCKER_IMAGE="archlinux" DOCKER_DEPS_CMD="pacman -Sy --noconfirm gcc git curl"
     - name: "Debian Rolling Release"
-      if: branch = release or type = cron
+      #if: branch = release or type = cron
       os: linux
       dist: bionic
       services:
@@ -51,7 +51,7 @@ matrix:
       env:
         - DOCKER_IMAGE="debian:sid"     DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
     - name: "Debian Testing"
-      if: branch = release or type = cron
+      #if: branch = release or type = cron
       os: linux
       dist: bionic
       services:
@@ -59,7 +59,7 @@ matrix:
       env:
         - DOCKER_IMAGE="debian:testing" DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
     - name: "Debian 10"
-      if: branch = release or type = cron
+      #if: branch = release or type = cron
       os: linux
       dist: bionic # kernel ~= Debian:10
       services:
@@ -67,7 +67,7 @@ matrix:
       env:
         - DOCKER_IMAGE="debian:10"      DOCKER_DEPS_CMD="apt update && apt install -y libglib2.0-0 procps gcc git curl"
     - name: "Debian 9"
-      if: branch = release or type = cron
+      #if: branch = release or type = cron
       os: linux
       dist: xenial # kernel ~= Debian:9
       services:
@@ -83,7 +83,7 @@ matrix:
       env:
         - DOCKER_IMAGE="centos:8" DOCKER_DEPS_CMD="yum install -y gcc git curl"
     - name: "CentOS 7"
-      if: branch = release or type = cron
+      #if: branch = release or type = cron
       os: linux
       dist: xenial # kernel ~= Centos7
       services:
@@ -97,18 +97,18 @@ matrix:
       dist: bionic
     - os: linux
       name: "Ubuntu 16.04 (Xenial)"
-      if: branch = release or type = cron
+      #if: branch = release or type = cron
       dist: xenial
     - name: "OSX 10.15 (Catalina)"
       # runs on all branches
       os: osx  # list of OSX env: https://docs.travis-ci.com/user/reference/osx/
       osx_image: xcode12.2
     - name: "OSX 10.14 (Mojave)"
-      if: branch = release or type = cron
+      #if: branch = release or type = cron
       os: osx
       osx_image: xcode11.3
     - name: "OSX 10.13 (High Sierra)"
-      if: branch = release or type = cron
+      #if: branch = release or type = cron
       os: osx
       osx_image: xcode9.4
     - name: "Windows Server, 1809"
