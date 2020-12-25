@@ -10,9 +10,9 @@
 set -ueo pipefail # stricter shell rules
 
 # if this is a docker job, run in the container instead; but if not just run it here.
-if [ -n "$DOCKER_IMAGE" ]; then
+if [ -n "${DOCKER_IMAGE:-}" ]; then
     ./util/dockerize.sh ./.ci.sh
-elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
+elif [ "${TRAVIS_OS_NAME:-}" = "windows" ]; then
     choco install wsl-ubuntu-1804 -y --ignore-checksums
      # or, instead of choco, use curl + powershell:
      # https://docs.microsoft.com/en-us/windows/wsl/install-manual#downloading-distros-via-the-command-line
