@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # CI testing script
 #  Installs SCT from scratch and runs all the tests we've ever written for it.
 

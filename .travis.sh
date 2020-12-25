@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # TravisCI testing harness.
 #  Supports running locally (i.e. on whatever platform Travis has loaded us in)
 #  or in a docker container specified by $DOCKER_IMAGE.

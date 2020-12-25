@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # dockerize.sh: run a script inside of another.
 #
 # usage: DOCKER_IMAGE="<image>" DOCKER_DEPS_CMD="<command to run before script>" dockerize.sh script.sh
