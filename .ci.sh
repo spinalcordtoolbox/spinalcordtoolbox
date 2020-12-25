@@ -2,7 +2,7 @@
 # CI testing script
 #  Installs SCT from scratch and runs all the tests we've ever written for it.
 
-set -e # Error build immediately if install script exits with non-zero
+set -ueo pipefail # stricter shell rules
 
 echo Installing SCT
 PIP_PROGRESS_BAR=off ./install_sct -y

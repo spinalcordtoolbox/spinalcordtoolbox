@@ -3,7 +3,7 @@
 #
 # usage: DOCKER_IMAGE="<image>" DOCKER_DEPS_CMD="<command to run before script>" dockerize.sh script.sh
 
-set -e # Error build immediately if install script exits with non-zero
+set -ueo pipefail # stricter shell rules
 
 CONTAINER=$(docker run \
     --init \
