@@ -77,7 +77,7 @@ jobs:
           #- container: Debian
           #  nightly: true
           - container: Ubuntu-18.04
-            dependencies: 'sudo apt update && sudo apt install -y gcc git curl'
+            dependencies: 'sudo -E apt update && sudo -E apt install -y gcc git curl'
             nightly: false
           #- container: Ubuntu-20.10
           #  nightly: true
