@@ -15,6 +15,7 @@ def labeled_data_test_params(path_in='sct_testing_data/t2/t2.nii.gz',
     test_sagittal_slice_get_center_spit."""
     im_in = Image(path_in)            # Base anatomical image
     im_seg_labeled = Image(path_seg)  # Base labeled segmentation
+    assert np.count_nonzero(im_seg_labeled.data) >= 2, "Labeled segmentation image has fewer than 2 labels"
 
     # Create image with all but one label removed
     im_seg_one_label = im_seg_labeled.copy()
@@ -34,9 +35,9 @@ def labeled_data_test_params(path_in='sct_testing_data/t2/t2.nii.gz',
 @pytest.mark.parametrize('im_in,im_seg', labeled_data_test_params())
 def test_sagittal_slice_get_center_spit(im_in, im_seg):
     """Test that get_center_split returns a valid index list."""
-    assert im_in.orientation == im_seg.orientation
+    assert im_in.orientation == im_seg.orientation, "im_in and im_seg aren't in the same orientation"
     qcslice = Sagittal([im_in, im_seg], p_resample=None)
-    
+
     if np.count_nonzero(im_seg.data) == 0:
         # If im_seg contains no labels, get_center_spit should fail
         with pytest.raises(ValueError):
@@ -46,4 +47,4 @@ def test_sagittal_slice_get_center_spit(im_in, im_seg):
         index = qcslice.get_center_spit()
         for i, axis in enumerate(im_in.orientation):
             if axis in ['S', 'I']:
-                assert len(index) == im_in.data.shape[i]
+                assert len(index) == im_in.data.shape[i], "Index list doesn't have expected length (n_SI)"
