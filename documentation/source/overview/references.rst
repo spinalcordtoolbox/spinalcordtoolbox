@@ -370,3 +370,13 @@ Applications
 -  `Stroman et al. A comparison of the effectiveness of functional MRI analysis methods 
    for pain research: The new normal. PLoS One, 2020 
    <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0243723>`__
+-  `Johnson et al. In vivo detection of microstructural spinal cord lesions in dogs 
+   with degenerative myelopathy using diffusion tensor imaging. J Vet Intern Med. 2020
+   <https://onlinelibrary.wiley.com/doi/10.1111/jvim.16014>`_
+-  `Kinawy et al. Dynamic Functional Connectivity of Resting-State Spinal Cord fMRI 
+   Reveals Fine-Grained Intrinsic Architecture. Neuron. 2020
+   <https://pubmed.ncbi.nlm.nih.gov/32910894/>`_
+-  `Weber et al. Assessing the spatial distribution of cervical spinal cord activity 
+   during tactile stimulation of the upper extremity in humans with functional 
+   magnetic resonance imaging. Neuroimage 2020
+   <https://www.sciencedirect.com/science/article/pii/S1053811920303918>`_
