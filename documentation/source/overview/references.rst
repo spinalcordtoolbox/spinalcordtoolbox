@@ -373,3 +373,7 @@ Applications
 -  `Stroman et al. A comparison of the effectiveness of functional MRI analysis methods 
    for pain research: The new normal. PLoS One, 2020 
    <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0243723>`__
+-  `Johnson et al. In vivo detection of microstructural spinal cord lesions in dogs 
+   with degenerative myelopathy using diffusion tensor imaging. J Vet Intern Med. 2020
+   <https://onlinelibrary.wiley.com/doi/10.1111/jvim.16014>`_
+   
