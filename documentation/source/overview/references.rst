@@ -376,4 +376,6 @@ Applications
 -  `Johnson et al. In vivo detection of microstructural spinal cord lesions in dogs 
    with degenerative myelopathy using diffusion tensor imaging. J Vet Intern Med. 2020
    <https://onlinelibrary.wiley.com/doi/10.1111/jvim.16014>`_
-   
+-  `Kinawy et al. Dynamic Functional Connectivity of Resting-State Spinal Cord fMRI 
+   Reveals Fine-Grained Intrinsic Architecture. Neuron. 2020
+   <https://pubmed.ncbi.nlm.nih.gov/32910894/>`_
