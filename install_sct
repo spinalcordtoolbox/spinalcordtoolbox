@@ -346,7 +346,7 @@ for arg in "$@"; do
 done
 
 NONINTERACTIVE=""
-while getopts ":dhbpvy" opt; do
+while getopts ":dhbvy" opt; do
   case $opt in
   d)
     echo " data directory will not be (re)-installed"
