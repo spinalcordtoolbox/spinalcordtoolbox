@@ -379,3 +379,7 @@ Applications
 -  `Kinawy et al. Dynamic Functional Connectivity of Resting-State Spinal Cord fMRI 
    Reveals Fine-Grained Intrinsic Architecture. Neuron. 2020
    <https://pubmed.ncbi.nlm.nih.gov/32910894/>`_
+-  `Weber et al. Assessing the spatial distribution of cervical spinal cord activity 
+   during tactile stimulation of the upper extremity in humans with functional 
+   magnetic resonance imaging. Neuroimage 2020
+   <https://www.sciencedirect.com/science/article/pii/S1053811920303918>`_
