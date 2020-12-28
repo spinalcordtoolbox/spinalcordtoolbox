@@ -138,7 +138,7 @@ def install_data(url, dest_folder, keep=False):
     """
 
     if not keep and os.path.exists(dest_folder):
-        logger.warning("Removing existing destination folder “%s”", dest_folder)
+        logger.warning("Removing existing destination folder '%s'", dest_folder)
         shutil.rmtree(dest_folder)
     os.makedirs(dest_folder, exist_ok=True)
 
