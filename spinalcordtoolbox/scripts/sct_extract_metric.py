@@ -29,6 +29,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__
 from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path
+from spinalcordtoolbox.utils.validation import check_dimensions_match
 
 
 class Param:
@@ -359,12 +360,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     if vertebral_levels:
         im_vertebral_labeling = Image(fname_vertebral_labeling).change_orientation("RPI")
 
-        # Get dimensions of input Image and the vertebral labeling file
-        nx, ny, nz = input_im.data.shape
-        nx_vertebral, ny_vertebral, nz_vertebral = im_vertebral_labeling.data.shape
-
-        # Check dimensions consistency between the input Image and the vertebral labeling file
-        if (nx, ny, nz) != (nx_vertebral, ny_vertebral, nz_vertebral):
+        if check_dimensions_match(input_im=input_im, im_vertebral_labeling=im_vertebral_labeling):
             printv('\nERROR: Metric data and vertebral labeling file DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
     else:
         im_vertebral_labeling = None
