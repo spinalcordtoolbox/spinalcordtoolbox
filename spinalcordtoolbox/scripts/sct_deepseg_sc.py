@@ -30,7 +30,7 @@ def get_parser():
     parser = argparse.ArgumentParser(
         description="Spinal Cord Segmentation using convolutional networks. Reference: Gros et al. Automatic "
                     "segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional "
-                    "neural networks. Neuroimage. 2018 Oct 6;184:901-915. ",
+                    "neural networks. Neuroimage. 2019 Jan 1;184:901-915.",
         formatter_class=SmartFormatter,
         add_help=None,
         prog=os.path.basename(__file__).strip(".py"))
