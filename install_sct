@@ -30,14 +30,14 @@ shopt -s failglob # error if a glob doesn't find any files, instead of remaining
 
 
 # Where tmp file are stored
-TMP_DIR=$(mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR')
+TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR')"
 # Start Directory So we go back there at the end of the Script
-SCT_SOURCE=$PWD
+SCT_SOURCE="$PWD"
 SCRIPT_DIR="scripts"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
-MACOSSUPPORTED=13  # Minimum version of macOS 10 supported
+MACOSSUPPORTED="13"  # Minimum version of macOS 10 supported
 
 
 # ======================================================================================================================
@@ -50,7 +50,7 @@ MACOSSUPPORTED=13  # Minimum version of macOS 10 supported
 function print() {
   type=$1
   txt=$2
-  case $type in
+  case "$type" in
   # Display useful info (green)
   info)
     echo -e "\n\033[0;32m${txt}\033[0m\n"
@@ -83,7 +83,7 @@ function die() {
 # Run a command and display it in color. Exit if error.
 # @input: string: command to run
 function run() {
-  cmd=$1
+  cmd="$1"
   print code "$cmd"
   $cmd
   if [[ $? != 0 ]]; then
@@ -94,12 +94,12 @@ function run() {
 # Force a clean exit
 function finish() {
   # Catch the last return code
-  value=$?
+  value="$?"
   # Get back to starting point
-  cd $SCT_SOURCE
-  if [[ $value -eq 0 ]]; then
+  cd "$SCT_SOURCE"
+  if [[ "$value" -eq 0 ]]; then
     print info "Installation finished successfully!"
-  elif [[ $value -eq 99 ]]; then
+  elif [[ "$value" -eq 99 ]]; then
     # Showing usage with -h
     echo ""
   else
@@ -108,8 +108,8 @@ Please copy the historic of this Terminal (starting with the command install_sct
 --> http://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
-  rm -rf $TMP_DIR
-  exit $value
+  rm -rf "$TMP_DIR"
+  exit "$value"
 }
 
 # reenable tty echo when user presses keyboard interrupt and output non-zero status for finish() function
@@ -125,34 +125,34 @@ detectKeyboardInterrupt() {
 function fetch_os_type() {
   print info "Checking OS type and version..."
   OSver="unknown"  # default value
-  uname_output=`uname -a`
-  echo $uname_output
+  uname_output="$(uname -a)"
+  echo "$uname_output"
   # macOS
-  if echo $uname_output | grep -i darwin >/dev/null 2>&1; then
+  if echo "$uname_output" | grep -i darwin >/dev/null 2>&1; then
     # Fetch macOS version
-    sw_vers_output=`sw_vers | grep -e ProductVersion`
+    sw_vers_output="$(sw_vers | grep -e ProductVersion)"
     echo "$sw_vers_output"
-    OSver=$(echo $sw_vers_output | cut -c 17-)
-    macOSmajor=$(echo $OSver | cut -f 1 -d '.')
-    macOSminor=$(echo $OSver | cut -f 2 -d '.')
+    OSver="$(echo "$sw_vers_output" | cut -c 17-)"
+    macOSmajor="$(echo "$OSver" | cut -f 1 -d '.')"
+    macOSminor="$(echo "$OSver" | cut -f 2 -d '.')"
     # Make sure OSver is supported
     if [[ "${macOSmajor}" = 10 ]] && [[ "${macOSminor}" < "${MACOSSUPPORTED}" ]]; then
       die "Sorry, this version of macOS (10.$macOSminor) is not supported. The minimum version is 10.$MACOSSUPPORTED."
     fi
     # Fix for non-English Unicode systems on MAC
-    if [[ -z $LC_ALL ]]; then
+    if [[ -z "${LC_ALL:-}" ]]; then
       export LC_ALL=en_US.UTF-8
     fi
 
-    if [[ -z $LANG ]]; then
+    if [[ -z "${LANG:-}" ]]; then
       export LANG=en_US.UTF-8
     fi
-    OS=osx
+    OS="osx"
     # make sure bashrc is loaded when starting a new Terminal
     force_bashrc_loading
   # Linux
-  elif echo $uname_output | grep -i linux >/dev/null 2>&1; then
-    OS=linux
+  elif echo "$uname_output" | grep -i linux >/dev/null 2>&1; then
+    OS="linux"
   else
     die "Sorry, the installer only supports Linux and macOS, quitting installer"
   fi
@@ -169,15 +169,15 @@ function check_requirements() {
   gcc --version > /dev/null 2>&1  # run silently, then check output status
   if [[ $? -ne 0 ]]; then
     print warning "WARNING: \"gcc\" is not installed."
-    if [[ $OS == "osx" ]]; then
-      while [[ ! $GCC_INSTALL =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-        GCC_INSTALL=no
+    if [[ "$OS" == "osx" ]]; then
+      while [[ ! "$GCC_INSTALL" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+        GCC_INSTALL="no"
         if [ -z "$NONINTERACTIVE" ]; then
           print question "Do you want to install it now? (accepting to install \"gcc\" will also install \"brew\" in case it is not installed already)? [y]es/[n]o: "
           read GCC_INSTALL
         fi
       done
-      if [[ $GCC_INSTALL =~ [Yy](es)? ]]; then
+      if [[ "$GCC_INSTALL" =~ [Yy](es)? ]]; then
         if [[ ! $(command -v brew) ]]; then
           # NB: this is a different NONINTERACTIVE than ours above; it's for the brew installer
           (NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)")
@@ -201,16 +201,16 @@ function check_requirements() {
 # Gets the shell rc file path based on the default shell.
 # @output: THE_RC and RC_FILE_PATH vars are modified
 function get_shell_rc_path() {
-  if [[ $SHELL == *"bash"* ]]; then
+  if [[ "$SHELL" == *"bash"* ]]; then
     THE_RC="bash"
     RC_FILE_PATH="$HOME/.bashrc"
-  elif [[ $SHELL == *"/sh"* ]]; then
+  elif [[ "$SHELL" == *"/sh"* ]]; then
     THE_RC="bash"
     RC_FILE_PATH="$HOME/.bashrc"
-  elif [[ $SHELL == *"zsh"* ]]; then
+  elif [[ "$SHELL" == *"zsh"* ]]; then
     THE_RC="bash"
     RC_FILE_PATH="$HOME/.zshrc"
-  elif [[ $SHELL == *"csh"* ]]; then
+  elif [[ "$SHELL" == *"csh"* ]]; then
     THE_RC="csh"
     RC_FILE_PATH="$HOME/.cshrc"
   else
@@ -228,17 +228,18 @@ if [[ -n \"\$BASH_VERSION\" ]]; then
     . \"\$HOME/.bashrc\"
     fi
 fi"
-  for profiles in ~/.bash_profile ~/.bash_login ~/.profile; do
-    if [[ -a $profiles ]]; then
-      if ! grep -E "(\.|source) .*bashrc" $profiles >/dev/null 2>&1; then
-        echo "$sourceblock" >>$profiles
+  bidon=""
+  for profile in ~/.bash_profile ~/.bash_login ~/.profile; do
+    if [[ -a "$profile" ]]; then
+      if ! grep -E "(\.|source) .*bashrc" "$profile" >/dev/null 2>&1; then
+        echo "$sourceblock" >>"$profile"
       fi
-      bidon=0
+      bidon="done"
       break
     fi
   done
 
-  if [[ -z $bidon ]]; then
+  if [[ -z "$bidon" ]]; then
     echo "$sourceblock" >>~/.bash_profile
   fi
 }
@@ -246,20 +247,22 @@ fi"
 # Installation text to insert in shell config file
 function edit_shellrc() {
   # Write text common to all shells
-  echo
-  echo "" >>$RC_FILE_PATH
-  echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))" >>$RC_FILE_PATH
-  echo $DISPLAY_UPDATE_PATH >>$RC_FILE_PATH
-  # Switch between shell
-  if [[ $THE_RC == "bash" ]]; then
-    echo "export SCT_DIR=$SCT_DIR" >>$RC_FILE_PATH
-    echo "export MPLBACKEND=Agg" >>$RC_FILE_PATH
-  elif [[ $THE_RC == "csh" ]]; then
-    echo "setenv SCT_DIR $SCT_DIR" >>$RC_FILE_PATH
-    echo "setenv MPLBACKEND Agg" >>$RC_FILE_PATH
-  fi
-  # add line
-  echo "" >>$RC_FILE_PATH
+  (
+    echo
+    echo ""
+    echo "# SPINALCORDTOOLBOX (installed on $(date +%Y-%m-%d\ %H:%M:%S))"
+    echo "$DISPLAY_UPDATE_PATH"
+    # Switch between shell
+    if [[ "$THE_RC" == "bash" ]]; then
+      echo "export SCT_DIR=$SCT_DIR"
+      echo "export MPLBACKEND=Agg"
+    elif [[ "$THE_RC" == "csh" ]]; then
+      echo "setenv SCT_DIR $SCT_DIR"
+      echo "setenv MPLBACKEND Agg"
+    fi
+    # add line
+    echo ""
+  ) >> "$RC_FILE_PATH"
 }
 
 # Download from URL using curl/wget
@@ -350,15 +353,15 @@ while getopts ":dbyvh" opt; do
   case $opt in
   d)
     echo " data directory will not be (re)-installed"
-    NO_DATA_INSTALL=yes
+    NO_DATA_INSTALL="yes"
     ;;
   b)
     echo " SCT binaries will not be (re)-installed "
-    NO_SCT_BIN_INSTALL=yes
+    NO_SCT_BIN_INSTALL="yes"
     ;;
   y)
     echo " non-interactive mode"
-    NONINTERACTIVE=yes
+    NONINTERACTIVE="yes"
     ;;
   v)
     echo " Full verbose!"
@@ -382,7 +385,7 @@ done
 
 # Catch SCT version
 if [[ -e "spinalcordtoolbox/version.txt" ]]; then
-  SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
+  SCT_VERSION="$(cat spinalcordtoolbox/version.txt)"
 else
   die "ERROR: version.txt not found. \n
 The install_sct script must be executed from the source directory"
@@ -402,12 +405,12 @@ fi
 get_shell_rc_path
 
 # Display install info
-echo -e "\nSCT version ......... "$SCT_VERSION
-echo -e "Installation type ... "$SCT_INSTALL_TYPE
+echo -e "\nSCT version ......... $SCT_VERSION"
+echo -e "Installation type ... $SCT_INSTALL_TYPE"
 echo -e "Operating system .... $OS ($OSver)"
-echo -e "Shell config ........ "$RC_FILE_PATH
+echo -e "Shell config ........ $RC_FILE_PATH"
 
-REPORT_STATS=no
+REPORT_STATS="no"
 if [ -z "$NONINTERACTIVE" ]; then
   # Send crash statistic and error logs to developers, that is the question:
   print question "To improve user experience and fix bugs, the SCT development team is using a
@@ -418,7 +421,7 @@ Do you agree to help us improve SCT? [y]es/[n]o: "
   read REPORT_STATS
 fi
 
-if [[ $REPORT_STATS =~ [Yy](es)? ]]; then
+if [[ "$REPORT_STATS" =~ [Yy](es)? ]]; then
   echo -ne '# Auto-generated by install_sct\nimport os\nSENTRY_DSN=os.environ.get("SCT_SENTRY_DSN", "https://5202d7c96ad84f17a24bd2653f1c4f9e:c1394bb176cc426caf0ff6a9095fb955@sentry.io/415369")\n' >spinalcordtoolbox/sentry_dsn.py
   print info "--> Crash reports will be sent to the SCT development team. Thank you!"
 else
@@ -427,7 +430,7 @@ fi
 
 # if installing from git folder, then becomes default installation folder
 if [[ "$SCT_INSTALL_TYPE" == "in-place" ]]; then
-  SCT_DIR=$SCT_SOURCE
+  SCT_DIR="$SCT_SOURCE"
 else
   SCT_DIR="$HOME/sct_$SCT_VERSION"
 fi
@@ -435,16 +438,16 @@ fi
 # Set install dir
 while true; do
   keep_default_path=""
-  while [[ ! $keep_default_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+  while [[ ! "$keep_default_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
     print info "SCT will be installed here: [$SCT_DIR]"
-    keep_default_path=yes
+    keep_default_path="yes"
     if [ -z "$NONINTERACTIVE" ]; then
       print question "
 Do you agree? [y]es/[n]o: "
       read keep_default_path
     fi
   done
-  if [[ $keep_default_path =~ ^[Yy] ]]; then
+  if [[ "$keep_default_path" =~ ^[Yy] ]]; then
     # user accepts default path --> exit loop
     break
   fi
@@ -456,9 +459,9 @@ Do you agree? [y]es/[n]o: "
   read new_install
 
   # Expand ~/
-  new_install=${new_install/#\~\//$HOME\/}
+  new_install="${new_install/#\~\//$HOME\/}"
   # Remove trailing /
-  new_install=${new_install%/}
+  new_install="${new_install%/}"
 
   # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
   if [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]]; then
@@ -468,19 +471,19 @@ Do you agree? [y]es/[n]o: "
   elif [[ -d "$new_install" ]]; then
     # directory exists --> update SCT_DIR and exit loop
     print warning "WARNING: Directory already exists. Files will be overwritten."
-    SCT_DIR=$new_install
+    SCT_DIR="$new_install"
     break
   elif [[ ! "$new_install" ]]; then
     # If no input, asking again, and again, and again
     continue
   else
-    SCT_DIR=$new_install
+    SCT_DIR="$new_install"
     break
   fi
 done
 
 # Create directory
-mkdir -p $SCT_DIR
+mkdir -p "$SCT_DIR"
 # check if directory was created
 if [[ -d "$SCT_DIR" ]]; then
   # check write permission
@@ -501,7 +504,7 @@ else
 fi
 
 # Update MPLBACKEND on headless system. See: https://github.com/neuropoly/spinalcordtoolbox/issues/2137
-if [[ -z ${MLBACKEND:-} ]]; then
+if [[ -z "${MLBACKEND:-}" ]]; then
   export MPLBACKEND=Agg
 fi
 
@@ -514,18 +517,18 @@ else
 fi
 
 # Clean old install setup in bin/ if existing
-if [[ -x $SCT_DIR/$BIN_DIR ]]; then
+if [[ -x "$SCT_DIR/$BIN_DIR" ]]; then
   print info "Removing sct and isct softlink from $SCT_DIR/$BIN_DIR"
-  find $SCT_DIR/$BIN_DIR -type l -name 'sct_*' -exec rm {} \;
-  find $SCT_DIR/$BIN_DIR -type l -name 'isct_*' -exec rm {} \;
+  find "$SCT_DIR/$BIN_DIR" -type l -name 'sct_*' -exec rm {} \;
+  find "$SCT_DIR/$BIN_DIR" -type l -name 'isct_*' -exec rm {} \;
 fi
 
 # Go to installation folder
-cd $SCT_DIR
+cd "$SCT_DIR"
 
 # Make sure we are in SCT folder (to avoid deleting folder from user)
 if [[ ! -f "spinalcordtoolbox/version.txt" ]]; then
-  die "ERROR: Cannot cd into SCT folder. SCT_DIR="$SCT_DIR
+  die "ERROR: Cannot cd into SCT folder. SCT_DIR=$SCT_DIR"
 fi
 
 
@@ -545,10 +548,10 @@ run "mkdir -p $SCT_DIR/$PYTHON_DIR"
 # Download miniconda
 case $OS in
 linux*)
-  download $TMP_DIR/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
   ;;
 osx)
-  download $TMP_DIR/miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+  download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
   ;;
 esac
 
@@ -584,7 +587,7 @@ else
   print info "Using requirements.txt (git installation)"
   export REQUIREMENTS_FILE="requirements.txt"
 fi
-pip install -r $REQUIREMENTS_FILE &&
+pip install -r "$REQUIREMENTS_FILE" &&
   # `tensorflow-tensorboard` is installed by `tensorflow==1.5.0` but is not needed,
   # and conflicts with the other installation of `tensorboard`. So, we uninstall here.
   # This is hacky, and should be removed as soon as we stop using `tensorflow==1.5.0`.
@@ -605,8 +608,8 @@ fi
 
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."
-mkdir -p $SCT_DIR/$BIN_DIR
-for file in $SCT_DIR/python/envs/venv_sct/bin/*sct*; do
+mkdir -p "$SCT_DIR/$BIN_DIR"
+for file in "$SCT_DIR"/python/envs/venv_sct/bin/*sct*; do
   cp "$file" "$SCT_DIR/$BIN_DIR/"
   res=$?
   if [[ $res != 0 ]]; then
@@ -632,7 +635,7 @@ fi
 print info "All requirements installed!"
 
 # Install data
-if [[ -n ${NO_DATA_INSTALL:-} ]]; then
+if [[ -n "${NO_DATA_INSTALL:-}" ]]; then
   print warning "WARNING: data/ will not be (re)-install"
 else
   # Download data
@@ -664,15 +667,15 @@ fi
 
 # update PATH environment
 add_to_path=""
-while [[ ! $add_to_path =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-  add_to_path=yes
+while [[ ! "$add_to_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+  add_to_path="yes"
   if [ -z "$NONINTERACTIVE" ]; then
     print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
     read add_to_path
   fi
 done
 
-if [[ $add_to_path =~ ^[Yy] ]]; then
+if [[ "$add_to_path" =~ ^[Yy] ]]; then
   edit_shellrc
 else
   print info "Not adding $SCT_DIR to \$PATH.
@@ -684,7 +687,7 @@ print info "Validate installation..."
 # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
 # it creates is cleaned properly
 if sct_check_dependencies; then
-  if [[ $add_to_path =~ ^[Nn] ]]; then
+  if [[ "$add_to_path" =~ ^[Nn] ]]; then
     print info "To use SCT, please update your environment by running:
 $DISPLAY_UPDATE_PATH"
   else
