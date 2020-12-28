@@ -31,8 +31,6 @@ from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct
 from spinalcordtoolbox.utils.fs import get_absolute_path
-from spinalcordtoolbox.utils.validation import check_dimensions_match
-from spinalcordtoolbox.image import Image
 
 
 def get_parser():
@@ -294,9 +292,6 @@ def main(args=None):
     remove_temp_files = arguments.r
     if arguments.vertfile is not None:
         fname_vert_levels = arguments.vertfile
-        if arguments.vert is not None:
-            if check_dimensions_match(input_im=Image(fname_segmentation).change_orientation('RPI'), im_vertebral_labeling=Image(fname_vert_levels).change_orientation('RPI')):
-                print('\nERROR: Input data and vertebral labeling file DO NOT HAVE SAME DIMENSIONS.', 1, type='error')
     if arguments.perlevel is not None:
         perlevel = arguments.perlevel
     else:
