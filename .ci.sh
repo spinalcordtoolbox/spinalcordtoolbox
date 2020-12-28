@@ -2,7 +2,11 @@
 # CI testing script
 #  Installs SCT from scratch and runs all the tests we've ever written for it.
 
-set -ueo pipefail # stricter shell rules
+# stricter shell mode
+# https://sipb.mit.edu/doc/safe-shell/
+set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
+set -u            # exit if unset variables used
+shopt -s failglob # error if a glob doesn't find any files, instead of remaining unexpanded
 
 echo Installing SCT
 PIP_PROGRESS_BAR=off ./install_sct -y

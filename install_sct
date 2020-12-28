@@ -24,7 +24,7 @@
 # https://sipb.mit.edu/doc/safe-shell/
 set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
 set -u            # exit if unset variables used
-shopt -s failglob # error if a glob fails
+shopt -s failglob # error if a glob doesn't find any files, instead of remaining unexpanded
 
 # set -v  # v: verbose
 

@@ -6,8 +6,11 @@
 # usage: .travis.sh
 #
 # e.g. DOCKER_IMAGE="centos:8" .travis.sh
-
-set -ueo pipefail # stricter shell rules
+# stricter shell mode
+# https://sipb.mit.edu/doc/safe-shell/
+set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
+set -u            # exit if unset variables used
+shopt -s failglob # error if a glob doesn't find any files, instead of remaining unexpanded
 
 # if this is a docker job, run in the container instead; but if not just run it here.
 if [ -n "${DOCKER_IMAGE:-}" ]; then
