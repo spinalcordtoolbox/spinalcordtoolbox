@@ -198,7 +198,9 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.file,
         default="./label/template/PAM50_levels.nii.gz",
-        help="Vertebral labeling file. Only use with flag -vert. The input Image and the vertebral labelling file must in the same voxel coordinate system and must match the dimensions between each other."
+        help="R|Vertebral labeling file. Only use with flag -vert.\n"
+            "The input Image and the vertebral labelling file must in the same voxel coordinate system "
+            "and must match the dimensions between each other."
     )
     optional.add_argument(
         '-perlevel',
