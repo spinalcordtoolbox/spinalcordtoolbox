@@ -356,10 +356,8 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         labels_tmp[i_label] = np.expand_dims(im_label.data, 3)  # TODO: generalize to 2D input label
     labels = np.concatenate(labels_tmp[:], 3)  # labels: (x,y,z,label)
     # Load vertebral levels
-    if vertebral_levels:
-        im_vertebral_labeling = fname_vertebral_labeling        
-    else:
-        im_vertebral_labeling = None
+    if not levels:
+        fname_vertebral_labeling = None
 
     # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
@@ -379,7 +377,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
     for id_label in labels_id_user:
         printv('Estimation for label: ' + label_struc[id_label].name, verbose)
         agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
-                                    perlevel=perlevel, vert_level=im_vertebral_labeling, method=method,
+                                    perlevel=perlevel, vert_level=fname_vertebral_labeling, method=method,
                                     label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
