@@ -269,9 +269,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default=param.verbose,
-        help="Verbose. 0: nothing. 1: basic. 2: extended."
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
     return parser
@@ -279,17 +282,14 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # initializations
     param = Param()
-
-    # check user arguments
-    parser = get_parser()
-    if args:
-        arguments = parser.parse_args(args)
-    else:
-        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     fname_data = arguments.i
     fname_seg = arguments.s
@@ -316,8 +316,6 @@ def main(args=None):
     contrast_template = arguments.c
     ref = arguments.ref
     param.remove_temp_files = arguments.r
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
     param.verbose = verbose  # TODO: not clean, unify verbose or param.verbose in code, but not both
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
@@ -516,7 +514,7 @@ def main(args=None):
             copy(fn_warp_straight2curve, 'warp_straight2curve.nii.gz')
             copy(fn_straight_ref, 'straight_ref.nii.gz')
             # apply straightening
-            sct_apply_transfo.main(args=[
+            sct_apply_transfo.main(argv=[
                 '-i', ftmp_seg,
                 '-w', 'warp_curve2straight.nii.gz',
                 '-d', 'straight_ref.nii.gz',
@@ -565,7 +563,7 @@ def main(args=None):
 
             # Apply straightening to labels
             printv('\nApply straightening to labels...', verbose)
-            sct_apply_transfo.main(args=[
+            sct_apply_transfo.main(argv=[
                 '-i', ftmp_label,
                 '-o', add_suffix(ftmp_label, '_straight'),
                 '-d', add_suffix(ftmp_seg, '_straight'),
@@ -593,13 +591,13 @@ def main(args=None):
 
         # Apply transformation
         printv('\nApply transformation...', verbose)
-        sct_apply_transfo.main(args=[
+        sct_apply_transfo.main(argv=[
             '-i', ftmp_data,
             '-o', add_suffix(ftmp_data, '_straightAffine'),
             '-d', ftmp_template,
             '-w', 'warp_curve2straightAffine.nii.gz'])
         ftmp_data = add_suffix(ftmp_data, '_straightAffine')
-        sct_apply_transfo.main(args=[
+        sct_apply_transfo.main(argv=[
             '-i', ftmp_seg,
             '-o', add_suffix(ftmp_seg, '_straightAffine'),
             '-d', ftmp_template,
@@ -766,7 +764,7 @@ def main(args=None):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
     if param.path_qc is not None:
-        generate_qc(fname_data, fname_in2=fname_template2anat, fname_seg=fname_seg, args=args,
+        generate_qc(fname_data, fname_in2=fname_template2anat, fname_seg=fname_seg, args=argv,
                     path_qc=os.path.abspath(param.path_qc), dataset=qc_dataset, subject=qc_subject,
                     process='sct_register_to_template')
     display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
@@ -1027,12 +1025,13 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         if (not same_space and i_step > 0) or (same_space and i_step > 1):
             printv('\nApply transformation from previous step', param.verbose)
             for ifile in range(len(src)):
-                sct_apply_transfo.main(args=[
+                sct_apply_transfo.main(argv=[
                     '-i', src[ifile],
                     '-d', dest[ifile],
-                    '-w', warp_forward,
                     '-o', add_suffix(src[ifile], '_reg'),
-                    '-x', interp_step[ifile]])
+                    '-x', interp_step[ifile],
+                    '-w'] + warp_forward
+                )
                 src[ifile] = add_suffix(src[ifile], '_reg')
 
         # register src --> dest
@@ -1086,14 +1085,14 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     # TODO: make the following code optional (or move it to sct_register_multimodal)
     # Apply warping field to src data
     printv('\nApply transfo source --> dest...', param.verbose)
-    sct_apply_transfo.main(args=[
+    sct_apply_transfo.main(argv=[
         '-i', 'src.nii',
         '-d', 'dest.nii',
         '-w', 'warp_src2dest.nii.gz',
         '-o', 'src_reg.nii',
         '-x', interp])
     printv('\nApply transfo dest --> source...', param.verbose)
-    sct_apply_transfo.main(args=[
+    sct_apply_transfo.main(argv=[
         '-i', 'dest.nii',
         '-d', 'src.nii',
         '-w', 'warp_dest2src.nii.gz',
@@ -1280,9 +1279,7 @@ def register(src, dest, step, param):
     return warp_forward, warp_inverse
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

@@ -8,9 +8,10 @@
 #
 # About the license: see the file LICENSE.TXT
 
+import sys
 import argparse
 
-from spinalcordtoolbox.utils import init_sct
+from spinalcordtoolbox.utils import init_sct, set_global_loglevel
 
 
 def get_parser():
@@ -62,26 +63,30 @@ def get_parser():
     return parser
 
 
-def main(args):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     from spinalcordtoolbox.reports.qc import generate_qc
-
     # Build args list (for display)
-    args_disp = '-i ' + args.i
-    if args.d:
-        args_disp += ' -d ' + args.d
-    if args.s:
-        args_disp += ' -s ' + args.s
-    generate_qc(fname_in1=args.i,
-                fname_in2=args.d,
-                fname_seg=args.s,
+    args_disp = '-i ' + arguments.i
+    if arguments.d:
+        args_disp += ' -d ' + arguments.d
+    if arguments.s:
+        args_disp += ' -s ' + arguments.s
+    generate_qc(fname_in1=arguments.i,
+                fname_in2=arguments.d,
+                fname_seg=arguments.s,
                 args=args_disp,
-                path_qc=args.qc,
-                dataset=args.qc_dataset,
-                subject=args.qc_subject,
-                process=args.p)
+                path_qc=arguments.qc,
+                dataset=arguments.qc_dataset,
+                subject=arguments.qc_subject,
+                process=arguments.p)
 
 
-if __name__ == '__main__':
-    arguments = get_parser().parse_args()
-    init_sct(log_level=2 if arguments.v else 1)
-    main(arguments)
+if __name__ == "__main__":
+    init_sct()
+    main(sys.argv[1:])
+
