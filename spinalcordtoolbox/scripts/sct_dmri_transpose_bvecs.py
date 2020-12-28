@@ -26,7 +26,7 @@ import os
 import sys
 import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, extract_fname, printv
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, extract_fname, printv, set_global_loglevel
 
 
 def get_parser():
@@ -60,9 +60,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose: 0 = nothing, 1 = basic, 2 = extended."
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
     return parser
@@ -70,18 +73,14 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
-
+def main(argv=None):
     parser = get_parser()
-    if args:
-        arguments = parser.parse_args(args)
-    else:
-        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     fname_in = arguments.bvec
     fname_out = arguments.o
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     # get bvecs in proper orientation
     from dipy.io import read_bvals_bvecs
@@ -105,9 +104,7 @@ def main(args=None):
     printv('Created file:\n--> ' + fname_out + '\n', verbose, 'info')
 
 
-# Start program
-# =======================================================================================================================
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

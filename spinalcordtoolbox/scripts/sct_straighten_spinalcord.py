@@ -20,7 +20,7 @@ from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 
 
 def get_parser():
@@ -180,29 +180,30 @@ def get_parser():
         choices=(0, 1),
         default=1)
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose. 0: nothing, 1: basic, 2: extended.",
-        required=False,
-        choices=(0, 1, 2),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
-    # Get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=args)
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     input_filename = arguments.i
     centerline_file = arguments.s
 
@@ -231,8 +232,6 @@ def main(args=None):
     sc_straight.output_filename = arguments.o
     sc_straight.path_output = arguments.ofolder
     path_qc = arguments.qc
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
     sc_straight.verbose = verbose
 
     # if arguments.cpu_nb is not None:
@@ -282,4 +281,5 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

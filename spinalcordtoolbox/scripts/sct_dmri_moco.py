@@ -31,7 +31,7 @@ import os
 import argparse
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, set_global_loglevel
 
 
 def get_parser():
@@ -134,22 +134,26 @@ def get_parser():
         help="Remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
-        "-v",
-        choices=('0', '1', '2'),
-        default='1',
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expanded",
-    )
+        '-v',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
     return parser
 
 
-def main():
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # initialization
     param = ParamMoco(is_diffusion=True, group_size=3, metric='MI', smooth='1')
 
     # Fetch user arguments
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     param.fname_data = arguments.i
     param.fname_bvecs = os.path.abspath(arguments.bvec)
     param.fname_bvals = arguments.bval
@@ -161,10 +165,6 @@ def main():
     param.remove_temp_files = arguments.r
     if arguments.param is not None:
         param.update(arguments.param)
-    param.verbose = int(arguments.v)
-
-    # Update log level
-    init_sct(log_level=param.verbose, update=True)
 
     # run moco
     moco_wrapper(param)
@@ -172,4 +172,5 @@ def main():
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

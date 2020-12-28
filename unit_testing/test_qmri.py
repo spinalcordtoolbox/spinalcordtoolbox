@@ -8,10 +8,12 @@ import pytest
 
 from spinalcordtoolbox.qmri import mt
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import init_sct
+from spinalcordtoolbox.utils import init_sct, set_global_loglevel
 
-init_sct(log_level=2)  # Set logger in debug mode
-VERBOSE = 0  # Set to 2 to save images, 0 otherwise
+
+# Set logger to "DEBUG"
+init_sct()
+set_global_loglevel(verbose=2)
 
 
 def make_sct_image(data):

@@ -27,7 +27,7 @@ from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric, LabelStruc
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, parse_num_list, display_open
-from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__
+from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path
 
 
@@ -48,7 +48,7 @@ class Param:
 class _ListLabelsAction(argparse.Action):
     """This class makes it possible to call the flag '-list-labels' without the need to input the required '-i'."""
     def __call__(self, parser, namespace, values, option_string=None):
-        file_label = os.path.join(namespace.f, param_default.file_info_label)
+        file_label = os.path.join(namespace.f, Param().file_info_label)
         check_file_exist(file_label, 0)
         with open(file_label, 'r') as default_info_label:
             label_references = default_info_label.read()
@@ -210,9 +210,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=("0", "1"),
-        default="1",
-        help="Verbose. 0 = nothing, 1 = expanded"
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
     advanced = parser.add_argument_group("\nFOR ADVANCED USERS")
@@ -264,31 +267,34 @@ def get_parser():
     return parser
 
 
-def main(fname_data, path_label, method, slices, levels, fname_output, labels_user, append_csv,
-         fname_vertebral_labeling="", perslice=1, perlevel=1, verbose=1, combine_labels=True):
-    """
-    Extract metrics from MRI data based on mask (could be single file of folder to atlas)
-    :param fname_data: data to extract metric from
-    :param path_label: mask: could be single file or folder to atlas (which contains info_label.txt)
-    :param method {'wa', 'bin', 'ml', 'map'}
-    :param slices. Slices of interest. Accepted format:
-           "0,1,2,3": slices 0,1,2,3
-           "0:3": slices 0,1,2,3
-    :param levels: Vertebral levels to extract metrics from. Should be associated with a template
-           (e.g. PAM50/template/) or a specified file: fname_vertebral_labeling. Same format as slices_of_interest.
-    :param fname_output:
-    :param labels_user:
-    :param append_csv: Append to csv file
-    :param fname_normalizing_label:
-    :param fname_vertebral_labeling: vertebral labeling to be used with vertebral_levels
-    :param perslice: if user selected several slices, then the function outputs a metric within each slice
-           instead of a single average output.
-    :param perlevel: if user selected several levels, then the function outputs a metric within each vertebral level
-           instead of a single average output.
-    :param verbose
-    :param combine_labels: bool: Combine labels into a single value
-    :return:
-    """
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
+    param_default = Param()
+
+    overwrite = 0  # TODO: Not used. Why?
+    fname_data = get_absolute_path(arguments.i)
+    path_label = arguments.f
+    method = arguments.method
+    fname_output = arguments.o
+    append_csv = arguments.append
+    combine_labels = arguments.combine
+    labels_user = arguments.l
+    adv_param_user = arguments.param  # TODO: Not used. Why?
+    slices = parse_num_list(arguments.z)
+    levels = parse_num_list(arguments.vert)
+    fname_vertebral_labeling = arguments.vertfile
+    perslice = arguments.perslice
+    perlevel = arguments.perlevel
+    fname_normalizing_label = arguments.norm_file  # TODO: Not used. Why?
+    normalization_method = arguments.norm_method  # TODO: Not used. Why?
+    label_to_fix = arguments.fix_label  # TODO: Not used. Why?
+    fname_output_metric_map = arguments.output_map  # TODO: Not used. Why?
+    fname_mask_weight = arguments.mask_weighted  # TODO: Not used. Why?
+    discard_negative_values = int(arguments.discard_neg_val)  # TODO: Not used. Why?
 
     # check if path_label is a file (e.g., single binary mask) instead of a folder (e.g., SCT atlas structure which
     # contains info_label.txt file)
@@ -356,7 +362,7 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
         labels_tmp[i_label] = np.expand_dims(im_label.data, 3)  # TODO: generalize to 2D input label
     labels = np.concatenate(labels_tmp[:], 3)  # labels: (x,y,z,label)
     # Load vertebral levels
-    if vertebral_levels:
+    if levels:
         im_vertebral_labeling = Image(fname_vertebral_labeling).change_orientation("RPI")
     else:
         im_vertebral_labeling = None
@@ -388,39 +394,6 @@ def main(fname_data, path_label, method, slices, levels, fname_output, labels_us
 
 
 if __name__ == "__main__":
-
     init_sct()
+    main(sys.argv[1:])
 
-    param_default = Param()
-
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-
-    overwrite = 0  # TODO: Not used. Why?
-    fname_data = get_absolute_path(arguments.i)
-    path_label = arguments.f
-    method = arguments.method
-    fname_output = arguments.o
-    append_csv = arguments.append
-    combine_labels = arguments.combine
-    labels_user = arguments.l
-    adv_param_user = arguments.param  # TODO: Not used. Why?
-    slices_of_interest = arguments.z
-    vertebral_levels = arguments.vert
-    fname_vertebral_labeling = arguments.vertfile
-    perslice = arguments.perslice
-    perlevel = arguments.perlevel
-    fname_normalizing_label = arguments.norm_file  # TODO: Not used. Why?
-    normalization_method = arguments.norm_method  # TODO: Not used. Why?
-    label_to_fix = arguments.fix_label  # TODO: Not used. Why?
-    fname_output_metric_map = arguments.output_map  # TODO: Not used. Why?
-    fname_mask_weight = arguments.mask_weighted  # TODO: Not used. Why?
-    discard_negative_values = int(arguments.discard_neg_val)  # TODO: Not used. Why?
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
-
-    # call main function
-    main(fname_data=fname_data, path_label=path_label, method=method, slices=parse_num_list(slices_of_interest),
-         levels=parse_num_list(vertebral_levels), fname_output=fname_output, labels_user=labels_user,
-         append_csv=append_csv, fname_vertebral_labeling=fname_vertebral_labeling, perslice=perslice,
-         perlevel=perlevel, verbose=verbose, combine_labels=combine_labels)

@@ -17,7 +17,7 @@ import argparse
 import matplotlib.pyplot as plt
 from dipy.data.fetcher import read_bvals_bvecs
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, set_global_loglevel
 
 bzero = 0.0001  # b-zero threshold
 
@@ -65,11 +65,12 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
 # ==========================================================================================
 
 
-def main():
-
-    # Get parser info
+def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     fname_bvecs = arguments.bvec
 
     # Read bvecs
@@ -133,9 +134,7 @@ def main():
     plt.show()
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

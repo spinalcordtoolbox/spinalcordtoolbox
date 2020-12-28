@@ -22,7 +22,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
 
 from spinalcordtoolbox.scripts.sct_image import split_data, concat_data
@@ -104,30 +104,29 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=('0', '1'),
-        default=param_default.verbose,
-        help='Verbose. 0 = nothing, 1 = expanded',
-    )
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
     return parser
 
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     # initialize parameters
     param = Param()
-    # call main function
-    parser = get_parser()
-    if args:
-        arguments = parser.parse_args(args)
-    else:
-        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     fname_data = arguments.i
     fname_bvecs = arguments.bvec
     average = arguments.a
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
     remove_temp_files = arguments.r
     path_out = arguments.ofolder
 
@@ -309,8 +308,7 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
     return index_b0, index_dwi, nb_b0, nb_dwi
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+
