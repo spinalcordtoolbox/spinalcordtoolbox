@@ -5,7 +5,7 @@ Images
 ======
 
 It is important to note that SCT Images, which are derived from NIFTI
-images, have their contents indexed in “Fortran order”, meaning that in
+images, have their contents indexed in "Fortran order", meaning that in
 an image of shape :math:`(N_a, N_b, N_c)`, where we consider the `a`
 axis to be the first, two consecutive (in the sense of storage location)
 elements are in the `a` dimension, the first.
@@ -35,7 +35,7 @@ The reference space for physical coordinates is LPI- (which is coming
 from nibabel and NIFTI).
 
 
-An “image orientation” corresponds to the orientation of the
+An "image orientation" corresponds to the orientation of the
 surface/volume with regard to the reference orientation.
 It is encoded in the (NIFTI) file header.
 
@@ -108,5 +108,5 @@ References
 - ITK (`ANTs <https://sourceforge.net/p/advants/discussion/840261/thread/2a1e9307/#fb5a>`_,
   `Slicer <https://www.slicer.org/wiki/Coordinate_systems>`_) reference coordinate system is different (LPS-).
 
-- `Matlab FieldTrip toolbox “How are the different head and MRI coordinate systems defined?”
+- `Matlab FieldTrip toolbox "How are the different head and MRI coordinate systems defined?"
   <http://www.fieldtriptoolbox.org/faq/how_are_the_different_head_and_mri_coordinate_systems_defined>`_
