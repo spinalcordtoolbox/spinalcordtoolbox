@@ -273,30 +273,11 @@ function edit_shellrc() {
 
 # Download from URL using curl/wget
 function download() {
-  # Use curl or wget to download goodies
-#   e_status=0
-#   # Try with wget
-#   ( (command -v wget) ]]; then
-#     run wget -O "$1" "$2"
-#     e_status="$?"
-#     echo exit status is "$e_status"
-#   fi
-#   # Try with curl
-#   if [[ $(command -v curl) && ! -e "$1" ]]; then
-#
-#     e_status="$?"
-#     echo exit status is "$e_status"
-#   fi
-#   # check success
-#   if [[ "$e_status" -ne 0 || ! -e "$1" ]]; then
-#     die "The download of $2 failed\n
-# Please check your internet connection before relaunching the installer\n"
-#   fi
-# TODO: check all combinations of errors here
   ((command -v wget >/dev/null) && run wget -O "$1" "$2" ) ||
   ((command -v curl >/dev/null) && run curl -o "$1" -L "$2" ) ||
-  die "The download of $2 failed\n
-Please check your internet connection before relaunching the installer\n"
+  die "The download of $2 failed
+Please check that you have wget or curl installed, and
+your internet connection before relaunching the installer"
 }
 
 # Usage of this script
@@ -583,8 +564,8 @@ export PYTHONNOUSERSITE=1
 
 # Remove old python folder
 print info "Installing conda..."
-run "rm -rf $SCT_DIR/$PYTHON_DIR"
-run "mkdir -p $SCT_DIR/$PYTHON_DIR"
+run rm -rf "$SCT_DIR/$PYTHON_DIR"
+run mkdir -p "$SCT_DIR/$PYTHON_DIR"
 
 # Download miniconda
 case $OS in
@@ -597,7 +578,7 @@ osx)
 esac
 
 # Run conda installer
-run "bash $TMP_DIR/miniconda.sh -p $SCT_DIR/$PYTHON_DIR -b -f"
+run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 
 # create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
 python/bin/conda create -y -n venv_sct python=3.6
