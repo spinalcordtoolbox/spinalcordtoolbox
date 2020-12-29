@@ -8,6 +8,7 @@ import re
 import shutil
 import logging
 import argparse
+import inspect
 
 from enum import Enum
 
@@ -96,6 +97,38 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     if verbose:
         printv('\nDone! To view results, type:')
         printv(cmd + '\n', verbose=1, type='info')
+
+
+class SCTArgumentParser(argparse.ArgumentParser):
+    """Parser that centralizes initialization steps common across all SCT scripts."""
+    def __init__(self, *args, **kwargs):
+        def update_parent_default(key, value):
+            """A polite way of letting a child class have different default values than the parent class."""
+            # Source: https://stackoverflow.com/a/41623488
+            argspec = inspect.getfullargspec(super(SCTArgumentParser, self).__init__)
+            arg_index = argspec.args.index(key)
+            if len(args) < arg_index and key not in kwargs:
+                kwargs[key] = value
+
+        update_parent_default('formatter_class', SmartFormatter)
+
+        # Update "usage:" message to match how SCT scripts are actually called (no '.py')
+        frame = inspect.stack()[1]
+        module = inspect.getmodule(frame[0])
+        update_parent_default('prog', os.path.basename(module.__file__).strip(".py"))
+
+        # Disable "add_help", because it won't properly add '-h' to our custom argument groups
+        # (We use custom argument groups because of https://stackoverflow.com/a/24181138)
+        update_parent_default('add_help', False)
+
+        super(SCTArgumentParser, self).__init__(*args, **kwargs)
+
+    def error(self, message):
+        """Overridden parent method. Ensures that calling script with no args prints the help. See issue #3137."""
+        # Source: https://stackoverflow.com/a/4042861
+        sys.stderr.write(f'{self.prog}: error: {message}\n\n')
+        self.print_help(sys.stderr)
+        sys.exit(2)
 
 
 class ActionCreateFolder(argparse.Action):
