@@ -3,9 +3,13 @@
 # Validation related utilites
 
 
-def check_dimensions_match(input_metric, im_vertebral_labeling):
-    # Check dimensions consistency between the input and the vertebral labeling file
-    if (input_metric.data.shape) != (im_vertebral_labeling.data.shape):
-        return False
-    else:
-        return True
+def check_dimensions_match(metric, img):
+    """
+    This function checks dimensions consistency between the input metric and image
+
+    :param metric: the object Metric to compare
+    :param img: the object Image to compare
+    """
+    if (metric.data.shape) != (img.data.shape):
+        raise ValueError(f"The input metric's dimension is {metric.data.shape}, "
+    f"but the input image's dimension is {img.data.shape}, which doesn't match.")

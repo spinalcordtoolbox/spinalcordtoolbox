@@ -249,8 +249,10 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     # aggregation based on levels
     if levels:
         im_vert_level = Image(vert_level).change_orientation('RPI')
-        if not check_dimensions_match(input_metric=metric, im_vertebral_labeling=im_vert_level):
-            logging.error('Input data and vertebral labeling file do not have the dame dimensions.')
+        try:
+            check_dimensions_match(metric=metric, img=im_vert_level)
+        except ValueError as e:
+            logging.error(e)
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
         slicegroups = [tuple(get_slices_from_vertebral_levels(im_vert_level, level)) for level in levels]
         if perlevel:
