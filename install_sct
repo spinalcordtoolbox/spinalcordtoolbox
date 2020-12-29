@@ -586,11 +586,11 @@ print info "Installing Python dependencies..."
 # Check if a frozen version of the requirements exist (for release only)
 if [[ -f "requirements-freeze.txt" ]]; then
   print info "Using requirements-freeze.txt (release installation)"
-  export REQUIREMENTS_FILE="requirements-freeze.txt"
+  REQUIREMENTS_FILE="requirements-freeze.txt"
 else
   # Not a package
   print info "Using requirements.txt (git installation)"
-  export REQUIREMENTS_FILE="requirements.txt"
+  REQUIREMENTS_FILE="requirements.txt"
 fi
 (
   pip install -r "$REQUIREMENTS_FILE" &&
