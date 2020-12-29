@@ -10,8 +10,6 @@ shopt -s failglob # error if a glob doesn't find any files, instead of remaining
 
 echo Installing SCT
 PIP_PROGRESS_BAR=off ./install_sct -y
-echo $?
-echo "... STATUS"
 
 echo *** CHECK PATH ***
 ls -lA bin  # Make sure all binaries and aliases are there
@@ -34,4 +32,3 @@ bash -c 'PYTHONPATH="$PWD/scripts:$PWD" pylint -j3 --py3k --output-format=parsea
 # python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 # cd ../spinalcordtoolbox_v*
 # yes | ./install_sct  # test installation of package
-

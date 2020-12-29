@@ -85,8 +85,7 @@ function die() {
 function run() {
   cmd="$1"
   print code "$cmd"
-  $cmd
-  if [[ $? != 0 ]]; then
+  if ! $cmd ; then
     die "ERROR: Command failed."
   fi
 }
@@ -166,8 +165,7 @@ function check_requirements() {
     die "ERROR: neither \"curl\" nor \"wget\" is installed. Please install either of them and restart SCT installation."
   fi
   # check gcc
-  gcc --version > /dev/null 2>&1  # run silently, then check output status
-  if [[ $? -ne 0 ]]; then
+  if ! gcc --version > /dev/null 2>&1; then
     print warning "WARNING: \"gcc\" is not installed."
     if [[ "$OS" == "osx" ]]; then
       while [[ ! "$GCC_INSTALL" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
@@ -184,8 +182,7 @@ function check_requirements() {
         fi
         brew install -f gcc
         # check if gcc install ran properly
-        gcc --version > /dev/null 2>&1  # run silently, then check output status
-        if [[ $? -ne 0 ]]; then
+        if ! gcc --version > /dev/null 2>&1; then
           die "ERROR: Installation of \"gcc\" failed. Please contact SCT team for assistance."
         fi
       else
@@ -576,7 +573,7 @@ if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
 fi
 
 
-# Install Python dependencies
+## Install the spinalcordtoolbox into the Conda venv
 print info "Installing Python dependencies..."
 # Check if a frozen version of the requirements exist (for release only)
 if [[ -f "requirements-freeze.txt" ]]; then
@@ -587,34 +584,27 @@ else
   print info "Using requirements.txt (git installation)"
   export REQUIREMENTS_FILE="requirements.txt"
 fi
-pip install -r "$REQUIREMENTS_FILE" &&
+(
+  pip install -r "$REQUIREMENTS_FILE" &&
   # `tensorflow-tensorboard` is installed by `tensorflow==1.5.0` but is not needed,
   # and conflicts with the other installation of `tensorboard`. So, we uninstall here.
   # This is hacky, and should be removed as soon as we stop using `tensorflow==1.5.0`.
   # See https://github.com/neuropoly/spinalcordtoolbox/issues/3035 for more info.
   pip uninstall -y tensorflow-tensorboard &&
   pip uninstall -y tensorboard &&
-  pip install tensorboard
-if [[ $? != 0 ]]; then
+  pip install tensorboard &&
+  # install sct itself
+  print info "Installing spinalcordtoolbox..." &&
+  pip install -e .
+) ||
   die "Failed running pip install: $?"
-fi
 
-## Install the spinalcordtoolbox into the Conda venv
-pip install -e $SCT_DIR
-e_status=$?
-if [[ $e_status != 0 ]]; then
-  die "Failed to pip install sct."
-fi
 
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."
 mkdir -p "$SCT_DIR/$BIN_DIR"
 for file in "$SCT_DIR"/python/envs/venv_sct/bin/*sct*; do
-  cp "$file" "$SCT_DIR/$BIN_DIR/"
-  res=$?
-  if [[ $res != 0 ]]; then
-    die "Problem creating launchers!"
-  fi
+  cp "$file" "$SCT_DIR/$BIN_DIR/" || die "Problem creating launchers!"
 done
 
 # Activate the launchers, particularly sct_download_data and sct_check_requirements
