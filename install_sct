@@ -46,30 +46,29 @@ MACOSSUPPORTED="13"  # Minimum version of macOS 10 supported
 
 # Print with color
 # @input1: {info, code, error}: type of text
-# @input2: text to print
+# rest of inputs: text to print
 function print() {
-  type=$1
-  txt=$2
+  type=$1; shift
   case "$type" in
   # Display useful info (green)
   info)
-    echo -e "\n\033[0;32m${txt}\033[0m\n"
+    echo -e "\n\033[0;32m${@}\033[0m\n"
     ;;
   # To interact with user (no carriage return) (light green)
   question)
-    echo -e -n "\n\033[0;92m${txt}\033[0m"
+    echo -e -n "\n\033[0;92m${@}\033[0m"
     ;;
   # To display code that is being run in the Terminal (blue)
   code)
-    echo -e "\n\033[0;34m${txt}\033[0m\n"
+    echo -e "\n\033[0;34m${@}\033[0m\n"
     ;;
   # Warning message (yellow)
   warning)
-    echo -e "\n\033[0;93m${txt}\033[0m\n"
+    echo -e "\n\033[0;93m${@}\033[0m\n"
     ;;
   # Error message (red)
   error)
-    echo -e "\n\033[0;31m${txt}\033[0m\n"
+    echo -e "\n\033[0;31m${@}\033[0m\n"
     ;;
   esac
 }
@@ -83,9 +82,8 @@ function die() {
 # Run a command and display it in color. Exit if error.
 # @input: string: command to run
 function run() {
-  cmd="$1"
-  print code "$cmd"
-  if ! $cmd ; then
+  print code "$@"
+  if ! "$@" ; then
     die "ERROR: Command failed."
   fi
 }
@@ -619,8 +617,7 @@ if [[ -n "${NO_SCT_BIN_INSTALL:-}" ]]; then
   print warning "WARNING: SCT binaries will not be (re)-installed"
 else
   print info "Installing binaries..."
-  run "sct_download_data -d binaries_${OS} -o ${SCT_DIR}/${BIN_DIR} -k" || \
-      die "Unsupported OS $OS: can't install binaries."
+  run sct_download_data -d "binaries_${OS}" -o "${SCT_DIR}/${BIN_DIR}" -k
 fi
 print info "All requirements installed!"
 
@@ -630,10 +627,10 @@ if [[ -n "${NO_DATA_INSTALL:-}" ]]; then
 else
   # Download data
   print info "Installing data..."
-  run "rm -rf $SCT_DIR/$DATA_DIR"
-  run "mkdir -p $SCT_DIR/$DATA_DIR"
+  run rm -rf "$SCT_DIR/$DATA_DIR"
+  run mkdir -p "$SCT_DIR/$DATA_DIR"
   for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
-    run "sct_download_data -d $data -o $SCT_DIR/$DATA_DIR/$data"
+    run sct_download_data -d "$data" -o "$SCT_DIR/$DATA_DIR/$data"
   done
 fi
 
