@@ -3,6 +3,7 @@ import pytest
 import logging
 import subprocess
 import os
+from spinalcordtoolbox.scripts import sct_propseg as sct_propseg
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,6 @@ def test_sct_propseg_backwards_compat(script_runner):
 
 
 def test_sct_propseg_o_flag(tmp_path):
-    command = """sct_deepseg_sc -i sct_testing_data/t2/t2.nii.gz -c t2 -o """ + os.path.join(tmp_path, "test_seg.nii.gz")
-    subprocess.check_output(command, shell=True)
-    assert os.path.isfile(os.path.join(tmp_path, "test_seg.nii.gz"))
+    command = """-i sct_testing_data/t2/t2.nii.gz -c t2 -o """ +os.path.join(str(tmp_path), "test_seg.nii.gz")
+    sct_propseg.main(command.split())
+    assert os.path.isfile(os.path.join(str(tmp_path), "test_seg.nii.gz"))
