@@ -16,7 +16,7 @@ import os
 import argparse
 
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 
 
 # DEFAULT PARAMETERS
@@ -122,21 +122,25 @@ def get_parser():
         metavar=Metavar.str,
         default="ernst_angle.png")
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended (graph)",
-        required=False,
-        choices=(0, 1, 2),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
 
 # main
 #=======================================================================================================================
-def main():
+def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     # Initialization
     param = Param()
     input_t1 = arguments.t1
@@ -144,7 +148,6 @@ def main():
     input_tr_min = 500
     input_tr_max = 3500
     input_tr = None
-    verbose = 1
     fname_output_file = arguments.o
     if arguments.ofig is not None:
         input_fname_output = arguments.ofig
@@ -153,8 +156,6 @@ def main():
         input_tr_max = arguments.b[1]
     if arguments.tr is not None:
         input_tr = arguments.tr
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     graph = ErnstAngle(input_t1, tr=input_tr, fname_output=input_fname_output)
     if input_tr is not None:
@@ -181,4 +182,5 @@ def main():
 #=======================================================================================================================
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

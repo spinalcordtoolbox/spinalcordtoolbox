@@ -16,15 +16,8 @@ import sys
 import os
 import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, set_global_loglevel
 import spinalcordtoolbox.image as image
-
-
-# DEFAULT PARAMETERS
-class Param:
-    # The constructor
-    def __init__(self):
-        self.verbose = 1
 
 
 # PARSER
@@ -64,6 +57,14 @@ def get_parser():
         required=False,
         choices=(0, 1),
         default=1)
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
@@ -82,17 +83,17 @@ def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
     img.save(fname_out, mutable=True, verbose=verbose)
 
 
-def main(args=None):
+def main(argv=None):
     """
     Main function
     :param args:
     :return:
     """
-    # get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=args)
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     # Building the command, do sanity checks
     fname_in = arguments.i
     fname_out = arguments.o
@@ -102,11 +103,6 @@ def main(args=None):
     convert(fname_in, fname_out, squeeze_data=squeeze_data)
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    # initialize parameters
-    param = Param()
-    # call main function
-    main()
+    main(sys.argv[1:])
