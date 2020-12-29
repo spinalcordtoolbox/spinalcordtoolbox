@@ -15,7 +15,7 @@ import sys
 import os
 import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax, printv
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax, printv, set_global_loglevel
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.qmri.mt import compute_mtr
 
@@ -57,10 +57,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
+        metavar=Metavar.int,
         type=int,
-        choices=(0, 1, 2),
-        help='Verbose: 0 = nothing, 1 = classic, 2 = expended',
-        default=1
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
         '-o',
@@ -71,23 +73,25 @@ def get_parser():
     return parser
 
 
-def main():
-    # Check input parameters
+def main(argv=None):
     parser = get_parser()
-    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    fname_mtr = args.o
-    verbose = args.v
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
+    fname_mtr = arguments.o
 
     # compute MTR
     printv('\nCompute MTR...', verbose)
-    nii_mtr = compute_mtr(nii_mt1=Image(args.mt1), nii_mt0=Image(args.mt0), threshold_mtr=args.thr)
+    nii_mtr = compute_mtr(nii_mt1=Image(arguments.mt1), nii_mt0=Image(arguments.mt0), threshold_mtr=arguments.thr)
 
     # save MTR file
     nii_mtr.save(fname_mtr, dtype='float32')
 
-    display_viewer_syntax([args.mt0, args.mt1, fname_mtr])
+    display_viewer_syntax([arguments.mt0, arguments.mt1, fname_mtr])
 
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

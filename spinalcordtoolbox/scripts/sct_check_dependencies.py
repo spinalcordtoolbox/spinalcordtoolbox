@@ -28,15 +28,7 @@ import psutil
 import requirements
 
 from spinalcordtoolbox.utils.shell import SmartFormatter
-from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__
-
-
-# DEFAULT PARAMETERS
-class Param:
-    # The constructor
-    def __init__(self):
-        self.create_log_file = 0
-        self.complete_test = 0
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__, set_global_loglevel
 
 
 class bcolors:
@@ -210,7 +202,12 @@ def get_parser():
     return parser
 
 
-def main():
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = complete_test = arguments.complete
+    set_global_loglevel(verbose=verbose)
+
     print("SCT info:")
     print("- version: {}".format(__version__))
     print("- path: {0}".format(__sct_dir__))
@@ -218,17 +215,7 @@ def main():
     # initialization
     install_software = 0
     e = 0
-    complete_test = param.complete_test
     os_running = 'not identified'
-
-    # Check input parameters
-    parser = get_parser()
-    arguments = parser.parse_args()
-    if arguments.complete:
-        complete_test = 1
-
-    # use variable "verbose" when calling run for more clarity
-    verbose = complete_test
 
     # complete test
     if complete_test:
@@ -362,7 +349,4 @@ def main():
 
 if __name__ == "__main__":
     init_sct()
-    # initialize parameters
-    param = Param()
-    # call main function
-    main()
+    main(sys.argv[1:])

@@ -4,7 +4,7 @@ Quality Control
 ***************
 
 Some SCT tools can generate Quality Control (QC) reports.
-These reports consist in “appendable” HTML files, containing a table
+These reports consist in "appendable" HTML files, containing a table
 of entries and allowing to show, for each entry, animated images
 (background with overlay on and off).
 

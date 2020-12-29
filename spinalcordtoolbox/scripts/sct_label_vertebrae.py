@@ -18,13 +18,13 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
-    clean_labeled_segmentation, label_discs, label_vert
+    clean_labeled_segmentation, label_vert
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
     copy, extract_fname, rmtree
 
@@ -161,6 +161,14 @@ def get_parser():
         help="Apply Laplacian filtering. More accurate but could mistake disc depending on anatomy."
     )
     optional.add_argument(
+        '-clean-labels',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help=" Clean output labeled segmentation to resemble original segmentation."
+    )
+    optional.add_argument(
         '-scale-dist',
         metavar=Metavar.float,
         type=float,
@@ -193,9 +201,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose. 0: nothing. 1: basic. 2: extended."
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
         '-qc',
@@ -218,7 +229,11 @@ def get_parser():
     return parser
 
 
-def main(args=None):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # initializations
     initz = ''
@@ -226,13 +241,6 @@ def main(args=None):
     fname_initlabel = ''
     file_labelz = 'labelz.nii.gz'
     param = Param()
-
-    # check user arguments
-    parser = get_parser()
-    if args:
-        arguments = parser.parse_args(args)
-    else:
-        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     fname_in = os.path.abspath(arguments.i)
     fname_seg = os.path.abspath(arguments.s)
@@ -268,9 +276,8 @@ def main(args=None):
         fname_initlabel = os.path.abspath(arguments.initlabel)
     if arguments.param is not None:
         param.update(arguments.param[0])
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
     remove_temp_files = arguments.r
+    clean_labels = arguments.clean_labels
     laplacian = arguments.laplacian
 
     path_tmp = tmp_create(basename="label_vertebrae")
@@ -300,7 +307,7 @@ def main(args=None):
         # apply straightening
         s, o = run_proc(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
-        sct_straighten_spinalcord.main(args=[
+        sct_straighten_spinalcord.main(argv=[
             '-i', 'data.nii',
             '-s', 'segmentation.nii',
             '-r', str(remove_temp_files),
@@ -331,14 +338,13 @@ def main(args=None):
     if fname_disc:
         # Apply straightening to disc-label
         printv('\nApply straightening to disc labels...', verbose)
-        run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
+        run_proc('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
                  (fname_disc,
                   'data_straightr.nii',
                   'warp_curve2straight.nii.gz',
                   'labeldisc_straight.nii.gz',
-                  'NearestNeighbor'),
-                 verbose=verbose,
-                 is_sct_binary=True,
+                  'label'),
+                 verbose=verbose
                  )
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
@@ -418,13 +424,25 @@ def main(args=None):
              verbose=verbose,
              is_sct_binary=True,
              )
-    # Clean labeled segmentation
-    printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
-    clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
+
+    if clean_labels:
+        # Clean labeled segmentation
+        printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
+        clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
 
     # label discs
     printv('\nLabel discs...', verbose)
-    label_discs('segmentation_labeled.nii', verbose=verbose)
+    printv('\nUn-straighten labeled discs...', verbose)
+    run_proc('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
+             ('segmentation_straight_labeled_disc.nii',
+              'segmentation.nii',
+              'warp_straight2curve.nii.gz',
+              'segmentation_labeled_disc.nii',
+              'label'),
+             verbose=verbose,
+             is_sct_binary=True,
+             )
+
 
     # come back
     os.chdir(curdir)
@@ -451,7 +469,7 @@ def main(args=None):
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
         labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
-        generate_qc(fname_in, fname_seg=labeled_seg_file, args=args, path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_in, fname_seg=labeled_seg_file, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_label_vertebrae')
 
     display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'])
@@ -459,5 +477,5 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

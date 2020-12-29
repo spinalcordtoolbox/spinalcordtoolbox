@@ -35,10 +35,11 @@ import yaml
 import psutil
 
 from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
-from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__
+from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import Tee
 
 from stat import S_IEXEC
+
 
 def get_parser():
     parser = argparse.ArgumentParser(
@@ -147,6 +148,9 @@ def get_parser():
     parser.add_argument('-zip',
                         action='store_true',
                         help='Create zip archive of output folders log/, qc/ and results/.')
+    parser.add_argument('-v', metavar=Metavar.int, type=int, choices=[0, 1, 2], default=1,
+                        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+                        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
@@ -220,19 +224,17 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     return res
 
 
-def main(argv):
-    # Print the sct startup info
-    init_sct()
-
-    # Parse the command line arguments
+def main(argv=None):
     parser = get_parser()
-    args = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # See if there's a configuration file and import those options
-    if args.config is not None:
+    if arguments.config is not None:
         print('configuring')
-        with open(args.config, 'r') as conf:
-            _, ext = os.path.splitext(args.config)
+        with open(arguments.config, 'r') as conf:
+            _, ext = os.path.splitext(arguments.config)
             if ext == '.json':
                 config = json.load(conf)
             if ext == '.yml' or ext == '.yaml':
@@ -243,7 +245,7 @@ def main(argv):
             warnings.warn(UserWarning('Using the `-config|-c` flag with additional arguments is discouraged'))
 
         # Check for unsupported arguments
-        orig_keys = set(vars(args).keys())
+        orig_keys = set(vars(arguments).keys())
         config_keys = set(config.keys())
         if orig_keys != config_keys:
             for k in config_keys.difference(orig_keys):
@@ -255,18 +257,18 @@ def main(argv):
         parser.set_defaults(**config)
 
         # Reparse the arguments
-        args = parser.parse_args(argv)
+        arguments = parser.parse_args(argv)
 
     # Set up email notifications if desired
-    do_email = args.email_to is not None
+    do_email = arguments.email_to is not None
     if do_email:
-        email_to = args.email_to
-        if args.email_from is not None:
-            email_from = args.email_from
+        email_to = arguments.email_to
+        if arguments.email_from is not None:
+            email_from = arguments.email_from
         else:
-            email_from = args.email_to
+            email_from = arguments.email_to
 
-        smtp_host, smtp_port = args.email_host.split(":")
+        smtp_host, smtp_port = arguments.email_host.split(":")
         smtp_port = int(smtp_port)
         email_pass = getpass('Please input your email password:\n')
 
@@ -289,14 +291,14 @@ def main(argv):
                 send_notification('sct_run_batch: test notification', 'Looks good')
 
     # Set up output directories and create them if they don't already exist
-    path_output = os.path.abspath(os.path.expanduser(args.path_output))
+    path_output = os.path.abspath(os.path.expanduser(arguments.path_output))
     path_results = os.path.join(path_output, 'results')
     path_data_processed = os.path.join(path_output, 'data_processed')
     path_log = os.path.join(path_output, 'log')
     path_qc = os.path.join(path_output, 'qc')
-    path_segmanual = os.path.abspath(os.path.expanduser(args.path_segmanual))
-    script = os.path.abspath(os.path.expanduser(args.script))
-    path_data = os.path.abspath(os.path.expanduser(args.path_data))
+    path_segmanual = os.path.abspath(os.path.expanduser(arguments.path_segmanual))
+    script = os.path.abspath(os.path.expanduser(arguments.script))
+    path_data = os.path.abspath(os.path.expanduser(arguments.path_data))
 
     for pth in [path_output, path_results, path_data_processed, path_log, path_qc]:
         os.makedirs(pth, exist_ok=True)
@@ -306,7 +308,7 @@ def main(argv):
         raise FileNotFoundError('Couldn\'t find the script script at {}'.format(script))
 
     # Setup overall log
-    batch_log = open(os.path.join(path_log, args.batch_log), 'w')
+    batch_log = open(os.path.join(path_log, arguments.batch_log), 'w')
 
     # Duplicate init_sct message to batch_log
     print('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__), file=batch_log, flush=True)
@@ -334,7 +336,7 @@ def main(argv):
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
 
     # Display number of CPU cores
-    print('CPU cores: Available: {} | Threads used by ITK Programs: {}'.format(multiprocessing.cpu_count(), args.itk_threads))
+    print('CPU cores: Available: {} | Threads used by ITK Programs: {}'.format(multiprocessing.cpu_count(), arguments.itk_threads))
 
     # Display RAM available
     print("RAM: Total {} MB | Available {} MB | Used {} MB".format(
@@ -346,7 +348,7 @@ def main(argv):
     # Log the current arguments (in yaml because it's cleaner)
     print('\nINPUT ARGUMENTS')
     print("---------------")
-    print(yaml.dump(vars(args)))
+    print(yaml.dump(vars(arguments)))
 
     # Display script version info
     print("SCRIPT")
@@ -356,7 +358,7 @@ def main(argv):
     print("Copying script to output folder...")
     try:
         # Copy the script and record the new location
-        script_copy = os.path.abspath(shutil.copy(script, args.path_output))
+        script_copy = os.path.abspath(shutil.copy(script, arguments.path_output))
         print("{} -> {}".format(script, script_copy))
         script = script_copy
     except shutil.SameFileError:
@@ -366,7 +368,7 @@ def main(argv):
         print("Input folder is a directory (not a file). Skipping copy.")
         pass
 
-    print("Setting execute permissions for script file {} ...".format(args.script))
+    print("Setting execute permissions for script file {} ...".format(arguments.script))
     script_stat = os.stat(script)
     os.chmod(script, script_stat.st_mode | S_IEXEC)
 
@@ -377,38 +379,38 @@ def main(argv):
     print("git origin: {}\n".format(__get_git_origin(path_to_git_folder=path_data)))
 
     # Find subjects and process inclusion/exclusions
-    subject_dirs = [f for f in os.listdir(path_data) if f.startswith(args.subject_prefix)]
+    subject_dirs = [f for f in os.listdir(path_data) if f.startswith(arguments.subject_prefix)]
 
     # Handle inclusion lists
-    assert not ((args.include is not None) and (args.include_list is not None)),\
+    assert not ((arguments.include is not None) and (arguments.include_list is not None)),\
         'Only one of `include` and `include-list` can be used'
 
-    if args.include is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(args.include, f) is not None]
+    if arguments.include is not None:
+        subject_dirs = [f for f in subject_dirs if re.search(arguments.include, f) is not None]
 
-    if args.include_list is not None:
+    if arguments.include_list is not None:
         # TODO decide if we should warn users if one of their inclusions isn't around
-        subject_dirs = [f for f in subject_dirs if f in args.include_list]
+        subject_dirs = [f for f in subject_dirs if f in arguments.include_list]
 
     # Handle exclusions
-    assert not ((args.exclude is not None) and (args.exclude_list is not None)),\
+    assert not ((arguments.exclude is not None) and (arguments.exclude_list is not None)),\
         'Only one of `exclude` and `exclude-list` can be used'
 
-    if args.exclude is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(args.exclude, f) is None]
+    if arguments.exclude is not None:
+        subject_dirs = [f for f in subject_dirs if re.search(arguments.exclude, f) is None]
 
-    if args.exclude_list is not None:
-        subject_dirs = [f for f in subject_dirs if f not in args.exclude_list]
+    if arguments.exclude_list is not None:
+        subject_dirs = [f for f in subject_dirs if f not in arguments.exclude_list]
 
     # Determine the number of jobs we can run simulataneously
-    if args.jobs < 1:
-        jobs = multiprocessing.cpu_count() + args.jobs
+    if arguments.jobs < 1:
+        jobs = multiprocessing.cpu_count() + arguments.jobs
     else:
-        jobs = args.jobs
+        jobs = arguments.jobs
 
     print("RUNNING")
     print("-------")
-    print("Running {} jobs in parallel.\n".format(jobs))
+    print("Processing {} subjects in parallel. (Worker processes used: {}).".format(len(subject_dirs), jobs))
 
     # Run the jobs, recording start and end times
     start = datetime.datetime.now()
@@ -418,15 +420,15 @@ def main(argv):
         with multiprocessing.Pool(jobs) as p:
             run_single_dir = functools.partial(run_single,
                                                script=script,
-                                               script_args=args.script_args,
+                                               script_args=arguments.script_args,
                                                path_segmanual=path_segmanual,
                                                path_data=path_data,
                                                path_data_processed=path_data_processed,
                                                path_results=path_results,
                                                path_log=path_log,
                                                path_qc=path_qc,
-                                               itk_threads=args.itk_threads,
-                                               continue_on_error=args.continue_on_error)
+                                               itk_threads=arguments.itk_threads,
+                                               continue_on_error=arguments.continue_on_error)
             results = list(p.imap(run_single_dir, subject_dirs))
     except Exception as e:
         if do_email:
@@ -473,7 +475,7 @@ def main(argv):
     print('To open the Quality Control (QC) report on a web-browser, run the following:\n'
           '{} {}/index.html'.format(open_cmd, path_qc))
 
-    if args.zip:
+    if arguments.zip:
         file_zip = 'sct_run_batch_{}'.format(time.strftime('%Y%m%d%H%M%S'))
         path_tmp = os.path.join(tempfile.mkdtemp(), file_zip)
         os.makedirs(os.path.join(path_tmp, file_zip))
@@ -487,5 +489,6 @@ def main(argv):
     batch_log.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    init_sct()
     main(sys.argv[1:])

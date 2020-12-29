@@ -15,7 +15,7 @@ import argparse
 import numpy as np
 from dipy.data.fetcher import read_bvals_bvecs
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
+from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.image import Image, concat_data
 
 
@@ -89,21 +89,28 @@ def get_parser():
         action='help',
         help="Show this help message and exit",
     )
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
 
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
-    # get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=args)
+    arguments = parser.parse_args(argv if argv else ['--help'])
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # check number of input args
     if not len(arguments.i) == len(arguments.order):
@@ -151,5 +158,5 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+
