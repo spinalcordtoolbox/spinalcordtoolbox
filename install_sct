@@ -292,11 +292,29 @@ Please check your internet connection before relaunching the installer\n"
 
 # Usage of this script
 function usage() {
-  echo -e "\nUsage: $0 [-d] [-b] [-v]" 1>&2
-  echo -e "\nOPTION"
-  echo -e "\t-d \v Prevent the (re)-installation of the \"data/\" directory "
-  echo -e "\n\t-b \v Prevent the (re)-installation of the SCT binaries files "
-  echo -e "\n\t-v \v Full verbose"
+  # extract the usage block from our own header
+  awk '
+    BEGIN {
+      printing=0
+      blanks=0
+    }
+
+    # filter for block-comments
+    $0 !~ /^#/   { next }
+    # strip off the leading "# "
+                 { sub("^#[[:space:]]?","") }
+
+    # count consecutive blank lines
+    # so we can detect the section break
+    /^$/         { blanks++ }
+    $0 !~ /^$/   { blanks=0 }
+
+    # detect usage section
+    /USAGE/      { printing=1 }
+    printing==1  { print }
+    (printing==1 && blanks>=2) \
+                 { exit }
+  ' "$0"
 }
 
 if [ "$(uname)" = "Darwin" ]; then
