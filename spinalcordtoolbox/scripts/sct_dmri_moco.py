@@ -28,10 +28,9 @@
 
 import sys
 import os
-import argparse
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, set_global_loglevel
 
 
 def get_parser():
@@ -39,18 +38,14 @@ def get_parser():
     # initialize parameters
     param_default = ParamMoco(is_diffusion=True, group_size=3, metric='MI', smooth='1')
 
-    # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et "
                     "al. (http://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n"
                     "  - group-wise (-g)\n"
                     "  - slice-wise regularized along z using polynomial function (-param). For more info about the "
                     "method, type: isct_antsSliceRegularizedRegistration\n"
                     "  - masking (-m)\n"
-                    "  - iterative averaging of target volume\n",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+                    "  - iterative averaging of target volume\n"
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -146,7 +141,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

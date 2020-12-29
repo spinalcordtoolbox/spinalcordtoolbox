@@ -23,7 +23,7 @@ import signal
 import numpy as np
 from pandas import DataFrame
 
-from spinalcordtoolbox.utils import init_sct, run_proc, tmp_create, printv, rmtree, __sct_dir__, set_global_loglevel
+from spinalcordtoolbox.utils import init_sct, run_proc, tmp_create, printv, rmtree, __sct_dir__, set_global_loglevel, SCTArgumentParser
 from spinalcordtoolbox.scripts import sct_download_data
 
 # FIXME
@@ -99,11 +99,9 @@ class bcolors:
 # PARSER
 # ==========================================================================================
 def get_parser():
-    import argparse
-
     param_default = Param()
 
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.",
     )
 
@@ -158,6 +156,9 @@ def get_parser():
     parser.add_argument("--execution-folder",
                         help="Folder where to run tests from (default. temporary)",
                         )
+    parser.add_argument('-h', "--help",
+                        help="show this message and exit",
+                        action="help")
 
     return parser
 
@@ -210,7 +211,7 @@ def process_function_multiproc(fname, param):
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.verbose
     set_global_loglevel(verbose=verbose)
 

@@ -14,9 +14,8 @@
 
 import os
 import sys
-import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 import spinalcordtoolbox.resampling
 
 
@@ -41,11 +40,8 @@ param = Param()
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
-        description="Anisotropic resampling of 3D or 4D data.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+    parser = SCTArgumentParser(
+        description="Anisotropic resampling of 3D or 4D data."
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -115,7 +111,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

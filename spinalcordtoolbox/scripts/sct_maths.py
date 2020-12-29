@@ -12,7 +12,6 @@
 
 import os
 import sys
-import argparse
 import pickle
 import gzip
 
@@ -22,19 +21,16 @@ import matplotlib.pyplot as plt
 
 import spinalcordtoolbox.math as sct_math
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 
 
 def get_parser():
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Perform mathematical operations on images. Some inputs can be either a number or a 4d image or '
-                    'several 3d images separated with ","',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    'several 3d images separated with ","'
+    )
 
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -254,7 +250,7 @@ def main(argv=None):
     :return:
     """
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

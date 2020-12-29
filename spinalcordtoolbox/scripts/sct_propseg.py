@@ -15,14 +15,13 @@
 
 import os
 import sys
-import argparse
 import logging
 
 import numpy as np
 from scipy import ndimage as ndi
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, mv, copy
 from spinalcordtoolbox.centerline import optic
@@ -149,7 +148,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 
 def get_parser():
     # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description=(
             "This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. "
             "You must provide the type of contrast, the image as well as the output folder path. The segmentation "
@@ -176,10 +175,7 @@ def get_parser():
             "cord. Neuroimage 98, 2014. pp 528-536. DOI: 10.1016/j.neuroimage.2014.04.051](https://pubmed.ncbi.nlm.nih.gov/24780696/)\n"
             "  - [De Leener B, Cohen-Adad J, Kadoury S. Automatic segmentation of the spinal cord and spinal canal "
             "coupled with vertebral labeling. IEEE Trans Med Imaging. 2015 Aug;34(8):1705-18.](https://pubmed.ncbi.nlm.nih.gov/26011879/)"
-        ),
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+        )
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -658,7 +654,7 @@ def propseg(img_input, options_dict):
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

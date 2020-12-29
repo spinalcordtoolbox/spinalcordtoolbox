@@ -15,12 +15,11 @@
 
 import sys
 import os
-import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree
 
@@ -42,11 +41,9 @@ class Param:
 def get_parser():
     # Initialize the parser
 
-    parser = argparse.ArgumentParser(
-        description='Merge images to the same space',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+    parser = SCTArgumentParser(
+        description='Merge images to the same space'
+    )
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
@@ -185,7 +182,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

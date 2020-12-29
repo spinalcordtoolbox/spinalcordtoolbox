@@ -26,7 +26,7 @@ import numpy as np
 from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric, LabelStruc
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, parse_num_list, display_open
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path
 
@@ -65,7 +65,7 @@ def get_parser():
 
     param_default = Param()
 
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description=(
             f"This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or "
             f"a folder generated with 'sct_warp_template' containing multiple label files and a label "
@@ -82,11 +82,7 @@ def get_parser():
             f"To compute average MTR in a region defined by a single label file (could be binary or 0-1 "
             f"weighted mask) between slices 1 and 4:\n"
             f"sct_extract_metric -i mtr.nii.gz -f "
-            f"my_mask.nii.gz -z 1:4 -method wa"
-        ),
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+            f"my_mask.nii.gz -z 1:4 -method wa")
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -269,7 +265,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

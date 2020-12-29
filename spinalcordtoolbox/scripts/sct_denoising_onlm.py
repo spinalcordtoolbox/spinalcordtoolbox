@@ -2,13 +2,12 @@
 
 import sys
 import os
-import argparse
 from time import time
 
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, extract_fname, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_global_loglevel
 
 
 # DEFAULT PARAMETERS
@@ -24,14 +23,10 @@ class Param:
 
 
 def get_parser():
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Utility function to denoise images. (Return the denoised image and also the difference '
-                    'between the input and the output.)',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    'between the input and the output.)'
+    )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -95,7 +90,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 
