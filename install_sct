@@ -104,7 +104,7 @@ function finish() {
     echo ""
   else
     print error "Installation failed!\n
-Please copy the historic of this Terminal (starting with the command install_sct) and paste it in a new created topic on SCT's forum:\n
+Please copy the output of this Terminal (starting with the command install_sct) and upload it as a .txt attachment in a new topic on SCT's forum:\n
 --> http://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
