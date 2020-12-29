@@ -82,10 +82,13 @@ function die() {
 # Run a command and display it in color. Exit if error.
 # @input: string: command to run
 function run() {
-  print code "$@"
-  if ! "$@" ; then
-    die "ERROR: Command failed."
-  fi
+  ( # this subshell means the 'die' only kills this function and not the whole script;
+    # the caller can decide what to do instead (but with set -e that usually means terminating the whole script)
+    print code "$@"
+    if ! "$@" ; then
+      die "ERROR: Command failed."
+    fi
+  )
 }
 
 # Force a clean exit
