@@ -625,7 +625,7 @@ export PATH="$SCT_DIR/$BIN_DIR:$PATH"
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Install binaries
-if [[ -n ${NO_SCT_BIN_INSTALL:-} ]]; then
+if [[ -n "${NO_SCT_BIN_INSTALL:-}" ]]; then
   print warning "WARNING: SCT binaries will not be (re)-installed"
 else
   print info "Installing binaries..."
