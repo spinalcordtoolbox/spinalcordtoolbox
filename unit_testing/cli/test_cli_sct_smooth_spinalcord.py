@@ -3,6 +3,7 @@ import pytest
 import logging
 import subprocess
 import os
+from spinalcordtoolbox.scripts import sct_smooth_spinalcord as sct_smooth_spinalcord
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,6 @@ def test_sct_smooth_spinalcord_backwards_compat(script_runner):
 
 
 def test_sct_smooth_spinalcord_o_flag(tmp_path):
-    command = 'sct_smooth_spinalcord -i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -o' + os.path.join(tmp_path, "test_smooth.nii")
-    subprocess.check_output(command, shell=True)
-    assert os.path.isfile(os.path.join(tmp_path, "test_smooth.nii"))
+    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -o' + os.path.join(str(tmp_path), "test_smooth.nii")
+    sct_smooth_spinalcord.main(command.split())
+    assert os.path.isfile(os.path.join(str(tmp_path), "test_smooth.nii"))
