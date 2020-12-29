@@ -477,6 +477,16 @@ Do you agree? [y]es/[n]o: "
   fi
 done
 
+# update PATH environment?
+add_to_path=""
+while [[ ! "$add_to_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+  add_to_path="yes"
+  if [ -z "$NONINTERACTIVE" ]; then
+    print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
+    read add_to_path
+  fi
+done
+
 # Create directory
 mkdir -p "$SCT_DIR"
 # check if directory was created
@@ -651,16 +661,6 @@ if [[ -e "$RC_FILE_PATH" ]]; then
     print info "In case an old version SCT is already installed (4.0.0-beta.1 or before), remove 'sct_env' declaration in RC file"
     sed -ie '/sct_env/ s/^#*/#/' "$RC_FILE_PATH"
 fi
-
-# update PATH environment
-add_to_path=""
-while [[ ! "$add_to_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-  add_to_path="yes"
-  if [ -z "$NONINTERACTIVE" ]; then
-    print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
-    read add_to_path
-  fi
-done
 
 if [[ "$add_to_path" =~ ^[Yy] ]]; then
   edit_shellrc
