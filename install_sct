@@ -343,9 +343,6 @@ print info "
 # CLI parser
 # ----------------------------------------------------------------------------------------------------------------------
 
-fetch_os_type
-check_requirements
-
 # Transform  long option "--long" into short option  "-l"
 for arg in "$@"; do
   shift
@@ -394,6 +391,9 @@ done
 # ----------------------------------------------------------------------------------------------------------------------
 # Prepare installation
 # ----------------------------------------------------------------------------------------------------------------------
+
+fetch_os_type
+check_requirements
 
 # Catch SCT version
 if [[ -e "spinalcordtoolbox/version.txt" ]]; then
