@@ -3,6 +3,7 @@ import pytest
 import logging
 import os
 import subprocess
+from spinalcordtoolbox.scripts import sct_detect_pmj as sct_detect_pmj
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,6 @@ def test_sct_detect_pmj_backwards_compat(script_runner):
     assert ret.stderr == ''
 
 def test_sct_detect_pmj_o_flag(tmp_path):
-    command = 'sct_detect_pmj -i sct_testing_data/template/template//PAM50_small_t2.nii.gz -igt sct_testing_data/template/template/PAM50_small_t2_pmj_manual.nii.gz  -c t2 -o' + os.path.join(tmp_path, 'test_pmj.nii.gz')
-    subprocess.check_output(command, shell=True)
-    assert os.path.isfile(os.path.join(tmp_path, 'test_pmj.nii.gz'))
+    command = '-i sct_testing_data/template/template//PAM50_small_t2.nii.gz -igt sct_testing_data/template/template/PAM50_small_t2_pmj_manual.nii.gz  -c t2 -o' + os.path.join(str(tmp_path), 'test_pmj.nii.gz')
+    sct_detect_pmj.main(command.split())
+    assert os.path.isfile(os.path.join(str(tmp_path), 'test_pmj.nii.gz'))
