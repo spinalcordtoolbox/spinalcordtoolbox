@@ -137,7 +137,7 @@ def main(argv=None):
     fname_anat = arguments.i
     fname_centerline = arguments.s
     param.algo_fitting = arguments.algo_fitting
-    
+
     if arguments.smooth is not None:
         sigma = arguments.smooth
     remove_temp_files = arguments.r
@@ -145,7 +145,6 @@ def main(argv=None):
         fname_out = arguments.o
     else:
         fname_out = extract_fname(fname_anat)[1] + '_smooth.nii'
-    init_sct(log_level=verbose, update=True)  # Update log level
 
 
     # Display arguments
