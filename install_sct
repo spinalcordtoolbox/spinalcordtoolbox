@@ -13,15 +13,14 @@
 # installation is successful.
 #
 # USAGE
-#   ./install_sct [-h] [-i] [-y] [-d] [-b] [-v]
+#   ./install_sct [-h] [-i] [-y] [-c] [-o] [-v]
 #
 # OPTIONS
 #  -h   Show this help
 #  -i   Install in-place; this is the default when working from git.
 #  -y   Install without interruption with 'yes' as default answer
-#  -d   Prevent the (re)-installation of the data/ directory
-#  -b   Prevent the (re)-installation of the SCT binaries files
 #  -c   Prevent checks from being run to validate the installation
+#  -o   Overwrite existing installation files (by default, 'python/', 'bin/' and 'data/' are preserved)
 #  -v   Full verbose
 #
 #
@@ -55,6 +54,7 @@ MACOSSUPPORTED="13"  # Minimum version of macOS 10 supported
 # CLI options
 SCT_INSTALL_TYPE=""
 NONINTERACTIVE=""
+CLEAN=""
 NO_DATA_INSTALL=""
 NO_SCT_BIN_INSTALL=""
 NO_INSTALL_VALIDATION=""
@@ -347,7 +347,7 @@ for arg in "$@"; do
   esac
 done
 
-while getopts ":iydbcvh" opt; do
+while getopts ":iycovh" opt; do
   case $opt in
   i)
     SCT_INSTALL_TYPE="in-place"
@@ -356,13 +356,10 @@ while getopts ":iydbcvh" opt; do
     echo " non-interactive mode"
     NONINTERACTIVE="yes"
     ;;
-  d)
-    echo " data directory will not be (re)-installed"
-    NO_DATA_INSTALL="yes"
-    ;;
-  b)
-    echo " SCT binaries will not be (re)-installed "
-    NO_SCT_BIN_INSTALL="yes"
+  o)
+    echo " SCT binaries will be overwritten"
+    echo " data directory will be overwritten"
+    CLEAN="yes"
     ;;
   c)
     echo " no checks will be run (installation will not be validated)"
@@ -569,35 +566,42 @@ fi
 
 
 # Remove old python folder
-run rm -rf "$SCT_DIR/$PYTHON_DIR"
-run mkdir -p "$SCT_DIR/$PYTHON_DIR"
+if [ -n "$CLEAN" ]; then
+  run rm -rf "$SCT_DIR/$PYTHON_DIR"
+fi
 
-# Download miniconda
-print info "Downloading Miniconda..."
-case $OS in
-linux*)
-  download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-  ;;
-osx)
-  download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-  ;;
-esac
+if [ ! -x "$SCT_DIR/$PYTHON_DIR"/bin/conda ]; then
+  run mkdir -p "$SCT_DIR/$PYTHON_DIR"
 
-# Run conda installer
-print info "Installing Miniconda..."
-run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
+  # Download miniconda
+  print info "Downloading Miniconda..."
+  case $OS in
+  linux*)
+    download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    ;;
+  osx)
+    download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
+    ;;
+  esac
 
-# Workaround for WSL "HTTP 000 Connection Failed" error
-# See: https://github.com/conda/conda/issues/9948#issuecomment-909989810
-# Syntax explanation: https://stackoverflow.com/a/6085237
-find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
+  # Run conda installer
+  print info "Installing Miniconda..."
+  run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 
-# create conda environment
-print info "Creating conda environment..."
-python/bin/conda create -y -n venv_sct python=3.7
+  # Workaround for WSL "HTTP 000 Connection Failed" error
+  # See: https://github.com/conda/conda/issues/9948#issuecomment-909989810
+  # Syntax explanation: https://stackoverflow.com/a/6085237
+  find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
+fi
 
-# Reapply the touch fix to avoid `pip` connection issues on WSL
-find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
+if ! ( "$SCT_DIR/$PYTHON_DIR"/bin/conda info -e | cut -f 1 -d ' ' | grep venv_sct >/dev/null ); then
+  # create conda environment
+  print info "Creating conda environment..."
+  python/bin/conda create -y -n venv_sct python=3.7
+
+  # Reapply the touch fix to avoid `pip` connection issues on WSL
+  find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
+fi
 
 # make sure that there is no conflict with local python install by making venv_sct an isolated environment.
 # For more information, see:
@@ -681,29 +685,39 @@ export PATH="$SCT_DIR/$BIN_DIR:$PATH"
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Install binaries
-if [[ -n "$NO_SCT_BIN_INSTALL" ]]; then
-  print warning "WARNING: SCT binaries will not be (re)-installed"
-else
+if [ -n "$CLEAN" ]; then
+  rm -f "${SCT_DIR}/${BIN_DIR}/isct_*"
+fi
+# use isct_antsSliceRegularizedRegistration as a proxy for "the binaries are installed"; this is hacky:
+if [ ! -x "${SCT_DIR}/${BIN_DIR}/isct_antsSliceRegularizedRegistration" ]; then
   print info "Installing binaries..."
+  # this if is a bit hacky but it's the best we've got until we migrate
+  # these to a better package management system (one with built in caching)
   run sct_download_data -d "binaries_${OS}" -k
 fi
+
 print info "All requirements installed!"
 
 # Install data
-if [[ -n "$NO_DATA_INSTALL" ]]; then
-  print warning "WARNING: data/ will not be (re)-install"
-else
-  # Download data
-  print info "Installing data..."
+if [ -n "$CLEAN" ]; then
   run rm -rf "$SCT_DIR/$DATA_DIR"
-  run mkdir -p "$SCT_DIR/$DATA_DIR"
-  for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
-    run sct_download_data -d "$data"
-  done
 fi
 
-# Install deep learning models
-python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()'
+print info "Installing data..."
+run mkdir -p "$SCT_DIR/$DATA_DIR"
+for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
+  if [ ! -d "$SCT_DIR/$DATA_DIR/$data" ]; then
+    run sct_download_data -d "$data"
+  fi
+done
+
+if [ -n "$CLEAN" ]; then
+  run rm -rf "$SCT_DIR/$DATA_DIR/deepseg_models"
+fi
+if [ ! -d "$SCT_DIR/$DATA_DIR/deepseg_models" ]; then
+  print info "Installing deep learning models..."
+  python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()'
+fi
 
 
 # ----------------------------------------------------------------------------------------------------------------------
