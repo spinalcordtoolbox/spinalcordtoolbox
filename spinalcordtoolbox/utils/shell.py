@@ -124,7 +124,11 @@ class SCTArgumentParser(argparse.ArgumentParser):
         super(SCTArgumentParser, self).__init__(*args, **kwargs)
 
     def error(self, message):
-        """Overridden parent method. Ensures that calling script with no args prints the help. See issue #3137."""
+        """
+            Overridden parent method. Ensures that calling script with no args prints the help.
+
+            See https://github.com/neuropoly/spinalcordtoolbox/issues/3137.
+        """
         # Source: https://stackoverflow.com/a/4042861
         sys.stderr.write(f'{self.prog}: error: {message}\n\n')
         self.print_help(sys.stderr)
