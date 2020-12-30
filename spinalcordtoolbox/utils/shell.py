@@ -130,7 +130,7 @@ class SCTArgumentParser(argparse.ArgumentParser):
 
     def error(self, message):
         """
-            Overridden parent method. Ensures that calling script with no args prints the help.
+            Overridden parent method. Ensures that help is printed when called with invalid args.
 
             See https://github.com/neuropoly/spinalcordtoolbox/issues/3137.
         """
