@@ -272,8 +272,8 @@ function edit_shellrc() {
 
 # Download from URL using curl/wget
 function download() {
-  ((command -v wget >/dev/null) && run wget -O "$1" "$2" ) ||
-  ((command -v curl >/dev/null) && run curl -o "$1" -L "$2" ) ||
+  ( (command -v wget >/dev/null) && run wget -O "$1" "$2" ) ||
+  ( (command -v curl >/dev/null) && run curl -o "$1" -L "$2" ) ||
   die "The download of $2 failed
 Please check that you have wget or curl installed, and
 your internet connection before relaunching the installer"
