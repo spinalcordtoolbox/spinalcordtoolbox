@@ -100,7 +100,12 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
 
 
 class SCTArgumentParser(argparse.ArgumentParser):
-    """Parser that centralizes initialization steps common across all SCT scripts."""
+    """
+        Parser that centralizes initialization steps common across all SCT scripts.
+
+        TODO: Centralize `-v`, `-r`, and `-h` arguments here too, as they're copied
+              and pasted across all SCT scripts.
+    """
     def __init__(self, *args, **kwargs):
         def update_parent_default(key, value):
             """A polite way of letting a child class have different default values than the parent class."""
