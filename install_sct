@@ -532,7 +532,7 @@ fi
 # Copy files to destination directory
 if [[ "$SCT_DIR" != "$SCT_SOURCE" ]]; then
   print info "Copying source files from $SCT_SOURCE to $SCT_DIR"
-  cp -vR "$SCT_SOURCE/"* "$SCT_DIR/" | while read line; do echo -n "."; done
+  cp -vR "$SCT_SOURCE/"* "$SCT_DIR/" | while read; do echo -n "."; done
 else
   print info "Skipping copy of source files (source and destination folders are the same)"
 fi
