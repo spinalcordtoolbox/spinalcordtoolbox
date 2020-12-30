@@ -13,8 +13,16 @@
 # installation is successful.
 #
 # USAGE
-#   ./install_sct
-#   ./install_sct -y  # will install without interruption with 'yes' as default answer
+#   ./install_sct [-h] [-i] [-y] [-d] [-b] [-v]
+#
+# OPTIONS
+#  -h   Show this help
+#  -i   Install in-place; this is the default when working from git.
+#  -y   Install without interruption with 'yes' as default answer
+#  -d   Prevent the (re)-installation of the data/ directory
+#  -b   Prevent the (re)-installation of the SCT binaries files
+#  -v   Full verbose
+#
 #
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
@@ -364,9 +372,19 @@ for arg in "$@"; do
   esac
 done
 
+SCT_INSTALL_TYPE=""
 NONINTERACTIVE=""
-while getopts ":dbyvh" opt; do
+NO_DATA_INSTALL=""
+NO_SCT_BIN_INSTALL=""
+while getopts ":iydbvh" opt; do
   case $opt in
+  i)
+    SCT_INSTALL_TYPE="in-place"
+    ;;
+  y)
+    echo " non-interactive mode"
+    NONINTERACTIVE="yes"
+    ;;
   d)
     echo " data directory will not be (re)-installed"
     NO_DATA_INSTALL="yes"
@@ -375,19 +393,15 @@ while getopts ":dbyvh" opt; do
     echo " SCT binaries will not be (re)-installed "
     NO_SCT_BIN_INSTALL="yes"
     ;;
-  y)
-    echo " non-interactive mode"
-    NONINTERACTIVE="yes"
-    ;;
   v)
     echo " Full verbose!"
     set -x
     ;;
   h)
     usage
-    exit 99
+    exit 0
     ;;
-  \?)
+  *)
     usage
     exit 99
     ;;
