@@ -326,17 +326,6 @@ fi
 # SCRIPT STARTS HERE
 # ======================================================================================================================
 
-# This trap specifically catches keyboardInterrupt and output a non-zero status before running finish()
-trap detectKeyboardInterrupt INT
-# Set a trap which, on shell error or shell exit, runs finish()
-trap finish EXIT
-
-print info "
-*******************************
-* Welcome to SCT installation *
-*******************************
-"
-
 # ----------------------------------------------------------------------------------------------------------------------
 # CLI parser
 # ----------------------------------------------------------------------------------------------------------------------
@@ -389,6 +378,17 @@ done
 # ----------------------------------------------------------------------------------------------------------------------
 # Prepare installation
 # ----------------------------------------------------------------------------------------------------------------------
+
+# This trap specifically catches keyboardInterrupt and output a non-zero status before running finish()
+trap detectKeyboardInterrupt INT
+# Set a trap which, on shell error or shell exit, runs finish()
+trap finish EXIT
+
+print info "
+*******************************
+* Welcome to SCT installation *
+*******************************
+"
 
 fetch_os_type
 check_requirements
