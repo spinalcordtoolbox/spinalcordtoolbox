@@ -16,10 +16,11 @@ echo Installing SCT
 #     Further explanation at https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
 #     TO BE REMOVED during https://github.com/neuropoly/spinalcordtoolbox/issues/3140.
 ./install_sct -iy
+set +euo pipefail; . ~/.bash_profile; set -euo pipefail;  # load sct
 
 echo *** CHECK PATH ***
 ls -lA bin  # Make sure all binaries and aliases are there
-source python/etc/profile.d/conda.sh  # to be able to call conda
+source "$SCT_DIR/python/etc/profile.d/conda.sh"  # to be able to call conda
 conda activate venv_sct  # reactivate conda for the pip install below
 
 echo *** UNIT TESTS ***

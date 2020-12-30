@@ -213,13 +213,13 @@ function check_requirements() {
 function get_shell_rc_path() {
   if [[ "$SHELL" == *"bash"* ]]; then
     THE_RC="bash"
-    RC_FILE_PATH="$HOME/.bashrc"
+    RC_FILE_PATH="$HOME/.bash_profile"
   elif [[ "$SHELL" == *"/sh"* ]]; then
     THE_RC="bash"
-    RC_FILE_PATH="$HOME/.bashrc"
+    RC_FILE_PATH="$HOME/.bash_profile"
   elif [[ "$SHELL" == *"zsh"* ]]; then
     THE_RC="bash"
-    RC_FILE_PATH="$HOME/.zshrc"
+    RC_FILE_PATH="$HOME/.zprofile"
   elif [[ "$SHELL" == *"csh"* ]]; then
     THE_RC="csh"
     RC_FILE_PATH="$HOME/.cshrc"
