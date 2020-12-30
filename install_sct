@@ -46,6 +46,11 @@ PYTHON_DIR="python"
 BIN_DIR="bin"
 MACOSSUPPORTED="13"  # Minimum version of macOS 10 supported
 
+# CLI options
+SCT_INSTALL_TYPE=""
+NONINTERACTIVE=""
+NO_DATA_INSTALL=""
+NO_SCT_BIN_INSTALL=""
 
 # ======================================================================================================================
 # FUNCTIONS
@@ -338,10 +343,6 @@ for arg in "$@"; do
   esac
 done
 
-SCT_INSTALL_TYPE=""
-NONINTERACTIVE=""
-NO_DATA_INSTALL=""
-NO_SCT_BIN_INSTALL=""
 while getopts ":iydbvh" opt; do
   case $opt in
   i)
