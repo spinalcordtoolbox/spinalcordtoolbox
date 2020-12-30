@@ -41,7 +41,6 @@ shopt -s failglob # error if a glob doesn't find any files, instead of remaining
 TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR')"
 # Start Directory So we go back there at the end of the Script
 SCT_SOURCE="$PWD"
-SCRIPT_DIR="scripts"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
