@@ -290,7 +290,7 @@ function usage() {
 
     # filter for block-comments
     $0 !~ /^#/   { next }
-    # strip off the leading "# "
+    # but strip any leading "# "
                  { sub("^#[[:space:]]?","") }
 
     # count consecutive blank lines
@@ -301,8 +301,7 @@ function usage() {
     # detect usage section
     /USAGE/      { printing=1 }
     printing==1  { print }
-    (printing==1 && blanks>=2) \
-                 { exit }
+    (printing==1 && blanks>=2) { exit }
   ' "$0"
 }
 
