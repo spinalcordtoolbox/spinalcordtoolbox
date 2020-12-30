@@ -582,6 +582,7 @@ run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 python/bin/conda create -y -n venv_sct python=3.6
 
 # activate miniconda
+# shellcheck disable=SC1091
 source python/etc/profile.d/conda.sh
 set +u #disable safeties, for conda is not written to their standard.
 conda activate venv_sct
