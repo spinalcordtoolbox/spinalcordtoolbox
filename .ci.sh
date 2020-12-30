@@ -8,12 +8,14 @@ set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
 set -u            # exit if unset variables used
 shopt -s failglob # error if a glob doesn't find any files, instead of remaining unexpanded
 
+export PIP_PROGRESS_BAR=off # disable pip's progress bar for the duration of CI
+
 echo Installing SCT
 # NB: we only force in-place (-i) installs to avoid pytest running from the source
 #     instead of the installed folder, where the extra detection models are.
 #     Further explanation at https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
 #     TO BE REMOVED during https://github.com/neuropoly/spinalcordtoolbox/issues/3140.
-PIP_PROGRESS_BAR=off ./install_sct -iy
+./install_sct -iy
 
 echo *** CHECK PATH ***
 ls -lA bin  # Make sure all binaries and aliases are there
