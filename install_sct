@@ -421,8 +421,8 @@ else
 The install_sct script must be executed from the source directory"
 fi
 
-# Get installation type (from git or from package)
-if [[ -z "${SCT_INSTALL_TYPE:-}" ]]; then
+# Get installation type (from git or from package) if not already specified
+if [[ -z "$SCT_INSTALL_TYPE" ]]; then
   if [[ -d ".git" ]]; then
     # folder .git exist, therefore it is a git installation
     SCT_INSTALL_TYPE="in-place"
@@ -658,7 +658,7 @@ export PATH="$SCT_DIR/$BIN_DIR:$PATH"
 # ----------------------------------------------------------------------------------------------------------------------
 
 # Install binaries
-if [[ -n "${NO_SCT_BIN_INSTALL:-}" ]]; then
+if [[ -n "$NO_SCT_BIN_INSTALL" ]]; then
   print warning "WARNING: SCT binaries will not be (re)-installed"
 else
   print info "Installing binaries..."
@@ -667,7 +667,7 @@ fi
 print info "All requirements installed!"
 
 # Install data
-if [[ -n "${NO_DATA_INSTALL:-}" ]]; then
+if [[ -n "$NO_DATA_INSTALL" ]]; then
   print warning "WARNING: data/ will not be (re)-install"
 else
   # Download data
