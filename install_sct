@@ -274,28 +274,29 @@ function edit_shellrc() {
 # Download from URL using curl/wget
 function download() {
   # Use curl or wget to download goodies
-  e_status=0
-  # Try with wget
-  if [[ $(command -v wget) ]]; then
-    cmd="wget -O $1 $2"
-    print code "$cmd"
-    $cmd
-    e_status=$?
-    echo exit status is $e_status
-  fi
-  # Try with curl
-  if [[ $(command -v curl) && ! -e $1 ]]; then
-    cmd="curl -o $1 -L $2"
-    print code "$cmd"
-    $cmd
-    e_status=$?
-    echo exit status is $e_status
-  fi
-  # check success
-  if [[ $e_status -ne 0 || ! -e $1 ]]; then
-    die "The download of $2 failed\n
+#   e_status=0
+#   # Try with wget
+#   ( (command -v wget) ]]; then
+#     run wget -O "$1" "$2"
+#     e_status="$?"
+#     echo exit status is "$e_status"
+#   fi
+#   # Try with curl
+#   if [[ $(command -v curl) && ! -e "$1" ]]; then
+#
+#     e_status="$?"
+#     echo exit status is "$e_status"
+#   fi
+#   # check success
+#   if [[ "$e_status" -ne 0 || ! -e "$1" ]]; then
+#     die "The download of $2 failed\n
+# Please check your internet connection before relaunching the installer\n"
+#   fi
+# TODO: check all combinations of errors here
+  ((command -v wget >/dev/null) && run wget -O "$1" "$2" ) ||
+  ((command -v curl >/dev/null) && run curl -o "$1" -L "$2" ) ||
+  die "The download of $2 failed\n
 Please check your internet connection before relaunching the installer\n"
-  fi
 }
 
 # Usage of this script
