@@ -652,8 +652,9 @@ python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.mo
 # Validate installation
 # ----------------------------------------------------------------------------------------------------------------------
 
-# Deactivating conda
-. $SCT_DIR/$PYTHON_DIR/bin/deactivate >/dev/null 2>&1
+# conda is only for a sandbox; users don't use it,
+# so neither should our post-install tests
+conda deactivate >/dev/null 2>&1
 
 # In case of previous SCT installation (4.0.0-beta.1 or before), remove sct_env declaration in bashrc
 print info "In case an old version SCT is already installed (4.0.0-beta.1 or before), remove 'sct_env' declaration in RC file"
