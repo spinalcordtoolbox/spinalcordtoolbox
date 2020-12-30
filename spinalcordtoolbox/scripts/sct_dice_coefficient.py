@@ -12,22 +12,19 @@
 
 import sys
 import os
-import argparse
 
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
 from spinalcordtoolbox.image import add_suffix
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Compute the Dice Coefficient. '
                     'N.B.: indexing (in both time and space) starts with 0 not 1! Inputting -1 for a '
-                    'size will set it to the full image extent for that dimension.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    'size will set it to the full image extent for that dimension.'
+    )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -105,7 +102,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

@@ -17,7 +17,6 @@
 import sys
 import os
 import time
-import argparse
 
 import numpy as np
 
@@ -67,7 +66,7 @@ paramregmulti = ParamregMultiStep([step0, step1, step2])
 # ==========================================================================================
 def get_parser():
     param = Param()
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description=(
             "Register an anatomical image to the spinal cord MRI template (default: PAM50).\n"
             "\n"
@@ -114,10 +113,7 @@ def get_parser():
             "\n"
             "More information about label creation can be found at "
             "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%%5FCourse%%5F20200121 (p47)"
-        ),
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+        )
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -284,7 +280,7 @@ def get_parser():
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

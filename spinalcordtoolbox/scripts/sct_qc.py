@@ -9,15 +9,13 @@
 # About the license: see the file LICENSE.TXT
 
 import sys
-import argparse
 
-from spinalcordtoolbox.utils import init_sct, set_global_loglevel
+from spinalcordtoolbox.utils import init_sct, set_global_loglevel, SCTArgumentParser
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Generate Quality Control (QC) report following SCT processing.',
-        formatter_class=argparse.RawTextHelpFormatter,
         epilog='Examples:\n'
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc\n'
                'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae\n'
@@ -60,12 +58,17 @@ def get_parser():
     parser.add_argument('-v',
                         action='store_true',
                         help="Verbose")
+    parser.add_argument('-h',
+                        '--help',
+                        action="help",
+                        help="show this message and exit")
+
     return parser
 
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

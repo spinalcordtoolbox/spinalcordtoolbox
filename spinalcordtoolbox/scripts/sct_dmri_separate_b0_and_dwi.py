@@ -15,13 +15,12 @@
 import sys
 import math
 import time
-import argparse
 import os
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
 
@@ -39,14 +38,10 @@ class Param:
 
 
 def get_parser():
-    # Initialize parser
     param_default = Param()
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Separate b=0 and DW images from diffusion dataset. The output files will have a suffix "
-                    "(_b0 and _dwi) appended to the input file name.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+                    "(_b0 and _dwi) appended to the input file name."
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -117,7 +112,7 @@ def get_parser():
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

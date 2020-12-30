@@ -12,26 +12,23 @@
 
 import os
 import sys
-import argparse
 
 import numpy as np
 from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 
 from spinalcordtoolbox.image import Image, concat_data, add_suffix, change_orientation, concat_warp2d, split_img_data, pad_image
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
 
 def get_parser():
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Perform manipulations on images (e.g., pad, change space, split along dimension). '
-                    'Inputs can be a number, a 4d image, or several 3d images separated with ","',
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip('.py'))
+                    'Inputs can be a number, a 4d image, or several 3d images separated with ","'
+    )
+
     mandatory = parser.add_argument_group('MANDATORY ARGUMENTS')
     mandatory.add_argument(
         '-i',
@@ -167,7 +164,7 @@ def main(argv=None):
     :return:
     """
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

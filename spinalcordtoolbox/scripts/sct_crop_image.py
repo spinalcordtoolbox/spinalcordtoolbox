@@ -10,17 +10,14 @@
 
 import sys
 import os
-import argparse
 
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_global_loglevel
 
 
 def get_parser():
-
-    # Mandatory arguments
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Tools to crop an image. Either via command line or via a Graphical User Interface (GUI). See "
                     "example usage at the end.",
         epilog="EXAMPLES:\n"
@@ -32,10 +29,8 @@ def get_parser():
                "sct_crop_image -i t2.nii.gz -ref mt1.nii.gz\n\n"
                "- To crop an image by specifying min/max (you don't need to specify all dimensions). In the example "
                "below, cropping will occur between x=5 and x=60, and between z=5 and z=zmax-1\n"
-               "sct_crop_image -i t2.nii.gz -xmin 5 -xmax 60 -zmin 5 -zmax -2\n\n",
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip('.py'))
+               "sct_crop_image -i t2.nii.gz -xmin 5 -xmax 60 -zmin 5 -zmax -2\n\n"
+    )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
@@ -145,7 +140,7 @@ def main(argv=None):
     :return:
     """
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

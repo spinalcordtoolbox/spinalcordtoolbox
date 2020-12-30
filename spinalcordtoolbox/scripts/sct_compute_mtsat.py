@@ -18,23 +18,19 @@
 
 import sys
 import os
-import argparse
 import json
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, display_viewer_syntax, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, display_viewer_syntax, set_global_loglevel
 from spinalcordtoolbox.qmri.mt import compute_mtsat
 from spinalcordtoolbox.image import Image, splitext
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Compute MTsat and T1map. '
                     'Reference: Helms G, Dathe H, Kallenberg K, Dechent P. High-resolution maps of magnetization '
                     'transfer with inherent correction for RF inhomogeneity and T1 relaxation obtained from 3D FLASH '
-                    'MRI. Magn Reson Med 2008;60(6):1396-1407.',
-        add_help=False,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py")
+                    'MRI. Magn Reson Med 2008;60(6):1396-1407.'
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -166,7 +162,7 @@ def fetch_metadata(fname_json, field):
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

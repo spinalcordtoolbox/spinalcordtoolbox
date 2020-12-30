@@ -12,21 +12,16 @@
 
 import sys
 import os
-import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, extract_fname, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, extract_fname, set_global_loglevel
 
 
 def get_parser():
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Concatenate bvec files in time. You can either use bvecs in lines or columns. '
                     'N.B.: Return bvecs in lines. If you need it in columns, please use '
-                    'sct_dmri_transpose_bvecs afterwards.',
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py"))
+                    'sct_dmri_transpose_bvecs afterwards.'
+    )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -63,7 +58,7 @@ def get_parser():
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 
