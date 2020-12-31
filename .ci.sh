@@ -98,12 +98,3 @@ echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
 COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" \
   pytest
 coverage combine
-
-# TODO: move this part to a separate travis job; there's no need for each platform to lint the code
-echo *** ANALYZE CODE ***
-pip install pylint
-bash -c 'PYTHONPATH="$PWD/scripts:$PWD" pylint -j3 --py3k --output-format=parseable --errors-only $(git ls-tree --name-only -r HEAD | sort | grep -E "(spinalcordtoolbox|scripts|testing).*\.py" | xargs); exit $(((($?&3))!=0))'
-
-# python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
-# cd ../spinalcordtoolbox_v*
-# yes | ./install_sct  # test installation of package
