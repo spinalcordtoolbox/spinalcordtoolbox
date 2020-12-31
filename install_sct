@@ -594,7 +594,11 @@ if [ ! -x "$SCT_DIR/$PYTHON_DIR"/bin/conda ]; then
   find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 fi
 
-if ! ( "$SCT_DIR/$PYTHON_DIR"/bin/conda info -e | cut -f 1 -d ' ' | grep venv_sct >/dev/null ); then
+# activate miniconda
+# shellcheck disable=SC1091
+source python/etc/profile.d/conda.sh
+
+if ! ( conda info -e | cut -f 1 -d ' ' | grep venv_sct >/dev/null ); then
   # create conda environment
   print info "Creating conda environment..."
   python/bin/conda create -y -n venv_sct python=3.7
@@ -609,9 +613,6 @@ fi
 # * Fix details: https://github.com/conda/conda/issues/7173#issuecomment-980496682
 echo "include-system-site-packages = false" > "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/pyvenv.cfg"
 
-# activate miniconda
-# shellcheck disable=SC1091
-source python/etc/profile.d/conda.sh
 set +u #disable safeties, for conda is not written to their standard.
 conda activate venv_sct
 set -u # reactivate safeties
