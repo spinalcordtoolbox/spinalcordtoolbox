@@ -6,6 +6,7 @@
 # usage: .travis.sh
 #
 # e.g. DOCKER_IMAGE="centos:8" .travis.sh
+
 # stricter shell mode
 # https://sipb.mit.edu/doc/safe-shell/
 set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
@@ -14,12 +15,20 @@ shopt -s failglob # error if a glob doesn't find any files, instead of remaining
 
 # if this is a docker job, run in the container instead; but if not just run it here.
 if [ -n "${DOCKER_IMAGE:-}" ]; then
+    if [ "$TRAVIS_OS_NAME" != "linux" ]; then
+        echo "docker can only be used on linux" >&2
+        exit 1
+    fi
     ./util/dockerize.sh ./.ci.sh
-elif [ "${TRAVIS_OS_NAME:-}" = "windows" ]; then
-    choco install wsl-ubuntu-1804 -y --ignore-checksums
+elif [ -n "${WSL_IMAGE:-}" ]; then
+    if [ "$TRAVIS_OS_NAME" != "windows" ]; then
+        echo "WSL can only be used on windows" >&2
+        exit 1
+    fi
+    choco install "$WSL_IMAGE" -y --ignore-checksums
      # or, instead of choco, use curl + powershell:
      # https://docs.microsoft.com/en-us/windows/wsl/install-manual#downloading-distros-via-the-command-line
-    # wsl --setdefault "Ubuntu-18.04"
+     # wsl --setdefault "Ubuntu-18.04"
      # TODO: Travis's version of wsl is too old for --setdefault.
      # Instead we trust that wsl will default to the installed
      # Ubuntu because it is the only option, but it would be
@@ -32,10 +41,8 @@ elif [ "${TRAVIS_OS_NAME:-}" = "windows" ]; then
     # https://devblogs.microsoft.com/commandline/share-environment-vars-between-wsl-and-windows/
     export WSLENV=DEBIAN_FRONTEND
 
-    wsl apt-get update
-    #wsl apt-get -y upgrade  # this step is probably important, but it's also sooo slow
-    wsl apt-get install -y gcc git curl
-    wsl ./.ci.sh
+    wsl -- "$WSL_DEPS_COMMAND"
+    wsl -- ./.ci.sh
 else
     ./.ci.sh
 fi

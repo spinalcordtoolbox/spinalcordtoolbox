@@ -111,9 +111,11 @@ matrix:
       if: branch = release or type = cron
       os: osx
       osx_image: xcode9.4
-    - name: "Windows Server, 1809"
+    - name: "WSL [Ubuntu 18.04]"
       # runs on all branches
       language: bash
       os: windows
+      env:
+        - WSL_IMAGE="wsl-ubuntu-1804" WSL_DEPS_CMD="apt update && apt install -y gcc git curl"
 
 script: ./.travis.sh
