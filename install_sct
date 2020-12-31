@@ -13,14 +13,15 @@
 # installation is successful.
 #
 # USAGE
-#   ./install_sct [-h] [-i] [-y] [-c] [-o] [-v]
+#   ./install_sct [-h] [-i] [-y] [-c] [-k] [-v]
 #
 # OPTIONS
 #  -h   Show this help
 #  -i   Install in-place; this is the default when working from git.
 #  -y   Install without interruption with 'yes' as default answer
 #  -c   Prevent checks from being run to validate the installation
-#  -o   Overwrite existing installation files (by default, 'python/', 'bin/' and 'data/' are preserved)
+#  -o   Keep existing installation files (by default, 'python/', 'bin/' and 'data/' are overwritten)
+#       This will speed up installation but can cause bugs.
 #  -v   Full verbose
 #
 #
@@ -54,7 +55,7 @@ MACOSSUPPORTED="13"  # Minimum version of macOS 10 supported
 # CLI options
 SCT_INSTALL_TYPE=""
 NONINTERACTIVE=""
-CLEAN=""
+CLEAN="yes"
 NO_DATA_INSTALL=""
 NO_SCT_BIN_INSTALL=""
 NO_INSTALL_VALIDATION=""
@@ -347,19 +348,17 @@ for arg in "$@"; do
   esac
 done
 
-while getopts ":iycovh" opt; do
+while getopts ":iyckvh" opt; do
   case $opt in
   i)
     SCT_INSTALL_TYPE="in-place"
     ;;
   y)
-    echo " non-interactive mode"
+    print info " non-interactive mode"
     NONINTERACTIVE="yes"
     ;;
-  o)
-    echo " SCT binaries will be overwritten"
-    echo " data directory will be overwritten"
-    CLEAN="yes"
+  k)
+    CLEAN=""
     ;;
   c)
     echo " no checks will be run (installation will not be validated)"
@@ -592,6 +591,8 @@ if [ ! -x "$SCT_DIR/$PYTHON_DIR"/bin/conda ]; then
   # See: https://github.com/conda/conda/issues/9948#issuecomment-909989810
   # Syntax explanation: https://stackoverflow.com/a/6085237
   find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
+else
+  print info " conda will not be reinstalled"
 fi
 
 # activate miniconda
@@ -605,6 +606,8 @@ if ! ( conda info -e | cut -f 1 -d ' ' | grep venv_sct >/dev/null ); then
 
   # Reapply the touch fix to avoid `pip` connection issues on WSL
   find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
+else
+  print info " venv_sct will not be recreated"
 fi
 
 # make sure that there is no conflict with local python install by making venv_sct an isolated environment.
@@ -695,6 +698,8 @@ if [ ! -x "${SCT_DIR}/${BIN_DIR}/isct_antsSliceRegularizedRegistration" ]; then
   # this if is a bit hacky but it's the best we've got until we migrate
   # these to a better package management system (one with built in caching)
   run sct_download_data -d "binaries_${OS}" -k
+else
+  print info " SCT binaries will not be reinstalled"
 fi
 
 print info "All requirements installed!"
@@ -709,6 +714,8 @@ run mkdir -p "$SCT_DIR/$DATA_DIR"
 for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
   if [ ! -d "$SCT_DIR/$DATA_DIR/$data" ]; then
     run sct_download_data -d "$data"
+  else
+    print info " $DATA_DIR/$data will not be reinstalled"
   fi
 done
 
@@ -718,6 +725,8 @@ fi
 if [ ! -d "$SCT_DIR/$DATA_DIR/deepseg_models" ]; then
   print info "Installing deep learning models..."
   python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()'
+else
+  print info " deepseg models will not be reinstalled"
 fi
 
 
