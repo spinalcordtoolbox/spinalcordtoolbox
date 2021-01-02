@@ -226,7 +226,7 @@ def mv(src, dst, verbose=1):
     """Move a file from src to dst, almost like os.rename
     """
     printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
-    os.rename(src, dst)
+    shutil.move(src, dst)
 
 
 def copy(src, dst, verbose=1):
