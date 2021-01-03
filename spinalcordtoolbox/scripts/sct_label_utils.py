@@ -103,8 +103,8 @@ def get_parser():
         type=int,
         help="R|Similar to '-create-seg'. This option takes a single label value, and will automatically select the "
              "mid-point slice in the inferior-superior direction (so there is no need for a slice index).\n"
-             "This is useful for when you have you have centered the field of view of your data at a specific "
-             "location. For example, if you already know that the C2-C3 disc is centered in the I-S direction, then "
+             "This is useful for when you have centered the field of view of your data at a specific location. "
+             "For example, if you already know that the C2-C3 disc is centered in the I-S direction, then "
              "you can enter '-create-seg-mid 3' for that label. This saves you the trouble of having to manually "
              "specify a slice index using '-create-seg'."
     )
