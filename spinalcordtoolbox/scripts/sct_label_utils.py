@@ -232,6 +232,11 @@ def get_parser():
 # MAIN
 # ==========================================================================================
 def main(argv=None):
+    for i, arg in enumerate(argv):
+        if arg == '-create-seg' and len(argv) > i+1 and '-1,' in argv[i+1]:
+            raise DeprecationWarning("The use of '-1' for '-create-seg' has been deprecated. Please use "
+                                     "'-create-seg-mid' instead.")
+
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
