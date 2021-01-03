@@ -68,7 +68,7 @@ def get_parser():
         action=ActionCreateFolder,
         required=False)
     optional.add_argument(
-        "-o",
+        '-o',
         metavar=Metavar.file,
         help='Output filename. Example: pmj.nii.gz '),
     optional.add_argument(
@@ -322,4 +322,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

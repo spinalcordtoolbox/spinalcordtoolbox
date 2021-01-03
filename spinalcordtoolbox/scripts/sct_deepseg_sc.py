@@ -89,11 +89,11 @@ def get_parser():
         action=ActionCreateFolder,
         default=os.getcwd())
     optional.add_argument(
-        "-o",
+        '-o',
         metavar=Metavar.file,
         help='Output filename. Example: spinal_seg.nii.gz '),
     optional.add_argument(
-        "-r",
+        '-r',
         type=int,
         help="Remove temporary files.",
         choices=(0, 1),
