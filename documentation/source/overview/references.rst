@@ -79,11 +79,11 @@ The table below provides individual references for novel methods used in SCT's :
      - `De Leener et al. Automatic segmentation of the spinal cord and spinal canal coupled with vertebral labeling. IEEE Transactions on Medical Imaging 2015 <https://www.ncbi.nlm.nih.gov/pubmed/26011879>`__
    * - ``sct_register_multimodal``
      - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2017. <http://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
-   * - ``sct_register_multimodal --algo=slicereg``
+   * - ``sct_register_multimodal --param algo=slicereg``
      - `Cohen-Adad et al. Slice-by-slice regularized registration for spinal cord MRI: SliceReg. Proc ISMRM 2015 <https://www.dropbox.com/s/v3bb3etbq4gb1l1/cohenadad_ismrm15_slicereg.pdf?dl=0>`__
    * - ``sct_register_to_template``
      - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2017. <http://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
-   * - ``sct_register_to_template --algo=slicereg``
+   * - ``sct_register_to_template --param algo=slicereg``
      - `Cohen-Adad et al. Slice-by-slice regularized registration for spinal cord MRI: SliceReg. Proc ISMRM 2015 <https://www.dropbox.com/s/v3bb3etbq4gb1l1/cohenadad_ismrm15_slicereg.pdf?dl=0>`__
    * - ``sct_straighten_spinalcord``
      - `De Leener B et al. Topologically-preserving straightening of spinal cord MRI. J Magn Reson Imaging 2017 <https://www.ncbi.nlm.nih.gov/pubmed/28130805>`__
