@@ -53,7 +53,7 @@ Command line tools
 The table below provides individual references for novel methods used in SCT's :ref:`command-line-tools`.
 
 .. note::
-   If you are using segmentation tools (``sct_propseg``/``sct_deepseg``) and registration tools (``sct_register_to_template``/``sct_register_multimodal``) together as part of a pipeline, please also consider this reference:
+   If you are using white matter/grey matter segmentation tools (``sct_deepseg_gm``/``sct_deepseg``) and registration tools (``sct_register_to_template``/``sct_register_multimodal``) together as part of a pipeline, please also consider this reference:
 
    `Dupont SM, De Leener B, Taso M, Le Troter A, Stikov N, Callot V, Cohen-Adad J. Fully-integrated framework for the segmentation and registration of the spinal cord white and gray matter. Neuroimage 2017 <https://www.ncbi.nlm.nih.gov/pubmed/27663988>`__
 
