@@ -8,6 +8,3 @@
    https://sphinx-argparse.readthedocs.io/en/stable/misc.html#text-wrapping-in-argument-tables */
 .wy-table-responsive {overflow: visible !important;}
 .wy-table-responsive table td, .wy-table-responsive table th  {white-space: normal; !important;}
-
-/* Remove extra whitespace at the end of lists in table cells */
-.wy-table-responsive table ul.simple {margin: 0;}
