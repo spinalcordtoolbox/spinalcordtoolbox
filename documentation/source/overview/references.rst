@@ -106,7 +106,7 @@ The table below provides references relevant to the :ref:`pam50` used by SCT, in
    * - White matter atlas
      - `Lévy et al. White matter atlas of the human spinal cord with estimation of partial volume effect. Neuroimage 2015 <https://www.ncbi.nlm.nih.gov/pubmed/26099457>`__
    * - Probabilistic atlas (AMU40)
-       `Taso et al. A reliable spatially normalized template of the human spinal cord–Applications to automated white matter/gray matter segmentation and tensor-based morphometry (TBM) mapping of gray matter alterations occurring with age. Neuroimage 2015 <https://www.ncbi.nlm.nih.gov/pubmed/26003856>`__
+     - `Taso et al. A reliable spatially normalized template of the human spinal cord–Applications to automated white matter/gray matter segmentation and tensor-based morphometry (TBM) mapping of gray matter alterations occurring with age. Neuroimage 2015 <https://www.ncbi.nlm.nih.gov/pubmed/26003856>`__
    * - Spinal levels
      - `Cadotte DW, Cadotte A, Cohen-Adad J, Fleet D, Livne M, Wilson JR, Mikulis D, Nugaeva N, Fehlings MG. Characterizing the location of spinal and vertebral levels in the human cervical spinal cord. AJNR Am J Neuroradiol, 2015, 36(4):803-810. <https://paperpile.com/app/p/5b580317-6921-06c8-a2ee-685d4dbaa44c>`_
 
