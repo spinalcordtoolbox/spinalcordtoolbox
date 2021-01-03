@@ -13,11 +13,10 @@
 
 import sys
 import os
-import argparse
 import logging
 
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_global_loglevel
 from spinalcordtoolbox.flattening import flatten_sagittal
 
 logger = logging.getLogger(__name__)
@@ -41,7 +40,7 @@ def main(argv=None):
     :return:
     """
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 
@@ -63,13 +62,10 @@ def main(argv=None):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Flatten the spinal cord such within the medial sagittal plane. Useful to make nice pictures. "
                     "Output data has suffix _flatten. Output type is float32 (regardless of input type) to minimize "
-                    "loss of precision during conversion.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+                    "loss of precision during conversion."
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(

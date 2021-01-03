@@ -17,13 +17,12 @@
 import sys
 import os
 import functools
-import argparse
 
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import cubic_to_point
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, get_interpolation, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, get_interpolation, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, copy
 
@@ -33,13 +32,8 @@ from spinalcordtoolbox.scripts import sct_image
 # PARSER
 # ==========================================================================================
 def get_parser():
-    # parser initialisation
-
-    parser = argparse.ArgumentParser(
-        description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py")
+    parser = SCTArgumentParser(
+        description='Apply transformations. This function is a wrapper for antsApplyTransforms (ANTs).'
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -344,7 +338,7 @@ def main(argv=None):
     :return:
     """
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

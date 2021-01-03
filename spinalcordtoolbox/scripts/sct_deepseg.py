@@ -11,7 +11,6 @@ ivadomed package.
 # TODO: Fetch default value (and display) depending on the model that is used.
 # TODO: accommodate multiclass segmentation
 
-import argparse
 import os
 import sys
 import logging
@@ -24,18 +23,16 @@ from spinalcordtoolbox import image
 import spinalcordtoolbox.deepseg as deepseg
 import spinalcordtoolbox.deepseg.models
 
-from spinalcordtoolbox.utils.shell import SmartFormatter, Metavar, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 
 logger = logging.getLogger(__name__)
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
-        description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+    parser = SCTArgumentParser(
+        description="Segment an anatomical structure or pathologies according to the specified deep learning model."
+    )
 
     input_output = parser.add_argument_group("\nINPUT/OUTPUT")
     input_output.add_argument(
@@ -130,7 +127,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

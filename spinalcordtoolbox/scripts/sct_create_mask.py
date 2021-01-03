@@ -16,7 +16,6 @@
 
 import sys
 import os
-import argparse
 
 import numpy as np
 
@@ -24,7 +23,7 @@ import nibabel
 from scipy import ndimage
 
 from spinalcordtoolbox.image import Image, empty_like
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, extract_fname, rmtree, copy
 from spinalcordtoolbox.labels import create_labels
@@ -54,13 +53,10 @@ class Param:
 def get_parser():
     # Initialize default parameters
     param_default = Param()
-    # Initialize the parser
 
-    parser = argparse.ArgumentParser(
-        description='Create mask along z direction.',
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py"),
-        formatter_class=SmartFormatter)
+    parser = SCTArgumentParser(
+        description='Create mask along z direction.'
+    )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
@@ -131,7 +127,7 @@ def main(argv=None):
     :return:
     """
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

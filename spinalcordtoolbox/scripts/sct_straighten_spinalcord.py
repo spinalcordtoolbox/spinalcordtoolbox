@@ -14,27 +14,22 @@
 
 import sys
 import os
-import argparse
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 
 
 def get_parser():
-
-    # Mandatory arguments
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="This program takes as input an anatomic image and the spinal cord centerline (or "
                     "segmentation), and returns the an image of a straightened spinal cord. Reference: "
                     "De Leener B, Mangeat G, Dupont S, Martin AR, Callot V, Stikov N, Fehlings MG, "
                     "Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn "
-                    "Reson Imaging. 2017 Oct;46(4):1209-1219",
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    "Reson Imaging. 2017 Oct;46(4):1209-1219"
+    )
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
@@ -200,7 +195,7 @@ def main(argv=None):
     :return:
     """
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

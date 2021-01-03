@@ -12,24 +12,19 @@
 
 import sys
 import os
-import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 
 
 # PARSER
 # ==========================================================================================
 def get_parser():
-    # parser initialisation
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Compute Maximum Spinal Cord Compression (MSCC) as in: Miyanji F, Furlan JC, Aarabi B, Arnold PM, '
                     'Fehlings MG. Acute cervical traumatic spinal cord injury: MR imaging findings correlated with '
                     'neurologic outcome--prospective study with 100 consecutive patients. Radiology 2007;243(3):820-'
-                    '827.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    '827.'
+    )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
@@ -80,7 +75,7 @@ def mscc(di, da, db):
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

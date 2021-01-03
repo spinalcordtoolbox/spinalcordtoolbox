@@ -11,30 +11,24 @@
 import os
 import sys
 import itertools
-import argparse
 
 import numpy as np
 from skimage.feature import greycomatrix, greycoprops
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like
-from spinalcordtoolbox.utils.shell import Metavar, ActionCreateFolder, SmartFormatter
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, run_proc, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
 def get_parser():
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given '
                     'mask. The textures features are those defined in the sckit-image implementation: '
                     'http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs '
                     'one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called '
                     'fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, '
-                    'called fnameInput_feature_distance_mean.nii.gz, is output.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py")
+                    'called fnameInput_feature_distance_mean.nii.gz, is output.'
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -317,7 +311,7 @@ def main(argv=None):
     :return:
     """
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

@@ -12,10 +12,9 @@
 
 import os
 import sys
-import argparse
 
 from spinalcordtoolbox.download import install_data
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 
 
@@ -98,11 +97,8 @@ DICT_URL = {
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
-        description="Download binaries from the web.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+    parser = SCTArgumentParser(
+        description="Download binaries from the web."
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -146,7 +142,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

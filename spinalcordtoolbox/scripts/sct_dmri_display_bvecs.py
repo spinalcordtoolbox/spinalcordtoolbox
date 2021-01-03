@@ -12,24 +12,18 @@
 
 import os
 import sys
-import argparse
 
 import matplotlib.pyplot as plt
 from dipy.data.fetcher import read_bvals_bvecs
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 
 bzero = 0.0001  # b-zero threshold
 
 
 def get_parser():
-
-    # Initialize the parser
-    parser = argparse.ArgumentParser(
-        description='Display scatter plot of gradient directions from bvecs file.',
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+    parser = SCTArgumentParser(
+        description='Display scatter plot of gradient directions from bvecs file.'
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -67,7 +61,7 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

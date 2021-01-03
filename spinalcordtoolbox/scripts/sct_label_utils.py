@@ -18,7 +18,6 @@
 
 import os
 import sys
-import argparse
 from typing import Sequence
 
 import numpy as np
@@ -27,17 +26,14 @@ import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import (Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, printv,
+from spinalcordtoolbox.utils import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, printv,
                                      parse_num_list, set_global_loglevel)
 from spinalcordtoolbox.utils.shell import display_viewer_syntax
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
-        description="Utility functions for label images.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+    parser = SCTArgumentParser(
+        description="Utility functions for label images."
     )
 
     req_group = parser.add_argument_group("\nREQUIRED I/O")
@@ -226,7 +222,7 @@ def get_parser():
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

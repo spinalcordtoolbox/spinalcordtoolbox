@@ -13,19 +13,16 @@
 
 import sys
 import os
-import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, printv, set_global_loglevel
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.qmri.mt import compute_mtr
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
-        description='Compute magnetization transfer ratio (MTR). Output is given in percentage.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+    parser = SCTArgumentParser(
+        description='Compute magnetization transfer ratio (MTR). Output is given in percentage.'
+    )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
@@ -75,7 +72,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

@@ -12,31 +12,26 @@ About the license: see the file LICENSE.TXT
 
 import os
 import sys
-import argparse
 
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
 import numpy as np
 
 from spinalcordtoolbox.image import Image, zeros_like
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
 def get_parser():
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Detection of the Ponto-Medullary Junction (PMJ). '
                     ' This method is machine-learning based and adapted for T1w-like or '
                     ' T2w-like images. '
                     ' If the PMJ is detected from the input image, a nifti mask is output '
                     ' ("*_pmj.nii.gz") with one voxel (value=50) located at the predicted PMJ '
-                    ' position. If the PMJ is not detected, nothing is output.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    ' position. If the PMJ is not detected, nothing is output.'
+    )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -264,7 +259,7 @@ class DetectPMJ:
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

@@ -12,7 +12,6 @@
 
 import sys
 import os
-import argparse
 
 import numpy as np
 
@@ -23,7 +22,7 @@ from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
     copy, extract_fname, rmtree
@@ -60,8 +59,7 @@ class Param:
 def get_parser():
     # initialize default param
     param_default = Param()
-    # parser initialisation
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description=(
             "This function takes an anatomical image and its cord segmentation (binary file), and outputs the "
             "cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and "
@@ -70,10 +68,7 @@ def get_parser():
             "'spinalcordtoolbox/vertebrae/detect_c2c3.py' to detect the C2-C3 disc.\n"
             "Tips: To run the function with init txt file that includes flags -initz/-initcenter:\n"
             "  sct_label_vertebrae -i t2.nii.gz -s t2_seg-manual.nii.gz  '$(< init_label_vertebrae.txt)'"
-        ),
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+        )
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -231,7 +226,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 
