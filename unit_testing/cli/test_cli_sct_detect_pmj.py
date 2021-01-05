@@ -3,7 +3,7 @@ import pytest
 import logging
 import os
 import subprocess
-from spinalcordtoolbox.scripts import sct_detect_pmj as sct_detect_pmj
+from spinalcordtoolbox.scripts import sct_detect_pmj
 
 logger = logging.getLogger(__name__)
 

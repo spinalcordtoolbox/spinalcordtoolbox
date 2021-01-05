@@ -3,7 +3,7 @@ import pytest
 import logging
 import os
 import subprocess
-from spinalcordtoolbox.scripts import sct_deepseg_sc as sct_deepseg_sc
+from spinalcordtoolbox.scripts import sct_deepseg_sc
 
 logger = logging.getLogger(__name__)
 

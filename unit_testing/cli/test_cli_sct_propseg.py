@@ -3,7 +3,7 @@ import pytest
 import logging
 import subprocess
 import os
-from spinalcordtoolbox.scripts import sct_propseg as sct_propseg
+from spinalcordtoolbox.scripts import sct_propseg
 
 logger = logging.getLogger(__name__)
 

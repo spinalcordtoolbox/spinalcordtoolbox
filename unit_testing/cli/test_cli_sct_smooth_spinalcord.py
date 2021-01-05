@@ -3,7 +3,7 @@ import pytest
 import logging
 import subprocess
 import os
-from spinalcordtoolbox.scripts import sct_smooth_spinalcord as sct_smooth_spinalcord
+from spinalcordtoolbox.scripts import sct_smooth_spinalcord
 
 logger = logging.getLogger(__name__)
 
