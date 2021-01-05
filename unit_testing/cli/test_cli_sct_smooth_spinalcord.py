@@ -18,6 +18,7 @@ def test_sct_smooth_spinalcord_backwards_compat(script_runner):
 
 
 def test_sct_smooth_spinalcord_o_flag(tmp_path):
-    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -o' + os.path.join(str(tmp_path), "test_smooth.nii")
-    sct_smooth_spinalcord.main(command.split())
+    argv = ['-i', 'sct_testing_data/t2/t2.nii.gz', '-s', 'sct_testing_data/t2/t2_seg-manual.nii.gz',
+               '-o', os.path.join(str(tmp_path), "test_smooth.nii")]
+    sct_smooth_spinalcord.main(argv)
     assert os.path.isfile(os.path.join(str(tmp_path), "test_smooth.nii"))
