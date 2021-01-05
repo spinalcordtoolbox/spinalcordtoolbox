@@ -201,12 +201,6 @@ def get_parser():
         help="Show this help message and exit."
     )
     optional.add_argument(
-        '-ofolder',
-        metavar=Metavar.folder,
-        action=ActionCreateFolder,
-        help="Output folder."
-    )
-    optional.add_argument(
         '-o',
         metavar=Metavar.file,
         help='Output filename. Example: spinal_seg.nii.gz '),
@@ -440,11 +434,8 @@ def propseg(img_input, options_dict):
 
     # Starting building the command
     cmd = ['isct_propseg', '-t', contrast_type_propseg]
-
-    if arguments.ofolder is not None:
-        folder_output = arguments.ofolder
-    else:
-        folder_output = './'
+    
+    folder_output = './'
     cmd += ['-o', folder_output]
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
         logger.error("output directory %s is not a valid directory" % folder_output)
