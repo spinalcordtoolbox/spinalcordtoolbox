@@ -2,21 +2,19 @@
 
 import os
 import sys
-import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 
 
 def get_parser():
-    # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description=(
             "This function extracts the spinal cord centerline. Three methods are available: 'optic' (automatic), "
             "'viewer' (manual), and 'fitseg' (applied on segmented image). These functions output (i) a NIFTI file "
@@ -25,10 +23,7 @@ def get_parser():
             "\n"
             "Reference: C Gros, B De Leener, et al. Automatic spinal cord localization, robust to MRI contrast using "
             "global curve optimization (2017). doi.org/10.1016/j.media.2017.12.001"
-        ),
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+        )
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -94,10 +89,13 @@ def get_parser():
         help="File name of ground-truth centerline or segmentation (binary nifti)."
     )
     optional.add_argument(
-        "-v",
-        choices=['0', '1'],
-        default='1',
-        help="Verbose. 1: display on, 0: display off (default)"
+        '-v',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
         "-qc",
@@ -118,10 +116,11 @@ def get_parser():
     return parser
 
 
-def run_main():
-    init_sct()
+def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # Input filename
     fname_input_data = arguments.i
@@ -152,9 +151,6 @@ def run_main():
     else:
         path_data, file_data, ext_data = extract_fname(fname_data)
         file_output = os.path.join(path_data, file_data + '_centerline')
-
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     if method == 'viewer':
         # Manual labeling of cord centerline
@@ -192,5 +188,7 @@ def run_main():
     display_viewer_syntax([fname_input_data, file_output + '.nii.gz'], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
-if __name__ == '__main__':
-    run_main()
+if __name__ == "__main__":
+    init_sct()
+    main(sys.argv[1:])
+

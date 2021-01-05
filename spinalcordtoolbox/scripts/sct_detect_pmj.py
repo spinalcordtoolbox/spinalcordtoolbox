@@ -12,31 +12,26 @@ About the license: see the file LICENSE.TXT
 
 import os
 import sys
-import argparse
 
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
 import numpy as np
 
 from spinalcordtoolbox.image import Image, zeros_like
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
 def get_parser():
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Detection of the Ponto-Medullary Junction (PMJ). '
                     ' This method is machine-learning based and adapted for T1w-like or '
                     ' T2w-like images. '
                     ' If the PMJ is detected from the input image, a nifti mask is output '
                     ' ("*_pmj.nii.gz") with one voxel (value=50) located at the predicted PMJ '
-                    ' position. If the PMJ is not detected, nothing is output.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    ' position. If the PMJ is not detected, nothing is output.'
+    )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -90,12 +85,13 @@ def get_parser():
         default=1,
         choices=(0, 1))
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-        required=False,
-        choices=(0, 1, 2),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
@@ -257,9 +253,11 @@ class DetectPMJ:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main():
+def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # Set param arguments ad inputted by user
     fname_in = arguments.i
@@ -289,9 +287,6 @@ def main():
     # Remove temp folder
     rm_tmp = bool(arguments.r)
 
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
-
     # Initialize DetectPMJ
     detector = DetectPMJ(fname_im=fname_in,
                          contrast=contrast,
@@ -317,4 +312,5 @@ def main():
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

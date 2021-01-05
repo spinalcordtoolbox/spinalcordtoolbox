@@ -12,7 +12,6 @@
 
 import os
 import sys
-import argparse
 import pickle
 import gzip
 
@@ -22,19 +21,16 @@ import matplotlib.pyplot as plt
 
 import spinalcordtoolbox.math as sct_math
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 
 
 def get_parser():
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Perform mathematical operations on images. Some inputs can be either a number or a 4d image or '
-                    'several 3d images separated with ","',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    'several 3d images separated with ","'
+    )
 
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -233,36 +229,35 @@ def get_parser():
         help='Output type.',
         choices=('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64',
                  'uint64'))
-    misc.add_argument(
-        "-v",
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose. 0: nothing. 1: basic. 2: extended.",
-        required=False,
+        choices=[0, 1, 2],
         default=1,
-        choices=(0, 1, 2))
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     dim_list = ['x', 'y', 'z', 't']
 
-    # Get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
-    parser = get_parser()
-    arguments = parser.parse_args(args=args)
     fname_in = arguments.i
     fname_out = arguments.o
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
     output_type = arguments.type
 
     # Open file(s)
@@ -509,4 +504,5 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

@@ -10,22 +10,19 @@
 
 import sys
 import os
-import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_global_loglevel
 from spinalcordtoolbox.image import add_suffix
 from spinalcordtoolbox.reports.qc import generate_qc
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Spinal Cord Gray Matter (GM) Segmentation using deep dilated convolutions. The contrast of the '
                     'input image must be similar to a T2*-weighted image: WM dark, GM bright and CSF bright. '
                     'Reference: Perone CS, Calabrese E, Cohen-Adad J. Spinal cord gray matter segmentation using deep '
-                    'dilated convolutions. Sci Rep 2018;8(1):5966.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    'dilated convolutions. Sci Rep 2018;8(1):5966.'
+    )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -82,18 +79,23 @@ def get_parser():
              "provides non-deterministic results.",
         metavar='')
     misc.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = no verbosity, 1 = verbose.",
-        choices=(0, 1),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
 
-def run_main():
+def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     input_filename = arguments.i
     if arguments.o is not None:
         output_filename = arguments.o
@@ -103,8 +105,6 @@ def run_main():
     use_tta = arguments.t
     model_name = arguments.m
     threshold = arguments.thr
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     if threshold > 1.0 or threshold < 0.0:
         raise RuntimeError("Threshold should be between 0.0 and 1.0.")
@@ -133,6 +133,7 @@ def run_main():
                               verbose=verbose)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     init_sct()
-    run_main()
+    main(sys.argv[1:])
+

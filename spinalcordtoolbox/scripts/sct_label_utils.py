@@ -18,7 +18,6 @@
 
 import os
 import sys
-import argparse
 from typing import Sequence
 
 import numpy as np
@@ -27,16 +26,14 @@ import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, printv, parse_num_list
+from spinalcordtoolbox.utils import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, printv,
+                                     parse_num_list, set_global_loglevel)
 from spinalcordtoolbox.utils.shell import display_viewer_syntax
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
-        description="Utility functions for label images.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+    parser = SCTArgumentParser(
+        description="Utility functions for label images."
     )
 
     req_group = parser.add_argument_group("\nREQUIRED I/O")
@@ -191,11 +188,12 @@ def get_parser():
 
     optional.add_argument(
         '-v',
-        choices=[0, 1, 2],
-        default=1,
         metavar=Metavar.int,
         type=int,
-        help="Verbose. 0: nothing. 1: basic. 2: extended."
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
     optional.add_argument(
@@ -222,15 +220,11 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
     parser = get_parser()
-    if args:
-        arguments = parser.parse_args(args)
-    else:
-        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-
-    verbosity = arguments.v
-    init_sct(log_level=verbosity, update=True)  # Update log level
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     input_filename = arguments.i
     output_fname = arguments.o
@@ -253,7 +247,7 @@ def main(args=None):
     elif arguments.cubic_to_point:
         out = sct_labels.cubic_to_point(img)
     elif arguments.display:
-        display_voxel(img, verbosity)
+        display_voxel(img, verbose)
         return
     elif arguments.increment:
         out = sct_labels.increment_z_inverse(img)
@@ -303,7 +297,7 @@ def main(args=None):
     display_viewer_syntax([input_filename, output_fname])
 
     if arguments.qc is not None:
-        generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=args,
+        generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=argv,
                     path_qc=os.path.abspath(arguments.qc), dataset=arguments.qc_dataset,
                     subject=arguments.qc_subject, process='sct_label_utils')
 
@@ -392,5 +386,5 @@ def launch_manual_label_gui(img: Image, input_labels_img: Image, labels: Sequenc
 
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

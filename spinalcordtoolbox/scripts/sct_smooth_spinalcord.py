@@ -15,13 +15,12 @@
 import sys
 import os
 import time
-import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_save, cache_signature, cache_valid, copy, \
     extract_fname, rmtree
 
@@ -51,14 +50,11 @@ def get_parser():
     param_default = Param()
 
     # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Smooth the spinal cord along its centerline. Steps are:\n"
                     "  1) Spinal cord is straightened (using centerline),\n"
                     "  2) a Gaussian kernel is applied in the superior-inferior direction,\n"
-                    "  3) then cord is de-straightened as originally.\n",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+                    "  3) then cord is de-straightened as originally.\n"
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -107,9 +103,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended"
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
     return parser
@@ -117,14 +116,15 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # Initialization
     param = Param()
     start_time = time.time()
-
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     fname_anat = arguments.i
     fname_centerline = arguments.s
@@ -132,8 +132,6 @@ def main(args=None):
     if arguments.smooth is not None:
         sigma = arguments.smooth
     remove_temp_files = arguments.r
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     # Display arguments
     printv('\nCheck input arguments...')
@@ -211,7 +209,7 @@ def main(args=None):
     # Smooth the straightened image along z
     printv('\nSmooth the straightened image...')
     sigma_smooth = ",".join([str(i) for i in sigma])
-    sct_maths.main(args=['-i', 'anat_rpi_straight.nii',
+    sct_maths.main(argv=['-i', 'anat_rpi_straight.nii',
                          '-smooth', sigma_smooth,
                          '-o', 'anat_rpi_straight_smooth.nii',
                          '-v', '0'])
@@ -249,8 +247,7 @@ def main(args=None):
     display_viewer_syntax([file_anat, file_anat + '_smooth'], verbose=verbose)
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

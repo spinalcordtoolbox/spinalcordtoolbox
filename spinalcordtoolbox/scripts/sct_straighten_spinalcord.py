@@ -14,27 +14,22 @@
 
 import sys
 import os
-import argparse
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 
 
 def get_parser():
-
-    # Mandatory arguments
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="This program takes as input an anatomic image and the spinal cord centerline (or "
                     "segmentation), and returns the an image of a straightened spinal cord. Reference: "
                     "De Leener B, Mangeat G, Dupont S, Martin AR, Callot V, Stikov N, Fehlings MG, "
                     "Cohen-Adad J. Topologically-preserving straightening of spinal cord MRI. J Magn "
-                    "Reson Imaging. 2017 Oct;46(4):1209-1219",
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    "Reson Imaging. 2017 Oct;46(4):1209-1219"
+    )
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
@@ -59,7 +54,7 @@ def get_parser():
         metavar=Metavar.file,
         help="Spinal cord centerline (or segmentation) of a destination image (which could be "
              "straight or curved). An algorithm scales the length of the input centerline to match that of the "
-             "destination centerline. If using -ldisc_input and -ldisc_dest with this parameter, "
+             "destination centerline. If using -ldisc-input and -ldisc-dest with this parameter, "
              "instead of linear scaling, the source centerline will be non-linearly matched so "
              "that the inter-vertebral discs of the input image will match that of the "
              "destination image. This feature is particularly useful for registering to a "
@@ -73,13 +68,13 @@ def get_parser():
         "you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,"
         "6,7). More details about label creation at "
         "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/. "  # TODO (Julien) update this link
-        "This option must be used with the -ldisc_dest parameter.",
+        "This option must be used with the -ldisc-dest parameter.",
         required=False)
     optional.add_argument(
         "-ldisc-dest",
         metavar=Metavar.file,
         help="Labels located at the posterior edge of the intervertebral discs, for the destination file (-dest). "
-             "The same comments as in -ldisc_input apply. This option must be used with the -ldisc_input parameter.",
+             "The same comments as in -ldisc-input apply. This option must be used with the -ldisc-input parameter.",
         required=False)
     optional.add_argument(
         "-disable-straight2curved",
@@ -143,11 +138,11 @@ def get_parser():
     optional.add_argument(
         "-param",
         metavar=Metavar.list,
-        help="R|Parameters for spinal cord straightening. Separate arguments with ','."
-             "\nprecision: [1.0,inf[. Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with hanning fitting method. Default=2"
-             "\nthreshold_distance: [0.0,inf[. Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10"
-             "\naccuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0"
-             "\ntemplate_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
+        help="R|Parameters for spinal cord straightening. Separate arguments with \",\".\n"
+             "  - precision: Float [1, inf) Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with Hanning fitting method. Default=2\n"
+             "  - threshold_distance: Float [0, inf) Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10\n"
+             "  - accuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0\n"
+             "  - template_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
         required=False)
 
     optional.add_argument(
@@ -180,29 +175,30 @@ def get_parser():
         choices=(0, 1),
         default=1)
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose. 0: nothing, 1: basic, 2: extended.",
-        required=False,
-        choices=(0, 1, 2),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
-    # Get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=args)
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     input_filename = arguments.i
     centerline_file = arguments.s
 
@@ -231,8 +227,6 @@ def main(args=None):
     sc_straight.output_filename = arguments.o
     sc_straight.path_output = arguments.ofolder
     path_qc = arguments.qc
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
     sc_straight.verbose = verbose
 
     # if arguments.cpu_nb is not None:
@@ -282,4 +276,5 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

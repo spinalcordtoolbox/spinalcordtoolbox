@@ -15,15 +15,14 @@
 
 import os
 import sys
-import argparse
 import logging
 
 import numpy as np
 from scipy import ndimage as ndi
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, mv, copy
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -149,7 +148,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 
 def get_parser():
     # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description=(
             "This program segments automatically the spinal cord on T1- and T2-weighted images, for any field of view. "
             "You must provide the type of contrast, the image as well as the output folder path. The segmentation "
@@ -176,10 +175,7 @@ def get_parser():
             "cord. Neuroimage 98, 2014. pp 528-536. DOI: 10.1016/j.neuroimage.2014.04.051](https://pubmed.ncbi.nlm.nih.gov/24780696/)\n"
             "  - [De Leener B, Cohen-Adad J, Kadoury S. Automatic segmentation of the spinal cord and spinal canal "
             "coupled with vertebral labeling. IEEE Trans Med Imaging. 2015 Aug;34(8):1705-18.](https://pubmed.ncbi.nlm.nih.gov/26011879/)"
-        ),
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+        )
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -232,9 +228,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1'],
-        default='1',
-        help="Verbose. 1: display on, 0: display off (default)"
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
         '-mesh',
@@ -455,7 +454,6 @@ def propseg(img_input, options_dict):
     remove_temp_files = arguments.r
 
     verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
     # Update for propseg binary
     if verbose > 0:
         cmd += ["-verbose"]
@@ -654,7 +652,12 @@ def propseg(img_input, options_dict):
     return Image(fname_seg)
 
 
-def main(arguments):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     fname_input_data = os.path.abspath(arguments.i)
     img_input = Image(fname_input_data)
     img_seg = propseg(img_input, arguments)
@@ -670,7 +673,5 @@ def main(arguments):
 
 if __name__ == "__main__":
     init_sct()
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    res = main(arguments)
-    raise SystemExit(res)
+    main(sys.argv[1:])
+

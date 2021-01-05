@@ -12,24 +12,19 @@
 
 import sys
 import os
-import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 
 
 # PARSER
 # ==========================================================================================
 def get_parser():
-    # parser initialisation
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Compute Maximum Spinal Cord Compression (MSCC) as in: Miyanji F, Furlan JC, Aarabi B, Arnold PM, '
                     'Fehlings MG. Acute cervical traumatic spinal cord injury: MR imaging findings correlated with '
                     'neurologic outcome--prospective study with 100 consecutive patients. Radiology 2007;243(3):820-'
-                    '827.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    '827.'
+    )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
@@ -60,6 +55,14 @@ def get_parser():
         "--help",
         action="help",
         help="Show this help message and exit")
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
@@ -70,11 +73,12 @@ def mscc(di, da, db):
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    # initialization
-    verbose = 1
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     # Get parser info
     di = arguments.di
     da = arguments.da
@@ -87,9 +91,7 @@ def main():
     printv('\nMSCC = ' + str(MSCC) + '\n', verbose, 'info')
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

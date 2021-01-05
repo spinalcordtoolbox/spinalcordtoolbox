@@ -15,13 +15,12 @@
 
 import sys
 import os
-import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree
 
 from spinalcordtoolbox.scripts import sct_maths
@@ -42,11 +41,9 @@ class Param:
 def get_parser():
     # Initialize the parser
 
-    parser = argparse.ArgumentParser(
-        description='Merge images to the same space',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+    parser = SCTArgumentParser(
+        description='Merge images to the same space'
+    )
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
@@ -92,13 +89,14 @@ def get_parser():
         required=False,
         default=Param().rm_tmp,
         choices=(0, 1))
-    misc.add_argument(
-        "-v",
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-        required=False,
-        choices=(0, 1, 2),
-        default=str(Param().verbose))
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
@@ -141,7 +139,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
     for fname_src in list_fname_src:
 
         # apply transformation src --> dest
-        sct_apply_transfo.main(args=[
+        sct_apply_transfo.main(argv=[
             '-i', fname_src,
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
@@ -149,13 +147,13 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-o', 'src_' + str(i_file) + '_template.nii.gz',
             '-v', str(param.verbose)])
         # create binary mask from input file by assigning one to all non-null voxels
-        sct_maths.main(args=[
+        sct_maths.main(argv=[
             '-i', fname_src,
             '-bin', str(param.almost_zero),
             '-o', 'src_' + str(i_file) + 'native_bin.nii.gz'])
 
         # apply transformation to binary mask to compute partial volume
-        sct_apply_transfo.main(args=[
+        sct_apply_transfo.main(argv=[
             '-i', 'src_' + str(i_file) + 'native_bin.nii.gz',
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
@@ -182,13 +180,14 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 
 # MAIN
 # ==========================================================================================
-def main():
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     # create param objects
     param = Param()
-
-    # get parser
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     # set param arguments ad inputted by user
     list_fname_src = arguments.i
@@ -202,8 +201,6 @@ def main():
         param.interp = arguments.x
     if arguments.r is not None:
         param.rm_tmp = arguments.r
-    param.verbose = arguments.v
-    init_sct(log_level=param.verbose, update=True)  # Update log level
 
     # check if list of input files and warping fields have same length
     assert len(list_fname_src) == len(list_fname_warp), "ERROR: list of files are not of the same length"
@@ -219,4 +216,5 @@ def main():
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

@@ -18,7 +18,6 @@
 
 import sys
 import os
-import argparse
 
 import numpy as np
 from matplotlib.ticker import MaxNLocator
@@ -28,8 +27,8 @@ from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, 
 from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, parse_num_list, display_open
-from spinalcordtoolbox.utils.sys import init_sct
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
+from spinalcordtoolbox.utils.sys import init_sct, set_global_loglevel
 from spinalcordtoolbox.utils.fs import get_absolute_path
 
 
@@ -38,7 +37,7 @@ def get_parser():
     :return: Returns the parser with the command line documentation contained in it.
     """
     # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description=(
             "Compute the following morphometric measures based on the spinal cord segmentation:\n"
             "  - area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be "
@@ -55,10 +54,7 @@ def get_parser():
             "metric is interesting for detecting non-convex shape (e.g., in case of strong compression)\n"
             "  - length: Length of the segmentation, computed by summing the slice thickness (corrected for the "
             "centerline angle at each slice) across the specified superior-inferior region.\n"
-        ),
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+        )
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -176,9 +172,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbosity. 1: display on, 0: display off (default)"
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
     return parser
@@ -264,12 +263,11 @@ def _make_figure(metric, fit_results):
     return fname_img
 
 
-def main(args=None):
+def main(argv=None):
     parser = get_parser()
-    if args:
-        arguments = parser.parse_args(args)
-    else:
-        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # Initialization
     slices = ''
@@ -311,9 +309,6 @@ def main(args=None):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
-
     # update fields
     metrics_agg = {}
     if not file_out:
@@ -341,7 +336,7 @@ def main(args=None):
 
     # QC report (only show CSA for clarity)
     if path_qc is not None:
-        generate_qc(fname_segmentation, args=args, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
+        generate_qc(fname_segmentation, args=arguments, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
                     subject=qc_subject, path_img=_make_figure(metrics_agg_merged, fit_results),
                     process='sct_process_segmentation')
 
@@ -350,5 +345,4 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    # call main function
     main(sys.argv[1:])
