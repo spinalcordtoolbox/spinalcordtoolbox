@@ -575,7 +575,6 @@ def label_discs(fname_seg, list_disc_z, list_disc_value, verbose=1):
     seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled_disc'))
 
 
-
 def label_disc_posterior(list_disc_z, list_disc_value, fname_hm, fname_data):
     """
     Function used to put label on the posterior tip for each disc using the previously found cooordinates.

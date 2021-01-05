@@ -20,6 +20,7 @@ from spinalcordtoolbox.image import Image, generate_output_file
 
 from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
     clean_labeled_segmentation, label_vert
+import spinalcordtoolbox.vertebrae.deep_label_core as deep_method
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
@@ -191,6 +192,12 @@ def get_parser():
         f"image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values "
         f"to set between 0.1 (strong weighting) and 999 (no weighting). "
         f"Default={param_default.gaussian_std}.\n"
+    )
+    optional.add_argument(
+        '-method',
+        default='TM',
+        choices=['DL','TM']
+        help="DL to use deep learning method, TM to use 3D template matching"
     )
     optional.add_argument(
         '-r',
@@ -432,7 +439,12 @@ def main(argv=None):
 
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1
-        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
+        if arguments.method == 'TM':
+            vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
+                            verbose=verbose, path_template=path_template, path_output=path_output,
+                            scale_dist=scale_dist)
+        elif arguments.method == 'DL':
+            deep_method.vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
                             verbose=verbose, path_template=path_template, path_output=path_output,
                             scale_dist=scale_dist)
 
@@ -449,8 +461,8 @@ def main(argv=None):
              )
 
     # un-straighten posterior disc map
-    # it won't exist if we don't use the detection since it is based on the network prediction
-    if fname_disc is None:
+    # it won't exist if we don't use the detection since it is based on the network prediction (DL method)
+    if fname_disc is None and arguments.method == 'DL':
         printv('\nUn-straighten posterior disc map...', verbose)
         run_proc('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
                  ('disc_posterior_tmp.nii.gz',
