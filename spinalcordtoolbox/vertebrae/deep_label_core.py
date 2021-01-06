@@ -12,7 +12,7 @@ import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
 from ivadomed import preprocessing as imed_preprocessing
 import nibabel as nib
-
+from spinalcordtoolbox.vertebrae.core import label_discs, label_segmentation, center_of_mass, create_label_z
 import logging
 import spinalcordtoolbox.scripts.sct_deepseg as sct_deepseg
 from scipy.signal import gaussian
@@ -274,40 +274,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
 
-def center_of_mass(x):
-    """
-    :return: array center of mass
-    """
-    if (x == 0).all():
-        raise ValueError("Array has no mass")
-    return scipy.ndimage.measurements.center_of_mass(x)
-
-
-def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
-    """
-    Create a label at coordinates x_center, y_center, z
-
-    :param fname_seg: segmentation
-    :param z: int
-    :param fname_labelz: string file name of output label
-    :return: fname_labelz
-    """
-    nii = Image(fname_seg)
-    orientation_origin = nii.orientation
-    nii = nii.change_orientation("RPI")
-    nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-    # find x and y coordinates of the centerline at z using center of mass
-    x, y = center_of_mass(np.array(nii.data[:, :, z]))
-    x, y = int(np.round(x)), int(np.round(y))
-    nii.data[:, :, :] = 0
-    nii.data[x, y, z] = value
-    # dilate label to prevent it from disappearing due to nearestneighbor interpolation
-    nii.data = dilate(nii.data, 3, 'ball')
-    nii.change_orientation(orientation_origin)  # put back in original orientation
-    nii.save(fname_labelz)
-    return fname_labelz
-
-
 def get_z_and_disc_values_from_label(fname_label):
     """
     Find z-value and label-value based on labeled image in RPI orientation
@@ -322,38 +288,6 @@ def get_z_and_disc_values_from_label(fname_label):
     # get label value
     value_label = int(nii.data[x_label, y_label, z_label])
     return [z_label, value_label]
-
-
-def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_new):
-    """
-    FIXME doc
-    Clean labeled segmentation by:\
-      (i)  removing voxels in segmentation_labeled that are not in segmentation and\
-      (ii) adding voxels in segmentation that are not in segmentation_labeled
-
-    :param fname_labeled_seg:
-    :param fname_seg:
-    :param fname_labeled_seg_new: output
-    :return: none
-    """
-    # remove voxels in segmentation_labeled that are not in segmentation
-    img_labeled_seg = Image(fname_labeled_seg)
-    img_seg = Image(fname_seg)
-    data_labeled_seg_mul = img_labeled_seg.data * img_seg.data
-    # dilate to add voxels in segmentation that are not in segmentation_labeled
-    data_labeled_seg_dil = dilate(img_labeled_seg.data, 2, 'ball')
-    data_labeled_seg_mul_bin = data_labeled_seg_mul > 0
-    data_diff = img_seg.data - data_labeled_seg_mul_bin
-    ind_nonzero = np.where(data_diff)
-    img_labeled_seg_corr = img_labeled_seg.copy()
-    img_labeled_seg_corr.data = data_labeled_seg_mul
-    for i_vox in range(len(ind_nonzero[0])):
-        # assign closest label value for this voxel
-        ix, iy, iz = ind_nonzero[0][i_vox], ind_nonzero[1][i_vox], ind_nonzero[2][i_vox]
-        img_labeled_seg_corr.data[ix, iy, iz] = data_labeled_seg_dil[ix, iy, iz]
-    # save new label file (overwrite)
-    img_labeled_seg_corr.absolutepath = fname_labeled_seg_new
-    img_labeled_seg_corr.save()
 
 
 def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget,
@@ -509,70 +443,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
 
     # return z-origin (z) + z-displacement minus zshift (to account for non-centered disc)
     return z + zrange[ind_peak] - zshift
-
-
-def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
-    """
-    Label segmentation image
-
-    :param fname_seg: fname of the segmentation, no orientation expected
-    :param list_disc_z: list of z that correspond to a disc
-    :param list_disc_value: list of associated disc values
-    :param verbose:
-    :return:
-    """
-
-    # open segmentation
-    seg = Image(fname_seg)
-    init_orientation = seg.orientation
-    seg.change_orientation("RPI")
-
-    dim = seg.dim
-    ny = dim[1]
-    nz = dim[2]
-    # loop across z
-    for iz in range(nz):
-        # get index of the disc right above iz
-        try:
-            ind_above_iz = max([i for i in range(len(list_disc_z)) if list_disc_z[i] > iz])
-        except ValueError:
-            # if ind_above_iz is empty, attribute value 0
-            vertebral_level = 0
-        else:
-            # assign vertebral level (add one because iz is BELOW the disk)
-            vertebral_level = list_disc_value[ind_above_iz] + 1
-        # get voxels in mask
-        ind_nonzero = np.nonzero(seg.data[:, :, iz])
-        seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
-
-    # write file
-    seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled'))
-
-
-def label_discs(fname_seg, list_disc_z, list_disc_value, verbose=1):
-    """
-    Create file with single voxel label in the middle of the spinal cord for each disc.
-    :param fname_seg: fname of the segmentation, no orientation expected
-    :param list_disc_z: list of z that correspond to a disc
-    :param list_disc_value: list of associated disc values
-    :param verbose:
-    :return:
-    """
-    seg = Image(fname_seg)
-    init_orientation = seg.orientation
-    seg.change_orientation("RPI")
-    disc_data = np.zeros_like(seg.data)
-    nx, ny, nz = seg.data.shape
-
-    for i in range(len(list_disc_z)):
-        if list_disc_z[i] < nz:
-            slices = seg.data[:, :, list_disc_z[i]]
-            cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
-            # Disc value are offset by one due to legacy code
-            disc_data[cx, cy, list_disc_z[i]] = list_disc_value[i] + 1
-
-    seg.data = disc_data
-    seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled_disc'))
 
 
 def label_disc_posterior(list_disc_z, list_disc_value, fname_hm, fname_data):

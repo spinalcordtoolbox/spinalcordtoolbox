@@ -196,7 +196,7 @@ def get_parser():
     optional.add_argument(
         '-method',
         default='TM',
-        choices=['DL','TM']
+        choices=['DL', 'TM'],
         help="DL to use deep learning method, TM to use 3D template matching"
     )
     optional.add_argument(
@@ -503,7 +503,7 @@ def main(argv=None):
     generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii"), fname_seg_labeled)
     generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii"),
                          os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
-    if fname_disc is None:
+    if fname_disc is None and arguments.method == 'DL':
         generate_output_file(os.path.join(path_tmp, "label_disc_posterior.nii.gz"),
                              os.path.join(path_output, file_in + '_labels-disc' + ext_in), verbose=verbose)
     # copy straightening files in case subsequent SCT functions need them
