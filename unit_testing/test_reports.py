@@ -8,31 +8,50 @@ import numpy as np
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.slice import Sagittal
 
+@pytest.fixture(scope="module")
+def im_base(path_in='t2/t2.nii.gz'):
+    # Base anatomical image
+    yield Image(path_in)
 
-def labeled_data_test_params(path_in='sct_testing_data/t2/t2.nii.gz',
-                             path_seg='sct_testing_data/t2/labels.nii.gz'):
-    """Generate image/label pairs for various test cases of
-    test_sagittal_slice_get_center_spit."""
-    im_in = Image(path_in)            # Base anatomical image
-    im_seg_labeled = Image(path_seg)  # Base labeled segmentation
-    assert np.count_nonzero(im_seg_labeled.data) >= 2, "Labeled segmentation image has fewer than 2 labels"
+@pytest.fixture(scope="module")
+def im_seg_labeled(path_seg='t2/labels.nii.gz'):
+    # Base labeled segmentation
+    im_seg = Image(path_seg)
+    assert np.count_nonzero(im_seg.data) >= 2, "Labeled segmentation image has fewer than 2 labels"
+    yield im_seg
 
+@pytest.fixture(scope="module")
+def im_seg_one_label(im_seg_labeled):
     # Create image with all but one label removed
     im_seg_one_label = im_seg_labeled.copy()
     for x, y, z in np.argwhere(im_seg_one_label.data)[1:]:
         im_seg_one_label.data[x, y, z] = 0
+    yield im_seg_one_label
 
+@pytest.fixture(scope="module")
+def im_seg_no_labels(im_seg_labeled):
     # Create image with no labels
     im_seg_no_labels = im_seg_labeled.copy()
     for x, y, z in np.argwhere(im_seg_no_labels.data):
         im_seg_no_labels.data[x, y, z] = 0
+    yield im_seg_no_labels
 
-    return [pytest.param(im_in, im_seg_labeled, id='multiple_labels'),
-            pytest.param(im_in, im_seg_one_label, id='one_label'),
-            pytest.param(im_in, im_seg_no_labels, id='no_labels')]
+def labeled_data_test_params():
+    """Generate image/label pairs for various test cases of
+    test_sagittal_slice_get_center_spit."""
+    return [pytest.param('im_base', 'im_seg_labeled', id='multiple_labels'),
+            pytest.param('im_base', 'im_seg_one_label', id='one_label'),
+            pytest.param('im_base', 'im_seg_no_labels', id='no_labels')]
 
+@pytest.fixture
+def im_in(request):
+    return request.getfixturevalue(request.param)
 
-@pytest.mark.parametrize('im_in,im_seg', labeled_data_test_params())
+@pytest.fixture
+def im_seg(request):
+    return request.getfixturevalue(request.param)
+
+@pytest.mark.parametrize('im_in,im_seg', labeled_data_test_params(), indirect=True)
 def test_sagittal_slice_get_center_spit(im_in, im_seg):
     """Test that get_center_split returns a valid index list."""
     assert im_in.orientation == im_seg.orientation, "im_in and im_seg aren't in the same orientation"

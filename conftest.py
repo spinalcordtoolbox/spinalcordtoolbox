@@ -25,10 +25,12 @@ from spinalcordtoolbox.scripts import sct_download_data as downloader
 logger = logging.getLogger(__name__)
 
 
-def pytest_sessionstart():
+@pytest.fixture(scope="session", autouse=True)
+def testdata():
     """ Download sct_testing_data prior to test collection. """
     logger.info("Downloading sct test data")
-    downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
+    if not os.path.isdir(sct_test_path()):
+        downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
 
 
 @pytest.fixture(scope="session", autouse=True)
