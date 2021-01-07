@@ -14,7 +14,7 @@ def im_base(path_in=sct_test_path('t2', 't2.nii.gz')):
     yield Image(path_in)
 
 @pytest.fixture(scope="module")
-def im_seg_labeled(path_seg='t2/labels.nii.gz'):
+def im_seg_labeled(path_seg=sct_test_path('t2', 'labels.nii.gz')):
     # Base labeled segmentation
     im_seg = Image(path_seg)
     assert np.count_nonzero(im_seg.data) >= 2, "Labeled segmentation image has fewer than 2 labels"
