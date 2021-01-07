@@ -18,7 +18,9 @@ echo Installing SCT
 ./install_sct -iy
 
 source python/etc/profile.d/conda.sh  # to be able to call conda
+set +u
 conda activate venv_sct  # reactivate conda for the pip install below
+set -u
 
 echo *** UNIT TESTS ***
 pip install coverage
