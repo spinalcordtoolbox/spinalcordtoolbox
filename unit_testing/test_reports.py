@@ -9,7 +9,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.slice import Sagittal
 
 @pytest.fixture(scope="module")
-def im_base(path_in='t2/t2.nii.gz'):
+def im_base(path_in=sct_test_path('t2', 't2.nii.gz')):
     # Base anatomical image
     yield Image(path_in)
 
