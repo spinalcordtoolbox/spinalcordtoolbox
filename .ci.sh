@@ -17,8 +17,9 @@ install_sct () {
   #     instead of the installed folder, where the extra detection models are.
   #     Further explanation at https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
   #     TO BE REMOVED during https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3140.
-  # NB: '-c' disables sct_check_dependencies so we can check it separately
-  ./install_sct -iyc
+  # NB: '-c' disables sct_check_dependencies so we can check it
+  # NB: '-k' keeps the folders 'data/', 'bin/', and 'python/' to speed up installation
+  ./install_sct -iyck
 }
 
 activate_venv_sct(){
