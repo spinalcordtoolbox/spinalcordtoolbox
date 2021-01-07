@@ -17,8 +17,6 @@ echo Installing SCT
 #     TO BE REMOVED during https://github.com/neuropoly/spinalcordtoolbox/issues/3140.
 ./install_sct -iy
 
-echo *** CHECK PATH ***
-ls -lA bin  # Make sure all binaries and aliases are there
 source python/etc/profile.d/conda.sh  # to be able to call conda
 conda activate venv_sct  # reactivate conda for the pip install below
 
