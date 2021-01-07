@@ -118,7 +118,7 @@ matrix:
       os: osx
       osx_image: xcode9.4
     - name: "Windows Server, 1809"
-      # runs on all branches
+      if: type = push or type = cron
       language: bash
       os: windows
 

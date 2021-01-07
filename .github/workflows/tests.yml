@@ -211,6 +211,10 @@ jobs:
   windows-wsl-ubuntu-18_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
     name: WSL [Ubuntu 18.04]
+    # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
+    #if: ${{ env.NIGHTLY }}
+    # in the meantime, copy-paste this:
+    if: ${{ !!(github.event_name == 'schedule' || (github.event_name == 'push')) }}
     runs-on: windows-2019
     defaults:
       run:
