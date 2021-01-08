@@ -15,12 +15,11 @@
 import sys
 import os
 import time
-import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_save, cache_signature, cache_valid, copy, \
     extract_fname, rmtree
@@ -51,14 +50,11 @@ def get_parser():
     param_default = Param()
 
     # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Smooth the spinal cord along its centerline. Steps are:\n"
                     "  1) Spinal cord is straightened (using centerline),\n"
                     "  2) a Gaussian kernel is applied in the superior-inferior direction,\n"
-                    "  3) then cord is de-straightened as originally.\n",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+                    "  3) then cord is de-straightened as originally.\n"
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -122,7 +118,7 @@ def get_parser():
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

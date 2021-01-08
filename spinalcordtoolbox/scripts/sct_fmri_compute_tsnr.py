@@ -14,12 +14,11 @@
 
 import sys
 import os
-import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, add_suffix, empty_like
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_global_loglevel
 
 
 class Param:
@@ -65,11 +64,8 @@ class Tsnr:
 # PARSER
 # ==========================================================================================
 def get_parser():
-    parser = argparse.ArgumentParser(
-        description="Compute temporal SNR (tSNR) in fMRI time series.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+    parser = SCTArgumentParser(
+        description="Compute temporal SNR (tSNR) in fMRI time series."
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -107,7 +103,7 @@ def get_parser():
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

@@ -13,9 +13,8 @@
 
 import sys
 import os
-import argparse
 
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 
 
@@ -71,14 +70,11 @@ class ErnstAngle:
 
 
 def get_parser():
-    # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Function to compute the Ernst Angle. For examples of T1 values in the brain, see Wansapura et al. '
                     'NMR relaxation times in the human brain at 3.0 tesla. Journal of magnetic resonance imaging : '
-                    'JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    'JMRI (1999) vol. 9 (4) pp. 531-8. \nT1 in WM: 832ms\nT1 in GM: 1331ms'
+    )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
@@ -137,7 +133,7 @@ def get_parser():
 #=======================================================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

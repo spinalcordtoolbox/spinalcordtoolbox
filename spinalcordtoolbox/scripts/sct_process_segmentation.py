@@ -18,7 +18,6 @@
 
 import sys
 import os
-import argparse
 
 import numpy as np
 from matplotlib.ticker import MaxNLocator
@@ -28,7 +27,7 @@ from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, 
 from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, parse_num_list, display_open
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, set_global_loglevel
 from spinalcordtoolbox.utils.fs import get_absolute_path
 
@@ -38,7 +37,7 @@ def get_parser():
     :return: Returns the parser with the command line documentation contained in it.
     """
     # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description=(
             "Compute the following morphometric measures based on the spinal cord segmentation:\n"
             "  - area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be "
@@ -55,10 +54,7 @@ def get_parser():
             "metric is interesting for detecting non-convex shape (e.g., in case of strong compression)\n"
             "  - length: Length of the segmentation, computed by summing the slice thickness (corrected for the "
             "centerline angle at each slice) across the specified superior-inferior region.\n"
-        ),
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+        )
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -269,7 +265,7 @@ def _make_figure(metric, fit_results):
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

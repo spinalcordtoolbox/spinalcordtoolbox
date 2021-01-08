@@ -10,17 +10,16 @@
 
 import os
 import sys
-import argparse
 
 import numpy as np
 from dipy.data.fetcher import read_bvals_bvecs
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.image import Image, concat_data
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Concatenate b=0 scans with DWI time series and update the bvecs and bvals files.\n\n"
                     "Example 1: Add two b=0 file at the beginning and one at the end of the DWI time series:\n"
                     ">> sct_dmri_concat_b0_and_dwi -i b0-1.nii b0-2.nii dmri.nii b0-65.nii -bvec bvecs.txt -bval "
@@ -29,10 +28,7 @@ def get_parser():
                     "Example 2: Concatenate two DWI series and add one b=0 file at the beginning:\n"
                     ">> sct_dmri_concat_b0_and_dwi -i b0-1.nii dmri1.nii dmri2.nii -bvec bvecs1.txt bvecs2.txt -bval "
                     "bvals1.txt bvals2.txt -order b0 dwi dwi -o dmri_concat.nii -obval bvals_concat.txt -obvec "
-                    "bvecs_concat.txt",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+                    "bvecs_concat.txt"
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -108,7 +104,7 @@ def main(argv=None):
     :return:
     """
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

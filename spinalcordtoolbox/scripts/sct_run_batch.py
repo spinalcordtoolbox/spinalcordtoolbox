@@ -15,7 +15,6 @@
 
 import os
 import sys
-import argparse
 from getpass import getpass
 import multiprocessing
 import subprocess
@@ -34,7 +33,7 @@ from textwrap import dedent
 import yaml
 import psutil
 
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import Tee
 
@@ -42,7 +41,7 @@ from stat import S_IEXEC
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Wrapper to processing scripts, which loops across subjects. Subjects should be organized as '
                     'folders within a single directory. We recommend following the BIDS convention '
                     '(https://bids.neuroimaging.io/). The processing script should accept a subject directory '
@@ -50,9 +49,8 @@ def get_parser():
                     'arguments passed via `-script-args`. If the script or the input data are located within a '
                     'git repository, the git commit is displayed. If the script or data have changed since the latest '
                     'commit, the symbol "*" is added after the git commit number. If no git repository is found, the '
-                    'git commit version displays "?!?". The script is copied on the output folder (-path-out).',
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip('.py'))
+                    'git commit version displays "?!?". The script is copied on the output folder (-path-out).'
+    )
 
     parser.add_argument('-config', '-c',
                         help='R|'
@@ -151,6 +149,7 @@ def get_parser():
     parser.add_argument('-v', metavar=Metavar.int, type=int, choices=[0, 1, 2], default=1,
                         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
                         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+    parser.add_argument('-h', "--help", action="help", help="show this help message and exit")
 
     return parser
 
@@ -226,7 +225,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

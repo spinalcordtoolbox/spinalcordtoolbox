@@ -13,11 +13,10 @@
 
 import sys
 import os
-import argparse
 
 import spinalcordtoolbox.metadata
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import copy
 
@@ -147,12 +146,8 @@ def get_interp(file_label, list_labels_nn):
 def get_parser():
     # Initialize default parameters
     param_default = Param()
-    # Initialize parser
-    parser = argparse.ArgumentParser(
-        description="This function warps the template and all atlases to a destination image.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+    parser = SCTArgumentParser(
+        description="This function warps the template and all atlases to a destination image."
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -237,7 +232,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

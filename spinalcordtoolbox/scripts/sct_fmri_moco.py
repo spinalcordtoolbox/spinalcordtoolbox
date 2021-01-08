@@ -13,10 +13,9 @@
 
 import sys
 import os
-import argparse
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, set_global_loglevel
 
 
 def get_parser():
@@ -25,7 +24,7 @@ def get_parser():
     param_default = ParamMoco(group_size=1, metric='MeanSquares', smooth='0')
 
     # parser initialisation
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Motion correction of fMRI data. Some robust features include:\n"
                     "  - group-wise (-g)\n"
                     "  - slice-wise regularized along z using polynomial function (-p)\n"
@@ -39,10 +38,7 @@ def get_parser():
                     "  - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate "
                     "files), as required for FSL analysis.\n"
                     "  - a TSV file with the slice-wise average of the motion correction for XY (one file), that "
-                    "can be used for Quality Control.\n",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+                    "can be used for Quality Control.\n"
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -124,7 +120,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 
