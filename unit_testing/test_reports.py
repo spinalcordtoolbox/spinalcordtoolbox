@@ -7,6 +7,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.slice import Sagittal
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 
 @pytest.fixture(scope="module")
