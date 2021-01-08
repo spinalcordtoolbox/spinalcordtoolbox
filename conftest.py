@@ -29,8 +29,7 @@ logger = logging.getLogger(__name__)
 def testdata():
     """ Download sct_testing_data prior to test collection. """
     logger.info("Downloading sct test data")
-    if not os.path.isdir(sct_test_path()):
-        downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
+    downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
 
 
 @pytest.fixture(scope="session", autouse=True)
