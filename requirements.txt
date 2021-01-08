@@ -40,4 +40,5 @@ transforms3d
 urllib3[secure]
 pytest_console_scripts
 pytest-xdist
+pytest_cases
 tensorboard==1.14.0
