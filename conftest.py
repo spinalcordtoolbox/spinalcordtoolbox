@@ -25,11 +25,13 @@ from spinalcordtoolbox.scripts import sct_download_data as downloader
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def testdata():
-    """ Download sct_testing_data prior to test collection. """
-    logger.info("Downloading sct test data")
-    downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
+def pytest_sessionstart():
+    """Download sct_testing_data prior to test collection."""
+    # pytest_sessionstart runs once before any test session starts, then again for each
+    # worker session. We only want it to run once, so check to see if we're in a worker session.
+    if "PYTEST_XDIST_WORKER" not in os.environ.keys():
+        logger.info("Downloading sct test data")
+        downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
 
 
 @pytest.fixture(scope="session", autouse=True)
