@@ -12,12 +12,11 @@
 
 import sys
 import os
-import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, add_suffix, empty_like, change_orientation
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname
 
@@ -432,14 +431,9 @@ def non_zero_coord(data):
 
 
 def get_parser():
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Compute the Hausdorff\'s distance between two binary images which can be thinned (ie skeletonized).'
-                    ' If only one image is inputted, it will be only thinned',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py")
+                    ' If only one image is inputted, it will be only thinned'
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -497,7 +491,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

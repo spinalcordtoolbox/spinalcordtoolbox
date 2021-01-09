@@ -24,18 +24,13 @@
 
 import os
 import sys
-import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, extract_fname, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, extract_fname, printv, set_global_loglevel
 
 
 def get_parser():
-    # Initialize the parser
-    parser = argparse.ArgumentParser(
-        description='Transpose bvecs file (if necessary) to get nx3 structure.',
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+    parser = SCTArgumentParser(
+        description='Transpose bvecs file (if necessary) to get nx3 structure.'
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -75,7 +70,7 @@ def get_parser():
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

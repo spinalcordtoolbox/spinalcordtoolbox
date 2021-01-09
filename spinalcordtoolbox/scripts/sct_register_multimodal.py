@@ -34,13 +34,12 @@
 import sys
 import os
 import time
-import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.registration.register import Paramreg, ParamregMultiStep
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import check_dim
@@ -56,7 +55,7 @@ paramregmulti = ParamregMultiStep([step0, step1])
 
 def get_parser():
     # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="This program co-registers two 3D volumes. The deformation is non-rigid and is constrained along "
                     "Z direction (i.e., axial plane). Hence, this function assumes that orientation of the destination "
                     "image is axial (RPI). If you need to register two volumes with large deformations and/or "
@@ -78,10 +77,7 @@ def get_parser():
                     "segmentation, i.e. using type=seg\n"
                     " - Columnwise algorithm needs to be applied after a translation and rotation such as centermassrot "
                     "algorithm. For example: -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:"
-                    "step=2,type=seg,algo=columnwise,metric=MeanSquares",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+                    "step=2,type=seg,algo=columnwise,metric=MeanSquares"
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -302,7 +298,7 @@ class Param:
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

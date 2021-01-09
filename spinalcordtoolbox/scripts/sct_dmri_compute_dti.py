@@ -12,18 +12,14 @@
 
 import os
 import sys
-import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 
 
 def get_parser():
-    # Initialize the parser
-    parser = argparse.ArgumentParser(
-        description='Compute Diffusion Tensor Images (DTI) using dipy.',
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py"))
+    parser = SCTArgumentParser(
+        description='Compute Diffusion Tensor Images (DTI) using dipy.'
+    )
 
     mandatory = parser.add_argument_group("MANDATORY ARGMENTS")
     mandatory.add_argument(
@@ -90,7 +86,7 @@ def get_parser():
 # ==========================================================================================
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

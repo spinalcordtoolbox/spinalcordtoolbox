@@ -13,7 +13,6 @@ import math
 import sys
 import pickle
 import shutil
-import argparse
 
 import numpy as np
 import pandas as pd
@@ -21,15 +20,13 @@ from skimage.measure import label
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
 def get_parser():
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='R|Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
                     '3, etc.) and then outputs morphometric measures for each lesion:\n'
                     '- volume [mm^3]\n'
@@ -38,10 +35,7 @@ def get_parser():
                     '                                the lesion as a circle in the axial plane.\n\n'
                     'If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means '
                     'that the registered template does not fully cover the lesion. In that case you might want to '
-                    'check the registration results.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py")
+                    'check the registration results.'
     )
 
     mandatory_arguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -519,7 +513,7 @@ def main(argv=None):
     :return:
     """
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 

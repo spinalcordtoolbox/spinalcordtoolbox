@@ -41,7 +41,7 @@ matrix:
       services:
         - docker
       env:
-        - DOCKER_IMAGE="archlinux" DOCKER_DEPS_CMD="pacman -Sy --noconfirm which gcc git curl"
+        - DOCKER_IMAGE="archlinux" DOCKER_DEPS_CMD="pacman -Sy --noconfirm gcc git curl"
     - name: "Debian Rolling Release"
       if: branch = release or type = cron
       os: linux
@@ -81,7 +81,7 @@ matrix:
       services:
         - docker
       env:
-        - DOCKER_IMAGE="centos:8" DOCKER_DEPS_CMD="yum install -y which gcc git curl"
+        - DOCKER_IMAGE="centos:8" DOCKER_DEPS_CMD="yum install -y gcc git curl"
     - name: "CentOS 7"
       if: branch = release or type = cron
       os: linux
@@ -89,7 +89,7 @@ matrix:
       services:
         - docker
       env:
-        - DOCKER_IMAGE="centos:7" DOCKER_DEPS_CMD="yum install -y which gcc git curl"
+        - DOCKER_IMAGE="centos:7" DOCKER_DEPS_CMD="yum install -y gcc git curl"
     # The rest of the OSes can use Travis's built-in images:
     - name: "Ubuntu 18.04 (Bionic Beaver)"
       # runs on all branches

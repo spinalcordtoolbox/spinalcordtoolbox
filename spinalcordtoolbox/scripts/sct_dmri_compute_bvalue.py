@@ -16,14 +16,13 @@
 import sys
 import os
 import math
-import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 
@@ -51,12 +50,9 @@ def main(argv=None):
 
 
 def get_parser():
-    # Initialize the parser
-    parser = argparse.ArgumentParser(
-        description='Calculate b-value (in mm^2/s).',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+    parser = SCTArgumentParser(
+        description='Calculate b-value (in mm^2/s).'
+    )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(

@@ -1,9 +1,13 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # dockerize.sh: run a script inside of another.
 #
 # usage: DOCKER_IMAGE="<image>" DOCKER_DEPS_CMD="<command to run before script>" dockerize.sh script.sh
 
-set -e # Error build immediately if install script exits with non-zero
+# stricter shell mode
+# https://sipb.mit.edu/doc/safe-shell/
+set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
+set -u            # exit if unset variables used
+shopt -s failglob # error if a glob doesn't find any files, instead of remaining unexpanded
 
 CONTAINER=$(docker run \
     --init \

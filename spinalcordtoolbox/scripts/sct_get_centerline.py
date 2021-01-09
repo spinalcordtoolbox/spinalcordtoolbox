@@ -2,21 +2,19 @@
 
 import os
 import sys
-import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 
 
 def get_parser():
-    # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description=(
             "This function extracts the spinal cord centerline. Three methods are available: 'optic' (automatic), "
             "'viewer' (manual), and 'fitseg' (applied on segmented image). These functions output (i) a NIFTI file "
@@ -25,10 +23,7 @@ def get_parser():
             "\n"
             "Reference: C Gros, B De Leener, et al. Automatic spinal cord localization, robust to MRI contrast using "
             "global curve optimization (2017). doi.org/10.1016/j.media.2017.12.001"
-        ),
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+        )
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -123,7 +118,7 @@ def get_parser():
 
 def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 
