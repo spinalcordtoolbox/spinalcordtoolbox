@@ -93,11 +93,22 @@ def get_parser():
         help="R|Create labels on a cord segmentation (or centerline) image defined by '-i'. Each label should be "
              "specified using the form 'v1,v2' where 'v1' is value of the slice index along the inferior-superior "
              "axis, and 'v2' is the value of the label. Separate each label with ':'. \n"
-             "Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from the most inferior slice).\n"
-             "You can also choose a slice value of '-1' to automatically select the mid-point in the "
-             "inferior-superior direction. For example, if you know that the C2-C3 disc is centered in the I-S "
-             "direction, then you can enter '-1,3' for that label instead."
+             "Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from "
+             "the most inferior slice)."
     )
+
+    func_group.add_argument(
+        '-create-seg-mid',
+        metavar=Metavar.int,
+        type=int,
+        help="R|Similar to '-create-seg'. This option takes a single label value, and will automatically select the "
+             "mid-point slice in the inferior-superior direction (so there is no need for a slice index).\n"
+             "This is useful for when you have centered the field of view of your data at a specific location. "
+             "For example, if you already know that the C2-C3 disc is centered in the I-S direction, then "
+             "you can enter '-create-seg-mid 3' for that label. This saves you the trouble of having to manually "
+             "specify a slice index using '-create-seg'."
+    )
+
     func_group.add_argument(
         '-create-viewer',
         metavar=Metavar.list,
@@ -221,6 +232,11 @@ def get_parser():
 # MAIN
 # ==========================================================================================
 def main(argv=None):
+    for i, arg in enumerate(argv):
+        if arg == '-create-seg' and len(argv) > i+1 and '-1,' in argv[i+1]:
+            raise DeprecationWarning("The use of '-1' for '-create-seg' has been deprecated. Please use "
+                                     "'-create-seg-mid' instead.")
+
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -243,6 +259,9 @@ def main(argv=None):
         out = sct_labels.create_labels(img, labels)
     elif arguments.create_seg is not None:
         labels = arguments.create_seg
+        out = sct_labels.create_labels_along_segmentation(img, labels)
+    elif arguments.create_seg_mid is not None:
+        labels = [(-1, arguments.create_seg_mid)]
         out = sct_labels.create_labels_along_segmentation(img, labels)
     elif arguments.cubic_to_point:
         out = sct_labels.cubic_to_point(img)
