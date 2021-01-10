@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="session", autouse=True)
-def testdata():
+def sct_testing_data():
     """ Download sct_testing_data prior to test collection. """
     logger.info("Downloading sct test data")
     downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])

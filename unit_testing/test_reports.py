@@ -3,7 +3,7 @@
 # pytest unit tests for spinalcordtoolbox.reports
 
 import pytest
-from pytest_cases import parametrize_with_cases
+from pytest_cases import fixture, fixture_ref, parametrize
 import numpy as np
 
 from spinalcordtoolbox.image import Image
@@ -11,11 +11,13 @@ from spinalcordtoolbox.reports.slice import Sagittal
 from spinalcordtoolbox.utils.sys import sct_test_path
 
 
+@fixture
 def im_base(path_in=sct_test_path('t2', 't2.nii.gz')):
     # Base anatomical image
     return Image(path_in)
 
 
+@fixture
 def im_seg_labeled(path_seg=sct_test_path('t2', 'labels.nii.gz')):
     # Base labeled segmentation
     im_seg = Image(path_seg)
@@ -23,26 +25,29 @@ def im_seg_labeled(path_seg=sct_test_path('t2', 'labels.nii.gz')):
     return im_seg
 
 
-def im_seg_one_label(im_seg=im_seg_labeled()):
+@fixture
+def im_seg_one_label(im_seg_labeled):
     # Create image with all but one label removed
-    im_seg_one_label = im_seg.copy()
+    im_seg_one_label = im_seg_labeled.copy()
     for x, y, z in np.argwhere(im_seg_one_label.data)[1:]:
         im_seg_one_label.data[x, y, z] = 0
     return im_seg_one_label
 
 
-def im_seg_no_labels(im_seg=im_seg_labeled()):
+@fixture
+def im_seg_no_labels(im_seg_labeled):
     # Create image with no labels
-    im_seg_no_labels = im_seg.copy()
+    im_seg_no_labels = im_seg_labeled.copy()
     for x, y, z in np.argwhere(im_seg_no_labels.data):
         im_seg_no_labels.data[x, y, z] = 0
     return im_seg_no_labels
 
 
-@parametrize_with_cases("im_in", cases=[im_base])
-@parametrize_with_cases("im_seg", cases=[im_seg_labeled, im_seg_one_label, im_seg_no_labels])
-def test_sagittal_slice_get_center_spit(im_in, im_seg):
+@parametrize("im_seg", [fixture_ref(im_seg_labeled), fixture_ref(im_seg_one_label), fixture_ref(im_seg_no_labels)])
+def test_sagittal_slice_get_center_spit(im_base, im_seg):
     """Test that get_center_spit returns a valid index list."""
+    im_in = im_base
+
     assert im_in.orientation == im_seg.orientation, "im_in and im_seg aren't in the same orientation"
     qcslice = Sagittal([im_in, im_seg], p_resample=None)
 

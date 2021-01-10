@@ -14,8 +14,9 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.utils import tmp_create, __sct_dir__
 from spinalcordtoolbox.scripts import sct_image
 
+from pytest_cases import fixture
 
-@pytest.fixture(scope="session")
+@fixture(scope="session")
 def image_paths():
     ret = []
     sct_dir = os.path.dirname(os.path.dirname(__file__))
@@ -28,6 +29,7 @@ def image_paths():
     return ret
 
 
+@fixture
 def fake_3dimage_custom(data):
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -36,6 +38,7 @@ def fake_3dimage_custom(data):
     return nibabel.nifti1.Nifti1Image(data, affine)
 
 
+@fixture
 def fake_3dimage_sct_custom(data):
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
@@ -48,6 +51,7 @@ def fake_3dimage_sct_custom(data):
     return img
 
 
+@fixture
 def fake_3dimage_vis():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -121,7 +125,7 @@ def fake_3dimage_vis():
     return nibabel.nifti1.Nifti1Image(data, affine)
 
 
-@pytest.fixture(scope="session")
+@fixture(scope="session")
 def fake_3dimage_sct_vis():
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
@@ -134,6 +138,7 @@ def fake_3dimage_sct_vis():
     return img
 
 
+@fixture
 def fake_3dimage():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -164,11 +169,12 @@ def fake_3dimage():
     return nibabel.nifti1.Nifti1Image(data, affine)
 
 
-@pytest.fixture(name="fake_3dimage", scope="session")
+@fixture(name="fake_3dimage", scope="session")
 def fake_3dimage_fixture():
     return fake_3dimage()
 
 
+@fixture
 def fake_3dimage2():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -191,6 +197,7 @@ def fake_3dimage2():
     return nibabel.nifti1.Nifti1Image(data, affine)
 
 
+@fixture
 def fake_4dimage():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -215,7 +222,7 @@ def fake_4dimage():
     return nibabel.nifti1.Nifti1Image(data, affine)
 
 
-@pytest.fixture(scope="session")
+@fixture(scope="session")
 def fake_4dimage_sct():
     """
     :return: an Image (4D) in RAS+ (aka SCT LPI) space
@@ -228,7 +235,7 @@ def fake_4dimage_sct():
     return img
 
 
-@pytest.fixture(scope="session")
+@fixture(scope="session")
 def fake_3dimage_sct():
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
@@ -241,7 +248,7 @@ def fake_3dimage_sct():
     return img
 
 
-@pytest.fixture(scope="session")
+@fixture(scope="session")
 def fake_3dimage_sct2():
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space

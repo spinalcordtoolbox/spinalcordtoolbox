@@ -5,10 +5,9 @@
 import logging
 from time import time
 
-import numpy as np
 import pytest
-from pytest_cases import parametrize_with_cases
-
+from pytest_cases import fixture, fixture_ref, parametrize
+import numpy as np
 
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
@@ -19,24 +18,28 @@ from .test_image import fake_3dimage, fake_3dimage2
 logger = logging.getLogger(__name__)
 
 
+@fixture
 def seg_img():
     return Image(sct_test_path('t2', 't2_seg-manual.nii.gz'))
 
 
+@fixture
 def t2_img():
     return Image(sct_test_path('t2', 't2.nii.gz'))
 
 
+@fixture
 def labels_img():
     return Image(sct_test_path('t2', 'labels.nii.gz'))
 
 
-def fake_3dimage_sct2():
+@fixture
+def fake_3dimage_sct2(fake_3dimage2):
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     shape = (1,2,3)
     """
-    i = fake_3dimage2()
+    i = fake_3dimage2
     img = Image(i.get_data(), hdr=i.header,
                 orientation="RPI",
                 dim=i.header.get_data_shape(),
@@ -44,12 +47,13 @@ def fake_3dimage_sct2():
     return img
 
 
-def fake_3dimage_sct():
+@fixture
+def fake_3dimage_sct(fake_3dimage):
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     shape = (7,8,9)
     """
-    i = fake_3dimage()
+    i = fake_3dimage
     img = Image(i.get_data(), hdr=i.header,
                 orientation="LPI",
                 dim=i.header.get_data_shape(),
@@ -57,7 +61,7 @@ def fake_3dimage_sct():
     return img
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct, fake_3dimage_sct2, t2_img])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct), fixture_ref(fake_3dimage_sct2), fixture_ref(t2_img)])
 def test_create_labels_empty(test_image):
     a = test_image.copy()
     expected = zeros_like(a)
@@ -72,7 +76,7 @@ def test_create_labels_empty(test_image):
     assert diff.all()
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct, fake_3dimage_sct2, t2_img])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct), fixture_ref(fake_3dimage_sct2), fixture_ref(t2_img)])
 def test_create_labels(test_image):
     a = test_image.copy()
     labels = [Coordinate(l) for l in [[0, 1, 0, 99], [0, 1, 2, 5]]]
@@ -83,7 +87,7 @@ def test_create_labels(test_image):
     assert b.data[0, 1, 2] == 5
 
 
-@parametrize_with_cases("test_image", cases=[seg_img])
+@parametrize("test_image", [fixture_ref(seg_img)])
 def test_create_labels_along_segmentation(test_image):
     a = test_image.copy()
     labels = [(5, 1), (14, 2), (23, 3)]
@@ -94,14 +98,14 @@ def test_create_labels_along_segmentation(test_image):
     # TODO [AJ] implement test
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct, fake_3dimage_sct2, t2_img])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct), fixture_ref(fake_3dimage_sct2), fixture_ref(t2_img)])
 def test_cubic_to_point(test_image):
     a = test_image.copy()
     sct_labels.cubic_to_point(a)
     # TODO [AJ] implement test
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct, fake_3dimage_sct2, t2_img])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct), fixture_ref(fake_3dimage_sct2), fixture_ref(t2_img)])
 def test_increment_z_inverse(test_image):
     a = zeros_like(test_image.copy())
     a.data[0, 1, 0] = 1
@@ -119,8 +123,6 @@ def test_increment_z_inverse(test_image):
     assert diff.all()
 
 
-@parametrize_with_cases("seg_img", cases=[seg_img])
-@parametrize_with_cases("labels_img", cases=[labels_img])
 def test_labelize_from_discs(seg_img, labels_img):
     seg = seg_img.copy()
     ref = labels_img.copy()
@@ -129,7 +131,7 @@ def test_labelize_from_discs(seg_img, labels_img):
     # TODO [AJ] implement test
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct2])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct2)])
 def test_label_vertebrae(test_image):
     a = test_image
     expected = zeros_like(a)
@@ -140,7 +142,7 @@ def test_label_vertebrae(test_image):
     assert diff.all()
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct)])
 def test_compute_mean_squared_error(test_image):
     src = test_image
     ref = src.copy()
@@ -152,7 +154,7 @@ def test_compute_mean_squared_error(test_image):
     assert mse == 1.1547005383792515
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct)])
 def test_compute_mse_label_warning(caplog, test_image):
     src = test_image
     ref = src.copy()
@@ -168,7 +170,7 @@ def test_compute_mse_label_warning(caplog, test_image):
     assert string_form_ref in caplog.text
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct)])
 def test_compute_mse_no_label_warning(caplog, test_image):
     src = test_image
     ref = src.copy()
@@ -177,7 +179,7 @@ def test_compute_mse_no_label_warning(caplog, test_image):
 
 
 @pytest.mark.skip(reason="Too long to run on large image!")
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct, fake_3dimage_sct2, t2_img])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct), fixture_ref(fake_3dimage_sct2), fixture_ref(t2_img)])
 def test_remove_missing_labels(test_image):
     src = test_image.copy()
     ref = test_image.copy()
@@ -201,7 +203,7 @@ def test_remove_missing_labels(test_image):
     assert diff.all()
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct, fake_3dimage_sct2, t2_img])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct), fixture_ref(fake_3dimage_sct2), fixture_ref(t2_img)])
 def test_continuous_vertebral_levels(test_image):
     a = test_image.copy()
     b = sct_labels.continuous_vertebral_levels(a)
@@ -211,7 +213,7 @@ def test_continuous_vertebral_levels(test_image):
     # TODO [AJ] implement test
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct, fake_3dimage_sct2, t2_img])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct), fixture_ref(fake_3dimage_sct2), fixture_ref(t2_img)])
 def test_remove_labels_from_image(test_image):
     img = test_image.copy()
     expected = test_image.copy()
@@ -230,7 +232,7 @@ def test_remove_labels_from_image(test_image):
     assert diff.all()
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct, fake_3dimage_sct2, t2_img])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct), fixture_ref(fake_3dimage_sct2), fixture_ref(t2_img)])
 def test_remove_other_labels_from_image(test_image):
     img = test_image.copy()
     expected = zeros_like(test_image)
@@ -250,7 +252,7 @@ def test_remove_other_labels_from_image(test_image):
     assert diff.all()
 
 
-@parametrize_with_cases("test_image", cases=[fake_3dimage_sct])
+@parametrize("test_image", [fixture_ref(fake_3dimage_sct)])
 def test_check_missing_label(test_image):
     img = test_image
     false_positive = img.copy()
