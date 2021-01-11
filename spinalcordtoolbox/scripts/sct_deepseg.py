@@ -38,7 +38,6 @@ def get_parser():
     input_output.add_argument(
         "-i",
         nargs="+",
-        required=True,
         help="Image to segment. Can be multiple images (separated with space).",
         metavar=Metavar.file)
     input_output.add_argument(
@@ -132,6 +131,11 @@ def main(argv=None):
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 
+    if (arguments.list_tasks is False
+            and arguments.install_task is None
+            and (arguments.i is None or arguments.task is None)):
+        parser.error("You must specify either '-list-tasks', '-install-task', or ['-i' + '-task'].")
+
     # Deal with task
     if arguments.list_tasks:
         deepseg.models.display_list_tasks()
@@ -145,10 +149,6 @@ def main(argv=None):
     for file in arguments.i:
         if not os.path.isfile(file):
             parser.error("This file does not exist: {}".format(file))
-
-    # Check if at least a model or task has been specified
-    if arguments.task is None:
-        parser.error("You need to specify a task.")
 
     # Check if all input images are provided
     required_contrasts = deepseg.models.get_required_contrasts(arguments.task)
