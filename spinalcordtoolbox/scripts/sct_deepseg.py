@@ -38,6 +38,7 @@ def get_parser():
     input_output.add_argument(
         "-i",
         nargs="+",
+        required=True,
         help="Image to segment. Can be multiple images (separated with space).",
         metavar=Metavar.file)
     input_output.add_argument(
