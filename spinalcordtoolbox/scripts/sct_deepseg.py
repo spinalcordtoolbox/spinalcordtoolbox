@@ -152,7 +152,7 @@ def main(argv=None):
     if arguments.task is None:
         parser.error("You need to specify a task.")
 
-    # Verify if the task is custom
+    # Verify if the task is part of the "official" tasks, or if it is pointing to paths containing custom models
     if len(arguments.task) == 1 and arguments.task[0] in deepseg.models.TASKS:
         # Check if all input images are provided
         required_contrasts = deepseg.models.get_required_contrasts(arguments.task[0])
