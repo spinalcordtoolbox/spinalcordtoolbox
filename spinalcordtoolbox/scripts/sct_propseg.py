@@ -434,18 +434,18 @@ def propseg(img_input, options_dict):
 
     # Starting building the command
     cmd = ['isct_propseg', '-t', contrast_type_propseg]
-    
-    folder_output = './'
-    cmd += ['-o', folder_output]
-    if not os.path.isdir(folder_output) and os.path.exists(folder_output):
-        logger.error("output directory %s is not a valid directory" % folder_output)
-    if not os.path.exists(folder_output):
-        os.makedirs(folder_output)
 
     if arguments.o is not None:
         fname_out = arguments.o
     else:
         fname_out = os.path.basename(add_suffix(fname_data, "_seg"))
+    
+    folder_output = os.path.dirname(fname_out)
+    cmd += ['-o', folder_output]
+    if not os.path.isdir(folder_output) and os.path.exists(folder_output):
+        logger.error("output directory %s is not a valid directory" % folder_output)
+    if not os.path.exists(folder_output):
+        os.makedirs(folder_output)
 
     if arguments.down is not None:
         cmd += ["-down", str(arguments.down)]

@@ -17,8 +17,7 @@ def test_sct_propseg_backwards_compat(script_runner):
     assert ret.stderr == ''
 
 
-def test_sct_propseg_o_flag():
-    argv = ['-i', 'sct_testing_data/t2/t2.nii.gz', '-c', 't2', '-o', 'test_seg.nii.gz']
+def test_sct_propseg_o_flag(tmp_path):
+    argv = ['-i', 'sct_testing_data/t2/t2.nii.gz', '-c', 't2', '-o', os.path.join(str(tmp_path), 'test_seg.nii.gz')]
     sct_propseg.main(argv)
-    assert os.path.isfile("test_seg.nii.gz")
-    os.remove("test_seg.nii.gz")
+    assert os.path.isfile(os.path.join(str(tmp_path), 'test_seg.nii.gz'))
