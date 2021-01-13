@@ -13,27 +13,21 @@
 
 import os
 import sys
-import argparse
 
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import Image, check_dim
 from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
 from spinalcordtoolbox.reports.qc import generate_qc
 
 
-
 def get_parser():
-    """Initialize the parser."""
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Spinal Cord Segmentation using convolutional networks. Reference: Gros et al. Automatic "
                     "segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional "
-                    "neural networks. Neuroimage. 2019 Jan 1;184:901-915.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py"))
+                    "neural networks. Neuroimage. 2019 Jan 1;184:901-915."
+    )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
@@ -95,17 +89,23 @@ def get_parser():
         action=ActionCreateFolder,
         default=os.getcwd())
     optional.add_argument(
-        "-r",
+        '-o',
+        metavar=Metavar.file,
+        help='Output filename. Example: spinal_seg.nii.gz '),
+    optional.add_argument(
+        '-r',
         type=int,
         help="Remove temporary files.",
         choices=(0, 1),
         default=1)
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="1: display on (default), 0: display off, 2: extended",
-        choices=(0, 1, 2),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
     optional.add_argument(
         '-qc',
         metavar=Metavar.str,
@@ -127,57 +127,64 @@ def get_parser():
     return parser
 
 
-def main():
+def main(argv=None):
     """Main function."""
     parser = get_parser()
-    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
-    fname_image = os.path.abspath(args.i)
-    contrast_type = args.c
+    fname_image = os.path.abspath(arguments.i)
+    contrast_type = arguments.c
 
-    ctr_algo = args.centerline
+    ctr_algo = arguments.centerline
 
-    if args.brain is None:
+    if arguments.brain is None:
         if contrast_type in ['t2s', 'dwi']:
             brain_bool = False
         if contrast_type in ['t1', 't2']:
             brain_bool = True
     else:
-        brain_bool = bool(args.brain)
+        brain_bool = bool(arguments.brain)
 
-    if bool(args.brain) and ctr_algo == 'svm':
+    if bool(arguments.brain) and ctr_algo == 'svm':
         printv('Please only use the flag "-brain 1" with "-centerline cnn".', 1, 'warning')
         sys.exit(1)
 
-    kernel_size = args.kernel
+    kernel_size = arguments.kernel
     if kernel_size == '3d' and contrast_type == 'dwi':
         kernel_size = '2d'
         printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.',
                    type="warning")
 
-    if ctr_algo == 'file' and args.file_centerline is None:
+    if ctr_algo == 'file' and arguments.file_centerline is None:
         printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')
         sys.exit(1)
 
-    if args.file_centerline is not None:
-        manual_centerline_fname = args.file_centerline
+    if arguments.file_centerline is not None:
+        manual_centerline_fname = arguments.file_centerline
         ctr_algo = 'file'
     else:
         manual_centerline_fname = None
 
-    threshold = args.thr
+    if arguments.o is not None:
+        fname_out = arguments.o
+    else:
+        path, file_name, ext = extract_fname(fname_image)
+        fname_out = file_name + '_seg' + ext
+
+    threshold = arguments.thr
+
     if threshold is not None:
         if threshold > 1.0 or (threshold < 0.0 and threshold != -1.0):
             raise SyntaxError("Threshold should be between 0 and 1, or equal to -1 (no threshold)")
 
-    remove_temp_files = args.r
-    verbose = args.v
-    init_sct(log_level=verbose, update=True)  # Update log level
+    remove_temp_files = arguments.r
 
-    path_qc = args.qc
-    qc_dataset = args.qc_dataset
-    qc_subject = args.qc_subject
-    output_folder = args.ofolder
+    path_qc = arguments.qc
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
+    output_folder = arguments.ofolder
 
     # check if input image is 2D or 3D
     check_dim(fname_image, dim_lst=[2, 3])
@@ -192,8 +199,7 @@ def main():
                                      threshold_seg=threshold, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # Save segmentation
-    fname_seg = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_seg' +
-                                             extract_fname(fname_image)[2]))
+    fname_seg = os.path.abspath(os.path.join(output_folder, fname_out))
     im_seg.save(fname_seg)
 
     # Generate QC report
@@ -205,4 +211,4 @@ def main():
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])

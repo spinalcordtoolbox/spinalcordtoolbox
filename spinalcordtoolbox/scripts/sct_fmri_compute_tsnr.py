@@ -14,12 +14,11 @@
 
 import sys
 import os
-import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, add_suffix, empty_like
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_global_loglevel
 
 
 class Param:
@@ -65,11 +64,8 @@ class Tsnr:
 # PARSER
 # ==========================================================================================
 def get_parser():
-    parser = argparse.ArgumentParser(
-        description="Compute temporal SNR (tSNR) in fMRI time series.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+    parser = SCTArgumentParser(
+        description="Compute temporal SNR (tSNR) in fMRI time series."
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -87,9 +83,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1'],
-        default='1',
-        help="Verbosity. 0: None, 1: Verbose"
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
         '-o',
@@ -102,29 +101,26 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
-
+def main(argv=None):
     parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     param = Param()
 
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_src = arguments.i
     if arguments.o is not None:
         fname_dst = arguments.o
     else:
         fname_dst = add_suffix(fname_src, "_tsnr")
 
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
-
     # call main function
     tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)
     tsnr.compute()
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    param = Param()
-    main()
+    main(sys.argv[1:])
+

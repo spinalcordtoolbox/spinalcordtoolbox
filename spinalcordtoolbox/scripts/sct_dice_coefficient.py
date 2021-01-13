@@ -12,22 +12,19 @@
 
 import sys
 import os
-import argparse
 
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
 from spinalcordtoolbox.image import add_suffix
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Compute the Dice Coefficient. '
                     'N.B.: indexing (in both time and space) starts with 0 not 1! Inputting -1 for a '
-                    'size will set it to the full image extent for that dimension.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    'size will set it to the full image extent for that dimension.'
+    )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -93,25 +90,24 @@ def get_parser():
         choices=(0, 1))
     optional.add_argument(
         '-v',
+        metavar=Metavar.int,
         type=int,
-        help='Verbose.',
-        required=False,
+        choices=[0, 1, 2],
         default=1,
-        choices=(0, 1))
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
 
-if __name__ == "__main__":
-    init_sct()
+def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     fname_input1 = arguments.i
     fname_input2 = arguments.d
-
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     tmp_dir = tmp_create()  # create tmp directory
     tmp_dir = os.path.abspath(tmp_dir)
@@ -177,3 +173,8 @@ if __name__ == "__main__":
         rmtree(tmp_dir)
 
     printv(output, verbose)
+
+
+if __name__ == "__main__":
+    init_sct()
+    main(sys.argv[1:])

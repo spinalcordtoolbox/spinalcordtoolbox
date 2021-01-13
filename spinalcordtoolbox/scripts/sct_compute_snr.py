@@ -14,12 +14,12 @@
 
 import sys
 import os
-import argparse
+
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, empty_like, add_suffix
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, parse_num_list, init_sct, printv
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, parse_num_list, init_sct, printv, set_global_loglevel
 
 
 # PARAMETERS
@@ -33,15 +33,11 @@ class Param(object):
 
 
 def get_parser():
-
-    # Initialize the parser
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Compute SNR using methods described in [Dietrich et al., Measurement of'
                     ' signal-to-noise ratios in MR images: Influence of multichannel coils, parallel '
-                    'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].'
+    )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
@@ -82,10 +78,12 @@ def get_parser():
         choices=(0, 1))
     optional.add_argument(
         '-v',
-        help="Verbose. 0: nothing, 1: basic, 2: extended.",
+        metavar=Metavar.int,
         type=int,
-        choices=(0, 1, 2),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
@@ -102,14 +100,16 @@ def weighted_avg_and_std(values, weights):
     return (average, np.sqrt(variance))
 
 
-def main():
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # Default params
     param = Param()
 
     # Get parser info
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_data = arguments.i
     if arguments.m is not None:
         fname_mask = arguments.m
@@ -120,8 +120,6 @@ def main():
         index_vol_user = arguments.vol
     else:
         index_vol_user = ''
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     # Check parameters
     if method == 'diff':
@@ -189,9 +187,6 @@ def main():
         printv('\nSNR_' + method + ' = ' + str(snr_roi) + '\n', type='info')
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])

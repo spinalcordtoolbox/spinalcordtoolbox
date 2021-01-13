@@ -12,7 +12,6 @@
 
 import sys
 import os
-import argparse
 
 import numpy as np
 
@@ -23,8 +22,8 @@ from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
     copy, extract_fname, rmtree
 
@@ -60,8 +59,7 @@ class Param:
 def get_parser():
     # initialize default param
     param_default = Param()
-    # parser initialisation
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description=(
             "This function takes an anatomical image and its cord segmentation (binary file), and outputs the "
             "cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and "
@@ -70,10 +68,7 @@ def get_parser():
             "'spinalcordtoolbox/vertebrae/detect_c2c3.py' to detect the C2-C3 disc.\n"
             "Tips: To run the function with init txt file that includes flags -initz/-initcenter:\n"
             "  sct_label_vertebrae -i t2.nii.gz -s t2_seg-manual.nii.gz  '$(< init_label_vertebrae.txt)'"
-        ),
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+        )
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -201,9 +196,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose. 0: nothing. 1: basic. 2: extended."
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
         '-qc',
@@ -226,7 +224,11 @@ def get_parser():
     return parser
 
 
-def main(args=None):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # initializations
     initz = ''
@@ -234,13 +236,6 @@ def main(args=None):
     fname_initlabel = ''
     file_labelz = 'labelz.nii.gz'
     param = Param()
-
-    # check user arguments
-    parser = get_parser()
-    if args:
-        arguments = parser.parse_args(args)
-    else:
-        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     fname_in = os.path.abspath(arguments.i)
     fname_seg = os.path.abspath(arguments.s)
@@ -276,8 +271,6 @@ def main(args=None):
         fname_initlabel = os.path.abspath(arguments.initlabel)
     if arguments.param is not None:
         param.update(arguments.param[0])
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
     remove_temp_files = arguments.r
     clean_labels = arguments.clean_labels
     laplacian = arguments.laplacian
@@ -309,7 +302,7 @@ def main(args=None):
         # apply straightening
         s, o = run_proc(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
-        sct_straighten_spinalcord.main(args=[
+        sct_straighten_spinalcord.main(argv=[
             '-i', 'data.nii',
             '-s', 'segmentation.nii',
             '-r', str(remove_temp_files),
@@ -471,7 +464,7 @@ def main(args=None):
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
         labeled_seg_file = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
-        generate_qc(fname_in, fname_seg=labeled_seg_file, args=args, path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_in, fname_seg=labeled_seg_file, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_label_vertebrae')
 
     display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'])
@@ -479,5 +472,5 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

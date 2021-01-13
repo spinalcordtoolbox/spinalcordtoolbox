@@ -12,31 +12,26 @@ About the license: see the file LICENSE.TXT
 
 import os
 import sys
-import argparse
 
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
 import numpy as np
 
 from spinalcordtoolbox.image import Image, zeros_like
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
 def get_parser():
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Detection of the Ponto-Medullary Junction (PMJ). '
                     ' This method is machine-learning based and adapted for T1w-like or '
                     ' T2w-like images. '
                     ' If the PMJ is detected from the input image, a nifti mask is output '
                     ' ("*_pmj.nii.gz") with one voxel (value=50) located at the predicted PMJ '
-                    ' position. If the PMJ is not detected, nothing is output.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+                    ' position. If the PMJ is not detected, nothing is output.'
+    )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -73,6 +68,10 @@ def get_parser():
         action=ActionCreateFolder,
         required=False)
     optional.add_argument(
+        '-o',
+        metavar=Metavar.file,
+        help='Output filename. Example: pmj.nii.gz '),
+    optional.add_argument(
         '-qc',
         metavar=Metavar.str,
         help='The path where the quality control generated content will be saved.',
@@ -90,18 +89,19 @@ def get_parser():
         default=1,
         choices=(0, 1))
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-        required=False,
-        choices=(0, 1, 2),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
 
 class DetectPMJ:
-    def __init__(self, fname_im, contrast, fname_seg, path_out, verbose):
+    def __init__(self, fname_im, contrast, fname_seg, path_out, verbose, fname_out):
 
         self.fname_im = fname_im
         self.contrast = contrast
@@ -124,7 +124,7 @@ class DetectPMJ:
 
         self.threshold = -0.75 if self.contrast == 't1' else 0.8  # detection map threshold, depends on the contrast
 
-        self.fname_out = extract_fname(self.fname_im)[1] + '_pmj.nii.gz'
+        self.fname_out = fname_out
 
         self.fname_qc = 'qc_pmj.png'
 
@@ -257,9 +257,11 @@ class DetectPMJ:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main():
+def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # Set param arguments ad inputted by user
     fname_in = arguments.i
@@ -283,21 +285,23 @@ def main():
             os.makedirs(path_results)
     else:
         path_results = '.'
+    if arguments.o is not None:
+        fname_o = arguments.o
+    else:
+        fname_o = extract_fname(fname_in)[1] + '_pmj.nii.gz'
 
     path_qc = arguments.qc
 
     # Remove temp folder
     rm_tmp = bool(arguments.r)
 
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
-
     # Initialize DetectPMJ
     detector = DetectPMJ(fname_im=fname_in,
                          contrast=contrast,
                          fname_seg=fname_seg,
                          path_out=path_results,
-                         verbose=verbose)
+                         verbose=verbose,
+                         fname_out=fname_o)
 
     # run the extraction
     fname_out, tmp_dir = detector.apply()
@@ -317,4 +321,4 @@ def main():
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])

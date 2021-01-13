@@ -8,15 +8,14 @@
 #
 # About the license: see the file LICENSE.TXT
 
-import argparse
+import sys
 
-from spinalcordtoolbox.utils import init_sct
+from spinalcordtoolbox.utils import init_sct, set_global_loglevel, SCTArgumentParser
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Generate Quality Control (QC) report following SCT processing.',
-        formatter_class=argparse.RawTextHelpFormatter,
         epilog='Examples:\n'
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc\n'
                'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae\n'
@@ -59,29 +58,38 @@ def get_parser():
     parser.add_argument('-v',
                         action='store_true',
                         help="Verbose")
+    parser.add_argument('-h',
+                        '--help',
+                        action="help",
+                        help="show this message and exit")
+
     return parser
 
 
-def main(args):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     from spinalcordtoolbox.reports.qc import generate_qc
-
     # Build args list (for display)
-    args_disp = '-i ' + args.i
-    if args.d:
-        args_disp += ' -d ' + args.d
-    if args.s:
-        args_disp += ' -s ' + args.s
-    generate_qc(fname_in1=args.i,
-                fname_in2=args.d,
-                fname_seg=args.s,
+    args_disp = '-i ' + arguments.i
+    if arguments.d:
+        args_disp += ' -d ' + arguments.d
+    if arguments.s:
+        args_disp += ' -s ' + arguments.s
+    generate_qc(fname_in1=arguments.i,
+                fname_in2=arguments.d,
+                fname_seg=arguments.s,
                 args=args_disp,
-                path_qc=args.qc,
-                dataset=args.qc_dataset,
-                subject=args.qc_subject,
-                process=args.p)
+                path_qc=arguments.qc,
+                dataset=arguments.qc_dataset,
+                subject=arguments.qc_subject,
+                process=arguments.p)
 
 
-if __name__ == '__main__':
-    arguments = get_parser().parse_args()
-    init_sct(log_level=2 if arguments.v else 1)
-    main(arguments)
+if __name__ == "__main__":
+    init_sct()
+    main(sys.argv[1:])
+

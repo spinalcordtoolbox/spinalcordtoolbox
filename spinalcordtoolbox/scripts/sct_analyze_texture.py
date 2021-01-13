@@ -11,30 +11,24 @@
 import os
 import sys
 import itertools
-import argparse
 
 import numpy as np
 from skimage.feature import greycomatrix, greycoprops
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like
-from spinalcordtoolbox.utils.shell import Metavar, ActionCreateFolder, SmartFormatter
-from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, run_proc
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
+from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, run_proc, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
 def get_parser():
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given '
                     'mask. The textures features are those defined in the sckit-image implementation: '
                     'http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs '
                     'one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called '
                     'fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, '
-                    'called fnameInput_feature_distance_mean.nii.gz, is output.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py")
+                    'called fnameInput_feature_distance_mean.nii.gz, is output.'
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -102,12 +96,13 @@ def get_parser():
         choices=(0, 1),
         default=int(Param().rm_tmp))
     optional.add_argument(
-        "-v",
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended.",
-        required=False,
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        choices=(0, 1, 2),
-        default=Param().verbose)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
@@ -309,17 +304,16 @@ class ParamGLCM(object):
         self.angle = '0,45,90,135'  # Rotation angles for co-occurrence matrix
 
 
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
-    # get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=args)
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # create param object
     param = Param()
@@ -348,8 +342,6 @@ def main(args=None):
         param.dim = arguments.dim
     if arguments.r is not None:
         param.rm_tmp = bool(arguments.r)
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     # create the GLCM constructor
     glcm = ExtractGLCM(param=param, param_glcm=param_glcm)
@@ -366,4 +358,4 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])

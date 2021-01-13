@@ -14,23 +14,18 @@
 
 import os
 import sys
-import argparse
 
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 
 
 def get_parser():
-    """Initialize the parser."""
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='MS lesion Segmentation using convolutional networks. Reference: Gros C et al. Automatic'
                     'segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional'
-                    'neural networks. Neuroimage. 2018 Oct 6;184:901-915.',
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py"))
+                    'neural networks. Neuroimage. 2018 Oct 6;184:901-915.'
+    )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -95,11 +90,13 @@ def get_parser():
         choices=(0, 1),
         default=1)
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="1: Display on (default), 0: Display off, 2: Extended",
-        choices=(0, 1, 2),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
     optional.add_argument(
         '-igt',
         metavar=Metavar.str,
@@ -109,35 +106,35 @@ def get_parser():
     return parser
 
 
-def main():
+def main(argv=None):
     """Main function."""
     parser = get_parser()
-    args = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
-    fname_image = args.i
-    contrast_type = args.c
+    fname_image = arguments.i
+    contrast_type = arguments.c
 
-    ctr_algo = args.centerline
+    ctr_algo = arguments.centerline
 
-    brain_bool = bool(args.brain)
-    if args.brain is None and contrast_type in ['t2s', 't2_ax']:
+    brain_bool = bool(arguments.brain)
+    if arguments.brain is None and contrast_type in ['t2s', 't2_ax']:
         brain_bool = False
 
-    output_folder = args.ofolder
+    output_folder = arguments.ofolder
 
-    if ctr_algo == 'file' and args.file_centerline is None:
+    if ctr_algo == 'file' and arguments.file_centerline is None:
         printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'error')
         sys.exit(1)
 
-    if args.file_centerline is not None:
-        manual_centerline_fname = args.file_centerline
+    if arguments.file_centerline is not None:
+        manual_centerline_fname = arguments.file_centerline
         ctr_algo = 'file'
     else:
         manual_centerline_fname = None
 
-    remove_temp_files = args.r
-    verbose = args.v
-    init_sct(log_level=verbose, update=True)  # Update log level
+    remove_temp_files = arguments.r
 
     algo_config_stg = '\nMethod:'
     algo_config_stg += '\n\tCenterline algorithm: ' + str(ctr_algo)
@@ -173,4 +170,5 @@ def main():
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

@@ -13,20 +13,17 @@
 
 import sys
 import os
-import argparse
 import logging
 
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, display_viewer_syntax
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_global_loglevel
 from spinalcordtoolbox.flattening import flatten_sagittal
 
 logger = logging.getLogger(__name__)
 
+
 # Default parameters
-
-
 class Param:
-    # The constructor
     def __init__(self):
         self.debug = 0
         self.interp = 'sinc'  # final interpolation
@@ -34,7 +31,7 @@ class Param:
         self.verbose = 1
 
 
-def main(fname_anat, fname_centerline, verbose):
+def main(argv=None):
     """
     Main function
     :param fname_anat:
@@ -42,6 +39,14 @@ def main(fname_anat, fname_centerline, verbose):
     :param verbose:
     :return:
     """
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
+    fname_anat = arguments.i
+    fname_centerline = arguments.s
+
     # load input images
     im_anat = Image(fname_anat)
     im_centerline = Image(fname_centerline)
@@ -57,13 +62,10 @@ def main(fname_anat, fname_centerline, verbose):
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Flatten the spinal cord such within the medial sagittal plane. Useful to make nice pictures. "
                     "Output data has suffix _flatten. Output type is float32 (regardless of input type) to minimize "
-                    "loss of precision during conversion.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+                    "loss of precision during conversion."
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -87,9 +89,12 @@ def get_parser():
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default=str(param_default.verbose),
-        help="Verbosity. 0: no verbose (default), 1: min verbose, 2: verbose + figures"
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
     return parser
@@ -97,16 +102,5 @@ def get_parser():
 
 if __name__ == "__main__":
     init_sct()
-    # initialize parameters
-    param = Param()
-    param_default = Param()
+    main(sys.argv[1:])
 
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
-    fname_anat = arguments.i
-    fname_centerline = arguments.s
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
-
-    # call main function
-    main(fname_anat, fname_centerline, verbose)

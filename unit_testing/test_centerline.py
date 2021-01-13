@@ -13,13 +13,15 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, f
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 import spinalcordtoolbox.math
-from spinalcordtoolbox.utils import sct_test_path, init_sct
+from spinalcordtoolbox.utils import sct_test_path, init_sct, set_global_loglevel
 
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
-
-init_sct(log_level=2)  # Set logger in debug mode
-VERBOSE = 0  # Set to 2 to save images, 0 otherwise
+# Set logger to "DEBUG"
+init_sct()
+set_global_loglevel(verbose=2)
+# Separate setting for get_centerline. Set to 2 to save images ("DEBUG"), 0 otherwise ("INFO")
+VERBOSE = 0
 
 
 # Generate a list of fake centerlines: (dummy_segmentation(params), dict of expected results)

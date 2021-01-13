@@ -18,7 +18,6 @@
 
 import os
 import sys
-import argparse
 from typing import Sequence
 
 import numpy as np
@@ -27,16 +26,14 @@ import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, ActionCreateFolder, list_type, init_sct, printv, parse_num_list
+from spinalcordtoolbox.utils import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, printv,
+                                     parse_num_list, set_global_loglevel)
 from spinalcordtoolbox.utils.shell import display_viewer_syntax
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
-        description="Utility functions for label images.",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+    parser = SCTArgumentParser(
+        description="Utility functions for label images."
     )
 
     req_group = parser.add_argument_group("\nREQUIRED I/O")
@@ -96,11 +93,22 @@ def get_parser():
         help="R|Create labels on a cord segmentation (or centerline) image defined by '-i'. Each label should be "
              "specified using the form 'v1,v2' where 'v1' is value of the slice index along the inferior-superior "
              "axis, and 'v2' is the value of the label. Separate each label with ':'. \n"
-             "Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from the most inferior slice).\n"
-             "You can also choose a slice value of '-1' to automatically select the mid-point in the "
-             "inferior-superior direction. For example, if you know that the C2-C3 disc is centered in the I-S "
-             "direction, then you can enter '-1,3' for that label instead."
+             "Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from "
+             "the most inferior slice)."
     )
+
+    func_group.add_argument(
+        '-create-seg-mid',
+        metavar=Metavar.int,
+        type=int,
+        help="R|Similar to '-create-seg'. This option takes a single label value, and will automatically select the "
+             "mid-point slice in the inferior-superior direction (so there is no need for a slice index).\n"
+             "This is useful for when you have centered the field of view of your data at a specific location. "
+             "For example, if you already know that the C2-C3 disc is centered in the I-S direction, then "
+             "you can enter '-create-seg-mid 3' for that label. This saves you the trouble of having to manually "
+             "specify a slice index using '-create-seg'."
+    )
+
     func_group.add_argument(
         '-create-viewer',
         metavar=Metavar.list,
@@ -191,11 +199,12 @@ def get_parser():
 
     optional.add_argument(
         '-v',
-        choices=[0, 1, 2],
-        default=1,
         metavar=Metavar.int,
         type=int,
-        help="Verbose. 0: nothing. 1: basic. 2: extended."
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
 
     optional.add_argument(
@@ -222,15 +231,16 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
-    parser = get_parser()
-    if args:
-        arguments = parser.parse_args(args)
-    else:
-        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+def main(argv=None):
+    for i, arg in enumerate(argv):
+        if arg == '-create-seg' and len(argv) > i+1 and '-1,' in argv[i+1]:
+            raise DeprecationWarning("The use of '-1' for '-create-seg' has been deprecated. Please use "
+                                     "'-create-seg-mid' instead.")
 
-    verbosity = arguments.v
-    init_sct(log_level=verbosity, update=True)  # Update log level
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     input_filename = arguments.i
     output_fname = arguments.o
@@ -250,10 +260,13 @@ def main(args=None):
     elif arguments.create_seg is not None:
         labels = arguments.create_seg
         out = sct_labels.create_labels_along_segmentation(img, labels)
+    elif arguments.create_seg_mid is not None:
+        labels = [(-1, arguments.create_seg_mid)]
+        out = sct_labels.create_labels_along_segmentation(img, labels)
     elif arguments.cubic_to_point:
         out = sct_labels.cubic_to_point(img)
     elif arguments.display:
-        display_voxel(img, verbosity)
+        display_voxel(img, verbose)
         return
     elif arguments.increment:
         out = sct_labels.increment_z_inverse(img)
@@ -303,7 +316,7 @@ def main(args=None):
     display_viewer_syntax([input_filename, output_fname])
 
     if arguments.qc is not None:
-        generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=args,
+        generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=argv,
                     path_qc=os.path.abspath(arguments.qc), dataset=arguments.qc_dataset,
                     subject=arguments.qc_subject, process='sct_label_utils')
 
@@ -392,5 +405,5 @@ def launch_manual_label_gui(img: Image, input_labels_img: Image, labels: Sequenc
 
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

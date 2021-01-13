@@ -12,26 +12,23 @@
 
 import os
 import sys
-import argparse
 
 import numpy as np
 from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 
 from spinalcordtoolbox.image import Image, concat_data, add_suffix, change_orientation, concat_warp2d, split_img_data, pad_image
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
 
 def get_parser():
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Perform manipulations on images (e.g., pad, change space, split along dimension). '
-                    'Inputs can be a number, a 4d image, or several 3d images separated with ","',
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip('.py'))
+                    'Inputs can be a number, a 4d image, or several 3d images separated with ","'
+    )
+
     mandatory = parser.add_argument_group('MANDATORY ARGUMENTS')
     mandatory.add_argument(
         '-i',
@@ -149,34 +146,34 @@ def get_parser():
     misc = parser.add_argument_group('Misc')
     misc.add_argument(
         '-v',
+        metavar=Metavar.int,
         type=int,
-        help='Verbose. 0: nothing. 1: basic. 2: extended.',
-        required=False,
+        choices=[0, 1, 2],
         default=1,
-        choices=(0, 1, 2))
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
+    )
 
     return parser
 
 
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     # initializations
     output_type = None
     dim_list = ['x', 'y', 'z', 't']
 
-    # Get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
-    parser = get_parser()
-    arguments = parser.parse_args(args=args)
     fname_in = arguments.i
     n_in = len(fname_in)
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     if arguments.o is not None:
         fname_out = arguments.o
@@ -533,4 +530,5 @@ def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])
+

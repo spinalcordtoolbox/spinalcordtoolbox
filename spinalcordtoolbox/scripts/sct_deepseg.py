@@ -11,7 +11,6 @@ ivadomed package.
 # TODO: Fetch default value (and display) depending on the model that is used.
 # TODO: accommodate multiclass segmentation
 
-import argparse
 import os
 import sys
 import logging
@@ -24,18 +23,16 @@ from spinalcordtoolbox import image
 import spinalcordtoolbox.deepseg as deepseg
 import spinalcordtoolbox.deepseg.models
 
-from spinalcordtoolbox.utils.shell import SmartFormatter, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 
 logger = logging.getLogger(__name__)
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(
-        description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+    parser = SCTArgumentParser(
+        description="Segment an anatomical structure or pathologies according to the specified deep learning model."
+    )
 
     input_output = parser.add_argument_group("\nINPUT/OUTPUT")
     input_output.add_argument(
@@ -60,8 +57,11 @@ def get_parser():
     seg = parser.add_argument_group('\nTASKS')
     seg.add_argument(
         "-task",
+        nargs="+",
         help="Task to perform. It could either be a pre-installed task, task that could be installed, or a custom task."
-             " To list available tasks, run: sct_deepseg -list-tasks",
+             " To list available tasks, run: sct_deepseg -list-tasks. To use a custom task, indicate the path to the "
+             " ivadomed packaged model (see https://ivadomed.org/en/latest/pretrained_models.html#packaged-model-format for more details). "
+             " More than one path can be indicated (separated with space) for cascaded application of the models.",
         metavar=Metavar.str)
     seg.add_argument(
         "-list-tasks",
@@ -112,11 +112,13 @@ def get_parser():
 
     misc = parser.add_argument_group('\nMISC')
     misc.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = no verbosity, 1 = verbose.",
-        choices=(0, 1),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
     misc.add_argument(
         "-h",
         "--help",
@@ -126,43 +128,51 @@ def get_parser():
     return parser
 
 
-def main(argv):
+def main(argv=None):
     parser = get_parser()
-    args = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # Deal with task
-    if args.list_tasks:
+    if arguments.list_tasks:
         deepseg.models.display_list_tasks()
 
-    if args.install_task is not None:
-        for name_model in deepseg.models.TASKS[args.install_task]['models']:
+    if arguments.install_task is not None:
+        for name_model in deepseg.models.TASKS[arguments.install_task]['models']:
             deepseg.models.install_model(name_model)
         exit(0)
 
     # Deal with input/output
-    for file in args.i:
+    for file in arguments.i:
         if not os.path.isfile(file):
             parser.error("This file does not exist: {}".format(file))
 
     # Check if at least a model or task has been specified
-    if args.task is None:
+    if arguments.task is None:
         parser.error("You need to specify a task.")
 
-    # Check if all input images are provided
-    required_contrasts = deepseg.models.get_required_contrasts(args.task)
-    if len(args.i) != len(required_contrasts):
+    # Verify if the task is part of the "official" tasks, or if it is pointing to paths containing custom models
+    if len(arguments.task) == 1 and arguments.task[0] in deepseg.models.TASKS:
+        # Check if all input images are provided
+        required_contrasts = deepseg.models.get_required_contrasts(arguments.task[0])
+        n_contrasts = len(required_contrasts)
+        # Get pipeline model names
+        name_models = deepseg.models.TASKS[arguments.task[0]]['models']
+    else:
+        n_contrasts = len(arguments.i)
+        name_models = arguments.task
+
+    if len(arguments.i) != n_contrasts:
         parser.error(
             "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
-            .format(len(args.i), args.task, ', '.join(required_contrasts)))
+            .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
 
     # Check modality order
-    if len(args.i) > 1 and args.c is None:
+    if len(arguments.i) > 1 and arguments.c is None:
         parser.error(
-            "Please specify the order in which you put the contrasts in the input images (-i) with flag -c, e.g.,"
-            " -c t1 t2")
-
-    # Get pipeline model names
-    name_models = deepseg.models.TASKS[args.task]['models']
+            "Please specify the order in which you put the contrasts in the input images (-i) with flag -c, e.g., "
+            "-c t1 t2")
 
     # Run pipeline by iterating through the models
     fname_prior = None
@@ -182,21 +192,21 @@ def main(argv):
                 parser.error("The input model is invalid: {}".format(path_model))
 
         # Order input images
-        if args.c is not None:
+        if arguments.c is not None:
             input_filenames = []
             for required_contrast in deepseg.models.MODELS[name_model]['contrasts']:
-                for provided_contrast, input_filename in zip(args.c, args.i):
+                for provided_contrast, input_filename in zip(arguments.c, arguments.i):
                     if required_contrast == provided_contrast:
                         input_filenames.append(input_filename)
         else:
-            input_filenames = args.i
+            input_filenames = arguments.i
 
         # Call segment_nifti
-        options = {**vars(args), "fname_prior": fname_prior}
+        options = {**vars(arguments), "fname_prior": fname_prior}
         nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, options=options)
 
         # Delete intermediate outputs
-        if fname_prior and os.path.isfile(fname_prior) and args.r:
+        if fname_prior and os.path.isfile(fname_prior) and arguments.r:
             logger.info("Remove temporary files...")
             os.remove(fname_prior)
 
@@ -226,9 +236,9 @@ def main(argv):
         fname_prior = fname_seg
 
     for output_filename in output_filenames:
-        display_viewer_syntax([args.i[0], output_filename], colormaps=['gray', 'red'], opacities=['', '0.7'])
+        display_viewer_syntax([arguments.i[0], output_filename], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])

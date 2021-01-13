@@ -16,15 +16,16 @@
 import sys
 import os
 import math
-import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 
 
-def main():
-    # Initialization
+def main(argv=None):
     parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     GYRO = float(42.576 * 10 ** 6)  # gyromagnetic ratio (in Hz.T^-1)
     gradamp = []
     bigdelta = []
@@ -49,12 +50,9 @@ def main():
 
 
 def get_parser():
-    # Initialize the parser
-    parser = argparse.ArgumentParser(
-        description='Calculate b-value (in mm^2/s).',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py"))
+    parser = SCTArgumentParser(
+        description='Calculate b-value (in mm^2/s).'
+    )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -85,6 +83,14 @@ def get_parser():
         "--help",
         action="help",
         help="Show this help message and exit")
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
@@ -94,5 +100,5 @@ def get_parser():
 # =======================================================================================================================
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

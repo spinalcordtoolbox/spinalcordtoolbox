@@ -34,30 +34,28 @@
 import sys
 import os
 import time
-import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.registration.register import Paramreg, ParamregMultiStep
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import check_dim
 
 from spinalcordtoolbox.scripts.sct_register_to_template import register_wrapper
 
+# Default registration parameters
+step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
+                 slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
+step1 = Paramreg(step='1', type='im')
+paramregmulti = ParamregMultiStep([step0, step1])
 
-def get_parser(paramregmulti=None):
+
+def get_parser():
     # Initialize the parser
-
-    if paramregmulti is None:
-        step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
-                         slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
-        step1 = Paramreg(step='1', type='im')
-        paramregmulti = ParamregMultiStep([step0, step1])
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="This program co-registers two 3D volumes. The deformation is non-rigid and is constrained along "
                     "Z direction (i.e., axial plane). Hence, this function assumes that orientation of the destination "
                     "image is axial (RPI). If you need to register two volumes with large deformations and/or "
@@ -79,10 +77,7 @@ def get_parser(paramregmulti=None):
                     "segmentation, i.e. using type=seg\n"
                     " - Columnwise algorithm needs to be applied after a translation and rotation such as centermassrot "
                     "algorithm. For example: -param step=1,type=seg,algo=centermassrot,metric=MeanSquares:"
-                    "step=2,type=seg,algo=columnwise,metric=MeanSquares",
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py")
+                    "step=2,type=seg,algo=columnwise,metric=MeanSquares"
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -278,9 +273,12 @@ def get_parser(paramregmulti=None):
     )
     optional.add_argument(
         '-v',
-        choices=['0', '1', '2'],
-        default='1',
-        help="Verbose. 0: nothing, 1: basic, 2: extended."
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     return parser
 
@@ -298,9 +296,11 @@ class Param:
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     # initialize parameters
     param = Param()
@@ -315,17 +315,6 @@ def main(args=None):
     generate_warpinv = 1
 
     start_time = time.time()
-
-    # get default registration parameters
-    # step1 = Paramreg(step='1', type='im', algo='syn', metric='MI', iter='5', shrink='1', smooth='0', gradStep='0.5')
-    step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
-                     slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
-    step1 = Paramreg(step='1', type='im')
-    paramregmulti = ParamregMultiStep([step0, step1])
-
-    parser = get_parser(paramregmulti=paramregmulti)
-
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
 
     # get arguments
     fname_src = arguments.i
@@ -371,8 +360,6 @@ def main(args=None):
     identity = arguments.identity
     interp = arguments.x
     remove_temp_files = arguments.r
-    verbose = int(arguments.v)
-    init_sct(log_level=verbose, update=True)  # Update log level
 
     # printv(arguments)
     printv('\nInput parameters:')
@@ -427,7 +414,7 @@ def main(args=None):
 
     if path_qc is not None:
         if fname_dest_seg:
-            generate_qc(fname_src2dest, fname_in2=fname_dest, fname_seg=fname_dest_seg, args=args,
+            generate_qc(fname_src2dest, fname_in2=fname_dest, fname_seg=fname_dest_seg, args=argv,
                         path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject,
                         process='sct_register_multimodal')
         else:
@@ -438,9 +425,6 @@ def main(args=None):
     display_viewer_syntax([fname_dest, fname_src2dest], verbose=verbose)
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    # call main function
-    main()
+    main(sys.argv[1:])

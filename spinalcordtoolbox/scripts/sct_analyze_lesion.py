@@ -13,7 +13,6 @@ import math
 import sys
 import pickle
 import shutil
-import argparse
 
 import numpy as np
 import pandas as pd
@@ -21,15 +20,13 @@ from skimage.measure import label
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils.shell import Metavar, SmartFormatter, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, printv
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
 def get_parser():
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='R|Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
                     '3, etc.) and then outputs morphometric measures for each lesion:\n'
                     '- volume [mm^3]\n'
@@ -38,10 +35,7 @@ def get_parser():
                     '                                the lesion as a circle in the axial plane.\n\n'
                     'If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means '
                     'that the registered template does not fully cover the lesion. In that case you might want to '
-                    'check the registration results.',
-        add_help=None,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py")
+                    'check the registration results.'
     )
 
     mandatory_arguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -95,12 +89,13 @@ def get_parser():
         default=1,
         choices=(0, 1))
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-        required=False,
-        choices=(0, 1, 2),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
@@ -511,17 +506,16 @@ class AnalyzeLeion:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
-    # get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
     parser = get_parser()
-    arguments = parser.parse_args(args=args)
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     fname_mask = arguments.m
     fname_sc = arguments.s
@@ -547,10 +541,6 @@ def main(args=None):
     else:
         rm_tmp = True
 
-    # Verbosity
-    verbose = arguments.v
-    init_sct(log_level=verbose, update=True)  # Update log level
-
     # create the Lesion constructor
     lesion_obj = AnalyzeLeion(fname_mask=fname_mask,
                               fname_sc=fname_sc,
@@ -575,4 +565,4 @@ def main(args=None):
 
 if __name__ == "__main__":
     init_sct()
-    main()
+    main(sys.argv[1:])

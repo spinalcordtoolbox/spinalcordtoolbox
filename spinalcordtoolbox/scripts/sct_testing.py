@@ -23,7 +23,7 @@ import signal
 import numpy as np
 from pandas import DataFrame
 
-from spinalcordtoolbox.utils import init_sct, run_proc, tmp_create, printv, rmtree, __sct_dir__
+from spinalcordtoolbox.utils import init_sct, run_proc, tmp_create, printv, rmtree, __sct_dir__, set_global_loglevel, SCTArgumentParser
 from spinalcordtoolbox.scripts import sct_download_data
 
 # FIXME
@@ -99,11 +99,9 @@ class bcolors:
 # PARSER
 # ==========================================================================================
 def get_parser():
-    import argparse
-
     param_default = Param()
 
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description="Crash and integrity testing for functions of the Spinal Cord Toolbox. Internet connection is required for downloading testing data.",
     )
 
@@ -158,6 +156,9 @@ def get_parser():
     parser.add_argument("--execution-folder",
                         help="Folder where to run tests from (default. temporary)",
                         )
+    parser.add_argument('-h', "--help",
+                        help="show this message and exit",
+                        action="help")
 
     return parser
 
@@ -208,19 +209,14 @@ def process_function_multiproc(fname, param):
 
 # Main
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.verbose
+    set_global_loglevel(verbose=verbose)
 
     # initializations
     param = Param()
-
-    # check user arguments
-    if args is None:
-        args = sys.argv[1:]
-
-    # get parser info
-    parser = get_parser()
-
-    arguments = parser.parse_args(args)
 
     param.download = int(arguments.download)
     param.path_data = arguments.path
@@ -228,8 +224,7 @@ def main(args=None):
     param.remove_tmp_file = int(arguments.remove_temps)
     jobs = arguments.jobs
 
-    param.verbose = arguments.verbose
-    init_sct(log_level=param.verbose, update=True)  # Update log level
+    param.verbose = verbose
 
     start_time = time.time()
 
@@ -609,11 +604,7 @@ def update_param(param):
     return param
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    # initialize parameters
-    param = Param()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

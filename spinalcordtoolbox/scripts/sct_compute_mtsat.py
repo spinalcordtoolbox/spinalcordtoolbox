@@ -18,23 +18,19 @@
 
 import sys
 import os
-import argparse
 import json
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv, display_viewer_syntax
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, display_viewer_syntax, set_global_loglevel
 from spinalcordtoolbox.qmri.mt import compute_mtsat
 from spinalcordtoolbox.image import Image, splitext
 
 
-def get_parser(argv):
-    parser = argparse.ArgumentParser(
+def get_parser():
+    parser = SCTArgumentParser(
         description='Compute MTsat and T1map. '
                     'Reference: Helms G, Dathe H, Kallenberg K, Dechent P. High-resolution maps of magnetization '
                     'transfer with inherent correction for RF inhomogeneity and T1 relaxation obtained from 3D FLASH '
-                    'MRI. Magn Reson Med 2008;60(6):1396-1407.',
-        add_help=False,
-        formatter_class=SmartFormatter,
-        prog=os.path.basename(__file__).strip(".py")
+                    'MRI. Magn Reson Med 2008;60(6):1396-1407.'
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -115,11 +111,13 @@ def get_parser(argv):
         help="Output file for T1map",
         default="t1map.nii.gz")
     optional.add_argument(
-        "-v",
-        help="Verbose: 0 = no verbosity, 1 = verbose (default).",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        choices=(0, 1),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
@@ -162,51 +160,52 @@ def fetch_metadata(fname_json, field):
         return metadata[field]
 
 
-def main(argv):
-    parser = get_parser(argv)
-    args = parser.parse_args(argv if argv else ['--help'])
-    verbose = args.v
-    init_sct(log_level=verbose, update=True)  # Update log level
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
 
     printv('Load data...', verbose)
-    nii_mt = Image(args.mt)
-    nii_pd = Image(args.pd)
-    nii_t1 = Image(args.t1)
-    if args.b1map is None:
+    nii_mt = Image(arguments.mt)
+    nii_pd = Image(arguments.pd)
+    nii_t1 = Image(arguments.t1)
+    if arguments.b1map is None:
         nii_b1map = None
     else:
-        nii_b1map = Image(args.b1map)
+        nii_b1map = Image(arguments.b1map)
 
-    if args.trmt is None:
-        args.trmt = fetch_metadata(get_json_file_name(args.mt, check_exist=True), 'RepetitionTime')
-    if args.trpd is None:
-        args.trpd = fetch_metadata(get_json_file_name(args.pd, check_exist=True), 'RepetitionTime')
-    if args.trt1 is None:
-        args.trt1 = fetch_metadata(get_json_file_name(args.t1, check_exist=True), 'RepetitionTime')
-    if args.famt is None:
-        args.famt = fetch_metadata(get_json_file_name(args.mt, check_exist=True), 'FlipAngle')
-    if args.fapd is None:
-        args.fapd = fetch_metadata(get_json_file_name(args.pd, check_exist=True), 'FlipAngle')
-    if args.fat1 is None:
-        args.fat1 = fetch_metadata(get_json_file_name(args.t1, check_exist=True), 'FlipAngle')
+    if arguments.trmt is None:
+        arguments.trmt = fetch_metadata(get_json_file_name(arguments.mt, check_exist=True), 'RepetitionTime')
+    if arguments.trpd is None:
+        arguments.trpd = fetch_metadata(get_json_file_name(arguments.pd, check_exist=True), 'RepetitionTime')
+    if arguments.trt1 is None:
+        arguments.trt1 = fetch_metadata(get_json_file_name(arguments.t1, check_exist=True), 'RepetitionTime')
+    if arguments.famt is None:
+        arguments.famt = fetch_metadata(get_json_file_name(arguments.mt, check_exist=True), 'FlipAngle')
+    if arguments.fapd is None:
+        arguments.fapd = fetch_metadata(get_json_file_name(arguments.pd, check_exist=True), 'FlipAngle')
+    if arguments.fat1 is None:
+        arguments.fat1 = fetch_metadata(get_json_file_name(arguments.t1, check_exist=True), 'FlipAngle')
 
     # compute MTsat
     nii_mtsat, nii_t1map = compute_mtsat(nii_mt, nii_pd, nii_t1,
-                                         args.trmt, args.trpd, args.trt1,
-                                         args.famt, args.fapd, args.fat1,
+                                         arguments.trmt, arguments.trpd, arguments.trt1,
+                                         arguments.famt, arguments.fapd, arguments.fat1,
                                          nii_b1map=nii_b1map)
 
     # Output MTsat and T1 maps
     printv('Generate output files...', verbose)
-    nii_mtsat.save(args.omtsat)
-    nii_t1map.save(args.ot1map)
+    nii_mtsat.save(arguments.omtsat)
+    nii_t1map.save(arguments.ot1map)
 
-    display_viewer_syntax([args.omtsat, args.ot1map],
+    display_viewer_syntax([arguments.omtsat, arguments.ot1map],
                               colormaps=['gray', 'gray'],
                               minmax=['-10,10', '0, 3'],
                               opacities=['1', '1'],
                               verbose=verbose)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
+    init_sct()
     main(sys.argv[1:])

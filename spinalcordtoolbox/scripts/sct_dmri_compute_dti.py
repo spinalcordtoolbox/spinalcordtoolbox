@@ -12,26 +12,14 @@
 
 import os
 import sys
-import argparse
 
-from spinalcordtoolbox.utils import Metavar, SmartFormatter, init_sct, printv
-
-
-class Param:
-    def __init__(self):
-        self.verbose = 1
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 
 
 def get_parser():
-    param = Param()
-
-    # Initialize the parser
-
-    parser = argparse.ArgumentParser(
-        description='Compute Diffusion Tensor Images (DTI) using dipy.',
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py"))
+    parser = SCTArgumentParser(
+        description='Compute Diffusion Tensor Images (DTI) using dipy.'
+    )
 
     mandatory = parser.add_argument_group("MANDATORY ARGMENTS")
     mandatory.add_argument(
@@ -83,19 +71,25 @@ def get_parser():
         required=False,
         default='dti_')
     optional.add_argument(
-        "-v",
-        help="Verbose. 0: nothing. 1: basic. 2: extended.",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        required=False,
-        default=param.verbose,
-        choices=(0, 1, 2))
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
 
 # MAIN
 # ==========================================================================================
-def main(args=None):
+def main(argv=None):
+    parser = get_parser()
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+
     # initialization
     file_mask = ''
 
@@ -110,17 +104,15 @@ def main(args=None):
     evecs = arguments.evecs
     if arguments.m is not None:
         file_mask = arguments.m
-    param.verbose = arguments.v
-    init_sct(log_level=param.verbose, update=True)  # Update log level
 
     # compute DTI
-    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask):
+    if not compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask, verbose):
         printv('ERROR in compute_dti()', 1, 'error')
 
 
 # compute_dti
 # ==========================================================================================
-def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask):
+def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_mask, verbose):
     """
     Compute DTI.
     :param fname_in: input 4d file.
@@ -145,13 +137,13 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
 
     # mask and crop the data. This is a quick way to avoid calculating Tensors on the background of the image.
     if not file_mask == '':
-        printv('Open mask file...', param.verbose)
+        printv('Open mask file...', verbose)
         # open mask file
         nii_mask = Image(file_mask)
         mask = nii_mask.data
 
     # fit tensor model
-    printv('Computing tensor using "' + method + '" method...', param.verbose)
+    printv('Computing tensor using "' + method + '" method...', verbose)
     import dipy.reconst.dti as dti
     if method == 'standard':
         tenmodel = dti.TensorModel(gtab)
@@ -169,7 +161,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
             tenfit = dti_restore.fit(data, mask)
 
     # Compute metrics
-    printv('Computing metrics...', param.verbose)
+    printv('Computing metrics...', verbose)
     # FA
     nii.data = tenfit.fa
     nii.save(prefix + 'FA.nii.gz', dtype='float32')
@@ -195,11 +187,7 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
     return True
 
 
-# START PROGRAM
-# ==========================================================================================
 if __name__ == "__main__":
     init_sct()
-    # initialize parameters
-    param = Param()
-    # call main function
-    main()
+    main(sys.argv[1:])
+

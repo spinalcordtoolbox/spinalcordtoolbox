@@ -501,7 +501,7 @@ def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     im_dest.save(fname_dest)
     # apply warping field
     fname_src_reg = add_suffix(fname_src, '_reg')
-    sct_apply_transfo.main(args=['-i', fname_src,
+    sct_apply_transfo.main(argv=['-i', fname_src,
                                  '-d', fname_dest,
                                  '-w', warp,
                                  '-x', interp])
