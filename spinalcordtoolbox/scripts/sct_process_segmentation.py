@@ -276,7 +276,7 @@ def main(argv=None):
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
     fname_segmentation = get_absolute_path(arguments.i)
-    fname_vert_levels = ''
+
     if arguments.o is not None:
         file_out = os.path.abspath(arguments.o)
     else:
@@ -287,11 +287,11 @@ def main(argv=None):
         append = 0
     if arguments.vert is not None:
         vert_levels = arguments.vert
+        fname_vert_levels = arguments.vertfile
     else:
         vert_levels = ''
+        fname_vert_levels = ''
     remove_temp_files = arguments.r
-    if arguments.vertfile is not None:
-        fname_vert_levels = arguments.vertfile
     if arguments.perlevel is not None:
         perlevel = arguments.perlevel
     else:
