@@ -2,7 +2,6 @@ from pytest_console_scripts import script_runner
 import pytest
 import logging
 import os
-import subprocess
 from spinalcordtoolbox.scripts import sct_detect_pmj
 
 logger = logging.getLogger(__name__)

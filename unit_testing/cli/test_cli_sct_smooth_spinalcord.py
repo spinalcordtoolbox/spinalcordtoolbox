@@ -1,7 +1,6 @@
 from pytest_console_scripts import script_runner
 import pytest
 import logging
-import subprocess
 import os
 from spinalcordtoolbox.scripts import sct_smooth_spinalcord
 

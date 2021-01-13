@@ -2,7 +2,6 @@ from pytest_console_scripts import script_runner
 import pytest
 import logging
 import os
-import subprocess
 from spinalcordtoolbox.scripts import sct_deepseg_sc
 
 logger = logging.getLogger(__name__)
@@ -22,4 +21,3 @@ def test_sct_deepseg_sc_o_flag(tmp_path):
             str(os.path.join(str(tmp_path), 'test_seg.nii.gz'))]
     sct_deepseg_sc.main(argv)
     assert os.path.isfile(os.path.join(str(tmp_path), 'test_seg.nii.gz'))
-
