@@ -300,3 +300,12 @@ def test_save_as_csv_extract_metric(dummy_data_and_labels):
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
         assert next(spamreader)[1:-1] == [__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
+
+
+def test_dimension_mismatch_between_metric_and_vertfile(dummy_metrics, dummy_vert_level):
+    """Test that an exception is raised for mismatched metric and -vertfile images."""
+    with pytest.raises(ValueError) as err:
+        aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['inconsistent length'],
+                                                         vert_level=dummy_vert_level)
+
+    assert "mismatch" in str(err.value)
