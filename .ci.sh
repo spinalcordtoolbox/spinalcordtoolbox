@@ -12,9 +12,25 @@ echo Installing SCT
 PIP_PROGRESS_BAR=off ./install_sct -y
 
 echo *** CHECK PATH ***
-ls -lA bin  # Make sure all binaries and aliases are there
-source python/etc/profile.d/conda.sh  # to be able to call conda
-conda activate venv_sct  # reactivate conda for the pip install below
+# Make sure all binaries and aliases are there
+# TODO: 1. put this in a utility file that{
+# 		validates file existance,
+#		returns a boolean for existance of the command on the system}
+#       2. do tests: command exists, doesn't exist, and null case
+
+while read -r tool
+do
+   if [ -z $( command -v "$tool" ) ]; then
+      echo "Missing tool: $tool"; exit 1
+   fi
+# TODO: Need this path to be in a configuration file, and commands file added; possibly under install
+
+done < $commands_list_path
+
+# to be able to call conda
+source python/etc/profile.d/conda.sh
+# reactivate conda for the pip install below
+conda activate venv_sct  
 
 echo *** UNIT TESTS ***
 pip install coverage
