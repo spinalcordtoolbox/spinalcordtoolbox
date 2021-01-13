@@ -28,9 +28,10 @@ def test_scripts_with_no_args_as_main_func(capsys, script):
     mod = importlib.import_module(f"spinalcordtoolbox.scripts.{script}")
     with pytest.raises(SystemExit) as system_err:
         mod.main()
+    captured = capsys.readouterr()
+
     assert system_err.value.code is 2
-    out, err = capsys.readouterr()
-    assert 'usage' in out.lower() or 'usage' in err.lower()
+    assert 'usage' in captured.err.lower()
 
 
 @pytest.mark.script_launch_mode('subprocess')
