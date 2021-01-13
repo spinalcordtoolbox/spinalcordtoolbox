@@ -1,12 +1,7 @@
-from spinalcordtoolbox.utils import __sct_dir__
-import os
 import pytest
+import pkg_resources
 
-scripts = []
-for line in open(os.path.join(__sct_dir__, 'scripts.txt')):
-    li = line.strip()
-    if not li.startswith("#"):
-        scripts.append(li)
+scripts = pkg_resources.get_entry_map('spinalcordtoolbox')['console_scripts'].keys()
 
 # Exclude scripts where no arguments is valid usage
 no_args_scripts = [s for s in scripts if s not in [
