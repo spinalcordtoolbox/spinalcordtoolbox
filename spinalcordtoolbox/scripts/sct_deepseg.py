@@ -137,7 +137,7 @@ def main(argv=None):
     if (arguments.list_tasks is False
             and arguments.install_task is None
             and (arguments.i is None or arguments.task is None)):
-        parser.error("You must specify either '-list-tasks', '-install-task', or ['-i' + '-task'].")
+        parser.error("You must specify either '-list-tasks', '-install-task', or both '-i' + '-task'.")
 
     # Deal with task
     if arguments.list_tasks:
