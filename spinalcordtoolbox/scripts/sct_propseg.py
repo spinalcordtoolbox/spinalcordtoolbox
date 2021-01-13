@@ -201,11 +201,10 @@ def get_parser():
         help="Show this help message and exit."
     )
     optional.add_argument(
-        '-ofolder',
-        metavar=Metavar.folder,
-        action=ActionCreateFolder,
-        help="Output folder."
-    )
+        '-o',
+        metavar=Metavar.file,
+        help='Output filename. Example: spinal_seg.nii.gz '
+        )
     optional.add_argument(
         '-down',
         metavar=Metavar.int,
@@ -436,10 +435,12 @@ def propseg(img_input, options_dict):
     # Starting building the command
     cmd = ['isct_propseg', '-t', contrast_type_propseg]
 
-    if arguments.ofolder is not None:
-        folder_output = arguments.ofolder
+    if arguments.o is not None:
+        fname_out = arguments.o
     else:
-        folder_output = './'
+        fname_out = os.path.basename(add_suffix(fname_data, "_seg"))
+    
+    folder_output = os.path.dirname(fname_out)
     cmd += ['-o', folder_output]
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
         logger.error("output directory %s is not a valid directory" % folder_output)
@@ -618,7 +619,7 @@ def propseg(img_input, options_dict):
         sys.exit(1)
 
     # build output filename
-    fname_seg = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_seg")))
+    fname_seg = os.path.join(folder_output, fname_out)
     fname_centerline = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_centerline")))
     # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
     if rescale_header is not 1:
@@ -674,4 +675,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-
