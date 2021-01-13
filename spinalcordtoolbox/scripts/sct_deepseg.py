@@ -60,7 +60,7 @@ def get_parser():
         nargs="+",
         help="Task to perform. It could either be a pre-installed task, task that could be installed, or a custom task."
              " To list available tasks, run: sct_deepseg -list-tasks. To use a custom task, indicate the path to the "
-             " ivadomed packaged model (see https://ivadomed.org/en/latest/pretrained_models.html for more details). "
+             " ivadomed packaged model (see https://ivadomed.org/en/latest/pretrained_models.html#packaged-model-format for more details). "
              " More than one path can be indicated for cascaded application of the models.",
         metavar=Metavar.str)
     seg.add_argument(
