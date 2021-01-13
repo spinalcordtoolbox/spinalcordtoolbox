@@ -7,6 +7,7 @@
 [![User forum](https://img.shields.io/discourse/status?label=forum&server=http%3A%2F%2Fforum.spinalcordmri.org)](http://forum.spinalcordmri.org/c/sct)
 [![Developer mailing list](http://img.shields.io/badge/mailing%20list-development-green.svg?style=flat)](https://groups.google.com/forum/#!forum/sct_developers)
 [![Coverage Status](https://coveralls.io/repos/github/neuropoly/spinalcordtoolbox/badge.svg?branch=master)](https://coveralls.io/github/neuropoly/spinalcordtoolbox?branch=master)
+[![Twitter Follow](https://img.shields.io/twitter/follow/spinaltoolbox.svg?style=social&label=Follow)](https://twitter.com/spinaltoolbox)
 
 SCT is a comprehensive, free and open-source software dedicated to the 
 processing and analysis of spinal cord MRI data.

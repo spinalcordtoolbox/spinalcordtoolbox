@@ -1243,7 +1243,7 @@ def find_index_halfmax(data1d):
 
 def find_angle_hog(image, centermass, px, py, angle_range=10):
     """
-    Finds the angle of an image based on the method described by Sun, “Symmetry Detection Using Gradient Information.”
+    Finds the angle of an image based on the method described by Sun, "Symmetry Detection Using Gradient Information."
     Pattern Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved by N. Pinon
 
     :param: image : 2D numpy array to find symmetry axis on

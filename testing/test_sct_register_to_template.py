@@ -18,7 +18,7 @@ import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox import __sct_dir__
 
-import sct_apply_transfo
+from spinalcordtoolbox.scripts import sct_apply_transfo
 
 
 def init(param_test):
@@ -49,7 +49,7 @@ def test_integrity(param_test):
     index_args = param_test.default_args.index(param_test.args)
 
     # apply transformation to binary mask: template --> anat
-    sct_apply_transfo.main(args=[
+    sct_apply_transfo.main(argv=[
         '-i', param_test.fname_gt[index_args],
         '-d', param_test.file_seg,
         '-w', 'warp_template2anat.nii.gz',
@@ -58,7 +58,7 @@ def test_integrity(param_test):
         '-v', '0'])
 
     # apply transformation to binary mask: anat --> template
-    sct_apply_transfo.main(args=[
+    sct_apply_transfo.main(argv=[
         '-i', param_test.file_seg,
         '-d', param_test.fname_gt[index_args],
         '-w', 'warp_anat2template.nii.gz',

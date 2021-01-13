@@ -4,8 +4,8 @@ futures
 # h5py is pinned to minor than 3 due to issues with Keras/TF
 # https://github.com/tensorflow/tensorflow/issues/44467
 h5py~=2.10.0
-ivadomed==2.4.0
 Keras==2.1.5
+ivadomed==2.6.1
 matplotlib
 nibabel
 numpy
@@ -40,3 +40,4 @@ transforms3d
 urllib3[secure]
 pytest_console_scripts
 pytest-xdist
+tensorboard==1.14.0
