@@ -16,7 +16,6 @@ import logging
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import __version__, parse_num_list_inv
-from spinalcordtoolbox.utils.validation import check_dimensions_match
 
 
 class Metric:
@@ -233,6 +232,12 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     :param map_clusters: list of list of int: See func_map()
     :return: Aggregated metric
     """
+    if vert_level:
+        vert_level_slices = Image(vert_level).change_orientation('RPI').data.shape[2]
+        metric_slices = metric.data.shape[0]
+        if vert_level_slices != metric_slices:
+            raise ValueError(f"Shape mismatch between vertfile [{vert_level_slices}] and metric [{metric_slices}]).")
+
     # If user neither specified slices nor levels, set perslice=True, otherwise, the output will likely contain nan
     # because in many cases the segmentation does not span the whole I-S dimension.
     if perslice is None:
@@ -249,10 +254,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     # aggregation based on levels
     if levels:
         im_vert_level = Image(vert_level).change_orientation('RPI')
-        try:
-            check_dimensions_match(metric=metric, img=im_vert_level)
-        except ValueError as e:
-            logging.error(e)
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
         slicegroups = [tuple(get_slices_from_vertebral_levels(im_vert_level, level)) for level in levels]
         if perlevel:
