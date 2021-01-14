@@ -97,8 +97,8 @@ def get_parser():
     )
     optional.add_argument(
         '-interleaved',
-        choices=[0, 1],
-        default=0,
+        choices=('0', '1'),
+        default=param_default.remove_temp_files,
         help='Interleaved acquisition: 0 = NOT-interleaved, 1 = interleaved.'
     )
     optional.add_argument(
@@ -169,7 +169,7 @@ def main(argv=None):
         param.update(arguments.param)
 
     # run moco
-    if param.interleaved == 1:
+    if param.interleaved == '1':
         # split input data to two datasets (even and odd slices), run moco in each sub-dataset and merge back the data
         moco_wrapper_interleaved(param)
     else:
