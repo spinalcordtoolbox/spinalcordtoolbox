@@ -29,7 +29,7 @@
 import sys
 import os
 
-from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
+from spinalcordtoolbox.moco import ParamMoco, moco_wrapper, moco_wrapper_interleaved
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, set_global_loglevel
 
 
@@ -96,6 +96,12 @@ def get_parser():
         help='Binary mask to limit voxels considered by the registration metric. Example: dmri_mask.nii.gz',
     )
     optional.add_argument(
+        '-interleaved',
+        choices=[0, 1],
+        default=0,
+        help='Interleaved acquisition: 0 = NOT-interleaved, 1 = interleaved.'
+    )
+    optional.add_argument(
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
@@ -155,6 +161,7 @@ def main(argv=None):
     param.bval_min = arguments.bvalmin
     param.group_size = arguments.g
     param.fname_mask = arguments.m
+    param.interleaved = arguments.interleaved
     param.interp = arguments.x
     param.path_out = arguments.ofolder
     param.remove_temp_files = arguments.r
@@ -162,7 +169,11 @@ def main(argv=None):
         param.update(arguments.param)
 
     # run moco
-    moco_wrapper(param)
+    if param.interleaved == 1:
+        # split input data to two datasets (even and odd slices), run moco in each sub-dataset and merge back the data
+        moco_wrapper_interleaved(param)
+    else:
+        moco_wrapper(param)
 
 
 if __name__ == "__main__":
