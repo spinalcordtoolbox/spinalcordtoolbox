@@ -191,20 +191,6 @@ def test_register_step_ants_registration(step2_data):
 
 
 def test_register_step_ants_slice_regularized_registration(step_axial_data_in_same_space):
-    """
-    Read CSV file, remove first element, flatten and convert to float
-    """
-    def csv2num(file_csv):
-        with open(file_csv, newline='') as csvfile:
-            spamreader = list(csv.reader(csvfile, delimiter=','))
-        # Remove first element corresponding to header ['Tx', 'Ty']
-        spamreader.pop(0)
-        # Flatten
-        spamreader = [item for sublist in spamreader for item in sublist]
-        # Convert each element to float
-        spamreader = [float(i) for i in spamreader]
-        return spamreader
-
     src, dest, step, cli_params = step_axial_data_in_same_space
 
     warp_forward_out, warp_inverse_out = register_step_ants_slice_regularized_registration(
@@ -213,9 +199,10 @@ def test_register_step_ants_slice_regularized_registration(step_axial_data_in_sa
         step=step,
         metricSize='4')
 
-    # Verify integrity of the output Tx Ty file.
-    txty_result = csv2num('step1TxTy_poly.csv')
-    txty_groundtruth = csv2num(sct_test_path('mt', 'step1TxTy_poly_groundtruth.csv'))
+    # Verify integrity of the output Tx Ty file
+    txty_result = np.genfromtxt('step1TxTy_poly.csv', skip_header=1, delimiter=',')
+    txty_groundtruth = np.genfromtxt(
+        sct_test_path('mt', 'step1TxTy_poly_groundtruth.csv'), skip_header=1, delimiter=',')
     assert all([a == pytest.approx(b, abs=1e-14) for a, b in zip(txty_result, txty_groundtruth)])
 
 
