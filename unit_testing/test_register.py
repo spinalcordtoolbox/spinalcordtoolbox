@@ -9,7 +9,7 @@ import csv
 
 from spinalcordtoolbox.scripts.sct_register_to_template import Param, register
 from spinalcordtoolbox.registration.register import *
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils import sct_test_path, __sct_dir__
 
 logger = logging.getLogger(__name__)
 
@@ -215,13 +215,9 @@ def test_register_step_ants_slice_regularized_registration(step_axial_data_in_sa
 
     # Verify integrity of the output Tx Ty file.
     txty_result = csv2num('step1TxTy_poly.csv')
-    assert txty_result == [
-        ['Tx', 'Ty'],
-        ['1.00439255454324', '-0.151760183772956'],
-        ['1.04645709177172', '-0.621178997815087'],
-        ['0.904949339396005', '-0.862157494292993'],
-        ['0.784728781515325', '-0.893095039021259'],
-        ['0.890654902228899', '-0.732390997814474']]
+    txty_groundtruth = csv2num(
+        os.path.join(__sct_dir__, 'spinalcordtoolbox', 'testing', 'step1TxTy_poly_groundtruth.csv'))
+    assert txty_result == txty_groundtruth
 
 
 # higher level tests for step registration, regardless of step)
