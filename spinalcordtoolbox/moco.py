@@ -22,12 +22,13 @@ import operator
 import csv
 
 import numpy as np
+import nibabel as nib
 import scipy.interpolate
 
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
 from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolation
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
-from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
+from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy, mv
 
 # FIXME don't import from scripts in API
 from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
@@ -81,6 +82,7 @@ class ParamMoco:
         self.iterAvg = 1  # iteratively average target image for more robust moco
         self.is_sagittal = False  # if True, then split along Z (right-left) and register each 2D slice (vs. 3D volume)
         self.output_motion_param = True  # if True, the motion parameters are outputted
+        self.interleaved = 0    # data acquired in interleaved mode
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -472,6 +474,7 @@ def moco_wrapper(param):
         [os.path.join(param.path_out, add_suffix(os.path.basename(param.fname_data), param.suffix)),
          param.fname_data], mode='ortho,ortho')
 
+    return im_moco
 
 def moco(param):
     """
@@ -880,3 +883,216 @@ def spline(folder_mat, nt, nz, verbose, index_b0=[], graph=0):
 
     printv('\n...Done. Patient motion has been smoothed', verbose)
     printv('------------------------------------------------------------------------------\n', verbose)
+
+
+def moco_wrapper_interleaved(param):
+    """
+    Run moco separately for even and odd slices, then merge data back together
+    :param param: ParamMoco class
+    :return: None
+    """
+    orig_name = param.fname_data  # store orig name passed by user
+    file_data = 'data.nii'  # corresponds to the full input data (e.g. dmri or fmri)
+    file_mask = 'mask.nii'
+    file_moco_params_x = 'moco_params_x.nii.gz'
+    file_moco_params_y = 'moco_params_y.nii.gz'
+    file_moco_params = 'moco_params.tsv'
+    # TODO - switch from tsv to csv in future
+
+    printv('\nInput parameters:', param.verbose)
+    printv('  Input file ............ ' + param.fname_data, param.verbose)
+    printv('  Group size ............ {}'.format(param.group_size), param.verbose)
+    printv('  Interleaved mode ...... {}'.format(param.interleaved), param.verbose)
+
+    # Start timer
+    start_time = time.time()
+
+    path_tmp = tmp_create(basename="moco")
+
+    # Copying input data to tmp folder
+    printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
+    convert(param.fname_data, os.path.join(path_tmp, file_data))
+    if param.fname_mask != '':
+        convert(param.fname_mask, os.path.join(path_tmp, file_mask), verbose=param.verbose)
+
+    # Build absolute output path and go to tmp folder
+    curdir = os.getcwd()
+    path_out_abs = os.path.abspath(param.path_out)
+    os.chdir(path_tmp)
+
+    # Load data and get dimensions
+    printv('\nGet dimensions of data...', param.verbose)
+    im_data = Image(file_data)
+    nx, ny, nz, nt, px, py, pz, pt = im_data.dim
+    printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
+
+    printv('\nData were acquired in interleaved mode.', param.verbose)
+    printv('Splitting data into two datasets along SI direction'
+               ' (even and odd slices) and run moco separately...', param.verbose)
+    orig_orientation = split_to_even_and_odd(im_data, file_data)
+
+    # Split mask if was passed
+    if param.fname_mask != '':
+        mask_data = Image(file_mask)
+        split_to_even_and_odd(mask_data, file_mask)
+
+    # ==================================================================================================================
+    # Run moco only on even slices
+    # ==================================================================================================================
+    printv('\nStarting moco on even slices...', param.verbose)
+    # Update fields in param (because used later in another function, and param class will be passed)
+    param.fname_data = 'data_even.nii'
+    param.path_out = ''
+    if param.fname_mask != '':
+        param.fname_mask = 'mask_even.nii'
+    # Run moco on even slices
+    im_data_even = moco_wrapper(param)
+    if param.output_motion_param:
+        # Rename .nii and tsv moco parameters after moco (add _even suffix)
+        for name in file_moco_params_x, file_moco_params_y, file_moco_params:
+            mv(name, add_suffix(name, '_even'))
+
+    # ==================================================================================================================
+    # Run moco only on odd slices
+    # ==================================================================================================================
+    printv('\nStarting moco on odd slices...', param.verbose)
+    # Update field in param (because used later in another function, and param class will be passed)
+    param.fname_data = 'data_odd.nii'
+    param.path_out = ''
+    if param.fname_mask != '':
+        param.fname_mask = 'mask_odd.nii'
+    # Run moco on odd slices
+    im_data_odd = moco_wrapper(param)
+    if param.output_motion_param:
+        # Rename .nii and tsv moco parameters after moco (add _odd suffix)
+        for name in file_moco_params_x, file_moco_params_y, file_moco_params:
+            mv(name, add_suffix(name, '_odd'))
+
+    # ==================================================================================================================
+    # Merge even and odd datasets after moco back together
+    # ==================================================================================================================
+    im_data_merged = im_data.copy()
+    counter_even = 0
+    counter_odd = 0
+    for index in range(0, im_data_merged.dim[2]):
+        if index % 2 == 0:
+            im_data_merged.data[:, :, index, :] = im_data_even.data[:, :, counter_even, :]
+            counter_even += 1
+        elif index % 2 != 0:
+            im_data_merged.data[:, :, index, :] = im_data_odd.data[:, :, counter_odd, :]
+            counter_odd += 1
+
+    # reorient back to original orientation
+    if im_data_merged.orientation != orig_orientation:
+        im_data_merged.change_orientation(orientation=orig_orientation, generate_path=True)
+    # Save to tmp dir
+    im_data_merged.save(add_suffix(file_data, '_merged'), verbose=0)
+
+    # Generate b0_moco_mean and dwi_moco_mean
+    args = ['-i', os.path.join(path_tmp, add_suffix(file_data, '_merged')),
+            '-bvec', param.fname_bvecs, '-a', '1', '-v', '0']
+    if not param.fname_bvals == '':
+        # if bvals file is provided
+        args += ['-bval', param.fname_bvals]
+    fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(argv=args)
+
+    # Deal with motion parameters
+    if param.output_motion_param:
+        # nii motion parameters
+        moco_params_x_odd = Image('moco_params_x_odd.nii.gz')
+        moco_params_x_even = Image('moco_params_x_even.nii.gz')
+        moco_params_x_merged = np.zeros((1, 1, nz, nt), dtype=np.float32)  # create empty array for x motion params
+        moco_params_y_odd = Image('moco_params_y_odd.nii.gz')
+        moco_params_y_even = Image('moco_params_y_even.nii.gz')
+        moco_params_y_merged = np.zeros((1, 1, nz, nt), dtype=np.float32)  # create empty array for y motion params
+        counter_even = 0
+        counter_odd = 0
+        for index in range(0, im_data_merged.dim[2]):
+            if index % 2 == 0:
+                moco_params_x_merged[:, :, index, :] = moco_params_x_even.data[:, :, counter_even, :]
+                moco_params_y_merged[:, :, index, :] = moco_params_y_even.data[:, :, counter_even, :]
+                counter_even += 1
+            elif index % 2 != 0:
+                moco_params_x_merged[:, :, index, :] = moco_params_x_odd.data[:, :, counter_odd, :]
+                moco_params_y_merged[:, :, index, :] = moco_params_y_odd.data[:, :, counter_odd, :]
+                counter_odd += 1
+        # Save nii to tmp dir
+        # TODO - merged moco params files have isotropic 1mm voxel size instead of voxel size of original image
+        img_params_x = nib.Nifti1Image(moco_params_x_merged, None)
+        nib.save(img_params_x, add_suffix(file_moco_params_x, '_merged'))
+        img_params_y = nib.Nifti1Image(moco_params_y_merged, None)
+        nib.save(img_params_y, add_suffix(file_moco_params_y, '_merged'))
+
+        # tsv motion parameters (slice-wise average)
+        moco_param = np.concatenate((np.squeeze(np.mean(moco_params_x_merged, 2)).reshape(-1, 1),
+                                     np.squeeze(np.mean(moco_params_y_merged, 2)).reshape(-1, 1)), axis=1)
+        with open(add_suffix(file_moco_params, '_merged'), 'wt') as out_file:
+            tsv_writer = csv.writer(out_file, delimiter='\t')
+            tsv_writer.writerow(['X', 'Y'])
+            for mocop in moco_param:
+                tsv_writer.writerow([mocop[0], mocop[1]])
+
+    # ==================================================================================================================
+    # Save merged output files
+    # ==================================================================================================================
+    printv('\nGenerate merged output files...', param.verbose)
+    # save moco corrected image
+    generate_output_file(os.path.join(path_tmp, add_suffix(file_data, '_merged')),
+                             os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco')))
+    # save b0_moco_mean and dwi_moco_mean
+    generate_output_file(fname_b0_mean,
+                             os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco_b0_mean')))
+    generate_output_file(fname_dwi_mean,
+                             os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco_dwi_mean')))
+    # save motion param files
+    if param.output_motion_param:
+        generate_output_file(os.path.join(path_tmp, add_suffix(file_moco_params_x, '_merged')),
+                                 os.path.join(path_out_abs, file_moco_params_x), squeeze_data=False)
+        generate_output_file(os.path.join(path_tmp, add_suffix(file_moco_params_y, '_merged')),
+                                 os.path.join(path_out_abs, file_moco_params_y), squeeze_data=False)
+        generate_output_file(os.path.join(path_tmp, add_suffix(file_moco_params, '_merged')),
+                                 os.path.join(path_out_abs, file_moco_params), squeeze_data=False)
+
+    # Delete temporary files
+    if param.remove_temp_files == 1:
+        printv('\nDelete temporary files...', param.verbose)
+        rmtree(path_tmp, verbose=param.verbose)
+
+    # come back to working directory
+    os.chdir(curdir)
+
+    # display elapsed time
+    elapsed_time = time.time() - start_time
+    printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
+
+
+def split_to_even_and_odd(data_to_split, file_name):
+    """
+    Split 4D data along SI direction into two datasets (even and odd slices) and save them
+    :param data_to_split: 4D data to split
+    :param file_name: data filename
+    :return: orig_orientation: original orientation of input data
+    """
+    # change orientation to RPI
+    orig_orientation = data_to_split.orientation
+    data_to_split.change_orientation(orientation='RPI', generate_path=True)
+    # split along SI direction
+    im_data_split_list = split_data(data_to_split, 2)
+
+    # Get only even slices across all volumes
+    data_even = []
+    # loop across even slices
+    for index_even in range(0, len(im_data_split_list), 2):
+        data_even.append(im_data_split_list[index_even])
+    # Concatenate in SI and save
+    concat_data(data_even, dim=2).save(add_suffix(file_name, '_even'), verbose=0)
+
+    # Get only odd slices across all volumes
+    data_odd = []
+    # loop across odd slices
+    for index_odd in range(1, len(im_data_split_list), 2):
+        data_odd.append(im_data_split_list[index_odd])
+    # Concatenate in SI and save
+    concat_data(data_odd, dim=2).save(add_suffix(file_name, '_odd'), verbose=0)
+
+    return orig_orientation
