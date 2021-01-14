@@ -1,6 +1,6 @@
 <img src="https://github.com/neuropoly/spinalcordtoolbox/blob/master/documentation/imgs/logo_sct.png" width="300">
 
-[![Build Status](https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master)](https://travis-ci.org/neuropoly/spinalcordtoolbox)
+[![Build Status](https://api.travis-ci.com/neuropoly/spinalcordtoolbox.svg?branch=master)](https://travis-ci.com/github/neuropoly/spinalcordtoolbox)
 [![GitHub Release](https://github-basic-badges.herokuapp.com/release/neuropoly/spinalcordtoolbox.svg)](https://github.com/neuropoly/spinalcordtoolbox/releases)
 [![Github Download Count](https://img.shields.io/github/downloads/neuropoly/spinalcordtoolbox/total.svg)](https://github.com/neuropoly/spinalcordtoolbox/releases)
 [![Project Stats](https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif)](https://www.openhub.net/p/spinalcordtoolbox)
