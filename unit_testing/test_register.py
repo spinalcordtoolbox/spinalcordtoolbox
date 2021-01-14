@@ -217,7 +217,7 @@ def test_register_step_ants_slice_regularized_registration(step_axial_data_in_sa
     txty_result = csv2num('step1TxTy_poly.csv')
     txty_groundtruth = csv2num(
         os.path.join(__sct_dir__, 'spinalcordtoolbox', 'testing', 'step1TxTy_poly_groundtruth.csv'))
-    assert txty_result == txty_groundtruth
+    assert all([a == pytest.approx(b, abs=1e-14) for a, b in zip(txty_result, txty_groundtruth)])
 
 
 # higher level tests for step registration, regardless of step)
