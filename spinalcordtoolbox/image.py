@@ -291,12 +291,13 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
-        if check_sform and \
-           not check_affines_match(self):
+        # Make sure sform and qform are the same.
+        # Context: https://github.com/neuropoly/spinalcordtoolbox/issues/2429
+        if check_sform and not check_affines_match(self):
             if self.absolutepath is None:
                 logger.error("Internal code has produced an image with inconsistent qform and sform "
-                           "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
-                           " or on the SCT forums https://forum.spinalcordmri.org/.")
+                             "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
+                             " or on the SCT forum https://forum.spinalcordmri.org/.")
             else:
                 dummy_reaffined = re.sub("\\.(.*)", "_same-affine.\\1", self.absolutepath)
                 logger.error("Image {} has different qform and sform matrices. "
