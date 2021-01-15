@@ -203,7 +203,7 @@ def test_register_step_ants_slice_regularized_registration(step_axial_data_in_sa
     txty_result = np.genfromtxt('step1TxTy_poly.csv', skip_header=1, delimiter=',')
     txty_groundtruth = np.genfromtxt(
         sct_test_path('mt', 'step1TxTy_poly_groundtruth.csv'), skip_header=1, delimiter=',')
-    assert all([a == pytest.approx(b, abs=1e-14) for a, b in zip(txty_result, txty_groundtruth)])
+    assert txty_result == pytest.approx(txty_groundtruth, abs=1e-14)
 
 
 # higher level tests for step registration, regardless of step)
