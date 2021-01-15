@@ -245,7 +245,8 @@ class Image(object):
 
     """
 
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1, check_sform=True):
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1,
+                 check_sform=False):
         """
         :param param: string indicating a path to a image file or an `Image` object.
         :param hdr: a nibabel header object to use as the header for the image (overwritten if `param` is provided)
