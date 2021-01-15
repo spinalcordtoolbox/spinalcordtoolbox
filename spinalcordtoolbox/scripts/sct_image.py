@@ -17,6 +17,7 @@ import numpy as np
 from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 
+import spinalcordtoolbox
 from spinalcordtoolbox.image import Image, concat_data, add_suffix, change_orientation, concat_warp2d, split_img_data, pad_image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
@@ -184,6 +185,8 @@ def main(argv=None):
     # If the user wants to fix sforms replace `Image` with the sform fixer
     if arguments.set_sform_to_qform:
         Image = read_and_fix_sform
+    else:
+        Image = spinalcordtoolbox.image.Image
 
     if arguments.o is not None:
         fname_out = arguments.o
