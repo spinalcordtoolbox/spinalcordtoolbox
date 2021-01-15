@@ -29,11 +29,11 @@ from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolati
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
 
-# FIXME: don't import from scripts!
-import sct_dmri_separate_b0_and_dwi
-from sct_convert import convert
-from sct_image import split_data, concat_data, multicomponent_split
-import sct_apply_transfo
+# FIXME don't import from scripts in API
+from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
+from spinalcordtoolbox.scripts.sct_convert import convert
+from spinalcordtoolbox.scripts.sct_image import split_data, concat_data, multicomponent_split
+from spinalcordtoolbox.scripts import sct_apply_transfo
 
 
 class ParamMoco:
@@ -385,7 +385,7 @@ def moco_wrapper(param):
         if not param.fname_bvals == '':
             # if bvals file is provided
             args += ['-bval', param.fname_bvals]
-        fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(args=args)
+        fname_b0, fname_b0_mean, fname_dwi, fname_dwi_mean = sct_dmri_separate_b0_and_dwi.main(argv=args)
     else:
         fname_moco_mean = add_suffix(im_moco.absolutepath, '_mean')
         im_moco.mean(dim=3).save(fname_moco_mean)
@@ -638,7 +638,7 @@ def moco(param):
                 # copy transformation
                 copy(file_mat[iz][gT[index_good]] + 'Warp.nii.gz', file_mat[iz][fT[it]] + 'Warp.nii.gz')
                 # apply transformation
-                sct_apply_transfo.main(args=['-i', file_data_splitZ_splitT[fT[it]],
+                sct_apply_transfo.main(argv=['-i', file_data_splitZ_splitT[fT[it]],
                                              '-d', file_target,
                                              '-w', file_mat[iz][fT[it]] + 'Warp.nii.gz',
                                              '-o', file_data_splitZ_splitT_moco[fT[it]],
@@ -758,7 +758,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
             status, output = run_proc(cmd, verbose=1 if param.verbose == 2 else 0, env=env, **kw)
 
     elif param.todo == 'apply':
-        sct_apply_transfo.main(args=['-i', file_src,
+        sct_apply_transfo.main(argv=['-i', file_src,
                                      '-d', file_dest,
                                      '-w', file_mat + param.suffix_mat,
                                      '-o', file_out_concat,

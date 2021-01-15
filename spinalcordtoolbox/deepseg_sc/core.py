@@ -7,20 +7,17 @@ import sys
 import logging
 
 import numpy as np
-from scipy.ndimage.measurements import center_of_mass, label
 from skimage.exposure import rescale_intensity
+from scipy.ndimage.measurements import center_of_mass, label
 from scipy.ndimage import distance_transform_edt
 
 from spinalcordtoolbox import resampling
 from .cnn_models import nn_architecture_seg, nn_architecture_ctr
 from .postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
-from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, add_suffix
+from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, add_suffix, concat_data, split_img_data
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
-from spinalcordtoolbox.utils import sct_dir_local_path, printv, TempFolder
-
-
-# FIXME: don't import from scripts!
-from sct_image import concat_data, split_data
+from spinalcordtoolbox.utils import sct_dir_local_path, TempFolder
+from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -103,7 +100,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                                          ParamCenterline(algo_fitting='optic', contrast=contrast_type))
 
         if z_max is not None:
-            printv('Cropping brain section.')
+            logger.info('Cropping brain section.')
             im_ctl.data[:, :, z_max:] = 0
 
     elif algo == 'viewer':
@@ -122,7 +119,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
     im_ctl.absolutepath = ctl_absolute_path
 
     if bool_2d:
-        im_ctl = split_data(im_ctl, dim=2)[0]
+        im_ctl = split_img_data(im_ctl, dim=2)[0]
 
     if algo != 'viewer':
         im_labels = None
@@ -306,7 +303,7 @@ def heatmap(im, model, patch_shape, mean_train, std_train, brain_bool=True):
             z_sc_notDetected_cmpt += 1
             # if the SC has not been detected on 10 consecutive z_slices, we stop the SC investigation
             if z_sc_notDetected_cmpt > 10 and brain_bool:
-                printv('Brain section detected.')
+                logger.info('Brain section detected.')
                 break
 
         # distance transform to deal with the harsh edges of the prediction boundaries (Dice)
@@ -368,7 +365,6 @@ def segment_3d(model_fname, contrast_type, im_in):
 
     :return: seg_crop.data: ndarray float32: Output prediction
     """
-    from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
     dct_patch_sc_3d = {'t2': {'size': (64, 64, 48), 'mean': 65.8562, 'std': 59.7999},
                        't2s': {'size': (96, 96, 48), 'mean': 87.0212, 'std': 64.425},
                        't1': {'size': (64, 64, 48), 'mean': 88.5001, 'std': 66.275}}

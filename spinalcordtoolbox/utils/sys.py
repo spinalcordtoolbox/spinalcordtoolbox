@@ -38,15 +38,35 @@ if os.getenv('SENTRY_DSN', None):
     import raven
 
 
+def set_global_loglevel(verbose):
+    """
+    Use SCT's verbosity values to set the global logging level.
+
+    :verbosity: Verbosity value, typically from argparse (args.v). Values must adhere
+    one of two schemes:
+       - [0, 1, 2], which corresponds to [WARNING, INFO, DEBUG]. (Older scheme)
+       - [False, True], which corresponds to [INFO, DEBUG].      (Newer scheme)
+    """
+    dict_log_levels = {
+        '0': 'WARNING', '1': 'INFO', '2': 'DEBUG',  # Older scheme
+        'False': 'INFO', 'True': 'DEBUG',           # Newer scheme (See issue #2676)
+    }
+
+    if str(verbose) not in dict_log_levels.keys():
+        raise ValueError(f"Invalid verbosity level '{verbose}' does not map to a log level, so cannot set.")
+
+    log_level = dict_log_levels[str(verbose)]
+    # Set logging level for logger and increase level for global config (to avoid logging when calling child functions)
+    logger.setLevel(getattr(logging, log_level))
+    logging.root.setLevel(getattr(logging, log_level))
+
+
 # TODO: add test
-def init_sct(log_level=1, update=False):
+def init_sct():
     """
-    Initialize the sct for typical terminal usage
-    :param log_level: int: 0: warning, 1: info, 2: debug.
-    :param update: Bool: If True, only update logging log level. Otherwise, set logging + Sentry.
-    :return:
+    Initialize SCT for typical terminal usage, including logging initialization, Sentry
+    configuration, as well as a status message with the SCT version and the command run.
     """
-    dict_log_levels = {0: 'WARNING', 1: 'INFO', 2: 'DEBUG'}
 
     def _format_wrap(old_format):
         def _format(record):
@@ -60,25 +80,29 @@ def init_sct(log_level=1, update=False):
             return res
         return _format
 
-    # Set logging level for logger and increase level for global config (to avoid logging when calling child functions)
-    logger.setLevel(getattr(logging, dict_log_levels[log_level]))
-    logging.root.setLevel(getattr(logging, dict_log_levels[log_level]))
+    # Initialize logging
+    set_global_loglevel(verbose=False)  # False => "INFO". For "DEBUG", must be called again with verbose=True.
+    hdlr = logging.StreamHandler(sys.stdout)
+    fmt = logging.Formatter()
+    fmt.format = _format_wrap(fmt.format)
+    hdlr.setFormatter(fmt)
+    logging.root.addHandler(hdlr)
 
-    if not update:
-        # Initialize logging
-        hdlr = logging.StreamHandler(sys.stdout)
-        fmt = logging.Formatter()
-        fmt.format = _format_wrap(fmt.format)
-        hdlr.setFormatter(fmt)
-        logging.root.addHandler(hdlr)
+    # Sentry config
+    init_error_client()
+    if os.environ.get("SCT_TIMER", None) is not None:
+        add_elapsed_time_counter()
 
-        # Sentry config
-        init_error_client()
-        if os.environ.get("SCT_TIMER", None) is not None:
-            add_elapsed_time_counter()
+    # Display SCT version
+    logger.info('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__))
 
-        # Display SCT version
-        logger.info('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__))
+    # Display command (Only if called from CLI: check for .py in first arg)
+    # Use next(iter()) to not fail on empty list (vs. sys.argv[0])
+    if '.py' in next(iter(sys.argv), None):
+        script = os.path.basename(sys.argv[0]).strip(".py")
+        arguments = ' '.join(sys.argv[1:])
+        logger.info(f"{script} {arguments}\n"
+                    f"--\n")
 
 
 def add_elapsed_time_counter():
@@ -272,7 +296,8 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
     else:
         cmdline = list2cmdline(cmd)
 
-    logger.debug(f"{cmdline} # in {cwd}")
+    if verbose:
+        printv("%s # in %s" % (cmdline, cwd), 1, 'code')
 
     shell = isinstance(cmd, str)
 

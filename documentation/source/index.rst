@@ -20,9 +20,9 @@ Welcome to Spinal Cord Toolbox's documentation!
     :alt: Downloads
     :target: https://github.com/neuropoly/spinalcordtoolbox/graphs/traffic
 
-.. |badge-ci| image:: https://travis-ci.org/neuropoly/spinalcordtoolbox.svg?branch=master
+.. |badge-ci| image:: https://api.travis-ci.com/neuropoly/spinalcordtoolbox.svg?branch=master
     :alt: Travis CI
-    :target: https://travis-ci.org/neuropoly/spinalcordtoolbox
+    :target: https://travis-ci.com/github/neuropoly/spinalcordtoolbox
 
 .. |badge-doc| image:: https://readthedocs.org/projects/spinalcordtoolbox/badge/
     :alt: Documentation Status
@@ -52,6 +52,7 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
    user_section/installation.rst
    user_section/getting-started.rst
    user_section/command-line.rst
+   user_section/tutorials.rst
    user_section/support.rst
 
 
@@ -61,6 +62,5 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
 
    dev_section/CONTRIBUTING.rst
    dev_section/api.rst
-   dev_section/development.rst
    dev_section/CHANGES.md
    dev_section/license.rst

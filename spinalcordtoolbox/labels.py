@@ -29,9 +29,10 @@ logger = logging.getLogger(__name__)
 def add(img: Image, value: int) -> Image:
     """
     This function adds a specified value to all non-zero voxels.
+
     :param img: source image
     :param value: numeric value to add
-    :returns new image with value added
+    :returns: new image with value added
     """
     out = img.copy()
     out.data[np.where(out.data != 0)] += value
@@ -44,6 +45,7 @@ def create_labels_empty(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     Create an empty image with labels listed by the user.
     This method works only if the user inserted correct coordinates.
     If only one label is to be added, coordinates must be completed with '[]'
+
     :param img: source image
     :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
     :returns: empty image with labels
@@ -58,6 +60,7 @@ def create_labels(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     Add labels provided by a user to the image.
     This method works only if the user inserted correct coordinates.
     If only one label is to be added, coordinates must be completed with '[]'
+
     :param img: source image
     :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
     :returns: labeled source image
@@ -70,6 +73,7 @@ def create_labels(img: Image, coordinates: Sequence[Coordinate]) -> Image:
 def _add_labels(img: Image, coordinates: Sequence[Coordinate]) -> Image:
     """
     Given an image and list of coordinates, add the labels to the image and return it.
+
     :param img: source image
     :param coordinates: list of Coordinate objects (see spinalcordtoolbox.types)
     :returns: labeled source image
@@ -94,6 +98,7 @@ def create_labels_along_segmentation(img: Image, labels: Sequence[Tuple[int, int
     """
     Create an image with labels defined along the spinal cord segmentation (or centerline).
     Input image does **not** need to be RPI (re-orientation is done within this function).
+
     :param img: source segmentation
     :param labels: list of label tuples as (z_value, label_value)
     :returns: labeled segmentation (Image)
@@ -187,6 +192,7 @@ def increment_z_inverse(img: Image) -> Image:
     """
     Take all non-zero values, sort them along the inverse z direction, and attributes the values 1,
     2, 3, etc.
+
     :param img: source image
     :returns: image with non-zero values sorted along inverse z
     """
@@ -214,6 +220,7 @@ def labelize_from_discs(img: Image, ref: Image) -> Image:
     Typically, user inputs a segmentation image, and labels with disks position, and this function produces
     a segmentation image with vertebral levels labelized.
     Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
+
     :param img: segmentation
     :param ref: reference labels
     :returns: segmentation image with vertebral levels labelized
@@ -235,6 +242,7 @@ def labelize_from_discs(img: Image, ref: Image) -> Image:
 def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image:
     """
     Find the center of mass of vertebral levels specified by the user.
+
     :param img: source image
     :param vertebral_levels: list of vertebral levels
     :returns: image with labels
@@ -267,35 +275,54 @@ def label_vertebrae(img: Image, vertebral_levels: Sequence[int] = None) -> Image
     return out
 
 
+def check_missing_label(img, ref):
+    """
+    Function that return the list of label that are present in ref and not in img.
+    This is useful to find label that are in img and not in the ref (first output) and
+    labels that are present in the ref and not in img (second output)
+
+    :param img: source image
+    :param ref: reference image
+    :return: two lists. The first one is the list of label present in the input and not in the ref image, \
+    the second one gives the labels presents in the ref and not in the input.
+    """
+    coordinates_input = img.getNonZeroCoordinates()
+    coordinates_ref = ref.getNonZeroCoordinates()
+
+    rounded_coord_ref_values = [np.round(c.value) for c in coordinates_ref]
+    rounded_coord_in_values = [np.round(c.value) for c in coordinates_input]
+
+    missing_labels_ref = [x for x in rounded_coord_in_values if x not in rounded_coord_ref_values]
+    missing_labels_inp = [x for x in rounded_coord_ref_values if x not in rounded_coord_in_values]
+
+    if missing_labels_ref:
+        logger.warning(f"Label mismatch: Labels {missing_labels_ref} present in input image but missing from reference image.")
+
+    if missing_labels_inp:
+        logger.warning(f"Label mismatch: Labels {missing_labels_inp} present in reference image but missing from input image.")
+
+    return missing_labels_ref, missing_labels_inp
+
+
 # FIXME [AJ]: this is slow on large images
 def compute_mean_squared_error(img: Image, ref: Image) -> float:
     """
     Compute the Mean Squared Distance Error between two sets of labels (input and ref).
     Moreover, a warning is generated for each label mismatch.
+
     :param img: source image
     :param ref: reference image
     :returns: computed MSE
     """
     coordinates_input = img.getNonZeroCoordinates()
     coordinates_ref = ref.getNonZeroCoordinates()
-
-    # check if all the labels in both the images match
-    if len(coordinates_input) != len(coordinates_ref):
-        raise ValueError(f"Input and reference image don't have the same number of labels! {len(coordinates_input)} vs {len(coordinates_ref)}")
-
-    rounded_coord_ref_values = [np.round(c.value) for c in coordinates_ref]
-    rounded_coord_in_values = [np.round(c.value) for c in coordinates_input]
     result = 0.0
 
+    # This line will add warning in the log if there are missing label.
+    _, _ = check_missing_label(img, ref)
 
     for coord in coordinates_input:
         for coord_ref in coordinates_ref:
-            if np.round(coord.value) not in rounded_coord_in_values:
-                logger.warning(f"Missing input label {coord} in reference!")
-
-            if np.round(coord_ref.value) not in rounded_coord_ref_values:
-                logger.warning(f"Missing reference label {coord_ref} in reference!")
-
             if np.round(coord_ref.value) == np.round(coord.value):
                 result += (coord_ref.z - coord.z) ** 2
                 break
@@ -309,6 +336,7 @@ def compute_mean_squared_error(img: Image, ref: Image) -> float:
 def remove_missing_labels(img: Image, ref: Image):
     """
     Compare an input image and a reference image. Remove any label from the input image that doesn't exist in the reference image.
+
     :param img: source image
     :param ref: reference image
     :returns: image with labels missing from reference removed
@@ -330,6 +358,7 @@ def continuous_vertebral_levels(img: Image) -> Image:
     This function transforms the vertebral levels file from the template into a continuous file.
     Instead of having integer representing the vertebral level on each slice, a continuous value that represents
     the position of the slice in the vertebral level coordinate system. The image must be RPI
+
     :param img: input image
     :returns: image with continuous vertebral levels
     """
@@ -399,6 +428,7 @@ def continuous_vertebral_levels(img: Image) -> Image:
 def remove_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     """
     Remove specified labels (set to 0) from an image.
+
     :param img: source image
     :param labels: list of specified labels to remove
     :returns: image with labels specified removed
@@ -419,6 +449,7 @@ def remove_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
 def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     """
     Remove labels other than specified from an image
+
     :param img: source image
     :param labels: list of specified labels to keep
     :returns: image with labels specified kept only
