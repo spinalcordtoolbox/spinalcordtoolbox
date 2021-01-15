@@ -93,6 +93,12 @@ def get_parser():
         help='Copy the header of the source image (specified in -i) to the destination image (specified here) '
              'and save it into a new image (specified in -o)',
         required = False)
+    header.add_argument(
+        '-set-sform-to-qform',
+        help='Set the sform matrix of all input images to their respective qform matrix. '
+             'This operation is applied anytime an image is read in by `sct_image`.',
+        action='store_true'
+    )
 
     orientation = parser.add_argument_group('ORIENTATION OPERATIONS')
     orientation.add_argument(
@@ -174,6 +180,10 @@ def main(argv=None):
 
     fname_in = arguments.i
     n_in = len(fname_in)
+
+    # If the user wants to fix sforms replace `Image` with the sform fixer
+    if arguments.set_sform_to_qform:
+        Image = read_and_fix_sform
 
     if arguments.o is not None:
         fname_out = arguments.o
@@ -301,6 +311,11 @@ def main(argv=None):
         if len(spaces) < 2:
             spaces.append(None)
         im_out = [ displacement_to_abs_fsl(Image(fname_in[0]), spaces[0], spaces[1]) ]
+
+    elif arguments.set_sform_to_qform is not None:
+        # This argument can be used stand alone or with other operations so
+        # it should go last before the else
+        im_out = [Image(fname_in[0])]
 
     else:
         im_out = None
@@ -486,6 +501,14 @@ def multicomponent_merge(fname_list):
     im_out.hdr.set_intent('vector', (), '')
     im_out.absolutepath = add_suffix(im_out.absolutepath, '_multicomponent')
     return im_out
+
+
+def read_and_fix_sform(fname):
+    im_in = Image(fname, check_sform=False)
+    im_reaff = im_in.copy()
+    im_reaff.header = im_in.header.copy()
+    im_reaff.header.set_sform(im_reaff.header.get_qform())
+    return im_reaff
 
 
 def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
