@@ -255,9 +255,8 @@ class Image(object):
         :param absolutepath: a relative path to associate with the image.
         :param dim: The dimensions of the image, defaults to automatically determined.
         :param verbose: integer how verbose to be 0 is silent 1 is chatty.
-        :param check_sform: whether or not to check whether the sform matches 
-        the qform. If this is set to `True`, `Image` will fail raise an
-        error if they don't match.
+        :param check_sform: whether or not to check whether the sform matches the qform. If this is set to `True`,
+        `Image` will fail raise an error if they don't match.
         """ 
 
         # initialization of all parameters
@@ -308,13 +307,6 @@ class Image(object):
                     self._path, self._path, dummy_reaffined))
             raise ValueError("Image sform does not match qform")
 
-
-        # TODO: In the future, we might want to check qform_code and enforce its value. Related to #2454
-        # Check qform_code
-        # if not self.hdr['qform_code'] in [0, 1]:
-        #     # Set to 0 (unknown)
-        #     self.hdr.set_qform(self.hdr.get_qform(), code=0)
-        #     self.header.set_qform(self.hdr.get_qform(), code=0)
 
     @property
     def dim(self):
