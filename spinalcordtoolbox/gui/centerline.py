@@ -38,6 +38,8 @@ class CenterlineController(base.BaseController):
         # set first slice location (see definitions in base.py)
         if self.params.starting_slice == 'fov':
             self.START_SLICE = 0
+        elif self.params.starting_slice == 'top_minus_one':
+            self.START_SLICE = 1
         elif self.params.starting_slice == 'midfovminusinterval':
             self.START_SLICE = np.round(self.image.dim[0] / 2 - self.INTERVAL)
 
