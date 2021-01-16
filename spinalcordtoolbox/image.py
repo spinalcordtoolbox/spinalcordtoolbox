@@ -256,8 +256,8 @@ class Image(object):
         :param dim: The dimensions of the image, defaults to automatically determined.
         :param verbose: integer how verbose to be 0 is silent 1 is chatty.
         :param check_sform: whether or not to check whether the sform matches the qform. If this is set to `True`,
-        `Image` will fail raise an error if they don't match.
-        """ 
+          `Image` will fail raise an error if they don't match.
+        """
 
         # initialization of all parameters
         self.im_file = None
