@@ -179,10 +179,25 @@ class Centerline(base.BaseDialog):
 
     def _init_footer(self, parent):
         ctrl_layout = super(Centerline, self)._init_footer(parent)
+
         skip = QtWidgets.QPushButton('Skip')
         ctrl_layout.insertWidget(2, skip)
-
         skip.clicked.connect(self.on_skip_slice)
+
+        clean = QtWidgets.QPushButton('Clean')
+        ctrl_layout.insertWidget(2, clean)
+        clean.clicked.connect(self.on_clean)
+
+    def on_clean(self):
+        try:
+            logger.debug("Clean all labels")
+            self._controller.points = []
+            self.sagittal_canvas.refresh()
+            self.axial_canvas.refresh()
+            # TODO: fix: does not refresh
+            # TODO: add text
+        except InvalidActionWarning as warn:
+            self.update_warning(str(warn))
 
     def on_skip_slice(self):
         try:
