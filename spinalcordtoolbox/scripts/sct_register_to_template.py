@@ -1154,6 +1154,8 @@ def register(src, dest, step, param):
     printv('  algo ........... ' + step.algo, param.verbose)
     printv('  slicewise ...... ' + step.slicewise, param.verbose)
     printv('  metric ......... ' + step.metric, param.verbose)
+    printv('  samplStrategy .. ' + step.samplingStrategy, param.verbose)
+    printv('  samplPercent ... ' + step.samplingPercentage, param.verbose)
     printv('  iter ........... ' + step.iter, param.verbose)
     printv('  smooth ......... ' + step.smooth, param.verbose)
     printv('  laplacian ...... ' + step.laplacian, param.verbose)
