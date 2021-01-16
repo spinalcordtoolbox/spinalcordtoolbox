@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui import widgets
-from spinalcordtoolbox.gui.base import TooManyPointsWarning, InvalidActionWarning
+from spinalcordtoolbox.gui.base import InvalidActionWarning
 
 # TODO: remove this useless logger (because no handler is found) by sct.log
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ class CenterlineController(base.BaseController):
         # reorient data to SAL
         super(CenterlineController, self).reformat_image()
         max_x, max_z = self.image.dim[:3:2]
-        self.params.num_points = self.params.num_points or 11
+        # self.params.num_points = self.params.num_points or 11
         # update interval (in pixel) between two consecutive points based on pixel size
         self.INTERVAL = np.round(self.params.interval_in_mm // self.image.dim[4])
 
@@ -69,8 +69,8 @@ class CenterlineController(base.BaseController):
         if existing_points:
             self.points[existing_points[0]] = (x, y, z, 1)
         else:
-            if len(self.points) >= self.params.num_points:
-                raise TooManyPointsWarning()
+            # if len(self.points) >= self.params.num_points:
+            #     raise TooManyPointsWarning()
             self.points.append((x, y, z, 1))
         self.position = (x, y, z)
         if self.mode == 'AUTO':
@@ -209,7 +209,7 @@ class Centerline(base.BaseDialog):
             self.axial_canvas.refresh()
             self.sagittal_canvas.refresh()
             self.update_status('Sagittal position at {:8.2f}'.format(self._controller.position[0]))
-        except (TooManyPointsWarning, InvalidActionWarning) as warn:
+        except InvalidActionWarning as warn:
             self.update_warning(str(warn))
 
     def increment_horizontal_nav(self):
@@ -229,7 +229,7 @@ class Centerline(base.BaseDialog):
             self.axial_canvas.refresh()
             self.sagittal_canvas.refresh()
             self.update_status('{} point(s) selected'.format(len(self._controller.points)))
-        except (TooManyPointsWarning, InvalidActionWarning) as warn:
+        except InvalidActionWarning as warn:
             self.update_warning(str(warn))
 
     def on_undo(self):
