@@ -242,7 +242,8 @@ def check_affines_match(im):
 
 class Image(object):
     """
-
+    Create an object that behaves similarly to nibabel's image object. Useful additions include: dim, check_sform and
+    a few methods (load, save) that deal with image dtype.
     """
 
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1,
