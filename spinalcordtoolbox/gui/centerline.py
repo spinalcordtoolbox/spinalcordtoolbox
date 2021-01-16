@@ -225,7 +225,7 @@ class Centerline(base.BaseDialog):
         widget = self.sender()
         if widget.mode in self._controller.MODES and widget.isChecked() and widget.mode != self._controller.mode:
             self._controller.mode = widget.mode
-            self.update_status('Reset manual labels: Now in mode {}'.format(widget.mode))
+            self.update_status('Now in mode {}'.format(widget.mode))
 
             self.sagittal_canvas.title(widget.sagittal_title)
             self.sagittal_canvas.refresh()
