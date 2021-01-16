@@ -163,7 +163,7 @@ class Centerline(base.BaseDialog):
         custom_mode.toggled.connect(self.on_toggle_mode)
         custom_mode.mode = 'CUSTOM'
         custom_mode.sagittal_title = 'Select an axial slice.\n{}'.format(self.params.subtitle)
-        custom_mode.axial_title = 'Select the center of the spinal cord'
+        custom_mode.axial_title = 'Click in the center of the spinal cord'
         layout.addWidget(custom_mode)
 
         auto_mode = QtWidgets.QRadioButton('Mode Auto')
