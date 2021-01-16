@@ -6,9 +6,10 @@
 """ Qt dialog for manual labeling of an image """
 
 import logging
+import sys
 
 import numpy as np
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 
 from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui import widgets
@@ -180,13 +181,25 @@ class Centerline(base.BaseDialog):
     def _init_footer(self, parent):
         ctrl_layout = super(Centerline, self)._init_footer(parent)
 
-        skip = QtWidgets.QPushButton('Skip')
+        if sys.platform.lower() == 'darwin':
+            cmd_key = 'Cmd'
+        else:
+            cmd_key = 'Ctrl'
+
+        skip = QtWidgets.QPushButton('Skip [%s+F]' % cmd_key)
         ctrl_layout.insertWidget(2, skip)
         skip.clicked.connect(self.on_skip_slice)
 
-        clean = QtWidgets.QPushButton('Clean')
+        clean = QtWidgets.QPushButton('Delete all [%s+D]' % cmd_key)
         ctrl_layout.insertWidget(2, clean)
         clean.clicked.connect(self.on_clean)
+
+        events = (
+            (QtGui.QKeySequence('Ctrl+F'), self.on_skip_slice),
+            (QtGui.QKeySequence('Ctrl+D'), self.on_clean),
+        )
+        for event, action in events:
+            QtWidgets.QShortcut(event, self, action)
 
     def on_clean(self):
         try:
