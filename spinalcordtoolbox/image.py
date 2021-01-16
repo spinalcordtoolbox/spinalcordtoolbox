@@ -302,11 +302,10 @@ class Image(object):
                              " or on the SCT forum https://forum.spinalcordmri.org/.")
             else:
                 dummy_reaffined = re.sub("\\.(.*)", "_same-affine.\\1", self.absolutepath)
-                logger.error("Image {} has different qform and sform matrices. "
-                             "This can produce incorrect results. Consider setting "
-                             "the two matrices to be equal using "
-                             "`sct_image -i {} -set-sform-to-qform -o {}`.".format(
-                                 self._path, self._path, dummy_reaffined))
+                logger.error("Image {} has different qform and sform matrices. This can produce incorrect results. "
+                             "Consider setting the two matrices to be equal by running:\n"
+                             "sct_image -i {} -set-sform-to-qform -o {}.".format(
+                    self._path, self._path, dummy_reaffined))
             raise ValueError("Image sform does not match qform")
 
 
