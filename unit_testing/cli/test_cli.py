@@ -27,7 +27,7 @@ def test_scripts_with_no_args_as_main_func(capsys, script):
     show usage descriptions when called with no arguments."""
     mod = importlib.import_module(f"spinalcordtoolbox.scripts.{script}")
     with pytest.raises(SystemExit) as system_err:
-        mod.main()
+        mod.main(argv=[])
     captured = capsys.readouterr()
 
     assert system_err.value.code is 2
