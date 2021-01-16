@@ -188,20 +188,20 @@ class Centerline(base.BaseDialog):
 
         skip = QtWidgets.QPushButton('Skip [%s+F]' % cmd_key)
         ctrl_layout.insertWidget(2, skip)
-        skip.clicked.connect(self.on_skip_slice)
+        skip.clicked.connect(self.on_skip_label)
 
         clean = QtWidgets.QPushButton('Delete all [%s+D]' % cmd_key)
         ctrl_layout.insertWidget(2, clean)
-        clean.clicked.connect(self.on_clean)
+        clean.clicked.connect(self.on_delete_all_labels)
 
         events = (
-            (QtGui.QKeySequence('Ctrl+F'), self.on_skip_slice),
-            (QtGui.QKeySequence('Ctrl+D'), self.on_clean),
+            (QtGui.QKeySequence('Ctrl+F'), self.on_skip_label),
+            (QtGui.QKeySequence('Ctrl+D'), self.on_delete_all_labels),
         )
         for event, action in events:
             QtWidgets.QShortcut(event, self, action)
 
-    def on_clean(self):
+    def on_delete_all_labels(self):
         try:
             logger.debug("Clean all labels")
             self._controller.points = []
@@ -212,7 +212,7 @@ class Centerline(base.BaseDialog):
         except InvalidActionWarning as warn:
             self.update_warning(str(warn))
 
-    def on_skip_slice(self):
+    def on_skip_label(self):
         try:
             logger.debug('Skipping slice')
             self._controller.skip_slice()
