@@ -104,15 +104,15 @@ class SpinalCordStraightener(object):
 
         # Copying input data to tmp folder
         logger.info('Copy files to tmp folder...')
-        Image(fname_anat).save(os.path.join(path_tmp, "data.nii"))
-        Image(fname_centerline).save(os.path.join(path_tmp, "centerline.nii.gz"))
+        Image(fname_anat, check_sform=True).save(os.path.join(path_tmp, "data.nii"))
+        Image(fname_centerline, check_sform=True).save(os.path.join(path_tmp, "centerline.nii.gz"))
 
         if self.use_straight_reference:
-            Image(self.centerline_reference_filename).save(os.path.join(path_tmp, "centerline_ref.nii.gz"))
+            Image(self.centerline_reference_filename, check_sform=True).save(os.path.join(path_tmp, "centerline_ref.nii.gz"))
         if self.discs_input_filename != '':
-            Image(self.discs_input_filename).save(os.path.join(path_tmp, "labels_input.nii.gz"))
+            Image(self.discs_input_filename, check_sform=True).save(os.path.join(path_tmp, "labels_input.nii.gz"))
         if self.discs_ref_filename != '':
-            Image(self.discs_ref_filename).save(os.path.join(path_tmp, "labels_ref.nii.gz"))
+            Image(self.discs_ref_filename, check_sform=True).save(os.path.join(path_tmp, "labels_ref.nii.gz"))
 
         # go to tmp folder
         curdir = os.getcwd()
