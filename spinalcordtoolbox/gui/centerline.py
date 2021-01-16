@@ -128,7 +128,7 @@ class CenterlineController(base.BaseController):
         if value != self._mode:
             self._mode = value
             # self.points = []
-            self.reset_position()
+            # self.reset_position()
 
 
 class Centerline(base.BaseDialog):
