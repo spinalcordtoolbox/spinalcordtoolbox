@@ -234,7 +234,7 @@ class BaseDialog(QtWidgets.QWidget):
             cmd_key = 'Ctrl'
 
         self.btn_ok = QtWidgets.QPushButton('Save and Quit [%s+s]' % cmd_key)
-        self.btn_undo = QtWidgets.QPushButton('Undo [%s+s]' % cmd_key)
+        self.btn_undo = QtWidgets.QPushButton('Undo [%s+z]' % cmd_key)
 
         ctrl_layout.addStretch()
         ctrl_layout.addWidget(self.btn_undo)
