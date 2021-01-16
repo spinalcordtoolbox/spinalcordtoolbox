@@ -158,18 +158,23 @@ class Centerline(base.BaseDialog):
         group.setFlat(True)
         layout = QtWidgets.QHBoxLayout()
 
-        custom_mode = QtWidgets.QRadioButton('Mode Custom')
+        if sys.platform.lower() == 'darwin':
+            cmd_key = 'Cmd'
+        else:
+            cmd_key = 'Ctrl'
+
+        custom_mode = QtWidgets.QRadioButton('Mode Custom [%s+T]' % cmd_key)
+        custom_mode.mode = 'CUSTOM'
         custom_mode.setToolTip('Manually select the axis slice on sagittal plane')
         custom_mode.toggled.connect(self.on_toggle_mode)
-        custom_mode.mode = 'CUSTOM'
         custom_mode.sagittal_title = 'Select an axial slice.\n{}'.format(self.params.subtitle)
         custom_mode.axial_title = 'Click in the center of the spinal cord'
         layout.addWidget(custom_mode)
 
-        auto_mode = QtWidgets.QRadioButton('Mode Auto')
+        auto_mode = QtWidgets.QRadioButton('Mode Auto [%s+T]' % cmd_key)
+        auto_mode.mode = 'AUTO'
         auto_mode.setToolTip('Automatically move down the axis slice on the sagittal plane')
         auto_mode.toggled.connect(self.on_toggle_mode)
-        auto_mode.mode = 'AUTO'
         auto_mode.sagittal_title = 'The axial slice is automatically selected\n{}'.format(self.params.subtitle)
         auto_mode.axial_title = 'Click in the center of the spinal cord'
         layout.addWidget(auto_mode)
@@ -177,6 +182,11 @@ class Centerline(base.BaseDialog):
         group.setLayout(layout)
         parent.addWidget(group)
         auto_mode.click()
+
+        # Add keyboard shortcut to toggle between modes
+        self.auto_mode = auto_mode
+        self.custom_mode = custom_mode
+        QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+T'), self, self.on_toggle_mode)
 
     def _init_footer(self, parent):
         ctrl_layout = super(Centerline, self)._init_footer(parent)
@@ -193,6 +203,7 @@ class Centerline(base.BaseDialog):
         clean = QtWidgets.QPushButton('Delete all [%s+D]' % cmd_key)
         ctrl_layout.insertWidget(2, clean)
         clean.clicked.connect(self.on_delete_all_labels)
+        # TODO: try the setShortcut attribute
 
         events = (
             (QtGui.QKeySequence('Ctrl+F'), self.on_skip_label),
@@ -223,14 +234,24 @@ class Centerline(base.BaseDialog):
 
     def on_toggle_mode(self):
         widget = self.sender()
-        if widget.mode in self._controller.MODES and widget.isChecked() and widget.mode != self._controller.mode:
-            self._controller.mode = widget.mode
-            self.update_status('Now in mode {}'.format(widget.mode))
-
-            self.sagittal_canvas.title(widget.sagittal_title)
-            self.sagittal_canvas.refresh()
-            self.axial_canvas.title(widget.axial_title)
-            self.axial_canvas.refresh()
+        # If needed in case user used keyboard shortcut (no widget.mode in this case)
+        if hasattr(widget, 'mode'):
+            if widget.mode == self._controller.mode:
+                # User clicked on the same button, so no further action is required.
+                return
+        else:
+            # If user selected keyboard shortcut, simply toggle mode without further checks.
+            if self._controller.mode == 'AUTO':
+                widget = self.custom_mode
+            else:
+                widget = self.auto_mode
+            widget.click()
+        self._controller.mode = widget.mode
+        self.update_status('Now in mode {}'.format(widget.mode))
+        self.sagittal_canvas.title(widget.sagittal_title)
+        self.sagittal_canvas.refresh()
+        self.axial_canvas.title(widget.axial_title)
+        self.axial_canvas.refresh()
 
     def on_select_slice(self, x, y, z):
         try:
