@@ -258,6 +258,9 @@ def main(argv=None):
         # Reparse the arguments
         arguments = parser.parse_args(argv)
 
+    if arguments.script is None:
+        parser.error("The -script argument must be provided, either via command-line or via the -config/-c argument.")
+
     # Set up email notifications if desired
     do_email = arguments.email_to is not None
     if do_email:
