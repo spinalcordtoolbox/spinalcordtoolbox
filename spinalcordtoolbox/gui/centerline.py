@@ -72,8 +72,6 @@ class CenterlineController(base.BaseController):
         if existing_points:
             self.points[existing_points[0]] = (x, y, z, 1)
         else:
-            # if len(self.points) >= self.params.num_points:
-            #     raise TooManyPointsWarning()
             self.points.append((x, y, z, 1))
         self.position = (x, y, z)
         if self.mode == 'AUTO':
