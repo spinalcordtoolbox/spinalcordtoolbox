@@ -92,10 +92,6 @@ def main(argv=None):
 
     # initialization
     file_mask = ''
-
-    # Get parser info
-    parser = get_parser()
-    arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
     fname_in = arguments.i
     fname_bvals = arguments.bval
     fname_bvecs = arguments.bvec
