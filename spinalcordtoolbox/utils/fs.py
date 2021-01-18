@@ -10,6 +10,9 @@ import tempfile
 import datetime
 import logging
 import pathlib
+import fcntl
+from fcntl import LOCK_EX, LOCK_SH
+from contextlib import contextmanager
 
 from .sys import printv
 
@@ -249,3 +252,28 @@ def copy(src, dst, verbose=1):
             if isinstance(e, shutil.SameFileError):
                 return
         raise  # Must be another error
+
+@contextmanager
+def Lockf(fd, cmd=LOCK_EX):
+    """
+    Lock a file using fcntl.lockf() in a way compatible with the `with` statement.
+
+    cmd:
+      - LOCK_EX - an exclusive lock
+      - LOCK_SH - a shared lock; usually used for read-only access.
+
+    with open(lock, "w") as fd:
+        with Lockf(fd):
+            # do something with the lock
+            # ...
+
+    TODO: Does this contextmanager already exist somewhere in the standard library?
+    """
+    if cmd not in [fcntl.LOCK_EX, fcntl.LOCK_SH]:
+        raise ValueError("cmd must be LOCK_EX or LOCK_SH")
+
+    fcntl.lockf(fd, cmd)
+    try:
+        yield
+    finally:
+        fcntl.lockf(fd, fcntl.LOCK_UN)

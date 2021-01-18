@@ -19,17 +19,101 @@ from hashlib import md5
 import pytest
 
 from spinalcordtoolbox.utils.sys import sct_dir_local_path, sct_test_path
+from spinalcordtoolbox.utils.fs import Lockf
 from spinalcordtoolbox.scripts import sct_download_data as downloader
 
 
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def sct_testing_data():
-    """ Download sct_testing_data prior to test collection. """
-    logger.info("Downloading sct test data")
-    downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
+try:
+    import xdist
+    # XXX is this the right way to check if xdist is active?
+
+    @fixture(scope="session")
+    def testrun_tmp_path(tmp_path_factory, worker_id):
+        """
+        A session-scoped fixture giving the test run's temporary directory.
+        Returns *the same* temporary directory -- even between pytest_xdist workers,
+        if that is in use.
+
+        Returns a pathlib.Path object.
+        """
+
+        # if running under xdist, each worker has an isolated subdir.
+        # but to coordinate the workers, we need them to share the dir
+        # This is based on
+        # https://pypi.org/project/pytest-xdist/
+        # https://github.com/cloud-custodian/pytest-terraform/blob/17bb7e8f87540333d65ccdd2554464c798036101/pytest_terraform/xdist.py#L91-L95
+        #
+        # Is there a better way to determine this? Some option we can set?
+        if worker_id == "master":
+            # this path never seems to get executed when xdist is active? there's only gw0,
+            # gw1, gw2, .., but never a "master", at least not one that executes
+            return tmp_path_factory.getbasetemp()
+        else:
+            # assumption: pytest-xdist just puts its workers' tempdirs as subdirs of the base tempdir.
+            return tmp_path_factory.getbasetemp().parent
+
+    del xdist
+except ImportError:
+    @fixture(scope="session")
+    def testrun_tmp_path(tmp_path_factory):
+        """
+        A session-scoped fixture giving the test run's temporary directory.
+        Returns *the same* temporary directory -- even between pytest_xdist workers,
+        if that is in use.
+
+        Returns a pathlib.Path object.
+        """
+        return tmp_path_factory.getbasetemp()
+
+
+@fixture(scope="session", autouse=True)
+# TODO: make this *not* autouse; instead, replace all calls to sct_test_path() with this fixture, so that pytest can understand the dependencies.
+def sct_testing_data(testrun_tmp_path):
+    """ Download sct_testing_data prior to testing. """
+    # pytest-xdist breaks session-scoped fixtures: it silently makes them [worker-scoped instead](https://github.com/pytest-dev/pytest-xdist/issues/271).
+    #
+    # This is a concurrency issue, and an interprocess one at that, so here we handle it with a lock file:
+    # whichever worker gets the lock first generates the fixture, then marks itself done using a second file.
+    # Every other worker blocks until at least the first one is done, then they will see the '.done' file and skip on.
+    # We don't try to handle cleaning up the lockfile when we're done (which can be very tricky to get right!);
+    # because we're running under pytest we can just lean on the master process to clean it up for us.
+    #
+    # Here we are using [`fcntl.lockf`](https://apenwarr.ca/log/20101213):
+    # > in C, use fcntl(), but avoid lockf(), which is not necessarily the same thing.
+    # > in python, use fcntl.lockf(), which is the same thing as fcntl() in C.
+    #
+    # There are several other options:
+    # - [`portalocker.Lock`](https://pypi.org/project/portalocker/)
+    # - [`posix_ipc.Semaphore`](http://semanchuk.com/philip/posix_ipc/)
+    # - ?
+    #
+    # This is compatible with pytest-xdist's multi-server mode, where it distributes tests out via ssh.
+    # Each node has its own fcntl locks, so workers that end up on the same host will only do the work
+    # once, while those on different hosts will have at least one of them pick it up.
+
+    _fixture_name = "sct_testing_data" # TODO: generalize to fixture.__name__
+    lock = testrun_tmp_path / f"{_fixture_name}.lock"
+    done = testrun_tmp_path / f"{_fixture_name}.done"
+    # instead of testrun_tmp_path, per the suggestion on https://pypi.org/project/pytest-xdist/,
+    # we could use testrun_uid to make our own distinct tmpdir, or perhaps a POSIX semaphore.
+    # this is working for now.
+
+    with open(lock, "w") as lock:
+        with Lockf(lock):
+            if not os.path.exists(done):
+                if not os.path.exists(sct_test_path()):
+                    downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
+                with open(done, "w"): pass  # write the 'done' flag
+
+    # return the test path so clients
+    # TODO: merge test_data_integrity() in here
+
+    yield sct_test_path()
+
+    # TODO: delete the data ?
 
 
 @pytest.fixture(scope="session", autouse=True)
