@@ -68,6 +68,10 @@ def get_parser():
         action=ActionCreateFolder,
         required=False)
     optional.add_argument(
+        '-o',
+        metavar=Metavar.file,
+        help='Output filename. Example: pmj.nii.gz '),
+    optional.add_argument(
         '-qc',
         metavar=Metavar.str,
         help='The path where the quality control generated content will be saved.',
@@ -97,7 +101,7 @@ def get_parser():
 
 
 class DetectPMJ:
-    def __init__(self, fname_im, contrast, fname_seg, path_out, verbose):
+    def __init__(self, fname_im, contrast, fname_seg, path_out, verbose, fname_out):
 
         self.fname_im = fname_im
         self.contrast = contrast
@@ -120,7 +124,7 @@ class DetectPMJ:
 
         self.threshold = -0.75 if self.contrast == 't1' else 0.8  # detection map threshold, depends on the contrast
 
-        self.fname_out = extract_fname(self.fname_im)[1] + '_pmj.nii.gz'
+        self.fname_out = fname_out
 
         self.fname_qc = 'qc_pmj.png'
 
@@ -281,6 +285,10 @@ def main(argv=None):
             os.makedirs(path_results)
     else:
         path_results = '.'
+    if arguments.o is not None:
+        fname_o = arguments.o
+    else:
+        fname_o = extract_fname(fname_in)[1] + '_pmj.nii.gz'
 
     path_qc = arguments.qc
 
@@ -292,7 +300,8 @@ def main(argv=None):
                          contrast=contrast,
                          fname_seg=fname_seg,
                          path_out=path_results,
-                         verbose=verbose)
+                         verbose=verbose,
+                         fname_out=fname_o)
 
     # run the extraction
     fname_out, tmp_dir = detector.apply()
@@ -313,4 +322,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

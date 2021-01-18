@@ -57,8 +57,11 @@ def get_parser():
     seg = parser.add_argument_group('\nTASKS')
     seg.add_argument(
         "-task",
+        nargs="+",
         help="Task to perform. It could either be a pre-installed task, task that could be installed, or a custom task."
-             " To list available tasks, run: sct_deepseg -list-tasks",
+             " To list available tasks, run: sct_deepseg -list-tasks. To use a custom task, indicate the path to the "
+             " ivadomed packaged model (see https://ivadomed.org/en/latest/pretrained_models.html#packaged-model-format for more details). "
+             " More than one path can be indicated (separated with space) for cascaded application of the models.",
         metavar=Metavar.str)
     seg.add_argument(
         "-list-tasks",
@@ -131,6 +134,11 @@ def main(argv=None):
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 
+    if (arguments.list_tasks is False
+            and arguments.install_task is None
+            and (arguments.i is None or arguments.task is None)):
+        parser.error("You must specify either '-list-tasks', '-install-task', or both '-i' + '-task'.")
+
     # Deal with task
     if arguments.list_tasks:
         deepseg.models.display_list_tasks()
@@ -145,13 +153,18 @@ def main(argv=None):
         if not os.path.isfile(file):
             parser.error("This file does not exist: {}".format(file))
 
-    # Check if at least a model or task has been specified
-    if arguments.task is None:
-        parser.error("You need to specify a task.")
+    # Verify if the task is part of the "official" tasks, or if it is pointing to paths containing custom models
+    if len(arguments.task) == 1 and arguments.task[0] in deepseg.models.TASKS:
+        # Check if all input images are provided
+        required_contrasts = deepseg.models.get_required_contrasts(arguments.task[0])
+        n_contrasts = len(required_contrasts)
+        # Get pipeline model names
+        name_models = deepseg.models.TASKS[arguments.task[0]]['models']
+    else:
+        n_contrasts = len(arguments.i)
+        name_models = arguments.task
 
-    # Check if all input images are provided
-    required_contrasts = deepseg.models.get_required_contrasts(arguments.task)
-    if len(arguments.i) != len(required_contrasts):
+    if len(arguments.i) != n_contrasts:
         parser.error(
             "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
             .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
@@ -161,9 +174,6 @@ def main(argv=None):
         parser.error(
             "Please specify the order in which you put the contrasts in the input images (-i) with flag -c, e.g., "
             "-c t1 t2")
-
-    # Get pipeline model names
-    name_models = deepseg.models.TASKS[arguments.task]['models']
 
     # Run pipeline by iterating through the models
     fname_prior = None
