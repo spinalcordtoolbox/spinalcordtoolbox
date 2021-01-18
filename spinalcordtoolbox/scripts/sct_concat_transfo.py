@@ -13,13 +13,16 @@
 
 # TODO: also enable to concatenate reversed transfo
 
-from __future__ import absolute_import, division
+import sys
+import os
+import functools
+import argparse
 
-import sys, os, functools, argparse
+from spinalcordtoolbox.image import Image, check_dim, generate_output_file
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, SmartFormatter
+from spinalcordtoolbox.utils.sys import init_sct, printv, run_proc
+from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, check_file_exist
 
-import sct_utils as sct
-from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import Metavar, SmartFormatter
 
 class Param:
     # The constructor
@@ -27,23 +30,23 @@ class Param:
         self.fname_warp_final = 'warp_final.nii.gz'
 
 
-def main(args=None):
+def main(argv=None):
     """
     Main function
-    :param args:
+    :param argv:
     :return:
     """
     # get parser args
-    if args is None:
-        args = None if sys.argv[1:] else ['--help']
+    if argv is None:
+        argv = None if sys.argv[1:] else ['--help']
     else:
         # flatten the list of input arguments because -w and -winv carry a nested list
         lst = []
-        for line in args:
+        for line in argv:
             lst.append(line) if isinstance(line, str) else lst.extend(line)
-        args = lst
+        argv = lst
     parser = get_parser()
-    arguments = parser.parse_args(args=args)
+    arguments = parser.parse_args(args=argv)
 
     # Initialization
     fname_warp_final = ''  # concatenated transformations
@@ -54,10 +57,10 @@ def main(args=None):
     if arguments.o is not None:
         fname_warp_final = arguments.o
     verbose = arguments.v
-    sct.init_sct(log_level=verbose, update=True)  # Update log level
+    init_sct()
 
     # Parse list of warping fields
-    sct.printv('\nParse list of warping fields...', verbose)
+    printv('\nParse list of warping fields...', verbose)
     use_inverse = []
     fname_warp_list_invert = []
     # list_warp = list_warp.replace(' ', '')  # remove spaces
@@ -74,35 +77,35 @@ def main(args=None):
         path_warp = fname_warp_list[idx_warp]
         if path_warp.endswith((".nii", ".nii.gz")) \
                 and Image(fname_warp_list[idx_warp]).header.get_intent()[0] != 'vector':
-            raise ValueError("Displacement field in {} is invalid: should be encoded" \
-                             " in a 5D file with vector intent code" \
-                             " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h" \
+            raise ValueError("Displacement field in {} is invalid: should be encoded"
+                             " in a 5D file with vector intent code"
+                             " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"
                              .format(path_warp))
     # need to check if last warping field is an affine transfo
     isLastAffine = False
-    path_fname, file_fname, ext_fname = sct.extract_fname(fname_warp_list_invert[-1][-1])
+    path_fname, file_fname, ext_fname = extract_fname(fname_warp_list_invert[-1][-1])
     if ext_fname in ['.txt', '.mat']:
         isLastAffine = True
 
     # check if destination file is 3d
-    if not sct.check_dim(fname_dest, dim_lst=[3]):
-        sct.printv('ERROR: Destination data must be 3d')
+    if not check_dim(fname_dest, dim_lst=[3]):
+        printv('ERROR: Destination data must be 3d')
 
     # Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
     fname_warp_list_invert.reverse()
     fname_warp_list_invert = functools.reduce(lambda x, y: x + y, fname_warp_list_invert)
 
     # Check file existence
-    sct.printv('\nCheck file existence...', verbose)
-    sct.check_file_exist(fname_dest, verbose)
+    printv('\nCheck file existence...', verbose)
+    check_file_exist(fname_dest, verbose)
     for i in range(len(fname_warp_list)):
-        sct.check_file_exist(fname_warp_list[i], verbose)
+        check_file_exist(fname_warp_list[i], verbose)
 
     # Get output folder and file name
     if fname_warp_final == '':
-        path_out, file_out, ext_out = sct.extract_fname(param.fname_warp_final)
+        path_out, file_out, ext_out = extract_fname(param.fname_warp_final)
     else:
-        path_out, file_out, ext_out = sct.extract_fname(fname_warp_final)
+        path_out, file_out, ext_out = extract_fname(fname_warp_final)
 
     # Check dimension of destination data (cf. issue #1419, #1429)
     im_dest = Image(fname_dest)
@@ -112,15 +115,15 @@ def main(args=None):
         dimensionality = '3'
 
     cmd = ['isct_ComposeMultiTransform', dimensionality, 'warp_final' + ext_out, '-R', fname_dest] + fname_warp_list_invert
-    status, output = sct.run(cmd, verbose=verbose, is_sct_binary=True)
+    status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
 
     # check if output was generated
     if not os.path.isfile('warp_final' + ext_out):
-        sct.printv('ERROR: Warping field was not generated.\n' + output, 1, 'error')
+        printv('ERROR: Warping field was not generated.\n' + output, 1, 'error')
 
     # Generate output files
-    sct.printv('\nGenerate output files...', verbose)
-    sct.generate_output_file('warp_final' + ext_out, os.path.join(path_out, file_out + ext_out))
+    printv('\nGenerate output files...', verbose)
+    generate_output_file('warp_final' + ext_out, os.path.join(path_out, file_out + ext_out))
 
 
 # ==========================================================================================
@@ -141,7 +144,7 @@ def get_parser():
         required=True,
         help='Destination image. (e.g. "mt.nii.gz")',
         metavar=Metavar.file,
-        )
+    )
     mandatoryArguments.add_argument(
         "-w",
         required=True,
@@ -168,23 +171,23 @@ def get_parser():
         "-o",
         help='Name of output warping field (e.g. "warp_template2mt.nii.gz")',
         metavar=Metavar.str,
-        required = False)
+        required=False)
     optional.add_argument(
         "-v",
         type=int,
         help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
         required=False,
         choices=(0, 1, 2),
-        default = 1)
+        default=1)
 
     return parser
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # Start program
-#=======================================================================================================================
+# =======================================================================================================================
 if __name__ == "__main__":
-    sct.init_sct()
+    init_sct()
     param = Param()
     # call main function
-    main()
+    main(sys.argv[1:])
