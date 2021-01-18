@@ -6,6 +6,8 @@ import sys
 import os
 
 import pytest
+from pytest import fixture
+#from pytest_cases import fixture
 import numpy as np
 import nibabel
 import nibabel.orientations
@@ -13,8 +15,6 @@ import nibabel.orientations
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.utils import tmp_create, __sct_dir__
 from spinalcordtoolbox.scripts import sct_image
-
-from pytest_cases import fixture
 
 @fixture(scope="session")
 def image_paths():
@@ -29,7 +29,7 @@ def image_paths():
     return ret
 
 
-@fixture
+#TODO: @fixture
 def fake_3dimage_custom(data):
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -38,7 +38,7 @@ def fake_3dimage_custom(data):
     return nibabel.nifti1.Nifti1Image(data, affine)
 
 
-@fixture
+#TODO: @fixture
 def fake_3dimage_sct_custom(data):
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
@@ -51,7 +51,7 @@ def fake_3dimage_sct_custom(data):
     return img
 
 
-@fixture
+#TODO: @fixture
 def fake_3dimage_vis():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -138,7 +138,7 @@ def fake_3dimage_sct_vis():
     return img
 
 
-@fixture
+#TODO: @fixture
 def fake_3dimage():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -174,7 +174,7 @@ def fake_3dimage_fixture():
     return fake_3dimage()
 
 
-@fixture
+#TODO: @fixture
 def fake_3dimage2():
     """
     :return: a Nifti1Image (3D) in RAS+ space
@@ -197,7 +197,7 @@ def fake_3dimage2():
     return nibabel.nifti1.Nifti1Image(data, affine)
 
 
-@fixture
+#TODO: @fixture
 def fake_4dimage():
     """
     :return: a Nifti1Image (3D) in RAS+ space

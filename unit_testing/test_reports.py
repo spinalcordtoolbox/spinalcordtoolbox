@@ -3,7 +3,10 @@
 # pytest unit tests for spinalcordtoolbox.reports
 
 import pytest
-from pytest_cases import fixture, fixture_ref, parametrize
+from pytest import fixture
+parametrize = pytest.mark.parametrize
+#from pytest_cases import fixture, fixture_ref, parameterize
+fixture_ref = lambda _: _
 import numpy as np
 
 from spinalcordtoolbox.image import Image

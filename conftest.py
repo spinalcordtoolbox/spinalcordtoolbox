@@ -17,6 +17,8 @@ from typing import Mapping
 from hashlib import md5
 
 import pytest
+from pytest import fixture
+#from pytest_cases import fixture
 
 from spinalcordtoolbox.utils.sys import sct_dir_local_path, sct_test_path
 from spinalcordtoolbox.utils.fs import Lockf
