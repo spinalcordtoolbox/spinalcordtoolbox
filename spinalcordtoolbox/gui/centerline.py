@@ -6,13 +6,14 @@
 """ Qt dialog for manual labeling of an image """
 
 import logging
+import sys
 
 import numpy as np
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 
 from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui import widgets
-from spinalcordtoolbox.gui.base import TooManyPointsWarning, InvalidActionWarning
+from spinalcordtoolbox.gui.base import InvalidActionWarning
 
 # TODO: remove this useless logger (because no handler is found) by sct.log
 logger = logging.getLogger(__name__)
@@ -31,13 +32,15 @@ class CenterlineController(base.BaseController):
         # reorient data to SAL
         super(CenterlineController, self).reformat_image()
         max_x, max_z = self.image.dim[:3:2]
-        self.params.num_points = self.params.num_points or 11
+        # self.params.num_points = self.params.num_points or 11
         # update interval (in pixel) between two consecutive points based on pixel size
         self.INTERVAL = np.round(self.params.interval_in_mm // self.image.dim[4])
 
         # set first slice location (see definitions in base.py)
         if self.params.starting_slice == 'fov':
             self.START_SLICE = 0
+        elif self.params.starting_slice == 'top_minus_one':
+            self.START_SLICE = 1
         elif self.params.starting_slice == 'midfovminusinterval':
             self.START_SLICE = np.round(self.image.dim[0] / 2 - self.INTERVAL)
 
@@ -69,8 +72,6 @@ class CenterlineController(base.BaseController):
         if existing_points:
             self.points[existing_points[0]] = (x, y, z, 1)
         else:
-            if len(self.points) >= self.params.num_points:
-                raise TooManyPointsWarning()
             self.points.append((x, y, z, 1))
         self.position = (x, y, z)
         if self.mode == 'AUTO':
@@ -127,8 +128,6 @@ class CenterlineController(base.BaseController):
 
         if value != self._mode:
             self._mode = value
-            self.points = []
-            self.reset_position()
 
 
 class Centerline(base.BaseDialog):
@@ -155,18 +154,23 @@ class Centerline(base.BaseDialog):
         group.setFlat(True)
         layout = QtWidgets.QHBoxLayout()
 
-        custom_mode = QtWidgets.QRadioButton('Mode Custom')
+        if sys.platform.lower() == 'darwin':
+            cmd_key = 'Cmd'
+        else:
+            cmd_key = 'Ctrl'
+
+        custom_mode = QtWidgets.QRadioButton('Mode Custom [%s+T]' % cmd_key)
+        custom_mode.mode = 'CUSTOM'
         custom_mode.setToolTip('Manually select the axis slice on sagittal plane')
         custom_mode.toggled.connect(self.on_toggle_mode)
-        custom_mode.mode = 'CUSTOM'
         custom_mode.sagittal_title = 'Select an axial slice.\n{}'.format(self.params.subtitle)
-        custom_mode.axial_title = 'Select the center of the spinal cord'
+        custom_mode.axial_title = 'Click in the center of the spinal cord'
         layout.addWidget(custom_mode)
 
-        auto_mode = QtWidgets.QRadioButton('Mode Auto')
+        auto_mode = QtWidgets.QRadioButton('Mode Auto [%s+T]' % cmd_key)
+        auto_mode.mode = 'AUTO'
         auto_mode.setToolTip('Automatically move down the axis slice on the sagittal plane')
         auto_mode.toggled.connect(self.on_toggle_mode)
-        auto_mode.mode = 'AUTO'
         auto_mode.sagittal_title = 'The axial slice is automatically selected\n{}'.format(self.params.subtitle)
         auto_mode.axial_title = 'Click in the center of the spinal cord'
         layout.addWidget(auto_mode)
@@ -175,14 +179,47 @@ class Centerline(base.BaseDialog):
         parent.addWidget(group)
         auto_mode.click()
 
+        # Add keyboard shortcut to toggle between modes
+        self.auto_mode = auto_mode
+        self.custom_mode = custom_mode
+        QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+T'), self, self.on_toggle_mode)
+
     def _init_footer(self, parent):
         ctrl_layout = super(Centerline, self)._init_footer(parent)
-        skip = QtWidgets.QPushButton('Skip')
+
+        if sys.platform.lower() == 'darwin':
+            cmd_key = 'Cmd'
+        else:
+            cmd_key = 'Ctrl'
+
+        skip = QtWidgets.QPushButton('Skip [%s+F]' % cmd_key)
         ctrl_layout.insertWidget(2, skip)
+        skip.clicked.connect(self.on_skip_label)
 
-        skip.clicked.connect(self.on_skip_slice)
+        clean = QtWidgets.QPushButton('Delete all [%s+D]' % cmd_key)
+        ctrl_layout.insertWidget(2, clean)
+        clean.clicked.connect(self.on_delete_all_labels)
+        # TODO: try the setShortcut attribute
 
-    def on_skip_slice(self):
+        events = (
+            (QtGui.QKeySequence('Ctrl+F'), self.on_skip_label),
+            (QtGui.QKeySequence('Ctrl+D'), self.on_delete_all_labels),
+        )
+        for event, action in events:
+            QtWidgets.QShortcut(event, self, action)
+
+    def on_delete_all_labels(self):
+        try:
+            logger.debug("Clean all labels")
+            self._controller.points = []
+            self.sagittal_canvas.refresh()
+            self.axial_canvas.refresh()
+            # TODO: fix: does not refresh
+            # TODO: add text
+        except InvalidActionWarning as warn:
+            self.update_warning(str(warn))
+
+    def on_skip_label(self):
         try:
             logger.debug('Skipping slice')
             self._controller.skip_slice()
@@ -193,14 +230,24 @@ class Centerline(base.BaseDialog):
 
     def on_toggle_mode(self):
         widget = self.sender()
-        if widget.mode in self._controller.MODES and widget.isChecked() and widget.mode != self._controller.mode:
-            self._controller.mode = widget.mode
-            self.update_status('Reset manual labels: Now in mode {}'.format(widget.mode))
-
-            self.sagittal_canvas.title(widget.sagittal_title)
-            self.sagittal_canvas.refresh()
-            self.axial_canvas.title(widget.axial_title)
-            self.axial_canvas.refresh()
+        # If needed in case user used keyboard shortcut (no widget.mode in this case)
+        if hasattr(widget, 'mode'):
+            if widget.mode == self._controller.mode:
+                # User clicked on the same button, so no further action is required.
+                return
+        else:
+            # If user selected keyboard shortcut, simply toggle mode without further checks.
+            if self._controller.mode == 'AUTO':
+                widget = self.custom_mode
+            else:
+                widget = self.auto_mode
+            widget.click()
+        self._controller.mode = widget.mode
+        self.update_status('Now in mode {}'.format(widget.mode))
+        self.sagittal_canvas.title(widget.sagittal_title)
+        self.sagittal_canvas.refresh()
+        self.axial_canvas.title(widget.axial_title)
+        self.axial_canvas.refresh()
 
     def on_select_slice(self, x, y, z):
         try:
@@ -209,7 +256,7 @@ class Centerline(base.BaseDialog):
             self.axial_canvas.refresh()
             self.sagittal_canvas.refresh()
             self.update_status('Sagittal position at {:8.2f}'.format(self._controller.position[0]))
-        except (TooManyPointsWarning, InvalidActionWarning) as warn:
+        except InvalidActionWarning as warn:
             self.update_warning(str(warn))
 
     def increment_horizontal_nav(self):
@@ -229,7 +276,7 @@ class Centerline(base.BaseDialog):
             self.axial_canvas.refresh()
             self.sagittal_canvas.refresh()
             self.update_status('{} point(s) selected'.format(len(self._controller.points)))
-        except (TooManyPointsWarning, InvalidActionWarning) as warn:
+        except InvalidActionWarning as warn:
             self.update_warning(str(warn))
 
     def on_undo(self):
