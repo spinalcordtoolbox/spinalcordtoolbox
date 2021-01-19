@@ -3,10 +3,7 @@
 # pytest unit tests for spinalcordtoolbox.reports
 
 import pytest
-from pytest import fixture
-parametrize = pytest.mark.parametrize
-#from pytest_cases import fixture, fixture_ref, parameterize
-fixture_ref = lambda _: _
+from .test_utils import fixture, parametrize
 import numpy as np
 
 from spinalcordtoolbox.image import Image
@@ -46,7 +43,7 @@ def im_seg_no_labels(im_seg_labeled):
     return im_seg_no_labels
 
 
-@parametrize("im_seg", [fixture_ref(im_seg_labeled), fixture_ref(im_seg_one_label), fixture_ref(im_seg_no_labels)])
+@parametrize("im_seg", [im_seg_labeled, im_seg_one_label, im_seg_no_labels])
 def test_sagittal_slice_get_center_spit(im_base, im_seg):
     """Test that get_center_spit returns a valid index list."""
     im_in = im_base
