@@ -3,8 +3,25 @@
 # pytest unit tests for utils
 
 import pytest
+import pytest_cases
 
 from spinalcordtoolbox import utils
+
+
+def parametrize(argnames: str=None,
+                argvalues: Iterable[Any]=None,
+                *args, **kwargs):
+    """
+    Wrap pytest_cases.parametrize (which wraps pytest.mark.parametrize)
+    to avoid having to repeat fixture_ref() everywhere.
+
+    See https://smarie.github.io/python-pytest-cases/api_reference/#parametrize
+    """
+    return pytest_cases.parametrize(argnames,
+                                    [(pytest_cases.fixture_ref(v) if hasattr(v,'_pytestfixturefunction') else v)
+                                      for v in argvalues],
+                                    *args,
+                                    **kwargs)
 
 
 def test_parse_num_list_inv():
