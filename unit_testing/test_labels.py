@@ -248,9 +248,8 @@ def test_remove_other_labels_from_image(test_image):
     assert diff.all()
 
 
-@parametrize("test_image", test_images)
-def test_check_missing_label(test_image):
-    img = test_image
+def test_check_missing_label():
+    img = fake_3dimage_sct()
     false_positive = img.copy()
 
     # modifying the data to create one false negative and one false positive
