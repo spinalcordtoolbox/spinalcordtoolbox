@@ -33,6 +33,8 @@ def labels_img():
     return Image(sct_test_path('t2', 'labels.nii.gz'))
 
 
+# TODO [AJ] investigate how to parametrize fixtures from test_image.py
+# without redefining the function here
 def fake_3dimage_sct2():
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
