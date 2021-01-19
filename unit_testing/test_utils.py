@@ -7,6 +7,7 @@ import pytest_cases
 
 from spinalcordtoolbox import utils
 
+# This is only needed until pytest_case.fixture is upstreamed: https://github.com/pytest-dev/pytest/issues/3960
 fixture = pytest_cases.fixture
 
 def parametrize(argnames=None,
@@ -18,6 +19,7 @@ def parametrize(argnames=None,
 
     See https://smarie.github.io/python-pytest-cases/api_reference/#parametrize
     """
+    # Follow up on this at https://github.com/smarie/python-pytest-cases/issues/177
     return pytest_cases.parametrize(argnames,
                                     [(pytest_cases.fixture_ref(v) if hasattr(v,'_pytestfixturefunction') else v)
                                       for v in argvalues] if argvalues else argvalues,
