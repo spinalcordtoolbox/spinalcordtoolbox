@@ -7,9 +7,10 @@ import pytest_cases
 
 from spinalcordtoolbox import utils
 
+fixture = pytest_cases.fixture
 
-def parametrize(argnames: str=None,
-                argvalues: Iterable[Any]=None,
+def parametrize(argnames=None,
+                argvalues=None,
                 *args, **kwargs):
     """
     Wrap pytest_cases.parametrize (which wraps pytest.mark.parametrize)
@@ -19,7 +20,7 @@ def parametrize(argnames: str=None,
     """
     return pytest_cases.parametrize(argnames,
                                     [(pytest_cases.fixture_ref(v) if hasattr(v,'_pytestfixturefunction') else v)
-                                      for v in argvalues],
+                                      for v in argvalues] if argvalues else argvalues,
                                     *args,
                                     **kwargs)
 
