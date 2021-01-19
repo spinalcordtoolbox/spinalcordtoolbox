@@ -5,18 +5,15 @@
 import logging
 from time import time
 
-import pytest
-from pytest import fixture
-parametrize = pytest.mark.parametrize
-#from pytest_cases import fixture, fixture_ref, parametrize
-fixture_ref = lambda _: _  # quick test patch
 import numpy as np
+import pytest
 
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.utils import sct_test_path
 from spinalcordtoolbox.types import Coordinate
 from .test_image import fake_3dimage, fake_3dimage2
+from .test_utils import fixture, parametrize
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +23,7 @@ def seg_img():
     return Image(sct_test_path('t2', 't2_seg-manual.nii.gz'))
 
 
-#TODO: @fixture
+@fixture
 def t2_img():
     return Image(sct_test_path('t2', 't2.nii.gz'))
 
@@ -36,8 +33,6 @@ def labels_img():
     return Image(sct_test_path('t2', 'labels.nii.gz'))
 
 
-#TODO: @fixture
-# def fake_3dimage_sct2(fake_3dimage2):
 def fake_3dimage_sct2():
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
@@ -51,8 +46,6 @@ def fake_3dimage_sct2():
     return img
 
 
-#TODO: @fixture
-#def fake_3dimage_sct(fake_3dimage):
 def fake_3dimage_sct():
     """
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
@@ -65,8 +58,9 @@ def fake_3dimage_sct():
                 )
     return img
 
-test_images = [fake_3dimage_sct(), fake_3dimage_sct2(), t2_img()]
-# TODO:? test_images = [fixture_ref(fake_3dimage_sct), fixture_ref(fake_3dimage_sct2), fixture_ref(t2_img)]
+
+test_images = [fake_3dimage_sct(), fake_3dimage_sct2(), t2_img]
+
 
 @parametrize("test_image", test_images)
 def test_create_labels_empty(test_image):
@@ -137,10 +131,8 @@ def test_labelize_from_discs(seg_img, labels_img):
     # TODO [AJ] implement test
 
 
-#@parametrize("test_image", [fixture_ref(fake_3dimage_sct2)])
-@parametrize("test_image", [fake_3dimage_sct2()])
-def test_label_vertebrae(test_image):
-    a = test_image
+def test_label_vertebrae():
+    a = fake_3dimage_sct2()
     expected = zeros_like(a)
     expected.data[0, 0, 0] = 111
     b = sct_labels.label_vertebrae(a, [111])
@@ -149,10 +141,8 @@ def test_label_vertebrae(test_image):
     assert diff.all()
 
 
-#@parametrize("test_image", [fixture_ref(fake_3dimage_sct)])
-@parametrize("test_image", [fake_3dimage_sct()])
-def test_compute_mean_squared_error(test_image):
-    src = test_image
+def test_compute_mean_squared_error():
+    src = fake_3dimage_sct()
     ref = src.copy()
 
     for x, y, z, _ in src.getNonZeroCoordinates():
@@ -162,10 +152,8 @@ def test_compute_mean_squared_error(test_image):
     assert mse == 1.1547005383792515
 
 
-#@parametrize("test_image", [fixture_ref(fake_3dimage_sct)])
-@parametrize("test_image", [fake_3dimage_sct()])
-def test_compute_mse_label_warning(caplog, test_image):
-    src = test_image
+def test_compute_mse_label_warning(caplog):
+    src = fake_3dimage_sct()
     ref = src.copy()
     # Label 1500 is not in the reference image. The label present at [0,0,0] will be missing from the input image
     # This will triggers the warning that we are looking for
@@ -179,10 +167,8 @@ def test_compute_mse_label_warning(caplog, test_image):
     assert string_form_ref in caplog.text
 
 
-#@parametrize("test_image", [fixture_ref(fake_3dimage_sct)])
-@parametrize("test_image", [fake_3dimage_sct()])
-def test_compute_mse_no_label_warning(caplog, test_image):
-    src = test_image
+def test_compute_mse_no_label_warning(caplog):
+    src = fake_3dimage_sct()
     ref = src.copy()
     sct_labels.compute_mean_squared_error(src, ref)
     assert 'Label mismatch' not in caplog.text
