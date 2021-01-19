@@ -27,46 +27,28 @@ from spinalcordtoolbox.scripts import sct_download_data as downloader
 logger = logging.getLogger(__name__)
 
 
-try:
-    import xdist
-    # XXX is this the right way to check if xdist is active?
+@fixture(scope="session")
+def testrun_tmp_path(tmp_path_factory):
+    """
+    A session-scoped fixture giving the test run's temporary directory.
+    Returns *the same* temporary directory -- even between pytest_xdist workers,
+    if that is in use.
 
-    @fixture(scope="session")
-    def testrun_tmp_path(tmp_path_factory, worker_id):
-        """
-        A session-scoped fixture giving the test run's temporary directory.
-        Returns *the same* temporary directory -- even between pytest_xdist workers,
-        if that is in use.
+    Returns a pathlib.Path object.
+    """
 
-        Returns a pathlib.Path object.
-        """
+    if 'PYTEST_XDIST_WORKER' in os.environ:
+        # we are a xdist worker process
 
-        # if running under xdist, each worker has an isolated subdir.
-        # but to coordinate the workers, we need them to share the dir
-        # This is based on
-        # https://pypi.org/project/pytest-xdist/
-        # https://github.com/cloud-custodian/pytest-terraform/blob/17bb7e8f87540333d65ccdd2554464c798036101/pytest_terraform/xdist.py#L91-L95
-        #
-        # Is there a better way to determine this? Some option we can set?
-        if worker_id == "master":
-            # this path never seems to get executed when xdist is active? there's only gw0,
-            # gw1, gw2, .., but never a "master", at least not one that executes
-            return tmp_path_factory.getbasetemp()
-        else:
-            # assumption: pytest-xdist just puts its workers' tempdirs as subdirs of the base tempdir.
-            return tmp_path_factory.getbasetemp().parent
-
-    del xdist
-except ImportError:
-    @fixture(scope="session")
-    def testrun_tmp_path(tmp_path_factory):
-        """
-        A session-scoped fixture giving the test run's temporary directory.
-        Returns *the same* temporary directory -- even between pytest_xdist workers,
-        if that is in use.
-
-        Returns a pathlib.Path object.
-        """
+        # Each worker has an isolated subdir but to coordinate locking for node-scoped fixtures,
+        # we need them to share, so create a fixture that counteracts that.
+        # This is based on:
+        # - https://github.com/pytest-dev/pytest-xdist/blob/cf45eab9771ee271f8ec3eb4d33e23c914c70126/README.rst#making-session-scoped-fixtures-execute-only-once
+        # - https://github.com/cloud-custodian/pytest-terraform/blob/17bb7e8f87540333d65ccdd2554464c798036101/pytest_terraform/xdist.py#L91-L95
+        return tmp_path_factory.getbasetemp().parent
+    else:
+        # we're either not a worker process, *or* the user has used `pytest -n 0`
+        # and we are the unique worker, which amounts to the same thing.
         return tmp_path_factory.getbasetemp()
 
 
