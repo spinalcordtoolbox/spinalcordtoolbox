@@ -44,8 +44,8 @@ def im_seg_no_labels(im_seg_labeled):
 
 
 @parametrize("im_seg", [im_seg_labeled, im_seg_one_label, im_seg_no_labels])
-def test_sagittal_slice_get_center_spit(im_in, im_seg):
-    """Test that get_center_spit returns a valid index list."""
+def test_sagittal_slice_get_center_split(im_in, im_seg):
+    """Test that get_center_split returns a valid index list."""
 
     assert im_in.orientation == im_seg.orientation, "im_in and im_seg aren't in the same orientation"
     qcslice = Sagittal([im_in, im_seg], p_resample=None)
