@@ -20,7 +20,7 @@ import argparse
 
 from spinalcordtoolbox.image import Image, check_dim, generate_output_file
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, SmartFormatter
-from spinalcordtoolbox.utils.sys import init_sct, printv, run_proc
+from spinalcordtoolbox.utils.sys import init_sct, printv, run_proc, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, check_file_exist
 
 
@@ -36,17 +36,11 @@ def main(argv=None):
     :param argv:
     :return:
     """
-    # get parser args
-    if argv is None:
-        argv = None if sys.argv[1:] else ['--help']
-    else:
-        # flatten the list of input arguments because -w and -winv carry a nested list
-        lst = []
-        for line in argv:
-            lst.append(line) if isinstance(line, str) else lst.extend(line)
-        argv = lst
     parser = get_parser()
-    arguments = parser.parse_args(args=argv)
+    arguments = parser.parse_args(argv)
+    verbose = arguments.v
+    set_global_loglevel(verbose=verbose)
+    param = Param()
 
     # Initialization
     fname_warp_final = ''  # concatenated transformations
@@ -130,13 +124,11 @@ def main(argv=None):
 def get_parser():
     # Initialize the parser
 
-    parser = argparse.ArgumentParser(
+    parser = SCTArgumentParser(
         description='Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform (ANTs). '
                     'The order of input warping fields is important. For example, if you want to concatenate: '
                     'A->B and B->C to yield A->C, then you have to input warping fields in this order: A->B B->C.',
-        formatter_class=SmartFormatter,
-        add_help=None,
-        prog=os.path.basename(__file__).strip(".py"))
+    )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
@@ -170,15 +162,15 @@ def get_parser():
     optional.add_argument(
         "-o",
         help='Name of output warping field (e.g. "warp_template2mt.nii.gz")',
-        metavar=Metavar.str,
-        required=False)
+        metavar=Metavar.str)
     optional.add_argument(
-        "-v",
+        '-v',
+        metavar=Metavar.int,
         type=int,
-        help="Verbose: 0 = nothing, 1 = classic, 2 = expended",
-        required=False,
-        choices=(0, 1, 2),
-        default=1)
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
 
@@ -188,6 +180,4 @@ def get_parser():
 # =======================================================================================================================
 if __name__ == "__main__":
     init_sct()
-    param = Param()
-    # call main function
     main(sys.argv[1:])
