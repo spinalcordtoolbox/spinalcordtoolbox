@@ -410,6 +410,7 @@ def get_functions_parallelizable():
         'sct_compute_mtr',
         'sct_compute_mscc',
         'sct_compute_snr',
+        'sct_concat_transfo',
         'sct_create_mask',
         'sct_crop_image',
         'sct_dice_coefficient',
