@@ -98,49 +98,40 @@ def node_scoped(fixture):
 
     # in order to support generator-fixtures, we need to *give* a generator function
     # -- not just a generator: a generator function -- because pytest internally looks
-    # at inspect.isgeneratorfunction() to detect it. Otherwise, the lock just locks
-    # its *initialization*, i.e. no actual code of the fixture.
+    # at inspect.isgeneratorfunction() to detect it. If we just `return fixture()` when
+    # fixture is a generator function the lock just locks its *initialization*, i.e.
+    # no actual code of the fixture.
     #
-    # The difference between a function and a generator function is the 'yield' keyword,
-    # so that means we need to have two nearly identical def:s. I don't know how to reduce the duplication here.
-    # Maybe, in the non-generator case, wrap it with something that makes it a generator and only do that?
-    if inspect.isgeneratorfunction(fixture):
+    # To deal with this, assume generators as the default case.
+    @functools.wraps(fixture)
+    def _fixture(*args, **kwargs):
+        with nodelock():
+            if not os.path.exists(done):
 
-        def _fixture(*args, **kwargs):
-            with nodelock():
-                if not os.path.exists(done):
+                if inspect.isgeneratorfunction(fixture):
                     g = fixture(*args, **kwargs)
-                    result = next(g)
-                    with open(done, 'wb') as cache:
-                        pickle.dump(result, cache)
-                    yield g
                 else:
-                    with open(done, 'rb') as cache:
-                        yield pickle.load(cache)
-                    g = (e for e in []) # just make an empty generator for below
-            # this sleeps here until pytest is done with all the tests
-            with nodelock():
-                # delete cache
-                if os.path.exists(done):
-                    os.unlink(done)
-                # clean up fixture
-                yield from g
+                    # wrap non-generator fixture into a generator
+                    g = (fixture(*args, **kwargs) for _ in [""])
 
-    else:
+                result = next(g)
 
-        def _fixture(*args, **kwargs):
-            with nodelock():
-                if not os.path.exists(done):
-                    result = fixture(*args, **kwargs)
-                    with open(done, 'wb') as cache:
-                        pickle.dump(result, cache)
-                else:
-                    with open(done, 'rb') as cache:
-                        result = pickle.load(cache)
-                return result
-                # NB: cache isn't deleted here!
+                with open(done, 'wb') as cache:
+                    pickle.dump(result, cache)
 
-    _fixture = functools.wraps(fixture)(_fixture)
+                yield result
+            else:
+                # ignore fixture() entirely; just read the cache
+                with open(done, 'rb') as cache:
+                    yield pickle.load(cache)
+                g = (e for e in []) # just make an empty generator for below
+        # this sleeps here until pytest is done with all the tests
+        with nodelock():
+            # delete cache
+            if os.path.exists(done):
+                os.unlink(done)
+            # clean up fixture
+            yield from g
 
     return _fixture
 
