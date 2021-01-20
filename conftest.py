@@ -12,11 +12,14 @@
 
 import sys
 import os
+import pathlib
+import tempfile
 import logging
 from typing import Mapping
 import functools
-from hashlib import md5
+from contextlib import contextmanager
 import inspect
+from hashlib import md5
 try:
     import cPickle as pickle # py 3.6 doesn't have cPickle?
 except ImportError:
@@ -24,7 +27,6 @@ except ImportError:
 
 import pytest
 from pytest import fixture
-from _pytest.fixtures import call_fixture_func # sketchy, but needed to wrap generator-fixtures
 
 from spinalcordtoolbox.utils.sys import sct_dir_local_path, sct_test_path
 from spinalcordtoolbox.utils.fs import Lockf
@@ -32,31 +34,6 @@ from spinalcordtoolbox.scripts import sct_download_data as downloader
 
 
 logger = logging.getLogger(__name__)
-
-
-@fixture(scope="session")
-def testrun_tmp_path(tmp_path_factory):
-    """
-    A session-scoped fixture giving the test run's temporary directory.
-    Returns *the same* temporary directory -- even between pytest_xdist workers,
-    if that is in use.
-
-    Returns a pathlib.Path object.
-    """
-
-    if 'PYTEST_XDIST_WORKER' in os.environ:
-        # we are a xdist worker process
-
-        # Each worker has an isolated subdir but to coordinate locking for node-scoped fixtures,
-        # we need them to share, so create a fixture that counteracts that.
-        # This is based on:
-        # - https://github.com/pytest-dev/pytest-xdist/blob/cf45eab9771ee271f8ec3eb4d33e23c914c70126/README.rst#making-session-scoped-fixtures-execute-only-once
-        # - https://github.com/cloud-custodian/pytest-terraform/blob/17bb7e8f87540333d65ccdd2554464c798036101/pytest_terraform/xdist.py#L91-L95
-        return tmp_path_factory.getbasetemp().parent
-    else:
-        # we're either not a worker process, *or* the user has used `pytest -n 0`
-        # and we are the unique worker, which amounts to the same thing.
-        return tmp_path_factory.getbasetemp()
 
 
 def node_scoped(fixture):
@@ -79,7 +56,22 @@ def node_scoped(fixture):
         def fixture():
             return make_some_data()
     """
-    def _fixture(testrun_tmp_path, request, **kwargs):
+    tmpdir = pathlib.Path(tempfile.gettempdir())
+    if 'PYTEST_XDIST_TESTRUNUID' in os.environ:
+        # running under xdist
+        tmpdir = tmpdir / f"pytest-{os.environ['PYTEST_XDIST_TESTRUNUID']}"
+    else:
+        # not under xdist
+        # this isn't necessarily safe! this *could* be reused. UUIDs aren't, but PIDs are, sometimes.
+        # on the other hand, we shouldn't even need a lock in this case, but we'll make one anyway.
+        tmpdir = tmpdir / f"pytest-{os.getpid()}"
+    fixture_path = tmpdir / f"{fixture.__name__}"
+    os.makedirs(fixture_path, exist_ok=True)
+    lock = fixture_path / f"lock"
+    done = fixture_path / f"done"
+
+    @contextmanager
+    def nodelock():
         #
         # xdist means we need to deal with interprocess concurrency, so here we handle it with a lock file:
         # whichever worker gets the lock first generates the fixture, then marks itself done using a second file.
@@ -100,47 +92,55 @@ def node_scoped(fixture):
         # Each node has its own fcntl locks, so workers that end up on the same host will only do the work
         # once, while those on different hosts will have at least one of them pick it up.
 
-        fixture_path = testrun_tmp_path / "fixtures" / f"{fixture.__name__}"
-        os.makedirs(fixture_path, exist_ok=True)
-        lock = fixture_path / f"lock"
-        done = fixture_path / f"done"
-        # instead of testrun_tmp_path, per the suggestion on https://pypi.org/project/pytest-xdist/,
-        # we could use testrun_uid to make our own distinct tmpdir, or perhaps a POSIX semaphore.
-        # this is working for now.
-
-        # in case the fixture *also* uses the fixtures we do
-        # (LOCAL_FIXTURES is the set of our own arguments; it's extracted below)
-        for fx in LOCAL_FIXTURES:
-            if fx in inspect.signature(fixture).parameters:
-                kwargs[fx] = locals()[fx]
-
         with open(lock, "w") as lock_fd:
             with Lockf(lock_fd):
+                yield
+
+    # in order to support generator-fixtures, we need to *give* a generator function
+    # -- not just a generator: a generator function -- because pytest internally looks
+    # at inspect.isgeneratorfunction() to detect it. Otherwise, the lock just locks
+    # its *initialization*, i.e. no actual code of the fixture.
+    #
+    # The difference between a function and a generator function is the 'yield' keyword,
+    # so that means we need to have two nearly identical def:s. I don't know how to reduce the duplication here.
+    # Maybe, in the non-generator case, wrap it with something that makes it a generator and only do that?
+    if inspect.isgeneratorfunction(fixture):
+
+        def _fixture(*args, **kwargs):
+            with nodelock():
                 if not os.path.exists(done):
-                    result = call_fixture_func(fixture, request, kwargs)
-                    with open(done, "wb") as result_cache:
-                        pickle.dump(result, result_cache)
+                    g = fixture(*args, **kwargs)
+                    result = next(g)
+                    with open(done, 'wb') as cache:
+                        pickle.dump(result, cache)
+                    yield g
                 else:
-                    with open(done, "rb") as result_cache:
-                        result = pickle.load(result_cache)
+                    with open(done, 'rb') as cache:
+                        yield pickle.load(cache)
+                    g = (e for e in []) # just make an empty generator for below
+            # this sleeps here until pytest is done with all the tests
+            with nodelock():
+                # delete cache
+                if os.path.exists(done):
+                    os.unlink(done)
+                # clean up fixture
+                yield from g
+
+    else:
+
+        def _fixture(*args, **kwargs):
+            with nodelock():
+                if not os.path.exists(done):
+                    result = fixture(*args, **kwargs)
+                    with open(done, 'wb') as cache:
+                        pickle.dump(result, cache)
+                else:
+                    with open(done, 'rb') as cache:
+                        result = pickle.load(cache)
                 return result
+                # NB: cache isn't deleted here!
 
-    # we have to *append* the fixtures we use in our wrapper to its (forged) signature
-    # in order for pytest's fixture system to pick it up and feed them in to us,
-    # and we also need to be careful to forward them on if the original uses them too.
-    # this could maybe be shortened with decorator.decorator() (https://github.com/micheles/decorator/) at the expense of an extra dependency.
-    LOCAL_FIXTURES=[fx for fx, prm in inspect.signature(_fixture).parameters.items() if prm.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD]
-
-    # apply @functools.wraps(); do it *after* we cache LOCAL_FIXTURES so we read the right signature.
     _fixture = functools.wraps(fixture)(_fixture)
-
-    for fx in LOCAL_FIXTURES:
-        if fx not in inspect.signature(fixture).parameters:
-            sig = inspect.signature(_fixture)
-            _fixture.__signature__ = sig.replace(parameters=
-                                                      {**sig.parameters,
-                                                         fx: inspect.Parameter(fx, inspect.Parameter.POSITIONAL_OR_KEYWORD)}
-                                                      .values())
 
     return _fixture
 
