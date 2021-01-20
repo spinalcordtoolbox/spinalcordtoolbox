@@ -82,8 +82,7 @@ def main(argv=None):
         isLastAffine = True
 
     # check if destination file is 3d
-    if not check_dim(fname_dest, dim_lst=[3]):
-        printv('ERROR: Destination data must be 3d')
+    check_dim(fname_dest, dim_lst=[3])
 
     # Here we take the inverse of the warp list, because sct_WarpImageMultiTransform concatenates in the reverse order
     fname_warp_list_invert.reverse()
