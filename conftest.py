@@ -24,6 +24,7 @@ except ImportError:
 
 import pytest
 from pytest import fixture
+from _pytest.fixtures import call_fixture_func # sketchy, but needed to wrap generator-fixtures
 
 from spinalcordtoolbox.utils.sys import sct_dir_local_path, sct_test_path
 from spinalcordtoolbox.utils.fs import Lockf
@@ -78,13 +79,7 @@ def node_scoped(fixture):
         def fixture():
             return make_some_data()
     """
-    from _pytest.compat import is_generator
-    if is_generator(fixture):
-        raise TypeError("node_scoped doesn't (yet) support generator-fixtures")
-
-
-    @functools.wraps(fixture)
-    def _fixture(testrun_tmp_path, *args, **kwargs):
+    def _fixture(testrun_tmp_path, request, **kwargs):
         #
         # xdist means we need to deal with interprocess concurrency, so here we handle it with a lock file:
         # whichever worker gets the lock first generates the fixture, then marks itself done using a second file.
@@ -113,14 +108,16 @@ def node_scoped(fixture):
         # we could use testrun_uid to make our own distinct tmpdir, or perhaps a POSIX semaphore.
         # this is working for now.
 
-        if 'testrun_tmp_path' in inspect.signature(fixture).parameters:
-            # just in case the fixture *also* uses testrun_tmp_path
-            kwargs = {**kwargs, 'testrun_tmp_path': testrun_tmp_path}
+        # in case the fixture *also* uses the fixtures we do
+        # (LOCAL_FIXTURES is the set of our own arguments; it's extracted below)
+        for fx in LOCAL_FIXTURES:
+            if fx in inspect.signature(fixture).parameters:
+                kwargs[fx] = locals()[fx]
 
         with open(lock, "w") as lock_fd:
             with Lockf(lock_fd):
                 if not os.path.exists(done):
-                    result = fixture(*args, **kwargs)
+                    result = call_fixture_func(fixture, request, kwargs)
                     with open(done, "wb") as result_cache:
                         pickle.dump(result, result_cache)
                 else:
@@ -128,15 +125,22 @@ def node_scoped(fixture):
                         result = pickle.load(result_cache)
                 return result
 
+    # we have to *append* the fixtures we use in our wrapper to its (forged) signature
+    # in order for pytest's fixture system to pick it up and feed them in to us,
+    # and we also need to be careful to forward them on if the original uses them too.
+    # this could maybe be shortened with decorator.decorator() (https://github.com/micheles/decorator/) at the expense of an extra dependency.
+    LOCAL_FIXTURES=[fx for fx, prm in inspect.signature(_fixture).parameters.items() if prm.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD]
 
-    # we have to *append* testrun_tmp_path to the wrapper's signature in order for pytest's fixture system to pick it up and feed it to us
-    # this could be shortened with decorator.decorator() (https://github.com/micheles/decorator/blob/master/docs/documentation.md) at the expense of an extra dependency.
-    if 'testrun_tmp_path' not in inspect.signature(fixture).parameters:
-        sig = inspect.signature(_fixture)
-        _fixture.__signature__ = sig.replace(parameters=
-                                                  {**sig.parameters,
-                                                     'testrun_tmp_path': inspect.Parameter('testrun_tmp_path', inspect.Parameter.POSITIONAL_OR_KEYWORD)}
-                                                  .values())
+    # apply @functools.wraps(); do it *after* we cache LOCAL_FIXTURES so we read the right signature.
+    _fixture = functools.wraps(fixture)(_fixture)
+
+    for fx in LOCAL_FIXTURES:
+        if fx not in inspect.signature(fixture).parameters:
+            sig = inspect.signature(_fixture)
+            _fixture.__signature__ = sig.replace(parameters=
+                                                      {**sig.parameters,
+                                                         fx: inspect.Parameter(fx, inspect.Parameter.POSITIONAL_OR_KEYWORD)}
+                                                      .values())
 
     return _fixture
 
@@ -153,7 +157,7 @@ def sct_testing_data(worker_id):
         downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
 
     # return the test path so clients know they can use it
-    return sct_test_path()
+    yield sct_test_path()
 
     # TODO: delete the data ?
 
