@@ -44,14 +44,11 @@ def main(argv=None):
 
     # Initialization
     fname_warp_final = ''  # concatenated transformations
+    if arguments.o is not None:
+        fname_warp_final = arguments.o
     fname_dest = arguments.d
     fname_warp_list = arguments.w
     warpinv_filename = arguments.winv
-
-    if arguments.o is not None:
-        fname_warp_final = arguments.o
-    verbose = arguments.v
-    init_sct()
 
     # Parse list of warping fields
     printv('\nParse list of warping fields...', verbose)
