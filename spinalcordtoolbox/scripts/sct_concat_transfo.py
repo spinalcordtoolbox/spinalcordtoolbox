@@ -54,13 +54,10 @@ def main(argv=None):
     printv('\nParse list of warping fields...', verbose)
     use_inverse = []
     fname_warp_list_invert = []
-    # list_warp = list_warp.replace(' ', '')  # remove spaces
-    # list_warp = list_warp.split(",")  # parse with comma
     for idx_warp, path_warp in enumerate(fname_warp_list):
         # Check if this transformation should be inverted
         if path_warp in warpinv_filename:
             use_inverse.append('-i')
-            # list_warp[idx_warp] = path_warp[1:]  # remove '-'
             fname_warp_list_invert += [[use_inverse[idx_warp], fname_warp_list[idx_warp]]]
         else:
             use_inverse.append('')
@@ -72,11 +69,6 @@ def main(argv=None):
                              " in a 5D file with vector intent code"
                              " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"
                              .format(path_warp))
-    # need to check if last warping field is an affine transfo
-    isLastAffine = False
-    path_fname, file_fname, ext_fname = extract_fname(fname_warp_list_invert[-1][-1])
-    if ext_fname in ['.txt', '.mat']:
-        isLastAffine = True
 
     # check if destination file is 3d
     check_dim(fname_dest, dim_lst=[3])
@@ -105,11 +97,11 @@ def main(argv=None):
         dimensionality = '3'
 
     cmd = ['isct_ComposeMultiTransform', dimensionality, 'warp_final' + ext_out, '-R', fname_dest] + fname_warp_list_invert
-    status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+    _, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
 
     # check if output was generated
     if not os.path.isfile('warp_final' + ext_out):
-        printv('ERROR: Warping field was not generated.\n' + output, 1, 'error')
+        raise ValueError(f"Warping field was not generated! {output}")
 
     # Generate output files
     printv('\nGenerate output files...', verbose)
