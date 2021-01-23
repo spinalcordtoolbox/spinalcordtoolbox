@@ -30,10 +30,12 @@ from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp
 
 logger = logging.getLogger(__name__)
 
+
 class Paramreg(object):
-    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', iter='10', shrink='1', smooth='0',
-                 gradStep='0.5', deformation='1x1x0', init='', filter_size=5, poly='5', slicewise='0', laplacian='0',
-                 dof='Tx_Ty_Tz_Rx_Ry_Rz', smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
+    def __init__(self, step=None, type=None, algo='syn', metric='MeanSquares', samplingStrategy='None',
+                 samplingPercentage='0.2', iter='10', shrink='1', smooth='0', gradStep='0.5', deformation='1x1x0',
+                 init='', filter_size=5, poly='5', slicewise='0', laplacian='0', dof='Tx_Ty_Tz_Rx_Ry_Rz',
+                 smoothWarpXY='2', pca_eigenratio_th='1.6', rot_method='pca'):
         """
         Class to define registration method.
 
@@ -41,6 +43,8 @@ class Paramreg(object):
         :param type: {im, seg, imseg, label} Type of data used for registration. Use type=label only at step=0.
         :param algo:
         :param metric:
+        :param samplingStrategy: {'Regular', 'Random', 'None'}
+        :param samplingPercentage: [0, 1]
         :param iter:
         :param shrink:
         :param smooth:
@@ -63,6 +67,8 @@ class Paramreg(object):
         self.type = type
         self.algo = algo
         self.metric = metric
+        self.samplingStrategy = samplingStrategy
+        self.samplingPercentage = samplingPercentage
         self.iter = iter
         self.shrink = shrink
         self.smooth = smooth
@@ -160,8 +166,8 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
     # estimate transfo
     cmd = ['isct_antsSliceRegularizedRegistration',
            '-t', 'Translation[' + step.gradStep + ']',
-           '-m',
-           step.metric + '[' + dest + ',' + src + ',1,' + metricSize + ',Regular,0.2]',
+           '-m', step.metric + '['
+           + ','.join([dest, src, '1', metricSize, step.samplingStrategy, step.samplingPercentage]) + ']',
            '-p', step.poly,
            '-i', step.iter,
            '-f', step.shrink,
@@ -178,6 +184,7 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
     status, output = run_proc(cmd, verbose, is_sct_binary=True)
 
     return warp_forward_out, warp_inverse_out
+
 
 def register_step_ants_registration(src, dest, step, masking, ants_registration_params, padding, metricSize, verbose=1):
     """
@@ -235,6 +242,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
 
     return warp_forward_out, warp_inverse_out
 
+
 def register_step_slicewise_ants(src, dest, step, ants_registration_params, fname_mask, remove_temp_files, verbose=1):
     """
     """
@@ -260,6 +268,7 @@ def register_step_slicewise_ants(src, dest, step, ants_registration_params, fnam
 
     return warp_forward_out, warp_inverse_out
 
+
 def register_step_slicewise(src, dest, step, ants_registration_params, remove_temp_files, verbose=1):
     """
     """
@@ -283,6 +292,7 @@ def register_step_slicewise(src, dest, step, ants_registration_params, remove_te
     )
 
     return warp_forward_out, warp_inverse_out
+
 
 def register_step_label(src, dest, step, verbose=1):
     """
@@ -342,7 +352,6 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
 
         dest_image = image.convert(image.Image(fname_dest))
         dest_image.save(os.path.join(path_tmp, "dest.nii"))
-
 
     if fname_mask != '':
         image.convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
@@ -407,10 +416,6 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
         logger.info(f"rm -rf {path_tmp}")
         shutil.rmtree(path_tmp)
 
-
-def register_image_slicewise():
-    """
-    """
 
 def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='warp_forward.nii.gz',
                              fname_warp_inv='warp_inverse.nii.gz', rot_method='pca', filter_size=0, path_qc='./',
@@ -971,6 +976,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             warps.
     """
     # set metricSize
+    # TODO: create internal function get_metricSize()
     if paramreg.metric == 'MI':
         metricSize = '32'  # corresponds to number of bins
     else:
@@ -1126,6 +1132,7 @@ def numerotation(nb):
         nb_output = str(nb)
     return nb_output
 
+
 def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field.nii.gz', verbose=1):
     """
     Generate an ITK warping field
@@ -1158,6 +1165,7 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
     save(img, fname_warp)
     logger.info(f" --> {fname_warp}")
 
+
 def angle_between(a, b):
     """
     Compute angle in radian between a and b. Throws an exception if a or b has zero magnitude.
@@ -1171,6 +1179,7 @@ def angle_between(a, b):
     arccosInput = -1.0 if arccosInput < -1.0 else arccosInput
     sign_angle = np.sign(np.cross(a, b))
     return sign_angle * acos(arccosInput)
+
 
 def compute_pca(data2d):
     """
@@ -1234,7 +1243,7 @@ def find_index_halfmax(data1d):
 
 def find_angle_hog(image, centermass, px, py, angle_range=10):
     """
-    Finds the angle of an image based on the method described by Sun, “Symmetry Detection Using Gradient Information.”
+    Finds the angle of an image based on the method described by Sun, "Symmetry Detection Using Gradient Information."
     Pattern Recognition Letters 16, no. 9 (September 1, 1995): 987–96, and improved by N. Pinon
 
     :param: image : 2D numpy array to find symmetry axis on

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # TravisCI testing harness.
 #  Supports running locally (i.e. on whatever platform Travis has loaded us in)
 #  or in a docker container specified by $DOCKER_IMAGE.
@@ -6,13 +6,16 @@
 # usage: .travis.sh
 #
 # e.g. DOCKER_IMAGE="centos:8" .travis.sh
-
-set -e # Error build immediately if install script exits with non-zero
+# stricter shell mode
+# https://sipb.mit.edu/doc/safe-shell/
+set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
+set -u            # exit if unset variables used
+shopt -s failglob # error if a glob doesn't find any files, instead of remaining unexpanded
 
 # if this is a docker job, run in the container instead; but if not just run it here.
-if [ -n "$DOCKER_IMAGE" ]; then
+if [ -n "${DOCKER_IMAGE:-}" ]; then
     ./util/dockerize.sh ./.ci.sh
-elif [ "${TRAVIS_OS_NAME}" = "windows" ]; then
+elif [ "${TRAVIS_OS_NAME:-}" = "windows" ]; then
     choco install wsl-ubuntu-1804 -y --ignore-checksums
      # or, instead of choco, use curl + powershell:
      # https://docs.microsoft.com/en-us/windows/wsl/install-manual#downloading-distros-via-the-command-line

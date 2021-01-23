@@ -1,13 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # CI testing script
 #  Installs SCT from scratch and runs all the tests we've ever written for it.
 
-set -e # Error build immediately if install script exits with non-zero
+# stricter shell mode
+# https://sipb.mit.edu/doc/safe-shell/
+set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
+set -u            # exit if unset variables used
+shopt -s failglob # error if a glob doesn't find any files, instead of remaining unexpanded
 
 echo Installing SCT
-yes | ASK_REPORT_QUESTION=false PIP_PROGRESS_BAR=off ./install_sct
-echo $?
-echo "... STATUS"
+PIP_PROGRESS_BAR=off ./install_sct -y
 
 echo *** CHECK PATH ***
 ls -lA bin  # Make sure all binaries and aliases are there
@@ -27,14 +29,6 @@ echo *** ANALYZE CODE ***
 pip install pylint
 bash -c 'PYTHONPATH="$PWD/scripts:$PWD" pylint -j3 --py3k --output-format=parseable --errors-only $(git ls-tree --name-only -r HEAD | sort | grep -E "(spinalcordtoolbox|scripts|testing).*\.py" | xargs); exit $(((($?&3))!=0))'
 
-#
-# echo *** BUILD DOCUMENTATION ***
-# pip install sphinx sphinxcontrib.programoutput sphinx_rtd_theme
-# cd documentation/sphinx
-# make html
-# cd -
-
 # python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
 # cd ../spinalcordtoolbox_v*
 # yes | ./install_sct  # test installation of package
-
