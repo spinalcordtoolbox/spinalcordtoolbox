@@ -580,7 +580,7 @@ esac
 run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 
 # create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
-python/bin/conda create -y -n venv_sct python=3.6
+python/bin/conda create -y -n venv_sct python=3.6 pip==21.2.2 setuptools==58.0.4 wheel==0.37.1 packaging==21.3
 
 # activate miniconda
 # shellcheck disable=SC1091
