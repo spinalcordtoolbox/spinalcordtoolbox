@@ -54,6 +54,8 @@ jobs:
           ./batch_processing.sh
 
       - name: Validate results
+        env:
+          PY_COLORS: "1"
         run: |
           source python/etc/profile.d/conda.sh
           conda activate venv_sct
