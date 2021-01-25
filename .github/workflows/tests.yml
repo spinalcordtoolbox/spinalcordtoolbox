@@ -1,6 +1,5 @@
 name: Tests
 
-# EVENT TRIGGERS COPIED FROM CURRENTLY OPEN PR https://github.com/neuropoly/spinalcordtoolbox/pull/3125
 on:
   push:
     branches:
