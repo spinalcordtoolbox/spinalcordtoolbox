@@ -24,9 +24,15 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Fetch past results
-        uses: actions/download-artifact@v2
-        with:
-          name: batch-processing-results
+        run: |
+          export NEWEST_ARTIFACT_ID=$(curl -H "Accept: application/vnd.github.v3+json" \
+                                           https://api.github.com/repos/neuropoly/spinalcordtoolbox/actions/artifacts |
+                                      jq '.artifacts[].id' |
+                                      awk '{for(i=1;i<=NF;i++) if($i>maxval) maxval=$i;}; END { print maxval;}')
+          curl -u admin:${{ secrets.GITHUB_TOKEN }} \
+               -H "Accept: application/vnd.github.v3+json" \
+               -L "https://api.github.com/repos/neuropoly/spinalcordtoolbox/actions/artifacts/$NEWEST_ARTIFACT_ID/zip" \
+               --output batch_processing_results.zip
 
       - name: Install SCT
         run: |
