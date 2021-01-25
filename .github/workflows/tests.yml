@@ -15,6 +15,9 @@ on:
     # i.e. this can only run on master
     - cron:  '0 11 * * *'
 
+env:
+  zip_filepath: "batch_processing_results.zip"
+
 jobs:
   batch_processing:
     name: Test batch_processing.sh
@@ -35,7 +38,7 @@ jobs:
           curl -u admin:${{ secrets.GITHUB_TOKEN }} \
                -H "Accept: application/vnd.github.v3+json" \
                -L "https://api.github.com/repos/neuropoly/spinalcordtoolbox/actions/artifacts/$NEWEST_ARTIFACT_ID/zip" \
-               --output batch_processing_results.zip
+               --output "${{ env.zip_filepath }}"
 
       # install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
       # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
@@ -47,14 +50,16 @@ jobs:
           cat ~/.bashrc | grep "export MPLBACKEND" | cut -d " " -f 2 >> $GITHUB_ENV
           cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
 
-      - name: Run batch_processing.sh
-        run: |
-          ./batch_processing.sh
+# TEMPORARILY COMMENT TO SAVE TIME IN CI WHILE TESTING ENVIRONMENT VARIABLES
+#      - name: Run batch_processing.sh
+#        run: |
+#          ./batch_processing.sh
 
       - name: Validate results
         run: |
           source python/etc/profile.d/conda.sh
           conda activate venv_sct
+          BATCH_PROCESSING_ZIP_FILEPATH="${{ env.zip_filepath }}" \
           pytest unit_testing/test_batch_processing.py
 
       - name: Upload results
