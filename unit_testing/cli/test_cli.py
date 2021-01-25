@@ -35,7 +35,7 @@ def test_scripts_with_no_args_as_main_func(capsys, script):
 
 
 @pytest.mark.script_launch_mode('subprocess')
-@pytest.mark.parametrize("script", scripts_without_callable_main)
+@pytest.mark.parametrize("script", scripts_to_test)
 def test_scripts_with_no_args_as_subprocess(script, script_runner):
     """Test that [SCRIPTS_NOT_CALLABLE_WITH_MAIN] all return error code 2 and
     show usage descriptions when called with no arguments."""
