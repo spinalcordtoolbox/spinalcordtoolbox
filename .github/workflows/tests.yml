@@ -23,11 +23,10 @@ jobs:
       - name: Checkout SCT
         uses: actions/checkout@v2
 
-# COMMENTED FOR NOW UNTIL FIRST RESULTS HAVE BEEN STORED
-#      - name: Fetch past results
-#        uses: actions/download-artifact@v2
-#        with:
-#          name: batch-processing-results
+      - name: Fetch past results
+        uses: actions/download-artifact@v2
+        with:
+          name: batch-processing-results
 
       - name: Install SCT
         run: |
@@ -42,8 +41,10 @@ jobs:
 
       - name: Upload results
         uses: actions/upload-artifact@v2
-        # COMMENTED FOR NOW UNTIL FIRST RESULTS HAVE BEEN STORED
-        # if: github.event.pull_request.merged == true
+        # Only upload new results on merged pull requests. This allows us to A) refresh the 90-day
+        # retention period, and B) update the stored values if they've changed -- assuming that the
+        # change was expected (e.g. if we've made a functionality change to one of our scripts).
+        if: github.event.pull_request.merged == true  # TOOD: Does this work as expected? Double-check "on:" triggers
         with:
           name: batch-processing-results
           path: |
