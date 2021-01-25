@@ -23,6 +23,9 @@ jobs:
       - name: Checkout SCT
         uses: actions/checkout@v2
 
+      # We use the REST API to fetch the most recently uploaded results from batch_processing.
+      # jq and awk are used to filter the JSON response by artifact ID, which is then used to download the right .zip.
+      # Relevant documentation: https://docs.github.com/en/rest/reference/actions#artifacts
       - name: Fetch past results
         run: |
           export NEWEST_ARTIFACT_ID=$(curl -H "Accept: application/vnd.github.v3+json" \
@@ -34,6 +37,9 @@ jobs:
                -L "https://api.github.com/repos/neuropoly/spinalcordtoolbox/actions/artifacts/$NEWEST_ARTIFACT_ID/zip" \
                --output batch_processing_results.zip
 
+      # install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+      # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+      # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
       - name: Install SCT
         run: |
           PIP_PROGRESS_BAR=off ./install_sct -y
