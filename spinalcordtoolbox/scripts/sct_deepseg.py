@@ -134,6 +134,11 @@ def main(argv=None):
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 
+    if (arguments.list_tasks is False
+            and arguments.install_task is None
+            and (arguments.i is None or arguments.task is None)):
+        parser.error("You must specify either '-list-tasks', '-install-task', or both '-i' + '-task'.")
+
     # Deal with task
     if arguments.list_tasks:
         deepseg.models.display_list_tasks()
@@ -147,10 +152,6 @@ def main(argv=None):
     for file in arguments.i:
         if not os.path.isfile(file):
             parser.error("This file does not exist: {}".format(file))
-
-    # Check if at least a model or task has been specified
-    if arguments.task is None:
-        parser.error("You need to specify a task.")
 
     # Verify if the task is part of the "official" tasks, or if it is pointing to paths containing custom models
     if len(arguments.task) == 1 and arguments.task[0] in deepseg.models.TASKS:

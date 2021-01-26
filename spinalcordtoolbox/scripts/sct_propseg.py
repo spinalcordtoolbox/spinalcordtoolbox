@@ -14,6 +14,7 @@
 # TODO: remove temp files in case rescaled is not "1"
 
 import os
+import pathlib
 import sys
 import logging
 
@@ -440,7 +441,7 @@ def propseg(img_input, options_dict):
     else:
         fname_out = os.path.basename(add_suffix(fname_data, "_seg"))
     
-    folder_output = os.path.dirname(fname_out)
+    folder_output = str(pathlib.Path(fname_out).parent)
     cmd += ['-o', folder_output]
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
         logger.error("output directory %s is not a valid directory" % folder_output)

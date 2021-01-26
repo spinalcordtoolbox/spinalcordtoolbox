@@ -496,13 +496,9 @@ def main(argv=None):
     set_global_loglevel(verbose=verbose)
 
     param = Param()
-    input_fname = None
     if param.debug:
         printv('\n*** WARNING: DEBUG MODE ON ***\n')
     else:
-        param_default = Param()
-        parser = get_parser()
-        arguments = parser.parse_args(args=None if sys.argv[1:] else ['--help'])
         input_fname = arguments.i
         input_second_fname = ''
         output_fname = 'hausdorff_distance.txt'
