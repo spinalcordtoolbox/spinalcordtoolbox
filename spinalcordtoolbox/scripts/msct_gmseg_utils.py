@@ -456,7 +456,7 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
     fname_dest_seg = 'dest_seg.nii.gz'
     im_dest_seg.save(fname_dest_seg)
     # do registration using param_reg
-    sct_register_multimodal.main(args=['-i', fname_src,
+    sct_register_multimodal.main(argv=['-i', fname_src,
                                        '-d', fname_dest,
                                        '-iseg', fname_src_seg,
                                        '-dseg', fname_dest_seg,

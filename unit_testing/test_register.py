@@ -5,9 +5,11 @@
 import logging
 
 import pytest
+import csv
 
 from spinalcordtoolbox.scripts.sct_register_to_template import Param, register
 from spinalcordtoolbox.registration.register import *
+from spinalcordtoolbox.utils import sct_test_path
 
 logger = logging.getLogger(__name__)
 
@@ -118,6 +120,26 @@ def step2_data():
 
     return src, dest, step, cli_params
 
+@pytest.fixture
+def step_axial_data_in_same_space():
+    """
+    """
+    src = sct_test_path('mt', 'mt0_seg.nii.gz')
+    dest = sct_test_path('mt', 'mt1_seg.nii.gz')
+
+    step = Paramreg(
+        step='1',
+        type='seg',
+        algo='slicereg',
+        metric='MeanSquares',
+        iter='5',
+    )
+
+    cli_params = Param()
+    cli_params.debug = 2
+
+    return src, dest, step, cli_params
+
 @pytest.mark.skip(reason="Need to fix input test data")
 def test_register_step_label(step0_data):
     """
@@ -167,11 +189,22 @@ def test_register_step_ants_registration(step2_data):
      verbose=cli_params.verbose,
     )
 
-@pytest.mark.skip(reason="TODO")
-def test_register_step_ants_slice_regularized_registration():
-     """
-     """
-     raise NotImplementedError()
+
+def test_register_step_ants_slice_regularized_registration(step_axial_data_in_same_space):
+    src, dest, step, cli_params = step_axial_data_in_same_space
+
+    warp_forward_out, warp_inverse_out = register_step_ants_slice_regularized_registration(
+        src=src,
+        dest=dest,
+        step=step,
+        metricSize='4')
+
+    # Verify integrity of the output Tx Ty file
+    txty_result = np.genfromtxt('step1TxTy_poly.csv', skip_header=1, delimiter=',')
+    txty_groundtruth = np.genfromtxt(
+        sct_test_path('mt', 'step1TxTy_poly_groundtruth.csv'), skip_header=1, delimiter=',')
+    assert txty_result == pytest.approx(txty_groundtruth, abs=1e-14)
+
 
 # higher level tests for step registration, regardless of step)
 @pytest.mark.skip(reason="Need to fix input test data")

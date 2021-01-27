@@ -96,6 +96,10 @@ def get_parser():
         help=f"Algorithm for curve fitting. For more information, see sct_straighten_spinalcord."
     )
     optional.add_argument(
+        "-o",
+        metavar=Metavar.file,
+        help='Output filename. Example: smooth_sc.nii '),
+    optional.add_argument(
         '-r',
         choices=[0, 1],
         default=1,
@@ -129,9 +133,15 @@ def main(argv=None):
     fname_anat = arguments.i
     fname_centerline = arguments.s
     param.algo_fitting = arguments.algo_fitting
+
     if arguments.smooth is not None:
         sigma = arguments.smooth
     remove_temp_files = arguments.r
+    if arguments.o is not None:
+        fname_out = arguments.o
+    else:
+        fname_out = extract_fname(fname_anat)[1] + '_smooth.nii'
+
 
     # Display arguments
     printv('\nCheck input arguments...')
@@ -233,7 +243,7 @@ def main(argv=None):
     # Generate output file
     printv('\nGenerate output file...')
     generate_output_file(os.path.join(path_tmp, "anat_rpi_straight_smooth_curved_nonzero.nii"),
-                         file_anat + '_smooth' + ext_anat)
+                         fname_out)
 
     # Remove temporary files
     if remove_temp_files == 1:
@@ -244,7 +254,7 @@ def main(argv=None):
     elapsed_time = time.time() - start_time
     printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's\n')
 
-    display_viewer_syntax([file_anat, file_anat + '_smooth'], verbose=verbose)
+    display_viewer_syntax([fname_anat, fname_out], verbose=verbose)
 
 
 if __name__ == "__main__":

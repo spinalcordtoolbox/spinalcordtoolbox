@@ -286,7 +286,10 @@ def _call_viewer_centerline(im_data, interslice_gap=20.0):
     # setting maximum number of points to a reasonable value
     params.num_points = np.ceil(nz * pz / interslice_gap) + 2
     params.interval_in_mm = interslice_gap
-    params.starting_slice = 'top'
+    # Starting at the top slice minus 1 in cases where the first slice is almost zero, due to gradient
+    # non-linearity correction:
+    # https://forum.spinalcordmri.org/t/centerline-viewer-enhancements-sct-v5-0-1/605/4?u=jcohenadad
+    params.starting_slice = 'top_minus_one'
 
     im_mask_viewer = zeros_like(im_data)
     launch_centerline_dialog(im_data, im_mask_viewer, params)
