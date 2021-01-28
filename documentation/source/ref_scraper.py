@@ -17,14 +17,16 @@ if __name__ == "__main__":
     # url = "file:/Users/alex/Desktop/SCT.html"
     driver.get(url)
     citation = []
+    count = 1
     while True:
         title = [element.get_attribute("textContent") for element in driver.find_elements_by_xpath('//h3[@class="gs_rt"]')]
         authors = [element.get_attribute("textContent") for element in driver.find_elements_by_xpath('//div[@class="gs_a"]')]
         for title, authors in zip(title,authors):
-            print(title.replace('[HTML][HTML] ',''),' - ',authors.split(',')[0], 'et al. -',authors.split('-')[1])
+            print(str(count),' - ',title.replace('[HTML][HTML] ',''),' - ',authors.split(',')[0], 'et al. -',authors.split('-')[1])
             ref = title.replace('[HTML][HTML] ',''),' - ',authors.split(',')[0], 'et al. -',authors.split('-')[1]
             citation.append(str(ref))
             print('\n')
+            count = count+1
         element = driver.find_element_by_xpath("//button[@class='gs_btnPR gs_in_ib gs_btn_lrge gs_btn_half gs_btn_lsu']")
         driver.execute_script("arguments[0].click();", element)
         time.sleep(5)
