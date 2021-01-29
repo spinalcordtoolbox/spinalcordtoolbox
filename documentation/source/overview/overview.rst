@@ -4,8 +4,7 @@ Overview
 .. image:: ../../imgs/overview.png
   :alt: Alternative text
 
-SCT tools process MRI data (`NIfTI <https://nifti.nimh.nih.gov/>`_
-files) and can do fully automatic tasks such as:
+SCT tools process MRI data (`NIfTI <https://nifti.nimh.nih.gov/>`_ files) and can do fully automatic tasks such as:
 
 - Segmentation of the spinal cord and gray matter
 - Segmentation of pathologies (eg. multiple sclerosis lesions)
