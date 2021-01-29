@@ -3,9 +3,7 @@
 Installation
 ############
 
-SCT works in macOS, Linux and Windows (see Requirements below). SCT bundles its own Python distribution (Miniconda),
-installed with all the required packages, and uses specific package versions, in order to ensure reproducibility of
-results. SCT offers various installation methods:
+SCT works in macOS, Linux and Windows (see Requirements below). SCT bundles its own Python distribution (Miniconda), installed with all the required packages, and uses specific package versions, in order to ensure reproducibility of results. SCT offers various installation methods:
 
 .. contents::
    :local:
@@ -24,21 +22,16 @@ Requirements
   * RedHat/CentOS >= 7
   * Windows, see `Install on Windows 10 with WSL`_.
 
-* You need to have ``gcc`` installed. On macOS, we recommend installing `Homebrew <https://brew.sh/>`_ and then run
-  ``brew install gcc``. On Linux, we recommend installing it via your package manager. For example on Debian/Ubuntu:
-  ``apt install gcc``, and on CentOS/RedHat: ``yum -y install gcc``.
+* You need to have ``gcc`` installed. On macOS, we recommend installing `Homebrew <https://brew.sh/>`_ and then run ``brew install gcc``. On Linux, we recommend installing it via your package manager. For example on Debian/Ubuntu: ``apt install gcc``, and on CentOS/RedHat: ``yum -y install gcc``.
 
 
 
 Install from package (recommended)
 ----------------------------------
 
-The simplest way to install SCT is to do it via a stable release. First, download the
-`latest release <https://github.com/neuropoly/spinalcordtoolbox/releases>`_. Major changes to
-each release are listed in the :doc:`/dev_section/CHANGES`.
+The simplest way to install SCT is to do it via a stable release. First, download the `latest release <https://github.com/neuropoly/spinalcordtoolbox/releases>`_. Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
 
-Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal,
-go into the created folder and launch the installer:
+Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal, go into the created folder and launch the installer:
 
 .. code:: sh
 
@@ -51,8 +44,7 @@ go into the created folder and launch the installer:
 Install from Github (development)
 ---------------------------------
 
-If you wish to benefit from the cutting-edge version of SCT, or if you wish to contribute to the code, we
-recommend you download the Github version.
+If you wish to benefit from the cutting-edge version of SCT, or if you wish to contribute to the code, we recommend you download the Github version.
 
 #. Retrieve the SCT code
 
@@ -275,8 +267,7 @@ For macOS and Linux users
 Create an X11 server for handling display:
 
 1. Install XQuartz X11 server.
-2. Check ‘Allow connections from network clientsoption inXQuartz\`
-   settings.
+2. Check ‘Allow connections from network clientsoption inXQuartz\` settings.
 3. Quit and restart XQuartz.
 4. In XQuartz window xhost + 127.0.0.1
 5. In your other Terminal window, run:
@@ -344,16 +335,11 @@ Install with pip (experimental)
 
 SCT can be installed using pip, with some caveats:
 
-- The installation is done in-place, so the folder containing SCT must
-  be kept around
+- The installation is done in-place, so the folder containing SCT must be kept around
 
-- In order to ensure coexistence with other packages, the dependency
-  specifications are loosened, and it is possible that your package
-  combination has not been tested with SCT.
+- In order to ensure coexistence with other packages, the dependency specifications are loosened, and it is possible that your package combination has not been tested with SCT.
 
-  So in case of problem, try again with the reference installation,
-  and report a bug indicating the dependency versions retrieved using
-  `sct_check_dependencies`.
+  So in case of problems, try again with the reference installation, and report a bug indicating the dependency versions retrieved using `sct_check_dependencies`.
 
 
 Procedure:
@@ -374,8 +360,7 @@ Procedure:
 
       git checkout ${revision_of_interest}
 
-#. If numpy is not already on the system, install it, either using
-   your distribution package manager or pip.
+#. If numpy is not already on the system, install it, either using your distribution package manager or pip.
 
 #. Install sct using pip
 
@@ -452,15 +437,14 @@ Procedure:
 Matlab Integration on Mac
 -------------------------
 
-Matlab took the liberty of setting ``DYLD_LIBRARY_PATH`` and in order
-for SCT to run, you have to run:
+Matlab took the liberty of setting ``DYLD_LIBRARY_PATH`` and in order for SCT to run, you have to run:
 
 .. code:: matlab
 
    setenv('DYLD_LIBRARY_PATH', '');
 
-Prior to running SCT commands. See
- https://github.com/neuropoly/spinalcordtoolbox/issues/405
+Prior to running SCT commands.
+See https://github.com/neuropoly/spinalcordtoolbox/issues/405
 
 
 
