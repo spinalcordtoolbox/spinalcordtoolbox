@@ -28,7 +28,8 @@ def dummy_metrics():
                'with int': Metric(data=np.array([99, 100, 101, 102, 103, 104, 105, 106, 107])),
                'with nan': Metric(data=np.array([99, np.nan, 101, 102, 103, 104, 105, 106, 107])),
                'inconsistent length': Metric(data=np.array([99, 100])),
-               'with string': Metric(data=np.array([99, "boo!", 101, 102, 103, 104, 105, 106, 107]))}
+               'with string': Metric(data=np.array([99, "boo!", 101, 102, 103, 104, 105, 106, 107])),
+               '3D': Metric(data=np.resize(np.array([99, 100, 101, 102, 103, 104, 105, 106, 107]), [4, 5, 9]))}
     return metrics
 
 
@@ -303,9 +304,12 @@ def test_save_as_csv_extract_metric(dummy_data_and_labels):
 
 
 def test_dimension_mismatch_between_metric_and_vertfile(dummy_metrics, dummy_vert_level):
-    """Test that an exception is raised for mismatched metric and -vertfile images."""
-    with pytest.raises(ValueError) as err:
-        aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['inconsistent length'],
-                                                         vert_level=dummy_vert_level)
-
-    assert "mismatch" in str(err.value)
+    """Test that an exception is raised only for mismatched metric and -vertfile images."""
+    for metric in dummy_metrics:
+        if metric == 'inconsistent length':
+            with pytest.raises(ValueError) as err:
+                aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], vert_level=dummy_vert_level)
+            assert "mismatch" in str(err.value)
+        else:
+            # Verify that no error is thrown for all other metrics
+            aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], vert_level=dummy_vert_level)
