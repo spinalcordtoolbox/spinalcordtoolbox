@@ -15,7 +15,10 @@ on:
     - cron:  '0 11 * * *'
 
 env:
-  zip_filepath: "batch_processing_results.zip"
+  # Turns on color output for pytest. See: https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591
+  PY_COLORS: "1"
+  # Used in 'pytest.mark.skipif()' for test, which prevents the test from being run during the usual test suite
+  BATCH_PROCESSING_CI_JOB: "1"
 
 jobs:
   batch_processing:
@@ -40,9 +43,6 @@ jobs:
           ./batch_processing.sh
 
       - name: Validate new results
-        env:
-          PY_COLORS: "1"
-          BATCH_PROCESSING_CI_JOB: "1"
         run: |
           source python/etc/profile.d/conda.sh
           conda activate venv_sct
