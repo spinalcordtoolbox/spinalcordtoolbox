@@ -32,10 +32,10 @@ def test_batch_processing_results(csv_filepath, row, pos, rel_tolerance):
 
     with open(csv_filepath_old, newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
-        metric_value_old = [row for row in reader][row][pos]  # Row/position varies depending on metric
+        metric_value_old = float([row for row in reader][row][pos])  # Row/position varies depending on metric
 
     with open(csv_filepath_new, newline='') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
-        metric_value_new = [row for row in reader][row][pos]  # Row/position varies depending on metric
+        metric_value_new = float([row for row in reader][row][pos])  # Row/position varies depending on metric
 
     assert metric_value_new == pytest.approx(metric_value_old, rel=rel_tolerance)
