@@ -39,40 +39,11 @@ jobs:
         run: |
           ./batch_processing.sh
 
-      # We use the REST API to fetch the most recently uploaded results from batch_processing.
-      # jq and awk are used to filter the JSON response by artifact ID, which is then used to download the right .zip.
-      # Relevant documentation: https://docs.github.com/en/rest/reference/actions#artifacts
-      - name: Fetch past results
-        run: |
-          export NEWEST_ARTIFACT_ID=$(curl -H "Accept: application/vnd.github.v3+json" \
-                                           https://api.github.com/repos/neuropoly/spinalcordtoolbox/actions/artifacts |
-                                      jq '.artifacts[].id' |
-                                      awk '{for(i=1;i<=NF;i++) if($i>maxval) maxval=$i;}; END { print maxval;}')
-          curl -u admin:${{ secrets.GITHUB_TOKEN }} \
-               -H "Accept: application/vnd.github.v3+json" \
-               -L "https://api.github.com/repos/neuropoly/spinalcordtoolbox/actions/artifacts/$NEWEST_ARTIFACT_ID/zip" \
-               --output "${{ env.zip_filepath }}"
-
       - name: Validate new results
         env:
           PY_COLORS: "1"
+          BATCH_PROCESSING_CI_JOB: "1"
         run: |
           source python/etc/profile.d/conda.sh
           conda activate venv_sct
-          BATCH_PROCESSING_ZIP_FILEPATH="${{ env.zip_filepath }}" \
-          pytest unit_testing/test_batch_processing.py
-
-      - name: Upload results
-        uses: actions/upload-artifact@v2
-        # Only upload new results on merged pull requests. This allows us to A) refresh the 90-day
-        # retention period, and B) update the stored values if they've changed -- assuming that the
-        # change was expected (e.g. if we've made a functionality change to one of our scripts).
-        if: github.event.pull_request.merged == true  # TOOD: Does this work as expected? Double-check "on:" triggers
-        with:
-          name: batch-processing-results
-          path: |
-            sct_example_data/t2/csa_c2c3.csv
-            sct_example_data/mt/mtr_in_wm.csv
-            sct_example_data/t2s/csa_gm.csv
-            sct_example_data/t2s/csa_wm.csv
-            sct_example_data/dmri/fa_in_cst.csv
+          pytest unit_testing/batch_processing/test_batch_processing.py
