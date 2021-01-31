@@ -34,9 +34,7 @@ jobs:
       - name: Install SCT
         run: |
           PIP_PROGRESS_BAR=off ./install_sct -y
-          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
-          cat ~/.bashrc | grep "export MPLBACKEND" | cut -d " " -f 2 >> $GITHUB_ENV
-          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+          . ~/.bashrc
 
       - name: Run batch_processing.sh
         run: |
