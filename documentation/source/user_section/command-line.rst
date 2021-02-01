@@ -13,17 +13,14 @@ Command-Line Tools
 Summary of Tools
 ****************
 
-The command-line tools are named ``sct_*``; to see all the commands
-available from SCT, start a new Terminal and type ``sct`` then press
-"tab".
+The command-line tools are named ``sct_*``; to see all the commands available from SCT, start a new Terminal and type ``sct`` then press "tab".
 
 
 Segmentation
 ============
 
 - sct_create_mask_ - Create mask along z direction.
-- sct_deepseg_ - Segment an anatomical structure or pathologies according using a deep learning model created with
-  `ivadomed <http://ivadomed.org/>`_.
+- sct_deepseg_ - Segment an anatomical structure or pathologies according using a deep learning model created with `ivadomed <http://ivadomed.org/>`_.
 - sct_deepseg_gm_ - Segment spinal cord gray matter using deep learning.
 - sct_deepseg_lesion_ - Segment multiple sclerosis lesions.
 - sct_deepseg_sc_ - Segment spinal cord using deep learning.
@@ -52,8 +49,7 @@ Registration
 - sct_apply_transfo_ - Apply transformations.
 - sct_get_centerline_ - Reconstruct spinal cord centerline.
 - sct_register_multimodal_ - Register two images together (non-linear, constrained in axial plane)
-- sct_register_to_template_ - Register an image with an anatomical template (eg. the `PAM50 template
-  <https://pubmed.ncbi.nlm.nih.gov/29061527/>`_).
+- sct_register_to_template_ - Register an image with an anatomical template (eg. the `PAM50 template <https://pubmed.ncbi.nlm.nih.gov/29061527/>`_).
 - sct_straighten_spinalcord_ - Straighten spinal cord from centerline
 - sct_warp_template_ - Warps the template and all atlases to a destination image.
 
@@ -73,8 +69,7 @@ Magnetization transfer
 ======================
 
 - sct_compute_mtr_ - Compute magnetization transfer ratio (MTR).
-- sct_compute_mtsat_ - Compute MTsat and T1map `[Helms et al. Magn Reson Med 2008]
-  <https://pubmed.ncbi.nlm.nih.gov/19025906/>`_.
+- sct_compute_mtsat_ - Compute MTsat and T1map `[Helms et al. Magn Reson Med 2008] <https://pubmed.ncbi.nlm.nih.gov/19025906/>`_.
 
 Functional MRI
 ==============
@@ -85,8 +80,7 @@ Functional MRI
 Metric processing
 =================
 
-- sct_analyze_texture_ - Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a
-  given mask.
+- sct_analyze_texture_ - Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given mask.
 - sct_extract_metric_ - Estimate metric value within tracts, taking into account partial volume effect.
 
 Image manipulation

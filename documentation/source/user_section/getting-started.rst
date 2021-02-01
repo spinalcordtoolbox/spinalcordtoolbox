@@ -3,8 +3,7 @@
 Getting Started
 ###############
 
-To get started using SCT, you may take a look at the `Batch Processing
-Example`_, or follow the longer `Courses`_ materials.
+To get started using SCT, you may take a look at the `Batch Processing Example`_, or follow the longer `Courses`_ materials.
 
 .. contents::
    :local:
@@ -14,11 +13,8 @@ Example`_, or follow the longer `Courses`_ materials.
 Batch Processing Example
 ************************
 
-The best way to learn how to use SCT is to look at the example `batch_processing
-<https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh>`_ script. This script performs a
-typical analysis of multi-parametric MRI data, including cross-sectional area measurements, magnetization transfer,
-diffusion tensor imaging metrics computation and extraction within specific tracts, and functional MRI pre-processing.
-This script will download an example dataset containing T1w, T2w, T2\*w, MT, DTI and fMRI data.
+The best way to learn how to use SCT is to look at the example `batch_processing <https://github.com/neuropoly/spinalcordtoolbox/blob/master/batch_processing.sh>`_ script.
+This script performs a typical analysis of multi-parametric MRI data, including cross-sectional area measurements, magnetization transfer, diffusion tensor imaging metrics computation and extraction within specific tracts, and functional MRI pre-processing. This script will download an example dataset containing T1w, T2w, T2\*w, MT, DTI and fMRI data.
 
 To launch the script run:
 
@@ -26,17 +22,14 @@ To launch the script run:
 
   $SCT_DIR/batch_processing.sh
 
-While the script is running, we encourage you to understand the meaning of each command line that is listed in the
-script. Comments are here to help justify some choices of parameters. If you have any question, please do not
-hesitate to ask for :ref:`support`.
+While the script is running, we encourage you to understand the meaning of each command line that is listed in the script. Comments are here to help justify some choices of parameters. If you have any question, please do not hesitate to ask for :ref:`support`.
 
 The script source is shown below:
 
 .. literalinclude:: ../../../batch_processing.sh
    :language: sh
 
-If you would like to get more examples about what SCT can do, please visit the `sct-pipeline repository
-<https://github.com/sct-pipeline/>`_. Each repository is a pipeline dedicated to a specific research project.
+If you would like to get more examples about what SCT can do, please visit the `sct-pipeline repository <https://github.com/sct-pipeline/>`_. Each repository is a pipeline dedicated to a specific research project.
 
 
 .. _sct_courses:
@@ -44,14 +37,10 @@ If you would like to get more examples about what SCT can do, please visit the `
 Courses
 *******
 
-We organize **free** SCT courses, each year after the ISMRM conference.
-If you’d like to be added to the mailing list, please send an email to
-spinalcordtoolbox@gmail.com. The past courses handouts are listed
-below:
+We organize **free** SCT courses, each year after the ISMRM conference. If you’d like to be added to the mailing list, please send an email to spinalcordtoolbox@gmail.com. The past courses handouts are listed below:
 
 -  `SCT course (v4.2.1), London, 2020-01-21`_ \| `Video recording`_
--  `SCT course (v4.0.0), Beijing, 2019-08-02`_ \| `Slides with Chinese
-   translation`_
+-  `SCT course (v4.0.0), Beijing, 2019-08-02`_ \| `Slides with Chinese translation`_
 -  `SCT course (v4.0.0_beta.4), London, 2019-01-22`_
 -  `SCT course (v3.2.2), Paris, 2018-06-12`_
 -  `SCT course (v3.0.3), Honolulu, 2017-04-28`_
@@ -86,5 +75,4 @@ Please visit our `Youtube channel`_ which contains some tutorials.
 Citing SCT
 **********
 
-If you use SCT in your research or as part of your developments, please always cite SCT as explained in the
-:ref:`references` section.
+If you use SCT in your research or as part of your developments, please always cite SCT as explained in the :ref:`references` section.
