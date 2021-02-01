@@ -184,6 +184,8 @@ def main(argv=None):
 
     fname_in = arguments.i
     n_in = len(fname_in)
+    # TODO: The functions for '-concat', '-omc', and '-display-warp' take in filenames, so they ignore 'im_in'.
+    #  Instead, we should harmonize this functionality so that 'im_in' is used everywhere.
     im_in = Image(fname_in[0])
 
     if arguments.set_sform_to_qform is not None:
@@ -200,6 +202,7 @@ def main(argv=None):
         dim = arguments.concat
         assert dim in dim_list
         dim = dim_list.index(dim)
+        # TODO: Modify concat_data to take in a list of Image() objects so that 'im_in' can be passed instead
         im_out = [concat_data(fname_in, dim)]
 
     elif arguments.copy_header is not None:
@@ -213,6 +216,7 @@ def main(argv=None):
         im_out = [im_dest_new]
 
     elif arguments.display_warp:
+        # TODO: Modify visualize_warp to take in an Image() object so that 'im_in' can be passed instead
         visualize_warp(fname_in[0], fname_grid=None, step=3, rm_tmp=True)
         im_out = None
 
@@ -240,6 +244,7 @@ def main(argv=None):
             if im.data.shape != im_ref.data.shape:
                 printv(parser.error('ERROR: -omc inputs need to have all the same shapes'))
             del im
+        # TODO: Modify multicomponent_merge to take in a list of Image() objects so that 'im_in' can be passed instead
         im_out = [multicomponent_merge(fname_in)]  # TODO: adapt to fname_in
 
     elif arguments.pad is not None:
