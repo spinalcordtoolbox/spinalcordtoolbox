@@ -233,11 +233,14 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     :return: Aggregated metric
     """
     if vert_level:
+        # Assumption: vert_level image will only ever be 3D or 4D
         vert_level_slices = Image(vert_level).change_orientation('RPI').data.shape[2]
-        metric_slices = metric.data.shape[0]
+        # Get slices ('z') from metrics regardless of whether they're 1D [z], 3D [x, y, z], and 4D [x, y, z, t]
+        metric_slices = metric.data.shape[2] if len(metric.data.shape) >= 3 else metric.data.shape[0]
         if vert_level_slices != metric_slices:
             raise ValueError(f"Shape mismatch between vertfile [{vert_level_slices}] and metric [{metric_slices}]). "
-                             f"Please verify that your vertfile has the same number of slices as your input image.")
+                             f"Please verify that your vertfile has the same number of slices as your input image, "
+                             f"and that your metric is RPI/LPI oriented.")
 
     # If user neither specified slices nor levels, set perslice=True, otherwise, the output will likely contain nan
     # because in many cases the segmentation does not span the whole I-S dimension.
