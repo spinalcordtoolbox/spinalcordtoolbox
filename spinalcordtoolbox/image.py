@@ -380,6 +380,16 @@ class Image(object):
         self.hdr.set_sform(im_ref.hdr.get_sform())
         self.hdr._structarr['sform_code'] = im_ref.hdr._structarr['sform_code']
 
+    def set_sform_to_qform(self):
+        """Use this (or set_qform_to_sform) when matching matrices are required."""
+        self.hdr.set_sform(self.hdr.get_qform())
+        self.hdr._structarr['sform_code'] = self.hdr._structarr['qform_code']
+
+    def set_qform_to_sform(self):
+        """Use this or (set_sform_to_qform) when matching matrices are required."""
+        self.hdr.set_qform(self.hdr.get_sform())
+        self.hdr._structarr['qform_code'] = self.hdr._structarr['sform_code']
+
     def loadFromPath(self, path, verbose):
         """
         This function load an image from an absolute path using nibabel library

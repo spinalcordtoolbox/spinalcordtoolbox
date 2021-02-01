@@ -96,8 +96,9 @@ def get_parser():
         required = False)
     header.add_argument(
         '-set-sform-to-qform',
-        help='Set the sform matrix of all input images to their respective qform matrix. '
-             'This operation is applied anytime an image is read in by `sct_image`.',
+        help='Set the sform matrix of all input images to their respective qform matrix. Use this option when you '
+             'need to enforce matching sform and qform matrices. This option can be used by itself, or in combination '
+             'with other functions.',
         action='store_true'
     )
 
@@ -181,14 +182,10 @@ def main(argv=None):
 
     fname_in = arguments.i
     n_in = len(fname_in)
-
-    # If the user wants to fix sforms replace `Image` with the sform fixer
-    if arguments.set_sform_to_qform:
-        Image = read_and_fix_sform
-    else:
-        Image = spinalcordtoolbox.image.Image
-
     im_in = Image(fname_in[0])
+
+    if arguments.set_sform_to_qform is not None:
+        im_in.set_sform_to_qform()
 
     if arguments.o is not None:
         fname_out = arguments.o
@@ -201,7 +198,7 @@ def main(argv=None):
         dim = arguments.concat
         assert dim in dim_list
         dim = dim_list.index(dim)
-        im_out = [concat_data(fname_in, dim)]  # TODO: adapt to fname_in
+        im_out = [concat_data(fname_in, dim)]
 
     elif arguments.copy_header is not None:
         if fname_out is None:
@@ -305,10 +302,9 @@ def main(argv=None):
             spaces.append(None)
         im_out = [ displacement_to_abs_fsl(im_in, spaces[0], spaces[1]) ]
 
+    # If this argument is used standalone, simply pass the input image to the output (sform was set for im_in earlier)
     elif arguments.set_sform_to_qform is not None:
-        # This argument can be used stand alone or with other operations so
-        # it should go last before the else
-        im_out = [im_in]  # TODO: adapt to fname_in
+        im_out = [im_in]
 
     else:
         im_out = None
@@ -494,14 +490,6 @@ def multicomponent_merge(fname_list):
     im_out.hdr.set_intent('vector', (), '')
     im_out.absolutepath = add_suffix(im_out.absolutepath, '_multicomponent')
     return im_out
-
-
-def read_and_fix_sform(fname):
-    im_in = Image(fname, check_sform=False)
-    im_reaff = im_in.copy()
-    im_reaff.header = im_in.header.copy()
-    im_reaff.header.set_sform(im_reaff.header.get_qform())
-    return im_reaff
 
 
 def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
