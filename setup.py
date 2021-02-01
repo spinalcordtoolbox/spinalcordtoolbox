@@ -62,6 +62,7 @@ setup(
                 'sct_analyze_texture',
                 'sct_apply_transfo',
                 'sct_check_dependencies',
+                'sct_concat_transfo',
                 'sct_compute_ernst_angle',
                 'sct_compute_hausdorff_distance',
                 'sct_compute_mscc',

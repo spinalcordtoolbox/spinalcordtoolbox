@@ -1,5 +1,82 @@
 # Changelog
 
+## 5.1.0 (2021-01-22)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/5.0.1...5.1.0)
+
+**FEATURE**
+
+ - **sct_concat_transfo:** Restore previously deprecated sct_concat_transfo.py.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3181)
+ - **sct_deepseg:** Support of multichannel and multiclass models.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3041)
+ - **sct_label_utils:** Add function to detect missing label.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2992)
+
+**DOCUMENTATION-INTERNAL**
+
+ - Add script to automate requirements-freeze.txt generation.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3042)
+
+**BUG**
+
+ - **sct_compute_hausdorff_distance,sct_dmri_compute_dti:** Fix bugs introduced by recent init step refactoring pull request.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3177)
+ - **sct_propseg:** Replace os.path.dirname with pathlib.Path().parent.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3166)
+ - **sct_deepseg,sct_run_batch:** Make sure (most) scripts return error code and print usage when no args are passed.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3156)
+ - **sct_label_utils:** Add new '-create-seg-mid' option to replace bugged '-create-seg -1' behavior.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3148)
+ - Replace "argv if argv else '--help'" behavior with subclassed ArgumentParser.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3139)
+ - Replace troublesome unicode quote characters with more friendly ones.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3135)
+ - Fixup realpath polyfill.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3123)
+ - Fix incorrect indexing in get_center_spit to prevent QC report cropping.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3116)
+ - Forces output label image to be UINT8 with -create-viewer.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3104)
+ - Check that conda actually activated during install..  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3103)
+ - **sct_label_vertebrae:** Change Error type so program doesn't quit when labels are too high.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3073)
+ - Set PYTHONNOUSERSITE=True to prevent user site packages from interfering.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3070)
+ - Bump ivadomed version to 2.5.0.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3034)
+ - **sct_label_vertebrae:** Fixed missing top disc label with using -discfile .  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2990)
+ - **sct_label_vertebrae:** Obsolete -denoise functionality.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2985)
+ - Fix API importing scripts.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2966)
+
+**INSTALLATION**
+
+ - Remove tensorboard==1.14.0 version pinning from requirements.txt.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3185)
+ - Fixup realpath polyfill.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3123)
+ - Check that conda actually activated during install..  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3103)
+ - Turn on stricter shell rules + maintainence.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3102)
+ - Add improvements to recent tensorflow-tensorboard fix.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3082)
+ - Fix version parsing to support Big Sur (11.0).  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3053)
+
+**DOCUMENTATION**
+
+ - Updated badge from travis.org to travis.com.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3165)
+ - Add the Twitter badge.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3162)
+ - Organize "Specific references" into clearer tables .  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3133)
+ - Update references.rst.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3132)
+ - **sct_deepseg_sc:** Update references.rst.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3117)
+ - **sct_straighten_spinalcord:** Readability of parameters. Fixed -ldisc-input and -ldisc-dest typos.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3092)
+ - Documentation fixes.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3069)
+ - Update references.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3066)
+ - Fix link reference.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3061)
+ - **sct_run_batch:** Update sct_run_batch argparse descriptions to clarify '-itk-threads' usage.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3052)
+ - Update references.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3028)
+ - Enable fail on warning in RTD.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2980)
+
+**ENHANCEMENT**
+
+ - Various improvements for the manual labeling of cord centerline.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3175)
+ - **sct_deepseg:** Add option to have a custom task.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3160)
+ - **sct_run_batch:** Print actual numbers of jobs run in parallel..  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3109)
+ - Update tumor segmentation models.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3098)
+ - Change default option values to None.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3090)
+ - **sct_deepseg_sc,sct_detect_pmj,sct_propseg:** Implement -o flag for a few functions.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3081)
+ - **sct_label_utils:** Update -create-viewer argument to use parse_num_list function.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3076)
+ - **sct_label_vertebrae:** Check that there is two inputs for initz.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3060)
+ - **sct_register_multimodal:** Introduced flags samplingStrategy and samplingPercentage for ANTs calls; Set default to 'None' to ensure reproducible results.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3050)
+
+**REFACTORING**
+
+ - Refactor CLI init steps to be consistent across scripts.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3091)
+ - Fix API importing scripts.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2966)
+
+**GIT/GITHUB**
+
+ - Add slightly modified PR template from shimming-toolbox.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3032)
+
 ## 5.0.1 (2020-11-12)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/5.0.0...5.0.1)
 
