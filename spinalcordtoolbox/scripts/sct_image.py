@@ -35,7 +35,9 @@ def get_parser():
         '-i',
         nargs='+',
         metavar=Metavar.file,
-        help='Input file(s). If several inputs: separate them by white space. Example: "data.nii.gz"',
+        help='R|Input file(s). Example: "data.nii.gz"\n'
+             'Note: Only "-concat" or "-ocs" support multiple input files. In those cases, separate filenames using '
+             'spaces. Example usage: "sct_image -i data1.nii.gz data2.nii.gz -concat"',
         required = True)
     optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional.add_argument(
@@ -96,9 +98,9 @@ def get_parser():
         required = False)
     header.add_argument(
         '-set-sform-to-qform',
-        help='Set the sform matrix of all input images to their respective qform matrix. Use this option when you '
-             'need to enforce matching sform and qform matrices. This option can be used by itself, or in combination '
-             'with other functions.',
+        help="Set the input image's sform matrix equal to its qform matrix. Use this option when you "
+             "need to enforce matching sform and qform matrices. This option can be used by itself, or in combination "
+             "with other functions.",
         action='store_true'
     )
 
