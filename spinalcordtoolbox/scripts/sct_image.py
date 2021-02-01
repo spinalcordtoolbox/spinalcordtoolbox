@@ -188,6 +188,8 @@ def main(argv=None):
     else:
         Image = spinalcordtoolbox.image.Image
 
+    im_in = Image(fname_in[0])
+
     if arguments.o is not None:
         fname_out = arguments.o
     else:
@@ -204,7 +206,6 @@ def main(argv=None):
     elif arguments.copy_header is not None:
         if fname_out is None:
             raise ValueError("Need to specify output image with -o!")
-        im_in = Image(fname_in[0])
         im_dest = Image(arguments.copy_header)
         im_dest_new = im_in.copy()
         im_dest_new.data = im_dest.data.copy()
@@ -213,12 +214,10 @@ def main(argv=None):
         im_out = [im_dest_new]
 
     elif arguments.display_warp:
-        im_in = fname_in[0]
-        visualize_warp(im_in, fname_grid=None, step=3, rm_tmp=True)
+        visualize_warp(fname_in[0], fname_grid=None, step=3, rm_tmp=True)
         im_out = None
 
     elif arguments.getorient:
-        im_in = Image(fname_in[0])
         orient = im_in.orientation
         im_out = None
 
@@ -226,11 +225,9 @@ def main(argv=None):
         index_vol = (arguments.keep_vol).split(',')
         for iindex_vol, vol in enumerate(index_vol):
                 index_vol[iindex_vol] = int(vol)
-        im_in = Image(fname_in[0])
         im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
     elif arguments.mcs:
-        im_in = Image(fname_in[0])
         if n_in != 1:
             printv(parser.error('ERROR: -mcs need only one input'))
         if len(im_in.data.shape) != 5:
@@ -238,7 +235,7 @@ def main(argv=None):
         im_out = multicomponent_split(im_in)
 
     elif arguments.omc:
-        im_ref = Image(fname_in[0])
+        im_ref = im_in
         for fname in fname_in:
             im = Image(fname)
             if im.data.shape != im_ref.data.shape:
@@ -247,7 +244,6 @@ def main(argv=None):
         im_out = [multicomponent_merge(fname_in)]  # TODO: adapt to fname_in
 
     elif arguments.pad is not None:
-        im_in = Image(fname_in[0])
         ndims = len(im_in.data.shape)
         if ndims != 3:
             printv('ERROR: you need to specify a 3D input file.', 1, 'error')
@@ -263,7 +259,6 @@ def main(argv=None):
                             pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
 
     elif arguments.pad_asym is not None:
-        im_in = Image(fname_in[0])
         ndims = len(im_in.data.shape)
         if ndims != 3:
             printv('ERROR: you need to specify a 3D input file.', 1, 'error')
@@ -281,28 +276,23 @@ def main(argv=None):
         index_vol = (arguments.remove_vol).split(',')
         for iindex_vol, vol in enumerate(index_vol):
             index_vol[iindex_vol] = int(vol)
-        im_in = Image(fname_in[0])
         im_out = [remove_vol(im_in, index_vol, todo='remove')]
 
     elif arguments.setorient is not None:
         printv(fname_in[0])
-        im_in = Image(fname_in[0])
         im_out = [change_orientation(im_in, arguments.setorient)]
 
     elif arguments.setorient_data is not None:
-        im_in = Image(fname_in[0])
         im_out = [change_orientation(im_in, arguments.setorient_data, data_only=True)]
 
     elif arguments.split is not None:
         dim = arguments.split
         assert dim in dim_list
-        im_in = Image(fname_in[0])
         dim = dim_list.index(dim)
         im_out = split_data(im_in, dim)
 
     elif arguments.type is not None:
         output_type = arguments.type
-        im_in = Image(fname_in[0])
         im_out = [im_in]  # TODO: adapt to fname_in
 
     elif arguments.to_fsl is not None:
@@ -313,12 +303,12 @@ def main(argv=None):
         spaces = [ Image(s) for s in space_files ]
         if len(spaces) < 2:
             spaces.append(None)
-        im_out = [ displacement_to_abs_fsl(Image(fname_in[0]), spaces[0], spaces[1]) ]
+        im_out = [ displacement_to_abs_fsl(im_in, spaces[0], spaces[1]) ]
 
     elif arguments.set_sform_to_qform is not None:
         # This argument can be used stand alone or with other operations so
         # it should go last before the else
-        im_out = [Image(fname_in[0])]
+        im_out = [im_in]  # TODO: adapt to fname_in
 
     else:
         im_out = None
