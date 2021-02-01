@@ -16,12 +16,12 @@ from spinalcordtoolbox.utils.sys import sct_dir_local_path
     reason="Run only for batch processing CI job"
 )
 @pytest.mark.parametrize("csv_filepath,row,pos,rel_tolerance",
-                         [("t2/csa_c2c3.csv",    -1, 5, 1e-5),
-                          ("t2s/csa_gm.csv",     -1, 5, 1e-5),
-                          ("t2s/csa_wm.csv",     -1, 5, 1e-5),
-                          ("mt/mtr_in_wm.csv",   -1, 7, 1e-5),
-                          ("dmri/fa_in_cst.csv", -1, 7, 1e-5),
-                          ("dmri/fa_in_cst.csv", -2, 7, 1e-5)])
+                         [("t2/csa_c2c3.csv",    -1, 5, 1e-14),
+                          ("t2s/csa_gm.csv",     -1, 5, 1e-14),
+                          ("t2s/csa_wm.csv",     -1, 5, 1e-14),
+                          ("mt/mtr_in_wm.csv",   -1, 7, 1e-8),
+                          ("dmri/fa_in_cst.csv", -1, 7, 1e-8),
+                          ("dmri/fa_in_cst.csv", -2, 7, 1e-7)])
 def test_batch_processing_results(csv_filepath, row, pos, rel_tolerance):
     """Ensure that new batch_processing.sh results are within a certain tolerance of the cached baseline results."""
     sct_dir = pathlib.Path(sct_dir_local_path())
