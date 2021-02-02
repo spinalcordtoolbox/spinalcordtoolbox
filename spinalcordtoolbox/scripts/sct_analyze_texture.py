@@ -203,8 +203,10 @@ class ExtractGLCM:
 
             dim_idx = 3 # img is [x, y, z, angle] so specify 4th dimension (angle)
 
-            img = concat_data(im2mean_lst, dim_idx).save(fname_out)
-            img = Image(fname_out)
+            img = concat_data(im2mean_lst, dim_idx).save(fname_out, mutable=True)
+
+            if len(np.shape(img.data)) < 4: # in case input volume is 3d and dim=t
+                img.data = img.data[..., np.newaxis]
             img.data = np.mean(img.data, dim_idx)
             img.save()
 
