@@ -112,6 +112,7 @@ The table below provides references relevant to the :ref:`pam50` used by SCT, in
 
 Applications
 ------------
+The following studies (in chronological order) have used SCT:
 
 -  `Kong et al. Intrinsically organized resting state networks in the human spinal cord. PNAS 2014 <http://www.pnas.org/content/111/50/18067.abstract>`__
 -  `Duval et al. In vivo mapping of human spinal cord microstructure at 300mT/m. Neuroimage 2015 <https://www.ncbi.nlm.nih.gov/pubmed/26095093>`__
@@ -192,3 +193,8 @@ Applications
 -  `Johnson et al. In vivo detection of microstructural spinal cord lesions in dogs with degenerative myelopathy using diffusion tensor imaging. J Vet Intern Med. 2020 <https://onlinelibrary.wiley.com/doi/10.1111/jvim.16014>`_
 -  `Kinawy et al. Dynamic Functional Connectivity of Resting-State Spinal Cord fMRI Reveals Fine-Grained Intrinsic Architecture. Neuron. 2020 <https://pubmed.ncbi.nlm.nih.gov/32910894/>`_
 -  `Weber et al. Assessing the spatial distribution of cervical spinal cord activity during tactile stimulation of the upper extremity in humans with functional magnetic resonance imaging. Neuroimage 2020 <https://www.sciencedirect.com/science/article/pii/S1053811920303918>`_
+-  `Querin et al. Development of new outcome measures for adult SMA type III and IV: a multimodal longitudinal study. J Neurol 2021 <https://pubmed.ncbi.nlm.nih.gov/33388927/>`_
+-  `McLachlin et al. Spatial correspondence of spinal cord white matter tracts using diffusion tensor imaging, fibre tractography, and atlas-based segmentation. Neuroradiology 2021 <https://link.springer.com/article/10.1007/s00234-021-02635-9>`_
+-  `Dvorak et al. Comparison of multi echo T2 relaxation and steady state approaches for myelin imaging in the central nervous system. Scientific reports 2021 <https://www.nature.com/articles/s41598-020-80585-7>`_
+-  `Adanyeguh et al. Multiparametric in vivo analyses of the brain and spine identify structural and metabolic biomarkers in men with adrenomyeloneuropathy. NeuroImage: Clinical, 2021 <https://www.sciencedirect.com/science/article/pii/S2213158221000103>`_
+-  `Meyer et al. Optimized cervical spinal cord perfusion MRI after traumatic injury in the rat. J. of Cerebral Blood Flow & Metabolism, 2021 <https://journals.sagepub.com/doi/10.1177/0271678X20982396>`_
