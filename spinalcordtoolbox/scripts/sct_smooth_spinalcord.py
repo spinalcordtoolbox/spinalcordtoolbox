@@ -23,9 +23,8 @@ from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type,
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_save, cache_signature, cache_valid, copy, \
     extract_fname, rmtree
-
+from spinalcordtoolbox.math import smooth
 from spinalcordtoolbox.scripts.sct_convert import convert
-from spinalcordtoolbox.scripts import sct_maths
 
 
 class Param:
@@ -135,7 +134,7 @@ def main(argv=None):
     param.algo_fitting = arguments.algo_fitting
 
     if arguments.smooth is not None:
-        sigma = arguments.smooth
+        sigmas = arguments.smooth
     remove_temp_files = arguments.r
     if arguments.o is not None:
         fname_out = arguments.o
@@ -147,7 +146,7 @@ def main(argv=None):
     printv('\nCheck input arguments...')
     printv('  Volume to smooth .................. ' + fname_anat)
     printv('  Centerline ........................ ' + fname_centerline)
-    printv('  Sigma (mm) ........................ ' + str(sigma))
+    printv('  Sigma (mm) ........................ ' + str(sigmas))
     printv('  Verbose ........................... ' + str(verbose))
 
     # Check that input is 3D:
@@ -218,11 +217,19 @@ def main(argv=None):
 
     # Smooth the straightened image along z
     printv('\nSmooth the straightened image...')
-    sigma_smooth = ",".join([str(i) for i in sigma])
-    sct_maths.main(argv=['-i', 'anat_rpi_straight.nii',
-                         '-smooth', sigma_smooth,
-                         '-o', 'anat_rpi_straight_smooth.nii',
-                         '-v', '0'])
+
+    img = Image("anat_rpi_straight.nii")
+    out = img.copy()
+
+    if len(sigmas) == 1:
+        sigmas = [sigmas[0] for i in range(len(img.data.shape))]
+    elif len(sigmas) != len(img.data.shape):
+            raise ValueError("-smooth need the same number of inputs as the number of image dimension OR only one input")
+
+    sigmas = [sigmas[i] / img.dim[i + 4] for i in range(3)]
+    out.data = smooth(out.data, sigmas)
+    out.save(path="anat_rpi_straight_smooth.nii")
+
     # Apply the reversed warping field to get back the curved spinal cord
     printv('\nApply the reversed warping field to get back the curved spinal cord...')
     run_proc(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)
@@ -242,8 +249,7 @@ def main(argv=None):
 
     # Generate output file
     printv('\nGenerate output file...')
-    generate_output_file(os.path.join(path_tmp, "anat_rpi_straight_smooth_curved_nonzero.nii"),
-                         fname_out)
+    generate_output_file(os.path.join(path_tmp, "anat_rpi_straight_smooth_curved_nonzero.nii"), fname_out)
 
     # Remove temporary files
     if remove_temp_files == 1:
