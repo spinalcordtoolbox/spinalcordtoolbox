@@ -17,6 +17,7 @@ import numpy as np
 from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 
+import spinalcordtoolbox
 from spinalcordtoolbox.image import Image, concat_data, add_suffix, change_orientation, concat_warp2d, split_img_data, pad_image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
@@ -34,7 +35,9 @@ def get_parser():
         '-i',
         nargs='+',
         metavar=Metavar.file,
-        help='Input file(s). If several inputs: separate them by white space. Example: "data.nii.gz"',
+        help='R|Input file(s). Example: "data.nii.gz"\n'
+             'Note: Only "-concat" or "-ocs" support multiple input files. In those cases, separate filenames using '
+             'spaces. Example usage: "sct_image -i data1.nii.gz data2.nii.gz -concat"',
         required = True)
     optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional.add_argument(
@@ -93,6 +96,13 @@ def get_parser():
         help='Copy the header of the source image (specified in -i) to the destination image (specified here) '
              'and save it into a new image (specified in -o)',
         required = False)
+    header.add_argument(
+        '-set-sform-to-qform',
+        help="Set the input image's sform matrix equal to its qform matrix. Use this option when you "
+             "need to enforce matching sform and qform matrices. This option can be used by itself, or in combination "
+             "with other functions.",
+        action='store_true'
+    )
 
     orientation = parser.add_argument_group('ORIENTATION OPERATIONS')
     orientation.add_argument(
@@ -174,6 +184,12 @@ def main(argv=None):
 
     fname_in = arguments.i
     n_in = len(fname_in)
+    # TODO: The functions for '-concat', '-omc', and '-display-warp' take in filenames, so they ignore 'im_in'.
+    #  Instead, we should harmonize this functionality so that 'im_in' is used everywhere.
+    im_in = Image(fname_in[0])
+
+    if arguments.set_sform_to_qform is not None:
+        im_in.set_sform_to_qform()
 
     if arguments.o is not None:
         fname_out = arguments.o
@@ -186,12 +202,12 @@ def main(argv=None):
         dim = arguments.concat
         assert dim in dim_list
         dim = dim_list.index(dim)
-        im_out = [concat_data(fname_in, dim)]  # TODO: adapt to fname_in
+        # TODO: Modify concat_data to take in a list of Image() objects so that 'im_in' can be passed instead
+        im_out = [concat_data(fname_in, dim)]
 
     elif arguments.copy_header is not None:
         if fname_out is None:
             raise ValueError("Need to specify output image with -o!")
-        im_in = Image(fname_in[0])
         im_dest = Image(arguments.copy_header)
         im_dest_new = im_in.copy()
         im_dest_new.data = im_dest.data.copy()
@@ -200,12 +216,11 @@ def main(argv=None):
         im_out = [im_dest_new]
 
     elif arguments.display_warp:
-        im_in = fname_in[0]
-        visualize_warp(im_in, fname_grid=None, step=3, rm_tmp=True)
+        # TODO: Modify visualize_warp to take in an Image() object so that 'im_in' can be passed instead
+        visualize_warp(fname_in[0], fname_grid=None, step=3, rm_tmp=True)
         im_out = None
 
     elif arguments.getorient:
-        im_in = Image(fname_in[0])
         orient = im_in.orientation
         im_out = None
 
@@ -213,11 +228,9 @@ def main(argv=None):
         index_vol = (arguments.keep_vol).split(',')
         for iindex_vol, vol in enumerate(index_vol):
                 index_vol[iindex_vol] = int(vol)
-        im_in = Image(fname_in[0])
         im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
     elif arguments.mcs:
-        im_in = Image(fname_in[0])
         if n_in != 1:
             printv(parser.error('ERROR: -mcs need only one input'))
         if len(im_in.data.shape) != 5:
@@ -225,16 +238,16 @@ def main(argv=None):
         im_out = multicomponent_split(im_in)
 
     elif arguments.omc:
-        im_ref = Image(fname_in[0])
+        im_ref = im_in
         for fname in fname_in:
             im = Image(fname)
             if im.data.shape != im_ref.data.shape:
                 printv(parser.error('ERROR: -omc inputs need to have all the same shapes'))
             del im
+        # TODO: Modify multicomponent_merge to take in a list of Image() objects so that 'im_in' can be passed instead
         im_out = [multicomponent_merge(fname_in)]  # TODO: adapt to fname_in
 
     elif arguments.pad is not None:
-        im_in = Image(fname_in[0])
         ndims = len(im_in.data.shape)
         if ndims != 3:
             printv('ERROR: you need to specify a 3D input file.', 1, 'error')
@@ -250,7 +263,6 @@ def main(argv=None):
                             pad_y_f=pady, pad_z_i=padz, pad_z_f=padz)]
 
     elif arguments.pad_asym is not None:
-        im_in = Image(fname_in[0])
         ndims = len(im_in.data.shape)
         if ndims != 3:
             printv('ERROR: you need to specify a 3D input file.', 1, 'error')
@@ -268,28 +280,23 @@ def main(argv=None):
         index_vol = (arguments.remove_vol).split(',')
         for iindex_vol, vol in enumerate(index_vol):
             index_vol[iindex_vol] = int(vol)
-        im_in = Image(fname_in[0])
         im_out = [remove_vol(im_in, index_vol, todo='remove')]
 
     elif arguments.setorient is not None:
         printv(fname_in[0])
-        im_in = Image(fname_in[0])
         im_out = [change_orientation(im_in, arguments.setorient)]
 
     elif arguments.setorient_data is not None:
-        im_in = Image(fname_in[0])
         im_out = [change_orientation(im_in, arguments.setorient_data, data_only=True)]
 
     elif arguments.split is not None:
         dim = arguments.split
         assert dim in dim_list
-        im_in = Image(fname_in[0])
         dim = dim_list.index(dim)
         im_out = split_data(im_in, dim)
 
     elif arguments.type is not None:
         output_type = arguments.type
-        im_in = Image(fname_in[0])
         im_out = [im_in]  # TODO: adapt to fname_in
 
     elif arguments.to_fsl is not None:
@@ -300,7 +307,11 @@ def main(argv=None):
         spaces = [ Image(s) for s in space_files ]
         if len(spaces) < 2:
             spaces.append(None)
-        im_out = [ displacement_to_abs_fsl(Image(fname_in[0]), spaces[0], spaces[1]) ]
+        im_out = [ displacement_to_abs_fsl(im_in, spaces[0], spaces[1]) ]
+
+    # If this argument is used standalone, simply pass the input image to the output (sform was set for im_in earlier)
+    elif arguments.set_sform_to_qform is not None:
+        im_out = [im_in]
 
     else:
         im_out = None
