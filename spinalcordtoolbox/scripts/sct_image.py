@@ -36,7 +36,7 @@ def get_parser():
         nargs='+',
         metavar=Metavar.file,
         help='R|Input file(s). Example: "data.nii.gz"\n'
-             'Note: Only "-concat" or "-ocs" support multiple input files. In those cases, separate filenames using '
+             'Note: Only "-concat" or "-omc" support multiple input files. In those cases, separate filenames using '
              'spaces. Example usage: "sct_image -i data1.nii.gz data2.nii.gz -concat"',
         required = True)
     optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
