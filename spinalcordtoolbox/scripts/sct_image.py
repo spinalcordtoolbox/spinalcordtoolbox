@@ -12,6 +12,7 @@
 
 import os
 import sys
+from typing import Sequence
 
 import numpy as np
 from nibabel import Nifti1Image
@@ -183,13 +184,18 @@ def main(argv=None):
     dim_list = ['x', 'y', 'z', 't']
 
     fname_in = arguments.i
-    n_in = len(fname_in)
-    # TODO: The functions for '-concat', '-omc', and '-display-warp' take in filenames, so they ignore 'im_in'.
-    #  Instead, we should harmonize this functionality so that 'im_in' is used everywhere.
-    im_in = Image(fname_in[0])
 
+    im_in_list = [Image(fname) for fname in fname_in]
+    if len(im_in_list) > 1 and arguments.concat is None and arguments.omc is None:
+        parser.error("Multi-image input is only supported for the '-concat' and '-omc' arguments.")
+
+    # Apply initialization steps to all input images first
     if arguments.set_sform_to_qform is not None:
-        im_in.set_sform_to_qform()
+        [im.set_sform_to_qform() for im in im_in_list]
+
+    # Most sct_image options don't accept multi-image input, so here we simply separate out the first image
+    # TODO: Extend the options so that they iterate through the list of images (to support multi-image input)
+    im_in = im_in_list[0]
 
     if arguments.o is not None:
         fname_out = arguments.o
@@ -202,8 +208,7 @@ def main(argv=None):
         dim = arguments.concat
         assert dim in dim_list
         dim = dim_list.index(dim)
-        # TODO: Modify concat_data to take in a list of Image() objects so that 'im_in' can be passed instead
-        im_out = [concat_data(fname_in, dim)]
+        im_out = [concat_data(im_in_list, dim)]
 
     elif arguments.copy_header is not None:
         if fname_out is None:
@@ -216,8 +221,7 @@ def main(argv=None):
         im_out = [im_dest_new]
 
     elif arguments.display_warp:
-        # TODO: Modify visualize_warp to take in an Image() object so that 'im_in' can be passed instead
-        visualize_warp(fname_in[0], fname_grid=None, step=3, rm_tmp=True)
+        visualize_warp(im_warp=im_in, im_grid=None, step=3, rm_tmp=True)
         im_out = None
 
     elif arguments.getorient:
@@ -231,21 +235,17 @@ def main(argv=None):
         im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
     elif arguments.mcs:
-        if n_in != 1:
-            printv(parser.error('ERROR: -mcs need only one input'))
         if len(im_in.data.shape) != 5:
             printv(parser.error('ERROR: -mcs input need to be a multi-component image'))
         im_out = multicomponent_split(im_in)
 
     elif arguments.omc:
-        im_ref = im_in
-        for fname in fname_in:
-            im = Image(fname)
+        im_ref = im_in_list[0]
+        for im in im_in_list:
             if im.data.shape != im_ref.data.shape:
                 printv(parser.error('ERROR: -omc inputs need to have all the same shapes'))
             del im
-        # TODO: Modify multicomponent_merge to take in a list of Image() objects so that 'im_in' can be passed instead
-        im_out = [multicomponent_merge(fname_in)]  # TODO: adapt to fname_in
+        im_out = [multicomponent_merge(im_in_list=im_in_list)]
 
     elif arguments.pad is not None:
         ndims = len(im_in.data.shape)
@@ -283,7 +283,7 @@ def main(argv=None):
         im_out = [remove_vol(im_in, index_vol, todo='remove')]
 
     elif arguments.setorient is not None:
-        printv(fname_in[0])
+        printv(im_in.absolutepath)
         im_out = [change_orientation(im_in, arguments.setorient)]
 
     elif arguments.setorient_data is not None:
@@ -297,7 +297,7 @@ def main(argv=None):
 
     elif arguments.type is not None:
         output_type = arguments.type
-        im_out = [im_in]  # TODO: adapt to fname_in
+        im_out = [im_in]
 
     elif arguments.to_fsl is not None:
         space_files = arguments.to_fsl
@@ -469,20 +469,19 @@ def multicomponent_split(im):
     return im_out
 
 
-def multicomponent_merge(fname_list):
+def multicomponent_merge(im_in_list: Sequence[Image]):
     from numpy import zeros
     # WARNING: output multicomponent is not optimal yet, some issues may be related to the use of this function
 
-    im_0 = Image(fname_list[0])
+    im_0 = im_in_list[0]
     new_shape = list(im_0.data.shape)
     if len(new_shape) == 3:
         new_shape.append(1)
-    new_shape.append(len(fname_list))
+    new_shape.append(len(im_in_list))
     new_shape = tuple(new_shape)
 
     data_out = zeros(new_shape)
-    for i, fname in enumerate(fname_list):
-        im = Image(fname)
+    for i, im in enumerate(im_in_list):
         dat = im.data
         if len(dat.shape) == 2:
             data_out[:, :, 0, 0, i] = dat.astype('float32')
@@ -499,11 +498,13 @@ def multicomponent_merge(fname_list):
     return im_out
 
 
-def visualize_warp(fname_warp, fname_grid=None, step=3, rm_tmp=True):
-    if fname_grid is None:
+def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
+    fname_warp = im_warp.absolutepath()
+    if im_grid:
+        fname_grid = im_grid.absolutepath()
+    else:
         from numpy import zeros
         tmp_dir = tmp_create()
-        im_warp = Image(fname_warp)
         status, out = run_proc(['fslhd', fname_warp])
         curdir = os.getcwd()
         os.chdir(tmp_dir)
