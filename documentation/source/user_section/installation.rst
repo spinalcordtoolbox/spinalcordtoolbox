@@ -158,12 +158,6 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
            source ${SCT_DIR}/python/etc/profile.d/conda.sh
            conda activate venv_sct
 
-   Install wxPython using conda:
-
-   .. code-block:: sh
-
-           yes | conda install -c anaconda wxpython
-
    Install FSLeyes using conda-forge:
 
    .. code-block:: sh
