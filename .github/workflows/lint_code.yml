@@ -1,16 +1,19 @@
+name: Python Linting (lintly + flake8)
+
 on: [pull_request]
 
 jobs:
   lint:
-    name: Python Linting (flake8)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: grantmcconnaughey/lintly-flake8-github-action@v1.0
-        with:
-          # The GitHub API token to create reviews with
-          token: ${{ secrets.GITHUB_TOKEN }}
-          # Fail if "new" violations detected or "any", default "new"
-          failIf: new
-          # Additional arguments to pass to flake8, default "." (current directory)
-          args: "--use-checks ."
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install dependencies
+      run: pip install flake8 lintly
+    - name: Lint with flake8
+      run: flake8 | lintly --use-checks --fail-on new
+      env:
+        LINTLY_API_KEY: ${{ secrets.GITHUB_TOKEN }}
