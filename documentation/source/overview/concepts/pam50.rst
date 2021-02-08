@@ -10,15 +10,9 @@ PAM50 Template
 Introduction
 ============
 
-Template-based analysis of multi-parametric MRI data of the spinal cord sets
-the foundation for standardization and reproducibility. Particularly, it
-allows researchers to process their data with minimum bias, perform
-multi-center studies, with the goal of improving patient diagnosis and
-prognosis and helping the discovery of new biomarkers of spinal-related
-diseases.
+Template-based analysis of multi-parametric MRI data of the spinal cord sets the foundation for standardization and reproducibility. Particularly, it allows researchers to process their data with minimum bias, perform multi-center studies, with the goal of improving patient diagnosis and prognosis and helping the discovery of new biomarkers of spinal-related diseases.
 
-PAM50 is one such template for MRI of the full spinal cord and brainstem, and
-is included in your installation of SCT. It has the following features:
+PAM50 is one such template for MRI of the full spinal cord and brainstem, and is included in your installation of SCT. It has the following features:
 
 * It is available for T1-, T2-and T2*-weighted MRI contrast.
 * It is compatible with the ICBM152 brain template (a.k.a. MNI template), allowing to conduct simultaneous brain/spine studies within the same coordinate system.
@@ -43,10 +37,7 @@ White and grey matter atlas (``PAM50/atlas``)
     :figwidth: 40%
     :align: right
 
-The White Matter atlas will be a useful tool for your studies of specific spinal cord tracts. It consists of 36 nifti
-volumes named ``PAM50_atlas_<tract_number>.nii.gz`` where ``<tract_number>`` is the number identifying the tract.
-Fifteen WM tracts and three GM regions are available for each side. The values of each voxel of the files ``PAM50_atlas_<tract_number>.nii.gz``
-are the voxel volume proportions occupied by the corresponding tract.
+The White Matter atlas will be a useful tool for your studies of specific spinal cord tracts. It consists of 36 nifti volumes named ``PAM50_atlas_<tract_number>.nii.gz`` where ``<tract_number>`` is the number identifying the tract. Fifteen WM tracts and three GM regions are available for each side. The values of each voxel of the files ``PAM50_atlas_<tract_number>.nii.gz`` are the voxel volume proportions occupied by the corresponding tract.
 
 The atlas folder also contains an ``info_label.txt`` file to explain what each file represents:
 
@@ -61,8 +52,7 @@ Spinal levels (``PAM50/spinal_levels``)
     :figwidth: 40%
     :align: right
 
-In the folder ``data/PAM50/spinal_levels``, you will find 20 label images corresponding to different spinal cord levels, including both C1:C8 and T1:T12. In each nifti file, the value of each voxel is the probability for this voxel to belong to the
-spinal level.
+In the folder ``data/PAM50/spinal_levels``, you will find 20 label images corresponding to different spinal cord levels, including both C1:C8 and T1:T12. In each nifti file, the value of each voxel is the probability for this voxel to belong to the spinal level.
 
 The spinal_levels folder also contains an ``info_label.txt`` file to explain what each file represents:
 
