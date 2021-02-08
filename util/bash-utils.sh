@@ -23,7 +23,7 @@ do
 done
 
 
-# Checks commands in a file exist on the system
+# Checks commands in a file on the system
 # Takes in variable specifically named commands_file
 # Does check for file existance
 

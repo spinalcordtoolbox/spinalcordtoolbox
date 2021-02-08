@@ -14,7 +14,7 @@ PIP_PROGRESS_BAR=off ./install_sct -y
 echo *** CHECK PATH ***
 
 # Make sure all binaries and aliases are there
-sh ./util/bash-utils.sh ./install/required_installed_commands.py
+sh ./util/bash-utils.sh commands_file="./install/required_installed_commands.py"
 
 # to be able to call conda
 source python/etc/profile.d/conda.sh
