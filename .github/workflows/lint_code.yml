@@ -12,3 +12,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           # Fail if "new" violations detected or "any", default "new"
           failIf: new
+          # Additional arguments to pass to flake8, default "." (current directory)
+          args: "--use-checks ."
