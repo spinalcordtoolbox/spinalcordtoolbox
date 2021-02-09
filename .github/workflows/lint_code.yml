@@ -1,9 +1,9 @@
-name: Python Linting (lintly + flake8)
+name: Python Linting
 
 on: [pull_request]
 
 jobs:
-  lint:
+  lint_job:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
