@@ -163,7 +163,7 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
    .. code-block:: sh
 
            conda config --set channel_priority strict
-           yes | conda install -c conda-forge fsleyes
+           conda install -y -c conda-forge fsleyes
 
    To use FSLeyes, run Xming from your computer before entering the fsleyes command.
 
