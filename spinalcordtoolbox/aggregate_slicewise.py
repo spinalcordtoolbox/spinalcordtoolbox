@@ -299,8 +299,8 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
                 if mask is not None:
                     mask_slicegroup = mask.data[..., slicegroup, :]
                     agg_metric[slicegroup]['Label'] = mask.label
-                    # Add volume fraction
-                    agg_metric[slicegroup]['Size [vox]'] = np.sum(mask_slicegroup.flatten())
+                    # For size calculation, only the first index [0] is relevant (See spinalcordtoolbox/issues/3216)
+                    agg_metric[slicegroup]['Size [vox]'] = np.sum(mask_slicegroup[..., 0])
                 else:
                     mask_slicegroup = np.ones(data_slicegroup.shape)
                 # Ignore nonfinite values
