@@ -23,6 +23,7 @@ import numpy as np
 import pathlib
 
 import transforms3d.affines as affines
+import re
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
@@ -76,7 +77,7 @@ class Slicer(object):
         """
 
         :param im: image to iterate through
-        :param spec: "from" letters to indicate how to slice the image.
+        :param orientation: "from" letters to indicate how to slice the image.
                      The slices are done on the last letter axis,
                      and they are defined as the first/second letter.
         """
@@ -220,12 +221,46 @@ class SlicerMany(object):
         return [x[idx] for x in self.slicers]
 
 
+def check_affines_match(im):
+    hdr = im.hdr
+    hdr2 = hdr.copy()
+
+    try:
+        hdr2.set_qform(hdr.get_sform())
+    except np.linalg.LinAlgError:
+        # See https://github.com/neuropoly/spinalcordtoolbox/issues/3097
+        logger.warning("The sform for {} is uninitialized and may cause unexpected behaviour."
+                       ''.format(im.absolutepath))
+
+        if im.absolutepath is None:
+            logger.error("Internal code has produced an image with an uninitialized sform. "
+                         "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
+                         "or on the SCT forums https://forum.spinalcordmri.org/.")
+
+        return(True)
+
+    return np.allclose(hdr.get_qform(), hdr2.get_qform())
+
+
 class Image(object):
     """
-
+    Create an object that behaves similarly to nibabel's image object. Useful additions include: dim, check_sform and
+    a few methods (load, save) that deal with image dtype.
     """
 
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1):
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1,
+                 check_sform=False):
+        """
+        :param param: string indicating a path to a image file or an `Image` object.
+        :param hdr: a nibabel header object to use as the header for the image (overwritten if `param` is provided)
+        :param orientation: a three character orientation code (e.g. RPI).
+        :param absolutepath: a relative path to associate with the image.
+        :param dim: The dimensions of the image, defaults to automatically determined.
+        :param verbose: integer how verbose to be 0 is silent 1 is chatty.
+        :param check_sform: whether or not to check whether the sform matches the qform. If this is set to `True`,
+          `Image` will fail raise an error if they don't match.
+        """
+
         # initialization of all parameters
         self.im_file = None
         self.data = None
@@ -259,12 +294,21 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
-        # TODO: In the future, we might want to check qform_code and enforce its value. Related to #2454
-        # Check qform_code
-        # if not self.hdr['qform_code'] in [0, 1]:
-        #     # Set to 0 (unknown)
-        #     self.hdr.set_qform(self.hdr.get_qform(), code=0)
-        #     self.header.set_qform(self.hdr.get_qform(), code=0)
+        # Make sure sform and qform are the same.
+        # Context: https://github.com/neuropoly/spinalcordtoolbox/issues/2429
+        if check_sform and not check_affines_match(self):
+            if self.absolutepath is None:
+                logger.error("Internal code has produced an image with inconsistent qform and sform "
+                             "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
+                             " or on the SCT forum https://forum.spinalcordmri.org/.")
+            else:
+                dummy_reaffined = re.sub("\\.(.*)", "_same-affine.\\1", self.absolutepath)
+                logger.error("Image {} has different qform and sform matrices. This can produce incorrect results. "
+                             "Consider setting the two matrices to be equal by running:\n"
+                             "sct_image -i {} -set-sform-to-qform -o {}.".format(
+                    self._path, self._path, dummy_reaffined))
+            raise ValueError("Image sform does not match qform")
+
 
     @property
     def dim(self):
@@ -337,6 +381,16 @@ class Image(object):
         self.hdr._structarr['qform_code'] = im_ref.hdr._structarr['qform_code']
         self.hdr.set_sform(im_ref.hdr.get_sform())
         self.hdr._structarr['sform_code'] = im_ref.hdr._structarr['sform_code']
+
+    def set_sform_to_qform(self):
+        """Use this (or set_qform_to_sform) when matching matrices are required."""
+        self.hdr.set_sform(self.hdr.get_qform())
+        self.hdr._structarr['sform_code'] = self.hdr._structarr['qform_code']
+
+    def set_qform_to_sform(self):
+        """Use this or (set_sform_to_qform) when matching matrices are required."""
+        self.hdr.set_qform(self.hdr.get_sform())
+        self.hdr._structarr['qform_code'] = self.hdr._structarr['sform_code']
 
     def loadFromPath(self, path, verbose):
         """

@@ -24,11 +24,12 @@ from spinalcordtoolbox.image import Image
 @pytest.fixture(scope="session")
 def dummy_metrics():
     """Create a Dict of dummy metric."""
-    metrics = {'with float': Metric(data=np.array([29., 31., 39., 41., 50.])),
-               'with int': Metric(data=np.array([99, 100, 101, 102, 103])),
-               'with nan': Metric(data=np.array([99, np.nan, 101, 102, 103])),
+    metrics = {'with float': Metric(data=np.array([29., 31., 39., 41., 50., 51., 59., 62., 70.])),
+               'with int': Metric(data=np.array([99, 100, 101, 102, 103, 104, 105, 106, 107])),
+               'with nan': Metric(data=np.array([99, np.nan, 101, 102, 103, 104, 105, 106, 107])),
                'inconsistent length': Metric(data=np.array([99, 100])),
-               'with string': Metric(data=np.array([99, "boo!", 101, 102, 103]))}
+               'with string': Metric(data=np.array([99, "boo!", 101, 102, 103, 104, 105, 106, 107])),
+               '3D': Metric(data=np.resize(np.array([99, 100, 101, 102, 103, 104, 105, 106, 107]), [4, 5, 9]))}
     return metrics
 
 
@@ -104,7 +105,7 @@ def test_aggregate_across_all_slices(dummy_metrics):
     """Test extraction of metrics aggregation across slices: All slices by default"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], perslice=False,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[list(agg_metric)[0]]['WA()'] == 38.0
+    assert agg_metric[list(agg_metric)[0]]['WA()'] == 48.0
 
 
 # noinspection 801,PyShadowingNames
@@ -284,7 +285,7 @@ def test_save_as_csv_sorting(dummy_metrics):
     aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
     with open('tmp_file_out.csv', 'r') as csvfile:
         spamreader = csv.DictReader(csvfile, delimiter=',')
-        assert [row['Slice (I->S)'] for row in spamreader] == ['0', '1', '2', '3', '4']
+        assert [row['Slice (I->S)'] for row in spamreader] == ['0', '1', '2', '3', '4', '5', '6', '7', '8']
 
 
 # noinspection 801,PyShadowingNames
@@ -300,3 +301,15 @@ def test_save_as_csv_extract_metric(dummy_data_and_labels):
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
         assert next(spamreader)[1:-1] == [__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
+
+
+def test_dimension_mismatch_between_metric_and_vertfile(dummy_metrics, dummy_vert_level):
+    """Test that an exception is raised only for mismatched metric and -vertfile images."""
+    for metric in dummy_metrics:
+        if metric == 'inconsistent length':
+            with pytest.raises(ValueError) as err:
+                aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], vert_level=dummy_vert_level)
+            assert "mismatch" in str(err.value)
+        else:
+            # Verify that no error is thrown for all other metrics
+            aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], vert_level=dummy_vert_level)
