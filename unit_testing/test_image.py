@@ -341,11 +341,7 @@ def test_nibabel_reorient(fake_3dimage):
     print(dst.header)
 
 
-def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
-
-    path_tmp = tmp_create(basename="test_reorient")
-    path_tmp = "."
-
+def test_change_orientation(tmp_path, fake_3dimage_sct, fake_3dimage_sct_vis):
     print("Spot-checking that physical coordinates don't change")
     for shape_is in (1, 2, 3):
         shape = (1, 1, shape_is)
@@ -382,8 +378,8 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
         assert (posa_src == posa_dst).all()
         assert (posz_src == posz_dst).all()
         fn = "".join(str(x) for x in im_src.data.shape)
-        im_src.save("{}-src.nii".format(fn))
-        im_dst.save("{}-dst.nii".format(fn))
+        im_src.save(str(tmp_path/"{}-src.nii".format(fn)))
+        im_dst.save(str(tmp_path/"{}-dst.nii".format(fn)))
 
     np.random.seed(0)
 
@@ -450,12 +446,10 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
                     assert np.allclose(pos_src, pos_dst, atol=1e-3)
 
 
-def test_more_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
-    path_tmp = tmp_create(basename="test_reorient")
-    path_tmp = "."
+def test_more_change_orientation(tmp_path, fake_3dimage_sct, fake_3dimage_sct_vis):
 
     im_src = fake_3dimage_sct.copy()
-    im_src.save(os.path.join(path_tmp, "src.nii"), mutable=True)
+    im_src.save(os.path.join(tmp_path, "src.nii"), mutable=True)
 
     print(im_src.orientation, im_src.data.shape)
 
@@ -516,7 +510,7 @@ def test_more_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
     print("Testing orientation persistence")
     img = im_src.copy()
     orientation = img.orientation
-    fn = os.path.join(path_tmp, "pouet.nii")
+    fn = os.path.join(tmp_path, "pouet.nii")
     img.change_orientation("PIR").save(fn)
     assert img.data.shape == orient2shape("PIR")
     img = msct_image.Image(fn)
@@ -528,8 +522,7 @@ def test_more_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
     img = fake_3dimage_sct_vis.copy()
     print(img.header.get_best_affine())
     orientation = img.orientation
-    path_tmp = "."
-    fn = os.path.join(path_tmp, "vis.nii")
+    fn = os.path.join(tmp_path, "vis.nii")
     fn2 = img.save(fn, mutable=True).change_orientation("ALS", generate_path=True).save().absolutepath
     img = msct_image.Image(fn2)
     assert img.orientation == "ALS"
