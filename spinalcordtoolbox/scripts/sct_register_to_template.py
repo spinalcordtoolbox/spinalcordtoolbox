@@ -1192,7 +1192,7 @@ def register(src, dest, step, param):
         )
 
     elif step.algo == 'slicereg':
-        warp_forward_out, warp_inverse_out = register_step_ants_slice_regularized_registration(
+        warp_forward_out, warp_inverse_out, _ = register_step_ants_slice_regularized_registration(
             src=src,
             dest=dest,
             step=step,
