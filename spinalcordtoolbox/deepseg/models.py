@@ -69,9 +69,9 @@ MODELS = {
         "contrasts": ["t2", "t1"],
         "default": False,
     },
-    "model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel": {
+    "model_seg_mice_gm-wm_dwi_unet2d-multichannel-softseg": {
         "url": [
-            "xx"
+            "https://github.com/ivadomed/model_seg_mice_gm-wm_dwi_unet2d-multichannel-softseg/archive/r20210218.zip"
         ],
         "description": "Grey and white matters segmentation on exvivo DWI mouse data.",
         "contrasts": ["dwi"],
