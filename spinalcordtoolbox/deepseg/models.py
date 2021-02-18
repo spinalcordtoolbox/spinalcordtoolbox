@@ -71,7 +71,7 @@ MODELS = {
     },
     "model_seg_mice_gm-wm_dwi_unet2d-multichannel-softseg": {
         "url": [
-            "https://github.com/ivadomed/model_seg_mice_gm-wm_dwi_unet2d-multichannel-softseg/archive/r20210218.zip"
+            "https://github.com/ivadomed/model_seg_mice_gm-wm_dwi_unet2d-multichannel-softseg/archive/r20210219.zip"
         ],
         "description": "Grey/white matter seg on exvivo mouse DWI.",
         "contrasts": ["dwi"],
