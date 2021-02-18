@@ -175,14 +175,14 @@ def display_list_tasks():
     tasks = sct.deepseg.models.list_tasks()
     # Display beautiful output
     color = {True: 'green', False: 'red'}
-    print("{:<30s}{:<50s}{:<20s}MODELS".format("TASK", "DESCRIPTION", "INPUT CONTRASTS"))
-    print("-" * 120)
+    print("{:<30s}{:<70s}{:<20s}MODELS".format("TASK", "DESCRIPTION", "INPUT CONTRASTS"))
+    print("-" * 200)
     for name_task, value in tasks.items():
         path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
         are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
         task_status = colored.stylize(name_task.ljust(30),
                                       colored.fg(color[all(are_models_valid)]))
-        description_status = colored.stylize(value['description'].ljust(50),
+        description_status = colored.stylize(value['description'].ljust(70),
                                              colored.fg(color[all(are_models_valid)]))
         models_status = ', '.join([colored.stylize(model_name,
                                                    colored.fg(color[is_valid]))
