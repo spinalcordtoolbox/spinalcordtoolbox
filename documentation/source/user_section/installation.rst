@@ -342,62 +342,6 @@ Procedure:
       pip install --user -e .
 
 
-Hard-core Installation-less SCT usage
-=====================================
-
-This is completely unsupported.
-
-
-Procedure:
-
-#. Retrieve the SCT code
-
-
-#. Install dependencies
-
-   Example for Ubuntu 18.04:
-
-   .. code:: sh
-
-      # The less obscure ones may be packaged in the distribution
-      sudo apt install python3-{numpy,scipy,nibabel,matplotlib,h5py,mpi4py,keras,tqdm,sympy,requests,sklearn,skimage}
-      # The more obscure ones would be on pip
-      sudo apt install libmpich-dev
-      pip3 install --user distribute2mpi nipy dipy
-
-   Example for Debian 8 Jessie:
-
-   .. code:: sh
-
-      # The less obscure ones may be packaged in the distribution
-      sudo apt install python3-{numpy,scipy,matplotlib,h5py,mpi4py,requests}
-      # The more obscure ones would be on pip
-      sudo apt install libmpich-dev
-      pip3 install --user distribute2mpi sympy tqdm Keras nibabel nipy dipy scikit-image sklearn
-
-
-#. Prepare the runtime environment
-
-   .. code:: sh
-
-      # Create launcher-less scripts
-      mkdir -p bin
-      find scripts/ -executable | while read file; do ln -sf "../${file}" "bin/$(basename ${file//.py/})"; done
-      PATH+=":$PWD/bin"
-
-      # Download binary programs
-      mkdir bins
-      pushd bins
-      sct_download_data -d binaries_linux
-      popd
-      PATH+=":$PWD/bins"
-
-      # Download models & cie
-      mkdir data; pushd data; for x in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models ; do sct_download_data -d $x; done; popd
-
-      # Add path to spinalcordtoolbox to PYTHONPATH
-      export PYTHONPATH="$PWD:$PWD/scripts"
-
 .. _fsleyes_installation:
 
 Integration with FSLeyes
@@ -413,29 +357,29 @@ Install the C/C++ compilers required to use wxPython:
 
 .. code-block:: sh
 
-       sudo apt-get install build-essential
-       sudo apt-get install libgtk2.0-dev libgtk-3-dev libwebkitgtk-dev libwebkitgtk-3.0-dev
-       sudo apt-get install libjpeg-turbo8-dev libtiff5-dev libsdl1.2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libnotify-dev freeglut3-dev
+    sudo apt-get install build-essential
+    sudo apt-get install libgtk2.0-dev libgtk-3-dev libwebkitgtk-dev libwebkitgtk-3.0-dev
+    sudo apt-get install libjpeg-turbo8-dev libtiff5-dev libsdl1.2-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libnotify-dev freeglut3-dev
 
 Activate SCT's conda environment (to run each time you wish to use FSLeyes):
 
 .. code-block:: sh
 
-       source ${SCT_DIR}/python/etc/profile.d/conda.sh
-       conda activate venv_sct
+    source ${SCT_DIR}/python/etc/profile.d/conda.sh
+    conda activate venv_sct
 
 Set the channel priority to strict (`as recommended by conda <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority>`_), then install FSLeyes using conda-forge:
 
 .. code-block:: sh
 
-       conda config --set channel_priority strict
-       conda install -y -c conda-forge fsleyes
+    conda config --set channel_priority strict
+    conda install -y -c conda-forge fsleyes
 
 To use FSLeyes, run Xming from your computer before entering the fsleyes command.
 
 .. important::
 
-  Each time you wish to use FSLeyes, you first need to activate SCT's conda environment (see above).
+    Each time you wish to use FSLeyes, you first need to activate SCT's conda environment (see above).
 
 MacOS
 -----
@@ -497,9 +441,66 @@ Comment this line out and add these 4 lines:
 
     # fullName = util.find_library( name )
     if name == "OpenGL":
-        fullName = "/System/Library/Frameworks/OpenGL.framework/OpenGL"
+      fullName = "/System/Library/Frameworks/OpenGL.framework/OpenGL"
     elif name == "GLUT":
-        fullName = "/System/Library/Frameworks/GLUT.framework/GLUT"
+      fullName = "/System/Library/Frameworks/GLUT.framework/GLUT"
+
+
+Hard-core Installation-less SCT usage
+=====================================
+
+This is completely unsupported.
+
+
+Procedure:
+
+#. Retrieve the SCT code
+
+
+#. Install dependencies
+
+   Example for Ubuntu 18.04:
+
+   .. code:: sh
+
+      # The less obscure ones may be packaged in the distribution
+      sudo apt install python3-{numpy,scipy,nibabel,matplotlib,h5py,mpi4py,keras,tqdm,sympy,requests,sklearn,skimage}
+      # The more obscure ones would be on pip
+      sudo apt install libmpich-dev
+      pip3 install --user distribute2mpi nipy dipy
+
+   Example for Debian 8 Jessie:
+
+   .. code:: sh
+
+      # The less obscure ones may be packaged in the distribution
+      sudo apt install python3-{numpy,scipy,matplotlib,h5py,mpi4py,requests}
+      # The more obscure ones would be on pip
+      sudo apt install libmpich-dev
+      pip3 install --user distribute2mpi sympy tqdm Keras nibabel nipy dipy scikit-image sklearn
+
+
+#. Prepare the runtime environment
+
+   .. code:: sh
+
+      # Create launcher-less scripts
+      mkdir -p bin
+      find scripts/ -executable | while read file; do ln -sf "../${file}" "bin/$(basename ${file//.py/})"; done
+      PATH+=":$PWD/bin"
+
+      # Download binary programs
+      mkdir bins
+      pushd bins
+      sct_download_data -d binaries_linux
+      popd
+      PATH+=":$PWD/bins"
+
+      # Download models & cie
+      mkdir data; pushd data; for x in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models ; do sct_download_data -d $x; done; popd
+
+      # Add path to spinalcordtoolbox to PYTHONPATH
+      export PYTHONPATH="$PWD:$PWD/scripts"
 
 
 
