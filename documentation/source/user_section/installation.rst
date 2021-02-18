@@ -398,6 +398,8 @@ Procedure:
       # Add path to spinalcordtoolbox to PYTHONPATH
       export PYTHONPATH="$PWD:$PWD/scripts"
 
+.. _fsleyes_installation:
+
 Integration with FSLeyes
 ========================
 
