@@ -68,6 +68,14 @@ MODELS = {
         "description": "Multiclass cord tumor segmentation model.",
         "contrasts": ["t2", "t1"],
         "default": False,
+    },
+    "model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel": {
+        "url": [
+            "xx"
+        ],
+        "description": "Grey and white matters segmentation on exvivo DWI mouse data.",
+        "contrasts": ["dwi"],
+        "default": False,
     }
 }
 
