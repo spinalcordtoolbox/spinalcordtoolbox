@@ -89,7 +89,10 @@ TASKS = {
          'models': ['findcord_tumor', 't2_tumor']},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor segmentation.',
-         'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']}
+         'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']},
+    'seg_mice_gm-wm_dwi':
+        {'description': 'Grey and white matters segmentation on exvivo DWI mouse data.',
+         'models': ['model_seg_mice_gm-wm_dwi_unet2d-multichannel-softseg']}
 }
 
 
