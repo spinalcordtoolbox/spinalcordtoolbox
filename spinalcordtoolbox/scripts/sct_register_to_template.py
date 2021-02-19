@@ -842,7 +842,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
                               int(float(v))])
                   for x, y, z, v in og_labels]
 
-    sct_labels.create_labels_empty(Image(fname_dest), new_labels).save(path=fname_output)
+    sct_labels.create_labels_empty(Image(fname_dest).change_type('uint8'), new_labels).save(path=fname_output)
 
 
 def check_labels(fname_landmarks, label_type='body'):
