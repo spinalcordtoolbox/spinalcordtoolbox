@@ -1,4 +1,4 @@
-.. _fsleyes:
+.. _fsleyes_integration:
 
 *******************
 FSLeyes Integration
