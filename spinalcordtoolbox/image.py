@@ -250,7 +250,7 @@ class Image(object):
     """
 
     def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1,
-                 check_sform=False):
+                 check_sform=False, check_dtype=True):
         """
         :param param: string indicating a path to a image file or an `Image` object.
         :param hdr: a nibabel header object to use as the header for the image (overwritten if `param` is provided)
@@ -309,6 +309,14 @@ class Image(object):
                              "sct_image -i {} -set-sform-to-qform -o {}.".format(
                     self._path, self._path, dummy_reaffined))
             raise ValueError("Image sform does not match qform")
+
+        # Make sure header type matches data type
+        # Context: https://github.com/neuropoly/spinalcordtoolbox/issues/3232
+        data_dtype = self.data.dtype
+        hdr_dtype = self.hdr.get_data_dtype()
+        if check_dtype and data_dtype != hdr_dtype:
+            logger.warning(f"Header of {self._path} specifies datatype '{hdr_dtype}', but data is '{data_dtype}'.")
+            raise ValueError("Datatype mismatch between header and data array.")  # Raise error just to demo in CI tests
 
 
     @property
