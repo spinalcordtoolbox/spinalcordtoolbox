@@ -3,12 +3,14 @@
 # pytest unit tests for spinalcordtoolbox.register
 
 import logging
+import os
 
 import pytest
-import csv
+import numpy as np
 
 from spinalcordtoolbox.scripts.sct_register_to_template import Param, register
-from spinalcordtoolbox.registration.register import *
+from spinalcordtoolbox.registration.register import (Paramreg, register_step_ants_registration, register_step_label,
+                                                     register_step_ants_slice_regularized_registration)
 from spinalcordtoolbox.utils import sct_test_path
 
 logger = logging.getLogger(__name__)

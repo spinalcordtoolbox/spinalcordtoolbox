@@ -378,8 +378,8 @@ def test_change_orientation(tmp_path, fake_3dimage_sct, fake_3dimage_sct_vis):
         assert (posa_src == posa_dst).all()
         assert (posz_src == posz_dst).all()
         fn = "".join(str(x) for x in im_src.data.shape)
-        im_src.save(str(tmp_path/"{}-src.nii".format(fn)))
-        im_dst.save(str(tmp_path/"{}-dst.nii".format(fn)))
+        im_src.save(str(tmp_path / "{}-src.nii".format(fn)))
+        im_dst.save(str(tmp_path / "{}-dst.nii".format(fn)))
 
     np.random.seed(0)
 
