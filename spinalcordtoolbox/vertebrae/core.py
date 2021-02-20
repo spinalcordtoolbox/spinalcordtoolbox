@@ -513,7 +513,7 @@ def label_discs(fname_seg, list_disc_z, list_disc_value, verbose=1):
             slices = seg.data[:, :, list_disc_z[i] - 1:list_disc_z[i] + 1]
             try:
                 cx, cy, cz = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
-            except Exception as e:
+            except Exception:
                 raise ValueError('There seems to be a problem with the segmentation (empty slices)')
             # Disc value are offset by one due to legacy code
             disc_data[cx, cy, list_disc_z[i]] = list_disc_value[i] + 1
