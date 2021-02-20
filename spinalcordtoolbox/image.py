@@ -315,8 +315,8 @@ class Image(object):
         data_dtype = self.data.dtype
         hdr_dtype = self.hdr.get_data_dtype()
         if check_dtype and data_dtype != hdr_dtype:
-            logger.warning(f"Header of {self._path} specifies datatype '{hdr_dtype}', but data is '{data_dtype}'.")
-            raise ValueError("Datatype mismatch between header and data array.")  # Raise error just to demo in CI tests
+            raise TypeError(f"Datatype mismatch: '{hdr_dtype}' (header) != '{data_dtype}' (data) for image with "
+                            f"filepath '{self._path}'.")
 
 
     @property
