@@ -50,6 +50,7 @@ def fake_3dimage_sct():
 
 
 test_images = [fake_3dimage_sct(), fake_3dimage_sct2(), t2_img]
+test_labels = [fake_3dimage_sct(), fake_3dimage_sct2(), labels_img]
 
 
 @pytest.mark.parametrize("test_image", test_images)
@@ -165,13 +166,10 @@ def test_compute_mse_no_label_warning(caplog):
     assert 'Label mismatch' not in caplog.text
 
 
-@pytest.mark.skip(reason="Too long to run on large image!")
-@pytest.mark.parametrize("test_image", test_images)
+@pytest.mark.parametrize("test_image", test_labels)
 def test_remove_missing_labels(test_image):
     src = test_image.copy()
     ref = test_image.copy()
-
-    expected = test_image.copy()
 
     # introduce 2 discrepancies
     src.data[0, 0, 0] = 99
@@ -180,14 +178,16 @@ def test_remove_missing_labels(test_image):
     ref.data[0, 0, 0] = 1
     ref.data[0, 1, 2] = 1
 
-    # manually set expected
-    expected.data[0, 0, 0] = 0
-    expected.data[0, 1, 2] = 0
-
     res = sct_labels.remove_missing_labels(src, ref)
-    diff = res.data == expected.data
 
-    assert diff.all()
+    res_labels = res.getNonZeroCoordinates(coordValue=True)
+    ref_labels = ref.getNonZeroCoordinates(coordValue=True)
+
+    for c in res_labels:
+        assert c in ref_labels
+
+    assert res.data[0, 0, 0] == 0
+    assert res.data[0, 1, 2] == 0
 
 
 @pytest.mark.parametrize("test_image", test_images)
