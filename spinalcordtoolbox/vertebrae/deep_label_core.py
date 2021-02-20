@@ -5,14 +5,11 @@
 # TODO: remove i/o as much as possible
 
 import os
-import logging
-
 import numpy as np
-import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
 from ivadomed import preprocessing as imed_preprocessing
 import nibabel as nib
-from spinalcordtoolbox.vertebrae.core import label_discs, label_segmentation, center_of_mass, create_label_z
+from spinalcordtoolbox.vertebrae.core import label_discs, label_segmentation, center_of_mass
 import logging
 import spinalcordtoolbox.scripts.sct_deepseg as sct_deepseg
 from scipy.signal import gaussian
@@ -20,9 +17,9 @@ from scipy.signal import gaussian
 logging.getLogger('matplotlib.font_manager').disabled = True
 
 from spinalcordtoolbox.metadata import get_file_label
-from spinalcordtoolbox.math import dilate, mutual_information
+
 from spinalcordtoolbox.utils.sys import run_proc, printv
-from spinalcordtoolbox.image import Image, add_suffix
+from spinalcordtoolbox.image import Image
 
 logger = logging.getLogger(__name__)
 
@@ -115,8 +112,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     list_disc_z_template.sort()
     list_disc_z_template.reverse()
     logger.info('Z-values for each disc: %s', list_disc_z_template)
-    list_distance_template = (
-            np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
+    list_distance_template = \
+        (np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
     # Update distance with scaling factor
     list_distance_template = [i * scale_dist for i in list_distance_template]
     logger.info('Distances between discs (in voxel): %s', list_distance_template)
@@ -154,7 +151,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     direction = 'superior'
     search_next_disc = True
     # image is straighten and oriented according to RPI convention before.
-    mid_index = int(np.round(nib.load(fname).header.get_data_shape()[0]/2.0))
+    mid_index = int(np.round(nib.load(fname).header.get_data_shape()[0] / 2.0))
     image_mid = imed_preprocessing.get_midslice_average(fname, mid_index)
     nib.save(image_mid, "input_image.nii.gz")
     if contrast == "t2":
@@ -172,7 +169,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         try:
             # get z corresponding to current disc on template
             current_z_template = list_disc_z_template[current_disc]
-        except:
+        except Exception:
             # in case reached the bottom (see issue #849)
             logger.warning('Reached the bottom of the template. Stop searching.')
             break
@@ -381,18 +378,16 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     if np.any(I_corr_gauss):
         # if I_corr contains at least a non-zero value
         ind_peak = np.argmax(I_corr_gauss)  # index of max along z
-        ind_dl = np.argmax(data_chunk1d)
         logger.info('.. Peak found: z=%s (correlation = %s)', zrange[ind_peak], I_corr_gauss[ind_peak])
         # check if correlation is high enough
         if I_corr_gauss[ind_peak] < thr_corr:
             logger.warning('Correlation is too low. Using adjusted template distance.')
             ind_peak = zrange.index(0)  # approx_distance_to_next_disc
-            ind_dl = ind_peak
+
     else:
         # if I_corr contains only zeros
         logger.warning('Correlation vector only contains zeros. Using adjusted template distance.')
         ind_peak = zrange.index(0)  # approx_distance_to_next_disc
-        ind_dl = ind_peak
 
     # display patterns and correlation
     if verbose == 2:
@@ -426,8 +421,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         fig.savefig('fig_pattern' + save_suffix + '.png')
         np.save('pattern' + save_suffix + '.npy', pattern1d)
         # show figure for each iz
-        i = 1
-        j = 1
         ind = 1
         fig = Figure(figsize=(15, 15))
         FigureCanvas(fig)
@@ -482,6 +475,6 @@ def label_disc_posterior(list_disc_z, list_disc_value, fname_hm, fname_data):
             else:
                 # Since the image is supposedly straighten, we can assume that most of the disc are aligned
                 # therefore if the heatmap missed one, we can just use the a default, aligned with the other
-                data_disc[int(np.round(nx/2.0)), default, list_disc_z[iz] - 1] = list_disc_value[iz] + 1
+                data_disc[int(np.round(nx / 2.0)), default, list_disc_z[iz] - 1] = list_disc_value[iz] + 1
     image_out.data = data_disc
     image_out.save('disc_posterior_tmp.nii.gz')
