@@ -304,10 +304,9 @@ def main(argv=None):
         input_files=[fname_in, fname_seg],
     )
     cachefile = os.path.join(curdir, "straightening.cache")
-    if (cache_valid(cachefile, cache_sig) and
-            os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and
-            os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and
-            os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz"))):
+    if (cache_valid(cachefile, cache_sig) and os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz"))
+            and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz"))
+            and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz"))):
 
         # if they exist, copy them into current folder
         printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
@@ -451,12 +450,12 @@ def main(argv=None):
         init_disc[1] = init_disc[1] - 1
         if arguments.method == 'TM':
             vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
-                            verbose=verbose, path_template=path_template, path_output=path_output,
-                            scale_dist=scale_dist)
+                                verbose=verbose, path_template=path_template, path_output=path_output,
+                                scale_dist=scale_dist)
         elif arguments.method == 'DL':
             deep_method.vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
-                            verbose=verbose, path_template=path_template, path_output=path_output,
-                            scale_dist=scale_dist)
+                                            verbose=verbose, path_template=path_template, path_output=path_output,
+                                            scale_dist=scale_dist)
 
     # un-straighten labeled spinal cord
     printv('\nUn-straighten labeling...', verbose)
