@@ -257,7 +257,8 @@ def create_mask(param):
             nibabel.save(img, (file_mask + str(iz) + '.nii'))
 
     fname_list = [file_mask + str(iz) + '.nii' for iz in range(nz)]
-    im_out = concat_data(fname_list, dim=2).save('mask_RPI.nii.gz')
+    im_list = [Image(fname) for fname in fname_list]
+    im_out = concat_data(im_list, dim=2).save('mask_RPI.nii.gz')
 
     im_out.change_orientation(orientation_input)
     im_out.header = Image(param.fname_data).header
