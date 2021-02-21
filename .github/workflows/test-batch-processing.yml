@@ -1,4 +1,4 @@
-name: Tests
+name: Test batch_processing.sh
 
 on:
   push:
