@@ -18,10 +18,10 @@ from spinalcordtoolbox.utils.sys import sct_dir_local_path
 # The parametrization below checks only 6 values (one from each csv file -- same as actual batch_processing.sh)
 # TODO: We can and should be verifying more results produced by this pipeline, but which values?
 @pytest.mark.parametrize("csv_filepath,row,pos,rel_tolerance",
-                         [("t2/csa_c2c3.csv",    -1, 5, 1e-14),
-                          ("t2s/csa_gm.csv",     -1, 5, 1e-14),
-                          ("t2s/csa_wm.csv",     -1, 5, 1e-14),
-                          ("mt/mtr_in_wm.csv",   -1, 7, 1e-8),
+                         [("t2/csa_c2c3.csv", -1, 5, 1e-14),
+                          ("t2s/csa_gm.csv", -1, 5, 1e-14),
+                          ("t2s/csa_wm.csv", -1, 5, 1e-14),
+                          ("mt/mtr_in_wm.csv", -1, 7, 1e-8),
                           ("dmri/fa_in_cst.csv", -1, 7, 1e-8),
                           ("dmri/fa_in_cst.csv", -2, 7, 1e-7)])
 def test_batch_processing_results(csv_filepath, row, pos, rel_tolerance):
