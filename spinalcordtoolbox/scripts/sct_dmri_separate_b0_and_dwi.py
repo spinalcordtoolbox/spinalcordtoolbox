@@ -190,7 +190,7 @@ def main(argv=None):
     for it in range(nb_b0):
         fname_in_list_b0.append(dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext)
     im_in_list_b0 = [Image(fname) for fname in fname_in_list_b0]
-    im_out = concat_data(im_in_list_b0, 3).save(b0_name + ext)
+    concat_data(im_in_list_b0, 3).save(b0_name + ext)
 
     # Average b=0 images
     if average:
@@ -208,7 +208,7 @@ def main(argv=None):
     for it in range(nb_dwi):
         fname_in_list_dwi.append(dmri_name + '_T' + str(index_dwi[it]).zfill(4) + ext)
     im_in_list_dwi = [Image(fname) for fname in fname_in_list_dwi]
-    im_out = concat_data(im_in_list_dwi, 3).save(dwi_name + ext)
+    concat_data(im_in_list_dwi, 3).save(dwi_name + ext)
 
     # Average DWI images
     if average:
