@@ -158,17 +158,12 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
            source ${SCT_DIR}/python/etc/profile.d/conda.sh
            conda activate venv_sct
 
-   Install wxPython using conda:
+   Set the channel priority to strict (`as recommended by conda <https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-channels.html#strict-channel-priority>`_), then install FSLeyes using conda-forge:
 
    .. code-block:: sh
 
-           yes | conda install -c anaconda wxpython
-
-   Install FSLeyes using conda-forge:
-
-   .. code-block:: sh
-
-           yes | conda install -c conda-forge fsleyes
+           conda config --set channel_priority strict
+           conda install -y -c conda-forge fsleyes
 
    To use FSLeyes, run Xming from your computer before entering the fsleyes command.
 

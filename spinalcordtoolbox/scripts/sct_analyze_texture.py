@@ -15,7 +15,7 @@ import itertools
 import numpy as np
 from skimage.feature import greycomatrix, greycoprops
 
-from spinalcordtoolbox.image import Image, add_suffix, zeros_like
+from spinalcordtoolbox.image import Image, add_suffix, zeros_like, concat_data
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, run_proc, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
@@ -196,12 +196,22 @@ class ExtractGLCM:
         extension = extract_fname(self.param.fname_im)[2]
         for im_m in im_metric_lst:     # Loop across GLCM texture properties
             # List images to mean
-            im2mean_lst = [im_m + str(self.param_glcm.distance) + '_' + a + extension for a in self.param_glcm.angle.split(',')]
+            fname_mean_list = [im_m + str(self.param_glcm.distance) + '_' + a + extension
+                               for a in self.param_glcm.angle.split(',')]
+            im_mean_list = [Image(fname) for fname in fname_mean_list]
 
             # Average across angles and save it as wrk_folder/fnameIn_feature_distance_mean.extension
             fname_out = im_m + str(self.param_glcm.distance) + '_mean' + extension
-            run_proc('sct_image -i ' + ' '.join(im2mean_lst) + ' -concat t -o ' + fname_out)
-            run_proc('sct_maths -i ' + fname_out + ' -mean t -o ' + fname_out)
+
+            dim_idx = 3 # img is [x, y, z, angle] so specify 4th dimension (angle)
+
+            img = concat_data(im_mean_list, dim_idx).save(fname_out, mutable=True)
+
+            if len(np.shape(img.data)) < 4: # in case input volume is 3d and dim=t
+                img.data = img.data[..., np.newaxis]
+            img.data = np.mean(img.data, dim_idx)
+            img.save()
+
             self.fname_metric_lst[im_m + str(self.param_glcm.distance) + '_mean'] = fname_out
 
     def extract_slices(self):
@@ -214,18 +224,6 @@ class ExtractGLCM:
         # extract axial slices in self.dct_im_seg
         self.dct_im_seg['im'], self.dct_im_seg['seg'] = [im.data[:, :, z] for z in range(im.dim[2])], [seg.data[:, :, z] for z in range(im.dim[2])]
 
-    # def init_metric_im(self):
-    #     # open image and re-orient it to RPI if needed
-    #     im_tmp = Image(self.param.fname_im)
-    #     if self.orientation_im != self.orientation_extraction:
-    #         im_tmp = msct_image.change_orientation(im_tmp, self.orientation_extraction)
-
-    #     # create Image objects with zeros values for each output image needed
-    #     for m in self.metric_lst:
-    #         im_2save = msct_image.zeros_like(im_tmp, dtype=np.float64)
-    #         fname_out = add_suffix(''.join(extract_fname(self.param.fname_im)[1:]), '_' + m)
-    #         im_2save.save(fname_out)
-    #         self.fname_metric_lst[m] = fname_out
 
     def compute_texture(self):
 
