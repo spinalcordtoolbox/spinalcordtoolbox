@@ -15,6 +15,8 @@ from spinalcordtoolbox.utils.sys import sct_dir_local_path
     not os.getenv('BATCH_PROCESSING_CI_JOB'),  # This environment variable should be set by the CI workflow file
     reason="Run only for batch processing CI job"
 )
+# The parametrization below checks only 6 values (one from each csv file -- same as actual batch_processing.sh)
+# TODO: We can and should be verifying more results produced by this pipeline, but which values?
 @pytest.mark.parametrize("csv_filepath,row,pos,rel_tolerance",
                          [("t2/csa_c2c3.csv",    -1, 5, 1e-14),
                           ("t2s/csa_gm.csv",     -1, 5, 1e-14),
