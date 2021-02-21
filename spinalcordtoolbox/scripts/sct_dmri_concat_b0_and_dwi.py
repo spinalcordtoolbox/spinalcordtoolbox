@@ -115,7 +115,8 @@ def main(argv=None):
         raise Exception("Number of files for bval and bvec should be the same.")
 
     # Concatenate NIFTI files
-    im_concat = concat_data(fname_in_list=arguments.i, dim=3, squeeze_data=False)
+    im_list = [Image(fname) for fname in arguments.i]
+    im_concat = concat_data(im_list, dim=3, squeeze_data=False)
     im_concat.save(arguments.o)
     printv("Generated file: {}".format(arguments.o))
 
