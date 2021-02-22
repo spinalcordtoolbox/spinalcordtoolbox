@@ -277,7 +277,8 @@ class Transform:
             # concat_data use to take a list of image in input, now takes a list of file names to open the files one by one (see issue #715)
             fname_list = glob.glob('data_reg_T*.nii')
             fname_list.sort()
-            im_out = sct_image.concat_data(fname_list, 3, im_header['pixdim'])
+            im_list = [Image(fname) for fname in fname_list]
+            im_out = sct_image.concat_data(im_list, 3, im_header['pixdim'])
             im_out.save(name_out + ext_out)
 
             os.chdir(curdir)

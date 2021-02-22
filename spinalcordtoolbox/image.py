@@ -17,6 +17,7 @@ import itertools
 import warnings
 import logging
 import shutil
+from typing import Sequence
 
 import nibabel as nib
 import numpy as np
@@ -867,11 +868,11 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     return dice
 
 
-def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
+def concat_data(im_in_list: Sequence[Image], dim, pixdim=None, squeeze_data=False):
     """
     Concatenate data
 
-    :param im_in_list: list of Images or image filenames
+    :param im_in_list: list of Images
     :param dim: dimension: 0, 1, 2, 3.
     :param pixdim: pixel resolution to join to image header
     :param squeeze_data: bool: if True, remove the last dim if it is a singleton.
@@ -883,11 +884,10 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
     dat_list = []
     data_concat_list = []
 
-    for i, fname in enumerate(fname_in_list):
+    for i, im in enumerate(im_in_list):
         # if there is more than 100 images to concatenate, then it does it iteratively to avoid memory issue.
         if i != 0 and i % 100 == 0:
             data_concat_list.append(np.concatenate(dat_list, axis=dim))
-            im = Image(fname)
             dat = im.data
             # if image shape is smaller than asked dim, then expand dim
             if len(dat.shape) <= dim:
@@ -896,7 +896,6 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
             del im
             del dat
         else:
-            im = Image(fname)
             dat = im.data
             # if image shape is smaller than asked dim, then expand dim
             if len(dat.shape) <= dim:
@@ -909,14 +908,12 @@ def concat_data(fname_in_list, dim, pixdim=None, squeeze_data=False):
         data_concat = np.concatenate(data_concat_list, axis=dim)
     else:
         data_concat = np.concatenate(dat_list, axis=dim)
+
     # write file
-    im_out = empty_like(Image(fname_in_list[0]))
+    fname_out = im_in_list[0].absolutepath
+    im_out = empty_like(Image(fname_out))
     im_out.data = data_concat
-    if isinstance(fname_in_list[0], str):
-        im_out.absolutepath = add_suffix(fname_in_list[0], '_concat')
-    else:
-        if fname_in_list[0].absolutepath:
-            im_out.absolutepath = add_suffix(fname_in_list[0].absolutepath, '_concat')
+    im_out.absolutepath = add_suffix(fname_out, '_concat')
 
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim

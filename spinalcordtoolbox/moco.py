@@ -287,9 +287,10 @@ def moco_wrapper(param):
     # Merge across groups
     printv('\nMerge across groups...', param.verbose)
     # file_dwi_groups_means_merge = 'dwi_averaged_groups'
-    im_dw_list = []
+    fname_dw_list = []
     for iGroup in range(nb_groups):
-        im_dw_list.append(list_file_group[iGroup])
+        fname_dw_list.append(list_file_group[iGroup])
+    im_dw_list = [Image(fname) for fname in fname_dw_list]
     concat_data(im_dw_list, 3).save(file_datasubgroup, verbose=0)
 
     # Cleanup
@@ -423,14 +424,17 @@ def moco_wrapper(param):
                 moco_param.append([np.mean(np.ravel(im_warp_XYZ[0].data)), np.mean(np.ravel(im_warp_XYZ[1].data))])
 
             # These two lines allow to generate one file instead of two, containing X, Y and Z moco parameters
-            #im_warp_concat = concat_data(files_warp, dim=3)
+            # im_warp = [Image(fname) for fname in files_warp]
+            # im_warp_concat = concat_data(im_warp, dim=3)
             # im_warp_concat.save('fmri_moco_params.nii')
 
             # Concatenating the moco parameters into a time series for X and Y components.
-            im_warp_concat = concat_data(files_warp_X, dim=3)
+            im_warp_X = [Image(fname) for fname in files_warp_X]
+            im_warp_concat = concat_data(im_warp_X, dim=3)
             im_warp_concat.save(file_moco_params_x)
 
-            im_warp_concat = concat_data(files_warp_Y, dim=3)
+            im_warp_Y = [Image(fname) for fname in files_warp_Y]
+            im_warp_concat = concat_data(im_warp_Y, dim=3)
             im_warp_concat.save(file_moco_params_y)
 
             # Writing a TSV file with the slicewise average estimate of the moco parameters. Useful for QC
@@ -651,14 +655,16 @@ def moco(param):
         # Merge data along T
         file_data_splitZ_moco.append(add_suffix(file, suffix))
         if todo != 'estimate':
-            im_out = concat_data(file_data_splitZ_splitT_moco, 3)
+            im_data_splitZ_splitT_moco = [Image(fname) for fname in file_data_splitZ_splitT_moco]
+            im_out = concat_data(im_data_splitZ_splitT_moco, 3)
             im_out.absolutepath = file_data_splitZ_moco[iz]
             im_out.save(verbose=0)
 
     # If sagittal, merge along Z
     if param.is_sagittal:
         # TODO: im_out.dim is incorrect: Z value is one
-        im_out = concat_data(file_data_splitZ_moco, 2)
+        im_data_splitZ_moco = [Image(fname) for fname in file_data_splitZ_moco]
+        im_out = concat_data(im_data_splitZ_moco, 2)
         dirname, basename, ext = extract_fname(file_data)
         path_out = os.path.join(dirname, basename + suffix + ext)
         im_out.absolutepath = path_out
