@@ -198,3 +198,4 @@ The following studies (in chronological order) have used SCT:
 -  `Dvorak et al. Comparison of multi echo T2 relaxation and steady state approaches for myelin imaging in the central nervous system. Scientific reports 2021 <https://www.nature.com/articles/s41598-020-80585-7>`_
 -  `Adanyeguh et al. Multiparametric in vivo analyses of the brain and spine identify structural and metabolic biomarkers in men with adrenomyeloneuropathy. NeuroImage: Clinical, 2021 <https://www.sciencedirect.com/science/article/pii/S2213158221000103>`_
 -  `Meyer et al. Optimized cervical spinal cord perfusion MRI after traumatic injury in the rat. J. of Cerebral Blood Flow & Metabolism, 2021 <https://journals.sagepub.com/doi/10.1177/0271678X20982396>`_
+-  `Solanes et al. 3D patient-specific spinal cord computational model for SCS management: potential clinical applications. Journal of Neural Engineering, 2021 <https://pubmed.ncbi.nlm.nih.gov/33556926/>`_
