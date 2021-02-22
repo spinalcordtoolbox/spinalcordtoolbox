@@ -31,6 +31,16 @@ def pytest_sessionstart():
     downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
 
 
+@pytest.fixture
+def run_in_sct_testing_data_dir():
+    """Temporarily change the working directory to 'sct_testing_data'. This replicates the behavior of the old
+    `sct_testing`, and is needed to prevent tests from cluttering the working directory with output files."""
+    cwd = os.getcwd()
+    os.chdir(sct_test_path())
+    yield
+    os.chdir(cwd)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def test_data_integrity(request):
     files_checksums = dict()
