@@ -1,14 +1,17 @@
-from pytest_console_scripts import script_runner
+import os
+
 import pytest
 import logging
+
+from spinalcordtoolbox.scripts import sct_convert
 
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.script_launch_mode('subprocess')
-def test_sct_convert_backwards_compat(script_runner):
-    ret = script_runner.run('sct_testing', '--function', 'sct_convert')
-    logger.debug(f"{ret.stdout}")
-    logger.debug(f"{ret.stderr}")
-    assert ret.success
-    assert ret.stderr == ''
+@pytest.mark.sct_testing
+@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
+def test_sct_convert_output_file_exists():
+    """Run the CLI script and verify output file exists."""
+    path_out = 't2.nii'
+    sct_convert.main(argv=['-i', 't2/t2.nii.gz', '-o', path_out])
+    os.path.exists(path_out)
