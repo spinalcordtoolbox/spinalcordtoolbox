@@ -8,13 +8,7 @@ import nibabel as nib
 from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.labels import check_missing_label
 
-@pytest.mark.script_launch_mode('subprocess')
-def test_sct_label_vertebrae_backwards_compat(script_runner):
-    ret = script_runner.run('sct_testing', '--function', 'sct_label_vertebrae')
-    logger.debug(f"{ret.stdout}")
-    logger.debug(f"{ret.stderr}")
-    assert ret.success
-    assert ret.stderr == ''
+logger = logging.getLogger(__name__)
 
 
 def test_sct_label_vertebrae_initz_error():
@@ -52,6 +46,7 @@ def test_sct_label_vertebrae_clean_labels(tmp_path):
     os.unlink('straightening.cache')
 
 
+@pytest.mark.sct_testing
 def test_sct_label_vertebrae_consistent_disc(tmp_path):
     """Check that all expected output labeled discs exist"""
     command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -discfile sct_testing_data/t2/labels.nii.gz -ofolder ' + str(tmp_path)
@@ -64,3 +59,12 @@ def test_sct_label_vertebrae_consistent_disc(tmp_path):
 
     # Files created in root directory by sct_label_vertebrae
     os.unlink('straightening.cache')
+
+
+@pytest.mark.sct_testing
+@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
+def test_sct_label_vertebrae_initfile_qc_no_checks():
+    """Run the CLI script without checking results.
+    TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
+    sct_label_vertebrae.main(argv=['-i', 't2/t2.nii.gz', '-s', 't2/t2_seg-manual.nii.gz', '-c', 't2',
+                                   '-initfile', 't2/init_label_vertebrae.txt', '-t', 'template', '-qc', 'testing-qc'])
