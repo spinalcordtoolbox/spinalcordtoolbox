@@ -75,25 +75,23 @@ def fake_3dimage_sct():
     return img
 
 
-def test_transfo_null():
-    dir_tmp = "."
-
+def test_transfo_null(tmp_path):
     print("Null warping field")
 
     print(" Create some recognizable data")
     data = np.ones((7, 8, 9), order="F")
-    path_src = "warp-src.nii"
+    path_src = str(tmp_path / "warp-src.nii")
     img_src = fake_image_sct_custom(data).save(path_src)
 
     print(" Create a null warping field")
     data = np.zeros((7, 8, 9, 1, 3), order="F")
-    path_warp = "warp-field.nii"
+    path_warp = str(tmp_path / "warp-field.nii")
     img_warp = fake_image_sct_custom(data)
     img_warp.header.set_intent('vector', (), '')
     img_warp.save(path_warp)
 
     print(" Apply")
-    path_dst = "warp-dst.nii"
+    path_dst = str(tmp_path / "warp-dst.nii")
     xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
                                         output_filename=path_dst)
     xform.apply()
@@ -119,9 +117,7 @@ def test_transfo_null():
     assert np.allclose(dat_src, dat_dst)
 
 
-def test_transfo_figure_out_ants_frame_exhaustive():
-
-    dir_tmp = "."
+def test_transfo_figure_out_ants_frame_exhaustive(tmp_path):
     all_orientations = msct_image.all_refspace_strings()
     #all_orientations = ("LPS", "LPI")
 
@@ -132,19 +128,19 @@ def test_transfo_figure_out_ants_frame_exhaustive():
     for orientation in all_orientations:
         print(" Shifting +1,+1,+1 (in {})".format(orientation))
 
-        path_src = "warp-{}-src.nii".format(orientation)
+        path_src = str(tmp_path / "warp-{}-src.nii".format(orientation))
         img_src = fake_3dimage_sct().change_orientation(orientation).save(path_src)
 
         # Create warping field
         shape = tuple(list(img_src.data.shape) + [1, 3])
         data = np.ones(shape, order="F")
-        path_warp = "warp-{}-field.nii".format(orientation)
+        path_warp = str(tmp_path / "warp-{}-field.nii".format(orientation))
         img_warp = fake_image_sct_custom(data)
         img_warp.header.set_intent('vector', (), '')
         img_warp.change_orientation(orientation).save(path_warp)
         print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
 
-        path_dst = "warp-{}-dst.nii".format(orientation)
+        path_dst = str(tmp_path / "warp-{}-dst.nii".format(orientation))
         xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
                                             output_filename=path_dst)
         xform.apply()
@@ -199,9 +195,7 @@ def test_transfo_figure_out_ants_frame_exhaustive():
     print("-> Working orientation: {}".format(" ".join(working_orientations)))
 
 
-def test_transfo_exhaustive_wrt_orientations():
-
-    dir_tmp = "."
+def test_transfo_exhaustive_wrt_orientations(tmp_path):
 
     print("Figuring out which orientations work without workaround")
 
@@ -219,7 +213,7 @@ def test_transfo_exhaustive_wrt_orientations():
 
         print(" Shifting {} in {}".format(shift_wanted, orientation))
 
-        path_src = "warp-{}-src.nii".format(orientation)
+        path_src = str(tmp_path / "warp-{}-src.nii".format(orientation))
         img_src = fake_3dimage_sct().change_orientation(orientation).save(path_src)
 
         path_ref = path_src
@@ -230,13 +224,13 @@ def test_transfo_exhaustive_wrt_orientations():
         data = np.zeros(shape, order="F")
         data[:, :, :, 0] = shift
 
-        path_warp = "warp-{}-field.nii".format(orientation)
+        path_warp = str(tmp_path / "warp-{}-field.nii".format(orientation))
         img_warp = fake_image_sct_custom(data)
         img_warp.header.set_intent('vector', (), '')
         img_warp.change_orientation(orientation).save(path_warp)
         #print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
 
-        path_dst = "warp-{}-dst.nii".format(orientation)
+        path_dst = str(tmp_path / "warp-{}-dst.nii".format(orientation))
         xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
                                             output_filename=path_dst)
         xform.apply()
@@ -378,16 +372,14 @@ def notest_transfo_more_exhaustive_wrt_orientations():
     print("Orientations DK: {}".format(ori_str(orientations_dk)))
 
 
-def test_transfo_skip_pix2phys():
+def test_transfo_skip_pix2phys(tmp_path):
     # "Recipe" useful if you want to skip pix2phys, which is *not* a good idea
-
-    dir_tmp = "."
 
     print("Achieving a shifting of +1,+1,+1 (in LPI)")
 
     print(" Create data")
 
-    path_src = "warp-src.nii"
+    path_src = str(tmp_path / "warp-src.nii")
     img_src = fake_3dimage_sct().save(path_src)
 
     print(" Create a warping field"
@@ -403,12 +395,12 @@ def test_transfo_skip_pix2phys():
     data[..., 2] *= -1  # invert Z so that the result is what we expect
     # See test_transfo_exhaustive_wrt_orientations()
 
-    path_warp = "warp-field111.nii"
+    path_warp = str(tmp_path / "warp-field111.nii")
     img_warp = fake_image_sct_custom(data)
     img_warp.header.set_intent('vector', (), '')
     img_warp.save(path_warp)
 
-    path_dst = "warp-dst111.nii"
+    path_dst = str(tmp_path / "warp-dst111.nii")
     xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
                                         output_filename=path_dst)
     xform.apply()

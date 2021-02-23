@@ -186,10 +186,11 @@ def main(argv=None):
 
     # Merge b=0 images
     printv('\nMerge b=0...', verbose)
-    l = []
+    fname_in_list_b0 = []
     for it in range(nb_b0):
-        l.append(dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext)
-    im_out = concat_data(l, 3).save(b0_name + ext)
+        fname_in_list_b0.append(dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext)
+    im_in_list_b0 = [Image(fname) for fname in fname_in_list_b0]
+    concat_data(im_in_list_b0, 3).save(b0_name + ext)
 
     # Average b=0 images
     if average:
@@ -203,10 +204,11 @@ def main(argv=None):
         out.save(path=b0_mean_name + ext)
 
     # Merge DWI
-    l = []
+    fname_in_list_dwi = []
     for it in range(nb_dwi):
-        l.append(dmri_name + '_T' + str(index_dwi[it]).zfill(4) + ext)
-    im_out = concat_data(l, 3).save(dwi_name + ext)
+        fname_in_list_dwi.append(dmri_name + '_T' + str(index_dwi[it]).zfill(4) + ext)
+    im_in_list_dwi = [Image(fname) for fname in fname_in_list_dwi]
+    concat_data(im_in_list_dwi, 3).save(dwi_name + ext)
 
     # Average DWI images
     if average:

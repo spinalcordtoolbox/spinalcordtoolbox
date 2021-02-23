@@ -196,14 +196,16 @@ class ExtractGLCM:
         extension = extract_fname(self.param.fname_im)[2]
         for im_m in im_metric_lst:     # Loop across GLCM texture properties
             # List images to mean
-            im2mean_lst = [im_m + str(self.param_glcm.distance) + '_' + a + extension for a in self.param_glcm.angle.split(',')]
+            fname_mean_list = [im_m + str(self.param_glcm.distance) + '_' + a + extension
+                               for a in self.param_glcm.angle.split(',')]
+            im_mean_list = [Image(fname) for fname in fname_mean_list]
 
             # Average across angles and save it as wrk_folder/fnameIn_feature_distance_mean.extension
             fname_out = im_m + str(self.param_glcm.distance) + '_mean' + extension
 
             dim_idx = 3 # img is [x, y, z, angle] so specify 4th dimension (angle)
 
-            img = concat_data(im2mean_lst, dim_idx).save(fname_out, mutable=True)
+            img = concat_data(im_mean_list, dim_idx).save(fname_out, mutable=True)
 
             if len(np.shape(img.data)) < 4: # in case input volume is 3d and dim=t
                 img.data = img.data[..., np.newaxis]
