@@ -200,3 +200,4 @@ The following studies (in chronological order) have used SCT:
 -  `Meyer et al. Optimized cervical spinal cord perfusion MRI after traumatic injury in the rat. J. of Cerebral Blood Flow & Metabolism, 2021 <https://journals.sagepub.com/doi/10.1177/0271678X20982396>`_
 -  `Solanes et al. 3D patient-specific spinal cord computational model for SCS management: potential clinical applications. Journal of Neural Engineering, 2021 <https://pubmed.ncbi.nlm.nih.gov/33556926/>`_
 -  `Johnson et al. Changes in White Matter of the Cervical Spinal Cord after a Single Season of Collegiate Football. Neurotrauma Reports, 2021 <https://www.liebertpub.com/doi/10.1089/neur.2020.0035>`_
+-  `Ost et al. Spinal Cord Morphology in Degenerative Cervical Myelopathy Patients; Assessing Key Morphological Characteristics Using Machine Vision Tools. Journal of Clinical Medicine, 2021 <https://www.mdpi.com/2077-0383/10/4/892>`_
