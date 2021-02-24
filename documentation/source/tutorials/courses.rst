@@ -1,12 +1,7 @@
-.. _tutorials-courses.rst:
-
-Tutorials and Courses
-#####################
-
 .. _sct_courses:
 
 Courses
-*******
+#######
 
 We organize **free** SCT courses, each year after the ISMRM conference. If youâ€™d like to be added to the mailing list, please send an email to spinalcordtoolbox@gmail.com. The past courses handouts are listed below:
 
@@ -32,23 +27,4 @@ We organize **free** SCT courses, each year after the ISMRM conference. If youâ€
 .. _SCT course (v3.0_beta1), Montreal, 2016-04-19: https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing
 .. _SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15: https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0
 
-
-Tutorial pages
-**************
-
-Some course materials are also provided in page-based tutorial format (as an alternative to slide decks/video recordings).
-
-.. toctree::
-  :glob:
-  :maxdepth: 1
-
-  tutorials/spinalcord_segmentation
-  tutorials/correcting_sct_propseg
-
-
-Video tutorials
-***************
-
-Please visit our `Youtube channel`_ which contains some tutorials.
-
-.. _Youtube channel: https://www.youtube.com/playlist?list=PLJ5-Fnq9XpaVgCZfY-GOGJaT0fmZN4vji
+Additionally, parts of this material have been transcribed into page-based tutorial format, and can be found in the :ref:`tutorials` page.
