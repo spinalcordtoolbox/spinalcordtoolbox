@@ -1,4 +1,4 @@
-import os, csv
+import csv
 import numpy as np
 
 import pytest

@@ -24,9 +24,9 @@ def test_sct_register_multimodal_mt0_image_data_within_threshold(use_seg, param)
     fname_out = 'mt0_reg.nii.gz'
     fname_gt = None
 
-    argv = ['-i', 'mt/mt0.nii.gz', '-d', 'mt/mt1.nii.gz', '-o', fname_out, '-x', 'linear', '-r', '0',  '-param', param]
+    argv = ['-i', 'mt/mt0.nii.gz', '-d', 'mt/mt1.nii.gz', '-o', fname_out, '-x', 'linear', '-r', '0', '-param', param]
     seg_argv = ['-iseg', 'mt/mt0_seg.nii.gz', '-dseg', 'mt/mt1_seg.nii.gz']
-    sct_register_multimodal.main(argv=argv+seg_argv if use_seg else argv)
+    sct_register_multimodal.main(argv=(argv + seg_argv) if use_seg else argv)
 
     # FIXME: The 'sct_testing' version of this test never did anything ("--> N/A"), because 'fname_gt' was never defined
     #  Need to figure out what fname_gt should be so we can properly make this comparison.

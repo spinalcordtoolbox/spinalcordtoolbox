@@ -2,8 +2,6 @@ import os
 import pytest
 import logging
 
-import numpy as np
-
 from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.utils import run_proc
 from spinalcordtoolbox.scripts import sct_propseg
