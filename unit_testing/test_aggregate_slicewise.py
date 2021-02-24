@@ -24,11 +24,12 @@ from spinalcordtoolbox.image import Image
 @pytest.fixture(scope="session")
 def dummy_metrics():
     """Create a Dict of dummy metric."""
-    metrics = {'with float': Metric(data=np.array([29., 31., 39., 41., 50.])),
-               'with int': Metric(data=np.array([99, 100, 101, 102, 103])),
-               'with nan': Metric(data=np.array([99, np.nan, 101, 102, 103])),
+    metrics = {'with float': Metric(data=np.array([29., 31., 39., 41., 50., 51., 59., 62., 70.])),
+               'with int': Metric(data=np.array([99, 100, 101, 102, 103, 104, 105, 106, 107])),
+               'with nan': Metric(data=np.array([99, np.nan, 101, 102, 103, 104, 105, 106, 107])),
                'inconsistent length': Metric(data=np.array([99, 100])),
-               'with string': Metric(data=np.array([99, "boo!", 101, 102, 103]))}
+               'with string': Metric(data=np.array([99, "boo!", 101, 102, 103, 104, 105, 106, 107])),
+               '3D': Metric(data=np.resize(np.array([99, 100, 101, 102, 103, 104, 105, 106, 107]), [4, 5, 9]))}
     return metrics
 
 
@@ -104,7 +105,7 @@ def test_aggregate_across_all_slices(dummy_metrics):
     """Test extraction of metrics aggregation across slices: All slices by default"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], perslice=False,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[list(agg_metric)[0]]['WA()'] == 38.0
+    assert agg_metric[list(agg_metric)[0]]['WA()'] == 48.0
 
 
 # noinspection 801,PyShadowingNames
@@ -202,22 +203,23 @@ def test_extract_metric_2d(dummy_data_and_labels_2d):
 
 
 # noinspection 801,PyShadowingNames
-def test_save_as_csv(dummy_metrics):
+def test_save_as_csv(tmp_path, dummy_metrics):
     """Test writing of output metric csv file"""
+    path_out = str(tmp_path / 'tmp_file_out.csv')
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[3, 4],
                                                                   perslice=False,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),
                                                                                ('STD', aggregate_slicewise.func_std)))
     # standard scenario
-    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', fname_in='FakeFile.txt')
-    with open('tmp_file_out.csv', 'r') as csvfile:
+    aggregate_slicewise.save_as_csv(agg_metric, path_out, fname_in='FakeFile.txt')
+    with open(path_out, 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
         assert next(spamreader)[1:] == [__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
     # with appending
-    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
-    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
-    with open('tmp_file_out.csv', 'r') as csvfile:
+    aggregate_slicewise.save_as_csv(agg_metric, path_out)
+    aggregate_slicewise.save_as_csv(agg_metric, path_out, append=True)
+    with open(path_out, 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
         assert next(spamreader)[1:] == [__version__, '', '3:4', '', '45.5', '4.5']
@@ -225,14 +227,15 @@ def test_save_as_csv(dummy_metrics):
 
 
 # noinspection 801,PyShadowingNames
-def test_save_as_csv_slices(dummy_metrics, dummy_vert_level):
+def test_save_as_csv_slices(tmp_path, dummy_metrics, dummy_vert_level):
     """Make sure slices are listed in reduced form"""
+    path_out = str(tmp_path / 'tmp_file_out.csv')
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
                                                                   perslice=False, perlevel=False,
                                                                   vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
-    with open('tmp_file_out.csv', 'r') as csvfile:
+    aggregate_slicewise.save_as_csv(agg_metric, path_out)
+    with open(path_out, 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
         assert row['Slice (I->S)'] == '2:5'
@@ -240,14 +243,15 @@ def test_save_as_csv_slices(dummy_metrics, dummy_vert_level):
 
 
 # noinspection 801,PyShadowingNames
-def test_save_as_csv_per_level(dummy_metrics, dummy_vert_level):
+def test_save_as_csv_per_level(tmp_path, dummy_metrics, dummy_vert_level):
     """Make sure slices are listed in reduced form"""
+    path_out = str(tmp_path / 'tmp_file_out.csv')
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
                                                                   perlevel=True,
                                                                   vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
-    with open('tmp_file_out.csv', 'r') as csvfile:
+    aggregate_slicewise.save_as_csv(agg_metric, path_out)
+    with open(path_out, 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
         assert row['Slice (I->S)'] == '2:3'
@@ -255,17 +259,18 @@ def test_save_as_csv_per_level(dummy_metrics, dummy_vert_level):
 
 
 # noinspection 801,PyShadowingNames
-def test_save_as_csv_per_slice_then_per_level(dummy_metrics, dummy_vert_level):
+def test_save_as_csv_per_slice_then_per_level(dummy_metrics, dummy_vert_level, tmp_path):
     """Test with and without specifying perlevel. See: https://github.com/neuropoly/spinalcordtoolbox/issues/2141"""
+    path_out = str(tmp_path / 'tmp_file_out.csv')
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
                                                                   perlevel=True,
                                                                   vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
+    aggregate_slicewise.save_as_csv(agg_metric, path_out)
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[0],
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),),)
-    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv', append=True)
-    with open('tmp_file_out.csv', 'r') as csvfile:
+    aggregate_slicewise.save_as_csv(agg_metric, path_out, append=True)
+    with open(path_out, 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
         assert row['Slice (I->S)'] == '2:3'
@@ -277,26 +282,39 @@ def test_save_as_csv_per_slice_then_per_level(dummy_metrics, dummy_vert_level):
 
 
 # noinspection 801,PyShadowingNames
-def test_save_as_csv_sorting(dummy_metrics):
+def test_save_as_csv_sorting(tmp_path, dummy_metrics):
     """Make sure slices are sorted in output csv file"""
+    path_out = str(tmp_path / 'tmp_file_out.csv')
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], perslice=True,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
-    with open('tmp_file_out.csv', 'r') as csvfile:
+    aggregate_slicewise.save_as_csv(agg_metric, path_out)
+    with open(path_out, 'r') as csvfile:
         spamreader = csv.DictReader(csvfile, delimiter=',')
-        assert [row['Slice (I->S)'] for row in spamreader] == ['0', '1', '2', '3', '4']
+        assert [row['Slice (I->S)'] for row in spamreader] == ['0', '1', '2', '3', '4', '5', '6', '7', '8']
 
 
 # noinspection 801,PyShadowingNames
-def test_save_as_csv_extract_metric(dummy_data_and_labels):
+def test_save_as_csv_extract_metric(tmp_path, dummy_data_and_labels):
     """Test file output with extract_metric()"""
-
+    path_out = str(tmp_path / 'tmp_file_out.csv')
     # With input label file
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1], perslice=False, method='wa')
-    aggregate_slicewise.save_as_csv(agg_metric, 'tmp_file_out.csv')
-    with open('tmp_file_out.csv', 'r') as csvfile:
+    aggregate_slicewise.save_as_csv(agg_metric, path_out)
+    with open(path_out, 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
         assert next(spamreader)[1:-1] == [__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
+
+
+def test_dimension_mismatch_between_metric_and_vertfile(dummy_metrics, dummy_vert_level):
+    """Test that an exception is raised only for mismatched metric and -vertfile images."""
+    for metric in dummy_metrics:
+        if metric == 'inconsistent length':
+            with pytest.raises(ValueError) as err:
+                aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], vert_level=dummy_vert_level)
+            assert "mismatch" in str(err.value)
+        else:
+            # Verify that no error is thrown for all other metrics
+            aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], vert_level=dummy_vert_level)

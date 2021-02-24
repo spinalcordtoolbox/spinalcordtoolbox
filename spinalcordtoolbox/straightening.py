@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class SpinalCordStraightener(object):
     def __init__(self, input_filename, centerline_filename, debug=0, param_centerline=ParamCenterline(),
                  interpolation_warp='spline', rm_tmp_files=1, verbose=1, precision=2.0, threshold_distance=10,
-                 output_filename=''):
+                 output_filename='', path_output=''):
         self.input_filename = input_filename
         self.centerline_filename = centerline_filename
         self.output_filename = output_filename
@@ -36,7 +36,7 @@ class SpinalCordStraightener(object):
         self.verbose = verbose
         self.precision = precision
         self.threshold_distance = threshold_distance
-        self.path_output = ""
+        self.path_output = path_output
         self.use_straight_reference = False
         self.centerline_reference_filename = ""
         self.discs_input_filename = ""
@@ -104,15 +104,15 @@ class SpinalCordStraightener(object):
 
         # Copying input data to tmp folder
         logger.info('Copy files to tmp folder...')
-        Image(fname_anat).save(os.path.join(path_tmp, "data.nii"))
-        Image(fname_centerline).save(os.path.join(path_tmp, "centerline.nii.gz"))
+        Image(fname_anat, check_sform=True).save(os.path.join(path_tmp, "data.nii"))
+        Image(fname_centerline, check_sform=True).save(os.path.join(path_tmp, "centerline.nii.gz"))
 
         if self.use_straight_reference:
-            Image(self.centerline_reference_filename).save(os.path.join(path_tmp, "centerline_ref.nii.gz"))
+            Image(self.centerline_reference_filename, check_sform=True).save(os.path.join(path_tmp, "centerline_ref.nii.gz"))
         if self.discs_input_filename != '':
-            Image(self.discs_input_filename).save(os.path.join(path_tmp, "labels_input.nii.gz"))
+            Image(self.discs_input_filename, check_sform=True).save(os.path.join(path_tmp, "labels_input.nii.gz"))
         if self.discs_ref_filename != '':
-            Image(self.discs_ref_filename).save(os.path.join(path_tmp, "labels_ref.nii.gz"))
+            Image(self.discs_ref_filename, check_sform=True).save(os.path.join(path_tmp, "labels_ref.nii.gz"))
 
         # go to tmp folder
         curdir = os.getcwd()
