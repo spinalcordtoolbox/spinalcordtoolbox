@@ -1,5 +1,47 @@
 # Changelog
 
+## 5.2.0 (2021-02-24)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/5.1.0...5.2.0)
+
+**FEATURE**
+
+ - **sct_deepseg:** New segmentation model: GM and WM for exvivo DWI data (University of Queensland).  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3224)
+
+**BUG**
+
+ - **sct_register_to_template:** Enforce UINT8 when resampling labels for register to template.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3230)
+ - Fix size calculation bug for '-method map' and '-method ml'.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3217)
+ - Fix recently-introduced faulty slice index comparison.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3203)
+ - Fix unit_testing/test_labels.py::test_remove_missing_labels.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3191)
+
+**DOCUMENTATION**
+
+ - Add reference Ost et al..  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3243)
+ - Add reference Johnson.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3241)
+ - Move course materials to "Tutorials" page for visibility.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3240)
+ - Update Installation section in docs for MacOS Big Sur, add section for FSLeyes.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3228)
+ - Add ref solanes.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3221)
+ - Update FSLeyes install instructions for Win10/WSL.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3210)
+ - Update references.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3204)
+ - Fix line breaks in documentation.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3197)
+ - **sct_extract_metric,sct_process_segmentation:** Validate '-vertfile' dimensions in aggregate_per_slice_or_level().  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3120)
+
+**ENHANCEMENT**
+
+ - Modify tests to clean up after themselves in the working directory.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3222)
+ - Remove xdist from requirements and pytest config.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3212)
+ - **sct_image,sct_straighten_spinalcord:** Check qform and sforms match first.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2858)
+
+**REFACTORING**
+
+ - **sct_image:** Refactor sct_image functions to accept Image objects as input .  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3208)
+ - **sct_maths:** Refactor sct_maths callers to remove subprocess and use API.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/2975)
+
+**GIT/GITHUB**
+
+ - Lint pull requests using flake8 GH Actions workflow.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3215)
+ - Add config that links to SCT forum and removes blank issues.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3151)
+
 ## 5.1.0 (2021-01-22)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/5.0.1...5.1.0)
 
