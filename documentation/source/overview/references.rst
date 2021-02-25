@@ -110,6 +110,9 @@ The table below provides references relevant to the :ref:`pam50` used by SCT, in
    * - Spinal levels
      - `Cadotte DW, Cadotte A, Cohen-Adad J, Fleet D, Livne M, Wilson JR, Mikulis D, Nugaeva N, Fehlings MG. Characterizing the location of spinal and vertebral levels in the human cervical spinal cord. AJNR Am J Neuroradiol, 2015, 36(4):803-810. <https://paperpile.com/app/p/5b580317-6921-06c8-a2ee-685d4dbaa44c>`_
 
+
+.. _references-applications:
+
 Applications
 ------------
 The following studies (in chronological order) have used SCT:
