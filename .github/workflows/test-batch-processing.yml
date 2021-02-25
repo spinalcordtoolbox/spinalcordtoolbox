@@ -23,10 +23,10 @@ env:
 jobs:
   batch_processing:
     name: Test batch_processing.sh
-    # Both Ubuntu and macOS are relevant because of https://github.com/neuropoly/spinalcordtoolbox/issues/3194
     strategy:
       matrix:
-        os: [ ubuntu-18.04, macos-10.15 ]
+        os: [ ubuntu-18.04 ]  # TODO: Change to [ ubuntu-18.04, macos-10.15 ]
+                              # macOS currently fails due to https://github.com/neuropoly/spinalcordtoolbox/issues/3194
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout SCT
