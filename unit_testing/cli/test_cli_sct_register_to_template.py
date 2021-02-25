@@ -56,4 +56,3 @@ def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt,
     im_template_seg = Image(fname_gt)
     dice_anat2template = msct_image.compute_dice(im_seg_reg, im_template_seg, mode='3d', zboundaries=True)
     assert dice_anat2template > dice_threshold
-
