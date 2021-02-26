@@ -270,13 +270,39 @@
 
     function download_yaml() {
         let res = {};
+        let seg_cmd_to_seg_type = {
+            "sct_analyze_lesion": "FILES_GMSEG",
+            "sct_analyze_texture": "FILES_SEG",
+            "sct_create_mask": "FILES_SEG",
+            "sct_crop_image": "FILES_SEG",
+            "sct_deepseg": "FILES_SEG",
+            "sct_deepseg_gm": "FILES_GMSEG",
+            "sct_deepseg_lesion": "FILES_GMSEG",
+            "sct_deepseg_sc": "FILES_SEG",
+            "sct_label_utils": "FILES_LABEL",
+            "sct_label_vertebrae": "FILES_LABEL",
+            "sct_process_segmentation": "FILES_SEG",
+            "sct_propseg": "FILES_SEG",
+            "sct_register_multimodal": "FILES_SEG",
+            "sct_register_to_template": "FILES_SEG",
+            "sct_resample": "FILES_SEG",
+            "sct_run_batch": "FILES_SEG",
+            "sct_smooth_spinalcord": "FILES_SEG",
+            "sct_straighten_spinalcord": "FILES_SEG",
+            "sct_warp_template": "FILES_SEG",
+        }
         sct_data.forEach(item => {
             if (item.problematic === true) {
-                let command = item.command; // TODO resolve segmentation type from command
-                if (command in res) {
-                    res[command].push(item.fname_in);
+                let command = item.command;
+                if (command in seg_cmd_to_seg_type) {
+                    segtype = seg_cmd_to_seg_type[command];
                 } else {
-                    res[command] = [item.fname_in];
+                    segtype = "FIXME";
+                }
+                if (segtype in res) {
+                    res[segtype].push(item.fname_in);
+                } else {
+                    res[segtype] = [item.fname_in];
                 }
             }
         });
