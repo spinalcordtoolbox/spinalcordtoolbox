@@ -52,6 +52,11 @@ $(document).ready(function(){
         obj.prev().click();
       }
     }
+    // p key (set problematic)
+    if (evt.which == 80) {
+      let index = obj[obj.length - 1].getAttribute("data-index");
+      sct_data[index].problematic = !sct_data[index].problematic;
+    }
   });
 
   $("#table").bootstrapTable({
