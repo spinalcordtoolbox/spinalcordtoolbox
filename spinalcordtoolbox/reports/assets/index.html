@@ -79,6 +79,7 @@
                       <li><a class="dropdown-item" id="Function+Args" onclick="toggleColumn(id)">Function+Args &#10004</a></li>
                       <li><a class="dropdown-item" id="Problematic" onclick="toggleColumn(id)">Problematic &#10004</a></li>
                     </ul>
+                    <button class="btn btn-default" type="button" id="download_yaml_btn" onclick="download_yaml()" disabled>Download problematic</button>
                 </div>
                 <script>
                     document.getElementById("dropdown").style.position= "relative";
@@ -116,7 +117,6 @@
               <div id="cmdLine"></div>
               <div id="sctVer"></div>
           </div>
-
       </div>
   </div>
 
@@ -127,6 +127,10 @@
 <script src="_assets/js/bootstrap.min.js"></script>
 <script src="_assets/js/bootstrap-table.min.js"></script>
 <script src="_assets/js/main.js"></script>
+<!-- https://github.com/jeremyfa/yaml.js/blob/develop/dist/yaml.min.js -->
+<script src="_assets/js/yaml.min.js"></script>
+<!-- https://github.com/eligrey/FileSaver.js/blob/master/dist/FileSaver.min.js -->
+<script src="_assets/js/filesaver.min.js"></script>
 <script>var sct_data = $sct_json_data;</script>
 <script>
     function toggleColumn(buttonID){
@@ -264,7 +268,36 @@
         }
     }
 
-    <!-- Toggle overlay -->
+
+    <!-- Press right arrow key to toggle overlay -->
+    document.addEventListener('keydown', function (evt) {
+    if (evt.which == 39) {
+        toggleOverlay()
+    }
+
+    function download_yaml() {
+        let res = {};
+        sct_data.forEach(item => {
+            if (item.problematic === true) {
+                let command = item.command; // TODO resolve segmentation type from command
+                if (command in res) {
+                    res[command].push(item.fname_in);
+                } else {
+                    res[command] = [item.fname_in];
+                }
+            }
+        });
+
+        yamlString = YAML.stringify(res, 4);
+
+        var blob = new Blob([yamlString], {
+        type: "text/plain;charset=utf-8"
+        });
+
+        saveAs(blob, 'problematic_segmentations.yml');
+    }
+
+    // <!-- Toggle overlay -->
     function toggleOverlay() {
         var x = document.getElementById("overlay-img");
         if (x.style.display === "none") {
@@ -275,11 +308,7 @@
         }
     }
 
-    <!-- Press right arrow key to toggle overlay -->
-    document.addEventListener('keydown', function (evt) {
-    if (evt.which == 39) {
-        toggleOverlay()
-    }
+
 });
 
 

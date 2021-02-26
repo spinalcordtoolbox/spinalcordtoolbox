@@ -56,6 +56,7 @@ $(document).ready(function(){
     if (evt.which == 80) {
       let index = obj[obj.length - 1].getAttribute("data-index");
       sct_data[index].problematic = !sct_data[index].problematic;
+      set_download_yml_btn_state();
     }
   });
 
@@ -71,4 +72,14 @@ function responseHandler(res) {
     res[i].moddate = n.toLocaleString();
   }
   return res;
+}
+
+function set_download_yml_btn_state() {
+  let disabled = true;
+  sct_data.forEach(item => {
+      if (item.problematic === true) {
+        disabled = false;
+      }
+  });
+  document.getElementById("download_yaml_btn").disabled = disabled;
 }
