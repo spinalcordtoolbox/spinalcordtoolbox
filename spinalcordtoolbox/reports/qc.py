@@ -485,7 +485,7 @@ class QcReport(object):
             'overlay_img': self.qc_params.overlay_img_path,
             'dimension': '%dx%d' % dimension,
             'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            'problematic': False
+            'qc': False
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
         # results = []

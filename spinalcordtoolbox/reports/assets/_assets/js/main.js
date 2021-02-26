@@ -55,7 +55,7 @@ $(document).ready(function(){
     // p key (set problematic)
     if (evt.which == 80) {
       let index = obj[obj.length - 1].getAttribute("data-index");
-      sct_data[index].problematic = !sct_data[index].problematic;
+      sct_data[index].qc = !sct_data[index].qc;
       set_download_yml_btn_state();
     }
   });
@@ -77,7 +77,7 @@ function responseHandler(res) {
 function set_download_yml_btn_state() {
   let disabled = true;
   sct_data.forEach(item => {
-      if (item.problematic === true) {
+      if (item.qc === true) {
         disabled = false;
       }
   });

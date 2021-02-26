@@ -77,9 +77,9 @@
                       <li><a class="dropdown-item" id="Contrast" onclick="toggleColumn(id)">Contrast &#10004</a></li>
                       <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Function</a></li>
                       <li><a class="dropdown-item" id="Function+Args" onclick="toggleColumn(id)">Function+Args &#10004</a></li>
-                      <li><a class="dropdown-item" id="Problematic" onclick="toggleColumn(id)">Problematic &#10004</a></li>
+                      <li><a class="dropdown-item" id="QC" onclick="toggleColumn(id)">QC</a></li>
                     </ul>
-                    <button class="btn btn-default" type="button" id="download_yaml_btn" onclick="download_yaml()" disabled>Download problematic</button>
+                    <button class="btn btn-default" type="button" id="download_yaml_btn" onclick="download_yaml()" disabled>Download QC</button>
                 </div>
                 <script>
                     document.getElementById("dropdown").style.position= "relative";
@@ -103,7 +103,7 @@
                               <th data-field="contrast" data-sortable="true">Contrast</th>
 			                  <th data-field="command" data-sortable="true">Function</th>
 			                  <th data-field="cmdline" data-sortable="true">Function+Args</th>
-			                  <th data-field="problematic" data-sortable="true">Problematic</th>
+			                  <th data-field="qc" data-sortable="true">QC</th>
 		                  </tr>
 	                </thead>
               </table>
@@ -292,7 +292,7 @@
             "sct_warp_template": "FILES_SEG",
         }
         sct_data.forEach(item => {
-            if (item.problematic === true) {
+            if (item.qc === true) {
                 let command = item.command;
                 if (command in seg_cmd_to_seg_type) {
                     segtype = seg_cmd_to_seg_type[command];
@@ -313,7 +313,7 @@
         type: "text/plain;charset=utf-8"
         });
 
-        saveAs(blob, 'problematic_segmentations.yml');
+        saveAs(blob, 'qc.yml');
     }
 
     // <!-- Toggle overlay -->
