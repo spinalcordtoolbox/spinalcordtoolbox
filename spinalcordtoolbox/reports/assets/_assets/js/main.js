@@ -34,8 +34,8 @@ $(document).ready(function(){
 
   $('html').keydown( function(evt) {
     var obj = $('#table tr.active');
-    // Arrow down: next subject
-    if (evt.which == 40) {
+    // Arrow down: next subject (or j)
+    if (evt.which == 40 || evt.which == 74) {
       if (obj.length == 0 || obj.text() === "DateDatasetSubjectPathFileContrastFunctionFunction+Args") {
         $('#table tr:first-child').click();
       }
@@ -43,8 +43,8 @@ $(document).ready(function(){
         obj.next().click();
       }
     }
-    // Arrow up: previous subject
-    if (evt.which == 38) {
+    // Arrow up: previous subject (or k)
+    if (evt.which == 38 || evt.which == 75) {
       if (obj.length == 0) {
         $('#table tr:last-child').click();
       }

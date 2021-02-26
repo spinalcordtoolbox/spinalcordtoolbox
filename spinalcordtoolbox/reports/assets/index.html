@@ -268,13 +268,6 @@
         }
     }
 
-
-    <!-- Press right arrow key to toggle overlay -->
-    document.addEventListener('keydown', function (evt) {
-    if (evt.which == 39) {
-        toggleOverlay()
-    }
-
     function download_yaml() {
         let res = {};
         sct_data.forEach(item => {
@@ -308,6 +301,11 @@
         }
     }
 
+    // <!-- Press right arrow key (or l) to toggle overlay -->
+    document.addEventListener('keydown', function (evt) {
+    if (evt.which == 39 || evt.which == 76) {
+        toggleOverlay()
+    }
 
 });
 
