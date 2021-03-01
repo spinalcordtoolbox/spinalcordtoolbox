@@ -21,3 +21,8 @@ def test_sct_smooth_spinalcord_o_flag(tmp_path):
                '-o', os.path.join(str(tmp_path), "test_smooth.nii")]
     sct_smooth_spinalcord.main(argv)
     assert os.path.isfile(os.path.join(str(tmp_path), "test_smooth.nii"))
+
+    # Files created in root directory by sct_smooth_spinalcord
+    os.unlink('straightening.cache')
+    os.unlink('warp_straight2curve.nii.gz')
+    os.unlink('warp_curve2straight.nii.gz')
