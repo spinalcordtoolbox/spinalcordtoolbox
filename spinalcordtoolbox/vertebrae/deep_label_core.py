@@ -9,7 +9,7 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 from ivadomed import preprocessing as imed_preprocessing
 import nibabel as nib
-from spinalcordtoolbox.vertebrae.core import label_discs, label_segmentation, center_of_mass
+from spinalcordtoolbox.vertebrae.core import label_discs, label_segmentation, center_of_mass, label_vert
 import logging
 import spinalcordtoolbox.scripts.sct_deepseg as sct_deepseg
 from scipy.signal import gaussian
@@ -22,35 +22,6 @@ from spinalcordtoolbox.utils.sys import run_proc, printv
 from spinalcordtoolbox.image import Image
 
 logger = logging.getLogger(__name__)
-
-
-def label_vert(fname_seg, fname_label, verbose=1):
-    """
-    Label segmentation using vertebral labeling information. No orientation expected.
-
-    :param fname_seg: file name of segmentation.
-    :param fname_label: file name for a labelled segmentation that will be used to label the input segmentation
-    :param fname_out: file name of the output labeled segmentation. If empty, will add suffix "_labeled" to fname_seg
-    :param verbose:
-    :return:
-    """
-    # Open labels
-    im_disc = Image(fname_label).change_orientation("RPI")
-    # retrieve all labels
-    coord_label = im_disc.getNonZeroCoordinates()
-    # compute list_disc_z and list_disc_value
-    list_disc_z = []
-    list_disc_value = []
-    for i in range(len(coord_label)):
-        list_disc_z.insert(0, coord_label[i].z)
-        # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
-        list_disc_value.insert(0, coord_label[i].value - 1)
-
-    list_disc_value = [x for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
-    list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
-    # label segmentation
-    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
-    label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
 
 def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../',
