@@ -9,7 +9,7 @@ import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 from ivadomed import preprocessing as imed_preprocessing
 import nibabel as nib
-from spinalcordtoolbox.vertebrae.core import label_discs, label_segmentation, center_of_mass, label_vert
+from spinalcordtoolbox.vertebrae.core import label_discs, label_segmentation, center_of_mass
 import logging
 import spinalcordtoolbox.scripts.sct_deepseg as sct_deepseg
 from scipy.signal import gaussian
@@ -294,8 +294,8 @@ def compute_corr_1d_profile(src, target, x, xshift, xsize, y, yshift, ysize, z, 
     nx, ny, nz = src.shape
     # Get pattern from template
     pattern = target[xtarget - xsize:xtarget + xsize,
-              ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
-              ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
+                     ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
+                     ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
     pattern1d = np.sum(pattern, axis=(0, 1))
     # convolve pattern1d with gaussian to get similar curve as input
     a = gaussian(30, std=5)
@@ -311,22 +311,22 @@ def compute_corr_1d_profile(src, target, x, xshift, xsize, y, yshift, ysize, z, 
         if z + iz + zsize + 1 > nz:
             padding_size = z + iz + zsize + 1 - nz
             data_chunk3d = src[:,
-                           y + yshift: y + yshift + ysize + 1,
-                           z + iz - zsize: z + iz + zsize + 1 - padding_size]
+                               y + yshift: y + yshift + ysize + 1,
+                               z + iz - zsize: z + iz + zsize + 1 - padding_size]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant',
                                   constant_values=0)
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
         elif z + iz - zsize < 0:
             padding_size = abs(iz - zsize)
             data_chunk3d = src[:,
-                           y + yshift - ysize: y + yshift + ysize + 1,
-                           z + iz - zsize + padding_size: z + iz + zsize + 1]
+                               y + yshift - ysize: y + yshift + ysize + 1,
+                               z + iz - zsize + padding_size: z + iz + zsize + 1]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
                                   constant_values=0)
         else:
             data_chunk3d = src[:,
-                           :ytarget + ysize,
-                           z + iz - zsize: z + iz + zsize + 1]
+                               :ytarget + ysize,
+                               z + iz - zsize: z + iz + zsize + 1]
 
         # convert subject pattern to 1d profile
         data_chunk1d = np.sum(data_chunk3d, axis=(0, 1))
@@ -377,8 +377,8 @@ def compute_corr_1d_profile(src, target, x, xshift, xsize, y, yshift, ysize, z, 
         ax = fig.add_subplot(132)
         iz = zrange[ind_peak]
         data_chunk3d = src[:,
-                       y + yshift - ysize: y + yshift + ysize + 1,
-                       z - iz - zsize: z + iz + zsize + 1]
+                           y + yshift - ysize: y + yshift + ysize + 1,
+                           z - iz - zsize: z + iz + zsize + 1]
         ax.plot(np.sum(data_chunk3d, axis=(0, 1)))
         ax.set_title('Subject accross all iz')
         # display correlation curve
@@ -401,8 +401,8 @@ def compute_corr_1d_profile(src, target, x, xshift, xsize, y, yshift, ysize, z, 
         for indic in zrange:
             ax = fig.add_subplot(4, 5, ind)
             data_chunk3d = src[:,
-                           y + yshift - ysize: y + yshift + ysize + 1,
-                           z + indic - zsize: z + indic + zsize + 1]
+                               y + yshift - ysize: y + yshift + ysize + 1,
+                               z + indic - zsize: z + indic + zsize + 1]
             ax.plot(np.sum(data_chunk3d, axis=(0, 1)))
             ax.set_title('Subject at iz' + str(indic))
             ind = ind + 1
