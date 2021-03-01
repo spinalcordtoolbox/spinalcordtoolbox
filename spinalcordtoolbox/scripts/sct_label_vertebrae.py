@@ -29,6 +29,7 @@ from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
     copy, extract_fname, rmtree
 from spinalcordtoolbox.math import threshold, laplacian
+from spinalcordtoolbox.resampling import resample_file
 
 from spinalcordtoolbox.scripts import sct_straighten_spinalcord
 
@@ -335,8 +336,7 @@ def main(argv=None):
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
-    s, o = run_proc(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o',
-                     'data_straightr.nii'], verbose=verbose)
+    s, o = resample_file('data_straight.nii', 'data_straightr.nii' ,'0.5x0.5x0.5', 'mm', 'linear', verbose=verbose)
 
     # Apply straightening to segmentation
     # N.B. Output is RPI and 0.5x0.5x0.5
@@ -426,7 +426,7 @@ def main(argv=None):
                  )
         # get z value and disk value to initialize labeling
         # After resampling to match template resolution
-        run_proc('sct_resample -i labelz_straight.nii.gz -mm 0.5 -x nn -o labelz_straight_r.nii.gz')
+        resample_file('labelz_straight.nii.gz', 'labelz_straight_r.nii.gz', '0.5x0.5x0.5', 'mm', 'nn')
         printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight_r.nii.gz')
         printv('.. ' + str(init_disc), verbose)
@@ -445,7 +445,6 @@ def main(argv=None):
             # smooth data
             img.data = laplacian(img.data, sigmas)
             img.save()
-
 
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1
