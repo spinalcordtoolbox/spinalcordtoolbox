@@ -158,7 +158,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
         if current_disc != 1:
-            current_z = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param.size_RL,
+            current_z = compute_mut_info_3d(data, data_template, x=xc, xshift=0, xsize=param.size_RL,
                                         y=yc, yshift=param.shift_AP, ysize=param.size_AP,
                                         z=current_z, zshift=0, zsize=param.size_IS,
                                         xtarget=xct, ytarget=yct, ztarget=current_z_template,
@@ -328,7 +328,7 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     img_labeled_seg_corr.save()
 
 
-def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, gaussian_std, path_output):
+def compute_mut_info_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, gaussian_std, path_output):
     """
     FIXME doc
     Find z that maximizes correlation between src and target 3d data.

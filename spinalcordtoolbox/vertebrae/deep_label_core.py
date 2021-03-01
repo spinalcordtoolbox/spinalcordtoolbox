@@ -176,12 +176,12 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
         if current_disc != 1:
-            current_z = compute_corr_3d(data_hm, data_template, x=xc, xshift=0, xsize=param.size_RL,
-                                        y=yc, yshift=param.shift_AP, ysize=param.size_AP,
-                                        z=current_z, zshift=0, zsize=param.size_IS,
-                                        xtarget=xct, ytarget=yct, ztarget=current_z_template,
-                                        zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc),
-                                        gaussian_std=999, path_output=path_output)
+            current_z = compute_corr_1d_profile(data_hm, data_template, x=xc, xshift=0, xsize=param.size_RL,
+                                                y=yc, yshift=param.shift_AP, ysize=param.size_AP,
+                                                z=current_z, zshift=0, zsize=param.size_IS,
+                                                xtarget=xct, ytarget=yct, ztarget=current_z_template,
+                                                zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc),
+                                                gaussian_std=999, path_output=path_output)
 
         # display new disc
         if verbose == 2:
@@ -223,7 +223,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc - 1)]
             except (IndexError, ValueError):
-                logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
+                logger.warning('Disc value not included in template. Using previously-calculated distance: %s',
+                               approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z + approx_distance_to_next_disc
             current_disc = current_disc - 1
@@ -231,7 +232,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
             except (IndexError, ValueError):
-                logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
+                logger.warning('Disc value not included in template. Using previously-calculated distance: %s',
+                               approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z - approx_distance_to_next_disc
             current_disc = current_disc + 1
@@ -287,11 +289,12 @@ def get_z_and_disc_values_from_label(fname_label):
     return [z_label, value_label]
 
 
-def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget,
-                    zrange, verbose, save_suffix, gaussian_std, path_output):
+def compute_corr_1d_profile(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget,
+                            ztarget,
+                            zrange, verbose, save_suffix, gaussian_std, path_output):
     """
     FIXME doc
-    Find z that maximizes correlation between src and target 3d data.
+    Find z that maximizes correlation between src and target 3d data profile (sum along y and z axis)s.
 
     :param src: 3d source data
     :param target: 3d target data
@@ -320,8 +323,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     nx, ny, nz = src.shape
     # Get pattern from template
     pattern = target[xtarget - xsize:xtarget + xsize,
-                     ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
-                     ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
+              ytarget + yshift - ysize: ytarget + yshift + ysize + 1,
+              ztarget + zshift - zsize: ztarget + zshift + zsize + 1]
     pattern1d = np.sum(pattern, axis=(0, 1))
     # convolve pattern1d with gaussian to get similar curve as input
     a = gaussian(30, std=5)
@@ -337,22 +340,22 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         if z + iz + zsize + 1 > nz:
             padding_size = z + iz + zsize + 1 - nz
             data_chunk3d = src[:,
-                               y + yshift: y + yshift + ysize + 1,
-                               z + iz - zsize: z + iz + zsize + 1 - padding_size]
+                           y + yshift: y + yshift + ysize + 1,
+                           z + iz - zsize: z + iz + zsize + 1 - padding_size]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (0, padding_size)), 'constant',
                                   constant_values=0)
         # if pattern extends towards bottom part of the image, then crop and pad with zeros
         elif z + iz - zsize < 0:
             padding_size = abs(iz - zsize)
             data_chunk3d = src[:,
-                               y + yshift - ysize: y + yshift + ysize + 1,
-                               z + iz - zsize + padding_size: z + iz + zsize + 1]
+                           y + yshift - ysize: y + yshift + ysize + 1,
+                           z + iz - zsize + padding_size: z + iz + zsize + 1]
             data_chunk3d = np.pad(data_chunk3d, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
                                   constant_values=0)
         else:
             data_chunk3d = src[:,
-                               :ytarget + ysize,
-                               z + iz - zsize: z + iz + zsize + 1]
+                           :ytarget + ysize,
+                           z + iz - zsize: z + iz + zsize + 1]
 
         # convert subject pattern to 1d profile
         data_chunk1d = np.sum(data_chunk3d, axis=(0, 1))
@@ -403,8 +406,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         ax = fig.add_subplot(132)
         iz = zrange[ind_peak]
         data_chunk3d = src[:,
-                           y + yshift - ysize: y + yshift + ysize + 1,
-                           z - iz - zsize: z + iz + zsize + 1]
+                       y + yshift - ysize: y + yshift + ysize + 1,
+                       z - iz - zsize: z + iz + zsize + 1]
         ax.plot(np.sum(data_chunk3d, axis=(0, 1)))
         ax.set_title('Subject accross all iz')
         # display correlation curve
@@ -427,8 +430,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         for indic in zrange:
             ax = fig.add_subplot(4, 5, ind)
             data_chunk3d = src[:,
-                               y + yshift - ysize: y + yshift + ysize + 1,
-                               z + indic - zsize: z + indic + zsize + 1]
+                           y + yshift - ysize: y + yshift + ysize + 1,
+                           z + indic - zsize: z + indic + zsize + 1]
             ax.plot(np.sum(data_chunk3d, axis=(0, 1)))
             ax.set_title('Subject at iz' + str(indic))
             ind = ind + 1
