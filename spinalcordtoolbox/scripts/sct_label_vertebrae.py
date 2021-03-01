@@ -337,7 +337,7 @@ def main(argv=None):
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
-    s, o = resample_file('data_straight.nii', 'data_straightr.nii', '0.5x0.5x0.5', 'mm', 'linear', verbose=verbose)
+    s, o = resample_file('data_straight.nii', 'data_straightr.nii', '0.5s', 'mm', 'linear', verbose=verbose)
 
     # Apply straightening to segmentation
     # N.B. Output is RPI and 0.5x0.5x0.5
