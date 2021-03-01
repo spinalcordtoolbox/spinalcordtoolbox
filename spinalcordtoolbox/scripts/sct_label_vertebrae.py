@@ -30,6 +30,7 @@ from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid,
     copy, extract_fname, rmtree
 from spinalcordtoolbox.math import threshold, laplacian
 from spinalcordtoolbox.resampling import resample_file
+import spinalcordtoolbox.scripts.sct_apply_transfo as sct_apply_transfo
 
 from spinalcordtoolbox.scripts import sct_straighten_spinalcord
 
@@ -473,14 +474,9 @@ def main(argv=None):
     # it won't exist if we don't use the detection since it is based on the network prediction (DL method)
     if fname_disc is None and arguments.method == 'DL':
         printv('\nUn-straighten posterior disc map...', verbose)
-        run_proc('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
-                 ('disc_posterior_tmp.nii.gz',
-                  'segmentation.nii',
-                  'warp_straight2curve.nii.gz',
-                  'label_disc_posterior.nii.gz',
-                  'label'),
-                 verbose=verbose
-                 )
+        sct_apply_transfo.main(['-i', 'disc_posterior_tmp.nii.gz', '-d', 'segmentation.nii', '-w',
+                                'warp_straight2curve.nii.gz', '-o', 'label_disc_posterior.nii.gz',
+                                '-x', 'label', '-v', verbose])
 
     if clean_labels:
         # Clean labeled segmentation
