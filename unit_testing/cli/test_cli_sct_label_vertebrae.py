@@ -28,7 +28,7 @@ def test_sct_label_vertebrae_disc(tmp_path, is_coordinates_gt, contrast, pref):
     print(is_coordinates_gt)
     d.mkdir()
     sct_label_vertebrae.main(['-i', 'sct_testing_data/' + contrast + "/" + pref + ".nii.gz ",
-                              '-s', ' sct_testing_data/' + contrast + "/" + pref + "_seg-manual.nii.gz",
+                              '-s', 'sct_testing_data/' + contrast + "/" + pref + "_seg-manual.nii.gz",
                               '-initfile', 'sct_testing_data/' + contrast + '/init_label_vertebrae.txt',
                               '-c', contrast, '-ofolder', str(d), '-method', 'DL'])
     nifti_label = Image(str(d) + "/" + pref + "_labels-disc.nii.gz")
