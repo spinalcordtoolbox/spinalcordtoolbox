@@ -2,7 +2,6 @@ from pytest_console_scripts import script_runner
 import pytest
 import logging
 import os
-import subprocess
 import numpy as np
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.scripts.sct_label_vertebrae as sct_label_vertebrae
