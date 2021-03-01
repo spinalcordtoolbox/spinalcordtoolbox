@@ -240,7 +240,7 @@ def check_affines_match(im):
 
         return(True)
 
-    return np.allclose(hdr.get_qform(), hdr2.get_qform())
+    return np.allclose(hdr.get_qform(), hdr2.get_qform(), atol=1e-3)
 
 
 class Image(object):
