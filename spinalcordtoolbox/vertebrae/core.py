@@ -251,12 +251,17 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
 
+class EmptyArrayError(ValueError):
+    """Custom exception to distinguish between general SciPy ValueErrors."""
+    pass
+
+
 def center_of_mass(x):
     """
     :return: array center of mass
     """
     if (x == 0).all():
-        raise ValueError("Array has no mass")
+        raise EmptyArrayError("Center of mass can't be calculated on empty arrays.")
     return scipy.ndimage.measurements.center_of_mass(x)
 
 
