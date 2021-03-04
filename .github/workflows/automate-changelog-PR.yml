@@ -1,0 +1,34 @@
+name: "Create PR with updated CHANGES.md"
+
+on:
+  workflow_dispatch:
+    inputs:
+      fname_changelog:
+        description: 'Changelog filename'
+        required: true
+        default: 'CHANGES.md'
+
+jobs:
+  create-changelog-PR:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: Install changelog
+      run: pip install changelog-neuropoly
+    - name: Generate changelog
+      run: |
+        echo -e "MILESTONE=$(changelog neuropoly/spinalcordtoolbox --update --name ${{ github.event.inputs.fname_changelog }} | grep 'INFO Milestone' | head -1 | cut -d' ' -f3 | cut -d',' -f1)" >> ${GITHUB_ENV}
+        rm "${{ github.event.inputs.fname_changelog }}.bak"
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v3
+      with:
+        branch: "bot/v${{ env.MILESTONE }}"
+        commit-message  : "Update ${{ github.event.inputs.fname_changelog }} for ${{ env.MILESTONE }} release"
+        title: "Update ${{ github.event.inputs.fname_changelog }} for ${{ env.MILESTONE }} release"
+        milestone: "${{ env.MILESTONE }}"
+        body: "Automated step carried out as a part of [Creating a new release](https://github.com/neuropoly/spinalcordtoolbox/wiki/Misc%3A-Creating-a-new-release) checklist."
+        delete-branch: true
