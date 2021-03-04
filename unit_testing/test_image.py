@@ -673,3 +673,39 @@ def test_splitext():
     assert msct_image.splitext('nice.image.nii.gz') == ('nice.image', '.nii.gz')
     assert msct_image.splitext('nice.folder/image.nii.gz') == ('nice.folder/image', '.nii.gz')
     assert msct_image.splitext('image.tar.gz') == ('image', '.tar.gz')
+
+
+def test_tolerance_of_affine_mismatch_check():
+    """Verify that affine mismatch error is thrown only for mismatches above a certain tolerance."""
+    # ERROR NOT EXPECTED (Affine matrices have slight differences, but are close enough to be equivalent)
+    # NB: Specific values taken from anonymized data from https://github.com/neuropoly/spinalcordtoolbox/issues/3251
+    qform_affine = np.array([[-0.0000000613307, -0.0032542832702, -0.8999945527288, 36.8009071350098],
+                             [-0.9322916865349, -0.0000000613307, 0.0000000594134, 214.2190246582031],
+                             [0.0000000615451, -0.9322860067718, 0.0031415651366, 122.8873901367188],
+                             [0.0000000000000, 0.0000000000000, 0.0000000000000, 1.0000000000000]])
+    sform_affine = np.array([[-0.0000000000007, -0.0032542543486, -0.8999945521355, 36.8009071350098],
+                             [-0.9322916865349, 0.0000000001912, -0.0000000000000, 214.2190246582031],
+                             [-0.0000000001912, -0.9322860240936, 0.0031415862031, 122.8873901367188],
+                             [0.0000000000000, 0.0000000000000, 0.0000000000000, 1.0000000000000]])
+    header_e7 = nibabel.Nifti1Header()
+    header_e7.set_sform(affine=sform_affine)
+    header_e7.set_qform(affine=qform_affine)
+    msct_image.Image(param=[1, 1, 1], hdr=header_e7, check_sform=True)
+
+    # ERROR NOT EXPECTED (A bigger discrepancy is introduced, but it doesn't exceed the tolerance of the check)
+    qform_affine_e3 = qform_affine.copy()
+    qform_affine_e3[0, 0] += 1e-3
+    header_e3 = nibabel.Nifti1Header()
+    header_e3.set_sform(affine=sform_affine)
+    header_e3.set_qform(affine=qform_affine_e3)
+    msct_image.Image(param=[1, 1, 1], hdr=header_e3, check_sform=True)
+
+    # ERROR EXPECTED (A bigger discrepancy is introduced, and it does exceed the tolerance of the check)
+    qform_affine_e2 = qform_affine.copy()
+    qform_affine_e2[0, 0] += 1e-2
+    header_e2 = nibabel.Nifti1Header()
+    header_e2.set_sform(affine=sform_affine)
+    header_e2.set_qform(affine=qform_affine_e2)
+    with pytest.raises(ValueError) as e:
+        msct_image.Image(param=[1, 1, 1], hdr=header_e2, check_sform=True)
+    assert "Image sform does not match qform" in str(e.value)
