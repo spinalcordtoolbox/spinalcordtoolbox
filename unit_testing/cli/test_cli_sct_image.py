@@ -55,7 +55,7 @@ def test_sct_image_getorient(path_in):
 def test_sct_image_split_dmri(dmri_t_slices):
     """Verify the output of '-split' matches reference image. Note: CLI script is run by the 'dmri_t_slices' fixture."""
     _, filename, ext = extract_fname(dmri_t_slices[0])
-    ref = Image(f'dmri / {filename}{ext}')  # Reference image should exist inside working directory (sct_testing_data)
+    ref = Image(f'dmri/{filename}{ext}')  # Reference image should exist inside working directory (sct_testing_data)
     new = Image(dmri_t_slices[0])         # New image should be generated inside tmp directory
     assert np.sum(ref.data - new.data) <= 1e-3
 
