@@ -30,7 +30,8 @@ def test_sct_propseg_check_dice_coefficient_against_groundtruth():
 @pytest.mark.sct_testing
 def test_isct_propseg_compatibility():
     # TODO: Move this check to `sct_check_dependencies`. (It was in `sct_testing`, so it is put here for now.)
-    status_isct_propseg, output_isct_propseg = run_proc('isct_propseg', verbose=0, raise_exception=False)
+    status_isct_propseg, output_isct_propseg = run_proc('isct_propseg', verbose=0, raise_exception=False,
+                                                        is_sct_binary=True)
     isct_propseg_version = output_isct_propseg.split('\n')[0]
     assert isct_propseg_version == 'sct_propseg - Version 1.1 (2015-03-24)', \
         'isct_propseg does not seem to be compatible with your system or is no up-to-date... Please contact SCT ' \
