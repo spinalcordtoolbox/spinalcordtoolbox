@@ -1,0 +1,2 @@
+Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,Label,Size [vox],MAP(),STD()
+2021-01-25 00:48:42,git-HEAD-42ef57b3a6241a127ed0d7a7eebc909dc46c9d07,/home/runner/work/spinalcordtoolbox/spinalcordtoolbox/sct_example_data/mt/mtr.nii.gz,4:17,2:5,white matter,1866.8310447890826,54.38001541207312,4.851424830774496
