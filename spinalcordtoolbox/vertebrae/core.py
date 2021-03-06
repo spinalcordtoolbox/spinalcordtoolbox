@@ -15,6 +15,7 @@ from scipy.signal import gaussian
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.math import dilate, mutual_information
+from spinalcordtoolbox.centerline.core import get_centerline
 
 logger = logging.getLogger(__name__)
 
@@ -251,12 +252,17 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
 
+class EmptyArrayError(ValueError):
+    """Custom exception to distinguish between general SciPy ValueErrors."""
+    pass
+
+
 def center_of_mass(x):
     """
     :return: array center of mass
     """
     if (x == 0).all():
-        raise ValueError("Array has no mass")
+        raise EmptyArrayError("Center of mass can't be calculated on empty arrays.")
     return scipy.ndimage.measurements.center_of_mass(x)
 
 
@@ -518,8 +524,17 @@ def label_discs(fname_seg, list_disc_z, list_disc_value, verbose=1):
 
     for i in range(len(list_disc_z)):
         if list_disc_z[i] < nz:
-            slices = seg.data[:, :, list_disc_z[i]]
-            cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
+            try:
+                slices = seg.data[:, :, list_disc_z[i]]
+                cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
+            except EmptyArrayError:
+                logger.warning("During disc labeling, center of mass calculation failed due to discontinuities in "
+                               "segmented spinal cord; please check the quality of your segmentation. Using "
+                               "interpolated centerline as a fallback.")
+                interpolated_centerline, _, _, _ = get_centerline(seg)
+                slices = interpolated_centerline.data[:, :, list_disc_z[i]]
+                cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
+
             # Disc value are offset by one due to legacy code
             disc_data[cx, cy, list_disc_z[i]] = list_disc_value[i] + 1
 
