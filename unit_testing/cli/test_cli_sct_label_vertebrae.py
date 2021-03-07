@@ -61,6 +61,19 @@ def test_sct_label_vertebrae_consistent_disc(tmp_path):
     os.unlink('straightening.cache')
 
 
+def test_sct_label_vertebrae_disc_discontinuity_center_of_mass_error(tmp_path, caplog):
+    # Generate a discontinuity next to an intervertebral disc
+    t2_seg = Image('sct_testing_data/t2/t2_seg-manual.nii.gz')
+    t2_seg.data[:, 16, :] = 0
+    path_out = str(tmp_path / 't2_seg-large-discontinuity.nii.gz')
+    t2_seg.save(path=path_out)
+
+    # Ensure the discontinuity is detected and an interpolated centerline is used instead
+    sct_label_vertebrae.main(['-i', 'sct_testing_data/t2/t2.nii.gz', '-s', path_out, '-c', 't2',
+                              '-initfile', 'sct_testing_data/t2/init_label_vertebrae.txt'])
+    assert "Using interpolated centerline" in caplog.text
+
+
 @pytest.mark.sct_testing
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_label_vertebrae_initfile_qc_no_checks():
