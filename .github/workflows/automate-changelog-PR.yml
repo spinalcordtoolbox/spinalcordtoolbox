@@ -7,6 +7,9 @@ on:
         description: 'Changelog filename'
         required: true
         default: 'CHANGES.md'
+      milestone_title:
+        description: 'Milestone title'
+        required: true
 
 jobs:
   create-changelog-PR:
@@ -17,18 +20,24 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - name: Install changelog
-      run: pip install changelog-neuropoly
+    - name: Checkout 'changelog'
+      uses: actions/checkout@v2
+      with:
+        repository: neuropoly/changelog
+        path: changelog
+    - name: Install 'changelog'
+      run: |
+        pip install ./changelog
     - name: Generate changelog
       run: |
-        echo -e "MILESTONE=$(changelog neuropoly/spinalcordtoolbox --update --name ${{ github.event.inputs.fname_changelog }} | grep 'INFO Milestone' | head -1 | cut -d' ' -f3 | cut -d',' -f1)" >> ${GITHUB_ENV}
+        changelog neuropoly/spinalcordtoolbox --update --name "${{ github.event.inputs.fname_changelog }}" --milestone ${{ github.event.inputs.milestone_title }}
         rm "${{ github.event.inputs.fname_changelog }}.bak"
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v3
       with:
-        branch: "bot/v${{ env.MILESTONE }}"
-        commit-message  : "Update ${{ github.event.inputs.fname_changelog }} for ${{ env.MILESTONE }} release"
-        title: "Update ${{ github.event.inputs.fname_changelog }} for ${{ env.MILESTONE }} release"
-        milestone: "${{ env.MILESTONE }}"
+        branch: "bot/v${{ github.event.inputs.milestone_title }}"
+        commit-message  : "Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release"
+        title: "Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release"
+        milestone: "${{ github.event.inputs.milestone_title }}"
         body: "Automated step carried out as a part of [Creating a new release](https://github.com/neuropoly/spinalcordtoolbox/wiki/Misc%3A-Creating-a-new-release) checklist."
         delete-branch: true
