@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        path: ${{ github.event.repository.name }}
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -30,11 +32,13 @@ jobs:
         pip install ./changelog
     - name: Generate changelog
       run: |
+        cd ${{ github.event.repository.name }}
         changelog neuropoly/spinalcordtoolbox --update --name "${{ github.event.inputs.fname_changelog }}" --milestone ${{ github.event.inputs.milestone_title }}
         rm "${{ github.event.inputs.fname_changelog }}.bak"
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v3
       with:
+        path: "${{ github.event.repository.name }}"
         branch: "bot/v${{ github.event.inputs.milestone_title }}"
         commit-message  : "Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release"
         title: "Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release"
