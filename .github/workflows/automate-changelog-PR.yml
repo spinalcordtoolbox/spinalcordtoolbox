@@ -1,4 +1,4 @@
-name: "Create PR with updated CHANGES.md"
+name: "Update changelog and open a pull request"
 
 on:
   workflow_dispatch:
@@ -15,10 +15,7 @@ jobs:
   create-changelog-PR:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-      with:
-        path: ${{ github.event.repository.name }}
-    - name: Set up Python
+    - name: Set up Python (to install 'changelog')
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
@@ -30,12 +27,16 @@ jobs:
     - name: Install 'changelog'
       run: |
         pip install ./changelog
-    - name: Generate changelog
+    - name: Checkout '${{ github.event.repository.name }}'
+      uses: actions/checkout@v2
+      with:
+        path: ${{ github.event.repository.name }}
+    - name: Update '${{ github.event.inputs.fname_changelog }}' for '${{ github.event.repository.name }}'
       run: |
         cd ${{ github.event.repository.name }}
         changelog neuropoly/spinalcordtoolbox --update --name "${{ github.event.inputs.fname_changelog }}" --milestone ${{ github.event.inputs.milestone_title }}
         rm "${{ github.event.inputs.fname_changelog }}.bak"
-    - name: Create Pull Request
+    - name: Create pull request for updated changelog
       uses: peter-evans/create-pull-request@v3
       with:
         path: "${{ github.event.repository.name }}"
