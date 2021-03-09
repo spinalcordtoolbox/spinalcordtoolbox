@@ -11,8 +11,7 @@ However, for a long time, no software package had existed to process mpMRI data 
 Purpose
 -------
 
-**Spinal Cord Toolbox (SCT)** brings together the spinal cord neuroimaging community by establishing
-standard templates and analysis procedures.
+**Spinal Cord Toolbox (SCT)** brings together the spinal cord neuroimaging community by establishing standard templates and analysis procedures.
 
 SCT is a comprehensive, free and open-source software dedicated to the processing and analysis of spinal cord MRI data. SCT builds on previously-validated methods and includes state-of-the-art MRI templates and atlases of the spinal cord, algorithms to segment and register new data to the templates, and motion correction methods for diffusion and functional time series. SCT is tailored towards standardization and automation of the processing pipeline, versatility, modularity, and it follows guidelines of software development and distribution.
 
