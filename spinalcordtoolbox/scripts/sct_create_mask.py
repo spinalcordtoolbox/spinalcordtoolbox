@@ -22,7 +22,7 @@ import numpy as np
 import nibabel
 from scipy import ndimage
 
-from spinalcordtoolbox.image import Image, empty_like
+from spinalcordtoolbox.image import Image, empty_like, zeros_like
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, extract_fname, rmtree, copy
@@ -242,23 +242,13 @@ def create_mask(param):
     for iz in range(0, nz, 1):
         if iz in z_centerline_not_null:
             cx[iz], cy[iz] = ndimage.measurements.center_of_mass(np.array(data_centerline[:, :, iz]))
-    # create 2d masks
-    file_mask = 'data_mask'
-    for iz in range(nz):
-        if iz not in z_centerline_not_null:
-            # write an empty nifty volume
-            img = nibabel.Nifti1Image(data_centerline[:, :, iz], None, hdr)
-            nibabel.save(img, (file_mask + str(iz) + '.nii'))
-        else:
-            center = np.array([cx[iz], cy[iz]])
-            mask2d = create_mask2d(param, center, param.shape, param.size, im_data=im_data)
-            # Write NIFTI volumes
-            img = nibabel.Nifti1Image(mask2d, None, hdr)
-            nibabel.save(img, (file_mask + str(iz) + '.nii'))
 
-    fname_list = [file_mask + str(iz) + '.nii' for iz in range(nz)]
-    im_list = [Image(fname) for fname in fname_list]
-    im_out = concat_data(im_list, dim=2).save('mask_RPI.nii.gz')
+    # create 2d masks at each axial slice
+    im_out = zeros_like(im_data)
+    for iz in range(nz):
+        if iz in z_centerline_not_null:
+            center = np.array([cx[iz], cy[iz]])
+            im_out.data[:, :, iz] = create_mask2d(param, center, param.shape, param.size, im_data=im_data)
 
     im_out.change_orientation(orientation_input)
     im_out.header = Image(param.fname_data).header
