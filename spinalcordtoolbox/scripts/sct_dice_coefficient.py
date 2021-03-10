@@ -114,11 +114,12 @@ def main(argv=None):
     tmp_dir = os.path.abspath(tmp_dir)
 
     # copy input files to tmp directory
-    # for fname in [fname_input1, fname_input2]:
-    copy(fname_input1, tmp_dir)
-    copy(fname_input2, tmp_dir)
-    fname_input1 = ''.join(extract_fname(fname_input1)[1:])
-    fname_input2 = ''.join(extract_fname(fname_input2)[1:])
+    fname_input1_tmp = 'tmp1_' + ''.join(extract_fname(fname_input1)[1:])
+    fname_input2_tmp = 'tmp2_' + ''.join(extract_fname(fname_input2)[1:])
+    copy(fname_input1, os.path.join(tmp_dir, fname_input1_tmp))
+    copy(fname_input2, os.path.join(tmp_dir, fname_input2_tmp))
+    fname_input1 = fname_input1_tmp
+    fname_input2 = fname_input2_tmp
 
     curdir = os.getcwd()
     os.chdir(tmp_dir)  # go to tmp directory

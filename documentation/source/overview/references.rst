@@ -196,6 +196,7 @@ The following studies (in chronological order) have used SCT:
 -  `Johnson et al. In vivo detection of microstructural spinal cord lesions in dogs with degenerative myelopathy using diffusion tensor imaging. J Vet Intern Med. 2020 <https://onlinelibrary.wiley.com/doi/10.1111/jvim.16014>`_
 -  `Kinawy et al. Dynamic Functional Connectivity of Resting-State Spinal Cord fMRI Reveals Fine-Grained Intrinsic Architecture. Neuron. 2020 <https://pubmed.ncbi.nlm.nih.gov/32910894/>`_
 -  `Weber et al. Assessing the spatial distribution of cervical spinal cord activity during tactile stimulation of the upper extremity in humans with functional magnetic resonance imaging. Neuroimage 2020 <https://www.sciencedirect.com/science/article/pii/S1053811920303918>`_
+-  `Azzarito et al. Tracking the neurodegenerative gradient after spinal cord injury. NeuroImage Clinical, 2020 <https://pubmed.ncbi.nlm.nih.gov/32145681/>`_
 -  `Querin et al. Development of new outcome measures for adult SMA type III and IV: a multimodal longitudinal study. J Neurol 2021 <https://pubmed.ncbi.nlm.nih.gov/33388927/>`_
 -  `McLachlin et al. Spatial correspondence of spinal cord white matter tracts using diffusion tensor imaging, fibre tractography, and atlas-based segmentation. Neuroradiology 2021 <https://link.springer.com/article/10.1007/s00234-021-02635-9>`_
 -  `Dvorak et al. Comparison of multi echo T2 relaxation and steady state approaches for myelin imaging in the central nervous system. Scientific reports 2021 <https://www.nature.com/articles/s41598-020-80585-7>`_
