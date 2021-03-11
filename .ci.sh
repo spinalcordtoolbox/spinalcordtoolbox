@@ -23,6 +23,7 @@ conda activate venv_sct  # reactivate conda for the pip install below
 set -u
 
 echo *** UNIT TESTS ***
+export PY_COLORS=1
 pip install coverage
 echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
 echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
