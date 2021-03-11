@@ -28,7 +28,9 @@ from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_l
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, extract_fname, rmtree, copy
 from spinalcordtoolbox.labels import create_labels
 from spinalcordtoolbox.types import Coordinate
+from spinalcordtoolbox.math import concatenate_along_4th_dimension
 
+from spinalcordtoolbox.scripts.sct_maths import get_data_or_scalar
 from spinalcordtoolbox.scripts.sct_image import concat_data
 
 
@@ -255,7 +257,8 @@ def create_mask(param):
             nibabel.save(img, (file_mask + str(iz) + '.nii'))
 
     fname_list = [file_mask + str(iz) + '.nii' for iz in range(nz)]
-    im_out = concat_data(fname_list, dim=2).save('mask_RPI.nii.gz')
+    im_list = [Image(fname) for fname in fname_list]
+    im_out = concat_data(im_list, dim=2).save('mask_RPI.nii.gz')
 
     im_out.change_orientation(orientation_input)
     im_out.header = Image(param.fname_data).header
@@ -286,7 +289,11 @@ def create_line(param, fname, coord, nz):
     copy(fname, 'line.nii', verbose=param.verbose)
 
     # set all voxels to zero
-    run_proc(['sct_maths', '-i', 'line.nii', '-mul', '0', '-o', 'line.nii'], param.verbose)
+    img = Image('line.nii')
+    data = get_data_or_scalar('0', img.data)
+    data_concat = concatenate_along_4th_dimension(img.data, data)
+    img.data = np.prod(data_concat, axis=3)
+    img.save()
 
     labels = []
 
@@ -297,7 +304,7 @@ def create_line(param, fname, coord, nz):
         # backwards compat
         labels.extend([Coordinate([coord[0], coord[1], iz, 1]) for iz in range(nz)])
 
-    create_labels(Image("line.nii"), labels).save(path="line.nii")
+    create_labels(img, labels).save()
 
     return 'line.nii'
 

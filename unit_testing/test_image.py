@@ -341,11 +341,7 @@ def test_nibabel_reorient(fake_3dimage):
     print(dst.header)
 
 
-def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
-
-    path_tmp = tmp_create(basename="test_reorient")
-    path_tmp = "."
-
+def test_change_orientation(tmp_path, fake_3dimage_sct, fake_3dimage_sct_vis):
     print("Spot-checking that physical coordinates don't change")
     for shape_is in (1, 2, 3):
         shape = (1, 1, shape_is)
@@ -382,8 +378,8 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
         assert (posa_src == posa_dst).all()
         assert (posz_src == posz_dst).all()
         fn = "".join(str(x) for x in im_src.data.shape)
-        im_src.save("{}-src.nii".format(fn))
-        im_dst.save("{}-dst.nii".format(fn))
+        im_src.save(str(tmp_path / "{}-src.nii".format(fn)))
+        im_dst.save(str(tmp_path / "{}-dst.nii".format(fn)))
 
     np.random.seed(0)
 
@@ -417,6 +413,7 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
 
         affine[0, 0] *= 2
         im_ref.header.set_sform(affine, code='scanner')
+        im_ref.header.set_qform(affine, code='scanner')
 
         orientations = msct_image.all_refspace_strings()
         for ori_src in orientations:
@@ -449,12 +446,10 @@ def test_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
                     assert np.allclose(pos_src, pos_dst, atol=1e-3)
 
 
-def test_more_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
-    path_tmp = tmp_create(basename="test_reorient")
-    path_tmp = "."
+def test_more_change_orientation(tmp_path, fake_3dimage_sct, fake_3dimage_sct_vis):
 
     im_src = fake_3dimage_sct.copy()
-    im_src.save(os.path.join(path_tmp, "src.nii"), mutable=True)
+    im_src.save(os.path.join(tmp_path, "src.nii"), mutable=True)
 
     print(im_src.orientation, im_src.data.shape)
 
@@ -515,7 +510,7 @@ def test_more_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
     print("Testing orientation persistence")
     img = im_src.copy()
     orientation = img.orientation
-    fn = os.path.join(path_tmp, "pouet.nii")
+    fn = os.path.join(tmp_path, "pouet.nii")
     img.change_orientation("PIR").save(fn)
     assert img.data.shape == orient2shape("PIR")
     img = msct_image.Image(fn)
@@ -527,8 +522,7 @@ def test_more_change_orientation(fake_3dimage_sct, fake_3dimage_sct_vis):
     img = fake_3dimage_sct_vis.copy()
     print(img.header.get_best_affine())
     orientation = img.orientation
-    path_tmp = "."
-    fn = os.path.join(path_tmp, "vis.nii")
+    fn = os.path.join(tmp_path, "vis.nii")
     fn2 = img.save(fn, mutable=True).change_orientation("ALS", generate_path=True).save().absolutepath
     img = msct_image.Image(fn2)
     assert img.orientation == "ALS"
@@ -679,3 +673,39 @@ def test_splitext():
     assert msct_image.splitext('nice.image.nii.gz') == ('nice.image', '.nii.gz')
     assert msct_image.splitext('nice.folder/image.nii.gz') == ('nice.folder/image', '.nii.gz')
     assert msct_image.splitext('image.tar.gz') == ('image', '.tar.gz')
+
+
+def test_tolerance_of_affine_mismatch_check():
+    """Verify that affine mismatch error is thrown only for mismatches above a certain tolerance."""
+    # ERROR NOT EXPECTED (Affine matrices have slight differences, but are close enough to be equivalent)
+    # NB: Specific values taken from anonymized data from https://github.com/neuropoly/spinalcordtoolbox/issues/3251
+    qform_affine = np.array([[-0.0000000613307, -0.0032542832702, -0.8999945527288, 36.8009071350098],
+                             [-0.9322916865349, -0.0000000613307, 0.0000000594134, 214.2190246582031],
+                             [0.0000000615451, -0.9322860067718, 0.0031415651366, 122.8873901367188],
+                             [0.0000000000000, 0.0000000000000, 0.0000000000000, 1.0000000000000]])
+    sform_affine = np.array([[-0.0000000000007, -0.0032542543486, -0.8999945521355, 36.8009071350098],
+                             [-0.9322916865349, 0.0000000001912, -0.0000000000000, 214.2190246582031],
+                             [-0.0000000001912, -0.9322860240936, 0.0031415862031, 122.8873901367188],
+                             [0.0000000000000, 0.0000000000000, 0.0000000000000, 1.0000000000000]])
+    header_e7 = nibabel.Nifti1Header()
+    header_e7.set_sform(affine=sform_affine)
+    header_e7.set_qform(affine=qform_affine)
+    msct_image.Image(param=[1, 1, 1], hdr=header_e7, check_sform=True)
+
+    # ERROR NOT EXPECTED (A bigger discrepancy is introduced, but it doesn't exceed the tolerance of the check)
+    qform_affine_e3 = qform_affine.copy()
+    qform_affine_e3[0, 0] += 1e-3
+    header_e3 = nibabel.Nifti1Header()
+    header_e3.set_sform(affine=sform_affine)
+    header_e3.set_qform(affine=qform_affine_e3)
+    msct_image.Image(param=[1, 1, 1], hdr=header_e3, check_sform=True)
+
+    # ERROR EXPECTED (A bigger discrepancy is introduced, and it does exceed the tolerance of the check)
+    qform_affine_e2 = qform_affine.copy()
+    qform_affine_e2[0, 0] += 1e-2
+    header_e2 = nibabel.Nifti1Header()
+    header_e2.set_sform(affine=sform_affine)
+    header_e2.set_qform(affine=qform_affine_e2)
+    with pytest.raises(ValueError) as e:
+        msct_image.Image(param=[1, 1, 1], hdr=header_e2, check_sform=True)
+    assert "Image sform does not match qform" in str(e.value)

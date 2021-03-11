@@ -28,6 +28,9 @@ def test_sct_label_vertebrae_high_value_warning(caplog, tmp_path):
     sct_label_vertebrae.main(command.split())
     assert 'Disc value not included in template.' in caplog.text
 
+    # Files created in root directory by sct_label_vertebrae
+    os.unlink('straightening.cache')
+
 
 def test_sct_label_vertebrae_clean_labels(tmp_path):
     command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,3 -clean-labels 1 -ofolder ' + str(os.path.join(str(tmp_path), 'clean'))
@@ -45,6 +48,9 @@ def test_sct_label_vertebrae_clean_labels(tmp_path):
     # The cleaned version should be closer to the segmentation
     assert dice_clean >= dice_no_clean
 
+    # Files created in root directory by sct_label_vertebrae
+    os.unlink('straightening.cache')
+
 
 def test_sct_label_vertebrae_consistent_disc(tmp_path):
     """Check that all expected output labeled discs exist"""
@@ -55,3 +61,19 @@ def test_sct_label_vertebrae_consistent_disc(tmp_path):
     fp, fn = check_missing_label(pred, ref)
     assert fp == []
     assert fn == []
+
+    # Files created in root directory by sct_label_vertebrae
+    os.unlink('straightening.cache')
+
+
+def test_sct_label_vertebrae_disc_discontinuity_center_of_mass_error(tmp_path, caplog):
+    # Generate a discontinuity next to an intervertebral disc
+    t2_seg = Image('sct_testing_data/t2/t2_seg-manual.nii.gz')
+    t2_seg.data[:, 16, :] = 0
+    path_out = str(tmp_path / 't2_seg-large-discontinuity.nii.gz')
+    t2_seg.save(path=path_out)
+
+    # Ensure the discontinuity is detected and an interpolated centerline is used instead
+    sct_label_vertebrae.main(['-i', 'sct_testing_data/t2/t2.nii.gz', '-s', path_out, '-c', 't2',
+                              '-initfile', 'sct_testing_data/t2/init_label_vertebrae.txt'])
+    assert "Using interpolated centerline" in caplog.text

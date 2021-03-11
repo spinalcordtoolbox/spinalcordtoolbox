@@ -186,26 +186,40 @@ def main(argv=None):
 
     # Merge b=0 images
     printv('\nMerge b=0...', verbose)
-    l = []
+    fname_in_list_b0 = []
     for it in range(nb_b0):
-        l.append(dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext)
-    im_out = concat_data(l, 3).save(b0_name + ext)
+        fname_in_list_b0.append(dmri_name + '_T' + str(index_b0[it]).zfill(4) + ext)
+    im_in_list_b0 = [Image(fname) for fname in fname_in_list_b0]
+    concat_data(im_in_list_b0, 3).save(b0_name + ext)
 
     # Average b=0 images
     if average:
         printv('\nAverage b=0...', verbose)
-        run_proc(['sct_maths', '-i', b0_name + ext, '-o', b0_mean_name + ext, '-mean', 't'], verbose)
+        img = Image(b0_name + ext)
+        out = img.copy()
+        dim_idx = 3
+        if len(np.shape(img.data)) < dim_idx + 1:
+            raise ValueError("Expecting image with 4 dimensions!")
+        out.data = np.mean(out.data, dim_idx)
+        out.save(path=b0_mean_name + ext)
 
     # Merge DWI
-    l = []
+    fname_in_list_dwi = []
     for it in range(nb_dwi):
-        l.append(dmri_name + '_T' + str(index_dwi[it]).zfill(4) + ext)
-    im_out = concat_data(l, 3).save(dwi_name + ext)
+        fname_in_list_dwi.append(dmri_name + '_T' + str(index_dwi[it]).zfill(4) + ext)
+    im_in_list_dwi = [Image(fname) for fname in fname_in_list_dwi]
+    concat_data(im_in_list_dwi, 3).save(dwi_name + ext)
 
     # Average DWI images
     if average:
         printv('\nAverage DWI...', verbose)
-        run_proc(['sct_maths', '-i', dwi_name + ext, '-o', dwi_mean_name + ext, '-mean', 't'], verbose)
+        img = Image(dwi_name + ext)
+        out = img.copy()
+        dim_idx = 3
+        if len(np.shape(img.data)) < dim_idx + 1:
+            raise ValueError("Expecting image with 4 dimensions!")
+        out.data = np.mean(out.data, dim_idx)
+        out.save(path=dwi_mean_name + ext)
 
     # come back
     os.chdir(curdir)

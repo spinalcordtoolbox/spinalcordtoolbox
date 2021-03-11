@@ -16,7 +16,8 @@ import os
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
-from spinalcordtoolbox.image import add_suffix
+from spinalcordtoolbox.image import Image, add_suffix
+from spinalcordtoolbox.math import binarize
 
 
 def get_parser():
@@ -113,27 +114,33 @@ def main(argv=None):
     tmp_dir = os.path.abspath(tmp_dir)
 
     # copy input files to tmp directory
-    # for fname in [fname_input1, fname_input2]:
-    copy(fname_input1, tmp_dir)
-    copy(fname_input2, tmp_dir)
-    fname_input1 = ''.join(extract_fname(fname_input1)[1:])
-    fname_input2 = ''.join(extract_fname(fname_input2)[1:])
+    fname_input1_tmp = 'tmp1_' + ''.join(extract_fname(fname_input1)[1:])
+    fname_input2_tmp = 'tmp2_' + ''.join(extract_fname(fname_input2)[1:])
+    copy(fname_input1, os.path.join(tmp_dir, fname_input1_tmp))
+    copy(fname_input2, os.path.join(tmp_dir, fname_input2_tmp))
+    fname_input1 = fname_input1_tmp
+    fname_input2 = fname_input2_tmp
 
     curdir = os.getcwd()
     os.chdir(tmp_dir)  # go to tmp directory
 
+    im_1 = Image(fname_input1)
+    im_2 = Image(fname_input2)
+
     if arguments.bin is not None:
+        im_1.data = binarize(im_1.data, 0)
         fname_input1_bin = add_suffix(fname_input1, '_bin')
-        run_proc(['sct_maths', '-i', fname_input1, '-bin', '0', '-o', fname_input1_bin])
-        fname_input1 = fname_input1_bin
+        im_1.save(fname_input1_bin, mutable=True)
+
+        im_2.data = binarize(im_2.data, 0)
         fname_input2_bin = add_suffix(fname_input2, '_bin')
-        run_proc(['sct_maths', '-i', fname_input2, '-bin', '0', '-o', fname_input2_bin])
+        im_2.save(fname_input2_bin, mutable=True)
+
+        # Use binarized images in subsequent steps
+        fname_input1 = fname_input1_bin
         fname_input2 = fname_input2_bin
 
     # copy header of im_1 to im_2
-    from spinalcordtoolbox.image import Image
-    im_1 = Image(fname_input1)
-    im_2 = Image(fname_input2)
     im_2.header = im_1.header
     im_2.save()
 
