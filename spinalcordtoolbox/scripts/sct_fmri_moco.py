@@ -16,7 +16,7 @@ import os
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, set_global_loglevel
-
+from spinalcordtoolbox.reports.qc import generate_qc
 
 def get_parser():
     # initialize parameters
@@ -162,7 +162,17 @@ def main(argv=None):
         param.update(arguments.param)
 
     # run moco
-    moco_wrapper(param)
+    img_moco = moco_wrapper(param)
+    fname_output_data = img_moco.absolutepath
+
+    # QC report
+    path_qc = arguments.qc
+    qc_fps = arguments.qc_fps
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
+    if path_qc is not None:
+        generate_qc(fname_in1=fname_output_data, fname_in2=param.fname_data, fname_seg=param.fname_mask,
+                    path_qc=os.path.abspath(path_qc), fps = qc_fps, dataset=qc_dataset, subject=qc_subject, process='sct_fmri_moco')
 
 
 if __name__ == "__main__":
