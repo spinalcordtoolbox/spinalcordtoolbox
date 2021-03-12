@@ -173,7 +173,8 @@ def main(argv=None):
     qc_subject = arguments.qc_subject
     if path_qc is not None:
         generate_qc(fname_in1=fname_output_data, fname_in2=param.fname_data, fname_seg=param.fname_mask,
-                    path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset, subject=qc_subject, process='sct_fmri_moco')
+                    path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset, subject=qc_subject,
+                    process='sct_fmri_moco')
 
 
 if __name__ == "__main__":
