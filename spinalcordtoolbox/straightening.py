@@ -520,12 +520,12 @@ class SpinalCordStraightener(object):
         image_centerline_straight.save(fname_ref)
         if self.curved2straight:
             logger.info('Apply transformation to input image...')
-        sct_apply_transfo.main(['-i', 'data.nii',
-                                '-d', fname_ref,
-                                '-w', 'tmp.curve2straight.nii.gz',
-                                '-o', 'tmp.anat_rigid_warp.nii.gz',
-                                '-x', 'spline',
-                                '-v', str(verbose)])
+            sct_apply_transfo.main(['-i', 'data.nii',
+                                    '-d', fname_ref,
+                                    '-w', 'tmp.curve2straight.nii.gz',
+                                    '-o', 'tmp.anat_rigid_warp.nii.gz',
+                                    '-x', 'spline',
+                                    '-v', str(verbose)])
 
 
         if self.accuracy_results:
