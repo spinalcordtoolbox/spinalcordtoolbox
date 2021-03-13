@@ -154,10 +154,8 @@ class ActionCreateFolder(argparse.Action):
         Create a new directory if not exist. The action might throw
         OSError, along with other kinds of exception
         """
-        if not os.path.isdir(folder_name):
-            os.mkdir(folder_name)
-
         folder_name = os.path.normpath(folder_name)
+        os.makedirs(folder_name, exist_ok=True)
         return folder_name
 
     def __call__(self, parser, namespace, values, option_string=None):
