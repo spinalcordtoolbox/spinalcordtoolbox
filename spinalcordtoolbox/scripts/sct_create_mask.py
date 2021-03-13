@@ -244,7 +244,7 @@ def create_mask(param):
             cx[iz], cy[iz] = ndimage.measurements.center_of_mass(np.array(data_centerline[:, :, iz]))
 
     # create 2d masks at each axial slice
-    im_out = zeros_like(im_data)
+    im_out = zeros_like(im_data, dtype=np.float64)
     for iz in range(nz):
         if iz in z_centerline_not_null:
             center = np.array([cx[iz], cy[iz]])
