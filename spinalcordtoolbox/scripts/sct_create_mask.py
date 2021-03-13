@@ -249,6 +249,7 @@ def create_mask(param):
         if iz in z_centerline_not_null:
             center = np.array([cx[iz], cy[iz]])
             im_out.data[:, :, iz] = create_mask2d(param, center, param.shape, param.size, im_data=im_data)
+    im_out.save('mask_RPI.nii.gz')
 
     im_out.change_orientation(orientation_input)
     im_out.header = Image(param.fname_data).header
