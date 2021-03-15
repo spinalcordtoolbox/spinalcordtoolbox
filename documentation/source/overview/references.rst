@@ -205,3 +205,4 @@ The following studies (in chronological order) have used SCT:
 -  `Solanes et al. 3D patient-specific spinal cord computational model for SCS management: potential clinical applications. Journal of Neural Engineering, 2021 <https://pubmed.ncbi.nlm.nih.gov/33556926/>`_
 -  `Johnson et al. Changes in White Matter of the Cervical Spinal Cord after a Single Season of Collegiate Football. Neurotrauma Reports, 2021 <https://www.liebertpub.com/doi/10.1089/neur.2020.0035>`_
 -  `Ost et al. Spinal Cord Morphology in Degenerative Cervical Myelopathy Patients; Assessing Key Morphological Characteristics Using Machine Vision Tools. Journal of Clinical Medicine, 2021 <https://www.mdpi.com/2077-0383/10/4/892>`_
+-  `Lee et al. Diffusion‐prepared fast spin echo for artifact‐free spinal cord imaging. Magnetic Resonance in Medicine, 2021 <https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28751>`_
