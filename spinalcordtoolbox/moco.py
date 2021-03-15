@@ -128,7 +128,7 @@ def moco_wrapper(param):
     Wrapper that performs motion correction.
 
     :param param: ParamMoco class
-    :return: None
+    :return: fname_moco
     """
     file_data = 'data.nii'  # corresponds to the full input data (e.g. dmri or fmri)
     file_data_dirname, file_data_basename, file_data_ext = extract_fname(file_data)
@@ -476,6 +476,7 @@ def moco_wrapper(param):
         [os.path.join(param.path_out, add_suffix(os.path.basename(param.fname_data), param.suffix)),
          param.fname_data], mode='ortho,ortho')
 
+    return fname_moco
 
 def moco(param):
     """
