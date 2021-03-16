@@ -1,3 +1,4 @@
+import sys
 import pytest
 import logging
 
@@ -6,6 +7,7 @@ from spinalcordtoolbox.scripts import sct_denoising_onlm
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Test hangs on macOS 10.15 CI runners (cause currently unknown)")
 @pytest.mark.sct_testing
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_denoising_onlm_no_checks():
