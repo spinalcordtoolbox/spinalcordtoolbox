@@ -136,6 +136,15 @@ def get_parser():
         help="Show this help message and exit."
     )
     optional.add_argument(
+        '-s-template-id',
+        metavar=Metavar.int,
+        type=int,
+        help="Segmentation from the template to associate with the flag '-s'. Typically, the spinal cord segmentation "
+             "is used, but if it is available, the white matter mask would produced better registration results. The ID"
+             "is indicated in the file 'template/info_label.txt' of the template indicated by the flag '-t'.",
+        default=3
+        )
+    optional.add_argument(
         '-l',
         metavar=Metavar.file,
         help="R|One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
@@ -339,7 +348,7 @@ def main(argv=None):
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)  # label = spinal cord mask with discrete vertebral levels
     id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
     file_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast_template.upper()])  # label = *-weighted template
-    file_template_seg = get_file_label(os.path.join(path_template, 'template'), id_label=3)  # label = spinal cord mask (binary)
+    file_template_seg = get_file_label(os.path.join(path_template, 'template'), id_label=arguments.s_template_id)
 
     # start timer
     start_time = time.time()
