@@ -41,6 +41,7 @@ ini_param_trans_x = 270.0  # pix
 ini_param_trans_y = -150.0  # pix
 initial_step = 2
 
+
 def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1):
     """
     Register two NIFTI volumes containing landmarks
@@ -101,6 +102,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
                                                            points_moving_barycenter[2]))
     text_file.close()
 
+    
 def getNeighbors(point, set_points, k=1):
     '''
     Locate most similar neighbours
