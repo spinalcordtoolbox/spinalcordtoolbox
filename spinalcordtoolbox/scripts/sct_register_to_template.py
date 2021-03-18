@@ -698,24 +698,10 @@ def main(argv=None):
         printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
         sct_labels.remove_missing_labels(Image(ftmp_template_label), Image(ftmp_label)).save(path=ftmp_template_label)
 
-        # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This
-        # new label is added at the level of the upper most label (lowest value), at 1cm to the right.
-        for i_file in [ftmp_label, ftmp_template_label]:
-            im_label = Image(i_file)
-            coord_label = im_label.getCoordinatesAveragedByValue()  # N.B. landmarks are sorted by value
-            # Create new label
-            from copy import deepcopy
-            new_label = deepcopy(coord_label[0])
-            # move it 5mm to the left (orientation is RAS)
-            nx, ny, nz, nt, px, py, pz, pt = im_label.dim
-            new_label.x = np.round(coord_label[0].x + 5.0 / px)
-            # assign value 99
-            new_label.value = 99
-            # Add to existing image
-            im_label.data[int(new_label.x), int(new_label.y), int(new_label.z)] = new_label.value
-            # Overwrite label file
-            # im_label.absolutepath = 'label_rpi_modif.nii.gz'
-            im_label.save()
+        # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation.
+        add_orthogonal_label(ftmp_label)
+        add_orthogonal_label(ftmp_template_label)
+
         # Set the angle of the template orientation to 0 (source image)
         for key in list(paramregmulti.steps.keys()):
             paramregmulti.steps[key].rot_src = 0
@@ -764,6 +750,29 @@ def main(argv=None):
                     process='sct_register_to_template')
     display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
+
+
+def add_orthogonal_label(fname_label):
+    """
+    Add one label of value=99 at the axial slice that contains the label with the lowest value, 10 pixels to the right.
+    :param fname_label:
+    :return:
+    """
+    im_label = Image(fname_label)
+    coord_label = im_label.getCoordinatesAveragedByValue()  # N.B. landmarks are sorted by value
+    # Create new label
+    from copy import deepcopy
+    new_label = deepcopy(coord_label[0])
+    # move it 5mm to the left (orientation is RAS)
+    nx, ny, nz, nt, px, py, pz, pt = im_label.dim
+    new_label.x = np.round(coord_label[0].x + 5.0 / px)  # TODO change to 10 pixels
+    # assign value 99
+    new_label.value = 99
+    # Add to existing image
+    im_label.data[int(new_label.x), int(new_label.y), int(new_label.z)] = new_label.value
+    # Overwrite label file
+    # im_label.absolutepath = 'label_rpi_modif.nii.gz'
+    im_label.save()
 
 
 def project_labels_on_spinalcord(fname_label, fname_seg, param_centerline):
