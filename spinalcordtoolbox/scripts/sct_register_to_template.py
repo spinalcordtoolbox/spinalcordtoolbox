@@ -140,9 +140,10 @@ def get_parser():
         '-s-template-id',
         metavar=Metavar.int,
         type=int,
-        help="Segmentation from the template to be used by flag '-s'. By default, the spinal cord segmentation "
-             "is used, but if available, a different segmentation could produce better registration results. The ID"
-             "is an integer indicated in the file 'template/info_label.txt' of the template indicated by the flag '-t'.",
+        help="Segmentation file ID to use for registration. The ID is an integer indicated in the file "
+             "'template/info_label.txt'. This 'info_label.txt' file corresponds to the template indicated by the flag "
+             "'-t'. By default, the spinal cord segmentation is used (ID=3), but if available, a different segmentation"
+             " such as white matter segmentation could produce better registration results.",
         default=3
         )
     optional.add_argument(
