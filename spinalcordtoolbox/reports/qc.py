@@ -535,6 +535,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
               dpi=300,
               stretch_contrast_method='contrast_stretching',
               angle_line=None,
+              fps=None,
               dataset=None,
               subject=None):
     """
@@ -553,6 +554,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
     :param dpi: int: Output resolution of the image
     :param stretch_contrast_method: Method for stretching contrast. See QcImage
     :param angle_line: [float]: See generate_qc()
+    :param fps: [float]: Frame rate for output gif images
     :param dataset: str: Dataset name
     :param subject: str: Subject name
     :return:
@@ -563,7 +565,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
 
     if qcslice is not None:
         @QcImage(report, 'none', qcslice_operations, stretch_contrast_method=stretch_contrast_method,
-                 angle_line=angle_line)
+                 angle_line=angle_line, fps=fps)
         def layout(qslice):
             # This will call qc.__call__(self, func):
             return qcslice_layout(qslice)
@@ -605,8 +607,8 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
         print("WARNING! Platform undetectable.")
 
 
-def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args=None, path_qc=None, dataset=None,
-                subject=None, path_img=None, process=None):
+def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args=None, path_qc=None, fps=None,
+                dataset=None, subject=None, path_img=None, process=None):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
     scripts (e.g. sct_propseg).
@@ -618,6 +620,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     each slice, for slice that don't have an angle to display, a nan is expected. To be used for assessing cord orientation.
     :param args: args from parent function
     :param path_qc: str: Path to save QC report
+    :param fps: float: Frame rate for output gif images
     :param dataset: str: Dataset name
     :param subject: str: Subject name
     :param path_img: dict: Path to image to display (e.g., a graph), instead of computing the image from MRI.
@@ -715,7 +718,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         qcslice_operations=qcslice_operations,
         qcslice_layout=qcslice_layout,
         stretch_contrast_method='equalized',
-        angle_line=angle_line
+        angle_line=angle_line,
+        fps=fps,
     )
 
 
