@@ -759,6 +759,11 @@ def add_orthogonal_label(fname_label):
     :return:
     """
     im_label = Image(fname_label)
+    orient_orig = im_label.orientation
+    # For some reasons (#3304) calling self.change_orientation() replaces self.absolutepath with Null so we need to
+    # save it.
+    path_label = im_label.absolutepath
+    im_label.change_orientation('RPI')
     coord_label = im_label.getCoordinatesAveragedByValue()  # N.B. landmarks are sorted by value
     # Create new label
     from copy import deepcopy
@@ -771,8 +776,8 @@ def add_orthogonal_label(fname_label):
     # Add to existing image
     im_label.data[int(new_label.x), int(new_label.y), int(new_label.z)] = new_label.value
     # Overwrite label file
-    # im_label.absolutepath = 'label_rpi_modif.nii.gz'
-    im_label.save()
+    im_label.change_orientation(orient_orig)
+    im_label.save(path_label)
 
 
 def project_labels_on_spinalcord(fname_label, fname_seg, param_centerline):

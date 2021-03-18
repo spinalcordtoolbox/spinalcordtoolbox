@@ -6,6 +6,7 @@ import pytest
 import logging
 import spinalcordtoolbox.scripts.sct_register_to_template as sct_register_to_template
 from spinalcordtoolbox.image import Image
+import spinalcordtoolbox.labels as sct_labels
 logger = logging.getLogger(__name__)
 
 # def change_orientation
@@ -28,12 +29,18 @@ def test_sct_register_to_template_non_rpi_template(tmp_path):
         nii = Image(file)
         nii.change_orientation('LPI')
         nii.save(file)
+    # Create label for registration
+    sct_labels.label_vertebrae(Image('sct_testing_data/template_lpi/template/PAM50_small_levels.nii.gz'), 0).\
+        save('sct_testing_data/template_lpi/template/labels_vert.nii.gz')
+    # Required by sct_register_to_template -ldisc
+    shutil.copy('sct_testing_data/template_lpi/template/PAM50_small_label_discPosterior.nii.gz '
+                'sct_testing_data/template_lpi/template/PAM50_label_disc.nii.gz')
     # Run registration to template using the RPI template as input file
     command = '-i sct_testing_data/template/template/PAM50_small_t2.nii.gz ' \
               '-s sct_testing_data/template/template/PAM50_small_cord.nii.gz ' \
-              '-l sct_testing_data/template/template/labels_vert.nii.gz ' \
+              '-ldisc sct_testing_data/template/template/PAM50_small_label_discPosterior.nii.gz ' \
               '-c t2 -t sct_testing_data/template_lpi -ref subject ' \
-              '-param step=1,type=seg,algo=centermass'
+              '-param step=1,type=seg,algo=centermass -r 0 -v 2'
     sct_register_to_template.main(command.split())
     img_orig = Image('sct_testing_data/template/template/PAM50_small_t2.nii.gz')
     img_reg = Image('template2anat.nii.gz')
