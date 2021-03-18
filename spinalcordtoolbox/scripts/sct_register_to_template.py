@@ -30,6 +30,7 @@ from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils import *
+from spinalcordtoolbox.utils import Metavar
 from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
