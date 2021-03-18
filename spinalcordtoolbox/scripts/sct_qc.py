@@ -29,7 +29,8 @@ def get_parser():
                         help='SCT function associated with the QC report to generate',
                         choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_register_multimodal',
                                  'sct_register_to_template', 'sct_warp_template', 'sct_label_vertebrae',
-                                 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline'),
+                                 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline', 'sct_fmri_moco',
+                                 'sct_dmri_moco'),
                         required=True)
     parser.add_argument('-s',
                         metavar='SEG',
