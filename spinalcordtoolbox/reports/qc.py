@@ -63,7 +63,7 @@ class QcImage(object):
     # _seg_colormap = plt.cm.autumn
 
     def __init__(self, qc_report, interpolation, action_list, stretch_contrast=True,
-                 stretch_contrast_method='contrast_stretching', angle_line=None):
+                 stretch_contrast_method='contrast_stretching', angle_line=None, fps=None):
         """
         :param qc_report: QcReport: The QC report object
         :param interpolation: str: Type of interpolation used in matplotlib
@@ -71,6 +71,7 @@ class QcImage(object):
         :param stretch_contrast: adjust image so as to improve contrast
         :param stretch_contrast_method: str: {'contrast_stretching', 'equalized'}: Method for stretching contrast
         :param angle_line: float: See generate_qc()
+        :param fps: float: Frame rate for output gif images
         """
         self.qc_report = qc_report
         self.interpolation = interpolation
@@ -78,6 +79,7 @@ class QcImage(object):
         self._stretch_contrast = stretch_contrast
         self._stretch_contrast_method = stretch_contrast_method
         self._angle_line = angle_line
+        self._fps = fps
         self._centermass = None  # center of mass returned by slice.Axial.get_center()
     """
     action_list contain the list of images that has to be generated.
@@ -554,7 +556,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
     :param dpi: int: Output resolution of the image
     :param stretch_contrast_method: Method for stretching contrast. See QcImage
     :param angle_line: [float]: See generate_qc()
-    :param fps: [float]: Frame rate for output gif images
+    :param fps: float: Frame rate for output gif images
     :param dataset: str: Dataset name
     :param subject: str: Subject name
     :return:
