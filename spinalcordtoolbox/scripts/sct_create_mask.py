@@ -243,21 +243,14 @@ def create_mask(param):
         if iz in z_centerline_not_null:
             cx[iz], cy[iz] = ndimage.measurements.center_of_mass(np.array(data_centerline[:, :, iz]))
     # create 2d masks
-    file_mask = 'data_mask'
+    im_list = []
     for iz in range(nz):
         if iz not in z_centerline_not_null:
-            # write an empty nifty volume
-            img = nibabel.Nifti1Image(data_centerline[:, :, iz], None, hdr)
-            nibabel.save(img, (file_mask + str(iz) + '.nii'))
+            im_list.append(Image(data_centerline[:, :, iz], hdr=hdr))
         else:
             center = np.array([cx[iz], cy[iz]])
             mask2d = create_mask2d(param, center, param.shape, param.size, im_data=im_data)
-            # Write NIFTI volumes
-            img = nibabel.Nifti1Image(mask2d, None, hdr)
-            nibabel.save(img, (file_mask + str(iz) + '.nii'))
-
-    fname_list = [file_mask + str(iz) + '.nii' for iz in range(nz)]
-    im_list = [Image(fname) for fname in fname_list]
+            im_list.append(Image(mask2d, hdr=hdr))
     im_out = concat_data(im_list, dim=2).save('mask_RPI.nii.gz')
 
     im_out.change_orientation(orientation_input)
