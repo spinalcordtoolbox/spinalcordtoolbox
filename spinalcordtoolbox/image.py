@@ -914,9 +914,6 @@ def concat_data(im_in_list: Sequence[Image], dim, pixdim=None, squeeze_data=Fals
     if im_in_first.absolutepath is not None:
         im_out.absolutepath = add_suffix(im_in_first.absolutepath, '_concat')
 
-    # write file
-    im_out.data = data_concat
-
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim
 
