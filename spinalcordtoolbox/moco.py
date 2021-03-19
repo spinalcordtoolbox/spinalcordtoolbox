@@ -933,8 +933,8 @@ def moco_wrapper_interleaved(param):
     printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), param.verbose)
 
     printv('\nData were acquired in interleaved mode.', param.verbose)
-    printv('Splitting data into two datasets along SI direction'
-               ' (even and odd slices) and run moco separately...', param.verbose)
+    printv('Splitting data into two datasets along SI direction (even and odd slices) and run moco separately...',
+           param.verbose)
     orig_orientation = split_to_even_and_odd(im_data, file_data)
 
     # Split mask if was passed
@@ -1044,20 +1044,20 @@ def moco_wrapper_interleaved(param):
     printv('\nGenerate merged output files...', param.verbose)
     # save moco corrected image
     generate_output_file(os.path.join(path_tmp, add_suffix(file_data, '_merged')),
-                             os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco')))
+                         os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco')))
     # save b0_moco_mean and dwi_moco_mean
     generate_output_file(fname_b0_mean,
-                             os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco_b0_mean')))
+                         os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco_b0_mean')))
     generate_output_file(fname_dwi_mean,
-                             os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco_dwi_mean')))
+                         os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco_dwi_mean')))
     # save motion param files
     if param.output_motion_param:
         generate_output_file(os.path.join(path_tmp, add_suffix(file_moco_params_x, '_merged')),
-                                 os.path.join(path_out_abs, file_moco_params_x), squeeze_data=False)
+                             os.path.join(path_out_abs, file_moco_params_x), squeeze_data=False)
         generate_output_file(os.path.join(path_tmp, add_suffix(file_moco_params_y, '_merged')),
-                                 os.path.join(path_out_abs, file_moco_params_y), squeeze_data=False)
+                             os.path.join(path_out_abs, file_moco_params_y), squeeze_data=False)
         generate_output_file(os.path.join(path_tmp, add_suffix(file_moco_params, '_merged')),
-                                 os.path.join(path_out_abs, file_moco_params), squeeze_data=False)
+                             os.path.join(path_out_abs, file_moco_params), squeeze_data=False)
 
     # Delete temporary files
     if param.remove_temp_files == 1:
