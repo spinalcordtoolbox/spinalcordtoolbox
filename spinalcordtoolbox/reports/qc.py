@@ -71,7 +71,7 @@ class QcImage(object):
         :param stretch_contrast: adjust image so as to improve contrast
         :param stretch_contrast_method: str: {'contrast_stretching', 'equalized'}: Method for stretching contrast
         :param angle_line: float: See generate_qc()
-        :param fps: float: Frame rate for output gif images
+        :param fps: float: Number of frames per second for output gif images
         """
         self.qc_report = qc_report
         self.interpolation = interpolation
@@ -556,7 +556,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
     :param dpi: int: Output resolution of the image
     :param stretch_contrast_method: Method for stretching contrast. See QcImage
     :param angle_line: [float]: See generate_qc()
-    :param fps: float: Frame rate for output gif images
+    :param fps: float: Number of frames per second for output gif images
     :param dataset: str: Dataset name
     :param subject: str: Subject name
     :return:
@@ -622,7 +622,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     each slice, for slice that don't have an angle to display, a nan is expected. To be used for assessing cord orientation.
     :param args: args from parent function
     :param path_qc: str: Path to save QC report
-    :param fps: float: Frame rate for output gif images
+    :param fps: float: Number of frames per second for output gif images
     :param dataset: str: Dataset name
     :param subject: str: Subject name
     :param path_img: dict: Path to image to display (e.g., a graph), instead of computing the image from MRI.
