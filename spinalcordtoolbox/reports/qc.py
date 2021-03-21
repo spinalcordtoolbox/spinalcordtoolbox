@@ -246,6 +246,14 @@ class QcImage(object):
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
+    def grid(self, mask, ax):
+        """Centered grid to assess quality of motion correction"""
+        grid = np.full_like(mask, np.nan)
+        ax.imshow(grid, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
+        ax.grid(color='w', which='major', axis='both', linestyle='-')
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
     # def colorbar(self):
     #     fig = plt.figure(figsize=(9, 1.5))
     #     ax = fig.add_axes([0.05, 0.80, 0.9, 0.15])
@@ -671,7 +679,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         qcslice_operations = [QcImage.grid]  # grid will be added in future PR
-        def qcslice_layout(x): return x.mosaic_through_time()  # mosaic_through_time will be added in future PR
+        def qcslice_layout(x): return x.mosaic_through_time()
     # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
         plane = 'Sagittal'
