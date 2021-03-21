@@ -280,11 +280,15 @@ class QcImage(object):
             self.qc_report.make_content_path()
             logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
-            if self._angle_line is None:
-                img, mask = func(sct_slice, *args)
-            else:
+            if self._angle_line is not None:
                 [img, mask], centermass = func(sct_slice, *args)
                 self._centermass = centermass
+            if self._fps is not None:
+                images_after_moco, images_before_moco = func(sct_slice, *args)
+                masks_after_moco = images_after_moco.copy()
+                masks_before_moco = images_before_moco.copy()
+            else:
+                img, mask = func(sct_slice, *args)
 
             if self._stretch_contrast:
                 def equalized(a):
@@ -322,35 +326,85 @@ class QcImage(object):
 
                 img = func_stretch_contrast[self._stretch_contrast_method](img)
 
-            fig = Figure()
             # if axial mosaic restrict width
             if sct_slice.get_name() == 'Axial':
                 size_fig = [5, 5 * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
             # if sagittal orientation restrict height
             elif sct_slice.get_name() == 'Sagittal':
                 size_fig = [5 * img.shape[1] / img.shape[0], 5]
-            fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
-            FigureCanvas(fig)
-            ax = fig.add_axes((0, 0, 1, 1))
-            ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(aspect_img))
-            self._add_orientation_label(ax)
-            ax.get_xaxis().set_visible(False)
-            ax.get_yaxis().set_visible(False)
-            self._save(fig, self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
 
-            for action in self.action_list:
-                logger.debug('Action List %s', action.__name__)
-                if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
-                    print("Mask type %s" % mask.dtype)
-                    mask = func_stretch_contrast[self._stretch_contrast_method](mask)
+            if self._fps is not None:
+                bkg_img_paths = []
+                overlay_img_paths = []
+                for i in range(len(images_after_moco)):
+                    fig = Figure()
+                    fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
+                    ax1 = fig.add_subplot(211)
+                    ax1.imshow(images_after_moco[i])
+                    ax1.set_title('After motion correction')
+                    ax1.get_xaxis().set_visible(False)
+                    ax1.get_yaxis().set_visible(False)
+                    self._add_orientation_label(ax1)
+
+                    ax2 = fig.add_subplot(212)
+                    ax2.imshow(images_before_moco[i])
+                    ax2.set_title('Before motion correction')
+                    ax2.get_xaxis().set_visible(False)
+                    ax2.get_yaxis().set_visible(False)
+                    self._add_orientation_label(ax2)
+
+                    # Function qc_params.abs_bkg_img_list_path to be added in future commit
+                    bkg_img_path = self.qc_report.qc_params.abs_bkg_img_list_path(i)
+                    self._save(fig, bkg_img_path, dpi = self.qc_report.qc_params.dpi)
+                    bkg_img_paths.append(bkg_img_path)
+
+                    fig = Figure()
+                    fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
+                    ax1 = fig.add_subplot(211)
+                    ax1.imshow(masks_after_moco[i])
+                    ax1.set_title('After motion correction')
+                    ax1.get_xaxis().set_visible(False)
+                    ax1.get_yaxis().set_visible(False)
+                    self._add_orientation_label(ax1)
+                    QcImage.grid(self, masks_after_moco, ax1)
+
+                    ax2 = fig.add_subplot(212)
+                    ax2.imshow(masks_before_moco[i])
+                    ax2.set_title('Before motion correction')
+                    ax2.get_xaxis().set_visible(False)
+                    ax2.get_yaxis().set_visible(False)
+                    self._add_orientation_label(ax2)
+                    QcImage.grid(self, masks_before_moco, ax2)
+
+                    # Function qc_params.abs_bkg_img_list_path to be added in future commit
+                    overlay_img_path = self.qc_report.qc_params.abs_overlay_img_list_path(i)
+                    self._save(fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
+                    overlay_img_paths.append(overlay_img_path)
+
+            else:
                 fig = Figure()
                 fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
                 FigureCanvas(fig)
                 ax = fig.add_axes((0, 0, 1, 1))
-                action(self, mask, ax)
-                self._save(fig, self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
+                ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(aspect_img))
+                self._add_orientation_label(ax)
+                ax.get_xaxis().set_visible(False)
+                ax.get_yaxis().set_visible(False)
+                self._save(fig, self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
 
-            self.qc_report.update_description_file(img.shape)
+                for action in self.action_list:
+                    logger.debug('Action List %s', action.__name__)
+                    if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
+                        print("Mask type %s" % mask.dtype)
+                        mask = func_stretch_contrast[self._stretch_contrast_method](mask)
+                    fig = Figure()
+                    fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
+                    FigureCanvas(fig)
+                    ax = fig.add_axes((0, 0, 1, 1))
+                    action(self, mask, ax)
+                    self._save(fig, self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
+
+                self.qc_report.update_description_file(img.shape)
 
         return wrapped_f
 
