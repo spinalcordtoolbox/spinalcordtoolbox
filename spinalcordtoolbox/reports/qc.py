@@ -376,7 +376,7 @@ class QcImage(object):
                     self._add_orientation_label(ax2)
                     QcImage.grid(self, masks_before_moco, ax2)
 
-                    # Function qc_params.abs_bkg_img_list_path to be added in future commit
+                    # Function qc_params.abs_overlay_img_list_path to be added in future commit
                     overlay_img_path = self.qc_report.qc_params.abs_overlay_img_list_path(i)
                     self._save(fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
                     overlay_img_paths.append(overlay_img_path)
