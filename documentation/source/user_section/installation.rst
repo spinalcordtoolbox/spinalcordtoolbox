@@ -94,7 +94,7 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
    .. code-block:: sh
 
-      sudo apt-get -y update
+      sudo apt-get update
       sudo apt-get -y install gcc
       sudo apt-get -y install unzip
       sudo apt-get install -y python-pip python
