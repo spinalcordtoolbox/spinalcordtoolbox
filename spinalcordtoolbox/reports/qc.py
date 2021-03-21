@@ -274,20 +274,25 @@ class QcImage(object):
             """
             self.qc_report.slice_name = sct_slice.get_name()
 
-            # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
-            aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
+
+
 
             self.qc_report.make_content_path()
             logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
             if self._angle_line is not None:
+                # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
+                aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
                 [img, mask], centermass = func(sct_slice, *args)
                 self._centermass = centermass
             if self._fps is not None:
+                # To add: aspect ratio for 4d images
                 images_after_moco, images_before_moco = func(sct_slice, *args)
                 masks_after_moco = images_after_moco.copy()
                 masks_before_moco = images_before_moco.copy()
             else:
+                # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
+                aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
                 img, mask = func(sct_slice, *args)
 
             if self._stretch_contrast:
@@ -746,7 +751,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         qcslice_operations = [QcImage.grid]  # grid will be added in future PR
-        def qcslice_layout(x): return x.mosaic_through_time()
+        def qcslice_layout(x): return x.mosaics_through_time()
     # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
         plane = 'Sagittal'
