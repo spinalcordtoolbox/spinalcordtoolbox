@@ -10,7 +10,7 @@ import numpy as np
 from scipy import ndimage
 from nibabel.nifti1 import Nifti1Image
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, split_img_data
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
@@ -38,10 +38,11 @@ class Slice(object):
 
     def __init__(self, images, p_resample=0.6):
         """
-        :param images: list of 3D volumes to be separated into slices.
+        :param images: list of 3D or 4D volumes to be separated into slices.
         """
         logger.info('Resample images to {}x{} mm'.format(p_resample, p_resample))
         self._images = list()
+        self._4d_images = list()
         image_ref = None  # first pass: we don't have a reference image to resample to
         for i, image in enumerate(images):
             img = image.copy()
@@ -56,8 +57,11 @@ class Slice(object):
                 img_r = self._resample_slicewise(img, p_resample, type_img=type_img, image_ref=image_ref)
             else:
                 img_r = img.copy()
-            self._images.append(img_r)
-            image_ref = self._images[0]  # 2nd and next passes: we resample any image to the space of the first one
+            if img_r.dim[3] == 1:   # If image is 3D, nt = 1
+                self._images.append(img_r)
+                image_ref = self._images[0] # 2nd and next passes: we resample any image to the space of the first one
+            else:
+                self._4d_images.append(img_r)
 
     @staticmethod
     def axial_slice(data, i):
@@ -269,6 +273,24 @@ class Slice(object):
             return matrices, centers_mosaic
         else:
             return matrices
+
+    def mosaics_through_time(self):
+        """Obtain mosaics for each volume
+
+        :return: list of tuples of numpy.ndarray containing the mosaics of each volumes
+        """
+
+        mosaics = list()
+        for i, img in enumerate(self._4d_images):
+            im_t_list = (split_img_data(img, 3, squeeze_data=True))  # Split along T dimension
+            if i != 0:
+                self._images = self._images.slice(-1)  # Removes all images except the last, which is the segmentation
+            self._images.insert(0, im_t_list)
+            matrices = self.mosaic()
+
+            mosaics.append(matrices)
+
+            return mosaics
 
     def single(self):
         """Obtain the matrices of the single slices. Flatten
