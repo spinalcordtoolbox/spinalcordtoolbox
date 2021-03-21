@@ -43,9 +43,11 @@ class Slice(object):
         logger.info('Resample images to {}x{} mm'.format(p_resample, p_resample))
         self._images = list()
         self._4d_images = list()
+        self._absolute_paths = list()  # Used because change_orientation removes the field absolute_path
         image_ref = None  # first pass: we don't have a reference image to resample to
         for i, image in enumerate(images):
             img = image.copy()
+            self._absolute_paths.append(img.absolutepath)  # change_orientation removes the field absolute_path
             img.change_orientation('SAL')
             if p_resample:
                 if i == len(images) - 1:
@@ -281,11 +283,15 @@ class Slice(object):
         """
 
         mosaics = list()
+
         for i, img in enumerate(self._4d_images):
-            im_t_list = (split_img_data(img, 3, squeeze_data=True))  # Split along T dimension
+            # TODO: The absolutepath is changed to None after change_orientation
+            img.absolutepath = self._absolute_paths[i]
+
+            im_t_list = (split_img_data(img, dim=3, squeeze_data=True))  # Split along T dimension
             if i != 0:
                 self._images = self._images.slice(-1)  # Removes all images except the last, which is the segmentation
-            self._images.insert(0, im_t_list)
+            self._images = im_t_list + self._images
             matrices = self.mosaic()
 
             mosaics.append(matrices)
