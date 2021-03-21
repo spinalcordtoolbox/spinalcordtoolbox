@@ -353,7 +353,6 @@ class QcImage(object):
                     ax2.get_yaxis().set_visible(False)
                     self._add_orientation_label(ax2)
 
-                    # Function qc_params.abs_bkg_img_list_path to be added in future commit
                     bkg_img_path = self.qc_report.qc_params.abs_bkg_img_list_path(i)
                     self._save(fig, bkg_img_path, dpi = self.qc_report.qc_params.dpi)
                     bkg_img_paths.append(bkg_img_path)
@@ -376,7 +375,6 @@ class QcImage(object):
                     self._add_orientation_label(ax2)
                     QcImage.grid(self, masks_before_moco, ax2)
 
-                    # Function qc_params.abs_overlay_img_list_path to be added in future commit
                     overlay_img_path = self.qc_report.qc_params.abs_overlay_img_list_path(i)
                     self._save(fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
                     overlay_img_paths.append(overlay_img_path)
@@ -485,12 +483,27 @@ class Params(object):
         self.qc_results = os.path.join(dest_folder, '_json/qc_' + self.mod_date + '.json')
         self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.png')
         self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.png')
+        if command == 'sct_fmri_moco' or 'sct_dmri_moco':
+            self.bkg_img_list_path = os.path.join(dataset, subject, command, self.mod_date, 'bkg_img_list')
+            self.overlay_img_list_path = os.path.join(dataset, subject, command, self.mod_date, 'overlay_img_list')
 
     def abs_bkg_img_path(self):
         return os.path.join(self.root_folder, self.bkg_img_path)
 
     def abs_overlay_img_path(self):
         return os.path.join(self.root_folder, self.overlay_img_path)
+
+    def abs_bkg_img_list_path(self, idx):
+        """
+        :param idx: index of image
+        """
+        return os.path.join(self.root_folder, self.bkg_img_list_path, 'bkg_img', str(idx), '.png')
+
+    def abs_overaly_img_list_path(self, idx):
+        """
+        :param idx: index of image
+        """
+        return os.path.join(self.root_folder, self.overlay_img_list_path, 'overlay_img', str(idx), '.png')
 
 
 class QcReport(object):
