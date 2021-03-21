@@ -56,6 +56,10 @@ def get_parser():
                         help='If provided, this string will be mentioned in the QC report as the subject the process '
                              'was run on',
                         required=False)
+    parser.add_argument('-fps',
+                        metavar='float',
+                        help='The number of frames per second for output gif images',
+                        required=False)
     parser.add_argument('-v',
                         action='store_true',
                         help="Verbose")
@@ -84,6 +88,7 @@ def main(argv=None):
                 fname_in2=arguments.d,
                 fname_seg=arguments.s,
                 args=args_disp,
+                fps=arguments.fps,
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
