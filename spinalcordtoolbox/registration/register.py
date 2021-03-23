@@ -352,25 +352,26 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     if isinstance(fname_src, list):
         # TODO: swap 0 and 1 (to be consistent with the child function below)
         src_img = image.convert(image.Image(fname_src[0]))
-        src_img.save(os.path.join(path_tmp, "src.nii"))
+        src_img.save(os.path.join(path_tmp, "src.nii"), mutable=True, verbose=verbose)
 
         src_seg = image.convert(image.Image(fname_src[1]))
-        src_seg.save(os.path.join(path_tmp, "src_seg.nii"))
+        src_seg.save(os.path.join(path_tmp, "src_seg.nii"), mutable=True, verbose=verbose)
 
         dest_img = image.convert(image.Image(fname_dest[0]))
-        dest_img.save(os.path.join(path_tmp, "dest.nii"))
+        dest_img.save(os.path.join(path_tmp, "dest.nii"), mutable=True, verbose=verbose)
 
         dest_seg = image.convert(image.Image(fname_dest[1]))
-        dest_seg.save(os.path.join(path_tmp, "dest_seg.nii"))
+        dest_seg.save(os.path.join(path_tmp, "dest_seg.nii"), mutable=True, verbose=verbose)
     else:
         src_img = image.convert(image.Image(fname_src))
-        src_img.save(os.path.join(path_tmp, "src.nii"))
+        src_img.save(os.path.join(path_tmp, "src.nii"), mutable=True, verbose=verbose)
 
         dest_image = image.convert(image.Image(fname_dest))
-        dest_image.save(os.path.join(path_tmp, "dest.nii"))
+        dest_image.save(os.path.join(path_tmp, "dest.nii"), mutable=True, verbose=verbose)
 
     if fname_mask != '':
-        image.convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
+        mask_img = image.convert(image.Image(fname_mask))
+        mask_img.save(os.path.join(path_tmp, "mask.nii.gz"), mutable=True, verbose=verbose)
 
     # go to temporary folder
     curdir = os.getcwd()
