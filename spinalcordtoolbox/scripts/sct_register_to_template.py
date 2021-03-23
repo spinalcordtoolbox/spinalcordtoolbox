@@ -30,6 +30,7 @@ from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils import *
+from spinalcordtoolbox.utils import Metavar
 from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
@@ -135,6 +136,16 @@ def get_parser():
         action="help",
         help="Show this help message and exit."
     )
+    optional.add_argument(
+        '-s-template-id',
+        metavar=Metavar.int,
+        type=int,
+        help="Segmentation file ID to use for registration. The ID is an integer indicated in the file "
+             "'template/info_label.txt'. This 'info_label.txt' file corresponds to the template indicated by the flag "
+             "'-t'. By default, the spinal cord segmentation is used (ID=3), but if available, a different segmentation"
+             " such as white matter segmentation could produce better registration results.",
+        default=3
+        )
     optional.add_argument(
         '-l',
         metavar=Metavar.file,
@@ -339,7 +350,7 @@ def main(argv=None):
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)  # label = spinal cord mask with discrete vertebral levels
     id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
     file_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast_template.upper()])  # label = *-weighted template
-    file_template_seg = get_file_label(os.path.join(path_template, 'template'), id_label=3)  # label = spinal cord mask (binary)
+    file_template_seg = get_file_label(os.path.join(path_template, 'template'), id_label=arguments.s_template_id)
 
     # start timer
     start_time = time.time()
@@ -1279,4 +1290,3 @@ def register(src, dest, step, param):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

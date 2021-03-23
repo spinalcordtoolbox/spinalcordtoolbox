@@ -909,11 +909,10 @@ def concat_data(im_in_list: Sequence[Image], dim, pixdim=None, squeeze_data=Fals
     else:
         data_concat = np.concatenate(dat_list, axis=dim)
 
-    # write file
-    fname_out = im_in_list[0].absolutepath
-    im_out = empty_like(Image(fname_out))
-    im_out.data = data_concat
-    im_out.absolutepath = add_suffix(fname_out, '_concat')
+    im_in_first = im_in_list[0]
+    im_out = empty_like(im_in_first)  # NB: empty_like reuses the header from the first input image for im_out
+    if im_in_first.absolutepath is not None:
+        im_out.absolutepath = add_suffix(im_in_first.absolutepath, '_concat')
 
     if pixdim is not None:
         im_out.hdr['pixdim'] = pixdim

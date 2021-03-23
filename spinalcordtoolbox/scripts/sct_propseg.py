@@ -21,7 +21,7 @@ import logging
 import numpy as np
 from scipy import ndimage as ndi
 
-from spinalcordtoolbox.image import Image, add_suffix, zeros_like
+from spinalcordtoolbox.image import Image, add_suffix, zeros_like, convert
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, mv, copy
@@ -29,7 +29,6 @@ from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
 
 from spinalcordtoolbox.scripts import sct_image
-from spinalcordtoolbox.scripts.sct_convert import convert
 
 logger = logging.getLogger(__name__)
 
@@ -50,18 +49,18 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     printv('\nCheck consistency of segmentation...', verbose)
     # creating a temporary folder in which all temporary files will be placed and deleted afterwards
     path_tmp = tmp_create(basename="propseg")
-    convert(fname_segmentation, os.path.join(path_tmp, "tmp.segmentation.nii.gz"), verbose=0)
-    convert(fname_centerline, os.path.join(path_tmp, "tmp.centerline.nii.gz"), verbose=0)
-    fname_seg_absolute = os.path.abspath(fname_segmentation)
+    im_seg = convert(Image(fname_segmentation))
+    im_seg.save(os.path.join(path_tmp, "tmp.segmentation.nii.gz"), mutable=True, verbose=0)
+    im_centerline = convert(Image(fname_centerline))
+    im_centerline.save(os.path.join(path_tmp, "tmp.centerline.nii.gz"), mutable=True, verbose=0)
 
     # go to tmp folder
     curdir = os.getcwd()
     os.chdir(path_tmp)
 
-    # convert segmentation image to RPI
-    im_input = Image('tmp.segmentation.nii.gz')
-    image_input_orientation = im_input.orientation
-
+    # convert input to RPI (and store original info to use when converting back at the end)
+    fname_seg_absolute = os.path.abspath(fname_segmentation)
+    image_input_orientation = im_seg.orientation
     sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz -v 0".split())
     sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz -v 0".split())
 
