@@ -198,7 +198,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     })
     # PYTHONNOUSERSITE is originally set in compat/launcher.py. We unset here so that it doesn't affect non-SCT commands
     # in user's pipeline scripts. See: https://github.com/neuropoly/spinalcordtoolbox/issues/3200.
-    del envir['PYTHONNOUSERSITE']
+    envir.pop('PYTHONNOUSERSITE', None)
 
     # Ship the job out, merging stdout/stderr and piping to log file
     try:
