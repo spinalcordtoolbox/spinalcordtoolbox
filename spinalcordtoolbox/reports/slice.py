@@ -290,13 +290,13 @@ class Slice(object):
 
             im_t_list = (split_img_data(img, dim=3, squeeze_data=True))  # Split along T dimension
             if i != 0:
-                self._images = self._images.slice(-1)  # Removes all images except the last, which is the segmentation
+                self._images = self._images[:-1]  # Removes all images except the last, which is the segmentation
             self._images = im_t_list + self._images
             matrices = self.mosaic()
 
             mosaics.append(matrices)
 
-            return mosaics
+        return mosaics
 
     def single(self):
         """Obtain the matrices of the single slices. Flatten
@@ -322,7 +322,10 @@ class Slice(object):
         return matrices
 
     def aspect(self):
-        return [self.get_aspect(x) for x in self._images]
+        if len(self._4d_images) == 0:  # For 3D images
+            return [self.get_aspect(x) for x in self._images]
+        else: # For 4D images
+            return [self.get_aspect(x) for x in self._4d_images]
 
     def _resample_slicewise(self, image, p_resample, type_img, image_ref=None):
         """
