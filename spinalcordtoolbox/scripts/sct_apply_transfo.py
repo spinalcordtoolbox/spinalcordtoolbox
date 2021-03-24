@@ -18,7 +18,9 @@ import sys
 import os
 import functools
 
-from spinalcordtoolbox.image import Image, generate_output_file
+import nibabel as nib
+
+from spinalcordtoolbox.image import Image, generate_output_file, get_dimension
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import cubic_to_point
@@ -162,7 +164,7 @@ class Transform:
                 fname_warp_list_invert += [[path_warp]]
             path_warp = list_warp[idx_warp]
             if path_warp.endswith((".nii", ".nii.gz")) \
-                    and Image(list_warp[idx_warp]).header.get_intent()[0] != 'vector':
+                    and nib.load(list_warp[idx_warp]).header.get_intent()[0] != 'vector':
                 raise ValueError("Displacement field in {} is invalid: should be encoded"
                                  " in a 5D file with vector intent code"
                                  " (see https://nifti.nimh.nih.gov/pub/dist/src/niftilib/nifti1.h"
@@ -193,9 +195,8 @@ class Transform:
 
         # Get dimensions of data
         printv('\nGet dimensions of data...', verbose)
-        img_src = Image(fname_src)
-        nx, ny, nz, nt, px, py, pz, pt = img_src.dim
-        # nx, ny, nz, nt, px, py, pz, pt = get_dimension(fname_src)
+        img_src = nib.load(fname_src)
+        nx, ny, nz, nt, px, py, pz, pt = get_dimension(img_src)
         printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)
 
         # if 3d
@@ -233,7 +234,7 @@ class Transform:
 
             # convert to nifti into temp folder
             printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-            img_src.save(os.path.join(path_tmp, "data.nii"))
+            nib.save(img_src, os.path.join(path_tmp, "data.nii"))
             copy(fname_dest, os.path.join(path_tmp, file_dest + ext_dest))
             fname_warp_list_tmp = []
             for fname_warp in list_warp:
@@ -290,13 +291,18 @@ class Transform:
 
         # Copy affine matrix from destination space to make sure qform/sform are the same
         printv("Copy affine matrix from destination space to make sure qform/sform are the same.", verbose)
-        im_src_reg = Image(fname_out)
-        im_src_reg.copy_qform_from_ref(Image(fname_dest))
-        im_src_reg.save(verbose=0)  # set verbose=0 to avoid warning message about rewriting file
+        # mmap=False prevents bus error, see https://github.com/nipreps/niworkflows/issues/246
+        im_src_reg = nib.load(fname_out, mmap=False)
+        im_dest = nib.load(fname_dest)
+        qform, qform_code = im_dest.header.get_qform(coded=True)
+        sform, sform_code = im_dest.header.get_sform(coded=True)
+        im_src_reg.set_qform(qform, int(qform_code))
+        im_src_reg.set_sform(sform, int(sform_code))
+        nib.save(im_src_reg, fname_out)
 
         if islabel:
             printv("\nTake the center of mass of each registered dilated labels...")
-            labeled_img = cubic_to_point(im_src_reg)
+            labeled_img = cubic_to_point(Image(fname_out))
             labeled_img.save(path=fname_out)
             if remove_temp_files:
                 printv('\nRemove temporary files...', verbose)
@@ -312,9 +318,9 @@ class Transform:
                 # Extract only the first ndim of the warping field
                 img_warp = Image(warping_field)
                 if dim == '2':
-                    img_warp_ndim = Image(img_src.data[:, :], hdr=img_warp.hdr)
+                    img_warp_ndim = Image(img_src.get_data()[:, :], hdr=img_warp.hdr)
                 elif dim in ['3', '4']:
-                    img_warp_ndim = Image(img_src.data[:, :, :], hdr=img_warp.hdr)
+                    img_warp_ndim = Image(img_src.get_data()[:, :, :], hdr=img_warp.hdr)
                 # Set zero to everything outside the warping field
                 cropper = ImageCropper(Image(fname_out))
                 cropper.get_bbox_from_ref(img_warp_ndim)
