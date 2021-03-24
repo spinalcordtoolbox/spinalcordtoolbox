@@ -355,7 +355,6 @@ class QcImage(object):
                     self._add_orientation_label(ax2)
 
                     bkg_img_path = self.qc_report.qc_params.abs_bkg_img_list_path(i)
-                    logger.info(bkg_img_path)
                     self._save(fig, bkg_img_path, dpi=self.qc_report.qc_params.dpi)
                     bkg_img_paths.append(bkg_img_path)
 
@@ -367,7 +366,7 @@ class QcImage(object):
                     ax1.get_xaxis().set_visible(False)
                     ax1.get_yaxis().set_visible(False)
                     self._add_orientation_label(ax1)
-                    QcImage.grid(self, masks_after_moco, ax1)
+                    QcImage.grid(self, masks_after_moco[i], ax1)
 
                     ax2 = fig.add_subplot(212)
                     ax2.imshow(masks_before_moco[i], cmap='gray', aspect=float(self.aspect_mask))
@@ -375,7 +374,7 @@ class QcImage(object):
                     ax2.get_xaxis().set_visible(False)
                     ax2.get_yaxis().set_visible(False)
                     self._add_orientation_label(ax2)
-                    QcImage.grid(self, masks_before_moco, ax2)
+                    QcImage.grid(self, masks_before_moco[i], ax2)
 
                     overlay_img_path = self.qc_report.qc_params.abs_overlay_img_list_path(i)
                     self._save(fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
