@@ -274,9 +274,6 @@ class QcImage(object):
             """
             self.qc_report.slice_name = sct_slice.get_name()
 
-
-
-
             self.qc_report.make_content_path()
             logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
@@ -287,6 +284,7 @@ class QcImage(object):
                 self._centermass = centermass
             if self._fps is not None:
                 # To add: aspect ratio for 4d images
+                #aspect_img, self.aspect_mask = sct_slice.aspect()[:2]  
                 images_after_moco, images_before_moco = func(sct_slice, *args)
                 masks_after_moco = images_after_moco.copy()
                 masks_before_moco = images_before_moco.copy()
@@ -295,7 +293,7 @@ class QcImage(object):
                 aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
                 img, mask = func(sct_slice, *args)
 
-            if self._stretch_contrast:
+            if self._stretch_contrast and self._fps is None:
                 def equalized(a):
                     """
                     Perform histogram equalization using CLAHE
@@ -332,13 +330,14 @@ class QcImage(object):
                 img = func_stretch_contrast[self._stretch_contrast_method](img)
 
             # if axial mosaic restrict width
-            if sct_slice.get_name() == 'Axial':
+            if sct_slice.get_name() == 'Axial' and self._fps is None:
                 size_fig = [5, 5 * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
             # if sagittal orientation restrict height
             elif sct_slice.get_name() == 'Sagittal':
                 size_fig = [5 * img.shape[1] / img.shape[0], 5]
 
             if self._fps is not None:
+                size_fig = [5, 5 * images_after_moco[0].shape[0] / images_after_moco[0].shape[1]]
                 bkg_img_paths = []
                 overlay_img_paths = []
                 for i in range(len(images_after_moco)):
@@ -359,7 +358,8 @@ class QcImage(object):
                     self._add_orientation_label(ax2)
 
                     bkg_img_path = self.qc_report.qc_params.abs_bkg_img_list_path(i)
-                    self._save(fig, bkg_img_path, dpi = self.qc_report.qc_params.dpi)
+                    logger.info(bkg_img_path)
+                    self._save(fig, bkg_img_path, dpi=self.qc_report.qc_params.dpi)
                     bkg_img_paths.append(bkg_img_path)
 
                     fig = Figure()
@@ -393,6 +393,7 @@ class QcImage(object):
                 self._add_orientation_label(ax)
                 ax.get_xaxis().set_visible(False)
                 ax.get_yaxis().set_visible(False)
+                logger.info(self.qc_report.qc_params.abs_bkg_img_path())
                 self._save(fig, self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
 
                 for action in self.action_list:
@@ -489,8 +490,8 @@ class Params(object):
         self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.png')
         self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.png')
         if command == 'sct_fmri_moco' or 'sct_dmri_moco':
-            self.bkg_img_list_path = os.path.join(dataset, subject, command, self.mod_date, 'bkg_img_list')
-            self.overlay_img_list_path = os.path.join(dataset, subject, command, self.mod_date, 'overlay_img_list')
+            self.bkg_img_list_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img_list')
+            self.overlay_img_list_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img_list')
 
     def abs_bkg_img_path(self):
         return os.path.join(self.root_folder, self.bkg_img_path)
@@ -502,13 +503,15 @@ class Params(object):
         """
         :param idx: index of image
         """
-        return os.path.join(self.root_folder, self.bkg_img_list_path, 'bkg_img', str(idx), '.png')
+        bkg_filename = 'bkg_img_' + str(idx) + '.png'
+        return os.path.join(self.root_folder, self.bkg_img_list_path, bkg_filename)
 
-    def abs_overaly_img_list_path(self, idx):
+    def abs_overlay_img_list_path(self, idx):
         """
         :param idx: index of image
         """
-        return os.path.join(self.root_folder, self.overlay_img_list_path, 'overlay_img', str(idx), '.png')
+        overlay_filename = 'overlay_img_' + str(idx) + '.png'
+        return os.path.join(self.root_folder, self.overlay_img_list_path, overlay_filename)
 
 
 class QcReport(object):
@@ -538,13 +541,24 @@ class QcReport(object):
         :return: return "root folder of the report" and the "furthest folder path" containing the images
         """
         # make a new or update Qc directory
-        target_img_folder = os.path.dirname(self.qc_params.abs_bkg_img_path())
+        if self.qc_params.command is 'sct_fmri_moco' or 'sct_dmri_moco':
+            target_bkg_folder = os.path.dirname(self.qc_params.abs_bkg_img_list_path(0))
+            target_overlay_folder = os.path.dirname(self.qc_params.abs_overlay_img_list_path(0))
+            try:
+                os.makedirs(target_bkg_folder, exist_ok=True)
+                os.makedirs(target_overlay_folder)
+            except OSError as err:
+                if not os.path.isdir(target_bkg_folder) or os.path.isdir(target_overlay_folder):
+                    raise err
+        else:
+            target_img_folder = os.path.dirname(self.qc_params.abs_bkg_img_path())
+            try:
+                os.makedirs(target_img_folder, exist_ok=True)
+            except OSError as err:
+                if not os.path.isdir(target_img_folder):
+                    raise err
 
-        try:
-            os.makedirs(target_img_folder, exist_ok=True)
-        except OSError as err:
-            if not os.path.isdir(target_img_folder):
-                raise err
+
 
     def update_description_file(self, dimension):
         """Create the description file with a JSON structure
@@ -750,7 +764,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     elif process in ['sct_dmri_moco', 'sct_fmri_moco']:
         plane = 'Axial'
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
-        qcslice_operations = [QcImage.grid]  # grid will be added in future PR
+        qcslice_operations = [QcImage.grid]
         def qcslice_layout(x): return x.mosaics_through_time()
     # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
