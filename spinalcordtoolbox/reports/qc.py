@@ -278,20 +278,17 @@ class QcImage(object):
             logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
             if self._angle_line is not None:
-                # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
-                aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
                 [img, mask], centermass = func(sct_slice, *args)
                 self._centermass = centermass
             if self._fps is not None:
-                # To add: aspect ratio for 4d images
-                #aspect_img, self.aspect_mask = sct_slice.aspect()[:2]  
                 images_after_moco, images_before_moco = func(sct_slice, *args)
                 masks_after_moco = images_after_moco.copy()
                 masks_before_moco = images_before_moco.copy()
             else:
-                # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
-                aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
                 img, mask = func(sct_slice, *args)
+
+            # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
+            aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
 
             if self._stretch_contrast and self._fps is None:
                 def equalized(a):
@@ -344,14 +341,14 @@ class QcImage(object):
                     fig = Figure()
                     fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
                     ax1 = fig.add_subplot(211)
-                    ax1.imshow(images_after_moco[i])
+                    ax1.imshow(images_after_moco[i], cmap='gray', aspect=float(aspect_img))
                     ax1.set_title('After motion correction')
                     ax1.get_xaxis().set_visible(False)
                     ax1.get_yaxis().set_visible(False)
                     self._add_orientation_label(ax1)
 
                     ax2 = fig.add_subplot(212)
-                    ax2.imshow(images_before_moco[i])
+                    ax2.imshow(images_before_moco[i], cmap='gray', aspect=float(aspect_img))
                     ax2.set_title('Before motion correction')
                     ax2.get_xaxis().set_visible(False)
                     ax2.get_yaxis().set_visible(False)
@@ -365,7 +362,7 @@ class QcImage(object):
                     fig = Figure()
                     fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
                     ax1 = fig.add_subplot(211)
-                    ax1.imshow(masks_after_moco[i])
+                    ax1.imshow(masks_after_moco[i], cmap='gray', aspect=float(self.aspect_mask))
                     ax1.set_title('After motion correction')
                     ax1.get_xaxis().set_visible(False)
                     ax1.get_yaxis().set_visible(False)
@@ -373,7 +370,7 @@ class QcImage(object):
                     QcImage.grid(self, masks_after_moco, ax1)
 
                     ax2 = fig.add_subplot(212)
-                    ax2.imshow(masks_before_moco[i])
+                    ax2.imshow(masks_before_moco[i], cmap='gray', aspect=float(self.aspect_mask))
                     ax2.set_title('Before motion correction')
                     ax2.get_xaxis().set_visible(False)
                     ax2.get_yaxis().set_visible(False)
