@@ -95,6 +95,9 @@ DICT_URL = {
         "https://osf.io/t97ap/?action=download",
         "https://www.neuro.polymtl.ca/_media/downloads/sct/20190117_c2c3_disc_models.zip",
     ],
+    "exvivo_template": [
+        "https://github.com/sct-data/exvivo-template/archive/refs/tags/r20210317.zip"
+    ],
 }
 
 
