@@ -94,7 +94,7 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
    .. code-block:: sh
 
-      sudo apt-get -y update
+      sudo apt-get update
       sudo apt-get -y install gcc
       sudo apt-get -y install unzip
       sudo apt-get install -y python-pip python
@@ -123,7 +123,7 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
    .. code:: sh
 
-      yes | ./install_sct
+      ./install_sct -y
 
    To complete the installation of these software run:
 
@@ -171,12 +171,12 @@ Ubuntu-based installation
    docker run -it ubuntu
    # Now, inside Docker container, install dependencies
    apt-get update
-   yes | apt install git curl bzip2 libglib2.0-0 gcc
+   apt install -y git curl bzip2 libglib2.0-0 gcc
    # Note for above: libglib2.0-0 is required by PyQt
    # Install SCT
    git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
    cd sct
-   yes | ./install_sct
+   ./install_sct -y
    export PATH="/sct/bin:${PATH}"
    # Test SCT
    sct_testing
@@ -198,7 +198,7 @@ CentOS7-based installation
    # Install SCT
    git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
    cd sct
-   yes | ./install_sct
+   ./install_sct -y
    export PATH="/sct/bin:${PATH}"
    # Test SCT
    sct_testing
@@ -400,7 +400,7 @@ Next, install ``FSLeyes`` using ``conda-forge``:
 
 .. code-block:: sh
 
-    yes | conda install -c conda-forge fsleyes
+    conda install -c conda-forge -y fsleyes
 
 
 Install from FSL
