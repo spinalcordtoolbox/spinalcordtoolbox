@@ -282,8 +282,8 @@ class QcImage(object):
                 self._centermass = centermass
             if self._fps is not None:
                 images_after_moco, images_before_moco = func(sct_slice, *args)
-                masks_after_moco = images_after_moco.copy()
-                masks_before_moco = images_before_moco.copy()
+                #masks_after_moco = images_after_moco.copy()
+                #masks_before_moco = images_before_moco.copy()
             else:
                 img, mask = func(sct_slice, *args)
 
@@ -328,28 +328,29 @@ class QcImage(object):
 
             # if axial mosaic restrict width
             if sct_slice.get_name() == 'Axial' and self._fps is None:
-                size_fig = [5, 5 * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
+                size_fig = [5,  * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
             # if sagittal orientation restrict height
             elif sct_slice.get_name() == 'Sagittal':
                 size_fig = [5 * img.shape[1] / img.shape[0], 5]
 
             if self._fps is not None:
-                size_fig = [5, 5 * images_after_moco[0].shape[0] / images_after_moco[0].shape[1]]
+                size_fig = [5, 15 * images_after_moco[0].shape[0] / images_after_moco[0].shape[1]]
                 bkg_img_paths = []
                 overlay_img_paths = []
                 for i in range(len(images_after_moco)):
                     fig = Figure()
                     fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
+                    fig.subplots_adjust(hspace=0.5)
                     ax1 = fig.add_subplot(211)
                     ax1.imshow(images_after_moco[i], cmap='gray', aspect=float(aspect_img))
-                    ax1.set_title('After motion correction')
+                    ax1.set_title('After motion correction', fontsize=7, loc='left')
                     ax1.get_xaxis().set_visible(False)
                     ax1.get_yaxis().set_visible(False)
                     self._add_orientation_label(ax1)
 
                     ax2 = fig.add_subplot(212)
                     ax2.imshow(images_before_moco[i], cmap='gray', aspect=float(aspect_img))
-                    ax2.set_title('Before motion correction')
+                    ax2.set_title('Before motion correction', fontsize=7, loc='left')
                     ax2.get_xaxis().set_visible(False)
                     ax2.get_yaxis().set_visible(False)
                     self._add_orientation_label(ax2)
@@ -361,20 +362,20 @@ class QcImage(object):
                     fig = Figure()
                     fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
                     ax1 = fig.add_subplot(211)
-                    ax1.imshow(masks_after_moco[i], cmap='gray', aspect=float(self.aspect_mask))
-                    ax1.set_title('After motion correction')
+                    ax1.imshow(images_after_moco[i], cmap='gray', aspect=float(self.aspect_mask))
+                    ax1.set_title('After motion correction', fontsize=7, loc='left')
                     ax1.get_xaxis().set_visible(False)
                     ax1.get_yaxis().set_visible(False)
                     self._add_orientation_label(ax1)
-                    QcImage.grid(self, masks_after_moco[i], ax1)
+                    QcImage.grid(self, images_after_moco[i], ax1)
 
                     ax2 = fig.add_subplot(212)
-                    ax2.imshow(masks_before_moco[i], cmap='gray', aspect=float(self.aspect_mask))
-                    ax2.set_title('Before motion correction')
+                    ax2.imshow(images_before_moco[i], cmap='gray', aspect=float(self.aspect_mask))
+                    ax2.set_title('Before motion correction', fontsize=7, loc='left')
                     ax2.get_xaxis().set_visible(False)
                     ax2.get_yaxis().set_visible(False)
                     self._add_orientation_label(ax2)
-                    QcImage.grid(self, masks_before_moco[i], ax2)
+                    QcImage.grid(self, images_before_moco[i], ax2)
 
                     overlay_img_path = self.qc_report.qc_params.abs_overlay_img_list_path(i)
                     self._save(fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
@@ -759,7 +760,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     # Axial orientation, switch between gif image (before and after motion correction) and grid overlay
     elif process in ['sct_dmri_moco', 'sct_fmri_moco']:
         plane = 'Axial'
-        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)], p_resample=None)
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         qcslice_operations = [QcImage.grid]
         def qcslice_layout(x): return x.mosaics_through_time()
     # Sagittal orientation, display vertebral labels
