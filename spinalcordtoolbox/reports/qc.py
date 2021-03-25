@@ -282,13 +282,11 @@ class QcImage(object):
                 self._centermass = centermass
             if self._fps is not None:
                 images_after_moco, images_before_moco = func(sct_slice, *args)
-                #masks_after_moco = images_after_moco.copy()
-                #masks_before_moco = images_before_moco.copy()
             else:
                 img, mask = func(sct_slice, *args)
 
             # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
-            aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
+            self.aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
 
             if self._stretch_contrast and self._fps is None:
                 def equalized(a):
@@ -338,47 +336,17 @@ class QcImage(object):
                 bkg_img_paths = []
                 overlay_img_paths = []
                 for i in range(len(images_after_moco)):
-                    fig = Figure()
-                    fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
-                    fig.subplots_adjust(hspace=0.5)
-                    ax1 = fig.add_subplot(211)
-                    ax1.imshow(images_after_moco[i], cmap='gray', aspect=float(aspect_img))
-                    ax1.set_title('After motion correction', fontsize=7, loc='left')
-                    ax1.get_xaxis().set_visible(False)
-                    ax1.get_yaxis().set_visible(False)
-                    self._add_orientation_label(ax1)
-
-                    ax2 = fig.add_subplot(212)
-                    ax2.imshow(images_before_moco[i], cmap='gray', aspect=float(aspect_img))
-                    ax2.set_title('Before motion correction', fontsize=7, loc='left')
-                    ax2.get_xaxis().set_visible(False)
-                    ax2.get_yaxis().set_visible(False)
-                    self._add_orientation_label(ax2)
+                    bkg_fig = self._generate_moco_figure(images_after_moco[i], images_before_moco[i], size_fig)
 
                     bkg_img_path = self.qc_report.qc_params.abs_bkg_img_list_path(i)
-                    self._save(fig, bkg_img_path, dpi=self.qc_report.qc_params.dpi)
+                    self._save(bkg_fig, bkg_img_path, dpi=self.qc_report.qc_params.dpi)
                     bkg_img_paths.append(bkg_img_path)
 
-                    fig = Figure()
-                    fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
-                    ax1 = fig.add_subplot(211)
-                    ax1.imshow(images_after_moco[i], cmap='gray', aspect=float(self.aspect_mask))
-                    ax1.set_title('After motion correction', fontsize=7, loc='left')
-                    ax1.get_xaxis().set_visible(False)
-                    ax1.get_yaxis().set_visible(False)
-                    self._add_orientation_label(ax1)
-                    QcImage.grid(self, images_after_moco[i], ax1)
-
-                    ax2 = fig.add_subplot(212)
-                    ax2.imshow(images_before_moco[i], cmap='gray', aspect=float(self.aspect_mask))
-                    ax2.set_title('Before motion correction', fontsize=7, loc='left')
-                    ax2.get_xaxis().set_visible(False)
-                    ax2.get_yaxis().set_visible(False)
-                    self._add_orientation_label(ax2)
-                    QcImage.grid(self, images_before_moco[i], ax2)
+                    overlay_fig = self._generate_moco_figure(images_after_moco[i], images_before_moco[i], size_fig,
+                                                             is_mask=True)
 
                     overlay_img_path = self.qc_report.qc_params.abs_overlay_img_list_path(i)
-                    self._save(fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
+                    self._save(overlay_fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
                     overlay_img_paths.append(overlay_img_path)
 
             else:
@@ -422,6 +390,40 @@ class QcImage(object):
             ax.text(12, 28, 'P', color='yellow', size=4)
             ax.text(0, 18, 'L', color='yellow', size=4)
             ax.text(24, 18, 'R', color='yellow', size=4)
+
+    def _generate_moco_figure(self, top_image, bottom_image, size_fig, is_mask=False):
+        """
+        Add orientation labels on the figure
+
+        :param fig: MPL figure handler
+        :return fig: MPL figure handler
+        """
+        if is_mask:
+            aspect = self.aspect_mask
+        else:
+            aspect = self.aspect_img
+        fig = Figure()
+        fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
+        fig.subplots_adjust(hspace=0.5)
+        ax1 = fig.add_subplot(211)
+        ax1.imshow(top_image, cmap='gray', aspect=float(aspect))
+        ax1.set_title('After motion correction', fontsize=7, loc='left')
+        ax1.get_xaxis().set_visible(False)
+        ax1.get_yaxis().set_visible(False)
+        self._add_orientation_label(ax1)
+        if is_mask:
+            QcImage.grid(self, top_image, ax1)
+
+        ax2 = fig.add_subplot(212)
+        ax2.imshow(bottom_image, cmap='gray', aspect=float(aspect))
+        ax2.set_title('Before motion correction', fontsize=7, loc='left')
+        ax2.get_xaxis().set_visible(False)
+        ax2.get_yaxis().set_visible(False)
+        self._add_orientation_label(ax2)
+        if is_mask:
+            QcImage.grid(self, bottom_image, ax2)
+
+        return fig
 
     def _save(self, fig, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
         """
