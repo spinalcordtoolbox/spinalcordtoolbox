@@ -41,8 +41,9 @@ class Slice(object):
         :param images: list of 3D or 4D volumes to be separated into slices.
         """
         logger.info('Resample images to {}x{} mm'.format(p_resample, p_resample))
-        self._images = list()
-        self._4d_images = list()
+        self._images = list()  # 3d volumes
+        self._4d_images = list()  # 4d volumes
+        # self._image_seg = None  # for cropping
         self._absolute_paths = list()  # Used because change_orientation removes the field absolute_path
         image_ref = None  # first pass: we don't have a reference image to resample to
         for i, image in enumerate(images):
@@ -284,7 +285,7 @@ class Slice(object):
         """
 
         mosaics = list()
-        img_seg = self._images.copy()
+        # self._image_seg = self._images[0].copy()  # for cropping
 
         for i, img in enumerate(self._4d_images):
             # TODO: The absolutepath is changed to None after change_orientation
@@ -379,7 +380,10 @@ class Axial(Slice):
     def get_center(self, img_idx=-1):
         """Get the center of mass of each slice. By default, it assumes that self._images is a list of images, and the
         last item is the segmentation from which the center of mass is computed."""
+        #if self._image_seg is None:
         image = self._images[img_idx]
+        #else:
+        #    image = self._image_seg
         return self._axial_center(image)
 
 
