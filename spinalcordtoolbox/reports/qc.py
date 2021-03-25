@@ -759,7 +759,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     # Axial orientation, switch between gif image (before and after motion correction) and grid overlay
     elif process in ['sct_dmri_moco', 'sct_fmri_moco']:
         plane = 'Axial'
-        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)], p_resample=None)
         qcslice_operations = [QcImage.grid]
         def qcslice_layout(x): return x.mosaics_through_time()
     # Sagittal orientation, display vertebral labels
