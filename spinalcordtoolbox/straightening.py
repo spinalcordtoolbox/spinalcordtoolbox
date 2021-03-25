@@ -20,6 +20,8 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, copy, mv, extract_fname
 
+from spinalcordtoolbox.scripts import sct_apply_transfo
+
 logger = logging.getLogger(__name__)
 
 
@@ -518,15 +520,13 @@ class SpinalCordStraightener(object):
         image_centerline_straight.save(fname_ref)
         if self.curved2straight:
             logger.info('Apply transformation to input image...')
-            run_proc(['isct_antsApplyTransforms',
-                      '-d', '3',
-                      '-r', fname_ref,
-                      '-i', 'data.nii',
-                      '-o', 'tmp.anat_rigid_warp.nii.gz',
-                      '-t', 'tmp.curve2straight.nii.gz',
-                      '-n', 'BSpline[3]'],
-                     is_sct_binary=True,
-                     verbose=verbose)
+            sct_apply_transfo.main(['-i', 'data.nii',
+                                    '-d', fname_ref,
+                                    '-w', 'tmp.curve2straight.nii.gz',
+                                    '-o', 'tmp.anat_rigid_warp.nii.gz',
+                                    '-x', 'spline',
+                                    '-v', str(verbose)])
+
 
         if self.accuracy_results:
             time_accuracy_results = time.time()
@@ -534,15 +534,12 @@ class SpinalCordStraightener(object):
             # Ideally, the error should be zero.
             # Apply deformation to input image
             logger.info('Apply transformation to centerline image...')
-            run_proc(['isct_antsApplyTransforms',
-                      '-d', '3',
-                      '-r', fname_ref,
-                      '-i', 'centerline.nii.gz',
-                      '-o', 'tmp.centerline_straight.nii.gz',
-                      '-t', 'tmp.curve2straight.nii.gz',
-                      '-n', 'NearestNeighbor'],
-                     is_sct_binary=True,
-                     verbose=verbose)
+            sct_apply_transfo.main(['-i', 'centerline.nii.gz',
+                                    '-d', fname_ref,
+                                    '-w', 'tmp.curve2straight.nii.gz',
+                                    '-o', 'tmp.centerline_straight.nii.gz',
+                                    '-x', 'nn',
+                                    '-v', str(verbose)])
             file_centerline_straight = Image('tmp.centerline_straight.nii.gz', verbose=verbose)
             nx, ny, nz, nt, px, py, pz, pt = file_centerline_straight.dim
             coordinates_centerline = file_centerline_straight.getNonZeroCoordinates(sorting='z')
