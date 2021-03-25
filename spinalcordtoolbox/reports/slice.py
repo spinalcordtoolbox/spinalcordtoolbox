@@ -65,6 +65,7 @@ class Slice(object):
             else:
                 self._4d_images.append(img_r)
 
+
     @staticmethod
     def axial_slice(data, i):
         return data[i, :, :]
@@ -283,15 +284,15 @@ class Slice(object):
         """
 
         mosaics = list()
+        img_seg = self._images.copy()
 
         for i, img in enumerate(self._4d_images):
             # TODO: The absolutepath is changed to None after change_orientation
             img.absolutepath = self._absolute_paths[i]
 
             im_t_list = (split_img_data(img, dim=3, squeeze_data=True))  # Split along T dimension
-            if i != 0:
-                self._images = self._images[:-1]  # Removes all images except the last, which is the segmentation
-            self._images = im_t_list + self._images
+            self._images.clear()
+            self._images = im_t_list # + img_seg
             matrices = self.mosaic()
 
             mosaics.append(matrices)
