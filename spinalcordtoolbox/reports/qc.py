@@ -292,7 +292,7 @@ class QcImage(object):
             # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
             self.aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
 
-            if self._stretch_contrast and self._fps is None:
+            if self._stretch_contrast:
                 def equalized(a):
                     """
                     Perform histogram equalization using CLAHE
@@ -326,7 +326,9 @@ class QcImage(object):
                 func_stretch_contrast = {'equalized': equalized,
                                          'contrast_stretching': contrast_stretching}
 
-                img = func_stretch_contrast[self._stretch_contrast_method](img)
+                if self._fps is None:
+                    img = func_stretch_contrast[self._stretch_contrast_method](img)
+
 
             # if axial mosaic restrict width
             if sct_slice.get_name() == 'Axial' and self._fps is None:
@@ -340,6 +342,9 @@ class QcImage(object):
                 bkg_img_paths = []
                 overlay_img_paths = []
                 for i in range(len(images_after_moco)):
+                    images_after_moco[i] = func_stretch_contrast[self._stretch_contrast_method](images_after_moco[i])
+                    images_before_moco[i] = func_stretch_contrast[self._stretch_contrast_method](images_before_smoco[i])
+
                     bkg_fig = self._generate_moco_figure(images_after_moco[i], images_before_moco[i], size_fig)
 
                     bkg_img_path = self.qc_report.qc_params.abs_bkg_img_list_path(i)
