@@ -294,11 +294,10 @@ class Slice(object):
             im_t_list = (split_img_data(img, dim=3, squeeze_data=True))  # Split along T dimension
             self._images.clear()
             self._images = im_t_list # + img_seg
-            matrices = self.mosaic()
-
+            matrices, centers_mosaic = self.mosaic(return_center=True)
             mosaics.append(matrices)
 
-        return mosaics
+        return mosaics, centers_mosaic
 
     def single(self):
         """Obtain the matrices of the single slices. Flatten

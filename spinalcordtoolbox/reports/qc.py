@@ -250,7 +250,10 @@ class QcImage(object):
         """Centered grid to assess quality of motion correction"""
         grid = np.full_like(mask, np.nan)
         ax.imshow(grid, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
-        ax.grid(color='w', which='major', axis='both', linestyle='-')
+        for center_mosaic in self._centermass:
+            x0, y0 = center_mosaic[0], center_mosaic[1]
+            ax.axvline(x=x0, color='w', linestyle='-', linewidth=0.5)
+            ax.axhline(y=y0, color='w', linestyle='-', linewidth=0.5)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -281,7 +284,8 @@ class QcImage(object):
                 [img, mask], centermass = func(sct_slice, *args)
                 self._centermass = centermass
             if self._fps is not None:
-                images_after_moco, images_before_moco = func(sct_slice, *args)
+                [images_after_moco, images_before_moco], centermass = func(sct_slice, *args)
+                self._centermass = centermass
             else:
                 img, mask = func(sct_slice, *args)
 
