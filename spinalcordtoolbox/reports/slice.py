@@ -43,7 +43,7 @@ class Slice(object):
         logger.info('Resample images to {}x{} mm'.format(p_resample, p_resample))
         self._images = list()  # 3d volumes
         self._4d_images = list()  # 4d volumes
-        # self._image_seg = None  # for cropping
+        self._image_seg = None  # for cropping
         self._absolute_paths = list()  # Used because change_orientation removes the field absolute_path
         image_ref = None  # first pass: we don't have a reference image to resample to
         for i, image in enumerate(images):
@@ -65,7 +65,7 @@ class Slice(object):
                 image_ref = self._images[0] # 2nd and next passes: we resample any image to the space of the first one
             else:
                 self._4d_images.append(img_r)
-
+                # image_ref = self._4d_images[0]  # img_dest is not covered for 4D volumes in resample_nib()
 
     @staticmethod
     def axial_slice(data, i):
@@ -182,7 +182,7 @@ class Slice(object):
             return A
         xp = (~nans).ravel().nonzero()[0]
         fp = A[~nans]
-        x  = nans.ravel().nonzero()[0]
+        x = nans.ravel().nonzero()[0]
         A[nans] = np.interp(x, xp, fp)
         return A
 
@@ -285,10 +285,10 @@ class Slice(object):
         """
 
         mosaics = list()
-        # self._image_seg = self._images[0].copy()  # for cropping
+        self._image_seg = self._images[0].copy()  # for cropping
 
         for i, img in enumerate(self._4d_images):
-            # TODO: The absolutepath is changed to None after change_orientation
+            # The absolutepath is changed to None after change_orientation see issue #3304
             img.absolutepath = self._absolute_paths[i]
 
             im_t_list = (split_img_data(img, dim=3, squeeze_data=True))  # Split along T dimension
@@ -296,7 +296,7 @@ class Slice(object):
             self._images = im_t_list # + img_seg
             matrices, centers_mosaic = self.mosaic(return_center=True)
             mosaics.append(matrices)
-
+        logger.info(centers_mosaic)
         return mosaics, centers_mosaic
 
     def single(self):
@@ -379,10 +379,10 @@ class Axial(Slice):
     def get_center(self, img_idx=-1):
         """Get the center of mass of each slice. By default, it assumes that self._images is a list of images, and the
         last item is the segmentation from which the center of mass is computed."""
-        #if self._image_seg is None:
-        image = self._images[img_idx]
-        #else:
-        #    image = self._image_seg
+        if self._image_seg is None:
+            image = self._images[img_idx]
+        else:
+            image = self._image_seg
         return self._axial_center(image)
 
 
