@@ -329,7 +329,6 @@ class QcImage(object):
                 if self._fps is None:
                     img = func_stretch_contrast[self._stretch_contrast_method](img)
 
-
             # if axial mosaic restrict width
             if sct_slice.get_name() == 'Axial' and self._fps is None:
                 size_fig = [5,  * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
@@ -343,7 +342,7 @@ class QcImage(object):
                 overlay_img_paths = []
                 for i in range(len(images_after_moco)):
                     images_after_moco[i] = func_stretch_contrast[self._stretch_contrast_method](images_after_moco[i])
-                    images_before_moco[i] = func_stretch_contrast[self._stretch_contrast_method](images_before_smoco[i])
+                    images_before_moco[i] = func_stretch_contrast[self._stretch_contrast_method](images_before_moco[i])
 
                     bkg_fig = self._generate_moco_figure(images_after_moco[i], images_before_moco[i], size_fig)
 
