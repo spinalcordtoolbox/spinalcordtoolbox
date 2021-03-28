@@ -19,6 +19,7 @@ import skimage.exposure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.colors as color
+import imageio  # Not in the requirements
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
@@ -349,6 +350,8 @@ class QcImage(object):
                     bkg_img_path = self.qc_report.qc_params.abs_bkg_img_list_path(i)
                     self._save(bkg_fig, bkg_img_path, dpi=self.qc_report.qc_params.dpi)
                     bkg_img_paths.append(bkg_img_path)
+                    bkg_gif_path = self.qc_report.qc_params.abs_bkg_gif_path()
+                    self._save_gif(bkg_gif_path, bkg_img_paths, self._fps)
 
                     overlay_fig = self._generate_moco_figure(images_after_moco[i], images_before_moco[i], size_fig,
                                                              is_mask=True)
@@ -356,6 +359,8 @@ class QcImage(object):
                     overlay_img_path = self.qc_report.qc_params.abs_overlay_img_list_path(i)
                     self._save(overlay_fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
                     overlay_img_paths.append(overlay_img_path)
+                    overlay_gif_path = self.qc_report.qc_params.abs_overlay_gif_path()
+                    self._save_gif(overlay_gif_path, overlay_img_paths, self._fps)
 
             else:
                 fig = Figure()
@@ -452,6 +457,21 @@ class QcImage(object):
                     transparent=True,
                     dpi=dpi)
 
+    def _save_gif(self, gif_path, img_paths, fps=2):
+        """
+        Save a gif from a list of images.
+
+        :param gif_path: str: path of the folder where the gif is saved
+        :param img_paths: list: list of image paths to build gif image
+        :param fps: float: number of frames per second for the ouptut gif
+        :return:
+        """
+        logger.debug('Save gif %s', gif_path)
+        images = []
+        for f_name in img_paths:
+            images.append(imageio.imread(f_name))
+
+        imageio.mimsave(gif_path, images, fps=fps)
 
 class Params(object):
     """Parses and stores the variables that will be included into the QC details
@@ -498,7 +518,10 @@ class Params(object):
         self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.png')
         if command == 'sct_fmri_moco' or 'sct_dmri_moco':
             self.bkg_img_list_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img_list')
-            self.overlay_img_list_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img_list')
+            self.overlay_img_list_path = os.path.join(dataset, subject, contrast, command, self.mod_date,
+                                                      'overlay_img_list')
+            self.bkg_gif_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.gif')
+            self.overlay_gif_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.gif')
 
     def abs_bkg_img_path(self):
         return os.path.join(self.root_folder, self.bkg_img_path)
@@ -519,6 +542,12 @@ class Params(object):
         """
         overlay_filename = 'overlay_img_' + str(idx) + '.png'
         return os.path.join(self.root_folder, self.overlay_img_list_path, overlay_filename)
+
+    def abs_bkg_gif_path(self):
+        return os.path.join(self.root_folder, self.bkg_gif_path)
+
+    def abs_overlay_gif_path(self):
+        return os.path.join(self.root_folder, self.overlay_gif_path)
 
 
 class QcReport(object):
