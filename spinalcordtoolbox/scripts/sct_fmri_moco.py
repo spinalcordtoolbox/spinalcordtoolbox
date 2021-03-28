@@ -13,13 +13,11 @@
 
 import sys
 import os
-import logging # to remove
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, set_global_loglevel
 from spinalcordtoolbox.reports.qc import generate_qc
 
-logger = logging.getLogger(__name__) # to remove
 
 def get_parser():
     # initialize parameters
