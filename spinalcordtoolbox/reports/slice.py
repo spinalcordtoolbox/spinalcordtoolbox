@@ -51,8 +51,8 @@ class Slice(object):
             self._absolute_paths.append(img.absolutepath)  # change_orientation removes the field absolute_path
             img.change_orientation('SAL')
             if p_resample:
-                if i == len(images) - 1:
-                    # Last volume corresponds to a segmentation, therefore use linear interpolation here
+                if i == len(images) - 1 and img.dim[3] == 1:
+                    # Last volume, if it is 3d, corresponds to a segmentation, therefore use linear interpolation here
                     type_img = 'seg'
                 else:
                     # Otherwise it's an image: use spline interpolation
@@ -285,7 +285,8 @@ class Slice(object):
         """
 
         mosaics = list()
-        self._image_seg = self._images[0].copy()  # for cropping
+        if len(self._images) != 0:  # If there is a segmentation image
+            self._image_seg = self._images[0].copy()  # segmentation used to improve cropping
 
         for i, img in enumerate(self._4d_images):
             # The absolutepath is changed to None after change_orientation see issue #3304
@@ -293,10 +294,9 @@ class Slice(object):
 
             im_t_list = (split_img_data(img, dim=3, squeeze_data=True))  # Split along T dimension
             self._images.clear()
-            self._images = im_t_list # + img_seg
+            self._images = im_t_list
             matrices, centers_mosaic = self.mosaic(return_center=True)
             mosaics.append(matrices)
-        logger.info(centers_mosaic)
         return mosaics, centers_mosaic
 
     def single(self):
