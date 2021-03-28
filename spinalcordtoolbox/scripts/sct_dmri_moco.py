@@ -145,6 +145,11 @@ def get_parser():
         help="The path where the quality control generated content will be saved."
     )
     optional.add_argument(
+        '-qc-seg',
+        metavar=Metavar.file,
+        help="Segmentation of spinal cord to improve cropping in qc report"
+    )
+    optional.add_argument(
         '-qc-fps',
         metavar=Metavar.float,
         type=float,
@@ -195,10 +200,11 @@ def main(argv=None):
     qc_fps = arguments.qc_fps
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
+    qc_seg = arguments.qc_seg
     if path_qc is not None:
-        generate_qc(fname_in1=fname_output_image, fname_in2=param.fname_data, fname_seg=param.fname_mask,
+        generate_qc(fname_in1=fname_output_image, fname_in2=param.fname_data, fname_seg=qc_seg,
                     args=arguments, path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset,
-                    subject=qc_subject, process='sct_cmri_moco')
+                    subject=qc_subject, process='sct_dmri_moco')
 
 
 if __name__ == "__main__":
