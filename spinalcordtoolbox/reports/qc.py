@@ -362,6 +362,8 @@ class QcImage(object):
                     overlay_gif_path = self.qc_report.qc_params.abs_overlay_gif_path()
                     self._save_gif(overlay_gif_path, overlay_img_paths, self._fps)
 
+                self.qc_report.update_description_file(images_after_moco[0].shape)
+
             else:
                 fig = Figure()
                 fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
@@ -514,14 +516,16 @@ class Params(object):
         self.root_folder = dest_folder
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
         self.qc_results = os.path.join(dest_folder, '_json/qc_' + self.mod_date + '.json')
-        self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.png')
-        self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.png')
         if command == 'sct_fmri_moco' or 'sct_dmri_moco':
             self.bkg_img_list_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img_list')
             self.overlay_img_list_path = os.path.join(dataset, subject, contrast, command, self.mod_date,
                                                       'overlay_img_list')
-            self.bkg_gif_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.gif')
-            self.overlay_gif_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.gif')
+            self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.gif')
+            self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.gif')
+        else:
+            self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.png')
+            self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.png')
+
 
     def abs_bkg_img_path(self):
         return os.path.join(self.root_folder, self.bkg_img_path)
@@ -544,10 +548,10 @@ class Params(object):
         return os.path.join(self.root_folder, self.overlay_img_list_path, overlay_filename)
 
     def abs_bkg_gif_path(self):
-        return os.path.join(self.root_folder, self.bkg_gif_path)
+        return os.path.join(self.root_folder, self.bkg_img_path)
 
     def abs_overlay_gif_path(self):
-        return os.path.join(self.root_folder, self.overlay_gif_path)
+        return os.path.join(self.root_folder, self.overlay_img_path)
 
 
 class QcReport(object):
@@ -582,7 +586,7 @@ class QcReport(object):
             target_overlay_folder = os.path.dirname(self.qc_params.abs_overlay_img_list_path(0))
             try:
                 os.makedirs(target_bkg_folder, exist_ok=True)
-                os.makedirs(target_overlay_folder)
+                os.makedirs(target_overlay_folder, exist_ok=True)
             except OSError as err:
                 if not os.path.isdir(target_bkg_folder) or os.path.isdir(target_overlay_folder):
                     raise err
@@ -593,8 +597,6 @@ class QcReport(object):
             except OSError as err:
                 if not os.path.isdir(target_img_folder):
                     raise err
-
-
 
     def update_description_file(self, dimension):
         """Create the description file with a JSON structure
