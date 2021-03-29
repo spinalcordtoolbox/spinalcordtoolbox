@@ -42,6 +42,8 @@ def get_parser():
     )
 
     subparsers = parser.add_subparsers(dest='command')
+    # required=True can't be passed to parser.addsubparsers until Py3.7, see https://stackoverflow.com/a/55834365
+    subparsers.required = True
 
     display_parser = subparsers.add_parser('display', help="Subcommand for displaying the header.")
     display_parser.add_argument(
@@ -67,7 +69,7 @@ def main(argv: Sequence[str]):
     :param argv: A list of unparsed arguments, which is passed to ArgumentParser.parse_args()
     """
     parser = get_parser()
-    arguments = parser.parse_args(argv if argv else ['--help'])
+    arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_global_loglevel(verbose=verbose)
 
