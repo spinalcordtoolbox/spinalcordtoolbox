@@ -310,7 +310,7 @@ def main(argv=None):
         im_out = [ displacement_to_abs_fsl(im_in, spaces[0], spaces[1]) ]
 
     # If this argument is used standalone, simply pass the input image to the output (sform was set for im_in earlier)
-    elif arguments.set_sform_to_qform is not None:
+    elif arguments.set_sform_to_qform:
         im_out = [im_in]
 
     else:
