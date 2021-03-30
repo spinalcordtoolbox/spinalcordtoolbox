@@ -344,17 +344,16 @@ def main(argv=None):
     zsubsample = param.zsubsample
 
     # retrieve template file names
-    if label_type == 'vert':
-        # spinal cord mask with discrete vertebral levels
-        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)
-    elif label_type == 'disc':
-        # point-wise intervertebral disc labels
-        file_template_disc_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
-        # TODO: we could possibly get rid of the variable fname_template_disc_labeling and use fname_template_labeling
-        fname_template_disc_labeling = os.path.join(path_template, 'template', file_template_disc_labeling)
-    elif label_type == 'spinal':
+    if label_type == 'spinal':
         # point-wise spinal level labels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=14)
+    elif label_type == 'disc':
+        # point-wise intervertebral disc labels
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
+    else:
+        # spinal cord mask with discrete vertebral levels
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)
+
     id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
     file_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast_template.upper()])  # label = *-weighted template
     file_template_seg = get_file_label(os.path.join(path_template, 'template'), id_label=arguments.s_template_id)
@@ -408,8 +407,6 @@ def main(argv=None):
     Image(fname_template).save(os.path.join(path_tmp, ftmp_template))
     Image(fname_template_seg).save(os.path.join(path_tmp, ftmp_template_seg))
     Image(fname_template_labeling).save(os.path.join(path_tmp, ftmp_template_label))
-    if label_type == 'disc':
-        Image(fname_template_disc_labeling).save(os.path.join(path_tmp, ftmp_template_label))
 
     # go to tmp folder
     curdir = os.getcwd()
