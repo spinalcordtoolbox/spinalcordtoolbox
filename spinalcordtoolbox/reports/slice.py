@@ -62,7 +62,7 @@ class Slice(object):
                 img_r = img.copy()
             if img_r.dim[3] == 1:   # If image is 3D, nt = 1
                 self._images.append(img_r)
-                image_ref = self._images[0] # 2nd and next passes: we resample any image to the space of the first one
+                image_ref = self._images[0]  # 2nd and next passes: we resample any image to the space of the first one
             else:
                 self._4d_images.append(img_r)
                 # image_ref = self._4d_images[0]  # img_dest is not covered for 4D volumes in resample_nib()
@@ -325,7 +325,7 @@ class Slice(object):
     def aspect(self):
         if len(self._4d_images) == 0:  # For 3D images
             return [self.get_aspect(x) for x in self._images]
-        else: # For 4D images
+        else:  # For 4D images
             return [self.get_aspect(x) for x in self._4d_images]
 
     def _resample_slicewise(self, image, p_resample, type_img, image_ref=None):

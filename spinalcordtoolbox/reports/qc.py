@@ -526,7 +526,7 @@ class Params(object):
         self.root_folder = dest_folder
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
         self.qc_results = os.path.join(dest_folder, '_json/qc_' + self.mod_date + '.json')
-        if command == 'sct_fmri_moco' or 'sct_dmri_moco':
+        if command in ['sct_fmri_moco', 'sct_dmri_moco']:
             self.bkg_img_list_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img_list')
             self.overlay_img_list_path = os.path.join(dataset, subject, contrast, command, self.mod_date,
                                                       'overlay_img_list')
@@ -590,7 +590,7 @@ class QcReport(object):
         :return: return "root folder of the report" and the "furthest folder path" containing the images
         """
         # make a new or update Qc directory
-        if self.qc_params.command is 'sct_fmri_moco' or 'sct_dmri_moco':
+        if self.qc_params.command in ['sct_fmri_moco', 'sct_dmri_moco']:
             target_bkg_folder = os.path.dirname(self.qc_params.abs_bkg_img_list_path(0))
             target_overlay_folder = os.path.dirname(self.qc_params.abs_overlay_img_list_path(0))
             try:

@@ -171,7 +171,7 @@ def main(argv=None):
     # run moco
     fname_output_image = moco_wrapper(param)
 
-    #QC report
+    # QC report
     path_qc = arguments.qc
     qc_fps = arguments.qc_fps
     qc_dataset = arguments.qc_dataset
