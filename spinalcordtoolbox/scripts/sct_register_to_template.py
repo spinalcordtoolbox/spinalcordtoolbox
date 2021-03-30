@@ -108,7 +108,7 @@ def get_parser():
             "If more than two labels (only with the parameter '-disc') are used, a non-linear registration will be "
             "applied to align the each intervertebral disc between the subject and the template, as described in "
             "sct_straighten_spinalcord. This the most accurate and preferred method. This feature does not work with "
-            "the parameter '-ref subject'.\n"
+            "the parameter '-ref subject', where only a rigid registration is performed.\n"
             "\n"
             "More information about label creation can be found at "
             "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%%5FCourse%%5F20200121 (p47)"
