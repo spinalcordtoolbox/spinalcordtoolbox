@@ -350,6 +350,8 @@ def main(argv=None):
     elif label_type == 'disc':
         # point-wise intervertebral disc labels
         file_template_disc_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
+        # TODO: we could possibly get rid of the variable fname_template_disc_labeling and use fname_template_labeling
+        fname_template_disc_labeling = os.path.join(path_template, 'template', file_template_disc_labeling)
     elif label_type == 'spinal':
         # point-wise spinal level labels
         file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=14)
@@ -364,7 +366,6 @@ def main(argv=None):
     fname_template = os.path.join(path_template, 'template', file_template)
     fname_template_labeling = os.path.join(path_template, 'template', file_template_labeling)
     fname_template_seg = os.path.join(path_template, 'template', file_template_seg)
-    fname_template_disc_labeling = os.path.join(path_template, 'template', file_template_disc_labeling)
 
     # check file existence
     # TODO: no need to do that!
