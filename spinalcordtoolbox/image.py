@@ -1633,4 +1633,3 @@ def _align_dict(dictionary, use_tabs=True, delimiter=""):
             padding = " " * (len_max - len(k))
         out.append(f"{k}{padding}{delimiter}{v}")
     return '\n'.join(out)
-
