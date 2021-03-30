@@ -181,14 +181,14 @@ SLICE_ORDER_STRINGS = {
 }
 
 
-def generate_nifti_fields(image):
+def generate_nifti_fields(header):
     """
     Generate nifti header fields using methods found in fslhd.
     """
-    header = image.header
     nib_fields = {k: v[()] for k, v in dict(header).items()}
     qform = header.get_qform()
     sform = header.get_sform()
+    slope, inter = header.get_slope_inter()
 
     return {
         'sizeof_hdr': nib_fields['sizeof_hdr'],
@@ -221,8 +221,8 @@ def generate_nifti_fields(image):
         'vox_offset': header.single_vox_offset,
         'cal_max': f"{nib_fields['cal_max']:.6f}",
         'cal_min': f"{nib_fields['cal_min']:.6f}",
-        'scl_slope': f"{image.dataobj.slope:.6f}",
-        'scl_inter': f"{image.dataobj.inter:.6f}",
+        'scl_slope': f"{slope:.6f}",
+        'scl_inter': f"{inter:.6f}",
         'phase_dim': int((nib_fields['dim_info'] >> 2) & 3),
         'freq_dim': int(nib_fields['dim_info'] & 3),
         'slice_dim': int((nib_fields['dim_info'] >> 4) & 3),
