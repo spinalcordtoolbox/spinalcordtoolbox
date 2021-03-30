@@ -249,7 +249,7 @@ class QcImage(object):
 
     def grid(self, mask, ax):
         """Centered grid to assess quality of motion correction"""
-        grid = np.full_like(mask, np.nan)
+        grid = np.full_like(mask, 0)
         ax.imshow(grid, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
         for center_mosaic in self._centermass:
             x0, y0 = center_mosaic[0], center_mosaic[1]
@@ -338,8 +338,7 @@ class QcImage(object):
                 size_fig = [5 * img.shape[1] / img.shape[0], 5]
 
             if self._fps is not None:
-                size_fig = [5, 15 * images_after_moco[0].shape[0] / images_after_moco[0].shape[1]]
-                logger.info(type(size_fig))
+                size_fig = [5, 20 * images_after_moco[0].shape[0] / images_after_moco[0].shape[1]]
                 bkg_img_paths = []
                 overlay_img_paths = []
                 for i in range(len(images_after_moco)):
@@ -352,8 +351,6 @@ class QcImage(object):
                     bkg_img_path = self.qc_report.qc_params.abs_bkg_img_list_path(i)
                     self._save(bkg_fig, bkg_img_path, dpi=self.qc_report.qc_params.dpi)
                     bkg_img_paths.append(bkg_img_path)
-                    bkg_gif_path = self.qc_report.qc_params.abs_bkg_gif_path()
-                    self._save_gif(bkg_gif_path, bkg_img_paths, self._fps)
 
                     overlay_fig = self._generate_moco_figure(images_after_moco[i], images_before_moco[i], size_fig,
                                                              i_vol=i, is_mask=True)
@@ -361,11 +358,14 @@ class QcImage(object):
                     overlay_img_path = self.qc_report.qc_params.abs_overlay_img_list_path(i)
                     self._save(overlay_fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
                     overlay_img_paths.append(overlay_img_path)
-                    overlay_gif_path = self.qc_report.qc_params.abs_overlay_gif_path()
-                    self._save_gif(overlay_gif_path, overlay_img_paths, self._fps)
+
+                bkg_gif_path = self.qc_report.qc_params.abs_bkg_gif_path()
+                self._save_gif(bkg_gif_path, bkg_img_paths, self._fps)
+
+                overlay_gif_path = self.qc_report.qc_params.abs_overlay_gif_path()
+                self._save_gif(overlay_gif_path, overlay_img_paths, self._fps)
 
                 self.qc_report.update_description_file(images_after_moco[0].shape)
-
             else:
                 fig = Figure()
                 fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
@@ -425,11 +425,10 @@ class QcImage(object):
             aspect = self.aspect_img
         fig = Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
-        fig.subplots_adjust(hspace=0.5)
-
+        fig.subplots_adjust(left=0, top=0.9, bottom=0.1, hspace=0.5)
         ax1 = fig.add_subplot(211)
         ax1.imshow(top_image, cmap='gray', aspect=float(aspect))
-        ax1.set_title('After motion correction', fontsize=5, loc='left', pad=2)
+        ax1.set_title('After motion correction', fontsize=8, loc='left', pad=2)
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
         self._add_orientation_label(ax1)
@@ -438,9 +437,9 @@ class QcImage(object):
 
         ax2 = fig.add_subplot(212)
         ax2.imshow(bottom_image, cmap='gray', aspect=float(aspect))
-        ax2.set_title('Before motion correction', fontsize=5, loc='left', pad=2)
+        ax2.set_title('Before motion correction', fontsize=8, loc='left', pad=2)
         ax2.annotate(f'Current volume: {i_vol}', xy=(.975, .025), xycoords='figure fraction',
-                     horizontalalignment='right', verticalalignment='bottom', fontsize=3)
+                     horizontalalignment='right', verticalalignment='bottom', fontsize=5)
         ax2.get_xaxis().set_visible(False)
         ax2.get_yaxis().set_visible(False)
         self._add_orientation_label(ax2)
@@ -481,7 +480,7 @@ class QcImage(object):
         images = []
         for f_name in img_paths:
             images.append(imageio.imread(f_name))
-
+        logger.info('Saving gif %s', gif_path)
         imageio.mimsave(gif_path, images, fps=fps)
 
 
