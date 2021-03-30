@@ -351,6 +351,7 @@ def main(argv=None):
     id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
     file_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast_template.upper()])  # label = *-weighted template
     file_template_seg = get_file_label(os.path.join(path_template, 'template'), id_label=arguments.s_template_id)
+    file_template_disc_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
 
     # start timer
     start_time = time.time()
@@ -359,7 +360,7 @@ def main(argv=None):
     fname_template = os.path.join(path_template, 'template', file_template)
     fname_template_labeling = os.path.join(path_template, 'template', file_template_labeling)
     fname_template_seg = os.path.join(path_template, 'template', file_template_seg)
-    fname_template_disc_labeling = os.path.join(path_template, 'template', 'PAM50_label_disc.nii.gz')
+    fname_template_disc_labeling = os.path.join(path_template, 'template', file_template_disc_labeling)
 
     # check file existence
     # TODO: no need to do that!
