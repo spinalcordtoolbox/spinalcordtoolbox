@@ -332,20 +332,22 @@ class QcImage(object):
 
             # if axial mosaic restrict width
             if sct_slice.get_name() == 'Axial' and self._fps is None:
-                size_fig = [5,  * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
+                size_fig = [5, 5 * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
             # if sagittal orientation restrict height
             elif sct_slice.get_name() == 'Sagittal':
                 size_fig = [5 * img.shape[1] / img.shape[0], 5]
 
             if self._fps is not None:
                 size_fig = [5, 15 * images_after_moco[0].shape[0] / images_after_moco[0].shape[1]]
+                logger.info(type(size_fig))
                 bkg_img_paths = []
                 overlay_img_paths = []
                 for i in range(len(images_after_moco)):
+
                     images_after_moco[i] = func_stretch_contrast[self._stretch_contrast_method](images_after_moco[i])
                     images_before_moco[i] = func_stretch_contrast[self._stretch_contrast_method](images_before_moco[i])
 
-                    bkg_fig = self._generate_moco_figure(images_after_moco[i], images_before_moco[i], size_fig)
+                    bkg_fig = self._generate_moco_figure(images_after_moco[i], images_before_moco[i], size_fig, i_vol=i)
 
                     bkg_img_path = self.qc_report.qc_params.abs_bkg_img_list_path(i)
                     self._save(bkg_fig, bkg_img_path, dpi=self.qc_report.qc_params.dpi)
@@ -354,7 +356,7 @@ class QcImage(object):
                     self._save_gif(bkg_gif_path, bkg_img_paths, self._fps)
 
                     overlay_fig = self._generate_moco_figure(images_after_moco[i], images_before_moco[i], size_fig,
-                                                             is_mask=True)
+                                                             i_vol=i, is_mask=True)
 
                     overlay_img_path = self.qc_report.qc_params.abs_overlay_img_list_path(i)
                     self._save(overlay_fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
@@ -369,7 +371,7 @@ class QcImage(object):
                 fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
                 FigureCanvas(fig)
                 ax = fig.add_axes((0, 0, 1, 1))
-                ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(aspect_img))
+                ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(self.aspect_img))
                 self._add_orientation_label(ax)
                 ax.get_xaxis().set_visible(False)
                 ax.get_yaxis().set_visible(False)
@@ -406,11 +408,15 @@ class QcImage(object):
             ax.text(0, 18, 'L', color='yellow', size=4)
             ax.text(24, 18, 'R', color='yellow', size=4)
 
-    def _generate_moco_figure(self, top_image, bottom_image, size_fig, is_mask=False):
+    def _generate_moco_figure(self, top_image, bottom_image, size_fig, i_vol, is_mask=False):
         """
-        Add orientation labels on the figure
+        Create figure with two images for sct_fmri_moco and sct_dmri_moco
 
-        :param fig: MPL figure handler
+        :param top_image: numpy.ndarray: image of mosaic after motion correction
+        :param bottom_image: numpy.ndarray: image of mosaic before motion correction
+        :param size_fig: size of figure in inches
+        :param i_vol: int: number of the current volume
+        :param is_mask: display grid on top of mosaic
         :return fig: MPL figure handler
         """
         if is_mask:
@@ -420,9 +426,10 @@ class QcImage(object):
         fig = Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         fig.subplots_adjust(hspace=0.5)
+
         ax1 = fig.add_subplot(211)
         ax1.imshow(top_image, cmap='gray', aspect=float(aspect))
-        ax1.set_title('After motion correction', fontsize=7, loc='left')
+        ax1.set_title('After motion correction', fontsize=5, loc='left', pad=2)
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
         self._add_orientation_label(ax1)
@@ -431,7 +438,9 @@ class QcImage(object):
 
         ax2 = fig.add_subplot(212)
         ax2.imshow(bottom_image, cmap='gray', aspect=float(aspect))
-        ax2.set_title('Before motion correction', fontsize=7, loc='left')
+        ax2.set_title('Before motion correction', fontsize=5, loc='left', pad=2)
+        ax2.annotate(f'Current volume: {i_vol}', xy=(.975, .025), xycoords='figure fraction',
+                     horizontalalignment='right', verticalalignment='bottom', fontsize=3)
         ax2.get_xaxis().set_visible(False)
         ax2.get_yaxis().set_visible(False)
         self._add_orientation_label(ax2)
@@ -474,6 +483,7 @@ class QcImage(object):
             images.append(imageio.imread(f_name))
 
         imageio.mimsave(gif_path, images, fps=fps)
+
 
 class Params(object):
     """Parses and stores the variables that will be included into the QC details
@@ -526,7 +536,6 @@ class Params(object):
             self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.png')
             self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.png')
 
-
     def abs_bkg_img_path(self):
         return os.path.join(self.root_folder, self.bkg_img_path)
 
@@ -535,14 +544,14 @@ class Params(object):
 
     def abs_bkg_img_list_path(self, idx):
         """
-        :param idx: index of image
+        :param idx: index of current image
         """
         bkg_filename = 'bkg_img_' + str(idx) + '.png'
         return os.path.join(self.root_folder, self.bkg_img_list_path, bkg_filename)
 
     def abs_overlay_img_list_path(self, idx):
         """
-        :param idx: index of image
+        :param idx: index of current image
         """
         overlay_filename = 'overlay_img_' + str(idx) + '.png'
         return os.path.join(self.root_folder, self.overlay_img_list_path, overlay_filename)
