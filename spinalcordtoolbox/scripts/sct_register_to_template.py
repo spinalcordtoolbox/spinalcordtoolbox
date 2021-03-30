@@ -344,14 +344,18 @@ def main(argv=None):
     zsubsample = param.zsubsample
 
     # retrieve template file names
-    if label_type == 'spinal':
-        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=14)  # label = point-wise spinal level labels
-    else:
-        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)  # label = spinal cord mask with discrete vertebral levels
+    if label_type == 'vert':
+        # spinal cord mask with discrete vertebral levels
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)
+    elif label_type == 'disc':
+        # point-wise intervertebral disc labels
+        file_template_disc_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
+    elif label_type == 'spinal':
+        # point-wise spinal level labels
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=14)
     id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
     file_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast_template.upper()])  # label = *-weighted template
     file_template_seg = get_file_label(os.path.join(path_template, 'template'), id_label=arguments.s_template_id)
-    file_template_disc_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
 
     # start timer
     start_time = time.time()
