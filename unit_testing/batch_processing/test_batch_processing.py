@@ -17,15 +17,15 @@ from spinalcordtoolbox.utils.sys import sct_dir_local_path
 )
 # The parametrization below checks only 6 values (one from each csv file -- same as actual batch_processing.sh)
 # TODO: We can and should be verifying more results produced by this pipeline, but which values?
-@pytest.mark.parametrize("csv_filepath,row,pos,rel_tolerance",
-                         [("t2/csa_c2c3.csv", -1, 5, 1e-14),
-                          ("t2s/csa_gm.csv", -1, 5, 1e-14),
-                          ("t2s/csa_wm.csv", -1, 5, 1e-14),
-                          ("mt/mtr_in_wm.csv", -1, 7, 1e-8),
-                          ("dmri/fa_in_cst.csv", -1, 7, 1e-8),
-                          ("dmri/fa_in_cst.csv", -2, 7, 1e-7)])
-def test_batch_processing_results(csv_filepath, row, pos, rel_tolerance):
-    """Ensure that new batch_processing.sh results are within a certain tolerance of the cached baseline results."""
+@pytest.mark.parametrize("csv_filepath,row,pos",
+                         [("t2/csa_c2c3.csv", -1, 5),
+                          ("t2s/csa_gm.csv", -1, 5),
+                          ("t2s/csa_wm.csv", -1, 5),
+                          ("mt/mtr_in_wm.csv", -1, 7),
+                          ("dmri/fa_in_cst.csv", -1, 7),
+                          ("dmri/fa_in_cst.csv", -2, 7)])
+def test_batch_processing_results(csv_filepath, row, pos):
+    """Ensure that new batch_processing.sh results are approximately equal to the cached baseline results."""
     sct_dir = pathlib.Path(sct_dir_local_path())
     csv_filepath_old = sct_dir / "unit_testing/batch_processing/cached_results" / csv_filepath
     csv_filepath_new = sct_dir / "sct_example_data" / csv_filepath
@@ -40,4 +40,4 @@ def test_batch_processing_results(csv_filepath, row, pos, rel_tolerance):
         reader = csv.reader(csvfile, delimiter=',')
         metric_value_new = float([row for row in reader][row][pos])  # Row/position varies depending on metric
 
-    assert metric_value_new == pytest.approx(metric_value_old, rel=rel_tolerance)
+    assert metric_value_new == pytest.approx(metric_value_old)  # Default rel_tolerance: 1e-6
