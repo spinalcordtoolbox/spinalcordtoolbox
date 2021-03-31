@@ -24,7 +24,7 @@ def test_sct_register_to_template_backwards_compat(script_runner):
 @pytest.fixture(scope="module")
 def template_lpi(tmp_path_factory):
     """Change orientation of test data template to LPI."""
-    path_out = tmp_path_factory.mktemp("tmp_data")/'template_lpi'  # tmp_path_factory is needed for module scope
+    path_out = str(tmp_path_factory.mktemp("tmp_data")/'template_lpi')  # tmp_path_factory is needed for module scope
     shutil.copytree('sct_testing_data/template', path_out)
     for file in glob.glob('sct_testing_data/template_lpi/template/*.nii.gz'):
         nii = Image(file)
