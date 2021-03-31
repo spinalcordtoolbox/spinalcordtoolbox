@@ -93,7 +93,7 @@ def get_parser():
 
     header = parser.add_argument_group('HEADER OPERATIONS')
     header.add_argument(
-        "-show-header",
+        "-header",
         choices=HEADER_FORMATS,
         # 'const' and 'nargs' used because of https://stackoverflow.com/q/40324356
         const='sct',
@@ -300,13 +300,13 @@ def main(argv=None):
     elif arguments.setorient_data is not None:
         im_out = [change_orientation(im_in, arguments.setorient_data, data_only=True)]
 
-    elif arguments.show_header is not None:
+    elif arguments.header is not None:
         header = im_in.header
         # Necessary because of https://github.com/nipy/nibabel/issues/480#issuecomment-239227821
         if hasattr(im_in, "im_file"):
             header.structarr['scl_slope'] = im_in.im_file.dataobj.slope
             header.structarr['scl_inter'] = im_in.im_file.dataobj.inter
-        printv(create_formatted_header_string(header=header, output_format=arguments.show_header), verbose=verbose)
+        printv(create_formatted_header_string(header=header, output_format=arguments.header), verbose=verbose)
         im_out = None
 
     elif arguments.split is not None:
@@ -365,7 +365,7 @@ def main(argv=None):
 
     elif arguments.getorient:
         printv("-getorient has been deprecated, and will be removed in a future version of SCT. Please use"
-               "'sct_image -show-header' to view the orientation of your image.")
+               "'sct_image -header' to view the orientation of your image.")
 
     elif arguments.display_warp:
         printv('Warping grid generated.', verbose, 'info')
