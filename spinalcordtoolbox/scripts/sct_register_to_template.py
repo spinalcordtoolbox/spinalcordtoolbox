@@ -157,7 +157,8 @@ def get_parser():
     optional.add_argument(
         '-ldisc',
         metavar=Metavar.file,
-        help="R|Labels located at the posterior edge of the intervertebral discs or on their orthogonal projection on "
+        help="R|File containing disc labels. Labels can be located either at the posterior edge "
+             "of the intervertebral discs, or at the orthogonal projection of each disc onto "
              "the spinal cord (e.g.: the file 'xxx_seg_labeled_discs.nii.gz' output by sct_label_vertebrae).\n"
              "If you are using more than 2 labels, all discs covering the region of interest should be provided. "
              "E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. "
