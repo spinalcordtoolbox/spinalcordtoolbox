@@ -71,7 +71,7 @@ MODELS = {
     },
     "model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg": {
         "url": [
-            "https://github.com/ivadomed/model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg/archive/r20210331.zip"
+            "https://github.com/ivadomed/model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg/archive/r20210401.zip"
         ],
         "description": "Grey/white matter seg on exvivo human T2w.",
         "contrasts": ["t2"],
