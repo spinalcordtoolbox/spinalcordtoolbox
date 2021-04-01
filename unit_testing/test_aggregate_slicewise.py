@@ -182,6 +182,12 @@ def test_extract_metric(dummy_data_and_labels):
                                                     indiv_labels_ids=[0, 1], perslice=False, method='max')
     assert agg_metric[list(agg_metric)[0]]['MAX()'] == 41.0
 
+    # Median
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
+                                                    label_struc=dummy_data_and_labels[2], id_label=0,
+                                                    indiv_labels_ids=[0, 1], perslice=False, method='median')
+    assert agg_metric[list(agg_metric)[0]]['MEDIAN()'] == 39.0
+
     # Combined labels
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=99,

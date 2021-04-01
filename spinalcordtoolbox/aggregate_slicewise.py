@@ -146,6 +146,33 @@ def func_map(data, mask, map_clusters):
     return beta[0], beta
 
 
+def func_median(data, mask=None, map_clusters=None):
+    """
+    Compute weighted median.
+    Code inspired from: https://gist.github.com/tinybike/d9ff1dad515b66cc0d87
+    :param data: nd-array: input data
+    :param mask: (n+1)d-array: input mask
+    :param map_clusters: not used
+    :return:
+    """
+    # Check if mask has an additional dimension (in case it is a label). If so, select the first label
+    if mask.ndim == data.ndim + 1:
+        mask = mask[..., 0]
+    # data, weights = np.array(data).squeeze(), np.array(weights).squeeze()
+    s_data, s_mask = map(np.array, zip(*sorted(zip(data, mask))))
+    midpoint = 0.5 * sum(s_mask)
+    if any(mask > midpoint):
+        w_median = (data[mask == np.max(mask)])[0]
+    else:
+        cs_mask = np.cumsum(s_mask)
+        idx = np.where(cs_mask <= midpoint)[0][-1]
+        if cs_mask[idx] == midpoint:
+            w_median = np.mean(s_data[idx:idx + 2])
+        else:
+            w_median = s_data[idx + 1]
+    return w_median, None
+
+
 def func_ml(data, mask, map_clusters=None):
     """
     Compute maximum likelihood (ML) for the first label of mask.
@@ -424,6 +451,10 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     elif method == 'wa':
         mask = Metric(data=labels_sum, label=label_struc[id_label].name)
         group_funcs = (('WA', func_wa), ('STD', func_std))
+    # Weighted median
+    elif method == 'median':
+        mask = Metric(data=labels_sum, label=label_struc[id_label].name)
+        group_funcs = (('MEDIAN', func_median), ('STD', func_std))
     # Binarize mask
     elif method == 'bin':
         mask = Metric(data=labels_sum, label=label_struc[id_label].name)
