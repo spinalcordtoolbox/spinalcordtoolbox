@@ -15,7 +15,8 @@ import sys
 import os
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_global_loglevel
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax, list_type
 from spinalcordtoolbox.reports.qc import generate_qc
 
 
@@ -119,7 +120,8 @@ def get_parser():
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="The path where the quality control generated content will be saved."
+        help="The path where the quality control generated content will be saved.",
+        default=None
     )
     optional.add_argument(
         '-qc-seg',
@@ -177,10 +179,15 @@ def main(argv=None):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
     qc_seg = arguments.qc_seg
+
+    set_global_loglevel(verbose)  # moco_wrapper seems to change verbose to 0
+
     if path_qc is not None:
         generate_qc(fname_in1=fname_output_image, fname_in2=param.fname_data, fname_seg=qc_seg,
-                    args=arguments, path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset,
+                    args=sys.argv[1:], path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset,
                     subject=qc_subject, process='sct_fmri_moco')
+
+    display_viewer_syntax([fname_output_image, param.fname_data], mode='ortho,ortho')
 
 
 if __name__ == "__main__":

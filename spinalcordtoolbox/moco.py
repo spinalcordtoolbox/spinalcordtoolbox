@@ -470,11 +470,9 @@ def moco_wrapper(param):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
+    printv('\nElapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
 
-    display_viewer_syntax(
-        [os.path.join(param.path_out, add_suffix(os.path.basename(param.fname_data), param.suffix)),
-         param.fname_data], mode='ortho,ortho')
+    fname_moco = os.path.join(param.path_out, add_suffix(os.path.basename(param.fname_data), param.suffix))
 
     return fname_moco
 
