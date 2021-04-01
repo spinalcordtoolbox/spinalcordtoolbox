@@ -346,14 +346,15 @@ class QcImage(object):
                     images_after_moco[i] = func_stretch_contrast[self._stretch_contrast_method](images_after_moco[i])
                     images_before_moco[i] = func_stretch_contrast[self._stretch_contrast_method](images_before_moco[i])
 
-                    bkg_fig = self._generate_moco_figure(images_after_moco[i], images_before_moco[i], size_fig, i_vol=i)
+                    bkg_fig = self._generate_moco_figure(images_before_moco[i], images_after_moco[i], size_fig, i_vol=i,
+                                                         n_vol=len(images_after_moco))
 
                     bkg_img_path = self.qc_report.qc_params.abs_bkg_img_list_path(i)
                     self._save(bkg_fig, bkg_img_path, dpi=self.qc_report.qc_params.dpi)
                     bkg_img_paths.append(bkg_img_path)
 
-                    overlay_fig = self._generate_moco_figure(images_after_moco[i], images_before_moco[i], size_fig,
-                                                             i_vol=i, is_mask=True)
+                    overlay_fig = self._generate_moco_figure(images_before_moco[i], images_after_moco[i], size_fig,
+                                                             i_vol=i, n_vol=len(images_after_moco), is_mask=True)
 
                     overlay_img_path = self.qc_report.qc_params.abs_overlay_img_list_path(i)
                     self._save(overlay_fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
@@ -408,7 +409,7 @@ class QcImage(object):
             ax.text(0, 18, 'L', color='yellow', size=4)
             ax.text(24, 18, 'R', color='yellow', size=4)
 
-    def _generate_moco_figure(self, top_image, bottom_image, size_fig, i_vol, is_mask=False):
+    def _generate_moco_figure(self, top_image, bottom_image, size_fig, i_vol, n_vol, is_mask=False):
         """
         Create figure with two images for sct_fmri_moco and sct_dmri_moco
 
@@ -416,6 +417,7 @@ class QcImage(object):
         :param bottom_image: numpy.ndarray: image of mosaic before motion correction
         :param size_fig: size of figure in inches
         :param i_vol: int: number of the current volume
+        :param n_vol: int: number of volumes in total
         :param is_mask: display grid on top of mosaic
         :return fig: MPL figure handler
         """
@@ -428,7 +430,7 @@ class QcImage(object):
         fig.subplots_adjust(left=0, top=0.9, bottom=0.1, hspace=0.5)
         ax1 = fig.add_subplot(211)
         ax1.imshow(top_image, cmap='gray', aspect=float(aspect))
-        ax1.set_title('After motion correction', fontsize=8, loc='left', pad=2)
+        ax1.set_title('Before motion correction', fontsize=8, loc='left', pad=2)
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
         self._add_orientation_label(ax1)
@@ -437,9 +439,9 @@ class QcImage(object):
 
         ax2 = fig.add_subplot(212)
         ax2.imshow(bottom_image, cmap='gray', aspect=float(aspect))
-        ax2.set_title('Before motion correction', fontsize=8, loc='left', pad=2)
-        ax2.annotate(f'Current volume: {i_vol}', xy=(.975, .025), xycoords='figure fraction',
-                     horizontalalignment='right', verticalalignment='bottom', fontsize=5)
+        ax2.set_title('After motion correction', fontsize=8, loc='left', pad=2)
+        ax2.annotate(f'Volume: {i_vol+1}/{n_vol}', xy=(0, .025), xycoords='figure fraction',
+                     horizontalalignment='left', verticalalignment='bottom', fontsize=5)
         ax2.get_xaxis().set_visible(False)
         ax2.get_yaxis().set_visible(False)
         self._add_orientation_label(ax2)
