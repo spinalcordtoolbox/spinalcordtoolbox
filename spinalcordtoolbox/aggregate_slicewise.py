@@ -158,7 +158,7 @@ def func_median(data, mask=None, map_clusters=None):
     # Check if mask has an additional dimension (in case it is a label). If so, select the first label
     if mask.ndim == data.ndim + 1:
         mask = mask[..., 0]
-    # data, weights = np.array(data).squeeze(), np.array(weights).squeeze()
+    data, mask = data.reshape(-1), mask.reshape(-1)
     s_data, s_mask = map(np.array, zip(*sorted(zip(data, mask))))
     midpoint = 0.5 * sum(s_mask)
     if any(mask > midpoint):
