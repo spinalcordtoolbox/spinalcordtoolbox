@@ -18,5 +18,6 @@ def test_sct_image_backwards_compat(script_runner):
 
 @pytest.mark.parametrize("output_format", ('sct', 'fslhd', 'nibabel'))
 def test_sct_image_show_header_no_checks(output_format):
-    """Run the CLI script without checking results."""
+    """Run the CLI script without checking results. The rationale for not checking results is
+    provided here: https://github.com/neuropoly/spinalcordtoolbox/pull/3317#issuecomment-811429547"""
     sct_image.main(argv=['-i', 'sct_testing_data/t2/t2.nii.gz', '-header', output_format])
