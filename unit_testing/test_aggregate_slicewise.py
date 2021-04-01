@@ -201,11 +201,16 @@ def test_extract_metric(dummy_data_and_labels):
 
 # noinspection 801,PyShadowingNames
 def test_extract_metric_2d(dummy_data_and_labels_2d):
-    """Test different estimation methods."""
+    """Test different estimation methods with 2D input array"""
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels_2d[0], labels=dummy_data_and_labels_2d[1],
                                                     label_struc=dummy_data_and_labels_2d[2], id_label=0,
                                                     indiv_labels_ids=0, perslice=False, method='wa')
     assert agg_metric[list(agg_metric)[0]]['WA()'] == 5.0
+
+    agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels_2d[0], labels=dummy_data_and_labels_2d[1],
+                                                    label_struc=dummy_data_and_labels_2d[2], id_label=0,
+                                                    indiv_labels_ids=0, perslice=False, method='median')
+    assert agg_metric[list(agg_metric)[0]]['MEDIAN()'] == 5.0
 
 
 # noinspection 801,PyShadowingNames
