@@ -146,7 +146,7 @@ def func_map(data, mask, map_clusters):
     return beta[0], beta
 
 
-def func_median(data, mask=None, map_clusters=None):
+def func_median(data, mask, map_clusters=None):
     """
     Compute weighted median.
     Code inspired from: https://gist.github.com/tinybike/d9ff1dad515b66cc0d87
