@@ -57,6 +57,11 @@ $(document).ready(function(){
       let index = obj[obj.length - 1].getAttribute("data-index");
       sct_data[index].qc = !sct_data[index].qc;
       set_download_yml_btn_state();
+      $("#table").bootstrapTable({data: sct_data});
+      $("#table").bootstrapTable("load", sct_data);
+      hideColumns();
+      document.getElementById("table").rows[0].classList.remove("active");
+      document.getElementById("table").rows[parseInt(index)+1].className="active";
     }
   });
 
