@@ -98,8 +98,7 @@ def get_parser():
         # 'const' and 'nargs' used because of https://stackoverflow.com/q/40324356
         const='sct',
         nargs='?',
-        help="Print the header using the given output format. Choose 'nibabel' or 'fslhd' if you already have header "
-             "information from those programs and you want to compute the diff between two headers."
+        help="Print the header of a NIfTI file. You can select the output format of the header: 'sct' (default), 'nibabel' or 'fslhd'."
     )
     header.add_argument(
         '-copy-header',
@@ -564,4 +563,3 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-
