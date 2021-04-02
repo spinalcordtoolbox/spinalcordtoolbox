@@ -186,7 +186,7 @@ def test_extract_metric(dummy_data_and_labels):
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],
                                                     label_struc=dummy_data_and_labels[2], id_label=0,
                                                     indiv_labels_ids=[0, 1], perslice=False, method='median')
-    assert agg_metric[list(agg_metric)[0]]['MEDIAN()'] == 39.0
+    assert agg_metric[list(agg_metric)[0]]['MEDIAN()'] == 39.5
 
     # Combined labels
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels[0], labels=dummy_data_and_labels[1],

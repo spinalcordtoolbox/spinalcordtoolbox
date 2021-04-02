@@ -12,6 +12,7 @@ import functools
 import csv
 import datetime
 import logging
+import wquantiles
 
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 from spinalcordtoolbox.image import Image
@@ -148,8 +149,8 @@ def func_map(data, mask, map_clusters):
 
 def func_median(data, mask, map_clusters=None):
     """
-    Compute weighted median.
-    Code inspired from: https://gist.github.com/tinybike/d9ff1dad515b66cc0d87
+    Compute weighted median. This is a "non-discrete" implementation of the median, in that it computes the mean between
+    the middle discrete values. For more context, see: https://github.com/nudomarinero/wquantiles/issues/4
     :param data: nd-array: input data
     :param mask: (n+1)d-array: input mask
     :param map_clusters: not used
@@ -159,18 +160,7 @@ def func_median(data, mask, map_clusters=None):
     if mask.ndim == data.ndim + 1:
         mask = mask[..., 0]
     data, mask = data.reshape(-1), mask.reshape(-1)
-    s_data, s_mask = map(np.array, zip(*sorted(zip(data, mask))))
-    midpoint = 0.5 * sum(s_mask)
-    if any(mask > midpoint):
-        w_median = (data[mask == np.max(mask)])[0]
-    else:
-        cs_mask = np.cumsum(s_mask)
-        idx = np.where(cs_mask <= midpoint)[0][-1]
-        if cs_mask[idx] == midpoint:
-            w_median = np.mean(s_data[idx:idx + 2])
-        else:
-            w_median = s_data[idx + 1]
-    return w_median, None
+    return wquantiles.median(data, mask), None
 
 
 def func_ml(data, mask, map_clusters=None):
