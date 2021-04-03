@@ -423,8 +423,7 @@ class QcImage(object):
 
         ax1 = fig.add_subplot(211)
         null_image = np.zeros(np.shape(top_images[0]))
-        img1 = ax1.imshow(null_image, cmap='gray', aspect=float(aspect), vmin=np.amin(top_images[0]),
-                          vmax=np.amax(top_images[0]))
+        img1 = ax1.imshow(null_image, cmap='gray', aspect=float(aspect))
         ax1.set_title('Before motion correction', fontsize=8, loc='left', pad=2)
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
@@ -433,8 +432,7 @@ class QcImage(object):
             QcImage.grid(self, top_images[0], ax1)
 
         ax2 = fig.add_subplot(212)
-        img2 = ax2.imshow(null_image, cmap='gray', aspect=float(aspect), vmin=np.amin(bottom_images[0]),
-                          vmax=np.amax(bottom_images[0]))
+        img2 = ax2.imshow(null_image, cmap='gray', aspect=float(aspect))
         ax2.set_title('After motion correction', fontsize=8, loc='left', pad=2)
         ax2.get_xaxis().set_visible(False)
         ax2.get_yaxis().set_visible(False)
@@ -443,11 +441,13 @@ class QcImage(object):
             QcImage.grid(self, bottom_images[0], ax2)
 
         ann = ax2.annotate('', xy=(0, .025), xycoords='figure fraction', horizontalalignment='left',
-                           verticalalignment='bottom', fontsize=5)
+                           verticalalignment='bottom', fontsize=6)
 
         def update_figure(i):
             img1.set_data(top_images[i])
+            img1.set_clim(vmin=np.amin(top_images[i]), vmax=np.amax(top_images[i]))
             img2.set_data(bottom_images[i])
+            img2.set_clim(vmin=np.amin(bottom_images[i]), vmax=np.amax(bottom_images[i]))
             ann.set_text(f'Volume: {i + 1}/{n_vol}')
 
         # FuncAnimation creates an animation by repeatedly calling the function update_figure for each frame
