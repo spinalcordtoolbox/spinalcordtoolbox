@@ -18,8 +18,8 @@ import skimage.io
 import skimage.exposure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
+from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.colors as color
-import imageio  # Not in the requirements
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
@@ -339,34 +339,23 @@ class QcImage(object):
 
             if self._fps is not None:
                 size_fig = [5, 20 * images_after_moco[0].shape[0] / images_after_moco[0].shape[1]]
-                bkg_img_paths = []
-                overlay_img_paths = []
+
                 for i in range(len(images_after_moco)):
 
                     images_after_moco[i] = func_stretch_contrast[self._stretch_contrast_method](images_after_moco[i])
                     images_before_moco[i] = func_stretch_contrast[self._stretch_contrast_method](images_before_moco[i])
 
-                    bkg_fig = self._generate_moco_figure(images_before_moco[i], images_after_moco[i], size_fig, i_vol=i,
-                                                         n_vol=len(images_after_moco))
+                self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig,
+                                            n_vol=len(images_after_moco), dpi=self.qc_report.qc_params.dpi,
+                                            fps=self._fps)
 
-                    bkg_img_path = self.qc_report.qc_params.abs_bkg_img_list_path(i)
-                    self._save(bkg_fig, bkg_img_path, dpi=self.qc_report.qc_params.dpi)
-                    bkg_img_paths.append(bkg_img_path)
+                self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig,
+                                            n_vol=len(images_after_moco), is_mask=True,
+                                            dpi=self.qc_report.qc_params.dpi, fps=self._fps)
 
-                    overlay_fig = self._generate_moco_figure(images_before_moco[i], images_after_moco[i], size_fig,
-                                                             i_vol=i, n_vol=len(images_after_moco), is_mask=True)
+                w, h = (self.qc_report.qc_params.dpi*size_fig[0], self.qc_report.qc_params.dpi*size_fig[1])
+                self.qc_report.update_description_file((w, h))
 
-                    overlay_img_path = self.qc_report.qc_params.abs_overlay_img_list_path(i)
-                    self._save(overlay_fig, overlay_img_path, dpi=self.qc_report.qc_params.dpi)
-                    overlay_img_paths.append(overlay_img_path)
-
-                bkg_gif_path = self.qc_report.qc_params.abs_bkg_gif_path()
-                self._save_gif(bkg_gif_path, bkg_img_paths, self._fps)
-
-                overlay_gif_path = self.qc_report.qc_params.abs_overlay_gif_path()
-                self._save_gif(overlay_gif_path, overlay_img_paths, self._fps)
-
-                self.qc_report.update_description_file(images_after_moco[0].shape)
             else:
                 fig = Figure()
                 fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
@@ -409,46 +398,68 @@ class QcImage(object):
             ax.text(0, 18, 'L', color='yellow', size=4)
             ax.text(24, 18, 'R', color='yellow', size=4)
 
-    def _generate_moco_figure(self, top_image, bottom_image, size_fig, i_vol, n_vol, is_mask=False):
+    def _generate_and_save_gif(self, top_images, bottom_images, size_fig, n_vol, is_mask=False, dpi=300, fps=2):
         """
-        Create figure with two images for sct_fmri_moco and sct_dmri_moco
+        Create figure with two images for sct_fmri_moco and sct_dmri_moco and save gif
 
-        :param top_image: numpy.ndarray: image of mosaic after motion correction
-        :param bottom_image: numpy.ndarray: image of mosaic before motion correction
+        :param top_images: list of images of mosaic before motion correction
+        :param bottom_images: list of images of mosaic after motion correction
         :param size_fig: size of figure in inches
-        :param i_vol: int: number of the current volume
         :param n_vol: int: number of volumes in total
         :param is_mask: display grid on top of mosaic
-        :return fig: MPL figure handler
+        :param dpi: int: Output resolution of the image
+        :param fps: float: number of frames per second for the output gif
+        :return:
         """
         if is_mask:
             aspect = self.aspect_mask
         else:
             aspect = self.aspect_img
+
         fig = Figure()
+        FigureCanvas(fig)
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         fig.subplots_adjust(left=0, top=0.9, bottom=0.1, hspace=0.5)
+
         ax1 = fig.add_subplot(211)
-        ax1.imshow(top_image, cmap='gray', aspect=float(aspect))
+        null_image = np.zeros(np.shape(top_images[0]))
+        img1 = ax1.imshow(null_image, cmap='gray', aspect=float(aspect), vmin=np.amin(top_images[0]),
+                          vmax=np.amax(top_images[0]))
         ax1.set_title('Before motion correction', fontsize=8, loc='left', pad=2)
         ax1.get_xaxis().set_visible(False)
         ax1.get_yaxis().set_visible(False)
         self._add_orientation_label(ax1)
         if is_mask:
-            QcImage.grid(self, top_image, ax1)
+            QcImage.grid(self, top_images[0], ax1)
 
         ax2 = fig.add_subplot(212)
-        ax2.imshow(bottom_image, cmap='gray', aspect=float(aspect))
+        img2 = ax2.imshow(null_image, cmap='gray', aspect=float(aspect), vmin=np.amin(bottom_images[0]),
+                          vmax=np.amax(bottom_images[0]))
         ax2.set_title('After motion correction', fontsize=8, loc='left', pad=2)
-        ax2.annotate(f'Volume: {i_vol+1}/{n_vol}', xy=(0, .025), xycoords='figure fraction',
-                     horizontalalignment='left', verticalalignment='bottom', fontsize=5)
         ax2.get_xaxis().set_visible(False)
         ax2.get_yaxis().set_visible(False)
         self._add_orientation_label(ax2)
         if is_mask:
-            QcImage.grid(self, bottom_image, ax2)
+            QcImage.grid(self, bottom_images[0], ax2)
 
-        return fig
+        ann = ax2.annotate('', xy=(0, .025), xycoords='figure fraction', horizontalalignment='left',
+                           verticalalignment='bottom', fontsize=5)
+
+        def update_figure(i):
+            img1.set_data(top_images[i])
+            img2.set_data(bottom_images[i])
+            ann.set_text(f'Volume: {i + 1}/{n_vol}')
+
+        # FuncAnimation creates an animation by repeatedly calling the function update_figure for each frame
+        ani = FuncAnimation(fig, update_figure, frames=len(top_images))
+
+        if is_mask:
+            gif_out_path = self.qc_report.qc_params.abs_overlay_gif_path()
+        else:
+            gif_out_path = self.qc_report.qc_params.abs_bkg_gif_path()
+        writer = PillowWriter(fps)
+        logger.info('Saving gif %s', gif_out_path)
+        ani.save(gif_out_path, writer=writer, dpi=dpi)
 
     def _save(self, fig, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
         """
@@ -468,22 +479,6 @@ class QcImage(object):
                     bbox_inches=None,
                     transparent=True,
                     dpi=dpi)
-
-    def _save_gif(self, gif_path, img_paths, fps=2):
-        """
-        Save a gif from a list of images.
-
-        :param gif_path: str: path of the folder where the gif is saved
-        :param img_paths: list: list of image paths to build gif image
-        :param fps: float: number of frames per second for the ouptut gif
-        :return:
-        """
-        logger.debug('Save gif %s', gif_path)
-        images = []
-        for f_name in img_paths:
-            images.append(imageio.imread(f_name))
-        logger.info('Saving gif %s', gif_path)
-        imageio.mimsave(gif_path, images, fps=fps)
 
 
 class Params(object):
@@ -528,9 +523,6 @@ class Params(object):
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
         self.qc_results = os.path.join(dest_folder, '_json/qc_' + self.mod_date + '.json')
         if command in ['sct_fmri_moco', 'sct_dmri_moco']:
-            self.bkg_img_list_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img_list')
-            self.overlay_img_list_path = os.path.join(dataset, subject, contrast, command, self.mod_date,
-                                                      'overlay_img_list')
             self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.gif')
             self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.gif')
         else:
@@ -542,20 +534,6 @@ class Params(object):
 
     def abs_overlay_img_path(self):
         return os.path.join(self.root_folder, self.overlay_img_path)
-
-    def abs_bkg_img_list_path(self, idx):
-        """
-        :param idx: index of current image
-        """
-        bkg_filename = 'bkg_img_' + str(idx) + '.png'
-        return os.path.join(self.root_folder, self.bkg_img_list_path, bkg_filename)
-
-    def abs_overlay_img_list_path(self, idx):
-        """
-        :param idx: index of current image
-        """
-        overlay_filename = 'overlay_img_' + str(idx) + '.png'
-        return os.path.join(self.root_folder, self.overlay_img_list_path, overlay_filename)
 
     def abs_bkg_gif_path(self):
         return os.path.join(self.root_folder, self.bkg_img_path)
@@ -592,13 +570,11 @@ class QcReport(object):
         """
         # make a new or update Qc directory
         if self.qc_params.command in ['sct_fmri_moco', 'sct_dmri_moco']:
-            target_bkg_folder = os.path.dirname(self.qc_params.abs_bkg_img_list_path(0))
-            target_overlay_folder = os.path.dirname(self.qc_params.abs_overlay_img_list_path(0))
+            target_img_folder = os.path.dirname(self.qc_params.abs_bkg_gif_path())
             try:
-                os.makedirs(target_bkg_folder, exist_ok=True)
-                os.makedirs(target_overlay_folder, exist_ok=True)
+                os.makedirs(target_img_folder, exist_ok=True)
             except OSError as err:
-                if not os.path.isdir(target_bkg_folder) or os.path.isdir(target_overlay_folder):
+                if not os.path.isdir(target_img_folder):
                     raise err
         else:
             target_img_folder = os.path.dirname(self.qc_params.abs_bkg_img_path())
@@ -811,10 +787,9 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     # Axial orientation, switch between gif image (before and after motion correction) and grid overlay
     elif process in ['sct_dmri_moco', 'sct_fmri_moco']:
         plane = 'Axial'
-        if fname_seg is not None:
-            qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
-        else:
-            qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2)])
+        if fname_seg is None:
+            raise Exception("Segmentation is needed to ensure proper cropping around spinal cord.")
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         qcslice_operations = [QcImage.grid]
         def qcslice_layout(x): return x.mosaics_through_time()
     # Sagittal orientation, display vertebral labels
