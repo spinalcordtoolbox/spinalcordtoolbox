@@ -285,8 +285,7 @@ class Slice(object):
         """
 
         mosaics = list()
-        if len(self._images) != 0:  # If there is a segmentation image
-            self._image_seg = self._images[0].copy()  # segmentation used to improve cropping
+        self._image_seg = self._images[0].copy()  # segmentation used for cropping
 
         for i, img in enumerate(self._4d_images):
             # The absolutepath is changed to None after change_orientation see issue #3304
