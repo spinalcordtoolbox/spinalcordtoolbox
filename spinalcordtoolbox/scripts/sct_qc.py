@@ -58,6 +58,7 @@ def get_parser():
                         required=False)
     parser.add_argument('-fps',
                         metavar='float',
+                        type=float,
                         help='The number of frames per second for output gif images',
                         required=False)
     parser.add_argument('-v',
