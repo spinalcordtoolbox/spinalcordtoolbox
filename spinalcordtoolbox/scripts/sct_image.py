@@ -117,8 +117,7 @@ def get_parser():
     orientation = parser.add_argument_group('ORIENTATION OPERATIONS')
     orientation.add_argument(
         '-getorient',
-        help='Get orientation of the input image. NOTE: This option has been deprecated, and will be removed in a '
-             'future version of SCT.',
+        help='Get orientation of the input image',
         action='store_true',
         required=False)
     orientation.add_argument(
@@ -363,8 +362,7 @@ def main(argv=None):
             display_viewer_syntax(l_fname_out)
 
     elif arguments.getorient:
-        printv("-getorient has been deprecated, and will be removed in a future version of SCT. Please use"
-               "'sct_image -header' to view the orientation of your image.")
+        printv(orient)
 
     elif arguments.display_warp:
         printv('Warping grid generated.', verbose, 'info')
