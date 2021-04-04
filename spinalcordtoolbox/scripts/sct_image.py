@@ -190,7 +190,7 @@ def main(argv=None):
         parser.error("Multi-image input is only supported for the '-concat' and '-omc' arguments.")
 
     # Apply initialization steps to all input images first
-    if arguments.set_sform_to_qform is not None:
+    if arguments.set_sform_to_qform:
         [im.set_sform_to_qform() for im in im_in_list]
 
     # Most sct_image options don't accept multi-image input, so here we simply separate out the first image
@@ -310,7 +310,7 @@ def main(argv=None):
         im_out = [ displacement_to_abs_fsl(im_in, spaces[0], spaces[1]) ]
 
     # If this argument is used standalone, simply pass the input image to the output (sform was set for im_in earlier)
-    elif arguments.set_sform_to_qform is not None:
+    elif arguments.set_sform_to_qform:
         im_out = [im_in]
 
     else:
