@@ -114,10 +114,10 @@ sct_process_segmentation -i t2s_gmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_gm.csv
 # OPTIONAL: Update template registration using information from gray matter segmentation
 # # <<<
 # # Register WM/GM template to WM/GM seg
-# sct_register_graymatter -gm t2s_gmseg.nii.gz -wm t2s_wmseg.nii.gz -w warp_template2t2s.nii.gz -winv warp_t2s2template.nii.gz
+# sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_wm.nii.gz -d t2s_wmseg.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=im,algo=syn,slicewise=1,iter=5 -initwarp warp_template2t2s.nii.gz -initwarpinv warp_t2s2template.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # # Rename warping fields for clarity
-# mv warp_template2t2s_reg_gm.nii.gz warp_template2t2s.nii.gz
-# mv warp_t2s2template_reg_gm.nii.gz warp_t2s2template.nii.gz
+# mv warp_PAM50_wm2t2s_wmseg.nii.gz warp_template2t2s.nii.gz
+# mv warp_t2s_wmseg2PAM50_wm.nii.gz warp_t2s2template.nii.gz
 # # Warp template (this time corrected for internal structure)
 # sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz
 # # >>>
