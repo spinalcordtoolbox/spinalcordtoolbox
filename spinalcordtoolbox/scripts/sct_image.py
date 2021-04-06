@@ -97,9 +97,17 @@ def get_parser():
         help='Copy the header of the source image (specified in -i) to the destination image (specified here) '
              'and save it into a new image (specified in -o)',
         required = False)
-    header.add_argument(
+    affine_fixes = header.add_mutually_exclusive_group(required=False)
+    affine_fixes.add_argument(
         '-set-sform-to-qform',
         help="Set the input image's sform matrix equal to its qform matrix. Use this option when you "
+             "need to enforce matching sform and qform matrices. This option can be used by itself, or in combination "
+             "with other functions.",
+        action='store_true'
+    )
+    affine_fixes.add_argument(
+        '-set-qform-to-sform',
+        help="Set the input image's qform matrix equal to its sform matrix. Use this option when you "
              "need to enforce matching sform and qform matrices. This option can be used by itself, or in combination "
              "with other functions.",
         action='store_true'
@@ -192,6 +200,8 @@ def main(argv=None):
     # Apply initialization steps to all input images first
     if arguments.set_sform_to_qform:
         [im.set_sform_to_qform() for im in im_in_list]
+    elif arguments.set_qform_to_sform:
+        [im.set_qform_to_sform() for im in im_in_list]
 
     # Most sct_image options don't accept multi-image input, so here we simply separate out the first image
     # TODO: Extend the options so that they iterate through the list of images (to support multi-image input)
@@ -309,8 +319,8 @@ def main(argv=None):
             spaces.append(None)
         im_out = [ displacement_to_abs_fsl(im_in, spaces[0], spaces[1]) ]
 
-    # If this argument is used standalone, simply pass the input image to the output (sform was set for im_in earlier)
-    elif arguments.set_sform_to_qform:
+    # If these arguments are used standalone, simply pass the input image to the output (the affines were set earlier)
+    elif arguments.set_sform_to_qform or arguments.set_qform_to_sform:
         im_out = [im_in]
 
     else:
