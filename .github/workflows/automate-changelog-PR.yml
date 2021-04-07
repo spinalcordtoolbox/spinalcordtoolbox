@@ -17,14 +17,9 @@ jobs:
     steps:
     - name: Set up Python (to install 'changelog')
       uses: actions/setup-python@v2
-    - name: Checkout 'changelog'
-      uses: actions/checkout@v2
-      with:
-        repository: neuropoly/changelog
-        path: changelog
     - name: Install 'changelog'
       run: |
-        pip install ./changelog
+        pip install git+https://github.com/neuropoly/changelog@master
     - name: Checkout '${{ github.event.repository.name }}'
       uses: actions/checkout@v2
       with:
