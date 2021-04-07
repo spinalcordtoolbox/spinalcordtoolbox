@@ -170,18 +170,22 @@ def main(argv=None):
     if arguments.param is not None:
         param.update(arguments.param)
 
-    # run moco
-    fname_output_image = moco_wrapper(param)
-
-    # QC report
     path_qc = arguments.qc
     qc_fps = arguments.qc_fps
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
     qc_seg = arguments.qc_seg
 
+    if path_qc is not None:
+        if qc_seg is None:
+            raise Exception("-qc-seg is needed to ensure proper cropping around spinal cord in QC report.")
+
+    # run moco
+    fname_output_image = moco_wrapper(param)
+
     set_global_loglevel(verbose)  # moco_wrapper seems to change verbose to 0
 
+    # QC report
     if path_qc is not None:
         generate_qc(fname_in1=fname_output_image, fname_in2=param.fname_data, fname_seg=qc_seg,
                     args=sys.argv[1:], path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset,
