@@ -521,15 +521,9 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
         fname_grid = im_grid.absolutepath
     else:
         tmp_dir = tmp_create()
-        status, out = run_proc(['fslhd', fname_warp])
+        nx, ny, nz = im_warp.data.shape[0:3]
         curdir = os.getcwd()
         os.chdir(tmp_dir)
-        dim1 = 'dim1           '
-        dim2 = 'dim2           '
-        dim3 = 'dim3           '
-        nx = int(out[out.find(dim1):][len(dim1):out[out.find(dim1):].find('\n')])
-        ny = int(out[out.find(dim2):][len(dim2):out[out.find(dim2):].find('\n')])
-        nz = int(out[out.find(dim3):][len(dim3):out[out.find(dim3):].find('\n')])
         sq = np.zeros((step, step))
         sq[step - 1] = 1
         sq[:, step - 1] = 1
@@ -539,12 +533,11 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
                 for k in range(dat.shape[2]):
                     if dat[i:i + step, j:j + step, k].shape == (step, step):
                         dat[i:i + step, j:j + step, k] = sq
-        fname_grid = 'grid_' + str(step) + '.nii.gz'
         im_grid = Image(param=dat)
         grid_hdr = im_warp.hdr
         im_grid.hdr = grid_hdr
-        im_grid.absolutepath = fname_grid
-        im_grid.save()
+        fname_grid = 'grid_' + str(step) + '.nii.gz'
+        im_grid.save(fname_grid)
         fname_grid_resample = add_suffix(fname_grid, '_resample')
         run_proc(['sct_resample', '-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
         fname_grid = os.path.join(tmp_dir, fname_grid_resample)
