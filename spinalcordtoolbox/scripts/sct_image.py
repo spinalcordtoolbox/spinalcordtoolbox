@@ -488,7 +488,6 @@ def multicomponent_split(im):
 
 
 def multicomponent_merge(im_in_list: Sequence[Image]):
-    from numpy import zeros
     # WARNING: output multicomponent is not optimal yet, some issues may be related to the use of this function
 
     im_0 = im_in_list[0]
@@ -498,7 +497,7 @@ def multicomponent_merge(im_in_list: Sequence[Image]):
     new_shape.append(len(im_in_list))
     new_shape = tuple(new_shape)
 
-    data_out = zeros(new_shape)
+    data_out = np.zeros(new_shape)
     for i, im in enumerate(im_in_list):
         dat = im.data
         if len(dat.shape) == 2:
@@ -521,7 +520,6 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
     if im_grid:
         fname_grid = im_grid.absolutepath
     else:
-        from numpy import zeros
         tmp_dir = tmp_create()
         status, out = run_proc(['fslhd', fname_warp])
         curdir = os.getcwd()
@@ -532,10 +530,10 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
         nx = int(out[out.find(dim1):][len(dim1):out[out.find(dim1):].find('\n')])
         ny = int(out[out.find(dim2):][len(dim2):out[out.find(dim2):].find('\n')])
         nz = int(out[out.find(dim3):][len(dim3):out[out.find(dim3):].find('\n')])
-        sq = zeros((step, step))
+        sq = np.zeros((step, step))
         sq[step - 1] = 1
         sq[:, step - 1] = 1
-        dat = zeros((nx, ny, nz))
+        dat = np.zeros((nx, ny, nz))
         for i in range(0, dat.shape[0], step):
             for j in range(0, dat.shape[1], step):
                 for k in range(dat.shape[2]):
