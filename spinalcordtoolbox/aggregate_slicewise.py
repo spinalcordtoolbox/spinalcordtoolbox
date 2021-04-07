@@ -12,6 +12,7 @@ import functools
 import csv
 import datetime
 import logging
+import wquantiles
 
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 from spinalcordtoolbox.image import Image
@@ -144,6 +145,22 @@ def func_map(data, mask, map_clusters):
                            np.dot(x.T,
                                   (y - np.dot(x, beta_0))))
     return beta[0], beta
+
+
+def func_median(data, mask, map_clusters=None):
+    """
+    Compute weighted median. This is a "non-discrete" implementation of the median, in that it computes the mean between
+    the middle discrete values. For more context, see: https://github.com/nudomarinero/wquantiles/issues/4
+    :param data: nd-array: input data
+    :param mask: (n+1)d-array: input mask
+    :param map_clusters: not used
+    :return:
+    """
+    # Check if mask has an additional dimension (in case it is a label). If so, select the first label
+    if mask.ndim == data.ndim + 1:
+        mask = mask[..., 0]
+    data, mask = data.reshape(-1), mask.reshape(-1)
+    return wquantiles.median(data, mask), None
 
 
 def func_ml(data, mask, map_clusters=None):
@@ -424,6 +441,10 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     elif method == 'wa':
         mask = Metric(data=labels_sum, label=label_struc[id_label].name)
         group_funcs = (('WA', func_wa), ('STD', func_std))
+    # Weighted median
+    elif method == 'median':
+        mask = Metric(data=labels_sum, label=label_struc[id_label].name)
+        group_funcs = (('MEDIAN', func_median), ('STD', func_std))
     # Binarize mask
     elif method == 'bin':
         mask = Metric(data=labels_sum, label=label_struc[id_label].name)
@@ -499,7 +520,8 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     list_item = ['Label', 'Size [vox]', 'MEAN(area)', 'STD(area)', 'MEAN(angle_AP)', 'STD(angle_AP)', 'MEAN(angle_RL)',
                  'STD(angle_RL)', 'MEAN(diameter_AP)', 'STD(diameter_AP)', 'MEAN(diameter_RL)', 'STD(diameter_RL)',
                  'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(orientation)', 'STD(orientation)',
-                 'MEAN(solidity)', 'STD(solidity)', 'SUM(length)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'STD()', 'MAX()']
+                 'MEAN(solidity)', 'STD(solidity)', 'SUM(length)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'MEDIAN()',
+                 'STD()', 'MAX()']
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append or not os.path.isfile(fname_out):
