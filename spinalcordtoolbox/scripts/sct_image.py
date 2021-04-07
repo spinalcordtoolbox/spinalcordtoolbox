@@ -19,7 +19,8 @@ from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 
 import spinalcordtoolbox
-from spinalcordtoolbox.image import Image, concat_data, add_suffix, change_orientation, concat_warp2d, split_img_data, pad_image
+from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
+                                     create_formatted_header_string, HEADER_FORMATS)
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
@@ -91,6 +92,14 @@ def get_parser():
         choices = ('uint8','int16','int32','float32','complex64','float64','int8','uint16','uint32','int64','uint64'))
 
     header = parser.add_argument_group('HEADER OPERATIONS')
+    header.add_argument(
+        "-header",
+        choices=HEADER_FORMATS,
+        # 'const' and 'nargs' used because of https://stackoverflow.com/q/40324356
+        const='sct',
+        nargs='?',
+        help="Print the header of a NIfTI file. You can select the output format of the header: 'sct' (default), 'nibabel' or 'fslhd'."
+    )
     header.add_argument(
         '-copy-header',
         metavar=Metavar.file,
@@ -288,6 +297,15 @@ def main(argv=None):
 
     elif arguments.setorient_data is not None:
         im_out = [change_orientation(im_in, arguments.setorient_data, data_only=True)]
+
+    elif arguments.header is not None:
+        header = im_in.header
+        # Necessary because of https://github.com/nipy/nibabel/issues/480#issuecomment-239227821
+        if hasattr(im_in, "im_file"):
+            header.structarr['scl_slope'] = im_in.im_file.dataobj.slope
+            header.structarr['scl_inter'] = im_in.im_file.dataobj.inter
+        printv(create_formatted_header_string(header=header, output_format=arguments.header), verbose=verbose)
+        im_out = None
 
     elif arguments.split is not None:
         dim = arguments.split
@@ -543,4 +561,3 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-
