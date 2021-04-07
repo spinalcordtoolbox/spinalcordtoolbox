@@ -17,8 +17,6 @@ jobs:
     steps:
     - name: Set up Python (to install 'changelog')
       uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
     - name: Checkout 'changelog'
       uses: actions/checkout@v2
       with:
