@@ -517,9 +517,9 @@ def multicomponent_merge(im_in_list: Sequence[Image]):
 
 
 def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
-    fname_warp = im_warp.absolutepath()
+    fname_warp = im_warp.absolutepath
     if im_grid:
-        fname_grid = im_grid.absolutepath()
+        fname_grid = im_grid.absolutepath
     else:
         from numpy import zeros
         tmp_dir = tmp_create()
