@@ -37,5 +37,8 @@ jobs:
         commit-message  : "Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release"
         title: "Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release"
         milestone: "${{ github.event.inputs.milestone_title }}"
-        body: "Automated step carried out as a part of [Creating a new release](https://github.com/neuropoly/spinalcordtoolbox/wiki/Misc%3A-Creating-a-new-release) checklist."
+        body: |
+          Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release.
+          
+          Carried out as a part of the [release](https://github.com/neuropoly/spinalcordtoolbox/wiki/Misc%3A-Creating-a-new-release) checklist."
         delete-branch: true
