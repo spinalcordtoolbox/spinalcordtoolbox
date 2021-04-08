@@ -18,7 +18,7 @@ import numpy as np
 from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 
-import spinalcordtoolbox
+from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
                                      create_formatted_header_string, HEADER_FORMATS)
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
@@ -539,12 +539,12 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
         fname_grid = 'grid_' + str(step) + '.nii.gz'
         im_grid.save(fname_grid)
         fname_grid_resample = add_suffix(fname_grid, '_resample')
-        run_proc(['sct_resample', '-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
+        sct_resample.main(argv=['-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
         fname_grid = os.path.join(tmp_dir, fname_grid_resample)
         os.chdir(curdir)
     path_warp, file_warp, ext_warp = extract_fname(fname_warp)
     grid_warped = os.path.join(path_warp, extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp)
-    run_proc(['sct_apply_transfo', '-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
+    sct_apply_transfo.main(argv=['-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
     if rm_tmp:
         rmtree(tmp_dir)
 
