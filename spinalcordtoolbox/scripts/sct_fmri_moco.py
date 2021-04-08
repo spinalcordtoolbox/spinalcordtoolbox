@@ -126,13 +126,13 @@ def get_parser():
     optional.add_argument(
         '-qc-seg',
         metavar=Metavar.file,
-        help="Segmentation of spinal cord to improve cropping in qc report"
+        help="Segmentation of spinal cord to improve cropping in qc report. It is mandatory when calling a QC report"
     )
     optional.add_argument(
         '-qc-fps',
         metavar=Metavar.float,
         type=float,
-        default=2,
+        default=1,
         help="This float number is the number of frames per second for the output gif images."
     )
     optional.add_argument(

@@ -59,7 +59,8 @@ def get_parser():
     parser.add_argument('-fps',
                         metavar='float',
                         type=float,
-                        help='The number of frames per second for output gif images',
+                        help='The number of frames per second for output gif images. Only valid for sct_fmri_moco and '
+                             'sct_dmri_moco.',
                         required=False)
     parser.add_argument('-v',
                         action='store_true',
@@ -89,11 +90,11 @@ def main(argv=None):
                 fname_in2=arguments.d,
                 fname_seg=arguments.s,
                 args=args_disp,
-                fps=arguments.fps,
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
-                process=arguments.p)
+                process=arguments.p,
+                fps=arguments.fps,)
 
 
 if __name__ == "__main__":
