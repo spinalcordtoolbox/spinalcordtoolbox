@@ -305,11 +305,10 @@ class Image(object):
                              "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
                              " or on the SCT forum https://forum.spinalcordmri.org/.")
             else:
-                dummy_reaffined = re.sub("\\.(.*)", "_same-affine.\\1", self.absolutepath)
-                logger.error("Image {} has different qform and sform matrices. This can produce incorrect results. "
-                             "Consider setting the two matrices to be equal by running:\n"
-                             "sct_image -i {} -set-sform-to-qform -o {}.".format(
-                    self._path, self._path, dummy_reaffined))
+                logger.error(f"Image {self._path} has different qform and sform matrices. This can produce incorrect "
+                             f"results. Please use 'sct_image -i {self._path} -header' to check that both affine "
+                             f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
+                             f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
             raise ValueError("Image sform does not match qform")
 
 
