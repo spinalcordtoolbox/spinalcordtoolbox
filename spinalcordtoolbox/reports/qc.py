@@ -476,7 +476,7 @@ class QcImage(object):
             gif_out_path = self.qc_report.qc_params.abs_bkg_img_path()
 
         if self._fps is None:
-            self._fps = 1
+            self._fps = 3
         writer = PillowWriter(self._fps)
         logger.info('Saving gif %s', gif_out_path)
         ani.save(gif_out_path, writer=writer, dpi=self.qc_report.qc_params.dpi)

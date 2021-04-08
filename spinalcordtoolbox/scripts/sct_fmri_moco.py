@@ -132,7 +132,7 @@ def get_parser():
         '-qc-fps',
         metavar=Metavar.float,
         type=float,
-        default=1,
+        default=3,
         help="This float number is the number of frames per second for the output gif images."
     )
     optional.add_argument(
