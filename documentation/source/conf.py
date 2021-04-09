@@ -47,6 +47,23 @@ templates_path = ['_templates']
 # add doc for __init
 autoclass_content = 'both'
 
+autodoc_mock_imports = [
+  "tqdm",
+  "psutil",
+  "numpy",
+  "nibabel",
+  "skimage",
+  "scipy",
+  "transforms3d",
+  "colored",
+  "keras",
+  "wquantiles",
+  "tensorflow",
+  "dipy",
+  "matplotlib",
+]
+
+
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #

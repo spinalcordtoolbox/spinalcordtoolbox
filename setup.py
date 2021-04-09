@@ -39,6 +39,10 @@ setup(
     packages=find_packages(exclude=['.git', 'data', 'dev', 'dev.*',
                                     'install', 'testing']),
     include_package_data=True,
+    install_requires=[
+        # TODO: adopt https://github.com/readthedocs/readthedocs.org/issues/5512#issuecomment-475073310
+        #       to prevent long doc builds
+    ],
     extras_require={
         'docs': [
         'sphinx',
