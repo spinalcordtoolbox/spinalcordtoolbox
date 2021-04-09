@@ -99,6 +99,7 @@ def get_parser():
 
     return parser
 
+parser = get_parser()
 
 class AnalyzeLeion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
