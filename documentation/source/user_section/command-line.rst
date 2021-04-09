@@ -121,8 +121,13 @@ Main Tools
 sct_analyze_lesion
 ==================
 
-.. program-output:: sct_analyze_lesion -h
+.. argparse::
+   :ref: spinalcordtoolbox.scripts.sct_analyze_lesion.parser
+   :prog: sct_analyze_lesion
 
+.. argparse::
+   :ref: spinalcordtoolbox.my.module.parser
+   :prog: sample
 
 sct_analyze_texture
 ===================
