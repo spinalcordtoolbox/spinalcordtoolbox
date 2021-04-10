@@ -59,7 +59,7 @@ def get_parser():
     parser.add_argument('-fps',
                         metavar='float',
                         type=float,
-                        help='The number of frames per second for output gif images. Only valid for sct_fmri_moco and '
+                        help='The number of frames per second for output gif images. Only useful for sct_fmri_moco and '
                              'sct_dmri_moco.',
                         required=False)
     parser.add_argument('-v',

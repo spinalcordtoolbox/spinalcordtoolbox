@@ -73,7 +73,7 @@ class QcImage(object):
         :param stretch_contrast: adjust image so as to improve contrast
         :param stretch_contrast_method: str: {'contrast_stretching', 'equalized'}: Method for stretching contrast
         :param angle_line: float: See generate_qc()
-        :param fps: float: Number of frames per second for output gif images. It is only used for sct_fmri_moco and
+        :param fps: float: Number of frames per second for output gif images. It is only used for sct_fmri_moco and\
         sct_dmri_moco
         """
         self.qc_report = qc_report
