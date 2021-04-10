@@ -82,6 +82,8 @@ class QcImage(object):
         self.process = process
         self._stretch_contrast = stretch_contrast
         self._stretch_contrast_method = stretch_contrast_method
+        if stretch_contrast_method not in ['equalized', 'contrast_stretching']:
+            raise Exception("stretch_contrast_method is not valid. Try /'equalized/' or /'contrast_stretching/'")
         self._angle_line = angle_line
         self._fps = fps
         self._centermass = None  # center of mass returned by slice.Axial.get_center()
@@ -358,10 +360,10 @@ class QcImage(object):
         """
 
         size_fig = [5, 10 * images_after_moco[0].shape[0] / images_after_moco[0].shape[1] + 0.5]
-
-        for i in range(len(images_after_moco)):
-            images_after_moco[i] = self._func_stretch_contrast(images_after_moco[i])
-            images_before_moco[i] = self._func_stretch_contrast(images_before_moco[i])
+        if self._stretch_contrast:
+            for i in range(len(images_after_moco)):
+                images_after_moco[i] = self._func_stretch_contrast(images_after_moco[i])
+                images_before_moco[i] = self._func_stretch_contrast(images_before_moco[i])
 
         self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig)
         self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig, is_mask=True)
@@ -372,7 +374,7 @@ class QcImage(object):
     def _func_stretch_contrast(self, img):
         if self._stretch_contrast_method == "equalized":
             return self._equalize_histogram(img)
-        else:
+        else:  # stretch_contrast_method == "contrast_stretching":
             return self._stretch_intensity_levels(img)
 
     def _stretch_intensity_levels(self,img):
