@@ -377,7 +377,7 @@ class QcImage(object):
         else:  # stretch_contrast_method == "contrast_stretching":
             return self._stretch_intensity_levels(img)
 
-    def _stretch_intensity_levels(self,img):
+    def _stretch_intensity_levels(self, img):
         p2, p98 = np.percentile(img, (2, 98))
         return skimage.exposure.rescale_intensity(img, in_range=(p2, p98))
 
