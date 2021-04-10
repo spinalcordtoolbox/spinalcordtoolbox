@@ -373,8 +373,11 @@ class QcImage(object):
         if self._stretch_contrast_method == "equalized":
             return self._equalize_histogram(img)
         else:
-            p2, p98 = np.percentile(img, (2, 98))
-            return skimage.exposure.rescale_intensity(img, in_range=(p2, p98))
+            return self._stretch_intensity_levels(img)
+
+    def _stretch_intensity_levels(self,img):
+        p2, p98 = np.percentile(img, (2, 98))
+        return skimage.exposure.rescale_intensity(img, in_range=(p2, p98))
 
     def _equalize_histogram(self, img):
         """
