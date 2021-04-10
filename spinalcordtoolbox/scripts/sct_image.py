@@ -18,7 +18,7 @@ import numpy as np
 from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 
-import spinalcordtoolbox
+from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
                                      create_formatted_header_string, HEADER_FORMATS)
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
@@ -498,7 +498,6 @@ def multicomponent_split(im):
 
 
 def multicomponent_merge(im_in_list: Sequence[Image]):
-    from numpy import zeros
     # WARNING: output multicomponent is not optimal yet, some issues may be related to the use of this function
 
     im_0 = im_in_list[0]
@@ -508,7 +507,7 @@ def multicomponent_merge(im_in_list: Sequence[Image]):
     new_shape.append(len(im_in_list))
     new_shape = tuple(new_shape)
 
-    data_out = zeros(new_shape)
+    data_out = np.zeros(new_shape)
     for i, im in enumerate(im_in_list):
         dat = im.data
         if len(dat.shape) == 2:
@@ -527,43 +526,35 @@ def multicomponent_merge(im_in_list: Sequence[Image]):
 
 
 def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
-    fname_warp = im_warp.absolutepath()
+    fname_warp = im_warp.absolutepath
     if im_grid:
-        fname_grid = im_grid.absolutepath()
+        fname_grid = im_grid.absolutepath
     else:
-        from numpy import zeros
         tmp_dir = tmp_create()
-        status, out = run_proc(['fslhd', fname_warp])
+        nx, ny, nz = im_warp.data.shape[0:3]
         curdir = os.getcwd()
         os.chdir(tmp_dir)
-        dim1 = 'dim1           '
-        dim2 = 'dim2           '
-        dim3 = 'dim3           '
-        nx = int(out[out.find(dim1):][len(dim1):out[out.find(dim1):].find('\n')])
-        ny = int(out[out.find(dim2):][len(dim2):out[out.find(dim2):].find('\n')])
-        nz = int(out[out.find(dim3):][len(dim3):out[out.find(dim3):].find('\n')])
-        sq = zeros((step, step))
+        sq = np.zeros((step, step))
         sq[step - 1] = 1
         sq[:, step - 1] = 1
-        dat = zeros((nx, ny, nz))
+        dat = np.zeros((nx, ny, nz))
         for i in range(0, dat.shape[0], step):
             for j in range(0, dat.shape[1], step):
                 for k in range(dat.shape[2]):
                     if dat[i:i + step, j:j + step, k].shape == (step, step):
                         dat[i:i + step, j:j + step, k] = sq
-        fname_grid = 'grid_' + str(step) + '.nii.gz'
         im_grid = Image(param=dat)
         grid_hdr = im_warp.hdr
         im_grid.hdr = grid_hdr
-        im_grid.absolutepath = fname_grid
-        im_grid.save()
+        fname_grid = 'grid_' + str(step) + '.nii.gz'
+        im_grid.save(fname_grid)
         fname_grid_resample = add_suffix(fname_grid, '_resample')
-        run_proc(['sct_resample', '-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
+        sct_resample.main(argv=['-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
         fname_grid = os.path.join(tmp_dir, fname_grid_resample)
         os.chdir(curdir)
     path_warp, file_warp, ext_warp = extract_fname(fname_warp)
     grid_warped = os.path.join(path_warp, extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp)
-    run_proc(['sct_apply_transfo', '-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
+    sct_apply_transfo.main(argv=['-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
     if rm_tmp:
         rmtree(tmp_dir)
 

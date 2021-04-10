@@ -24,9 +24,6 @@ def main():
     if "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS" not in os.environ:
         env["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(multiprocessing.cpu_count())
 
-    # Prevent user site packages from interfering with SCT dependencies (See issue #3067)
-    env["PYTHONNOUSERSITE"] = "True"
-
     command = os.path.basename(sys.argv[0])
     pkg_dir = os.path.dirname(sct.__file__)
 
