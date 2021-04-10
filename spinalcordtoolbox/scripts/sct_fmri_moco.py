@@ -183,7 +183,7 @@ def main(argv=None):
     # run moco
     fname_output_image = moco_wrapper(param)
 
-    set_global_loglevel(verbose)  # moco_wrapper seems to change verbose to 0
+    set_global_loglevel(verbose)  # moco_wrapper changes verbose to 0, see issue #3341
 
     # QC report
     if path_qc is not None:
