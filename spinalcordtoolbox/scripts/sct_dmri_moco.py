@@ -143,12 +143,14 @@ def get_parser():
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="The path where the quality control generated content will be saved."
+        help="The path where the quality control generated content will be saved. (Note: "
+             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
     )
     optional.add_argument(
         '-qc-seg',
         metavar=Metavar.file,
-        help="Segmentation of spinal cord to improve cropping in qc report. It is mandatory when calling a QC report"
+        help="Segmentation of spinal cord to improve cropping in qc report. (Note: "
+             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
     )
     optional.add_argument(
         '-qc-fps',
