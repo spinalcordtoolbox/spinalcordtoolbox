@@ -83,7 +83,8 @@ class QcImage(object):
         self._stretch_contrast = stretch_contrast
         self._stretch_contrast_method = stretch_contrast_method
         if stretch_contrast_method not in ['equalized', 'contrast_stretching']:
-            raise Exception("stretch_contrast_method is not valid. Try /'equalized/' or /'contrast_stretching/'")
+            raise ValueError("Unrecognized stretch_contrast_method: {}.".format(stretch_contrast_method),
+                             "Try 'equalized' or 'contrast_stretching'")
         self._angle_line = angle_line
         self._fps = fps
         self._centermass = None  # center of mass returned by slice.Axial.get_center()
