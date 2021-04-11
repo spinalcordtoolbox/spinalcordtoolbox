@@ -201,9 +201,9 @@ def main(argv=None):
     qc_subject = arguments.qc_subject
     qc_seg = arguments.qc_seg
 
-    if path_qc is not None:
-        if qc_seg is None:
-            raise Exception("-qc-seg is needed to ensure proper cropping around spinal cord in QC report.")
+    mutually_inclusive_args = ('qc', 'qc_seg')
+    if not all([getattr(arguments, x) for x in mutually_inclusive_args]):
+        raise parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
 
     # run moco
     fname_output_image = moco_wrapper(param)
