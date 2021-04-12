@@ -284,11 +284,11 @@ class QcImage(object):
             """
             self.qc_report.slice_name = sct_slice.get_name()
 
-            self.qc_report.make_content_path()
-            logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
-
             # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
             self.aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
+
+            self.qc_report.make_content_path()
+            logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
             if self.process in ['sct_fmri_moco', 'sct_dmri_moco']:
                 [images_after_moco, images_before_moco], centermass = func(sct_slice, *args)
@@ -296,11 +296,11 @@ class QcImage(object):
                 self._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
 
             else:
-                if self._angle_line is not None:
+                if self._angle_line is None:
+                    img, mask = func(sct_slice, *args)
+                else:
                     [img, mask], centermass = func(sct_slice, *args)
                     self._centermass = centermass
-                else:
-                    img, mask = func(sct_slice, *args)
 
                 self._make_QC_image_for_3d_volumes(img, mask, slice_orientation=sct_slice.get_name())
 
