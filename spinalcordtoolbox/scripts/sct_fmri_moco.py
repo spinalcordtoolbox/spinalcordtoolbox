@@ -177,8 +177,9 @@ def main(argv=None):
     qc_subject = arguments.qc_subject
     qc_seg = arguments.qc_seg
 
-    mutually_inclusive_args = ('qc', 'qc_seg')
-    if not all([getattr(arguments, x) for x in mutually_inclusive_args]):
+    mutually_inclusive_args = (path_qc, qc_seg)
+    is_qc_none, is_seg_none = [arg is None for arg in mutually_inclusive_args]
+    if not (is_qc_none == is_seg_none):
         raise parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
 
     # run moco
