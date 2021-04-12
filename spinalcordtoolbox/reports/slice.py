@@ -376,11 +376,12 @@ class Axial(Slice):
         return self.axial_dim(image)
 
     def get_center(self, img_idx=-1):
-        """Get the center of mass of each slice. By default, it assumes that self._images is a list of images, and the
+        """Get the center of mass of each slice. For 4D images, segmentation is placed in self.image_seg.
+        For 3D images, by default, it assumes that self._images is a list of images, and the
         last item is the segmentation from which the center of mass is computed."""
-        if self._image_seg is None:
+        if self._image_seg is None:  # For 3D images
             image = self._images[img_idx]
-        else:
+        else:  # For 4D images
             image = self._image_seg
         return self._axial_center(image)
 
