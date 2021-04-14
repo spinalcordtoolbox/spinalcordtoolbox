@@ -20,9 +20,9 @@ Welcome to Spinal Cord Toolbox's documentation!
     :alt: Downloads
     :target: https://github.com/neuropoly/spinalcordtoolbox/graphs/traffic
 
-.. |badge-ci| image:: https://api.travis-ci.com/neuropoly/spinalcordtoolbox.svg?branch=master
-    :alt: Travis CI
-    :target: https://travis-ci.com/github/neuropoly/spinalcordtoolbox
+.. |badge-ci| image:: https://github.com/neuropoly/spinalcordtoolbox/actions/workflows/tests.yml/badge.svg
+    :alt: GitHub Actions CI
+    :target: https://github.com/neuropoly/spinalcordtoolbox/actions/workflows/tests.yml?query=branch%3Amaster
 
 .. |badge-doc| image:: https://readthedocs.org/projects/spinalcordtoolbox/badge/
     :alt: Documentation Status
