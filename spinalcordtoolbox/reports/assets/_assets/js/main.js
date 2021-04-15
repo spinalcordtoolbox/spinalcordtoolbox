@@ -52,8 +52,8 @@ $(document).ready(function(){
         obj.prev().click();
       }
     }
-    // p key (set problematic)
-    if (evt.which == 80) {
+    // f key (mark "failing" subjects using check, X, !)
+    if (evt.which == 70) {
       let index = obj[obj.length - 1].getAttribute("data-index");
       const heavy_check_mark = '\u2714'
       const heavy_ballot_x = '\u2718'
