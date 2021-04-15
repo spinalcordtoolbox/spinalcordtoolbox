@@ -36,7 +36,7 @@ $(document).ready(function(){
     var obj = $('#table tr.active');
     // Arrow down: next subject (or j)
     if (evt.which == 40 || evt.which == 74) {
-      if (obj.length == 0 || obj.text() === "DateDatasetSubjectPathFileContrastFunctionFunction+Args") {
+      if (obj.length == 0 || obj.text() === "QCDateDatasetSubjectPathFileContrastFunctionFunction+Args") {
         $('#table tr:first-child').click();
       }
       else {
