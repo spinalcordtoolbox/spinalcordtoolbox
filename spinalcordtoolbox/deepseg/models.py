@@ -69,12 +69,12 @@ MODELS = {
         "contrasts": ["t2", "t1"],
         "default": False,
     },
-    "model_seg_mice_gm-wm_dwi_unet2d-multichannel-softseg": {
+    "model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg": {
         "url": [
-            "https://github.com/ivadomed/model_seg_mice_gm-wm_dwi_unet2d-multichannel-softseg/archive/r20210220.zip"
+            "https://github.com/ivadomed/model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg/archive/r20210401_v2.zip"
         ],
-        "description": "Grey/white matter seg on exvivo mouse DWI.",
-        "contrasts": ["dwi"],
+        "description": "Grey/white matter seg on exvivo human T2w.",
+        "contrasts": ["t2"],
         "default": False,
     }
 }
@@ -98,9 +98,9 @@ TASKS = {
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor segmentation.',
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']},
-    'seg_mice_gm-wm_dwi':
-        {'description': 'Grey/white matter seg on exvivo mouse DWI.',
-         'models': ['model_seg_mice_gm-wm_dwi_unet2d-multichannel-softseg']}
+    'seg_exvivo_gm-wm_t2':
+        {'description': 'Grey/white matter seg on exvivo human T2w.',
+         'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']}
 }
 
 

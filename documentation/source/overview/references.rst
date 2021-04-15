@@ -110,6 +110,9 @@ The table below provides references relevant to the :ref:`pam50` used by SCT, in
    * - Spinal levels
      - `Cadotte DW, Cadotte A, Cohen-Adad J, Fleet D, Livne M, Wilson JR, Mikulis D, Nugaeva N, Fehlings MG. Characterizing the location of spinal and vertebral levels in the human cervical spinal cord. AJNR Am J Neuroradiol, 2015, 36(4):803-810. <https://paperpile.com/app/p/5b580317-6921-06c8-a2ee-685d4dbaa44c>`_
 
+
+.. _references-applications:
+
 Applications
 ------------
 The following studies (in chronological order) have used SCT:
@@ -193,6 +196,7 @@ The following studies (in chronological order) have used SCT:
 -  `Johnson et al. In vivo detection of microstructural spinal cord lesions in dogs with degenerative myelopathy using diffusion tensor imaging. J Vet Intern Med. 2020 <https://onlinelibrary.wiley.com/doi/10.1111/jvim.16014>`_
 -  `Kinawy et al. Dynamic Functional Connectivity of Resting-State Spinal Cord fMRI Reveals Fine-Grained Intrinsic Architecture. Neuron. 2020 <https://pubmed.ncbi.nlm.nih.gov/32910894/>`_
 -  `Weber et al. Assessing the spatial distribution of cervical spinal cord activity during tactile stimulation of the upper extremity in humans with functional magnetic resonance imaging. Neuroimage 2020 <https://www.sciencedirect.com/science/article/pii/S1053811920303918>`_
+-  `Azzarito et al. Tracking the neurodegenerative gradient after spinal cord injury. NeuroImage Clinical, 2020 <https://pubmed.ncbi.nlm.nih.gov/32145681/>`_
 -  `Querin et al. Development of new outcome measures for adult SMA type III and IV: a multimodal longitudinal study. J Neurol 2021 <https://pubmed.ncbi.nlm.nih.gov/33388927/>`_
 -  `McLachlin et al. Spatial correspondence of spinal cord white matter tracts using diffusion tensor imaging, fibre tractography, and atlas-based segmentation. Neuroradiology 2021 <https://link.springer.com/article/10.1007/s00234-021-02635-9>`_
 -  `Dvorak et al. Comparison of multi echo T2 relaxation and steady state approaches for myelin imaging in the central nervous system. Scientific reports 2021 <https://www.nature.com/articles/s41598-020-80585-7>`_
@@ -201,3 +205,6 @@ The following studies (in chronological order) have used SCT:
 -  `Solanes et al. 3D patient-specific spinal cord computational model for SCS management: potential clinical applications. Journal of Neural Engineering, 2021 <https://pubmed.ncbi.nlm.nih.gov/33556926/>`_
 -  `Johnson et al. Changes in White Matter of the Cervical Spinal Cord after a Single Season of Collegiate Football. Neurotrauma Reports, 2021 <https://www.liebertpub.com/doi/10.1089/neur.2020.0035>`_
 -  `Ost et al. Spinal Cord Morphology in Degenerative Cervical Myelopathy Patients; Assessing Key Morphological Characteristics Using Machine Vision Tools. Journal of Clinical Medicine, 2021 <https://www.mdpi.com/2077-0383/10/4/892>`_
+-  `Lee et al. Diffusion‐prepared fast spin echo for artifact‐free spinal cord imaging. Magnetic Resonance in Medicine, 2021 <https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28751>`_
+-  `Tinnermann et al. Observation of others’ painful heat stimulation involves responses in the spinal cord. Science Advances, 2021 <https://pubmed.ncbi.nlm.nih.gov/33789899/>`_
+-  `Zhang et al. Automatic spinal cord segmentation from axial-view MRI slices using CNN with grayscale regularized active contour propagation. Computers in Biology and Medicine, 2021 <https://pubmed.ncbi.nlm.nih.gov/33780869/>`_

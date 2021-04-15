@@ -30,6 +30,7 @@ from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils import *
+from spinalcordtoolbox.utils import Metavar
 from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
@@ -107,7 +108,7 @@ def get_parser():
             "If more than two labels (only with the parameter '-disc') are used, a non-linear registration will be "
             "applied to align the each intervertebral disc between the subject and the template, as described in "
             "sct_straighten_spinalcord. This the most accurate and preferred method. This feature does not work with "
-            "the parameter '-ref subject'.\n"
+            "the parameter '-ref subject', where only a rigid registration is performed.\n"
             "\n"
             "More information about label creation can be found at "
             "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%%5FCourse%%5F20200121 (p47)"
@@ -136,6 +137,16 @@ def get_parser():
         help="Show this help message and exit."
     )
     optional.add_argument(
+        '-s-template-id',
+        metavar=Metavar.int,
+        type=int,
+        help="Segmentation file ID to use for registration. The ID is an integer indicated in the file "
+             "'template/info_label.txt'. This 'info_label.txt' file corresponds to the template indicated by the flag "
+             "'-t'. By default, the spinal cord segmentation is used (ID=3), but if available, a different segmentation"
+             " such as white matter segmentation could produce better registration results.",
+        default=3
+        )
+    optional.add_argument(
         '-l',
         metavar=Metavar.file,
         help="R|One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
@@ -146,9 +157,11 @@ def get_parser():
     optional.add_argument(
         '-ldisc',
         metavar=Metavar.file,
-        help="R|Labels located at the posterior edge of the intervertebral discs. Example: anat_labels.nii.gz\n"
-             "If you are using more than 2 labels, all disc covering the region of interest should be provided. "
-             "(E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7.) "
+        help="R|File containing disc labels. Labels can be located either at the posterior edge "
+             "of the intervertebral discs, or at the orthogonal projection of each disc onto "
+             "the spinal cord (e.g.: the file 'xxx_seg_labeled_discs.nii.gz' output by sct_label_vertebrae).\n"
+             "If you are using more than 2 labels, all discs covering the region of interest should be provided. "
+             "E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. "
              "For more information about label creation, please refer to "
              "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%%5FCourse%%5F20200121 (p47)"
     )
@@ -334,12 +347,18 @@ def main(argv=None):
 
     # retrieve template file names
     if label_type == 'spinal':
-        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=14)  # label = point-wise spinal level labels
+        # point-wise spinal level labels
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=14)
+    elif label_type == 'disc':
+        # point-wise intervertebral disc labels
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=10)
     else:
-        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)  # label = spinal cord mask with discrete vertebral levels
+        # spinal cord mask with discrete vertebral levels
+        file_template_labeling = get_file_label(os.path.join(path_template, 'template'), id_label=7)
+
     id_label_dct = {'T1': 0, 'T2': 1, 'T2S': 2}
     file_template = get_file_label(os.path.join(path_template, 'template'), id_label=id_label_dct[contrast_template.upper()])  # label = *-weighted template
-    file_template_seg = get_file_label(os.path.join(path_template, 'template'), id_label=3)  # label = spinal cord mask (binary)
+    file_template_seg = get_file_label(os.path.join(path_template, 'template'), id_label=arguments.s_template_id)
 
     # start timer
     start_time = time.time()
@@ -348,7 +367,6 @@ def main(argv=None):
     fname_template = os.path.join(path_template, 'template', file_template)
     fname_template_labeling = os.path.join(path_template, 'template', file_template_labeling)
     fname_template_seg = os.path.join(path_template, 'template', file_template_seg)
-    fname_template_disc_labeling = os.path.join(path_template, 'template', 'PAM50_label_disc.nii.gz')
 
     # check file existence
     # TODO: no need to do that!
@@ -391,8 +409,6 @@ def main(argv=None):
     Image(fname_template).save(os.path.join(path_tmp, ftmp_template))
     Image(fname_template_seg).save(os.path.join(path_tmp, ftmp_template_seg))
     Image(fname_template_labeling).save(os.path.join(path_tmp, ftmp_template_label))
-    if label_type == 'disc':
-        Image(fname_template_disc_labeling).save(os.path.join(path_tmp, ftmp_template_label))
 
     # go to tmp folder
     curdir = os.getcwd()
@@ -698,24 +714,10 @@ def main(argv=None):
         printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
         sct_labels.remove_missing_labels(Image(ftmp_template_label), Image(ftmp_label)).save(path=ftmp_template_label)
 
-        # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation. This
-        # new label is added at the level of the upper most label (lowest value), at 1cm to the right.
-        for i_file in [ftmp_label, ftmp_template_label]:
-            im_label = Image(i_file)
-            coord_label = im_label.getCoordinatesAveragedByValue()  # N.B. landmarks are sorted by value
-            # Create new label
-            from copy import deepcopy
-            new_label = deepcopy(coord_label[0])
-            # move it 5mm to the left (orientation is RAS)
-            nx, ny, nz, nt, px, py, pz, pt = im_label.dim
-            new_label.x = np.round(coord_label[0].x + 5.0 / px)
-            # assign value 99
-            new_label.value = 99
-            # Add to existing image
-            im_label.data[int(new_label.x), int(new_label.y), int(new_label.z)] = new_label.value
-            # Overwrite label file
-            # im_label.absolutepath = 'label_rpi_modif.nii.gz'
-            im_label.save()
+        # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation.
+        add_orthogonal_label(ftmp_label)
+        add_orthogonal_label(ftmp_template_label)
+
         # Set the angle of the template orientation to 0 (source image)
         for key in list(paramregmulti.steps.keys()):
             paramregmulti.steps[key].rot_src = 0
@@ -764,6 +766,34 @@ def main(argv=None):
                     process='sct_register_to_template')
     display_viewer_syntax([fname_data, fname_template2anat], verbose=verbose)
     display_viewer_syntax([fname_template, fname_anat2template], verbose=verbose)
+
+
+def add_orthogonal_label(fname_label):
+    """
+    Add one label of value=99 at the axial slice that contains the label with the lowest value, 10 pixels to the right.
+    :param fname_label:
+    :return:
+    """
+    im_label = Image(fname_label)
+    orient_orig = im_label.orientation
+    # For some reasons (#3304) calling self.change_orientation() replaces self.absolutepath with Null so we need to
+    # save it.
+    path_label = im_label.absolutepath
+    im_label.change_orientation('RPI')
+    coord_label = im_label.getCoordinatesAveragedByValue()  # N.B. landmarks are sorted by value
+    # Create new label
+    from copy import deepcopy
+    new_label = deepcopy(coord_label[0])
+    # move it 5mm to the left (orientation is RAS)
+    nx, ny, nz, nt, px, py, pz, pt = im_label.dim
+    new_label.x = np.round(coord_label[0].x + 5.0 / px)  # TODO change to 10 pixels
+    # assign value 99
+    new_label.value = 99
+    # Add to existing image
+    im_label.data[int(new_label.x), int(new_label.y), int(new_label.z)] = new_label.value
+    # Overwrite label file
+    im_label.change_orientation(orient_orig)
+    im_label.save(path_label)
 
 
 def project_labels_on_spinalcord(fname_label, fname_seg, param_centerline):
@@ -1279,4 +1309,3 @@ def register(src, dest, step, param):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

@@ -65,20 +65,6 @@ def get_parser():
     return parser
 
 
-# conversion
-# ==========================================================================================
-def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
-    """
-    Convert data
-    :return True/False
-    """
-    printv('sct_convert -i ' + fname_in + ' -o ' + fname_out, verbose, 'code')
-
-    img = image.Image(fname_in)
-    img = image.convert(img, squeeze_data=squeeze_data, dtype=dtype)
-    img.save(fname_out, mutable=True, verbose=verbose)
-
-
 def main(argv=None):
     """
     Main function
@@ -96,7 +82,9 @@ def main(argv=None):
     squeeze_data = bool(arguments.squeeze)
 
     # convert file
-    convert(fname_in, fname_out, squeeze_data=squeeze_data)
+    img = image.Image(fname_in)
+    img = image.convert(img, squeeze_data=squeeze_data)
+    img.save(fname_out, mutable=True, verbose=verbose)
 
 
 if __name__ == "__main__":

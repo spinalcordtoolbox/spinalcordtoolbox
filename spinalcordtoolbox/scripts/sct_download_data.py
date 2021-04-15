@@ -28,8 +28,8 @@ DICT_URL = {
         "https://www.neuro.polymtl.ca/_media/downloads/sct/20180525_sct_example_data.zip",
     ],
     "sct_testing_data": [
-        "https://github.com/sct-data/sct_testing_data/releases/download/r20210114/sct_testing_data-r20210114.zip",
-        "https://osf.io/download/6000caf286541a05da149de5/"
+        "https://github.com/sct-data/sct_testing_data/releases/download/r20210330230310/sct_testing_data-r20210330230310.zip",
+        "https://osf.io/download/60629509229503022e6f107d/"
     ],
     "PAM50": [
         "https://github.com/sct-data/PAM50/releases/download/r20201104/PAM50-r20201104.zip",
@@ -94,6 +94,9 @@ DICT_URL = {
         "https://github.com/sct-data/c2c3_disc_models/releases/download/r20190117/20190117_c2c3_disc_models.zip",
         "https://osf.io/t97ap/?action=download",
         "https://www.neuro.polymtl.ca/_media/downloads/sct/20190117_c2c3_disc_models.zip",
+    ],
+    "exvivo_template": [
+        "https://github.com/sct-data/exvivo-template/archive/refs/tags/r20210317.zip"
     ],
 }
 
