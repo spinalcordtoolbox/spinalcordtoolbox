@@ -79,7 +79,8 @@
                       <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Function</a></li>
                       <li><a class="dropdown-item" id="Function+Args" onclick="toggleColumn(id)">Function+Args &#10004</a></li>
                     </ul>
-                    <button class="btn btn-default" type="button" id="download_yaml_btn" onclick="download_yaml()" disabled>Download QC</button>
+                    <button class="btn btn-default" type="button" id="download_yaml_btn_2718" onclick="download_yaml('\u2718')" disabled>Download "&#x2718"</button>
+                    <button class="btn btn-default" type="button" id="download_yaml_btn_2757" onclick="download_yaml('\u2757')" disabled>Download "&#x2757"</button>
                 </div>
                 <script>
                     document.getElementById("dropdown").style.position= "relative";
@@ -95,7 +96,7 @@
                   data-response-handler="responseHandler">
 	                <thead>
 		                  <tr>
-                              <th data-field="qc" data-sortable="true">QC</th>
+                              <th data-field="qc" data-sortable="true">&#x2714 / &#x2718</th>
                               <th data-field="moddate" data-sortable="true">Date</th>
 			                  <th data-field="dataset" data-sortable="true">Dataset</th>
 			                  <th data-field="subject" data-sortable="true">Subject</th>
@@ -268,7 +269,7 @@
         }
     }
 
-    function download_yaml() {
+    function download_yaml(marker) {
         let res = {};
         let seg_cmd_to_seg_type = {
             "sct_analyze_lesion": "FILES_GMSEG",
@@ -292,7 +293,7 @@
             "sct_warp_template": "FILES_SEG",
         }
         sct_data.forEach(item => {
-            if (item.qc === true) {
+            if (item.qc === marker) {
                 let command = item.command;
                 if (command in seg_cmd_to_seg_type) {
                     segtype = seg_cmd_to_seg_type[command];

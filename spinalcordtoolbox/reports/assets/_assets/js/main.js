@@ -55,8 +55,18 @@ $(document).ready(function(){
     // p key (set problematic)
     if (evt.which == 80) {
       let index = obj[obj.length - 1].getAttribute("data-index");
-      sct_data[index].qc = !sct_data[index].qc;
-      set_download_yml_btn_state();
+      const heavy_check_mark = '\u2714'
+      const heavy_ballot_x = '\u2718'
+      const heavy_excl_mark = '\u2757'
+      sct_data[index].qc = (
+          sct_data[index].qc === heavy_check_mark
+          ? heavy_ballot_x
+          : sct_data[index].qc === heavy_ballot_x
+            ? heavy_excl_mark
+            : heavy_check_mark
+      );
+      set_download_yml_btn_state(heavy_excl_mark);
+      set_download_yml_btn_state(heavy_ballot_x);
       $("#table").bootstrapTable({data: sct_data});
       $("#table").bootstrapTable("load", sct_data);
       hideColumns();
@@ -79,12 +89,20 @@ function responseHandler(res) {
   return res;
 }
 
-function set_download_yml_btn_state() {
+function set_download_yml_btn_state(marker) {
   let disabled = true;
   sct_data.forEach(item => {
-      if (item.qc === true) {
+      if (item.qc === marker) {
         disabled = false;
       }
   });
-  document.getElementById("download_yaml_btn").disabled = disabled;
+  if (containsNonLatinCodepoints(marker) === true) {
+    // This converts e.g. '\u2718' -> '2718' with corresponding id='download_yaml_btn_2718'
+    marker = marker.codePointAt(0).toString(16)
+  }
+  document.getElementById("download_yaml_btn_".concat(marker)).disabled = disabled;
+}
+
+function containsNonLatinCodepoints(s) {
+    return /[^\u0000-\u00ff]/.test(s);
 }
