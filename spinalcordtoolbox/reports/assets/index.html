@@ -298,7 +298,7 @@
                 if (command in seg_cmd_to_seg_type) {
                     segtype = seg_cmd_to_seg_type[command];
                 } else {
-                    segtype = "FIXME";
+                    segtype = "FILES_GENERATED_BY_".concat(command).concat("_FILE_KIND_UNKNOWN");
                 }
                 if (segtype in res) {
                     res[segtype].push(item.fname_in);
