@@ -20,6 +20,11 @@
       document.getElementById("mosaic-container").style.marginBottom=image_height+"px";
     }
   </script>
+  <style>
+      .fixed-table-container{
+          height: fit-content;
+      }
+  </style>
 </head>
 
 <body>
@@ -54,22 +59,20 @@
 
   <div class="container-fluid">
       <div class="row">
-          <div class="col-md-4">Keyboard shortcuts:
-              <a id="prev-img" href="#" class="previous">
-                  <span class="glyphicon glyphicon-arrow-up">
-                      Previous
-                  </span>
-              </a>
-              <a id="next-img" href="#" class="next">
-                  <span class="glyphicon glyphicon-arrow-down">
-                      Next
-                  </span>
-              </a>
+          <div class="col-md-5">
+              <img src="_assets/imgs/keyup.png" width="22px"> Previous
+                <img src="_assets/imgs/keydown.png" width="22px" style="margin-right: 2px;margin-left: 2px;">Next
+                <img src="_assets/imgs/keyright.png" width="22px" style="margin-right: 2px;margin-left: 2px;">Overlay
+                <img src="_assets/imgs/f-icon.png" width="33px" style="margin-right: -5px;">QC   |   Pass  
+                <span class="glyphicon glyphicon-ok"></span> 
+                Fail
+                <span class="glyphicon glyphicon-remove"></span> 
+                Artefact
+                <span class="glyphicon glyphicon-warning-sign"></span>
 
                 <div id="dropdown" class="dropdown">
                     <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
                     <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" id="QC" onclick="toggleColumn(id)">QC</a></li>
                       <li><a class="dropdown-item" id="Date" onclick="toggleColumn(id)">Date</button></a></li>
                       <li><a class="dropdown-item" id="Dataset" onclick="toggleColumn(id)">Dataset &#10004</a></li>
                       <li><a class="dropdown-item" id="Subject" onclick="toggleColumn(id)">Subject</a></li>
@@ -78,9 +81,9 @@
                       <li><a class="dropdown-item" id="Contrast" onclick="toggleColumn(id)">Contrast &#10004</a></li>
                       <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Function</a></li>
                       <li><a class="dropdown-item" id="Function+Args" onclick="toggleColumn(id)">Function+Args &#10004</a></li>
+                      <li><a class="dropdown-item" id="QC" onclick="toggleColumn(id)">QC</a></li>
                     </ul>
-                    <button class="btn btn-default" type="button" id="download_yaml_btn_2718" onclick="download_yaml('\u2718')" disabled>Download "&#x2718"</button>
-                    <button class="btn btn-default" type="button" id="download_yaml_btn_2757" onclick="download_yaml('\u2757')" disabled>Download "&#x2757"</button>
+                    
                 </div>
                 <script>
                     document.getElementById("dropdown").style.position= "relative";
@@ -93,10 +96,9 @@
 		  data-toolbar="#dropdown"
                   data-sort-order="asc"
 		  data-search="true"
-                  data-response-handler="responseHandler">
+                  data-response-handler="responseHandler" style="height:80%">
 	                <thead>
 		                  <tr>
-                              <th data-field="qc" data-sortable="true">&#x2714 / &#x2718</th>
                               <th data-field="moddate" data-sortable="true">Date</th>
 			                  <th data-field="dataset" data-sortable="true">Dataset</th>
 			                  <th data-field="subject" data-sortable="true">Subject</th>
@@ -105,11 +107,12 @@
                               <th data-field="contrast" data-sortable="true">Contrast</th>
 			                  <th data-field="command" data-sortable="true">Function</th>
 			                  <th data-field="cmdline" data-sortable="true">Function+Args</th>
+                              <th data-field="qc" data-sortable="true">&#x2714 / &#x2718</th>
 		                  </tr>
 	                </thead>
               </table>
           </div>
-          <div class="col-md-8">
+          <div class="col-md-7">
               <div class="result-body" id="mosaic-container">
                   <img id="sprite-img" onload="fetch_image_height()"/>
                   <img id="overlay-img"/>
@@ -185,7 +188,7 @@
         var isEmpty = true;
 
         var iTableRows;
-        for (iTableRows = 1; iTableRows < tableRows.length; iTableRows++){
+        for (iTableRows = 0; iTableRows < tableRows.length-1; iTableRows++){
             if (tableRows[iTableRows].innerText.indexOf(searchInput) > -1){
                 tableRows[iTableRows].style.display = "";
                 isEmpty = false;
@@ -248,9 +251,18 @@
          for the case where the table should be empty (i.e. when search
          results correspond to nothing).
          */
+        b=document.createElement("div")
+        b.className = "fixed-table-toolbar";
+        b.innerHTML="<button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_2718\" onclick=\"download_yaml('✘')\">Download \"✘\"</button><button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_2757\" onclick=\"download_yaml('❗')\">Download \"❗\"</button>"
+        a = document.getElementsByClassName("bootstrap-table");
+        a[0].appendChild(b);
+        c = a[0].children[2];
+        a[0].children[2] = b;
+        a[0].children[3] = c;
+
          var iTH;
          var dropdownList = document.getElementsByClassName('dropdown-item');
-         for (iTH = 0; iTH < dropdownList.length; iTH++){
+         for (iTH = 0; iTH < dropdownList.length-1; iTH++){
               toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
          }
      },4);
