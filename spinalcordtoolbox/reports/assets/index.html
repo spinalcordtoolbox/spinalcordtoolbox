@@ -321,8 +321,15 @@
         var blob = new Blob([yamlString], {
         type: "text/plain;charset=utf-8"
         });
+        fname = 'qc.yml'
+        if(marker=="❌"){
+        	fname = 'qc_fail.yml'
+        }
+        else if (marker=="⚠️"){
+        	fname = 'qc_artifact.yml'
+        }
 
-        saveAs(blob, 'qc.yml');
+        saveAs(blob, fname);
     }
 
     // <!-- Toggle overlay -->
