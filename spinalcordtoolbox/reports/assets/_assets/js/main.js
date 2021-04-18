@@ -55,9 +55,9 @@ $(document).ready(function(){
     // f key (mark "failing" subjects using check, X, !)
     if (evt.which == 70) {
       let index = obj[obj.length - 1].getAttribute("data-index");
-      const heavy_check_mark = '\u2714'
-      const heavy_ballot_x = '\u2718'
-      const heavy_excl_mark = '\u2757'
+      const heavy_check_mark = '\u2705'
+      const heavy_ballot_x = '\u274C'
+      const heavy_excl_mark = '\u26A0\uFE0F'
       sct_data[index].qc = (
           sct_data[index].qc === heavy_check_mark
           ? heavy_ballot_x
