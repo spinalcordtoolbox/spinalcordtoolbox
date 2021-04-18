@@ -63,12 +63,7 @@
               <img src="_assets/imgs/keyup.png" width="22px"> Previous
                 <img src="_assets/imgs/keydown.png" width="22px" style="margin-right: 2px;margin-left: 2px;">Next
                 <img src="_assets/imgs/keyright.png" width="22px" style="margin-right: 2px;margin-left: 2px;">Overlay
-                <img src="_assets/imgs/f-icon.png" width="33px" style="margin-right: -5px;">QC   |   Pass  
-                <span class="glyphicon glyphicon-ok"></span> 
-                Fail
-                <span class="glyphicon glyphicon-remove"></span> 
-                Artefact
-                <span class="glyphicon glyphicon-warning-sign"></span>
+                <img src="_assets/imgs/f-icon.png" width="33px" style="margin-right: -5px;">QC: ✅ = Pass | ❌ = Fail | ⚠️ = Artifact
 
                 <div id="dropdown" class="dropdown">
                     <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
@@ -83,7 +78,7 @@
                       <li><a class="dropdown-item" id="Function+Args" onclick="toggleColumn(id)">Function+Args &#10004</a></li>
                       <li><a class="dropdown-item" id="QC" onclick="toggleColumn(id)">QC</a></li>
                     </ul>
-                    
+
                 </div>
                 <script>
                     document.getElementById("dropdown").style.position= "relative";
@@ -107,7 +102,7 @@
                               <th data-field="contrast" data-sortable="true">Contrast</th>
 			                  <th data-field="command" data-sortable="true">Function</th>
 			                  <th data-field="cmdline" data-sortable="true">Function+Args</th>
-                              <th data-field="qc" data-sortable="true">&#x2714 / &#x2718</th>
+                              <th data-field="qc" data-sortable="true">QC</th>
 		                  </tr>
 	                </thead>
               </table>
@@ -253,7 +248,7 @@
          */
         b=document.createElement("div")
         b.className = "fixed-table-toolbar";
-        b.innerHTML="<button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_2718\" onclick=\"download_yaml('✘')\">Download \"✘\"</button><button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_2757\" onclick=\"download_yaml('❗')\">Download \"❗\"</button>"
+        b.innerHTML="<button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_2718\" onclick=\"download_yaml('❌')\">Download \"❌\"</button><button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_2757\" onclick=\"download_yaml('⚠️')\">Download \"⚠️\"</button>"
         a = document.getElementsByClassName("bootstrap-table");
         a[0].appendChild(b);
         c = a[0].children[2];
