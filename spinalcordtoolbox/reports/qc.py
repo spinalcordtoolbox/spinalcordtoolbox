@@ -516,7 +516,7 @@ class QcReport(object):
         with io.open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
             template = Template(template_index.read())
             output = template.substitute(sct_json_data=json.dumps(json_data))
-            io.open(os.path.join(dest_path, 'index.html'), 'w').write(output)
+            io.open(os.path.join(dest_path, 'index.html'), 'w', encoding="utf-8").write(output)
 
         for path in ['css', 'js', 'imgs', 'fonts']:
             src_path = os.path.join(assets_path, '_assets', path)
