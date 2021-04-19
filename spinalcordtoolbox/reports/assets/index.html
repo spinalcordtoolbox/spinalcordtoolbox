@@ -249,7 +249,7 @@
         b=document.createElement("div")
         b.className = "fixed-table-toolbar";
         b.style.paddingTop="10px";
-        b.innerHTML="<button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_274c\" onclick=\"download_yaml('❌')\" disabled>Download \"❌\"</button><button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_26a0\" onclick=\"download_yaml('⚠️')\" disabled>Download \"⚠️\"</button>"
+        b.innerHTML="<button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_274c\" onclick=\"download_yaml('\\u274C')\" disabled>Download QC Fails</button><button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_26a0\" onclick=\"download_yaml('\\u26A0\\uFE0F')\" disabled>Download QC Artifacts</button>"
         a = document.getElementsByClassName("bootstrap-table");
         a[0].appendChild(b);
         c = a[0].children[2];
@@ -323,10 +323,10 @@
         type: "text/plain;charset=utf-8"
         });
         fname = 'qc.yml'
-        if(marker=="❌"){
+        if(marker=='\u274C'){
         	fname = 'qc_fail.yml'
         }
-        else if (marker=="⚠️"){
+        else if (marker=='\u26A0\uFE0F'){
         	fname = 'qc_artifact.yml'
         }
 
