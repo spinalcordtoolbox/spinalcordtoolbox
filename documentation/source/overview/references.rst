@@ -208,3 +208,4 @@ The following studies (in chronological order) have used SCT:
 -  `Lee et al. Diffusion‐prepared fast spin echo for artifact‐free spinal cord imaging. Magnetic Resonance in Medicine, 2021 <https://onlinelibrary.wiley.com/doi/epdf/10.1002/mrm.28751>`_
 -  `Tinnermann et al. Observation of others’ painful heat stimulation involves responses in the spinal cord. Science Advances, 2021 <https://pubmed.ncbi.nlm.nih.gov/33789899/>`_
 -  `Zhang et al. Automatic spinal cord segmentation from axial-view MRI slices using CNN with grayscale regularized active contour propagation. Computers in Biology and Medicine, 2021 <https://pubmed.ncbi.nlm.nih.gov/33780869/>`_
+-  `Savini et al. Pilot Study on Quantitative Cervical Cord and Muscular MRI in Spinal Muscular Atrophy: Promising Biomarkers of Disease Evolution and Treatment? Front Neurol, 2021 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8039452/>`_
