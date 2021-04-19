@@ -249,7 +249,25 @@
         b=document.createElement("div")
         b.className = "fixed-table-toolbar";
         b.style.paddingTop="10px";
-        b.innerHTML="<button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_274c\" onclick=\"download_yaml('274c')\" disabled>Download QC Fails</button><button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_26a0\" onclick=\"download_yaml('26a0')\" disabled>Download QC Artifacts</button>"
+
+        btn1 = document.createElement("button");
+        btn1.type="button";
+        btn1.classList ="btn btn-default";
+        btn1.id="download_yaml_btn_274c";
+        btn1.onclick = function() { download_yaml('274c') }; 
+        btn1.disabled="disabled";
+        btn1.innerText="Download QC Fails";
+
+        btn2 = document.createElement("button");
+        btn2.type="button";
+        btn2.classList ="btn btn-default";
+        btn2.id="download_yaml_btn_26a0";
+        btn1.onclick = function() { download_yaml('26a0') }; 
+        btn2.disabled="disabled";
+        btn2.innerText="Download QC Artifacts";
+        b.appendChild(btn1);
+        b.appendChild(btn2);
+        
         a = document.getElementsByClassName("bootstrap-table");
         a[0].appendChild(b);
         c = a[0].children[2];
