@@ -249,7 +249,7 @@
         b=document.createElement("div")
         b.className = "fixed-table-toolbar";
         b.style.paddingTop="10px";
-        b.innerHTML="<button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_274c\" onclick=\"download_yaml('\\u274C')\" disabled>Download QC Fails</button><button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_26a0\" onclick=\"download_yaml('\\u26A0\\uFE0F')\" disabled>Download QC Artifacts</button>"
+        b.innerHTML="<button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_274c\" onclick=\"download_yaml('274c')\" disabled>Download QC Fails</button><button class=\"btn btn-default\" type=\"button\" id=\"download_yaml_btn_26a0\" onclick=\"download_yaml('26a0')\" disabled>Download QC Artifacts</button>"
         a = document.getElementsByClassName("bootstrap-table");
         a[0].appendChild(b);
         c = a[0].children[2];
@@ -302,7 +302,7 @@
             "sct_warp_template": "FILES_SEG",
         }
         sct_data.forEach(item => {
-            if (item.qc === marker) {
+            if (escape(item.qc).toLowerCase().slice(2,6) === marker) {
                 let command = item.command;
                 if (command in seg_cmd_to_seg_type) {
                     segtype = seg_cmd_to_seg_type[command];
@@ -323,11 +323,11 @@
         type: "text/plain;charset=utf-8"
         });
         fname = 'qc.yml'
-        if(marker=='\u274C'){
-        	fname = 'qc_fail.yml'
+        if(marker =='274c'){
+          fname = 'qc_fail.yml'
         }
-        else if (marker=='\u26A0\uFE0F'){
-        	fname = 'qc_artifact.yml'
+        else if (marker=='26a0'){
+          fname = 'qc_artifact.yml'
         }
 
         saveAs(blob, fname);
