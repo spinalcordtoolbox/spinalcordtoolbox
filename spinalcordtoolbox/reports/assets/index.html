@@ -161,7 +161,7 @@
         */
         var iTH, position;
         for (iTH = 0; iTH < document.getElementsByTagName('TH').length; iTH++){
-            if (buttonID.valueOf() == document.getElementsByTagName('TH')[iTH].innerText){
+            if (buttonID.valueOf() == document.getElementsByTagName('TH')[iTH].innerText.replace(/(\r\n|\n|\r)/gm, "")){
                 position = iTH;
             }
         }
@@ -231,7 +231,7 @@
                     }
                 }
             }
-        }, 50);
+        }, 100);
     });
 
     setTimeout(function() {
@@ -263,7 +263,7 @@
         b.appendChild(btn1);
         b.appendChild(btn2);
         
-        a = document.getElementsByClassName("table");
+        a = document.getElementsByClassName("bootstrap-table");
         a[0].appendChild(b);
         c = a[0].children[2];
         a[0].children[2] = b;
@@ -274,7 +274,7 @@
          for (iTH = 0; iTH < dropdownList.length-1; iTH++){
               toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
          }
-     }, 50);
+     }, 100);
 
 
     function hideColumns() {
