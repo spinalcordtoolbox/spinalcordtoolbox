@@ -236,7 +236,7 @@
                     }
                 }
             }
-        }, 4);
+        }, 50);
     });
 
     setTimeout(function() {
@@ -268,7 +268,7 @@
         b.appendChild(btn1);
         b.appendChild(btn2);
         
-        a = document.getElementsByClassName("bootstrap-table");
+        a = document.getElementsByClassName("table");
         a[0].appendChild(b);
         c = a[0].children[2];
         a[0].children[2] = b;
@@ -279,7 +279,7 @@
          for (iTH = 0; iTH < dropdownList.length-1; iTH++){
               toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
          }
-     },4);
+     }, 50);
 
 
     function hideColumns() {
