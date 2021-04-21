@@ -318,15 +318,16 @@
         sct_data.forEach(item => {
             if (escape(item.qc).toLowerCase().slice(2,6) === marker) {
                 let command = item.command;
+                let item_path = item.cwd.concat("/").concat(item.fname_in)
                 if (command in seg_cmd_to_seg_type) {
                     segtype = seg_cmd_to_seg_type[command];
                 } else {
                     segtype = "FILES_GENERATED_BY_".concat(command).concat("_FILE_KIND_UNKNOWN");
                 }
                 if (segtype in res) {
-                    res[segtype].push(item.fname_in);
+                    res[segtype].push(item_path);
                 } else {
-                    res[segtype] = [item.fname_in];
+                    res[segtype] = [item_path];
                 }
             }
         });
