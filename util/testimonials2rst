@@ -306,26 +306,30 @@ NR == 1 { next }
   feedback=$10
 
 
+  # medical doctor overrides other degrees, for our purpose of medical software testimony
   if(md != "") {
     degree="MD"
   }
+
+  # convert country name to emoji, if possible
+  if(FLAGS[tolower(country)] != "") {
+    country = FLAGS[tolower(country)]
+  }
+
+  # location = city + country, but only if both are defined
+  # if both are null, so is location.
+  if(city != "" && country != "") {
+    location = city " " country
+  } else {
+    location = city country
+  }
+
+  # prepend section separators
   if(degree != "") {
     degree=", " degree
   }
-  country = tolower(country)
-
   if(affiliation != "") {
     affiliation = " | " affiliation
-  }
-
-  location = ""
-  if(city != "") {
-    location = location city
-  }
-  if(country != "") {
-    if(FLAGS[country] != "") {
-      location = location " " FLAGS[country]
-    }
   }
   if(location != "") {
     location = " | " location
@@ -333,6 +337,8 @@ NR == 1 { next }
 
   print ".. admonition:: " name degree affiliation location
   print ""
+  # .rst admonitions need a 4-space indent to know the content is a continuation.
+  # fmt (below) recognizes and preserves these indents.
   print "    " testimonial
   print ""
   print ""
