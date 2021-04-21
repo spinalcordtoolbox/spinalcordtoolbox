@@ -10,7 +10,7 @@ import numpy as np
 from scipy import ndimage
 from nibabel.nifti1 import Nifti1Image
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, split_img_data
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
@@ -38,17 +38,21 @@ class Slice(object):
 
     def __init__(self, images, p_resample=0.6):
         """
-        :param images: list of 3D volumes to be separated into slices.
+        :param images: list of 3D or 4D volumes to be separated into slices.
         """
         logger.info('Resample images to {}x{} mm'.format(p_resample, p_resample))
-        self._images = list()
+        self._images = list()  # 3d volumes
+        self._4d_images = list()  # 4d volumes
+        self._image_seg = None  # for cropping
+        self._absolute_paths = list()  # Used because change_orientation removes the field absolute_path
         image_ref = None  # first pass: we don't have a reference image to resample to
         for i, image in enumerate(images):
             img = image.copy()
+            self._absolute_paths.append(img.absolutepath)  # change_orientation removes the field absolute_path
             img.change_orientation('SAL')
             if p_resample:
-                if i == len(images) - 1:
-                    # Last volume corresponds to a segmentation, therefore use linear interpolation here
+                if i == len(images) - 1 and img.dim[3] == 1:
+                    # Last volume, if it is 3d, corresponds to a segmentation, therefore use linear interpolation here
                     type_img = 'seg'
                 else:
                     # Otherwise it's an image: use spline interpolation
@@ -56,8 +60,12 @@ class Slice(object):
                 img_r = self._resample_slicewise(img, p_resample, type_img=type_img, image_ref=image_ref)
             else:
                 img_r = img.copy()
-            self._images.append(img_r)
-            image_ref = self._images[0]  # 2nd and next passes: we resample any image to the space of the first one
+            if img_r.dim[3] == 1:   # If image is 3D, nt = 1
+                self._images.append(img_r)
+                image_ref = self._images[0]  # 2nd and next passes: we resample any image to the space of the first one
+            else:
+                self._4d_images.append(img_r)
+                # image_ref = self._4d_images[0]  # img_dest is not covered for 4D volumes in resample_nib()
 
     @staticmethod
     def axial_slice(data, i):
@@ -174,7 +182,7 @@ class Slice(object):
             return A
         xp = (~nans).ravel().nonzero()[0]
         fp = A[~nans]
-        x  = nans.ravel().nonzero()[0]
+        x = nans.ravel().nonzero()[0]
         A[nans] = np.interp(x, xp, fp)
         return A
 
@@ -270,6 +278,26 @@ class Slice(object):
         else:
             return matrices
 
+    def mosaics_through_time(self):
+        """Obtain mosaics for each volume
+
+        :return: list of tuples of numpy.ndarray containing the mosaics of each volumes
+        """
+
+        mosaics = list()
+        self._image_seg = self._images[0].copy()  # segmentation used for cropping
+
+        for i, img in enumerate(self._4d_images):
+            # The absolutepath is changed to None after change_orientation see issue #3304
+            img.absolutepath = self._absolute_paths[i]
+
+            im_t_list = (split_img_data(img, dim=3, squeeze_data=True))  # Split along T dimension
+            self._images.clear()
+            self._images = im_t_list
+            matrices, centers_mosaic = self.mosaic(return_center=True)
+            mosaics.append(matrices)
+        return mosaics, centers_mosaic
+
     def single(self):
         """Obtain the matrices of the single slices. Flatten
 
@@ -294,7 +322,10 @@ class Slice(object):
         return matrices
 
     def aspect(self):
-        return [self.get_aspect(x) for x in self._images]
+        if len(self._4d_images) == 0:  # For 3D images
+            return [self.get_aspect(x) for x in self._images]
+        else:  # For 4D images
+            return [self.get_aspect(x) for x in self._4d_images]
 
     def _resample_slicewise(self, image, p_resample, type_img, image_ref=None):
         """
@@ -345,9 +376,13 @@ class Axial(Slice):
         return self.axial_dim(image)
 
     def get_center(self, img_idx=-1):
-        """Get the center of mass of each slice. By default, it assumes that self._images is a list of images, and the
+        """Get the center of mass of each slice. For 4D images, segmentation is placed in self.image_seg.
+        For 3D images, by default, it assumes that self._images is a list of images, and the
         last item is the segmentation from which the center of mass is computed."""
-        image = self._images[img_idx]
+        if self._image_seg is None:  # For 3D images
+            image = self._images[img_idx]
+        else:  # For 4D images
+            image = self._image_seg
         return self._axial_center(image)
 
 
