@@ -306,11 +306,6 @@ NR == 1 { next }
   feedback=$10
 
 
-  # medical doctor overrides other degrees, for our purpose of medical software testimony
-  if(md != "") {
-    degree="MD"
-  }
-
   # convert country name to emoji, if possible
   if(FLAGS[tolower(country)] != "") {
     country = FLAGS[tolower(country)]
@@ -324,6 +319,11 @@ NR == 1 { next }
     location = city country
   }
 
+  # medical doctor degree
+  if(md != "") {
+    md=" MD"
+  }
+
   # prepend section separators
   if(degree != "") {
     degree=", " degree
@@ -335,7 +335,7 @@ NR == 1 { next }
     location = " | " location
   }
 
-  print ".. admonition:: " name degree affiliation location
+  print ".. admonition:: " name md degree affiliation location
   print ""
   # .rst admonitions need a 4-space indent to know the content is a continuation.
   # fmt (below) recognizes and preserves these indents.
