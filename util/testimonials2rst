@@ -346,4 +346,8 @@ NR == 1 { next }
 }
 
 HERE="$(cd "$(dirname "$0")"; pwd -P)"
-testimonials2rst "$@" | fmt -80 | tee "${HERE}"/../documentation/source/overview/testimonials.rst
+
+# To directly write on the RST file, uncomment the line below. Otherwise, copy/paste and manually organize the output
+# of the terminal.
+#testimonials2rst "$@" | fmt -80 | tee "${HERE}"/../documentation/source/overview/testimonials.rst
+testimonials2rst "$@" | fmt -80
