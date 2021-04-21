@@ -1,4 +1,4 @@
-Video tutorials
+Video Tutorials
 ###############
 
 Please visit our `Youtube channel`_ which contains some tutorials.
