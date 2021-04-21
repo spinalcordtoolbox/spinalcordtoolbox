@@ -297,7 +297,7 @@ NR == 1 { next }
   name=$2
   degree=$3
   md=$4
-  institution=$5
+  affiliation=$5
   city="" # not in the dataset!
   country=$6
   OS=$7
