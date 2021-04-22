@@ -11,9 +11,9 @@ Spinal Cord Toolbox
     :alt: User forum
     :target: https://forum.spinalcordmri.org/c/sct
 
-.. |badge-mailing-list| image:: https://img.shields.io/badge/mailing%20list-development-green.svg?style=flat
-    :alt: Developers mailing list
-    :target: https://groups.google.com/forum/#!forum/sct_developers
+.. |badge-mailing-list| image:: https://img.shields.io/badge/mailing%20list-Spinalcordmri.org-green.svg?style=flat
+    :alt: Community mailing list
+    :target: https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform
 
 .. |badge-downloads| image:: https://img.shields.io/github/downloads/neuropoly/spinalcordtoolbox/total.svg
     :alt: Downloads
@@ -107,6 +107,14 @@ Who is using SCT?
 SCT is trusted by the research labs of many highly-regarded institutions worldwide. A full list of endorsements can be found on the `Testimonials <https://spinalcordtoolbox.com/en/latest/overview/testimonials.html>`_ page.
 
 For a list of neuroimaging studies that depend on SCT, visit the `Studies using SCT <https://spinalcordtoolbox.com/en/latest/overview/studies.html>`_ page.
+
+
+Contact
+-------
+
+If you have any questions or concerns, and would like to get in touch with the developers of Spinal Cord Toolbox, the best way to do so is via the `Spinalcordmri.org forum <https://forum.spinalcordmri.org/c/sct/8>`_.
+
+Otherwise, if you would like to stay up to date on SCT announcements (new releases, hands-on courses, etc.), please subscribe to the `Spinalcordmri.org mailing list <https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform>`_.
 
 
 License
