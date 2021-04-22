@@ -1,7 +1,7 @@
 .. _testimonials:
 
-Who is using SCT?
-#################
+Testimonials
+############
 
 ..
     To get those testimonials, use $SCT_PATH/util/testimonials2rst
