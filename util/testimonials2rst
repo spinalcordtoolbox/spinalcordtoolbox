@@ -321,7 +321,7 @@ NR == 1 { next }
 
   # medical doctor degree
   if(md != "") {
-    md=" MD"
+    md=", MD"
   }
 
   # prepend section separators
