@@ -1,7 +1,7 @@
 Spinal Cord Toolbox
 ###################
 
-|badge-releases| |badge-forum| |badge-mailing-list| |badge-downloads| |badge-ci| |badge-doc| |badge-license|
+|badge-releases| |badge-forum| |badge-mailing-list| |badge-stats| |badge-twitter| |badge-downloads| |badge-ci| |badge-doc| |badge-license|
 
 .. |badge-releases| image:: https://img.shields.io/github/v/release/neuropoly/spinalcordtoolbox
     :alt: Releases
@@ -30,6 +30,14 @@ Spinal Cord Toolbox
 .. |badge-license| image:: https://img.shields.io/github/license/neuropoly/spinalcordtoolbox
     :alt: License
     :target: https://github.com/neuropoly/spinalcordtoolbox/blob/master/LICENSE
+
+.. |badge-stats| image:: https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif
+    :alt: Project Stats
+    :target: https://www.openhub.net/p/spinalcordtoolbox
+
+.. |badge-twitter| image:: https://img.shields.io/twitter/follow/spinaltoolbox.svg?style=social&label=Follow
+    :alt: Twitter Follow
+    :target: https://twitter.com/spinaltoolbox
 
 
 **Spinal Cord Toolbox (SCT)** is a comprehensive, free and open-source set of command-line tools dedicated to the processing and analysis of spinal cord MRI data.
