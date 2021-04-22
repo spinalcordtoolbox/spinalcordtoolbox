@@ -119,3 +119,10 @@ Contributing
 ------------
 
 We happily welcome contributions. Please see the `Contributing <https://github.com/neuropoly/spinalcordtoolbox/wiki/Contributing>`_ page of the developer Wiki for more information.
+
+
+.. admonition:: ⚠ ️Medical Disclaimer
+
+   All content found in the Spinal Cord Toolbox repository and spinalcordtoolbox.com website, including: text, images, audio, or other formats were created for informational purposes only. The content is not intended to be a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition. Never disregard professional medical advice or delay in seeking it because of something you have read on this website.
+
+   If you think you may have a medical emergency, call your doctor, go to the emergency department, or call your local emergency number immediately. Spinal Cord Toolbox does not recommend or endorse any specific tests, physicians, products, procedures, opinions, or other information that may be mentioned on spinalcordtoolbox.com. Reliance on any information provided by spinalcordtoolbox.com, Spinal Cord Toolbox contributors, contracted writers, or medical professionals presenting content for publication to spinalcordtoolbox.com is solely at your own risk.
