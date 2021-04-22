@@ -36,6 +36,7 @@ Welcome to Spinal Cord Toolbox's documentation!
 SCT is a comprehensive, free and open-source software dedicated to the processing and analysis of spinal cord MRI data.
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Overview
 
@@ -46,6 +47,7 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
    overview/studies.rst
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: User section
 
@@ -57,6 +59,7 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
    user_section/citing_sct.rst
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Tutorials and Courses
 
@@ -66,6 +69,7 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
 
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Developer section
 
