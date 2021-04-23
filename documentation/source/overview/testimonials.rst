@@ -16,13 +16,13 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    SCT is an invaluable tool for our investigations of central pain processing
    in the spinal cord using fMRI. In addition, our combined cortico-spinal
    imaging approach greatly benefits from the accurate spatial prepossessing
-   capabilities of the SCT.
+   capabilities of SCT.
 
 
 .. admonition:: Douglas Arnold, MD | NeuroRx & McGill University | Montreal 🇨🇦
    :class: testimonial
 
-    Easily implemented. Beautiful output of state-of-the-art results
+    Easily implemented. Beautiful output of state-of-the-art results.
 
 
 .. admonition:: Claudia Gandini Wheeler-Kingshott, PhD | NMR Research Unit, UCL | London 🇬🇧
@@ -52,7 +52,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
     I have been working on spinal cord MRI for some years and I cannot make it
     without help of SCT. The segmentation, co-registration and MNI template etc
     are great features in the SCT toolbox, fast and reliable. We have published
-    papers in high impact journals such as PNAS and Brain, using SCT as main
+    papers in high impact journals such as PNAS and Brain, using SCT as the main
     analysis tool. SCT is well documented and the forum is really helpful as
     well. We can always get very quick replies for any questions there! So huge
     thanks to the SCT team for their hard work and contribution to spinal cord
@@ -71,7 +71,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 
     I use SCT basically for segmentation and quantitative measurement of spinal
     cord MRI for my research, including some on-going works. SCT is well
-    documented, instruction at the web site as well as the workshop helped me a
+    documented, and instruction at the website as well as the workshop helped me a
     lot. The best thing I like about SCT is that it is user-friendly and the
     results are easy to use for publication in papers.
 
@@ -105,7 +105,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 .. admonition:: David Cadotte, MD, PhD | University of Calgary | Calgary 🇨🇦
    :class: testimonial
 
-    At the University of Calgary we are using the SCT to process both routine
+    At the University of Calgary we are using SCT to process both routine
     clinical MRI scans (commonly used to confirm a diagnosis of degenerative
     cervical myelopathy) and advanced imaging protocols of diffusion imaging,
     magnetization transfer imaging and t2* acquisitions of the human spinal cord
@@ -152,7 +152,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
     SCT facilitates research into spinal cord imaging in no other known
     reliable, respected, and cost-free alternative currently available.
     Genuinely grateful for the effort behind this, and the vision altogether,
-    super thankful, and fully supportive of the maintenance of it , without a
+    super thankful, and fully supportive of the maintenance of it, without a
     doubt.
 
 
@@ -178,13 +178,13 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 .. admonition:: Ben Davies MD, MPhil | University of Cambridge | Cambridge 🇬🇧
    :class: testimonial
 
-    Degenerative Cervical Myelopathy - Clinical Research.  New to the platform,
+    Degenerative Cervical Myelopathy - Clinical Research. New to the platform,
     but ongoing study exploring its value as a radiological endpoints for the
-    disease.  I attended one of the SCT courses in London.   I think
+    disease. I attended one of the SCT courses in London. I think
     fundamentally this is an incredible resource, easy to use even for a
     clinician with limited prior experience, and is enabling access to
     quantitative MRI of the spinal cord, which is incredibly under utilised in a
-    wide range of diseases.   The team, led by JCA are incredibly supportive,
+    wide range of diseases. The team, led by JCA are incredibly supportive,
     able to answer emails and share the science which underpins and drives the
     platform forward.
 
@@ -193,7 +193,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    :class: testimonial
 
     I'm using SCT for fMRI of patients who had an Cerebral Vascular Event. I've
-    never posted on the foroum but other questions have helped me to understand
+    never posted on the forum, but other questions have helped me to understand
     the questions I have. I like SCT because is a friendly toolbox for
     processing cervical image data.
 
@@ -202,7 +202,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    :class: testimonial
 
     User-friendly, clear documentation, large community, rapid release, can be
-    trusted.   I love it and you guys should be proud of the tool. It is also
+    trusted. I love it and you guys should be proud of the tool. It is also
     used in my company Imeka Solutions Inc as well as others out there.
     (response above is 5/5 best)
 
@@ -210,7 +210,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 .. admonition:: Marcello Moccia, MD, PhD | University of Naples | Naples 🇮🇹
    :class: testimonial
 
-    SCT has speeded up our spinal cord research in multiple sclerosis. We are
+    SCT has sped up our spinal cord research in multiple sclerosis. We are
     now processing spinal cord images from clinical trials and practice.
 
 
@@ -264,9 +264,9 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    :class: testimonial
 
     We use SCT for investigations into spinal cord injury and multiple
-    sclerosis.  Analysis using SCT has contributed to several MS clinical trials
-    in which we are involved.  I find SCT to be well documented and each of its
-    tools has a clear purpose.  I also appreciate that it is made available
+    sclerosis. Analysis using SCT has contributed to several MS clinical trials
+    in which we are involved. I find SCT to be well documented and each of its
+    tools has a clear purpose. I also appreciate that it is made available
     under an open license.
 
 
@@ -291,9 +291,9 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 
     I am using SCT for treating MRIs at spinal levels in ALS patients; including
     structural images and DTI to obtain quantitative metrics. I have been using
-    SCT since 2 years I found it easy to use with minimal knowledge on imaging
+    SCT for 2 years, and I have found it easy to use with minimal knowledge on imaging
     processing. It would be helpful to have more example data with the ways to
-    analyze them. Thank you so much for providing this powerful tool
+    analyze them. Thank you so much for providing this powerful tool.
 
 
 .. admonition:: Alicia Cronin | Robarts Research Institute | London 🇨🇦
@@ -323,9 +323,9 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 
     I'm using SCT to analyze ex vivo human spinal cord data. There are a huge
     progress in my analysis using the amazing features in term of segmentation,
-    registration, etc.. The SCT is well documented and there are much work from
-    its team by  recorded courses (available publicly) for users from all over
-    the world. Personally, I've received valuable assistant and useful feedback
+    registration, etc. The SCT is well documented and there are much work from
+    its team by recorded courses (available publicly) for users from all over
+    the world. Personally, I've received valuable assistance and useful feedback
     from the SCT community. Also, the SCT team helped me to generate a specific
     deep learning model and implemented in SCT software (to benefit other users)
     in order to segment our ex-vivo tissues. I'm extremely grateful to all SCT
@@ -363,16 +363,16 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
     SCT very very helpful. It is very nice to have a dedicated toolbox with
     functions tailored to spinal cord acquisitions. Currently, I am working on a
     project in which we used the automated segmentation functionality of the SCT
-    to automate a procedure and this was very helpful! Also Dr Cohen-Adad and
+    to automate a procedure and this was very helpful! Also Dr. Cohen-Adad and
     other SCT experts are very helpful and quick to reply if one encounters
-    problems. I cannot recommend it enough  :)
+    problems. I cannot recommend it enough. :)
 
 
 .. admonition:: Abdullah Althobity, MD, PhD candidate | Ministry of Education | Riyadh 🇸🇦
    :class: testimonial
 
     I used SCT for to segment lumbar spinal cord region of EAE mouse model of
-    multiple sclerosis . The model has been trained very well by Charley and
+    multiple sclerosis. The model has been trained very well by Charley and
     Julien after I sent them some samples. They helped me from installing the
     software to the final step. Then all my data, which is over 70 mice, have
     been easy to analyse without any error. The biggest advantage of SCT that I
@@ -387,4 +387,3 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
     of cervical spinal cord. I am satisfied with SCT and its documentation and
     help. I rarely visit the community forum, since I have not yet encountered
     big problems and errors (that I cannot find solutions to in the help).
-
