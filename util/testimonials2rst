@@ -336,6 +336,7 @@ NR == 1 { next }
   }
 
   print ".. admonition:: " name md degree affiliation location
+  print "   :class: testimonial"
   print ""
   # .rst admonitions need a 4-space indent to know the content is a continuation.
   # fmt (below) recognizes and preserves these indents.

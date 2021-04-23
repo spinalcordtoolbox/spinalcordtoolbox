@@ -10,4 +10,4 @@
 .wy-table-responsive table td, .wy-table-responsive table th  {white-space: normal; !important;}
 
 /* Remove the '!' on a specific admonition to use it for the testimonials page */
-.admonition.admonition p.admonition-title::before{content:""}
+.admonition.testimonial p.admonition-title::before{content:""}
