@@ -8,7 +8,7 @@
 # 2. Go to https://docs.google.com/forms/d/1tJuIVtQ400G6dooZ0P0yukVNfp57b_uF9K5MXnfHLxU/edit#responses
 # 3. Click the "Sheets" icon.
 # 4. Export to .tsv with File->Download->TSV
-# 5. `utils/testimonials2rst 'Testimonials\ for\ SCT\ \(Responses\)\ -\ Form\ Responses\ 1.tsv'`
+# 5. `dev/docs/testimonials2rst 'Testimonials\ for\ SCT\ \(Responses\)\ -\ Form\ Responses\ 1.tsv'`
 # 6. Curate the .tsv to order the rows to highlight preferred testimonials.
 # 7. Go to 5 until satisfied.
 # 8. Publish: `git add documentation/ && git commit -m "Update testimonials" && git push`
