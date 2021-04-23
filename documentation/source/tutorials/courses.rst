@@ -5,15 +5,19 @@ Courses
 
 We organize **free** SCT courses, each year after the ISMRM conference. If you’d like to be added to the mailing list, please send an email to spinalcordtoolbox@gmail.com. The past courses handouts are listed below:
 
--  `SCT course (v4.2.1), London, 2020-01-21`_ \| `Video recording`_
--  `SCT course (v4.0.0), Beijing, 2019-08-02`_ \| `Slides with Chinese translation`_
--  `SCT course (v4.0.0_beta.4), London, 2019-01-22`_
--  `SCT course (v3.2.2), Paris, 2018-06-12`_
--  `SCT course (v3.0.3), Honolulu, 2017-04-28`_
--  `SCT course (v3.0_beta14), Geneva, 2016-06-28`_
--  `SCT course (v3.0_beta9), Singapore, 2016-05-13`_
--  `SCT course (v3.0_beta1), Montreal, 2016-04-19`_
--  `SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15`_
+.. list-table::
+   :widths: 80
+   :header-rows: 0
+
+   * -  `SCT course (v4.2.1), London, 2020-01-21`_ \| `Video recording`_
+   * -  `SCT course (v4.0.0), Beijing, 2019-08-02`_ \| `Slides with Chinese translation`_
+   * -  `SCT course (v4.0.0_beta.4), London, 2019-01-22`_
+   * -  `SCT course (v3.2.2), Paris, 2018-06-12`_
+   * -  `SCT course (v3.0.3), Honolulu, 2017-04-28`_
+   * -  `SCT course (v3.0_beta14), Geneva, 2016-06-28`_
+   * -  `SCT course (v3.0_beta9), Singapore, 2016-05-13`_
+   * -  `SCT course (v3.0_beta1), Montreal, 2016-04-19`_
+   * -  `SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15`_
 
 .. _SCT course (v4.2.1), London, 2020-01-21: https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121
 .. _Video recording: https://www.youtube.com/watch?v=whbtjYNtHko&feature=youtu.be
