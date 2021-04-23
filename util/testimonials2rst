@@ -348,7 +348,9 @@ NR == 1 { next }
 
 HERE="$(cd "$(dirname "$0")"; pwd -P)"
 
-# To directly write on the RST file, uncomment the line below. Otherwise, copy/paste and manually organize the output
-# of the terminal.
+# To directly write on the RST file, uncomment the line below, and comment out the other line.
 #testimonials2rst "$@" | fmt -80 | tee "${HERE}"/../documentation/source/overview/testimonials.rst
+
+# Otherwise, copy/paste and manually organize the output of the terminal.
+# Tip: Try 'xclip' to make copying/pasting easier: testimonials2rst testimonials.tsv | xclip -sel c
 testimonials2rst "$@" | fmt -80
