@@ -8,10 +8,6 @@ Python API
    The Python API is not stable yet, so be prepared to update your code with SCT updates.
 
 
-.. contents::
-..
-
-
 Segmentation
 ************
 
@@ -219,4 +215,3 @@ spinalcordtoolbox.template
 
 .. automodule:: spinalcordtoolbox.template
    :members:
-
