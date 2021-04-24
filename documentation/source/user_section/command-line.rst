@@ -4,11 +4,6 @@
 Command-Line Tools
 ##################
 
-.. contents::
-   :local:
-   :depth: 1
-..
-
 
 Summary of Tools
 ****************
@@ -27,7 +22,7 @@ Segmentation
 - sct_get_centerline_ - Extracts the spinal cord centerline.
 - sct_propseg_ - Segment spinal cord using propagation of deformation model (PropSeg).
 
-Segmentation analysis
+Segmentation Analysis
 =====================
 
 - sct_analyze_lesion_ - Compute statistics on segmented lesions.

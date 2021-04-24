@@ -5,10 +5,6 @@ Getting Started
 
 To get started using SCT, you may take a look at the `Batch Processing Example`_, or follow the longer :ref:`sct_courses` and :ref:`tutorials` materials.
 
-.. contents::
-   :local:
-..
-
 
 Batch Processing Example
 ************************
