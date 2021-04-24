@@ -41,16 +41,16 @@ setup(
     include_package_data=True,
     extras_require={
         'docs': [
-        'sphinx',
-        'sphinxcontrib-programoutput',
-        'sphinx_rtd_theme',
-        'sphinx-copybutton',
-        'furo',
-        'recommonmark'
+            'sphinx',
+            'sphinxcontrib-programoutput',
+            'sphinx_rtd_theme',
+            'sphinx-copybutton',
+            'furo',
+            'recommonmark'
         ],
         'mpi': [
-        'mpich==3.2',
-        'mpi4py==3.0.0',
+            'mpich==3.2',
+            'mpi4py==3.0.0',
         ],
     },
     entry_points=dict(
