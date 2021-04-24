@@ -105,11 +105,11 @@ html_theme = "furo"
 html_logo = '../imgs/logo_sct.png'
 
 html_theme_options = {
-    "collapse_navigation": True,
-    "display_version": True,
-    "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
-    "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
-    "style_nav_header_background": "#FFFFFF",  # background of the logo (top left)
+    # "collapse_navigation": True,
+    # "display_version": True,
+    # "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
+    # "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
+    # "style_nav_header_background": "#FFFFFF",  # background of the logo (top left)
     "sidebar_hide_name": True
     }
 
