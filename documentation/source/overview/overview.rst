@@ -8,12 +8,12 @@ SCT tools process MRI data (`NIfTI <https://nifti.nimh.nih.gov/>`_ files) and ca
 
 - Segmentation of the spinal cord and gray matter
 - Segmentation of pathologies (eg. multiple sclerosis lesions)
-- Detection of anatomical highlights (eg. ponto-medullary junction, spinal cord centerline, vertebral levels)
-- Registration to template, and deformation (eg. straightening)
+- Detection of anatomical highlights (e.g. ponto-medullary junction, spinal cord centerline, vertebral levels)
+- Registration to template, and deformation (e.g. straightening)
 - Motion correction for diffusion and functional MRI time series
-- Computation of quantitative MRI metrics (eg. diffusion tensor imaging, magnetization transfer)
-- Texture analysis (eg. grey level co-occurrence matrix)
-- Extraction of metrics within anatomical regions (eg. white matter tracts)
+- Computation of quantitative MRI metrics (e.g. diffusion tensor imaging, magnetization transfer)
+- Texture analysis (e.g. grey level co-occurrence matrix)
+- Extraction of metrics within anatomical regions (e.g. white matter tracts)
 
 SCT also has low-level tools:
 
