@@ -232,8 +232,9 @@ sct_crop_image -i fmri.nii.gz -m mask_fmri_mean.nii.gz -o fmri_crop.nii.gz
 # Tips: Here data have sufficient SNR and there is visible motion between two consecutive scans, so motion correction is more efficient with -g 1 (i.e. not average consecutive scans)
 sct_fmri_moco -i fmri_crop.nii.gz -g 1
 # Segment spinal cord manually
-# Since these data have very poor cord/CSF contrast, it is difficult to segment the cord properly
-# and hence in this case we do it manually. The file is called: fmri_crop_moco_mean_seg_manual.nii.gz
+#   Since these data have very poor cord/CSF contrast, it is difficult to segment the cord properly using sct_deepseg_sc
+#   and hence in this case we do it manually. The file is called: fmri_crop_moco_mean_seg_manual.nii.gz
+#   There is no command for this step, because the file is included in the 'sct_example_data' dataset.
 # Generate QC for sct_fmri_moco ('fmri_crop_moco_mean_seg_manual.nii.gz' is needed to align each slice in the QC mosaic)
 sct_qc -i fmri_crop.nii.gz -d fmri_crop_moco.nii.gz -s fmri_crop_moco_mean_seg_manual.nii.gz -p sct_fmri_moco -qc "$SCT_BP_QC_FOLDER"
 # Register template->fmri
