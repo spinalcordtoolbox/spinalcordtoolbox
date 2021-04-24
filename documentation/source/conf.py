@@ -39,10 +39,13 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
+    'sphinx_copybutton',
     'recommonmark']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+
+copybutton_image_path = "img/copy.png"
 
 # add doc for __init
 autoclass_content = 'both'
@@ -84,7 +87,7 @@ language = None
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "monokai"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -94,9 +97,8 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-#html_theme = 'alabaster'
-html_theme = "sphinx_rtd_theme"
+# html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -108,6 +110,7 @@ html_theme_options = {
     "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
     "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
     "style_nav_header_background": "#FFFFFF",  # background of the logo (top left)
+    "sidebar_hide_name": True
     }
 
 html_context = {
@@ -129,14 +132,14 @@ html_css_files = ['css/custom.css']
 # to template names.
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-html_sidebars = {
-    '**': [
-        'about.html',
-        'navigation.html',
-        'relations.html',  # needs 'show_related': True theme option to display
-        'searchbox.html',
-    ]
-}
+# html_sidebars = {
+#     '**': [
+#         'about.html',
+#         'navigation.html',
+#         'relations.html',  # needs 'show_related': True theme option to display
+#         'searchbox.html',
+#     ]
+# }
 
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -174,4 +177,3 @@ texinfo_documents = [
      author, 'SpinalCordToolbox', 'One line description of project.',
      'Miscellaneous'),
 ]
-

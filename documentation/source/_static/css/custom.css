@@ -8,3 +8,166 @@
    https://sphinx-argparse.readthedocs.io/en/stable/misc.html#text-wrapping-in-argument-tables */
 .wy-table-responsive {overflow: visible !important;}
 .wy-table-responsive table td, .wy-table-responsive table th  {white-space: normal; !important;}
+
+.tutorials-header .header-logo {
+  background-image: url("../../../../imgs/logo_sct.png");
+}
+
+body {
+  font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif;
+}
+
+.rst-content .toctree-wrapper>p.caption,h1,h2,h3,h4,h5,h6,legend {
+    margin-top: 2.0rem;
+    font-weight: 400;
+    font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif;
+}
+
+
+/* .highlight {
+    background: #fffbd8;
+    color: rgb(230, 236, 241);
+} */
+
+.highlight {
+    background: #0f0f4c !important;
+}
+
+.rst-content div[class^=highlight], .rst-content pre.literal-block {
+    border-radius: 5px;
+    border-color: #fffbd8;
+}
+
+.wy-side-nav-search {
+    background: #eeeff1 !important;
+}
+
+.wy-nav-side {
+    background: #2225fd;
+}
+
+.wy-menu-vertical p.caption {
+    color: #f9e53c;
+}
+
+.rst-content div[class^=highlight] div[class^=highlight], .rst-content pre.literal-block div[class^=highlight] {
+    padding: 10px;
+    border: none;
+    margin: 0;
+}
+
+/* a, a:visited {
+    color: #6abf6a;
+} */
+
+.wy-menu-vertical a:hover {
+    /* background-color: #fffbd7; */
+    background-color: #d6d6d6;
+    color: #404040;
+}
+a:hover {
+    color: #ff7524;
+}
+
+h1 {
+    letter-spacing: 1.78px;
+    text-transform: uppercase;
+}
+
+.wy-nav-content {
+    max-width: 1000px;
+}
+
+.rst-content .admonition-title, .wy-alert-title, .rst-content .note .admonition-title {
+    background-color: #b3dcb0;
+}
+
+.rst-content .admonition {
+    /* background-color: #eaf7e9; */
+    background-color: #f3f4f7;
+}
+
+.rst-content .admonition.warning {
+    /* background-color: #fff4eb; */
+    background-color: #f3f4f7;
+}
+
+html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)>dt {
+    display: block;
+    margin: 6px 0;
+    font-size: 90%;
+    line-height: normal;
+    background-color: #eaf7e9;
+    color: #6abf6a;
+    border-top: 3px solid #6abf6a;
+    padding: 6px;
+    position: relative;
+}
+
+.rst-content .viewcode-back, .rst-content .viewcode-link {
+    display: inline-block;
+    color: #ff7524;
+    font-size: 80%;
+    padding-left: 24px;
+}
+
+@media screen and (min-width: 1100px)
+.wy-nav-content-wrap {
+    background: rgba(0,0,0);
+}
+
+/* Furo */
+
+.content {
+    padding: 3.5em;
+    width: 48em;
+}
+
+html {
+    overflow: scroll;
+    overflow-x: hidden;
+}
+
+:not(html):not(body)::-webkit-scrollbar {
+    width: 0;  /* Remove scrollbar space */
+    background: transparent;  /* Optional: just make scrollbar invisible */
+}
+
+/* Optional: show position indicator in red */
+/* ::-webkit-scrollbar-thumb {
+    background: #FF0000;
+} */
+
+.sidebar-drawer {
+    justify-content: center;
+    min-width: 15em;
+    max-width: 18rem;
+}
+
+a.copybtn {
+	opacity: .5;
+    transition: opacity 0.5s;
+    top: 0.7rem;
+    right: 0.7rem;
+}
+
+
+.o-tooltip--left:after {
+   background: transparent;
+   font-size: 1rem;
+   color: white;
+   transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+}
+
+.o-tooltip--left:hover:after {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-100%) translateY(0);
+    transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+    transition-delay: .1s;
+}
+
+.highlight pre, pre.literal-block {
+    padding: 1.5rem 1.5rem;
+}
