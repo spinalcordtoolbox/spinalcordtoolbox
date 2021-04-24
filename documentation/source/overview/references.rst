@@ -8,18 +8,12 @@ If you use specific tools such as ``sct_deepseg_sc`` or the ``PAM50`` template, 
 listed in `specific references`_. You could also see some of the applications of SCT by other groups in `applications`_.
 
 
-.. contents::
-   :local:
-..
-
-
-Main reference
+Main Reference
 --------------
 
--  `De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D,
-   Callot V, Cohen-Adad J. SCT: Spinal Cord Toolbox, an open-source
-   software for processing spinal cord MRI data. Neuroimage
-   2017. <https://www.ncbi.nlm.nih.gov/pubmed/27720818>`__
+.. admonition:: Citation
+
+  `De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D, Callot V, Cohen-Adad J. SCT: Spinal Cord Toolbox, an open-source software for processing spinal cord MRI data. Neuroimage 2017. <https://www.ncbi.nlm.nih.gov/pubmed/27720818>`__
 
 .. code-block:: none
 
@@ -44,10 +38,10 @@ Main reference
   }
 
 
-Specific references
+Specific References
 -------------------
 
-Command line tools
+Command Line Tools
 ^^^^^^^^^^^^^^^^^^
 
 The table below provides individual references for novel methods used in SCT's :ref:`command-line-tools`.
