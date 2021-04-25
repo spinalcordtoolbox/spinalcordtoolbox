@@ -15,4 +15,4 @@ Purpose
 
 SCT is a comprehensive, free and open-source software dedicated to the processing and analysis of spinal cord MRI data. SCT builds on previously-validated methods and includes state-of-the-art MRI templates and atlases of the spinal cord, algorithms to segment and register new data to the templates, and motion correction methods for diffusion and functional time series. SCT is tailored towards standardization and automation of the processing pipeline, versatility, modularity, and it follows guidelines of software development and distribution.
 
-Preliminary applications of SCT cover a variety of studies, from cross-sectional area measures in large databases of patients, to the precise quantification of mpMRI metrics in specific spinal pathways. A list of these applications can be found in the :ref:`references-applications` section of the :ref:`references` page.
+Preliminary applications of SCT cover a variety of studies, from cross-sectional area measures in large databases of patients, to the precise quantification of mpMRI metrics in specific spinal pathways. A list of these applications can be found in the :ref:`studies` page.
