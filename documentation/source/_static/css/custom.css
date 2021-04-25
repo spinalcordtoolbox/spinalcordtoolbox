@@ -8,3 +8,6 @@
    https://sphinx-argparse.readthedocs.io/en/stable/misc.html#text-wrapping-in-argument-tables */
 .wy-table-responsive {overflow: visible !important;}
 .wy-table-responsive table td, .wy-table-responsive table th  {white-space: normal; !important;}
+
+/* Remove the '!' on a specific admonition to use it for the testimonials page */
+.admonition.testimonial p.admonition-title::before{content:""}

@@ -45,7 +45,7 @@
           <li><p class="navbar-text" id="qc-header"></p></li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
-          <li><a href="https://github.com/neuropoly/spinalcordtoolbox">About</a></li>
+          <li><a href="https://spinalcordtoolbox.com">SCT Home</a></li>
         </ul>
      </div>
     </div>
@@ -54,17 +54,11 @@
 
   <div class="container-fluid">
       <div class="row">
-          <div class="col-md-4">Keyboard shortcuts:
-              <a id="prev-img" href="#" class="previous">
-                  <span class="glyphicon glyphicon-arrow-up">
-                      Previous
-                  </span>
-              </a>
-              <a id="next-img" href="#" class="next">
-                  <span class="glyphicon glyphicon-arrow-down">
-                      Next
-                  </span>
-              </a>
+          <div class="col-md-5">
+              <img src="_assets/imgs/keyup.png" width="22px"> Previous
+                <img src="_assets/imgs/keydown.png" width="22px" style="margin-right: 2px;margin-left: 4px;">Next
+                <img src="_assets/imgs/keyright.png" width="22px" style="margin-right: 2px;margin-left: 4px;">Overlay
+                <img src="_assets/imgs/f-icon.png" width="22px" style="margin-right: 2px;margin-left: 4px;">QC: Pass ✅ | Fail ❌ | Artifact ⚠️
 
                 <div id="dropdown" class="dropdown">
                     <button id="dropdownButton" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true">Display Columns <span class="caret"></span></button>
@@ -77,7 +71,9 @@
                       <li><a class="dropdown-item" id="Contrast" onclick="toggleColumn(id)">Contrast &#10004</a></li>
                       <li><a class="dropdown-item" id="Function" onclick="toggleColumn(id)">Function</a></li>
                       <li><a class="dropdown-item" id="Function+Args" onclick="toggleColumn(id)">Function+Args &#10004</a></li>
+                      <li><a class="dropdown-item" id="QC" onclick="toggleColumn(id)">QC &#10004</a></li>
                     </ul>
+
                 </div>
                 <script>
                     document.getElementById("dropdown").style.position= "relative";
@@ -90,7 +86,7 @@
 		  data-toolbar="#dropdown"
                   data-sort-order="asc"
 		  data-search="true"
-                  data-response-handler="responseHandler">
+                  data-response-handler="responseHandler" style="height:80%">
 	                <thead>
 		                  <tr>
                               <th data-field="moddate" data-sortable="true">Date</th>
@@ -101,11 +97,12 @@
                               <th data-field="contrast" data-sortable="true">Contrast</th>
 			                  <th data-field="command" data-sortable="true">Function</th>
 			                  <th data-field="cmdline" data-sortable="true">Function+Args</th>
+                              <th data-field="qc" data-sortable="true">QC</th>
 		                  </tr>
 	                </thead>
               </table>
           </div>
-          <div class="col-md-8">
+          <div class="col-md-7">
               <div class="result-body" id="mosaic-container">
                   <img id="sprite-img" onload="fetch_image_height()"/>
                   <img id="overlay-img"/>
@@ -114,7 +111,6 @@
               <div id="cmdLine"></div>
               <div id="sctVer"></div>
           </div>
-
       </div>
   </div>
 
@@ -125,6 +121,10 @@
 <script src="_assets/js/bootstrap.min.js"></script>
 <script src="_assets/js/bootstrap-table.min.js"></script>
 <script src="_assets/js/main.js"></script>
+<!-- https://github.com/jeremyfa/yaml.js/blob/develop/dist/yaml.min.js -->
+<script src="_assets/js/yaml.min.js"></script>
+<!-- https://github.com/eligrey/FileSaver.js/blob/master/dist/FileSaver.min.js -->
+<script src="_assets/js/filesaver.min.js"></script>
 <script>var sct_data = $sct_json_data;</script>
 <script>
     function toggleColumn(buttonID){
@@ -161,7 +161,7 @@
         */
         var iTH, position;
         for (iTH = 0; iTH < document.getElementsByTagName('TH').length; iTH++){
-            if (buttonID.valueOf() == document.getElementsByTagName('TH')[iTH].innerText){
+            if (buttonID.valueOf() == document.getElementsByTagName('TH')[iTH].innerText.replace(/(\r\n|\n|\r)/gm, "")){
                 position = iTH;
             }
         }
@@ -178,7 +178,7 @@
         var isEmpty = true;
 
         var iTableRows;
-        for (iTableRows = 1; iTableRows < tableRows.length; iTableRows++){
+        for (iTableRows = 0; iTableRows < tableRows.length-1; iTableRows++){
             if (tableRows[iTableRows].innerText.indexOf(searchInput) > -1){
                 tableRows[iTableRows].style.display = "";
                 isEmpty = false;
@@ -231,7 +231,7 @@
                     }
                 }
             }
-        }, 4);
+        }, 100);
     });
 
     setTimeout(function() {
@@ -241,12 +241,40 @@
          for the case where the table should be empty (i.e. when search
          results correspond to nothing).
          */
+        b=document.createElement("div")
+        b.className = "fixed-table-toolbar";
+        b.style.paddingTop="10px";
+
+        btn1 = document.createElement("button");
+        btn1.type="button";
+        btn1.classList ="btn btn-default";
+        btn1.id="download_yaml_btn_274c";
+        btn1.onclick = function() { download_yaml('274c') }; 
+        btn1.disabled="disabled";
+        btn1.innerText="Download QC Fails";
+
+        btn2 = document.createElement("button");
+        btn2.type="button";
+        btn2.classList ="btn btn-default";
+        btn2.id="download_yaml_btn_26a0";
+        btn2.onclick = function() { download_yaml('26a0') }; 
+        btn2.disabled="disabled";
+        btn2.innerText="Download QC Artifacts";
+        b.appendChild(btn1);
+        b.appendChild(btn2);
+        
+        a = document.getElementsByClassName("bootstrap-table");
+        a[0].appendChild(b);
+        c = a[0].children[2];
+        a[0].children[2] = b;
+        a[0].children[3] = c;
+
          var iTH;
          var dropdownList = document.getElementsByClassName('dropdown-item');
-         for (iTH = 0; iTH < dropdownList.length; iTH++){
+         for (iTH = 0; iTH < dropdownList.length-1; iTH++){
               toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
          }
-     },4);
+     }, 100);
 
 
     function hideColumns() {
@@ -262,7 +290,65 @@
         }
     }
 
-    <!-- Toggle overlay -->
+    function download_yaml(marker) {
+        let res = {};
+        let seg_cmd_to_seg_type = {
+            "sct_analyze_lesion": "FILES_GMSEG",
+            "sct_analyze_texture": "FILES_SEG",
+            "sct_create_mask": "FILES_SEG",
+            "sct_crop_image": "FILES_SEG",
+            "sct_deepseg": "FILES_SEG",
+            "sct_deepseg_gm": "FILES_GMSEG",
+            "sct_deepseg_lesion": "FILES_GMSEG",
+            "sct_deepseg_sc": "FILES_SEG",
+            "sct_dmri_moco": "FILES_TIMESERIES",
+            "sct_fmri_moco": "FILES_TIMESERIES",
+            "sct_label_utils": "FILES_LABEL",
+            "sct_label_vertebrae": "FILES_LABEL",
+            "sct_process_segmentation": "FILES_SEG",
+            "sct_propseg": "FILES_SEG",
+            "sct_register_multimodal": "FILES_SEG",
+            "sct_register_to_template": "FILES_SEG",
+            "sct_resample": "FILES_SEG",
+            "sct_run_batch": "FILES_SEG",
+            "sct_smooth_spinalcord": "FILES_SEG",
+            "sct_straighten_spinalcord": "FILES_SEG",
+            "sct_warp_template": "FILES_SEG",
+        }
+        sct_data.forEach(item => {
+            if (escape(item.qc).toLowerCase().slice(2,6) === marker) {
+                let command = item.command;
+                let item_path = item.cwd.concat("/").concat(item.fname_in)
+                if (command in seg_cmd_to_seg_type) {
+                    segtype = seg_cmd_to_seg_type[command];
+                } else {
+                    segtype = "FILES_GENERATED_BY_".concat(command).concat("_FILE_KIND_UNKNOWN");
+                }
+                if (segtype in res) {
+                    res[segtype].push(item_path);
+                } else {
+                    res[segtype] = [item_path];
+                }
+            }
+        });
+
+        yamlString = YAML.stringify(res, 4);
+
+        var blob = new Blob([yamlString], {
+        type: "text/plain;charset=utf-8"
+        });
+        fname = 'qc.yml'
+        if(marker =='274c'){
+          fname = 'qc_fail.yml'
+        }
+        else if (marker=='26a0'){
+          fname = 'qc_artifact.yml'
+        }
+
+        saveAs(blob, fname);
+    }
+
+    // <!-- Toggle overlay -->
     function toggleOverlay() {
         var x = document.getElementById("overlay-img");
         if (x.style.display === "none") {
@@ -273,13 +359,13 @@
         }
     }
 
-    <!-- Press right arrow key to toggle overlay -->
+    // <!-- Press right arrow key (or l) to toggle overlay -->
     document.addEventListener('keydown', function (evt) {
-    if (evt.which == 39) {
+    if (evt.which == 39 || evt.which == 76) {
         toggleOverlay()
     }
-});
 
+});
 
 </script>
 </html>
