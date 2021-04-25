@@ -1,5 +1,63 @@
 # Changelog
 
+## 5.3.0 (2021-04-25)
+[View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/5.2.0...5.3.0)
+
+**FEATURE**
+
+ - **sct_image:** Handle affine matrix mismatches better by exposing `-set-qform-to-sform`.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3332)
+ - **sct_extract_metric:** Implemented weighted median.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3329)
+ - **sct_dmri_moco,sct_fmri_moco,sct_qc:** Implement QC for sct_dmri_moco and sct_fmri_moco.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3320)
+ - **sct_header:** Add flag to `sct_image` to print image headers .  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3317)
+ - **sct_download_data:** Add entry to download exvivo template.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3310)
+ - **sct_register_to_template:** Added flag -s-template-id to use another segmentation (e.g. white matter) for registration to template.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3299)
+ - **sct_qc:** Interactive QC assessment: Add Pass/Fail/Artifact and download YAML file..  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3253)
+
+**CI**
+
+ - Remove remaining Travis-related files and replace badge.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3345)
+ - Use 'extend-ignore' in flake8 config to preserve defaults.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3255)
+ - Run and test batch_processing.sh using GitHub Actions.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3198)
+ - Port CI to Github Actions.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3125)
+
+**BUG**
+
+ - **sct_image:** Various fixes to sct_image -display-warp.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3337)
+ - **sct_image:** Fix faulty check for `arguments.set_sform_to_qform`.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3331)
+ - **sct_deepseg:** Update model and fixed default output suffix.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3321)
+ - Update outdated `sct_register_graymatter` command in `batch_processing.sh`.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3316)
+ - **sct_run_batch:** Unset `PYTHONNOUSERSITE` in environment before calling batch script.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3313)
+ - **sct_register_to_template:** Fixed right-left flip if template is not RPI and other minor improvements.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3305)
+ - **sct_deepseg:** Unpin ivadomed to get latest version and fix wrong q/sform_code output.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3291)
+ - Replace instances of 'sct_convert.convert' with 'image.convert'.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3288)
+ - **sct_label_vertebrae,sct_warp_template:** Replace ANTs binary call with sct_apply_transfo call to properly set sform.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3272)
+ - **sct_create_mask:** Create 2d masks in memory instead of via intermediate files.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3270)
+ - **sct_label_vertebrae:** Handle 'label_discs' case where SC segmentation has holes/discontinuities.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3260)
+ - **sct_dice_coefficient:** Uniquely distinguish filenames for tmp files to prevent overwriting.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3258)
+ - Decrease the sensitivity of the sform/qform mismatch check.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3257)
+
+**DOCUMENTATION**
+
+ - Added testimonials; improvements on the documentation.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3349)
+ - add ref Savini et al..  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3348)
+ - add ref Zhang et al..  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3343)
+ - Add ref Tinnermann et al..  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3342)
+ - Drop `yes |` from the docs.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3307)
+ - Add ref Lee et al..  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3287)
+ - Add reference Azzarito et al..  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3259)
+ - Remove TODO from Introduction docs.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3247)
+
+**ENHANCEMENT**
+
+ - Update moco commands in `batch_processing.sh` to include QC.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3351)
+ - **sct_run_batch:** Fully isolate the conda env by its site.py.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3339)
+ - Use less strict value for `rel_tolerance` in the `batch_processing.sh` test.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3293)
+
+**GIT/GITHUB**
+
+ - Add GH Actions workflow that automates Changelog PR.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3264)
+ - Add checklist item to pull request template for 'Milestone' label.  [View pull request](https://github.com/neuropoly/spinalcordtoolbox/pull/3263)
+
 ## 5.2.0 (2021-02-24)
 [View detailed changelog](https://github.com/neuropoly/spinalcordtoolbox/compare/5.1.0...5.2.0)
 
