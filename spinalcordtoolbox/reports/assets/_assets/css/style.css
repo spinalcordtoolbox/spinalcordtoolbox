@@ -69,7 +69,7 @@ a.next {
 }
 
 .fixed-table-container {
-    height: 80vh;
+    height: fit-content;
     font-size: 10px;
 }
 

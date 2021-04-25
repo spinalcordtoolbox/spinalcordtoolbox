@@ -616,7 +616,8 @@ class QcReport(object):
             'background_img': self.qc_params.bkg_img_path,
             'overlay_img': self.qc_params.overlay_img_path,
             'dimension': '%dx%d' % dimension,
-            'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'qc': ""
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
         # results = []
@@ -644,10 +645,10 @@ class QcReport(object):
         assets_path = os.path.join(os.path.dirname(__file__), 'assets')
         dest_path = self.qc_params.root_folder
 
-        with io.open(os.path.join(assets_path, 'index.html')) as template_index:
+        with io.open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
             template = Template(template_index.read())
             output = template.substitute(sct_json_data=json.dumps(json_data))
-            io.open(os.path.join(dest_path, 'index.html'), 'w').write(output)
+            io.open(os.path.join(dest_path, 'index.html'), 'w', encoding="utf-8").write(output)
 
         for path in ['css', 'js', 'imgs', 'fonts']:
             src_path = os.path.join(assets_path, '_assets', path)
