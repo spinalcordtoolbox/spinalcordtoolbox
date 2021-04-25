@@ -26,3 +26,13 @@ You should see something like this appear in the ``FSLeyes`` interface:
 
 .. image:: ../../imgs/sct_fsleyes.png
   :alt: SCT-FSLeyes Interface
+
+
+Demonstration
+=============
+
+The YouTube video below demonstrates the FSLeyes plugin in action:
+
+.. raw:: html
+
+   <iframe width="560" height="315" src="https://www.youtube.com/embed/XC0vu0brEB0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>

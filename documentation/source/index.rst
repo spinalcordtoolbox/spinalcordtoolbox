@@ -1,51 +1,17 @@
-Welcome to Spinal Cord Toolbox's documentation!
-###############################################
-
-|badge-releases| |badge-forum| |badge-mailing-list| |badge-downloads| |badge-ci| |badge-doc| |badge-license|
-
-
-.. |badge-releases| image:: https://img.shields.io/github/v/release/neuropoly/spinalcordtoolbox
-    :alt: Releases
-    :target: https://github.com/neuropoly/spinalcordtoolbox/releases
-
-.. |badge-forum| image:: https://img.shields.io/discourse/status?label=forum&server=http%3A%2F%2Fforum.spinalcordmri.org
-    :alt: User forum
-    :target: https://forum.spinalcordmri.org/c/sct
-
-.. |badge-mailing-list| image:: https://img.shields.io/badge/mailing%20list-development-green.svg?style=flat
-    :alt: Developers mailing list
-    :target: https://groups.google.com/forum/#!forum/sct_developers
-
-.. |badge-downloads| image:: https://img.shields.io/github/downloads/neuropoly/spinalcordtoolbox/total.svg
-    :alt: Downloads
-    :target: https://github.com/neuropoly/spinalcordtoolbox/graphs/traffic
-
-.. |badge-ci| image:: https://api.travis-ci.com/neuropoly/spinalcordtoolbox.svg?branch=master
-    :alt: Travis CI
-    :target: https://travis-ci.com/github/neuropoly/spinalcordtoolbox
-
-.. |badge-doc| image:: https://readthedocs.org/projects/spinalcordtoolbox/badge/
-    :alt: Documentation Status
-    :target: https://spinalcordtoolbox.com
-
-.. |badge-license| image:: https://img.shields.io/github/license/neuropoly/spinalcordtoolbox
-    :alt: License
-    :target: https://github.com/neuropoly/spinalcordtoolbox/blob/master/LICENSE
-
-
-SCT is a comprehensive, free and open-source software dedicated to the processing and analysis of spinal cord MRI data.
+.. include:: ../../README.rst
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Overview
 
    overview/introduction.rst
-   overview/overview.rst
    overview/concepts.rst
-   overview/references.rst
-
+   overview/testimonials.rst
+   overview/studies.rst
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: User section
 
@@ -54,8 +20,10 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
    user_section/command-line.rst
    user_section/fsleyes.rst
    user_section/support.rst
+   user_section/citing_sct.rst
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Tutorials and Courses
 
@@ -65,6 +33,7 @@ SCT is a comprehensive, free and open-source software dedicated to the processin
 
 
 .. toctree::
+   :hidden:
    :maxdepth: 1
    :caption: Developer section
 

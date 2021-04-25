@@ -123,7 +123,7 @@ def get_parser():
     )
     optional.add_argument(
         '-method',
-        choices=['ml', 'map', 'wa', 'bin', 'max'],
+        choices=['ml', 'map', 'wa', 'bin', 'median', 'max'],
         default=param_default.method,
         help="R|Method to extract metrics.\n"
              "  - ml: maximum likelihood.\n"
@@ -137,6 +137,9 @@ def get_parser():
              " as long as the sum across all labels equals 1, in each voxel part of the atlas.\n"
              "  - wa: weighted average\n"
              "  - bin: binarize mask (threshold=0.5)\n"
+             "  - median: weighted median.\n"
+             "    This implementation of the median treats quantiles as a continuous (vs. discrete) function. For"
+             " more details, see https://pypi.org/project/wquantiles/.\n"
              "  - max: for each z-slice of the input data, extract the max value for each slice of the input data."
     )
     optional.add_argument(

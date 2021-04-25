@@ -24,14 +24,13 @@ import csv
 import numpy as np
 import scipy.interpolate
 
-from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
+from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, convert
 from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolation
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
 
 # FIXME don't import from scripts in API
 from spinalcordtoolbox.scripts import sct_dmri_separate_b0_and_dwi
-from spinalcordtoolbox.scripts.sct_convert import convert
 from spinalcordtoolbox.scripts.sct_image import split_data, concat_data, multicomponent_split
 from spinalcordtoolbox.scripts import sct_apply_transfo
 
@@ -128,7 +127,7 @@ def moco_wrapper(param):
     Wrapper that performs motion correction.
 
     :param param: ParamMoco class
-    :return: None
+    :return: fname_moco
     """
     file_data = 'data.nii'  # corresponds to the full input data (e.g. dmri or fmri)
     file_data_dirname, file_data_basename, file_data_ext = extract_fname(file_data)
@@ -165,9 +164,11 @@ def moco_wrapper(param):
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
-    convert(param.fname_data, os.path.join(path_tmp, file_data))
+    im_data = convert(Image(param.fname_data))
+    im_data.save(os.path.join(path_tmp, file_data), mutable=True, verbose=param.verbose)
     if param.fname_mask != '':
-        convert(param.fname_mask, os.path.join(path_tmp, file_mask), verbose=param.verbose)
+        im_mask = convert(Image(param.fname_mask))
+        im_mask.save(os.path.join(path_tmp, file_mask), mutable=True, verbose=param.verbose)
         # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = file_mask
 
@@ -178,7 +179,6 @@ def moco_wrapper(param):
 
     # Get dimensions of data
     printv('\nGet dimensions of data...', param.verbose)
-    im_data = Image(file_data)
     nx, ny, nz, nt, px, py, pz, pt = im_data.dim
     printv('  ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz), param.verbose)
 
@@ -470,11 +470,11 @@ def moco_wrapper(param):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
+    printv('\nElapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
 
-    display_viewer_syntax(
-        [os.path.join(param.path_out, add_suffix(os.path.basename(param.fname_data), param.suffix)),
-         param.fname_data], mode='ortho,ortho')
+    fname_moco = os.path.join(param.path_out, add_suffix(os.path.basename(param.fname_data), param.suffix))
+
+    return fname_moco
 
 
 def moco(param):
@@ -520,8 +520,8 @@ def moco(param):
 
     # copy file_target to a temporary file
     printv('\nCopy file_target to a temporary file...', verbose)
-    file_target = "target.nii.gz"
-    convert(param.file_target, file_target, verbose=0)
+    im_target = convert(Image(param.file_target))
+    im_target.save("target.nii.gz", mutable=True, verbose=0)
 
     # Check if user specified a mask
     if not param.fname_mask == '':
@@ -568,7 +568,8 @@ def moco(param):
 
         # deal with mask
         if not param.fname_mask == '':
-            convert(param.fname_mask, file_mask, squeeze_data=False, verbose=0)
+            im_mask = convert(Image(param.fname_mask), squeeze_data=False)
+            im_mask.save(file_mask, mutable=True, verbose=0)
             im_maskz_list = [Image(file_mask)]  # use a list with single element
 
     # Loop across file list, where each file is either a 2D volume (if sagittal) or a 3D volume (otherwise)

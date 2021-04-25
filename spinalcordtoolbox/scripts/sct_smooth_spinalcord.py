@@ -18,13 +18,12 @@ import time
 
 import numpy as np
 
-from spinalcordtoolbox.image import Image, generate_output_file
+from spinalcordtoolbox.image import Image, generate_output_file, convert
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_save, cache_signature, cache_valid, copy, \
     extract_fname, rmtree
 from spinalcordtoolbox.math import smooth
-from spinalcordtoolbox.scripts.sct_convert import convert
 
 
 class Param:
@@ -177,8 +176,10 @@ def main(argv=None):
     os.chdir(path_tmp)
 
     # convert to nii format
-    convert('anat' + ext_anat, 'anat.nii')
-    convert('centerline' + ext_centerline, 'centerline.nii')
+    im_anat = convert(Image('anat' + ext_anat))
+    im_anat.save('anat.nii', mutable=True, verbose=verbose)
+    im_centerline = convert(Image('centerline' + ext_centerline))
+    im_centerline.save('centerline.nii', mutable=True, verbose=verbose)
 
     # Change orientation of the input image into RPI
     printv('\nOrient input volume to RPI orientation...')
