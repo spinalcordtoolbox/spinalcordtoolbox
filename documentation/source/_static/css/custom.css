@@ -118,6 +118,10 @@ html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-cont
 
 /* Furo */
 
+a {
+    text-decoration: none;
+}
+
 .content {
     padding: 3.5em;
     width: 48em;
