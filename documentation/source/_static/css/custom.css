@@ -73,6 +73,8 @@ a:hover {
 h1 {
     letter-spacing: 1.78px;
     text-transform: uppercase;
+    font-size: 2.0rem;
+    font-weight: 300;
 }
 
 .wy-nav-content {
