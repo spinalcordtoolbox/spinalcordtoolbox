@@ -180,3 +180,27 @@ a.copybtn {
 .admonition.testimonial p.admonition-title::before {
     content:""
 }
+
+h2 {
+    font-size: 2.0rem;
+}
+
+h3 {
+    font-size: 1.75rem;
+}
+
+h4 {
+    font-size: 1.5rem;
+}
+
+h5 {
+    font-size: 1.25rem;
+}
+
+h6 {
+    font-size: 1.1rem;
+}
+
+h4, h5, h6 {
+    text-transform: none;
+}
