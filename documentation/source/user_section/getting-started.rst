@@ -26,10 +26,3 @@ The script source is shown below:
    :language: sh
 
 If you would like to get more examples about what SCT can do, please visit the `sct-pipeline repository <https://github.com/sct-pipeline/>`_. Each repository is a pipeline dedicated to a specific research project.
-
-.. _citing-sct:
-
-Citing SCT
-**********
-
-If you use SCT in your research or as part of your developments, please always cite SCT as explained in the :ref:`references` section.

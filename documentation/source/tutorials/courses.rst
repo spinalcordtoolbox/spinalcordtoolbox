@@ -3,7 +3,9 @@
 Courses
 #######
 
-We organize **free** SCT courses, each year after the ISMRM conference. If you’d like to be added to the mailing list, please send an email to spinalcordtoolbox@gmail.com. The past courses handouts are listed below:
+We organize **free** SCT courses, each year after the ISMRM conference. If you’d like to be added to the mailing list, please visit `this link <https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform>`_.
+
+The past courses handouts are listed below:
 
 .. list-table::
    :widths: 80

@@ -1,0 +1,356 @@
+#!/bin/sh
+
+# convert testimonials collected from https://docs.google.com/forms/d/1tJuIVtQ400G6dooZ0P0yukVNfp57b_uF9K5MXnfHLxU/
+# into .rst for publication.
+#
+# usage:
+# 1. Log in with a lab member google account
+# 2. Go to https://docs.google.com/forms/d/1tJuIVtQ400G6dooZ0P0yukVNfp57b_uF9K5MXnfHLxU/edit#responses
+# 3. Click the "Sheets" icon.
+# 4. Export to .tsv with File->Download->TSV
+# 5. `dev/docs/testimonials2rst 'Testimonials\ for\ SCT\ \(Responses\)\ -\ Form\ Responses\ 1.tsv'`
+# 6. Curate the .tsv to order the rows to highlight preferred testimonials.
+# 7. Go to 5 until satisfied.
+# 8. Publish: `git add documentation/ && git commit -m "Update testimonials" && git push`
+
+testimonials2rst() {
+awk '
+BEGIN {
+  FS="\t" # make awk process .tsv files
+
+  # lookup table of flag emojis
+  FLAGS["ascension island"]="🇦🇨"
+  FLAGS["andorra"]="🇦🇩"
+  FLAGS["united arab emirates"]="🇦🇪"
+  FLAGS["afghanistan"]="🇦🇫"
+  FLAGS["antigua and barbuda"]="🇦🇬"
+  FLAGS["anguilla"]="🇦🇮"
+  FLAGS["albania"]="🇦🇱"
+  FLAGS["armenia"]="🇦🇲"
+  FLAGS["angola"]="🇦🇴"
+  FLAGS["antarctica"]="🇦🇶"
+  FLAGS["argentina"]="🇦🇷"
+  FLAGS["american samoa"]="🇦🇸"
+  FLAGS["austria"]="🇦🇹"
+  FLAGS["australia"]="🇦🇺"
+  FLAGS["aruba"]="🇦🇼"
+  FLAGS["åland islands"]="🇦🇽"
+  FLAGS["azerbaijan"]="🇦🇿"
+  FLAGS["bosnia and herzegovina"]="🇧🇦"
+  FLAGS["barbados"]="🇧🇧"
+  FLAGS["bangladesh"]="🇧🇩"
+  FLAGS["belgium"]="🇧🇪"
+  FLAGS["burkina faso"]="🇧🇫"
+  FLAGS["bulgaria"]="🇧🇬"
+  FLAGS["bahrain"]="🇧🇭"
+  FLAGS["burundi"]="🇧🇮"
+  FLAGS["benin"]="🇧🇯"
+  FLAGS["st. barthélemy"]="🇧🇱"
+  FLAGS["bermuda"]="🇧🇲"
+  FLAGS["brunei"]="🇧🇳"
+  FLAGS["bolivia"]="🇧🇴"
+  FLAGS["caribbean netherlands"]="🇧🇶"
+  FLAGS["brazil"]="🇧🇷"
+  FLAGS["bahamas"]="🇧🇸"
+  FLAGS["bhutan"]="🇧🇹"
+  FLAGS["bouvet island"]="🇧🇻"
+  FLAGS["botswana"]="🇧🇼"
+  FLAGS["belarus"]="🇧🇾"
+  FLAGS["belize"]="🇧🇿"
+  FLAGS["canada"]="🇨🇦"
+  FLAGS["cocos (keeling) islands"]="🇨🇨"
+  FLAGS["congo - kinshasa"]="🇨🇩"
+  FLAGS["central african republic"]="🇨🇫"
+  FLAGS["congo - brazzaville"]="🇨🇬"
+  FLAGS["switzerland"]="🇨🇭"
+  FLAGS["côte d’ivoire"]="🇨🇮"
+  FLAGS["cook islands"]="🇨🇰"
+  FLAGS["chile"]="🇨🇱"
+  FLAGS["cameroon"]="🇨🇲"
+  FLAGS["china"]="🇨🇳"
+  FLAGS["colombia"]="🇨🇴"
+  FLAGS["clipperton island"]="🇨🇵"
+  FLAGS["costa rica"]="🇨🇷"
+  FLAGS["cuba"]="🇨🇺"
+  FLAGS["cape verde"]="🇨🇻"
+  FLAGS["curaçao"]="🇨🇼"
+  FLAGS["christmas island"]="🇨🇽"
+  FLAGS["cyprus"]="🇨🇾"
+  FLAGS["czechia"]="🇨🇿"
+  FLAGS["germany"]="🇩🇪"
+  FLAGS["diego garcia"]="🇩🇬"
+  FLAGS["djibouti"]="🇩🇯"
+  FLAGS["denmark"]="🇩🇰"
+  FLAGS["dominica"]="🇩🇲"
+  FLAGS["dominican republic"]="🇩🇴"
+  FLAGS["algeria"]="🇩🇿"
+  FLAGS["ceuta and melilla"]="🇪🇦"
+  FLAGS["ecuador"]="🇪🇨"
+  FLAGS["estonia"]="🇪🇪"
+  FLAGS["egypt"]="🇪🇬"
+  FLAGS["western sahara"]="🇪🇭"
+  FLAGS["eritrea"]="🇪🇷"
+  FLAGS["spain"]="🇪🇸"
+  FLAGS["ethiopia"]="🇪🇹"
+  FLAGS["european union"]="🇪🇺"
+  FLAGS["finland"]="🇫🇮"
+  FLAGS["fiji"]="🇫🇯"
+  FLAGS["falkland islands"]="🇫🇰"
+  FLAGS["micronesia"]="🇫🇲"
+  FLAGS["faroe islands"]="🇫🇴"
+  FLAGS["france"]="🇫🇷"
+  FLAGS["gabon"]="🇬🇦"
+  FLAGS["united kingdom"]="🇬🇧"
+  FLAGS["grenada"]="🇬🇩"
+  FLAGS["georgia"]="🇬🇪"
+  FLAGS["french guiana"]="🇬🇫"
+  FLAGS["guernsey"]="🇬🇬"
+  FLAGS["ghana"]="🇬🇭"
+  FLAGS["gibraltar"]="🇬🇮"
+  FLAGS["greenland"]="🇬🇱"
+  FLAGS["gambia"]="🇬🇲"
+  FLAGS["guinea"]="🇬🇳"
+  FLAGS["guadeloupe"]="🇬🇵"
+  FLAGS["equatorial guinea"]="🇬🇶"
+  FLAGS["greece"]="🇬🇷"
+  FLAGS["south georgia and south sandwich islands"]="🇬🇸"
+  FLAGS["guatemala"]="🇬🇹"
+  FLAGS["guam"]="🇬🇺"
+  FLAGS["guinea-bissau"]="🇬🇼"
+  FLAGS["guyana"]="🇬🇾"
+  FLAGS["hong kong sar china"]="🇭🇰"
+  FLAGS["heard and mcdonald islands"]="🇭🇲"
+  FLAGS["honduras"]="🇭🇳"
+  FLAGS["croatia"]="🇭🇷"
+  FLAGS["haiti"]="🇭🇹"
+  FLAGS["hungary"]="🇭🇺"
+  FLAGS["canary islands"]="🇮🇨"
+  FLAGS["indonesia"]="🇮🇩"
+  FLAGS["ireland"]="🇮🇪"
+  FLAGS["israel"]="🇮🇱"
+  FLAGS["isle of man"]="🇮🇲"
+  FLAGS["india"]="🇮🇳"
+  FLAGS["british indian ocean territory"]="🇮🇴"
+  FLAGS["iraq"]="🇮🇶"
+  FLAGS["iran"]="🇮🇷"
+  FLAGS["iceland"]="🇮🇸"
+  FLAGS["italy"]="🇮🇹"
+  FLAGS["jersey"]="🇯🇪"
+  FLAGS["jamaica"]="🇯🇲"
+  FLAGS["jordan"]="🇯🇴"
+  FLAGS["japan"]="🇯🇵"
+  FLAGS["kenya"]="🇰🇪"
+  FLAGS["kyrgyzstan"]="🇰🇬"
+  FLAGS["cambodia"]="🇰🇭"
+  FLAGS["kiribati"]="🇰🇮"
+  FLAGS["comoros"]="🇰🇲"
+  FLAGS["st. kitts and nevis"]="🇰🇳"
+  FLAGS["north korea"]="🇰🇵"
+  FLAGS["south korea"]="🇰🇷"
+  FLAGS["kuwait"]="🇰🇼"
+  FLAGS["cayman islands"]="🇰🇾"
+  FLAGS["kazakhstan"]="🇰🇿"
+  FLAGS["laos"]="🇱🇦"
+  FLAGS["lebanon"]="🇱🇧"
+  FLAGS["st. lucia"]="🇱🇨"
+  FLAGS["liechtenstein"]="🇱🇮"
+  FLAGS["sri lanka"]="🇱🇰"
+  FLAGS["liberia"]="🇱🇷"
+  FLAGS["lesotho"]="🇱🇸"
+  FLAGS["lithuania"]="🇱🇹"
+  FLAGS["luxembourg"]="🇱🇺"
+  FLAGS["latvia"]="🇱🇻"
+  FLAGS["libya"]="🇱🇾"
+  FLAGS["morocco"]="🇲🇦"
+  FLAGS["monaco"]="🇲🇨"
+  FLAGS["moldova"]="🇲🇩"
+  FLAGS["montenegro"]="🇲🇪"
+  FLAGS["st. martin"]="🇲🇫"
+  FLAGS["madagascar"]="🇲🇬"
+  FLAGS["marshall islands"]="🇲🇭"
+  FLAGS["north macedonia"]="🇲🇰"
+  FLAGS["mali"]="🇲🇱"
+  FLAGS["myanmar (burma)"]="🇲🇲"
+  FLAGS["mongolia"]="🇲🇳"
+  FLAGS["macao sar china"]="🇲🇴"
+  FLAGS["northern mariana islands"]="🇲🇵"
+  FLAGS["martinique"]="🇲🇶"
+  FLAGS["mauritania"]="🇲🇷"
+  FLAGS["montserrat"]="🇲🇸"
+  FLAGS["malta"]="🇲🇹"
+  FLAGS["mauritius"]="🇲🇺"
+  FLAGS["maldives"]="🇲🇻"
+  FLAGS["malawi"]="🇲🇼"
+  FLAGS["mexico"]="🇲🇽"
+  FLAGS["malaysia"]="🇲🇾"
+  FLAGS["mozambique"]="🇲🇿"
+  FLAGS["namibia"]="🇳🇦"
+  FLAGS["new caledonia"]="🇳🇨"
+  FLAGS["niger"]="🇳🇪"
+  FLAGS["norfolk island"]="🇳🇫"
+  FLAGS["nigeria"]="🇳🇬"
+  FLAGS["nicaragua"]="🇳🇮"
+  FLAGS["netherlands"]="🇳🇱"
+  FLAGS["norway"]="🇳🇴"
+  FLAGS["nepal"]="🇳🇵"
+  FLAGS["nauru"]="🇳🇷"
+  FLAGS["niue"]="🇳🇺"
+  FLAGS["new zealand"]="🇳🇿"
+  FLAGS["oman"]="🇴🇲"
+  FLAGS["panama"]="🇵🇦"
+  FLAGS["peru"]="🇵🇪"
+  FLAGS["french polynesia"]="🇵🇫"
+  FLAGS["papua new guinea"]="🇵🇬"
+  FLAGS["philippines"]="🇵🇭"
+  FLAGS["pakistan"]="🇵🇰"
+  FLAGS["poland"]="🇵🇱"
+  FLAGS["st. pierre and miquelon"]="🇵🇲"
+  FLAGS["pitcairn islands"]="🇵🇳"
+  FLAGS["puerto rico"]="🇵🇷"
+  FLAGS["palestinian territories"]="🇵🇸"
+  FLAGS["portugal"]="🇵🇹"
+  FLAGS["palau"]="🇵🇼"
+  FLAGS["paraguay"]="🇵🇾"
+  FLAGS["qatar"]="🇶🇦"
+  FLAGS["réunion"]="🇷🇪"
+  FLAGS["romania"]="🇷🇴"
+  FLAGS["serbia"]="🇷🇸"
+  FLAGS["russia"]="🇷🇺"
+  FLAGS["rwanda"]="🇷🇼"
+  FLAGS["saudi arabia"]="🇸🇦"
+  FLAGS["solomon islands"]="🇸🇧"
+  FLAGS["seychelles"]="🇸🇨"
+  FLAGS["sudan"]="🇸🇩"
+  FLAGS["sweden"]="🇸🇪"
+  FLAGS["singapore"]="🇸🇬"
+  FLAGS["st. helena"]="🇸🇭"
+  FLAGS["slovenia"]="🇸🇮"
+  FLAGS["svalbard and jan mayen"]="🇸🇯"
+  FLAGS["slovakia"]="🇸🇰"
+  FLAGS["sierra leone"]="🇸🇱"
+  FLAGS["san marino"]="🇸🇲"
+  FLAGS["senegal"]="🇸🇳"
+  FLAGS["somalia"]="🇸🇴"
+  FLAGS["suriname"]="🇸🇷"
+  FLAGS["south sudan"]="🇸🇸"
+  FLAGS["são tomé and príncipe"]="🇸🇹"
+  FLAGS["el salvador"]="🇸🇻"
+  FLAGS["sint maarten"]="🇸🇽"
+  FLAGS["syria"]="🇸🇾"
+  FLAGS["eswatini"]="🇸🇿"
+  FLAGS["tristan da cunha"]="🇹🇦"
+  FLAGS["turks and caicos islands"]="🇹🇨"
+  FLAGS["chad"]="🇹🇩"
+  FLAGS["french southern territories"]="🇹🇫"
+  FLAGS["togo"]="🇹🇬"
+  FLAGS["thailand"]="🇹🇭"
+  FLAGS["tajikistan"]="🇹🇯"
+  FLAGS["tokelau"]="🇹🇰"
+  FLAGS["timor-leste"]="🇹🇱"
+  FLAGS["turkmenistan"]="🇹🇲"
+  FLAGS["tunisia"]="🇹🇳"
+  FLAGS["tonga"]="🇹🇴"
+  FLAGS["turkey"]="🇹🇷"
+  FLAGS["trinidad and tobago"]="🇹🇹"
+  FLAGS["tuvalu"]="🇹🇻"
+  FLAGS["taiwan"]="🇹🇼"
+  FLAGS["tanzania"]="🇹🇿"
+  FLAGS["ukraine"]="🇺🇦"
+  FLAGS["uganda"]="🇺🇬"
+  FLAGS["u.s. outlying islands"]="🇺🇲"
+  FLAGS["united nations"]="🇺🇳"
+  FLAGS["united states"]="🇺🇸"
+  FLAGS["uruguay"]="🇺🇾"
+  FLAGS["uzbekistan"]="🇺🇿"
+  FLAGS["vatican city"]="🇻🇦"
+  FLAGS["st. vincent and grenadines"]="🇻🇨"
+  FLAGS["venezuela"]="🇻🇪"
+  FLAGS["british virgin islands"]="🇻🇬"
+  FLAGS["u.s. virgin islands"]="🇻🇮"
+  FLAGS["vietnam"]="🇻🇳"
+  FLAGS["vanuatu"]="🇻🇺"
+  FLAGS["wallis and futuna"]="🇼🇫"
+  FLAGS["samoa"]="🇼🇸"
+  FLAGS["kosovo"]="🇽🇰"
+  FLAGS["yemen"]="🇾🇪"
+  FLAGS["mayotte"]="🇾🇹"
+  FLAGS["south africa"]="🇿🇦"
+  FLAGS["zambia"]="🇿🇲"
+  FLAGS["zimbabwe"]="🇿🇼"
+  FLAGS["england"]="🏴󠁧󠁢󠁥󠁮󠁧󠁿"
+  FLAGS["scotland"]="🏴󠁧󠁢󠁳󠁣󠁴󠁿"
+  FLAGS["wales"]="🏴󠁧󠁢󠁷󠁬󠁳󠁿"
+
+
+  print ".. _testimonials:"
+  print ""
+  print "Who is using SCT?"
+  print "#################"
+  print ""
+}
+
+# skip table header
+NR == 1 { next }
+
+{
+  timestamp=$1
+  name=$2
+  degree=$3
+  md=$4
+  affiliation=$5
+  city="" # not in the dataset!
+  country=$6
+  OS=$7
+  rating=$8
+  testimonial=$9
+  feedback=$10
+
+
+  # convert country name to emoji, if possible
+  if(FLAGS[tolower(country)] != "") {
+    country = FLAGS[tolower(country)]
+  }
+
+  # location = city + country, but only if both are defined
+  # if both are null, so is location.
+  if(city != "" && country != "") {
+    location = city " " country
+  } else {
+    location = city country
+  }
+
+  # medical doctor degree
+  if(md != "") {
+    md=", MD"
+  }
+
+  # prepend section separators
+  if(degree != "") {
+    degree=", " degree
+  }
+  if(affiliation != "") {
+    affiliation = " | " affiliation
+  }
+  if(location != "") {
+    location = " | " location
+  }
+
+  print ".. admonition:: " name md degree affiliation location
+  print "   :class: testimonial"
+  print ""
+  # .rst admonitions need a 3-space indent to know the content is a continuation.
+  # fmt (below) recognizes and preserves these indents.
+  print "   " testimonial
+  print ""
+  print ""
+}' "$@"
+}
+
+HERE="$(cd "$(dirname "$0")"; pwd -P)"
+
+# To directly write on the RST file, uncomment the line below, and comment out the other line.
+#testimonials2rst "$@" | fmt -80 | tee "${HERE}"/../documentation/source/overview/testimonials.rst
+
+# Otherwise, copy/paste and manually organize the output of the terminal.
+# Tip: Try 'xclip' to make copying/pasting easier: testimonials2rst testimonials.tsv | xclip -sel c
+testimonials2rst "$@" | fmt -80

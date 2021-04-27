@@ -175,3 +175,8 @@ a.copybtn {
 .highlight pre, pre.literal-block {
     padding: 1.5rem 1.5rem;
 }
+
+/* Remove the '!' on a specific admonition to use it for the testimonials page */
+.admonition.testimonial p.admonition-title::before {
+    content:""
+}
