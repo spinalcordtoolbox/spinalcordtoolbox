@@ -136,7 +136,7 @@ class SCTArgumentParser(argparse.ArgumentParser):
         """
         # Source: https://stackoverflow.com/a/4042861
         self.print_help(sys.stderr)
-        sys.stderr.write(f'\n\033[0;01;31m{self.prog}: error: {message}\033[m\n')
+        printv(f'\n{self.prog}: error: {message}\n', verbose=1, type='error', file=sys.stderr)
         sys.exit(2)
 
 
