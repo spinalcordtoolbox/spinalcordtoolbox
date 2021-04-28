@@ -330,6 +330,11 @@ def printv(string, verbose=1, type='normal', file=None):
     colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow + bcolors.bold, 'error': bcolors.red + bcolors.bold,
               'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
 
+    if file is None:
+        # replicate the logic from print()
+        # so that we can check file.isatty()
+        file = sys.stdout
+
     if verbose:
         # The try/except is there in case file does not have isatty field (it did happen to me)
         try:
