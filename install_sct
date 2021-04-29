@@ -504,6 +504,13 @@ Do you agree? [y]es/[n]o: "
   fi
 done
 
+space_regex="[[:space:]]+"
+if [[ $SCT_DIR =~ $space_regex ]]; then
+  die "ERROR: Install directory $SCT_DIR contains spaces.\n\
+       SCT uses conda, which does not permit spaces in installation paths.\n\
+       More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
+fi
+
 # update PATH environment?
 add_to_path=""
 while [[ ! "$add_to_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
