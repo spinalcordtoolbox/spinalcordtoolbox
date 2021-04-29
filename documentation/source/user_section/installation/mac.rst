@@ -18,9 +18,10 @@ Gnu Compiler Collection (gcc)
 
 You need to have ``gcc`` installed. Check to see if ``gcc`` is installed by opening a Terminal and running:
 
-```
-gcc --version
-```
+.. code:: sh
+
+    gcc --version
+
 
 If it isn't installed, we recommend installing `Homebrew <https://brew.sh/>`_ and then run:
 
