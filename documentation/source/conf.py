@@ -110,7 +110,13 @@ html_theme_options = {
     # "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
     # "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
     # "style_nav_header_background": "#FFFFFF",  # background of the logo (top left)
-    "sidebar_hide_name": True
+    "sidebar_hide_name": True,
+    "light_css_variables": {
+        "color-admonition-title-background": "#EAF6FF",
+        "color-admonition-title": "#c2e2fb",
+        "color-admonition-title-background--note": "#30c42626",
+        "color-admonition-title--note": "#30c42659"
+    }
     }
 
 html_context = {
