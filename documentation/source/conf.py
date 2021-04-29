@@ -45,7 +45,7 @@ extensions = [
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
-copybutton_image_path = "img/copy.png"
+# copybutton_image_path = "img/copy.png"
 
 # add doc for __init
 autoclass_content = 'both'
@@ -87,7 +87,7 @@ language = None
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = "monokai"
+# pygments_style = "monokai"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False

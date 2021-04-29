@@ -26,13 +26,8 @@ body {
 
 
 /* .highlight {
-    background: #fffbd8;
-    color: rgb(230, 236, 241);
-} */
-
-.highlight {
     background: #0f0f4c !important;
-}
+} */
 
 .rst-content div[class^=highlight], .rst-content pre.literal-block {
     border-radius: 5px;
