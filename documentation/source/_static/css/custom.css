@@ -201,3 +201,9 @@ h6 {
 h4, h5, h6 {
     text-transform: none;
 }
+
+code.literal {
+    border-radius: 0.3em;
+    padding: .2em .3em;
+    color: #f86626;
+}
