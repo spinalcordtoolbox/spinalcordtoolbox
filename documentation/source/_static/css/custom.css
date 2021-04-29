@@ -25,9 +25,10 @@ body {
 }
 
 
-/* .highlight {
-    background: #0f0f4c !important;
-} */
+.highlight {
+    /* background: #0f0f4c !important; */
+    background: #f8f9fb !important;
+}
 
 .rst-content div[class^=highlight], .rst-content pre.literal-block {
     border-radius: 5px;
@@ -157,16 +158,14 @@ a.copybtn {
 .o-tooltip--left:after {
    background: transparent;
    font-size: 1rem;
-   color: white;
-   transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
+   /* color: white; */
+   color: #5a6d79;
 }
 
 .o-tooltip--left:hover:after {
     display: block;
     opacity: 1;
     visibility: visible;
-    transform: translateX(-100%) translateY(0);
-    transition: opacity 0.2s cubic-bezier(0.64, 0.09, 0.08, 1), transform 0.2s cubic-bezier(0.64, 0.09, 0.08, 1);
     transition-delay: .1s;
 }
 
