@@ -378,8 +378,10 @@ class Image(object):
         from copy import deepcopy
         if image is not None:
             self.im_file = deepcopy(image.im_file)
-            # NOTE: We no longer pre-load the data. We now wait until it's requested, using the 'data' getter method.
-            # self._data = self.im_file.get_data()
+            # Normally, we don't preload the data, and take it from self.im_file_get_data() in the 'data' getter method.
+            # However, if there is no self.im_file, we need to copy over the data from the original immediately.
+            if self.im_file is None:
+                self._data = deepcopy(image.data)
             self.hdr = deepcopy(image.hdr)
             self._path = deepcopy(image._path)
         else:
