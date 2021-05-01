@@ -266,7 +266,7 @@ class Image(object):
 
         # initialization of all parameters
         self.im_file = None
-        self.data = None
+        self._data = None
         self._path = None
         self.ext = ""
 
@@ -288,11 +288,11 @@ class Image(object):
             self.copy(param)
         # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
         elif isinstance(param, list):
-            self.data = np.zeros(param)
+            self._data = np.zeros(param)
             self.hdr = hdr
         # create a copy of im_ref
         elif isinstance(param, (np.ndarray, np.generic)):
-            self.data = param
+            self._data = param
             self.hdr = hdr
         else:
             raise TypeError('Image constructor takes at least one argument.')
@@ -357,6 +357,19 @@ class Image(object):
     def header(self, value):
         self.hdr = value
 
+    @property
+    def data(self):
+        # Delay loading the data from nibabel image to speed up any scripts that don't use the data
+        # FIXME: This is a patchy way of replicating nibabel behavior.
+        #        Ideally, we would use nibabel directly, but that is a much larger undertaking.
+        if self._data is None and hasattr(self.im_file, 'get_data'):
+            self._data = self.im_file.get_data()
+        return self._data
+
+    @data.setter
+    def data(self, value):
+        self._data = value
+
     def __deepcopy__(self, memo):
         from copy import deepcopy
         return type(self)(deepcopy(self.data, memo), deepcopy(self.hdr, memo), deepcopy(self.orientation, memo), deepcopy(self.absolutepath, memo), deepcopy(self.dim, memo))
@@ -365,7 +378,8 @@ class Image(object):
         from copy import deepcopy
         if image is not None:
             self.im_file = deepcopy(image.im_file)
-            self.data = deepcopy(image.data)
+            # NOTE: We no longer pre-load the data. We now wait until it's requested, using the 'data' getter method.
+            # self._data = self.im_file.get_data()
             self.hdr = deepcopy(image.hdr)
             self._path = deepcopy(image._path)
         else:
@@ -403,13 +417,14 @@ class Image(object):
         """
 
         self.im_file = nib.load(path)
-        self.data = self.im_file.get_data()
+        # NOTE: We no longer pre-load the data. We now wait until it's requested, using the 'data' getter method.
+        # self._data = self.im_file.get_data()
         self.hdr = self.im_file.header
         self.absolutepath = path
         if path != self.absolutepath:
-            logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
+            logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.dim[0:3])
         else:
-            logger.debug("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
+            logger.debug("Loaded %s orientation %s shape %s", path, self.orientation, self.dim[0:3])
 
     def change_shape(self, shape, generate_path=False):
         """
