@@ -123,7 +123,7 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
                                     '-w', fname_transfo,
                                     '-o', os.path.join(path_out, folder_label, template_label_file[i]),
                                     '-x', get_interp(template_label_file[i], list_labels_nn),
-                                    '-v', str(verbose)])
+                                    '-v', '0'])
         # Copy list.txt
         copy(os.path.join(path_label, folder_label, file_label), os.path.join(path_out, folder_label))
 
