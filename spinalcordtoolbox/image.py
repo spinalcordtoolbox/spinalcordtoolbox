@@ -417,12 +417,11 @@ class Image(object):
         :param path: path of the file from which the image will be loaded
         :return:
         """
-
-        self.im_file = nib.load(path)
+        self.absolutepath = path
+        self.im_file = nib.load(self.absolutepath)
         # NOTE: We no longer pre-load the data. We now wait until it's requested, using the 'data' getter method.
         # self._data = self.im_file.get_data()
         self.hdr = self.im_file.header
-        self.absolutepath = path
         if path != self.absolutepath:
             logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.dim[0:3])
         else:
