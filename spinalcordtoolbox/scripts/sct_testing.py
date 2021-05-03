@@ -398,7 +398,6 @@ def get_functions_nonparallelizable():
 
 def get_functions_parallelizable():
     return [
-        'sct_extract_metric',
         'sct_flatten_sagittal',
         'sct_fmri_compute_tsnr',
         'sct_fmri_moco',
