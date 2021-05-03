@@ -398,7 +398,6 @@ def get_functions_nonparallelizable():
 
 def get_functions_parallelizable():
     return [
-        'sct_register_to_template',
         'sct_resample',
         'sct_smooth_spinalcord',
         'sct_straighten_spinalcord',  # deps: sct_apply_transfo
