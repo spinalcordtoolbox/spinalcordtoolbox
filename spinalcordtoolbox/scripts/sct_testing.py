@@ -398,7 +398,6 @@ def get_functions_nonparallelizable():
 
 def get_functions_parallelizable():
     return [
-        'sct_register_multimodal',
         'sct_register_to_template',
         'sct_resample',
         'sct_smooth_spinalcord',
