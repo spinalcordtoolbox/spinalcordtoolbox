@@ -402,7 +402,6 @@ def get_functions_nonparallelizable():
 def get_functions_parallelizable():
     return [
         'sct_convert',
-        'sct_compute_mscc',
         'sct_compute_snr',
         'sct_concat_transfo',
         'sct_create_mask',
