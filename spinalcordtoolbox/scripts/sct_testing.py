@@ -393,7 +393,6 @@ def downloaddata(param):
 
 def get_functions_nonparallelizable():
     return [
-        'sct_deepseg_lesion',
         'sct_deepseg_sc',
     ]
 
