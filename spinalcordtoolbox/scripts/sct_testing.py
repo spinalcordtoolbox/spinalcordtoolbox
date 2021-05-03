@@ -402,7 +402,6 @@ def get_functions_nonparallelizable():
 def get_functions_parallelizable():
     return [
         'sct_convert',
-        'sct_compute_ernst_angle',
         'sct_compute_hausdorff_distance',
         'sct_compute_mtr',
         'sct_compute_mscc',
