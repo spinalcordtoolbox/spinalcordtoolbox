@@ -398,7 +398,6 @@ def get_functions_nonparallelizable():
 
 def get_functions_parallelizable():
     return [
-        'sct_label_vertebrae',
         'sct_maths',
         'sct_merge_images',
         'sct_process_segmentation',
