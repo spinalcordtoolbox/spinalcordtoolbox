@@ -398,7 +398,6 @@ def get_functions_nonparallelizable():
 
 def get_functions_parallelizable():
     return [
-        'sct_process_segmentation',
         'sct_propseg',
         'sct_qc',
         'sct_register_multimodal',
