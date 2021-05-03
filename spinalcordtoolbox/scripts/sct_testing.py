@@ -398,7 +398,6 @@ def get_functions_nonparallelizable():
 
 def get_functions_parallelizable():
     return [
-        'sct_dmri_concat_b0_and_dwi',
         'sct_dmri_concat_bvals',
         'sct_dmri_concat_bvecs',
         'sct_dmri_compute_bvalue',
