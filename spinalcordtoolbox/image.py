@@ -419,10 +419,7 @@ class Image(object):
         you probably don't want to use this function.
 
         """
-        if shape is not None:
-            change_shape(self, shape, self)
-        else:
-            raise ValueError("Need to specify a shape!")
+        change_shape(self, shape, self)
         return self
 
     def change_orientation(self, orientation, inverse=False):
@@ -436,11 +433,7 @@ class Image(object):
                         it.
 
         """
-        if orientation is not None:
-            change_orientation(self, orientation, self, inverse=inverse)
-        else:
-            raise ValueError("Need to specify an orientation!")
-
+        change_orientation(self, orientation, self, inverse=inverse)
         return self
 
     def change_type(self, dtype):
@@ -449,11 +442,7 @@ class Image(object):
 
         Note: the image path is voided.
         """
-        if dtype is not None:
-            change_type(self, dtype, self)
-        else:
-            raise ValueError("Need to specify a data type!")
-
+        change_type(self, dtype, self)
         return self
 
     def save(self, path=None, dtype=None, verbose=1, mutable=False):
