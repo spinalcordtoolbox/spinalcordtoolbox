@@ -443,7 +443,7 @@ class Image(object):
 
         return self
 
-    def change_type(self, dtype, generate_path=False):
+    def change_type(self, dtype):
         """
         Change data type on image.
 
@@ -451,11 +451,9 @@ class Image(object):
         """
         if dtype is not None:
             change_type(self, dtype, self)
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_{}".format(dtype.name))
         else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+            raise ValueError("Need to specify a data type!")
+
         return self
 
     def save(self, path=None, dtype=None, verbose=1, mutable=False):
