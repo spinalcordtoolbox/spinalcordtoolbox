@@ -435,7 +435,7 @@ class Image(object):
             self._path = None
         return self
 
-    def change_orientation(self, orientation, inverse=False, generate_path=False):
+    def change_orientation(self, orientation, inverse=False):
         """
         Change orientation on image (in-place).
 
@@ -444,20 +444,13 @@ class Image(object):
         :param inverse: if you think backwards, use this to specify that you actually\
                         want to transform *from* the specified orientation, not *to*\
                         it.
-        :param generate_path: whether to create a derived path name from the\
-                              original absolutepath (note: while it will generate\
-                              a file suffix, don't expect the suffix but rather\
-                              use the Image's absolutepath.\
-                              If not set, the absolutepath is voided.
 
         """
         if orientation is not None:
             change_orientation(self, orientation, self, inverse=inverse)
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_{}".format(orientation.lower()))
         else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+            raise ValueError("Need to specify an orientation!")
+
         return self
 
     def change_type(self, dtype, generate_path=False):
