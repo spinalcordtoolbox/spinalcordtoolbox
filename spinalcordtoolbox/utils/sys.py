@@ -322,24 +322,28 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
     return status, output
 
 
-def printv(string, verbose=1, type='normal'):
+def printv(string, verbose=1, type='normal', file=None):
     """
     Enables to print color-coded messages, depending on verbose status. Only use in command-line programs (e.g.,
     sct_propseg).
     """
-
-    colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow, 'error': bcolors.red,
+    colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow + bcolors.bold, 'error': bcolors.red + bcolors.bold,
               'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
 
+    if file is None:
+        # replicate the logic from print()
+        # so that we can check file.isatty()
+        file = sys.stdout
+
     if verbose:
-        # The try/except is there in case stdout does not have isatty field (it did happen to me)
+        # The try/except is there in case file does not have isatty field (it did happen to me)
         try:
             # Print color only if the output is the terminal
-            if sys.stdout.isatty():
+            if file.isatty():
                 color = colors.get(type, bcolors.normal)
-                print(color + string + bcolors.normal)
+                print(color + string + bcolors.normal, file=file)
             else:
-                print(string)
+                print(string, file=file)
         except Exception as e:
             print(string)
 

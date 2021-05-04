@@ -307,7 +307,7 @@ def main(argv=None):
             '-i', 'data.nii',
             '-s', 'segmentation.nii',
             '-r', str(remove_temp_files),
-            '-v', str(verbose),
+            '-v', '0',
         ])
         cache_save(cachefile, cache_sig)
 
@@ -323,7 +323,7 @@ def main(argv=None):
                             '-w', 'warp_curve2straight.nii.gz',
                             '-o', 'segmentation_straight.nii',
                             '-x', 'linear',
-                            '-v', str(verbose)])
+                            '-v', '0'])
 
     # Threshold segmentation at 0.5
     img = Image('segmentation_straight.nii')
@@ -391,7 +391,7 @@ def main(argv=None):
                                 '-w', 'warp_curve2straight.nii.gz',
                                 '-o', 'labelz_straight.nii.gz',
                                 '-x', 'nn',
-                                '-v', str(verbose)])
+                                '-v', '0'])
         # get z value and disk value to initialize labeling
         printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
@@ -425,7 +425,7 @@ def main(argv=None):
                             '-w', 'warp_straight2curve.nii.gz',
                             '-o', 'segmentation_labeled.nii',
                             '-x', 'nn',
-                            '-v', str(verbose)])
+                            '-v', '0'])
 
     if clean_labels:
         # Clean labeled segmentation
