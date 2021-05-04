@@ -411,15 +411,9 @@ class Image(object):
         else:
             logger.debug("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
 
-    def change_shape(self, shape, generate_path=False):
+    def change_shape(self, shape):
         """
         Change data shape (in-place)
-
-        :param generate_path: whether to create a derived path name from the\
-                              original absolutepath (note: while it will generate\
-                              a file suffix, don't expect the suffix but rather\
-                              use the Image's absolutepath.\
-                              If not set, the absolutepath is voided.
 
         This is mostly useful for adding/removing a fourth dimension,
         you probably don't want to use this function.
@@ -427,12 +421,8 @@ class Image(object):
         """
         if shape is not None:
             change_shape(self, shape, self)
-
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_shape-{}".format("-".join([str(x) for x in shape])))
         else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+            raise ValueError("Need to specify a shape!")
         return self
 
     def change_orientation(self, orientation, inverse=False):
