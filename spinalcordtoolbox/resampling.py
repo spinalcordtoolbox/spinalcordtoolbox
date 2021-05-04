@@ -122,6 +122,8 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
             data4d[..., it] = img3d_r.get_data()
         # Create 4d nibabel Image
         img_r = nib.nifti1.Nifti1Image(data4d, affine_r)
+        # Copy over the TR parameter from original 4D image (otherwise it will be incorrectly set to 1)
+        img_r.header.set_zooms(list(img_r.header.get_zooms()[0:3]) + [img.header.get_zooms()[3]])
 
     # Convert back to proper type
     if type(image) == nib.nifti1.Nifti1Image:
