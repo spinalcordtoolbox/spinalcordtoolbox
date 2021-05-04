@@ -221,7 +221,7 @@ class Transform:
                       '-i', fname_src,
                       '-o', fname_out,
                       '-t'
-                      ] + fname_warp_list_invert + ['-r', fname_dest] + interp, verbose=verbose, is_sct_binary=True)
+                      ] + fname_warp_list_invert + ['-r', fname_dest] + interp, is_sct_binary=True)
 
         # if 4d, loop across the T dimension
         else:
