@@ -466,9 +466,18 @@ def main(argv=None):
         # Change orientation of input images to RPI
         printv('\nChange orientation of input images to RPI...', verbose)
 
-        ftmp_data = Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
+        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
+        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
+        img_tmp_data.save(path=ftmp_data, mutable=True)
+
+        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
+        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
+        img_tmp_seg.save(path=ftmp_seg, mutable=True)
+
+        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
+        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
+        img_tmp_label.save(ftmp_label, mutable=True)
+
 
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if level_alignment:
@@ -706,9 +715,18 @@ def main(argv=None):
 
         # Change orientation of input images to RPI
         printv('\nChange orientation of input images to RPI...', verbose)
-        ftmp_data = Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
+
+        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
+        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
+        img_tmp_data.save(path=ftmp_data, mutable=True)
+
+        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
+        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
+        img_tmp_seg.save(path=ftmp_seg, mutable=True)
+
+        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
+        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
+        img_tmp_label.save(ftmp_label, mutable=True)
 
         # Remove unused label on template. Keep only label present in the input label image
         printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
