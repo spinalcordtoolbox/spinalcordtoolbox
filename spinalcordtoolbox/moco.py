@@ -150,16 +150,6 @@ def moco_wrapper(param):
     printv('  Input file ............ ' + param.fname_data, param.verbose)
     printv('  Group size ............ {}'.format(param.group_size), param.verbose)
 
-    # Get full path
-    # param.fname_data = os.path.abspath(param.fname_data)
-    # param.fname_bvecs = os.path.abspath(param.fname_bvecs)
-    # if param.fname_bvals != '':
-    #     param.fname_bvals = os.path.abspath(param.fname_bvals)
-
-    # Extract path, file and extension
-    # path_data, file_data, ext_data = extract_fname(param.fname_data)
-    # path_mask, file_mask, ext_mask = extract_fname(param.fname_mask)
-
     path_tmp = tmp_create(basename="moco")
 
     # Copying input data to tmp folder
