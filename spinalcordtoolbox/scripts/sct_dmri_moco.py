@@ -184,8 +184,8 @@ def main(argv=None):
 
     # Fetch user arguments
     param.fname_data = arguments.i
-    param.fname_bvecs = os.path.abspath(arguments.bvec)
-    param.fname_bvals = os.path.abspath(arguments.bval)
+    param.fname_bvecs = arguments.bvec
+    param.fname_bvals = arguments.bval
     param.bval_min = arguments.bvalmin
     param.group_size = arguments.g
     param.fname_mask = arguments.m

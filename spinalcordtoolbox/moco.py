@@ -161,6 +161,16 @@ def moco_wrapper(param):
         im_mask.save(os.path.join(path_tmp, file_mask), mutable=True, verbose=param.verbose)
         # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = file_mask
+    if param.fname_bvals != '':
+        _, _, ext_bvals = extract_fname(param.fname_bvals)
+        file_bvals = f"bvals.{ext_bvals}"  # Use hardcoded name to avoid potential duplicate files when copying
+        copyfile(param.fname_bvals, os.path.join(path_tmp, file_bvals))
+        param.fname_bvals = file_bvals
+    if param.fname_bvecs != '':
+        _, _, ext_bvecs = extract_fname(param.fname_bvecs)
+        file_bvecs = f"bvecs.{ext_bvecs}"  # Use hardcoded name to avoid potential duplicate files when copying
+        copyfile(param.fname_bvecs, os.path.join(path_tmp, file_bvecs))
+        param.fname_bvecs = file_bvecs
 
     # Build absolute output path and go to tmp folder
     curdir = os.getcwd()
