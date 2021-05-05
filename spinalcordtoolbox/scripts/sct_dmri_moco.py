@@ -75,7 +75,7 @@ def get_parser():
         '-bval',
         metavar=Metavar.file,
         default=param_default.fname_bvals,
-        help='Bvals file. Example: bvals.nii.gz',
+        help='Bvals file. Example: bvals.txt',
     )
     optional.add_argument(
         '-bvalmin',
