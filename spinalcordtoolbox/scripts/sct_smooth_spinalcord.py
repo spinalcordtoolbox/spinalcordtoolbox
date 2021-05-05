@@ -18,7 +18,7 @@ import time
 
 import numpy as np
 
-from spinalcordtoolbox.image import Image, generate_output_file, convert
+from spinalcordtoolbox.image import Image, generate_output_file, convert, add_suffix
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_save, cache_signature, cache_valid, copy, \
@@ -183,17 +183,17 @@ def main(argv=None):
 
     # Change orientation of the input image into RPI
     printv('\nOrient input volume to RPI orientation...')
-    fname_anat_rpi = Image("anat.nii") \
-        .change_orientation("RPI", generate_path=True) \
-        .save() \
-        .absolutepath
+
+    img_anat_rpi = Image("anat.nii").change_orientation("RPI")
+    fname_anat_rpi = add_suffix(img_anat_rpi.absolutepath, "_rpi")
+    img_anat_rpi.save(path=fname_anat_rpi, mutable=True)
 
     # Change orientation of the input image into RPI
     printv('\nOrient centerline to RPI orientation...')
-    fname_centerline_rpi = Image("centerline.nii") \
-        .change_orientation("RPI", generate_path=True) \
-        .save() \
-        .absolutepath
+
+    img_centerline_rpi = Image("centerline.nii").change_orientation("RPI")
+    fname_centerline_rpi = add_suffix(img_centerline_rpi.absolutepath, "_rpi")
+    img_centerline_rpi.save(path=fname_centerline_rpi, mutable=True)
 
     # Straighten the spinal cord
     # straighten segmentation

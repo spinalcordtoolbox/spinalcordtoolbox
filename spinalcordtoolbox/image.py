@@ -411,31 +411,18 @@ class Image(object):
         else:
             logger.debug("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
 
-    def change_shape(self, shape, generate_path=False):
+    def change_shape(self, shape):
         """
         Change data shape (in-place)
-
-        :param generate_path: whether to create a derived path name from the\
-                              original absolutepath (note: while it will generate\
-                              a file suffix, don't expect the suffix but rather\
-                              use the Image's absolutepath.\
-                              If not set, the absolutepath is voided.
 
         This is mostly useful for adding/removing a fourth dimension,
         you probably don't want to use this function.
 
         """
-        if shape is not None:
-            change_shape(self, shape, self)
-
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_shape-{}".format("-".join([str(x) for x in shape])))
-        else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+        change_shape(self, shape, self)
         return self
 
-    def change_orientation(self, orientation, inverse=False, generate_path=False):
+    def change_orientation(self, orientation, inverse=False):
         """
         Change orientation on image (in-place).
 
@@ -444,35 +431,18 @@ class Image(object):
         :param inverse: if you think backwards, use this to specify that you actually\
                         want to transform *from* the specified orientation, not *to*\
                         it.
-        :param generate_path: whether to create a derived path name from the\
-                              original absolutepath (note: while it will generate\
-                              a file suffix, don't expect the suffix but rather\
-                              use the Image's absolutepath.\
-                              If not set, the absolutepath is voided.
 
         """
-        if orientation is not None:
-            change_orientation(self, orientation, self, inverse=inverse)
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_{}".format(orientation.lower()))
-        else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+        change_orientation(self, orientation, self, inverse=inverse)
         return self
 
-    def change_type(self, dtype, generate_path=False):
+    def change_type(self, dtype):
         """
         Change data type on image.
 
         Note: the image path is voided.
         """
-        if dtype is not None:
-            change_type(self, dtype, self)
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_{}".format(dtype.name))
-        else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+        change_type(self, dtype, self)
         return self
 
     def save(self, path=None, dtype=None, verbose=1, mutable=False):

@@ -211,12 +211,15 @@ class ComputeDistances:
         if self.dim_im == 3:
             self.orientation1 = self.im1.orientation
             if self.orientation1 != 'IRP':
-                self.im1.change_orientation('IRP', generate_path=True)
+                self.im1.change_orientation('IRP')
+                self.im1.save(path=add_suffix(self.im1.absolutepath, "_irp"), mutable=True)
 
             if self.im2 is not None:
                 self.orientation2 = self.im2.orientation
                 if self.orientation2 != 'IRP':
-                    self.im2.change_orientation('IRP', generate_path=True)
+                    self.im2.change_orientation('IRP')
+                    self.im2.save(path=add_suffix(self.im2.absolutepath, "_irp"), mutable=True)
+
 
         if self.param.thinning:
             self.thinning1 = Thinning(self.im1, self.param.verbose)
@@ -379,7 +382,9 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
     im_in = Image(fname)
     orientation = im_in.orientation
     if orientation != 'RPI':
-        fname = im_in.change_orientation(im_in, 'RPI', generate_path=True).save().absolutepath
+        im_in.change_orientation('RPI')
+        fname = add_suffix(im_in.absolutepath, "_rpi")
+        im_in.save(path=fname, mutable=True)
 
     nx, ny, nz, nt, px, py, pz, pt = im_in.dim
 
@@ -406,10 +411,10 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
             img.save()
 
         if orientation != 'RPI':
-            name_resample = Image(name_resample) \
-                .change_orientation(orientation, generate_path=True) \
-                .save() \
-                .absolutepath
+            img = Image(name_resample)
+            img.change_orientation(orientation)
+            name_resample = add_suffix(img.absolutepath, "_{}".format(orientation.lower()))
+            img.save(path=name_resample, mutable=True)
 
         return name_resample
     else:
