@@ -75,7 +75,7 @@ def get_parser():
         '-bval',
         metavar=Metavar.file,
         default="",
-        help='bvals file. Used to identify low b-values (in case different from 0). Example: bvals.nii.gz',
+        help='bvals file. Used to identify low b-values (in case different from 0). Example: bvals.txt',
     )
     optional.add_argument(
         '-bvalmin',
