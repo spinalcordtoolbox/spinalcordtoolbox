@@ -179,7 +179,7 @@ def _properties2d(image, dim):
         _find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
                                  [i / upscale for i in dim])
     # TODO: compute major_axis_length/minor_axis_length by summing weighted voxels along axis
-    # Deal with https://github.com/neuropoly/spinalcordtoolbox/issues/2307
+    # Deal with https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2307
     if any(x in platform.platform() for x in ['Darwin-15', 'Darwin-16']):
         solidity = np.nan
     else:

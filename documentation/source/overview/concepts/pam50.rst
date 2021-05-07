@@ -70,5 +70,5 @@ References
 Additionally, the template was generated using the following tools:
 
 * `neuropoly/template GitHub repository <https://github.com/neuropoly/template>`_
-* `White matter atlas script <https://github.com/neuropoly/spinalcordtoolbox/tree/master/dev/atlas>`_
-* `Spinal levels script <https://github.com/neuropoly/spinalcordtoolbox/tree/master/dev/spinal_level>`_
+* `White matter atlas script <https://github.com/spinalcordtoolbox/spinalcordtoolbox/tree/master/dev/atlas>`_
+* `Spinal levels script <https://github.com/spinalcordtoolbox/spinalcordtoolbox/tree/master/dev/spinal_level>`_

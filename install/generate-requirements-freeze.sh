@@ -7,7 +7,7 @@ source "$SCT_DIR"/python/etc/profile.d/conda.sh
 conda activate venv_sct
 pip freeze |
   # Exclude SCT itself (not needed in requirements.txt)
-  grep -v "-e git+https://github.com/neuropoly/spinalcordtoolbox.git" |
+  grep -v "-e git+https://github.com/spinalcordtoolbox/spinalcordtoolbox.git" |
   # Exclude torch-related lines (these will be re-added from requirements.txt)
   grep -v "torch" > "$SCT_DIR"/requirements-freeze.txt
 conda deactivate

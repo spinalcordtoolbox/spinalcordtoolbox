@@ -119,7 +119,7 @@ def get_version(module):
     if module.__name__ == 'PyQt5.QtCore':
         # Unfortunately importing PyQt5.Qt makes sklearn import crash on Ubuntu 14.04 (corresponding to Debian's jessie)
         # so we don't display the version for this distros.
-        # See: https://github.com/neuropoly/spinalcordtoolbox/pull/2522#issuecomment-559310454
+        # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2522#issuecomment-559310454
         if 'jessie' in platform.platform():
             version = None
         else:

@@ -21,7 +21,7 @@ def test_sct_register_multimodal_mask_no_checks(tmp_path):
     """Run the script without validating results.
 
     TODO: Write a check that verifies the registration results as part of
-    https://github.com/neuropoly/spinalcordtoolbox/pull/3246."""
+    https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3246."""
     fname_mask = str(tmp_path/'mask_mt1.nii.gz')
     sct_create_mask.main(['-i', sct_test_path('mt', 'mt1.nii.gz'),
                           '-p', f"centerline,{sct_test_path('mt', 'mt1_seg.nii.gz')}",

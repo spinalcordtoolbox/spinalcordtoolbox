@@ -482,7 +482,7 @@ def main(argv=None):
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if level_alignment:
             # cropping the segmentation based on the label coverage to ensure good registration with level alignment
-            # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
+            # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/1669 for details
             image_labels = Image(ftmp_label)
             coordinates_labels = image_labels.getNonZeroCoordinates(sorting='z')
             nx, ny, nz, nt, px, py, pz, pt = image_labels.dim
