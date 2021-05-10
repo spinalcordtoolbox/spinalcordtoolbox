@@ -73,7 +73,7 @@ def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate
     x = np.array([round(nx/4.), round(nx/2.), round(3*nx/4.)])
     z = np.array([0, round(nz/2.), nz-1])
     # we use bspline (instead of poly) in order to avoid bad extrapolation at edges
-    # see: https://github.com/neuropoly/spinalcordtoolbox/pull/2754
+    # see: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2754
     xfit, _ = bspline(z, x, range(nz), 10)
     # p = P.fit(z, x, 3)
     # p = np.poly1d(np.polyfit(z, x, deg=3))

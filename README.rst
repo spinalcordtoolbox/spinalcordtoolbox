@@ -3,9 +3,9 @@ Spinal Cord Toolbox
 
 |badge-releases| |badge-forum| |badge-mailing-list| |badge-stats| |badge-twitter| |badge-downloads| |badge-ci| |badge-doc| |badge-license|
 
-.. |badge-releases| image:: https://img.shields.io/github/v/release/neuropoly/spinalcordtoolbox
+.. |badge-releases| image:: https://img.shields.io/github/v/release/spinalcordtoolbox/spinalcordtoolbox
     :alt: Releases
-    :target: https://github.com/neuropoly/spinalcordtoolbox/releases
+    :target: https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases
 
 .. |badge-forum| image:: https://img.shields.io/discourse/status?label=forum&server=http%3A%2F%2Fforum.spinalcordmri.org
     :alt: User forum
@@ -15,21 +15,21 @@ Spinal Cord Toolbox
     :alt: Community mailing list
     :target: https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform
 
-.. |badge-downloads| image:: https://img.shields.io/github/downloads/neuropoly/spinalcordtoolbox/total.svg
+.. |badge-downloads| image:: https://img.shields.io/github/downloads/spinalcordtoolbox/spinalcordtoolbox/total.svg
     :alt: Downloads
-    :target: https://github.com/neuropoly/spinalcordtoolbox/graphs/traffic
+    :target: https://github.com/spinalcordtoolbox/spinalcordtoolbox/graphs/traffic
 
-.. |badge-ci| image:: https://github.com/neuropoly/spinalcordtoolbox/actions/workflows/tests.yml/badge.svg
+.. |badge-ci| image:: https://github.com/spinalcordtoolbox/spinalcordtoolbox/actions/workflows/tests.yml/badge.svg
     :alt: GitHub Actions CI
-    :target: https://github.com/neuropoly/spinalcordtoolbox/actions/workflows/tests.yml?query=branch%3Amaster
+    :target: https://github.com/spinalcordtoolbox/spinalcordtoolbox/actions/workflows/tests.yml?query=branch%3Amaster
 
 .. |badge-doc| image:: https://readthedocs.org/projects/spinalcordtoolbox/badge/
     :alt: Documentation Status
     :target: https://spinalcordtoolbox.com
 
-.. |badge-license| image:: https://img.shields.io/github/license/neuropoly/spinalcordtoolbox
+.. |badge-license| image:: https://img.shields.io/github/license/spinalcordtoolbox/spinalcordtoolbox
     :alt: License
-    :target: https://github.com/neuropoly/spinalcordtoolbox/blob/master/LICENSE
+    :target: https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/LICENSE
 
 .. |badge-stats| image:: https://www.openhub.net/p/spinalcordtoolbox/widgets/project_thin_badge.gif
     :alt: Project Stats
@@ -65,7 +65,7 @@ Key Features
 Installation
 ------------
 
-For macOS and Linux users, the simplest way to install SCT is to download `the latest release <https://github.com/neuropoly/spinalcordtoolbox/releases>`_, then launch the install script:
+For macOS and Linux users, the simplest way to install SCT is to download `the latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, then launch the install script:
 
 .. code::
 
@@ -128,13 +128,13 @@ Otherwise, if you would like to stay up to date on SCT announcements (new releas
 License
 -------
 
-SCT is made available under the LGPLv3 license. For more details, see `LICENSE <https://github.com/neuropoly/spinalcordtoolbox/blob/master/LICENSE>`_.
+SCT is made available under the LGPLv3 license. For more details, see `LICENSE <https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/LICENSE>`_.
 
 
 Contributing
 ------------
 
-We happily welcome contributions. Please see the `Contributing <https://github.com/neuropoly/spinalcordtoolbox/wiki/Contributing>`_ page of the developer Wiki for more information.
+We happily welcome contributions. Please see the `Contributing <https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing>`_ page of the developer Wiki for more information.
 
 
 .. admonition:: ⚠ ️Medical Disclaimer

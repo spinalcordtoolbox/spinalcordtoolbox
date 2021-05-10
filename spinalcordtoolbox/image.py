@@ -231,13 +231,13 @@ def check_affines_match(im):
     try:
         hdr2.set_qform(hdr.get_sform())
     except np.linalg.LinAlgError:
-        # See https://github.com/neuropoly/spinalcordtoolbox/issues/3097
+        # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3097
         logger.warning("The sform for {} is uninitialized and may cause unexpected behaviour."
                        ''.format(im.absolutepath))
 
         if im.absolutepath is None:
             logger.error("Internal code has produced an image with an uninitialized sform. "
-                         "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
+                         "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
                          "or on the SCT forums https://forum.spinalcordmri.org/.")
 
         return(True)
@@ -298,11 +298,11 @@ class Image(object):
             raise TypeError('Image constructor takes at least one argument.')
 
         # Make sure sform and qform are the same.
-        # Context: https://github.com/neuropoly/spinalcordtoolbox/issues/2429
+        # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2429
         if check_sform and not check_affines_match(self):
             if self.absolutepath is None:
                 logger.error("Internal code has produced an image with inconsistent qform and sform "
-                             "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
+                             "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
                              " or on the SCT forum https://forum.spinalcordmri.org/.")
             else:
                 logger.error(f"Image {self._path} has different qform and sform matrices. This can produce incorrect "

@@ -43,7 +43,7 @@ def test_integrity(param_test):
     index_args = param_test.default_args.index(param_test.args)
 
     # Removed because of:
-    # https://travis-ci.org/neuropoly/spinalcordtoolbox/jobs/482061826
+    # https://travis-ci.org/spinalcordtoolbox/spinalcordtoolbox/jobs/482061826
     param_test.output += "NOT TESTED-- SHOULD BE REACTIVATED ASAP"
     # if index_args == 1:
     #     # compute center of mass of labeled segmentation

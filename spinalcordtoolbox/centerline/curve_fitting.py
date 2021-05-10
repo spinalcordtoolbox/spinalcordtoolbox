@@ -2,7 +2,7 @@
 # -*- coding: utf-8
 # Functions dealing with 2d and 3d curve fitting
 # TODO: implement robust fitting, i.e., detection and removal of outliers. See:
-#  https://github.com/neuropoly/spinalcordtoolbox/blob/24ec6668d623be00194b21038f275134c82122de/scripts/msct_smooth.py#L568
+#  https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/24ec6668d623be00194b21038f275134c82122de/scripts/msct_smooth.py#L568
 
 import logging
 import numpy as np

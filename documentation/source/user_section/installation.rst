@@ -30,7 +30,7 @@ Requirements
 Install from package (recommended)
 ==================================
 
-The simplest way to install SCT is to do it via a stable release. First, download the `latest release <https://github.com/neuropoly/spinalcordtoolbox/releases>`_. Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
+The simplest way to install SCT is to do it via a stable release. First, download the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_. Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
 
 Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal, go into the created folder and launch the installer:
 
@@ -53,7 +53,7 @@ If you wish to benefit from the cutting-edge version of SCT, or if you wish to c
 
    .. code:: sh
 
-      git clone https://github.com/neuropoly/spinalcordtoolbox
+      git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox
 
       cd spinalcordtoolbox
 
@@ -110,10 +110,10 @@ Windows subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
    .. code-block:: sh
 
-      git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+      git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
       cd sct
 
-   To select a `specific release <https://github.com/neuropoly/spinalcordtoolbox/releases>`_, replace X.Y.Z below with the proper release number. If you prefer to use the development version, you can skip this step.
+   To select a `specific release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, replace X.Y.Z below with the proper release number. If you prefer to use the development version, you can skip this step.
 
    .. code-block:: sh
 
@@ -174,7 +174,7 @@ Ubuntu-based installation
    apt install -y git curl bzip2 libglib2.0-0 gcc
    # Note for above: libglib2.0-0 is required by PyQt
    # Install SCT
-   git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
    ./install_sct -y
    export PATH="/sct/bin:${PATH}"
@@ -196,7 +196,7 @@ CentOS7-based installation
    # Now, inside Docker container, install dependencies
    yum install -y which gcc git curl
    # Install SCT
-   git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
    ./install_sct -y
    export PATH="/sct/bin:${PATH}"
@@ -315,7 +315,7 @@ Procedure:
 
    .. code:: sh
 
-      git clone https://github.com/neuropoly/spinalcordtoolbox
+      git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox
 
       cd spinalcordtoolbox
 
@@ -410,4 +410,4 @@ Matlab took the liberty of setting ``DYLD_LIBRARY_PATH`` and in order for SCT to
    setenv('DYLD_LIBRARY_PATH', '');
 
 Prior to running SCT commands.
-See https://github.com/neuropoly/spinalcordtoolbox/issues/405
+See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/405

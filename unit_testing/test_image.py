@@ -686,7 +686,7 @@ def test_splitext():
 def test_tolerance_of_affine_mismatch_check():
     """Verify that affine mismatch error is thrown only for mismatches above a certain tolerance."""
     # ERROR NOT EXPECTED (Affine matrices have slight differences, but are close enough to be equivalent)
-    # NB: Specific values taken from anonymized data from https://github.com/neuropoly/spinalcordtoolbox/issues/3251
+    # NB: Specific values taken from anonymized data from https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3251
     qform_affine = np.array([[-0.0000000613307, -0.0032542832702, -0.8999945527288, 36.8009071350098],
                              [-0.9322916865349, -0.0000000613307, 0.0000000594134, 214.2190246582031],
                              [0.0000000615451, -0.9322860067718, 0.0031415651366, 122.8873901367188],
