@@ -1245,9 +1245,10 @@ def zeros_like(img, dtype=None):
     intent and avoid doing a copy, which is slower than initialization with a constant.
 
     """
-    dst = change_type(img, dtype)
-    dst.data[:] = 0
-    return dst
+    zimg = Image(np.zeros_like(img.data), hdr=img.hdr)
+    if dtype is not None:
+        zimg.change_type(dtype)
+    return zimg
 
 
 def empty_like(img, dtype=None):
