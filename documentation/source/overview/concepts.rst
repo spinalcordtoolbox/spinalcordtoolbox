@@ -13,6 +13,7 @@ This section documents some SCT concepts and other useful things to know.
   concepts/quality-control
   concepts/spaces-and-coordinates
   concepts/temp-directories
+  concepts/warping-fields
 
 
 
