@@ -12,6 +12,8 @@ Parts of the material from the :ref:`sct_courses` slide decks/video recordings h
   pages/spinalcord_segmentation
   pages/registration_to_template
   pages/computing_metrics_for_registered_images
+  pages/registering-different-data-from-the-same-session
+  pages/computing-mtr-for-coregistered-mt-images
 
 In addition, there are in-depth guides to specific tools. Refer to these guides for cases when the default parameter settings are not sufficient.
 
