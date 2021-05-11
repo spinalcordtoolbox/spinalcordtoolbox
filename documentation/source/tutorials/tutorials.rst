@@ -10,7 +10,12 @@ Parts of the material from the :ref:`sct_courses` slide decks/video recordings h
   :maxdepth: 1
 
   pages/spinalcord_segmentation
+
+In addition, there are in-depth guides to specific tools. Refer to these guides for cases when the default parameter settings are not sufficient.
+
+.. toctree::
+  :glob:
+  :maxdepth: 1
+
   pages/correcting_sct_propseg
-
-
 
