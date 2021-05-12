@@ -39,6 +39,15 @@ def get_parser():
         action="help",
         help="Show this help message and exit."
     )
+    optional.add_argument(
+        '-v',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1, 2],
+        default=1,
+        # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
+    )
 
     return parser
 
