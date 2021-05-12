@@ -134,7 +134,7 @@ def main(argv=None):
     # Save image
     printv("Saving figure: bvecs.png\n")
     plt.savefig('bvecs.png')
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":
