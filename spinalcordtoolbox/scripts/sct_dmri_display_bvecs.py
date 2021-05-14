@@ -152,10 +152,9 @@ def main(argv=None):
     for unique_bval in np.unique(bvals):
         # skip b=0
         if unique_bval < bzero:
-            index -= 1
             continue
-        index += 1
         shell_markers[unique_bval] = symbols[index]
+        index += 1
 
     # Get total number of directions
     n_dir = len(x)
