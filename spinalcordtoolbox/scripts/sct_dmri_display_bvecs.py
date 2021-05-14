@@ -73,11 +73,11 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
         # if b=0, do not plot
         if not(abs(x[i]) < bzero and abs(x[i]) < bzero):
             ax.scatter(x[i], y[i], marker=marker[bvals[i]])
-    plt.axis('equal')
+    #plt.axis('equal')
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    # plt.xlim([-1, 1])
-    # plt.ylim([-1, 1])
+    plt.xlim([-max(bvals), max(bvals)])
+    plt.ylim([-max(bvals), max(bvals)])
     plt.grid()
 
 
@@ -196,9 +196,9 @@ def main(argv=None):
         # if b=0, do not plot
         if not(abs(x[i]) < bzero and abs(x[i]) < bzero and abs(x[i]) < bzero):
             ax.scatter(x[i], y[i], z[i], marker=shell_markers[bvals[i]])
-    # ax.set_xlim3d(-1, 1)
-    # ax.set_ylim3d(-1, 1)
-    # ax.set_zlim3d(-1, 1)
+    ax.set_xlim3d(-max(bvals), max(bvals))
+    ax.set_ylim3d(-max(bvals), max(bvals))
+    ax.set_zlim3d(-max(bvals), max(bvals))
     plt.title('3D view (use mouse to rotate)')
     plt.axis('on')
     # plt.draw()
