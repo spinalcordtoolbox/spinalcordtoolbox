@@ -16,8 +16,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from dipy.data.fetcher import read_bvals_bvecs
+from matplotlib.lines import Line2D
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
+
+# Switch matplotlib backend on MacOS in PyCharm
+if sys.platform == 'darwin':
+    import matplotlib
+    matplotlib.use('TkAgg')
 
 bzero = 0.0001  # b-zero threshold
 
@@ -73,6 +79,40 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
     # plt.xlim([-1, 1])
     # plt.ylim([-1, 1])
     plt.grid()
+
+
+def create_custom_legend(fig, shell_markers, bvals):
+    """
+    Create single custom legend for whole figure
+    :param fig: figure the legend will be creater for
+    :param shell_markers: dict with b-values and markers
+    :param bvals: ndarray with all b-values
+    :return:
+    """
+
+    # count number of bvals for individual shells
+    counted = pd.Series(bvals[bvals > bzero]).value_counts()
+
+    # Create single custom legend for whole figure with several subplots
+    lines = list()  # initialize list for individual symbols in the legend
+    labels = list()  # initialize list for individual text labels in the legend
+    # Loop across legend elements
+    for key, value in shell_markers.items():
+        lines.append(Line2D([0], [0], color='black', marker=value, markersize=10, alpha=0.5, linestyle='',
+                            markerfacecolor='none'))
+        labels.append(' b-values = {} (n = {})'.format(str(int(key)), str(counted[key])))
+
+    plt.tight_layout()
+    # Insert legend below subplots, NB - this line has to be below the plt.tight_layout()
+    legend = fig.legend(lines, labels, loc='lower left', bbox_to_anchor=(0.3, 0),
+                        bbox_transform=plt.gcf().transFigure, ncol=len(lines), fontsize=10)
+    # Change box's frame color to black
+    frame = legend.get_frame()
+    frame.set_edgecolor('black')
+    # tight layout of whole figure and shift master title up
+    fig.tight_layout()
+    fig.subplots_adjust(top=0.88, bottom=0.1)
+
 
 # MAIN
 # ==========================================================================================
@@ -163,6 +203,10 @@ def main(argv=None):
     plt.title('3D view (use mouse to rotate)')
     plt.axis('on')
     # plt.draw()
+
+    # add legend with b-values if bvals file was passed
+    if arguments.bval is not None:
+        create_custom_legend(fig, shell_markers, bvals)
 
     # Save image
     printv("Saving figure: bvecs.png\n")
