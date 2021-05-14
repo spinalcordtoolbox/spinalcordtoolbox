@@ -100,11 +100,11 @@ def create_custom_legend(fig, shell_markers, bvals):
     for key, value in shell_markers.items():
         lines.append(Line2D([0], [0], color='black', marker=value, markersize=10, alpha=0.5, linestyle='',
                             markerfacecolor='none'))
-        labels.append(' b-values = {} (n = {})'.format(str(int(key)), str(counted[key])))
+        labels.append('b-values = {} (n = {})'.format(str(int(key)), str(counted[key])))
 
     plt.tight_layout()
     # Insert legend below subplots, NB - this line has to be below the plt.tight_layout()
-    legend = fig.legend(lines, labels, loc='lower left', bbox_to_anchor=(0.3, 0),
+    legend = fig.legend(lines, labels, loc='lower left', bbox_to_anchor=(0.1, 0),
                         bbox_transform=plt.gcf().transFigure, ncol=len(lines), fontsize=10)
     # Change box's frame color to black
     frame = legend.get_frame()
