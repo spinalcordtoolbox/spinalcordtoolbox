@@ -206,6 +206,8 @@ def main(argv=None):
     # add legend with b-values if bvals file was passed
     if arguments.bval is not None:
         create_custom_legend(fig, shell_markers, bvals)
+    else:
+        plt.tight_layout()
 
     # Save image
     printv("Saving figure: bvecs.png\n")
