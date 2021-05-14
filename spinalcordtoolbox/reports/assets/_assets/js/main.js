@@ -11,6 +11,29 @@ $(document).ready(function(){
     ele.style.marginLeft = "10px";
   }
 
+  function newScroll(newRow)
+  {
+    var rowTop = newRow.position().top;
+    var rowBottom = rowTop + newRow.height();
+    var $table = $('.fixed-table-body'); // store instead of calling twice
+    var tableHeight = $table.height();
+    var currentScroll = $table.scrollTop();
+    
+    if (rowTop < 0)
+    {
+        // scroll up
+        $('.fixed-table-body').scrollTop(currentScroll + rowTop - 20);
+    }
+    else if (rowBottom  > tableHeight)
+    {
+        // scroll down
+        var scrollAmount = rowBottom - tableHeight;
+        $('.fixed-table-body').scrollTop(currentScroll + scrollAmount + 20);
+    }
+    
+    return false;
+  }
+
   $("#table").on("click", "tr", function() {
     var index = $(this).index();
     var list = $("#table").bootstrapTable('getData');
@@ -33,6 +56,9 @@ $(document).ready(function(){
   });
 
   $('html').keydown( function(evt) {
+
+    evt.preventDefault(); 
+
     var obj = $('#table tr.active');
     // Arrow down: next subject (or j)
     if (evt.which == 40 || evt.which == 74) {
@@ -42,6 +68,7 @@ $(document).ready(function(){
       else {
         obj.next().click();
       }
+      newScroll(obj)
     }
     // Arrow up: previous subject (or k)
     if (evt.which == 38 || evt.which == 75) {
@@ -51,6 +78,7 @@ $(document).ready(function(){
       else {
         obj.prev().click();
       }
+      newScroll(obj)
     }
     // f key (mark "failing" subjects using check, X, !)
     if (evt.which == 70) {

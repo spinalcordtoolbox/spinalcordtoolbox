@@ -12,6 +12,12 @@
   <link rel="stylesheet" href="_assets/css/bootstrap-table.min.css">
   <link rel="stylesheet" type="text/css" href="_assets/css/style.css">
   <title> </title>
+  <style type="text/css">
+    .fixed-table-body{
+      height: 49em;
+      position: relative;
+    }
+  </style>
   <script>
     function fetch_image_height()
     {
@@ -86,7 +92,7 @@
 		  data-toolbar="#dropdown"
                   data-sort-order="asc"
 		  data-search="true"
-                  data-response-handler="responseHandler" style="height:80%">
+                  data-response-handler="responseHandler">
 	                <thead>
 		                  <tr>
                               <th data-field="moddate" data-sortable="true">Date</th>
