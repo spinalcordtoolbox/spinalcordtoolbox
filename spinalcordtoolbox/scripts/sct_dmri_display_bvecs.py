@@ -30,6 +30,7 @@ bzero = 0.0001  # b-zero threshold
 # symbols for individual shells
 symbols = ['o', 'v', 's', 'H', 'D', 'P', '*']
 
+
 def get_parser():
     parser = SCTArgumentParser(
         description='Display scatter plot of gradient directions from bvecs file. If you have multi-shell acquisition,'
@@ -73,7 +74,7 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
         # if b=0, do not plot
         if not(abs(x[i]) < bzero and abs(x[i]) < bzero):
             ax.scatter(x[i], y[i], marker=marker[bvals[i]])
-    #plt.axis('equal')
+    # plt.axis('equal')
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.xlim([-max(bvals), max(bvals)])
@@ -148,7 +149,7 @@ def main(argv=None):
 
     # Assign scatter markers to unique bvals
     shell_markers = {}
-    index=0
+    index = 0
     for unique_bval in np.unique(bvals):
         # skip b=0
         if unique_bval < bzero:
@@ -218,4 +219,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-
