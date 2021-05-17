@@ -17,6 +17,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from dipy.data.fetcher import read_bvals_bvecs
 from matplotlib.lines import Line2D
+from matplotlib import cm
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 
@@ -26,9 +27,6 @@ if sys.platform == 'darwin':
     matplotlib.use('TkAgg')
 
 bzero = 0.0001  # b-zero threshold
-
-# symbols for individual shells
-colors = ['r', 'b', 'k', 'g', 'y', 'm']
 
 
 def get_parser():
@@ -73,7 +71,7 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
     for i in range(0, len(x)):
         # if b=0, do not plot
         if not(abs(x[i]) < bzero and abs(x[i]) < bzero):
-            ax.scatter(x[i], y[i], c=colors[bvals[i]], alpha=0.7)
+            ax.scatter(x[i], y[i], color=colors[bvals[i]], alpha=0.7)
     # plt.axis('equal')
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -142,15 +140,15 @@ def main(argv=None):
         # create dummy unit bvals array (necessary fot scatter plots)
         bvals = np.repeat(1, bvecs.shape[1])
 
-    # Assign scatter markers to unique bvals
+    # Set different color for each shell (bval)
     shell_colors = {}
-    index = 0
+    # Create iterator with different colors from brg palette
+    colors = iter(cm.brg(np.linspace(0, 1, len(np.unique(bvals)))))
     for unique_bval in np.unique(bvals):
         # skip b=0
         if unique_bval < bzero:
             continue
-        shell_colors[unique_bval] = colors[index]
-        index += 1
+        shell_colors[unique_bval] = next(colors)
 
     # Get total number of directions
     n_dir = len(x)
@@ -191,7 +189,7 @@ def main(argv=None):
         # x, y, z = bvecs[0], bvecs[1], bvecs[2]
         # if b=0, do not plot
         if not(abs(x[i]) < bzero and abs(x[i]) < bzero and abs(x[i]) < bzero):
-            ax.scatter(x[i], y[i], z[i], c=shell_colors[bvals[i]], alpha=0.7)
+            ax.scatter(x[i], y[i], z[i], color=shell_colors[bvals[i]], alpha=0.7)
     ax.set_xlim3d(-max(bvals), max(bvals))
     ax.set_ylim3d(-max(bvals), max(bvals))
     ax.set_zlim3d(-max(bvals), max(bvals))
