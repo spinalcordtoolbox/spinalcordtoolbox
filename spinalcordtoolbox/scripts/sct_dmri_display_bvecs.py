@@ -124,20 +124,16 @@ def main(argv=None):
     set_global_loglevel(verbose=verbose)
 
     fname_bvecs = arguments.bvec
-    if arguments.bval is not None:
-        fname_bvals = arguments.bval
-        # Read bvals and bvecs files
-        bvals, bvecs = read_bvals_bvecs(fname_bvals, fname_bvecs)
-    else:
-        # Read only bvecs file
-        _, bvecs = read_bvals_bvecs(None, fname_bvecs)
+    fname_bvals = arguments.bval
+    # Read bvals and bvecs files (if arguments.bval is not passed, bvals will be None)
+    bvals, bvecs = read_bvals_bvecs(fname_bvals, fname_bvecs)
 
     # if first dimension is not equal to 3 (x,y,z), transpose bvecs file
     if not bvecs.shape[0] == 3:
         bvecs = bvecs.transpose()
 
     # bvals file was passed
-    if arguments.bval is not None:
+    if bvals is not None:
         # multiply unit b-vectors by b-values
         x, y, z = bvecs[0] * bvals, bvecs[1] * bvals, bvecs[2] * bvals
     # bvals file was not passed
