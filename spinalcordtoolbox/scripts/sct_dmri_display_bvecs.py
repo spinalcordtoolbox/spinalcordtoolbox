@@ -102,8 +102,8 @@ def create_custom_legend(fig, shell_colors, bvals):
         lines.append(Line2D([0], [0], color=value, marker='o', markersize=8, alpha=0.7, linestyle=''))
         labels.append('b-values = {} (n = {})'.format(str(int(key)), str(bvals_per_shell[key])))
 
-    plt.tight_layout()
-    # Insert legend below subplots, NB - this line has to be below the plt.tight_layout()
+    # Insert legend below subplots, NB - this line has to be run after the plt.tight_layout() which is called before
+    # function call
     legend = fig.legend(lines, labels, loc='lower left', bbox_to_anchor=(0.1, 0),
                         bbox_transform=plt.gcf().transFigure, ncol=len(lines), fontsize=10)
     # Change box's frame color to black
@@ -206,11 +206,10 @@ def main(argv=None):
     plt.axis('on')
     # plt.draw()
 
+    plt.tight_layout()
     # add legend with b-values if bvals file was passed
     if arguments.bval is not None:
         create_custom_legend(fig, shell_colors, bvals)
-    else:
-        plt.tight_layout()
 
     # Save image
     printv("Saving figure: bvecs.png\n")
