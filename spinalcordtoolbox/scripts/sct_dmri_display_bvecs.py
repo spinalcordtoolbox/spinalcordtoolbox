@@ -28,7 +28,7 @@ if sys.platform == 'darwin':
 bzero = 0.0001  # b-zero threshold
 
 # symbols for individual shells
-symbols = ['o', 'v', 's', 'H', 'D', 'P', '*']
+colors = ['r', 'b', 'k', 'g', 'y', 'm']
 
 
 def get_parser():
@@ -68,12 +68,12 @@ def get_parser():
     return parser
 
 
-def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', ylabel='Y', bvals=None, marker=None):
+def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', ylabel='Y', bvals=None, colors=None):
     ax = fig_handle.add_subplot(subplot, aspect='equal')
     for i in range(0, len(x)):
         # if b=0, do not plot
         if not(abs(x[i]) < bzero and abs(x[i]) < bzero):
-            ax.scatter(x[i], y[i], marker=marker[bvals[i]])
+            ax.scatter(x[i], y[i], c=colors[bvals[i]], alpha=0.7)
     # plt.axis('equal')
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -82,26 +82,25 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
     plt.grid()
 
 
-def create_custom_legend(fig, shell_markers, bvals):
+def create_custom_legend(fig, shell_colors, bvals):
     """
     Create single custom legend for whole figure
-    :param fig: figure the legend will be creater for
-    :param shell_markers: dict with b-values and markers
+    :param fig: figure the legend will be created for
+    :param shell_colors: dict with b-values and colors
     :param bvals: ndarray with all b-values
     :return:
     """
 
     # count number of bvals for individual shells
-    counted = pd.Series(bvals[bvals > bzero]).value_counts()
+    bvals_per_shell = pd.Series(bvals[bvals > bzero]).value_counts()
 
     # Create single custom legend for whole figure with several subplots
     lines = list()  # initialize list for individual symbols in the legend
     labels = list()  # initialize list for individual text labels in the legend
     # Loop across legend elements
-    for key, value in shell_markers.items():
-        lines.append(Line2D([0], [0], color='black', marker=value, markersize=10, alpha=0.5, linestyle='',
-                            markerfacecolor='none'))
-        labels.append('b-values = {} (n = {})'.format(str(int(key)), str(counted[key])))
+    for key, value in shell_colors.items():
+        lines.append(Line2D([0], [0], color=value, marker='o', markersize=8, alpha=0.7, linestyle=''))
+        labels.append('b-values = {} (n = {})'.format(str(int(key)), str(bvals_per_shell[key])))
 
     plt.tight_layout()
     # Insert legend below subplots, NB - this line has to be below the plt.tight_layout()
@@ -148,13 +147,13 @@ def main(argv=None):
         bvals = np.repeat(1, bvecs.shape[1])
 
     # Assign scatter markers to unique bvals
-    shell_markers = {}
+    shell_colors = {}
     index = 0
     for unique_bval in np.unique(bvals):
         # skip b=0
         if unique_bval < bzero:
             continue
-        shell_markers[unique_bval] = symbols[index]
+        shell_colors[unique_bval] = colors[index]
         index += 1
 
     # Get total number of directions
@@ -185,9 +184,9 @@ def main(argv=None):
                  ', Number of effective directions (without duplicates): ' + str(n_dir_eff))
 
     # Display three views
-    plot_2dscatter(fig_handle=fig, subplot=221, x=x, y=y, xlabel='X', ylabel='Y', bvals=bvals, marker=shell_markers)
-    plot_2dscatter(fig_handle=fig, subplot=222, x=x, y=z, xlabel='X', ylabel='Z', bvals=bvals, marker=shell_markers)
-    plot_2dscatter(fig_handle=fig, subplot=223, x=y, y=z, xlabel='Y', ylabel='Z', bvals=bvals, marker=shell_markers)
+    plot_2dscatter(fig_handle=fig, subplot=221, x=x, y=y, xlabel='X', ylabel='Y', bvals=bvals, colors=shell_colors)
+    plot_2dscatter(fig_handle=fig, subplot=222, x=x, y=z, xlabel='X', ylabel='Z', bvals=bvals, colors=shell_colors)
+    plot_2dscatter(fig_handle=fig, subplot=223, x=y, y=z, xlabel='Y', ylabel='Z', bvals=bvals, colors=shell_colors)
 
     # 3D
     ax = fig.add_subplot(224, projection='3d')
@@ -196,7 +195,7 @@ def main(argv=None):
         # x, y, z = bvecs[0], bvecs[1], bvecs[2]
         # if b=0, do not plot
         if not(abs(x[i]) < bzero and abs(x[i]) < bzero and abs(x[i]) < bzero):
-            ax.scatter(x[i], y[i], z[i], marker=shell_markers[bvals[i]])
+            ax.scatter(x[i], y[i], z[i], c=shell_colors[bvals[i]], alpha=0.7)
     ax.set_xlim3d(-max(bvals), max(bvals))
     ax.set_ylim3d(-max(bvals), max(bvals))
     ax.set_zlim3d(-max(bvals), max(bvals))
@@ -206,7 +205,7 @@ def main(argv=None):
 
     # add legend with b-values if bvals file was passed
     if arguments.bval is not None:
-        create_custom_legend(fig, shell_markers, bvals)
+        create_custom_legend(fig, shell_colors, bvals)
     else:
         plt.tight_layout()
 
