@@ -21,11 +21,6 @@ from matplotlib import cm
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 
-# Switch matplotlib backend on MacOS in PyCharm
-if sys.platform == 'darwin':
-    import matplotlib
-    matplotlib.use('TkAgg')
-
 bzero = 0.0001  # b-zero threshold
 
 
@@ -208,7 +203,7 @@ def main(argv=None):
     # Save image
     printv("Saving figure: bvecs.png\n")
     plt.savefig('bvecs.png')
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":
