@@ -88,12 +88,11 @@ def create_custom_legend(fig, shell_colors, bvals):
     bvals_per_shell = pd.Series(bvals[bvals > bzero]).value_counts()
 
     # Create single custom legend for whole figure with several subplots
-    lines = list()  # initialize list for individual symbols in the legend
-    labels = list()  # initialize list for individual text labels in the legend
     # Loop across legend elements
-    for key, value in shell_colors.items():
-        lines.append(Line2D([0], [0], color=value, marker='o', markersize=8, alpha=0.7, linestyle=''))
-        labels.append('b-values = {} (n = {})'.format(str(int(key)), str(bvals_per_shell[key])))
+    lines = [Line2D([0], [0], color=color, marker='o', markersize=8, alpha=0.7, linestyle='')
+             for color in shell_colors.values()]
+    labels = [f'b-values = {shell} (n = {bvals_per_shell[shell]})'
+              for shell in shell_colors.keys()]
 
     # Insert legend below subplots, NB - this line has to be run after the plt.tight_layout() which is called before
     # function call
