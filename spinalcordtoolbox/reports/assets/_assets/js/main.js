@@ -1,3 +1,4 @@
+var selected_row =null;
 $(document).ready(function(){
   "use strict";
   var qc_details;
@@ -34,10 +35,38 @@ $(document).ready(function(){
     return false;
   }
 
+  function getActiveColumns()
+  {
+    var cols = $("table th");
+    var col_name = [];
+    for(let i=0; i<cols.length; i++)
+    {
+      if(cols[i].style.display == "")
+      {
+        col_name.push(cols[i].dataset.field);
+      }
+    }
+    return col_name;
+  }
+
+  function check_element(obj,cols,vals)
+  {
+
+    for( let i=0; i<cols.length; i++)
+    {
+      if (obj[cols[i]]!=vals[i])
+      {
+        return false
+      }
+    }
+    return true
+  }
+
   $("#table").on("click", "tr", function() {
     var index = $(this).index();
     var list = $("#table").bootstrapTable('getData');
     var item = list[index];
+    selected_row = $(this)[0].innerText;
     $("#sprite-img").attr("src", item.background_img).removeClass().addClass(item.orientation);
     $("#overlay-img").attr("src", item.overlay_img).removeClass().addClass(item.orientation);
     document.getElementById("cmdLine").innerHTML = "<b>Command:</b> " + item.cmdline;
@@ -82,7 +111,10 @@ $(document).ready(function(){
     }
     // f key (mark "failing" subjects using check, X, !)
     if (evt.which == 70) {
-      let index = obj[obj.length - 1].getAttribute("data-index");
+      vvar cols = getActiveColumns();
+      var vals = obj[0].innerText.split("\t");
+      let rel_index = obj[obj.length - 1].getAttribute("data-index");
+      let index = sct_data.findIndex(y => check_element(y,cols,vals))
       const heavy_check_mark = '\u2705'
       const heavy_ballot_x = '\u274C'
       const heavy_excl_mark = '\u26A0\uFE0F'
@@ -107,6 +139,20 @@ $(document).ready(function(){
   $("#table").bootstrapTable({
     data: sct_data
   });
+});
+
+$("#table").on('search.bs.table', function (e, row) {
+  hideColumns();
+  rows=$("table tbody tr");
+  for(let i=0; i<rows.length; i++)
+  {
+    if(rows[i].innerText == selected_row)
+    {
+      rows[i].className="active";
+      rows[i].scrollIntoView();
+    }
+  }
+  hideColumns();
 });
 
 function responseHandler(res) {
