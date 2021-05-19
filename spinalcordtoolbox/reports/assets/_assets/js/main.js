@@ -111,7 +111,7 @@ $(document).ready(function(){
     }
     // f key (mark "failing" subjects using check, X, !)
     if (evt.which == 70) {
-      vvar cols = getActiveColumns();
+      var cols = getActiveColumns();
       var vals = obj[0].innerText.split("\t");
       let rel_index = obj[obj.length - 1].getAttribute("data-index");
       let index = sct_data.findIndex(y => check_element(y,cols,vals))
