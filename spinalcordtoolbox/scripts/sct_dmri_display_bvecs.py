@@ -21,7 +21,7 @@ from matplotlib import cm
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
 
-bzero = 0.0001  # b-zero threshold
+BZERO_THRESH = 0.0001  # b-zero threshold
 
 
 def get_parser():
@@ -65,7 +65,7 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
     ax = fig_handle.add_subplot(subplot, aspect='equal')
     for i in range(0, len(x)):
         # if b=0, do not plot
-        if not(abs(x[i]) < bzero and abs(x[i]) < bzero):
+        if not(abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH):
             ax.scatter(x[i], y[i], color=colors[bvals[i]], alpha=0.7)
     # plt.axis('equal')
     plt.xlabel(xlabel)
@@ -85,7 +85,7 @@ def create_custom_legend(fig, shell_colors, bvals):
     """
 
     # count number of bvals for individual shells
-    bvals_per_shell = pd.Series(bvals[bvals > bzero]).value_counts()
+    bvals_per_shell = pd.Series(bvals[bvals > BZERO_THRESH]).value_counts()
 
     # Create single custom legend for whole figure with several subplots
     # Loop across legend elements
@@ -134,7 +134,7 @@ def main(argv=None):
     colors = iter(cm.brg(np.linspace(0, 1, len(np.unique(bvals)))))
     for unique_bval in np.unique(bvals):
         # skip b=0
-        if unique_bval < bzero:
+        if unique_bval < BZERO_THRESH:
             continue
         shell_colors[unique_bval] = next(colors)
 
@@ -147,7 +147,7 @@ def main(argv=None):
     for i in range(0, n_dir):
         add_direction = True
         # check if b=0
-        if abs(x[i]) < bzero and abs(x[i]) < bzero and abs(x[i]) < bzero:
+        if abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH:
             n_b0 += 1
             add_direction = False
         else:
@@ -176,7 +176,7 @@ def main(argv=None):
     for i in range(0, n_dir):
         # x, y, z = bvecs[0], bvecs[1], bvecs[2]
         # if b=0, do not plot
-        if not(abs(x[i]) < bzero and abs(x[i]) < bzero and abs(x[i]) < bzero):
+        if not(abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH):
             ax.scatter(x[i], y[i], z[i], color=shell_colors[bvals[i]], alpha=0.7)
     ax.set_xlim3d(-max(bvals), max(bvals))
     ax.set_ylim3d(-max(bvals), max(bvals))
