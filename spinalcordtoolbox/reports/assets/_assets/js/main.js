@@ -131,8 +131,9 @@ $(document).ready(function(){
       $("#table").bootstrapTable("load", sct_data);
       hideColumns();
       document.getElementById("table").rows[0].classList.remove("active");
-      document.getElementById("table").rows[parseInt(index)+1].className="active";
-      document.getElementById("table").rows[parseInt(index)+1].scrollIntoView();
+      document.getElementById("table").rows[parseInt(rel_index)+1].className="active";
+      selected_row = document.getElementById("table").rows[parseInt(rel_index)+1].innerText;
+      document.getElementById("table").rows[parseInt(rel_index)+1].scrollIntoView();
     }
   });
 
