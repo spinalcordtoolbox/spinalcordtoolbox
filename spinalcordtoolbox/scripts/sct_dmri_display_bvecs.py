@@ -97,13 +97,12 @@ def create_custom_legend(fig, shell_colors, bvals):
     # Insert legend below subplots, NB - this line has to be run after the plt.tight_layout() which is called before
     # function call
     legend = fig.legend(lines, labels, loc='lower left', bbox_to_anchor=(0.1, 0),
-                        bbox_transform=plt.gcf().transFigure, ncol=len(lines), fontsize=10)
+                        bbox_transform=plt.gcf().transFigure, ncol=3, fontsize=10)
     # Change box's frame color to black
     frame = legend.get_frame()
     frame.set_edgecolor('black')
     # tight layout of whole figure and shift master title up
-    fig.tight_layout()
-    fig.subplots_adjust(top=0.88, bottom=0.1)
+    fig.subplots_adjust(top=0.92, bottom=0.15)
 
 
 # MAIN
