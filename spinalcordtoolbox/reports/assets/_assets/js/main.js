@@ -66,12 +66,15 @@ $(document).ready(function(){
     var index = $(this).index();
     var list = $("#table").bootstrapTable('getData');
     var item = list[index];
+    if(index!=0){
     selected_row = $(this)[0].innerText;
     $("#sprite-img").attr("src", item.background_img).removeClass().addClass(item.orientation);
     $("#overlay-img").attr("src", item.overlay_img).removeClass().addClass(item.orientation);
     document.getElementById("cmdLine").innerHTML = "<b>Command:</b> " + item.cmdline;
     document.getElementById("sctVer").innerHTML = "<b>SCT version:</b> " + item.sct_version;
     $(this).addClass('active').siblings().removeClass('active');
+    }
+    if($('table tr.active').length>0){ $('table tr.active')[0].scrollIntoView();}
   });
 
   $('#prev-img').click( function(event) {
@@ -154,6 +157,24 @@ $("#table").on('search.bs.table', function (e, row) {
     }
   }
   hideColumns();
+});
+
+$("#table").on('sort.bs.table', function (e, row) {
+  
+  $('#table').on('post-body.bs.table', function(e,params){
+    console.log("sort finish");
+    $('#table').unbind("post-body.bs.table");
+    hideColumns();
+    rows=$("table tbody tr");
+    for(let i=0; i<rows.length; i++)
+    {
+      if(rows[i].innerText == selected_row)
+      {
+        rows[i].className="active";
+        rows[i].scrollIntoView();
+      }
+    }
+  });
 });
 
 function responseHandler(res) {
