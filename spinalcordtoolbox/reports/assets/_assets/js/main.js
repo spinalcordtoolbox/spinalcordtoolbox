@@ -66,7 +66,7 @@ $(document).ready(function(){
     var index = $(this).index();
     var list = $("#table").bootstrapTable('getData');
     var item = list[index];
-    if(index!=0){
+    if(!$(this)[0].innerHTML.includes("<th")){
     selected_row = $(this)[0].innerText;
     $("#sprite-img").attr("src", item.background_img).removeClass().addClass(item.orientation);
     $("#overlay-img").attr("src", item.overlay_img).removeClass().addClass(item.orientation);
