@@ -131,7 +131,7 @@ def main(argv=None):
     # Set different color for each shell (bval)
     shell_colors = {}
     # Create iterator with different colors from brg palette
-    colors = iter(cm.brg(np.linspace(0, 1, len(np.unique(bvals)))))
+    colors = iter(cm.nipy_spectral(np.linspace(0, 1, len(np.unique(bvals)))))
     for unique_bval in np.unique(bvals):
         # skip b=0
         if unique_bval < BZERO_THRESH:
