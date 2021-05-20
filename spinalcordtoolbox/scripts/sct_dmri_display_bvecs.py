@@ -77,7 +77,8 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
 
 def create_custom_legend(fig, shell_colors, bvals):
     """
-    Create single custom legend for whole figure
+    Create custom legend for whole figure containing number of directions (bvecs) for individual shells (bvals)
+    TODO - if legend contains >4 rows (i.e., 12 unique bvals), it overlays charts - need to be fixed in the future
     :param fig: figure the legend will be created for
     :param shell_colors: dict with b-values and colors
     :param bvals: ndarray with all b-values
