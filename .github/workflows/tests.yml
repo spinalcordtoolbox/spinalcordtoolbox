@@ -1,6 +1,7 @@
 name: Tests
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -47,7 +48,7 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-18.04
     container: archlinux
     steps:
@@ -64,7 +65,7 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-18.04
     container: debian:sid
     steps:
@@ -81,7 +82,7 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-18.04
     container: debian:testing
     steps:
@@ -98,7 +99,7 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-18.04
     container: debian:10
     steps:
@@ -115,7 +116,7 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
     container: debian:9
     steps:
@@ -145,7 +146,7 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
     container: centos:7
     steps:
@@ -171,7 +172,7 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-16.04
     steps:
       - name: Dependencies
@@ -196,7 +197,7 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    #if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    #if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     if: false # overloaded on Github currently, and we're not really using it yet.
     runs-on: macos-11.0
     steps:
@@ -214,7 +215,7 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: windows-2019
     defaults:
       run:
@@ -248,7 +249,7 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: windows-2019
     defaults:
       run:
