@@ -135,7 +135,7 @@ First, we create one or two labels in the metric space. For example, if you know
 
 .. code:: sh
 
-   sct_label_utils -i mt1_seg.nii.gz -create-seg -1,4 -o label_c3c4.nii.gz
+   sct_label_utils -i mt1_seg.nii.gz -create-seg-mid 4 -o label_c3c4.nii.gz
 
 Then, you can register to the template. Note: In case the metric image has axial resolution with thick slices, we recommend to do the registration in the subject space (instead of the template space), without cord straightening.
 
