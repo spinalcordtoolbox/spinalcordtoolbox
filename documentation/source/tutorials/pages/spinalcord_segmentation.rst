@@ -5,24 +5,15 @@ Tutorial 1: Segmenting the spinal cord
 
 This tutorial demonstrates how to use SCT's command-line scripts to segment spinal cords from anatomical MRI images of the spine. It is intended to be completed from start to finish, as it compares two different algorithms provided by SCT. It is meant to give you a feel for common usage of these tools on real-world data.
 
-.. warning::
+Prerequisites
+*************
 
-   This tutorial uses sample MRI images that must be retrieved beforehand. Please download and unzip `sct_course_london20.zip <https://osf.io/bze7v/?action=download>`_ , then open up the unzipped folder in your terminal and verify its contents using ``ls``.
+1. Read through the following page to familiarize yourself with key SCT concepts:
 
-   .. code:: sh
+    * :ref:`qc`: Primer for SCT's Quality Control interface. After each step of this tutorial, you will be able to open a QC report that lets you easily evaluate the results of each command.
 
-      ls
-      # Output:
-      # multi_subject single_subject
-
-   We will be using images from the ``single_subject/data`` directory, so navigate there and verify that it contains subdirectories for various MRI image contrasts using ``ls``.
-
-   .. code:: sh
-
-      cd single_subject/data
-      ls
-      # Output:
-      # dmri  fmri  LICENSE.txt  mt  README.txt  t1  t2  t2s
+2. Download and unzip `sct_course_london20.zip <https://osf.io/bze7v/?action=download>`_.
+3. Open a terminal and navigate to the ``sct_course_london20/single_subject/data/t2/`` directory.
 
 .. note::
 
@@ -67,25 +58,10 @@ Theory
 Example: T2w image
 ------------------
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/t2_image.png
-  :align: right
-  :figwidth: 10%
-
-  t2.nii.gz
-
-From the ``single_subject/data`` folder, navigate to the ``t2`` directory, and verify that it contains a single T2-weighted image:
-
-.. code:: sh
-
-   cd t2
-   ls
-   # Output:
-   # t2.nii.gz
-
 Running the script
 ^^^^^^^^^^^^^^^^^^
 
-Next, run the following command to process the image:
+Run the following command to process the image:
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/t2_qc.png
   :align: right
