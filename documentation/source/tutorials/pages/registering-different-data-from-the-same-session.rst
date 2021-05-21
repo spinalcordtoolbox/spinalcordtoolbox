@@ -5,8 +5,8 @@ Tutorial 4: Registering additional images from the same session (MT)
 
 This tutorial demonstrates how to register images of another contrast (given that you have previously registered anatomical data from the same session). another set of images reuse the results from past template registration
 
-Prerequisites
-*************
+Before starting this tutorial
+*****************************
 
 1. Some of the steps in this tutorial rely on the results of a previous registration procedure, so you may need  to first complete :ref:`registration-to-template`, which ensures that the following file is present:
 

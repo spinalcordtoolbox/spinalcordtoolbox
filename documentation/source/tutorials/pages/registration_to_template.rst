@@ -5,8 +5,8 @@ Tutorial 2: Registering T2 images to the PAM50 template
 
 This tutorial demonstrates a multi-step pipeline to register an anatomical MRI scan to the PAM50 Template. While T2 images are used for this tutorial, each step is applicable to multiple contrast types (T1, T2, T2*).
 
-Prerequisites
-*************
+Before starting this tutorial
+*****************************
 
 1. Read through the following pages to familiarize yourself with key SCT concepts:
 

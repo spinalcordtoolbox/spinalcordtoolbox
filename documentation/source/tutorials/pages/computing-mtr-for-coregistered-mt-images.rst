@@ -6,8 +6,8 @@ Tutorial 5: Computing MTR for PAM50-registered MT data
 This tutorial will demonstrate how to generate an MTR image for MT data, then compute MTR values for specific regions of the spinal cord using the PAM50 template.
 
 
-Prerequisites
-*************
+Before starting this tutorial
+*****************************
 
 1. Because this is a follow-on tutorial for :ref:`registering-multiple-images`, that tutorial must be completed beforehand, as several files are reused here.
 

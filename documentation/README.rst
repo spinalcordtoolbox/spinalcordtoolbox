@@ -19,8 +19,8 @@ This section considers the following placeholders:
 - `${SCT_DIR}`: installation path of SCT (eg. `/home/me/sct_3.1.1`)
 
 
-Prerequisites
-*************
+Before starting this tutorial
+*****************************
 
 There's something important to consider: Sphinx docs are usually generated from
 the source tree, and are importing the code.

@@ -5,8 +5,8 @@ Tutorial 1: Segmenting the spinal cord
 
 This tutorial demonstrates how to use SCT's command-line scripts to segment spinal cords from anatomical MRI images of the spine. It is intended to be completed from start to finish, as it compares two different algorithms provided by SCT. It is meant to give you a feel for common usage of these tools on real-world data.
 
-Prerequisites
-*************
+Before starting this tutorial
+*****************************
 
 1. Read through the following page to familiarize yourself with key SCT concepts:
 
