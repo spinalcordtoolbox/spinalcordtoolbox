@@ -1,14 +1,14 @@
 .. _registering-multiple-images:
 
-Tutorial 4: Registering additional images from the same session (MT)
-####################################################################
+Tutorial 4: Registering additional images from the same session (e.g., diffusion or magnetization transfer data)
+################################################################################################################
 
-This tutorial demonstrates how to register images of another contrast (given that you have previously registered anatomical data from the same session). another set of images reuse the results from past template registration
+This tutorial demonstrates how to register images of another contrast alongside anatomical data from the same session. In this case, we will work with magnetization transfer data, but these steps should apply to any images that are similar in appearance to T1, T2, or T2* contrasts.
 
 Before starting this tutorial
 *****************************
 
-1. Some of the steps in this tutorial rely on the results of a previous registration procedure, so you may need  to first complete :ref:`registration-to-template`, which ensures that the following file is present:
+1. Some of the steps in this tutorial rely on the results of a previous registration procedure, so you may need to first complete :ref:`registration-to-template`, which ensures that the following file is present:
 
    * ``/t2/warp_template2anat.nii.gz``: The warping field that defines the transformation from the PAM50 template to the anatomical space.
 
@@ -19,7 +19,7 @@ Before starting this tutorial
 Step 1: Segmenting MT1 data
 ***************************
 
-First, we will run the ``sct_deepseg_sc`` command to segment the spinal cord from the anatomical image.
+First, we will run the ``sct_deepseg_sc`` command to segment the spinal cord from the image containing the magnetization transfer pulse.
 
 .. code:: sh
 
@@ -27,7 +27,7 @@ First, we will run the ``sct_deepseg_sc`` command to segment the spinal cord fro
 
    # Input arguments:
    #   - i: Input image
-   #   - c: Contrast of the input image
+   #   - c: Contrast of the input image. T2 is chosen because of the visual similarity between MT1 and T2.
    #   - qc: Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
    # Output files/folders:
