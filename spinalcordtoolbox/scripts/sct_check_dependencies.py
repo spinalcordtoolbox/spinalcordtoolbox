@@ -336,7 +336,7 @@ def main(argv=None):
             print(err)
 
     except KeyError:
-        print_fail()
+        print_warning("Not set. (Note: This is expected for headless systems.)")
 
     print('')
     sys.exit(e + install_software)
