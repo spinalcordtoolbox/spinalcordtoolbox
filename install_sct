@@ -265,10 +265,8 @@ function edit_shellrc() {
     # Switch between shell
     if [[ "$THE_RC" == "bash" ]]; then
       echo "export SCT_DIR=$SCT_DIR"
-      echo "export MPLBACKEND=Agg"
     elif [[ "$THE_RC" == "csh" ]]; then
       echo "setenv SCT_DIR $SCT_DIR"
-      echo "setenv MPLBACKEND Agg"
     fi
     # add line
     echo ""
@@ -540,11 +538,6 @@ elif [[ $THE_RC == "csh" ]]; then
   DISPLAY_UPDATE_PATH="setenv PATH \"$SCT_DIR/$BIN_DIR:\$PATH\""
 else
   die "This variable is not recognized: THE_RC=$THE_RC"
-fi
-
-# Update MPLBACKEND on headless system. See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2137
-if [[ -z "${MLBACKEND:-}" ]]; then
-  export MPLBACKEND=Agg
 fi
 
 # Copy files to destination directory
