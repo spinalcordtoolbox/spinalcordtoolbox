@@ -317,16 +317,28 @@ def main(argv=None):
     if complete_test:
         print((status, output), '\n')
 
-    print_line('Check if DISPLAY variable is set')
+    print_line('Check if figure can be opened with matplotlib')
     try:
-        os.environ['DISPLAY']
-        print_ok()
+        import matplotlib
+        import matplotlib.pyplot as plt
+        # If matplotlib is using a GUI backend, the default 'show()` function will be overridden
+        # See: https://github.com/matplotlib/matplotlib/issues/20281#issuecomment-846467732
+        fig = plt.figure()
+        if getattr(fig.canvas.manager.show, "__func__", None) != matplotlib.backend_bases.FigureManagerBase.show:
+            print_ok(f" (Using GUI backend: '{matplotlib.get_backend()}')")
+        else:
+            print_fail(f" (Using non-GUI backend '{matplotlib.get_backend()}')")
+    except Exception as err:
+        print_fail()
+        print(err)
 
-        # Further check with PyQt specifically
-        print_line('Check if figure can be opened with PyQt')
-        from PyQt5.QtWidgets import QApplication, QLabel
+    print_line('Check if figure can be opened with PyQt')
+    if sys.platform == "linux" and 'DISPLAY' not in os.environ:
+        print_fail(" ($DISPLAY not set on X11-supporting system)")
+    else:
         try:
-            app = QApplication([])
+            from PyQt5.QtWidgets import QApplication, QLabel
+            _ = QApplication([])
             label = QLabel('Hello World!')
             label.show()
             label.close()
@@ -334,9 +346,6 @@ def main(argv=None):
         except Exception as err:
             print_fail()
             print(err)
-
-    except KeyError:
-        print_fail()
 
     print('')
     sys.exit(e + install_software)
