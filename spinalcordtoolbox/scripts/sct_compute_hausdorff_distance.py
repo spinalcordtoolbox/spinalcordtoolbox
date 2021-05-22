@@ -358,7 +358,7 @@ class ComputeDistances:
         data_dist = pd.DataFrame(data_dist)
         sns.violinplot(x="slice", y="distances", hue="image", data=data_dist, split=True, inner="point", cut=0)
         plt.savefig('violin_plot.png')
-        # plt.show()
+        plt.show()
 
 
 # ----------------------------------------------------------------------------------------------------------------------
