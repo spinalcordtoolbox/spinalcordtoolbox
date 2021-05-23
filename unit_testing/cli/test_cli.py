@@ -1,10 +1,6 @@
-import os
+import pytest
 import pkg_resources
 import importlib
-
-import pytest
-import matplotlib
-import matplotlib.pyplot as plt
 
 scripts = pkg_resources.get_entry_map('spinalcordtoolbox')['console_scripts'].keys()
 
@@ -46,18 +42,3 @@ def test_scripts_with_no_args_as_subprocess(script, script_runner):
     ret = script_runner.run(script)
     assert ret.returncode is 2
     assert 'usage' in ret.stdout.lower() or 'usage' in ret.stderr.lower()
-
-
-@pytest.mark.skipif('DISPLAY' in os.environ, reason="Run on headless systems only")
-def test_headless_environment_assumptions_for_matplotlib():
-    """Verify certain assumptions about how Matplotlib's backends work on headless systems."""
-    # Assumption: MPLBACKEND is set to 'Agg', a non-GUI backend (set in launcher when $DISPLAY is not set)
-    assert os.environ.get('MPLBACKEND') == 'Agg'
-
-    # Assumption: Matplotlib backend is also set to 'Agg' due to $MPLBACKEND environment variable
-    assert matplotlib.get_backend() == 'agg'
-
-    # The two lines below test another property of non-interactive backends.
-    # Context: https://github.com/matplotlib/matplotlib/issues/20281#issuecomment-846057011
-    fig, ax = plt.subplots()
-    assert getattr(fig.canvas, 'required_interactive_framework', False) is None
