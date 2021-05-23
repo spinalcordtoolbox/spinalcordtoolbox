@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import sys
 import multiprocessing
 
 from .utils import __version__, __sct_dir__, __data_dir__, __deepseg_dir__
@@ -16,16 +17,18 @@ def configure_sct_env_variables():
     if "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS" not in os.environ:
         os.environ["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(multiprocessing.cpu_count())
 
-    # DISPLAY is used by the X Window System (in UNIX): https://docstore.mik.ua/orelly/unix3/upt/ch35_08.htm
-    # We use this environment variable to detect whether or not we're on a headless system.
-    # NB: Sometimes 'DISPLAY' can be unset for SSH sessions that aren't headless. If any users encounter issues
-    # displaying plots, direct them to https://unix.stackexchange.com/q/138936
-    if "DISPLAY" not in os.environ:
+    # DISPLAY is used by the X Window System: https://docstore.mik.ua/orelly/unix3/upt/ch35_08.htm
+    # We use this environment variable to detect whether or not we're on a headless Linux system.
+    if sys.platform == "linux" and "DISPLAY" not in os.environ:
         # If we're on a headless system, set matplotlib's backend to 'Agg', which is a non-interactive backend.
-        # This will prevent interactive plots from being shown, which keeps headless systems from hanging indefinitely.
+        # This will prevent interactive plots from being shown, which keeps headless systems from crashing/hanging.
         os.environ["MPLBACKEND"] = "Agg"
-        # NB: We used to set MPLBACKEND in the user's RC file via `install_sct`. Unfortunately, this means that
-        # 'export MPLBACKEND=Agg' might be hanging around in users' RC files, even if they're not on a headless system.
+    # Caveats:
+    #    - We used to set MPLBACKEND in the user's RC file via `install_sct`. Unfortunately, this means that
+    #      'export MPLBACKEND=Agg' might be hanging around in users' RC files, even if they're not on a headless system.
+    #    - macOS uses Quartz, not X, so the backend 'macosx' will be used, and interactive plots will be shown by
+    #      default on all macOS systems. For macOS machines without a display, this could cause scripts to hang, because
+    #      an interactive plot will be shown, and there will be no way for the user to close it.
 
 
 configure_sct_env_variables()
