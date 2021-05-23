@@ -191,6 +191,12 @@ jobs:
      - name: CI
        run: |
          ./.ci.sh
+       # Matplotlib defaults to a GUI backend, meaning interactive plots are shown by default. This causes problems on
+       # headless systems. For Linux platforms, we can detect headless systems using the X11 environment variable
+       # "$DISPLAY". However, that check won't work for macOS environments using Quartz. So, to prevent the runner from
+       # hanging, we explicitly specify a non-GUI backend here:
+       env:
+         MPLBACKEND: Agg
 
   macos-11:
     name: macOS 11.0 (Big Sur)
@@ -208,6 +214,12 @@ jobs:
       - name: CI
         run: |
           ./.ci.sh
+        # Matplotlib defaults to a GUI backend, meaning interactive plots are shown by default. This causes problems on
+        # headless systems. For Linux platforms, we can detect headless systems using the X11 environment variable
+        # "$DISPLAY". However, that check won't work for macOS environments using Quartz. So, to prevent the runner from
+        # hanging, we explicitly specify a non-GUI backend here:
+        env:
+          MPLBACKEND: Agg
 
   windows-wsl-ubuntu-18_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
