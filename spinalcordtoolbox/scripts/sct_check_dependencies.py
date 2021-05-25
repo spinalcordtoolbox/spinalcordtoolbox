@@ -324,7 +324,7 @@ def main(argv=None):
         # If matplotlib is using a GUI backend, the default 'show()` function will be overridden
         # See: https://github.com/matplotlib/matplotlib/issues/20281#issuecomment-846467732
         fig = plt.figure()
-        if fig.canvas.manager.show.__func__ != matplotlib.backend_bases.FigureManagerBase.show:
+        if getattr(fig.canvas.manager.show, "__func__", None) != matplotlib.backend_bases.FigureManagerBase.show:
             print_ok(f" (Using GUI backend: '{matplotlib.get_backend()}')")
         else:
             print_fail(f" (Using non-GUI backend '{matplotlib.get_backend()}')")
