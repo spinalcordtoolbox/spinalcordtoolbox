@@ -618,22 +618,20 @@ def propseg(img_input, options_dict):
                    1, 'error')
         sys.exit(1)
 
-    # build output filename
+    # rename output files
+    fname_seg_old = os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_seg"))
     fname_seg = os.path.join(folder_output, fname_out)
+    mv(fname_seg_old, fname_seg)
+    fname_centerline_old = os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_centerline"))
     fname_centerline = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_centerline")))
-    # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
-    if rescale_header != 1.0:
-        mv(os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_seg")),
-               fname_seg)
-        mv(os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
-               fname_centerline)
-        # if user was used, copy the labelled points to the output folder (they will then be scaled back)
-        if use_viewer:
-            fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(add_suffix(fname_data,
-                                                                                              "_labels_viewer")))
-            copy(fname_labels_viewer, fname_labels_viewer_new)
-            # update variable (used later)
-            fname_labels_viewer = fname_labels_viewer_new
+    mv(fname_centerline_old, fname_centerline)
+
+    # if viewer was used, copy the labelled points to the output folder
+    if use_viewer:
+        fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_labels_viewer")))
+        copy(fname_labels_viewer, fname_labels_viewer_new)
+        # update variable (used later)
+        fname_labels_viewer = fname_labels_viewer_new
 
     # check consistency of segmentation
     if arguments.correct_seg:
