@@ -698,8 +698,9 @@ if [[ -e "$RC_FILE_PATH" ]]; then
     fi
     if grep "^export MPLBACKEND=Agg" "$RC_FILE_PATH"; then
       print info "Commenting out 'export MPLBACKEND=Agg' from previous SCT installation"
-      export MPL_COMMENTS='# The line below has been commented out by a more recent installation of SCT,\n# because export MPLBACKEND=Agg is no longer needed as of SCT v5.3.1.\n'
-      sed -ie 's/^export MPLBACKEND=Agg/'"$MPL_COMMENTS"'# export MPLBACKEND=Agg/' "$RC_FILE_PATH"
+      sed -ie 's/^export MPLBACKEND=Agg/# The line below has been commented out by a more recent installation of SCT,\
+# because export MPLBACKEND=Agg is no longer needed as of SCT v5.3.1.\
+# export MPLBACKEND=Agg/' "$RC_FILE_PATH"
     fi
 fi
 
