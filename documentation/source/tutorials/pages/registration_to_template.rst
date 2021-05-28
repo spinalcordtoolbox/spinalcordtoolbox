@@ -34,13 +34,13 @@ First, we will run the ``sct_deepseg_sc`` command to segment the spinal cord fro
 
    sct_deepseg_sc -i t2.nii.gz -c t2 -qc ~/qc_singleSubj
 
-   # Input arguments:
-   #   - i: Input image
-   #   - c: Contrast of the input image
-   #   - qc: Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
+:Input arguments:
+   - ``-i`` : Input image
+   - ``-c`` : Contrast of the input image
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
-   # Output files/folders:
-   #   - t2_seg.nii.gz: 3D binary mask of the segmented spinal cord
+:Output files/folders:
+   - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/t2_propseg_before_after.png
    :align: center
@@ -109,31 +109,19 @@ To apply this labeling algorithm, we use the following command:
 
    sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -qc ~/qc_singleSubj
 
-   # Input arguments:
-   #   - i: Input image
-   #   - s: Segmented spinal cord corresponding to the input image
-   #   - c: Contrast of the input image
-   #   - qc: Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+:Input arguments:
+   - ``-i`` : Input image
+   - ``-s`` : Segmented spinal cord corresponding to the input image
+   - ``-c`` : Contrast of the input image
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
-   # Output files/folders:
-   #   - t2_seg_labeled.nii.gz: Image containing the labeled spinal cord. Each voxel of the segmented spinal cord is
-   #                            labeled with a vertebral level as though the vertebrae were projected onto the spinal
-   #                            cord. The convention for label values is C3-->3, C4-->4, etc.
-   #   - t2_seg_labeled_discs.nii.gz: Image containing single-voxel intervertebral disc labels (without the segmented
-   #                                  spinal cord). Each label is centered within the disc. The convention for label
-   #                                  values is C2/C3-->3, C3/C4-->4, etc. This file also contains additional labels
-   #                                  (such as the pontomedullary junction and groove), but these are not yet used.
-   #   - straight_ref.nii.gz: The straightened input image produced by the intermediate straightening step. Can be
-   #                          re-used by other SCT functions that need a straight reference space.
-   #   - warp_curve2straight.nii.gz: The 4D warping field that defines the transform from the original curved
-   #                                 anatomical image to the straightened image.
-   #   - warp_straight2curve.nii.gz: The 4D warping field that defines the inverse transform from the straightened
-   #                                 anatomical image back to the original curved image.
-   #   - straightening.cache: If sct_label_vertebrae is run another time, the presence of this file (plus
-   #                          straight_ref.nii.gz and the two warping fields) will cause the straightening step to be
-   #                          skipped, thus saving processing time.
-
-The most relevant output files are ``t2_seg_labeled.nii.gz`` and ``t2_seg_labeled_discs.nii.gz``. Either of them can be used for the template registration and/or for computing metrics along the cord.
+:Output files/folders:
+   - ``straight_ref.nii.gz`` : The straightened input image produced by the intermediate straightening step. Can be re-used by other SCT functions that need a straight reference space.
+   - ``warp_curve2straight.nii.gz`` : The 4D warping field that defines the transform from the original curved anatomical image to the straightened image.
+   - ``warp_straight2curve.nii.gz`` : The 4D warping field that defines the inverse transform from the straightened anatomical image back to the original curved image.
+   - ``straightening.cache`` : SCT functions that require straightening will check for this file. If it is present in the working directory, ``straight_ref.nii.gz`` and the two warping fields will be re-used, saving processing time.
+   - ``t2_seg_labeled.nii.gz`` : Image containing the labeled spinal cord. Each voxel of the segmented spinal cord is labeled with a vertebral level as though the vertebrae were projected onto the spinal cord. The convention for label values is C3-->3, C4-->4, etc.
+   - ``t2_seg_labeled_discs.nii.gz`` : Image containing single-voxel intervertebral disc labels (without the segmented spinal cord). Each label is centered within the disc. The convention for label values is C2/C3-->3, C3/C4-->4, etc. This file also contains additional labels (such as the pontomedullary junction and groove), but these are not yet used.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-sct_label_vertebrae.png
    :align: center
@@ -158,14 +146,13 @@ As starting with 2 labels is recommended, you will need to extract them from the
 
    sct_label_utils -i t2_seg_labeled.nii.gz -vert-body 3,9 -o t2_labels_vert.nii.gz
 
-   # Input arguments:
-   #   - i: Input image containing a spinal cord labeled with vertebral levels
-   #   - vert-body: The top and bottom vertebral levels to create new point labels for. Choose labels based on
-   #                your region of interest. For example, here we have chosen '3,9', which corresponds to C3 and T1.
-   #   - o: Output filename
+:Input arguments:
+   - ``-i`` : Input image containing a spinal cord labeled with vertebral levels
+   - ``-vert-body`` : The top and bottom vertebral levels to create new point labels for. Choose labels based on your region of interest. Here, we have chosen ``3,9`` (C3 to T1).
+   - ``-o`` : Output filename
 
-   # Output files/folders:
-   #   - t2_labels_vert.nii.gz: Image containing the 2 single-voxel vertebral labels
+:Output files/folders:
+   - ``t2_labels_vert.nii.gz`` : Image containing the 2 single-voxel vertebral labels
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-sct_label_utils.png
    :align: center
@@ -223,22 +210,18 @@ To apply the registration algorithm, the following command is used:
 
    sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l t2_labels_vert.nii.gz -c t2 -qc ~/qc_singleSubj
 
-   # Input arguments:
-   #   - i: Input image
-   #   - s: Segmented spinal cord corresponding to the input image
-   #   - l: One or two labels located at the center of the spinal cord, on the mid-vertebral slice
-   #   - c: Contrast of the image. Specifying this determines which image from the template will be used.
-   #        (e.g. t2 --> PAM50_t2.nii.gz)
-   #   - qc: Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+:Input arguments:
+   - ``-i`` : Input image
+   - ``-s`` : Segmented spinal cord corresponding to the input image
+   - ``-l`` : One or two labels located at the center of the spinal cord, on the mid-vertebral slice
+   - ``-c`` : Contrast of the image. Specifying this determines the version of the template to use. (Here, ``-c t2`` means that ``PAM50_t2.nii.gz`` will be used.)
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
-   # Output files/folders:
-   #   - anat2template.nii.gz: The anatomical subject image (in this case, t2.nii.gz) warped to the template space.
-   #   - template2anat.nii.gz: The template image (in this case, PAM50_t2.nii.gz) warped to the anatomical subject
-   #                           space.
-   #   - warp_anat2template.nii.gz: The 4D warping field that defines the transform from the anatomical image to the
-   #                                template image.
-   #   - warp_template2anat.nii.gz: The 4D warping field that defines the inverse transform from the template image to
-   #                                the anatomical image.
+:Output files/folders:
+   - ``anat2template.nii.gz`` : The anatomical subject image (in this case, ``t2.nii.gz``) warped to the template space.
+   - ``template2anat.nii.gz`` : The template image (in this case, ``PAM50_t2.nii.gz``) warped to the anatomical subject space.
+   - ``warp_anat2template.nii.gz`` : The 4D warping field that defines the transform from the anatomical image to the template image.
+   - ``warp_template2anat.nii.gz`` : The 4D warping field that defines the inverse transform from the template image to the anatomical image.
 
 The most relevant of the output files is ``warp_template2anat.nii.gz``, which will be used to transform the unbiased PAM50 template into the subject space (i.e. to match the ``t2.nii.gz`` anatomical image).
 
@@ -267,17 +250,14 @@ Once the transformations are estimated, we can apply the resulting warping field
 
    sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0 -qc ~/qc_singleSubj
 
-   # Input arguments:
-   #   - d: Destination image the template will be warped to.
-   #   - w: Warping field (template space to anatomical space).
-   #   - a: Whether or not to also warp the white matter atlas. (If '-a 1' is specified, 'label/atlas' will also be output.)
-   #   - qc: Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+:Input arguments:
+   - ``-d`` : Destination image the template will be warped to.
+   - ``-w`` : Warping field (template space to anatomical space).
+   - ``-a`` : Whether or not to also warp the white matter atlas. (If ``-a 1`` is specified, ``label/atlas/`` will also be warped.)
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
-   # Output:
-   #   - label/template/: This directory contains the entirety of the PAM50 template, transformed into the subject
-   #                      space (i.e. the t2.nii.gz anatomical image).
-
-The output directory (``label/template``) contains 15 template objects, which can then be used to compute metrics for different regions of the spinal cord. An in-depth description of the template objects can be found on the :ref:`pam50` page.
+:Output files/folders:
+   - ``label/template/`` : This directory contains the 15 PAM50 template objects that have been transformed into the subject space (i.e. the t2.nii.gz anatomical image). These files can be used to compute metrics for different regions of the spinal cord. For further details on the template itself, visit the :ref:`pam50` page.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-sct_warp_template.png
    :align: center

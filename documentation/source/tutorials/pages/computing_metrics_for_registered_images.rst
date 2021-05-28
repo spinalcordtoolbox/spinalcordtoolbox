@@ -10,8 +10,8 @@ Before starting this tutorial
 
 1. Make sure that you have completed the previous tutorial, :ref:`registration-to-template`, before continuing. Output files from that tutorial will be reused here, namely:
 
-   * ``t2_seg.nii.gz``: The segmented spinal cord image file.
-   * ``label/template/``: The directory containing the registered PAM50 template files.
+   * ``t2_seg.nii.gz`` : The segmented spinal cord image file.
+   * ``label/template/`` : The directory containing the registered PAM50 template files.
 
 2. Navigate to the ``sct_course_london20/single_subject/data/t2/`` directory in a terminal window, and ensure that the files mentioned above are present.
 
@@ -27,13 +27,20 @@ Computing CSA
 CSA Averaged across vertebral levels
 ====================================
 
-First, we compute the cord cross-sectional area (CSA) and average it between C3 and C4 vertebral levels. To specify these vertebral levels, we use the ``-vert`` argument. We also specify the file containing vertebral level labels using the ``-vertfile`` argument; in this case, we specify a template object that had previously been warped to the subject space during the registration process.
+First, we compute the cord cross-sectional area (CSA) and average it between C3 and C4 vertebral levels.
 
 .. code:: sh
 
    sct_process_segmentation -i t2_seg.nii.gz -vert 3:4 -vertfile ./label/template/PAM50_levels.nii.gz -o csa_c3c4.csv
 
-This command generates a csv file named ``csa_c3c4.csv``, which is partially replicated in the table below.
+:Input arguments:
+   - ``-i`` : The input segmentation file.
+   - ``-vert`` : The vertebral levels to compute metrics across. Vertebral levels can be specified individually (``3,4``) or as a range (``3:4``).
+   - ``-vertfile`` : The label file that specifies vertebral levels. Here, we use the PAM50 template object that had been previosuly warped to the same coordinate space as the T2 segmentation.
+   - ``-o`` : The output CSV file.
+
+:Output files/folders:
+   - ``csa_c3c4.csv`` : A file containing the CSA values and other shape metrics. This file is partially replicated in the table below.
 
 .. csv-table:: CSA values computed for C3 and C4 vertebral levels (Averaged)
    :file: csa_c3c4.csv
@@ -43,13 +50,21 @@ This command generates a csv file named ``csa_c3c4.csv``, which is partially rep
 Per-level CSA
 =============
 
-Next, we will compute CSA for each individual vertebral level (rather than averaging) by using the ``-perlevel`` argument.
+Next, we will compute CSA for each individual vertebral level (rather than averaging).
 
 .. code:: sh
 
    sct_process_segmentation -i t2_seg.nii.gz -vert 3:4 -vertfile ./label/template/PAM50_levels.nii.gz -perlevel 1 -o csa_perlevel.csv
 
-This command generates a csv file named ``csa_perlevel.csv``, which is partially replicated in the table below.
+:Input arguments:
+   - ``-i`` : The input segmentation file.
+   - ``-vert`` : The vertebral levels to compute metrics across. Vertebral levels can be specified individually (``3,4``) or as a range (``3:4``).
+   - ``-vertfile`` : The label file that specifies vertebral levels. Here, we use the PAM50 template object that had been previosuly warped to the same coordinate space as the T2 segmentation.
+   - ``-perlevel`` : Set this option to 1 to turn on per-level computation.
+   - ``-o`` : The output CSV file.
+
+:Output files/folders:
+   - ``csa_perlevel.csv`` : A file containing the CSA values and other shape metrics. This file is partially replicated in the table below.
 
 .. csv-table:: CSA values computed for C3 and C4 vertebral levels
    :file: csa_perlevel.csv
@@ -63,9 +78,17 @@ Finally, to compute CSA for individual slices, set the ``-perslice`` argument to
 
 .. code:: sh
 
-   sct_process_segmentation -i t2_seg.nii.gz -z 30:35 -perslice 1 -o csa_perslice.csv
+   sct_process_segmentation -i t2_seg.nii.gz -perslice 1 -z 30:35 -o csa_perslice.csv
 
-This command generates a csv file named ``csa_perslice.csv``, which is partially replicated in the table below.
+:Input arguments:
+   - ``-i`` : The input segmentation file.
+   - ``-perslice`` : Set this option to 1 to turn on per-slice computation.
+   - ``-z`` : The Z-axis slices to compute metrics for. Slices can be specified individually (``30,31,32,33,34,35``) or as a range (``30:35``).
+   - ``-o`` : The output CSV file.
+
+:Output files/folders:
+   - ``csa_perslice.csv`` : A file containing the CSA values and other shape metrics. This file is partially replicated in the table below.
+
 
 .. csv-table:: CSA values across slices 30 to 35
    :file: csa_perslice.csv

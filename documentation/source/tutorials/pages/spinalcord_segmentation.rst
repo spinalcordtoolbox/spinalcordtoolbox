@@ -73,11 +73,13 @@ Run the following command to process the image:
 
    sct_propseg -i t2.nii.gz -c t2 -qc ~/qc_singleSubj
 
-Note that we have provided three arguments:
+:Input arguments:
+   - ``-i`` : Input image
+   - ``-c`` : Contrast of the input image
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
-- ``-i``, which indicates the input image (``t2.nii.gz``).
-- ``-c``, which indicates the contrast of the image (``t2``).
-- ``-qc``, the directory for Quality Control reporting (``~/qc_singleSubj``). QC reports will allow us to evaluate the segmentation slice-by-slice.
+:Output files/folders:
+   - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
 During execution, the script will provide status updates as it progress through its various stages.
 
@@ -138,7 +140,13 @@ Once here, we can run the ``sct_propseg`` command to process the image:
 
    sct_propseg -i t1.nii.gz -c t1 -qc ~/qc_singleSubj
 
-This command is identical to the previous step, apart from the ``-c`` argument to indicate a different contrast.
+:Input arguments:
+   - ``-i`` : Input image
+   - ``-c`` : Contrast of the input image
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
+
+:Output files/folders:
+   - ``t1_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
 Inspecting the results using QC
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -205,6 +213,15 @@ Since we aim to improve the T1 segmentation, ensure that you are still in the T1
 .. code:: sh
 
    sct_deepseg_sc -i t1.nii.gz -c t1 -qc ~/qc_singleSubj -ofolder deepseg
+
+:Input arguments:
+   - ``-i`` : Input image
+   - ``-c`` : Contrast of the input image
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
+   -  ``-ofolder`` : The folder to output files to. We specify this here so that we don't overwrite the ``t2_seg.nii.gz`` file output by ``sct_propseg``.
+
+:Output files/folders:
+   - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
 Much like ``sct_propseg``, we use the same values for ``-i``, ``-c``, and ``-qc``. In this case, however, we have added an additional ``-ofolder`` command. This is so that we do not overwrite the results generated in the previous steps, which allows us to compare the output of both algorithms. ``-ofolder`` is not strictly necessary, however.
 

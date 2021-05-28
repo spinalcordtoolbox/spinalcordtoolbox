@@ -10,7 +10,7 @@ Before starting this tutorial
 
 1. Some of the steps in this tutorial rely on the results of a previous registration procedure, so you may need to first complete :ref:`registration-to-template`, which ensures that the following file is present:
 
-   * ``/t2/warp_template2anat.nii.gz``: The warping field that defines the transformation from the PAM50 template to the anatomical space.
+   * ``/t2/warp_template2anat.nii.gz`` : The warping field that defines the transformation from the PAM50 template to the anatomical space.
 
 2. Open a terminal and navigate to the ``sct_course_london20/single_subject/data/mt/`` directory.
 
@@ -25,13 +25,13 @@ First, we will run the ``sct_deepseg_sc`` command to segment the spinal cord fro
 
    sct_deepseg_sc -i mt1.nii.gz -c t2 -qc ~/qc_singleSubj
 
-   # Input arguments:
-   #   - i: Input image
-   #   - c: Contrast of the input image. T2 is chosen because of the visual similarity between MT1 and T2.
-   #   - qc: Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+:Input arguments:
+   - ``-i`` : Input image
+   - ``-c`` : Contrast of the input image. T2 is chosen because of the visual similarity between MT1 and T2.
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
-   # Output files/folders:
-   #   - mt1_seg.nii.gz: 3D binary mask of the segmented spinal cord
+:Output files/folders:
+   - ``mt1_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-mt-sct_deepseg_sc.png
    :align: center
@@ -50,16 +50,15 @@ Next, we will create a mask to focus on the region of interest, which will incre
 
    sct_create_mask -i mt1.nii.gz -p centerline,mt1_seg.nii.gz -size 35mm -f cylinder -o mask_mt1.nii.gz
 
-   # Input arguments:
-   #   - i: Input image.
-   #   - p: Process to generate mask. By specifying 'centerline,mt1_seg.nii.gz', we tell the command to create a
-   #        mask centered around the spinal cord centerline by using the segmentation file 'mt1_seg.nii.gz'
-   #   - size: Size of the mask in the axial plane. (You can also specify size in pixels by omitting 'mm'.)
-   #   - f: Shape of the mask.
-   #   - qc: Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+:Input arguments:
+   - ``-i`` : Input image.
+   - ``-p`` : Process to generate mask. By specifying 'centerline,mt1_seg.nii.gz', we tell the command to create a mask centered around the spinal cord centerline by using the segmentation file 'mt1_seg.nii.gz'
+   - ``-size`` : Size of the mask in the axial plane. (You can also specify size in pixels by omitting 'mm'.)
+   - ``-f`` : Shape of the mask.
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
-   # Output files/folders:
-   #   - mt1_seg.nii.gz: 3D binary mask of the segmented spinal cord
+:Output files/folders:
+   - ``mt1_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-mt-sct_create_mask.png
    :align: center
@@ -99,30 +98,20 @@ To accomplish this, we now use the ``sct_register_multimodal`` command, which is
                            -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3  \
                            -owarp warp_template2mt.nii.gz -qc ~/qc_singleSubj
 
-   # Input arguments:
-   #   - i: Source image. Here, it is the PAM50 template taken from the SCT installation directory. The T2 version
-   #        of the template is used due to its similarity in contrast to the MT1 data.
-   #   - iseg: Segmentation corresponding to the source image. Here, it is the segmented spinal cord volume from
-   #           the PAM50 template, taken from the SCT installation directory.
-   #   - d: Destination image.
-   #   - dseg: Segmentation corresponding to the destination image.
-   #   - m: Mask image, which is used on the destination image to improve the accuracy over the region of interest.
-   #   - initwarp: Initial warping field to apply to the source image. Here, we supply the 'warp_template2anat.nii.gz'
-   #               file that was generated in the previous tutorial. Because we begin with the 'Template->T2'
-   #               transform already applied, the warping field that is generated here will be 'Template->T2->MT1'
-   #               a.k.a. 'Template->MT1'.
-   #   - param: Here, we will tweak the default registration parameters to specify a different nonrigid deformation.
-   #            The important change is 'algo=centermass': Because the template object is already "preregistered"
-   #            from the previous tutorial (see '-initwarp'), the benefits of the default 'algo=centermassrot' have
-   #            already been applied. So, we specify 'algo=centermass' in step 1 to exclude the unnecessary rotation.
-   #   - owarp: The name of the output warping field. This is optional. If not supplied, the filename would be
-   #            generated from the filenames '-i' and '-d', which in this case would be 'warp_PAM50_t22mt1.nii.gz'.
-   #   - qc: Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+:Input arguments:
+   - ``-i`` : Source image. Here, we select the T2 version of the PAM50 template, because the T2 contrast is the closest visual match to our MT1 data.
+   - ``-iseg`` : Segmented spinal cord for the source image. Here, we use the PAM50 segmented spinal cord volume.
+   - ``-d`` : Destination image.
+   - ``-dseg`` : Segmented spinal cord for the destination image.
+   - ``-m`` : Mask image. This is used on the destination image to improve the accuracy over the region of interest.
+   - ``-initwarp`` : Warping field used to initialize the source image. Here, we supply the ``warp_template2anat.nii.gz`` file that was generated in :ref:`registration-to-template`. Because we start with the ``Template->T2`` transformation already applied, the resulting warping field will represent ``Template->T2->MT1``. By comparison, if we registered ``Template->MT1`` directly, the warping field could differ from the previous T2 registration. So, specifying ``-initwarp`` ensures that your registration is more consistent across contrasts.
+   - ``-param`` : Here, we will tweak the default registration parameters to specify a different nonrigid deformation. The important change is ``algo=centermass``. Because the template object is already "preregistered" from the previous tutorial (using ``-initwarp``), the benefits of the default ``algo=centermassrot`` have already been realized. So, we specify a different algorithm in step 1 to exclude the unnecessary rotation.
+   - ``-owarp`` : The name of the output warping field. This is optional, and is only specified here to make the output filename a little clearer. By default, the filename would be automatically generated from the filenames ``-i`` and ``-d``, which in this case would be the (less clear) ``warp_PAM50_t22mt1.nii.gz``.
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
-   # Output files/folders:
-   #   - mt1_reg.nii.gz: TODO: Empty file. How to explain?
-   #   - PAM50_t2_reg.nii.gz: The PAM50 template image, registered to the space of the MT1 image.
-   #   - warp_template2mt.nii.gz: The warping field to transform the PAM50 template to the MT1 space.
+:Output files/folders:
+   - ``PAM50_t2_reg.nii.gz`` : The PAM50 template image, registered to the space of the MT1 image.
+   - ``warp_template2mt.nii.gz`` : The warping field to transform the PAM50 template to the MT1 space.
 
 .. _mt-registraton-without-anat:
 
@@ -165,15 +154,15 @@ Once we have the warping field, we can use it to warp the entire template to the
 
    sct_warp_template -d mt1.nii.gz -w warp_template2mt.nii.gz -a 1 -qc ~/qc_singleSubj
 
-   # Input arguments:
-   #   - d: Destination image the template will be warped to.
-   #   - w: Warping field (template space to anatomical space).
-   #   - a: Because '-a 1' is specified, the white and gray matter atlas will also be warped.
-   #   - qc: Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+:Input arguments:
+   - ``-d`` : Destination image the template will be warped to.
+   - ``-w`` : Warping field (template space to anatomical space).
+   - ``-a`` : Because ``-a 1`` is specified, the white and gray matter atlas will also be warped.
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
-   # Output:
-   #   - label/template/: This directory contains the entirety of the PAM50 template, transformed into the MT space.
-   #   - label/atlas/: This direct contains 36 NIFTI volumes for WM/GM tracts, transformed into the MT space.
+:Output:
+   - ``label/template/`` : This directory contains the entirety of the PAM50 template, transformed into the MT space.
+   - ``label/atlas/`` : This direct contains 36 NIFTI volumes for WM/GM tracts, transformed into the MT space.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-mt-sct_warp_template.png
    :align: center
