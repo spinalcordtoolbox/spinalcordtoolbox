@@ -108,6 +108,7 @@ html_theme_options = {
     "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
     "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
     "style_nav_header_background": "#FFFFFF",  # background of the logo (top left)
+    'prev_next_buttons_location': "both"
     }
 
 html_context = {
