@@ -1,11 +1,15 @@
-.. _correcting_sct_propseg:
+Fixing a failed segmentation
+############################
 
-Correcting sct_propseg
-######################
+Due to contrast variations in MR imaging protocols, the contrast between the spinal cord and the cerebro-spinal fluid (CSF) can differ between MR volumes. Therefore, the propagated segmentation method may fail sometimes in presence of artifacts, low contrast, etc.
 
-What to do if the propagated segmentation fails or contains local errors?
+You have several options if the segmentation fails:
 
-Due to contrast variations in MR imaging protocols, the contrast between the spinal cord and the cerebro-spinal fluid (CSF) can differ between MR volumes. Therefore, the propagated segmentation method may fail sometimes in presence of artefact, low contrast, etc. Here above, we propose some protocols to correct some segmentation failures.
+- Manually correct the segmentation.
+- Try a different algorithm (``sct_deepseg_sc``).
+- Tweak the parameters of ``sct_propseg`` to suit your data.
+
+This page focuses on option 3 by providing some protocols to correct segmentation failures.
 
 .. contents::
    :local:

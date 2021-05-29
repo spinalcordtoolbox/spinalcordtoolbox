@@ -1,0 +1,20 @@
+.. _spinalcord-segmentation:
+
+Spinal cord segmentation for anatomical images
+##############################################
+
+This tutorial demonstrates how to use SCT's command-line scripts to segment spinal cords from anatomical MRI images of the spine. It is intended to be completed from start to finish, as it compares two different algorithms provided by SCT. It is meant to give you a feel for common usage of these tools on real-world data.
+
+.. toctree::
+   :caption: Table of Contents
+   :maxdepth: 1
+
+   spinalcord-segmentation/before-starting
+   spinalcord-segmentation/contrasts
+   spinalcord-segmentation/sct_propseg
+   spinalcord-segmentation/sct_propseg-example-t2
+   spinalcord-segmentation/sct_propseg-example-t1
+   spinalcord-segmentation/fixing-failed-segmentations
+   spinalcord-segmentation/sct_deepseg_sc
+   spinalcord-segmentation/sct_deepseg_sc-example-t1
+   spinalcord-segmentation/choosing-an-algorithm

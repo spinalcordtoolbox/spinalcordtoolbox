@@ -1,7 +1,7 @@
 .. _customizing-registration-section:
 
-Customizing ``sct_register_to_template`` and ``sct_register_multimodal``
-########################################################################
+Customizing the registration command
+####################################
 
 This page provides recommendations for how to adjust the registration commands if the default parameters are insufficient for your specific data and pipeline.
 

@@ -1,9 +1,35 @@
-.. _sct_courses:
+.. _tutorials:
 
-Courses
-#######
+Tutorials and Courses
+#####################
 
-We organize **free** SCT courses, each year after the ISMRM conference. If you’d like to be added to the mailing list, please visit `this link <https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform>`_.
+Tutorial pages
+**************
+
+We provide the following hands-on tutorials for SCT's command-line tools. We recommend that you complete each tutorial in sequence using the "Next" and "Previous" buttons on each page.
+
+.. toctree::
+   :numbered:
+   :maxdepth: 1
+
+   tutorials/spinalcord-segmentation
+   tutorials/vertebral-labeling
+   tutorials/template-registration
+   tutorials/shape-metric-computation
+   tutorials/registering-additional-contrasts
+   tutorials/mtr-computation
+
+Video tutorials
+***************
+
+SCT also has a `YouTube channel`_ which contains additional tutorials.
+
+.. _Youtube channel: https://www.youtube.com/playlist?list=PLJ5-Fnq9XpaVgCZfY-GOGJaT0fmZN4vji
+
+SCT Course
+**********
+
+We also organize a **free** in-person SCT course each year after the ISMRM conference. The course provides a guided walkthrough of SCT, with developers and researchers on-hand to provide support and to answer any questions you may have. If you’d like to be added to the mailing list for course announcements, please visit `this link <https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform>`_.
 
 The past courses handouts are listed below:
 
@@ -28,5 +54,3 @@ The past courses handouts are listed below:
 .. _SCT course (v3.0_beta9), Singapore, 2016-05-13: https://drive.google.com/file/d/0Bx3A13n3Q_EAa3NQYjBOWjhjZm8/view?usp=sharing
 .. _SCT course (v3.0_beta1), Montreal, 2016-04-19: https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing
 .. _SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15: https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0
-
-Additionally, parts of this material have been transcribed into page-based tutorial format, and can be found in the :ref:`tutorials` page.
