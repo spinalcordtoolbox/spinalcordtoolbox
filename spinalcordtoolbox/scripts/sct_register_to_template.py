@@ -1134,13 +1134,15 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         '-w', 'warp_src2dest.nii.gz',
         '-o', 'src_reg.nii',
         '-x', interp])
-    printv('\nApply transfo dest --> source...', param.verbose)
-    sct_apply_transfo.main(argv=[
-        '-i', 'dest.nii',
-        '-d', 'src.nii',
-        '-w', 'warp_dest2src.nii.gz',
-        '-o', 'dest_reg.nii',
-        '-x', interp])
+
+    if generate_warpinv:
+        printv('\nApply transfo dest --> source...', param.verbose)
+        sct_apply_transfo.main(argv=[
+            '-i', 'dest.nii',
+            '-d', 'src.nii',
+            '-w', 'warp_dest2src.nii.gz',
+            '-o', 'dest_reg.nii',
+            '-x', interp])
 
     # come back
     os.chdir(curdir)
@@ -1149,24 +1151,23 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     # ------------------------------------------------------------------------------------------------------------------
 
     printv('\nGenerate output files...', param.verbose)
-    # generate: src_reg
-    fname_src2dest = generate_output_file(
-        os.path.join(path_tmp, "src_reg.nii"), os.path.join(path_out, file_out + ext_out), param.verbose)
 
-    # generate: dest_reg
-    fname_dest2src = generate_output_file(
-        os.path.join(path_tmp, "dest_reg.nii"), os.path.join(path_out, file_out_inv + ext_dest), param.verbose)
-
-    # generate: forward warping field
+    # generate src -> dest output files
+    fname_src2dest = os.path.join(path_out, file_out + ext_out)
+    generate_output_file(os.path.join(path_tmp, "src_reg.nii"), fname_src2dest, param.verbose)
     if fname_output_warp == '':
         fname_output_warp = os.path.join(path_out, 'warp_' + file_src + '2' + file_dest + '.nii.gz')
     generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, param.verbose)
 
-    # generate: inverse warping field
+    # generate dest -> sec output files
     if generate_warpinv:
+        fname_dest2src = os.path.join(path_out, file_out_inv + ext_dest)
+        generate_output_file(os.path.join(path_tmp, "dest_reg.nii"), fname_dest2src, param.verbose)
         fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
         generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), fname_output_warpinv, param.verbose)
     else:
+        # we skip generating files if there is no inverse warping field (i.e. we're doing a one-way registration)
+        fname_dest2src = None
         fname_output_warpinv = None
 
     # Delete temporary files
