@@ -1031,8 +1031,8 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         if fname_initwarpinv:
             warp_inverse.append(fname_initwarpinv)
         else:
-            printv('\nWARNING: No initial inverse warping field was specified, therefore the inverse warping field '
-                   'will NOT be generated.', param.verbose, 'warning')
+            printv('\nWARNING: No initial inverse warping field was specified, therefore the registration will be '
+                   'src->dest only, and the inverse warping field will NOT be generated.', param.verbose, 'warning')
             generate_warpinv = 0
     else:
         if same_space:
