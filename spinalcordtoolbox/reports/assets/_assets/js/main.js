@@ -1,4 +1,31 @@
 var selected_row =null;
+if (!Element.prototype.scrollIntoViewIfNeeded) {
+  Element.prototype.scrollIntoViewIfNeeded = function (centerIfNeeded) {
+    centerIfNeeded = arguments.length === 0 ? true : !!centerIfNeeded;
+
+    var parent = this.parentNode,
+        parentComputedStyle = window.getComputedStyle(parent, null),
+        parentBorderTopWidth = parseInt(parentComputedStyle.getPropertyValue('border-top-width')),
+        parentBorderLeftWidth = parseInt(parentComputedStyle.getPropertyValue('border-left-width')),
+        overTop = this.offsetTop - parent.offsetTop < parent.scrollTop,
+        overBottom = (this.offsetTop - parent.offsetTop + this.clientHeight - parentBorderTopWidth) > (parent.scrollTop + parent.clientHeight),
+        overLeft = this.offsetLeft - parent.offsetLeft < parent.scrollLeft,
+        overRight = (this.offsetLeft - parent.offsetLeft + this.clientWidth - parentBorderLeftWidth) > (parent.scrollLeft + parent.clientWidth),
+        alignWithTop = overTop && !overBottom;
+
+    if ((overTop || overBottom) && centerIfNeeded) {
+      parent.scrollTop = this.offsetTop - parent.offsetTop - parent.clientHeight / 2 - parentBorderTopWidth + this.clientHeight / 2;
+    }
+
+    if ((overLeft || overRight) && centerIfNeeded) {
+      parent.scrollLeft = this.offsetLeft - parent.offsetLeft - parent.clientWidth / 2 - parentBorderLeftWidth + this.clientWidth / 2;
+    }
+
+    if ((overTop || overBottom || overLeft || overRight) && !centerIfNeeded) {
+      this.scrollIntoView(alignWithTop);
+    }
+  };
+}
 $(document).ready(function(){
   "use strict";
   var qc_details;
@@ -74,7 +101,7 @@ $(document).ready(function(){
     document.getElementById("sctVer").innerHTML = "<b>SCT version:</b> " + item.sct_version;
     $(this).addClass('active').siblings().removeClass('active');
     }
-    if($('table tr.active').length>0){ $('table tr.active')[0].scrollIntoView();}
+    if($('table tr.active').length>0){ $('table tr.active')[0].scrollIntoViewIfNeeded(false);}
   });
 
   $('#prev-img').click( function(event) {
@@ -136,7 +163,7 @@ $(document).ready(function(){
       document.getElementById("table").rows[0].classList.remove("active");
       document.getElementById("table").rows[parseInt(rel_index)+1].className="active";
       selected_row = document.getElementById("table").rows[parseInt(rel_index)+1].innerText;
-      document.getElementById("table").rows[parseInt(rel_index)+1].scrollIntoView();
+      document.getElementById("table").rows[parseInt(rel_index)+1].scrollIntoViewIfNeeded(false);
     }
   });
 
@@ -162,19 +189,20 @@ $("#table").on('search.bs.table', function (e, row) {
 $("#table").on('sort.bs.table', function (e, row) {
   
   $('#table').on('post-body.bs.table', function(e,params){
-    console.log("sort finish");
-    $('#table').unbind("post-body.bs.table");
-    hideColumns();
-    rows=$("table tbody tr");
-    for(let i=0; i<rows.length; i++)
-    {
-      if(rows[i].innerText == selected_row)
-      {
-        rows[i].className="active";
-        rows[i].scrollIntoView();
-      }
-    }
-  });
+                  console.log("sort finish");
+                  $('#table').unbind("post-body.bs.table");
+                  hideColumns();
+                  rows=$("table tbody tr");
+                  for(let i=0; i<rows.length; i++)
+                  {
+                    if(rows[i].innerText == selected_row)
+                    {
+                      rows[i].className="active";
+                      rows[i].scrollIntoViewIfNeeded(false);
+                    }
+                  }
+            });
+  
 });
 
 function responseHandler(res) {

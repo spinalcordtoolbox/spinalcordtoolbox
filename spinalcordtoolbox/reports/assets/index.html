@@ -12,12 +12,36 @@
   <link rel="stylesheet" href="_assets/css/bootstrap-table.min.css">
   <link rel="stylesheet" type="text/css" href="_assets/css/style.css">
   <title> </title>
-  <style type="text/css">
-    .fixed-table-body{
-      height: 75vh;
-      position: relative;
-    }
-    
+   <style type="text/css">
+    table {
+        display: flex;
+        flex-flow: column;
+        width: 100%;
+        height: 75vh;
+        border: 0px solid #ddd;
+        }
+
+    thead {
+            flex: 0 0 auto;
+            border-top: 1px solid #ddd;
+            border-left: 1px solid #ddd;
+            background: lightgray;
+        }
+
+    tbody {
+            flex: 1 1 auto;
+            display: block;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-top: 1px solid #ddd;
+            border-left: 1px solid #ddd;
+        }
+
+    tr {
+            width: 100%;
+            display: table;
+            table-layout: fixed;
+        }    
   </style>
   <script>
     function fetch_image_height()
