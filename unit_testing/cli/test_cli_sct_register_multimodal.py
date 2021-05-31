@@ -1,4 +1,5 @@
 from pytest_console_scripts import script_runner
+import os
 import pytest
 import logging
 
@@ -17,7 +18,7 @@ def test_sct_register_multimodal_backwards_compat(script_runner):
     assert ret.stderr == ''
 
 
-def test_sct_register_multimodal_mask_no_checks(tmp_path):
+def test_sct_register_multimodal_mask_files_exist(tmp_path):
     """Run the script without validating results.
 
     TODO: Write a check that verifies the registration results as part of
@@ -35,3 +36,11 @@ def test_sct_register_multimodal_mask_no_checks(tmp_path):
         '-m', fname_mask,
         '-initwarp', sct_test_path('t2', 'warp_template2anat.nii.gz')
     ])
+
+    for path in ["PAM50_t2_reg.nii.gz", "warp_PAM50_t22mt1.nii.gz"]:
+        assert os.path.isfile(path)
+        os.unlink(path)
+
+    # Because `-initwarp` was specified (but `-initwarpinv` wasn't) the dest->seg files should NOT exist
+    for path in ["mt1_reg.nii.gz", "warp_mt12PAM50_t2.nii.gz"]:
+        assert not os.path.isfile(path)
