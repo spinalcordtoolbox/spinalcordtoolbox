@@ -497,7 +497,7 @@ def propseg(img_input, options_dict):
         elif str(arguments.init_centerline) == "hough":
             use_optic = False
         else:
-            if rescale_header is not 1:
+            if rescale_header != 1.0:
                 fname_labels_viewer = func_rescale_header(str(arguments.init_centerline), rescale_header, verbose=verbose)
             else:
                 fname_labels_viewer = str(arguments.init_centerline)
@@ -507,7 +507,7 @@ def propseg(img_input, options_dict):
         if str(arguments.init_mask) == "viewer":
             use_viewer = "mask"
         else:
-            if rescale_header is not 1:
+            if rescale_header != 1.0:
                 fname_labels_viewer = func_rescale_header(str(arguments.init_mask), rescale_header)
             else:
                 fname_labels_viewer = str(arguments.init_mask)
@@ -552,7 +552,7 @@ def propseg(img_input, options_dict):
     path_tmp = tmp_create(basename="label_vertebrae")
 
     # rescale header (see issue #1406)
-    if rescale_header is not 1:
+    if rescale_header != 1.0:
         fname_data_propseg = func_rescale_header(fname_data, rescale_header)
     else:
         fname_data_propseg = fname_data
@@ -618,22 +618,20 @@ def propseg(img_input, options_dict):
                    1, 'error')
         sys.exit(1)
 
-    # build output filename
+    # rename output files
+    fname_seg_old = os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_seg"))
     fname_seg = os.path.join(folder_output, fname_out)
+    mv(fname_seg_old, fname_seg)
+    fname_centerline_old = os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_centerline"))
     fname_centerline = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_centerline")))
-    # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
-    if rescale_header is not 1:
-        mv(os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_seg")),
-               fname_seg)
-        mv(os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
-               fname_centerline)
-        # if user was used, copy the labelled points to the output folder (they will then be scaled back)
-        if use_viewer:
-            fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(add_suffix(fname_data,
-                                                                                              "_labels_viewer")))
-            copy(fname_labels_viewer, fname_labels_viewer_new)
-            # update variable (used later)
-            fname_labels_viewer = fname_labels_viewer_new
+    mv(fname_centerline_old, fname_centerline)
+
+    # if viewer was used, copy the labelled points to the output folder
+    if use_viewer:
+        fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_labels_viewer")))
+        copy(fname_labels_viewer, fname_labels_viewer_new)
+        # update variable (used later)
+        fname_labels_viewer = fname_labels_viewer_new
 
     # check consistency of segmentation
     if arguments.correct_seg:
