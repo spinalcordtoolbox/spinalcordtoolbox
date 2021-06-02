@@ -39,7 +39,9 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'recommonmark']
+    'recommonmark',
+    'sphinx.ext.extlinks'
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -88,6 +90,12 @@ pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
+
+extlinks = {
+    # e.g. :sct_tutorial_data:`data_template-registration.zip` gets expanded into:
+    # 'https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
+    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20210609/%s', '')
+}
 
 
 # -- Options for HTML output ----------------------------------------------
