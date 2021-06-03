@@ -1,9 +1,13 @@
 Before starting this tutorial
 #############################
 
-1. Make sure that you have completed the previous tutorial, :ref:`template-registration`, before continuing. Output files from that tutorial will be reused here, namely:
+1. Make sure that you have the following files in your working directory:
 
-   * ``t2_seg.nii.gz`` : The segmented spinal cord image file.
-   * ``label/template/`` : The directory containing the registered PAM50 template files.
+   * ``single_subject/data/t2/t2_seg.nii.gz``: An 3D binary mask for the spinal cord of a T2 anatomical image.
+   * ``single_subject/data/t2/label/template/PAM50_levels.nii.gz``: The PAM50 template object containing vertebral levels, that has been transformed to the space of the T2 anatomical image.
 
-2. Navigate to the ``sct_course_london20/single_subject/data/t2/`` directory in a terminal window, and ensure that the files mentioned above are present.
+   You can get these files by downloading :sct_tutorial_data:`data_shape-metric-computation.zip`.
+
+.. note:: If you are :ref:`completing all of SCT's tutorials in sequence <completing-the-tutorials-in-sequence>`, your working directory should already contain the files needed for this tutorial.
+
+2. Open a terminal and navigate to the ``/single_subject/data/t2/`` directory.

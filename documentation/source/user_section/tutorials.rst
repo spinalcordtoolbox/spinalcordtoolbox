@@ -6,7 +6,7 @@ Tutorials and Courses
 Tutorial pages
 **************
 
-We provide the following hands-on tutorials for SCT's command-line tools. We recommend that you complete each tutorial in sequence using the "Next" and "Previous" buttons on each page.
+We provide the following hands-on tutorials for SCT's command-line tools.
 
 .. toctree::
    :numbered:
@@ -18,6 +18,13 @@ We provide the following hands-on tutorials for SCT's command-line tools. We rec
    tutorials/shape-metric-computation
    tutorials/registering-additional-contrasts
    tutorials/mtr-computation
+
+.. _completing-the-tutorials-in-sequence:
+
+Running through the tutorials in sequence
+*****************************************
+
+While each of these tutorials can be completed on its own, you can also run through all of them together in sequence. To do so, start by downloading the `full tutorial dataset <https://api.github.com/repos/spinalcordtoolbox/sct_tutorial_data/zipball/>`_, then extract it to your working directory. This download contains all of the necessary data files needed to run each tutorial in sequence. It also contains a handy script that demonstrates how to run all of the commands together as a pipeline.
 
 Video tutorials
 ***************
