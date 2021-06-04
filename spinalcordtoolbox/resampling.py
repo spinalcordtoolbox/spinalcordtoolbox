@@ -169,3 +169,108 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
 
     return nii_r
 
+def rescale_affine(fname_data, fname_out, verbose, new_size=None, new_size_type=None):
+    """
+    Rescale the affine matrix of a nibabel or Image object to accommodate smaller/bigger cord sizes.
+    Can deal with 2d, 3d or 4d image objects.
+
+    :param fname_data: The input image filename.
+    :param fname_out: The output image filename.
+    :param verbose: verbosity level
+    :param new_size: list of float: Resampling factor, final dimension or resolution, depending on new_size_type.
+    :param new_size_type: {'vox', 'factor', 'mm'}: Feature used for resampling. Examples:
+        new_size=[128, 128, 90], new_size_type='vox' --> Resampling to a dimension of 128x128x90 voxels
+        new_size=[2, 2, 2], new_size_type='factor' --> 2x isotropic upsampling
+        new_size=[1, 1, 5], new_size_type='mm' --> Resampling to a resolution of 1x1x5 mm
+    """
+    # Load data
+    logger.info('load data...')
+    nii = nib.load(fname_data)
+
+    new_size = new_size.split('x')
+
+    # If input is an Image object, create nibabel object from it
+    if type(nii) == nib.nifti1.Nifti1Image:
+        img = nii
+    elif type(nii) == Image:
+        img = nib.nifti1.Nifti1Image(nii.data, nii.hdr.get_best_affine())
+    else:
+        raise Exception(TypeError)
+
+    # Get dimensions of data
+    p = img.header.get_zooms()
+    shape = img.header.get_data_shape()
+
+    if img.ndim == 4 and new_size_type != 'factor':
+        new_size += ['1']  # needed because the code below is general, i.e., does not assume 3d input and uses img.shape
+
+    # compute new shape based on specific resampling method
+    if new_size_type == 'vox':
+        shape_r = tuple([int(new_size[i]) for i in range(img.ndim)])
+    elif new_size_type == 'factor':
+        if len(new_size) == 1:
+            # isotropic resampling
+            new_size = tuple([new_size[0] for i in range(img.ndim)])
+        # compute new shape as: shape_r = shape * f
+        shape_r = tuple([int(np.round(shape[i] * float(new_size[i]))) for i in range(img.ndim)])
+    elif new_size_type == 'mm':
+        if len(new_size) == 1:
+            # isotropic resampling
+            new_size = tuple([new_size[0] for i in range(img.ndim)])
+        # compute new shape as: shape_r = shape * (p_r / p)
+        shape_r = tuple([int(np.round(shape[i] * float(p[i]) / float(new_size[i]))) for i in range(img.ndim)])
+    else:
+        raise ValueError("'new_size_type' is not recognized.")
+
+    # Generate 3d affine transformation: R
+    affine = img.affine[:4, :4]
+    affine[3, :] = np.array([0, 0, 0, 1])  # satisfy to nifti convention. Otherwise it grabs the temporal
+    logger.debug('Affine matrix: \n' + str(affine))
+    R = np.eye(4)
+    for i in range(3):
+        try:
+            R[i, i] = img.shape[i] / float(shape_r[i])
+        except ZeroDivisionError:
+            raise ZeroDivisionError("Destination size is zero for dimension {}. You are trying to rescale to an "
+                                    "unrealistic dimension. Check your NIFTI pixdim values to make sure they are "
+                                    "not corrupted.".format(i))
+
+    affine_ar = np.dot(affine, R)
+    logger.debug('Affine matrix after rescaling: \n' + str(affine_ar))
+
+    if img.ndim == 3:
+        img_ar = nib.Nifti1Image(img.get_data(), affine_ar)
+
+    elif img.ndim == 4:
+        data4d = np.zeros(shape)
+        # Loop across 4th dimension and rescale affine for each 3d volume
+        for it in range(img.shape[3]):
+            # Create dummy 3d nibabel image
+            nii_tmp = nib.nifti1.Nifti1Image(img.get_data()[..., it], affine)
+            img3d_r = nib.Nifti1Image(nii_tmp.get_data(), affine_ar)
+            data4d[..., it] = img3d_r.get_data()
+        # Create 4d nibabel Image
+        img_ar = nib.nifti1.Nifti1Image(data4d, affine_ar)
+        # Copy over the TR parameter from original 4D image (otherwise it will be incorrectly set to 1)
+        img_ar.header.set_zooms(list(img_ar.header.get_zooms()[0:3]) + [img.header.get_zooms()[3]])
+
+    # Convert back to proper type
+    if type(nii) == nib.nifti1.Nifti1Image:
+        img_ar = nib.Nifti1Image(img_ar.get_data(), affine_ar)
+    elif type(nii) == Image:
+        img_ar = Image(img_ar.get_data(), hdr=img_ar.header, orientation=img.orientation, dim=img_ar.header.get_data_shape())
+
+    # build output file name
+    if fname_out == '':
+        fname_out = add_suffix(fname_data, '_ar')
+    else:
+        fname_out = fname_out
+
+
+    # save data
+    nib.save(img_ar, fname_out)
+
+    # to view results
+    display_viewer_syntax([fname_out], verbose=verbose)
+
+    return img_ar

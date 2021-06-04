@@ -92,6 +92,14 @@ def get_parser():
         help="Interpolation method."
     )
     optional.add_argument(
+        '-header-rescale',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Rescale the affine matrix of an image to accommodate smaller/bigger cord sizes. O = no, 1 = yes"
+    )
+    optional.add_argument(
         '-o',
         metavar=Metavar.file,
         help="Output file name. Example: dwi_resampled.nii.gz"
@@ -146,9 +154,11 @@ def main(argv=None):
         else:
             param.interpolation = arguments.x
 
-    spinalcordtoolbox.resampling.resample_file(param.fname_data, param.fname_out, param.new_size, param.new_size_type,
+    if arguments.header_rescale:
+        spinalcordtoolbox.resampling.rescale_affine(param.fname_data, param.fname_out, param.verbose, param.new_size, param.new_size_type)
+    else:
+        spinalcordtoolbox.resampling.resample_file(param.fname_data, param.fname_out, param.new_size, param.new_size_type,
                                                param.interpolation, param.verbose, fname_ref=param.ref)
-
 
 if __name__ == "__main__":
     init_sct()
