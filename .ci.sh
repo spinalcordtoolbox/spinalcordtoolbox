@@ -14,7 +14,7 @@ echo Installing SCT
 # NB: we only force in-place (-i) installs to avoid pytest running from the source
 #     instead of the installed folder, where the extra detection models are.
 #     Further explanation at https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
-#     TO BE REMOVED during https://github.com/neuropoly/spinalcordtoolbox/issues/3140.
+#     TO BE REMOVED during https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3140.
 ./install_sct -iy
 
 source python/etc/profile.d/conda.sh  # to be able to call conda

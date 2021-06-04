@@ -42,7 +42,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    community forum has been particularly helpful because my questions have been
    addressed in a timely fashion - and have resulted in quick bug fixes and
    additional features. Funding agencies interested in supporting collaborative
-   and reproducible research may view the Spinal Cord Toolbox as worthwhile
+   and reproducible research may view the Spinal Cord Toolbox as a worthwhile
    investment.
 
 
@@ -50,7 +50,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    :class: testimonial
 
    I have been working on spinal cord MRI for some years and I cannot make it
-   without help of SCT. The segmentation, co-registration and MNI template etc
+   without the help of SCT. The segmentation, co-registration and MNI template etc
    are great features in the SCT toolbox, fast and reliable. We have published
    papers in high impact journals such as PNAS and Brain, using SCT as the main
    analysis tool. SCT is well documented and the forum is really helpful as
@@ -98,7 +98,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    Over the last few years, our lab has been using SCT mostly to perform spinal
    cord PET imaging. This tool has enabled us to perform, automatically and
    very easily, image analyses that would be otherwise extremely laborious.
-   Even more impressive is how responsive Julien and his team. We love this
+   Even more impressive is how responsive Julien and his team are. We love this
    tool!
 
 
@@ -122,7 +122,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 .. admonition:: Francesco Grussu, PhD | Vall d'Hebron Institute of Oncology | Barcelona 🇪🇸
    :class: testimonial
 
-   I am a user of SCT since its first release. My work has so far focussed on
+   I have been a user of SCT since its first release. My work has so far focused on
    advanced spinal cord MRI (mainly diffusion MRI), and when I approached this
    field there were no well-established tools to process spinal cord MRI data
    yet (2012). However, since its first release back in 2015ish-2016ish, SCT
@@ -143,7 +143,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 
    I used SCT during my PhD for the process of Diffusion MRI data of spinal
    cord in the context of multiple sclerosis disease. Using this toolbox, I was
-   able to publish two conferences papers.
+   able to publish two conference papers.
 
 
 .. admonition:: Marios Yiannakas, PhD | University College London (UCL) | London 🇬🇧
@@ -160,7 +160,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    :class: testimonial
 
    SCT made a breakthrough enabling the quantification of spinal cord MRI in a
-   modern way. It also has helpful community forum even for newbies.
+   modern way. It also has a helpful community forum even for newbies.
 
 
 .. admonition:: Maria Marcella Lagana, PhD | IRCCS Fondazione Don Carlo Gnocchi ONLUS | Milan 🇮🇹
@@ -192,9 +192,9 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 .. admonition:: Karina Robles, BSc | National Autonomous University of Mexico | Mexico City 🇲🇽
    :class: testimonial
 
-   I'm using SCT for fMRI of patients who had an Cerebral Vascular Event. I've
+   I'm using SCT for fMRI of patients who had a Cerebrovascular Event. I've
    never posted on the forum, but other questions have helped me to understand
-   the questions I have. I like SCT because is a friendly toolbox for
+   the questions I have. I like SCT because it is a friendly toolbox for
    processing cervical image data.
 
 
@@ -224,7 +224,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    documentation and the community forum are world class. Every time I have
    used them (the forum, the git, or simply the documentation), I have been
    amazed by the response time and quality of the responses. It is definitively
-   an example of open source project bringing scientists together to push the
+   an example of an open source project bringing scientists together to push the
    boundaries of knowledge.
 
 
@@ -311,7 +311,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 .. admonition:: Nawal Kinany, PhD | University of Geneva | Geneva 🇨🇭
    :class: testimonial
 
-   Great toolbox, that I have, so far, mostly used to process spinal cord fMRI
+   Great toolbox that I have, so far, mostly used to process spinal cord fMRI
    data. The SCT offers powerful tools to bring this field forward and to
    enable more uniform & robust analyses (segmentation, normalization to a
    common template, etc.). The toolbox is well documented, with useful
@@ -327,8 +327,8 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    its team by recorded courses (available publicly) for users from all over
    the world. Personally, I've received valuable assistance and useful feedback
    from the SCT community. Also, the SCT team helped me to generate a specific
-   deep learning model and implemented in SCT software (to benefit other users)
-   in order to segment our ex-vivo tissues. I'm extremely grateful to all SCT
+   deep learning model and implemented it in SCT software (to benefit other users)
+   in order to segment our ex-vivo tissues. I'm extremely grateful to all of the SCT
    community for their help, support, effort and wish this community the best
    in their future work and development.
 
@@ -336,7 +336,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 .. admonition:: Mahdi Alizadeh, PhD | Thomas Jefferson University | Philadelphia 🇺🇸
    :class: testimonial
 
-   I used SCT for diffusion processing of spinal cord. Software itself was well
+   I used SCT for diffusion processing of the spinal cord. Software itself was well
    documented for me.
 
 
@@ -371,13 +371,13 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
 .. admonition:: Abdullah Althobity, MD, PhD candidate | Ministry of Education | Riyadh 🇸🇦
    :class: testimonial
 
-   I used SCT for to segment lumbar spinal cord region of EAE mouse model of
+   I used SCT to segment lumbar spinal cord regions of EAE mouse model for
    multiple sclerosis. The model has been trained very well by Charley and
    Julien after I sent them some samples. They helped me from installing the
    software to the final step. Then all my data, which is over 70 mice, have
    been easy to analyse without any error. The biggest advantage of SCT that I
-   or any colleague can run any segmentation in consistent way. The forum is
-   very useful where I get all answers for any question in very quick way.
+   or any colleague can run any segmentation in a consistent way. The forum is
+   very useful where I get all answers for any question in a very quick way.
 
 
 .. admonition:: Arash Forodighasemabadi, MSc | Aix-Marseille University | 🇫🇷

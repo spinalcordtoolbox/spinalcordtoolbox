@@ -1,6 +1,7 @@
 name: Test batch_processing.sh
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -26,7 +27,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-18.04 ]  # TODO: Change to [ ubuntu-18.04, macos-10.15 ]
-                              # macOS currently fails due to https://github.com/neuropoly/spinalcordtoolbox/issues/3194
+                              # macOS currently fails due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3194
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout SCT
@@ -35,7 +36,7 @@ jobs:
       # install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
       # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
       # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
-      # This workaround should be replaced by https://github.com/neuropoly/spinalcordtoolbox/pull/3198#discussion_r568225392
+      # This workaround should be replaced by https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3198#discussion_r568225392
       - name: Install SCT
         run: |
           PIP_PROGRESS_BAR=off ./install_sct -y

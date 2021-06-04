@@ -15,6 +15,10 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils import sct_progress_bar
 
+# NB: We use a threshold to check if an array is empty, instead of checking if it's exactly 0. This is because
+# resampling can change 0 -> ~0 (e.g. 1e-16). See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3402
+NEAR_ZERO_THRESHOLD = 1e-6
+
 
 def compute_shape(segmentation, angle_correction=True, param_centerline=None, verbose=1):
     """
@@ -52,7 +56,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
 
     # Extract min and max index in Z direction
     data_seg = im_segr.data
-    X, Y, Z = (data_seg > 0).nonzero()
+    X, Y, Z = (data_seg > NEAR_ZERO_THRESHOLD).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
     # Initialize dictionary of property_list, with 1d array of nan (default value if no property for a given slice).
@@ -142,7 +146,7 @@ def _properties2d(image, dim):
     upscale = 5  # upscale factor for resampling the input image (for better precision)
     pad = 3  # padding used for cropping
     # Check if slice is empty
-    if not image.any():
+    if np.all(image < NEAR_ZERO_THRESHOLD):
         logging.debug('The slice is empty.')
         return None
     # Normalize between 0 and 1 (also check if slice is empty)
@@ -179,7 +183,7 @@ def _properties2d(image, dim):
         _find_AP_and_RL_diameter(region.major_axis_length, region.minor_axis_length, orientation,
                                  [i / upscale for i in dim])
     # TODO: compute major_axis_length/minor_axis_length by summing weighted voxels along axis
-    # Deal with https://github.com/neuropoly/spinalcordtoolbox/issues/2307
+    # Deal with https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2307
     if any(x in platform.platform() for x in ['Darwin-15', 'Darwin-16']):
         solidity = np.nan
     else:

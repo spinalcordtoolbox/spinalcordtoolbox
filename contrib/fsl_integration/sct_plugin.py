@@ -748,7 +748,7 @@ def run_main():
                                        'from the Terminal (not by clicking on the App). '
                                        'If you are indeed running from the Terminal, please '
                                        'check the installation procedure at: '
-                                       'https://github.com/neuropoly/spinalcordtoolbox',
+                                       'https://github.com/spinalcordtoolbox/spinalcordtoolbox',
                                'SCT not found!', wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
