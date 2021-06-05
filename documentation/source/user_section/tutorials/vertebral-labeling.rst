@@ -1,7 +1,11 @@
 .. _vertebral-labeling:
 
-Labeling the vertebrae of segmented spinal cords
-################################################
+Vertebral labeling for anatomical images
+########################################
+
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/vertebral-labeling.png
+   :align: center
+   :height: 300px
 
 .. toctree::
    :caption: Table of Contents

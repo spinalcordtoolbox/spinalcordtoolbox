@@ -306,8 +306,9 @@ def main(argv=None):
         print((status, output), '\n')
 
     # check PropSeg compatibility with OS
+    set_global_loglevel(2)
     print_line('Check PropSeg compatibility with OS ')
-    status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
+    status, output = run_proc('isct_propseg', verbose=2, raise_exception=False, is_sct_binary=True)
     if status in (0, 1):
         print_ok()
     else:

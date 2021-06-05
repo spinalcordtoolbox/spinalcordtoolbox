@@ -1,7 +1,7 @@
 Spinal cord segmentation for MT1 data
 #####################################
 
-First, we will run the ``sct_deepseg_sc`` command to segment the spinal cord from the image containing the magnetization transfer pulse.
+First, we will run the ``sct_deepseg_sc`` command to segment the spinal cord from the MT1 image (i.e. the image that has the RF off-resonance pulse applied).
 
 .. code:: sh
 

@@ -11,10 +11,6 @@ You have several options if the segmentation fails:
 
 This page focuses on option 3 by providing some protocols to correct segmentation failures.
 
-.. contents::
-   :local:
-..
-
 Detection problem
 *****************
 
@@ -25,7 +21,7 @@ Two correction protocols can be used to improve the segmentation : add centerlin
 Parameter "-init"
 =================
 
-This enables you to change the starting position of the propagation (and the detection) in the image. You can provide a fraction (between 0 and 1) of the image in the inferior-superior director or the number of the desired slice.
+This enables you to change the starting position of the propagation (and the detection) in the image. You can provide either an axial slice number (where 0 represents the slice furthest towards the inferior direction), or a decimal number (between 0 and 1) indicating a fraction of the image in the inferior-superior direction.
 
 .. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/correcting_sct_propseg/propseg_init.png
   :width: 600

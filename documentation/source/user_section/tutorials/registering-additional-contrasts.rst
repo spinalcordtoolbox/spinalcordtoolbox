@@ -1,9 +1,9 @@
 .. _registering-additional-contrasts:
 
-Coregistering additional data (MT, DTI) to the PAM50 template
-#############################################################
+Coregistering additional data (MT, DT) to the PAM50 template
+##############################################################
 
-This tutorial demonstrates how to register images of other types (MT, DTI). This is especially useful if you wish to coregister multiple contrasts acquired in the same session. In this tutorial, we will work with magnetization transfer imaging (MTI) data, but these steps should apply to any images that are similar in appearance to T1, T2, or T2* contrasts.
+This tutorial demonstrates how to register images of other types, such as `magnetization transfer <https://radiopaedia.org/articles/magnetisation-transfer-1>`_ (MT) images and `diffusion tensor <https://radiopaedia.org/articles/diffusion-tensor-imaging-and-fibre-tractography?lang=us>`_ (DT) images. A common use case is to coregister multiple contrasts acquired in the same session. In this tutorial, we will work with MT data, but these steps should apply to any images that are similar in appearance to T1, T2, or T2* contrasts.
 
 
 .. toctree::

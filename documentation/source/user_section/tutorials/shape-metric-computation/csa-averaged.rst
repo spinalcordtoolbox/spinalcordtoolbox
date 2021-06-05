@@ -1,7 +1,7 @@
 CSA (Averaged across vertebral levels)
 ######################################
 
-First, we compute the cord cross-sectional area (CSA) and average it between C3 and C4 vertebral levels.
+First, we will start by computing the cord cross-sectional area (CSA) averaged across vertebral levels. As an example, we'll choose the C3 and C4 vertebral levels, but you can specify any vertebral levels present in the vertebral level file.
 
 .. code:: sh
 
@@ -10,7 +10,7 @@ First, we compute the cord cross-sectional area (CSA) and average it between C3 
 :Input arguments:
    - ``-i`` : The input segmentation file.
    - ``-vert`` : The vertebral levels to compute metrics across. Vertebral levels can be specified individually (``3,4``) or as a range (``3:4``).
-   - ``-vertfile`` : The label file that specifies vertebral levels. Here, we use the PAM50 template object that had been previosuly warped to the same coordinate space as the T2 segmentation.
+   - ``-vertfile`` : The volume containing vertebral levels. Here, we use a PAM50 template object that had been previously warped to the same coordinate space as the input segmentation.
    - ``-o`` : The output CSV file.
 
 :Output files/folders:

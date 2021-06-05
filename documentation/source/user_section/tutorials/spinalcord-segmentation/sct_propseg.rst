@@ -20,7 +20,7 @@ Theory
 
 ``sct_propseg`` itself is a single command, but internally it uses three processing steps to segment the spinal cord.
 
-#. Detect the approximate center of the spinal cord automatically using a machine learning-based method (OptiC). This is an initialization step for the core algorithm, PropSeg.
+#. Detect the approximate center of the spinal cord automatically using a machine learning-based method (`OptiC <https://archivesic.ccsd.cnrs.fr/PRIMES/hal-01713965v1>`_). This is an initialization step for the core algorithm, PropSeg.
 #. Create a coarse 3D mesh by propagating along the spinal cord (PropSeg).
 #. Refine the surface of the mesh using small adjustments.
 

@@ -1,7 +1,7 @@
-CSA (Per-slice)
-###############
+CSA (Per axial slice)
+####################
 
-Finally, to compute CSA for individual slices, set the ``-perslice`` argument to 1, combined with the ``-z`` argument to specify slice numbers (or a range of slices).
+To compute CSA for individual slices, set the ``-perslice`` argument to 1, and use ``-z`` argument to specify axial slice numbers or a range of slices. (For slice numbering, 0 represents the slice furthest towards the inferior direction.)
 
 .. code:: sh
 

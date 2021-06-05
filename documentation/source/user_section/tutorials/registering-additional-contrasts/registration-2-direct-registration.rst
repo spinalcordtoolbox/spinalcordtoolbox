@@ -5,7 +5,7 @@ Registeration Option 2: Direct registration to the template
 
 In the case that you have only the MT data without the anatomical data, you can still perform registration. To do so, all you will need to do is apply the same vertebral labeling and template registration steps that were covered in :ref:`template-registration`.
 
-First, we create one or two labels in the metric space. For example, if you know that your FOV is centered at C3/C4 disc, then you can create a label automatically with:
+First, we create one or two labels in the metric space. For example, if you know that your field of view is centered at C3/C4 disc, then you can create a label automatically with:
 
 .. code:: sh
 

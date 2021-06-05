@@ -30,6 +30,8 @@ Once here, we can run the ``sct_propseg`` command to process the image:
 :Output files/folders:
    - ``t1_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
+Once the command has finished, instructions will appear at the bottom for inspecting the results using either :ref:`Quality Control (QC) <qc>` reports or :ref:`fsleyes-instructions`.
+
 Inspecting the results using QC
 *******************************
 

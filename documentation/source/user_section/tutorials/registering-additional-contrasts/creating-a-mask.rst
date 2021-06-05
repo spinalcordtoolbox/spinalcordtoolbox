@@ -1,7 +1,7 @@
 Creating a mask around the segmentation
 #######################################
 
-Next, we will create a mask to focus on the region of interest, which will increase the accuracy of the registration. Importantly, this mask is used to exclude the tissue surrounding the spinal cord, because it can move independently of the cord and negatively impact the registration.
+Next, we will create a `binary mask <https://homepages.inf.ed.ac.uk/rbf/HIPR2/mask.htm>`_ to focus on the region of interest, which will increase the accuracy of the registration. Importantly, this mask is used to exclude the tissue surrounding the spinal cord, because it can move independently of the cord and negatively impact the registration.
 
 .. code:: sh
 

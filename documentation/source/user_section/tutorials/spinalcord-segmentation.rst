@@ -3,7 +3,11 @@
 Spinal cord segmentation for anatomical images
 ##############################################
 
-This tutorial demonstrates how to use SCT's command-line scripts to segment spinal cords from anatomical MRI images of the spine. It is intended to be completed from start to finish, as it compares two different algorithms provided by SCT. It is meant to give you a feel for common usage of these tools on real-world data.
+This tutorial demonstrates how to use SCT's command-line scripts to perform spinal cord segmentation. Segmentation in this case means to generate a 3D mask that identifies the spinal cord within anatomical images of the spine. This tutorial compares two different algorithms provided by SCT, and is meant to give you a feel for common usage of these tools on real-world data.
+
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/spinalcord-segmentation.png
+   :align: center
+   :height: 300px
 
 .. toctree::
    :caption: Table of Contents

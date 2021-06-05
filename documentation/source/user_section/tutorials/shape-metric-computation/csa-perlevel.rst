@@ -1,4 +1,4 @@
-CSA (Per-level)
+CSA (Per level)
 ###############
 
 Next, we will compute CSA for each individual vertebral level (rather than averaging).

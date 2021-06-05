@@ -3,7 +3,7 @@ Before starting this tutorial
 
 1. Read through the following page to familiarize yourself with key SCT concepts:
 
-    * :ref:`qc`: Primer for SCT's Quality Control interface. After each step of this tutorial, you will be able to open a QC report that lets you easily evaluate the results of each command.
+    * :ref:`inspecting-your-results`: After some steps in this tutorial, instructions are provided to open the output images using :ref:`Quality Control (QC) <qc>` reports and :ref:`fsleyes-instructions`.
 
 2. Make sure that you have the following files in your working directory:
 
