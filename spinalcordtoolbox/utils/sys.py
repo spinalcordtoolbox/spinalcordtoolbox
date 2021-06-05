@@ -48,7 +48,7 @@ def get_caller_module():
     return mod
 
 
-def set_global_loglevel(verbose):
+def set_loglevel(verbose):
     """
     Use SCT's verbosity values to set the logging level.
 
@@ -108,7 +108,7 @@ def init_sct():
         return _format
 
     # Initialize logging
-    set_global_loglevel(verbose=False)  # False => "INFO". For "DEBUG", must be called again with verbose=True.
+    set_loglevel(verbose=False)  # False => "INFO". For "DEBUG", must be called again with verbose=True.
     hdlr = logging.StreamHandler(sys.stdout)
     fmt = logging.Formatter()
     fmt.format = _format_wrap(fmt.format)

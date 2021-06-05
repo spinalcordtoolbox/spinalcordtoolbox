@@ -27,7 +27,7 @@ import psutil
 import requirements
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
-from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__, set_global_loglevel
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__, set_loglevel
 
 
 class bcolors:
@@ -201,7 +201,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = complete_test = arguments.complete
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     print("SCT info:")
     print("- version: {}".format(__version__))

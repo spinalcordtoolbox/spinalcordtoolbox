@@ -10,7 +10,7 @@
 
 import sys
 
-from spinalcordtoolbox.utils import init_sct, set_global_loglevel, SCTArgumentParser
+from spinalcordtoolbox.utils import init_sct, set_loglevel, SCTArgumentParser
 
 
 def get_parser():
@@ -77,7 +77,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     from spinalcordtoolbox.reports.qc import generate_qc
     # Build args list (for display)
