@@ -21,7 +21,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file, convert
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
 
 from spinalcordtoolbox.scripts.sct_image import split_data, concat_data

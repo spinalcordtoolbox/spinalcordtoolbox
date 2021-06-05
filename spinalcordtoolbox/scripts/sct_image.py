@@ -22,7 +22,7 @@ from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
                                      create_formatted_header_string, HEADER_FORMATS)
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
 

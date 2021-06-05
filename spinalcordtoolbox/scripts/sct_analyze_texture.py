@@ -17,7 +17,7 @@ from skimage.feature import greycomatrix, greycoprops
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, concat_data
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, run_proc, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 

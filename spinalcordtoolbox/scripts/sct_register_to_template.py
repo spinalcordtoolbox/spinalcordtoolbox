@@ -29,8 +29,11 @@ from spinalcordtoolbox.math import dilate, binarize
 from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import *
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
+                                        cache_save, cache_signature, cache_valid)
+from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
+                                           printv, display_viewer_syntax)
+from spinalcordtoolbox.utils.sys import set_loglevel, init_sct
 from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels

@@ -15,7 +15,7 @@
 import sys
 import os
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
 import spinalcordtoolbox.image as image
 
 

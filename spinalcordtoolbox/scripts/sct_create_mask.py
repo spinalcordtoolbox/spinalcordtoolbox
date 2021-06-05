@@ -24,7 +24,7 @@ from scipy import ndimage
 
 from spinalcordtoolbox.image import Image, empty_like
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, extract_fname, rmtree, copy
 from spinalcordtoolbox.labels import create_labels
 from spinalcordtoolbox.types import Coordinate
