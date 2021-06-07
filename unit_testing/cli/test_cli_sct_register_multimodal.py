@@ -19,10 +19,15 @@ def test_sct_register_multimodal_backwards_compat(script_runner):
 
 
 def test_sct_register_multimodal_mask_files_exist(tmp_path):
-    """Run the script without validating results.
+    """
+    Run the script without validating results.
 
-    TODO: Write a check that verifies the registration results as part of
-    https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3246."""
+    - TODO: Write a check that verifies the registration results as part of
+            https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3246.
+    - TODO: Parametrize this test to add '-initwarpinv warp_anat2template.nii.gz',
+            after the file is added to sct_testing_data:
+            https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3407#discussion_r646895013
+    """
     fname_mask = str(tmp_path/'mask_mt1.nii.gz')
     sct_create_mask.main(['-i', sct_test_path('mt', 'mt1.nii.gz'),
                           '-p', f"centerline,{sct_test_path('mt', 'mt1_seg.nii.gz')}",
