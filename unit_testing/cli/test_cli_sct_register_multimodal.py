@@ -34,13 +34,13 @@ def test_sct_register_multimodal_mask_files_exist(tmp_path):
         '-dseg', sct_test_path('mt', 'mt1_seg.nii.gz'),
         '-param', 'step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3',
         '-m', fname_mask,
-        '-initwarp', sct_test_path('t2', 'warp_template2anat.nii.gz')
+        '-initwarp', sct_test_path('t2', 'warp_template2anat.nii.gz'),
+        '-ofolder', str(tmp_path)
     ])
 
     for path in ["PAM50_t2_reg.nii.gz", "warp_PAM50_t22mt1.nii.gz"]:
-        assert os.path.isfile(path)
-        os.unlink(path)
+        assert os.path.isfile(tmp_path/path)
 
     # Because `-initwarp` was specified (but `-initwarpinv` wasn't) the dest->seg files should NOT exist
     for path in ["mt1_reg.nii.gz", "warp_mt12PAM50_t2.nii.gz"]:
-        assert not os.path.isfile(path)
+        assert not os.path.isfile(tmp_path/path)
