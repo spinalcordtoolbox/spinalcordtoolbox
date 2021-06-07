@@ -17,8 +17,10 @@ Once we have the warping field, we can use it to warp the entire template to the
    - ``label/template/`` : This directory contains the entirety of the PAM50 template, transformed into the MT space.
    - ``label/atlas/`` : This direct contains 36 NIFTI volumes for WM/GM tracts, transformed into the MT space.
 
+Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using either :ref:`Quality Control (QC) <qc>` reports or :ref:`fsleyes-instructions`.
+
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-mt-sct_warp_template.png
    :align: center
    :figwidth: 65%
 
-   Input/output images for ``sct_warp_template``.
+   Input/output images for ``sct_warp_template``

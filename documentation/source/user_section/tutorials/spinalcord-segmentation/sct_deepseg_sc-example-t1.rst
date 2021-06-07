@@ -1,12 +1,6 @@
 Hands-on Example: T1
 ####################
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/t1_deepseg_before_after.png
-   :align: right
-   :figwidth: 20%
-
-   No leakage with ``sct_deepseg_sc``
-
 Since we aim to improve the T1 segmentation, ensure that you are still in the T1 directory (``sct_course_london20/single_subject/data/t1``). Once there, run this command:
 
 .. code:: sh
@@ -22,11 +16,12 @@ Since we aim to improve the T1 segmentation, ensure that you are still in the T1
 :Output files/folders:
    - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
-Much like ``sct_propseg``, we use the same values for ``-i``, ``-c``, and ``-qc``. In this case, however, we have added an additional ``-ofolder`` command. This is so that we do not overwrite the results generated in the previous steps, which allows us to compare the output of both algorithms. ``-ofolder`` is not strictly necessary, however.
+Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using either :ref:`Quality Control (QC) <qc>` reports or :ref:`fsleyes-instructions`. You may also simply refresh the webpage that was generated in the previous sections to see the new results.
 
-Inspecting the T1w results using QC
-***********************************
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/t1_deepseg_before_after.png
+   :align: center
+   :figwidth: 65%
 
-Once again, you may either execute the command given by the script, or simply refresh the QC webpage from the previous examples.
+   No leakage with ``sct_deepseg_sc``
 
-In this case, ``sct_deepseg_sc`` has managed to improve upon the results of ``sct_propseg``.
+Looking at the relevant slices, we can see that ``sct_deepseg_sc`` has managed fix the leakage from ``sct_propseg``.

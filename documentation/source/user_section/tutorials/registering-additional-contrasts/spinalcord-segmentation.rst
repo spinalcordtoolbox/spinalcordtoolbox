@@ -15,8 +15,10 @@ First, we will run the ``sct_deepseg_sc`` command to segment the spinal cord fro
 :Output files/folders:
    - ``mt1_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
+Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using either :ref:`Quality Control (QC) <qc>` reports or :ref:`fsleyes-instructions`.
+
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-mt-sct_deepseg_sc.png
    :align: center
    :figwidth: 65%
 
-   Input/output images for ``sct_deepseg_sc``.
+   Input/output images for ``sct_deepseg_sc``

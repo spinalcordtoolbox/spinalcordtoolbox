@@ -5,10 +5,12 @@ Customizing the registration command
 
 This page provides recommendations for how to adjust the registration commands if the default parameters are insufficient for your specific data and pipeline.
 
+.. note:: Because choosing the right configuration for your data can be overwhelming, feel free to visit the `SCT forum <https://forum.spinalcordmri.org/c/sct/>`_ where you can ask for clarification and guidance.
+
 The ``-param`` argument
 ***********************
 
-The ``-param`` argument defines the transformations for each step of the registration process. The easiest way to use ``-param`` is to start with the default values, and adjust one parameter at a time.
+The ``-param`` argument is used to specify the transformations that are applied at each step of the registration process. The easiest way to use ``-param`` is to start with the default values, and adjust one parameter at a time.
 
 .. code-block::
 
@@ -18,44 +20,59 @@ The ``-param`` argument defines the transformations for each step of the registr
 
 Step 1 and step 2 can be modified, and additional steps can be added. In general, we recommend that you start with coarse-adjustment steps, then apply finer adjustments with each successive step.
 
-.. note:: Because choosing the right configuration for your data can be overwhelming, feel free to visit the `SCT forum <https://forum.spinalcordmri.org/c/sct/>`_ where you can ask for clarification and guidance.
+----
 
-Common adjustments to ``-param``
-================================
+``-param`` "algo"
+-----------------
 
-* ``type`` controls the type of data used for registration:
-
-   * ``type=im``: Use the input anatomical image.
-   * ``type=seg``: Use a separate segmentation image. Choose this if your image data contains distortions or artifacts, but you are confident in your segmentation. (For example, if you have manually corrected the segmentation.)
-   * ``type=imseg``: Use both the input image and a segmentation. Only for use with ``algo=centermassrot``.
+This parameter determines the type of nonrigid deformation to apply to the spinal cord at each step.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/sct_register_to_template-param-algo.png
-  :align: right
-  :figwidth: 40%
+  :align: center
+  :figwidth: 800px
 
-* ``algo`` determines the type of nonrigid deformation to apply to the spinal cord at each step:
+:``algo=translation``: Axial (X-Y) translation.
+:``algo=rigid``: Axial (X-Y) translation + rotation about the Z axis.
+:``algo=affine``: Axial (X-Y) translation + rotation about the Z axis + axial (X-Y) scaling.
+:``algo=syn``: Symmetric image normalization (`SyN <https://pubmed.ncbi.nlm.nih.gov/17659998/>`_) provided by `ANTs <https://stnava.github.io/ANTs/>`_.
+:``algo=b-splinesyn``: B-Spline regularized form of SyN provided by `ANTs <https://stnava. github.io/ANTs/>`_.
+:``algo=slicereg``: Slice-by-slide axial (X-Y) translation, regularized along the Z axis. This can be used as both an initial alignment of a segmented cord centerline, or to align the centers of two images that are already close.
+:``algo=centermassrot``: An alignment of the center of mass of the segmented cord with the center of mass of the template. Similar to ``algo=slicereg``, but also includes rotation, to account for a turned cord due to e.g. compression on one side of the cord.
+:``algo=columnwise``: This transformation involves a multi-step scaling operation with a much greater degree of freedom, so it is useful for highly compressed cords.
 
-   - ``algo=translation``: Axial (X-Y) translation.
-   - ``algo=rigid``: Axial (X-Y) translation + rotation about the Z axis.
-   - ``algo=affine``: Axial (X-Y) translation + rotation about the Z axis + axial (X-Y) scaling.
-   - ``algo=syn``: Symmetric image normalization (`SyN <https://pubmed.ncbi.nlm.nih.gov/17659998/>`_) provided by `ANTs <https://stnava.github.io/ANTs/>`_.
-   - ``algo=b-splinesyn``: B-Spline regularized form of SyN provided by `ANTs <https://stnava. github.io/ANTs/>`_.
-   - ``algo=slicereg``: Slice-by-slide axial (X-Y) translation, regularized along the Z axis. This can be used as both an initial alignment of a segmented cord centerline, or to align the centers of two images that are already close.
-   - ``algo=centermassrot``: An alignment of the center of mass of the segmented cord with the center of mass of the template. Similar to ``algo=slicereg``, but also includes rotation, to account for a turned cord due to e.g. compression on one side of the cord.
-   - ``algo=columnwise``: This transformation involves a multi-step scaling operation with a much greater degree of freedom, so it is useful for highly compressed cords.
+----
 
-* ``metric``: Similarity metric etc.
+``-param`` "type"
+-----------------
 
-   - ``metric=CC``
-   - ``metric=MI``
-   - ``metric=MeanSquares``:
+This parameter controls the type of data used for registration.
 
-* ``slicewise`` controls whether or not transformations should be computed on a slice-by-slice basis:
+:``type=im``: Use the input anatomical image.
+:``type=seg``: Use a separate segmentation image. Choose this if your image data contains distortions or artifacts, but you are confident in your segmentation. (For example, if you have manually corrected the segmentation.)
+:``type=imseg``: Use both the input image and a segmentation. Only for use with ``algo=centermassrot``.
 
-   * ``slicewise=1``: Apply deformations on a slice-by-slice basis.
-   * ``slicewise=0``: Regularize transformations across the Z axis.
+----
 
-For information about other parameters, please view the help description of ``sct_register_multimodal -h``.
+``-param`` "metric"
+-------------------
+
+This parameter determines which similarity metric is used to match the vertebral levels between the anatomical image and the template.
+
+:``metric=CC``:
+:``metric=MI``:
+:``metric=MeanSquares``:
+
+----
+
+``-param`` "slicewise"
+----------------------
+
+This parameter controls whether or not transformations should be computed on a slice-by-slice basis:
+
+:``slicewise=1``: Apply deformations on a slice-by-slice basis.
+:``slicewise=0``: Regularize transformations across the Z axis.
+
+----
 
 The ``-ref`` argument
 *********************

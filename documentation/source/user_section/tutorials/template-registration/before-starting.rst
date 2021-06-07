@@ -11,10 +11,14 @@ Before starting this tutorial
 
    * ``single_subject/data/t2/t2.nii.gz``: An anatomical spinal cord scan in the T1 contrast.
    * ``single_subject/data/t2/t2_seg.nii.gz``: An 3D binary mask for the spinal cord.
-   * ``t2_labels_vert.nii.gz`` : Image containing the 2 single-voxel vertebral labels
+   * ``single_subject/data/t2/t2_labels_vert.nii.gz`` : Image containing the 2 single-voxel vertebral labels
 
    You can get these files by downloading :sct_tutorial_data:`data_template-registration.zip`.
 
 .. note:: If you are :ref:`completing all of SCT's tutorials in sequence <completing-the-tutorials-in-sequence>`, your working directory should already contain the files needed for this tutorial.
 
-3. Open a terminal and navigate to the ``/single_subject/data/t2/`` directory.
+3. Open a terminal and navigate to the ``single_subject/data/t2/`` directory:
+
+.. code:: sh
+
+   cd {PATH_TO_DOWNLOADED_DATA}/single_subject/data/t2/

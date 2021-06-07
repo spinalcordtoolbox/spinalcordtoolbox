@@ -18,8 +18,10 @@ Once the transformations are estimated, we can apply the resulting warping field
 :Output files/folders:
    - ``label/template/`` : This directory contains the 15 PAM50 template objects that have been transformed into the subject space (i.e. the t2.nii.gz anatomical image). These files can be used to compute metrics for different regions of the spinal cord. For further details on the template itself, visit the :ref:`pam50` page.
 
+Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using either :ref:`Quality Control (QC) <qc>` reports or :ref:`fsleyes-instructions`.
+
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-sct_warp_template.png
    :align: center
    :figwidth: 65%
 
-   Input/output images for ``sct_warp_template``.
+   Input/output images for ``sct_warp_template``

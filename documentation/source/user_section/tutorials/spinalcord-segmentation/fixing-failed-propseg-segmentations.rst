@@ -1,5 +1,5 @@
-Fixing a failed segmentation
-############################
+Fixing a failed ``sct_propseg`` segmentation
+############################################
 
 Due to contrast variations in MR imaging protocols, the contrast between the spinal cord and the cerebro-spinal fluid (CSF) can differ between MR volumes. Therefore, the propagated segmentation method may fail sometimes in presence of artifacts, low contrast, etc.
 

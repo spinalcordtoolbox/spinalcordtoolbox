@@ -3,7 +3,7 @@
 Computing MTR for PAM50-registered MT data
 ##########################################
 
-This tutorial will demonstrate how to generate a `magnetization transfer ratio (MTR) <https://radiopaedia.org/articles/magnetisation-transfer-1>` image for magnetization transfer data.
+This tutorial will demonstrate how to generate a `magnetization transfer ratio (MTR) <https://radiopaedia.org/articles/magnetisation-transfer-1>`_ image for magnetization transfer data.
 
 .. toctree::
    :caption: Table of Contents

@@ -17,8 +17,10 @@ Following the recommendations in :ref:`how-many-labels`, we can use ``sct_label_
 :Output files/folders:
    - ``t2_labels_vert.nii.gz`` : Image containing the 2 single-voxel vertebral labels
 
+Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`fsleyes-instructions`. However, it is worth noting that because the output labels are single-voxel, you may need to use zoom to see them clearly in FSLeyes.
+
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-sct_label_utils.png
    :align: center
    :figwidth: 65%
 
-   Input/output images for ``sct_label_utils``.
+   Input/output images for ``sct_label_utils``

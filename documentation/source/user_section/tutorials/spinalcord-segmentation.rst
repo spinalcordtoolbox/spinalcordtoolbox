@@ -18,7 +18,7 @@ This tutorial demonstrates how to use SCT's command-line scripts to perform spin
    spinalcord-segmentation/sct_propseg
    spinalcord-segmentation/sct_propseg-example-t2
    spinalcord-segmentation/sct_propseg-example-t1
-   spinalcord-segmentation/fixing-failed-segmentations
+   spinalcord-segmentation/fixing-failed-propseg-segmentations
    spinalcord-segmentation/sct_deepseg_sc
    spinalcord-segmentation/sct_deepseg_sc-example-t1
    spinalcord-segmentation/choosing-an-algorithm
