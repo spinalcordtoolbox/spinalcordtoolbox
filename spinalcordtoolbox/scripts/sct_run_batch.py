@@ -177,11 +177,17 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     script_base = re.sub('\\.sh$', '', os.path.basename(script))
     script_full = os.path.abspath(os.path.expanduser(script))
 
-    subject = os.path.basename(subj_dir)
-    log_file = os.path.join(path_log, '{}_{}.log'.format(script_base, subject))
-    err_file = os.path.join(path_log, 'err.{}_{}.log'.format(script_base, subject))
+    subject, session = subj_dir.split(os.path.sep)
+    # If there is no session, 'session' will be empty
+    if session:
+        subject_session = subject + '_' + session
+    else:
+        subject_session = subject
+    # subject = os.path.basename(subj_dir)
+    log_file = os.path.join(path_log, '{}_{}.log'.format(script_base, subject_session))
+    err_file = os.path.join(path_log, 'err.{}_{}.log'.format(script_base, subject_session))
 
-    print('Started at {}: {}. See log file {}'.format(time.strftime('%Hh%Mm%Ss'), subject, log_file), flush=True)
+    print('Started at {}: {}. See log file {}'.format(time.strftime('%Hh%Mm%Ss'), subject_session, log_file), flush=True)
 
     # A full copy of the environment is needed otherwise sct programs won't necessarily be found
     envir = os.environ.copy()
