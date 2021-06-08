@@ -404,7 +404,7 @@ def main(argv=None):
     if arguments.exclude_list is not None:
         subject_dirs = [f for f in subject_dirs if f not in arguments.exclude_list]
 
-    # Determine the number of jobs we can run simulataneously
+    # Determine the number of jobs we can run simultaneously
     if arguments.jobs < 1:
         jobs = multiprocessing.cpu_count() + arguments.jobs
     else:
