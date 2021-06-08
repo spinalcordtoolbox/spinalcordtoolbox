@@ -82,3 +82,26 @@ def test_non_executable_task():
                             '-script', script.name,
                             '-continue-on-error', 0])
 
+
+def test_separate_sessions():
+    # Test that sessions ('ses') can be separated so that sct_run_batch can process each session folder separately.
+    with TemporaryDirectory() as data,\
+            TemporaryDirectory() as out,\
+            NamedTemporaryFile('w', suffix='.sh') as script:
+        # Create dummy BIDS directory with sessions
+        os.makedirs(os.path.join(data, 'sub-01', 'ses-01'))
+        os.makedirs(os.path.join(data, 'sub-01', 'ses-02'))
+        os.makedirs(os.path.join(data, 'sub-01', 'ses-03'))
+        os.makedirs(os.path.join(data, 'sub-02', 'ses-01'))
+        os.makedirs(os.path.join(data, 'sub-02', 'ses-02'))
+        # Dummy script that displays subject
+        script_text = """
+        #!/bin/bash
+        SUBJECT=$1
+        echo $SUBJECT
+        """
+        script.write(dedent(script_text)[1:])  #indexing removes beginning newline
+        script.flush()
+
+        sct_run_batch.main(['-path-data', data, '-path-out', out, '-script', script.name])
+        # TODO: check first log file: it should say sub-01_ses-01
