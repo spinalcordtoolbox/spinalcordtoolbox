@@ -381,7 +381,18 @@ def main(argv=None):
     print("git origin: {}\n".format(__get_git_origin(path_to_git_folder=path_data)))
 
     # Find subjects and process inclusion/exclusions
-    subject_dirs = [f for f in os.listdir(path_data) if f.startswith(arguments.subject_prefix)]
+    subject_dirs = []
+    subject_flat_dirs = [f for f in os.listdir(path_data) if f.startswith(arguments.subject_prefix)]
+    for isub in subject_flat_dirs:
+        session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
+        if not session_dirs:
+            # There is no session folder, so we consider only sub- directory: sub-XX
+            subject_dirs.append(isub)
+        else:
+            # There is a session folder, so we concatenate: sub-XX/ses-YY
+            session_dirs.sort()
+            for isess in session_dirs:
+                subject_dirs.append(os.path.join(isub, isess))
 
     # Handle inclusion lists
     assert not ((arguments.include is not None) and (arguments.include_list is not None)),\
