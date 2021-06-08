@@ -1,3 +1,4 @@
+import glob
 import os
 import sys
 import pytest
@@ -104,4 +105,5 @@ def test_separate_sessions():
         script.flush()
 
         sct_run_batch.main(['-path-data', data, '-path-out', out, '-script', script.name])
-        # TODO: check first log file: it should say sub-01_ses-01
+        file_log = glob.glob(os.path.join(out, 'log', '*sub-01_ses-01.log'))[0]
+        assert 'sub-01/ses-01' in open(file_log, "r").read()
