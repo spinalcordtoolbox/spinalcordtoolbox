@@ -60,6 +60,7 @@ def test_only_one_include():
                                 'arg2', '-path-data', data, '-path-out', out
                                 , '-script', out])
 
+
 def test_non_executable_task():
     data_path = sct_test_path()
     with \
