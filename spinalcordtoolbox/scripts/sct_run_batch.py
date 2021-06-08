@@ -177,13 +177,13 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     script_base = re.sub('\\.sh$', '', os.path.basename(script))
     script_full = os.path.abspath(os.path.expanduser(script))
 
-    subject, session = subj_dir.split(os.path.sep)
-    # If there is no session, 'session' will be empty
-    if session:
+    if os.path.sep in subj_dir:
+        subject, session = subj_dir.split(os.path.sep)
         subject_session = subject + '_' + session
     else:
+        subject = subj_dir
         subject_session = subject
-    # subject = os.path.basename(subj_dir)
+
     log_file = os.path.join(path_log, '{}_{}.log'.format(script_base, subject_session))
     err_file = os.path.join(path_log, 'err.{}_{}.log'.format(script_base, subject_session))
 
@@ -390,15 +390,17 @@ def main(argv=None):
     subject_dirs = []
     subject_flat_dirs = [f for f in os.listdir(path_data) if f.startswith(arguments.subject_prefix)]
     for isub in subject_flat_dirs:
-        session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
-        if not session_dirs:
-            # There is no session folder, so we consider only sub- directory: sub-XX
-            subject_dirs.append(isub)
-        else:
-            # There is a session folder, so we concatenate: sub-XX/ses-YY
-            session_dirs.sort()
-            for isess in session_dirs:
-                subject_dirs.append(os.path.join(isub, isess))
+        # Only consider folders
+        if os.path.isdir(os.path.join(path_data, isub)):
+            session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
+            if not session_dirs:
+                # There is no session folder, so we consider only sub- directory: sub-XX
+                subject_dirs.append(isub)
+            else:
+                # There is a session folder, so we concatenate: sub-XX/ses-YY
+                session_dirs.sort()
+                for isess in session_dirs:
+                    subject_dirs.append(os.path.join(isub, isess))
 
     # Handle inclusion lists
     assert not ((arguments.include is not None) and (arguments.include_list is not None)),\
