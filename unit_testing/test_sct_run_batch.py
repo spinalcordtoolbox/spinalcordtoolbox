@@ -12,6 +12,22 @@ sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 from spinalcordtoolbox.scripts import sct_run_batch
 
 
+def write_dummy_script(script):
+    """
+    Dummy script that displays subject
+    :param script: NamedTemporaryFile object. Script to write
+    :return:
+    """
+    script_text = """
+    #!/bin/bash
+    SUBJECT=$1
+    echo $SUBJECT
+    """
+    # indexing removes beginning newline
+    script.write(dedent(script_text)[1:])
+    script.flush()
+
+
 def test_config_with_args_warning():
     # This is formatted strangely because pep8 says so.
     with \
@@ -92,15 +108,7 @@ def test_no_sessions():
         # Create dummy BIDS directory with sessions
         os.makedirs(os.path.join(data, 'sub-01', 'anat'))
         os.makedirs(os.path.join(data, 'sub-02', 'anat'))
-        # Dummy script that displays subject
-        script_text = """
-        #!/bin/bash
-        SUBJECT=$1
-        echo $SUBJECT
-        """
-        script.write(dedent(script_text)[1:])  #indexing removes beginning newline
-        script.flush()
-
+        write_dummy_script(script)
         sct_run_batch.main(['-path-data', data, '-path-out', out, '-script', script.name])
         file_log = glob.glob(os.path.join(out, 'log', '*sub-01.log'))[0]
         assert 'sub-01' in open(file_log, "r").read()
@@ -117,15 +125,7 @@ def test_separate_sessions():
         os.makedirs(os.path.join(data, 'sub-01', 'ses-03'))
         os.makedirs(os.path.join(data, 'sub-02', 'ses-01'))
         os.makedirs(os.path.join(data, 'sub-02', 'ses-02'))
-        # Dummy script that displays subject
-        script_text = """
-        #!/bin/bash
-        SUBJECT=$1
-        echo $SUBJECT
-        """
-        script.write(dedent(script_text)[1:])  #indexing removes beginning newline
-        script.flush()
-
+        write_dummy_script(script)
         sct_run_batch.main(['-path-data', data, '-path-out', out, '-script', script.name])
         file_log = glob.glob(os.path.join(out, 'log', '*sub-01_ses-01.log'))[0]
         assert 'sub-01/ses-01' in open(file_log, "r").read()
