@@ -120,12 +120,11 @@ def test_separate_sessions():
             TemporaryDirectory() as out,\
             NamedTemporaryFile('w', suffix='.sh') as script:
         # Create dummy BIDS directory with sessions
-        os.makedirs(os.path.join(data, 'sub-01', 'ses-01'))
-        os.makedirs(os.path.join(data, 'sub-01', 'ses-02'))
-        os.makedirs(os.path.join(data, 'sub-01', 'ses-03'))
-        os.makedirs(os.path.join(data, 'sub-02', 'ses-01'))
-        os.makedirs(os.path.join(data, 'sub-02', 'ses-02'))
+        sub_ses_pairs = [('01', '01'), ('01', '02'), ('01', '03'), ('02', '01'), ('02', '02')]
+        for sub, ses in sub_ses_pairs:
+            os.makedirs(os.path.join(data, f'sub-{sub}', f'ses-{ses}'))
         write_dummy_script(script)
         sct_run_batch.main(['-path-data', data, '-path-out', out, '-script', script.name])
-        file_log = glob.glob(os.path.join(out, 'log', '*sub-01_ses-01.log'))[0]
-        assert 'sub-01/ses-01' in open(file_log, "r").read()
+        for sub, ses in sub_ses_pairs:
+            file_log = glob.glob(os.path.join(out, 'log', f'*sub-{sub}_ses-{ses}.log'))[0]
+            assert f'sub-{sub}/ses-{ses}' in open(file_log, "r").read()
