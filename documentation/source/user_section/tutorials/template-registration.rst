@@ -16,5 +16,5 @@ This tutorial demonstrates a multi-step pipeline to `register <http://jpeelle.ne
    template-registration/before-starting
    template-registration/sct_register_to_template
    template-registration/applying-the-registration-algorithm
-   template-registration/customizing-the-algorithm
+   template-registration/customizing-registration
    template-registration/applying-the-warping-fields

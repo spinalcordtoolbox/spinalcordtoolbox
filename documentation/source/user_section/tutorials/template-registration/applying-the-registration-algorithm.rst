@@ -1,3 +1,5 @@
+.. _applying-registration-algorithm:
+
 Applying the registration algorithm
 ###################################
 
