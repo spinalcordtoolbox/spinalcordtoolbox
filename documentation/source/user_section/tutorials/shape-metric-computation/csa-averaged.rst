@@ -1,3 +1,5 @@
+.. _csa-averaged:
+
 CSA (Averaged across vertebral levels)
 ######################################
 
@@ -18,5 +20,4 @@ First, we will start by computing the cord cross-sectional area (CSA) averaged a
 
 .. csv-table:: CSA values computed for C3 and C4 vertebral levels (Averaged)
    :file: csa_c3c4.csv
-   :widths: 14, 9, 13, 8, 7, 7, 7, 8, 7, 8, 7
    :header-rows: 1

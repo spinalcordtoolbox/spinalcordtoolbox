@@ -1,2 +1,2 @@
-Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,MEAN(area),STD(area),MEAN(angle_AP),STD(angle_AP),MEAN(angle_RL),STD(angle_RL)
-2020-11-28 10:07:20,5.0.1,data/t2/t2_seg.nii.gz,144:187,3:4,74.28722611,2.07756759,1.50028956,0.3025408,10.1223671,2.03312674
+Filename,Slice (I->S),VertLevel,MEAN(area),STD(area)
+single_subject/data/t2/t2_seg.nii.gz,143:186,3:4,77.8531806229711,2.11559910195358

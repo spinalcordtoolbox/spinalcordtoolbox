@@ -1,3 +1,5 @@
+.. _csa-perslice:
+
 CSA (Per axial slice)
 #####################
 
@@ -16,8 +18,6 @@ To compute CSA for individual slices, set the ``-perslice`` argument to 1, and u
 :Output files/folders:
    - ``csa_perslice.csv`` : A file containing the CSA values and other shape metrics. This file is partially replicated in the table below.
 
-
 .. csv-table:: CSA values across slices 30 to 35
    :file: csa_perslice.csv
-   :widths: 13, 9, 12, 8, 7, 7, 7, 9, 7, 9, 7
    :header-rows: 1

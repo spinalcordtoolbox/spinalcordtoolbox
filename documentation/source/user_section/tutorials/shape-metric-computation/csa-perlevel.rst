@@ -1,3 +1,5 @@
+.. _csa-perlevel:
+
 CSA (Per level)
 ###############
 
@@ -19,5 +21,4 @@ Next, we will compute CSA for each individual vertebral level (rather than avera
 
 .. csv-table:: CSA values computed for C3 and C4 vertebral levels
    :file: csa_perlevel.csv
-   :widths: 15, 9, 14, 8, 7, 7, 7, 7, 7, 7, 7
    :header-rows: 1
