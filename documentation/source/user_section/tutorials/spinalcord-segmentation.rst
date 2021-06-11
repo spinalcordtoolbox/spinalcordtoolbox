@@ -3,7 +3,7 @@
 Spinal cord segmentation for anatomical images
 ##############################################
 
-This tutorial demonstrates how to use SCT's command-line scripts to perform spinal cord segmentation. Segmentation in this case means to generate a 3D mask that identifies the spinal cord within anatomical images of the spine. This tutorial compares two different algorithms provided by SCT, and is meant to give you a feel for common usage of these tools on real-world data.
+This tutorial demonstrates how to use SCT's command-line scripts to perform spinal cord segmentation. In image processing, [segmentation](https://en.wikipedia.org/wiki/Image_segmentation) is the process of partitioning an image into different segments (sets of pixels/voxels). In the context of SCT, we generate a 3D mask (solid region overlaying segment of interest) that identifies the spinal cord within anatomical images of the spine. This tutorial compares two different algorithms provided by SCT, and is meant to give you a feel for common usage of these tools on real-world data.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/spinalcord-segmentation.png
    :align: center
