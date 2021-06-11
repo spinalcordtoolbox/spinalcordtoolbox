@@ -61,9 +61,9 @@ class QcImage(object):
                      "#9f89b0", "#e08e08", "#3d2b54",
                      "#7d0434", "#fb1849", "#14aab4",
                      "#a22abd", "#d58240", "#ac2aff"]
-    #_seg_colormap = ["#660000", "#ff0000"] # Dark red
-    #_seg_colormap = ["#000000", "#ff0000"] # With Black
-    _seg_colormap = ["#4d0000", "#ff0000"] # Darker red
+    # _seg_colormap = ["#660000", "#ff0000"]  # Dark red
+    # _seg_colormap = ["#000000", "#ff0000"]  # With Black
+    _seg_colormap = ["#4d0000", "#ff0000"]  # Darker red
 
     
     def __init__(self, qc_report, interpolation, action_list, process, stretch_contrast=True,
@@ -135,10 +135,10 @@ class QcImage(object):
         """Create figure with red segmentation. Common scenario."""
         img = np.ma.masked_equal(mask, 0)
         ax.imshow(img,
-                  cmap=color.LinearSegmentedColormap.from_list("",self._seg_colormap),
+                  cmap=color.LinearSegmentedColormap.from_list("", self._seg_colormap),
                   norm=color.Normalize(vmin=0, vmax=1),
                   interpolation=self.interpolation,
-                  #alpha=1,
+                  # alpha=1,
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
