@@ -5,7 +5,7 @@ Registration Option 1: Reusing previous warping fields
 
 Say that you have already registered anatomical data that was acquired in the same session as your MT data. In that case, there is no need to run ``sct_register_to_template`` again, because you can reuse the warping field between the template and the anatomical space. Thus, the only part that is missing is transformation from the anatomical space to the MT space, as shown in the figure below.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/mt-registration-pipeline.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registering-additional-contrasts/mt-registration-pipeline.png
    :align: center
    :figwidth: 65%
 

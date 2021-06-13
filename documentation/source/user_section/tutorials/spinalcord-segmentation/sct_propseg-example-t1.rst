@@ -18,7 +18,7 @@ Next, we will switch to the T1 directory so that we can try out ``sct_propseg`` 
 
 Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using either :ref:`Quality Control (QC) <qc>` reports or :ref:`fsleyes-instructions`. You may also simply refresh the webpage generated in the previous section to see the new results.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/t1_propseg_before_after.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/t1_propseg_before_after.png
   :align: center
   :figwidth: 65%
 

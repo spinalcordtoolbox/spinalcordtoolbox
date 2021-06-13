@@ -1,7 +1,7 @@
 Registration algorithm: ``sct_register_to_template``
 ####################################################
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/thin-plate-straightening.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/template-registration/thin-plate-straightening.png
    :align: right
    :figwidth: 300px
 

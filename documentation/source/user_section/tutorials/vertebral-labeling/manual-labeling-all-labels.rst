@@ -20,7 +20,7 @@ As before, you can use the ``-create-viewer`` option, this time providing multip
 :Output files/folders:
    * ``label_c2c3.nii.gz`` : An imagine containing the single-voxel label as selected in the GUI coordinate picker.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/vertebral-labeling-manual-all.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/vertebral-labeling-manual-all.png
    :align: center
    :figwidth: 65%
 

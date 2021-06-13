@@ -3,7 +3,7 @@
 Computing shape metrics for PAM50-registered data
 #################################################
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/csa.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/shape-metric-computation/csa.png
   :align: center
   :figwidth: 60%
 

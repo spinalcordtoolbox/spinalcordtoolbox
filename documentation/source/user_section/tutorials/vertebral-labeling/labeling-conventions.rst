@@ -10,7 +10,7 @@ Next, the segmented spinal cord must be labeled to provide reference markers for
 
 For image registration, you can provide either vertebral body labels or disc labels, as the decision does not significantly impact the performance of the registration.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/vertebral-labeling-conventions.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/vertebral-labeling-conventions.png
    :align: center
    :figwidth: 600px
 

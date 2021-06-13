@@ -20,7 +20,7 @@ Once the transformations are estimated, we can apply the resulting warping field
 
 Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using either :ref:`Quality Control (QC) <qc>` reports or :ref:`fsleyes-instructions`.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-sct_warp_template.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/template-registration/io-sct_warp_template.png
    :align: center
    :figwidth: 65%
 

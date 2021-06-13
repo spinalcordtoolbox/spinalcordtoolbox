@@ -8,14 +8,14 @@ The first spinal cord segmentation tool that SCT offers is called ``sct_propseg`
 
    (The centerline detection step is also provided in a standalone script called ``sct_get_centerline``.)
 
-   .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/optic_steps.png
+   .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/optic_steps.png
       :align: left
       :figwidth: 500px
 
 :2. Mesh propagation:
    Next, it creates a coarse 3D mesh by propagating along the spinal cord (PropSeg).
 
-   .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/mesh_propagation.png
+   .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/mesh_propagation.png
       :align: left
       :figwidth: 500px
 

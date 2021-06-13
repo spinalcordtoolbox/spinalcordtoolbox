@@ -15,6 +15,6 @@ As its name suggests, ``sct_deepseg_sc`` is based on deep learning. It is a newe
 :4. Segmentation:
    Lastly, a second convolutional neural network is applied to the extracted patch to segment the spinal cord.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/sct_deepseg_sc_steps.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/sct_deepseg_sc_steps.png
    :align: center
    :figwidth: 65%

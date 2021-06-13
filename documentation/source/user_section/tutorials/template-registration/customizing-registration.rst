@@ -27,7 +27,7 @@ Step 1 and step 2 can be modified, and additional steps can be added. In general
 
 This parameter determines the type of nonrigid deformation to apply to the spinal cord at each step.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/sct_register_to_template-param-algo.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/template-registration/sct_register_to_template-param-algo.png
   :align: center
   :figwidth: 800px
 

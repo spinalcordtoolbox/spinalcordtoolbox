@@ -19,7 +19,7 @@ Following the recommendations from the :ref:`previous page<how-many-labels>`, we
 
 Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`fsleyes-instructions`. However, it is worth noting that because the output labels are single-voxel, you may need to use zoom to see them clearly in FSLeyes.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-sct_label_utils.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/io-sct_label_utils.png
    :align: center
    :figwidth: 65%
 

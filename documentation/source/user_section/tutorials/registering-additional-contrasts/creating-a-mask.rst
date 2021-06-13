@@ -19,7 +19,7 @@ Next, we will create a `binary mask <https://homepages.inf.ed.ac.uk/rbf/HIPR2/ma
 
 Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`fsleyes-instructions`.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/io-mt-sct_create_mask.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registering-additional-contrasts/io-sct_create_mask.png
    :align: center
    :figwidth: 65%
 

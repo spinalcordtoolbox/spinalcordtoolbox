@@ -16,7 +16,7 @@ The vertebral/disc labeling algorithm has the following features:
   - **Produces both label types:** Labels are produced for both vertebral levels and intervertebral discs.
   - **Robust to missing discs:** The labeling algorithm uses several priors from the template, including the probabilistic distance between adjacent discs and the size of the vertebral discs. These priors allow it to be robust enough to handle cases where instrumentation results in missing discs or susceptibility artifacts. *(See the figure below.)*
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/instrumentation-missing-discs.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/instrumentation-missing-discs.png
    :align: center
    :figwidth: 400px
 

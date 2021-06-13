@@ -18,7 +18,7 @@ Since we aim to improve the T1 segmentation, ensure that you are still in the T1
 
 Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using either :ref:`Quality Control (QC) <qc>` reports or :ref:`fsleyes-instructions`. You may also simply refresh the webpage that was generated in the previous sections to see the new results.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/t1_deepseg_before_after.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/t1_deepseg_before_after.png
    :align: center
    :figwidth: 65%
 

@@ -3,7 +3,7 @@
 Vertebral labeling for anatomical images
 ########################################
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/vertebral-labeling.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/vertebral-labeling.png
    :align: center
    :height: 300px
 

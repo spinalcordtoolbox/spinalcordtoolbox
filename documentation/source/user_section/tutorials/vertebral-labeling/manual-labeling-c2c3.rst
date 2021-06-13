@@ -22,7 +22,7 @@ You can then pass this resulting file to the ``sct_label_vertebrae`` function vi
 
    sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -initlabel label_c2c3.nii.gz -qc ~/qc_singleSubj
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registration_to_template/vertebral-labeling-manual-c2c3.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/vertebral-labeling-manual-c2c3.png
    :align: center
    :figwidth: 65%
 
