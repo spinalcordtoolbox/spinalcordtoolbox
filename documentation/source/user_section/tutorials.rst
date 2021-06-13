@@ -21,6 +21,8 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    tutorials/gm-wm-segmentation
    tutorials/improving-registration-with-gm-seg
    tutorials/gm-wm-metric-computation
+   tutorials/processing-dmri-data
+
 
 .. _completing-the-tutorials-in-sequence:
 
