@@ -23,6 +23,7 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    tutorials/gm-wm-metric-computation
    tutorials/processing-dmri-data
    tutorials/processing-fmri-data
+   tutorials/spinalcord-smoothing
 
 .. _completing-the-tutorials-in-sequence:
 
