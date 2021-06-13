@@ -20,6 +20,7 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    tutorials/mtr-computation
    tutorials/gm-wm-segmentation
    tutorials/improving-registration-with-gm-seg
+   tutorials/gm-wm-metric-computation
 
 .. _completing-the-tutorials-in-sequence:
 
