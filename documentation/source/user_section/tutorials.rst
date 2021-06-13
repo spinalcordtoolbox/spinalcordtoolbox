@@ -25,6 +25,7 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    tutorials/processing-fmri-data
    tutorials/spinalcord-smoothing
    tutorials/visualizing-misaligned-cords
+   tutorials/batch-processing-of-subjects
 
 .. _completing-the-tutorials-in-sequence:
 
