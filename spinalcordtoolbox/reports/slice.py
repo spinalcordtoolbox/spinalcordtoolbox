@@ -352,7 +352,6 @@ class Slice(object):
             nii_r = resample_nib(nii, image_dest=nii_ref, interpolation=dict_interp[type_img])
         # If resampled image is a segmentation, binarize using threshold at 0.5
         if type_img == 'seg':
-            # img_r_data = (nii_r.get_data() > 0.5) * 1 # TODO binarize later
             img_r_data = nii_r.get_data()
             img_r_data[img_r_data < 0.5] = 0
         else:
