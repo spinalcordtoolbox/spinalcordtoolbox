@@ -354,6 +354,7 @@ class Slice(object):
         if type_img == 'seg':
             # img_r_data = (nii_r.get_data() > 0.5) * 1 # TODO binarize later
             img_r_data = nii_r.get_data()
+            img_r_data[img_r_data < 0.5] = 0
         else:
             img_r_data = nii_r.get_data()
         # Create Image objects
