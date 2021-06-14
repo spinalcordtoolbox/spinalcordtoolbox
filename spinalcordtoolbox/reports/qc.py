@@ -63,9 +63,9 @@ class QcImage(object):
                      "#a22abd", "#d58240", "#ac2aff"]
     _seg_colormap = ["#4d0000", "#ff0000"]
 
-    
+
     def __init__(self, qc_report, interpolation, action_list, process, stretch_contrast=True,
-                stretch_contrast_method='contrast_stretching', angle_line=None, fps=None):
+                 stretch_contrast_method='contrast_stretching', angle_line=None, fps=None):
         """
         :param qc_report: QcReport: The QC report object
         :param interpolation: str: Type of interpolation used in matplotlib
