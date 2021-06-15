@@ -15,6 +15,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+import inspect
 
 import tqdm
 
@@ -38,9 +39,22 @@ if os.getenv('SENTRY_DSN', None):
     import raven
 
 
-def set_global_loglevel(verbose):
+def get_caller_module():
+    """Return the first non-`utils.sys` module in the stack (to see where `utils.sys` is being called from)."""
+    for frame in inspect.stack():
+        mod = inspect.getmodule(frame[0])
+        if mod.__file__ != __file__:
+            break
+    return mod
+
+
+def set_loglevel(verbose):
     """
-    Use SCT's verbosity values to set the global logging level.
+    Use SCT's verbosity values to set the logging level.
+
+    The behavior of this function changes depending on how the caller module was invoked:
+       1. If the module was invoked via the command line, the root (global) logger will be used.
+       2. If the module was invoked via code (e.g. sct_script.main()), then only its local logger will be used.
 
     :verbosity: Verbosity value, typically from argparse (args.v). Values must adhere
     one of two schemes:
@@ -56,9 +70,22 @@ def set_global_loglevel(verbose):
         raise ValueError(f"Invalid verbosity level '{verbose}' does not map to a log level, so cannot set.")
 
     log_level = dict_log_levels[str(verbose)]
-    # Set logging level for logger and increase level for global config (to avoid logging when calling child functions)
+
+    # Set logging level for this file
     logger.setLevel(getattr(logging, log_level))
-    logging.root.setLevel(getattr(logging, log_level))
+
+    # Set logging level for the file that called this function
+    caller_module_name = get_caller_module().__name__
+    caller_logger = logging.getLogger(caller_module_name)
+    caller_logger.setLevel(getattr(logging, log_level))
+
+    # Set the logging level globally, but only when scripts are directly invoked (e.g. from the command line)
+    if caller_module_name == "__main__":
+        logging.root.setLevel(getattr(logging, log_level))
+    else:
+        # NB: Nothing will be set if we're calling a CLI script in-code, i.e. <sct_cli_script>.main(). This keeps
+        # the loglevel changes from leaking: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3341
+        pass
 
 
 # TODO: add test
@@ -81,7 +108,7 @@ def init_sct():
         return _format
 
     # Initialize logging
-    set_global_loglevel(verbose=False)  # False => "INFO". For "DEBUG", must be called again with verbose=True.
+    set_loglevel(verbose=False)  # False => "INFO". For "DEBUG", must be called again with verbose=True.
     hdlr = logging.StreamHandler(sys.stdout)
     fmt = logging.Formatter()
     fmt.format = _format_wrap(fmt.format)
