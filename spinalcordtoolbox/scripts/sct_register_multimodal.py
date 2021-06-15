@@ -312,7 +312,6 @@ def main(argv=None):
     fname_dest_seg = ''
     fname_src_label = ''
     fname_dest_label = ''
-    generate_warpinv = 1
 
     start_time = time.time()
 
@@ -420,7 +419,8 @@ def main(argv=None):
         else:
             printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
 
-    if generate_warpinv:
+    # If dest wasn't registered (e.g. unidirectional registration due to '-initwarp'), then don't output syntax
+    if fname_dest2src:
         display_viewer_syntax([fname_src, fname_dest2src], verbose=verbose)
     display_viewer_syntax([fname_dest, fname_src2dest], verbose=verbose)
 
