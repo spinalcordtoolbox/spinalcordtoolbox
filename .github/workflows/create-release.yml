@@ -12,7 +12,7 @@ env:
   RELEASE_BRANCH: "release"
 
 jobs:
-  create-changelog-PR:
+  create-release:
     runs-on: ubuntu-latest
     steps:
 
