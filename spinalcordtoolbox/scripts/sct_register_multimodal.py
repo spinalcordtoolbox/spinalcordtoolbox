@@ -40,7 +40,7 @@ import numpy as np
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.registration.register import Paramreg, ParamregMultiStep
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import check_dim
 
@@ -300,7 +300,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initialize parameters
     param = Param()
@@ -312,7 +312,6 @@ def main(argv=None):
     fname_dest_seg = ''
     fname_src_label = ''
     fname_dest_label = ''
-    generate_warpinv = 1
 
     start_time = time.time()
 
@@ -420,7 +419,8 @@ def main(argv=None):
         else:
             printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
 
-    if generate_warpinv:
+    # If dest wasn't registered (e.g. unidirectional registration due to '-initwarp'), then don't output syntax
+    if fname_dest2src:
         display_viewer_syntax([fname_src, fname_dest2src], verbose=verbose)
     display_viewer_syntax([fname_dest, fname_src2dest], verbose=verbose)
 

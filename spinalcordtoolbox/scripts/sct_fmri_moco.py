@@ -15,7 +15,7 @@ import sys
 import os
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
-from spinalcordtoolbox.utils.sys import init_sct, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax, list_type
 from spinalcordtoolbox.reports.qc import generate_qc
 
@@ -154,7 +154,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initialization
     param = ParamMoco(group_size=1, metric='MeanSquares', smooth='0')
@@ -185,7 +185,7 @@ def main(argv=None):
     # run moco
     fname_output_image = moco_wrapper(param)
 
-    set_global_loglevel(verbose)  # moco_wrapper changes verbose to 0, see issue #3341
+    set_loglevel(verbose)  # moco_wrapper changes verbose to 0, see issue #3341
 
     # QC report
     if path_qc is not None:

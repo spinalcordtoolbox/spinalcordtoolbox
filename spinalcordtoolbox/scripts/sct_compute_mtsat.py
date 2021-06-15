@@ -20,7 +20,7 @@ import sys
 import os
 import json
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, display_viewer_syntax, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, display_viewer_syntax, set_loglevel
 from spinalcordtoolbox.qmri.mt import compute_mtsat
 from spinalcordtoolbox.image import Image, splitext
 
@@ -164,7 +164,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     printv('Load data...', verbose)
     nii_mt = Image(arguments.mt)

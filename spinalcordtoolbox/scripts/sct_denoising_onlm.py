@@ -7,7 +7,7 @@ from time import time
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel
 
 
 # DEFAULT PARAMETERS
@@ -92,7 +92,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     parameter = arguments.p
     remove_temp_files = arguments.r

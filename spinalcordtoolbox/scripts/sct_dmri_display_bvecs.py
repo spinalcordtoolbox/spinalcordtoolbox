@@ -19,7 +19,7 @@ from dipy.data.fetcher import read_bvals_bvecs
 from matplotlib.lines import Line2D
 from matplotlib import cm
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
 
 BZERO_THRESH = 0.0001  # b-zero threshold
 
@@ -113,7 +113,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     fname_bvecs = arguments.bvec
     fname_bvals = arguments.bval

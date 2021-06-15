@@ -23,7 +23,7 @@ import signal
 import numpy as np
 from pandas import DataFrame
 
-from spinalcordtoolbox.utils import init_sct, run_proc, tmp_create, printv, rmtree, __sct_dir__, set_global_loglevel, SCTArgumentParser
+from spinalcordtoolbox.utils import init_sct, run_proc, tmp_create, printv, rmtree, __sct_dir__, set_loglevel, SCTArgumentParser
 from spinalcordtoolbox.scripts import sct_download_data
 
 # FIXME
@@ -213,7 +213,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.verbose
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initializations
     param = Param()
