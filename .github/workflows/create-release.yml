@@ -38,6 +38,7 @@ jobs:
       run: |
         echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
 
+    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
     - name: Commit and push
       run: |
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
