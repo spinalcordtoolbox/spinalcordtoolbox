@@ -27,7 +27,7 @@ from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, printv,
-                                     parse_num_list, set_global_loglevel)
+                                     parse_num_list, set_loglevel)
 from spinalcordtoolbox.utils.shell import display_viewer_syntax
 
 
@@ -245,7 +245,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     input_filename = arguments.i
     output_fname = arguments.o

@@ -16,7 +16,7 @@ import os
 import logging
 
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
 from spinalcordtoolbox.flattening import flatten_sagittal
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     fname_anat = arguments.i
     fname_centerline = arguments.s
