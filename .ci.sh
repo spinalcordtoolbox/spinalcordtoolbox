@@ -8,6 +8,7 @@ set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
 set -u            # exit if unset variables used
 shopt -s failglob # error if a glob doesn't find any files, instead of remaining unexpanded
 
+export SCT_PROGRESS_BAR=off # disable SCT's progress bar (e.g. for sct_download_data)
 export PIP_PROGRESS_BAR=off # disable pip's progress bar for the duration of CI
 export PY_COLORS=1 # Colored pytest output (https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591)
 
