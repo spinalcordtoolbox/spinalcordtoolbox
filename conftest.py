@@ -29,7 +29,8 @@ def pytest_sessionstart():
     """Perform actions that must be done prior to test collection."""
     # Use a non-interactive backend so that no GUI plots will interrupt the test suite.
     # (NB: We do this here to ensure it is set before `matplotlib` is first imported.)
-    os.environ["MPLBACKEND"] = 'Agg'
+    if 'MPLBACKEND' not in os.environ:
+        os.environ["MPLBACKEND"] = 'Agg'
 
     # Download sct_testing_data prior to test collection
     logger.info("Downloading sct test data")
