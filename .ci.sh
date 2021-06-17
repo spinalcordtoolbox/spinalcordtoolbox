@@ -9,24 +9,51 @@ set -u            # exit if unset variables used
 shopt -s failglob # error if a glob doesn't find any files, instead of remaining unexpanded
 
 export PIP_PROGRESS_BAR=off # disable pip's progress bar for the duration of CI
+export PY_COLORS=1 # Colored pytest output (https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591)
 
-echo Installing SCT
-# NB: we only force in-place (-i) installs to avoid pytest running from the source
-#     instead of the installed folder, where the extra detection models are.
-#     Further explanation at https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
-#     TO BE REMOVED during https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3140.
-./install_sct -iy
+install_sct () {
+  # NB: we only force in-place (-i) installs to avoid pytest running from the source
+  #     instead of the installed folder, where the extra detection models are.
+  #     Further explanation at https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
+  #     TO BE REMOVED during https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3140.
+  ./install_sct -iy
+}
 
-source python/etc/profile.d/conda.sh  # to be able to call conda
-set +u
-conda activate venv_sct  # reactivate conda for the pip install below
-set -u
+activate_venv_sct(){
+  source python/etc/profile.d/conda.sh  # to be able to call conda
+  set +u
+  conda activate venv_sct
+  set -u
+}
 
-echo *** UNIT TESTS ***
-export PY_COLORS=1
-pip install coverage
-echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
-echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
-COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" \
+run_tests() {
+  activate_venv_sct
   pytest
-coverage combine
+}
+
+run_tests_with_coverage(){
+  # NB: Coverage does not currently work: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2702
+  activate_venv_sct
+  pip install coverage
+  echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
+  echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
+  COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" pytest
+  coverage combine
+}
+
+while getopts ":itc" opt; do
+  case $opt in
+  i)
+    install_sct
+    ;;
+  t)
+    run_tests
+    ;;
+  c)
+    run_tests_with_coverage
+    ;;
+  *)
+    exit 99
+    ;;
+  esac
+done
