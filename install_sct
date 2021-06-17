@@ -265,10 +265,8 @@ function edit_shellrc() {
     # Switch between shell
     if [[ "$THE_RC" == "bash" ]]; then
       echo "export SCT_DIR=$SCT_DIR"
-      echo "export MPLBACKEND=Agg"
     elif [[ "$THE_RC" == "csh" ]]; then
       echo "setenv SCT_DIR $SCT_DIR"
-      echo "setenv MPLBACKEND Agg"
     fi
     # add line
     echo ""
@@ -542,11 +540,6 @@ else
   die "This variable is not recognized: THE_RC=$THE_RC"
 fi
 
-# Update MPLBACKEND on headless system. See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2137
-if [[ -z "${MLBACKEND:-}" ]]; then
-  export MPLBACKEND=Agg
-fi
-
 # Copy files to destination directory
 if [[ "$SCT_DIR" != "$SCT_SOURCE" ]]; then
   print info "Copying source files from $SCT_SOURCE to $SCT_DIR"
@@ -701,7 +694,13 @@ conda deactivate >/dev/null 2>&1
 if [[ -e "$RC_FILE_PATH" ]]; then
     if grep "sct_env" "$RC_FILE_PATH"; then
       print info "In case an old version SCT is already installed (4.0.0-beta.1 or before), remove 'sct_env' declaration in RC file"
-      sed -ie '/sct_env/ s/^#*/#/' "$RC_FILE_PATH"
+      sed_i '/sct_env/ s/^#*/#/' "$RC_FILE_PATH"
+    fi
+    if grep "^export MPLBACKEND=Agg" "$RC_FILE_PATH"; then
+      print info "Commenting out 'export MPLBACKEND=Agg' from previous SCT installation"
+      sed_i 's/^export MPLBACKEND=Agg/# The line below has been commented out by a more recent installation of SCT,\
+# because export MPLBACKEND=Agg is no longer needed as of SCT v5.4.0\
+# export MPLBACKEND=Agg/' "$RC_FILE_PATH"
     fi
 fi
 
