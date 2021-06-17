@@ -25,6 +25,7 @@ from matplotlib.ticker import MaxNLocator
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, merge_dict
 from spinalcordtoolbox.process_seg import compute_shape
+from spinalcordtoolbox.csa_pmj import compute_csa_from_pmj
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
@@ -155,6 +156,25 @@ def get_parser():
         type=int,
         default=30,
         help="Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}."
+    )
+    optional.add_argument(
+        '-pmj',
+        metavar=Metavar.file,
+        help="Ponto-Medullary Junction (PMJ) label file."
+             "Example: pmj.nii.gz"
+    )
+    optional.add_argument(
+        '-distance',
+        metavar=Metavar.float,
+        help="Distance (mm) from Ponto-Medullary Junction (PMJ) to compute CSA."
+             "to be used with flag -pmj"
+    )
+    optional.add_argument(
+        '-extent',
+        metavar=Metavar.float,
+        default=10,
+        help="Extent of the mask to average CSA (mm)."
+             "to be used with flag -pmj and -distance"
     )
     optional.add_argument(
         '-qc',
@@ -307,6 +327,15 @@ def main(argv=None):
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
         minmax=True)
+    if arguments.pmj is not None:
+        fname_pmj = get_absolute_path(arguments.pmj)
+    else:
+        fname_pmj = ''
+    if arguments.distance is not None:
+        distance_from_pmj = arguments.distance
+    else:
+        distance_from_pmj = None
+    extent_mask = arguments.extent
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
@@ -320,6 +349,13 @@ def main(argv=None):
                                          angle_correction=angle_correction,
                                          param_centerline=param_centerline,
                                          verbose=verbose)
+    compute_csa_from_pmj(fname_segmentation,
+                         fname_pmj,
+                         distance_from_pmj,
+                         extent_mask,
+                         metrics['area'],
+                         param_centerline=param_centerline,
+                         verbose=verbose)                                                                                  
     for key in metrics:
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
