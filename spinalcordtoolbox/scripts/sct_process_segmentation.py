@@ -28,7 +28,7 @@ from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
-from spinalcordtoolbox.utils.sys import init_sct, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.fs import get_absolute_path
 
 
@@ -269,7 +269,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # Initialization
     slices = ''

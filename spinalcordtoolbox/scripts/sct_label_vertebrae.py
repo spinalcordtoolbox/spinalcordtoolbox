@@ -23,7 +23,7 @@ from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
     copy, extract_fname, rmtree
 from spinalcordtoolbox.math import threshold, laplacian
@@ -229,7 +229,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initializations
     initz = ''

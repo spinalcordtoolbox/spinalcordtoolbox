@@ -20,7 +20,7 @@ import argparse
 
 from spinalcordtoolbox.image import Image, check_dim, generate_output_file
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, SmartFormatter
-from spinalcordtoolbox.utils.sys import init_sct, printv, run_proc, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, run_proc, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, check_file_exist
 
 
@@ -39,7 +39,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
     param = Param()
 
     # Initialization
