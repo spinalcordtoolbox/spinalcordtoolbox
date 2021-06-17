@@ -16,7 +16,8 @@ install_sct () {
   #     instead of the installed folder, where the extra detection models are.
   #     Further explanation at https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
   #     TO BE REMOVED during https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3140.
-  ./install_sct -iy
+  # NB: '-c' disables sct_check_dependencies so we can check it separately
+  ./install_sct -iyc
 }
 
 activate_venv_sct(){
@@ -24,6 +25,11 @@ activate_venv_sct(){
   set +u
   conda activate venv_sct
   set -u
+}
+
+check_dependencies() {
+  activate_venv_sct
+  sct_check_dependencies
 }
 
 run_tests() {
@@ -41,16 +47,16 @@ run_tests_with_coverage(){
   coverage combine
 }
 
-while getopts ":itc" opt; do
+while getopts ":ict" opt; do
   case $opt in
   i)
     install_sct
     ;;
+  c)
+    check_dependencies
+    ;;
   t)
     run_tests
-    ;;
-  c)
-    run_tests_with_coverage
     ;;
   *)
     exit 99

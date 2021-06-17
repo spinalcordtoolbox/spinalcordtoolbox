@@ -59,6 +59,9 @@ jobs:
       - name: Install SCT
         run: |
           ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
@@ -79,6 +82,9 @@ jobs:
       - name: Install SCT
         run: |
           ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
@@ -99,6 +105,9 @@ jobs:
       - name: Install SCT
         run: |
           ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
@@ -119,6 +128,9 @@ jobs:
       - name: Install SCT
         run: |
           ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
@@ -139,6 +151,9 @@ jobs:
       - name: Install SCT
         run: |
           ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
@@ -155,6 +170,9 @@ jobs:
       - name: Install SCT
         run: |
           ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
@@ -175,6 +193,9 @@ jobs:
       - name: Install SCT
         run: |
           ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
@@ -187,6 +208,9 @@ jobs:
       - name: Install SCT
         run: |
           ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
@@ -206,6 +230,9 @@ jobs:
       - name: Install SCT
         run: |
           ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
@@ -218,6 +245,9 @@ jobs:
      - name: Install SCT
        run: |
          ./.ci.sh -i
+     - name: Check dependencies
+       run: |
+         ./.ci.sh -c
      - name: Run pytest test suite
        run: |
          ./.ci.sh -t
@@ -238,6 +268,9 @@ jobs:
       - name: Install SCT
         run: |
           ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
       - name: Run pytest test suite
         run: |
           ./.ci.sh -t
@@ -275,6 +308,9 @@ jobs:
     - name: Install SCT
       run: |
         ./.ci.sh -i
+    - name: Check dependencies
+      run: |
+        ./.ci.sh -c
     - name: Run pytest test suite
       run: |
         ./.ci.sh -t
@@ -312,6 +348,9 @@ jobs:
     - name: Install SCT
       run: |
         ./.ci.sh -i
+    - name: Check dependencies
+      run: |
+        ./.ci.sh -c
     - name: Run pytest test suite
       run: |
         ./.ci.sh -t
