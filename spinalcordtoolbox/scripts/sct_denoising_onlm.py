@@ -5,6 +5,7 @@ from time import time
 
 import numpy as np
 import nibabel as nib
+from dipy.denoise.nlmeans import nlmeans
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel
 
@@ -123,8 +124,6 @@ def main(argv=None):
     # Process for manual detecting of background
     # mask = data[:, :, :] > noise_threshold
     # data = data[:, :, :]
-
-    from dipy.denoise.nlmeans import nlmeans
 
     if arguments.std is not None:
         sigma = std_noise
