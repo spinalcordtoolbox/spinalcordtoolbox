@@ -27,6 +27,7 @@ from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, 
 from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.csa_pmj import compute_csa_from_pmj
 from spinalcordtoolbox.centerline.core import ParamCenterline
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
@@ -91,7 +92,7 @@ def get_parser():
         '-z',
         metavar=Metavar.str,
         type=str,
-        help="Slice range to compute the metrics across (requires '-p csa'). Example: 5:23"
+        help="Slice range to compute the metrics across (requires '-p csa'). Example: 5:23"  # TODO: -p csa dose not exists anymore
     )
     optional.add_argument(
         '-perslice',
@@ -165,14 +166,16 @@ def get_parser():
     )
     optional.add_argument(
         '-distance',
+        type=float, # Is float necessary?
         metavar=Metavar.float,
         help="Distance (mm) from Ponto-Medullary Junction (PMJ) to compute CSA."
              "to be used with flag -pmj"
     )
     optional.add_argument(
         '-extent',
+        type=float,
         metavar=Metavar.float,
-        default=10,
+        default=15,
         help="Extent of the mask to average CSA (mm)."
              "to be used with flag -pmj and -distance"
     )
@@ -349,13 +352,17 @@ def main(argv=None):
                                          angle_correction=angle_correction,
                                          param_centerline=param_centerline,
                                          verbose=verbose)
-    compute_csa_from_pmj(fname_segmentation,
-                         fname_pmj,
-                         distance_from_pmj,
-                         extent_mask,
-                         metrics['area'],
-                         param_centerline=param_centerline,
-                         verbose=verbose)                                                                                  
+    if fname_pmj is not None:
+        mask, mask_metric, slices = compute_csa_from_pmj(fname_segmentation,
+                            fname_pmj,
+                            distance_from_pmj,
+                            extent_mask,
+                            metrics['area'],
+                            param_centerline=param_centerline,
+                            verbose=verbose)
+        fname_mask_out = add_suffix(arguments.i, '_mask_csa')                            
+        mask.save(fname_mask_out)
+                                                                                                             
     for key in metrics:
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
