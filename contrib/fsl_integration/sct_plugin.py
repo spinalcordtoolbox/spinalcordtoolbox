@@ -351,7 +351,7 @@ class SCTPanel(wx.Panel):
         while True:
             thr.join(0.1)
             wx.Yield()
-            if not thr.isAlive():
+            if not thr.is_alive():
                 break
             if progress_dialog.stop_run:
                 thr.sct_interrupt()
