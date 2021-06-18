@@ -24,8 +24,11 @@ class Param:
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='Utility function to denoise images. (Return the denoised image and also the difference '
-                    'between the input and the output.)'
+        description='Utility function to denoise images. Return the denoised image and also the difference '
+                    'between the input and the output. The denoising algorithm is based on the Non-local means'
+                    'methods (Pierrick Coupe, Jose Manjon, Montserrat Robles, Louis Collins. “Adaptive Multiresolution '
+                    'Non-Local Means Filter for 3D MR Image Denoising” IET Image Processing, Institution of '
+                    'Engineering and Technology, 2011). The implementation is based on Dipy (https://dipy.org/).'
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
