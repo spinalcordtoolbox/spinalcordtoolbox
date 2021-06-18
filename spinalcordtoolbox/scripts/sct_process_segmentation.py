@@ -353,13 +353,11 @@ def main(argv=None):
                                          param_centerline=param_centerline,
                                          verbose=verbose)
     if fname_pmj is not None:
-        mask, pmj_slices = compute_csa_from_pmj(fname_segmentation,
-                            fname_pmj,
-                            distance_from_pmj,
-                            extent_mask,
-                            metrics['area'],
+        mask, pmj_slices = compute_csa_from_pmj(fname_segmentation, fname_pmj,
+                            distance_from_pmj, extent_mask,
                             param_centerline=param_centerline,
                             verbose=verbose)
+                            
         fname_mask_out = add_suffix(arguments.i, '_mask_csa')                            
         mask.save(fname_mask_out)
         pmj_slices = [parse_num_list(pmj_slices[0]), pmj_slices[-1]]
