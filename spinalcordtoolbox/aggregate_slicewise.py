@@ -232,8 +232,8 @@ def func_wa(data, mask=None, map_clusters=None):
     return np.average(data, weights=mask), None
 
 
-def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], perslice=None, perlevel=False,
-                                 vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None):
+def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], pmj_slices=None, perslice=None,
+                                 perlevel=False, vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
 
@@ -262,7 +262,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     # If user neither specified slices nor levels, set perslice=True, otherwise, the output will likely contain nan
     # because in many cases the segmentation does not span the whole I-S dimension.
     if perslice is None:
-        if not slices and not levels:
+        if not slices and not levels and not pmj_slices:
             perslice = True
         else:
             perslice = False
@@ -273,6 +273,8 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
         slices = range(metric.data.shape[ndim-1])
 
     # aggregation based on levels
+    vertgroups = None
+    distance_group = None
     if levels:
         im_vert_level = Image(vert_level).change_orientation('RPI')
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
@@ -291,9 +293,14 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
             slicegroups = [tuple([val for sublist in slicegroups for val in sublist])]  # flatten into single tuple
             # vertgroups = [(2, 3, 4)]
             vertgroups = [tuple([level for level in levels])]
+    # aggregation based on distance from PMJ
+    elif pmj_slices is not None:
+        # slicegroups = [(0, 1, 2, 3, 4, 5, 6, 7, 8)]
+        # TODO: TO modify when we can input multiple distances
+        slicegroups = [tuple(pmj_slices[0])]
+        distancePMJ_group = [pmj_slices[-1]]
     # aggregation based on slices
     else:
-        vertgroups = None
         if perslice:
             # slicegroups = [(0,), (1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,)]
             slicegroups = [tuple([slice]) for slice in slices]
@@ -301,14 +308,20 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
             # slicegroups = [(0, 1, 2, 3, 4, 5, 6, 7, 8)]
             slicegroups = [tuple(slices)]
     agg_metric = dict((slicegroup, dict()) for slicegroup in slicegroups)
-
     # loop across slice group
     for slicegroup in slicegroups:
-        # add level info
-        if vertgroups is None:
+        # add level info or distance from PMJ info
+        if vertgroups is None and distancePMJ_group is None:
             agg_metric[slicegroup]['VertLevel'] = None
+            agg_metric[slicegroup]['DistancePMJ'] = None
+
+        elif distancePMJ_group is not None:
+            agg_metric[slicegroup]['VertLevel'] = None
+            agg_metric[slicegroup]['DistancePMJ'] = distancePMJ_group
+
         else:
             agg_metric[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
+            agg_metric[slicegroup]['DistancePMJ'] = None
         # Loop across functions (e.g.: MEAN, STD)
         for (name, func) in group_funcs:
             try:
@@ -527,7 +540,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     if not append or not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
-            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel']
+            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel', 'DistancePMJ']
             agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:
@@ -547,7 +560,8 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
             line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
-            agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
+            line.append(parse_num_list_inv(agg_metric[slicegroup]['DistancePMJ']))  # list vertebral levels
+            agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]  # list distance from PMJ
             for item in list_item:
                 for key in agg_metric_key:
                     if item in key:
