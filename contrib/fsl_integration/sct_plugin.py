@@ -198,9 +198,13 @@ class TextBox:
         Fetch path to file highlighted in the Overlay list.
         """
         selected_overlay = displayCtx.getSelectedOverlay()  # displayCtx is a class from FSLeyes
-        filename_path = selected_overlay.dataSource
-        print("Fetched file name: {}".format(filename_path))
-        self.textctrl.SetValue(filename_path)
+        if selected_overlay is None:
+            self.textctrl.GetParent().log_to_window("No files to input because the overlay list is empty. Please open "
+                                                    "an image in FSLeyes first, then try again.", level="WARNING")
+        else:
+            filename_path = selected_overlay.dataSource
+            print("Fetched file name: {}".format(filename_path))
+            self.textctrl.SetValue(filename_path)
 
     def get_file_name(self):
         return self.textctrl.GetValue()
