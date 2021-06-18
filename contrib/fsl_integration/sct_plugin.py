@@ -33,7 +33,7 @@ import wx.lib.agw.aui as aui
 import wx.html as html
 
 logger = logging.getLogger(__name__)
-aui_manager = frame.getAuiManager() # from FSLeyes context
+aui_manager = frame.auiManager  # noqa: F821 (from FSLeyes context)
 
 # keep track of all output folder text inputs so that we can update
 # all of them if one changes
