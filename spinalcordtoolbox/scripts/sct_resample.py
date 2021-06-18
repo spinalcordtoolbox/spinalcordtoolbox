@@ -154,11 +154,8 @@ def main(argv=None):
         else:
             param.interpolation = arguments.x
 
-    if arguments.header_rescale:
-        spinalcordtoolbox.resampling.rescale_affine(param.fname_data, param.fname_out, param.verbose, param.new_size, param.new_size_type)
-    else:
-        spinalcordtoolbox.resampling.resample_file(param.fname_data, param.fname_out, param.new_size, param.new_size_type,
-                                               param.interpolation, param.verbose, fname_ref=param.ref)
+    spinalcordtoolbox.resampling.resample_file(param.fname_data, param.fname_out, param.new_size, param.new_size_type,
+                                               param.interpolation, param.verbose, arguments.header_rescale, fname_ref=param.ref)
 
 if __name__ == "__main__":
     init_sct()
