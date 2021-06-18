@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import sys
-import os
 from time import time
 
 import numpy as np
