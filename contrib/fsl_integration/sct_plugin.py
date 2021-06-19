@@ -430,11 +430,12 @@ class TabPanelPropSeg(SCTPanel):
         contrast = self.rbox_contrast.GetStringSelection()
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
-        fname_out = "{}_seg.{}".format(fname, fext)
-        cmd_line = f"sct_propseg -i {fname_input} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
+        ofolder = self.hbox_ofolder.get_output_folder()
+        cmd_line = f"sct_propseg -i {fname_input} -c {contrast} -ofolder {ofolder}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
+        fname_out = f"{ofolder}/{fname}_seg.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
         opts = displayCtx.getOpts(image)
@@ -496,11 +497,12 @@ class TabPanelSCSeg(SCTPanel):
         contrast = self.rbox_contrast.GetStringSelection()
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
-        fname_out = "{}_seg.{}".format(fname, fext)
-        cmd_line = f"sct_deepseg_sc -i {fname_input} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
+        ofolder = self.hbox_ofolder.get_output_folder()
+        cmd_line = f"sct_deepseg_sc -i {fname_input} -c {contrast} -ofolder {ofolder}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
+        fname_out = f"{ofolder}/{fname}_seg.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
         opts = displayCtx.getOpts(image)
@@ -554,8 +556,9 @@ class TabPanelGMSeg(SCTPanel):
 
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
-        default_fname_out = "{}_gmseg.{}".format(fname, fext)
-        cmd_line = f"sct_deepseg_gm -i {fname_input} -o {os.path.join(self.hbox_ofolder.get_output_folder(), default_fname_out)}"
+        ofolder = self.hbox_ofolder.get_output_folder()
+        fname_out = f"{ofolder}/{fname}_gmseg.{fext}"
+        cmd_line = f"sct_deepseg_gm -i {fname_input} -o {fname_out}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
@@ -636,11 +639,12 @@ class TabPanelVertLB(SCTPanel):
 
         base_name = os.path.basename(fname_seg)
         fname, fext = base_name.split(os.extsep, 1)
-        fname_out = "{}_labeled.{}".format(fname, fext)
-        cmd_line = f"sct_label_vertebrae -i {fname_im} -s {fname_seg} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
+        ofolder = self.hbox_ofolder.get_output_folder()
+        cmd_line = f"sct_label_vertebrae -i {fname_im} -s {fname_seg} -c {contrast} -ofolder {ofolder}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
+        fname_out = f"{ofolder}/{fname}_labeled.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
         opts = displayCtx.getOpts(image)
@@ -730,7 +734,8 @@ class TabPanelRegisterToTemplate(SCTPanel):
             return
 
         contrast = self.rbox_contrast.GetStringSelection()
-        cmd_line = f"sct_register_to_template -i {fname_im} -s {fname_seg} -ldisc {fname_label} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
+        ofolder = self.hbox_ofolder.get_output_folder()
+        cmd_line = f"sct_register_to_template -i {fname_im} -s {fname_seg} -ldisc {fname_label} -c {contrast} -ofolder {ofolder}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
@@ -738,7 +743,7 @@ class TabPanelRegisterToTemplate(SCTPanel):
         fname, fext = base_name.split(os.extsep, 1)
         # TODO: at some point we will modify SCT's function to output the file name below
         # fname_out = "PAM50_{}_reg.{}".format(contrast, fext)
-        fname_out = 'template2anat.nii.gz'
+        fname_out = f'{ofolder}/template2anat.nii.gz'
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
         opts = displayCtx.getOpts(image)
