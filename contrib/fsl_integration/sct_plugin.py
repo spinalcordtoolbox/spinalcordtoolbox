@@ -23,7 +23,6 @@
 import os
 import select
 import subprocess
-import signal
 from threading import Thread
 import logging
 import webbrowser
@@ -116,7 +115,7 @@ class SCTCallThread(Thread):
     def __init__(self, command, text_window_ctrl):
         Thread.__init__(self)
         self.command = [command]
-        self.status = None
+        self.status = 0
         self.stdout = ""
         self.stderr = ""
         self.text_window = text_window_ctrl
@@ -162,7 +161,7 @@ class SCTCallThread(Thread):
 
     def sct_interrupt(self):
         if self.p:
-            self.p.send_signal(signal.SIGINT)
+            self.p.terminate()  # This sends SIGTERM (error code 15)
         else:
             print("No process running?")
 
@@ -358,13 +357,16 @@ class SCTPanel(wx.Panel):
 
         thr.join()
 
-        self.log_to_window("Command completed.", level="INFO")
-
         if progress_dialog:
             progress_dialog.Destroy()
 
-        # show stderr output if an error occurred
-        if thr.status:
+        if thr.status == 0:
+            self.log_to_window("Command completed.", level="INFO")
+        elif thr.status == -15:
+            # -15 corresponds to SIGTERM, used by the "Stop" button
+            self.log_to_window("Command terminated.", level="INFO")
+        else:
+            # show stderr output if an error occurred
             self.log_to_window("An error occurred", level="ERROR")
             error_dialog = ErrorDialog(frame, msg=thr.stderr)
             error_dialog.Show()
