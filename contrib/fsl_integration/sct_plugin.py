@@ -126,6 +126,10 @@ class SCTCallThread(Thread):
             del env["PYTHONHOME"]
         if 'PYTHONPATH' in env:
             del env["PYTHONPATH"]
+        # If FSLeyes is being used in a conda environment on macOS, this will be set to the wrong executable
+        # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3427#issuecomment-865215813
+        if 'PYTHONEXECUTABLE' in env:
+            del env['PYTHONEXECUTABLE']
 
         proc = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
         self.p = proc
