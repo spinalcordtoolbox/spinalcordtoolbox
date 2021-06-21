@@ -356,7 +356,9 @@ def main(argv=None):
     if status == 0:
         print_ok(more=(" (%s)" % fsleyes_version))
     else:
-        print_fail(f" ({output})")
+        print(f" Not installed. While FSLeyes is not a requirement of SCT, we recommend to install it to easily "
+              f"visualize processing outputs and/or to use SCT within FSLeyes. More info at: "
+              f"https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html")
     if complete_test:
         print('>> ' + cmd)
         print((status, output), '\n')
