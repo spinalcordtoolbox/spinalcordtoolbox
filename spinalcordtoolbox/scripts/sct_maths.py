@@ -483,7 +483,6 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
     res, data1_1d, data2_1d = sct_math.compute_similarity(img1.data, img2.data, metric=metric)
 
     if verbose > 1:
-        matplotlib.use('Agg')
         plt.plot(data1_1d, 'b')
         plt.plot(data2_1d, 'r')
         plt.title('Similarity: ' + metric_full + ' = ' + str(res))

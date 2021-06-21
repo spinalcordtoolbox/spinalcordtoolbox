@@ -464,8 +464,6 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # TODO: no need to split the src or dest if it is the template (we know its centerline and orientation already)
 
     if verbose == 2:
-        import matplotlib
-        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz
@@ -721,8 +719,6 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
     # for display stuff
     if verbose == 2:
-        import matplotlib
-        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz

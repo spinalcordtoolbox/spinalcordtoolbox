@@ -21,6 +21,7 @@
 #  -y   Install without interruption with 'yes' as default answer
 #  -d   Prevent the (re)-installation of the data/ directory
 #  -b   Prevent the (re)-installation of the SCT binaries files
+#  -c   Prevent checks from being run to validate the installation
 #  -v   Full verbose
 #
 #
@@ -51,6 +52,7 @@ SCT_INSTALL_TYPE=""
 NONINTERACTIVE=""
 NO_DATA_INSTALL=""
 NO_SCT_BIN_INSTALL=""
+NO_INSTALL_VALIDATION=""
 
 # ======================================================================================================================
 # FUNCTIONS
@@ -265,10 +267,8 @@ function edit_shellrc() {
     # Switch between shell
     if [[ "$THE_RC" == "bash" ]]; then
       echo "export SCT_DIR=$SCT_DIR"
-      echo "export MPLBACKEND=Agg"
     elif [[ "$THE_RC" == "csh" ]]; then
       echo "setenv SCT_DIR $SCT_DIR"
-      echo "setenv MPLBACKEND Agg"
     fi
     # add line
     echo ""
@@ -277,8 +277,8 @@ function edit_shellrc() {
 
 # Download from URL using curl/wget
 function download() {
-  ( (command -v wget >/dev/null) && run wget -O "$1" "$2" ) ||
-  ( (command -v curl >/dev/null) && run curl -o "$1" -L "$2" ) ||
+  ( (command -v wget >/dev/null) && run wget -nv -O "$1" "$2" ) ||
+  ( (command -v curl >/dev/null) && run curl -sS -o "$1" -L "$2" ) ||
   die "The download of $2 failed
 Please check that you have wget or curl installed, and
 your internet connection before relaunching the installer"
@@ -354,7 +354,7 @@ for arg in "$@"; do
   esac
 done
 
-while getopts ":iydbvh" opt; do
+while getopts ":iydbcvh" opt; do
   case $opt in
   i)
     SCT_INSTALL_TYPE="in-place"
@@ -370,6 +370,10 @@ while getopts ":iydbvh" opt; do
   b)
     echo " SCT binaries will not be (re)-installed "
     NO_SCT_BIN_INSTALL="yes"
+    ;;
+  c)
+    echo " no checks will be run (installation will not be validated)"
+    NO_INSTALL_VALIDATION="yes"
     ;;
   v)
     echo " Full verbose!"
@@ -542,11 +546,6 @@ else
   die "This variable is not recognized: THE_RC=$THE_RC"
 fi
 
-# Update MPLBACKEND on headless system. See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2137
-if [[ -z "${MLBACKEND:-}" ]]; then
-  export MPLBACKEND=Agg
-fi
-
 # Copy files to destination directory
 if [[ "$SCT_DIR" != "$SCT_SOURCE" ]]; then
   print info "Copying source files from $SCT_SOURCE to $SCT_DIR"
@@ -701,7 +700,13 @@ conda deactivate >/dev/null 2>&1
 if [[ -e "$RC_FILE_PATH" ]]; then
     if grep "sct_env" "$RC_FILE_PATH"; then
       print info "In case an old version SCT is already installed (4.0.0-beta.1 or before), remove 'sct_env' declaration in RC file"
-      sed -ie '/sct_env/ s/^#*/#/' "$RC_FILE_PATH"
+      sed_i '/sct_env/ s/^#*/#/' "$RC_FILE_PATH"
+    fi
+    if grep "^export MPLBACKEND=Agg" "$RC_FILE_PATH"; then
+      print info "Commenting out 'export MPLBACKEND=Agg' from previous SCT installation"
+      sed_i 's/^export MPLBACKEND=Agg/# The line below has been commented out by a more recent installation of SCT,\
+# because export MPLBACKEND=Agg is no longer needed as of SCT v5.4.0\
+# export MPLBACKEND=Agg/' "$RC_FILE_PATH"
     fi
 fi
 
@@ -712,18 +717,22 @@ else
 You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_xxx"
 fi
 
-# run sct_check_dependencies
-print info "Validate installation..."
-# We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
-# it creates is cleaned properly
-if sct_check_dependencies; then
-  if [[ "$add_to_path" =~ ^[Nn] ]]; then
-    print info "To use SCT, please update your environment by running:
-$DISPLAY_UPDATE_PATH"
-  else
-    print info "Open a new Terminal window to load environment variables, or run:
-source $RC_FILE_PATH"
-  fi
+if [[ -n "$NO_INSTALL_VALIDATION" ]]; then
+    print warning "WARNING: no checks will be run (installation will not be validated)"
 else
-  die "Installation validation Failed!"
+  # run sct_check_dependencies
+  print info "Validate installation..."
+  # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
+  # it creates is cleaned properly
+  if sct_check_dependencies; then
+    if [[ "$add_to_path" =~ ^[Nn] ]]; then
+      print info "To use SCT, please update your environment by running:
+  $DISPLAY_UPDATE_PATH"
+    else
+      print info "Open a new Terminal window to load environment variables, or run:
+  source $RC_FILE_PATH"
+    fi
+  else
+    die "Installation validation Failed!"
+  fi
 fi
