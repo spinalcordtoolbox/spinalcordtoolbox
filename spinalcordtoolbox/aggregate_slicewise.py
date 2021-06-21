@@ -241,6 +241,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], pmj_sl
     :param mask: Class Metric(): mask to use for aggregating the data. Optional.
     :param slices: List[int]: Slices to aggregate metric from. If empty, select all slices.
     :param levels: List[int]: Vertebral levels to aggregate metric from. It has priority over "slices".
+    :param pmj_slices: List: Slices to aggregate metric from and corresponding PMJ distance. It has priority over "slices".
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False). Has priority over "perslice".
     :param vert_level: Vertebral level. Could be either an Image or a file name.
@@ -274,7 +275,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], pmj_sl
 
     # aggregation based on levels
     vertgroups = None
-    distance_group = None
+    distancePMJ_group = None
     if levels:
         im_vert_level = Image(vert_level).change_orientation('RPI')
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
@@ -296,7 +297,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], pmj_sl
     # aggregation based on distance from PMJ
     elif pmj_slices is not None:
         # slicegroups = [(0, 1, 2, 3, 4, 5, 6, 7, 8)]
-        # TODO: TO modify when we can input multiple distances
+        # TODO: TO modify when we can input multiple distances + add option for perslice
         slicegroups = [tuple(pmj_slices[0])]
         distancePMJ_group = [pmj_slices[-1]]
     # aggregation based on slices
