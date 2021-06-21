@@ -25,9 +25,9 @@ from matplotlib.ticker import MaxNLocator
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, merge_dict
 from spinalcordtoolbox.process_seg import compute_shape
-from spinalcordtoolbox.csa_pmj import compute_csa_from_pmj
+from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
 from spinalcordtoolbox.centerline.core import ParamCenterline
-from spinalcordtoolbox.image import Image, add_suffix
+from spinalcordtoolbox.image import add_suffix
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
@@ -113,7 +113,7 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.str,
         default='./label/template/PAM50_levels.nii.gz',
-        help="R|Vertebral labeling file. Only use with flag -vert.\n" 
+        help="R|Vertebral labeling file. Only use with flag -vert.\n"
         "The input and the vertebral labelling file must in the same voxel coordinate system "
         "and must match the dimensions between each other. "
     )
@@ -166,16 +166,16 @@ def get_parser():
     )
     optional.add_argument(
         '-distance',
-        type=float, # Is float necessary?
+        type=float,  # Is float necessary?
         metavar=Metavar.float,
         help="Distance (mm) from Ponto-Medullary Junction (PMJ) to compute CSA."
              "to be used with flag -pmj"
     )
     optional.add_argument(
         '-extent',
-        type=float,
+        type=float,  # Is float necessary?
         metavar=Metavar.float,
-        default=15,
+        default=20,
         help="Extent of the mask to average CSA (mm)."
              "to be used with flag -pmj and -distance"
     )
@@ -333,7 +333,7 @@ def main(argv=None):
     if arguments.pmj is not None:
         fname_pmj = get_absolute_path(arguments.pmj)
     else:
-        fname_pmj = ''
+        fname_pmj = None
     if arguments.distance is not None:
         distance_from_pmj = arguments.distance
     else:
@@ -353,12 +353,12 @@ def main(argv=None):
                                          param_centerline=param_centerline,
                                          verbose=verbose)
     if fname_pmj is not None:
-        mask, pmj_slices = compute_csa_from_pmj(fname_segmentation, fname_pmj,
-                            distance_from_pmj, extent_mask,
-                            param_centerline=param_centerline,
-                            verbose=verbose)
-                            
-        fname_mask_out = add_suffix(arguments.i, '_mask_csa')                            
+        mask, pmj_slices = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
+                                                       distance_from_pmj, extent_mask,
+                                                       param_centerline=param_centerline,
+                                                       verbose=verbose)
+
+        fname_mask_out = add_suffix(arguments.i, '_mask_csa')
         mask.save(fname_mask_out)
         pmj_slices = [parse_num_list(pmj_slices[0]), pmj_slices[-1]]
     else:
@@ -367,7 +367,7 @@ def main(argv=None):
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                            levels=parse_num_list(vert_levels), 
+                                                            levels=parse_num_list(vert_levels),
                                                             pmj_slices=pmj_slices, perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=(('SUM', func_sum),))
