@@ -232,7 +232,7 @@ def func_wa(data, mask=None, map_clusters=None):
     return np.average(data, weights=mask), None
 
 
-def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], pmj_slices=None, perslice=None,
+def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distance_pmj=None, perslice=None,
                                  perlevel=False, vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
@@ -241,7 +241,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], pmj_sl
     :param mask: Class Metric(): mask to use for aggregating the data. Optional.
     :param slices: List[int]: Slices to aggregate metric from. If empty, select all slices.
     :param levels: List[int]: Vertebral levels to aggregate metric from. It has priority over "slices".
-    :param pmj_slices: List: Slices to aggregate metric from and corresponding PMJ distance. It has priority over "slices".
+    :param distance_pmj: float: Distance from Ponto-Medullary Junction (PMJ).
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False). Has priority over "perslice".
     :param vert_level: Vertebral level. Could be either an Image or a file name.
@@ -263,7 +263,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], pmj_sl
     # If user neither specified slices nor levels, set perslice=True, otherwise, the output will likely contain nan
     # because in many cases the segmentation does not span the whole I-S dimension.
     if perslice is None:
-        if not slices and not levels and not pmj_slices:
+        if not slices and not levels:
             perslice = True
         else:
             perslice = False
@@ -275,7 +275,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], pmj_sl
 
     # aggregation based on levels
     vertgroups = None
-    distancePMJ_group = None
     if levels:
         im_vert_level = Image(vert_level).change_orientation('RPI')
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
@@ -294,12 +293,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], pmj_sl
             slicegroups = [tuple([val for sublist in slicegroups for val in sublist])]  # flatten into single tuple
             # vertgroups = [(2, 3, 4)]
             vertgroups = [tuple([level for level in levels])]
-    # aggregation based on distance from PMJ
-    elif pmj_slices is not None:
-        # slicegroups = [(0, 1, 2, 3, 4, 5, 6, 7, 8)]
-        # TODO: TO modify when we can input multiple distances + add option for perslice
-        slicegroups = [tuple(pmj_slices[0])]
-        distancePMJ_group = [pmj_slices[-1]]
     # aggregation based on slices
     else:
         if perslice:
@@ -311,18 +304,14 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], pmj_sl
     agg_metric = dict((slicegroup, dict()) for slicegroup in slicegroups)
     # loop across slice group
     for slicegroup in slicegroups:
-        # add level info or distance from PMJ info
-        if vertgroups is None and distancePMJ_group is None:
+        # add level info
+        if vertgroups is None:
             agg_metric[slicegroup]['VertLevel'] = None
-            agg_metric[slicegroup]['DistancePMJ'] = None
-
-        elif distancePMJ_group is not None:
-            agg_metric[slicegroup]['VertLevel'] = None
-            agg_metric[slicegroup]['DistancePMJ'] = distancePMJ_group
-
         else:
             agg_metric[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
             agg_metric[slicegroup]['DistancePMJ'] = None
+        # add distance from PMJ info
+        agg_metric[slicegroup]['DistancePMJ'] = [distance_pmj]
         # Loop across functions (e.g.: MEAN, STD)
         for (name, func) in group_funcs:
             try:
@@ -561,8 +550,8 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
             line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
-            line.append(parse_num_list_inv(agg_metric[slicegroup]['DistancePMJ']))  # list vertebral levels
-            agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]  # list distance from PMJ
+            line.append(parse_num_list_inv(agg_metric[slicegroup]['DistancePMJ']))  # list distance from PMJ
+            agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:
                     if item in key:

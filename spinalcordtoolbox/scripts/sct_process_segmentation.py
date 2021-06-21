@@ -335,9 +335,9 @@ def main(argv=None):
     else:
         fname_pmj = None
     if arguments.distance is not None:
-        distance_from_pmj = arguments.distance
+        distance_pmj = arguments.distance
     else:
-        distance_from_pmj = None
+        distance_pmj = None
     extent_mask = arguments.extent
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
@@ -353,29 +353,26 @@ def main(argv=None):
                                          param_centerline=param_centerline,
                                          verbose=verbose)
     if fname_pmj is not None:
-        mask, pmj_slices = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
-                                                       distance_from_pmj, extent_mask,
-                                                       param_centerline=param_centerline,
-                                                       verbose=verbose)
+        mask, slices = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
+                                                   distance_pmj, extent_mask,
+                                                   param_centerline=param_centerline,
+                                                   verbose=verbose)
 
         fname_mask_out = add_suffix(arguments.i, '_mask_csa')
         mask.save(fname_mask_out)
-        pmj_slices = [parse_num_list(pmj_slices[0]), pmj_slices[-1]]
-    else:
-        pmj_slices = None
     for key in metrics:
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
                                                             levels=parse_num_list(vert_levels),
-                                                            pmj_slices=pmj_slices, perslice=perslice,
+                                                            distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=(('SUM', func_sum),))
         else:
             # For other metrics, we compute the average and standard deviation across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
                                                             levels=parse_num_list(vert_levels),
-                                                            pmj_slices=pmj_slices, perslice=perslice,
+                                                            distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=group_funcs)
     metrics_agg_merged = merge_dict(metrics_agg)

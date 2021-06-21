@@ -81,7 +81,6 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
 
     # Get corresponding slices
     slices = "{}:{}".format(z_index_extent_min, z_index_extent_max - 1)
-    slices = [slices, distance]
 
     return mask, slices
 
