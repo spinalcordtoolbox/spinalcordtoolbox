@@ -63,7 +63,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     if distance > arr_length[0][0]:
         raise ValueError("Input distance of " + str(distance) + " mm is out of bound for maximum distance of " + str(arr_length[0][0]) + " mm")
         # logging.error("Input distance of " + str(distance) + "mm is out of bound for maximum distance of " + str(arr_length[0][0]) + "mm")
-    
+
     # Get Z index of corresponding distance from PMJ with the specified extent
     # TODO: add warining if specified
     z_index_extent_min = get_nearest_index(arr_length, distance + extent/2)
