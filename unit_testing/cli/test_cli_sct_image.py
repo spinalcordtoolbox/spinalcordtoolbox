@@ -75,12 +75,12 @@ def dmri_t_slices(tmp_path, dmri_in):
 @pytest.mark.sct_testing
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_image_pad():
-    """Run the CLI script and ."""
+    """Run the CLI script and test the '-pad' option."""
     pad = 2
     path_in = 'mt/mtr.nii.gz'
     path_out = 'sct_image_out.nii.gz'
     sct_image.main(argv=['-i', path_in, '-o', 'sct_image_out.nii.gz', '-pad', f'0,0,{pad}'])
 
-    nx, ny, nz, nt, px, py, pz, pt = Image(path_in).dim
-    nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = Image(path_out).dim
-    assert nz2 == nz + 2 * pad
+    # z axis (dim[2]) should be padded, but all other values should be unchanged
+    expected_dim = Image(path_in).dim[:2] + (Image(path_in).dim[2] + (2 * pad),) + Image(path_in).dim[3:]
+    assert Image(path_out).dim == expected_dim
