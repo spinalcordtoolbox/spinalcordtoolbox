@@ -18,12 +18,12 @@ from spinalcordtoolbox.utils.sys import sct_dir_local_path
 # The parametrization below checks only 6 values (one from each csv file -- same as actual batch_processing.sh)
 # TODO: We can and should be verifying more results produced by this pipeline, but which values?
 @pytest.mark.parametrize("csv_filepath,row,pos",
-                         [("t2/csa_c2c3.csv", -1, 5),
-                          ("t2s/csa_gm.csv", -1, 5),
-                          ("t2s/csa_wm.csv", -1, 5),
-                          ("mt/mtr_in_wm.csv", -1, 7),
-                          ("dmri/fa_in_cst.csv", -1, 7),
-                          ("dmri/fa_in_cst.csv", -2, 7)])
+                         [("t2/csa_c2c3.csv", -1, 6),
+                          ("t2s/csa_gm.csv", -1, 6),
+                          ("t2s/csa_wm.csv", -1, 6),
+                          ("mt/mtr_in_wm.csv", -1, 8),
+                          ("dmri/fa_in_cst.csv", -1, 8),
+                          ("dmri/fa_in_cst.csv", -2, 8)])
 def test_batch_processing_results(csv_filepath, row, pos):
     """Ensure that new batch_processing.sh results are approximately equal to the cached baseline results."""
     sct_dir = pathlib.Path(sct_dir_local_path())
