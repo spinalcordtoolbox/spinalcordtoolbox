@@ -8,9 +8,9 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.sct_testing
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
-def test_sct_compute_hausdorff_distance_values_against_threshold():
-    """Run the CLI script and verify computed distances are all within a given threshold.
-    TODO: Distances are all 0.0. Is this test checking anything useful?"""
+def test_sct_compute_hausdorff_distance_null_values():
+    """Run the CLI script and verify computed distances between identical images are all zero."""
+    # TODO: Test distances between non-identical images`
     sct_compute_hausdorff_distance.main(argv=['-i', 't2s/t2s_gmseg_manual.nii.gz', '-d', 't2s/t2s_gmseg_manual.nii.gz'])
 
     with open('hausdorff_distance.txt', 'r') as f:
