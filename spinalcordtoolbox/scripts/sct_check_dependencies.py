@@ -357,7 +357,6 @@ def main(argv=None):
         print_ok(more=(" (%s)" % fsleyes_version))
     else:
         print_fail(f" ({output})")
-        e = 1
     if complete_test:
         print('>> ' + cmd)
         print((status, output), '\n')
