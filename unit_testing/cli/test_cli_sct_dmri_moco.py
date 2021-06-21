@@ -1,8 +1,7 @@
 import pytest
 import logging
 
-from pandas import read_csv
-from numpy import allclose
+from numpy import allclose, genfromtxt
 
 from spinalcordtoolbox.scripts import sct_dmri_moco, sct_image, sct_crop_image, sct_create_mask
 
@@ -16,8 +15,7 @@ def test_sct_dmri_moco_check_params(tmp_path):
     sct_dmri_moco.main(argv=['-i', 'dmri/dmri.nii.gz', '-bvec', 'dmri/bvecs.txt', '-g', '3', '-x', 'nn', '-r', '0',
                              '-ofolder', str(tmp_path)])
 
-    df = read_csv(tmp_path / "moco_params.tsv", sep="\t")
-    lresults = list(df['X'][:])
+    lresults = genfromtxt(tmp_path / "moco_params.tsv", skip_header=1, delimiter='\t')[:, 0]
     lgroundtruth = [0.00047529041677414337, -1.1970542445283172e-05, -1.1970542445283172e-05, -1.1970542445283172e-05,
                     -0.1296642741802682, -0.1296642741802682, -0.1296642741802682]
     assert allclose(lresults, lgroundtruth)
@@ -40,8 +38,7 @@ def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask):
     sct_dmri_moco.main(argv=['-i', 'dmri/dmri.nii.gz', '-bvec', 'dmri/bvecs.txt', '-g', '3', '-r', '0',
                              '-m', dmri_mask, '-ofolder', str(tmp_path)])
 
-    df = read_csv(tmp_path / "moco_params.tsv", sep="\t")
-    lresults = list(df['X'][:])
+    lresults = genfromtxt(tmp_path / "moco_params.tsv", skip_header=1, delimiter='\t')[:, 0]
     lgroundtruth = [0.008032332623754357, 0.0037734940916436697, 0.0037734940916436697, 0.0037734940916436697,
                     -0.01502861167728611, -0.01502861167728611, -0.01502861167728611]
     assert allclose(lresults, lgroundtruth)
