@@ -347,6 +347,21 @@ def main(argv=None):
             print_fail()
             print(err)
 
+    # Check version of FSLeyes
+    print_line('Check FSLeyes version')
+    cmd = 'fsleyes --version'
+    status, output = run_proc(cmd, verbose=0, raise_exception=False)
+    # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
+    fsleyes_version = output.split()[2]
+    if status == 0:
+        print_ok(more=(" (%s)" % fsleyes_version))
+    else:
+        print_fail(f" ({output})")
+        e = 1
+    if complete_test:
+        print('>> ' + cmd)
+        print((status, output), '\n')
+
     print('')
     sys.exit(e + install_software)
 
