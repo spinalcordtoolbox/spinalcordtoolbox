@@ -125,7 +125,7 @@ def test_aggregate_across_levels(dummy_metrics, dummy_vert_level):
                                                                   perslice=False, perlevel=False,
                                                                   vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[(0, 1, 2, 3)] == {'VertLevel': (2, 3), 'WA()': 35.0}
+    assert agg_metric[(0, 1, 2, 3)] == {'VertLevel': (2, 3), 'DistancePMJ': None, 'WA()': 35.0}
 
 
 # noinspection 801,PyShadowingNames
@@ -135,8 +135,8 @@ def test_aggregate_across_levels_perslice(dummy_metrics, dummy_vert_level):
                                                                   perslice=True, perlevel=False,
                                                                   vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[(0,)] == {'VertLevel': (2,), 'WA()': 29.0}
-    assert agg_metric[(2,)] == {'VertLevel': (3,), 'WA()': 39.0}
+    assert agg_metric[(0,)] == {'VertLevel': (2,), 'DistancePMJ': None, 'WA()': 29.0}
+    assert agg_metric[(2,)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 39.0}
 
 
 # noinspection 801,PyShadowingNames
@@ -145,8 +145,8 @@ def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
                                                                   perlevel=True, vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[(0, 1)] == {'VertLevel': (2,), 'WA()': 30.0}
-    assert agg_metric[(2, 3)] == {'VertLevel': (3,), 'WA()': 40.0}
+    assert agg_metric[(0, 1)] == {'VertLevel': (2,), 'DistancePMJ': None, 'WA()': 30.0}
+    assert agg_metric[(2, 3)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 40.0}
 
 
 # noinspection 801,PyShadowingNames
@@ -226,15 +226,15 @@ def test_save_as_csv(tmp_path, dummy_metrics):
     with open(path_out, 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:] == [__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, 'FakeFile.txt', '3:4', '', '', '45.5', '4.5']
     # with appending
     aggregate_slicewise.save_as_csv(agg_metric, path_out)
     aggregate_slicewise.save_as_csv(agg_metric, path_out, append=True)
     with open(path_out, 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '45.5', '4.5']
-        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '', '45.5', '4.5']
 
 
 # noinspection 801,PyShadowingNames
@@ -316,7 +316,7 @@ def test_save_as_csv_extract_metric(tmp_path, dummy_data_and_labels):
     with open(path_out, 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:-1] == [__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
+        assert next(spamreader)[1:-1] == [__version__, '', '0:4', '', '', 'label_0', '2.5', '38.0']
 
 
 def test_dimension_mismatch_between_metric_and_vertfile(dummy_metrics, dummy_vert_level):
