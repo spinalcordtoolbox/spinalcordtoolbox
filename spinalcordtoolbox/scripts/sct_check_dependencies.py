@@ -350,18 +350,25 @@ def main(argv=None):
     # Check version of FSLeyes
     print_line('Check FSLeyes version')
     cmd = 'fsleyes --version'
-    status, output = run_proc(cmd, verbose=0, raise_exception=False)
-    # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
-    fsleyes_version = output.split()[2]
-    if status == 0:
+    try:
+        status, output = run_proc(cmd, verbose=0, raise_exception=True)
+        # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
+        fsleyes_version = output.split()[2]
         print_ok(more=(" (%s)" % fsleyes_version))
-    else:
+    # FSLeyes is not installed
+    except RuntimeError:
         print("Not installed. While FSLeyes is not a requirement of SCT, we recommend to install it to easily "
               "visualize processing outputs and/or to use SCT within FSLeyes. More info at: "
               "https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html")
-    if complete_test:
-        print('>> ' + cmd)
-        print((status, output), '\n')
+    # Potentially sct_plugin.py related problem - see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3426
+    except AttributeError as err:
+        print('AttributeError exception occurred. This exception might be related to sct_plugin.py script. More info '
+              'at: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3426')
+        print(err)
+    # Others exceptions
+    except Exception as err:
+        print('Following exception occurred when trying to get FSLeyes version:')
+        print(err)
 
     print('')
     sys.exit(e + install_software)
