@@ -42,7 +42,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     # Extract min and max index in Z direction
     data_seg = im_segr.data
     X, Y, Z = (data_seg > NEAR_ZERO_THRESHOLD).nonzero()
-    min_z_index, max_z_index = min(Z), max(Z)
+    min_z_index = min(Z)
     # Compute the spinal cord centerline based on the spinal cord segmentation
     im_ctl, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
 
