@@ -46,7 +46,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     # Compute the spinal cord centerline based on the spinal cord segmentation
     _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
 
-    # Get tagent vector at the top of the centerline | Maybe take a fiew slices to get the vector ?
+    # Get tangent vector at the top of the centerline | Maybe take a few slices to get the vector ?
     iz = max_z_index
     tangent_vect = np.array([arr_ctl_der[0][iz - min_z_index] * px, arr_ctl_der[1][iz - min_z_index] * py, pz])
     # Normalize vector by its L2 norm
