@@ -23,9 +23,6 @@ def test_sct_label_vertebrae_consistent_disc(tmp_path):
     assert fp == []
     assert fn == []
 
-    # Files created in root directory by sct_label_vertebrae
-    os.unlink('straightening.cache')
-
 
 @pytest.mark.sct_testing
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
@@ -47,9 +44,6 @@ def test_sct_label_vertebrae_high_value_warning(caplog, tmp_path):
     sct_label_vertebrae.main(command.split())
     assert 'Disc value not included in template.' in caplog.text
 
-    # Files created in root directory by sct_label_vertebrae
-    os.unlink('straightening.cache')
-
 
 def test_sct_label_vertebrae_clean_labels(tmp_path):
     command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,3 -clean-labels 1 -ofolder ' + str(os.path.join(str(tmp_path), 'clean'))
@@ -66,9 +60,6 @@ def test_sct_label_vertebrae_clean_labels(tmp_path):
     dice_no_clean = compute_dice(image_no_clean, image_seg)
     # The cleaned version should be closer to the segmentation
     assert dice_clean >= dice_no_clean
-
-    # Files created in root directory by sct_label_vertebrae
-    os.unlink('straightening.cache')
 
 
 def test_sct_label_vertebrae_disc_discontinuity_center_of_mass_error(tmp_path, caplog):
