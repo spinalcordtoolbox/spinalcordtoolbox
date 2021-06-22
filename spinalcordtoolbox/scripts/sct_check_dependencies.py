@@ -365,7 +365,7 @@ def main(argv=None):
         print('AttributeError exception occurred. This exception might be related to sct_plugin.py script. More info '
               'at: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3426')
         print(err)
-    # Others exceptions
+    # Other exceptions
     except Exception as err:
         print('Following exception occurred when trying to get FSLeyes version:')
         print(err)
