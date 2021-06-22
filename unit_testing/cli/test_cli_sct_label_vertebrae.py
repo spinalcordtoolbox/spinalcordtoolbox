@@ -11,11 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
+@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_label_vertebrae_consistent_disc(tmp_path):
     """Check that all expected output labeled discs exist"""
-    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -discfile sct_testing_data/t2/labels.nii.gz -ofolder ' + str(tmp_path)
-    sct_label_vertebrae.main(command.split())
-    ref = Image('sct_testing_data/t2/labels.nii.gz')
+    fname_ref = 't2/labels.nii.gz'
+    sct_label_vertebrae.main(argv=['-i', 't2/t2.nii.gz', '-s', 't2/t2_seg-manual.nii.gz', '-c', 't2',
+                                   '-discfile', fname_ref, '-ofolder', str(tmp_path)])
+    ref = Image(fname_ref)
     pred = Image(os.path.join(tmp_path, 't2_seg-manual_labeled_discs.nii.gz'))
     fp, fn = check_missing_label(pred, ref)
     assert fp == []
