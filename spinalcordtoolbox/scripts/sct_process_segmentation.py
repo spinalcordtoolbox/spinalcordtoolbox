@@ -161,15 +161,15 @@ def get_parser():
     optional.add_argument(
         '-pmj',
         metavar=Metavar.file,
-        help="Ponto-Medullary Junction (PMJ) label file."
+        help="Ponto-Medullary Junction (PMJ) label file. "
              "Example: pmj.nii.gz"
     )
     optional.add_argument(
         '-distance',
         type=float,  # Is float necessary?
         metavar=Metavar.float,
-        help="Distance (mm) from Ponto-Medullary Junction (PMJ) to compute CSA."
-             "to be used with flag -pmj"
+        help="Distance (mm) from Ponto-Medullary Junction (PMJ) to compute CSA. "
+             "To be used with flag -pmj"
     )
     optional.add_argument(
         '-extent',
@@ -342,6 +342,11 @@ def main(argv=None):
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
+
+    mutually_inclusive_args = (fname_pmj, distance_pmj)
+    is_pmj_none, is_distance_none = [arg is None for arg in mutually_inclusive_args]
+    if not (is_pmj_none == is_distance_none):
+        raise parser.error("Both '-pmj' and '-distance' are required in order to process segmentation from PMJ.")
 
     # update fields
     metrics_agg = {}
