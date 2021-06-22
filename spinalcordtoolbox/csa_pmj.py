@@ -27,7 +27,6 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     :return slices:
 
     """
-    # TODO: loop through distance (when multiple distances are given)
     native_orientation = Image(segmentation).orientation
     im_seg = Image(segmentation).change_orientation('RPI')
     im_pmj = Image(pmj).change_orientation('RPI')
@@ -133,6 +132,9 @@ def get_distance_from_pmj(centerline_points, init_point, px, py, pz):
     arr_length = arr_length[::-1]
     arr_length = np.stack((arr_length, centerline_points[2]), axis=0)
     return arr_length
+
+
+def extrapolate_centerline(centerline, im_seg):
 
 
 def get_nearest_index(arr, value):
