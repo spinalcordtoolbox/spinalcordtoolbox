@@ -35,7 +35,7 @@ def test_sct_image_split_dmri(dmri_t_slices):
     _, filename, ext = extract_fname(dmri_t_slices[0])
     ref = Image(f'dmri/{filename}{ext}')  # Reference image should exist inside working directory (sct_testing_data)
     new = Image(dmri_t_slices[0])         # New image should be generated inside tmp directory
-    assert np.sum(ref.data - new.data) <= 1e-3
+    assert np.linalg.norm(ref.data - new.data) == 0
 
 
 @pytest.mark.sct_testing
@@ -46,7 +46,7 @@ def test_sct_image_concat_dmri(tmp_path, dmri_t_slices, dmri_in):
     sct_image.main(argv=['-i'] + dmri_t_slices + ['-concat', 't', '-o', path_out])
     ref = Image(dmri_in)
     new = Image(path_out)
-    assert np.sum(ref.data - new.data) <= 1e-3
+    assert np.linalg.norm(ref.data - new.data) == 0
 
 
 @pytest.mark.sct_testing
