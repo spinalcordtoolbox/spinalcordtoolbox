@@ -6,8 +6,7 @@ import logging
 import numpy as np
 import pytest
 
-import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox import __sct_dir__
 
 from spinalcordtoolbox.scripts import sct_register_to_template, sct_apply_transfo
@@ -94,11 +93,11 @@ def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt,
     # compute dice coefficient between template segmentation warped to anat and segmentation from anat
     im_seg = Image(fname_seg)
     im_template_seg_reg = Image('test_template2anat.nii.gz')
-    dice_template2anat = msct_image.compute_dice(im_seg, im_template_seg_reg, mode='3d', zboundaries=True)
+    dice_template2anat = compute_dice(im_seg, im_template_seg_reg, mode='3d', zboundaries=True)
     assert dice_template2anat > dice_threshold
 
     # compute dice coefficient between anat segmentation warped to template and segmentation from template
     im_seg_reg = Image('test_anat2template.nii.gz')
     im_template_seg = Image(fname_gt)
-    dice_anat2template = msct_image.compute_dice(im_seg_reg, im_template_seg, mode='3d', zboundaries=True)
+    dice_anat2template = compute_dice(im_seg_reg, im_template_seg, mode='3d', zboundaries=True)
     assert dice_anat2template > dice_threshold
