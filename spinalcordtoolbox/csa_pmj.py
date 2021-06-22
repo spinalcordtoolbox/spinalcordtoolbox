@@ -28,6 +28,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
 
     """
     # TODO: loop through distance (when multiple distances are given)
+    native_orientation = Image(segmentation).orientation
     im_seg = Image(segmentation).change_orientation('RPI')
     im_pmj = Image(pmj).change_orientation('RPI')
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
@@ -80,6 +81,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     mask = im_seg.copy()
     mask.data[:, :, 0:z_index_extent_min] = 0
     mask.data[:, :, z_index_extent_max:] = 0
+    mask.change_orientation(native_orientation)
 
     # Get corresponding slices
     slices = "{}:{}".format(z_index_extent_min, z_index_extent_max - 1)
