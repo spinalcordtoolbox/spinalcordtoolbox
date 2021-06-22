@@ -73,4 +73,4 @@ def test_sct_register_multimodal_mt0_image_data_within_threshold(use_seg, param,
     #     # check if non-zero elements are present when computing the difference of the two images
     #     diff = im_gt.data - im_result.data
     #     # compare images
-    #     assert abs(np.sum(diff)) < threshold
+    #     assert abs(np.sum(diff)) < threshold  # FIXME: Use np.linalg.norm when this test is fixed
