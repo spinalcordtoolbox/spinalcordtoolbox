@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import spinalcordtoolbox.math as sct_math
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 
 
@@ -252,7 +252,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     dim_list = ['x', 'y', 'z', 't']
 
@@ -483,7 +483,6 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
     res, data1_1d, data2_1d = sct_math.compute_similarity(img1.data, img2.data, metric=metric)
 
     if verbose > 1:
-        matplotlib.use('Agg')
         plt.plot(data1_1d, 'b')
         plt.plot(data2_1d, 'r')
         plt.title('Similarity: ' + metric_full + ' = ' + str(res))

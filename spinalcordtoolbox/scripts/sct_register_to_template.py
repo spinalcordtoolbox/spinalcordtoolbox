@@ -33,7 +33,7 @@ from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, r
                                         cache_save, cache_signature, cache_valid)
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
                                            printv, display_viewer_syntax)
-from spinalcordtoolbox.utils.sys import set_global_loglevel, init_sct
+from spinalcordtoolbox.utils.sys import set_loglevel, init_sct
 from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
@@ -296,7 +296,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initializations
     param = Param()

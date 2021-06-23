@@ -55,9 +55,15 @@ jobs:
         run: |
           pacman -Syu --noconfirm gcc git curl
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   debian-rolling:
     name: Debian Rolling Release
@@ -72,9 +78,15 @@ jobs:
         run: |
           apt update && apt install -y libglib2.0-0 procps gcc git curl
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   debian-testing:
     name: Debian Testing
@@ -89,9 +101,15 @@ jobs:
         run: |
           apt update && apt install -y libglib2.0-0 procps gcc git curl
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   debian-10:
     name: Debian 10
@@ -106,9 +124,15 @@ jobs:
         run: |
           apt update && apt install -y libglib2.0-0 procps gcc git curl
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   debian-9:
     name: Debian 9
@@ -123,9 +147,15 @@ jobs:
         run: |
           apt update && apt install -y libglib2.0-0 procps gcc git curl
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   centos-8:
     name: CentOS 8
@@ -136,9 +166,15 @@ jobs:
         run: |
           yum install -y gcc git curl
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   centos-7:
     name: CentOS 7
@@ -153,18 +189,30 @@ jobs:
         run: |
           yum install -y gcc git curl
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   ubuntu-18_04:
     name: Ubuntu 18.04 (Bionic Beaver)
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   ubuntu-16_04:
     name: Ubuntu 16.04 (Xenial)
@@ -178,18 +226,30 @@ jobs:
         run: |
           # github runners come with dev-tools pre-installed
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   macos-10_15:
    name: macOS 10.15 (Catalina)
    runs-on: macos-10.15
    steps:
      - uses: actions/checkout@v2
-     - name: CI
+     - name: Install SCT
        run: |
-         ./.ci.sh
+         ./.ci.sh -i
+     - name: Check dependencies
+       run: |
+         ./.ci.sh -c
+     - name: Run pytest test suite
+       run: |
+         ./.ci.sh -t
 
   macos-11:
     name: macOS 11.0 (Big Sur)
@@ -204,9 +264,15 @@ jobs:
         run: |
           # github runners come with dev-tools pre-installed
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   windows-wsl-ubuntu-18_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
@@ -238,9 +304,15 @@ jobs:
         # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl
     - uses: actions/checkout@v2
-    - name: CI
+    - name: Install SCT
       run: |
-        ./.ci.sh
+        ./.ci.sh -i
+    - name: Check dependencies
+      run: |
+        ./.ci.sh -c
+    - name: Run pytest test suite
+      run: |
+        ./.ci.sh -t
 
   windows-wsl-ubuntu-16_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
@@ -272,6 +344,12 @@ jobs:
         # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl
     - uses: actions/checkout@v2
-    - name: CI
+    - name: Install SCT
       run: |
-        ./.ci.sh
+        ./.ci.sh -i
+    - name: Check dependencies
+      run: |
+        ./.ci.sh -c
+    - name: Run pytest test suite
+      run: |
+        ./.ci.sh -t

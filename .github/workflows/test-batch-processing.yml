@@ -20,6 +20,9 @@ env:
   PY_COLORS: "1"
   # Used in 'pytest.mark.skipif()' for test, which prevents the test from being run during the usual test suite
   BATCH_PROCESSING_CI_JOB: "1"
+  # Disable progress bars for less verbose output
+  PIP_PROGRESS_BAR: "off"
+  SCT_PROGRESS_BAR: "off"
 
 jobs:
   batch_processing:
@@ -39,9 +42,8 @@ jobs:
       # This workaround should be replaced by https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3198#discussion_r568225392
       - name: Install SCT
         run: |
-          PIP_PROGRESS_BAR=off ./install_sct -y
+          ./install_sct -y
           cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
-          cat ~/.bashrc | grep "export MPLBACKEND" | cut -d " " -f 2 >> $GITHUB_ENV
           cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
 
       - name: Run batch_processing.sh
