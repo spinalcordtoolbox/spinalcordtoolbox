@@ -304,14 +304,16 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
     agg_metric = dict((slicegroup, dict()) for slicegroup in slicegroups)
     # loop across slice group
     for slicegroup in slicegroups:
+        # add distance from PMJ info
+        if distance_pmj is not None:
+            agg_metric[slicegroup]['DistancePMJ'] = [distance_pmj]
+        else:
+            agg_metric[slicegroup]['DistancePMJ'] = None
         # add level info
         if vertgroups is None:
             agg_metric[slicegroup]['VertLevel'] = None
         else:
             agg_metric[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
-            agg_metric[slicegroup]['DistancePMJ'] = None
-        # add distance from PMJ info
-        agg_metric[slicegroup]['DistancePMJ'] = [distance_pmj]
         # Loop across functions (e.g.: MEAN, STD)
         for (name, func) in group_funcs:
             try:
