@@ -206,6 +206,12 @@ def get_parser():
         help='Output filename. Example: spinal_seg.nii.gz '
         )
     optional.add_argument(
+        '-ofolder',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="Output folder."
+    )
+    optional.add_argument(
         '-down',
         metavar=Metavar.int,
         type=int,
@@ -439,13 +445,16 @@ def propseg(img_input, options_dict):
         fname_out = arguments.o
     else:
         fname_out = os.path.basename(add_suffix(fname_data, "_seg"))
-    
-    folder_output = str(pathlib.Path(fname_out).parent)
-    cmd += ['-o', folder_output]
+
+    if arguments.ofolder is not None:
+        folder_output = arguments.ofolder
+    else:
+        folder_output = str(pathlib.Path(fname_out).parent)
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
         logger.error("output directory %s is not a valid directory" % folder_output)
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
+    cmd += ['-o', folder_output]
 
     if arguments.down is not None:
         cmd += ["-down", str(arguments.down)]
