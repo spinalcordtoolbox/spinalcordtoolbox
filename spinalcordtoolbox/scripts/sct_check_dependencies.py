@@ -350,25 +350,28 @@ def main(argv=None):
     # Check version of FSLeyes
     print_line('Check FSLeyes version')
     cmd = 'fsleyes --version'
-    try:
-        status, output = run_proc(cmd, verbose=0, raise_exception=True)
+    status, output = run_proc(cmd, verbose=0, raise_exception=False)
+    # Exit code 0 - command has run successfully
+    if status == 0:
         # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
         fsleyes_version = output.split()[2]
         print_ok(more=(" (%s)" % fsleyes_version))
-    # FSLeyes is not installed
-    except RuntimeError:
-        print("Not installed. While FSLeyes is not a requirement of SCT, we recommend to install it to easily "
-              "visualize processing outputs and/or to use SCT within FSLeyes. More info at: "
-              "https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html")
-    # Potentially sct_plugin.py related problem - see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3426
-    except AttributeError as err:
-        print('AttributeError exception occurred. This exception might be related to sct_plugin.py script. More info '
-              'at: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3426')
-        print(err)
-    # Other exceptions
-    except Exception as err:
-        print('Following exception occurred when trying to get FSLeyes version:')
-        print(err)
+    # Exit code 126 - Command invoked cannot execute (permission problem or command is not an executable)
+    elif status == 126:
+        print('Command not executable. Please check permissions of fsleyes command.')
+    # Exit code 127 - Command not found (possible problem with $PATH)
+    elif status == 127:
+        print('Command not found. If you installed FSLeyes as part of FSL package, please check that FSL is included '
+              'in $PATH variable. If you installed FSLeyes using conda environment, make sure that the environment is '
+              'activated. If you do not have FSLeyes installed, consider its installation to easily visualize '
+              'processing outputs and/or to use SCT within FSLeyes. More info at: '
+              'https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html')
+    # All other exit codes
+    else:
+        print(f'Exit code {status} occurred. Please report this issue on SCT GitHub: '
+              f'https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues')
+        if complete_test:
+            print(output)
 
     print('')
     sys.exit(e + install_software)
