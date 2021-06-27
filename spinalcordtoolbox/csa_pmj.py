@@ -6,7 +6,7 @@ import logging
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.centerline.core import get_centerline, round_and_clip
+from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.centerline import curve_fitting
 from spinalcordtoolbox.resampling import resample_nib
 
@@ -64,17 +64,20 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     if distance > arr_length[0][0]:
         raise ValueError("Input distance of " + str(distance) + " mm is out of bound for maximum distance of " + str(arr_length[0][0]) + " mm")
 
-    if distance < arr_length[0][-1]:
+    if distance < arr_length[0][-1]:  # Do we want instead max_z_index (so that we know that the segmentation is available?)
         raise ValueError("Input distance of " + str(distance) + " mm is out of bound for minimum distance of " + str(arr_length[0][-1]) + " mm")
 
     # Get Z index of corresponding distance from PMJ with the specified extent
     z_index_extent_min = get_nearest_index(arr_length, distance + extent/2)
     z_index_extent_max = get_nearest_index(arr_length, distance - extent/2)
     # Check if extent corresponds to the lenght, if not add or remove a slice
-    z_index_extent_min, z_index_extent_max = validate_length(z_index_extent_min, z_index_extent_max, arr_length, extent)  # Find a quicker way to solve this
+    # z_index_extent_min, z_index_extent_max = validate_length(z_index_extent_min, z_index_extent_max, arr_length, extent)  # Find a quicker way to solve this
+
     # Check if min Z index is available in the segmentation, if not, use the min_z_index of segmentation
     if z_index_extent_min < min_z_index:
         z_index_extent_min = min_z_index
+        new_extent = arr_length[0][z_index_extent_min] - arr_length[0][z_index_extent_max]
+        logger.warning("Extent of {} mm is out of bounds for given segmentation at a distance of {} mm from PMJ. Will use an extent of {} mm".format(extent, distance, new_extent))
 
     # Create mask from segmentation centered on distance from PMJ and with extent length on z axis.
     mask = im_seg.copy()
