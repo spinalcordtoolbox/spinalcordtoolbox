@@ -166,18 +166,18 @@ def get_parser():
     )
     optional.add_argument(
         '-distance',
-        type=float,  # Is float necessary?
+        type=float,
         metavar=Metavar.float,
         help="Distance (mm) from Ponto-Medullary Junction (PMJ) to compute CSA. "
              "To be used with flag -pmj"
     )
     optional.add_argument(
         '-extent',
-        type=float,  # Is float necessary?
+        type=float,
         metavar=Metavar.float,
         default=20,
-        help="Extent of the mask to average CSA (mm)."
-             "to be used with flag -pmj and -distance"
+        help="Extent of the mask to average CSA (mm). "
+             "To be used with flag -pmj and -distance"
     )
     optional.add_argument(
         '-qc',
