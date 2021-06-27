@@ -358,13 +358,16 @@ def main(argv=None):
                                          param_centerline=param_centerline,
                                          verbose=verbose)
     if fname_pmj is not None:
-        mask, slices = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
-                                                   distance_pmj, extent_mask,
-                                                   param_centerline=param_centerline,
-                                                   verbose=verbose)
-
+        im_ctl, mask, slices = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
+                                                           distance_pmj, extent_mask,
+                                                           param_centerline=param_centerline,
+                                                           verbose=verbose)
+        # Save mask
         fname_mask_out = add_suffix(arguments.i, '_mask_csa')
         mask.save(fname_mask_out)
+        # Save extrapolated centerline
+        fname_ctl = add_suffix(arguments.i, '_centeline_extrapolated')
+        im_ctl.save(fname_ctl)
     for key in metrics:
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices

@@ -24,6 +24,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     :param distance: float: Distance from Ponto-Medullary Junction (PMJ) in mm.
     :param param_centerline: see centerline.core.ParamCenterline()
     :param verbose:
+    :return im_ctl:
     :return mask:
     :return slices:
 
@@ -51,7 +52,6 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     param_centerline.minmax = False  # Set to false to extrapolate centerline
     im_ctl, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
     im_ctl.change_orientation(native_orientation)
-    im_ctl.save('centerline_extrapolated.nii.gz')  # TODO: move to sct_process_segmentation.py
 
     # Get coordinate of PMJ label
     pmj_coord = np.argwhere(data_pmj != 0)[0]
@@ -84,7 +84,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
 
     # Get corresponding slices
     slices = "{}:{}".format(z_index_extent_min, z_index_extent_max - 1)
-    return mask, slices
+    return im_ctl, mask, slices
 
 
 def get_intersection_plane_line(plane_point, plane_norm_vect, line_point, line_vect):  # TO REMOVE
