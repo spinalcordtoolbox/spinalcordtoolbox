@@ -42,26 +42,23 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     # Extract min and max index in Z direction
     data_seg = im_segr.data
     X, Y, Z = (data_seg > NEAR_ZERO_THRESHOLD).nonzero()
-    min_z_index = min(Z)
+    min_z_index, max_z_index = min(Z), max(Z)
+
+    # Remove top slices  | TODO: check if center of mass of top slices is close to other slices, if not, remove
+    im_segr.data[:, :, max_z_index - 4:max_z_index + 1] = 0
+
     # Compute the spinal cord centerline based on the spinal cord segmentation
+    param_centerline.minmax = False  # Set to false to extrapolate centerline
     im_ctl, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
+    im_ctl.change_orientation(native_orientation)
+    im_ctl.save('centerline_extrapolated.nii.gz')  # TODO: move to sct_process_segmentation.py
 
-    # Extrapolate centerline
-    arr_ctl_extra = extrapolate_centerline(arr_ctl, im_segr, pz)
-
-    # Create an image with the centerline | ONLY TO VALIDATE --> to remove
-    im_centerline = im_segr.copy()
-    im_centerline.data = np.zeros(im_centerline.data.shape)
-    # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
-    im_centerline.data[round_and_clip(arr_ctl_extra[0], clip=[0, im_centerline.data.shape[0]]),
-                       round_and_clip(arr_ctl_extra[1], clip=[0, im_centerline.data.shape[1]]),
-                       np.array(range(im_segr.dim[2]))] = 1
-    im_centerline.save('centerline_extrapolated.nii.gz')
+    # Get coordinate of PMJ label
     pmj_coord = np.argwhere(data_pmj != 0)[0]
     # Get Z index of PMJ project on extrapolated centerline
-    pmj_index = get_min_distance(pmj_coord, arr_ctl_extra, px, py, pz)
+    pmj_index = get_min_distance(pmj_coord, arr_ctl, px, py, pz)
     # Compute distance from PMJ along centerline
-    arr_length = get_distance_from_pmj(arr_ctl_extra, pmj_index, px, py, pz)
+    arr_length = get_distance_from_pmj(arr_ctl, pmj_index, px, py, pz)
 
     # Check if distance is out of bound
     if distance > arr_length[0][0]:
@@ -118,7 +115,7 @@ def get_distance_from_pmj(centerline_points, z_index, px, py, pz):
     :return: nd-array: distance from PMJ and corresponding indexes.
     """
     length = 0
-    arr_length = []
+    arr_length = [0]
     for i in range(z_index, 0, -1):
         distance = np.sqrt(((centerline_points[0, i] - centerline_points[0, i - 1]) * px) ** 2 +
                            ((centerline_points[1, i] - centerline_points[1, i - 1]) * py) ** 2 +
@@ -126,11 +123,11 @@ def get_distance_from_pmj(centerline_points, z_index, px, py, pz):
         length += distance
         arr_length.append(length)
     arr_length = arr_length[::-1]
-    arr_length = np.stack((arr_length, centerline_points[2][:z_index]), axis=0)
+    arr_length = np.stack((arr_length, centerline_points[2][:z_index + 1]), axis=0)
     return arr_length
 
 
-def extrapolate_centerline(centerline, im_seg, pz):
+def extrapolate_centerline(centerline, im_seg, pz):  # TO REMOVE
     """
     Compute distance from projected PMJ on centerline and cord centerline.
     :param centerline: 3xn array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
