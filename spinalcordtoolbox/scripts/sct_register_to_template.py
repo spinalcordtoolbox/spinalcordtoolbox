@@ -1226,14 +1226,6 @@ def register(src, dest, step, param):
     else:
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
 
-    # set masking
-    if param.fname_mask:
-        fname_mask = 'mask.nii.gz'
-        masking = ['-x', 'mask.nii.gz']
-    else:
-        fname_mask = ''
-        masking = []
-
     # # landmark-based registration
     if step.type in ['label']:
         warp_forward_out, warp_inverse_out = register_step_label(
@@ -1243,45 +1235,10 @@ def register(src, dest, step, param):
             verbose=param.verbose,
         )
 
-    elif step.algo == 'slicereg':
-        warp_forward_out, warp_inverse_out, _ = register_step_ants_slice_regularized_registration(
-            src=src,
-            dest=dest,
-            step=step,
-            metricSize=metricSize,
-            fname_mask=fname_mask,
-            verbose=param.verbose,
-        )
-
-    # ANTS 3d
-    elif step.algo.lower() in ants_registration_params and step.slicewise == '0':  # FIXME [AJ]
-        warp_forward_out, warp_inverse_out = register_step_ants_registration(
-            src=src,
-            dest=dest,
-            step=step,
-            masking=masking,
-            ants_registration_params=ants_registration_params,
-            padding=param.padding,
-            metricSize=metricSize,
-            verbose=param.verbose,
-        )
-
-    # ANTS 2d
-    elif step.algo.lower() in ants_registration_params and step.slicewise == '1':  # FIXME [AJ]
-        warp_forward_out, warp_inverse_out = register_step_slicewise_ants(
-            src=src,
-            dest=dest,
-            step=step,
-            ants_registration_params=ants_registration_params,
-            fname_mask=fname_mask,
-            remove_temp_files=param.remove_temp_files,
-            verbose=param.verbose,
-        )
-
-    # slice-wise transfo
+    # slice-wise transfo (non-ANTs)
     elif step.algo in ['centermass', 'centermassrot', 'columnwise']:
         # check if user provided a mask-- if so, inform it will be ignored
-        if fname_mask:
+        if param.fname_mask:
             printv('\nWARNING: algo ' + step.algo + ' will ignore the provided mask.\n', 1, 'warning')
 
         warp_forward_out, warp_inverse_out = register_step_slicewise(
@@ -1293,8 +1250,53 @@ def register(src, dest, step, param):
             verbose=param.verbose,
         )
 
+    # ANTs-based registration
     else:
-        printv('\nERROR: algo ' + step.algo + ' does not exist. Exit program\n', 1, 'error')
+        # set masking
+        if param.fname_mask:
+            fname_mask = 'mask.nii.gz'
+            masking = ['-x', 'mask.nii.gz']
+        else:
+            fname_mask = ''
+            masking = []
+
+        if step.algo == 'slicereg':
+            warp_forward_out, warp_inverse_out, _ = register_step_ants_slice_regularized_registration(
+                src=src,
+                dest=dest,
+                step=step,
+                metricSize=metricSize,
+                fname_mask=fname_mask,
+                verbose=param.verbose,
+            )
+
+        # ANTS 3d
+        elif step.algo.lower() in ants_registration_params and step.slicewise == '0':  # FIXME [AJ]
+            warp_forward_out, warp_inverse_out = register_step_ants_registration(
+                src=src,
+                dest=dest,
+                step=step,
+                masking=masking,
+                ants_registration_params=ants_registration_params,
+                padding=param.padding,
+                metricSize=metricSize,
+                verbose=param.verbose,
+            )
+
+        # ANTS 2d
+        elif step.algo.lower() in ants_registration_params and step.slicewise == '1':  # FIXME [AJ]
+            warp_forward_out, warp_inverse_out = register_step_slicewise_ants(
+                src=src,
+                dest=dest,
+                step=step,
+                ants_registration_params=ants_registration_params,
+                fname_mask=fname_mask,
+                remove_temp_files=param.remove_temp_files,
+                verbose=param.verbose,
+            )
+
+        else:
+            printv('\nERROR: algo ' + step.algo + ' does not exist. Exit program\n', 1, 'error')
 
     if not os.path.isfile(warp_forward_out):
         # no forward warping field for rigid and affine
