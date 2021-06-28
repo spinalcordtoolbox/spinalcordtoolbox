@@ -10,7 +10,8 @@ import numpy as np
 
 from spinalcordtoolbox.scripts.sct_register_to_template import Param, register
 from spinalcordtoolbox.registration.register import (Paramreg, register_step_ants_registration, register_step_label,
-                                                     register_step_ants_slice_regularized_registration)
+                                                     antsSliceRegularizedRegistration)
+from spinalcordtoolbox.image import add_suffix
 from spinalcordtoolbox.utils import sct_test_path
 
 logger = logging.getLogger(__name__)
@@ -195,7 +196,22 @@ def test_register_step_ants_registration(step2_data):
 def test_register_step_ants_slice_regularized_registration(step_axial_data_in_same_space):
     src, dest, step, cli_params = step_axial_data_in_same_space
 
-    outfiles = _, _, txty_csv_out = register_step_ants_slice_regularized_registration(src, dest, step, metricSize='4')
+    outfiles = _, _, txty_csv_out = antsSliceRegularizedRegistration(
+            fname_fixed_image=dest,
+            fname_moving_image=src,
+            metric=step.metric,
+            metric_size="4",
+            sampling_strategy=step.samplingStrategy,
+            sampling_percentage=step.samplingPercentage,
+            gradient_step=step.gradStep,
+            iterations=step.iter,
+            smoothing_sigmas=step.smooth,
+            shrink_factors=step.shrink,
+            polydegree=step.poly,
+            output_prefix=f'step{step.step}',
+            fname_warped_image=add_suffix(src, f'_regStep{step.step}'),
+            verbose=cli_params.verbose
+        )
 
     # Verify integrity of the output Tx Ty file
     txty_result = np.genfromtxt(txty_csv_out, skip_header=1, delimiter=',')
