@@ -3,6 +3,8 @@
 # Functions to get distance from PMJ for processing segmentation data
 # Author: Sandrine Bédard
 import logging
+import sys
+
 import numpy as np
 
 from spinalcordtoolbox.image import Image
@@ -29,6 +31,19 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     :return slices:
 
     """
+    im_seg = Image(segmentation)
+    im_pmj = Image(pmj)
+    if not im_seg.data.shape == im_pmj.data.shape:
+        raise RuntimeError(f"segmentation and pmj should be in the same space coordinate.")
+    # Add PMJ label to the segmentation and then extrapolate to obtain a Centerline object defines between the PMJ
+    # and the lower end of the centerline.
+    im_seg_with_pmj = im_seg.copy()
+    im_seg_with_pmj.data = im_seg_with_pmj.data + im_pmj.data
+    from spinalcordtoolbox.straightening import _get_centerline
+    param_centerline.algo_fitting = 'nurbs'
+    ctl_seg_with_pmj = _get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
+    sys.exit(0)
+
     native_orientation = Image(segmentation).orientation
     im_seg = Image(segmentation).change_orientation('RPI')
     im_pmj = Image(pmj).change_orientation('RPI')
