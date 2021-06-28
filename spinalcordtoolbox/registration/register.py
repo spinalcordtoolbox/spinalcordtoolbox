@@ -190,9 +190,14 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
     return warp_forward_out, warp_inverse_out, txty_csv_out
 
 
-def register_step_ants_registration(src, dest, step, masking, ants_registration_params, padding, metricSize, verbose=1):
+def register_step_ants_registration(src, dest, step, fname_mask, ants_registration_params, padding, metricSize, verbose=1):
     """
     """
+    if fname_mask:
+        mask_options = ['-x', fname_mask]
+    else:
+        mask_options = []
+
     # Pad the destination image (because ants doesn't deform the extremities)
     # N.B. no need to pad if iter = 0
     if not step.iter == '0':
@@ -238,7 +243,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
            '--output', '[step' + str(step.step) + ',' + scr_regStep + ']',
            '--interpolation', 'BSpline[3]',
            '--verbose', '1',
-           ] + masking
+           ] + mask_options
 
     # add init translation
     if step.init:

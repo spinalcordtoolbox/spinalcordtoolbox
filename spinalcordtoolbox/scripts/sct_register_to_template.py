@@ -1255,10 +1255,8 @@ def register(src, dest, step, param):
         # set masking
         if param.fname_mask:
             fname_mask = 'mask.nii.gz'
-            masking = ['-x', 'mask.nii.gz']
         else:
             fname_mask = ''
-            masking = []
 
         if step.algo == 'slicereg':
             warp_forward_out, warp_inverse_out, _ = register_step_ants_slice_regularized_registration(
@@ -1276,7 +1274,7 @@ def register(src, dest, step, param):
                 src=src,
                 dest=dest,
                 step=step,
-                masking=masking,
+                fname_mask=fname_mask,
                 ants_registration_params=ants_registration_params,
                 padding=param.padding,
                 metricSize=metricSize,
