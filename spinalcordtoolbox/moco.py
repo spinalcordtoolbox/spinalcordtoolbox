@@ -607,17 +607,8 @@ def moco(param):
             # deal with masking (except in the 'apply' case, where masking is irrelevant)
             input_mask = None
             if not param.fname_mask == '' and not param.todo == 'apply':
-                # Check if mask is binary
-                if np.array_equal(im_maskz_list[iz].data, im_maskz_list[iz].data.astype(bool)):
-                    # If it is, pass this mask into register() to be used
-                    input_mask = im_maskz_list[iz]
-                else:
-                    # If not, do not pass this mask into register() because ANTs cannot handle non-binary masks.
-                    #  Instead, multiply the input data by the Gaussian mask.
-                    im = Image(file_data_splitZ_splitT[it])
-                    im_masked = im.copy()
-                    im_masked.data = im.data * im_maskz_list[iz].data
-                    im_masked.save(verbose=0)  # silence warning about file overwritting
+                # If it is, pass this mask into register() to be used
+                input_mask = im_maskz_list[iz]
 
             # run 3D registration
             failed_transfo[it] = register(param, file_data_splitZ_splitT[it], file_target_splitZ[iz], file_mat[iz][it],
@@ -746,6 +737,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                 shrink_factors='1',
                 output_prefix=file_mat,
                 fname_warped_image=file_out_concat,
+                num_threads='1'  # Reducing the number of CPU threads used for moco (see issue #201 and #2642)
             )
         # 3D mode
         else:
@@ -766,7 +758,8 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                 output_prefix=file_mat,
                 fname_warped_image=file_out_concat,
                 verbose='1',
-                interpolation=param.interp
+                interpolation=param.interp,
+                num_threads='1'  # Reducing the number of CPU threads used for moco (see issue #201 and #2642)
             )
 
     elif param.todo == 'apply':

@@ -55,7 +55,7 @@ def test_sct_register_multimodal_mask_files_exist(tmp_path):
         assert not os.path.exists(tmp_path/path)
 
 
-@pytest.mark.parametrize('algo', ['affine', 'bsplinesyn'])
+@pytest.mark.parametrize('algo', ['slicereg', 'affine', 'bsplinesyn'])
 @pytest.mark.parametrize('mask_type', ['cylinder', 'gaussian'])
 def test_sct_register_multimodal_with_masks(tmp_path, algo, mask_type):
     """

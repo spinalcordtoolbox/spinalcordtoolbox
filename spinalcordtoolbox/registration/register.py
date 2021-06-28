@@ -155,10 +155,11 @@ def slicereg_crop_extents(src, dest):
     return src_crop, dest_crop
 
 
-def antsSliceRegularizedRegistration(fname_fixed_image, fname_moving_image, fname_mask_image,
+def antsSliceRegularizedRegistration(fname_fixed_image, fname_moving_image,
                                      metric, metric_size, sampling_strategy, sampling_percentage,
                                      gradient_step, iterations, smoothing_sigmas, shrink_factors, polydegree,
-                                     output_prefix, fname_warped_image, verbose, interpolation=None, num_threads=1):
+                                     output_prefix, fname_warped_image,
+                                     verbose="1", fname_mask_image=None, interpolation=None, num_threads=None):
     """
     Python wrapper for the `antsSliceRegularizedRegistration` C++ binary.
 
@@ -178,11 +179,13 @@ def antsSliceRegularizedRegistration(fname_fixed_image, fname_moving_image, fnam
             cmd += ['--mask', fname_mask_image]
         # Otherwise, if the mask is nonbinary (soft mask), we have to apply it directly to the input image
         else:
-            masked_image = image.Image(fname_moving_image).copy()
-            masked_image.data *= mask_data
-            # Update the filename to avoid writing over the original image
-            fname_moving_image = image.add_suffix(fname_moving_image, '_masked')
-            masked_image.save(fname_moving_image)
+            for fname in [fname_moving_image, fname_fixed_image]:
+                masked_image = image.Image(fname).copy()
+                if masked_image.data.shape == mask_data.shape:
+                    masked_image.data = masked_image.data * mask_data
+                    # Update the filename to avoid writing over the original image
+                    fname = image.add_suffix(fname, '_masked')
+                    masked_image.save(fname)
 
     # NB: We set `metricWeight` to 1 because the `--help` for the ANTs binary mentions the following:
     #     "Note that the metricWeight is currently not used. Rather, it is a temporary place holder
@@ -214,7 +217,9 @@ def antsSliceRegularizedRegistration(fname_fixed_image, fname_moving_image, fnam
     else:
         cmd += ['--verbose', '1']  # All non-zero verbose values (including SCT's '2')  become '1'
 
-    env = {**os.environ, **{"ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS": str(num_threads)}}
+    env = os.environ
+    if num_threads:
+        env["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(num_threads)
     run_proc(cmd, verbose, env=env, is_sct_binary=True)
 
     # TODO: Provide the option to specify custom filenames, then rename the files ourselves
@@ -225,12 +230,12 @@ def antsSliceRegularizedRegistration(fname_fixed_image, fname_moving_image, fnam
     return warp_forward_out, warp_inverse_out, txty_csv_out
 
 
-def antsRegistration(fname_fixed_image, fname_moving_image, fname_mask_image, dimensionality,
+def antsRegistration(fname_fixed_image, fname_moving_image, dimensionality,
                      transform_algorithm, gradient_step, transform_params,
                      metric, metric_size, sampling_strategy, sampling_percentage,
                      iterations, interpolation, smoothing_sigmas, shrink_factors,
-                     output_prefix, fname_warped_image, restrict_deformation=None,
-                     initial_moving_transform=None, verbose='1', num_threads='1'):
+                     output_prefix, fname_warped_image, restrict_deformation=None, initial_moving_transform=None,
+                     fname_mask_image=None, verbose='1', num_threads=None):
     """
     Python wrapper for the `antsRegistration` C++ binary.
 
@@ -249,11 +254,13 @@ def antsRegistration(fname_fixed_image, fname_moving_image, fname_mask_image, di
             cmd += ['--masks', fname_mask_image]
         # Otherwise, if the mask is nonbinary (soft mask), we have to apply it directly to the input image
         else:
-            masked_image = image.Image(fname_moving_image).copy()
-            masked_image.data *= mask_data
-            # Update the filename to avoid writing over the original image
-            fname_moving_image = image.add_suffix(fname_moving_image, '_masked')
-            masked_image.save(fname_moving_image)
+            for fname in [fname_moving_image, fname_fixed_image]:
+                masked_image = image.Image(fname).copy()
+                if masked_image.data.shape == mask_data.shape:
+                    masked_image.data = masked_image.data * mask_data
+                    # Update the filename to avoid writing over the original image
+                    fname = image.add_suffix(fname, '_masked')
+                    masked_image.save(fname)
 
     # NB: We set `metricWeight` to 1 because the `--help` for the ANTs binary mentions the following:
     #     "Note that the metricWeight is currently not used. Rather, it is a temporary place holder
@@ -292,7 +299,9 @@ def antsRegistration(fname_fixed_image, fname_moving_image, fname_mask_image, di
     else:
         cmd += ['--verbose', '1']  # All non-zero verbose values (including SCT's '2')  become '1'
 
-    env = {**os.environ, **{"ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS": str(num_threads)}}
+    env = os.environ
+    if num_threads:
+        env["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(num_threads)
     run_proc(cmd, verbose, env=env, is_sct_binary=True)
 
     # get appropriate file name for transformation

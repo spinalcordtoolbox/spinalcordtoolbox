@@ -1269,6 +1269,11 @@ def register(src, dest, step, param):
             dest_pad = image.add_suffix(dest, '_pad')
             run_proc(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(param.padding)])
             dest = dest_pad
+            # pad the mask if it exists, too, to ensure the same shape
+            if fname_mask:
+                fname_mask_pad = image.add_suffix(fname_mask, '_pad')
+                run_proc(['sct_image', '-i', fname_mask, '-o', fname_mask_pad, '-pad', '0,0,' + str(param.padding)])
+                fname_mask = fname_mask_pad
 
         # apply Laplacian filter
         if not step.laplacian == '0':
