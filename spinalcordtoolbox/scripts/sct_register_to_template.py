@@ -1244,13 +1244,23 @@ def register(src, dest, step, param):
         )
 
     elif step.algo == 'slicereg':
-        warp_forward_out, warp_inverse_out, _ = register_step_ants_slice_regularized_registration(
-            src=src,
-            dest=dest,
-            step=step,
-            metricSize=metricSize,
-            fname_mask=fname_mask,
-            verbose=param.verbose,
+        src, dest = slicereg_crop_extents(src, dest)
+        warp_forward_out, warp_inverse_out, _ = antsSliceRegularizedRegistration(
+            fname_fixed_image=dest,
+            fname_moving_image=src,
+            fname_mask_image=fname_mask,
+            metric=step.metric,
+            metric_size=metricSize,
+            sampling_strategy=step.samplingStrategy,
+            sampling_percentage=step.samplingPercentage,
+            gradient_step=step.gradStep,
+            iterations=step.iter,
+            smoothing_sigmas=step.smooth,
+            shrink_factors=step.shrink,
+            polydegree=step.poly,
+            output_prefix=f'step{step.step}',
+            fname_warped_image=image.add_suffix(src, f'_regStep{step.step}'),
+            verbose=param.verbose
         )
 
     # ANTS 3d
