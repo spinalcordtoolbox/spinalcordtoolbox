@@ -1252,11 +1252,22 @@ def register(src, dest, step, param):
 
     # ANTs-based registration
     else:
-        # set masking
         if param.fname_mask:
-            fname_mask = 'mask.nii.gz'
+            im_dest = image.Image(dest)
+            im_mask = image.Image("mask.nii.gz")
+            # If the mask is binary, it's OK to use with ANTs-based tools
+            if np.array_equal(im_mask.data, im_mask.data.astype(bool)):
+                fname_mask = "mask.nii.gz"
+            # If the mask is non-binary (i.e. soft mask, such as a Gaussian mask), then it's ncessary to apply the
+            # mask directly to the image instead. (This is a workaround for ANTs not supporting non-binary masks.)
+            else:
+                im_masked = im_dest.copy()
+                im_masked.data = im_dest.data * im_mask.data
+                dest = image.add_suffix(dest, "_masked")  # Update the filename to not overwrite the original image
+                im_masked.save(dest)
+                fname_mask = None
         else:
-            fname_mask = ''
+            fname_mask = None
 
         if step.algo == 'slicereg':
             warp_forward_out, warp_inverse_out, _ = register_step_ants_slice_regularized_registration(
