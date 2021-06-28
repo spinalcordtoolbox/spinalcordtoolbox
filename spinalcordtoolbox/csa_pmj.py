@@ -40,10 +40,17 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     im_seg_with_pmj = im_seg.copy()
     im_seg_with_pmj.data = im_seg_with_pmj.data + im_pmj.data
     from spinalcordtoolbox.straightening import _get_centerline
-    param_centerline.algo_fitting = 'nurbs'
-    ctl_seg_with_pmj = _get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
+    # Linear interpolation (vs. bspline) ensures strong robustness towards defective segmentations at the top slices.
+    param_centerline.algo_fitting = 'linear'
+    # On top of the linear interpolation we add some smoothing to remove discontinuities.
+    param_centerline.smooth = 50
+    param_centerline.minmax = True
+    ctl_seg_with_pmj = get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
+    # ctl_seg_with_pmj = get_centerline(im_seg, param_centerline, verbose=verbose)
+    # ctl_seg_with_pmj = _get_centerline(im_seg, param_centerline, verbose=verbose)
     sys.exit(0)
 
+    # SANDRINE
     native_orientation = Image(segmentation).orientation
     im_seg = Image(segmentation).change_orientation('RPI')
     im_pmj = Image(pmj).change_orientation('RPI')
@@ -54,20 +61,20 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     data_pmj = im_pmjr.data
     # Update dimensions from resampled image
     nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
-
-    # Extract min and max index in Z direction
-    data_seg = im_segr.data
-    X, Y, Z = (data_seg > NEAR_ZERO_THRESHOLD).nonzero()
-    min_z_index, max_z_index = min(Z), max(Z)
-
-    # Remove top slices  | TODO: check if center of mass of top slices is close to other slices, if not, remove
-    im_segr.data[:, :, max_z_index - 4:max_z_index + 1] = 0
+    #
+    # # Extract min and max index in Z direction
+    # data_seg = im_segr.data
+    # X, Y, Z = (data_seg > NEAR_ZERO_THRESHOLD).nonzero()
+    # min_z_index, max_z_index = min(Z), max(Z)
+    #
+    # # Remove top slices  | TODO: check if center of mass of top slices is close to other slices, if not, remove
+    # im_segr.data[:, :, max_z_index - 4:max_z_index + 1] = 0
 
     # Compute the spinal cord centerline based on the spinal cord segmentation
     param_centerline.minmax = False  # Set to false to extrapolate centerline
     im_ctl, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
     im_ctl.change_orientation(native_orientation)
-
+    sys.exit(0)
     # Get coordinate of PMJ label
     pmj_coord = np.argwhere(data_pmj != 0)[0]
     # Get Z index of PMJ project on extrapolated centerline
