@@ -1229,10 +1229,8 @@ def register(src, dest, step, param):
     # set masking
     if param.fname_mask:
         fname_mask = 'mask.nii.gz'
-        masking = ['-x', 'mask.nii.gz']
     else:
         fname_mask = ''
-        masking = []
 
     # # landmark-based registration
     if step.type in ['label']:
@@ -1265,15 +1263,50 @@ def register(src, dest, step, param):
 
     # ANTS 3d
     elif step.algo.lower() in ants_registration_params and step.slicewise == '0':  # FIXME [AJ]
-        warp_forward_out, warp_inverse_out = register_step_ants_registration(
-            src=src,
-            dest=dest,
-            step=step,
-            masking=masking,
-            ants_registration_params=ants_registration_params,
-            padding=param.padding,
-            metricSize=metricSize,
-            verbose=param.verbose,
+        # Pad the destination image (because ants doesn't deform the extremities)
+        # N.B. no need to pad if iter = 0
+        if not step.iter == '0':
+            dest_pad = image.add_suffix(dest, '_pad')
+            run_proc(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(param.padding)])
+            dest = dest_pad
+
+        # apply Laplacian filter
+        if not step.laplacian == '0':
+            logger.info(f"\nApply Laplacian filter")
+            sigmas = [step.laplacian, step.laplacian, 0]
+            src_img = image.Image(src)
+            src_out = src_img.copy()
+            src = image.add_suffix(src, '_laplacian')
+            dest = image.add_suffix(dest, '_laplacian')
+            sigmas = [sigmas[i] / src_img.dim[i + 4] for i in range(3)]
+            src_out.data = laplacian(src_out.data, sigmas)
+            src_out.save(path=src)
+            dest_img = image.Image(dest)
+            dest_out = dest_img.copy()
+            dest_out.data = laplacian(dest_out.data, sigmas)
+            dest_out.save(path=dest)
+
+        logger.info(f"\nEstimate transformation")
+        warp_forward_out, warp_inverse_out = antsRegistration(
+            fname_fixed_image=dest,
+            fname_moving_image=src,
+            fname_mask_image=fname_mask,
+            transform_algorithm=step.algo,
+            gradient_step=step.gradStep,
+            transform_params=ants_registration_params[step.algo.lower()],
+            dimensionality='3',
+            interpolation='spline',
+            sampling_percentage=None,
+            sampling_strategy=None,
+            metric=step.metric,
+            metric_size=metricSize,
+            iterations=step.iter,
+            smoothing_sigmas=step.smooth,
+            shrink_factors=step.shrink,
+            restrict_deformation=step.deformation,
+            output_prefix=f'step{step.step}',
+            fname_warped_image=image.add_suffix(src, f'_regStep{step.step}'),
+            initial_moving_transform=step.init,
         )
 
     # ANTS 2d

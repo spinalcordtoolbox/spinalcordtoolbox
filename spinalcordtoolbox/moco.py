@@ -25,7 +25,7 @@ import numpy as np
 import scipy.interpolate
 
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, convert
-from spinalcordtoolbox.registration.register import antsSliceRegularizedRegistration
+from spinalcordtoolbox.registration.register import antsRegistration, antsSliceRegularizedRegistration
 from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolation
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
@@ -713,7 +713,6 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
         if param.sampling == 'None':
             # 'None' sampling means 'fully dense' sampling
             # see https://github.com/ANTsX/ANTs/wiki/antsRegistration-reproducibility-issues
-            sampling = param.sampling
             sampling_strategy = None
             sampling_percentage = None
         else:
@@ -724,36 +723,30 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
             # Be aware: even 'Regular' is not fully deterministic:
             # > Regular includes a random perturbation on the grid sampling
             # - https://github.com/ANTsX/ANTs/issues/976#issuecomment-602313884
-            sampling = 'Regular,' + param.sampling
             sampling_strategy = 'Regular'
             sampling_percentage = param.sampling
 
         if im_data.orientation[2] in 'LR':
-            cmd = ['isct_antsRegistration',
-                   '-d', '2',
-                   '--transform', 'Affine[%s]' % param.gradStep,
-                   '--metric', param.metric + '[' + file_dest + ',' + file_src + ',1,' + metric_radius + ',' + sampling + ']',
-                   '--convergence', param.iter,
-                   '--shrink-factors', '1',
-                   '--smoothing-sigmas', param.smooth,
-                   '--verbose', '1',
-                   '--output', '[' + file_mat + ',' + file_out_concat + ']']
-            cmd += get_interpolation('isct_antsRegistration', param.interp)
-            if im_mask is not None:
-                # if user specified a mask, make sure there are non-null voxels in the image before running the registration
-                if np.count_nonzero(im_mask.data):
-                    cmd += ['--masks', im_mask.absolutepath]
-                else:
-                    # Mask only contains zeros. Copying the image instead of estimating registration.
-                    copy(file_src, file_out_concat, verbose=0)
-                    do_registration = False
-                    # TODO: create affine mat file with identity, in case used by -g 2
-            # run command
-            if do_registration:
-                kw.update(dict(is_sct_binary=True))
-                # reducing the number of CPU used for moco (see issue #201 and #2642)
-                env = {**os.environ, **{"ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS": "1"}}
-                status, output = run_proc(cmd, verbose=1 if param.verbose == 2 else 0, env=env, **kw)
+            antsRegistration(
+                fname_fixed_image=file_dest,
+                fname_moving_image=file_src,
+                # im_mask is passed as an Image, but the ANTs binary needs a filename. (Consider refactoring?)
+                fname_mask_image=(im_mask.absolutepath if im_mask is not None else None),
+                transform_algorithm='Affine',
+                gradient_step=param.gradStep,
+                transform_params=None,
+                dimensionality='2',
+                interpolation=param.interp,
+                metric=param.metric,
+                metric_size=metric_radius,
+                sampling_strategy=sampling_strategy,
+                sampling_percentage=sampling_percentage,
+                iterations=param.iter,
+                smoothing_sigmas=param.smooth,
+                shrink_factors='1',
+                output_prefix=file_mat,
+                fname_warped_image=file_out_concat,
+            )
         # 3D mode
         else:
             antsSliceRegularizedRegistration(

@@ -187,7 +187,7 @@ def antsSliceRegularizedRegistration(fname_fixed_image, fname_moving_image, fnam
     # NB: We set `metricWeight` to 1 because the `--help` for the ANTs binary mentions the following:
     #     "Note that the metricWeight is currently not used. Rather, it is a temporary place holder
     #      until multivariate metrics are available for a single stage."
-    metric_weight = 1
+    metric_weight = '1'
     metric_options = ','.join([fname_fixed_image, fname_moving_image, metric_weight, metric_size])
     if sampling_strategy and sampling_percentage:
         sampling_options = ','.join([sampling_strategy, sampling_percentage])
@@ -196,14 +196,14 @@ def antsSliceRegularizedRegistration(fname_fixed_image, fname_moving_image, fnam
     cmd += ['--metric', f'{metric}[{metric_options},{sampling_options}]']
 
     # TODO: Update this option to support rotation (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/1178)
-    cmd += ['--transform', f'Translation[{gradient_step}']
+    cmd += ['--transform', f'Translation[{gradient_step}]']
 
     cmd += ['--iterations', iterations]
     cmd += ['--polydegree', polydegree]
     cmd += ['--smoothingSigmas', smoothing_sigmas]
     cmd += ['--shrinkFactors', shrink_factors]
     if interpolation:
-        cmd += ['--interpolation', get_interpolation('isct_antsSliceRegularizedRegistration', interpolation)]
+        cmd += get_interpolation('isct_antsSliceRegularizedRegistration', interpolation)
 
     # NB: We're not currently using the optional `outputAverageImage` argument (see ANTs binary `--help` for more info)
     cmd += ['--output', f'[{output_prefix},{fname_warped_image}]']
@@ -225,71 +225,83 @@ def antsSliceRegularizedRegistration(fname_fixed_image, fname_moving_image, fnam
     return warp_forward_out, warp_inverse_out, txty_csv_out
 
 
-def register_step_ants_registration(src, dest, step, masking, ants_registration_params, padding, metricSize, verbose=1):
+def antsRegistration(fname_fixed_image, fname_moving_image, fname_mask_image, dimensionality,
+                     transform_algorithm, gradient_step, transform_params,
+                     metric, metric_size, sampling_strategy, sampling_percentage,
+                     iterations, interpolation, smoothing_sigmas, shrink_factors,
+                     output_prefix, fname_warped_image, restrict_deformation=None,
+                     initial_moving_transform=None, verbose='1', num_threads='1'):
     """
+    Python wrapper for the `antsRegistration` C++ binary.
+
+    This function is meant to be a very light wrapper to exposes the arguments of the binary, while
+    also taking care of any necessary quirks or workarounds (e.g. ANTs' string-based argument syntax).
+
+    The only logic that should go in this function is the bare minimum required for _every_ call to the binary.
     """
-    # Pad the destination image (because ants doesn't deform the extremities)
-    # N.B. no need to pad if iter = 0
-    if not step.iter == '0':
-        dest_pad = image.add_suffix(dest, '_pad')
-        run_proc(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(padding)])
-        dest = dest_pad
+    cmd = ['isct_antsRegistration']
 
-    # apply Laplacian filter
-    if not step.laplacian == '0':
-        logger.info(f"\nApply Laplacian filter")
+    # Handle ANTs softmask limitation: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3075
+    if fname_mask_image:
+        mask_data = image.Image(fname_mask_image).data
+        # If the mask is binary, then we can use it directly with the `-x` option
+        if np.array_equal(mask_data, mask_data.astype(bool)):
+            cmd += ['--masks', fname_mask_image]
+        # Otherwise, if the mask is nonbinary (soft mask), we have to apply it directly to the input image
+        else:
+            masked_image = image.Image(fname_moving_image).copy()
+            masked_image.data *= mask_data
+            # Update the filename to avoid writing over the original image
+            fname_moving_image = image.add_suffix(fname_moving_image, '_masked')
+            masked_image.save(fname_moving_image)
 
-        sigmas = [step.laplacian, step.laplacian, 0]
+    # NB: We set `metricWeight` to 1 because the `--help` for the ANTs binary mentions the following:
+    #     "Note that the metricWeight is currently not used. Rather, it is a temporary place holder
+    #      until multivariate metrics are available for a single stage."
+    metric_weight = '1'
+    metric_options = ','.join([fname_fixed_image, fname_moving_image, metric_weight, metric_size])
+    if sampling_strategy and sampling_percentage:
+        sampling_options = f',{sampling_strategy},{sampling_percentage}'
+    else:
+        sampling_options = ''
+    cmd += ['--metric', f'{metric}[{metric_options}{sampling_options}]']
 
-        src_img = image.Image(src)
-        src_out = src_img.copy()
+    if transform_params:
+        cmd += ['--transform', f'{transform_algorithm}[{gradient_step}{transform_params}]']
+    else:
+        cmd += ['--transform', f'{transform_algorithm}[{gradient_step}]']
+    cmd += ['--dimensionality', dimensionality]
+    cmd += ['--convergence', iterations]
+    cmd += ['--shrink-factors', shrink_factors]
+    cmd += ['--smoothing-sigmas', f'{smoothing_sigmas}mm']
 
-        src = image.add_suffix(src, '_laplacian')
-        dest = image.add_suffix(dest, '_laplacian')
+    if restrict_deformation:
+        cmd += ['--restrict-deformation', restrict_deformation]
+    if interpolation:
+        cmd += get_interpolation('isct_antsRegistration', interpolation)
+    if initial_moving_transform:
+        init_val = {'geometric': '0', 'centermass': '1', 'origin': '2'}[initial_moving_transform]
+        cmd += ['--initial-moving-transform', f'[{fname_fixed_image},{fname_moving_image},{init_val}']
 
-        sigmas = [sigmas[i] / src_img.dim[i + 4] for i in range(3)]
+    # NB: We're not currently using the optional `outputAverageImage` argument (see ANTs binary `--help` for more info)
+    cmd += ['--output', f'[{output_prefix},{fname_warped_image}]']
 
-        src_out.data = laplacian(src_out.data, sigmas)
-        src_out.save(path=src)
+    # Coerce SCT's verbosity values into the values supported by ANTs
+    if not verbose or str(verbose) == '0':
+        cmd += ['--verbose', '0']
+    else:
+        cmd += ['--verbose', '1']  # All non-zero verbose values (including SCT's '2')  become '1'
 
-        dest_img = image.Image(dest)
-        dest_out = dest_img.copy()
-        dest_out.data = laplacian(dest_out.data, sigmas)
-        dest_out.save(path=dest)
-
-    # Estimate transformation
-    logger.info(f"\nEstimate transformation")
-    scr_regStep = image.add_suffix(src, '_regStep' + str(step.step))
-
-    cmd = ['isct_antsRegistration',
-           '--dimensionality', '3',
-           '--transform', step.algo + '[' + step.gradStep
-           + ants_registration_params[step.algo.lower()] + ']',
-           '--metric', step.metric + '[' + dest + ',' + src + ',1,' + metricSize + ']',
-           '--convergence', step.iter,
-           '--shrink-factors', step.shrink,
-           '--smoothing-sigmas', step.smooth + 'mm',
-           '--restrict-deformation', step.deformation,
-           '--output', '[step' + str(step.step) + ',' + scr_regStep + ']',
-           '--interpolation', 'BSpline[3]',
-           '--verbose', '1',
-           ] + masking
-
-    # add init translation
-    if step.init:
-        init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
-        cmd += ['-r', '[' + dest + ',' + src + ',' + init_dict[step.init] + ']']
-
-    # run command
-    status, output = run_proc(cmd, verbose, is_sct_binary=True)
+    env = {**os.environ, **{"ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS": str(num_threads)}}
+    run_proc(cmd, verbose, env=env, is_sct_binary=True)
 
     # get appropriate file name for transformation
-    if step.algo in ['rigid', 'affine', 'translation']:
-        warp_forward_out = 'step' + str(step.step) + '0GenericAffine.mat'
-        warp_inverse_out = '-step' + str(step.step) + '0GenericAffine.mat'
+    if transform_algorithm in ['rigid', 'affine', 'translation']:
+        warp_forward_out = f'{output_prefix}0GenericAffine.mat'
+        warp_inverse_out = f'-{output_prefix}0GenericAffine.mat'
     else:
-        warp_forward_out = 'step' + str(step.step) + '0Warp.nii.gz'
-        warp_inverse_out = 'step' + str(step.step) + '0InverseWarp.nii.gz'
+        warp_forward_out = f'{output_prefix}0Warp.nii.gz'
+        warp_inverse_out = f'{output_prefix}0InverseWarp.nii.gz'
 
     return warp_forward_out, warp_inverse_out
 
