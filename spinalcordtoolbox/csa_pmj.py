@@ -31,8 +31,10 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     :return slices:
 
     """
-    im_seg = Image(segmentation)
-    im_pmj = Image(pmj)
+    im_seg = Image(segmentation).change_orientation('RPI')
+    native_orientation = im_seg.orientation
+    im_seg.change_orientation('RPI')
+    im_pmj = Image(pmj).change_orientation('RPI')
     if not im_seg.data.shape == im_pmj.data.shape:
         raise RuntimeError(f"segmentation and pmj should be in the same space coordinate.")
     # Add PMJ label to the segmentation and then extrapolate to obtain a Centerline object defines between the PMJ
@@ -45,71 +47,31 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     # On top of the linear interpolation we add some smoothing to remove discontinuities.
     param_centerline.smooth = 50
     param_centerline.minmax = True
-    ctl_seg_with_pmj = get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
-    # ctl_seg_with_pmj = get_centerline(im_seg, param_centerline, verbose=verbose)
-    # ctl_seg_with_pmj = _get_centerline(im_seg, param_centerline, verbose=verbose)
-    sys.exit(0)
-
-    # SANDRINE
-    native_orientation = Image(segmentation).orientation
-    im_seg = Image(segmentation).change_orientation('RPI')
-    im_pmj = Image(pmj).change_orientation('RPI')
-    nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-    pr = min([px, py])
-    im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
-    im_pmjr = resample_nib(im_pmj, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
-    data_pmj = im_pmjr.data
-    # Update dimensions from resampled image
-    nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
-    #
-    # # Extract min and max index in Z direction
-    # data_seg = im_segr.data
-    # X, Y, Z = (data_seg > NEAR_ZERO_THRESHOLD).nonzero()
-    # min_z_index, max_z_index = min(Z), max(Z)
-    #
-    # # Remove top slices  | TODO: check if center of mass of top slices is close to other slices, if not, remove
-    # im_segr.data[:, :, max_z_index - 4:max_z_index + 1] = 0
-
-    # Compute the spinal cord centerline based on the spinal cord segmentation
-    param_centerline.minmax = False  # Set to false to extrapolate centerline
-    im_ctl, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
-    im_ctl.change_orientation(native_orientation)
-    sys.exit(0)
-    # Get coordinate of PMJ label
-    pmj_coord = np.argwhere(data_pmj != 0)[0]
-    # Get Z index of PMJ project on extrapolated centerline
-    pmj_index = get_min_distance(pmj_coord, arr_ctl, px, py, pz)
-    # Compute distance from PMJ along centerline
-    arr_length = get_distance_from_pmj(arr_ctl, pmj_index, px, py, pz)
-
-    # Check if distance is out of bound
-    if distance > arr_length[0][0]:
-        raise ValueError("Input distance of " + str(distance) + " mm is out of bound for maximum distance of " + str(arr_length[0][0]) + " mm")
-
-    if distance < arr_length[0][-1]:  # Do we want instead max_z_index (so that we know that the segmentation is available?)
-        raise ValueError("Input distance of " + str(distance) + " mm is out of bound for minimum distance of " + str(arr_length[0][-1]) + " mm")
-
-    # Get Z index of corresponding distance from PMJ with the specified extent
-    z_index_extent_min = get_nearest_index(arr_length, distance + extent/2)
-    z_index_extent_max = get_nearest_index(arr_length, distance - extent/2)
-    # Check if extent corresponds to the lenght, if not add or remove a slice
-    # z_index_extent_min, z_index_extent_max = validate_length(z_index_extent_min, z_index_extent_max, arr_length, extent)  # Find a quicker way to solve this
-
-    # Check if min Z index is available in the segmentation, if not, use the min_z_index of segmentation
-    if z_index_extent_min < min_z_index:
-        z_index_extent_min = min_z_index
-        new_extent = arr_length[0][z_index_extent_min] - arr_length[0][z_index_extent_max]
-        logger.warning("Extent of {} mm is out of bounds for given segmentation at a distance of {} mm from PMJ. Will use an extent of {} mm".format(extent, distance, new_extent))
+    # Compute spinalcordtoolbox.types.Centerline class
+    ctl_seg_with_pmj = _get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
+    # Also get the image centerline (because it is a required output)
+    # TODO: merge _get_centerline into get_centerline
+    im_ctl_seg_with_pmj, _, _, _ = get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
+    # Compute the incremental distance from the PMJ along each point in the centerline
+    length_from_pmj = [ctl_seg_with_pmj.incremental_length[-1] - i for i in ctl_seg_with_pmj.incremental_length]
+    # From this incremental distance, find the indices corresponding to the requested distance +/- extent/2 from the PMJ
+    zmin = np.argmin(np.array([np.abs(i - distance - extent/2) for i in length_from_pmj]))
+    zmax = np.argmin(np.array([np.abs(i - distance + extent/2) for i in length_from_pmj]))
+    # Check if the range of selected slices are covered by the segmentation
+    if not all(np.any(im_seg.data[:, :, z]) for z in range(zmin, zmax)):
+        raise ValueError(f"The requested distances from the PMJ are not fully covered by the segmentation.\n"
+                         f"The range of slices are: [{zmin}, {zmax}]")
 
     # Create mask from segmentation centered on distance from PMJ and with extent length on z axis.
     mask = im_seg.copy()
-    mask.data[:, :, 0:z_index_extent_min] = 0
-    mask.data[:, :, z_index_extent_max:] = 0
+    mask.data[:, :, 0:zmin] = 0
+    mask.data[:, :, zmax:] = 0
     mask.change_orientation(native_orientation)
 
     # Get corresponding slices
-    slices = "{}:{}".format(z_index_extent_min, z_index_extent_max - 1)
-    return im_ctl, mask, slices
+    # TODO: why the "-1"?
+    slices = "{}:{}".format(zmin, zmax-1)
+    return im_ctl_seg_with_pmj.change_orientation(native_orientation), mask, slices
 
 
 def get_intersection_plane_line(plane_point, plane_norm_vect, line_point, line_vect):  # TO REMOVE
