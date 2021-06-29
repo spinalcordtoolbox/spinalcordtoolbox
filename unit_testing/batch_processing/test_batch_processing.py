@@ -10,34 +10,33 @@ import pytest
 
 from spinalcordtoolbox.utils.sys import sct_dir_local_path
 
+SCT_DIR = pathlib.Path(sct_dir_local_path())
+CACHE_DIR = SCT_DIR / "unit_testing" / "batch_processing" / "cached_results"
+OUTPUT_DIR = SCT_DIR / "sct_example_data" 
 
-@pytest.mark.skipif(
-    not os.getenv('BATCH_PROCESSING_CI_JOB'),  # This environment variable should be set by the CI workflow file
-    reason="Run only for batch processing CI job"
-)
-# The parametrization below checks only 6 values (one from each csv file -- same as actual batch_processing.sh)
 # TODO: We can and should be verifying more results produced by this pipeline, but which values?
-@pytest.mark.parametrize("csv_filepath,row,column",
-                         [("t2/csa_c2c3.csv", -1, "MEAN(area)"),
-                          ("t2s/csa_gm.csv", -1, "MEAN(area)"),
-                          ("t2s/csa_wm.csv", -1, "MEAN(area)"),
-                          ("mt/mtr_in_wm.csv", -1, "MAP()"),
-                          ("dmri/fa_in_cst.csv", -1, "WA()"),
-                          ("dmri/fa_in_cst.csv", -2, "WA()")])
+TESTED_VALUES = [("t2/csa_c2c3.csv", -1, "MEAN(area)"),
+                 ("t2s/csa_gm.csv", -1, "MEAN(area)"),
+                 ("t2s/csa_wm.csv", -1, "MEAN(area)"),
+                 ("mt/mtr_in_wm.csv", -1, "MAP()"),
+                 ("dmri/fa_in_cst.csv", -1, "WA()"),
+                 ("dmri/fa_in_cst.csv", -2, "WA()")]
+
+
+def get_csv_value(csv_filepath, row, column):
+    with open(csv_filepath, newline='') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        value = [row for row in reader][row][column]
+    return value
+
+
+@pytest.mark.skipif(not os.getenv('BATCH_PROCESSING_CI_JOB'), reason="Run only for batch processing CI job")
+@pytest.mark.parametrize("csv_filepath,row,column", TESTED_VALUES)
 def test_batch_processing_results(csv_filepath, row, column):
     """Ensure that new batch_processing.sh results are approximately equal to the cached baseline results."""
-    sct_dir = pathlib.Path(sct_dir_local_path())
-    csv_filepath_old = sct_dir / "unit_testing/batch_processing/cached_results" / csv_filepath
-    csv_filepath_new = sct_dir / "sct_example_data" / csv_filepath
-    assert csv_filepath_old.is_file(), f"{csv_filepath_old} not present. Please check the SCT installation."
-    assert csv_filepath_new.is_file(), f"{csv_filepath_new} not present. Was batch_processing.sh run beforehand?"
-
-    with open(csv_filepath_old, newline='') as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=',')
-        metric_value_old = float([row for row in reader][row][column])  # Row/position varies depending on metric
-
-    with open(csv_filepath_new, newline='') as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=',')
-        metric_value_new = float([row for row in reader][row][column])  # Row/position varies depending on metric
-
-    assert metric_value_new == pytest.approx(metric_value_old)  # Default rel_tolerance: 1e-6
+    csv_output = OUTPUT_DIR / csv_filepath
+    csv_cached = CACHE_DIR / csv_filepath
+    assert csv_cached.is_file(), f"{csv_cached} not present. Please check the SCT installation."
+    assert csv_output.is_file(), f"{csv_output} not present. Was batch_processing.sh run beforehand?"
+    assert (get_csv_value(csv_output, row, column) == pytest.approx(  # Default rel_tolerance: 1e-6
+            get_csv_value(csv_cached, row, column)))
