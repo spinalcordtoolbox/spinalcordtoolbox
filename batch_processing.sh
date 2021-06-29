@@ -259,12 +259,10 @@ echo "Version:         `sct_version`"
 echo "Ran on:          `uname -nsr`"
 echo "Duration:        $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 echo "---"
-echo "t2/CSA:         " `awk -F"," ' {print $6}' t2/csa_c2c3.csv | tail -1`
-echo "mt/MTR(WM):     " `awk -F"," ' {print $8}' mt/mtr_in_wm.csv | tail -1`
-echo "t2s/CSA_GM:     " `awk -F"," ' {print $6}' t2s/csa_gm.csv | tail -1`
-echo "t2s/CSA_WM:     " `awk -F"," ' {print $6}' t2s/csa_wm.csv | tail -1`
-echo "dmri/FA(CST_r): " `awk -F"," ' {print $8}' dmri/fa_in_cst.csv | tail -1`
-echo "dmri/FA(CST_l): " `awk -F"," ' {print $8}' dmri/fa_in_cst.csv | tail -2 | head -1`
+# The file `test_batch_processing.py` will output tested values when run as a script
+"$SCT_DIR"/python/envs/venv_sct/bin/python $SCT_DIR/unit_testing/batch_processing/test_batch_processing.py
+# If you want to actually test these values against SCT's ground truth, run the following line as well:
+# TEST_BATCH_PROCESSING=1 "$SCT_DIR"/python/envs/venv_sct/bin/python -m pytest "$SCT_DIR/unit_testing/batch_processing/test_batch_processing.py"
 echo "~~~"
 
 # Display syntax to open QC report on web browser
