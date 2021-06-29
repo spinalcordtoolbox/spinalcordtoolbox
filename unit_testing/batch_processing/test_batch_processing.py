@@ -17,14 +17,14 @@ from spinalcordtoolbox.utils.sys import sct_dir_local_path
 )
 # The parametrization below checks only 6 values (one from each csv file -- same as actual batch_processing.sh)
 # TODO: We can and should be verifying more results produced by this pipeline, but which values?
-@pytest.mark.parametrize("csv_filepath,row,pos",
-                         [("t2/csa_c2c3.csv", -1, 5),
-                          ("t2s/csa_gm.csv", -1, 5),
-                          ("t2s/csa_wm.csv", -1, 5),
-                          ("mt/mtr_in_wm.csv", -1, 7),
-                          ("dmri/fa_in_cst.csv", -1, 7),
-                          ("dmri/fa_in_cst.csv", -2, 7)])
-def test_batch_processing_results(csv_filepath, row, pos):
+@pytest.mark.parametrize("csv_filepath,row,column",
+                         [("t2/csa_c2c3.csv", -1, "MEAN(area)"),
+                          ("t2s/csa_gm.csv", -1, "MEAN(area)"),
+                          ("t2s/csa_wm.csv", -1, "MEAN(area)"),
+                          ("mt/mtr_in_wm.csv", -1, "MAP()"),
+                          ("dmri/fa_in_cst.csv", -1, "WA()"),
+                          ("dmri/fa_in_cst.csv", -2, "WA()")])
+def test_batch_processing_results(csv_filepath, row, column):
     """Ensure that new batch_processing.sh results are approximately equal to the cached baseline results."""
     sct_dir = pathlib.Path(sct_dir_local_path())
     csv_filepath_old = sct_dir / "unit_testing/batch_processing/cached_results" / csv_filepath
@@ -33,11 +33,11 @@ def test_batch_processing_results(csv_filepath, row, pos):
     assert csv_filepath_new.is_file(), f"{csv_filepath_new} not present. Was batch_processing.sh run beforehand?"
 
     with open(csv_filepath_old, newline='') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        metric_value_old = float([row for row in reader][row][pos])  # Row/position varies depending on metric
+        reader = csv.DictReader(csvfile, delimiter=',')
+        metric_value_old = float([row for row in reader][row][column])  # Row/position varies depending on metric
 
     with open(csv_filepath_new, newline='') as csvfile:
-        reader = csv.reader(csvfile, delimiter=',')
-        metric_value_new = float([row for row in reader][row][pos])  # Row/position varies depending on metric
+        reader = csv.DictReader(csvfile, delimiter=',')
+        metric_value_new = float([row for row in reader][row][column])  # Row/position varies depending on metric
 
     assert metric_value_new == pytest.approx(metric_value_old)  # Default rel_tolerance: 1e-6
