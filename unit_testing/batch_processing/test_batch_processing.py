@@ -23,11 +23,11 @@ TESTED_VALUES = [("t2/csa_c2c3.csv", 0, "MEAN(area)"),
                  ("dmri/fa_in_cst.csv", 1, "WA()")]
 
 
-def get_csv_value(csv_filepath, row, column):
+def get_csv_float_value(csv_filepath, row, column):
     with open(csv_filepath, newline='') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         value = [row for row in reader][row][column]
-    return value
+    return float(value)
 
 
 @pytest.mark.skipif(not os.getenv('TEST_BATCH_PROCESSING'), reason="Run only for batch processing CI job")
@@ -38,15 +38,15 @@ def test_batch_processing_results(csv_filepath, row, column):
     csv_cached = CACHE_DIR / csv_filepath
     assert csv_cached.is_file(), f"{csv_cached} not present. Please check the SCT installation."
     assert csv_output.is_file(), f"{csv_output} not present. Was batch_processing.sh run beforehand?"
-    assert (get_csv_value(csv_output, row, column) == pytest.approx(  # Default rel_tolerance: 1e-6
-            get_csv_value(csv_cached, row, column)))
+    assert (get_csv_float_value(csv_output, row, column) == pytest.approx(  # Default rel_tolerance: 1e-6
+            get_csv_float_value(csv_cached, row, column)))
 
 
 def display_batch_processing_results():
     """Utility function to avoid having to use 'awk' in the batch_processing.sh script."""
     max_len = len(max([v[0] for v in TESTED_VALUES], key=len))
     for csv_filepath, row, column in TESTED_VALUES:
-        value = float(get_csv_value(OUTPUT_DIR/csv_filepath, row, column))
+        value = get_csv_float_value(OUTPUT_DIR/csv_filepath, row, column)
         print(f"{f'{csv_filepath}:':<{max_len+2}} {value:<18} [Row {row+1}, {column}]")
 
 
