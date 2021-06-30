@@ -261,8 +261,6 @@ echo "Duration:        $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($
 echo "---"
 # The file `test_batch_processing.py` will output tested values when run as a script
 "$SCT_DIR"/python/envs/venv_sct/bin/python $SCT_DIR/unit_testing/batch_processing/test_batch_processing.py
-# If you want to actually test these values against SCT's ground truth, run the following line as well:
-# TEST_BATCH_PROCESSING=1 "$SCT_DIR"/python/envs/venv_sct/bin/python -m pytest "$SCT_DIR/unit_testing/batch_processing/test_batch_processing.py"
 echo "~~~"
 
 # Display syntax to open QC report on web browser
