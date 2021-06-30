@@ -130,27 +130,6 @@ def get_distance_from_pmj(centerline_points, z_index, px, py, pz):
     return arr_length
 
 
-def extrapolate_centerline(centerline, im_seg, pz):  # TO REMOVE
-    """
-    Compute distance from projected PMJ on centerline and cord centerline.
-    :param centerline: 3xn array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
-    :param im_seg: Image(): input segmentation.
-    :param pz: float: z pixel size.
-    """
-    smooth = 30
-    diff = np.sqrt((centerline[0, -1] - np.mean(centerline[0, -6:-1])) ** 2 +
-                   (centerline[1, -1] - np.mean(centerline[1, -6:-1])) ** 2)
-    if diff > 2:
-        centerline = centerline[:, :-5]  # Remove last slices (maybe always do that?)
-    x_mean = centerline[0, :]
-    y_mean = centerline[1, :]
-    z_mean = centerline[2, :]
-    z_ref = np.array(range(im_seg.dim[2]))
-    x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, smooth, pz=pz, deg_bspline=3)
-    y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, smooth, pz=pz, deg_bspline=3)
-    return np.array([x_centerline_fit, y_centerline_fit, z_ref])
-
-
 def get_nearest_index(arr, value):
     """
     Return the index of the closest value to the distance in arr.
