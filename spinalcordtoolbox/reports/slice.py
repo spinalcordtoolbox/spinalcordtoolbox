@@ -340,6 +340,8 @@ class Slice(object):
         dict_interp = {'im': 'spline', 'seg': 'linear'}
         # Create nibabel object
         nii = Nifti1Image(image.data, image.hdr.get_best_affine())
+        # Check if input image is binary
+        is_binary = np.isin(nii.get_data(), [0, 1]).all()
         # If no reference image is provided, resample to specified resolution
         if image_ref is None:
             # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
@@ -350,10 +352,14 @@ class Slice(object):
             # Create nibabel object for reference image
             nii_ref = Nifti1Image(image_ref.data, image_ref.hdr.get_best_affine())
             nii_r = resample_nib(nii, image_dest=nii_ref, interpolation=dict_interp[type_img])
-        # If resampled image is a segmentation, binarize using threshold at 0.5
+        # If resampled image is a segmentation, binarize using threshold at 0.5 for binary segmentation
+        # Apply threshold at 0.5 for non-binary segmentation
         if type_img == 'seg':
             img_r_data = nii_r.get_data()
-            img_r_data[img_r_data < 0.5] = 0
+            if is_binary:
+                img_r_data = (img_r_data > 0.5) * 1
+            else:
+                img_r_data[img_r_data < 0.5] = 0
         else:
             img_r_data = nii_r.get_data()
         # Create Image objects
