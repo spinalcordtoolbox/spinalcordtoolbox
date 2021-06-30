@@ -41,6 +41,11 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     # and the lower end of the centerline.
     im_seg_with_pmj = im_seg.copy()
     im_seg_with_pmj.data = im_seg_with_pmj.data + im_pmj.data
+
+    # Get max and min index of the segmentation with pmj
+    _, _, Z = (im_seg_with_pmj.data > NEAR_ZERO_THRESHOLD).nonzero()
+    min_z_index, max_z_index = min(Z), max(Z)
+
     from spinalcordtoolbox.straightening import _get_centerline
     # Linear interpolation (vs. bspline) ensures strong robustness towards defective segmentations at the top slices.
     param_centerline.algo_fitting = 'linear'
@@ -53,10 +58,12 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     # TODO: merge _get_centerline into get_centerline
     im_ctl_seg_with_pmj, _, _, _ = get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
     # Compute the incremental distance from the PMJ along each point in the centerline
-    length_from_pmj = [ctl_seg_with_pmj.incremental_length[-1] - i for i in ctl_seg_with_pmj.incremental_length]
+    length_from_pmj = ctl_seg_with_pmj.incremental_length_inverse[::-1]
     # From this incremental distance, find the indices corresponding to the requested distance +/- extent/2 from the PMJ
-    zmin = np.argmin(np.array([np.abs(i - distance - extent/2) for i in length_from_pmj]))
-    zmax = np.argmin(np.array([np.abs(i - distance + extent/2) for i in length_from_pmj]))
+    z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
+    zmin = z_ref[np.argmin(np.array([np.abs(i - distance - extent/2) for i in length_from_pmj]))]
+    zmax = z_ref[np.argmin(np.array([np.abs(i - distance + extent/2) for i in length_from_pmj]))]
+
     # Check if the range of selected slices are covered by the segmentation
     if not all(np.any(im_seg.data[:, :, z]) for z in range(zmin, zmax)):
         raise ValueError(f"The requested distances from the PMJ are not fully covered by the segmentation.\n"
