@@ -7,7 +7,6 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
-from spinalcordtoolbox.resampling import resample_nib
 
 logger = logging.getLogger(__name__)
 
@@ -28,28 +27,26 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     :return slices:
 
     """
-    native_orientation = Image(segmentation).orientation
     im_seg = Image(segmentation).change_orientation('RPI')
     im_pmj = Image(pmj).change_orientation('RPI')
+    native_orientation = im_seg.orientation
     nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-    pr = min([px, py])
-    im_segr = resample_nib(im_seg, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
-    im_pmjr = resample_nib(im_pmj, new_size=[pr, pr, pz], new_size_type='mm', interpolation='linear')
-    data_pmj = im_pmjr.data
-    # Update dimensions from resampled image
-    nx, ny, nz, nt, px, py, pz, pt = im_segr.dim
+    data_pmj = im_pmj.data
+
+    if not im_seg.data.shape == im_pmj.data.shape:
+        raise RuntimeError(f"segmentation and pmj should be in the same space coordinate.")
 
     # Extract min and max index in Z direction
-    data_seg = im_segr.data
+    data_seg = im_seg.data
     X, Y, Z = (data_seg > NEAR_ZERO_THRESHOLD).nonzero()
-    min_z_index, max_z_index = min(Z), max(Z)
+    _, max_z_index = min(Z), max(Z)
 
     # Remove top slices  | TODO: check if center of mass of top slices is close to other slices, if not, remove
-    im_segr.data[:, :, max_z_index - 4:max_z_index + 1] = 0
+    im_seg.data[:, :, max_z_index - 4:max_z_index + 1] = 0
 
     # Compute the spinal cord centerline based on the spinal cord segmentation
     param_centerline.minmax = False  # Set to false to extrapolate centerline
-    im_ctl, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
+    im_ctl, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_seg, param=param_centerline, verbose=verbose)
     im_ctl.change_orientation(native_orientation)
 
     # Get coordinate of PMJ label
@@ -59,51 +56,36 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     # Compute distance from PMJ along centerline
     arr_length = get_distance_from_pmj(arr_ctl, pmj_index, px, py, pz)
 
+    # Get Z index of corresponding distance from PMJ with the specified extent
+    zmin = get_nearest_index(arr_length, distance + extent/2)
+    zmax = get_nearest_index(arr_length, distance - extent/2)
+
+    zmin = np.argmin(np.array([np.abs(i - distance - extent/2) for i in arr_length[0]]))  # Check if seg starts at 1, need to get the right index
+    zmax = np.argmin(np.array([np.abs(i - distance + extent/2) for i in arr_length[0]]))
+
     # Check if distance is out of bound
-    if distance > arr_length[0][0]:
+    if distance + extent/2 > arr_length[0][0]:
         raise ValueError("Input distance of " + str(distance) + " mm is out of bound for maximum distance of " + str(arr_length[0][0]) + " mm")
 
-    if distance < arr_length[0][-1]:  # Do we want instead max_z_index (so that we know that the segmentation is available?)
+    if distance - extent/2 < arr_length[0][max_z_index]:  # Do we want instead max_z_index (so that we know that the segmentation is available?)
         raise ValueError("Input distance of " + str(distance) + " mm is out of bound for minimum distance of " + str(arr_length[0][-1]) + " mm")
 
-    # Get Z index of corresponding distance from PMJ with the specified extent
-    z_index_extent_min = get_nearest_index(arr_length, distance + extent/2)
-    z_index_extent_max = get_nearest_index(arr_length, distance - extent/2)
-    # Check if extent corresponds to the lenght, if not add or remove a slice
-    # z_index_extent_min, z_index_extent_max = validate_length(z_index_extent_min, z_index_extent_max, arr_length, extent)  # Find a quicker way to solve this
-
-    # Check if min Z index is available in the segmentation, if not, use the min_z_index of segmentation
-    if z_index_extent_min < min_z_index:
-        z_index_extent_min = min_z_index
-        new_extent = arr_length[0][z_index_extent_min] - arr_length[0][z_index_extent_max]
-        logger.warning("Extent of {} mm is out of bounds for given segmentation at a distance of {} mm from PMJ. Will use an extent of {} mm".format(extent, distance, new_extent))
-
+    # Check if the range of selected slices are covered by the segmentation
+    if not all(np.any(im_seg.data[:, :, z]) for z in range(zmin, zmax)):
+        raise ValueError(f"The requested distances from the PMJ are not fully covered by the segmentation.\n"
+                         f"The range of slices are: [{zmin}, {zmax}]")
+    
+    print('min', arr_length[0][zmax], 'max', arr_length[0][zmin])
+    print(arr_length[0][zmin]-arr_length[0][zmax])
     # Create mask from segmentation centered on distance from PMJ and with extent length on z axis.
     mask = im_seg.copy()
-    mask.data[:, :, 0:z_index_extent_min] = 0
-    mask.data[:, :, z_index_extent_max:] = 0
+    mask.data[:, :, 0:zmin] = 0
+    mask.data[:, :, zmax:] = 0
     mask.change_orientation(native_orientation)
 
     # Get corresponding slices
-    slices = "{}:{}".format(z_index_extent_min, z_index_extent_max - 1)
+    slices = "{}:{}".format(zmin, zmax - 1)  # TODO check if we include last slice
     return im_ctl, mask, slices
-
-
-def get_intersection_plane_line(plane_point, plane_norm_vect, line_point, line_vect):  # TO REMOVE
-    """
-    Get intersection between a plane and a line.
-    :param plane_point: coordinates of a point on the plane.
-    :param plane_norm_vect: normal vector of the plane.
-    :param line_point: point of the line.
-    :param line_vect: vector of the direction of the line.
-    :return: coordinates of intersection between line and plane.
-    """
-    det = plane_norm_vect.dot(line_vect)
-    w = line_point - plane_point
-    si = -plane_norm_vect.dot(w) / det
-    intersection = w + si * line_vect + plane_point
-
-    return intersection
 
 
 def get_distance_from_pmj(centerline_points, z_index, px, py, pz):
@@ -146,39 +128,3 @@ def get_min_distance(pmj, centerline, px, py, pz):
                        ((centerline[1, :] - pmj[1]) * py) ** 2 +
                        ((centerline[2, :] - pmj[2]) * pz) ** 2)
     return int(centerline[2, distance.argmin()])
-
-
-def validate_length(z_min, z_max, arr, value):  # TODO: Find a better way for this
-    length = arr[0, z_min] - arr[0, z_max]
-    if length > value:
-        length_1 = arr[0, z_min + 1] - arr[0, z_max]
-        length_2 = arr[0, z_min] - arr[0, z_max - 1]
-        if np.abs(length_2 - value) < np.abs(length_1 - value):
-            closest_length = length_2
-            z_min_2 = z_min
-            z_max_2 = z_max - 1
-        else:
-            closest_length = length_1
-            z_min_2 = z_min + 1
-            z_max_2 = z_max
-        if (np.abs(length - value)) < (np.abs(closest_length - value)):
-            return z_min, z_max
-        else:
-            return z_min_2, z_max_2
-
-    if length < value:
-        length_1 = arr[0, z_min - 1] - arr[0, z_max]
-        length_2 = arr[0, z_min] - arr[0, z_max + 1]
-
-        if np.abs(length_2 - value) < np.abs(length_1 - value):
-            closest_length = length_2
-            z_min_2 = z_min
-            z_max_2 = z_max + 1
-        else:
-            closest_length = length_1
-            z_min_2 = z_min - 1
-            z_max_2 = z_max
-        if (np.abs(length - value)) < (np.abs(closest_length - value)):
-            return z_min, z_max
-        else:
-            return z_min_2, z_max_2
