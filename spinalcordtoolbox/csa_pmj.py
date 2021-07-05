@@ -68,7 +68,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     if distance > length_from_pmj[0]:
         raise ValueError("Input distance of " + str(distance) + " mm is out of bound for maximum distance of " + str(length_from_pmj[0]) + " mm")
 
-    if distance < length_from_pmj[-1]:  # Do we want instead max_z_index (so that we know that the segmentation is available?)
+    if distance < length_from_pmj[-1]:
         raise ValueError("Input distance of " + str(distance) + " mm is out of bound for minimum distance of " + str(length_from_pmj[-1]) + " mm")
 
     # Check if the range of selected slices are covered by the segmentation
