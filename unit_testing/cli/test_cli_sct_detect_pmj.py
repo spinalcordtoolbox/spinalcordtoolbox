@@ -32,9 +32,11 @@ def test_sct_detect_pmj_check_euclidean_distance_against_groundtruth():
     assert len(gt) == len(pred) == 1
 
     # transform pixel coordinates to physical coordinates (units in millimeters)
-    gt_phys = im_pmj_manual.transfo_pix2phys(gt)
-    pred_phys = im_pmj.transfo_pix2phys(pred)
+    # NB: These functions take in a list of coordinates [(x,y,z), (x,y,z), ...] and output an [Nx3] numpy array.
+    #     But, since there should be 1 predicted PMJ point, we can squeeze from [1x3] to [3].
+    gt_phys = np.squeeze(im_pmj_manual.transfo_pix2phys(gt))
+    pred_phys = np.squeeze(im_pmj.transfo_pix2phys(pred))
 
     # ensure prediction is within 10mm of ground truth coordinates
-    distances = np.linalg.norm(gt_phys - pred_phys, axis=1)
-    assert np.all(distances < 10.0)
+    distance = np.linalg.norm(gt_phys - pred_phys)
+    assert distance < 10.0
