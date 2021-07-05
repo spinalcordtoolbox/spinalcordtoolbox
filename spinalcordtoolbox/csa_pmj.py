@@ -64,12 +64,12 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     zmin = z_ref[np.argmin(np.array([np.abs(i - distance - extent/2) for i in length_from_pmj]))]
     zmax = z_ref[np.argmin(np.array([np.abs(i - distance + extent/2) for i in length_from_pmj]))]
 
-    # Check if distance is out of bound
+    # Check if distance is out of bounds
     if distance > length_from_pmj[0]:
-        raise ValueError("Input distance of " + str(distance) + " mm is out of bound for maximum distance of " + str(length_from_pmj[0]) + " mm")
+        raise ValueError("Input distance of " + str(distance) + " mm is out of bounds for maximum distance of " + str(length_from_pmj[0]) + " mm")
 
     if distance < length_from_pmj[-1]:
-        raise ValueError("Input distance of " + str(distance) + " mm is out of bound for minimum distance of " + str(length_from_pmj[-1]) + " mm")
+        raise ValueError("Input distance of " + str(distance) + " mm is out of bounds for minimum distance of " + str(length_from_pmj[-1]) + " mm")
 
     # Check if the range of selected slices are covered by the segmentation
     if not all(np.any(im_seg.data[:, :, z]) for z in range(zmin, zmax)):
