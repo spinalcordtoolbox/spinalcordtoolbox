@@ -110,7 +110,6 @@ System tools
 ============
 
 - sct_check_dependencies_ - Check installation and compatibility of SCT.
-- sct_testing_ - Runs complete testing to make sure SCT is working properly.
 - sct_version_ - Display SCT version.
 
 
@@ -421,11 +420,6 @@ sct_check_dependencies
 
 .. program-output:: sct_check_dependencies -h
 
-
-sct_testing
-===========
-
-.. program-output:: sct_testing -h
 
 sct_version
 ===========

@@ -243,7 +243,7 @@ def main(argv=None):
     contrast = arguments.c
     path_template = os.path.abspath(arguments.t)
     scale_dist = arguments.scale_dist
-    path_output = arguments.ofolder
+    path_output = os.path.abspath(arguments.ofolder)
     param.path_qc = arguments.qc
     if arguments.discfile is not None:
         fname_disc = os.path.abspath(arguments.discfile)
@@ -293,8 +293,11 @@ def main(argv=None):
     cache_sig = cache_signature(
         input_files=[fname_in, fname_seg],
     )
-    cachefile = os.path.join(curdir, "straightening.cache")
-    if cache_valid(cachefile, cache_sig) and os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz")) and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz")):
+    fname_cache = "straightening.cache"
+    if (cache_valid(os.path.join(curdir, fname_cache), cache_sig)
+            and os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz"))
+            and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz"))
+            and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz"))):
         # if they exist, copy them into current folder
         printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
         copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
@@ -309,7 +312,7 @@ def main(argv=None):
             '-r', str(remove_temp_files),
             '-v', '0',
         ])
-        cache_save(cachefile, cache_sig)
+        cache_save(os.path.join(path_output, fname_cache), cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
