@@ -19,7 +19,7 @@ import os
 import numpy as np
 
 from spinalcordtoolbox.image import Image, empty_like, add_suffix
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, parse_num_list, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, parse_num_list, init_sct, printv, set_loglevel
 
 
 # PARAMETERS
@@ -104,7 +104,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # Default params
     param = Param()

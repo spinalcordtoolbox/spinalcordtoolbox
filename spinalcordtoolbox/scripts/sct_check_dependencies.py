@@ -27,7 +27,7 @@ import psutil
 import requirements
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
-from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__, set_global_loglevel
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__, set_loglevel
 
 
 class bcolors:
@@ -201,7 +201,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = complete_test = arguments.complete
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     print("SCT info:")
     print("- version: {}".format(__version__))
@@ -318,16 +318,28 @@ def main(argv=None):
     if complete_test:
         print((status, output), '\n')
 
-    print_line('Check if DISPLAY variable is set')
+    print_line('Check if figure can be opened with matplotlib')
     try:
-        os.environ['DISPLAY']
-        print_ok()
+        import matplotlib
+        import matplotlib.pyplot as plt
+        # If matplotlib is using a GUI backend, the default 'show()` function will be overridden
+        # See: https://github.com/matplotlib/matplotlib/issues/20281#issuecomment-846467732
+        fig = plt.figure()
+        if getattr(fig.canvas.manager.show, "__func__", None) != matplotlib.backend_bases.FigureManagerBase.show:
+            print_ok(f" (Using GUI backend: '{matplotlib.get_backend()}')")
+        else:
+            print_fail(f" (Using non-GUI backend '{matplotlib.get_backend()}')")
+    except Exception as err:
+        print_fail()
+        print(err)
 
-        # Further check with PyQt specifically
-        print_line('Check if figure can be opened with PyQt')
-        from PyQt5.QtWidgets import QApplication, QLabel
+    print_line('Check if figure can be opened with PyQt')
+    if sys.platform == "linux" and 'DISPLAY' not in os.environ:
+        print_fail(" ($DISPLAY not set on X11-supporting system)")
+    else:
         try:
-            app = QApplication([])
+            from PyQt5.QtWidgets import QApplication, QLabel
+            _ = QApplication([])
             label = QLabel('Hello World!')
             label.show()
             label.close()
@@ -336,8 +348,31 @@ def main(argv=None):
             print_fail()
             print(err)
 
-    except KeyError:
-        print_fail()
+    # Check version of FSLeyes
+    print_line('Check FSLeyes version')
+    cmd = 'fsleyes --version'
+    status, output = run_proc(cmd, verbose=0, raise_exception=False)
+    # Exit code 0 - command has run successfully
+    if status == 0:
+        # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
+        fsleyes_version = output.split()[2]
+        print_ok(more=(" (%s)" % fsleyes_version))
+    # Exit code 126 - Command invoked cannot execute (permission problem or command is not an executable)
+    elif status == 126:
+        print('Command not executable. Please check permissions of fsleyes command.')
+    # Exit code 127 - Command not found (possible problem with $PATH)
+    elif status == 127:
+        print('Command not found. If you installed FSLeyes as part of FSL package, please check that FSL is included '
+              'in $PATH variable. If you installed FSLeyes using conda environment, make sure that the environment is '
+              'activated. If you do not have FSLeyes installed, consider its installation to easily visualize '
+              'processing outputs and/or to use SCT within FSLeyes. More info at: '
+              'https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html')
+    # All other exit codes
+    else:
+        print(f'Exit code {status} occurred. Please report this issue on SCT GitHub: '
+              f'https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues')
+        if complete_test:
+            print(output)
 
     print('')
     sys.exit(e + install_software)

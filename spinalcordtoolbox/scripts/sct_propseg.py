@@ -23,7 +23,7 @@ from scipy import ndimage as ndi
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, convert
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, mv, copy
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -205,6 +205,12 @@ def get_parser():
         metavar=Metavar.file,
         help='Output filename. Example: spinal_seg.nii.gz '
         )
+    optional.add_argument(
+        '-ofolder',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="Output folder."
+    )
     optional.add_argument(
         '-down',
         metavar=Metavar.int,
@@ -439,13 +445,16 @@ def propseg(img_input, options_dict):
         fname_out = arguments.o
     else:
         fname_out = os.path.basename(add_suffix(fname_data, "_seg"))
-    
-    folder_output = str(pathlib.Path(fname_out).parent)
-    cmd += ['-o', folder_output]
+
+    if arguments.ofolder is not None:
+        folder_output = arguments.ofolder
+    else:
+        folder_output = str(pathlib.Path(fname_out).parent)
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
         logger.error("output directory %s is not a valid directory" % folder_output)
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
+    cmd += ['-o', folder_output]
 
     if arguments.down is not None:
         cmd += ["-down", str(arguments.down)]
@@ -655,7 +664,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     fname_input_data = os.path.abspath(arguments.i)
     img_input = Image(fname_input_data)

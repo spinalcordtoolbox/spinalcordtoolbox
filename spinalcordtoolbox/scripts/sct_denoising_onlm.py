@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 import sys
-import os
 from time import time
 
 import numpy as np
 import nibabel as nib
+from dipy.denoise.nlmeans import nlmeans
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel
 
 
 # DEFAULT PARAMETERS
@@ -24,8 +24,11 @@ class Param:
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='Utility function to denoise images. (Return the denoised image and also the difference '
-                    'between the input and the output.)'
+        description='Utility function to denoise images. Return the denoised image and also the difference '
+                    'between the input and the output. The denoising algorithm is based on the Non-local means'
+                    'methods (Pierrick Coupe, Jose Manjon, Montserrat Robles, Louis Collins. “Adaptive Multiresolution '
+                    'Non-Local Means Filter for 3D MR Image Denoising” IET Image Processing, Institution of '
+                    'Engineering and Technology, 2011). The implementation is based on Dipy (https://dipy.org/).'
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -92,7 +95,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     parameter = arguments.p
     remove_temp_files = arguments.r
@@ -124,8 +127,6 @@ def main(argv=None):
     # Process for manual detecting of background
     # mask = data[:, :, :] > noise_threshold
     # data = data[:, :, :]
-
-    from dipy.denoise.nlmeans import nlmeans
 
     if arguments.std is not None:
         sigma = std_noise

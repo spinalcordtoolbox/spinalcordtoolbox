@@ -23,7 +23,6 @@
 import os
 import select
 import subprocess
-import signal
 from threading import Thread
 import logging
 import webbrowser
@@ -33,7 +32,7 @@ import wx.lib.agw.aui as aui
 import wx.html as html
 
 logger = logging.getLogger(__name__)
-aui_manager = frame.getAuiManager() # from FSLeyes context
+aui_manager = frame.auiManager  # noqa: F821 (from FSLeyes context)
 
 # keep track of all output folder text inputs so that we can update
 # all of them if one changes
@@ -116,7 +115,7 @@ class SCTCallThread(Thread):
     def __init__(self, command, text_window_ctrl):
         Thread.__init__(self)
         self.command = [command]
-        self.status = None
+        self.status = 0
         self.stdout = ""
         self.stderr = ""
         self.text_window = text_window_ctrl
@@ -127,6 +126,10 @@ class SCTCallThread(Thread):
             del env["PYTHONHOME"]
         if 'PYTHONPATH' in env:
             del env["PYTHONPATH"]
+        # If FSLeyes is being used in a conda environment on macOS, this will be set to the wrong executable
+        # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3427#issuecomment-865215813
+        if 'PYTHONEXECUTABLE' in env:
+            del env['PYTHONEXECUTABLE']
 
         proc = subprocess.Popen(self.command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=env)
         self.p = proc
@@ -162,7 +165,7 @@ class SCTCallThread(Thread):
 
     def sct_interrupt(self):
         if self.p:
-            self.p.send_signal(signal.SIGINT)
+            self.p.terminate()  # This sends SIGTERM (error code 15)
         else:
             print("No process running?")
 
@@ -199,9 +202,13 @@ class TextBox:
         Fetch path to file highlighted in the Overlay list.
         """
         selected_overlay = displayCtx.getSelectedOverlay()  # displayCtx is a class from FSLeyes
-        filename_path = selected_overlay.dataSource
-        print("Fetched file name: {}".format(filename_path))
-        self.textctrl.SetValue(filename_path)
+        if selected_overlay is None:
+            self.textctrl.GetParent().log_to_window("No files to input because the overlay list is empty. Please open "
+                                                    "an image in FSLeyes first, then try again.", level="WARNING")
+        else:
+            filename_path = selected_overlay.dataSource
+            print("Fetched file name: {}".format(filename_path))
+            self.textctrl.SetValue(filename_path)
 
     def get_file_name(self):
         return self.textctrl.GetValue()
@@ -351,20 +358,23 @@ class SCTPanel(wx.Panel):
         while True:
             thr.join(0.1)
             wx.Yield()
-            if not thr.isAlive():
+            if not thr.is_alive():
                 break
             if progress_dialog.stop_run:
                 thr.sct_interrupt()
 
         thr.join()
 
-        self.log_to_window("Command completed.", level="INFO")
-
         if progress_dialog:
             progress_dialog.Destroy()
 
-        # show stderr output if an error occurred
-        if thr.status:
+        if thr.status == 0:
+            self.log_to_window("Command completed.", level="INFO")
+        elif thr.status == -15:
+            # -15 corresponds to SIGTERM, used by the "Stop" button
+            self.log_to_window("Command terminated.", level="INFO")
+        else:
+            # show stderr output if an error occurred
             self.log_to_window("An error occurred", level="ERROR")
             error_dialog = ErrorDialog(frame, msg=thr.stderr)
             error_dialog.Show()
@@ -424,11 +434,12 @@ class TabPanelPropSeg(SCTPanel):
         contrast = self.rbox_contrast.GetStringSelection()
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
-        fname_out = "{}_seg.{}".format(fname, fext)
-        cmd_line = f"sct_propseg -i {fname_input} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
+        ofolder = self.hbox_ofolder.get_output_folder()
+        cmd_line = f"sct_propseg -i {fname_input} -c {contrast} -ofolder {ofolder}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
+        fname_out = f"{ofolder}/{fname}_seg.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
         opts = displayCtx.getOpts(image)
@@ -490,11 +501,12 @@ class TabPanelSCSeg(SCTPanel):
         contrast = self.rbox_contrast.GetStringSelection()
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
-        fname_out = "{}_seg.{}".format(fname, fext)
-        cmd_line = f"sct_deepseg_sc -i {fname_input} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
+        ofolder = self.hbox_ofolder.get_output_folder()
+        cmd_line = f"sct_deepseg_sc -i {fname_input} -c {contrast} -ofolder {ofolder}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
+        fname_out = f"{ofolder}/{fname}_seg.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
         opts = displayCtx.getOpts(image)
@@ -548,8 +560,9 @@ class TabPanelGMSeg(SCTPanel):
 
         base_name = os.path.basename(fname_input)
         fname, fext = base_name.split(os.extsep, 1)
-        default_fname_out = "{}_gmseg.{}".format(fname, fext)
-        cmd_line = f"sct_deepseg_gm -i {fname_input} -o {os.path.join(self.hbox_ofolder.get_output_folder(), default_fname_out)}"
+        ofolder = self.hbox_ofolder.get_output_folder()
+        fname_out = f"{ofolder}/{fname}_gmseg.{fext}"
+        cmd_line = f"sct_deepseg_gm -i {fname_input} -o {fname_out}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
@@ -630,11 +643,12 @@ class TabPanelVertLB(SCTPanel):
 
         base_name = os.path.basename(fname_seg)
         fname, fext = base_name.split(os.extsep, 1)
-        fname_out = "{}_labeled.{}".format(fname, fext)
-        cmd_line = f"sct_label_vertebrae -i {fname_im} -s {fname_seg} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
+        ofolder = self.hbox_ofolder.get_output_folder()
+        cmd_line = f"sct_label_vertebrae -i {fname_im} -s {fname_seg} -c {contrast} -ofolder {ofolder}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
+        fname_out = f"{ofolder}/{fname}_labeled.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
         opts = displayCtx.getOpts(image)
@@ -724,7 +738,8 @@ class TabPanelRegisterToTemplate(SCTPanel):
             return
 
         contrast = self.rbox_contrast.GetStringSelection()
-        cmd_line = f"sct_register_to_template -i {fname_im} -s {fname_seg} -ldisc {fname_label} -c {contrast} -ofolder {self.hbox_ofolder.get_output_folder()}"
+        ofolder = self.hbox_ofolder.get_output_folder()
+        cmd_line = f"sct_register_to_template -i {fname_im} -s {fname_seg} -ldisc {fname_label} -c {contrast} -ofolder {ofolder}"
         self.call_sct_command(cmd_line)
 
         # Add output to the list of overlay
@@ -732,7 +747,7 @@ class TabPanelRegisterToTemplate(SCTPanel):
         fname, fext = base_name.split(os.extsep, 1)
         # TODO: at some point we will modify SCT's function to output the file name below
         # fname_out = "PAM50_{}_reg.{}".format(contrast, fext)
-        fname_out = 'template2anat.nii.gz'
+        fname_out = f'{ofolder}/template2anat.nii.gz'
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
         opts = displayCtx.getOpts(image)

@@ -26,9 +26,25 @@ logger = logging.getLogger(__name__)
 
 
 def pytest_sessionstart():
-    """ Download sct_testing_data prior to test collection. """
+    """Perform actions that must be done prior to test collection."""
+    # Use a non-interactive backend so that no GUI plots will interrupt the test suite.
+    # (NB: We do this here to ensure it is set before `matplotlib` is first imported.)
+    if 'MPLBACKEND' not in os.environ:
+        os.environ["MPLBACKEND"] = 'Agg'
+
+    # Download sct_testing_data prior to test collection
     logger.info("Downloading sct test data")
     downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
+
+
+@pytest.fixture
+def run_in_sct_testing_data_dir():
+    """Temporarily change the working directory to 'sct_testing_data'. This replicates the behavior of the old
+    `sct_testing`, and is needed to prevent tests from cluttering the working directory with output files."""
+    cwd = os.getcwd()
+    os.chdir(sct_test_path())
+    yield
+    os.chdir(cwd)
 
 
 @pytest.fixture(scope="session", autouse=True)

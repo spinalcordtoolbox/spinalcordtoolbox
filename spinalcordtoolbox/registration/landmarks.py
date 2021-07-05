@@ -257,10 +257,6 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     logger.info(f"Translation:\n {translation_array}")
 
     if verbose == 2:
-
-        import matplotlib
-        # use Agg to prevent display
-        matplotlib.use('Agg')
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
 
