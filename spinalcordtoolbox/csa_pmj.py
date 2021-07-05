@@ -34,14 +34,14 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     data_pmj = im_pmj.data
 
     if not im_seg.data.shape == im_pmj.data.shape:
-        raise RuntimeError(f"segmentation and pmj should be in the same space coordinate.")
+        raise RuntimeError("Segmentation and pmj should be in the same space coordinate.")
 
     # Extract min and max index in Z direction
     data_seg = im_seg.data
     X, Y, Z = (data_seg > NEAR_ZERO_THRESHOLD).nonzero()
-    _, max_z_index = min(Z), max(Z)
+    min_z_index, max_z_index = min(Z), max(Z)
 
-    # Remove top slices  | TODO: check if center of mass of top slices is close to other slices, if not, remove
+    # Remove top slices
     im_seg.data[:, :, max_z_index - 4:max_z_index + 1] = 0
 
     # Compute the spinal cord centerline based on the spinal cord segmentation
@@ -56,27 +56,22 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     # Compute distance from PMJ along centerline
     arr_length = get_distance_from_pmj(arr_ctl, pmj_index, px, py, pz)
 
-    # Get Z index of corresponding distance from PMJ with the specified extent
-    zmin = get_nearest_index(arr_length, distance + extent/2)
-    zmax = get_nearest_index(arr_length, distance - extent/2)
-
-    zmin = np.argmin(np.array([np.abs(i - distance - extent/2) for i in arr_length[0]]))  # Check if seg starts at 1, need to get the right index
-    zmax = np.argmin(np.array([np.abs(i - distance + extent/2) for i in arr_length[0]]))
-
     # Check if distance is out of bound
-    if distance + extent/2 > arr_length[0][0]:
+    if distance > arr_length[0][0]:
         raise ValueError("Input distance of " + str(distance) + " mm is out of bound for maximum distance of " + str(arr_length[0][0]) + " mm")
 
-    if distance - extent/2 < arr_length[0][max_z_index]:  # Do we want instead max_z_index (so that we know that the segmentation is available?)
+    if distance < arr_length[0][-1]:
         raise ValueError("Input distance of " + str(distance) + " mm is out of bound for minimum distance of " + str(arr_length[0][-1]) + " mm")
+
+    z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
+    zmin = z_ref[np.argmin(np.array([np.abs(i - distance - extent/2) for i in arr_length[0]]))]
+    zmax = z_ref[np.argmin(np.array([np.abs(i - distance + extent/2) for i in arr_length[0]]))]
 
     # Check if the range of selected slices are covered by the segmentation
     if not all(np.any(im_seg.data[:, :, z]) for z in range(zmin, zmax)):
         raise ValueError(f"The requested distances from the PMJ are not fully covered by the segmentation.\n"
                          f"The range of slices are: [{zmin}, {zmax}]")
-    
-    print('min', arr_length[0][zmax], 'max', arr_length[0][zmin])
-    print(arr_length[0][zmin]-arr_length[0][zmax])
+
     # Create mask from segmentation centered on distance from PMJ and with extent length on z axis.
     mask = im_seg.copy()
     mask.data[:, :, 0:zmin] = 0
@@ -111,19 +106,16 @@ def get_distance_from_pmj(centerline_points, z_index, px, py, pz):
     return arr_length
 
 
-def get_nearest_index(arr, value):
-    """
-    Return the index of the closest value to the distance in arr.
-    :param arr: nd-array: distance from PMJ and corresponding indexes.
-    :param value: float: value to find the closest index to.
-    :returns index: int:
-    """
-    difference_array = np.absolute(arr[0]-value)
-    index = arr[1][difference_array.argmin()]
-    return int(index)
-
-
 def get_min_distance(pmj, centerline, px, py, pz):
+    """
+    Get index of minimum distance from pmj coordinate and centerline.
+    :param pmj: 3xn array: coordinate of the PMJ with RPI orientation.
+    :param centerline: 3xn array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
+    :param px: x pixel size.
+    :param py: y pixel size.
+    :param pz: z pixel size.
+    :retrun: int: z index.
+    """
     distance = np.sqrt(((centerline[0, :] - pmj[0]) * px) ** 2 +
                        ((centerline[1, :] - pmj[1]) * py) ** 2 +
                        ((centerline[2, :] - pmj[2]) * pz) ** 2)
