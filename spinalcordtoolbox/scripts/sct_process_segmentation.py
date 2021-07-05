@@ -366,7 +366,7 @@ def main(argv=None):
         fname_mask_out = add_suffix(arguments.i, '_mask_csa')
         mask.save(fname_mask_out)
         # Save extrapolated centerline
-        fname_ctl = add_suffix(arguments.i, '_centeline_extrapolated')
+        fname_ctl = add_suffix(arguments.i, '_centerline_extrapolated')
         im_ctl.save(fname_ctl)
     for key in metrics:
         if key == 'length':
