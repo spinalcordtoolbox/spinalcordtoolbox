@@ -1,20 +1,36 @@
-from pytest_console_scripts import script_runner
-import pytest
-import logging
-import spinalcordtoolbox.scripts.sct_label_vertebrae as sct_label_vertebrae
-logger = logging.getLogger(__name__)
 import os
-import nibabel as nib
+import logging
+
+import pytest
+
 from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.labels import check_missing_label
+import spinalcordtoolbox.scripts.sct_label_vertebrae as sct_label_vertebrae
 
-@pytest.mark.script_launch_mode('subprocess')
-def test_sct_label_vertebrae_backwards_compat(script_runner):
-    ret = script_runner.run('sct_testing', '--function', 'sct_label_vertebrae')
-    logger.debug(f"{ret.stdout}")
-    logger.debug(f"{ret.stderr}")
-    assert ret.success
-    assert ret.stderr == ''
+logger = logging.getLogger(__name__)
+
+
+@pytest.mark.sct_testing
+@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
+def test_sct_label_vertebrae_consistent_disc(tmp_path):
+    """Check that all expected output labeled discs exist"""
+    fname_ref = 't2/labels.nii.gz'
+    sct_label_vertebrae.main(argv=['-i', 't2/t2.nii.gz', '-s', 't2/t2_seg-manual.nii.gz', '-c', 't2',
+                                   '-discfile', fname_ref, '-ofolder', str(tmp_path)])
+    ref = Image(fname_ref)
+    pred = Image(os.path.join(tmp_path, 't2_seg-manual_labeled_discs.nii.gz'))
+    fp, fn = check_missing_label(pred, ref)
+    assert fp == []
+    assert fn == []
+
+
+@pytest.mark.sct_testing
+@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
+def test_sct_label_vertebrae_initfile_qc_no_checks():
+    """Run the CLI script without checking results.
+    TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
+    sct_label_vertebrae.main(argv=['-i', 't2/t2.nii.gz', '-s', 't2/t2_seg-manual.nii.gz', '-c', 't2',
+                                   '-initfile', 't2/init_label_vertebrae.txt', '-t', 'template', '-qc', 'testing-qc'])
 
 
 def test_sct_label_vertebrae_initz_error():
@@ -27,9 +43,6 @@ def test_sct_label_vertebrae_high_value_warning(caplog, tmp_path):
     command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -initz 40,19 -ofolder ' + str(tmp_path)
     sct_label_vertebrae.main(command.split())
     assert 'Disc value not included in template.' in caplog.text
-
-    # Files created in root directory by sct_label_vertebrae
-    os.unlink('straightening.cache')
 
 
 def test_sct_label_vertebrae_clean_labels(tmp_path):
@@ -47,23 +60,6 @@ def test_sct_label_vertebrae_clean_labels(tmp_path):
     dice_no_clean = compute_dice(image_no_clean, image_seg)
     # The cleaned version should be closer to the segmentation
     assert dice_clean >= dice_no_clean
-
-    # Files created in root directory by sct_label_vertebrae
-    os.unlink('straightening.cache')
-
-
-def test_sct_label_vertebrae_consistent_disc(tmp_path):
-    """Check that all expected output labeled discs exist"""
-    command = '-i sct_testing_data/t2/t2.nii.gz -s sct_testing_data/t2/t2_seg-manual.nii.gz -c t2 -discfile sct_testing_data/t2/labels.nii.gz -ofolder ' + str(tmp_path)
-    sct_label_vertebrae.main(command.split())
-    ref = Image('sct_testing_data/t2/labels.nii.gz')
-    pred = Image(os.path.join(tmp_path, 't2_seg-manual_labeled_discs.nii.gz'))
-    fp, fn = check_missing_label(pred, ref)
-    assert fp == []
-    assert fn == []
-
-    # Files created in root directory by sct_label_vertebrae
-    os.unlink('straightening.cache')
 
 
 def test_sct_label_vertebrae_disc_discontinuity_center_of_mass_error(tmp_path, caplog):

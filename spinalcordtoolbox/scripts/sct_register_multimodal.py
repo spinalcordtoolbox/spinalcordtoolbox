@@ -34,6 +34,7 @@
 import sys
 import os
 import time
+from copy import deepcopy
 
 import numpy as np
 
@@ -50,7 +51,7 @@ from spinalcordtoolbox.scripts.sct_register_to_template import register_wrapper
 step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
                  slicewise='0', dof='Tx_Ty_Tz_Rx_Ry_Rz')  # only used to put src into dest space
 step1 = Paramreg(step='1', type='im')
-paramregmulti = ParamregMultiStep([step0, step1])
+DEFAULT_PARAMREGMULTI = ParamregMultiStep([step0, step1])
 
 
 def get_parser():
@@ -158,7 +159,7 @@ def get_parser():
               f"  - step: <int> Step number (starts at 1, except for type=label).\n"
               f"  - type: {{im, seg, imseg, label}} type of data used for registration. Use type=label only at "
               f"step=0.\n"
-              f"  - algo: The algorithm used to compute the transformation. Default={paramregmulti.steps['1'].algo}\n"
+              f"  - algo: The algorithm used to compute the transformation. Default={DEFAULT_PARAMREGMULTI.steps['1'].algo}\n"
               f"    * translation: translation in X-Y plane (2dof)\n"
               f"    * rigid: translation + rotation in X-Y plane (4dof)\n"
               f"    * affine: translation + rotation + scaling in X-Y plane (6dof)\n"
@@ -170,8 +171,8 @@ def get_parser():
               f"'rot_method'\n"
               f"    * columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
               f"  - slicewise: <int> Slice-by-slice 2d transformation. "
-              f"Default={paramregmulti.steps['1'].slicewise}.\n"
-              f"  - metric: {{CC, MI, MeanSquares}}. Default={paramregmulti.steps['1'].metric}.\n"
+              f"Default={DEFAULT_PARAMREGMULTI.steps['1'].slicewise}.\n"
+              f"  - metric: {{CC, MI, MeanSquares}}. Default={DEFAULT_PARAMREGMULTI.steps['1'].metric}.\n"
               f"    * CC: The cross correlation metric compares the images based on their intensities but with a small "
               f"normalization. It can be used with images with the same contrast (for ex. T2-w with T2-w). In this "
               f"case it is very efficient but the computation time can be very long.\n"
@@ -181,40 +182,40 @@ def get_parser():
               f"    * MeanSquares: The mean squares metric compares the images based on their intensities. It can be "
               f"used only with images that have exactly the same contrast (with the same intensity range) or with "
               f"segmentations.\n"
-              f"  - iter: <int> Number of iterations. Default={paramregmulti.steps['1'].iter}.\n"
+              f"  - iter: <int> Number of iterations. Default={DEFAULT_PARAMREGMULTI.steps['1'].iter}.\n"
               f"  - shrink: <int> Shrink factor. A shrink factor of 2 will down sample the images by a factor of 2 to "
               f"do the registration, and thus allow bigger deformations (and be faster to compute). It is usually "
-              f"combined with a smoothing. (only for syn/bsplinesyn). Default={paramregmulti.steps['1'].shrink}.\n"
+              f"combined with a smoothing. (only for syn/bsplinesyn). Default={DEFAULT_PARAMREGMULTI.steps['1'].shrink}.\n"
               f"  - smooth: <int> Smooth factor (in mm). Note: if algo={{centermassrot,columnwise}} the smoothing "
-              f"kernel is: SxSx0. Otherwise it is SxSxS. Default={paramregmulti.steps['1'].smooth}.\n"
+              f"kernel is: SxSx0. Otherwise it is SxSxS. Default={DEFAULT_PARAMREGMULTI.steps['1'].smooth}.\n"
               f"  - laplacian: <int> Laplace filter using Gaussian second derivatives, applied before registration. "
               f"The input number correspond to the standard deviation of the Gaussian filter. "
-              f"Default={paramregmulti.steps['1'].laplacian}.\n"
+              f"Default={DEFAULT_PARAMREGMULTI.steps['1'].laplacian}.\n"
               f"  - gradStep: <float> The gradient step used by the function opitmizer. A small gradient step can lead "
               f"to a more accurate registration but will take longer to compute, with the risk to not reach "
               f"convergence. A bigger gradient step will make the registration faster but the result can be far from "
-              f"an optimum. Default={paramregmulti.steps['1'].gradStep}.\n"
+              f"an optimum. Default={DEFAULT_PARAMREGMULTI.steps['1'].gradStep}.\n"
               f"  - deformation: ?x?x?: Restrict deformation (for ANTs algo). Replace ? by 0 (no deformation) or 1 "
-              f"(deformation). Default={paramregmulti.steps['1'].deformation}.\n"
+              f"(deformation). Default={DEFAULT_PARAMREGMULTI.steps['1'].deformation}.\n"
               f"  - init: Initial translation alignment based on:\n"
               f"    * geometric: Geometric center of images\n"
               f"    * centermass: Center of mass of images\n"
               f"    * origin: Physical origin of images\n"
               f"  - poly: <int> Polynomial degree of regularization (only for algo=slicereg). "
-              f"Default={paramregmulti.steps['1'].poly}.\n"
+              f"Default={DEFAULT_PARAMREGMULTI.steps['1'].poly}.\n"
               f"  - filter_size: <float> Filter size for regularization (only for algo=centermassrot). "
-              f"Default={paramregmulti.steps['1'].filter_size}.\n"
+              f"Default={DEFAULT_PARAMREGMULTI.steps['1'].filter_size}.\n"
               f"  - smoothWarpXY: <int> Smooth XY warping field (only for algo=columnwize). "
-              f"Default={paramregmulti.steps['1'].smoothWarpXY}.\n"
+              f"Default={DEFAULT_PARAMREGMULTI.steps['1'].smoothWarpXY}.\n"
               f"  - pca_eigenratio_th: <int> Min ratio between the two eigenvalues for PCA-based angular adjustment "
               f"(only for algo=centermassrot and rot_method=pca). "
-              f"Default={paramregmulti.steps['1'].pca_eigenratio_th}.\n"
+              f"Default={DEFAULT_PARAMREGMULTI.steps['1'].pca_eigenratio_th}.\n"
               f"  - dof: <str> Degree of freedom for type=label. Separate with '_'. T stands for translation and R "
               f"stands for rotation, x, y, and z indicating the direction. For example, Tx_Ty_Tz_Rx_Ry_Rz would allow "
               f"translation on x, y and z axes and rotation on x, y and z axes. "
-              f"Default={paramregmulti.steps['0'].dof}.\n"
+              f"Default={DEFAULT_PARAMREGMULTI.steps['0'].dof}.\n"
               f"  - rot_method {{pca, hog, pcahog}}: rotation method to be used with algo=centermassrot. If using hog "
-              f"or pcahog, type should be set to imseg. Default={paramregmulti.steps['1'].rot_method}\n"
+              f"or pcahog, type should be set to imseg. Default={DEFAULT_PARAMREGMULTI.steps['1'].rot_method}\n"
               f"    * pca: approximate cord segmentation by an ellipse and finds it orientation using PCA's "
               f"eigenvectors\n"
               f"    * hog: finds the orientation using the symmetry of the image\n"
@@ -347,6 +348,7 @@ def main(argv=None):
     else:
         fname_mask = ''
     padding = arguments.z
+    paramregmulti = deepcopy(DEFAULT_PARAMREGMULTI)
     if arguments.param is not None:
         paramregmulti_user = arguments.param
         # update registration parameters
