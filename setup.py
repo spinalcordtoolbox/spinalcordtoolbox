@@ -108,7 +108,6 @@ setup(
                 'sct_resample',
                 'sct_smooth_spinalcord',
                 'sct_straighten_spinalcord',
-                'sct_testing',
                 'sct_version',
                 'sct_warp_template',
             ]

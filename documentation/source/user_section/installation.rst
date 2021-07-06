@@ -179,7 +179,7 @@ Ubuntu-based installation
    ./install_sct -y
    export PATH="/sct/bin:${PATH}"
    # Test SCT
-   sct_testing
+   pytest .
    # save the state of the container. Open a new Terminal and run:
    docker ps -a  # list all containers
    docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu16.04
@@ -201,7 +201,7 @@ CentOS7-based installation
    ./install_sct -y
    export PATH="/sct/bin:${PATH}"
    # Test SCT
-   sct_testing
+   pytest .
    # save the state of the container. Open a new Terminal and run:
    docker ps -a  # list all containers
    docker commit <CONTAINER_ID> <YOUR_NAME>/centos:centos7

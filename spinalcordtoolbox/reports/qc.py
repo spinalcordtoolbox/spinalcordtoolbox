@@ -223,7 +223,7 @@ class QcImage(object):
         y, x = np.where(mask == 50)
         img = np.full_like(mask, np.nan)
         ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
-        ax.text(x, y, 'X', color='lime', clip_on=True)
+        ax.plot(x, y, 'x', color='lime', markersize=6)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
