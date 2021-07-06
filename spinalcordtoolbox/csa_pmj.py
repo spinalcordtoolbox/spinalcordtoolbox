@@ -3,14 +3,11 @@
 # Functions to get distance from PMJ for processing segmentation data
 # Author: Sandrine Bédard
 import logging
-import sys
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
-from spinalcordtoolbox.centerline import curve_fitting
-from spinalcordtoolbox.resampling import resample_nib
 
 logger = logging.getLogger(__name__)
 
