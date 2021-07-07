@@ -22,9 +22,9 @@ body {
 }
 
 .rst-content .toctree-wrapper>p.caption,h1,h2,h3,h4,h5,h6,legend {
-    margin-top: 2.0rem;
-    font-weight: 500;
-    font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif;
+    /* margin-top: 2.0rem; */
+    /* font-weight: 500; */
+    /* font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif; */
     /* font-family: "Roboto Condensed",sans-serif; */
 }
 
@@ -72,9 +72,10 @@ a:hover {
 
 h1 {
     letter-spacing: 1.78px;
-    text-transform: uppercase;
+    /* text-transform: uppercase; */
     font-size: 2.0rem;
-    font-weight: 300;
+    /* font-weight: 300; */
+    font-weight: 500;
 }
 
 .wy-nav-content {
@@ -210,4 +211,20 @@ code.literal {
     border-radius: 0.3em;
     padding: .2em .3em;
     color: #f86626;
+}
+
+/* Testing Theme TOC */
+
+/* .sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
+    color: #fcfcfc;
+}
+
+.sidebar-tree .caption, .sidebar-tree .caption-text {
+    color: #fcfcfc;
+} */
+
+.rst-content .toctree-wrapper>p.caption, h1, h2, h3, h4, h5, h6, legend {
+    margin-top: 0;
+    font-weight: 700;
+    font-family: Roboto Slab,ff-tisa-web-pro,Georgia,Arial,sans-serif;
 }
