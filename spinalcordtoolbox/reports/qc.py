@@ -61,7 +61,8 @@ class QcImage(object):
                      "#9f89b0", "#e08e08", "#3d2b54",
                      "#7d0434", "#fb1849", "#14aab4",
                      "#a22abd", "#d58240", "#ac2aff"]
-    # _seg_colormap = plt.cm.autumn
+    _seg_colormap = ["#4d0000", "#ff0000"]
+
 
     def __init__(self, qc_report, interpolation, action_list, process, stretch_contrast=True,
                  stretch_contrast_method='contrast_stretching', angle_line=None, fps=None):
@@ -130,12 +131,11 @@ class QcImage(object):
 
     def listed_seg(self, mask, ax):
         """Create figure with red segmentation. Common scenario."""
-        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        img = np.ma.masked_equal(mask, 0)
         ax.imshow(img,
-                  cmap=color.ListedColormap(self._color_bin_red),
-                  norm=color.Normalize(vmin=0, vmax=1),
+                  cmap=color.LinearSegmentedColormap.from_list("", self._seg_colormap),
+                  norm=color.Normalize(vmin=0.5, vmax=1),
                   interpolation=self.interpolation,
-                  alpha=1,
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -223,7 +223,7 @@ class QcImage(object):
         y, x = np.where(mask == 50)
         img = np.full_like(mask, np.nan)
         ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
-        ax.text(x, y, 'X', color='lime', clip_on=True)
+        ax.plot(x, y, 'x', color='lime', markersize=6)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 

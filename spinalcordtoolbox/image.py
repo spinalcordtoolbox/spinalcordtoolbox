@@ -231,13 +231,13 @@ def check_affines_match(im):
     try:
         hdr2.set_qform(hdr.get_sform())
     except np.linalg.LinAlgError:
-        # See https://github.com/neuropoly/spinalcordtoolbox/issues/3097
+        # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3097
         logger.warning("The sform for {} is uninitialized and may cause unexpected behaviour."
                        ''.format(im.absolutepath))
 
         if im.absolutepath is None:
             logger.error("Internal code has produced an image with an uninitialized sform. "
-                         "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
+                         "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
                          "or on the SCT forums https://forum.spinalcordmri.org/.")
 
         return(True)
@@ -298,11 +298,11 @@ class Image(object):
             raise TypeError('Image constructor takes at least one argument.')
 
         # Make sure sform and qform are the same.
-        # Context: https://github.com/neuropoly/spinalcordtoolbox/issues/2429
+        # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2429
         if check_sform and not check_affines_match(self):
             if self.absolutepath is None:
                 logger.error("Internal code has produced an image with inconsistent qform and sform "
-                             "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
+                             "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
                              " or on the SCT forum https://forum.spinalcordmri.org/.")
             else:
                 logger.error(f"Image {self._path} has different qform and sform matrices. This can produce incorrect "
@@ -411,31 +411,18 @@ class Image(object):
         else:
             logger.debug("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
 
-    def change_shape(self, shape, generate_path=False):
+    def change_shape(self, shape):
         """
         Change data shape (in-place)
-
-        :param generate_path: whether to create a derived path name from the\
-                              original absolutepath (note: while it will generate\
-                              a file suffix, don't expect the suffix but rather\
-                              use the Image's absolutepath.\
-                              If not set, the absolutepath is voided.
 
         This is mostly useful for adding/removing a fourth dimension,
         you probably don't want to use this function.
 
         """
-        if shape is not None:
-            change_shape(self, shape, self)
-
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_shape-{}".format("-".join([str(x) for x in shape])))
-        else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+        change_shape(self, shape, self)
         return self
 
-    def change_orientation(self, orientation, inverse=False, generate_path=False):
+    def change_orientation(self, orientation, inverse=False):
         """
         Change orientation on image (in-place).
 
@@ -444,35 +431,18 @@ class Image(object):
         :param inverse: if you think backwards, use this to specify that you actually\
                         want to transform *from* the specified orientation, not *to*\
                         it.
-        :param generate_path: whether to create a derived path name from the\
-                              original absolutepath (note: while it will generate\
-                              a file suffix, don't expect the suffix but rather\
-                              use the Image's absolutepath.\
-                              If not set, the absolutepath is voided.
 
         """
-        if orientation is not None:
-            change_orientation(self, orientation, self, inverse=inverse)
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_{}".format(orientation.lower()))
-        else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+        change_orientation(self, orientation, self, inverse=inverse)
         return self
 
-    def change_type(self, dtype, generate_path=False):
+    def change_type(self, dtype):
         """
         Change data type on image.
 
         Note: the image path is voided.
         """
-        if dtype is not None:
-            change_type(self, dtype, self)
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_{}".format(dtype.name))
-        else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+        change_type(self, dtype, self)
         return self
 
     def save(self, path=None, dtype=None, verbose=1, mutable=False):
@@ -1275,9 +1245,10 @@ def zeros_like(img, dtype=None):
     intent and avoid doing a copy, which is slower than initialization with a constant.
 
     """
-    dst = change_type(img, dtype)
-    dst.data[:] = 0
-    return dst
+    zimg = Image(np.zeros_like(img.data), hdr=img.hdr.copy())
+    if dtype is not None:
+        zimg.change_type(dtype)
+    return zimg
 
 
 def empty_like(img, dtype=None):

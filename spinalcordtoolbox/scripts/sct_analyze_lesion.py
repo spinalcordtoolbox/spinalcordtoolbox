@@ -21,7 +21,7 @@ from skimage.measure import label
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
@@ -515,7 +515,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     fname_mask = arguments.m
     fname_sc = arguments.s

@@ -271,7 +271,7 @@ def test_save_as_csv_per_level(tmp_path, dummy_metrics, dummy_vert_level):
 
 # noinspection 801,PyShadowingNames
 def test_save_as_csv_per_slice_then_per_level(dummy_metrics, dummy_vert_level, tmp_path):
-    """Test with and without specifying perlevel. See: https://github.com/neuropoly/spinalcordtoolbox/issues/2141"""
+    """Test with and without specifying perlevel. See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2141"""
     path_out = str(tmp_path / 'tmp_file_out.csv')
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
                                                                   perlevel=True,

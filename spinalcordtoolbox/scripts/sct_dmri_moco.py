@@ -30,7 +30,7 @@ import sys
 import os
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
-from spinalcordtoolbox.utils.sys import init_sct, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
 from spinalcordtoolbox.reports.qc import generate_qc
 
@@ -75,7 +75,7 @@ def get_parser():
         '-bval',
         metavar=Metavar.file,
         default=param_default.fname_bvals,
-        help='Bvals file. Example: bvals.nii.gz',
+        help='Bvals file. Example: bvals.txt',
     )
     optional.add_argument(
         '-bvalmin',
@@ -177,14 +177,14 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initialization
     param = ParamMoco(is_diffusion=True, group_size=3, metric='MI', smooth='1')
 
     # Fetch user arguments
     param.fname_data = arguments.i
-    param.fname_bvecs = os.path.abspath(arguments.bvec)
+    param.fname_bvecs = arguments.bvec
     param.fname_bvals = arguments.bval
     param.bval_min = arguments.bvalmin
     param.group_size = arguments.g
@@ -209,7 +209,7 @@ def main(argv=None):
     # run moco
     fname_output_image = moco_wrapper(param)
 
-    set_global_loglevel(verbose)  # moco_wrapper changes verbose to 0, see issue #3341
+    set_loglevel(verbose)  # moco_wrapper changes verbose to 0, see issue #3341
 
     # QC report
     if path_qc is not None:

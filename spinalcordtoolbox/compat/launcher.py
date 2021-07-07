@@ -17,10 +17,6 @@ def main():
     env = dict()
     env.update(os.environ)
 
-    if "DISPLAY" not in os.environ:
-        # No DISPLAY, set suitable default matplotlib backend as pyplot is used
-        env["MPLBACKEND"] = "Agg"
-
     if "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS" not in os.environ:
         env["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(multiprocessing.cpu_count())
 

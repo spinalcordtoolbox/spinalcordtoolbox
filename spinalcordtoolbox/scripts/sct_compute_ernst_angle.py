@@ -15,7 +15,7 @@ import sys
 import os
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 
 # DEFAULT PARAMETERS
@@ -45,8 +45,6 @@ class ErnstAngle:
 
     # draw the graph
     def draw(self, tr_min, tr_max):
-        import matplotlib
-        matplotlib.use('TkAgg')
         import matplotlib.pyplot as plt
         from numpy import arange
         step = (tr_max - tr_min) / 50
@@ -135,7 +133,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # Initialization
     param = Param()

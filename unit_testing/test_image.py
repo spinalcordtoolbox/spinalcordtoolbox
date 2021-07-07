@@ -523,25 +523,33 @@ def test_more_change_orientation(tmp_path, fake_3dimage_sct, fake_3dimage_sct_vi
     print(img.header.get_best_affine())
     orientation = img.orientation
     fn = os.path.join(tmp_path, "vis.nii")
-    fn2 = img.save(fn, mutable=True).change_orientation("ALS", generate_path=True).save().absolutepath
+    img.save(fn, mutable=True).change_orientation("ALS")
+    fn2 = msct_image.add_suffix(img.absolutepath, "_als")
+    img.save(path=fn2, mutable=True)
     img = msct_image.Image(fn2)
     assert img.orientation == "ALS"
     assert img.data.shape == orient2shape("ALS")
     print(img.header.get_best_affine())
 
-    fn2 = img.save(fn, mutable=True).change_orientation("RAS", generate_path=True).save().absolutepath
+    img.save(fn, mutable=True).change_orientation("RAS")
+    fn2 = msct_image.add_suffix(img.absolutepath, "_ras")
+    img.save(path=fn2, mutable=True)
     img = msct_image.Image(fn2)
     assert img.orientation == "RAS"
     assert img.data.shape == orient2shape("RAS")
     print(img.header.get_best_affine())
 
-    fn2 = img.save(fn, mutable=True).change_orientation("RPI", generate_path=True).save().absolutepath
+    img.save(fn, mutable=True).change_orientation("RPI")
+    fn2 = msct_image.add_suffix(img.absolutepath, "_rpi")
+    img.save(path=fn2, mutable=True)
     img = msct_image.Image(fn2)
     assert img.orientation == "RPI"
     assert img.data.shape == orient2shape("RPI")
     print(img.header.get_best_affine())
 
-    fn2 = img.save(fn, mutable=True).change_orientation("PLI", generate_path=True).save().absolutepath
+    img.save(fn, mutable=True).change_orientation("PLI")
+    fn2 = msct_image.add_suffix(img.absolutepath, "_pli")
+    img.save(path=fn2, mutable=True)
     img = msct_image.Image(fn2)
     assert img.orientation == "PLI"
     assert img.data.shape == orient2shape("PLI")
@@ -678,7 +686,7 @@ def test_splitext():
 def test_tolerance_of_affine_mismatch_check():
     """Verify that affine mismatch error is thrown only for mismatches above a certain tolerance."""
     # ERROR NOT EXPECTED (Affine matrices have slight differences, but are close enough to be equivalent)
-    # NB: Specific values taken from anonymized data from https://github.com/neuropoly/spinalcordtoolbox/issues/3251
+    # NB: Specific values taken from anonymized data from https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3251
     qform_affine = np.array([[-0.0000000613307, -0.0032542832702, -0.8999945527288, 36.8009071350098],
                              [-0.9322916865349, -0.0000000613307, 0.0000000594134, 214.2190246582031],
                              [0.0000000615451, -0.9322860067718, 0.0031415651366, 122.8873901367188],

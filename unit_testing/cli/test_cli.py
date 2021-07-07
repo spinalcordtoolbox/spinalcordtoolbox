@@ -6,7 +6,6 @@ scripts = pkg_resources.get_entry_map('spinalcordtoolbox')['console_scripts'].ke
 
 scripts_where_no_args_is_valid = [
     'isct_test_ants',          # No args -> tests ants binaries
-    'sct_testing',             # No args -> runs full test suite
     'sct_check_dependencies',  # No args -> checks dependencies
     'sct_version'              # No args -> prints version
 ]
