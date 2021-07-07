@@ -56,10 +56,10 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
    .. code-block:: sh
 
-      git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+      git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
       cd sct
 
-   To select a `specific release <https://github.com/neuropoly/spinalcordtoolbox/releases>`_, replace X.Y.Z below with the proper release number. If you prefer to use the development version, you can skip this step.
+   To select a `specific release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, replace X.Y.Z below with the proper release number. If you prefer to use the development version, you can skip this step.
 
    .. code-block:: sh
 
@@ -118,7 +118,7 @@ Docker Image: Ubuntu
    apt install -y git curl bzip2 libglib2.0-0 gcc
    # Note for above: libglib2.0-0 is required by PyQt
    # Install SCT
-   git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
    ./install_sct -y
    export PATH="/sct/bin:${PATH}"
@@ -140,7 +140,7 @@ Docker Image: CentOS7
    # Now, inside Docker container, install dependencies
    yum install -y which gcc git curl
    # Install SCT
-   git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
    ./install_sct -y
    export PATH="/sct/bin:${PATH}"

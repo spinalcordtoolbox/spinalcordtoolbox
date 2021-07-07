@@ -43,7 +43,7 @@ Installation Options
 Option 1: Install from Package (recommended)
 --------------------------------------------
 
-The simplest way to install SCT is to do it via a stable release. First, download the `latest release <https://github.com/neuropoly/spinalcordtoolbox/releases>`_. Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
+The simplest way to install SCT is to do it via a stable release. First, download the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_. Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
 
 Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal, go into the created folder and launch the installer:
 
@@ -63,7 +63,7 @@ If you wish to benefit from the cutting-edge version of SCT, or if you wish to c
 
    .. code:: sh
 
-      git clone https://github.com/neuropoly/spinalcordtoolbox
+      git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox
 
       cd spinalcordtoolbox
 
@@ -99,7 +99,7 @@ Procedure:
 
    .. code:: sh
 
-      git clone https://github.com/neuropoly/spinalcordtoolbox
+      git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox
 
       cd spinalcordtoolbox
 
@@ -158,7 +158,7 @@ Docker Image: Ubuntu
    apt install -y git curl bzip2 libglib2.0-0 gcc
    # Note for above: libglib2.0-0 is required by PyQt
    # Install SCT
-   git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
    ./install_sct -y
    export PATH="/sct/bin:${PATH}"
@@ -180,7 +180,7 @@ Docker Image: CentOS7
    # Now, inside Docker container, install dependencies
    yum install -y which gcc git curl
    # Install SCT
-   git clone https://github.com/neuropoly/spinalcordtoolbox.git sct
+   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
    ./install_sct -y
    export PATH="/sct/bin:${PATH}"
