@@ -248,7 +248,7 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=param_default.warp_histo,
-        help="Warp histology atlas from Duval et al. Neuroimage 2019 (https://pubmed.ncbi.nlm.nih.gov/30326296/). (default: 0)"
+        help="Warp histology atlas from Duval et al. Neuroimage 2019 (https://pubmed.ncbi.nlm.nih.gov/30326296/)."
     )
 
     return parser
