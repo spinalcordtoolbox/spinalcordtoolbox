@@ -7,7 +7,7 @@ Registration algorithm: ``sct_register_to_template``
 
    Spinal cord straighting using thin-plate spline interpolation.
 
-After spinal cord labeling, we can register the subject with the template. If we have the labeled spinal cord, we can register the anatomical image to the template. SCT provides the ``sct_register_to_template`` command for template registration. Here are the steps for the algorithm within this command:
+SCT provides the ``sct_register_to_template`` command for template registration. Here are the steps for the algorithm within this command:
 
 1. **Straightening:** The straightening works by finding, for each point along the spinal cord, the mathematical transformation to go from a curved centerline to a straight centerline.
 
