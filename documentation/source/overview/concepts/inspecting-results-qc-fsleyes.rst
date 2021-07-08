@@ -49,7 +49,7 @@ How do I use the QC report?
 
 Once you run the ``open`` command, the QC report page will open up in your web browser for you to interact with.
 
-.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/t2_qc2.png
+.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/quality-control/qc.png
   :align: center
   :height: 400px
 
@@ -77,6 +77,6 @@ If you have the `FSLeyes <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes>`_ tool
 
 Running this command will display a viewer that you can interact with. For more information about how to use FSLeyes, visit the `FSLeyes documentation <https://open.win.ox.ac.uk/pages/fsl/fsleyes/fsleyes/userdoc/>`_.
 
-.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord_segmentation/t2_fsleyes2.png
+.. image:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/quality-control/fsleyes.png
   :align: center
   :height: 400px
