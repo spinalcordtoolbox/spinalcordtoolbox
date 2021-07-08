@@ -39,11 +39,18 @@ class Param:
         self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
         self.verbose = 1  # verbose
         self.path_qc = None
+        self.warp_histo = 0
+        self.folder_histo = 'histology'
+        self.file_info_label_histo = 'description.txt'
+        self.list_labels_nn_histo = ['_200um_Naxons.nii.gz', '_200um_MVF.nii.gz', '_200um_AVF.nii.gz',
+                                     '_200um_EquivDiameter.nii.gz', '_200um_EquivDiameter14.nii.gz',
+                                     '_200um_EquivDiameter48.nii.gz', '_200um_Eccentricity.nii.gz']
 
 
 class WarpTemplate:
     def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
-                 folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn, verbose):
+                 folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn,
+                 verbose, warp_histo, folder_histo, file_info_label_histo):
 
         # Initialization
         self.fname_src = fname_src
@@ -58,7 +65,11 @@ class WarpTemplate:
         self.file_info_label = file_info_label
         self.list_labels_nn = list_labels_nn
         self.verbose = verbose
+        self.warp_histo = warp_histo
+        self.folder_histo = folder_histo
+        self.file_info_label_histo = file_info_label_histo
 
+        # printv(arguments)
         # printv(arguments)
         printv('\nCheck parameters:')
         printv('  Working directory ........ ' + os.getcwd())
@@ -86,6 +97,12 @@ class WarpTemplate:
         if self.warp_spinal_levels == 1:
             printv('\nWARP SPINAL LEVELS:', self.verbose)
             warp_label(self.path_template, self.folder_spinal_levels, self.file_info_label, self.fname_src,
+                       self.fname_transfo, self.folder_out, self.list_labels_nn, self.verbose)
+
+        # Warp histology atlas
+        if self.warp_histo == 1:
+            printv('\nWARP HISTOLOGY ATLAS:', self.verbose)
+            warp_label(self.path_template, self.folder_histo, self.file_info_label_histo, self.fname_src,
                        self.fname_transfo, self.folder_out, self.list_labels_nn, self.verbose)
 
 
@@ -225,6 +242,14 @@ def get_parser():
         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
+    optional.add_argument(
+        '-histo',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=param_default.warp_histo,
+        help="Warp histology atlas from Duval et al. Neuroimage 2019 (https://pubmed.ncbi.nlm.nih.gov/30326296/). (default: 0)"
+    )
 
     return parser
 
@@ -251,10 +276,13 @@ def main(argv=None):
     folder_spinal_levels = param.folder_spinal_levels
     file_info_label = param.file_info_label
     list_labels_nn = param.list_labels_nn
+    warp_histo = arguments.warp_histo
+    folder_histo = param.folder_histo
 
     # call main function
     w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
-                     folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn, verbose)
+                     folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn,
+                     verbose, warp_histo, folder_histo)
 
     path_template = os.path.join(w.folder_out, w.folder_template)
 
