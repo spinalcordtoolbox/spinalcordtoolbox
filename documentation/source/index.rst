@@ -29,6 +29,5 @@
    :caption: Developer section
 
    dev_section/CONTRIBUTING.rst
-   dev_section/api.rst
    dev_section/CHANGES.md
    dev_section/license.rst
