@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-import json
 import os
 import logging
 
 import pytest
 
+from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils import sct_test_path
 import spinalcordtoolbox.reports.qc as qc
 import spinalcordtoolbox.reports.slice as qcslice
 
@@ -15,24 +16,22 @@ handle.setLevel(logging.DEBUG)
 logger.addHandler(handle)
 
 
+
 @pytest.fixture()
 def t2_image():
-    sct_test_data = 'sct_testing_data'
-    t2_file = os.path.join(sct_test_data, 't2', 't2.nii.gz')
-    return t2_file
+    t2_file = sct_test_path('t2', 't2.nii.gz')
+    return Image(t2_file)
 
 
 @pytest.fixture()
 def t2_seg_image():
-    sct_test_data = 'sct_testing_data'
-    t2_seg_file = os.path.join(sct_test_data, 't2', 't2_seg-manual.nii.gz')
-    return t2_seg_file
+    t2_seg_file = sct_test_path('t2', 't2_seg-manual.nii.gz')
+    return Image(t2_seg_file)
 
 
 @pytest.fixture()
 def t2_path():
-    sct_test_data = 'sct_testing_data'
-    t2_path = os.path.join(sct_test_data, 't2')
+    t2_path = sct_test_path('t2')
     return t2_path
 
 
@@ -43,6 +42,10 @@ def assert_qc_assets(path):
 
     assert os.path.isdir(os.path.join(path, 'imgs'))
 
+
+# FIXME: The following tests are broken, as they use outdated syntax for classes, attributes, etc.
+#        For example, the Coronal slice type no longer exists, having been removed in 2018 (PR #1667)
+#        These tests could could be deleted, but saving them lets them be used to model new tests after.
 #
 # def test_slices(t2_image, t2_seg_image):
 #     sagittal = qcslice.Sagittal(t2_image, t2_seg_image)
@@ -96,42 +99,27 @@ def assert_qc_assets(path):
 
 
 def test_label_vertebrae(t2_image, t2_seg_image):
-    param = qc.Params(t2_image, 'sct_label_vertebrae', ['-a', '-b'], 'Sagittal', '/tmp')
+    param = qc.Params(t2_image.absolutepath, 'sct_label_vertebrae', ['-a', '-b'], 'Sagittal', '/tmp')
     report = qc.QcReport(param, 'Test label vertebrae')
 
-    @qc.QcImage(report, 'spline36', [qc.QcImage.label_vertebrae, ])
+    @qc.QcImage(report, 'spline36', [qc.QcImage.label_vertebrae, ], process=param.command)
     def test(qslice):
         return qslice.single()
 
-    test(qcslice.Sagittal(t2_image, t2_seg_image))
+    test(qcslice.Sagittal([t2_image, t2_seg_image]))
     assert os.path.isfile(param.abs_bkg_img_path())
     assert os.path.isfile(param.abs_overlay_img_path())
 
 
 def test_propseg(t2_image, t2_seg_image):
-    param = qc.Params(t2_image, 'sct_propseg', ['-a'], 'Axial', '/tmp')
+    param = qc.Params(t2_image.absolutepath, 'sct_propseg', ['-a'], 'Axial', '/tmp')
     report = qc.QcReport(param, 'Test usage')
 
-    @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ])
+    @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ], process=param.command)
     def test(qslice):
         return qslice.mosaic()
 
-    test(qcslice.Axial(t2_image, t2_seg_image))
+    test(qcslice.Axial([t2_image, t2_seg_image]))
     assert os.path.isfile(param.abs_bkg_img_path())
     assert os.path.isfile(param.abs_overlay_img_path())
     assert os.path.isfile(param.qc_results)
-
-
-
-# def test_segment_graymatter(t2_image, t2_seg_image):
-#     param = qc.Params(['ofolder=/tmp/graymatter', ])
-#     report = qc.QcReport('test_segment_graymatter', param, ['-e', '--wow'], 'Testing the usage')
-#
-#     @qc.QcImage(report, 'bicubic', [qc.QcImage.sequential_seg, qc.QcImage.colorbar])
-#     def test(qslice, nb_col, thr):
-#         img, seg = qslice.mosaic(nb_col)
-#         seg[seg < thr] = 0
-#         return img, seg
-#
-#     test(qcslice.Axial(t2_image, t2_seg_image), param.nb_column, param.threshold)
-#     assert_qc_assets('/tmp/qc')
