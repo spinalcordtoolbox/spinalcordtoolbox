@@ -219,12 +219,19 @@ code.literal {
     color: #f86626;
 }
 
-/* Testing Theme TOC */
+/* Sidebar Colour */
 
-/* .sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
+/* Blue Sidebar */
+
+.sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
     color: #fcfcfc;
 }
 
 .sidebar-tree .caption, .sidebar-tree .caption-text {
     color: #fcfcfc;
-} */
+}
+
+:root {
+    --color-sidebar-background: #0054af;
+    --color-sidebar-item-background--hover: #0866c7;
+}
