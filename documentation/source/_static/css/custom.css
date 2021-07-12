@@ -234,4 +234,5 @@ code.literal {
 :root {
     --color-sidebar-background: #0054af;
     --color-sidebar-item-background--hover: #0866c7;
+    --color-sidebar-link-text: #fcfcfc;
 }
