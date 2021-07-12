@@ -41,7 +41,7 @@ setup(
     include_package_data=True,
     extras_require={
         'docs': [
-            'sphinx',
+            'sphinx==4.0.0',
             'sphinxcontrib-programoutput',
             'sphinx_rtd_theme',
             'sphinx-copybutton',
