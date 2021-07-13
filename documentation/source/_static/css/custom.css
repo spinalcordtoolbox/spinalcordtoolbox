@@ -24,18 +24,18 @@ body {
   /* font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif; */
   font-family: 'Lato', sans-serif, "proxima-nova","Helvetica Neue",Arial;
 }
-/*
+
 .rst-content .toctree-wrapper>p.caption,h1,h2,h3,h4,h5,h6,legend {
     margin-top: 2.0rem;
     font-weight: 600;
     font-family: 'Lato', sans-serif;
-} */
+}
 
-.rst-content .toctree-wrapper>p.caption, h1, h2, h3, h4, h5, h6, legend {
+/* .rst-content .toctree-wrapper>p.caption, h1, h2, h3, h4, h5, h6, legend {
     margin-top: 2.0rem;
     font-weight: 700;
     font-family: Roboto Slab,ff-tisa-web-pro,Georgia,Arial,sans-serif;
-}
+} */
 
 
 .highlight {
