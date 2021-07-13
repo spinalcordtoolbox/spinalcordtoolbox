@@ -181,7 +181,7 @@ a.copybtn {
 }
 
 .highlight pre, pre.literal-block {
-    padding: 1.5rem 1.5rem;
+    padding: 0.9rem 0.9rem;
 }
 
 /* Remove the '!' on a specific admonition to use it for the testimonials page */
