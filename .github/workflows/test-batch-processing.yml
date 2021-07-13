@@ -54,4 +54,4 @@ jobs:
         run: |
           source python/etc/profile.d/conda.sh
           conda activate venv_sct
-          pytest unit_testing/batch_processing/test_batch_processing.py
+          pytest testing/batch_processing/test_batch_processing.py
