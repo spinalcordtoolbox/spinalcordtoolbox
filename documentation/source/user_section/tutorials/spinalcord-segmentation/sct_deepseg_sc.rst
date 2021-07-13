@@ -1,4 +1,4 @@
-Algorithm #2: ``sct_deepsec_sc``
+Algorithm #2: ``sct_deepseg_sc``
 ################################
 
 As its name suggests, ``sct_deepseg_sc`` is based on deep learning. It is a newer algorithm, having been introduced to SCT in 2018. The steps of the algorithm are as follows:

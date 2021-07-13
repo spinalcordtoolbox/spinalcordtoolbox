@@ -24,7 +24,7 @@ import csv
 import numpy as np
 import scipy.interpolate
 
-from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, convert
+from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, convert, apply_mask_if_soft
 from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolation
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
@@ -523,16 +523,8 @@ def moco(param):
     im_target = convert(Image(param.file_target))
     im_target.save("target.nii.gz", mutable=True, verbose=0)
 
-    # Check if user specified a mask
     if not param.fname_mask == '':
-        # Check if this mask is soft (i.e., non-binary, such as a Gaussian mask)
-        im_mask = Image(param.fname_mask)
-        if not np.array_equal(im_mask.data, im_mask.data.astype(bool)):
-            # If it is a soft mask, multiply the target by the soft mask.
-            im = Image(file_target)
-            im_masked = im.copy()
-            im_masked.data = im.data * im_mask.data
-            im_masked.save(verbose=0)  # silence warning about file overwritting
+        file_target, _ = apply_mask_if_soft(file_target, param.fname_mask)
 
     # If scan is sagittal, split src and target along Z (slice)
     if param.is_sagittal:
@@ -606,17 +598,8 @@ def moco(param):
             # deal with masking (except in the 'apply' case, where masking is irrelevant)
             input_mask = None
             if not param.fname_mask == '' and not param.todo == 'apply':
-                # Check if mask is binary
-                if np.array_equal(im_maskz_list[iz].data, im_maskz_list[iz].data.astype(bool)):
-                    # If it is, pass this mask into register() to be used
-                    input_mask = im_maskz_list[iz]
-                else:
-                    # If not, do not pass this mask into register() because ANTs cannot handle non-binary masks.
-                    #  Instead, multiply the input data by the Gaussian mask.
-                    im = Image(file_data_splitZ_splitT[it])
-                    im_masked = im.copy()
-                    im_masked.data = im.data * im_maskz_list[iz].data
-                    im_masked.save(verbose=0)  # silence warning about file overwritting
+                file_data_splitZ_splitT[it], input_mask = apply_mask_if_soft(file_data_splitZ_splitT[it],
+                                                                             im_maskz_list[iz])
 
             # run 3D registration
             failed_transfo[it] = register(param, file_data_splitZ_splitT[it], file_target_splitZ[iz], file_mat[iz][it],
