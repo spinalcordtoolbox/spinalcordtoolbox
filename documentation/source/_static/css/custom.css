@@ -25,17 +25,17 @@ body {
   font-family: 'Lato', sans-serif, "proxima-nova","Helvetica Neue",Arial;
 }
 
-/* .rst-content .toctree-wrapper>p.caption,h1,h2,h3,h4,h5,h6,legend {
+.rst-content .toctree-wrapper>p.caption,h1,h2,h3,h4,h5,h6,legend {
     margin-top: 2.0rem;
     font-weight: 600;
     font-family: 'Lato', sans-serif;
-} */
+}
 
-.rst-content .toctree-wrapper>p.caption, h1, h2, h3, h4, h5, h6, legend {
+/* .rst-content .toctree-wrapper>p.caption, h1, h2, h3, h4, h5, h6, legend {
     margin-top: 2.0rem;
     font-weight: 700;
     font-family: Roboto Slab,ff-tisa-web-pro,Georgia,Arial,sans-serif;
-}
+} */
 
 
 .highlight {
@@ -226,7 +226,7 @@ code.literal {
 
 /* Blue Sidebar */
 
-.sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
+/* .sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
     color: #fcfcfc;
 }
 
@@ -238,11 +238,11 @@ code.literal {
     --color-sidebar-background: #0054af;
     --color-sidebar-item-background--hover: #0866c7;
     --color-sidebar-link-text: #fcfcfc;
-}
+} */
 
 /* Dark Grey Sidebar */
 
-/* .sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
+.sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
     color: #fcfcfc;
 }
 
@@ -254,4 +254,4 @@ code.literal {
     --color-sidebar-background: #3d3d3c;
     --color-sidebar-item-background--hover: #0866c7;
     --color-sidebar-link-text: #fcfcfc;
-} */
+}

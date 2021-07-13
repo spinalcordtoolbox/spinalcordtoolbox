@@ -110,7 +110,7 @@ html_theme = "furo"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = './_static/img/sct_logo_blue.png'
+html_logo = './_static/img/sct_logo_dark_grey.png'
 
 html_theme_options = {
     "sidebar_hide_name": True,
