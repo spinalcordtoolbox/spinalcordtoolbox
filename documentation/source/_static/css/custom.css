@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css?family=Lato');
+
+
 :root {
     --color-background-primary: #fcfcfc;
 }
@@ -18,14 +21,16 @@
 }
 
 body {
-  font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif;
+  /* font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif; */
+  font-family: 'Lato', sans-serif;
 }
 
 .rst-content .toctree-wrapper>p.caption,h1,h2,h3,h4,h5,h6,legend {
     margin-top: 2.0rem;
-    font-weight: 500;
-    font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif;
-    font-family: "Roboto Condensed",sans-serif;
+    font-weight: 600;
+    /* font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif; */
+    font-family: 'Lato', sans-serif;
+    /* font-family: "Roboto Condensed",sans-serif; */
 }
 
 /* .rst-content .toctree-wrapper>p.caption, h1, h2, h3, h4, h5, h6, legend {
@@ -77,11 +82,11 @@ a:hover {
 }
 
 h1 {
-    letter-spacing: 1.78px;
+    /* letter-spacing: 1.78px; */
     /* text-transform: uppercase; */
     font-size: 2.0rem;
     /* font-weight: 300; */
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .wy-nav-content {
@@ -223,7 +228,7 @@ code.literal {
 
 /* Blue Sidebar */
 
-/* .sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
+.sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
     color: #fcfcfc;
 }
 
@@ -235,11 +240,11 @@ code.literal {
     --color-sidebar-background: #0054af;
     --color-sidebar-item-background--hover: #0866c7;
     --color-sidebar-link-text: #fcfcfc;
-} */
+}
 
 /* Dark Grey Sidebar */
 
-.sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
+/* .sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
     color: #fcfcfc;
 }
 
@@ -251,4 +256,4 @@ code.literal {
     --color-sidebar-background: #3d3d3c;
     --color-sidebar-item-background--hover: #0866c7;
     --color-sidebar-link-text: #fcfcfc;
-}
+} */
