@@ -222,7 +222,7 @@ code.literal {
     color: #f86626;
 }
 
-/* Sidebar Colour Test */
+/* Sidebar */
 
 /* Blue Sidebar */
 
@@ -247,7 +247,8 @@ code.literal {
 }
 
 .sidebar-tree .caption, .sidebar-tree .caption-text {
-    color: #fcfcfc;
+    color: #ff8653;
+    /* color: #6dd2d2; */
 }
 
 :root {
