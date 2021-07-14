@@ -52,8 +52,8 @@ jobs:
     container: archlinux
     steps:
       - name: Dependencies
-        run: |
-          pacman -Syu --noconfirm gcc git curl
+        run: |  # NB: glu is needed for PyQT testing (https://stackoverflow.com/a/66486957/7584115)
+          pacman -Syu --noconfirm gcc git curl glu
       - uses: actions/checkout@v2
       - name: Install SCT
         run: |
@@ -75,8 +75,8 @@ jobs:
     container: debian:sid
     steps:
       - name: Dependencies
-        run: |
-          apt update && apt install -y libglib2.0-0 procps gcc git curl
+        run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
+          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v2
       - name: Install SCT
         run: |
@@ -98,8 +98,8 @@ jobs:
     container: debian:testing
     steps:
       - name: Dependencies
-        run: |
-          apt update && apt install -y libglib2.0-0 procps gcc git curl
+        run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
+          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v2
       - name: Install SCT
         run: |
@@ -121,8 +121,8 @@ jobs:
     container: debian:10
     steps:
       - name: Dependencies
-        run: |
-          apt update && apt install -y libglib2.0-0 procps gcc git curl
+        run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
+          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl libgl1-mesa-dev
       - uses: actions/checkout@v2
       - name: Install SCT
         run: |
@@ -144,8 +144,8 @@ jobs:
     container: debian:9
     steps:
       - name: Dependencies
-        run: |
-          apt update && apt install -y libglib2.0-0 procps gcc git curl
+        run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
+          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v2
       - name: Install SCT
         run: |
@@ -163,8 +163,8 @@ jobs:
     container: centos:8
     steps:
       - name: Dependencies
-        run: |
-          yum install -y gcc git curl
+        run: |  # NB: mesa-libGL is needed for PyQT testing (https://stackoverflow.com/a/65408967/7584115)
+          yum install -y gcc git curl mesa-libGL
       - uses: actions/checkout@v2
       - name: Install SCT
         run: |
@@ -186,8 +186,8 @@ jobs:
     container: centos:7
     steps:
       - name: Dependencies
-        run: |
-          yum install -y gcc git curl
+        run: |  # NB: mesa-libGL is needed for PyQT testing (https://stackoverflow.com/a/65408967/7584115)
+          yum install -y gcc git curl mesa-libGL
       - uses: actions/checkout@v2
       - name: Install SCT
         run: |
@@ -302,7 +302,8 @@ jobs:
     - name: Dependencies
       run: |
         # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
-        sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl
+        # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
+        sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
     - uses: actions/checkout@v2
     - name: Install SCT
       run: |
@@ -342,7 +343,8 @@ jobs:
     - name: Dependencies
       run: |
         # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
-        sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl
+        # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
+        sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
     - uses: actions/checkout@v2
     - name: Install SCT
       run: |

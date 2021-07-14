@@ -1603,3 +1603,33 @@ def _align_dict(dictionary, use_tabs=True, delimiter=""):
             padding = " " * (len_max - len(k))
         out.append(f"{k}{padding}{delimiter}{v}")
     return '\n'.join(out)
+
+
+def apply_mask_if_soft(fname_im: str, fname_mask: str):
+    """
+    Check to see if a mask is soft (non-binary), and if it is:
+        * Apply the mask directly to the image and save it as a separate image file.
+        * Set the mask filename to None to avoid the mask being used.
+
+    This is a workaround needed for ANTs binaries (e.g. antsSliceRegularizedRegistration), because
+    they don't natively support softmasks. This fix is needed everywhere that we use those binaries.
+
+    :param fname_im: (str) Filename of the image to apply the mask to.
+    :param fname_mask: (str) Filename of the mask to check.
+    :return: Filenames of the image and mask. (If the mask was applied, the filename of the image will be
+             updated as to not overwrite the image, and the filename of the mask will be set to None.)
+    """
+    # FIXME: Since this is a problem inherent to the binaries themselves, it would be nice if this fix
+    #        was automatically applied whenever we call the binaries. For example, if we had a light wrapper for each
+    #        ANTs binary, then we could ensure that the workaround is applied in a consistent way, no matter how the
+    #        binaries are called. However, this idea is not currently compatible with how moco.py is structured.
+    #        (See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3075#issuecomment-871366336)
+    im = Image(fname_im)
+    im_mask = Image(fname_mask)
+    if not np.array_equal(im_mask.data, im_mask.data.astype(bool)):
+        fname_mask = None
+        fname_im = add_suffix(im.absolutepath, "_masked")
+        # NB: casting="unsafe" -> https://github.com/numpy/numpy/issues/7225#issuecomment-380051749
+        im.data = np.multiply(im.data, im_mask.data, casting="unsafe")
+        im.save(fname_im, mutable=True)
+    return fname_im, fname_mask
