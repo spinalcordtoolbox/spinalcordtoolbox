@@ -18,6 +18,7 @@
 
 import sys
 import os
+import logging
 
 import numpy as np
 from matplotlib.ticker import MaxNLocator
@@ -32,6 +33,8 @@ from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.fs import get_absolute_path
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -184,6 +187,12 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved."
+             "QC report is only availbale for PMJ-based CSA."
+    )
+    optional.add_argument(
+        '-qc-image',
+        metavar=Metavar.str,
+        help='Input image to display in QC report. To be used with flag -qc '
     )
     optional.add_argument(
         '-qc-dataset',
@@ -368,6 +377,7 @@ def main(argv=None):
         # Save extrapolated centerline
         fname_ctl = add_suffix(arguments.i, '_centerline_extrapolated')
         im_ctl.save(fname_ctl)
+
     for key in metrics:
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
@@ -385,12 +395,21 @@ def main(argv=None):
                                                             group_funcs=group_funcs)
     metrics_agg_merged = merge_dict(metrics_agg)
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
-
-    # QC report (only show CSA for clarity)
+    # QC report (only for PMJ-based CSA)
     if path_qc is not None:
-        generate_qc(fname_segmentation, args=arguments, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
-                    subject=qc_subject, path_img=_make_figure(metrics_agg_merged, fit_results),
-                    process='sct_process_segmentation')
+        if fname_pmj is not None:
+            if arguments.qc_image is not None:
+                generate_qc(fname_in1=get_absolute_path(arguments.qc_image),
+                            fname_seg=[fname_ctl, fname_pmj, fname_mask_out, fname_ctl],
+                            args=arguments,
+                            path_qc=os.path.abspath(path_qc),
+                            dataset=qc_dataset,
+                            subject=qc_subject,
+                            process='sct_process_segmentation')
+            else:
+                raise parser.error('-qc-image is required to display QC report.')
+        else:
+            logger.warning('QC report only available for PMJ-based CSA. QC report not generated.')
 
     display_open(file_out)
 
