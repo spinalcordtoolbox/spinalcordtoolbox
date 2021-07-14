@@ -380,7 +380,7 @@ def main(argv=None):
         im_ctl.save(fname_ctl)
 
         # Generated centerline smoothed in RL direction for visualization (and QC report)
-        fname_ctl_smooth = add_suffix(arguments.i, '_smooth')
+        fname_ctl_smooth = add_suffix(fname_ctl, '_smooth')
         subprocess.run(['sct_maths', '-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth], stdout=subprocess.PIPE, check=True)
 
     for key in metrics:
