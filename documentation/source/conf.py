@@ -39,7 +39,9 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'recommonmark']
+    'recommonmark',
+    'sphinx.ext.extlinks'
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -81,13 +83,19 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = []
+exclude_patterns = ['*/api.rst']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
+
+extlinks = {
+    # e.g. :sct_tutorial_data:`data_template-registration.zip` gets expanded into:
+    # 'https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
+    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20210609/%s', '')
+}
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -108,6 +116,7 @@ html_theme_options = {
     "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
     "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
     "style_nav_header_background": "#FFFFFF",  # background of the logo (top left)
+    'prev_next_buttons_location': "both"  # put Previous/Next buttons on both the top and bottom of the page
     }
 
 html_context = {
