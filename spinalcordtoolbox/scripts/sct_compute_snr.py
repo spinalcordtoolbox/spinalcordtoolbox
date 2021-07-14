@@ -112,7 +112,6 @@ def main(argv=None):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
-    file_name=None
     # Default params
     param = Param()
 
