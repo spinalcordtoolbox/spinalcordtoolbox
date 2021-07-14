@@ -18,7 +18,7 @@ setup(
     version=version,
     description='Library of analysis tools for MRI of the spinal cord',
     long_description=long_description,
-    url='http://www.neuro.polymtl.ca/home',
+    url='https://www.neuro.polymtl.ca/',
     author='NeuroPoly Lab, Polytechnique Montreal',
     author_email='neuropoly@googlegroups.com',
     license='MIT',
