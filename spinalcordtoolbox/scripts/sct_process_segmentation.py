@@ -16,6 +16,7 @@
 
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
+import subprocess
 import sys
 import os
 import logging
@@ -378,6 +379,10 @@ def main(argv=None):
         fname_ctl = add_suffix(arguments.i, '_centerline_extrapolated')
         im_ctl.save(fname_ctl)
 
+        # Generated centerline smoothed in RL direction for visualization (and QC report)
+        fname_ctl_smooth = add_suffix(arguments.i, '_smooth')
+        subprocess.run(['sct_maths', '-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth], stdout=subprocess.PIPE, check=True)
+
     for key in metrics:
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
@@ -400,7 +405,7 @@ def main(argv=None):
         if fname_pmj is not None:
             if arguments.qc_image is not None:
                 generate_qc(fname_in1=get_absolute_path(arguments.qc_image),
-                            fname_seg=[fname_ctl, fname_pmj, fname_mask_out, fname_ctl],
+                            fname_seg=[fname_ctl_smooth, fname_pmj, fname_mask_out, fname_ctl_smooth],  # Repeat centerline to flatten image along the centerline
                             args=arguments,
                             path_qc=os.path.abspath(path_qc),
                             dataset=qc_dataset,
