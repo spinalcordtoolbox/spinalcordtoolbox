@@ -131,7 +131,8 @@ def main(argv=None):
     #Added function for text file 
     if arguments.o is not None:
         file_name = arguments.o
-
+    else:
+        file_name = None
 
 
     # Check parameters
