@@ -210,9 +210,13 @@ jobs:
       - name: Check dependencies
         run: |
           ./.ci.sh -c
-      - name: Run pytest test suite
-        run: |
-          ./.ci.sh -t
+      - name: Run pytest test suite (with code coverage)
+        run: |  # NB: We use `-v` instead of `-t` here to run this one with coverage
+          ./.ci.sh -v
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true
 
   ubuntu-16_04:
     name: Ubuntu 16.04 (Xenial)
