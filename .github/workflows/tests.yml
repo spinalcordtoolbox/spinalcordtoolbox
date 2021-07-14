@@ -213,10 +213,19 @@ jobs:
       - name: Run pytest test suite (with code coverage)
         run: |  # NB: We use `-v` instead of `-t` here to run this one with coverage
           ./.ci.sh -v
-      - name: Upload coverage to Codecov
+      - name: Upload API coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
           fail_ci_if_error: true
+          files: ./cov-cli.xml
+          flags: cli
+      - name: Upload CLI coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true
+          files: ./cov-api.xml
+          flags: api
+
 
   ubuntu-16_04:
     name: Ubuntu 16.04 (Xenial)

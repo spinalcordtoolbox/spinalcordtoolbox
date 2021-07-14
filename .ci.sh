@@ -41,8 +41,8 @@ run_tests() {
 run_tests_with_coverage(){
   # NB: Testing using example from https://github.com/codecov/example-python
   activate_venv_sct
-  pip install pytest-cov
-  pytest --cov=spinalcordtoolbox --cov-config setup.cfg --cov-branch --cov-report=xml
+  pytest --cov=spinalcordtoolbox --cov-config setup.cfg --cov-branch --cov-report=xml:cov-api.xml testing/api
+  pytest --cov=spinalcordtoolbox --cov-config setup.cfg --cov-branch --cov-report=xml:cov-cli.xml testing/cli
 }
 
 while getopts ":ictv" opt; do

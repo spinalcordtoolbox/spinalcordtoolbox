@@ -16,7 +16,7 @@
 .idea/*
 .eggs/
 /.coverage
-/coverage.xml
+/cov*.xml
 /.cache
 /bin
 /python
