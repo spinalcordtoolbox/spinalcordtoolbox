@@ -44,10 +44,6 @@ setup(
             'sphinx_rtd_theme',
             'recommonmark'
         ],
-        'mpi': [
-        'mpich==3.2',
-        'mpi4py==3.0.0',
-        ],
     },
     entry_points=dict(
         console_scripts=[
