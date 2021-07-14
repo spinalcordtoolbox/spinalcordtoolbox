@@ -47,7 +47,7 @@ setup(
     },
     entry_points=dict(
         console_scripts=[
-            '{}=spinalcordtoolbox.compat.launcher:main'.format(x) for x in \
+            '{}=spinalcordtoolbox.compat.launcher:main'.format(x) for x in
             [
                 'isct_convert_binary_to_trilinear',
                 'isct_minc2volume-viewer',
