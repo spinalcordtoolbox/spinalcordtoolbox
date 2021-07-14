@@ -39,10 +39,10 @@ setup(
     include_package_data=True,
     extras_require={
         'docs': [
-        'sphinx',
-        'sphinxcontrib-programoutput',
-        'sphinx_rtd_theme',
-        'recommonmark'
+            'sphinx',
+            'sphinxcontrib-programoutput',
+            'sphinx_rtd_theme',
+            'recommonmark'
         ],
         'mpi': [
         'mpich==3.2',
