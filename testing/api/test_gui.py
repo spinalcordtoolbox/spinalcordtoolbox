@@ -5,6 +5,7 @@ import unittest
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.gui import base, centerline, sagittal
 from spinalcordtoolbox.gui.base import InvalidActionWarning
+from spinalcordtoolbox.utils import sct_test_path
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -12,7 +13,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 class CenterlineTestCase(unittest.TestCase):
     def setUp(self):
-        self.image = msct_image.Image(os.path.expanduser('~/sct_example_data/t2/t2.nii.gz'))
+        self.image = msct_image.Image(sct_test_path('t2', 't2.nii.gz'))
         self.overlay = msct_image.Image(self.image)
         self.params = base.AnatomicalParams()
 
@@ -30,20 +31,19 @@ class CenterlineTestCase(unittest.TestCase):
 
     def test_auto_init(self):
         controller = self._init_auto()
-        assert controller.position == (0, 160, 32)
+        assert controller.position == (0, 30, 26)
         assert len(controller.points) == 0
 
     def test_custom_init(self):
         controller = self._init_custom()
-        assert controller.position == (160, 160, 32)
+        assert controller.position == (0, 30, 26)
         assert len(controller.points) == 0
 
     def test_select_auto_points(self):
         self.params.num_points = 3
         controller = self._init_auto()
-        expected = [(0, 45, 33, 1), (160, 51, 35, 1), (319, 71, 31, 1)]
-        points = [(x, y, z) for x, y, z, _ in expected]
-        points = [(160, 45, 33), (319, 51, 35), (319, 71, 31)]
+        expected = [(0, 45, 33, 1), (25, 51, 35, 1), (30, 59, 31, 1)]
+        points = [(x + self.params.interval_in_mm, y, z) for x, y, z, _ in expected]
 
         with self.assertRaises(InvalidActionWarning):
             controller.select_slice(*points[0])
@@ -76,7 +76,7 @@ class CenterlineTestCase(unittest.TestCase):
 
 class SagittalTestCase(unittest.TestCase):
     def setUp(self):
-        self.image = msct_image.Image(os.path.expanduser('~/sct_example_data/t2/t2.nii.gz'))
+        self.image = msct_image.Image(sct_test_path('t2', 't2.nii.gz'))
         self.overlay = msct_image.Image(self.image)
         self.params = base.AnatomicalParams()
 
@@ -85,13 +85,13 @@ class SagittalTestCase(unittest.TestCase):
         controller.reformat_image()
 
         assert len(controller.points) == 0
-        assert controller.position == (160, 160, 32)
+        assert controller.position == (27, 30, 26)
 
     def test_select_L1_label(self):
         controller = sagittal.SagittalController(self.image, self.params)
         controller.reformat_image()
-        expected = (99, 89, 21, 21)
-        input_point = (99, 89, 21, 21)
+        expected = input_point = (25, 50, 21, 21)
+        input_point = (25, 50, 21, 21)
 
         controller.label = 21
         controller.select_point(*input_point)
