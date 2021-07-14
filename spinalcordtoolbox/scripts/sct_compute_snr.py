@@ -202,7 +202,7 @@ def main(argv=None):
     #Added function for text file
     if file_name is not None:
         file_name+='.txt'
-        f= open(file_name,"w")
+        f = open(file_name,"w")
         f.write(str(snr_roi))
         f.close
         printv('\nFile saved to '+ file_name)
