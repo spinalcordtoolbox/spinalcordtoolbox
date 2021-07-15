@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import os
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
@@ -19,21 +18,23 @@ setup(
     version=version,
     description='Library of analysis tools for MRI of the spinal cord',
     long_description=long_description,
-    url='http://www.neuro.polymtl.ca/home',
+    url='https://www.neuro.polymtl.ca/',
     author='NeuroPoly Lab, Polytechnique Montreal',
     author_email='neuropoly@googlegroups.com',
-    license='MIT',
+    license='LGPLv3',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Healthcare Industry',
         'Intended Audience :: Education',
+        'Topic :: Scientific/Engineering :: Image Processing',
+        'Topic :: Scientific/Engineering :: Image Recognition',
+        'Topic :: Scientific/Engineering :: Information Analysis',
         'Topic :: Scientific/Engineering :: Medical Science Apps.',
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
         'Operating System :: Unix',
         'Operating System :: MacOS',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6'
     ],
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
     packages=find_packages(exclude=['.git', 'data', 'dev', 'dev.*',
@@ -48,14 +49,10 @@ setup(
             'furo',
             'recommonmark'
         ],
-        'mpi': [
-            'mpich==3.2',
-            'mpi4py==3.0.0',
-        ],
     },
     entry_points=dict(
         console_scripts=[
-            '{}=spinalcordtoolbox.compat.launcher:main'.format(x) for x in \
+            '{}=spinalcordtoolbox.compat.launcher:main'.format(x) for x in
             [
                 'isct_convert_binary_to_trilinear',
                 'isct_minc2volume-viewer',
