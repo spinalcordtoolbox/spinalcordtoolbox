@@ -127,12 +127,7 @@ def main(argv=None):
     else:
         index_vol_user = ''
     
-    #Added function for text file 
-    if arguments.o is not None:
-        file_name = arguments.o
-    else:
-        file_name = None
-
+    file_name = arguments.o
 
     # Check parameters
     if method == 'diff':
