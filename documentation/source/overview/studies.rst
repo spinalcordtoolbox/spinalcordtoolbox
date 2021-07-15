@@ -97,3 +97,4 @@ The following studies (in chronological order) have used SCT:
 -  `Tinnermann et al. Observation of others’ painful heat stimulation involves responses in the spinal cord. Science Advances, 2021 <https://pubmed.ncbi.nlm.nih.gov/33789899/>`_
 -  `Zhang et al. Automatic spinal cord segmentation from axial-view MRI slices using CNN with grayscale regularized active contour propagation. Computers in Biology and Medicine, 2021 <https://pubmed.ncbi.nlm.nih.gov/33780869/>`_
 -  `Savini et al. Pilot Study on Quantitative Cervical Cord and Muscular MRI in Spinal Muscular Atrophy: Promising Biomarkers of Disease Evolution and Treatment? Front Neurol, 2021 <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8039452/>`_
+-  `Vallotton et al. Tracking white and grey matter degeneration along the spinal cord axis in degenerative cervical myelopathy. J Neurotrauma. 2021 <https://pubmed.ncbi.nlm.nih.gov/34238034/>`_
