@@ -12,15 +12,19 @@ About the license: see the file LICENSE.TXT
 
 import os
 import sys
+import logging
 
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
 import numpy as np
 
 from spinalcordtoolbox.image import Image, zeros_like
+from spinalcordtoolbox.math import correlation
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -182,6 +186,8 @@ class DetectPMJ:
             img_pred_maxValue = np.max(img_pred.data)  # get the max value of the detection map
             self.pa_coord = np.where(img_pred.data == img_pred_maxValue)[0][0]
             self.is_coord = np.where(img_pred.data == img_pred_maxValue)[1][0]
+            # Update R-L coordinate
+            self.compute_cross_corr_3d()
 
             printv('\nPonto-Medullary Junction detected', self.verbose, 'normal')
 
@@ -255,6 +261,67 @@ class DetectPMJ:
 
         self.curdir = os.getcwd()
         os.chdir(self.tmp_dir)  # go to tmp directory
+
+    def compute_cross_corr_3d(self, xrange=list(range(-10, 10)), xshift=10, yshift=10, zshift=10):  # Range of 20 is bit extreme?
+        """
+        Compute cross-correlation between image and it's mirror using a slidding window in R-L direction to find the image symmetry and adjust R-L coordinate.
+        Use a slidding window of 20x20x20 by default.
+        :param xrange:
+        :param xshift:
+        :param yshift:
+        :param zshift:
+        """
+        img = Image(self.fname_im)   # img in PIR orientation
+        ny, nz, nx, *_ = img.dim
+        # initializations
+        I_corr = np.zeros(len(xrange))
+        allzeros = 0
+        # current_z = 0
+        ind_I = 0
+        for ix in xrange:
+            # if pattern extends towards left part of the image, then crop and pad with zeros
+            if self.rl_coord + ix + 1 + xshift > nx:
+                padding_size = self.rl_coord + ix + xshift + 1 - nx
+                src = img.data[self.pa_coord - yshift:self.pa_coord + yshift + 1,
+                               self.is_coord - zshift: self.is_coord + zshift + 1,
+                               self.rl_coord + ix - xshift: self.rl_coord + ix + xshift + 1 - padding_size]
+                src = np.pad(src, ((0, 0), (0, 0), (0, padding_size)), 'constant',
+                             constant_values=0)
+            # if pattern extends towards right part of the image, then crop and pad with zeros
+            elif self.rl_coord + ix - xshift < 0:
+                padding_size = abs(ix - xshift)
+                src = img.data[self.pa_coord - yshift:self.pa_coord + yshift + 1,
+                               self.is_coord - zshift: self.is_coord + zshift + 1,
+                               self.rl_coord + ix - xshift + padding_size: self.rl_coord + ix + xshift + 1]
+                src = np.pad(src, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
+                             constant_values=0)
+            else:
+                src = img.data[self.pa_coord - yshift:self.pa_coord + yshift + 1,
+                               self.is_coord - zshift: self.is_coord + zshift + 1,
+                               self.rl_coord + ix - xshift: self.rl_coord + xshift + ix + 1]
+            target = src[:, :, ::-1]  # Mirror of src (in R-L direction)
+            # convert to 1d
+            src_1d = src.ravel()
+            target_1d = target.ravel()
+            # check if src_1d contains at least one non-zero value
+            if (src_1d.size == target_1d.size) and np.any(src_1d):
+                I_corr[ind_I] = correlation(src_1d, target_1d)
+            else:
+                allzeros = 1
+            ind_I = ind_I + 1
+        if allzeros:
+            logger.warning('Data contained zero. We probably hit the edge of the image.')
+        if np.any(I_corr):
+            # if I_corr contains at least a non-zero value
+            ind_peak = [i for i in range(len(I_corr)) if I_corr[i] == max(I_corr)][0]  # index of max along x
+            logger.info('.. Peak found: x=%s (correlation = %s)', xrange[ind_peak], I_corr[ind_peak])
+            # TODO (maybe) check if correlation is high enough compared to previous R-L coord
+        else:
+            # if I_corr contains only zeros
+            logger.warning('Correlation vector only contains zeros.')
+        # Change adjust rl_coord
+        logger.info('R-L coordinate adjusted from %s to  %s)', self.rl_coord, self.rl_coord + xrange[ind_peak])
+        self.rl_coord = self.rl_coord + xrange[ind_peak]
 
 
 def main(argv=None):
