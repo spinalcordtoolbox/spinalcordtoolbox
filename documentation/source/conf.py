@@ -115,10 +115,7 @@ html_logo = './_static/img/sct_logo_dark_grey.png'
 html_theme_options = {
     "sidebar_hide_name": True,
     "light_css_variables": {
-        "color-admonition-title-background": "#EAF6FF",
-        "color-admonition-title": "#c2e2fb",
-        "color-admonition-title-background--note": "#30c42626",
-        "color-admonition-title--note": "#30c42659"
+
     }
 }
 
