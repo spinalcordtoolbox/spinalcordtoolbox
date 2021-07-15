@@ -89,7 +89,7 @@ def get_parser():
         metavar=Metavar.str,
         type=str,
         default=None,
-        help="File name where to write the computed SNR."
+        help="File name to write the computed SNR to."
     )
 
     return parser
@@ -112,6 +112,7 @@ def main(argv=None):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
+    
     # Default params
     param = Param()
 
@@ -196,10 +197,9 @@ def main(argv=None):
     
     #Added function for text file
     if file_name is not None:
-        f = open(file_name,"w")
-        f.write(str(snr_roi))
-        f.close
-        printv('\nFile saved to '+ file_name)
+        with open(file_name, "w") as f:
+            f.write(str(snr_roi))
+            printv('\nFile saved to ' + file_name)
 
 
 if __name__ == "__main__":
