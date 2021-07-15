@@ -1,10 +1,6 @@
 @import url('https://fonts.googleapis.com/css?family=Lato');
 
 
-:root {
-    --color-background-primary: #fcfcfc;
-}
-
 /* body{font-family:'Roboto',sans-serif;} */
 .wy-side-nav-search>div.version{color:#000000;}
 .wy-menu-vertical a:visited{color:#d9d9d9;}
@@ -37,11 +33,26 @@ body {
     font-family: Roboto Slab,ff-tisa-web-pro,Georgia,Arial,sans-serif;
 } */
 
+/* Code Chunks */
 
-.highlight {
-    /* background: #0f0f4c !important; */
-    background: #f2f2f3 !important;
+@media (prefers-color-scheme: light) {
+    .highlight {
+        background: #f2f2f3 !important;
+    }
 }
+
+@media (prefers-color-scheme: dark) {
+    .highlight {
+        background: #202020 !important;
+    }
+    .highlight .nv {
+        color: #40ffff;
+    }
+    .highlight .s1 {
+        color: #ed9d13;
+    }
+}
+
 
 .rst-content div[class^=highlight], .rst-content pre.literal-block {
     border-radius: 5px;
@@ -253,6 +264,23 @@ code.literal {
 
 :root {
     --color-sidebar-background: #3d3d3c;
-    --color-sidebar-item-background--hover: #0866c7;
+    --color-sidebar-item-background--hover: #5a5a58;
     --color-sidebar-link-text: #fcfcfc;
+}
+
+/* Light Mode */
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --color-background-primary: #fcfcfc;
+    }
+}
+
+
+/* Dark Mode */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-sidebar-background: #1a1c1e;
+    }
 }

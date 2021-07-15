@@ -119,13 +119,7 @@ html_theme_options = {
         "color-admonition-title": "#c2e2fb",
         "color-admonition-title-background--note": "#30c42626",
         "color-admonition-title--note": "#30c42659"
-    },
-    # "collapse_navigation": True,
-    # "display_version": True,
-    # "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
-    # "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
-    # "style_nav_header_background": "#FFFFFF",  # background of the logo (top left)
-    # 'prev_next_buttons_location': "both"  # put Previous/Next buttons on both the top and bottom of the page
+    }
 }
 
 html_context = {
@@ -141,7 +135,7 @@ html_context = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_css_files = ['css/custom.css']
+html_css_files = ['css/custom.css', 'css/pygments_dark.css']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
