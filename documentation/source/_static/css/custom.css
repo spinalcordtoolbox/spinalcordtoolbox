@@ -1,5 +1,10 @@
 @import url('https://fonts.googleapis.com/css?family=Lato');
 
+:root {
+    --admonition-font-size: 1rem;
+    --admonition-title-font-size: 1rem;
+}
+
 
 /* body{font-family:'Roboto',sans-serif;} */
 .wy-side-nav-search>div.version{color:#000000;}
