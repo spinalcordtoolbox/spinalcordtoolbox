@@ -264,14 +264,14 @@ class DetectPMJ:
 
     def compute_cross_corr_3d(self, xrange=list(range(-10, 10)), xshift=10, yshift=10, zshift=10):  # Range of 20 is bit extreme?
         """
-        Compute cross-correlation between image and it's mirror using a slidding window in R-L direction to find the image symmetry and adjust R-L coordinate.
-        Use a slidding window of 20x20x20 by default.
+        Compute cross-correlation between image and its mirror using a sliding window in R-L direction to find the image symmetry and adjust R-L coordinate.
+        Use a sliding window of 20x20x20 by default.
         :param xrange:
         :param xshift:
         :param yshift:
         :param zshift:
         """
-        img = Image(self.fname_im)   # img in PIR orientation
+        img = Image(self.fname_im)  # img in PIR orientation
         ny, nz, nx, *_ = img.dim
         # initializations
         I_corr = np.zeros(len(xrange))
