@@ -184,12 +184,16 @@ a.copybtn {
     right: 0.7rem;
 }
 
-
 .o-tooltip--left:after {
-   background: transparent;
-   font-size: 1rem;
-   /* color: white; */
-   color: #5a6d79;
+    background: #f2f2f3;
+    border-width: 1px;
+    border-color: #5a6d79;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #5a6d79;
+    border-style: solid;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 .o-tooltip--left:hover:after {
