@@ -259,6 +259,7 @@ code.literal {
 
 .sidebar-tree .caption, .sidebar-tree .caption-text {
     color: #ff8653;
+    font-size: 0.78rem;
     /* color: #6dd2d2; */
 }
 
