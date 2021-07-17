@@ -1,7 +1,7 @@
 .. _mt-registraton-without-anat:
 
-Registeration Option 2: Direct registration to the template
-###########################################################
+Registration Option 2: Direct registration to the template
+##########################################################
 
 In the case that you have only the MT data without the anatomical data, you can still perform registration. To do so, all you will need to do is apply the same vertebral labeling and template registration steps that were covered in :ref:`template-registration`.
 
