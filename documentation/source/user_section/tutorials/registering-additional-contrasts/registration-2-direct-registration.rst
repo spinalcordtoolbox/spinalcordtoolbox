@@ -24,6 +24,6 @@ Then, you can register to the template. Note: In case the metric image has axial
 
    Input/output images for ``sct_register_to_template`` using MT1 data.
 
-.. important::
+.. warning::
 
    Only use this method if you don't also have anatomical data. If you do have anatomical data, we recommend that you stick with :ref:`mt-registraton-with-anat`. By reusing the registration results, you ensure that you use a consistent transformation between each contrast in your analysis.

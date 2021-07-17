@@ -27,7 +27,7 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
    - Install  `Windows subsystem for linux and initialize it <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_.
 
-     .. important::
+     .. warning::
 
         Make sure to install WSL1. SCT can work with WSL2, but the installation procedure described here refers to WSL1.
         If you are comfortable with installing SCT with WSL2, please feel free to do so.

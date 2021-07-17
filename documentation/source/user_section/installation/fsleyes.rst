@@ -34,7 +34,7 @@ Set the channel priority to strict (`as recommended by conda <https://docs.conda
 
 To use FSLeyes, run Xming from your computer before entering the fsleyes command.
 
-.. important::
+.. warning::
 
     Each time you wish to use FSLeyes, you first need to activate SCT's conda environment (see above).
 
