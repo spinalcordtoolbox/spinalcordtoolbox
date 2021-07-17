@@ -14,5 +14,5 @@ def test_sct_compute_snr_against_groundtruth():
     sct_compute_snr.main(argv=['-i', 'dmri/dwi.nii.gz', '-m', 'dmri/dmri_T0001.nii.gz', '-method', 'diff', 
                                '-vol', '0,5', '-o', fname_out])
     with open(fname_out, "r") as f:
-         snr = int(f.read())
+        snr = int(f.read())
     assert snr == pytest.approx(2.432321811697386)
