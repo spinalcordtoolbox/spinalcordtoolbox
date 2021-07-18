@@ -239,7 +239,7 @@ class DetectPMJ:
             Image(self.fname_im).change_orientation("PIR").save(''.join(extract_fname(self.fname_im)[1:]), verbose=0)
 
             if self.fname_seg is not None:
-                Image(self.fname_seg, verbose=0).change_orientation('PIR').save(''.join(extract_fname(self.fname_seg)[1:]))
+                Image(self.fname_seg).change_orientation('PIR').save(''.join(extract_fname(self.fname_seg)[1:]), verbose=0)
 
     def ifolder2tmp(self):
         """Copy data to tmp folder."""
