@@ -27,6 +27,7 @@ from matplotlib.ticker import MaxNLocator
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, merge_dict
 from spinalcordtoolbox.process_seg import compute_shape
+from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix
@@ -381,7 +382,7 @@ def main(argv=None):
 
         # Generated centerline smoothed in RL direction for visualization (and QC report)
         fname_ctl_smooth = add_suffix(fname_ctl, '_smooth')
-        subprocess.run(['sct_maths', '-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth], stdout=subprocess.PIPE, check=True)
+        sct_maths.main(['-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth])
 
     for key in metrics:
         if key == 'length':
