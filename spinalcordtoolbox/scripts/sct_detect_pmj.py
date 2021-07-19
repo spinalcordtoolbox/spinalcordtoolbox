@@ -262,22 +262,27 @@ class DetectPMJ:
         self.curdir = os.getcwd()
         os.chdir(self.tmp_dir)  # go to tmp directory
 
-    def compute_cross_corr_3d(self, xrange=list(range(-10, 10)), xshift=10, yshift=10, zshift=10):  # Range of 20 is bit extreme?
+    def compute_cross_corr_3d(self, xrange=list(range(-10, 10)), xshift=10, yshift=10, zshift=10):
         """
         Compute cross-correlation between image and its mirror using a sliding window in R-L direction to find the image symmetry and adjust R-L coordinate.
-        Use a sliding window of 20x20x20 by default.
+        Use a sliding window of 20x20x20 mm by default.
         :param xrange:
         :param xshift:
         :param yshift:
         :param zshift:
         """
         img = Image(self.fname_im)  # img in PIR orientation
-        ny, nz, nx, *_ = img.dim
+        ny, nz, nx, _, py, pz, px, _ = img.dim
         # initializations
         I_corr = np.zeros(len(xrange))
         allzeros = 0
         # current_z = 0
         ind_I = 0
+        # Adjust parameters with physical dimensions
+        xrange = [int(item//px) for item in xrange]
+        xshift = int(xshift//px)
+        yshift = int(yshift//py)
+        zshift = int(zshift//pz)
         for ix in xrange:
             # if pattern extends towards left part of the image, then crop and pad with zeros
             if self.rl_coord + ix + 1 + xshift > nx:
