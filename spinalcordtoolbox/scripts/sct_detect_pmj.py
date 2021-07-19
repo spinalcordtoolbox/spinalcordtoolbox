@@ -138,7 +138,7 @@ class DetectPMJ:
 
         self.orient2pir()  # orient data to PIR orientation
 
-        self.extract_pmjsymmetrical_sagittal_slice()  # extracts slice based on PMJ symmetry point, contains a detection, but only used to select the ROI for correlation
+        self.extract_pmj_symmetrical_sagittal_slice()  # extracts slice based on PMJ symmetry point, contains a detection, but only used to select the ROI for correlation
 
         self.detect()  # run the detection
 
@@ -236,7 +236,7 @@ class DetectPMJ:
 
         run_proc(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
 
-    def extract_pmjsymmetrical_sagittal_slice(self):
+    def extract_pmj_symmetrical_sagittal_slice(self):
         """Extract a slice that is symmetrical about the estimated PMJ location."""
         # Here, detection is used just as a way to determine the ROI for the sliding window approach
         self.extract_sagittal_slice()
