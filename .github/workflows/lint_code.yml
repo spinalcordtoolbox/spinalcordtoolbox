@@ -1,5 +1,9 @@
 name: Python Linting
 
+# This allows linting forks, not just branches in this repo,
+# but we need to be careful with it: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+# > TL;DR: Combining pull_request_target workflow trigger with an explicit checkout of an untrusted PR is a dangerous practice that may lead to repository compromise.
+# We believe this workflow is safe, but most workflows would not be.
 on:
   pull_request_target:
 
