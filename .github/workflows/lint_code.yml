@@ -1,11 +1,6 @@
 name: Python Linting
 
-# This allows linting forks, not just branches in this repo,
-# but we need to be careful with it: https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
-# > TL;DR: Combining pull_request_target workflow trigger with an explicit checkout of an untrusted PR is a dangerous practice that may lead to repository compromise.
-# We believe this workflow is safe, but most workflows would not be.
-on:
-  pull_request_target:
+on: [pull_request]
 
 jobs:
   lint_job:
@@ -13,15 +8,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
     - name: Install dependencies
-      run: pip install flake8 lintly==0.5.0
+      run: pip install flake8
     # Note: flake8 picks up project-wide configuration options from 'setup.cfg' in SCT's root directory
     - name: Lint with flake8
-      run: flake8 | lintly --use-checks --fail-on new --exit-zero --no-post-status --commit-sha ${{ github.event.pull_request.head.sha }} --pr ${{ github.event.pull_request.number }} --log
-      env:
-        LINTLY_API_KEY: ${{ secrets.GITHUB_TOKEN }}
+      run: git diff origin/master... | flake8 --diff
