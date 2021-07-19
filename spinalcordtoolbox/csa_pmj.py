@@ -33,7 +33,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     im_seg.change_orientation('RPI')
     im_pmj = Image(pmj).change_orientation('RPI')
     if not im_seg.data.shape == im_pmj.data.shape:
-        raise RuntimeError(f"segmentation and pmj should be in the same space coordinate.")
+        raise RuntimeError("segmentation and pmj should be in the same space coordinate.")
     # Add PMJ label to the segmentation and then extrapolate to obtain a Centerline object defines between the PMJ
     # and the lower end of the centerline.
     im_seg_with_pmj = im_seg.copy()
