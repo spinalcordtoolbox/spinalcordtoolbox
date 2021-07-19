@@ -43,7 +43,7 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-i',
         required=True,
-        help='4D data to compute the SNR on (along the 4th dimension). Example: b0s.nii.gz',
+        help='3D or 4D data to compute the SNR on (along the 4th dimension). Example: b0s.nii.gz',
         metavar=Metavar.file)
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -59,10 +59,15 @@ def get_parser():
         default='')
     optional.add_argument(
         '-method',
-        help='R|Method to use to compute the SNR:\n'
-             ' diff (default): Substract two volumes (defined by -vol) and estimate noise variance within the ROI (flag -m is required).\n'
-             ' mult: Estimate noise variance over time across volumes specified with -vol.',
-        choices=('diff', 'mult'),
+        help='R|Method to use to compute the SNR (default: diff):\n'
+             "- diff: Substract two volumes (defined by -vol) and estimate noise variance within the ROI "
+             "(flag '-m' is required). Requires a 4D volume.\n"
+             "- mult: Estimate noise variance over time across volumes specified with '-vol'. Requires a 4D volume.\n"
+             "- single: Estimates noise variance in a 5x5 square at the corner of the image, and average the mean "
+             "signal inside the ROI specified by flag '-m'. The variance and mean are corrected for Rayleigh "
+             "distributions. This corresponds to the cases SNRstd and SNRmean in the Dietrich et al. article. Uses a "
+             "3D or a 4D volume. If a 4D volume is input, the volume to compute SNR on is specified by '-vol'.",
+        choices=('diff', 'mult', 'single'),
         default='diff')
     optional.add_argument(
         '-vol',
@@ -190,6 +195,9 @@ def main(argv=None):
         _, std_in_roi = weighted_avg_and_std(data_sub, mask)
         # Compute SNR, correcting for Rayleigh noise (see eq. 7 in Dietrich et al.)
         snr_roi = (2 / np.sqrt(2)) * mean_in_roi / std_in_roi
+
+    elif method == 'single':
+        raise NotImplementedError
 
     # Display result
     if fname_mask:
