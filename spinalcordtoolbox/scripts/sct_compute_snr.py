@@ -138,7 +138,7 @@ def main(argv=None):
     # Check parameters
     if method in ['diff', 'single']:
         if not fname_mask:
-            printv(f"You need to provide a mask with -method {method}. Exit.", 1, type='error')
+            raise SCTArgumentParser.error(parser, f"You need to provide a mask with -method {method}.")
 
     # Load data and orient to RPI
     im_data = Image(fname_data).change_orientation('RPI')
