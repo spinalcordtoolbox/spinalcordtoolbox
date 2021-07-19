@@ -8,7 +8,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        fetch-depth: 0
+        fetch-depth: 0  # Fetches all references, which is needed to `git diff` with origin/master
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
@@ -17,4 +17,6 @@ jobs:
       run: pip install flake8
     # Note: flake8 picks up project-wide configuration options from 'setup.cfg' in SCT's root directory
     - name: Lint with flake8
+      # NB: 'master...branch' is syntantic sugar for 'git diff `git merge-base master branch`..branch'
+      # NB: You can exclude the second ref ('branch') and git diff will take the currently checked-out ref
       run: git diff origin/master... | flake8 --diff
