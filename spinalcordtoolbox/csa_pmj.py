@@ -79,7 +79,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     mask.change_orientation(native_orientation)
 
     np.savetxt("centerline.csv", arr_ctl, delimiter=",")
-    
+
     # Get corresponding slices
     # TODO: why the "-1"?
     slices = "{}:{}".format(zmin, zmax-1)
