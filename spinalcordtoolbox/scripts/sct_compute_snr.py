@@ -152,11 +152,6 @@ def main(argv=None):
     else:
         index_vol = range(data.shape[3])
 
-    # Make sure user selected 2 volumes with diff method
-    if method == 'diff':
-        if not len(index_vol) == 2:
-            printv('Method "diff" should be used with exactly two volumes (specify with flag "-vol").', 1, 'error')
-
     # Compute SNR
     # NB: "time" is assumed to be the 4th dimension of the variable "data"
     if method == 'mult':
@@ -187,6 +182,11 @@ def main(argv=None):
             # snr_roi = np.average(snr_map[mask_std_nonzero], weights=mask[mask_std_nonzero])
 
     elif method == 'diff':
+        # Check user selected exactly 2 volumes for this method.
+        if not len(index_vol) == 2:
+            raise SCTArgumentParser.error(parser, f"Number of selected volumes: {len(index_vol)}. The method 'diff' "
+                                                  f"should be used with exactly 2 volumes. You can specify the number "
+                                                  f"of volumes with the flag '-vol'.")
         data_2vol = np.take(data, index_vol, axis=3)
         # Compute mean in ROI
         data_mean = np.mean(data_2vol, axis=3)
