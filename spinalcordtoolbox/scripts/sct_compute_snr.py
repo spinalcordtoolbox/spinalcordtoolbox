@@ -136,9 +136,9 @@ def main(argv=None):
     file_name = arguments.o
 
     # Check parameters
-    if method == 'diff':
+    if method in ['diff', 'single']:
         if not fname_mask:
-            printv('You need to provide a mask with -method diff. Exit.', 1, type='error')
+            printv(f"You need to provide a mask with -method {method}. Exit.", 1, type='error')
 
     # Load data and orient to RPI
     im_data = Image(fname_data).change_orientation('RPI')
