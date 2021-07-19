@@ -131,7 +131,6 @@ class QcImage(object):
 
     def listed_seg(self, mask, ax):
         """Create figure with red segmentation. Common scenario."""
-        #mask = mask/mask.max()  # TODO: move when generating smooth centerline
         img = np.ma.masked_equal(mask, 0)
         ax.imshow(img,
                   cmap=color.LinearSegmentedColormap.from_list("", self._seg_colormap),

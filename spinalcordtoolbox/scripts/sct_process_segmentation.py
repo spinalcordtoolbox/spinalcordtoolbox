@@ -16,7 +16,6 @@
 
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 
-import subprocess
 import sys
 import os
 import logging
