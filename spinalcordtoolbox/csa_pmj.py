@@ -5,7 +5,6 @@
 import logging
 
 import numpy as np
-import os
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
 
