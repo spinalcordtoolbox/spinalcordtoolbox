@@ -292,7 +292,6 @@ class DetectPMJ:
         xshift = int(xshift//px)
         yshift = int(yshift//py)
         zshift = int(zshift//pz)
-        print(xrange, )
         for ix in xrange:
             # if pattern extends towards left part of the image, then crop and pad with zeros
             if self.rl_coord + ix + 1 + xshift > nx:
