@@ -138,7 +138,7 @@ class DetectPMJ:
 
         self.orient2pir()  # orient data to PIR orientation
 
-        self.extract_sagital_slice()  # extract a sagital slice, used to do the detection
+        self.extract_pmjsymmetrical_sagittal_slice()  # extracts slice based on PMJ symmetry point, contains a detection, but only used to select the ROI for correlation
 
         self.detect()  # run the detection
 
@@ -186,9 +186,6 @@ class DetectPMJ:
             img_pred_maxValue = np.max(img_pred.data)  # get the max value of the detection map
             self.pa_coord = np.where(img_pred.data == img_pred_maxValue)[0][0]
             self.is_coord = np.where(img_pred.data == img_pred_maxValue)[1][0]
-            # Update R-L coordinate
-            self.compute_cross_corr_3d()
-
             printv('\nPonto-Medullary Junction detected', self.verbose, 'normal')
 
         else:
@@ -211,14 +208,14 @@ class DetectPMJ:
 
         self.dection_map_pmj += '.nii'  # fname of the resulting detection map
 
-    def extract_sagital_slice(self):
-        """Extract the sagital slice where the detection is done.
+    def extract_sagittal_slice(self):
+        """Extract the sagittal slice where the detection is done.
 
         If the segmentation is provided,
-            the 2D sagital slice is choosen accoding to the segmentation.
+            the 2D sagittal slice is choosen accoding to the segmentation.
 
         If the segmentation is not provided,
-            the 2D sagital slice is choosen as the mid-sagital slice of the input image.
+            the 2D sagittal slice is choosen as the mid-sagittal slice of the input image.
         """
         # TODO: get the mean across multiple sagittal slices to reduce noise
 
@@ -237,6 +234,18 @@ class DetectPMJ:
             self.rl_coord = int(img.dim[2] / 2)  # Right_left coordinate
             del img
 
+        run_proc(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
+
+    def extract_pmjsymmetrical_sagittal_slice(self):
+        """Extract a slice that is symmetrical about the estimated PMJ location."""
+        # Here, detection is used just as a way to determine the ROI for the sliding window approach
+        self.extract_sagittal_slice()
+        self.detect()
+        self.get_max_position()
+
+        self.compute_cross_corr_3d()  # Updates self.rl_coord
+
+        # Replace the mid-sagittal slice, to be used for the "main" PMJ detection
         run_proc(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
 
     def orient2pir(self):
@@ -283,6 +292,7 @@ class DetectPMJ:
         xshift = int(xshift//px)
         yshift = int(yshift//py)
         zshift = int(zshift//pz)
+        print(xrange, )
         for ix in xrange:
             # if pattern extends towards left part of the image, then crop and pad with zeros
             if self.rl_coord + ix + 1 + xshift > nx:
