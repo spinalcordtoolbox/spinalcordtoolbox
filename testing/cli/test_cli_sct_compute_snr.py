@@ -13,15 +13,16 @@ logger = logging.getLogger(__name__)
 
 def dummy_3d_data():
     """Create 3d image with object in the middle and Rayleigh noise distribution. Outputs a nibabel object."""
-    data = np.ones([32, 32, 32])
+    data = np.ones([32, 32, 32], dtype=np.float)
     # Add a 5x5x5 object with representative intensity in the middle of the image
     data[14:19, 14:19, 14:19] = 100
-    # Add Gaussian noise
-    data = skimage.util.random_noise(data, mode='gaussian', mean=0, var=1)
+    # Add Gaussian noise on two separate images
+    data1 = skimage.util.random_noise(data, mode='gaussian', clip=False, mean=0, var=1)
+    data2 = skimage.util.random_noise(data, mode='gaussian', clip=False, mean=0, var=1)
     # Compute the square root of the sum of squares to obtain a Rayleigh (equivalent to Chi) distribution. This
     # distribution is a more realistic representation of noise in magnitude MRI data, which is obtained by combining
     # imaginary and real channels (each having Gaussian distribution).
-    data = np.sqrt(data**2 + data**2)
+    data = np.sqrt(data1**2 + data2**2)
     return data
 
 
