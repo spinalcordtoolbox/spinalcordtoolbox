@@ -85,7 +85,7 @@ def test_sct_compute_snr_mult_vol(dummy_4d_nib, dummy_3d_mask_nib):
     with open(filename, "r") as f:
         snr = float(f.read())
     # We need a large tolerance because of the randomization
-    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), abs=5)
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), abs=10)
 
 
 def test_sct_compute_snr_diff(dummy_4d_nib, dummy_3d_mask_nib):
@@ -95,7 +95,7 @@ def test_sct_compute_snr_diff(dummy_4d_nib, dummy_3d_mask_nib):
     with open(filename, "r") as f:
         snr = float(f.read())
     # We need a large tolerance because of the randomization
-    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), abs=5)
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), abs=10)
 
 #
 # @pytest.mark.sct_testing
