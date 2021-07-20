@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import logging
+import skimage
 import tempfile
 
 import nibabel
@@ -12,7 +13,15 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="session")
 def dummy_3dimage():
-    data = np.ones([16, 16, 16])
+    data = np.ones([32, 32, 32])
+    # Add a 5x5x5 object with representative intensity in the middle of the image
+    data[14:19, 14:19, 14:19] = 100
+    # Add Gaussian noise
+    data = skimage.util.random_noise(data, mode='gaussian', mean=0, var=1)
+    # Compute the square root of the sum of squares to obtain a Rayleigh (equivalent to Chi) distribution. This
+    # distribution is a more realistic representation of noise in magnitude MRI data, which is obtained by combining
+    # imaginary and real channels (each having Gaussian distribution).
+    data = np.sqrt(data**2 + data**2)
     affine = np.eye(4)
     nib = nibabel.nifti1.Nifti1Image(data, affine)
     filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False)
@@ -21,6 +30,7 @@ def dummy_3dimage():
 
 
 @pytest.fixture(scope="session")
+# TODO: use dummy_3dimage to construct this 4d image
 def dummy_4dimage():
     data = np.ones([16, 16, 16, 16])
     affine = np.eye(4)
