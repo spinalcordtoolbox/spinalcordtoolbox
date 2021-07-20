@@ -157,9 +157,8 @@ def main(argv=None):
             raise ValueError(f"Input mask dimension: {dim}. Input dimension for the mask should be 3.")
 
     # Retrieve selected volumes
-    if arguments.vol is not None:
-        index_vol = parse_num_list(arguments.vol)
-    else:
+    index_vol = parse_num_list(arguments.vol)
+    if not index_vol:
         if method in ['diff', 'mult']:
             index_vol = range(data.shape[3])
         elif method in ['single']:
