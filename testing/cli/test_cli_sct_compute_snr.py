@@ -50,9 +50,9 @@ def dummy_3d_mask_nib():
     data = np.ones([32, 32, 32], dtype=np.uint8)
     data[14:19, 14:19, 14:19] = 1
     nii = nibabel.nifti1.Nifti1Image(dummy_3d_data(), np.eye(4))
-    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False)
-    nibabel.save(nii, filename.name)
-    return filename.name
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nii, filename)
+    return filename
 
 
 def test_sct_compute_snr_check_dimension(dummy_3d_nib):
@@ -68,9 +68,18 @@ def test_sct_compute_snr_check_dimension_mask(dummy_4d_nib):
 
 
 def test_sct_compute_snr_mult(dummy_4d_nib, dummy_3d_mask_nib):
-    filename = tempfile.NamedTemporaryFile(prefix='snr_mult_', suffix='.txt', delete=False)
+    filename = tempfile.NamedTemporaryFile(prefix='snr_mult_', suffix='.txt', delete=False).name
     sct_compute_snr.main(
-        argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'mult', '-o', filename.name])
+        argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'mult', '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # assert snr == pytest.approx(2.432321811697386)
+
+
+def test_sct_compute_snr_diff(dummy_4d_nib, dummy_3d_mask_nib):
+    filename = tempfile.NamedTemporaryFile(prefix='snr_diff_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'diff', '-vol', '0,1', '-o', filename])
     with open(filename, "r") as f:
         snr = float(f.read())
     # assert snr == pytest.approx(2.432321811697386)
