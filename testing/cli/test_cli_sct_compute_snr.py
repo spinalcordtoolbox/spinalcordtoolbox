@@ -10,13 +10,14 @@ from spinalcordtoolbox.scripts import sct_compute_snr
 
 logger = logging.getLogger(__name__)
 
+SIGNAL_OBJECT = 100
 
 def dummy_3d_data():
     """Create 3d image with object in the middle and Rayleigh noise distribution. Outputs a nibabel object."""
     data = np.ones([32, 32, 32], dtype=np.float)
     # Add a 5x5x5 object with representative intensity in the middle of the image
-    data[14:19, 14:19, 14:19] = 100
-    # Add Gaussian noise on two separate images
+    data[14:19, 14:19, 14:19] = SIGNAL_OBJECT
+    # Add Gaussian noise with unit variance on two separate images
     data1 = skimage.util.random_noise(data, mode='gaussian', clip=False, mean=0, var=1)
     data2 = skimage.util.random_noise(data, mode='gaussian', clip=False, mean=0, var=1)
     # Compute the square root of the sum of squares to obtain a Rayleigh (equivalent to Chi) distribution. This
@@ -73,7 +74,8 @@ def test_sct_compute_snr_mult(dummy_4d_nib, dummy_3d_mask_nib):
         argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'mult', '-o', filename])
     with open(filename, "r") as f:
         snr = float(f.read())
-    # assert snr == pytest.approx(38)
+    # We need a large tolerance because of the randomization
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), abs=5)
 
 
 def test_sct_compute_snr_diff(dummy_4d_nib, dummy_3d_mask_nib):
@@ -82,7 +84,8 @@ def test_sct_compute_snr_diff(dummy_4d_nib, dummy_3d_mask_nib):
         argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'diff', '-vol', '0,1', '-o', filename])
     with open(filename, "r") as f:
         snr = float(f.read())
-    # assert snr == pytest.approx(2.432321811697386)
+    # We need a large tolerance because of the randomization
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), abs=5)
 
 #
 # @pytest.mark.sct_testing
