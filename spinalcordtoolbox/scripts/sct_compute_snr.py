@@ -136,12 +136,12 @@ def main(argv=None):
         if not fname_mask:
             raise SCTArgumentParser.error(parser, f"You need to provide a mask with -method {method}.")
 
-    # Load data and orient to RPI
-    im_data = Image(fname_data).change_orientation('RPI')
+    # Load data
+    im_data = Image(fname_data)
     data = im_data.data
     dim = len(data.shape)
     if fname_mask:
-        mask = Image(fname_mask).change_orientation('RPI').data
+        mask = Image(fname_mask).data
 
     # Check dimensionality
     if method in ['diff', 'mult']:
