@@ -25,7 +25,7 @@ from spinalcordtoolbox.scripts import sct_download_data as downloader
 logger = logging.getLogger(__name__)
 
 
-def pytest_sessionstart(session):
+def pytest_sessionstart():
     """Perform actions that must be done prior to test collection."""
     # Use a non-interactive backend so that no GUI plots will interrupt the test suite.
     # (NB: We do this here to ensure it is set before `matplotlib` is first imported.)
@@ -33,16 +33,9 @@ def pytest_sessionstart(session):
         os.environ["MPLBACKEND"] = 'Agg'
 
     # Download sct_testing_data prior to test collection
-    if not session.config.getoption('--skip-data-dl'):
+    if not os.path.exists(sct_test_path()):
         logger.info("Downloading sct test data")
         downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
-
-
-def pytest_addoption(parser):
-    """Pytest hook to add custom command line option(s)."""
-    parser.addoption(
-        "--skip-data-dl", action="store_true", help="Opt out of redownloading sct_testing_data when running tests."
-    )
 
 
 @pytest.fixture
