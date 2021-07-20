@@ -29,9 +29,9 @@ def dummy_3d_data():
 @pytest.fixture(scope="session")
 def dummy_3d_nib():
     nii = nibabel.nifti1.Nifti1Image(dummy_3d_data(), np.eye(4))
-    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False)
-    nibabel.save(nii, filename.name)
-    return filename.name
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nii, filename)
+    return filename
 
 
 @pytest.fixture(scope="session")
@@ -40,9 +40,9 @@ def dummy_4d_nib():
     data = np.stack([dummy_3d_data() for i in range(50)], axis=3)
     affine = np.eye(4)
     nib = nibabel.nifti1.Nifti1Image(data, affine)
-    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False)
-    nibabel.save(nib, filename.name)
-    return filename.name
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nib, filename)
+    return filename
 
 
 @pytest.fixture(scope="session")
@@ -73,7 +73,7 @@ def test_sct_compute_snr_mult(dummy_4d_nib, dummy_3d_mask_nib):
         argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'mult', '-o', filename])
     with open(filename, "r") as f:
         snr = float(f.read())
-    # assert snr == pytest.approx(2.432321811697386)
+    # assert snr == pytest.approx(38)
 
 
 def test_sct_compute_snr_diff(dummy_4d_nib, dummy_3d_mask_nib):
