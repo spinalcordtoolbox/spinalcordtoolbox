@@ -71,8 +71,9 @@ def get_parser():
         default='diff')
     optional.add_argument(
         '-vol',
-        help='Volumes to compute SNR from. Separate with "," (Example: -vol 0,1), or select range '
-             'using ":" (Example: -vol 2:50). By default, all volumes in series are selected.',
+        help="Volumes to compute SNR from. Separate with ',' (Example: '-vol 0,1'), or select range "
+             "using ':' (Example: '-vol 2:50'). By default, all volumes in are selected, except if '-method single' "
+             "in which case the first volume is selected.",
         metavar=Metavar.str,
         default='')
     optional.add_argument(
@@ -128,11 +129,6 @@ def main(argv=None):
     else:
         fname_mask = ''
     method = arguments.method
-    if arguments.vol is not None:
-        index_vol_user = arguments.vol
-    else:
-        index_vol_user = ''
-    
     file_name = arguments.o
 
     # Check parameters
@@ -143,14 +139,26 @@ def main(argv=None):
     # Load data and orient to RPI
     im_data = Image(fname_data).change_orientation('RPI')
     data = im_data.data
+    dim = len(data.shape)
     if fname_mask:
         mask = Image(fname_mask).change_orientation('RPI').data
 
+    # Check dimensionality
+    if method in ['diff', 'mult']:
+        if dim is not 4:
+            raise ValueError(f"Input data dimension: {dim}. Input dimension for this method should be 4.")
+    if method in ['single']:
+        if dim not in [3, 4]:
+            raise ValueError(f"Input data dimension: {dim}. Input dimension for this method should be 3 or 4.")
+
     # Retrieve selected volumes
-    if index_vol_user:
-        index_vol = parse_num_list(index_vol_user)
+    if arguments.vol is not None:
+        index_vol = parse_num_list(arguments.vol)
     else:
-        index_vol = range(data.shape[3])
+        if method in ['diff', 'mult']:
+            index_vol = range(data.shape[3])
+        elif method in ['single']:
+            index_vol = 0
 
     # Compute SNR
     # NB: "time" is assumed to be the 4th dimension of the variable "data"
@@ -197,6 +205,12 @@ def main(argv=None):
         snr_roi = (2 / np.sqrt(2)) * mean_in_roi / std_in_roi
 
     elif method == 'single':
+        # Check that the input volume is 3D, or if it is 4D, that the user selected exactly 1 volume for this method.
+        if not len(index_vol) == 2:
+            raise SCTArgumentParser.error(parser, f"Number of selected volumes: {len(index_vol)}. The method 'diff' "
+                                                  f"should be used with exactly 2 volumes. You can specify the number "
+                                                  f"of volumes with the flag '-vol'.")
+
         raise NotImplementedError
 
     # Display result

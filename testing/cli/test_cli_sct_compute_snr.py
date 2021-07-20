@@ -1,9 +1,32 @@
+import numpy as np
 import pytest
 import logging
+import tempfile
+
+import nibabel
 
 from spinalcordtoolbox.scripts import sct_compute_snr
+from spinalcordtoolbox.utils import SCTArgumentParser
 
 logger = logging.getLogger(__name__)
+
+
+@pytest.fixture(scope="session")
+def dummy_3dimage():
+    """
+    :return: a Nifti1Image
+    """
+    data = np.ones([16, 16, 16])
+    affine = np.eye(4)
+    nib = nibabel.nifti1.Nifti1Image(data, affine)
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False)
+    nibabel.save(nib, filename.name)
+    return filename.name
+
+
+def test_sct_compute_snr_check_dimension(dummy_3dimage):
+    with pytest.raises(ValueError):
+        sct_compute_snr.main(argv=['-i', dummy_3dimage, '-m', dummy_3dimage, '-method', 'diff', '-vol', '0,5'])
 
 
 @pytest.mark.sct_testing
