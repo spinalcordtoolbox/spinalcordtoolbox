@@ -47,9 +47,9 @@ def dummy_4d_nib():
 
 @pytest.fixture(scope="session")
 def dummy_3d_mask_nib():
-    data = np.ones([32, 32, 32], dtype=np.uint8)
+    data = np.zeros([32, 32, 32], dtype=np.uint8)
     data[14:19, 14:19, 14:19] = 1
-    nii = nibabel.nifti1.Nifti1Image(dummy_3d_data(), np.eye(4))
+    nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
     filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
     nibabel.save(nii, filename)
     return filename
