@@ -58,6 +58,11 @@ def get_parser():
         metavar=Metavar.file,
         default='')
     optional.add_argument(
+        '-m-noise',
+        help="Binary (or weighted) mask within which noise will be calculated. Only valid for '-method single'.",
+        metavar=Metavar.file,
+        default='')
+    optional.add_argument(
         '-method',
         help='R|Method to use to compute the SNR (default: diff):\n'
              "- diff: Substract two volumes (defined by -vol) and estimate noise variance within the ROI "
@@ -124,10 +129,12 @@ def main(argv=None):
 
     # Get parser info
     fname_data = arguments.i
+    # TODO: fix issue below
     if arguments.m is not None:
         fname_mask = arguments.m
     else:
         fname_mask = ''
+    fname_mask_noise = arguments.m_noise
     method = arguments.method
     file_name = arguments.o
 
@@ -193,9 +200,8 @@ def main(argv=None):
     elif method == 'diff':
         # Check user selected exactly 2 volumes for this method.
         if not len(index_vol) == 2:
-            raise SCTArgumentParser.error(parser, f"Number of selected volumes: {len(index_vol)}. The method 'diff' "
-                                                  f"should be used with exactly 2 volumes. You can specify the number "
-                                                  f"of volumes with the flag '-vol'.")
+            raise ValueError(f"Number of selected volumes: {len(index_vol)}. The method 'diff' should be used with "
+                             f"exactly 2 volumes. You can specify the number of volumes with the flag '-vol'.")
         data_2vol = np.take(data, index_vol, axis=3)
         # Compute mean in ROI
         data_mean = np.mean(data_2vol, axis=3)
@@ -207,12 +213,24 @@ def main(argv=None):
 
     elif method == 'single':
         # Check that the input volume is 3D, or if it is 4D, that the user selected exactly 1 volume for this method.
-        if not len(index_vol) == 2:
-            raise SCTArgumentParser.error(parser, f"Number of selected volumes: {len(index_vol)}. The method 'diff' "
-                                                  f"should be used with exactly 2 volumes. You can specify the number "
-                                                  f"of volumes with the flag '-vol'.")
-
-        raise NotImplementedError
+        if dim == 3:
+            data3d = data
+        elif dim == 4:
+            if not len(index_vol) == 1:
+                raise ValueError(f"Number of selected volumes: {len(index_vol)}. The method 'diff' should be used with "
+                                 f"exactly 1 volume. You can specify the number of volumes with the flag '-vol'.")
+            data3d = np.take(data, index_vol, axis=3)
+        # Check that input noise mask is provided
+        if fname_mask_noise:
+            mask_noise = Image(fname_mask_noise).data
+        else:
+            raise RuntimeError(f"A noise mask is mandatory with '-method single'.")
+        # Compute mean in ROI
+        mean_in_roi = np.average(data3d, weights=mask)
+        # Compute standard deviation in background
+        std_in_roi = np.std(data3d[mask_noise])
+        # Compute SNR, correcting for Rayleigh noise (see eq. A12 in Dietrich et al.)
+        snr_roi = np.sqrt((4 - np.pi) / 2) * mean_in_roi / std_in_roi
 
     # Display result
     if fname_mask:
