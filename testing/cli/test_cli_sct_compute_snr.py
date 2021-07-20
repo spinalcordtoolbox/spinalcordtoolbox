@@ -11,8 +11,8 @@ from spinalcordtoolbox.scripts import sct_compute_snr
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="session")
-def dummy_3dimage():
+def dummy_3d_data():
+    """Create 3d image with object in the middle and Rayleigh noise distribution. Outputs a nibabel object."""
     data = np.ones([32, 32, 32])
     # Add a 5x5x5 object with representative intensity in the middle of the image
     data[14:19, 14:19, 14:19] = 100
@@ -22,17 +22,21 @@ def dummy_3dimage():
     # distribution is a more realistic representation of noise in magnitude MRI data, which is obtained by combining
     # imaginary and real channels (each having Gaussian distribution).
     data = np.sqrt(data**2 + data**2)
-    affine = np.eye(4)
-    nib = nibabel.nifti1.Nifti1Image(data, affine)
+    return data
+
+
+@pytest.fixture(scope="session")
+def dummy_3d_nib():
+    nii = nibabel.nifti1.Nifti1Image(dummy_3d_data(), np.eye(4))
     filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False)
-    nibabel.save(nib, filename.name)
+    nibabel.save(nii, filename.name)
     return filename.name
 
 
 @pytest.fixture(scope="session")
-# TODO: use dummy_3dimage to construct this 4d image
-def dummy_4dimage():
-    data = np.ones([16, 16, 16, 16])
+def dummy_4d_nib():
+    # Create 4D volume. We need sufficient volumes to compute reliable standard deviation along the 4th dimension.
+    data = np.stack([dummy_3d_data() for i in range(50)], axis=3)
     affine = np.eye(4)
     nib = nibabel.nifti1.Nifti1Image(data, affine)
     filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False)
@@ -40,11 +44,20 @@ def dummy_4dimage():
     return filename.name
 
 
-def test_sct_compute_snr_check_dimension(dummy_3dimage):
+def test_sct_compute_snr_check_dimension(dummy_3d_nib):
     with pytest.raises(ValueError):
-        sct_compute_snr.main(argv=['-i', dummy_3dimage, '-m', dummy_3dimage, '-method', 'diff', '-vol', '0,5'])
+        sct_compute_snr.main(argv=['-i', dummy_3d_nib, '-m', dummy_3d_nib, '-method', 'diff', '-vol', '0,5'])
     with pytest.raises(ValueError):
-        sct_compute_snr.main(argv=['-i', dummy_3dimage, '-m', dummy_3dimage, '-method', 'mult', '-vol', '0,5'])
+        sct_compute_snr.main(argv=['-i', dummy_3d_nib, '-m', dummy_3d_nib, '-method', 'mult', '-vol', '0,5'])
+
+
+def test_sct_compute_snr_mult(dummy_4d_nib):
+    filename = tempfile.NamedTemporaryFile(prefix='snr_mult_', suffix='.txt', delete=False)
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib, '-m', dummy_4d_nib, '-method', 'mult', '-o', filename.name])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # assert snr == pytest.approx(2.432321811697386)
 
 #
 # @pytest.mark.sct_testing

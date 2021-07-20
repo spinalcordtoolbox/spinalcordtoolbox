@@ -151,6 +151,11 @@ def main(argv=None):
         if dim not in [3, 4]:
             raise ValueError(f"Input data dimension: {dim}. Input dimension for this method should be 3 or 4.")
 
+    # Check dimensionality of mask
+    if fname_mask:
+        if len(mask.shape) is not 3:
+            raise ValueError(f"Input mask dimension: {dim}. Input dimension for the mask should be 3.")
+
     # Retrieve selected volumes
     if arguments.vol is not None:
         index_vol = parse_num_list(arguments.vol)
