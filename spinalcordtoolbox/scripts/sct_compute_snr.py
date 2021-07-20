@@ -188,10 +188,7 @@ def main(argv=None):
         im_stdnonzero.save(fname_stdnonzero, dtype=np.float32)
         # Compute SNR in ROI
         if fname_mask:
-            mean_in_roi = np.average(data_mean[mask_std_nonzero], weights=mask[mask_std_nonzero])
-            std_in_roi = np.average(data_std[mask_std_nonzero], weights=mask[mask_std_nonzero])
-            snr_roi = mean_in_roi / std_in_roi
-            # snr_roi = np.average(snr_map[mask_std_nonzero], weights=mask[mask_std_nonzero])
+            snr_roi = np.average(snr_map[mask_std_nonzero], weights=mask[mask_std_nonzero])
 
     elif method == 'diff':
         # Check user selected exactly 2 volumes for this method.
