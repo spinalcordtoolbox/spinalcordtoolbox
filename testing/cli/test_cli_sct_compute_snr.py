@@ -12,11 +12,12 @@ logger = logging.getLogger(__name__)
 
 SIGNAL_OBJECT = 100
 
+
 def dummy_3d_data():
     """Create 3d image with object in the middle and Rayleigh noise distribution. Outputs a nibabel object."""
     data = np.ones([32, 32, 32], dtype=np.float)
-    # Add a 5x5x5 object with representative intensity in the middle of the image
-    data[14:19, 14:19, 14:19] = SIGNAL_OBJECT
+    # Add an object with representative intensity in the middle of the image
+    data[9:24, 9:24, 9:24] = SIGNAL_OBJECT
     # Add Gaussian noise with unit variance on two separate images
     data1 = skimage.util.random_noise(data, mode='gaussian', clip=False, mean=0, var=1)
     data2 = skimage.util.random_noise(data, mode='gaussian', clip=False, mean=0, var=1)
@@ -49,7 +50,17 @@ def dummy_4d_nib():
 @pytest.fixture(scope="session")
 def dummy_3d_mask_nib():
     data = np.zeros([32, 32, 32], dtype=np.uint8)
-    data[14:19, 14:19, 14:19] = 1
+    data[9:24, 9:24, 9:24] = 1
+    nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nii, filename)
+    return filename
+
+
+@pytest.fixture(scope="session")
+def dummy_3d_mask_noise_nib():
+    data = np.zeros([32, 32, 32], dtype=np.uint8)
+    data[0:5, 0:5, 0:32] = 1
     nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
     filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
     nibabel.save(nii, filename)
@@ -92,6 +103,17 @@ def test_sct_compute_snr_diff(dummy_4d_nib, dummy_3d_mask_nib):
     filename = tempfile.NamedTemporaryFile(prefix='snr_diff_', suffix='.txt', delete=False).name
     sct_compute_snr.main(
         argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'diff', '-vol', '0,1', '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # We need a large tolerance because of the randomization
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), abs=10)
+
+
+def test_sct_compute_snr_single_3d(dummy_3d_nib, dummy_3d_mask_nib, dummy_3d_mask_noise_nib):
+    filename = tempfile.NamedTemporaryFile(prefix='snr_diff_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_3d_nib, '-m', dummy_3d_mask_nib, '-m-noise', dummy_3d_mask_noise_nib, '-method', 'single',
+              '-o', filename])
     with open(filename, "r") as f:
         snr = float(f.read())
     # We need a large tolerance because of the randomization
