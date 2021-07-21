@@ -406,7 +406,7 @@ def main(argv=None):
             if arguments.qc_image is not None:
                 generate_qc(fname_in1=get_absolute_path(arguments.qc_image),
                             fname_seg=[fname_ctl_smooth, fname_pmj, fname_mask_out, fname_ctl_smooth],  # Repeat centerline to flatten image along the centerline
-                            args=arguments,
+                            args=sys.argv[1:],
                             path_qc=os.path.abspath(path_qc),
                             dataset=qc_dataset,
                             subject=qc_subject,
