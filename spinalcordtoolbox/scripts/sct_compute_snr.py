@@ -13,8 +13,6 @@
 ########################################################################################
 
 import sys
-import os
-
 
 import numpy as np
 
@@ -28,9 +26,6 @@ class Param(object):
     def __init__(self):
         self.almost_zero = np.finfo(float).eps
 
-# PARSER
-# ==========================================================================================
-
 
 def get_parser():
     parser = SCTArgumentParser(
@@ -38,14 +33,12 @@ def get_parser():
                     ' signal-to-noise ratios in MR images: Influence of multichannel coils, parallel '
                     'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].'
     )
-
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         '-i',
         required=True,
         help='3D or 4D data to compute the SNR on (along the 4th dimension). Example: b0s.nii.gz',
         metavar=Metavar.file)
-
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -102,7 +95,6 @@ def get_parser():
         default=None,
         help="File name to write the computed SNR to."
     )
-
     return parser
 
 
@@ -236,7 +228,7 @@ def main(argv=None):
     if fname_mask:
         printv('\nSNR_' + method + ' = ' + str(snr_roi) + '\n', type='info')
     
-    #Added function for text file
+    # Added function for text file
     if file_name is not None:
         with open(file_name, "w") as f:
             f.write(str(snr_roi))

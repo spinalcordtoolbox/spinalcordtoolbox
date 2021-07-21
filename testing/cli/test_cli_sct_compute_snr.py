@@ -131,14 +131,4 @@ def test_sct_compute_snr_single_4d(dummy_4d_nib, dummy_3d_mask_nib, dummy_3d_mas
     # We need a large tolerance because of the randomization
     # TODO: Need to figure out what the problem is with the strong bias (~30% less than the "real" SNR)
     assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.5)
-#
-# @pytest.mark.sct_testing
-# @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
-# def test_sct_compute_snr_against_groundtruth():
-#     """Run the CLI script and check SNR against a ground truth value."""
-#     fname_out = "computed_snr.txt"
-#     sct_compute_snr.main(argv=['-i', 'dmri/dwi.nii.gz', '-m', 'dmri/dmri_T0001.nii.gz', '-method', 'diff',
-#                                '-vol', '0,5', '-o', fname_out])
-#     with open(fname_out, "r") as f:
-#         snr = float(f.read())
-#     assert snr == pytest.approx(2.432321811697386)
+
