@@ -33,8 +33,9 @@ def pytest_sessionstart():
         os.environ["MPLBACKEND"] = 'Agg'
 
     # Download sct_testing_data prior to test collection
-    logger.info("Downloading sct test data")
-    downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
+    if not os.path.exists(sct_test_path()):
+        logger.info("Downloading sct test data")
+        downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
 
 
 @pytest.fixture
