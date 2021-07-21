@@ -121,11 +121,7 @@ def main(argv=None):
 
     # Get parser info
     fname_data = arguments.i
-    # TODO: fix issue below
-    if arguments.m is not None:
-        fname_mask = arguments.m
-    else:
-        fname_mask = ''
+    fname_mask = arguments.m
     fname_mask_noise = arguments.m_noise
     method = arguments.method
     file_name = arguments.o
