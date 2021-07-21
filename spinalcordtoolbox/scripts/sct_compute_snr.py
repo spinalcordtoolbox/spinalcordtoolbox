@@ -227,7 +227,7 @@ def main(argv=None):
     # Display result
     if fname_mask:
         printv('\nSNR_' + method + ' = ' + str(snr_roi) + '\n', type='info')
-    
+
     # Added function for text file
     if file_name is not None:
         with open(file_name, "w") as f:
