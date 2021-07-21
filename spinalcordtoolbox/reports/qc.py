@@ -850,6 +850,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     # Metric outputs (only graphs)
     elif process in ['sct_process_segmentation']:
         plane = 'Sagittal'
+        dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         fname_list = [fname_in1]
         fname_list.extend(fname_seg)
         qcslice_type = qcslice.Sagittal([Image(fname) for fname in fname_list], p_resample=None)  # TODO: add multiple overlays
