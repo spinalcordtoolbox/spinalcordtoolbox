@@ -219,7 +219,7 @@ def main(argv=None):
             if not len(index_vol) == 1:
                 raise ValueError(f"Number of selected volumes: {len(index_vol)}. The method 'diff' should be used with "
                                  f"exactly 1 volume. You can specify the number of volumes with the flag '-vol'.")
-            data3d = np.take(data, index_vol, axis=3)
+            data3d = np.squeeze(data[..., index_vol])
         # Check that input noise mask is provided
         if fname_mask_noise:
             mask_noise = Image(fname_mask_noise).data
