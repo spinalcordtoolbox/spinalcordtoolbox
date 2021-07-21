@@ -157,7 +157,7 @@ def main(argv=None):
         if method in ['diff', 'mult']:
             index_vol = range(data.shape[3])
         elif method in ['single']:
-            index_vol = 0
+            index_vol = [0]
 
     # Compute SNR
     # NB: "time" is assumed to be the 4th dimension of the variable "data"
@@ -205,7 +205,7 @@ def main(argv=None):
             data3d = data
         elif dim == 4:
             if not len(index_vol) == 1:
-                raise ValueError(f"Number of selected volumes: {len(index_vol)}. The method 'diff' should be used with "
+                raise ValueError(f"Selected volumes: {index_vol}. The method 'single' should be used with "
                                  f"exactly 1 volume. You can specify the number of volumes with the flag '-vol'.")
             data3d = np.squeeze(data[..., index_vol])
         # Check that input noise mask is provided

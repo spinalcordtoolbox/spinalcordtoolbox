@@ -79,6 +79,17 @@ def test_sct_compute_snr_check_dimension_mask(dummy_4d_nib):
         sct_compute_snr.main(argv=['-i', dummy_4d_nib, '-m', dummy_4d_nib, '-method', 'mult'])
 
 
+def test_sct_compute_snr_check_vol_param(dummy_4d_nib, dummy_3d_nib):
+    with pytest.raises(ValueError):
+        sct_compute_snr.main(argv=['-i', dummy_4d_nib, '-m', dummy_3d_nib, '-m-noise', dummy_3d_nib,
+                                   '-vol', '0,1,2', '-method', 'single'])
+
+
+def test_sct_compute_snr_missing_mask(dummy_4d_nib, dummy_3d_nib):
+    with pytest.raises(RuntimeError):
+        sct_compute_snr.main(argv=['-i', dummy_4d_nib, '-m', dummy_3d_nib, '-method', 'single'])
+
+
 def test_sct_compute_snr_mult(dummy_4d_nib, dummy_3d_mask_nib):
     filename = tempfile.NamedTemporaryFile(prefix='snr_mult_', suffix='.txt', delete=False).name
     sct_compute_snr.main(
