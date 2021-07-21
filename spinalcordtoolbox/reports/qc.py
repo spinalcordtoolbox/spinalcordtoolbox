@@ -779,7 +779,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     qcslice_operations = None
     qcslice_layout = None
 
-
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
