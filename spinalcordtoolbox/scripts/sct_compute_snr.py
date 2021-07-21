@@ -144,7 +144,7 @@ def main(argv=None):
 
     # Check dimensionality
     if method in ['diff', 'mult']:
-        if dim is not 4:
+        if dim != 4:
             raise ValueError(f"Input data dimension: {dim}. Input dimension for this method should be 4.")
     if method in ['single']:
         if dim not in [3, 4]:
@@ -152,7 +152,7 @@ def main(argv=None):
 
     # Check dimensionality of mask
     if fname_mask:
-        if len(mask.shape) is not 3:
+        if len(mask.shape) != 3:
             raise ValueError(f"Input mask dimension: {dim}. Input dimension for the mask should be 3.")
 
     # Retrieve selected volumes
@@ -216,7 +216,7 @@ def main(argv=None):
         if fname_mask_noise:
             mask_noise = Image(fname_mask_noise).data
         else:
-            raise RuntimeError(f"A noise mask is mandatory with '-method single'.")
+            raise RuntimeError("A noise mask is mandatory with '-method single'.")
         # Compute mean in ROI
         mean_in_roi = np.average(data3d, weights=mask)
         # Compute standard deviation in background
