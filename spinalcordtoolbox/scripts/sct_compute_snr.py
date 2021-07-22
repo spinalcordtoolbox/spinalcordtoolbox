@@ -227,7 +227,7 @@ def main(argv=None):
         # Compute mean in ROI
         mean_in_roi = np.average(data3d, weights=mask)
         # Compute standard deviation in background
-        std_in_roi = np.std(data3d[mask_noise])
+        _, std_in_roi = weighted_avg_and_std(data3d, weights=mask_noise)
         # Compute SNR, correcting for Rayleigh noise (see eq. A12 in Dietrich et al.)
         snr_roi = np.sqrt((4 - np.pi) / 2) * mean_in_roi / std_in_roi
 
