@@ -73,9 +73,10 @@ def get_parser():
         default='diff')
     optional.add_argument(
         '-vol',
-        help="Volumes to compute SNR from. Separate with ',' (Example: '-vol 0,1'), or select range "
-             "using ':' (Example: '-vol 2:50'). By default, all volumes in are selected, except if '-method single' "
-             "in which case the first volume is selected.",
+        help="R|Volumes to compute SNR from. Separate with ',' (Example: '-vol 0,1'), or select range "
+             "using ':' (Example: '-vol 2:50'). If this argument is not passed:\n"
+             "  - For '-method mult' and '-method diff', all volumes will be used by default.\n"
+             "  - For '-method single', the first volume (index [0]) will be used by default.",
         metavar=Metavar.str,
         default='')
     optional.add_argument(
