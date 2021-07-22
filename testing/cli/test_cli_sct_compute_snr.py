@@ -10,6 +10,8 @@ from spinalcordtoolbox.scripts import sct_compute_snr
 
 logger = logging.getLogger(__name__)
 
+# Declare the signal intensity in the object created in the dummy_*() functions. This object will be used to compute
+# the SNR using various methods.
 SIGNAL_OBJECT = 1000
 
 
