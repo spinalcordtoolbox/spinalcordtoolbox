@@ -135,7 +135,7 @@ def main(argv=None):
     # Check parameters
     if method in ['diff', 'single']:
         if not fname_mask:
-            raise SCTArgumentParser.error(parser, f"Argument '-m' must be specified when using '-method {method}'.")
+            raise parser.error(f"Argument '-m' must be specified when using '-method {method}'.")
 
     # Load data
     im_data = Image(fname_data)
