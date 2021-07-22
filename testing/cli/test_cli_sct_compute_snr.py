@@ -165,3 +165,16 @@ def test_sct_compute_snr_single_4d(dummy_4d_nib, dummy_3d_mask_nib, dummy_3d_mas
     # We need a large tolerance because of the randomization
     # TODO: Need to figure out what the problem is with the strong bias (~30% less than the "real" SNR)
     assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.5)
+
+
+def test_sct_compute_snr_single_3d_mask_object(dummy_3d_nib, dummy_3d_mask_nib):
+    """Compute noise statistics in the object ROI. In this case, noise distribution is considered Gaussian,
+    not Rayleigh"""
+    filename = tempfile.NamedTemporaryFile(prefix='snr_single_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_3d_nib, '-m', dummy_3d_mask_nib, '-m-noise', dummy_3d_mask_nib, '-method', 'single',
+              '-rayleigh', 0, '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # We need a large tolerance because of the randomization
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.05)
