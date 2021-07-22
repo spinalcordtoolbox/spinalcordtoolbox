@@ -120,6 +120,22 @@ def test_sct_compute_snr_diff(dummy_4d_nib, dummy_3d_mask_nib):
     assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.05)
 
 
+def test_sct_compute_snr_diff_vol_versus_not_vol(dummy_4d_nib, dummy_3d_mask_nib):
+    """Make sure that if vol is not specified, it uses the first 2 volumes"""
+    filename = tempfile.NamedTemporaryFile(prefix='snr_diff_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'diff', '-vol', '0,1', '-o', filename])
+    filename_no_vol = tempfile.NamedTemporaryFile(prefix='snr_diff_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'diff', '-o', filename_no_vol])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    with open(filename_no_vol, "r") as f:
+        snr_no_vol = float(f.read())
+    # We need a large tolerance because of the randomization
+    assert snr == snr_no_vol
+
+
 def test_sct_compute_snr_single_3d(dummy_3d_nib, dummy_3d_mask_nib, dummy_3d_mask_noise_nib):
     filename = tempfile.NamedTemporaryFile(prefix='snr_single_', suffix='.txt', delete=False).name
     sct_compute_snr.main(
