@@ -37,7 +37,11 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-i',
         required=True,
-        help='3D or 4D data to compute the SNR on (along the 4th dimension). Example: b0s.nii.gz',
+        help="R|Image to compute the SNR on. (Example: b0s.nii.gz)\n"
+             "- For '-method diff' and '-method mult', the image must be 4D, as SNR will be computed "
+             "along the 4th dimension.\n"
+             "- For '-method single', the image can either be 3D or 4D. If a 4D image is passed, a specific "
+             "3D volume should be specified using the '-vol' argument.",
         metavar=Metavar.file)
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
