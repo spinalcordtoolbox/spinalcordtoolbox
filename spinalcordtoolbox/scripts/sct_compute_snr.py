@@ -81,6 +81,14 @@ def get_parser():
         metavar=Metavar.str,
         default='')
     optional.add_argument(
+        '-rayleigh',
+        type=int,
+        help="Correct for Rayleigh distribution. It is recommended to always use this correction for the 'diff' method "
+             "and to use it with the 'single' method in case the noise mask is taken in a region with low SNR (e.g., "
+             "the air). ",
+        default=1,
+        choices=(0, 1))
+    optional.add_argument(
         '-r',
         type=int,
         help='Remove temporary files.',
@@ -131,6 +139,7 @@ def main(argv=None):
     fname_mask_noise = arguments.m_noise
     method = arguments.method
     file_name = arguments.o
+    rayleigh_correction = arguments.rayleigh
 
     # Check parameters
     if method in ['diff', 'single']:
@@ -204,8 +213,11 @@ def main(argv=None):
         mean_in_roi = np.average(data_mean, weights=mask)
         data_sub = np.subtract(data_2vol[:, :, :, 1], data_2vol[:, :, :, 0])
         _, std_in_roi = weighted_avg_and_std(data_sub, mask)
-        # Compute SNR, correcting for Rayleigh noise (see eq. 7 in Dietrich et al.)
-        snr_roi = (2 / np.sqrt(2)) * mean_in_roi / std_in_roi
+        # Compute SNR
+        snr_roi = mean_in_roi / std_in_roi
+        if rayleigh_correction:
+            # Correcting for Rayleigh noise (see eq. 7 in Dietrich et al.)
+            snr_roi *= 2 / np.sqrt(2)
 
     elif method == 'single':
         # Check that the input volume is 3D, or if it is 4D, that the user selected exactly 1 volume for this method.
@@ -228,8 +240,11 @@ def main(argv=None):
         mean_in_roi = np.average(data3d, weights=mask)
         # Compute standard deviation in background
         _, std_in_roi = weighted_avg_and_std(data3d, weights=mask_noise)
-        # Compute SNR, correcting for Rayleigh noise (see eq. A12 in Dietrich et al.)
-        snr_roi = np.sqrt((4 - np.pi) / 2) * mean_in_roi / std_in_roi
+        # Compute SNR
+        snr_roi = mean_in_roi / std_in_roi
+        if rayleigh_correction:
+            # Correcting for Rayleigh noise (see eq. A12 in Dietrich et al.)
+            snr_roi *= np.sqrt((4 - np.pi) / 2)
 
     # Display result
     if fname_mask:
