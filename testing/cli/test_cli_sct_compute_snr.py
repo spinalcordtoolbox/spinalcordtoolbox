@@ -67,11 +67,10 @@ def dummy_3d_mask_noise_nib():
     return filename
 
 
-def test_sct_compute_snr_check_dimension(dummy_3d_nib):
+@pytest.mark.parametrize('method', ['diff', 'mult'])
+def test_sct_compute_snr_check_dimension(dummy_3d_nib, method):
     with pytest.raises(ValueError):
-        sct_compute_snr.main(argv=['-i', dummy_3d_nib, '-m', dummy_3d_nib, '-method', 'diff', '-vol', '0,5'])
-    with pytest.raises(ValueError):
-        sct_compute_snr.main(argv=['-i', dummy_3d_nib, '-m', dummy_3d_nib, '-method', 'mult', '-vol', '0,5'])
+        sct_compute_snr.main(argv=['-i', dummy_3d_nib, '-m', dummy_3d_nib, '-method', method, '-vol', '0,5'])
 
 
 def test_sct_compute_snr_check_dimension_mask(dummy_4d_nib):
