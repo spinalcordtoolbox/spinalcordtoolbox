@@ -75,8 +75,9 @@ def get_parser():
         '-vol',
         help="R|Volumes to compute SNR from. Separate with ',' (Example: '-vol 0,1'), or select range "
              "using ':' (Example: '-vol 2:50'). If this argument is not passed:\n"
-             "  - For '-method mult' and '-method diff', all volumes will be used by default.\n"
-             "  - For '-method single', the first volume (index [0]) will be used by default.",
+             "  - For '-method mult', all volumes will be used.\n"
+             "  - For '-method diff', the first two volumes will be used.\n"
+             "  - For '-method single', the first volume will be used.",
         metavar=Metavar.str,
         default='')
     optional.add_argument(
@@ -159,9 +160,11 @@ def main(argv=None):
     # Retrieve selected volumes
     index_vol = parse_num_list(arguments.vol)
     if not index_vol:
-        if method in ['diff', 'mult']:
+        if method == 'mult':
             index_vol = range(data.shape[3])
-        elif method in ['single']:
+        elif method == 'diff':
+            index_vol = [0, 1]
+        elif method == 'single':
             index_vol = [0]
 
     # Compute SNR
