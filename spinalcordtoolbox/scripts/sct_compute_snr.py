@@ -221,6 +221,9 @@ def main(argv=None):
             mask_noise = Image(fname_mask_noise).data
         else:
             raise RuntimeError("A noise mask is mandatory with '-method single'.")
+        # Check dimensionality of the noise mask
+        if len(mask_noise.shape) != 3:
+            raise ValueError(f"Input noise mask dimension: {dim}. Input dimension for the noise mask should be 3.")
         # Compute mean in ROI
         mean_in_roi = np.average(data3d, weights=mask)
         # Compute standard deviation in background

@@ -79,6 +79,12 @@ def test_sct_compute_snr_check_dimension_mask(dummy_4d_nib):
         sct_compute_snr.main(argv=['-i', dummy_4d_nib, '-m', dummy_4d_nib, '-method', 'mult'])
 
 
+def test_sct_compute_snr_check_dimension_mask_noise(dummy_3d_nib, dummy_4d_nib):
+    with pytest.raises(ValueError):
+        sct_compute_snr.main(argv=['-i', dummy_3d_nib, '-m', dummy_3d_nib, '-m-noise', dummy_4d_nib,
+                                   '-method', 'single'])
+
+
 def test_sct_compute_snr_check_vol_param(dummy_4d_nib, dummy_3d_nib):
     with pytest.raises(ValueError):
         sct_compute_snr.main(argv=['-i', dummy_4d_nib, '-m', dummy_3d_nib, '-m-noise', dummy_3d_nib,
