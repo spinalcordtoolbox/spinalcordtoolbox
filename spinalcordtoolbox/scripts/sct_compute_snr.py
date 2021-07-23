@@ -226,7 +226,7 @@ def main(argv=None):
         elif dim == 4:
             if not len(index_vol) == 1:
                 raise ValueError(f"Selected volumes: {index_vol}. The method 'single' should be used with "
-                                 f"exactly 1 volume. You can specify the number of volumes with the flag '-vol'.")
+                                 f"exactly 1 volume. You can specify the index of the volume with the flag '-vol'.")
             data3d = np.squeeze(data[..., index_vol])
         # Check that input noise mask is provided
         if fname_mask_noise:
