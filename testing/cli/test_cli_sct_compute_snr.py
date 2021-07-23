@@ -93,8 +93,11 @@ def test_sct_compute_snr_check_vol_param(dummy_4d_nib, dummy_3d_nib):
 
 
 def test_sct_compute_snr_missing_mask(dummy_4d_nib, dummy_3d_nib):
-    with pytest.raises(RuntimeError):
-        sct_compute_snr.main(argv=['-i', dummy_4d_nib, '-m', dummy_3d_nib, '-method', 'single'])
+    for args in (['-i', dummy_4d_nib, '-m', dummy_3d_nib, '-method', 'single'],
+                 ['-i', dummy_4d_nib, '-method', 'diff']):
+        with pytest.raises(SystemExit) as e:
+            sct_compute_snr.main(argv=args)
+        assert e.value.code == 2
 
 
 def test_sct_compute_snr_mult(dummy_4d_nib, dummy_3d_mask_nib):
