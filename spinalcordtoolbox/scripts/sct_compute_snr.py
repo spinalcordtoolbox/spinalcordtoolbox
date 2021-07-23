@@ -164,7 +164,7 @@ def main(argv=None):
     # Check dimensionality of mask
     if fname_mask:
         if len(mask.shape) != 3:
-            raise ValueError(f"Input mask dimension: {dim}. Input dimension for the mask should be 3.")
+            raise ValueError(f"Mask should be a 3D image, but the input mask has shape '{mask.shape}'.")
 
     # Retrieve selected volumes
     index_vol = parse_num_list(arguments.vol)
