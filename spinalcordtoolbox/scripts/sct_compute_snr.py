@@ -222,9 +222,10 @@ def main(argv=None):
         # Compute SNR
         snr_roi_slicewise = [m/s for m, s in zip(mean_in_roi, std_in_roi)]
         snr_roi = sum(snr_roi_slicewise) / len(snr_roi_slicewise)
-        if rayleigh_correction:
-            # Correcting for Rayleigh noise (see eq. 7 in Dietrich et al.)
-            snr_roi *= np.sqrt(2)
+        # Correcting for Gaussian assumption in the subtraction method (see Firbank et al. Phys. Med. Biol. 44 (1999))
+        # Note: the article of Dietrich et al. suggests a correction factor of 1/sqrt(2), but results from the
+        # simulation are "off" when using that factor.
+        snr_roi *= np.sqrt(2)
 
     elif method == 'single':
         # Check that the input volume is 3D, or if it is 4D, that the user selected exactly 1 volume for this method.
