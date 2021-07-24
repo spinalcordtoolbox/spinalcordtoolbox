@@ -84,6 +84,13 @@ def get_parser():
         default=1,
         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.str,
+        type=str,
+        default=None,
+        help="File name to write the computed SNR to."
+    )
 
     return parser
 
@@ -105,7 +112,7 @@ def main(argv=None):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
-
+    
     # Default params
     param = Param()
 
@@ -120,6 +127,8 @@ def main(argv=None):
         index_vol_user = arguments.vol
     else:
         index_vol_user = ''
+    
+    file_name = arguments.o
 
     # Check parameters
     if method == 'diff':
@@ -185,6 +194,12 @@ def main(argv=None):
     # Display result
     if fname_mask:
         printv('\nSNR_' + method + ' = ' + str(snr_roi) + '\n', type='info')
+    
+    #Added function for text file
+    if file_name is not None:
+        with open(file_name, "w") as f:
+            f.write(str(snr_roi))
+            printv('\nFile saved to ' + file_name)
 
 
 if __name__ == "__main__":
