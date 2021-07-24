@@ -218,7 +218,7 @@ def main(argv=None):
         std_in_roi = [weighted_std(data_sub[..., iz], weights=mask[..., iz])
                       for iz in range(nz) if np.any(mask[..., iz])]
         # Compute SNR
-        snr_roi_slicewise = [m/s for m,s in zip(mean_in_roi, std_in_roi)]
+        snr_roi_slicewise = [m/s for m, s in zip(mean_in_roi, std_in_roi)]
         snr_roi = sum(snr_roi_slicewise) / len(snr_roi_slicewise)
         if rayleigh_correction:
             # Correcting for Rayleigh noise (see eq. 7 in Dietrich et al.)
@@ -252,7 +252,7 @@ def main(argv=None):
         std_in_roi = [weighted_std(data3d[..., iz], weights=mask_noise[..., iz])
                       for iz in range(nz) if np.any(mask_noise[..., iz])]
         # Compute SNR
-        snr_roi_slicewise = [m/s for m,s in zip(mean_in_roi, std_in_roi)]
+        snr_roi_slicewise = [m/s for m, s in zip(mean_in_roi, std_in_roi)]
         snr_roi = sum(snr_roi_slicewise) / len(snr_roi_slicewise)
         if rayleigh_correction:
             # Correcting for Rayleigh noise (see eq. A12 in Dietrich et al.)
