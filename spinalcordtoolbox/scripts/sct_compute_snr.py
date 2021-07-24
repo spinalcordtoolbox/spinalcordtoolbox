@@ -222,7 +222,7 @@ def main(argv=None):
         snr_roi = sum(snr_roi_slicewise) / len(snr_roi_slicewise)
         if rayleigh_correction:
             # Correcting for Rayleigh noise (see eq. 7 in Dietrich et al.)
-            snr_roi *= 2 / np.sqrt(2)
+            snr_roi *= np.sqrt(2)
 
     elif method == 'single':
         # Check that the input volume is 3D, or if it is 4D, that the user selected exactly 1 volume for this method.
