@@ -112,7 +112,7 @@ def get_parser():
     return parser
 
 
-def weighted_avg_and_std(values, weights):
+def weighted_std(values, weights):
     """
     Return the weighted average and standard deviation.
     values, weights -- Numpy ndarrays with the same shape.
@@ -121,7 +121,7 @@ def weighted_avg_and_std(values, weights):
     average = np.average(values, weights=weights)
     # Fast and numerically precise:
     variance = np.average((values - average) ** 2, weights=weights)
-    return (average, np.sqrt(variance))
+    return np.sqrt(variance)
 
 
 def main(argv=None):
@@ -150,6 +150,7 @@ def main(argv=None):
     im_data = Image(fname_data)
     data = im_data.data
     dim = len(data.shape)
+    nz = data.shape[2]
     if fname_mask:
         mask = Image(fname_mask).data
 
@@ -208,13 +209,17 @@ def main(argv=None):
             raise ValueError(f"Number of selected volumes: {len(index_vol)}. The method 'diff' should be used with "
                              f"exactly 2 volumes. You can specify the number of volumes with the flag '-vol'.")
         data_2vol = np.take(data, index_vol, axis=3)
-        # Compute mean in ROI
+        # Compute mean across the two volumes
         data_mean = np.mean(data_2vol, axis=3)
-        mean_in_roi = np.average(data_mean, weights=mask)
+        # Compute mean in ROI for each z-slice, if the slice in the mask is not null
+        mean_in_roi = [np.average(data_mean[..., iz], weights=mask[..., iz])
+                       for iz in range(nz) if np.any(mask[..., iz])]
         data_sub = np.subtract(data_2vol[:, :, :, 1], data_2vol[:, :, :, 0])
-        _, std_in_roi = weighted_avg_and_std(data_sub, mask)
+        std_in_roi = [weighted_std(data_sub[..., iz], weights=mask[..., iz])
+                      for iz in range(nz) if np.any(mask[..., iz])]
         # Compute SNR
-        snr_roi = mean_in_roi / std_in_roi
+        snr_roi_slicewise = [m/s for m,s in zip(mean_in_roi, std_in_roi)]
+        snr_roi = sum(snr_roi_slicewise) / len(snr_roi_slicewise)
         if rayleigh_correction:
             # Correcting for Rayleigh noise (see eq. 7 in Dietrich et al.)
             snr_roi *= 2 / np.sqrt(2)
@@ -236,12 +241,19 @@ def main(argv=None):
         # Check dimensionality of the noise mask
         if len(mask_noise.shape) != 3:
             raise ValueError(f"Input noise mask dimension: {dim}. Input dimension for the noise mask should be 3.")
-        # Compute mean in ROI
-        mean_in_roi = np.average(data3d, weights=mask)
-        # Compute standard deviation in background
-        _, std_in_roi = weighted_avg_and_std(data3d, weights=mask_noise)
+        # Check that non-null slices are consistent between mask and mask_noise.
+        for iz in range(nz):
+            if not np.any(mask[..., iz]) == np.any(mask_noise[..., iz]):
+                raise ValueError(f"Slice {iz} is empty in either mask or mask_noise. Non-null slices should be "
+                                 f"consistent between mask and mask_noise.")
+        # Compute mean in ROI for each z-slice, if the slice in the mask is not null
+        mean_in_roi = [np.average(data3d[..., iz], weights=mask[..., iz])
+                       for iz in range(nz) if np.any(mask[..., iz])]
+        std_in_roi = [weighted_std(data3d[..., iz], weights=mask_noise[..., iz])
+                      for iz in range(nz) if np.any(mask_noise[..., iz])]
         # Compute SNR
-        snr_roi = mean_in_roi / std_in_roi
+        snr_roi_slicewise = [m/s for m,s in zip(mean_in_roi, std_in_roi)]
+        snr_roi = sum(snr_roi_slicewise) / len(snr_roi_slicewise)
         if rayleigh_correction:
             # Correcting for Rayleigh noise (see eq. A12 in Dietrich et al.)
             snr_roi *= np.sqrt((4 - np.pi) / 2)
