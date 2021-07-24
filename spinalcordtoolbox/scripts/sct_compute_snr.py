@@ -5,9 +5,11 @@
 # Measurement of signal-to-noise ratios in MR images: Influence of multichannel coils,
 # parallel imaging, and reconstruction filters (2007).
 #
+# Also see this discussion: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3481
+#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Simon LEVY
+# Authors: Simon Levy, Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################
