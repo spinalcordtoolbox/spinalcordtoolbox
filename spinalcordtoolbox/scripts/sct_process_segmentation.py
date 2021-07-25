@@ -411,7 +411,7 @@ def main(argv=None):
                             # to be properly layered underneath the PMJ + mask. However, Sagittal.get_center_spit
                             # is called during QC, and it uses `fname_seg[-1]` to center the slices. `fname_mask_out`
                             # doesn't work for this, so we have to repeat `fname_ctl_smooth` at the end of the list.
-                            fname_seg=[fname_ctl_smooth, fname_pmj, fname_mask_out, fname_ctl_smooth], 
+                            fname_seg=[fname_ctl_smooth, fname_pmj, fname_mask_out, fname_ctl_smooth],
                             args=sys.argv[1:],
                             path_qc=os.path.abspath(path_qc),
                             dataset=qc_dataset,
