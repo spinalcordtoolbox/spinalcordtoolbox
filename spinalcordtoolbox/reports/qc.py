@@ -323,8 +323,8 @@ class QcImage(object):
         Create overlay and background images for all processes that deal with 3d volumes
         (all except sct_fmri_moco and sct_dmri_moco)
 
-        :param img: list of mosaic images after motion correction  # Doesn't seem correct?
-        :param mask: list of mosaic images before motion correction
+        :param img: The base image to display underneath the overlays (typically anatomical)
+        :param mask: A list of images to be processed and overlaid on top of `img`
         :return:
         """
 
