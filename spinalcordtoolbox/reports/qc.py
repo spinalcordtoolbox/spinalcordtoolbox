@@ -266,7 +266,7 @@ class QcImage(object):
 
     def smooth_centerline(self, mask, ax):
         """Display smoothed centerline"""
-        mask = mask/mask.max()  # TODO: move when generating smooth centerline
+        mask = mask/mask.max()
         mask[mask < 0.05] = 0  # Apply 0.5 threshold
         img = np.ma.masked_equal(mask, 0)
         ax.imshow(img,
