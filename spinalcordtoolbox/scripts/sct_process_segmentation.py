@@ -188,7 +188,7 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved."
-             "QC report is only availbale for PMJ-based CSA."
+             " The QC report is only available for PMJ-based CSA (with flag '-pmj')."
     )
     optional.add_argument(
         '-qc-image',
