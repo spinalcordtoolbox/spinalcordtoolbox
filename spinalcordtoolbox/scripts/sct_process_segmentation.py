@@ -407,7 +407,11 @@ def main(argv=None):
         if fname_pmj is not None:
             if arguments.qc_image is not None:
                 generate_qc(fname_in1=get_absolute_path(arguments.qc_image),
-                            fname_seg=[fname_ctl_smooth, fname_pmj, fname_mask_out, fname_ctl_smooth],  # Repeat centerline to flatten image along the centerline
+                            # NB: For this QC figure, the centerline has to be first in the list in order for the centerline
+                            # to be properly layered underneath the PMJ + mask. However, Sagittal.get_center_spit
+                            # is called during QC, and it uses `fname_seg[-1]` to center the slices. `fname_mask_out`
+                            # doesn't work for this, so we have to repeat `fname_ctl_smooth` at the end of the list.
+                            fname_seg=[fname_ctl_smooth, fname_pmj, fname_mask_out, fname_ctl_smooth], 
                             args=sys.argv[1:],
                             path_qc=os.path.abspath(path_qc),
                             dataset=qc_dataset,
