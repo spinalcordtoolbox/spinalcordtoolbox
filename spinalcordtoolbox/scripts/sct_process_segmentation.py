@@ -193,7 +193,9 @@ def get_parser():
     optional.add_argument(
         '-qc-image',
         metavar=Metavar.str,
-        help='Input image to display in QC report. To be used with flag -qc '
+        help="Input image to display in QC report. Typically, it would be the "
+             "source anatomical image used to generate the spinal cord "
+             "segmentation. This flag is mandatory if using flag '-qc'."
     )
     optional.add_argument(
         '-qc-dataset',
