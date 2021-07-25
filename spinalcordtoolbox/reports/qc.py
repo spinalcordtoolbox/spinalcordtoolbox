@@ -851,6 +851,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         fname_list = [fname_in1]
+        # fname_seg should be a list of 4 images: 3 for each of the `qcslice_operations`, plus an extra
+        # centerline image, which is needed to make `Sagittal.get_center_spit` work correctly
         fname_list.extend(fname_seg)
         qcslice_type = qcslice.Sagittal([Image(fname) for fname in fname_list], p_resample=None)  # TODO: add multiple overlays
         qcslice_operations = [QcImage.smooth_centerline, QcImage.highlight_pmj, QcImage.listed_seg]
