@@ -235,6 +235,18 @@ h4, h5, h6 {
     text-transform: none;
 }
 
+/* Table of Contents Headers */
+
+.toctree-wrapper.compound .caption, .toctree-wrapper.compound :not(.caption)>.caption-text {
+    text-transform: None;
+    text-align: initial;
+    margin-bottom: 1.0rem;
+    font-size: 1.125rem;
+    margin-top: 2.0rem;
+    font-weight: 600;
+    font-family: 'Lato', sans-serif;
+}
+
 /* Inline Code */
 
 code.literal {
