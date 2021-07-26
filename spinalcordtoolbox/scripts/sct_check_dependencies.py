@@ -290,8 +290,7 @@ def main(argv=None):
         importlib.import_module('spinalcordtoolbox')
         print_ok()
     except ImportError:
-        print_fail()
-        print("Unable to import spinalcordtoolbox module!?")
+        print_fail("Unable to import spinalcordtoolbox module.")
         install_software = 1
 
     # Check ANTs integrity
