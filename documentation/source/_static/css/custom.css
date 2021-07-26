@@ -235,10 +235,16 @@ h4, h5, h6 {
     text-transform: none;
 }
 
+/* Inline Code */
+
 code.literal {
     border-radius: 0.3em;
     padding: .2em .3em;
     color: #f86626;
+}
+
+.sidebar-tree code.literal {
+    background: #3d3d3c;
 }
 
 /* Sidebar */
