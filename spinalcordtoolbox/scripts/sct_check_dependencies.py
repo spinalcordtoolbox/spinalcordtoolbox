@@ -23,6 +23,7 @@ import platform
 import importlib
 import warnings
 import psutil
+import traceback
 
 import requirements
 
@@ -278,9 +279,10 @@ def main(argv=None):
             else:
                 print_ok()
 
-        except ImportError as err:
+        except Exception as err:
             print_fail()
-            print(err)
+            print(f"An error occured while importing module {dep_pkg} -> {err}")
+            print(f"Full traceback: {traceback.format_exc()}")
             install_software = 1
 
     print_line('Check if spinalcordtoolbox is installed')
@@ -288,7 +290,7 @@ def main(argv=None):
         importlib.import_module('spinalcordtoolbox')
         print_ok()
     except ImportError:
-        print_fail()
+        print_fail("Unable to import spinalcordtoolbox module.")
         install_software = 1
 
     # Check ANTs integrity
