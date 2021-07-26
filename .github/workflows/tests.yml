@@ -199,9 +199,9 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  ubuntu-18_04:
-    name: Ubuntu 18.04 (Bionic Beaver)
-    runs-on: ubuntu-18.04
+  ubuntu-20_04:
+    name: Ubuntu 20.04 (Focal Fossa)
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - name: Install SCT
@@ -227,13 +227,13 @@ jobs:
           flags: api
 
 
-  ubuntu-16_04:
-    name: Ubuntu 16.04 (Xenial)
+  ubuntu-18_04:
+    name: Ubuntu 18.04 (Bionic Beaver)
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
       - name: Dependencies
         run: |

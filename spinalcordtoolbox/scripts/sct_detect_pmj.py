@@ -12,15 +12,18 @@ About the license: see the file LICENSE.TXT
 
 import os
 import sys
+import logging
 
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
 import numpy as np
 
-from spinalcordtoolbox.image import Image, zeros_like
+from spinalcordtoolbox.image import Image, zeros_like, compute_cross_corr_3d
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -134,7 +137,7 @@ class DetectPMJ:
 
         self.orient2pir()  # orient data to PIR orientation
 
-        self.extract_sagital_slice()  # extract a sagital slice, used to do the detection
+        self.extract_pmj_symmetrical_sagittal_slice()  # extracts slice based on PMJ symmetry point, contains a detection, but only used to select the ROI for correlation
 
         self.detect()  # run the detection
 
@@ -182,7 +185,6 @@ class DetectPMJ:
             img_pred_maxValue = np.max(img_pred.data)  # get the max value of the detection map
             self.pa_coord = np.where(img_pred.data == img_pred_maxValue)[0][0]
             self.is_coord = np.where(img_pred.data == img_pred_maxValue)[1][0]
-
             printv('\nPonto-Medullary Junction detected', self.verbose, 'normal')
 
         else:
@@ -205,14 +207,14 @@ class DetectPMJ:
 
         self.dection_map_pmj += '.nii'  # fname of the resulting detection map
 
-    def extract_sagital_slice(self):
-        """Extract the sagital slice where the detection is done.
+    def extract_sagittal_slice(self):
+        """Extract the sagittal slice where the detection is done.
 
         If the segmentation is provided,
-            the 2D sagital slice is choosen accoding to the segmentation.
+            the 2D sagittal slice is choosen accoding to the segmentation.
 
         If the segmentation is not provided,
-            the 2D sagital slice is choosen as the mid-sagital slice of the input image.
+            the 2D sagittal slice is choosen as the mid-sagittal slice of the input image.
         """
         # TODO: get the mean across multiple sagittal slices to reduce noise
 
@@ -233,13 +235,25 @@ class DetectPMJ:
 
         run_proc(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
 
+    def extract_pmj_symmetrical_sagittal_slice(self):
+        """Extract a slice that is symmetrical about the estimated PMJ location."""
+        # Here, detection is used just as a way to determine the ROI for the sliding window approach
+        self.extract_sagittal_slice()
+        self.detect()
+        self.get_max_position()
+        image = Image(self.fname_im)  # img in PIR orientation
+        self.rl_coord = compute_cross_corr_3d(image.change_orientation('RPI'), [self.rl_coord, self.pa_coord, self.is_coord, ])  # Find R-L symmetry
+
+        # Replace the mid-sagittal slice, to be used for the "main" PMJ detection
+        run_proc(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
+
     def orient2pir(self):
         """Orient input data to PIR orientation."""
         if self.orientation_im != 'PIR':  # open image and re-orient it to PIR if needed
-            Image(self.fname_im).change_orientation("PIR").save(''.join(extract_fname(self.fname_im)[1:]))
+            Image(self.fname_im).change_orientation("PIR").save(''.join(extract_fname(self.fname_im)[1:]), verbose=0)
 
             if self.fname_seg is not None:
-                Image(self.fname_seg).change_orientation('PIR').save(''.join(extract_fname(self.fname_seg)[1:]))
+                Image(self.fname_seg).change_orientation('PIR').save(''.join(extract_fname(self.fname_seg)[1:]), verbose=0)
 
     def ifolder2tmp(self):
         """Copy data to tmp folder."""
