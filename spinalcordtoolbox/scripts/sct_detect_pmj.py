@@ -30,11 +30,11 @@ def get_parser():
     parser = SCTArgumentParser(
         description='Detection of the Ponto-Medullary Junction (PMJ). '
                     'This method is based on a machine-learning algorithm published in (Gros et al. 2018, Medical '
-                    'Image Analysis, doi.org/10.1016/j.media.2017.12.001). Two models are available: one for T1w-like '
-                    'and another for T2w-like images. '
+                    'Image Analysis, https://doi.org/10.1016/j.media.2017.12.001). Two models are available: one for '
+                    'T1w-like and another for T2w-like images. '
                     'If the PMJ is detected from the input image, a NIfTI mask is output '
-                    ' ("*_pmj.nii.gz") with one voxel (value=50) located at the predicted PMJ '
-                    ' position. If the PMJ is not detected, nothing is output.'
+                    '("*_pmj.nii.gz") with one voxel (value=50) located at the predicted PMJ '
+                    'position. If the PMJ is not detected, nothing is output.'
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
