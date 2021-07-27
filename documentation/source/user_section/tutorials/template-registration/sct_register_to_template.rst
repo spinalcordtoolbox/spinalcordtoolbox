@@ -17,6 +17,6 @@ SCT provides the ``sct_register_to_template`` command for template registration.
 2. **Vertebrae-matching transformation**: Once straightened, the next step involves a transformation to match the vertebral levels of the subject to that of the template. If 2 labels are provided, this transformation will be affine; if 3+ labels are provided, this transformation will be non-affine. (Note: This step focuses only on matching the coordinates of the labels, and does not consider the shape of the spinal cord, which is handled by the next step.)
 3. **Shape-matching transformation**: A multi-step nonrigid deformation is estimated to match the subject’s cord shape to the template. By default, two steps are used: the first handles large deformations, while the second applies fine adjustments.
 
-.. important::
+.. warning::
 
    SCT provides many additional nonrigid deformation algorithms beyond the default configuration. You can visit the :ref:`customizing-registration-section` page to learn how to optimize the registration procedure for your particular contrast, resolution, and spinal cord geometry.

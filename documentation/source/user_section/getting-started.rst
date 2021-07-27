@@ -5,10 +5,6 @@ Getting Started
 
 To get started using SCT, you may take a look at the `Batch Processing Example`_, or follow the longer :ref:`tutorials` materials.
 
-.. contents::
-   :local:
-..
-
 
 Batch Processing Example
 ************************
@@ -22,7 +18,7 @@ To launch the script run:
 
   $SCT_DIR/batch_processing.sh
 
-While the script is running, we encourage you to understand the meaning of each command line that is listed in the script. Comments are here to help justify some choices of parameters. If you have any question, please do not hesitate to ask for :ref:`support`.
+While the script is running, we encourage you to understand the meaning of each command line that is listed in the script. Comments are here to help justify some choices of parameters. If you have any question, please do not hesitate to ask for :ref:`help`.
 
 The script source is shown below:
 
