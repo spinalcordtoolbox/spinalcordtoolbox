@@ -9,6 +9,9 @@ Before starting this tutorial
 
  * ``single_subject/data/mt/mt0.nii.gz``: The image without the magnetization transfer pulse.
  * ``single_subject/data/mt/mt1.nii.gz``: The image with the magnetization transfer pulse.
+
+.. TODO: Replace these file requirements with seg/mask generation steps
+
  * ``single_subject/data/mt/mt1_seg.nii.gz`` : The segmented spinal cord for the MT1 image (used for registering MT0 on MT1).
  * ``single_subject/data/mt/mask_mt1.nii.gz`` : The mask surrounding the spinal cord region of interest (used for registering MT0 on MT1).
 
