@@ -2,10 +2,17 @@
 
 """Detect Ponto-Medullary Junction.
 
+The models were trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
+in section 2.1.2, except that the cords are not straightened for the PMJ disc detection task.
+
+To train a new model:
+- Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
+- Run "source sct_launcher" in a terminal
+- Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
+- Save the trained model in https://github.com/spinalcordtoolbox/pmj_models
+
 Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 Author: Charley
-Created: 2017-07-21
-Modified: 2017-09-12
 
 About the license: see the file LICENSE.TXT
 """
