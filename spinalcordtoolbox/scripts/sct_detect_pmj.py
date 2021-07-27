@@ -29,9 +29,10 @@ logger = logging.getLogger(__name__)
 def get_parser():
     parser = SCTArgumentParser(
         description='Detection of the Ponto-Medullary Junction (PMJ). '
-                    ' This method is machine-learning based and adapted for T1w-like or '
-                    ' T2w-like images. '
-                    ' If the PMJ is detected from the input image, a nifti mask is output '
+                    'This method is based on a machine-learning algorithm published in (Gros et al. 2018, Medical '
+                    'Image Analysis, doi.org/10.1016/j.media.2017.12.001). Two models are available: one for T1w-like '
+                    'and another for T2w-like images. '
+                    'If the PMJ is detected from the input image, a NIfTI mask is output '
                     ' ("*_pmj.nii.gz") with one voxel (value=50) located at the predicted PMJ '
                     ' position. If the PMJ is not detected, nothing is output.'
     )
@@ -50,7 +51,6 @@ def get_parser():
         help="Type of image contrast, if your contrast is not in the available options (t1, t2), "
              "use t1 (cord bright/ CSF dark) or t2 (cord dark / CSF bright)",
     )
-
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
