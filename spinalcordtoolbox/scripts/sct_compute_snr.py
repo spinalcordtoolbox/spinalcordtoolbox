@@ -64,13 +64,16 @@ def get_parser():
     optional.add_argument(
         '-method',
         help='R|Method to use to compute the SNR (default: diff):\n'
-             "- diff: Substract two volumes (defined by -vol) and estimate noise variance within the ROI "
+             "  - diff: Substract two volumes (defined by -vol) and estimate noise variance within the ROI "
              "(flag '-m' is required). Requires a 4D volume.\n"
-             "- mult: Estimate noise variance over time across volumes specified with '-vol'. Requires a 4D volume.\n"
-             "- single: Estimates noise variance in a 5x5 square at the corner of the image, and average the mean "
-             "signal inside the ROI specified by flag '-m'. The variance and mean are corrected for Rayleigh "
-             "distributions. This corresponds to the cases SNRstd and SNRmean in the Dietrich et al. article. Uses a "
-             "3D or a 4D volume. If a 4D volume is input, the volume to compute SNR on is specified by '-vol'.",
+             "  - mult: Estimate noise variance over time across volumes specified with '-vol'. Requires a 4D volume.\n"
+             "  - single: Compute the mean signal in the mask specified by '-m' and estimate the noise variance in a "
+             "mask specified by '-m-noise'. If the noise mask is in the background (air), the noise variance needs to "
+             "be corrected for Rayleigh distribution (set '-rayleigh 1'). If the noise mask is located in a "
+             "region with high signal (eg: tissue), noise distribution can be assumed Gaussian and there is no need to "
+             "correct for Rayleigh distribution (use '-rayleigh 0'). This implementation corresponds to the SNRstdv "
+             "in the Dietrich et al. article. Uses a 3D or a 4D volume. If a 4D volume is input, the volume to "
+             "compute SNR on is specified by '-vol'.",
         choices=('diff', 'mult', 'single'),
         default='diff')
     optional.add_argument(
