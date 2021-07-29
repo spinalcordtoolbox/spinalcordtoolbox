@@ -226,6 +226,7 @@ def test_sct_compute_snr_single_3d(dummy_3d_nib, dummy_3d_mask_nib, dummy_3d_mas
         snr = float(f.read())
     # We need a large tolerance because of the randomization
     # TODO: Need to figure out what the problem is with the strong bias (~30% less than the "real" SNR)
+    #  see: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3486
     assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.5)
 
 
