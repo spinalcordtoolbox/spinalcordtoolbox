@@ -82,5 +82,5 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
 
     # Get corresponding slices
     slices = "{}:{}".format(zmin, zmax-1)  # -1 since the last slice is included to compute CSA after.
-    
+
     return im_ctl_seg_with_pmj.change_orientation(native_orientation), mask, slices, arr_ctl
