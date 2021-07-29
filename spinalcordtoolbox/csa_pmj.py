@@ -15,11 +15,12 @@ NEAR_ZERO_THRESHOLD = 1e-6
 
 def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_centerline=None, verbose=1):
     """
-    Compute distance from PMJ projection on centerline for all the centerline.
-    Generate mask from segmentation of the slices used to process segmentation data corresponding to a distance from PMJ projection.
+    Interpolate centerline with pontomedullary junction (PMJ) label and compute distance from PMJ along the centerline.
+    Generate a mask from segmentation of the slices used to process segmentation data corresponding to a distance from PMJ.
     :param segmentation: input segmentation. Could be either an Image or a file name.
     :param pmj: label of PMJ.
-    :param distance: float: Distance from Ponto-Medullary Junction (PMJ) in mm.
+    :param distance: float: Distance from PMJ in mm.
+    :param extent: extent of the coverage mask in mm.
     :param param_centerline: see centerline.core.ParamCenterline()
     :param verbose:
     :return im_ctl:
@@ -33,7 +34,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     im_pmj = Image(pmj).change_orientation('RPI')
     if not im_seg.data.shape == im_pmj.data.shape:
         raise RuntimeError("segmentation and pmj should be in the same space coordinate.")
-    # Add PMJ label to the segmentation and then extrapolate to obtain a Centerline object defines between the PMJ
+    # Add PMJ label to the segmentation and then extrapolate to obtain a Centerline object defined between the PMJ
     # and the lower end of the centerline.
     im_seg_with_pmj = im_seg.copy()
     im_seg_with_pmj.data = im_seg_with_pmj.data + im_pmj.data
@@ -56,6 +57,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     # Compute the incremental distance from the PMJ along each point in the centerline
     length_from_pmj = ctl_seg_with_pmj.incremental_length_inverse[::-1]
     # From this incremental distance, find the indices corresponding to the requested distance +/- extent/2 from the PMJ
+    # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
     z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
     zmin = z_ref[np.argmin(np.array([np.abs(i - distance - extent/2) for i in length_from_pmj]))]
     zmax = z_ref[np.argmin(np.array([np.abs(i - distance + extent/2) for i in length_from_pmj]))]
@@ -81,6 +83,5 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     np.savetxt("centerline.csv", arr_ctl, delimiter=",")
 
     # Get corresponding slices
-    # TODO: why the "-1"?
-    slices = "{}:{}".format(zmin, zmax-1)
+    slices = "{}:{}".format(zmin, zmax-1)  # -1 since the last slice is included to compute CSA after.
     return im_ctl_seg_with_pmj.change_orientation(native_orientation), mask, slices
