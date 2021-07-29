@@ -29,7 +29,7 @@ from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
 from spinalcordtoolbox.centerline.core import ParamCenterline
-from spinalcordtoolbox.image import add_suffix
+from spinalcordtoolbox.image import add_suffix, splitext
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
@@ -370,17 +370,19 @@ def main(argv=None):
                                          param_centerline=param_centerline,
                                          verbose=verbose)
     if fname_pmj is not None:
-        im_ctl, mask, slices = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
-                                                           distance_pmj, extent_mask,
-                                                           param_centerline=param_centerline,
-                                                           verbose=verbose)
+        im_ctl, mask, slices, centerline = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
+                                                                       distance_pmj, extent_mask,
+                                                                       param_centerline=param_centerline,
+                                                                       verbose=verbose)
         # Save mask
         fname_mask_out = add_suffix(arguments.i, '_mask_csa')
         mask.save(fname_mask_out)
         # Save extrapolated centerline
         fname_ctl = add_suffix(arguments.i, '_centerline_extrapolated')
         im_ctl.save(fname_ctl)
-
+        # Save array of the centerline in a .csv file
+        fname_ctl_csv, _ = splitext(add_suffix(arguments.i, '_centerline_extrapolated'))
+        np.savetxt(fname_ctl_csv + '.csv', centerline, delimiter=",")
         # Generated centerline smoothed in RL direction for visualization (and QC report)
         fname_ctl_smooth = add_suffix(fname_ctl, '_smooth')
         sct_maths.main(['-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth])
