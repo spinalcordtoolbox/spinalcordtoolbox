@@ -38,14 +38,13 @@ Please note that the white and gray matter masks found in ``template/`` are for 
 
 .. _pam50-atlas-section:
 
-White and gray matter atlas (``PAM50/atlas``)
+White and Grey Matter Atlas (``PAM50/atlas``)
 =============================================
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/pam50/white_matter_atlas_illustration.png
-    :figwidth: 40%
     :align: right
 
-The White Matter atlas will be a useful tool for your studies of specific spinal cord tracts. It consists of 36 nifti volumes named ``PAM50_atlas_<tract_number>.nii.gz`` where ``<tract_number>`` is the number identifying the tract. Fifteen WM tracts and three GM regions are available for each side. The values of each voxel of the files ``PAM50_atlas_<tract_number>.nii.gz`` are the voxel volume proportions occupied by the corresponding tract.
+The White Matter atlas will be a useful tool for your studies of specific spinal cord tracts. It consists of 36 NIfTI volumes named ``PAM50_atlas_<tract_number>.nii.gz`` where ``<tract_number>`` is the number identifying the tract. Fifteen WM tracts and three GM regions are available for each side. The values of each voxel of the files ``PAM50_atlas_<tract_number>.nii.gz`` are the voxel volume proportions occupied by the corresponding tract.
 
 Notably, each volume is a probablistic mask, or "soft mask". The voxel values in these volumes range from 0 to 1; voxels in the center of each tract will equal 1, while voxels near the edges of each tract will be weighted closer to 0. This is to account for `partial volume effects <http://mriquestions.com/partial-volume-effects.html>`_.
 
