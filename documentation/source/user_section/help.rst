@@ -1,6 +1,6 @@
-.. _support:
+.. _help:
 
-Support
+Help
 #######
 
 

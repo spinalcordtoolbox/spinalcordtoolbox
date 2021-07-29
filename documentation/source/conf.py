@@ -40,11 +40,14 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
     'recommonmark',
-    'sphinx.ext.extlinks'
+    'sphinx.ext.extlinks',
+    'sphinx_copybutton'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+
+# copybutton_image_path = "img/copy.png"
 
 # add doc for __init
 autoclass_content = 'both'
@@ -83,10 +86,10 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['*/api.rst']
+exclude_patterns = ['*/api', "*/api.rst"]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+# pygments_style = "monokai"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -102,22 +105,19 @@ extlinks = {
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-#html_theme = 'alabaster'
-html_theme = "sphinx_rtd_theme"
+# html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '../imgs/logo_sct.png'
+html_logo = './_static/img/sct_logo_dark_grey.png'
 
 html_theme_options = {
-    "collapse_navigation": True,
-    "display_version": True,
-    "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
-    "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
-    "style_nav_header_background": "#FFFFFF",  # background of the logo (top left)
-    'prev_next_buttons_location': "both"  # put Previous/Next buttons on both the top and bottom of the page
+    "sidebar_hide_name": True,
+    "light_css_variables": {
+
     }
+}
 
 html_context = {
     "display_github": True,
@@ -132,20 +132,20 @@ html_context = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_css_files = ['css/custom.css']
+html_css_files = ['css/custom.css', 'css/pygments_dark.css']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-html_sidebars = {
-    '**': [
-        'about.html',
-        'navigation.html',
-        'relations.html',  # needs 'show_related': True theme option to display
-        'searchbox.html',
-    ]
-}
+# html_sidebars = {
+#     '**': [
+#         'about.html',
+#         'navigation.html',
+#         'relations.html',  # needs 'show_related': True theme option to display
+#         'searchbox.html',
+#     ]
+# }
 
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -183,4 +183,3 @@ texinfo_documents = [
      author, 'SpinalCordToolbox', 'One line description of project.',
      'Miscellaneous'),
 ]
-
