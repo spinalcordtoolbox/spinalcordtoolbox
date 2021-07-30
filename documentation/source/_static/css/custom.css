@@ -5,6 +5,12 @@
     --admonition-title-font-size: 1rem;
 }
 
+.sidebar-scroll::-webkit-scrollbar, .toc-scroll::-webkit-scrollbar {
+    display: None;
+    width: 0rem !important;
+    height: 0rem !important;
+}
+
 
 /* body{font-family:'Roboto',sans-serif;} */
 .wy-side-nav-search>div.version{color:#000000;}
@@ -322,10 +328,4 @@ code.literal {
         --color-admonition-title: #0054af;
         --color-admonition-title-background: #0054af5c;
     }
-}
-
-.sidebar-scroll::-webkit-scrollbar, .toc-scroll::-webkit-scrollbar, article[role=main] ::-webkit-scrollbar {
-    display: None;
-    width: 0rem !important;
-    height: 0rem !important;
 }
