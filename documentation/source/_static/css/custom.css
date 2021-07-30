@@ -325,6 +325,6 @@ code.literal {
 }
 
 .sidebar-scroll::-webkit-scrollbar, .toc-scroll::-webkit-scrollbar, article[role=main] ::-webkit-scrollbar {
-    width: 0rem;
-    height: 0rem;
+    width: 0rem !important;
+    height: 0rem !important;
 }
