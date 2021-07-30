@@ -323,3 +323,8 @@ code.literal {
         --color-admonition-title-background: #0054af5c;
     }
 }
+
+.sidebar-scroll::-webkit-scrollbar, .toc-scroll::-webkit-scrollbar, article[role=main] ::-webkit-scrollbar {
+    width: 0rem;
+    height: 0rem;
+}
