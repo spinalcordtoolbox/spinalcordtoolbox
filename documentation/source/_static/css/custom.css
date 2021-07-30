@@ -289,8 +289,13 @@ code.literal {
     /* color: #6dd2d2; */
 }
 
+.sidebar-drawer {
+    border-right: 1px solid var(--color-sidebar-background-border);
+    background: #3d3d3c !important;
+}
+
 :root {
-    --color-sidebar-background: #3d3d3c;
+    --color-sidebar-background: #3d3d3c
     --color-sidebar-item-background--hover: #5a5a58;
     --color-sidebar-link-text: #fcfcfc;
 }
