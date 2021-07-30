@@ -46,7 +46,7 @@ setup(
             'sphinx_rtd_theme',
             'sphinx-copybutton',
             'furo==2021.4.11b34',
-            'recommonmark'
+            'recommonmark',
             'sphinx==4.1.2'
         ],
     },
