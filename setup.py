@@ -46,7 +46,7 @@ setup(
             'sphinxcontrib-programoutput',
             'sphinx_rtd_theme',
             'sphinx-copybutton',
-            'furo',
+            'furo==2021.4.11b34',
             'recommonmark'
         ],
     },
