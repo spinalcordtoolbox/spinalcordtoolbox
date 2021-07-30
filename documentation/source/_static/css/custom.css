@@ -11,6 +11,11 @@
     height: 0rem !important;
 }
 
+.sidebar-scroll::-webkit-scrollbar-thumb, .toc-scroll::-webkit-scrollbar-thumb, article[role=main] ::-webkit-scrollbar-thumb {
+    background-color: var(--color-sidebar-background);
+    border-radius: .125rem;
+}
+
 
 /* body{font-family:'Roboto',sans-serif;} */
 .wy-side-nav-search>div.version{color:#000000;}
