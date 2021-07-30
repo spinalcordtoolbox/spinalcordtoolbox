@@ -12,7 +12,7 @@
 }
 
 .sidebar-scroll::-webkit-scrollbar-thumb, .toc-scroll::-webkit-scrollbar-thumb, article[role=main] ::-webkit-scrollbar-thumb {
-    background-color: var(--color-sidebar-background);
+    background-color: var(--color-sidebar-background) !important;
     border-radius: .125rem;
 }
 
