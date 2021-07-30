@@ -289,10 +289,10 @@ code.literal {
     /* color: #6dd2d2; */
 }
 
-.sidebar-drawer {
+/* .sidebar-drawer {
     border-right: 1px solid var(--color-sidebar-background-border);
     background: #3d3d3c !important;
-}
+} */
 
 :root {
     --color-sidebar-background: #3d3d3c
@@ -305,6 +305,7 @@ code.literal {
 @media (prefers-color-scheme: light) {
     :root {
         --color-background-primary: #fcfcfc;
+        --color-sidebar-background: #3d3d3c !important;
         --color-admonition-title-background: #EAF6FF;
         --color-admonition-title: #c2e2fb;
         --color-admonition-title-background--note: #30c42626;
@@ -317,7 +318,7 @@ code.literal {
 
 @media (prefers-color-scheme: dark) {
     :root {
-        --color-sidebar-background: #1a1c1e;
+        --color-sidebar-background: #1a1c1e !important;
         --color-admonition-title: #0054af;
         --color-admonition-title-background: #0054af5c;
     }
