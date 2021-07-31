@@ -19,6 +19,7 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    tutorials/registering-additional-contrasts
    tutorials/mtr-computation
    tutorials/gm-wm-segmentation
+   tutorials/improving-registration-with-gm-seg
 
 .. _completing-the-tutorials-in-sequence:
 
