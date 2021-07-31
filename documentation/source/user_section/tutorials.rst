@@ -18,6 +18,7 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    tutorials/shape-metric-computation
    tutorials/registering-additional-contrasts
    tutorials/mtr-computation
+   tutorials/gm-wm-segmentation
 
 .. _completing-the-tutorials-in-sequence:
 
