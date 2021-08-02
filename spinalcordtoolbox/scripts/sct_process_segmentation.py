@@ -364,7 +364,7 @@ def main(argv=None):
     mutually_inclusive_args = (fname_pmj, distance_pmj)
     is_pmj_none, is_distance_none = [arg is None for arg in mutually_inclusive_args]
     if not (is_pmj_none == is_distance_none):
-        raise parser.error("Both '-pmj' and '-distance' are required in order to process segmentation from PMJ.")
+        raise parser.error("Both '-pmj' and '-pmj-distance' are required in order to process segmentation from PMJ.")
 
     # update fields
     metrics_agg = {}
