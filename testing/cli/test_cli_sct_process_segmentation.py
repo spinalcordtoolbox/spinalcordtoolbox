@@ -44,7 +44,7 @@ def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_labe
         assert row['SUM(length)'] == '4.0'
 
 
-def test_sct_process_segmentation_missing_pmj_distance(dummy_3d_mask_nib, dummy_3d_pmj_label):
+def test_sct_process_segmentation_missing_pmj_args(dummy_3d_mask_nib, dummy_3d_pmj_label):
     """ Run sct_process_segmentation with PMJ method when missing -pmj or -pmj-distance """
     for args in [['-i', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label], ['-i', dummy_3d_mask_nib, '-pmj-distance', '4']]:
         with pytest.raises(SystemExit) as e:
