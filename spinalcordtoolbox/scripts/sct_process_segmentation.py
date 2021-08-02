@@ -175,19 +175,19 @@ def get_parser():
              "Example: pmj.nii.gz"
     )
     optional.add_argument(
-        '-distance',
+        '-pmj-distance',
         type=float,
         metavar=Metavar.float,
         help="Distance (mm) from Ponto-Medullary Junction (PMJ) to compute CSA. "
              "To be used with flag -pmj"
     )
     optional.add_argument(
-        '-extent',
+        '-pmj-extent',
         type=float,
         metavar=Metavar.float,
         default=20,
         help="Extent of the mask to average CSA (mm). "
-             "To be used with flag -pmj and -distance"
+             "To be used with flag -pmj and -pmj-distance"
     )
     optional.add_argument(
         '-qc',
@@ -352,11 +352,11 @@ def main(argv=None):
         fname_pmj = get_absolute_path(arguments.pmj)
     else:
         fname_pmj = None
-    if arguments.distance is not None:
-        distance_pmj = arguments.distance
+    if arguments.pmj_distance is not None:
+        distance_pmj = arguments.pmj_distance
     else:
         distance_pmj = None
-    extent_mask = arguments.extent
+    extent_mask = arguments.pmj_extent
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
