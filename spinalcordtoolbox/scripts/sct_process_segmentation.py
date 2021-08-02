@@ -380,18 +380,11 @@ def main(argv=None):
                                                                        distance_pmj, extent_mask,
                                                                        param_centerline=param_centerline,
                                                                        verbose=verbose)
-        # Save mask
-        fname_mask_out = add_suffix(arguments.i, '_mask_csa')
-        mask.save(fname_mask_out)
-        # Save extrapolated centerline
-        fname_ctl = add_suffix(arguments.i, '_centerline_extrapolated')
-        im_ctl.save(fname_ctl)
-        # Save array of the centerline in a .csv file
-        fname_ctl_csv, _ = splitext(add_suffix(arguments.i, '_centerline_extrapolated'))
-        np.savetxt(fname_ctl_csv + '.csv', centerline, delimiter=",")
-        # Generated centerline smoothed in RL direction for visualization (and QC report)
-        fname_ctl_smooth = add_suffix(fname_ctl, '_smooth')
-        sct_maths.main(['-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth])
+
+        # Save array of the centerline in a .csv file if verbose == 2
+        if verbose == 2:
+            fname_ctl_csv, _ = splitext(add_suffix(arguments.i, '_centerline_extrapolated'))
+            np.savetxt(fname_ctl_csv + '.csv', centerline, delimiter=",")
 
     for key in metrics:
         if key == 'length':
@@ -414,6 +407,22 @@ def main(argv=None):
     if path_qc is not None:
         if fname_pmj is not None:
             if arguments.qc_image is not None:
+                fname_mask_out = add_suffix(arguments.i, '_mask_csa')
+                fname_ctl = add_suffix(arguments.i, '_centerline_extrapolated')
+                fname_ctl_smooth = add_suffix(fname_ctl, '_smooth')
+                if verbose != 2:
+                    from spinalcordtoolbox.utils.fs import tmp_create
+                    path_tmp = tmp_create()
+                    fname_mask_out = os.path.join(path_tmp, fname_mask_out)
+                    fname_ctl = os.path.join(path_tmp, fname_ctl)
+                    fname_ctl_smooth = os.path.join(path_tmp, fname_ctl_smooth)
+                # Save mask
+                mask.save(fname_mask_out)
+                # Save extrapolated centerline
+                im_ctl.save(fname_ctl)
+                # Generated centerline smoothed in RL direction for visualization (and QC report)
+                sct_maths.main(['-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth])
+
                 generate_qc(fname_in1=get_absolute_path(arguments.qc_image),
                             # NB: For this QC figure, the centerline has to be first in the list in order for the centerline
                             # to be properly layered underneath the PMJ + mask. However, Sagittal.get_center_spit
