@@ -42,12 +42,12 @@ setup(
     include_package_data=True,
     extras_require={
         'docs': [
-            'sphinx',
             'sphinxcontrib-programoutput',
             'sphinx_rtd_theme',
             'sphinx-copybutton',
-            'furo',
-            'recommonmark'
+            'furo==2021.6.18b35',
+            'recommonmark',
+            'sphinx==4.1.2'
         ],
     },
     entry_points=dict(
