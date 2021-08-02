@@ -60,12 +60,16 @@ def get_parser():
             "metric is interesting for detecting non-convex shape (e.g., in case of strong compression)\n"
             "  - length: Length of the segmentation, computed by summing the slice thickness (corrected for the "
             "centerline angle at each slice) across the specified superior-inferior region.\n"
+            "\n"
             "To select the region to compute metrics over, choose one of the following arguments:\n"
-            "   1. '-z': Select axial slices based on slice index.\n "
-            "      Add '-perslice' to compute metrics for each axial slice.\n"
-            "   2. '-pmj' + '-distance' + '-extent': Select axial slices based on distance from pontomedullary junction.\n"
-            "   3. '-vert' + '-vertfile': Select a region based on vertebral labels, instead of individual slices.\n"
-            "       Add '-perlevel' to compute metrics for each individual vertebral level."
+            "   1. '-z': Select axial slices based on slice index.\n"
+            "   2. '-pmj' + '-pmj-distance' + '-pmj-extent': Select axial slices based on distance from pontomedullary "
+            "junction.\n"
+            "      (For options 1 and 2, you can also add '-perslice' to compute metrics for each axial slice, rather "
+            "than averaging.)\n"
+            "   3. '-vert' + '-vertfile': Select a region based on vertebral labels instead of individual slices.\n"
+            "      (For option 3, you can also add '-perlevel' to compute metrics for each vertebral level, rather "
+            "than averaging.)"
         )
     )
 
