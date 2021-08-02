@@ -102,7 +102,7 @@ def get_parser():
         '-z',
         metavar=Metavar.str,
         type=str,
-        help="Slice range to compute the metrics across (requires '-p csa'). Example: 5:23"  # TODO: -p csa dose not exists anymore
+        help="Slice range to compute the metrics across. Example: 5:23"
     )
     optional.add_argument(
         '-perslice',
