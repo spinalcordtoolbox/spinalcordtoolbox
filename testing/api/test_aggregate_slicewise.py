@@ -155,7 +155,6 @@ def test_aggregate_slices_pmj(dummy_metrics):
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[2, 3, 4, 5],
                                                                   distance_pmj=64, perslice=False, perlevel=False,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    print(agg_metric)
     assert agg_metric[(2, 3, 4, 5)] == {'VertLevel': None, 'DistancePMJ': [64], 'WA()': 45.25}
 
 
@@ -312,6 +311,21 @@ def test_save_as_csv_sorting(tmp_path, dummy_metrics):
     with open(path_out, 'r') as csvfile:
         spamreader = csv.DictReader(csvfile, delimiter=',')
         assert [row['Slice (I->S)'] for row in spamreader] == ['0', '1', '2', '3', '4', '5', '6', '7', '8']
+
+
+def test_save_as_csv_pmj(tmp_path, dummy_metrics):
+    """Test writing of output metric csv file with distance from PMJ method"""
+    path_out = str(tmp_path / 'tmp_file_out.csv')
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[2, 3, 4, 5],
+                                                                  distance_pmj=64.0, perslice=False, perlevel=False,
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    aggregate_slicewise.save_as_csv(agg_metric, path_out)
+    with open(path_out, 'r') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        row = next(reader)
+        assert row['Slice (I->S)'] == '2:5'
+        assert row['DistancePMJ'] == '64.0'
+        assert row['VertLevel'] == ''
 
 
 # noinspection 801,PyShadowingNames
