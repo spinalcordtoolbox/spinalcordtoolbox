@@ -182,16 +182,16 @@ def get_parser():
         '-pmj-distance',
         type=float,
         metavar=Metavar.float,
-        help="Distance (mm) from Ponto-Medullary Junction (PMJ) to compute CSA. "
-             "To be used with flag -pmj"
+        help="Distance (mm) from Ponto-Medullary Junction (PMJ) to the center of the mask used to compute morphometric "
+             "measures. (To be used with flag '-pmj'.)"
     )
     optional.add_argument(
         '-pmj-extent',
         type=float,
         metavar=Metavar.float,
         default=20,
-        help="Extent of the mask to average CSA (mm). "
-             "To be used with flag -pmj and -pmj-distance"
+        help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
+             "included in the calculation. (To be used with flag '-pmj' and '-pmj-distance'.)"
     )
     optional.add_argument(
         '-qc',
