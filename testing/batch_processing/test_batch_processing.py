@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8
-# pytest unit tests to validate the reults of the batch_processing.sh script
+# pytest unit tests to validate the results of the batch_processing.sh script
 
 import os
 import pathlib
