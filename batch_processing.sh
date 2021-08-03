@@ -85,9 +85,14 @@ sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels_vert.nii.gz -c 
 # Warp template without the white matter atlas (we don't need it at this point)
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # Compute cross-sectional area (and other morphometry measures) for each slice
-sct_process_segmentation -i t2_seg.nii.gz -qc "$SCT_BP_QC_FOLDER"
+sct_process_segmentation -i t2_seg.nii.gz
 # Compute cross-sectional area and average between C2 and C3 levels
 sct_process_segmentation -i t2_seg.nii.gz -vert 2:3 -o csa_c2c3.csv
+# Compute cross-sectionnal area based on distance from pontomedullary junction (PMJ)
+# Detect PMJ
+sct_detect_pmj -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER" 
+# Compute cross-section area at 60 mm from PMJ averaged on a 30 mm extent
+sct_process_segmentation -i t2_seg.nii.gz -pmj t2_pmj.nii.gz -pmj-distance 60 -pmj-extent 30 -qc "$SCT_BP_QC_FOLDER" -qc-image t2.nii.gz -o csa_pmj.csv
 # Go back to root folder
 cd ..
 
