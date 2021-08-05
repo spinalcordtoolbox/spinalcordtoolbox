@@ -270,24 +270,6 @@ code.literal {
     background: #3d3d3c;
 }
 
-/* Sidebar */
-
-/* Blue Sidebar */
-
-/* .sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
-    color: #fcfcfc;
-}
-
-.sidebar-tree .caption, .sidebar-tree .caption-text {
-    color: #fcfcfc;
-}
-
-:root {
-    --color-sidebar-background: #0054af;
-    --color-sidebar-item-background--hover: #0866c7;
-    --color-sidebar-link-text: #fcfcfc;
-} */
-
 /* Dark Grey Sidebar */
 
 .sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
@@ -306,7 +288,7 @@ code.literal {
 } */
 
 :root {
-    --color-sidebar-background: #3d3d3c
+    --color-sidebar-background: #3d3d3c;
     --color-sidebar-item-background--hover: #5a5a58;
     --color-sidebar-link-text: #fcfcfc;
 }
