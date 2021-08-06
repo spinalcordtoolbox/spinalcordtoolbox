@@ -9,7 +9,7 @@ Tutorial pages
 We provide the following hands-on tutorials for SCT's command-line tools.
 
 .. toctree::
-   :numbered:
+   :numbered: 2
    :maxdepth: 1
 
    tutorials/spinalcord-segmentation
