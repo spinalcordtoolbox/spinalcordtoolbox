@@ -9,23 +9,13 @@ Tutorial pages
 We provide the following hands-on tutorials for SCT's command-line tools.
 
 .. toctree::
-   :numbered: 2
-   :maxdepth: 1
+   :numbered: 3
+   :maxdepth: 2
 
-   tutorials/spinalcord-segmentation
-   tutorials/vertebral-labeling
-   tutorials/template-registration
-   tutorials/shape-metric-computation
-   tutorials/registering-additional-contrasts
-   tutorials/mtr-computation
-   tutorials/gm-wm-segmentation
-   tutorials/improving-registration-with-gm-seg
-   tutorials/gm-wm-metric-computation
-   tutorials/processing-dmri-data
-   tutorials/processing-fmri-data
-   tutorials/spinalcord-smoothing
-   tutorials/visualizing-misaligned-cords
-   tutorials/batch-processing-of-subjects
+   tutorials/anat
+   tutorials/gm-wm
+   tutorials/4d
+   tutorials/other
 
 .. _completing-the-tutorials-in-sequence:
 
