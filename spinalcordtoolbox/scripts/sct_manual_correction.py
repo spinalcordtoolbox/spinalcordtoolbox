@@ -80,9 +80,9 @@ def get_parser():
         default='./')
     optional.add_argument(
         '-software',
-        default="fsleyes",
+        default='fsleyes',
         metavar=Metavar.str,
-        choices=["fsleyes", "itk-snap"]
+        choices=['fsleyes', 'itksnap']
     )
     optional.add_argument(
         '-qc-only',
@@ -121,11 +121,11 @@ def get_function(task):
 
 def get_suffix(task, suffix=''):
     if task == 'FILES_SEG':
-        return '_seg'+suffix
+        return '_seg' + suffix
     elif task == 'FILES_LABEL':
-        return '_labels'+suffix
+        return '_labels' + suffix
     elif task == 'FILES_PMJ':
-        return '_pmj'+suffix
+        return '_pmj' + suffix
 
     else:
         raise ValueError("This task is not recognized: {}".format(task))
