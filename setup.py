@@ -98,6 +98,7 @@ setup(
                 'sct_label_vertebrae',
                 'sct_maths',
                 'sct_merge_images',
+                'sct_manual_correction',
                 'sct_process_segmentation',
                 'sct_run_batch',
                 'sct_propseg',
