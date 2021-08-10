@@ -5,11 +5,13 @@ Now that we have a mask highlighting the spinal cord, we can apply motion correc
 
 .. code::
 
-   sct_fmri_moco -i fmri.nii.gz -m mask_fmri.nii.gz
+   sct_fmri_moco -i fmri.nii.gz -m mask_fmri.nii.gz  -qc ~/qc_singleSubj -qc-seg t2_seg_reg.nii.gz
 
 :Input arguments:
    - ``-i`` : The input fMRI image.
    - ``-m`` : A mask used to limit the voxels considered by the motion correction algorithm.
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+   - ``-qc-seg`` :  Segmentation of spinal cord to improve cropping in QC report.
 
 :Output files/folders:
    - ``fmri_moco.nii.gz`` : The motion-corrected 4D fMRI image.

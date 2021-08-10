@@ -13,7 +13,7 @@ First, we extract the MTR from the right and left corticospinal tracts.
    sct_extract_metric -i mtr.nii.gz -f label/atlas -method map -l 4,5 -z 5:15 -o mtr_in_cst.csv
 
 :Input arguments:
-   - ``-i`` : Image to extract intensity values from.
+   - ``-i`` : Image to extract values from.
    - ``-f`` : File or folder used to pick out specific regions from the input image. In this case, we supply the folder of the white matter atlas that was transformed to the space of the MTR data.
    - ``-method`` : We specify ``map`` to choose the Maximum a Posteriori method, which helps to account for the partial volume effect. This method is most suitable for small regions. This method should only be used with the PAM50 white/gray matter atlas (or with any custom atlas) as long as the sum across all overlapping labels equals 1 in each voxel part of the atlas.
    - ``-l`` : The IDs of the label (or group of labels) to compute metrics for. In this case, labels 4 and 5 correspond to the left and right lateral corticospinal tracts. You can see the full list of labels to choose from by running ``sct_extract_metric -list-labels``.
@@ -23,6 +23,10 @@ First, we extract the MTR from the right and left corticospinal tracts.
 .. csv-table:: ``mtr_in_cst.csv``: MTR values in corticospinal tracts
    :file: mtr_in_cst.csv
    :header-rows: 1
+
+.. TODO: In the SCT Course video, "Size[vox]" used to say ~1500 because it included the voxels used in all slices. Now, it shows 67/68, which I assume is the average size across all of the slices. Is this change expected? When did we make this change?
+
+We can see from the results that the MTR for both the left and right tracts is comparable, which is to be expected, given that the example data in this case was taken from a healthy adult.
 
 Dorsal columns (averages across C2-C4 vertebral levels)
 -------------------------------------------------------
@@ -34,9 +38,9 @@ Next, we extract the MTR from the dorsal columns.
    sct_extract_metric -i mtr.nii.gz -f label/atlas -method wa -l 53 -vert 2:4 -o mtr_in_dc.csv
 
 :Input arguments:
-   - ``-i`` : Image to extract intensity values from.
+   - ``-i`` : Image to extract values from.
    - ``-f`` : File or folder used to pick out specific regions from the input image. In this case, we supply the folder of the white matter atlas that was transformed to the space of the MTR data.
-   - ``-method`` : TODO: Why do we specify ``wa`` here as opposed to ``map``?
+   - ``-method`` : TODO: Why do we specify ``wa`` here as opposed to ``map``? This was glossed over in the SCT Course video...
    - ``-l`` : The IDs of the label (or group of labels) to extract metrics for. In this case, label 53 is a combined label that represents labels 0:3 (or, the left and right fasciculus cuneatus and left and right fasciculus gracilis together). You can see the full list of labels to choose from by running ``sct_extract_metric -list-labels``.
    - ``-vert`` : This argument further restricts the metric extraction to specific vertebral levels. In this case, 3 levels in total (C2-C4) will be used for the averaging process.
    - ``-o`` : The name of the output file.
@@ -49,4 +53,4 @@ Next, we extract the MTR from the dorsal columns.
 
    When restricting the metric computation to specific vertebral levels or slices, as is done in the examples above, be careful to always check the associated volume fraction. If too low, your quantifications will be unreliable. If you publish, we recommend including the volume fraction associated with all estimated metrics.
 
-   (TODO: What is meant by "volume fraction" here? How would this be something the user calculates/checks?)
+   (TODO: What is meant by "volume fraction" here? How would the user calculate/check the volume fractions? Should we say "volume size" instead of "fraction"?)

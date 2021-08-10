@@ -1,4 +1,4 @@
-e.. TODO:
+.. TODO:
 
    Is this one-page tutorial necessary? It is basically just telling users that the ``sct_flatten_sagittal`` tool exists. (Compared to other tutorials, which demonstrate multi-step workflows.)
 

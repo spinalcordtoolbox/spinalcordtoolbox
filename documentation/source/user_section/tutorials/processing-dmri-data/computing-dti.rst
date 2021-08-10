@@ -1,7 +1,7 @@
 Computing DTI for motion corrected dMRI data
 ############################################
 
-Here, we compute the diffusion tensor. SCT relies on the excellent dipy library for computing dMRI metrics `[Garyfallidis et al., Front Neuroinform 2014] <https://pubmed.ncbi.nlm.nih.gov/24600385/>`_.
+Here, we compute the diffusion tensor. SCT relies on the excellent ``dipy`` library for computing dMRI metrics `[Garyfallidis et al., Front Neuroinform 2014] <https://pubmed.ncbi.nlm.nih.gov/24600385/>`_.
 
 .. code::
 
@@ -27,4 +27,4 @@ Here, we compute the diffusion tensor. SCT relies on the excellent dipy library 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/processing-dmri-data/io-sct_dmri_compute_dti.png
    :align: center
 
-Now that we have the diffusion tensor images, we can register the dMRI data to the PAM50 template so that we can use the template to extract these metrics from specific regions of the image.
+Now that we have the diffusion tensor images, we can move on to registering the dMRI data to the PAM50 template, which allows us to extract these DTI metrics from specific regions of the image.

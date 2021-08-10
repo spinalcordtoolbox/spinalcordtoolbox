@@ -1,9 +1,11 @@
 Motion correction for dMRI images
 #################################
 
-SCT features a complex motion correction algorithm, which is inspired by `[Xu et al., Neuroimage 2013] <https://pubmed.ncbi.nlm.nih.gov/23178538/>`_. The key aspects of this algorithm are as follows:
+SCT features a complex motion correction algorithm, which is inspired by `[Xu et al., Neuroimage 2013] <https://pubmed.ncbi.nlm.nih.gov/23178538/>`_.
 
-.. TODO: The explanation of the motion correction algorithm is a little confusing to me. Rewrite into a step-by-step process? Make it more brief? Leave some of the explanation for the ``-h`` description?
+.. TODO: The explanation of the motion correction algorithm and the specific parameters is a little confusing to me. Should we rewrite into a step-by-step process? Make it more brief? Leave some of the explanation for the ``-h`` description?
+
+   The key aspects of this algorithm are as follows:
 
     * **SliceReg:** Slice-wise registration regularized along the Z direction (based on the function antsSliceRegularizedRegistration from ANTs, and described in [De Leener et al., Neuroimage 2017]).
     * **Grouping:** there is the possibility to group successive volumes in order to have sufficient SNR to estimate a reliable transformation. If your data are very low SNR you can increase the number of successive images that are averaged into group with the flag ``-g``.
@@ -13,11 +15,13 @@ SCT features a complex motion correction algorithm, which is inspired by `[Xu et
 
 .. code::
 
-   sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt
+   sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt -qc ~/qc_singleSubj -qc-seg TODO
 
 :Input arguments:
    - ``-i`` : The input dMRI image.
    - ``-bvec`` : A text file with three lines, each containing a value for each volume in the input image. Together, the the three sets of values represent the ``(x, y, z)`` coordinates of the b-vectors, which indicate the direction of the diffusion encoding for each volume of the dMRI image.
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+   - ``-qc-seg`` : TODO: QC requires a segmentation. However, the segmentation produced in the previous "Preprocessing" page was not cropped, so, it doesn't work with ``-qc-seg``! We will need to rewrite either the tutorial or the QC code so that they work together to form a "typical" usage.
 
 :Output files/folders:
    - ``dmri_crop_moco.nii.gz`` : The motion-corrected 4D dMRI image.

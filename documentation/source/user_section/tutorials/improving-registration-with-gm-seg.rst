@@ -7,7 +7,7 @@ This tutorial is a follow-on for both the :ref:`gm-wm-segmentation` tutorial and
 
    Most of the time, the improvement of using GM registration is small. In some cases it can even make it worse (because the result will largely depend on the quality of the GM segmentation), so in general we don’t recommend going through this 2-step registration.
 
-   .. TODO: When _do_ we recommend going through this, then?
+   .. TODO: This warning was present in the presenter notes of one of the slides, but is a little discouraging. It begs the questions: "What is the point of this tutorial? If we don't recommend this method (in general), then in what specific cases would we recommend going through this?"
 
 .. toctree::
    :caption: Table of Contents

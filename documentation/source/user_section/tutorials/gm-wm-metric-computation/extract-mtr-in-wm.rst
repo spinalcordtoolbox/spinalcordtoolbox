@@ -3,14 +3,12 @@ Using the atlas to extract MTR in white matter
 
 In this example, we will extract and aggregate values from the white matter region of an MTR image. The ``mtr.nii.gz`` image used here comes from the previous tutorial :ref:`mtr-computation`.
 
-In this case, rather than supplying a binary mask as was done in previous steps, here we will use the white matter atlas. This way, we can account for the partial volume effect, because the perimeter of the mask will be represented using the full range of values from ``0`` to ``1`` (rather than binarized). This lets us more accurately represent the interface between the white and gray matter, as well as the interface between the white matter and the cerebrospinal fluid.
-
 .. code::
 
    sct_extract_metric -i mtr.nii.gz -f label/atlas -method map -l 51 -o mtr_in_wm.csv
 
 :Input arguments:
-   - ``-i`` : Image to extract intensity values from.
+   - ``-i`` : Image to extract values from.
    - ``-f`` : File or folder used to pick out specific regions from the input image. In this case, we supply the folder of the white matter atlas that was transformed to the space of the MTR data.
    - ``-method`` : We specify ``map`` to choose the Maximum a Posteriori method, which helps to account for the partial volume effect. This method is most suitable for small regions. This method should only be used with the PAM50 white/gray matter atlas (or with any custom atlas) as long as the sum across all overlapping labels equals 1 in each voxel part of the atlas.
    - ``-l`` : The IDs of the label (or group of labels) to compute metrics for. In this case, label 51 is a combined label that represents all of the WM tracts together. You can see the full list of labels to choose from by running ``sct_extract_metric -list-labels``.
@@ -20,4 +18,4 @@ In this case, rather than supplying a binary mask as was done in previous steps,
    :file: mtr_in_wm.csv
    :header-rows: 1
 
-The label volume fraction is indicated as “Size [vox]”, which gives you a sense of the reliability of the measure. In this example, for each slice, the metric was computed based on 50-70 voxels. As demonstrated in `[De Leener et al., Neuroimage 2017; Appendix] <https://pubmed.ncbi.nlm.nih.gov/27720818/>`_, having at least 240 voxels results in an error smaller than 1%, while having 30 voxels results in an error inferior than 2% (assuming an SNR of 10).
+The label volume fraction is indicated as “``Size [vox]``”, which gives you a sense of the reliability of the measure. In this example, for each slice, the metric was computed based on 50-70 voxels. As demonstrated in `[De Leener et al., Neuroimage 2017; Appendix] <https://pubmed.ncbi.nlm.nih.gov/27720818/>`_, having at least 30 voxels results in an error smaller than 2%, while having at least 240 voxels results in an error smaller than 1% (assuming an SNR of 10).

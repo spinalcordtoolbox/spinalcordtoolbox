@@ -22,8 +22,15 @@ This registration step is similar to that of previous tutorials. However, a nota
    - ``-d`` : Destination image.
    - ``-dseg`` : Segmentation for the destination image. Here, we use the white matter segmentation for the same reasons as ``-iseg``.
    - ``-initwarp`` : Warping field used to initialize the source image. Here, we supply the ``warp_template2anat.nii.gz`` file from the previous T2 registration. (See: :ref:`template-registration`)
+      - TODO: I'm concerned that the usage of the ``-initwarp`` flag is not clear enough. For users who are following this tutorial standalone, they may not have the full context of the previous tutorial, so the usage of ``-initwarp`` may appear to "come out of nowhere". But, even if they have the context, reusing intermediate results raises some questions:
+          - Is ``-initwarp`` optional or mandatory?
+          - What should the command look like without ``-initwarp``?
+          - Will the registration results be significantly worse without ``-initwarp``?
+          - In what cases should ``-initwarp`` be used, and in what cases can they perform registration directly?
    - ``-initwarpinv``: Warping field used to initialize the destination image. Here, we supply the inverse warping field, ``warp_anat2template.nii.gz`` from the previous T2 registration. (See: :ref:`template-registration`)
-   - ``-param`` : TODO: Why are we using ``rigid`` specifically? The MT tutorial uses ``centermass`` instead... do we need to explain the discrepancy?
+      - TODO: Same concerns as above.
+   - ``-param`` :
+      - TODO: Why are we using ``rigid`` specifically? The MT tutorial uses ``centermass`` instead... do we need to explain the discrepancy? (Not explained in SCT course.)
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
@@ -42,4 +49,6 @@ Finally, it is also worth renaming the automatically generated warping fields fo
    mv warp_PAM50_t2s2t2s.nii.gz warp_template2t2s.nii.gz
    mv warp_t2s2PAM50_t2s.nii.gz warp_t2s2template.nii.gz
 
+.. TODO: I've excluded the ``sct_warp_template`` step here because the T2* warped template was not actually used for anything in later steps.
 
+   Also, my intent (more generally) is to convey that the main result of registration is to produce warping fields, and that those warping fields are the thing that should be passed along to other tutorials. (i.e. later in the "metric tutorial" I want to communicate that the user needs a warping field from a previous registration, that way they can warp the template *for the purposes of metric extraction*.)

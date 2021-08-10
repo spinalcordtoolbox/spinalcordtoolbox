@@ -3,7 +3,7 @@ Before starting this tutorial
 
 1. Read through the following pages to familiarize yourself with key SCT concepts:
 
-    * :ref:`qc`: Primer for SCT's Quality Control interface. After each step of this tutorial, you will be able to open a QC report that lets you easily evaluate the results of each command.
+   * :ref:`qc`: Primer for SCT's Quality Control interface. After each step of this tutorial, you will be able to open a QC report that lets you easily evaluate the results of each command.
 
 2. Make sure that you have the following files in your working directory:
 

@@ -43,7 +43,7 @@ Due to the low contrast between spinal cord and cerebrospinal fluid of fMRI data
    - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
 
-Once we have the spinal cord segmentation for the T2 image, we can transform that segmentation into the space of the fMRI data by registering the T2 segmentation with the fMRI mean image created earlier.
+Now that we have the spinal cord segmentation for the T2 image, we can transform that segmentation into the space of the fMRI data by registering the T2 segmentation with the fMRI mean image created earlier.
 
 .. code::
 

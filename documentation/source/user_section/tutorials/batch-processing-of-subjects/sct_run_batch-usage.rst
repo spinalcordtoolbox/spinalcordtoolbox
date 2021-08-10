@@ -1,7 +1,7 @@
 Running the sample script (``process_data.sh``) using ``sct_run_batch``
 #######################################################################
 
-In your working directory, you should have the batch processing script, a config file, and a data directory containing three subjects. You can double-check this using the ``ls`` command:
+In your working directory, you should have the batch processing script, a config file, and a data directory containing three subjects in `BIDS dataset structure <https://bids-specification.readthedocs.io/en/stable/>`_. You can double-check this using the ``ls`` command:
 
 .. code:: sh
 

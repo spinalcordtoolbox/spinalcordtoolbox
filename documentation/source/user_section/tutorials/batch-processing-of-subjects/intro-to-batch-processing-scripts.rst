@@ -21,6 +21,6 @@ Example scripts
 
 The SCT team itself regularly creates customized pipelines for its research efforts. You can see examples of different projects and studies here: https://github.com/sct-pipeline
 
-SCT also provides a large example script called ``batch_processing.sh`` that is meant to introduce all of the main functionality within SCT.
+SCT also provides a large example script called ``batch_processing.sh`` that is meant to introduce all of the main functionality within SCT. You can read more about this on the :ref:`Batch Processing Example <getting-started>` page.
 
 For the purposes of this tutorial, however, we will focus on a smaller script called ``process_data.sh`` that is included alongside the data for this tutorial. The sample script contains a basic processing workflow, demonstrating how to compute CSA for T2 data, and MTR for the white matter regions of MT data.
