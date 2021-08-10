@@ -97,7 +97,7 @@ todo_include_todos = False
 extlinks = {
     # e.g. :sct_tutorial_data:`data_template-registration.zip` gets expanded into:
     # 'https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
-    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20210609/%s', '')
+    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/temp-release-for-PR/%s', '')
 }
 
 
