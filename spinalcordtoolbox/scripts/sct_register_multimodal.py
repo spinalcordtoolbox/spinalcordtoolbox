@@ -227,7 +227,11 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Just put source into destination (no optimization)."
+        help="Supplying this option will skip cord shape optimizations (e.g. translations, rotations, deformations) "
+             "during registration. Instead, the registration will only change the properties of the input image "
+             "(dimension, resolution, orientation) so that they match the properties of the destination image. "
+             "(Conceptually, this is like copying the source data into the destination data without change, "
+             "hence the name 'identity'.)"
     )
     optional.add_argument(
         '-z',

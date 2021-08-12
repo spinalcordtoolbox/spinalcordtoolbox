@@ -28,7 +28,11 @@ First we compute the mean of the 4D fMRI data to obtain a coarse 3D approximatio
 Generating a spinal cord segmentation
 -------------------------------------
 
-Due to the low contrast between spinal cord and cerebrospinal fluid of fMRI data, it is difficult to directly obtain a spinal cord segmentation for fMRI data using ``sct_deepseg_sc``. So, as a workaround, we will instead obtain a spinal cord segmentation for another contrast.
+Due to the low contrast between spinal cord and cerebrospinal fluid of fMRI data, it is difficult to directly obtain a spinal cord segmentation for fMRI data using ``sct_deepseg_sc``. So, as a workaround, we will instead obtain a spinal cord segmentation for another contrast (T2), then transform it to the space of the fMRI data.
+
+
+Generating a T2 segmentation
+============================
 
 .. code::
 
@@ -43,7 +47,10 @@ Due to the low contrast between spinal cord and cerebrospinal fluid of fMRI data
    - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
 
-Now that we have the spinal cord segmentation for the T2 image, we can transform that segmentation into the space of the fMRI data by registering the T2 segmentation with the fMRI mean image created earlier.
+Transforming the T2 segmentation to the fMRI space
+==================================================
+
+Since the segmentation image will only be used to coarsely highlight the region of interest, a complex transformation is not necessary, so we supply the ``-identity`` to ``sct_register_multimodal`` to speed up processing.
 
 .. code::
 
@@ -54,7 +61,7 @@ Now that we have the spinal cord segmentation for the T2 image, we can transform
 :Input arguments:
    - ``-i`` : Input image
    - ``-d`` : Destination image
-   - ``-identity`` : Just put source into destination (no optimization). (TODO: This description is a little vague/confusing for me. How does this mean ``-identity``? If no optimiation is performed, then what does this accomplish? Can we clarify this in the help description of ``sct_register_multimodal``.)
+   - ``-identity`` : Supplying this option will skip cord shape optimizations (e.g. translations, rotations, deformations) during registration. Instead, the registration will only change the properties of the input image (dimension, resolution, orientation) so that they match the properties of the destination image. (Conceptually, this is like copying the source data into the destination data without change, hence the name 'identity'.)
 
 :Output files/folders:
    - ``t2_seg_reg.nii.gz`` : The T2 segmentation, transformed to the space of the fMRI mean image. This file is what will be used to create the spinal cord mask for fMRI motion correction.
