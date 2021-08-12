@@ -1410,6 +1410,23 @@ def add_suffix(fname, suffix):
     return os.path.join(stem + suffix + ext)
 
 
+def remove_suffix(fname, suffix):
+    """
+    Remove suffix between end of file name and extension.
+
+    :param fname: absolute or relative file name with suffix. Example: t2_mean.nii
+    :param suffix: suffix. Example: _mean
+    :return: file name without suffix. Example: t2.nii
+
+    Examples:
+
+    - remove_suffix(t2_mean.nii, _mean) -> t2.nii
+    - remove_suffix(t2a.nii.gz, a) -> t2.nii.gz
+    """
+    stem, ext = splitext(fname)
+    return os.path.join(stem.replace(suffix, '') + ext)
+
+
 def splitext(fname):
     """
     Split a fname (folder/file + ext) into a folder/file and extension.
