@@ -64,10 +64,12 @@ Once the segmentation is obtained, we can use it to create a mask around the cor
 :Output files/folders:
    - ``mask_dmri_mean.nii.gz`` : An imagine containing a mask surrounding the spinal cord.
 
+This mask is what we will use to crop the data to only keep the cord.
+
 Cropping around the spinal cord using the mask
 ----------------------------------------------
 
-This mask is what we will use to crop the data to only keep the cord.
+First, we crop the original 4D dMRI image.
 
 .. code::
 
@@ -80,3 +82,17 @@ This mask is what we will use to crop the data to only keep the cord.
 
 :Output files/folders:
    - ``dmri_crop.nii.gz`` : The cropped 4D dMRI images.
+
+Additionally, we also crop around the spinal cord segmentation image. This will be used for visualization purposes when generating the QC report for the motion correction step.
+
+.. code::
+
+   sct_crop_image -i dmri_mean_seg.nii.gz -m mask_dmri_mean.nii.gz -o dmri_mean_seg_crop.nii.gz
+
+:Input arguments:
+   - ``-i`` : The input image to crop.
+   - ``-m`` : The mask used to crop the image. The extents of the mask across all slices will be used to determine the 3D rectangular bounding box to crop the image with.
+   - ``-o``: The filename of the output image.
+
+:Output files/folders:
+   - ``dmri_mean_seg_crop.nii.gz`` : The cropped 3D segmentation image.

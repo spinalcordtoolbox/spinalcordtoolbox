@@ -15,13 +15,13 @@ SCT features a complex motion correction algorithm, which is inspired by `[Xu et
 
 .. code::
 
-   sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt -qc ~/qc_singleSubj -qc-seg TODO
+   sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt -qc ~/qc_singleSubj -qc-seg dmri_mean_seg_crop.nii.gz
 
 :Input arguments:
    - ``-i`` : The input dMRI image.
    - ``-bvec`` : A text file with three lines, each containing a value for each volume in the input image. Together, the the three sets of values represent the ``(x, y, z)`` coordinates of the b-vectors, which indicate the direction of the diffusion encoding for each volume of the dMRI image.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
-   - ``-qc-seg`` : TODO: QC requires a segmentation. However, the segmentation produced in the previous "Preprocessing" page was not cropped, so, it doesn't work with ``-qc-seg``! We will need to rewrite either the tutorial or the QC code so that they work together to form a "typical" usage.
+   - ``-qc-seg`` : Segmentation of spinal cord to improve cropping in the QC report.
 
 :Output files/folders:
    - ``dmri_crop_moco.nii.gz`` : The motion-corrected 4D dMRI image.
