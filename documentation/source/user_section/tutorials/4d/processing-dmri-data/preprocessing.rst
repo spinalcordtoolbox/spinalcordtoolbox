@@ -59,7 +59,7 @@ Once the segmentation is obtained, we can use it to create a mask around the cor
    - ``-i`` : The input image to create the mask from.
    - ``-p`` : The process used to position the mask. The ``centerline`` process will compute the center of mass for each slice of ``dmri_mean_seg.nii.gz``, then use those locations for the center of the mask at each slice.
    - ``-f``: The shape of the mask. Here, we create cylinder around the centerline.
-   - ``-size``: The {diameter? radius? TODO: Clarify in help description.} of the mask.
+   - ``-size``: The diameter of the mask.
 
 :Output files/folders:
    - ``mask_dmri_mean.nii.gz`` : An imagine containing a mask surrounding the spinal cord.
