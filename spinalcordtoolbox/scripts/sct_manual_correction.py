@@ -2,14 +2,11 @@
 #
 # Script to perform manual correction of segmentations and vertebral labeling.
 #
-# For usage, type: python manual_correction.py -h
-#
 # Authors: Jan Valosek, Julien Cohen-Adad and Sandrine Bédard
 
-import argparse
-import coloredlogs
 import glob
 import json
+import logging
 import os
 import sys
 import shutil
@@ -17,11 +14,10 @@ from textwrap import dedent
 import time
 import yaml
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
+from spinalcordtoolbox.utils import fs
+from spinalcordtoolbox.image import add_suffix, remove_suffix
 
-
-# Folder where to output manual labels, at the root of a BIDS dataset.
-# TODO: make it an input argument (with default value)
-FOLDER_DERIVATIVES = os.path.join('derivatives', 'labels')
+# TODO: adapt for GM seg
 
 
 def get_parser():
@@ -78,6 +74,11 @@ def get_parser():
              "does not already exist, it will be created."
              "Example: ~/data-ukbiobank",
         default='./')
+    optional.add_argument(
+        '-path-segmanual',
+        metavar=Metavar.folder,
+        default='./derivatives/labels'
+    )
     optional.add_argument(
         '-software',
         default='fsleyes',
@@ -159,8 +160,8 @@ def correct_vertebral_labeling(fname, fname_label):
     :param name_rater:
     :return:
     """
-    message = "Click at the posterior tip of the disc between C1-C2, C2-C3 and C3-C4 vertebral levels, then click 'Save and Quit'."
-    os.system('sct_label_utils -i {} -create-viewer 2,3,4 -o {} -msg "{}"'.format(fname, fname_label, message))
+    message = "Place labels at the posterior tip of each inter-vertebral disc. E.g. Label 3: C2/C3, Label 4: C3/C4, etc., then click 'Save and Quit'." 
+    os.system('sct_label_utils -i {} -create-viewer 2:23 -o {} -msg "{}"'.format(fname, fname_label, message))
 
 
 def correct_pmj_label(fname, fname_label):
@@ -188,6 +189,36 @@ def create_json(fname_nifti, name_rater):
         json.dump(metadata, outfile, indent=4)
 
 
+def check_files_exist(dict_files):  # TODO: move to utils.fs
+    """
+    Check if all files listed in the input dictionary exist
+    :param dict_files:
+    :param path_data: folder where BIDS dataset is located
+    :return:
+    """
+    missing_files = []
+    for task, files in dict_files.items():
+        if files is not None:
+            for file in files:
+                if not os.path.exists(file):
+                    missing_files.append(file)
+    if missing_files:
+        logging.error("The following files are missing: \n{}. \nPlease check that the files listed "
+                        "in the yaml file and the input path are correct.".format(missing_files))
+
+
+def check_output_folder(path_manual):  #TODO: move to utils.fs
+    """
+    Make sure path exists, has writing permissions.
+    :param path_bids:
+    :return: path_bids_derivatives
+    """
+    
+    #if not os.path.exists(path_manual):
+    #    logging.error("Output path does not exist: {}".format(path_manual))
+    os.makedirs(path_manual, exist_ok=True)
+
+
 def main():
 
     # Parse the command line arguments
@@ -195,16 +226,14 @@ def main():
     args = parser.parse_args()
 
     # Logging level
-    if args.verbose:
-        coloredlogs.install(fmt='%(message)s', level='DEBUG')
-    else:
-        coloredlogs.install(fmt='%(message)s', level='INFO')
+    #if args.verbose:
+    #    coloredlogs.install(fmt='%(message)s', level='DEBUG')
+    #else:
+    #    coloredlogs.install(fmt='%(message)s', level='INFO')
 
     # check if input yml file exists
-    if os.path.isfile(args.config):
-        fname_yml = args.config
-    else:
-        sys.exit("ERROR: Input yml file {} does not exist or path is wrong.".format(args.config))
+    fs.check_file_exist(args.config)
+    fname_yml = args.config
 
     # fetch input yml file as dict
     with open(fname_yml, 'r') as stream:
@@ -214,14 +243,14 @@ def main():
             print(exc)
 
     # Curate dict_yml to only have filenames instead of absolute path
-    dict_yml = utils.curate_dict_yml(dict_yml)
+    #dict_yml = utils.curate_dict_yml(dict_yml)
 
     # check for missing files before starting the whole process
-    utils.check_files_exist(dict_yml, args.path_in)
+    check_files_exist(dict_yml)
 
     # check that output folder exists and has write permission
-    path_out_deriv = utils.check_output_folder(args.path_out, FOLDER_DERIVATIVES)
-
+    check_output_folder(args.path_segmanual)
+    path_out = args.path_segmanual
     # Get name of expert rater (skip if -qc-only is true)
     if not args.qc_only:
         name_rater = input("Enter your name (Firstname Lastname). It will be used to generate a json sidecar with each "
@@ -234,7 +263,7 @@ def main():
     if args.add_seg_only:
         path_list = glob.glob(args.path_in + "/**/*_seg.nii.gz", recursive=True)  # TODO: add other extension
         # Get only filenames without suffix _seg  to match files in -config .yml list
-        file_list = [utils.remove_suffix(os.path.split(path)[-1], '_seg') for path in path_list]
+        file_list = [remove_suffix(os.path.split(path)[-1], '_seg') for path in path_list]
 
     # TODO: address "none" issue if no file present under a key
     # Perform manual corrections
@@ -253,8 +282,8 @@ def main():
                 contrast = utils.get_contrast(file)
                 fname = os.path.join(args.path_in, subject, contrast, file)
                 fname_label = os.path.join(
-                    path_out_deriv, subject, contrast, utils.add_suffix(file, get_suffix(task, '-manual')))
-                os.makedirs(os.path.join(path_out_deriv, subject, contrast), exist_ok=True)
+                    path_out, subject, contrast, add_suffix(file, get_suffix(task, '-manual')))
+                os.makedirs(os.path.join(path_out, subject, contrast), exist_ok=True)
                 if not args.qc_only:
                     if os.path.isfile(fname_label):
                         # if corrected file already exists, asks user if they want to overwrite it
@@ -275,18 +304,14 @@ def main():
                     # Perform labeling for the specific task
                     if do_labeling:
                         if task in ['FILES_SEG']:
-                            fname_seg = utils.add_suffix(fname, get_suffix(task))
+                            fname_seg = add_suffix(fname, get_suffix(task))
                             if overwrite:
                                 shutil.copyfile(fname_seg, fname_label)
                             if not args.add_seg_only:
                                 correct_segmentation(fname, fname_label)
                         elif task == 'FILES_LABEL':
-                            if not utils.check_software_installed():
-                                sys.exit("Some required software are not installed. Exit program.")
                             correct_vertebral_labeling(fname, fname_label)
                         elif task == 'FILES_PMJ':
-                            if not utils.check_software_installed():
-                                sys.exit("Some required software are not installed. Exit program.")
                             correct_pmj_label(fname, fname_label)
                         else:
                             sys.exit('Task not recognized from yml file: {}'.format(task))
