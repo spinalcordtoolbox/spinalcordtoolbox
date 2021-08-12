@@ -1,7 +1,7 @@
 .. _mt-registraton-without-anat:
 
-Registeration Option 2: Direct registration to the template
-###########################################################
+Registration Option 2: Direct registration to the template
+##########################################################
 
 In the case that you have only the MT data without the anatomical data, you can still perform registration. To do so, all you will need to do is apply the same vertebral labeling and template registration steps that were covered in :ref:`template-registration`.
 
@@ -24,6 +24,6 @@ Then, you can register to the template. Note: In case the metric image has axial
 
    Input/output images for ``sct_register_to_template`` using MT1 data.
 
-.. important::
+.. warning::
 
    Only use this method if you don't also have anatomical data. If you do have anatomical data, we recommend that you stick with :ref:`mt-registraton-with-anat`. By reusing the registration results, you ensure that you use a consistent transformation between each contrast in your analysis.

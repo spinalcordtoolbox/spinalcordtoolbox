@@ -1,15 +1,267 @@
+import numpy as np
 import pytest
 import logging
+import skimage
+import tempfile
+
+import nibabel
 
 from spinalcordtoolbox.scripts import sct_compute_snr
 
 logger = logging.getLogger(__name__)
 
+# Declare the signal intensity in the object created in the dummy_*() functions. This object will be used to compute
+# the SNR using various methods.
+SIGNAL_OBJECT = 1000
 
-@pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
-def test_sct_compute_snr_no_checks():
-    """Run the CLI script without checking results.
-    TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
-    sct_compute_snr.main(argv=['-i', 'dmri/dwi.nii.gz', '-m', 'dmri/dmri_T0001.nii.gz', '-method', 'diff',
-                               '-vol', '0,5'])
+# Define a scaling factor for a slice. This scaling factor mimics inhomogeneous transmit in MRI, or intensity bias field
+# correction filer.
+SCALING_SLICE = 100
+
+
+def dummy_3d_data(scale_mid_slice=0):
+    """
+    Create 3d image with object in the middle and Rayleigh noise distribution. Outputs a nibabel object.
+    :param scale_mid_slice: If non-null, the last slice is scaled. This is to mimic MRI scans with variable transmit
+    profile.
+    :return:
+    """
+    data = np.ones([32, 32, 32], dtype=np.float)
+    # Add an object with representative intensity in the middle of the image
+    data[9:24, 9:24, 9:24] = SIGNAL_OBJECT
+    # Add Gaussian noise with unit variance on two separate images
+    data1 = skimage.util.random_noise(data, mode='gaussian', clip=False, mean=0, var=1)
+    data2 = skimage.util.random_noise(data, mode='gaussian', clip=False, mean=0, var=1)
+    if scale_mid_slice:
+        data1[..., 16] *= scale_mid_slice
+        data2[..., 16] *= scale_mid_slice
+    # Compute the square root of the sum of squares to obtain a Rayleigh (equivalent to Chi) distribution. This
+    # distribution is a more realistic representation of noise in magnitude MRI data, which is obtained by combining
+    # imaginary and real channels (each having Gaussian distribution).
+    data = np.sqrt(data1**2 + data2**2)
+    return data
+
+
+@pytest.fixture(scope="session")
+def dummy_3d_nib():
+    nii = nibabel.nifti1.Nifti1Image(dummy_3d_data(), np.eye(4))
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nii, filename)
+    return filename
+
+
+@pytest.fixture(scope="session")
+def dummy_3d_nib_scaled():
+    """Create 3D volume with one slice in the middle scaled by a factor SCALING_SLICE"""
+    nii = nibabel.nifti1.Nifti1Image(dummy_3d_data(scale_mid_slice=SCALING_SLICE), np.eye(4))
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nii, filename)
+    return filename
+
+
+@pytest.fixture(scope="session")
+def dummy_4d_nib():
+    """Create 4D volume. We need sufficient volumes to compute reliable standard deviation along the 4th dimension."""
+    data = np.stack([dummy_3d_data() for i in range(50)], axis=3)
+    affine = np.eye(4)
+    nib = nibabel.nifti1.Nifti1Image(data, affine)
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nib, filename)
+    return filename
+
+
+@pytest.fixture(scope="session")
+def dummy_4d_nib_scaled():
+    """Create 4D volume with one slice in the middle scaled."""
+    data = np.stack([dummy_3d_data(scale_mid_slice=SCALING_SLICE) for i in range(50)], axis=3)
+    affine = np.eye(4)
+    nib = nibabel.nifti1.Nifti1Image(data, affine)
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nib, filename)
+    return filename
+
+
+@pytest.fixture(scope="session")
+def dummy_3d_mask_nib():
+    data = np.zeros([32, 32, 32], dtype=np.uint8)
+    data[9:24, 9:24, 9:24] = 1
+    nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nii, filename)
+    return filename
+
+
+@pytest.fixture(scope="session")
+def dummy_3d_mask_noise_nib():
+    data = np.zeros([32, 32, 32], dtype=np.uint8)
+    data[0:5, 0:5, 9:24] = 1
+    nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nii, filename)
+    return filename
+
+
+@pytest.fixture(scope="session")
+def dummy_3d_mask_noise_notconsistent_nib():
+    """Slices are non-null while they are null on the image to compute SNR from."""
+    data = np.zeros([32, 32, 32], dtype=np.uint8)
+    data[0:5, 0:5, 0:32] = 1
+    nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nii, filename)
+    return filename
+
+
+@pytest.mark.parametrize('method', ['diff', 'mult'])
+def test_sct_compute_snr_check_dimension(dummy_3d_nib, method):
+    with pytest.raises(ValueError):
+        sct_compute_snr.main(argv=['-i', dummy_3d_nib, '-m', dummy_3d_nib, '-method', method, '-vol', '0,5'])
+
+
+def test_sct_compute_snr_check_dimension_mask(dummy_4d_nib):
+    with pytest.raises(ValueError):
+        sct_compute_snr.main(argv=['-i', dummy_4d_nib, '-m', dummy_4d_nib, '-method', 'mult'])
+
+
+def test_sct_compute_snr_check_dimension_mask_noise(dummy_3d_nib, dummy_4d_nib):
+    with pytest.raises(ValueError):
+        sct_compute_snr.main(argv=['-i', dummy_3d_nib, '-m', dummy_3d_nib, '-m-noise', dummy_4d_nib,
+                                   '-method', 'single'])
+
+
+def test_sct_compute_snr_check_vol_param(dummy_4d_nib, dummy_3d_nib):
+    with pytest.raises(ValueError):
+        sct_compute_snr.main(argv=['-i', dummy_4d_nib, '-m', dummy_3d_nib, '-m-noise', dummy_3d_nib,
+                                   '-vol', '0,1,2', '-method', 'single'])
+
+
+def test_sct_compute_snr_missing_mask(dummy_4d_nib, dummy_3d_nib):
+    for args in (['-i', dummy_4d_nib, '-m', dummy_3d_nib, '-method', 'single'],
+                 ['-i', dummy_4d_nib, '-method', 'diff']):
+        with pytest.raises(SystemExit) as e:
+            sct_compute_snr.main(argv=args)
+        assert e.value.code == 2
+
+
+def test_sct_compute_snr_notconsistent_mask_noise_mask(dummy_3d_nib, dummy_3d_mask_nib,
+                                                       dummy_3d_mask_noise_notconsistent_nib):
+    with pytest.raises(ValueError):
+        sct_compute_snr.main(argv=['-i', dummy_3d_nib, '-m', dummy_3d_mask_nib,
+                                   '-m-noise', dummy_3d_mask_noise_notconsistent_nib, '-method', 'single'])
+
+
+def test_sct_compute_snr_mult(dummy_4d_nib, dummy_3d_mask_nib):
+    filename = tempfile.NamedTemporaryFile(prefix='snr_mult_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'mult', '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # We need a large tolerance because of the randomization
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.05)
+
+
+def test_sct_compute_snr_mult_vol(dummy_4d_nib, dummy_3d_mask_nib):
+    filename = tempfile.NamedTemporaryFile(prefix='snr_mult_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'mult', '-vol', '0:40', '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # We need a large tolerance because of the randomization
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.05)
+
+
+def test_sct_compute_snr_mult_scaled(dummy_4d_nib_scaled, dummy_3d_mask_nib):
+    filename = tempfile.NamedTemporaryFile(prefix='snr_mult_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib_scaled, '-m', dummy_3d_mask_nib, '-method', 'mult', '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # We need a large tolerance because of the randomization
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.05)
+
+
+def test_sct_compute_snr_diff(dummy_4d_nib, dummy_3d_mask_nib):
+    filename = tempfile.NamedTemporaryFile(prefix='snr_diff_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'diff', '-vol', '0,1', '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # We need a large tolerance because of the randomization
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.05)
+
+
+def test_sct_compute_snr_diff_vol_versus_not_vol(dummy_4d_nib, dummy_3d_mask_nib):
+    """Make sure that if vol is not specified, it uses the first 2 volumes"""
+    filename = tempfile.NamedTemporaryFile(prefix='snr_diff_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'diff', '-vol', '0,1', '-o', filename])
+    filename_no_vol = tempfile.NamedTemporaryFile(prefix='snr_diff_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-method', 'diff', '-o', filename_no_vol])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    with open(filename_no_vol, "r") as f:
+        snr_no_vol = float(f.read())
+    # We need a large tolerance because of the randomization
+    assert snr == snr_no_vol
+
+
+def test_sct_compute_snr_diff_scaled(dummy_4d_nib_scaled, dummy_3d_mask_nib):
+    filename = tempfile.NamedTemporaryFile(prefix='snr_diff_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib_scaled, '-m', dummy_3d_mask_nib, '-method', 'diff', '-vol', '0,1',
+              '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # We need a large tolerance because of the randomization
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.05)
+
+
+def test_sct_compute_snr_single_3d(dummy_3d_nib, dummy_3d_mask_nib, dummy_3d_mask_noise_nib):
+    filename = tempfile.NamedTemporaryFile(prefix='snr_single_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_3d_nib, '-m', dummy_3d_mask_nib, '-m-noise', dummy_3d_mask_noise_nib, '-method', 'single',
+              '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # We need a large tolerance because of the randomization
+    # TODO: Need to figure out what the problem is with the strong bias (~30% less than the "real" SNR)
+    #  see: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3486
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.5)
+
+
+def test_sct_compute_snr_single_4d(dummy_4d_nib, dummy_3d_mask_nib, dummy_3d_mask_noise_nib):
+    filename = tempfile.NamedTemporaryFile(prefix='snr_single_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_4d_nib, '-m', dummy_3d_mask_nib, '-m-noise', dummy_3d_mask_noise_nib, '-method', 'single',
+              '-vol', '0', '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # We need a large tolerance because of the randomization
+    # TODO: Need to figure out what the problem is with the strong bias (~30% less than the "real" SNR)
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.5)
+
+
+def test_sct_compute_snr_single_3d_scaled(dummy_3d_nib_scaled, dummy_3d_mask_nib, dummy_3d_mask_noise_nib):
+    filename = tempfile.NamedTemporaryFile(prefix='snr_single_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_3d_nib_scaled, '-m', dummy_3d_mask_nib, '-m-noise', dummy_3d_mask_noise_nib,
+              '-method', 'single', '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # We need a large tolerance because of the randomization
+    # TODO: Need to figure out what the problem is with the strong bias (~30% less than the "real" SNR)
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.5)
+
+
+def test_sct_compute_snr_single_3d_mask_object(dummy_3d_nib, dummy_3d_mask_nib):
+    """Compute noise statistics in the object ROI. In this case, noise distribution is considered Gaussian,
+    not Rayleigh"""
+    filename = tempfile.NamedTemporaryFile(prefix='snr_single_', suffix='.txt', delete=False).name
+    sct_compute_snr.main(
+        argv=['-i', dummy_3d_nib, '-m', dummy_3d_mask_nib, '-m-noise', dummy_3d_mask_nib, '-method', 'single',
+              '-rayleigh', 0, '-o', filename])
+    with open(filename, "r") as f:
+        snr = float(f.read())
+    # We need a large tolerance because of the randomization
+    assert snr == pytest.approx(np.sqrt(2*SIGNAL_OBJECT**2), rel=0.05)
