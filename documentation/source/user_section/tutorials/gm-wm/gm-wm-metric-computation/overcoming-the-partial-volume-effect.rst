@@ -23,16 +23,7 @@ This method is only useful if you have an existing binary mask for each region o
 Atlas-based methods
 *******************
 
-Instead of using binary masks, we can use the white and gray matter atlas contained within the PAM50 template.
-
-.. TODO: There is some additional info I haven't included from the presenter's notes:
-
-   "Here, we benefit from the fact that the metric is measured within thousands of voxels, where the partial volume for each compartment (e.g., white matter, gray matter, CSF) is known.""
-
-   I'm not 100% certain I understand this quotation. Questions:
-
-   - Thousands of voxels? How so? Isn't a single tract barely even covered by one voxel? Is it the *atlas* that includes thousands of voxels?
-   - "partial volume is known"? How so? Is this referring to the individual images for each tract in the atlas?
+Instead of using binary masks, we can use the white and gray matter atlas contained within the PAM50 template. In the atlas, each tract is represented using a nonbinary "soft" mask, with values ranging from 0 to 1 at the edges of each tract label that capture the partial volume information. For more information on how the exact partial volume values were determined for each tract, see `[Lévy et al., Neuroimage 2015] <https://pubmed.ncbi.nlm.nih.gov/26099457/>`_.
 
 ``-method ml``: Maximum Likelihood
 ----------------------------------
@@ -42,10 +33,8 @@ The partial volume information from the atlas can be combined with Gaussian mixt
 ``-method map``: Maximum A Posteriori
 -------------------------------------
 
-Because Maximum Likelihood estimation is sensitive to noise, especially in small tracts, we recommend using a modified version of Maximum Likelihood called Maximum a Posteriori. This method uses a prior based on the average metric value within the CSF, WM and GM compartments.
+Because Maximum Likelihood estimation is sensitive to noise, especially in small tracts, we recommend using the Maximum a Posteriori method instead. This method adds a prior -- specifically, the maximum likelihood estimation computed within either the WM, GM, or CSF compartment of the image, depending on which area the ROI belongs to. (For example, if a metric is extracted for a specific WM tract, the maximum likelihood for the WM as a whole will be used as a prior.)
 
 The ``map`` method is the most robust to noise in small tracts. This was further validated using bootstrap simulations based on a synthetic MRI phantom. For more details, see `[Lévy et al., Neuroimage 2015] <https://pubmed.ncbi.nlm.nih.gov/26099457/>`_ (construction of the phantom, effect of noise, contrast) and `[De Leener et al., Neuroimage 2017; Appendix] <https://pubmed.ncbi.nlm.nih.gov/27720818/>`_ (effect of spatial resolution).
-
-.. TODO: Is the prior taken from the atlas (not specific to any particular metric)? Or is it computed uniquely for each image?
 
 .. note:: The methods ``bin`` and ``wa`` can be used with any binary mask. However, the methods ``ml`` and ``map`` require you to warp the white matter atlas to the coordinate space of your data, as is shown on the next page.
