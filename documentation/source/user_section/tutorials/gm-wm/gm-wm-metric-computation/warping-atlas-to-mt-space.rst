@@ -1,9 +1,13 @@
 Transforming the GM/WM atlas to the MT space using warping fields
 #################################################################
 
-In order to use the PAM50 atlas to extract and aggregate image data, the atlas must first be transformed from the unbiased PAM50 coordinate space to the space of the data you wish to compute metrics for.
+For the next example, we will demonstrate how to extract MTR for specific white matter tracts. Since we are now working with MT data, we will switch folders using ``cd``:
 
-For this example, we will demonstrate how to extract MTR for specific white matter tracts. Thus, the atlas needs to be transformed to the space of the MT data. To do this, we will re-use the ``warp_template2mt.nii.gz`` file generated in previous MT tutorials:
+.. code:: sh
+
+   cd ../mt
+
+In order to extract and aggregate metrics from specific white matter tracts, the white/gray matter atlas must first be transformed from the unbiased PAM50 coordinate space to the space of the data you wish to compute metrics for. To do this, we will re-use the ``warp_template2mt.nii.gz`` file generated in previous MT tutorials:
 
 * :ref:`registering-additional-contrasts`
 * :ref:`gm-informed-mt-registration`
