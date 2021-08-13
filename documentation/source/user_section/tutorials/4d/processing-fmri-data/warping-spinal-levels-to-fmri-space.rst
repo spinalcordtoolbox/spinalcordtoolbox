@@ -10,7 +10,7 @@ Now that we've registered the PAM50 template with the motion-corrected fMRI data
 :Input arguments:
    - ``-d`` : Destination image the template will be warped to.
    - ``-w`` : Warping field (template space to anatomical space).
-   - ``-s`` : Because ``-s 1`` is specified,
+   - ``-s`` : Because ``-s 1`` is specified, spinal levels will be warped.
    - ``-a`` : Because ``-a 0`` is specified, the white and gray matter atlas will not be warped.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
