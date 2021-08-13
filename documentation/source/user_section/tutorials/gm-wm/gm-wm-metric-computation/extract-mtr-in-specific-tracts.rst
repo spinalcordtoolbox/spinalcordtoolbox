@@ -51,6 +51,4 @@ Next, we extract the MTR from the dorsal columns.
 
 .. warning::
 
-   When restricting the metric computation to specific vertebral levels or slices, as is done in the examples above, be careful to always check the associated volume fraction. If too low, your quantifications will be unreliable. If you publish, we recommend including the volume fraction associated with all estimated metrics.
-
-   (TODO: What is meant by "volume fraction" here? How would the user calculate/check the volume fractions? Should we say "volume size" instead of "fraction"?)
+   Be careful to always check the associated volume fraction of your metrics (indicated by the ``Size [vox] column). This is especially relevant if you are restricting the metric computation to a subset of vertebral levels or axial slices; if the number of voxels included in the computation is too low, your quantifications will be unreliable. If you publish, we recommend including the volume fraction associated with all estimated metrics.
