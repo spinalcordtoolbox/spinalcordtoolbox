@@ -3,6 +3,23 @@ Motion correction for fMRI data
 
 Now that we have a mask highlighting the spinal cord, we can apply motion correction to the volumes of the fMRI data.
 
+The motion correction algorithm
+-------------------------------
+
+SCT features a complex motion correction algorithm, which is inspired by `[Xu et al., Neuroimage 2013] <https://pubmed.ncbi.nlm.nih.gov/23178538/>`_. The key aspects of this algorithm are as follows:
+
+* **SliceReg:** Slice-wise registration regularized along the Z direction (based on the function antsSliceRegularizedRegistration from ANTs, and described in `[De Leener et al., Neuroimage 2017] <https://pubmed.ncbi.nlm.nih.gov/27720818/>`_).
+* **Grouping:** The algorithm performs group-wise registration between groups of successive dMRI volumes. If your data has a very low signal-to-noise ratio (SNR), you can use the flag ``-g`` to increase the number of successive images that are averaged into a group in order to have sufficient SNR to estimate a reliable transformation.
+* **Iterative average:** After registering a new group to the target image (which is usually the first DWI group), the target is averaged with the newly registered group in order to increase the SNR of the target image.
+* **Outlier detection:** If a detected transformation is too large, it is ignored and the previous transformation is used instead.
+* **Masking:** You can use the flag ``-m`` to provide a spinal cord mask, in order to estimate motion of the cord while ignoring the rest of the tissue.
+
+Applying the algorithm
+----------------------
+
+To apply the algorithm, we use the ``sct_fmri_moco`` command:
+
+
 .. code::
 
    sct_fmri_moco -i fmri.nii.gz -m mask_fmri.nii.gz  -qc ~/qc_singleSubj -qc-seg t2_seg_reg.nii.gz
