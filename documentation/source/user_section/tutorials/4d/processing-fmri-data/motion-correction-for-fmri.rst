@@ -1,5 +1,5 @@
-Motion correction for fMRI data
-###############################
+Motion correction for fMRI images
+#################################
 
 Now that we have a mask highlighting the spinal cord, we can apply motion correction to the volumes of the fMRI data.
 
