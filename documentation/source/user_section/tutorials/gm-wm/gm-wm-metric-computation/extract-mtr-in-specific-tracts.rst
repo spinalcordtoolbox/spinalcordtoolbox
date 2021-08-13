@@ -35,7 +35,9 @@ Next, we extract the MTR from the dorsal columns.
 
 .. code::
 
-   sct_extract_metric -i mtr.nii.gz -f label/atlas -method wa -l 53 -vert 2:4 -o mtr_in_dc.csv
+   sct_extract_metric -i mtr.nii.gz -f label/atlas -method wa -l 53 \
+                      -vert 2:4 -vertfile label/template/PAM50_levels.nii.gz \
+                      -o mtr_in_dc.csv
 
 :Input arguments:
    - ``-i`` : Image to extract values from.
@@ -43,6 +45,7 @@ Next, we extract the MTR from the dorsal columns.
    - ``-method`` : TODO: Why do we specify ``wa`` here as opposed to ``map``? This was glossed over in the SCT Course video...
    - ``-l`` : The IDs of the label (or group of labels) to extract metrics for. In this case, label 53 is a combined label that represents labels 0:3 (or, the left and right fasciculus cuneatus and left and right fasciculus gracilis together). You can see the full list of labels to choose from by running ``sct_extract_metric -list-labels``.
    - ``-vert`` : This argument further restricts the metric extraction to specific vertebral levels. In this case, 3 levels in total (C2-C4) will be used for the averaging process.
+   - ``-vertfile``: This argument specifies the vertebral label file to use when extracting metrics.
    - ``-o`` : The name of the output file.
 
 .. csv-table:: ``mtr_in_dc.csv``: MTR values in dorsal columns
