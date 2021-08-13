@@ -7,10 +7,12 @@ Before starting this tutorial
 
 2. Make sure that you have the following files in your working directory:
 
-   * ``t2/warp_anat2template.nii.gz`` : The 4D warping field that defines the transform from the anatomical image to the template image.
-   * ``t2/warp_template2anat.nii.gz`` : The 4D warping field that defines the inverse transform from the template image to the T2 anatomical image.
    * ``t2s/t2s.nii.gz`` : A T2* anatomical image of the spinal region.
    * ``t2s/t2s_wmseg.nii.gz``: A binary mask for the white matter segmentation of the spinal cord.
+   * ``t2s/t2s_gmseg.nii.gz``:  A binary mask for the gray matter segmentation of the spinal cord.
+   * ``mt/mt1.nii.gz``: A magnetization transfer image with the off-resonance RF pulse applied.
+   * ``mt/mtr.nii.gz``: An image containing the voxel-wise magnetization transfer ratio.
+   * ``mt/warp_template2mt.nii.gz`` : The 4D warping field that defines the transform from the template image to the MT image.
 
    You can get these files by downloading :sct_tutorial_data:`data_gm-wm-metric-computation.zip`.
 
