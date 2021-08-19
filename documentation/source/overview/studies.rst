@@ -101,3 +101,4 @@ The following studies (in chronological order) have used SCT:
 -  `Shahrampour et al. Atlas-Based Quantification of DTI Measures in a Typically Developing Pediatric Spinal Cord. American Journal of Neuroradiology. 2021 <https://pubmed.ncbi.nlm.nih.gov/34326104/>`_
 -  `Adibi et al. Quantitative Magnetic Resonance Imaging Analysis of Early Markers of Upper Cervical Cord Atrophy in Multiple Sclerosis and Neuromyelitis Optica Spectrum Disorder. Mult Scler Int. 2021 <https://pubmed.ncbi.nlm.nih.gov/34306756/>`_
 -  `Martucci et al. Spinal Cord Resting State Activity in Individuals With Fibromyalgia Who Take Opioids. Front. Neurol. 2021 <https://www.frontiersin.org/articles/10.3389/fneur.2021.694271/full>`_
+-  `David et al. Longitudinal changes of spinal cord grey and white matter following spinal cord injury. Journal of Neurology, Neurosurgery & Psychiatry. 2021 <https://jnnp.bmj.com/content/early/2021/08/11/jnnp-2021-326337.info>`_
