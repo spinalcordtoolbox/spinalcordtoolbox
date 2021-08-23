@@ -22,6 +22,7 @@ Next, we run ``sct_register_multimodal`` to compute the transformation between t
                            -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 \
                            -m mask_mt1.nii.gz \
                            -initwarp ../t2s/warp_template2t2s.nii.gz \
+                           -owarp warp_template2mt.nii.gz \
                            -qc ~/qc_singleSubj
 
 :Input arguments:
@@ -30,15 +31,9 @@ Next, we run ``sct_register_multimodal`` to compute the transformation between t
 
 :Output files/folders:
    - ``PAM50_t2_reg.nii.gz`` : The PAM50 template image, registered to the space of the MT1 image.
-   - ``warp_PAM50_t22mt1.nii.gz`` : The warping field to transform the PAM50 template to the MT1 space.
+   - ``warp_template2mt.nii.gz`` : The warping field to transform the PAM50 template to the MT1 space.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/improving-registration-with-gm-seg/io-sct_register_multimodal-mt.png
    :align: center
-
-Again, it is worth renaming the automatically generated warping field for clarity.
-
-.. code::
-
-   mv warp_PAM50_t22mt1.nii.gz warp_template2mt.nii.gz
 
 This transformation can be used to warp the template to the MT space, which allows metrics to be extracted for specific vertebral levels, WM/GM tracts, and more.
