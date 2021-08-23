@@ -1,9 +1,11 @@
 GM-informed registration between the PAM50 template and T2* data
 ################################################################
 
-First, we will need to generate the warping fields that represent the transformation between the T2* space and the PAM50 template space. Once we have that transformation, we can then use it to improve the registration results of MT data.
+Usually, template registration would be perfomed using the ``sct_register_to_template`` command. That command is important because it matches the vertebral levels of the data to that of the PAM50 template. Unfortunately, though, because T2* scans are typically acquired axially with thick slices, it is much more difficult to acquire the vertebral labels needed for the vertebral matching step..
 
-This registration step is similar to that of previous tutorials. However, a notable difference is that rather than using the full spinal cord segmentations for the arguments ``-iseg`` and ``-dseg``, we use the white matter segmentation. This is because its interior perimeter outlines the gray matter shape, while its exterior perimeter outlines the shape of the spinal cord itself, which better informs the registration algorithm.
+To get around this limitation, we recommend that you first perform :ref:`vertebral labeling <vertebral-labeling>` and :ref:`template registration <template-registration>` using a different contrast for the same subject (e.g. T2 anatomical data, where vertebral levels are much more apparent). This will provide you with warping fields between the template and the data, which you can then re-use to initialize the T2* registration via the ``-initwarp`` and ``-initwarpinv`` flags. Doing so provides all of the benefits of vertebral matching, without having to label the T2* data directly.
+
+Since we are starting the T2* registration with an initial transformation already applied, all that is left is fine-tuning for the T2* data. Here, we use a different command: ``sct_register_multimodal``. This command is the more general, flexible counterpart to the ``sct_register_to_template`` command, as it provides more options to register *any* two images together.
 
 .. code:: sh
 
@@ -22,11 +24,6 @@ This registration step is similar to that of previous tutorials. However, a nota
    - ``-d`` : Destination image.
    - ``-dseg`` : Segmentation for the destination image. Here, we use the white matter segmentation for the same reasons as ``-iseg``.
    - ``-initwarp`` : Warping field used to initialize the source image. Here, we supply the ``warp_template2anat.nii.gz`` file from the previous T2 registration. (See: :ref:`template-registration`)
-      - TODO: I'm concerned that the usage of the ``-initwarp`` flag is not clear enough. For users who are following this tutorial standalone, they may not have the full context of the previous tutorial, so the usage of ``-initwarp`` may appear to "come out of nowhere". But, even if they have the context, reusing intermediate results raises some questions:
-          - Is ``-initwarp`` optional or mandatory?
-          - What should the command look like without ``-initwarp``?
-          - Will the registration results be significantly worse without ``-initwarp``?
-          - In what cases should ``-initwarp`` be used, and in what cases can they perform registration directly?
    - ``-initwarpinv``: Warping field used to initialize the destination image. Here, we supply the inverse warping field, ``warp_anat2template.nii.gz`` from the previous T2 registration. (See: :ref:`template-registration`)
       - TODO: Same concerns as above.
    - ``-param`` :
