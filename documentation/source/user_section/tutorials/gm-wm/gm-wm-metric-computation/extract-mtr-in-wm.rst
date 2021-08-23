@@ -22,4 +22,4 @@ The label volume fraction is indicated as “``Size [vox]``”, which gives you 
 
 .. warning::
 
-   Be careful to always check the associated volume fraction of your metrics (indicated by the ``Size [vox] column). This is especially relevant if you are restricting the metric computation to a subset of vertebral levels or axial slices; if the number of voxels included in the computation is too low, your quantifications will be unreliable. If you publish, we recommend including the volume fraction associated with all estimated metrics.
+   Be careful to always check the associated volume fraction of your metrics (indicated by the Size [vox] column). This is especially relevant if you are restricting the metric computation to a subset of vertebral levels or axial slices; if the number of voxels included in the computation is too low, your quantifications will be unreliable. If you publish, we recommend including the volume fraction associated with all estimated metrics.
