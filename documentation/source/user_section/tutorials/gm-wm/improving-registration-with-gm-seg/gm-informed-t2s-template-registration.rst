@@ -45,7 +45,3 @@ Finally, it is also worth renaming the automatically generated warping fields fo
 
    mv warp_PAM50_t2s2t2s.nii.gz warp_template2t2s.nii.gz
    mv warp_t2s2PAM50_t2s.nii.gz warp_t2s2template.nii.gz
-
-.. TODO: I've excluded the ``sct_warp_template`` step here because the T2* warped template was not actually used for anything in later steps.
-
-   Also, my intent (more generally) is to convey that the main result of registration is to produce warping fields, and that those warping fields are the thing that should be passed along to other tutorials. (i.e. later in the "metric tutorial" I want to communicate that the user needs a warping field from a previous registration, that way they can warp the template *for the purposes of metric extraction*.)
