@@ -96,7 +96,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help='Output filename. Example: smooth_sc.nii.gz'),
+        help="Output filename. Example: smooth_sc.nii.gz. By default, the suffix '_smooth' will be added to the input file name."),
     optional.add_argument(
         '-r',
         choices=[0, 1],
