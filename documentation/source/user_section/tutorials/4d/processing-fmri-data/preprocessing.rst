@@ -61,7 +61,7 @@ Since the segmentation image will only be used to coarsely highlight the region 
 :Input arguments:
    - ``-i`` : Input image
    - ``-d`` : Destination image
-   - ``-identity`` : Supplying this option will skip cord shape optimizations (e.g. translations, rotations, deformations) during registration. Instead, the registration will only change the properties of the input image (dimension, resolution, orientation) so that they match the properties of the destination image. (Conceptually, this is like copying the source data into the destination data without change, hence the name 'identity'.)
+   - ``-identity`` : Supplying this option will skip registration optimization (e.g. translations, rotations, deformations) and will only rely on the qform (from the NIfTI header) of the source and destination images. Use this option if you wish to put the source image into the space of the destination image (i.e. match dimension, resolution and orientation).
 
 :Output files/folders:
    - ``t2_seg_reg.nii.gz`` : The T2 segmentation, transformed to the space of the fMRI mean image. This file is what will be used to create the spinal cord mask for fMRI motion correction.
