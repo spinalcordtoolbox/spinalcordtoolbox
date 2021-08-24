@@ -140,7 +140,6 @@ def main(argv=None):
     else:
         fname_out = extract_fname(fname_anat)[1] + '_smooth.nii.gz'
 
-
     # Display arguments
     printv('\nCheck input arguments...')
     printv('  Volume to smooth .................. ' + fname_anat)
