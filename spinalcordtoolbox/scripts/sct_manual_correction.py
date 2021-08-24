@@ -26,7 +26,7 @@ def get_parser():
     """
     parser = SCTArgumentParser(
         description='Manual correction of spinal cord segmentation, vertebral and pontomedullary junction labeling. '
-                    'Manually corrected files are saved under derivatives/ folder (BIDS standard).',
+                    'Manually corrected files are saved under path-segmanual/ folder.',
         prog=os.path.basename(__file__).strip('.py')
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
