@@ -1168,7 +1168,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     if generate_warpinv:
         fname_dest2src = os.path.join(path_out, file_out_inv + ext_dest)
         generate_output_file(os.path.join(path_tmp, "dest_reg.nii"), fname_dest2src, param.verbose)
-        if fname_output_warp == '':
+        if fname_output_warpinv == '':
             fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
         generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), fname_output_warpinv, param.verbose)
     else:
