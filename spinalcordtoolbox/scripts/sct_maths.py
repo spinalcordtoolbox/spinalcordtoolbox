@@ -135,7 +135,13 @@ def get_parser():
     thresholding.add_argument(
         "-thr",
         type=float,
-        help='Use following number to threshold image (zero below number).',
+        help='Lower threshold limit (zero below number).',
+        metavar=Metavar.float,
+        required=False)
+    thresholding.add_argument(
+        "-uthr",
+        type=float,
+        help='Upper threshold limit (zero below number).',
         metavar=Metavar.float,
         required=False)
 
@@ -278,9 +284,8 @@ def main(argv=None):
         param = arguments.otsu_median
         data_out = sct_math.otsu_median(data, param[0], param[1])
 
-    elif arguments.thr is not None:
-        param = arguments.thr
-        data_out = sct_math.threshold(data, param)
+    elif arguments.thr is not None or arguments.uthr is not None:
+        data_out = sct_math.threshold(data, arguments.thr, arguments.uthr)
 
     elif arguments.percent is not None:
         param = arguments.percent
