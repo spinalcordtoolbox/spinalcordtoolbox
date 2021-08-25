@@ -25,7 +25,6 @@ Since we are starting the T2* registration with an initial transformation alread
    - ``-dseg`` : Segmentation for the destination image. Here, we use the white matter segmentation for the same reasons as ``-iseg``.
    - ``-initwarp`` : Warping field used to initialize the source image. Here, we supply the ``warp_template2anat.nii.gz`` file from the previous T2 registration. (See: :ref:`template-registration`)
    - ``-initwarpinv``: Warping field used to initialize the destination image. Here, we supply the inverse warping field, ``warp_anat2template.nii.gz`` from the previous T2 registration. (See: :ref:`template-registration`)
-      - TODO: Same concerns as above.
    - ``-param`` :
       - TODO: Why are we using ``rigid`` specifically? The MT tutorial uses ``centermass`` instead... do we need to explain the discrepancy? (Not explained in SCT course.)
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
