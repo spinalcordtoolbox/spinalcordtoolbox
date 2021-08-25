@@ -57,8 +57,8 @@ def test_sct_register_multimodal_mt0_image_data_within_threshold(use_seg, param,
     """Run the CLI script and verify that the output image data is close to a reference image (within threshold)."""
     fname_out_src = str(tmp_path/'mt0_reg.nii.gz')
     fname_out_dest = str(tmp_path/'mt0_reg_inv.nii.gz')
-    fname_owarp = str(tmp_path/'warp_anat2template.nii.gz')
-    fname_owarpinv = str(tmp_path/'warp_template2anat.nii.gz')
+    fname_owarp = str(tmp_path/'warp_mt02mt1.nii.gz')
+    fname_owarpinv = str(tmp_path/'warp_mt12mt0.nii.gz')
 
     argv = ['-i', 'mt/mt0.nii.gz', '-d', 'mt/mt1.nii.gz', '-x', 'linear', '-r', '0', '-param', param,
             '-o', fname_out_src, '-owarp', fname_owarp, '-owarpinv', fname_owarpinv]
