@@ -23,10 +23,11 @@ SCT provides a spinal cord smoothing function that takes into account the curvat
    - ``-s`` : A spinal cord segmentation mask corresponding to the input image. This is needed as ``sct_smooth_spinalcord`` performs a 1D smoothing operation following the cord centerline (as opposed to the cortical surface smoothing in FreeSurfer, which is 2D).
 
 :Output files/folders:
-   - ``t1_smooth.nii`` : The input image, smoothed along the spinal cord. (TODO: Why are we outputting the uncompressed ``.nii`` file here?
+   - ``t1_smooth.nii.gz`` : The input image, smoothed along the spinal cord.
    - ``warp_curve2straight.nii.gz`` : ``sct_smooth_spinalcord`` involves an intermediate straightening step, so this is the 4D warping field that defines the transform from the original curved anatomical image to the straightened image.
    - ``warp_straight2curve.nii.gz`` : ``sct_smooth_spinalcord`` involves an intermediate straightening step, so this is the 4D warping field that defines the inverse transform from the straightened anatomical image back to the original curved image.
-   - ``straightening.cache`` : SCT functions that require straightening will check for this file. If it is present in the working directory, ``straight_ref.nii.gz`` and the two warping fields will be re-used, saving processing time. (TODO: ``straight_ref.nii.gz`` is not output, making this seemingly uselesss. Is this a bug?)
+   - ``straight_ref.nii.gz`` : The straightened input image produced by the intermediate straightening step. Can be re-used by other SCT functions that need a straight reference space.
+   - ``straightening.cache`` : SCT functions that require straightening will check for this file. If it is present in the working directory, ``straight_ref.nii.gz`` and the two warping fields will be re-used, saving processing time.
 
 After smoothing, the apparent noise is reduced, while the cord edges are preserved, allowing a more reliable segmentation on a second pass.
 
