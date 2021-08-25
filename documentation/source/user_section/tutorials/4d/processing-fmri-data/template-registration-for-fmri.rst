@@ -11,6 +11,8 @@ Now that we have the motion-corrected time-averaged fMRI image, we can use it to
                            -param step=1,type=im,algo=syn,metric=CC,iter=5,slicewise=0 \
                            -initwarp ../t2s/warp_template2t2s.nii.gz \
                            -initwarpinv ../t2s/warp_t2s2template.nii.gz \
+                           -owarp warp_template2fmri.nii.gz \
+                           -owarpinv warp_fmri2template.nii.gz \
                            -qc ~/qc_singleSubj
 
 .. TODO: I don't understand the choices made for ``-dseg`` and ``-iseg``.
@@ -29,17 +31,12 @@ Now that we have the motion-corrected time-averaged fMRI image, we can use it to
       - ``slicewise=0``: This setting regularizes the transformations across the Z axis. (TODO: The presenter notes say that this is needed, but they don't provide a justification for why.)
    - ``-initwarp`` : TODO: Is this necessary? I understand that it's meant to improve the registration with the GM/WM-informed warping field, but I worry that it makes this tutorial unnecessarily complex for people who will read it as a standalone tutorial. So, I'm wondering if the T2* warping fields should be kept to the GM/WM tutorials only.
    - ``-initwarpinv`` : TODO: Is this necessary? (See above.)
+   - ``-owarp``: The name of the output warping field. This is optional, and is only specified here to make the output filename a little clearer. By default, the filename would be automatically generated from the filenames ``-i`` and ``-d``, which in this case would be the (less clear) ``warp_PAM50_t2s2fmri_moco_mean.nii.gz``.
+   - ``-owarpinv`` : The name of the output inverse warping field. This is specified for the same reasons as ``-owarp``.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
    - ``PAM50_t2s_reg.nii.gz`` : The PAM50 template image, registered to the space of dMRI data.
    - ``fmri_moco_mean_reg.nii.gz`` : The mean fMRI image, registered to the space of the PAM50 template.
-   - ``warp_PAM50_t2s2fmri_moco_mean.nii.gz`` : The warping field to transform the PAM50 template to the fMRI space.
-   - ``warp_fmri_moco_mean2PAM50_t2s.nii.gz`` : The warping field to transform the fMRI data to the PAM50 template space.
-
-Finally, we rename the warping fields for convenience, since the automatically generated filenames are a little verbose.
-
-.. code::
-
-   mv warp_PAM50_t2s2fmri_moco_mean.nii.gz warp_template2fmri.nii.gz
-   mv warp_fmri_moco_mean2PAM50_t2s.nii.gz warp_fmri2template.nii.gz
+   - ``warp_template2fmri.nii.gz`` : The warping field to transform the PAM50 template to the fMRI space.
+   - ``warp_fmri2template.nii.gz`` : The warping field to transform the fMRI data to the PAM50 template space.

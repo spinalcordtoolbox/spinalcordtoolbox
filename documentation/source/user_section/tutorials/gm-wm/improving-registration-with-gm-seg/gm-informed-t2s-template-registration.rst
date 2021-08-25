@@ -15,6 +15,8 @@ Since we are starting the T2* registration with an initial transformation alread
                            -dseg t2s_wmseg.nii.gz \
                            -initwarp ../t2/warp_template2anat.nii.gz \
                            -initwarpinv ../t2/warp_anat2template.nii.gz \
+                           -owarp warp_template2t2s.nii.gz \
+                           -owarpinv warp_t2s2template.nii.gz \
                            -param step=1,type=seg,algo=rigid:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 \
                            -qc ~/qc_singleSubj
 
@@ -27,20 +29,15 @@ Since we are starting the T2* registration with an initial transformation alread
    - ``-initwarpinv``: Warping field used to initialize the destination image. Here, we supply the inverse warping field, ``warp_anat2template.nii.gz`` from the previous T2 registration. (See: :ref:`template-registration`)
    - ``-param`` :
       - TODO: Why are we using ``rigid`` specifically? The MT tutorial uses ``centermass`` instead... do we need to explain the discrepancy? (Not explained in SCT course.)
+   - ``-owarp``: The name of the output warping field. This is optional, and is only specified here to make the output filename a little clearer. By default, the filename would be automatically generated from the filenames ``-i`` and ``-d``, which in this case would be the (less clear) ``warp_PAM50_t2s2t2s.nii.gz``.
+   - ``-owarpinv`` : The name of the output inverse warping field. This is specified for the same reasons as ``-owarp``.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
    - ``PAM50_t2s_reg.nii.gz`` : The PAM50 template image, registered to the space of the T2s image.
    - ``t2s_reg.nii.gx``: The T2s image, registered to the space of the PAM50 template.
-   - ``warp_PAM50_t2s2t2s.nii.gz`` : The warping field to transform the PAM50 template to the T2s space.
-   - ``warp_t2s2PAM50_t2s.nii.gz`` : The warping field to transform the T2s image to the PAM50 template space.
+   - ``warp_template2t2s.nii.gz`` : The warping field to transform the PAM50 template to the T2s space.
+   - ``warp_t2s2template.nii.gz`` : The warping field to transform the T2s image to the PAM50 template space.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/improving-registration-with-gm-seg/io-sct_register_multimodal-t2s.png
    :align: center
-
-Finally, it is also worth renaming the automatically generated warping fields for clarity.
-
-.. code:: sh
-
-   mv warp_PAM50_t2s2t2s.nii.gz warp_template2t2s.nii.gz
-   mv warp_t2s2PAM50_t2s.nii.gz warp_t2s2template.nii.gz
