@@ -218,13 +218,13 @@ jobs:
         with:
           fail_ci_if_error: true
           files: ./cov-cli.xml
-          flags: "testing%2Fcli"
+          flags: cli-tests
       - name: Upload CLI coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
           fail_ci_if_error: true
           files: ./cov-api.xml
-          flags: "testing%2Fapi"
+          flags: api-tests
 
 
   ubuntu-18_04:
