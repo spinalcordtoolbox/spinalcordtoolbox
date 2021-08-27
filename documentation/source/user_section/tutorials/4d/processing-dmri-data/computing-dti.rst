@@ -24,7 +24,7 @@ Here, we compute the diffusion tensor. SCT relies on the excellent ``dipy`` libr
 
 .. TODO: Why doesn't sct_dmri_compute_dti output "Geodesic anisotropy (GA)"?
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/processing-dmri-data/io-sct_dmri_compute_dti.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/processing-dmri-data/io-sct_dmri_compute_dti.png
    :align: center
 
 Now that we have the diffusion tensor images, we can move on to registering the dMRI data to the PAM50 template, which allows us to extract these DTI metrics from specific regions of the image.

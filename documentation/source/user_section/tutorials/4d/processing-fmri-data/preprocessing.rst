@@ -3,7 +3,7 @@ Preprocessing steps to highlight the spinal cord
 
 Similarly to the dMRI tutorial, prior to motion correction, it is useful to highlight the spinal cord region using a mask, as it helps to improve accuracy and speed up processing.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/processing-fmri-data/preprocessing.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/processing-fmri-data/preprocessing.png
    :align: center
 
 

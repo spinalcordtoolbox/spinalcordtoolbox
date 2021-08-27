@@ -7,5 +7,5 @@ If you want to add more tract combinations for all of the subjects in your study
 
 In the example below, we have added two ensembles of tracts corresponding to the right and left hemi-cord:
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/gm-wm-metric-computation/custom-tracts.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/gm-wm-metric-computation/custom-tracts.png
    :align: center

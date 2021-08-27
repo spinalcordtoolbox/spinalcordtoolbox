@@ -20,7 +20,7 @@ Because some subjects (esp. those with scoliosis) might not be perfectly aligned
 :Output files/folders:
    - ``t1_flatten.nii.gz`` : The input image, transformed in a way that ensures that the center medial (L-R) slice depicts the entire spinal cord.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/visualizing-misaligned-cords/io-sct_flatten_sagittal.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/visualizing-misaligned-cords/io-sct_flatten_sagittal.png
    :align: center
 
 .. note::

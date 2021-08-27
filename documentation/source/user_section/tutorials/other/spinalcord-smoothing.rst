@@ -31,5 +31,5 @@ SCT provides a spinal cord smoothing function that takes into account the curvat
 
 After smoothing, the apparent noise is reduced, while the cord edges are preserved, allowing a more reliable segmentation on a second pass.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/spinalcord-smoothing/io-sct_smooth_spinalcord.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-smoothing/io-sct_smooth_spinalcord.png
    :align: center

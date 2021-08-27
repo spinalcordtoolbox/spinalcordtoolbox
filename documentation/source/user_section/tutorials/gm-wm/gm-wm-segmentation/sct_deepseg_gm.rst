@@ -9,7 +9,7 @@ For segmenting the gray matter, SCT features the function ``sct_deepseg_gm``, wh
 
 ``sct_deepseg_gm`` obtained the best Dice score amongst all other methods that participated in the GM challenge `[Prados et al., Neuroimage 2017] <https://pubmed.ncbi.nlm.nih.gov/28286318/>`_.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/gm-wm-segmentation/gm-challenge.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/gm-wm-segmentation/gm-challenge.png
    :align: center
 
    Results of the GM Challenge

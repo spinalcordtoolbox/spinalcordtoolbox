@@ -18,5 +18,5 @@ Now that we've registered the PAM50 template with the motion-corrected fMRI data
    - ``label/template/`` : This directory contains the entirety of the PAM50 template, transformed into the fMRI space.
    - ``label/spinal_levels/`` : This direct contains 20 label images corresponding to different spinal cord levels, spanning both C1:C8 and T1:T12, transformed into the fMRI space. In each NIfTI file, the value of each voxel is the probability for this voxel to belong to the spinal level.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/processing-fmri-data/spinal-levels.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/processing-fmri-data/spinal-levels.png
    :align: center

@@ -14,5 +14,5 @@ Applying the gray matter segmentation algorithm
 :Output:
    - ``t2s_gmseg.nii.gz`` : The image file containing the gray matter segmentation.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/gm-wm-segmentation/io-sct_deepseg_gm.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/gm-wm-segmentation/io-sct_deepseg_gm.png
    :align: center

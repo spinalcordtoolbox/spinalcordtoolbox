@@ -1,7 +1,7 @@
 What if things go wrong?
 ########################
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/batch-processing-of-subjects/segmentation-issue.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/batch-processing-of-subjects/segmentation-issue.png
    :align: center
 
 If you spot any issues during QC, e.g., error during segmentation, you can correct the issue (manually or by adjusting SCT parameters), and then re-run the processing.

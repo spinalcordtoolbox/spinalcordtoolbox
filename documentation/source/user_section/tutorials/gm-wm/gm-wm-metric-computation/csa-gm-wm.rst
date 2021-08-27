@@ -21,5 +21,5 @@ The computed GM and WM segmentations can be used to compute the cross sectional 
 :Output files/folders:
    - ``csa_wm.csv`` and ``csa_gm.csv``: Two CSV files containing shape metrics for both the white and gray matter segmentations.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/gm-wm-metric-computation/io-sct_process_segmentation.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/gm-wm-metric-computation/io-sct_process_segmentation.png
    :align: center

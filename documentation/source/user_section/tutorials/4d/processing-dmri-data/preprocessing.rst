@@ -5,7 +5,7 @@ Prior to motion correction, it's often helpful to crop dMRI data around the regi
 
 To crop the data, we use the multi-step process below:
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/processing-dmri-data/preprocessing.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/processing-dmri-data/preprocessing.png
    :align: center
 
 Computing a mean image

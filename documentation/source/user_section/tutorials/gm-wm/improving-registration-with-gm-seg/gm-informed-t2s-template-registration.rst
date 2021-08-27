@@ -39,5 +39,5 @@ Since we are starting the T2* registration with an initial transformation alread
    - ``warp_template2t2s.nii.gz`` : The warping field to transform the PAM50 template to the T2s space.
    - ``warp_t2s2template.nii.gz`` : The warping field to transform the T2s image to the PAM50 template space.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/improving-registration-with-gm-seg/io-sct_register_multimodal-t2s.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/improving-registration-with-gm-seg/io-sct_register_multimodal-t2s.png
    :align: center

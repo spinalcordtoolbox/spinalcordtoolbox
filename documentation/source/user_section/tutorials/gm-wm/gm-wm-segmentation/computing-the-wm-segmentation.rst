@@ -20,7 +20,7 @@ In order to subtract the gray matter, we will first will need to get the  full s
 :Output files/folders:
    - ``t2s_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/gm-wm-segmentation/io-sct_deepseg_sc.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/gm-wm-segmentation/io-sct_deepseg_sc.png
    :align: center
 
 Subtracting the gray matter
@@ -40,5 +40,5 @@ Now that we have the spinal cord segmentation, we can subtract the gray matter a
 :Output files/folders:
    - ``t2s_wmseg.nii.gz`` : An image file containing the segmentation for the white matter.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/gm-wm-segmentation/io-sct_maths_gm_wm.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/gm-wm-segmentation/io-sct_maths_gm_wm.png
    :align: center

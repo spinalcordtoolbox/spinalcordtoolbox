@@ -28,5 +28,5 @@ Quality Control report
 
 A QC report is generated under ``qc/``. As shown before, the QC report is useful to quickly assess the quality of the analysis pipeline.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/jn/2857-add-remaining-tutorials/batch-processing-of-subjects/qc.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/batch-processing-of-subjects/qc.png
    :align: center
