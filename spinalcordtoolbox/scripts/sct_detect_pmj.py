@@ -6,10 +6,14 @@ The models were trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/
 in section 2.1.2, except that the cords are not straightened for the PMJ disc detection task.
 
 To train a new model:
+- Install SCT v3.2.7 (https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/v3.2.7)
 - Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
 - Run "source sct_launcher" in a terminal
 - Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
 - Save the trained model in https://github.com/spinalcordtoolbox/pmj_models
+
+NB: The files in the `dev/` folder are not actively maintained, so these training steps are not guaranteed to
+    work with more recent versions of SCT.
 
 Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 Author: Charley
