@@ -8,12 +8,7 @@ If you use specific tools such as ``sct_deepseg_sc`` or the ``PAM50`` template, 
 listed in `specific references`_.
 
 
-.. contents::
-   :local:
-..
-
-
-Main reference
+Main Reference
 --------------
 
 -  `De Leener B, Levy S, Dupont SM, Fonov VS, Stikov N, Louis Collins D,
@@ -44,10 +39,10 @@ Main reference
   }
 
 
-Specific references
+Specific References
 -------------------
 
-Command line tools
+Command Line Tools
 ^^^^^^^^^^^^^^^^^^
 
 The table below provides individual references for novel methods used in SCT's :ref:`command-line-tools`.

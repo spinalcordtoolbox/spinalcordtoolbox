@@ -1,3 +1,22 @@
+@import url('https://fonts.googleapis.com/css?family=Lato');
+
+:root {
+    --admonition-font-size: 1rem;
+    --admonition-title-font-size: 1rem;
+}
+
+.sidebar-scroll::-webkit-scrollbar, .toc-scroll::-webkit-scrollbar {
+    display: None;
+    width: 0rem !important;
+    height: 0rem !important;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb, .toc-scroll::-webkit-scrollbar-thumb, article[role=main] ::-webkit-scrollbar-thumb {
+    background-color: var(--color-sidebar-background) !important;
+    border-radius: .125rem;
+}
+
+
 /* body{font-family:'Roboto',sans-serif;} */
 .wy-side-nav-search>div.version{color:#000000;}
 .wy-menu-vertical a:visited{color:#d9d9d9;}
@@ -9,5 +28,291 @@
 .wy-table-responsive {overflow: visible !important;}
 .wy-table-responsive table td, .wy-table-responsive table th  {white-space: normal; !important;}
 
+.tutorials-header .header-logo {
+  background-image: url("../img/sct_logo_dark_grey.png");
+}
+
+body {
+  /* font-family: FreightSans, Helvetica Neue, Helvetica, Arial, sans-serif; */
+  font-family: 'Lato', sans-serif, "proxima-nova", "Helvetica Neue", Arial;
+}
+
+.rst-content .toctree-wrapper>p.caption,h1,h2,h3,h4,h5,h6,legend {
+    margin-top: 2.0rem;
+    font-weight: 600;
+    font-family: 'Lato', sans-serif;
+}
+
+/* .rst-content .toctree-wrapper>p.caption, h1, h2, h3, h4, h5, h6, legend {
+    margin-top: 2.0rem;
+    font-weight: 700;
+    font-family: Roboto Slab,ff-tisa-web-pro,Georgia,Arial,sans-serif;
+} */
+
+/* Code Chunks */
+
+@media (prefers-color-scheme: light) {
+    .highlight {
+        background: #f2f2f3 !important;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .highlight {
+        background: #202020 !important;
+    }
+    .highlight .nv {
+        color: #40ffff;
+    }
+    .highlight .s1 {
+        color: #ed9d13;
+    }
+}
+
+.rst-content div[class^=highlight], .rst-content pre.literal-block {
+    border-radius: 5px;
+    border-color: #fffbd8;
+}
+
+.wy-side-nav-search {
+    background: #eeeff1 !important;
+}
+
+.wy-nav-side {
+    background: #2225fd;
+}
+
+.wy-menu-vertical p.caption {
+    color: #f9e53c;
+}
+
+.rst-content div[class^=highlight] div[class^=highlight], .rst-content pre.literal-block div[class^=highlight] {
+    padding: 10px;
+    border: none;
+    margin: 0;
+}
+
+/* a, a:visited {
+    color: #6abf6a;
+} */
+
+.wy-menu-vertical a:hover {
+    /* background-color: #fffbd7; */
+    background-color: #d6d6d6;
+    color: #404040;
+}
+a:hover {
+    color: #ff7524;
+}
+
+h1 {
+    /* letter-spacing: 1.78px; */
+    /* text-transform: uppercase; */
+    font-size: 2.0rem;
+    /* font-weight: 300; */
+    font-weight: 600;
+}
+
+.wy-nav-content {
+    max-width: 1000px;
+}
+
+.rst-content .admonition-title, .wy-alert-title, .rst-content .note .admonition-title {
+    background-color: #b3dcb0;
+}
+
+.rst-content .admonition {
+    /* background-color: #eaf7e9; */
+    background-color: #f3f4f7;
+}
+
+.rst-content .admonition.warning {
+    /* background-color: #fff4eb; */
+    background-color: #f3f4f7;
+}
+
+html.writer-html4 .rst-content dl:not(.docutils)>dt, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.glossary):not(.simple)>dt {
+    display: block;
+    margin: 6px 0;
+    font-size: 90%;
+    line-height: normal;
+    background-color: #eaf7e9;
+    color: #6abf6a;
+    border-top: 3px solid #6abf6a;
+    padding: 6px;
+    position: relative;
+}
+
+.rst-content .viewcode-back, .rst-content .viewcode-link {
+    display: inline-block;
+    color: #ff7524;
+    font-size: 80%;
+    padding-left: 24px;
+}
+
+@media screen and (min-width: 1100px)
+.wy-nav-content-wrap {
+    background: rgba(0,0,0);
+}
+
+/* Furo */
+
+a {
+    text-decoration: none;
+}
+
+.content {
+    padding: 3.5em;
+    width: 50em;
+}
+
+html {
+    overflow: scroll;
+    overflow-x: hidden;
+}
+
+:not(html):not(body)::-webkit-scrollbar {
+    width: 0;  /* Remove scrollbar space */
+    background: transparent;  /* Optional: just make scrollbar invisible */
+}
+
+/* Optional: show position indicator in red */
+/* ::-webkit-scrollbar-thumb {
+    background: #FF0000;
+} */
+
+.sidebar-drawer {
+    justify-content: center;
+    min-width: 15em;
+    max-width: 18rem;
+}
+
+a.copybtn {
+	opacity: .5;
+    transition: opacity 0.5s;
+    top: 0.7rem;
+    right: 0.7rem;
+}
+
+.o-tooltip--left:after {
+    background: #f2f2f3;
+    border-width: 1px;
+    border-color: #5a6d79;
+    border-radius: 4px;
+    font-size: 1rem;
+    color: #5a6d79;
+    border-style: solid;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.o-tooltip--left:hover:after {
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    transition-delay: .1s;
+}
+
+.highlight pre, pre.literal-block {
+    padding: 0.9rem 0.9rem;
+}
+
 /* Remove the '!' on a specific admonition to use it for the testimonials page */
-.admonition.testimonial p.admonition-title::before{content:""}
+.admonition.testimonial p.admonition-title::before {
+    content:""
+}
+
+h2 {
+    font-size: 1.625rem;
+}
+
+h3 {
+    font-size: 1.375rem;
+}
+
+h4 {
+    font-size: 1.125rem;
+}
+
+h5 {
+    font-size: 1.0rem;
+}
+
+h6 {
+    font-size: 0.875rem;
+}
+
+h4, h5, h6 {
+    text-transform: none;
+}
+
+/* Table of Contents Headers */
+
+.toctree-wrapper.compound .caption, .toctree-wrapper.compound :not(.caption)>.caption-text {
+    text-transform: None;
+    text-align: initial;
+    margin-bottom: 1.0rem;
+    font-size: 1.125rem;
+    margin-top: 2.0rem;
+    font-weight: 600;
+    font-family: 'Lato', sans-serif;
+}
+
+/* Inline Code */
+
+code.literal {
+    border-radius: 0.3em;
+    padding: .2em .3em;
+    color: #f86626;
+}
+
+.sidebar-tree code.literal {
+    background: #3d3d3c;
+}
+
+/* Dark Grey Sidebar */
+
+.sidebar-tree .toctree-l1>.reference, .sidebar-tree .toctree-l1>label .icon {
+    color: #fcfcfc;
+}
+
+.sidebar-tree .caption, .sidebar-tree .caption-text {
+    color: #ff8653;
+    font-size: 0.78rem;
+    /* color: #6dd2d2; */
+}
+
+/* .sidebar-drawer {
+    border-right: 1px solid var(--color-sidebar-background-border);
+    background: #3d3d3c !important;
+} */
+
+:root {
+    --color-sidebar-background: #3d3d3c;
+    --color-sidebar-item-background--hover: #5a5a58;
+    --color-sidebar-link-text: #fcfcfc;
+}
+
+/* Light Mode */
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --color-background-primary: #fcfcfc;
+        --color-sidebar-background: #3d3d3c !important;
+        --color-admonition-title-background: #EAF6FF;
+        --color-admonition-title: #c2e2fb;
+        --color-admonition-title-background--note: #30c42626;
+        --color-admonition-title--note: #30c42659;
+    }
+}
+
+
+/* Dark Mode */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-sidebar-background: #1a1c1e !important;
+        --color-admonition-title: #0054af;
+        --color-admonition-title-background: #0054af5c;
+    }
+}

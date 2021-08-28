@@ -241,8 +241,11 @@ def otsu_median(data, size, n_iter):
     return mask
 
 
-def threshold(data, thr_value):
-    data[data < thr_value] = 0
+def threshold(data, lthr=None, uthr=None):
+    if lthr is not None:
+        data[data < lthr] = 0
+    if uthr is not None:
+        data[data > uthr] = 0
     return data
 
 

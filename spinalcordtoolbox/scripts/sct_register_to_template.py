@@ -931,7 +931,8 @@ def check_labels(fname_landmarks, label_type='body'):
 
 def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg='', fname_dest_seg='', fname_src_label='',
                      fname_dest_label='', fname_mask='', fname_initwarp='', fname_initwarpinv='', identity=False,
-                     interp='linear', fname_output='', fname_output_warp='', path_out='', same_space=False):
+                     interp='linear', fname_output='', fname_output_warp='', fname_output_warpinv='',
+                     path_out='', same_space=False):
     """
     Wrapper for image registration.
 
@@ -950,6 +951,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     :param interp:
     :param fname_output:
     :param fname_output_warp:
+    :param fname_output_warpinv:
     :param path_out:
     :param same_space: Bool: Source and destination images are in the same physical space (i.e. same coordinates).
     :return: fname_src2dest, fname_dest2src, fname_output_warp, fname_output_warpinv
@@ -1166,7 +1168,8 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     if generate_warpinv:
         fname_dest2src = os.path.join(path_out, file_out_inv + ext_dest)
         generate_output_file(os.path.join(path_tmp, "dest_reg.nii"), fname_dest2src, param.verbose)
-        fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
+        if fname_output_warpinv == '':
+            fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
         generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), fname_output_warpinv, param.verbose)
     else:
         # we skip generating files if there is no inverse warping field (i.e. we're doing a one-way registration)

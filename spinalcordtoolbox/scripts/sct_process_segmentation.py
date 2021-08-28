@@ -18,6 +18,7 @@
 
 import sys
 import os
+import logging
 
 import numpy as np
 from matplotlib.ticker import MaxNLocator
@@ -25,11 +26,16 @@ from matplotlib.ticker import MaxNLocator
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, merge_dict
 from spinalcordtoolbox.process_seg import compute_shape
+from spinalcordtoolbox.scripts import sct_maths
+from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
 from spinalcordtoolbox.centerline.core import ParamCenterline
+from spinalcordtoolbox.image import add_suffix, splitext
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.fs import get_absolute_path
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
@@ -54,6 +60,16 @@ def get_parser():
             "metric is interesting for detecting non-convex shape (e.g., in case of strong compression)\n"
             "  - length: Length of the segmentation, computed by summing the slice thickness (corrected for the "
             "centerline angle at each slice) across the specified superior-inferior region.\n"
+            "\n"
+            "To select the region to compute metrics over, choose one of the following arguments:\n"
+            "   1. '-z': Select axial slices based on slice index.\n"
+            "   2. '-pmj' + '-pmj-distance' + '-pmj-extent': Select axial slices based on distance from pontomedullary "
+            "junction.\n"
+            "      (For options 1 and 2, you can also add '-perslice' to compute metrics for each axial slice, rather "
+            "than averaging.)\n"
+            "   3. '-vert' + '-vertfile': Select a region based on vertebral labels instead of individual slices.\n"
+            "      (For option 3, you can also add '-perlevel' to compute metrics for each vertebral level, rather "
+            "than averaging.)"
         )
     )
 
@@ -90,7 +106,7 @@ def get_parser():
         '-z',
         metavar=Metavar.str,
         type=str,
-        help="Slice range to compute the metrics across (requires '-p csa'). Example: 5:23"
+        help="Slice range to compute the metrics across. Example: 5:23"
     )
     optional.add_argument(
         '-perslice',
@@ -111,7 +127,7 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.str,
         default='./label/template/PAM50_levels.nii.gz',
-        help="R|Vertebral labeling file. Only use with flag -vert.\n" 
+        help="R|Vertebral labeling file. Only use with flag -vert.\n"
         "The input and the vertebral labelling file must in the same voxel coordinate system "
         "and must match the dimensions between each other. "
     )
@@ -157,10 +173,39 @@ def get_parser():
         help="Degree of smoothing for centerline fitting. Only use with -centerline-algo {bspline, linear}."
     )
     optional.add_argument(
+        '-pmj',
+        metavar=Metavar.file,
+        help="Ponto-Medullary Junction (PMJ) label file. "
+             "Example: pmj.nii.gz"
+    )
+    optional.add_argument(
+        '-pmj-distance',
+        type=float,
+        metavar=Metavar.float,
+        help="Distance (mm) from Ponto-Medullary Junction (PMJ) to the center of the mask used to compute morphometric "
+             "measures. (To be used with flag '-pmj'.)"
+    )
+    optional.add_argument(
+        '-pmj-extent',
+        type=float,
+        metavar=Metavar.float,
+        default=20,
+        help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
+             "included in the calculation. (To be used with flag '-pmj' and '-pmj-distance'.)"
+    )
+    optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved."
+             " The QC report is only available for PMJ-based CSA (with flag '-pmj')."
+    )
+    optional.add_argument(
+        '-qc-image',
+        metavar=Metavar.str,
+        help="Input image to display in QC report. Typically, it would be the "
+             "source anatomical image used to generate the spinal cord "
+             "segmentation. This flag is mandatory if using flag '-qc'."
     )
     optional.add_argument(
         '-qc-dataset',
@@ -307,9 +352,23 @@ def main(argv=None):
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
         minmax=True)
+    if arguments.pmj is not None:
+        fname_pmj = get_absolute_path(arguments.pmj)
+    else:
+        fname_pmj = None
+    if arguments.pmj_distance is not None:
+        distance_pmj = arguments.pmj_distance
+    else:
+        distance_pmj = None
+    extent_mask = arguments.pmj_extent
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
+
+    mutually_inclusive_args = (fname_pmj, distance_pmj)
+    is_pmj_none, is_distance_none = [arg is None for arg in mutually_inclusive_args]
+    if not (is_pmj_none == is_distance_none):
+        raise parser.error("Both '-pmj' and '-pmj-distance' are required in order to process segmentation from PMJ.")
 
     # update fields
     metrics_agg = {}
@@ -320,27 +379,69 @@ def main(argv=None):
                                          angle_correction=angle_correction,
                                          param_centerline=param_centerline,
                                          verbose=verbose)
+    if fname_pmj is not None:
+        im_ctl, mask, slices, centerline = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
+                                                                       distance_pmj, extent_mask,
+                                                                       param_centerline=param_centerline,
+                                                                       verbose=verbose)
+
+        # Save array of the centerline in a .csv file if verbose == 2
+        if verbose == 2:
+            fname_ctl_csv, _ = splitext(add_suffix(arguments.i, '_centerline_extrapolated'))
+            np.savetxt(fname_ctl_csv + '.csv', centerline, delimiter=",")
+
     for key in metrics:
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                            levels=parse_num_list(vert_levels), perslice=perslice,
+                                                            levels=parse_num_list(vert_levels),
+                                                            distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=(('SUM', func_sum),))
         else:
             # For other metrics, we compute the average and standard deviation across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                            levels=parse_num_list(vert_levels), perslice=perslice,
+                                                            levels=parse_num_list(vert_levels),
+                                                            distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=group_funcs)
     metrics_agg_merged = merge_dict(metrics_agg)
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
-
-    # QC report (only show CSA for clarity)
+    # QC report (only for PMJ-based CSA)
     if path_qc is not None:
-        generate_qc(fname_segmentation, args=arguments, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
-                    subject=qc_subject, path_img=_make_figure(metrics_agg_merged, fit_results),
-                    process='sct_process_segmentation')
+        if fname_pmj is not None:
+            if arguments.qc_image is not None:
+                fname_mask_out = add_suffix(arguments.i, '_mask_csa')
+                fname_ctl = add_suffix(arguments.i, '_centerline_extrapolated')
+                fname_ctl_smooth = add_suffix(fname_ctl, '_smooth')
+                if verbose != 2:
+                    from spinalcordtoolbox.utils.fs import tmp_create
+                    path_tmp = tmp_create()
+                    fname_mask_out = os.path.join(path_tmp, fname_mask_out)
+                    fname_ctl = os.path.join(path_tmp, fname_ctl)
+                    fname_ctl_smooth = os.path.join(path_tmp, fname_ctl_smooth)
+                # Save mask
+                mask.save(fname_mask_out)
+                # Save extrapolated centerline
+                im_ctl.save(fname_ctl)
+                # Generated centerline smoothed in RL direction for visualization (and QC report)
+                sct_maths.main(['-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth])
+
+                generate_qc(fname_in1=get_absolute_path(arguments.qc_image),
+                            # NB: For this QC figure, the centerline has to be first in the list in order for the centerline
+                            # to be properly layered underneath the PMJ + mask. However, Sagittal.get_center_spit
+                            # is called during QC, and it uses `fname_seg[-1]` to center the slices. `fname_mask_out`
+                            # doesn't work for this, so we have to repeat `fname_ctl_smooth` at the end of the list.
+                            fname_seg=[fname_ctl_smooth, fname_pmj, fname_mask_out, fname_ctl_smooth],
+                            args=sys.argv[1:],
+                            path_qc=os.path.abspath(path_qc),
+                            dataset=qc_dataset,
+                            subject=qc_subject,
+                            process='sct_process_segmentation')
+            else:
+                raise parser.error('-qc-image is required to display QC report.')
+        else:
+            logger.warning('QC report only available for PMJ-based CSA. QC report not generated.')
 
     display_open(file_out)
 
