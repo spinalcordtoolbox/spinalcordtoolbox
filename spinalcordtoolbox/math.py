@@ -301,7 +301,7 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
     :param model: regression model required to learn the mapping within Patch2Self
 
     .. note::
-        for more info about patch_radius and block radius, please refer to the dipy website: https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self
+        for more info about patch_radius and model, please refer to the dipy website: https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self
     """
     denoised = patch2self(data_in, bvals_in, patch_radius=patch_radius,
                           model=model)
