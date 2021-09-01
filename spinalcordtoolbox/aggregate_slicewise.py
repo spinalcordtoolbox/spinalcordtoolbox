@@ -560,3 +560,10 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
                         line.append(str(agg_metric[slicegroup][key]))
                         break
             spamwriter.writerow(line)
+
+
+def normalize(csa, predictors, coeff, means, data_subject):
+    pred_csa = csa
+    for predictor in predictors:
+        pred_csa = pred_csa + coeff[predictor]*(means[predictor] - data_subject[predictor])
+    return pred_csa
