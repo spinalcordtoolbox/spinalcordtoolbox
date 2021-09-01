@@ -19,6 +19,9 @@
 import sys
 import os
 import logging
+import pandas as pd
+import argparse
+from nibabel.quaternions import norm
 
 import numpy as np
 from matplotlib.ticker import MaxNLocator
@@ -32,11 +35,10 @@ from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __data_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
 
 logger = logging.getLogger(__name__)
-
 
 def get_parser():
     """
@@ -44,7 +46,7 @@ def get_parser():
     """
     # Initialize the parser
     parser = SCTArgumentParser(
-        description=(
+        description=(  # TODO add in description normliaze CSA
             "Compute the following morphometric measures based on the spinal cord segmentation:\n"
             "  - area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be "
             "accounted for by inputing a mask comprising values within [0,1].\n"
@@ -194,6 +196,12 @@ def get_parser():
              "included in the calculation. (To be used with flag '-pmj' and '-pmj-distance'.)"
     )
     optional.add_argument(
+        '-normalize',
+        metavar=Metavar.list,
+        nargs="+",
+        help="Normalize CSA values"  # TODO add example, choice of models and usage --> participants.tsv or specify a value
+    )
+    optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
@@ -309,6 +317,34 @@ def _make_figure(metric, fit_results):
 
     return fname_img
 
+PREDICTORS_DICT = {'brain volume':'brain-volume', 'thalamus volume': 'thalamus-volume' }
+
+def get_data_for_normalization(norm_args):
+    if 'thalamus-volume' in norm_args:
+        model = 'coeff_brain_thalamus_sex'
+    else:
+        model = 'coeff_brain_sex'
+    path_model = os.path.join(__data_dir__, 'csa_normalization_models', model + '.csv')
+    data_predictors = pd.read_csv(path_model, index_col=0)
+    data_predictors.drop('const', inplace=True)
+    data_subject = pd.DataFrame(index=data_predictors.index)
+
+    # TODO: check if participant.tsv or specified value, change predictors names
+    # Get predictors and values specified by the user
+    values = norm_args[1::2]
+    predictors = norm_args[::2]
+    # Check if all predictor have a value
+    if len(predictors) != len(values):
+        raise RuntimeError("Values for normalization need to be specified for each predictor.")
+    data_subject = {}
+    for i in range(len(predictors)):
+        data_subject[predictors[i]] = float(values[i])
+    if 'inter BV_sex' in data_predictors.index:
+        data_subject['inter BV_sex'] = data_subject['brain-volume']*data_subject['sex']
+    data_subject = pd.DataFrame([data_subject])
+    print(data_subject)
+    return data_predictors, data_subject
+
 
 def main(argv=None):
     parser = get_parser()
@@ -361,6 +397,9 @@ def main(argv=None):
     else:
         distance_pmj = None
     extent_mask = arguments.pmj_extent
+    if arguments.normalize is not None:
+        normalize = True
+        norm_args = arguments.normalize
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
@@ -405,6 +444,8 @@ def main(argv=None):
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=group_funcs)
+    if normalize:
+        data_predictors, data_subject = get_data_for_normalization(norm_args)
     metrics_agg_merged = merge_dict(metrics_agg)
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
     # QC report (only for PMJ-based CSA)
