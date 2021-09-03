@@ -564,13 +564,13 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
 
 def normalize_csa(csa, data_predictors, data_subject):
     """
-    Normalize CSA values with coeff from multivariate model. TODO: add ref of paper
+    Normalize CSA values with coeff from multivariate model. TODO: add REF
 
     :param csa: computed CSA value
     :param data_predictors: panda.DataFrame: coefficients from multilinear regression and mean values
     :param data_subject: panda.DataFrame: demographic data of the subject for each predictor
 
-    : return csa_norm: normalized CSA value
+    :return csa_norm: normalized CSA value
     """
     csa_norm = csa
     predictors = list(data_predictors.index)
