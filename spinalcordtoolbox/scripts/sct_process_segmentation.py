@@ -317,9 +317,12 @@ def _make_figure(metric, fit_results):
 
     return fname_img
 
-PREDICTORS_DICT = {'brain volume':'brain-volume', 'thalamus volume': 'thalamus-volume' }
 
 def get_data_for_normalization(norm_args):
+    """
+    """
+    PREDICTORS_DICT = {'brain-volume':'brain volume', 'thalamus-volume': 'thalamus volume' }
+
     if 'thalamus-volume' in norm_args:
         model = 'coeff_brain_thalamus_sex'
     else:
@@ -329,20 +332,23 @@ def get_data_for_normalization(norm_args):
     data_predictors.drop('const', inplace=True)
     data_subject = pd.DataFrame(index=data_predictors.index)
 
-    # TODO: check if participant.tsv or specified value, change predictors names
     # Get predictors and values specified by the user
     values = norm_args[1::2]
     predictors = norm_args[::2]
+
     # Check if all predictor have a value
     if len(predictors) != len(values):
         raise RuntimeError("Values for normalization need to be specified for each predictor.")
     data_subject = {}
     for i in range(len(predictors)):
+        # Change name of predictor
+        if predictors[i] in PREDICTORS_DICT.keys():
+            predictors[i] = PREDICTORS_DICT[predictors[i]]
         data_subject[predictors[i]] = float(values[i])
+    # Add interaction term
     if 'inter BV_sex' in data_predictors.index:
-        data_subject['inter BV_sex'] = data_subject['brain-volume']*data_subject['sex']
+        data_subject['inter BV_sex'] = data_subject['brain volume']*data_subject['sex']
     data_subject = pd.DataFrame([data_subject])
-    print(data_subject)
     return data_predictors, data_subject
 
 
