@@ -199,7 +199,10 @@ def get_parser():
         '-normalize',
         metavar=Metavar.list,
         nargs="+",
-        help="Normalize CSA values"  # TODO add example, choice of models and usage --> participants.tsv or specify a value
+        help="R|Normalize CSA values ('MEAN(area)'). Two models are available: \n1. sex, brain-volume, thalamus-volume."
+        " \n2.sex, brain-volume. \nSpecify each value for the subject after the corresponding predictor.\n"
+        "Example: -normalize sex 0 brain-volume 960606.0 thalamus-volume 13942.0 \n"
+        "Volumes are in mm^3. For sex, female: 0, male: 1."
     )
     optional.add_argument(
         '-qc',
@@ -320,10 +323,17 @@ def _make_figure(metric, fit_results):
 
 def get_data_for_normalization(norm_args):
     """
-    TODO
+    Get coefficients of multilinear regression for CSA normalization and subject data.
+    Normalization models are under spinalcordtoolbox/data/csa_normalization_models/.
+    Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
+    # TODO update link with release tag
+
+    :param norm_args: arguments from the argument -normalize.
+
+    :return coefficients, mean values, subject values of each specified predictor.
     """
     PREDICTORS_DICT = {'brain-volume':'brain volume', 'thalamus-volume': 'thalamus volume' }
-
+    # Select model
     if 'thalamus-volume' in norm_args:
         model = 'coeff_brain_thalamus_sex'
     else:
