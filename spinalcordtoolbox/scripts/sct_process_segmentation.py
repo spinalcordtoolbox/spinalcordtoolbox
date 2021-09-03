@@ -202,7 +202,7 @@ def get_parser():
         help="R|Normalize CSA values ('MEAN(area)'). Two models are available: \n1. sex, brain-volume, thalamus-volume."
         " \n2.sex, brain-volume. \nSpecify each value for the subject after the corresponding predictor.\n"
         "Example: -normalize sex 0 brain-volume 960606.0 thalamus-volume 13942.0 \n"
-        "Volumes are in mm^3. For sex, female: 0, male: 1."
+        "brain-volume and thalamus-volume are in mm^3. For sex, female: 0, male: 1."
     )
     optional.add_argument(
         '-qc',
