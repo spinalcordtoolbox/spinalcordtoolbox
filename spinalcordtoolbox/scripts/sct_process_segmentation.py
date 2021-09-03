@@ -27,7 +27,7 @@ import numpy as np
 from matplotlib.ticker import MaxNLocator
 
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
-    func_sum, merge_dict
+    func_sum, merge_dict, normalize_csa
 from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
@@ -320,6 +320,7 @@ def _make_figure(metric, fit_results):
 
 def get_data_for_normalization(norm_args):
     """
+    TODO
     """
     PREDICTORS_DICT = {'brain-volume':'brain volume', 'thalamus-volume': 'thalamus volume' }
 
