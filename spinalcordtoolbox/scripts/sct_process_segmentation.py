@@ -451,9 +451,13 @@ def main(argv=None):
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=group_funcs)
+    metrics_agg_merged = merge_dict(metrics_agg)
     if normalize:
         data_predictors, data_subject = get_data_for_normalization(norm_args)
-    metrics_agg_merged = merge_dict(metrics_agg)
+        for line in metrics_agg_merged:
+            # Normalize CSA value and replace in metrics_agg_merged
+            metrics_agg_merged[line]['MEAN(area)'] = normalize_csa(metrics_agg_merged[line]['MEAN(area)'], data_predictors, data_subject)
+    
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
     # QC report (only for PMJ-based CSA)
     if path_qc is not None:
