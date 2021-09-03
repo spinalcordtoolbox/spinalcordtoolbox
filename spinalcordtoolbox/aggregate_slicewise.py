@@ -574,8 +574,8 @@ def normalize_csa(csa, data_predictors, data_subject):
     """
     csa_norm = csa
     predictors = list(data_predictors.index)
-    means = data_predictors['means']
+    means = data_predictors['mean']
     coeff = data_predictors['coeff']
     for predictor in predictors:
-        csa_norm = csa_norm + coeff[predictor]*(means[predictor] - data_subject[predictor])
+        csa_norm = csa_norm + coeff[predictor]*(means[predictor] - data_subject[predictor][0])
     return csa_norm
