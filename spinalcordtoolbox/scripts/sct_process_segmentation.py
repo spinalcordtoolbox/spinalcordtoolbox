@@ -326,7 +326,7 @@ def get_data_for_normalization(norm_args):
     Get coefficients of multilinear regression for CSA normalization and subject data.
     Normalization models are under spinalcordtoolbox/data/csa_normalization_models/.
     Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
-    # TODO update link with release tag
+    # TODO update link with release tag.
 
     :param norm_args: arguments from the argument -normalize.
 
@@ -421,6 +421,8 @@ def main(argv=None):
     if arguments.normalize is not None:
         normalize = True
         norm_args = arguments.normalize
+    else:
+        normalize = False
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
