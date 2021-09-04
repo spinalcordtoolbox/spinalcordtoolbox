@@ -341,7 +341,7 @@ def get_data_for_normalization(norm_args):
     elif all(item in norm_args for item in model_2):
         model = 'coeff_brain_thalamus_sex'
     else:
-        raise RuntimeError('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume')
+        raise ValueError('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume {}'.format(norm_args))
     path_model = os.path.join(__data_dir__, 'csa_normalization_models', model + '.csv')
     data_predictors = pd.read_csv(path_model, index_col=0)
     data_predictors.drop('const', inplace=True)
@@ -353,7 +353,7 @@ def get_data_for_normalization(norm_args):
 
     # Check if all predictor have a value
     if len(predictors) != len(values):
-        raise RuntimeError("Values for normalization need to be specified for each predictor.")
+        raise ValueError("Values for normalization need to be specified for each predictor.")
     data_subject = {}
     for i in range(len(predictors)):
         # Change name of predictor
