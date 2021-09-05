@@ -38,6 +38,7 @@ from spinalcordtoolbox.utils.fs import get_absolute_path
 
 logger = logging.getLogger(__name__)
 
+
 def get_parser():
     """
     :return: Returns the parser with the command line documentation contained in it.
@@ -322,19 +323,19 @@ def _make_figure(metric, fit_results):
 def get_data_for_normalization(norm_args):
     """
     Get coefficients of multilinear regression for CSA normalization and subject data.
-    Normalization models are under spinalcordtoolbox/data/csa_normalization_models/.
+    Normalization models are under data/csa_normalization_models/
     Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
     # TODO update link with release tag.
 
-    :param norm_args: arguments from the argument -normalize.
+    :param norm_args: arguments from -normalize.
 
     :return coefficients, mean values, subject values of each specified predictor.
     """
-    PREDICTORS_DICT = {'brain-volume':'brain volume', 'thalamus-volume': 'thalamus volume' }
+    PREDICTORS_DICT = {'brain-volume': 'brain volume', 'thalamus-volume': 'thalamus volume'}
     # Select model
     model_1 = ['sex', 'brain-volume']
     model_2 = ['thalamus-volume', 'sex', 'brain-volume']
-    if all(item in norm_args for item in model_1 ):
+    if all(item in norm_args for item in model_1):
         model = 'coeff_brain_sex'
     elif all(item in norm_args for item in model_2):
         model = 'coeff_brain_thalamus_sex'
@@ -471,7 +472,7 @@ def main(argv=None):
         for line in metrics_agg_merged:
             # Normalize CSA value and replace in metrics_agg_merged
             metrics_agg_merged[line]['MEAN(area)'] = normalize_csa(metrics_agg_merged[line]['MEAN(area)'], data_predictors, data_subject)
-    
+
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
     # QC report (only for PMJ-based CSA)
     if path_qc is not None:
