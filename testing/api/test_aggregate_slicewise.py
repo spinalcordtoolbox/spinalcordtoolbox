@@ -2,9 +2,6 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.aggregate_slicewise
 
-
-
-
 import sys
 import os
 import pytest
@@ -84,9 +81,10 @@ def dummy_vert_level():
 @pytest.fixture(scope="session")
 def dummmy_data_predictor():
     """Create a panda dataframe of dummy coefficient and mean."""
-    data=[[1, 0.5], [1e-6, 1156171]]
+    data = [[1, 0.5], [1e-6, 1156171]]
     df = pd.DataFrame(data, columns=['coeff', 'mean'], index=['sex', 'brain-volume'])
     return df
+
 
 @pytest.fixture(scope="session")
 def dummmy_data_subject():
@@ -94,6 +92,7 @@ def dummmy_data_subject():
     data = [[0, 960606.0]]
     df = pd.DataFrame(data, columns=['sex', 'brain-volume'])
     return df
+
 
 # noinspection 801,PyShadowingNames
 def test_aggregate_across_selected_slices(dummy_metrics):
