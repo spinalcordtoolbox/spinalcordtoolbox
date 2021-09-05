@@ -20,8 +20,6 @@ import sys
 import os
 import logging
 import pandas as pd
-import argparse
-from nibabel.quaternions import norm
 
 import numpy as np
 from matplotlib.ticker import MaxNLocator
