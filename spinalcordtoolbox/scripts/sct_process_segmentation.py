@@ -48,7 +48,7 @@ def get_parser():
         description=(
             "Compute the following morphometric measures based on the spinal cord segmentation:\n"
             "  - area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be "
-            "accounted for by inputing a mask comprising values within [0,1].\n"
+            "accounted for by inputing a mask comprising values within [0,1]. Can be normalized when specifying the flag -normalize\n"
             "  - angle_AP, angle_RL: Estimated angle between the cord centerline and the axial slice. This angle is "
             "used to correct for morphometric information.\n"
             "  - diameter_AP, diameter_RL: Finds the major and minor axes of the cord and measure their length.\n"
