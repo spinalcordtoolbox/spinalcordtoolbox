@@ -329,7 +329,8 @@ def get_data_for_normalization(norm_args):
 
     :param norm_args: arguments from -normalize.
 
-    :return coefficients, mean values, subject values of each specified predictor.
+    :return data_predictors and data_subject:
+
     """
     PREDICTORS_DICT = {'brain-volume': 'brain volume', 'thalamus-volume': 'thalamus volume'}
     # Select model
@@ -340,7 +341,7 @@ def get_data_for_normalization(norm_args):
     elif all(item in norm_args for item in model_2):
         model = 'coeff_brain_thalamus_sex'
     else:
-        raise ValueError('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume {}'.format(norm_args))
+        raise ValueError('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume')
     path_model = os.path.join(__data_dir__, 'csa_normalization_models', model + '.csv')
     data_predictors = pd.read_csv(path_model, index_col=0)
     data_predictors.drop('const', inplace=True)
@@ -360,8 +361,7 @@ def get_data_for_normalization(norm_args):
             predictors[i] = PREDICTORS_DICT[predictors[i]]
         data_subject[predictors[i]] = float(values[i])
     # Add interaction term
-    if 'inter BV_sex' in data_predictors.index:
-        data_subject['inter BV_sex'] = data_subject['brain volume']*data_subject['sex']
+    data_subject['inter BV_sex'] = data_subject['brain volume']*data_subject['sex']
     data_subject = pd.DataFrame([data_subject])
     return data_predictors, data_subject
 
