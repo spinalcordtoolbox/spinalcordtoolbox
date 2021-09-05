@@ -45,7 +45,7 @@ def get_parser():
     """
     # Initialize the parser
     parser = SCTArgumentParser(
-        description=(  # TODO add in description normliaze CSA
+        description=(
             "Compute the following morphometric measures based on the spinal cord segmentation:\n"
             "  - area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be "
             "accounted for by inputing a mask comprising values within [0,1].\n"
