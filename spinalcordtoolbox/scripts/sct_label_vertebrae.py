@@ -462,7 +462,7 @@ def main(argv=None):
         printv('\nUn-straighten posterior disc map...', verbose)
         sct_apply_transfo.main(['-i', 'disc_posterior_tmp.nii.gz', '-d', 'segmentation.nii', '-w',
                                 'warp_straight2curve.nii.gz', '-o', 'label_disc_posterior.nii.gz',
-                                '-x', 'label', '-v', verbose])
+                                '-x', 'label', '-v', str(verbose)])
 
     if clean_labels:
         # Clean labeled segmentation
