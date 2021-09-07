@@ -16,7 +16,6 @@ import os
 import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
-
 from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
     clean_labeled_segmentation, label_vert
 import spinalcordtoolbox.vertebrae.deep_label_core as deep_method
@@ -182,14 +181,14 @@ def get_parser():
         metavar=Metavar.list,
         type=list_type(',', str),
         help=f"R|Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
-        f"  - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
-        f"  - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
-        f"  - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"
-        f"  - size_IS [mm]: IS window size for disc search. Default={param_default.size_IS}.\n"
-        f"  - gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the "
-        f"image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values "
-        f"to set between 0.1 (strong weighting) and 999 (no weighting). "
-        f"Default={param_default.gaussian_std}.\n"
+             f"  - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
+             f"  - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
+             f"  - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"
+             f"  - size_IS [mm]: IS window size for disc search. Default={param_default.size_IS}.\n"
+             f"  - gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the "
+             f"image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values "
+             f"to set between 0.1 (strong weighting) and 999 (no weighting). "
+             f"Default={param_default.gaussian_std}.\n"
     )
     optional.add_argument(
         '-method',
@@ -301,7 +300,6 @@ def main(argv=None):
     # Straighten spinal cord
     printv('\nStraighten spinal cord...', verbose)
     # check if warp_curve2straight and warp_straight2curve already exist (i.e. no need to do it another time)
-
     cache_sig = cache_signature(
         input_files=[fname_in, fname_seg],
     )
@@ -353,6 +351,7 @@ def main(argv=None):
     img.data = threshold(img.data, 0.5)
     img.save()
 
+
     # If disc label file is provided, label vertebrae using that file instead of automatically
     if fname_disc:
         # Apply straightening to disc-label
@@ -365,7 +364,6 @@ def main(argv=None):
                   'label'),
                  verbose=verbose
                  )
-
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
     else:
@@ -410,7 +408,6 @@ def main(argv=None):
         dilate(Image(fname_labelz), 5, 'ball').save(fname_labelz)
 
         # Apply straightening to z-label
-
         printv('\nAnd apply straightening to label...', verbose)
         sct_apply_transfo.main(['-i', file_labelz,
                                 '-d', 'data_straightr.nii',
@@ -439,6 +436,7 @@ def main(argv=None):
             # smooth data
             img.data = laplacian(img.data, sigmas)
             img.save()
+
 
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1
@@ -486,28 +484,23 @@ def main(argv=None):
              is_sct_binary=True,
              )
 
+
     # come back
     os.chdir(curdir)
 
     # Generate output files
-
     path_seg, file_seg, ext_seg = extract_fname(fname_seg)
     path_in, file_in, ext_in = extract_fname(fname_in)
     fname_seg_labeled = os.path.join(path_output, file_seg + '_labeled' + ext_seg)
     printv('\nGenerate output files...', verbose)
     generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii"), fname_seg_labeled)
-    generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii"),
-                         os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
+    generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii"), os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
     if fname_disc is None and arguments.method == 'DL':
-        generate_output_file(os.path.join(path_tmp, "label_disc_posterior.nii.gz"),
-                             os.path.join(path_output, file_in + '_labels-disc' + ext_in), verbose=verbose)
+        generate_output_file(os.path.join(path_tmp, "label_disc_posterior.nii.gz"), os.path.join(path_output, file_in + '_labels-disc' + ext_in), verbose=verbose)
     # copy straightening files in case subsequent SCT functions need them
-    generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"),
-                         os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose=verbose)
-    generate_output_file(os.path.join(path_tmp, "warp_straight2curve.nii.gz"),
-                         os.path.join(path_output, "warp_straight2curve.nii.gz"), verbose=verbose)
-    generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"),
-                         os.path.join(path_output, "straight_ref.nii.gz"), verbose=verbose)
+    generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose=verbose)
+    generate_output_file(os.path.join(path_tmp, "warp_straight2curve.nii.gz"), os.path.join(path_output, "warp_straight2curve.nii.gz"), verbose=verbose)
+    generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose=verbose)
 
     # Remove temporary files
     if remove_temp_files == 1:
