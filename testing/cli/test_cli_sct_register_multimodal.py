@@ -53,13 +53,20 @@ def test_sct_register_multimodal_mask_files_exist(tmp_path):
     (True, 'step=1,algo=centermassrot,type=imseg,rot_method=pcahog', None),
     (True, 'step=1,algo=columnwise,type=seg,smooth=1', None),
 ])
-def test_sct_register_multimodal_mt0_image_data_within_threshold(use_seg, param, fname_gt):
+def test_sct_register_multimodal_mt0_image_data_within_threshold(use_seg, param, fname_gt, tmp_path):
     """Run the CLI script and verify that the output image data is close to a reference image (within threshold)."""
-    fname_out = 'mt0_reg.nii.gz'
+    fname_out_src = str(tmp_path/'mt0_reg.nii.gz')
+    fname_out_dest = str(tmp_path/'mt0_reg_inv.nii.gz')
+    fname_owarp = str(tmp_path/'warp_mt02mt1.nii.gz')
+    fname_owarpinv = str(tmp_path/'warp_mt12mt0.nii.gz')
 
-    argv = ['-i', 'mt/mt0.nii.gz', '-d', 'mt/mt1.nii.gz', '-o', fname_out, '-x', 'linear', '-r', '0', '-param', param]
+    argv = ['-i', 'mt/mt0.nii.gz', '-d', 'mt/mt1.nii.gz', '-x', 'linear', '-r', '0', '-param', param,
+            '-o', fname_out_src, '-owarp', fname_owarp, '-owarpinv', fname_owarpinv]
     seg_argv = ['-iseg', 'mt/mt0_seg.nii.gz', '-dseg', 'mt/mt1_seg.nii.gz']
     sct_register_multimodal.main(argv=(argv + seg_argv) if use_seg else argv)
+
+    for f in [fname_out_src, fname_out_dest, fname_owarp, fname_owarpinv]:
+        assert os.path.isfile(f)
 
     # This check is skipped because of https://github.com/neuropoly/spinalcordtoolbox/issues/3372
     #############################################################################################

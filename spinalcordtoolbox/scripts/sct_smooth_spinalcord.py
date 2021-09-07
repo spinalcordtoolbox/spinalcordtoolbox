@@ -96,7 +96,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help='Output filename. Example: smooth_sc.nii '),
+        help="Output filename. Example: smooth_sc.nii.gz. By default, the suffix '_smooth' will be added to the input file name."),
     optional.add_argument(
         '-r',
         choices=[0, 1],
@@ -138,8 +138,7 @@ def main(argv=None):
     if arguments.o is not None:
         fname_out = arguments.o
     else:
-        fname_out = extract_fname(fname_anat)[1] + '_smooth.nii'
-
+        fname_out = extract_fname(fname_anat)[1] + '_smooth.nii.gz'
 
     # Display arguments
     printv('\nCheck input arguments...')
@@ -212,7 +211,8 @@ def main(argv=None):
     else:
         run_proc(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting=' + param.algo_fitting], verbose)
         cache_save(cachefile, cache_sig)
-        # move warping fields locally (to use caching next time)
+        # move warping fields and straight reference file from the tmpdir to the localdir (to use caching next time)
+        copy('straight_ref.nii.gz', os.path.join(curdir, 'straight_ref.nii.gz'))
         copy('warp_curve2straight.nii.gz', os.path.join(curdir, 'warp_curve2straight.nii.gz'))
         copy('warp_straight2curve.nii.gz', os.path.join(curdir, 'warp_straight2curve.nii.gz'))
 
