@@ -40,7 +40,7 @@ def test_sct_label_vertebrae_disc(tmp_path, is_coordinates_gt, contrast, pref):
     d = tmp_path / "sub"
     print(is_coordinates_gt)
     d.mkdir()
-    sct_label_vertebrae.main(['-i', 'sct_testing_data/' + contrast + "/" + pref + ".nii.gz ",
+    sct_label_vertebrae.main(['-i', 'sct_testing_data/' + contrast + "/" + pref + ".nii.gz",
                               '-s', 'sct_testing_data/' + contrast + "/" + pref + "_seg-manual.nii.gz",
                               '-initfile', 'sct_testing_data/' + contrast + '/init_label_vertebrae.txt',
                               '-c', contrast, '-ofolder', str(d), '-method', 'DL'])
