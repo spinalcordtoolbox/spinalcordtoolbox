@@ -16,7 +16,7 @@ import os
 import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
-from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
+from spinalcordtoolbox.vertebrae.core import get_z_and_disc_values_from_label, vertebral_detection, \
     clean_labeled_segmentation, label_vert
 import spinalcordtoolbox.vertebrae.deep_label_core as deep_method
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
@@ -27,9 +27,8 @@ from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCrea
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
     copy, extract_fname, rmtree
-from spinalcordtoolbox.math import threshold, laplacian
+from spinalcordtoolbox.math import threshold
 from spinalcordtoolbox.resampling import resample_file
-import spinalcordtoolbox.scripts.sct_apply_transfo as sct_apply_transfo
 
 from spinalcordtoolbox.scripts import sct_straighten_spinalcord, sct_apply_transfo
 
@@ -436,7 +435,6 @@ def main(argv=None):
             # smooth data
             img.data = laplacian(img.data, sigmas)
             img.save()
-
 
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1

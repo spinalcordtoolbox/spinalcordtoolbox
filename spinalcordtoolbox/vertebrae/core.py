@@ -162,10 +162,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
         if current_disc != 1:
             current_z = compute_mut_info_3d(data, data_template, x=xc, xshift=0, xsize=param.size_RL,
-                                        y=yc, yshift=param.shift_AP, ysize=param.size_AP,
-                                        z=current_z, zshift=0, zsize=param.size_IS,
-                                        xtarget=xct, ytarget=yct, ztarget=current_z_template,
-                                        zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc), gaussian_std=999, path_output=path_output)
+                                            y=yc, yshift=param.shift_AP, ysize=param.size_AP,
+                                            z=current_z, zshift=0, zsize=param.size_IS,
+                                            xtarget=xct, ytarget=yct, ztarget=current_z_template,
+                                            zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc),
+                                            gaussian_std=999, path_output=path_output)
 
         # display new disc
         if verbose == 2:
