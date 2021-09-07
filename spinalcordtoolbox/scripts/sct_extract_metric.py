@@ -27,7 +27,7 @@ from spinalcordtoolbox.metadata import read_label_file
 from spinalcordtoolbox.aggregate_slicewise import check_labels, extract_metric, save_as_csv, Metric, LabelStruc
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, parse_num_list, display_open
-from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import check_file_exist, extract_fname, get_absolute_path
 
 
@@ -123,7 +123,7 @@ def get_parser():
     )
     optional.add_argument(
         '-method',
-        choices=['ml', 'map', 'wa', 'bin', 'max'],
+        choices=['ml', 'map', 'wa', 'bin', 'median', 'max'],
         default=param_default.method,
         help="R|Method to extract metrics.\n"
              "  - ml: maximum likelihood.\n"
@@ -137,6 +137,9 @@ def get_parser():
              " as long as the sum across all labels equals 1, in each voxel part of the atlas.\n"
              "  - wa: weighted average\n"
              "  - bin: binarize mask (threshold=0.5)\n"
+             "  - median: weighted median.\n"
+             "    This implementation of the median treats quantiles as a continuous (vs. discrete) function. For"
+             " more details, see https://pypi.org/project/wquantiles/.\n"
              "  - max: for each z-slice of the input data, extract the max value for each slice of the input data."
     )
     optional.add_argument(
@@ -269,7 +272,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     param_default = Param()
 

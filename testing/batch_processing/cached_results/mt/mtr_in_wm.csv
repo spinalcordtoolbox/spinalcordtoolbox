@@ -1,0 +1,2 @@
+Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,Label,Size [vox],MAP(),STD()
+2021-03-16 10:47:36,git-jn/3254-fix-sform-sct_warp_template-9566dce5850797d73d819917f7f49ce74b4a052c,/home/joshua/repos/spinalcordtoolbox/sct_example_data/mt/mtr.nii.gz,4:17,2:5,white matter,980.9416908352437,54.37973987894469,4.85153610548257

@@ -24,7 +24,7 @@ import spinalcordtoolbox.deepseg as deepseg
 import spinalcordtoolbox.deepseg.models
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ def get_parser():
     input_output.add_argument(
         "-o",
         help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
-             "suffix '_seg' will be added and output extension will be .nii.gz.",
+             "the suffix specified in the packaged model will be added and output extension will be .nii.gz.",
         metavar=Metavar.str)
 
     seg = parser.add_argument_group('\nTASKS')
@@ -132,7 +132,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     if (arguments.list_tasks is False
             and arguments.install_task is None

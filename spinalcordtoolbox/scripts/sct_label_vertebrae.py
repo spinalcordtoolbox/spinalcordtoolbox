@@ -25,14 +25,14 @@ from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
     copy, extract_fname, rmtree
 from spinalcordtoolbox.math import threshold, laplacian
 from spinalcordtoolbox.resampling import resample_file
 import spinalcordtoolbox.scripts.sct_apply_transfo as sct_apply_transfo
 
-from spinalcordtoolbox.scripts import sct_straighten_spinalcord
+from spinalcordtoolbox.scripts import sct_straighten_spinalcord, sct_apply_transfo
 
 
 # PARAMETERS
@@ -239,7 +239,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initializations
     initz = ''
@@ -253,7 +253,7 @@ def main(argv=None):
     contrast = arguments.c
     path_template = os.path.abspath(arguments.t)
     scale_dist = arguments.scale_dist
-    path_output = arguments.ofolder
+    path_output = os.path.abspath(arguments.ofolder)
     param.path_qc = arguments.qc
     if arguments.discfile is not None:
         fname_disc = os.path.abspath(arguments.discfile)
@@ -305,12 +305,11 @@ def main(argv=None):
     cache_sig = cache_signature(
         input_files=[fname_in, fname_seg],
     )
-    cachefile = os.path.join(curdir, "straightening.cache")
-    if (cache_valid(cachefile, cache_sig) and
-            os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz")) and
-            os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz"))
+    fname_cache = "straightening.cache"
+    if (cache_valid(os.path.join(curdir, fname_cache), cache_sig)
+            and os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz"))
+            and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz"))
             and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz"))):
-
         # if they exist, copy them into current folder
         printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
         copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
@@ -331,9 +330,9 @@ def main(argv=None):
             '-i', 'data.nii',
             '-s', 'segmentation.nii',
             '-r', str(remove_temp_files),
-            '-v', str(verbose),
+            '-v', '0',
         ])
-        cache_save(cachefile, cache_sig)
+        cache_save(os.path.join(path_output, fname_cache), cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
@@ -342,15 +341,12 @@ def main(argv=None):
     # Apply straightening to segmentation
     # N.B. Output is RPI and 0.5x0.5x0.5
     printv('\nApply straightening to segmentation...', verbose)
-    run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
-             ('segmentation.nii',
-              'data_straightr.nii',
-              'warp_curve2straight.nii.gz',
-              'segmentation_straight.nii',
-              'Linear'),
-             verbose=verbose,
-             is_sct_binary=True,
-             )
+    sct_apply_transfo.main(['-i', 'segmentation.nii',
+                            '-d', 'data_straightr.nii',
+                            '-w', 'warp_curve2straight.nii.gz',
+                            '-o', 'segmentation_straight.nii',
+                            '-x', 'linear',
+                            '-v', '0'])
 
     # Threshold segmentation at 0.5
     img = Image('segmentation_straight.nii')
@@ -416,15 +412,12 @@ def main(argv=None):
         # Apply straightening to z-label
 
         printv('\nAnd apply straightening to label...', verbose)
-        run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
-                 (file_labelz,
-                  'data_straightr.nii',
-                  'warp_curve2straight.nii.gz',
-                  'labelz_straight.nii.gz',
-                  'NearestNeighbor'),
-                 verbose=verbose,
-                 is_sct_binary=True,
-                 )
+        sct_apply_transfo.main(['-i', file_labelz,
+                                '-d', 'data_straightr.nii',
+                                '-w', 'warp_curve2straight.nii.gz',
+                                '-o', 'labelz_straight.nii.gz',
+                                '-x', 'nn',
+                                '-v', '0'])
         # get z value and disk value to initialize labeling
         # After resampling to match template resolution
         resample_file('labelz_straight.nii.gz', 'labelz_straight_r.nii.gz', '0.5x0.5x0.5', 'mm', 'nn')
@@ -460,15 +453,12 @@ def main(argv=None):
 
     # un-straighten labeled spinal cord
     printv('\nUn-straighten labeling...', verbose)
-    run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
-             ('segmentation_straight_labeled.nii',
-              'segmentation.nii',
-              'warp_straight2curve.nii.gz',
-              'segmentation_labeled.nii',
-              'NearestNeighbor'),
-             verbose=verbose,
-             is_sct_binary=True,
-             )
+    sct_apply_transfo.main(['-i', 'segmentation_straight_labeled.nii',
+                            '-d', 'segmentation.nii',
+                            '-w', 'warp_straight2curve.nii.gz',
+                            '-o', 'segmentation_labeled.nii',
+                            '-x', 'nn',
+                            '-v', '0'])
 
     # un-straighten posterior disc map
     # it won't exist if we don't use the detection since it is based on the network prediction (DL method)

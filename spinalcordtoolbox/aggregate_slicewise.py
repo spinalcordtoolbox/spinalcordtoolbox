@@ -12,6 +12,7 @@ import functools
 import csv
 import datetime
 import logging
+import wquantiles
 
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 from spinalcordtoolbox.image import Image
@@ -146,6 +147,22 @@ def func_map(data, mask, map_clusters):
     return beta[0], beta
 
 
+def func_median(data, mask, map_clusters=None):
+    """
+    Compute weighted median. This is a "non-discrete" implementation of the median, in that it computes the mean between
+    the middle discrete values. For more context, see: https://github.com/nudomarinero/wquantiles/issues/4
+    :param data: nd-array: input data
+    :param mask: (n+1)d-array: input mask
+    :param map_clusters: not used
+    :return:
+    """
+    # Check if mask has an additional dimension (in case it is a label). If so, select the first label
+    if mask.ndim == data.ndim + 1:
+        mask = mask[..., 0]
+    data, mask = data.reshape(-1), mask.reshape(-1)
+    return wquantiles.median(data, mask), None
+
+
 def func_ml(data, mask, map_clusters=None):
     """
     Compute maximum likelihood (ML) for the first label of mask.
@@ -215,8 +232,8 @@ def func_wa(data, mask=None, map_clusters=None):
     return np.average(data, weights=mask), None
 
 
-def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], perslice=None, perlevel=False,
-                                 vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None):
+def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distance_pmj=None, perslice=None,
+                                 perlevel=False, vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
 
@@ -224,6 +241,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     :param mask: Class Metric(): mask to use for aggregating the data. Optional.
     :param slices: List[int]: Slices to aggregate metric from. If empty, select all slices.
     :param levels: List[int]: Vertebral levels to aggregate metric from. It has priority over "slices".
+    :param distance_pmj: float: Distance from Ponto-Medullary Junction (PMJ) in mm.
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False). Has priority over "perslice".
     :param vert_level: Vertebral level. Could be either an Image or a file name.
@@ -256,6 +274,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
         slices = range(metric.data.shape[ndim-1])
 
     # aggregation based on levels
+    vertgroups = None
     if levels:
         im_vert_level = Image(vert_level).change_orientation('RPI')
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
@@ -276,7 +295,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
             vertgroups = [tuple([level for level in levels])]
     # aggregation based on slices
     else:
-        vertgroups = None
         if perslice:
             # slicegroups = [(0,), (1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,)]
             slicegroups = [tuple([slice]) for slice in slices]
@@ -284,9 +302,13 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
             # slicegroups = [(0, 1, 2, 3, 4, 5, 6, 7, 8)]
             slicegroups = [tuple(slices)]
     agg_metric = dict((slicegroup, dict()) for slicegroup in slicegroups)
-
     # loop across slice group
     for slicegroup in slicegroups:
+        # add distance from PMJ info
+        if distance_pmj is not None:
+            agg_metric[slicegroup]['DistancePMJ'] = [distance_pmj]
+        else:
+            agg_metric[slicegroup]['DistancePMJ'] = None
         # add level info
         if vertgroups is None:
             agg_metric[slicegroup]['VertLevel'] = None
@@ -424,6 +446,10 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     elif method == 'wa':
         mask = Metric(data=labels_sum, label=label_struc[id_label].name)
         group_funcs = (('WA', func_wa), ('STD', func_std))
+    # Weighted median
+    elif method == 'median':
+        mask = Metric(data=labels_sum, label=label_struc[id_label].name)
+        group_funcs = (('MEDIAN', func_median), ('STD', func_std))
     # Binarize mask
     elif method == 'bin':
         mask = Metric(data=labels_sum, label=label_struc[id_label].name)
@@ -499,13 +525,14 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     list_item = ['Label', 'Size [vox]', 'MEAN(area)', 'STD(area)', 'MEAN(angle_AP)', 'STD(angle_AP)', 'MEAN(angle_RL)',
                  'STD(angle_RL)', 'MEAN(diameter_AP)', 'STD(diameter_AP)', 'MEAN(diameter_RL)', 'STD(diameter_RL)',
                  'MEAN(eccentricity)', 'STD(eccentricity)', 'MEAN(orientation)', 'STD(orientation)',
-                 'MEAN(solidity)', 'STD(solidity)', 'SUM(length)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'STD()', 'MAX()']
+                 'MEAN(solidity)', 'STD(solidity)', 'SUM(length)', 'WA()', 'BIN()', 'ML()', 'MAP()', 'MEDIAN()',
+                 'STD()', 'MAX()']
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append or not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
-            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel']
+            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel', 'DistancePMJ']
             agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:
@@ -525,6 +552,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
             line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
+            line.append(parse_num_list_inv(agg_metric[slicegroup]['DistancePMJ']))  # list distance from PMJ
             agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:

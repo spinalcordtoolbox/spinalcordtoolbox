@@ -134,6 +134,10 @@ class ParamregMultiStep:
 def register_step_ants_slice_regularized_registration(src, dest, step, metricSize, fname_mask='', verbose=1):
     """
     """
+    # NB: If the mask is soft, fname_mask will be returned as None, so that it won't be further applied via '-x'
+    if fname_mask:
+        dest, fname_mask = image.apply_mask_if_soft(dest, fname_mask)
+
     # Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given
     # threshold.
     list_fname = [src, dest]
@@ -352,25 +356,26 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     if isinstance(fname_src, list):
         # TODO: swap 0 and 1 (to be consistent with the child function below)
         src_img = image.convert(image.Image(fname_src[0]))
-        src_img.save(os.path.join(path_tmp, "src.nii"))
+        src_img.save(os.path.join(path_tmp, "src.nii"), mutable=True, verbose=verbose)
 
         src_seg = image.convert(image.Image(fname_src[1]))
-        src_seg.save(os.path.join(path_tmp, "src_seg.nii"))
+        src_seg.save(os.path.join(path_tmp, "src_seg.nii"), mutable=True, verbose=verbose)
 
         dest_img = image.convert(image.Image(fname_dest[0]))
-        dest_img.save(os.path.join(path_tmp, "dest.nii"))
+        dest_img.save(os.path.join(path_tmp, "dest.nii"), mutable=True, verbose=verbose)
 
         dest_seg = image.convert(image.Image(fname_dest[1]))
-        dest_seg.save(os.path.join(path_tmp, "dest_seg.nii"))
+        dest_seg.save(os.path.join(path_tmp, "dest_seg.nii"), mutable=True, verbose=verbose)
     else:
         src_img = image.convert(image.Image(fname_src))
-        src_img.save(os.path.join(path_tmp, "src.nii"))
+        src_img.save(os.path.join(path_tmp, "src.nii"), mutable=True, verbose=verbose)
 
         dest_image = image.convert(image.Image(fname_dest))
-        dest_image.save(os.path.join(path_tmp, "dest.nii"))
+        dest_image.save(os.path.join(path_tmp, "dest.nii"), mutable=True, verbose=verbose)
 
     if fname_mask != '':
-        image.convert(fname_mask, os.path.join(path_tmp, "mask.nii.gz"))
+        mask_img = image.convert(image.Image(fname_mask))
+        mask_img.save(os.path.join(path_tmp, "mask.nii.gz"), mutable=True, verbose=verbose)
 
     # go to temporary folder
     curdir = os.getcwd()
@@ -463,8 +468,6 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # TODO: no need to split the src or dest if it is the template (we know its centerline and orientation already)
 
     if verbose == 2:
-        import matplotlib
-        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz
@@ -720,8 +723,6 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
     # for display stuff
     if verbose == 2:
-        import matplotlib
-        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz

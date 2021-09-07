@@ -17,8 +17,9 @@ import os
 import spinalcordtoolbox.metadata
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import copy
+from spinalcordtoolbox.scripts import sct_apply_transfo
 
 
 # DEFAULT PARAMETERS
@@ -117,14 +118,12 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
         for i in range(0, len(template_label_file)):
             fname_label = os.path.join(path_label, folder_label, template_label_file[i])
             # apply transfo
-            run_proc('isct_antsApplyTransforms -d 3 -i %s -r %s -t %s -o %s -n %s' %
-                     (fname_label,
-                      fname_src,
-                      fname_transfo,
-                      os.path.join(path_out, folder_label, template_label_file[i]),
-                      get_interp(template_label_file[i], list_labels_nn)),
-                     is_sct_binary=True,
-                     verbose=verbose)
+            sct_apply_transfo.main(['-i', fname_label,
+                                    '-d', fname_src,
+                                    '-w', fname_transfo,
+                                    '-o', os.path.join(path_out, folder_label, template_label_file[i]),
+                                    '-x', get_interp(template_label_file[i], list_labels_nn),
+                                    '-v', '0'])
         # Copy list.txt
         copy(os.path.join(path_label, folder_label, file_label), os.path.join(path_out, folder_label))
 
@@ -133,10 +132,10 @@ def warp_label(path_label, folder_label, file_label, fname_src, fname_transfo, p
 # ==========================================================================================
 def get_interp(file_label, list_labels_nn):
     # default interp
-    interp = 'Linear'
-    # NN interp
+    interp = 'linear'
+    # Nearest Neighbours interp
     if any(substring in file_label for substring in list_labels_nn):
-        interp = 'NearestNeighbor'
+        interp = 'nn'
     # output
     return interp
 
@@ -234,7 +233,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     param = Param()
 

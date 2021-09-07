@@ -41,7 +41,8 @@ ini_param_trans_x = 270.0  # pix
 ini_param_trans_y = -150.0  # pix
 initial_step = 2
 
-def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1, path_qc=None):
+
+def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', verbose=1):
     """
     Register two NIFTI volumes containing landmarks
     :param fname_src: fname of source landmarks
@@ -84,7 +85,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     # estimate transformation
     # N.B. points_src and points_dest are inverted below, because ITK uses inverted transformation matrices, i.e., src->dest is defined in dest instead of src.
     # (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_dest, points_src, constraints=dof, verbose=verbose, path_qc=path_qc)
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_src, points_dest, constraints=dof, verbose=verbose, path_qc=path_qc)
+    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_src, points_dest, constraints=dof, verbose=verbose)
     # writing rigid transformation file
     # N.B. x and y dimensions have a negative sign to ensure compatibility between Python and ITK transfo
     text_file = open(fname_affine, 'w')
@@ -101,6 +102,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
                                                            points_moving_barycenter[2]))
     text_file.close()
 
+    
 def getNeighbors(point, set_points, k=1):
     '''
     Locate most similar neighbours
@@ -200,7 +202,7 @@ def minimize_transform(params, points_dest, points_src, constraints):
     return SSE(np.matrix(points_dest), points_src_reg)
 
 
-def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_Tz_Rx_Ry_Rz', verbose=0, path_qc=None):
+def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_Tz_Rx_Ry_Rz', verbose=0):
     """
     Compute affine transformation to register landmarks
     :param points_src:
@@ -254,15 +256,7 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     logger.info(f"Center:\n {points_src_barycenter}")
     logger.info(f"Translation:\n {translation_array}")
 
-    if verbose == 2 and path_qc is not None:
-        try:
-            os.makedirs(path_qc)
-        except FileExistsError:
-            pass
-
-        import matplotlib
-        # use Agg to prevent display
-        matplotlib.use('Agg')
+    if verbose == 2:
         import matplotlib.pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
 
@@ -288,14 +282,14 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
         ax.set_aspect('auto')
         plt.legend()
         # plt.show()
-        plt.savefig(os.path.join(path_qc, 'getRigidTransformFromLandmarks_plot.png'))
+        plt.savefig('getRigidTransformFromLandmarks_plot.png')
 
         fig2 = plt.figure()
         plt.plot(sse_results)
         plt.grid()
         plt.title('#Iterations: ' + str(res.nit) + ', #FuncEval: ' + str(res.nfev) + ', Error: ' + str(res.fun))
         plt.show()
-        plt.savefig(os.path.join(path_qc, 'getRigidTransformFromLandmarks_iterations.png'))
+        plt.savefig(os.path.join('getRigidTransformFromLandmarks_iterations.png'))
 
     # transform numpy matrix to list structure because it is easier to handle
     points_src_reg = points_src_reg.tolist()

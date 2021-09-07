@@ -15,7 +15,7 @@
 import sys
 import os
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
 import spinalcordtoolbox.image as image
 
 
@@ -65,20 +65,6 @@ def get_parser():
     return parser
 
 
-# conversion
-# ==========================================================================================
-def convert(fname_in, fname_out, squeeze_data=True, dtype=None, verbose=1):
-    """
-    Convert data
-    :return True/False
-    """
-    printv('sct_convert -i ' + fname_in + ' -o ' + fname_out, verbose, 'code')
-
-    img = image.Image(fname_in)
-    img = image.convert(img, squeeze_data=squeeze_data, dtype=dtype)
-    img.save(fname_out, mutable=True, verbose=verbose)
-
-
 def main(argv=None):
     """
     Main function
@@ -88,7 +74,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # Building the command, do sanity checks
     fname_in = arguments.i
@@ -96,7 +82,9 @@ def main(argv=None):
     squeeze_data = bool(arguments.squeeze)
 
     # convert file
-    convert(fname_in, fname_out, squeeze_data=squeeze_data)
+    img = image.Image(fname_in)
+    img = image.convert(img, squeeze_data=squeeze_data)
+    img.save(fname_out, mutable=True, verbose=verbose)
 
 
 if __name__ == "__main__":

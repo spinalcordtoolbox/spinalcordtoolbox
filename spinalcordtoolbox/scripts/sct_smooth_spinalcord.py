@@ -18,13 +18,12 @@ import time
 
 import numpy as np
 
-from spinalcordtoolbox.image import Image, generate_output_file
+from spinalcordtoolbox.image import Image, generate_output_file, convert, add_suffix
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_save, cache_signature, cache_valid, copy, \
     extract_fname, rmtree
 from spinalcordtoolbox.math import smooth
-from spinalcordtoolbox.scripts.sct_convert import convert
 
 
 class Param:
@@ -97,7 +96,7 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help='Output filename. Example: smooth_sc.nii '),
+        help="Output filename. Example: smooth_sc.nii.gz. By default, the suffix '_smooth' will be added to the input file name."),
     optional.add_argument(
         '-r',
         choices=[0, 1],
@@ -123,7 +122,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # Initialization
     param = Param()
@@ -139,8 +138,7 @@ def main(argv=None):
     if arguments.o is not None:
         fname_out = arguments.o
     else:
-        fname_out = extract_fname(fname_anat)[1] + '_smooth.nii'
-
+        fname_out = extract_fname(fname_anat)[1] + '_smooth.nii.gz'
 
     # Display arguments
     printv('\nCheck input arguments...')
@@ -177,22 +175,24 @@ def main(argv=None):
     os.chdir(path_tmp)
 
     # convert to nii format
-    convert('anat' + ext_anat, 'anat.nii')
-    convert('centerline' + ext_centerline, 'centerline.nii')
+    im_anat = convert(Image('anat' + ext_anat))
+    im_anat.save('anat.nii', mutable=True, verbose=verbose)
+    im_centerline = convert(Image('centerline' + ext_centerline))
+    im_centerline.save('centerline.nii', mutable=True, verbose=verbose)
 
     # Change orientation of the input image into RPI
     printv('\nOrient input volume to RPI orientation...')
-    fname_anat_rpi = Image("anat.nii") \
-        .change_orientation("RPI", generate_path=True) \
-        .save() \
-        .absolutepath
+
+    img_anat_rpi = Image("anat.nii").change_orientation("RPI")
+    fname_anat_rpi = add_suffix(img_anat_rpi.absolutepath, "_rpi")
+    img_anat_rpi.save(path=fname_anat_rpi, mutable=True)
 
     # Change orientation of the input image into RPI
     printv('\nOrient centerline to RPI orientation...')
-    fname_centerline_rpi = Image("centerline.nii") \
-        .change_orientation("RPI", generate_path=True) \
-        .save() \
-        .absolutepath
+
+    img_centerline_rpi = Image("centerline.nii").change_orientation("RPI")
+    fname_centerline_rpi = add_suffix(img_centerline_rpi.absolutepath, "_rpi")
+    img_centerline_rpi.save(path=fname_centerline_rpi, mutable=True)
 
     # Straighten the spinal cord
     # straighten segmentation
@@ -211,7 +211,8 @@ def main(argv=None):
     else:
         run_proc(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting=' + param.algo_fitting], verbose)
         cache_save(cachefile, cache_sig)
-        # move warping fields locally (to use caching next time)
+        # move warping fields and straight reference file from the tmpdir to the localdir (to use caching next time)
+        copy('straight_ref.nii.gz', os.path.join(curdir, 'straight_ref.nii.gz'))
         copy('warp_curve2straight.nii.gz', os.path.join(curdir, 'warp_curve2straight.nii.gz'))
         copy('warp_straight2curve.nii.gz', os.path.join(curdir, 'warp_straight2curve.nii.gz'))
 

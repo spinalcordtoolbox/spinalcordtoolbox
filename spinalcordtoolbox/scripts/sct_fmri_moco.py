@@ -15,7 +15,9 @@ import sys
 import os
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax, list_type
+from spinalcordtoolbox.reports.qc import generate_qc
 
 
 def get_parser():
@@ -114,6 +116,36 @@ def get_parser():
         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
+    optional.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="The path where the quality control generated content will be saved. (Note: "
+             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+    )
+    optional.add_argument(
+        '-qc-seg',
+        metavar=Metavar.file,
+        help="Segmentation of spinal cord to improve cropping in qc report. (Note: "
+             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+    )
+    optional.add_argument(
+        '-qc-fps',
+        metavar=Metavar.float,
+        type=float,
+        default=3,
+        help="This float number is the number of frames per second for the output gif images."
+    )
+    optional.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+    )
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
 
     return parser
 
@@ -122,7 +154,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initialization
     param = ParamMoco(group_size=1, metric='MeanSquares', smooth='0')
@@ -139,8 +171,29 @@ def main(argv=None):
     if arguments.param is not None:
         param.update(arguments.param)
 
+    path_qc = arguments.qc
+    qc_fps = arguments.qc_fps
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
+    qc_seg = arguments.qc_seg
+
+    mutually_inclusive_args = (path_qc, qc_seg)
+    is_qc_none, is_seg_none = [arg is None for arg in mutually_inclusive_args]
+    if not (is_qc_none == is_seg_none):
+        raise parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
+
     # run moco
-    moco_wrapper(param)
+    fname_output_image = moco_wrapper(param)
+
+    set_loglevel(verbose)  # moco_wrapper changes verbose to 0, see issue #3341
+
+    # QC report
+    if path_qc is not None:
+        generate_qc(fname_in1=fname_output_image, fname_in2=param.fname_data, fname_seg=qc_seg,
+                    args=sys.argv[1:], path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset,
+                    subject=qc_subject, process='sct_fmri_moco')
+
+    display_viewer_syntax([fname_output_image, param.fname_data], mode='ortho,ortho')
 
 
 if __name__ == "__main__":

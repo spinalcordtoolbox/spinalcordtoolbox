@@ -4,11 +4,12 @@
 FSLeyes Integration
 *******************
 
-`FSLeyes <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes#Install_as_part_of_FSL_.28recommended.29>`_
+`FSLeyes <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes>`_
 is part of the larger `FSL <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki>`_ package, which is a library
 containing tools for FMRI, MRI, and DTI brain imaging data. ``FSLeyes`` is the image viewer for this package, and can
-be installed as either part of the ``FSL`` package, or as a standalone app. See
-:ref:`fsleyes_installation` for instructions on how to install.
+be installed as either part of the ``FSL`` package, or as a standalone app.
+
+Previously, SCT provided instructions on how to install FSLeyes into the SCT environment. However, we now request that you install FSLeyes separately and manage the installation on your own. You can find installation instructions for FSLeyes at `this link <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes>`_.
 
 
 SCT + FSLeyes
@@ -24,5 +25,15 @@ To enable the ``SCT`` plugin:
 
 You should see something like this appear in the ``FSLeyes`` interface:
 
-.. image:: ../../imgs/sct_fsleyes.png
+.. image:: ../_static/img/sct_fsleyes.png
   :alt: SCT-FSLeyes Interface
+
+
+Demonstration
+=============
+
+The YouTube video below demonstrates the FSLeyes plugin in action:
+
+.. raw:: html
+
+   <iframe width="560" height="315" src="https://www.youtube.com/embed/XC0vu0brEB0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>

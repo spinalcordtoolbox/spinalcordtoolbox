@@ -14,7 +14,7 @@ import sys
 import os
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.math import binarize
@@ -105,7 +105,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     fname_input1 = arguments.i
     fname_input2 = arguments.d
@@ -114,11 +114,12 @@ def main(argv=None):
     tmp_dir = os.path.abspath(tmp_dir)
 
     # copy input files to tmp directory
-    # for fname in [fname_input1, fname_input2]:
-    copy(fname_input1, tmp_dir)
-    copy(fname_input2, tmp_dir)
-    fname_input1 = ''.join(extract_fname(fname_input1)[1:])
-    fname_input2 = ''.join(extract_fname(fname_input2)[1:])
+    fname_input1_tmp = 'tmp1_' + ''.join(extract_fname(fname_input1)[1:])
+    fname_input2_tmp = 'tmp2_' + ''.join(extract_fname(fname_input2)[1:])
+    copy(fname_input1, os.path.join(tmp_dir, fname_input1_tmp))
+    copy(fname_input2, os.path.join(tmp_dir, fname_input2_tmp))
+    fname_input1 = fname_input1_tmp
+    fname_input2 = fname_input2_tmp
 
     curdir = os.getcwd()
     os.chdir(tmp_dir)  # go to tmp directory

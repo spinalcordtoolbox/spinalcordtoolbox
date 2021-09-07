@@ -19,13 +19,12 @@ import os
 
 import numpy as np
 
-from spinalcordtoolbox.image import Image, generate_output_file
+from spinalcordtoolbox.image import Image, generate_output_file, convert
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
 
 from spinalcordtoolbox.scripts.sct_image import split_data, concat_data
-from spinalcordtoolbox.scripts.sct_convert import convert
 
 
 class Param:
@@ -76,7 +75,7 @@ def get_parser():
         '-bval',
         metavar=Metavar.file,
         default="",
-        help='bvals file. Used to identify low b-values (in case different from 0). Example: bvals.nii.gz',
+        help='bvals file. Used to identify low b-values (in case different from 0). Example: bvals.txt',
     )
     optional.add_argument(
         '-bvalmin',
@@ -114,7 +113,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initialize parameters
     param = Param()
@@ -159,9 +158,8 @@ def main(argv=None):
     b0_mean_name = b0_name + '_mean'
     dwi_name = file_data + '_dwi'
     dwi_mean_name = dwi_name + '_mean'
-
-    if not convert(fname_data, os.path.join(path_tmp, dmri_name + ext)):
-        printv('ERROR in convert.', 1, 'error')
+    im_dmri = convert(Image(fname_data))
+    im_dmri.save(os.path.join(path_tmp, dmri_name + ext), mutable=True, verbose=verbose)
     copy(fname_bvecs, os.path.join(path_tmp, "bvecs"), verbose=verbose)
 
     # go to tmp folder
@@ -169,7 +167,6 @@ def main(argv=None):
     os.chdir(path_tmp)
 
     # Get size of data
-    im_dmri = Image(dmri_name + ext)
     printv('\nGet dimensions data...', verbose)
     nx, ny, nz, nt, px, py, pz, pt = im_dmri.dim
     printv('.. ' + str(nx) + ' x ' + str(ny) + ' x ' + str(nz) + ' x ' + str(nt), verbose)

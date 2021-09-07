@@ -8,27 +8,59 @@ set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
 set -u            # exit if unset variables used
 shopt -s failglob # error if a glob doesn't find any files, instead of remaining unexpanded
 
-echo Installing SCT
-PIP_PROGRESS_BAR=off ./install_sct -y
+export SCT_PROGRESS_BAR=off # disable SCT's progress bar (e.g. for sct_download_data)
+export PIP_PROGRESS_BAR=off # disable pip's progress bar for the duration of CI
+export PY_COLORS=1 # Colored pytest output (https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591)
 
-echo *** CHECK PATH ***
-ls -lA bin  # Make sure all binaries and aliases are there
-source python/etc/profile.d/conda.sh  # to be able to call conda
-conda activate venv_sct  # reactivate conda for the pip install below
+install_sct () {
+  # NB: we only force in-place (-i) installs to avoid pytest running from the source
+  #     instead of the installed folder, where the extra detection models are.
+  #     Further explanation at https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
+  #     TO BE REMOVED during https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3140.
+  # NB: '-c' disables sct_check_dependencies so we can check it separately
+  ./install_sct -iyc
+}
 
-echo *** UNIT TESTS ***
-pip install coverage
-echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
-echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
-COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" \
+activate_venv_sct(){
+  source python/etc/profile.d/conda.sh  # to be able to call conda
+  set +u
+  conda activate venv_sct
+  set -u
+}
+
+check_dependencies() {
+  activate_venv_sct
+  sct_check_dependencies
+}
+
+run_tests() {
+  activate_venv_sct
   pytest
-coverage combine
+}
 
-# TODO: move this part to a separate travis job; there's no need for each platform to lint the code
-echo *** ANALYZE CODE ***
-pip install pylint
-bash -c 'PYTHONPATH="$PWD/scripts:$PWD" pylint -j3 --py3k --output-format=parseable --errors-only $(git ls-tree --name-only -r HEAD | sort | grep -E "(spinalcordtoolbox|scripts|testing).*\.py" | xargs); exit $(((($?&3))!=0))'
+run_tests_with_coverage(){
+  # NB: Coverage does not currently work: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2702
+  activate_venv_sct
+  pip install coverage
+  echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
+  echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
+  COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" pytest
+  coverage combine
+}
 
-# python create_package.py -s ${TRAVIS_OS_NAME}  # test package creation
-# cd ../spinalcordtoolbox_v*
-# yes | ./install_sct  # test installation of package
+while getopts ":ict" opt; do
+  case $opt in
+  i)
+    install_sct
+    ;;
+  c)
+    check_dependencies
+    ;;
+  t)
+    run_tests
+    ;;
+  *)
+    exit 99
+    ;;
+  esac
+done

@@ -39,10 +39,15 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'recommonmark']
+    'recommonmark',
+    'sphinx.ext.extlinks',
+    'sphinx_copybutton'
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+
+# copybutton_image_path = "img/copy.png"
 
 # add doc for __init
 autoclass_content = 'both'
@@ -81,34 +86,50 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = []
+exclude_patterns = ['*/api', "*/api.rst"]
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+# pygments_style = "monokai"
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
+
+extlinks = {
+    # e.g. :sct_tutorial_data:`data_template-registration.zip` gets expanded into:
+    # 'https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
+    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20210609/%s', '')
+}
 
 
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
-#html_theme = 'alabaster'
-html_theme = "sphinx_rtd_theme"
+# html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = '../imgs/logo_sct.png'
+html_logo = './_static/img/logo_sct_whitetext.png'
 
 html_theme_options = {
-    "collapse_navigation": True,
-    "display_version": True,
-    "sticky_navigation": True,  # Set to False to disable the sticky nav while scrolling.
-    "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
-    "style_nav_header_background": "#FFFFFF",  # background of the logo (top left)
+    "sidebar_hide_name": True,
+    "light_css_variables": {
+        "color-background-primary": "#fcfcfc",
+        "color-sidebar-background": "#3d3d3c",
+        "color-admonition-title-background": "#EAF6FF",
+        "color-admonition-title": "#c2e2fb",
+        "color-admonition-title-background--note": "#30c42626",
+        "color-admonition-title--note": "#30c42659",
+        "color-sidebar-item-background--hover": "#5a5a58",
+        "color-sidebar-link-text": "#fcfcfc"
+    },
+    "dark_css_variables": {
+        "color-sidebar-background": "#1a1c1e",
+        "color-admonition-title": "#0054af",
+        "color-admonition-title-background": "#0054af5c"
     }
+}
 
 html_context = {
     "display_github": True,
@@ -123,20 +144,20 @@ html_context = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
-html_css_files = ['css/custom.css']
+html_css_files = ['css/custom.css', 'css/pygments_dark.css']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-html_sidebars = {
-    '**': [
-        'about.html',
-        'navigation.html',
-        'relations.html',  # needs 'show_related': True theme option to display
-        'searchbox.html',
-    ]
-}
+# html_sidebars = {
+#     '**': [
+#         'about.html',
+#         'navigation.html',
+#         'relations.html',  # needs 'show_related': True theme option to display
+#         'searchbox.html',
+#     ]
+# }
 
 
 # -- Options for HTMLHelp output ------------------------------------------
@@ -174,4 +195,3 @@ texinfo_documents = [
      author, 'SpinalCordToolbox', 'One line description of project.',
      'Miscellaneous'),
 ]
-
