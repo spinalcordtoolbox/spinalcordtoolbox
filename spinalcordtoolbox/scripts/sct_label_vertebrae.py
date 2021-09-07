@@ -333,7 +333,7 @@ def main(argv=None):
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
-    s, o = resample_file('data_straight.nii', 'data_straightr.nii', '0.5', 'mm', 'linear', verbose=verbose)
+    resample_file('data_straight.nii', 'data_straightr.nii', '0.5x0.5x0.5', 'mm', 'linear', verbose=verbose)
 
     # Apply straightening to segmentation
     # N.B. Output is RPI and 0.5x0.5x0.5
@@ -416,7 +416,7 @@ def main(argv=None):
                                 '-v', '0'])
         # get z value and disk value to initialize labeling
         # After resampling to match template resolution
-        resample_file('labelz_straight.nii.gz', 'labelz_straight_r.nii.gz', '0.5x0.5x0.5', 'mm', 'nn')
+        resample_file('labelz_straight.nii.gz', 'labelz_straight_r.nii.gz', '0.5x0.5x0.5', 'mm', 'nn', verbose=verbose)
         printv('\nGet z and disc values from straight label...', verbose)
         init_disc = get_z_and_disc_values_from_label('labelz_straight_r.nii.gz')
         printv('.. ' + str(init_disc), verbose)
