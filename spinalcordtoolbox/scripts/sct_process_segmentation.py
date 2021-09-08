@@ -33,7 +33,7 @@ from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __data_dir__
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
 
 logger = logging.getLogger(__name__)
@@ -342,7 +342,7 @@ def get_data_for_normalization(norm_args):
         model = 'coeff_brain_thalamus_sex'
     else:
         raise ValueError('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume')
-    path_model = os.path.join(__data_dir__, 'csa_normalization_models', model + '.csv')
+    path_model = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'data', 'csa_normalization_models', model + '.csv')
     data_predictors = pd.read_csv(path_model, index_col=0)
     data_predictors.drop('const', inplace=True)
     data_subject = pd.DataFrame(index=data_predictors.index)
