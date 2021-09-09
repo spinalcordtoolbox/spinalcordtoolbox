@@ -2,10 +2,21 @@
 
 """Detect Ponto-Medullary Junction.
 
+The models were trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
+in section 2.1.2, except that the cords are not straightened for the PMJ disc detection task.
+
+To train a new model:
+- Install SCT v3.2.7 (https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/v3.2.7)
+- Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
+- Run "source sct_launcher" in a terminal
+- Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
+- Save the trained model in https://github.com/spinalcordtoolbox/pmj_models
+
+NB: The files in the `dev/` folder are not actively maintained, so these training steps are not guaranteed to
+    work with more recent versions of SCT.
+
 Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 Author: Charley
-Created: 2017-07-21
-Modified: 2017-09-12
 
 About the license: see the file LICENSE.TXT
 """
@@ -29,11 +40,12 @@ logger = logging.getLogger(__name__)
 def get_parser():
     parser = SCTArgumentParser(
         description='Detection of the Ponto-Medullary Junction (PMJ). '
-                    ' This method is machine-learning based and adapted for T1w-like or '
-                    ' T2w-like images. '
-                    ' If the PMJ is detected from the input image, a nifti mask is output '
-                    ' ("*_pmj.nii.gz") with one voxel (value=50) located at the predicted PMJ '
-                    ' position. If the PMJ is not detected, nothing is output.'
+                    'This method is based on a machine-learning algorithm published in (Gros et al. 2018, Medical '
+                    'Image Analysis, https://doi.org/10.1016/j.media.2017.12.001). Two models are available: one for '
+                    'T1w-like and another for T2w-like images. '
+                    'If the PMJ is detected from the input image, a NIfTI mask is output '
+                    '("*_pmj.nii.gz") with one voxel (value=50) located at the predicted PMJ '
+                    'position. If the PMJ is not detected, nothing is output.'
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -50,7 +62,6 @@ def get_parser():
         help="Type of image contrast, if your contrast is not in the available options (t1, t2), "
              "use t1 (cord bright/ CSF dark) or t2 (cord dark / CSF bright)",
     )
-
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
