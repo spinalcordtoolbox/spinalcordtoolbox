@@ -30,7 +30,6 @@ def dummy_3d_pmj_label():
     return filename
 
 
-@pytest.fixture(scope="session")
 def test_sct_process_segmentation_check_pmj(dummy_3d_mask_nib, dummy_3d_pmj_label, tmp_path):
     """ Run sct_process_segmentation with -pmj, -pmj-distance and -pmj-extent and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
