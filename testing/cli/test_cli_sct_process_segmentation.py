@@ -60,7 +60,7 @@ def test_sct_process_segmentation_check_normalize(dummy_3d_mask_nib, tmp_path):
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
-        assert float(row['MEAN(area)']) == pytest.approx(229.66183933280874)
+        assert float(row['MEAN(area)']) == pytest.approx(228.20973426502943)
 
 
 def test_sct_process_segmentation_check_normalize_missing_value(dummy_3d_mask_nib, tmp_path):
@@ -79,7 +79,6 @@ def test_sct_process_segmentation_check_normalize_missing_predictor(dummy_3d_mas
         sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-normalize',
                                             'sex', '0' 'thalamus-volume', '13942.0', '-o', filename])
         assert e.value.code == 2
-
 
 
 @pytest.mark.sct_testing
