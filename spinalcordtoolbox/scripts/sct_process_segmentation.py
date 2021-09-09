@@ -20,7 +20,7 @@ import sys
 import os
 import logging
 import pandas as pd
-
+import argparse
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
@@ -37,6 +37,22 @@ from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
 
 logger = logging.getLogger(__name__)
+
+
+class SeperateNormArgs(argparse.Action):
+    """Seperates predictors from their values, computes interaction between sex and brain-volume and puts the results in a dataframe"""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        pred = values[::2]
+        val = values[1::2]
+        if len(pred) != len(val):
+            raise parser.error("Values for normalization need to be specified for each predictor.")
+        data_subject = {}
+        for i in range(len(pred)):
+            data_subject[pred[i]] = float(val[i])
+
+        df = pd.DataFrame([data_subject])
+        setattr(namespace, self.dest, df)
 
 
 def get_parser():
@@ -197,6 +213,7 @@ def get_parser():
     optional.add_argument(
         '-normalize',
         metavar=Metavar.list,
+        action=SeperateNormArgs,
         nargs="+",
         help="R|Normalize CSA values ('MEAN(area)'). Two models are available: \n1. sex, brain-volume, thalamus-volume."
         " \n2.sex, brain-volume. \nSpecify each value for the subject after the corresponding predictor.\n"
@@ -320,52 +337,6 @@ def _make_figure(metric, fit_results):
     return fname_img
 
 
-def get_data_for_normalization(norm_args):
-    """
-    Get coefficients of multilinear regression for CSA normalization and subject data.
-    Normalization models are under data/csa_normalization_models/
-    Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
-    # TODO update link with release tag.
-
-    :param norm_args: arguments from -normalize.
-
-    :return data_predictors and data_subject:
-
-    """
-    PREDICTORS_DICT = {'brain-volume': 'brain volume', 'thalamus-volume': 'thalamus volume'}
-    # Select model
-    model_1 = ['sex', 'brain-volume']
-    model_2 = ['thalamus-volume', 'sex', 'brain-volume']
-    if all(item in norm_args for item in model_1):
-        model = 'coeff_brain_sex'
-    elif all(item in norm_args for item in model_2):
-        model = 'coeff_brain_thalamus_sex'
-    else:
-        raise ValueError('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume')
-    path_model = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'data', 'csa_normalization_models', model + '.csv')
-    data_predictors = pd.read_csv(path_model, index_col=0)
-    data_predictors.drop('const', inplace=True)
-    data_subject = pd.DataFrame(index=data_predictors.index)
-
-    # Get predictors and values specified by the user
-    values = norm_args[1::2]
-    predictors = norm_args[::2]
-
-    # Check if all predictor have a value
-    if len(predictors) != len(values):
-        raise ValueError("Values for normalization need to be specified for each predictor.")
-    data_subject = {}
-    for i in range(len(predictors)):
-        # Change name of predictor
-        if predictors[i] in PREDICTORS_DICT.keys():
-            predictors[i] = PREDICTORS_DICT[predictors[i]]
-        data_subject[predictors[i]] = float(values[i])
-    # Add interaction term
-    data_subject['inter BV_sex'] = data_subject['brain volume']*data_subject['sex']
-    data_subject = pd.DataFrame([data_subject])
-    return data_predictors, data_subject
-
-
 def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
@@ -462,11 +433,22 @@ def main(argv=None):
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=group_funcs)
     metrics_agg_merged = merge_dict(metrics_agg)
+    # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
-        data_predictors, data_subject = get_data_for_normalization(arguments.normalize)
+        path_model = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'data', 'csa_normalization_models', 
+                          '_'.join(sorted(arguments.normalize.columns)) + '.csv')
+        if not os.path.isfile(path_model):
+            raise parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
+        # Get normalization model
+        # Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
+        # TODO update link with release tag.
+        data_predictors = pd.read_csv(path_model, index_col=0)    
+        # Add interaction term
+        arguments.normalize['inter-BV_sex'] = arguments.normalize['brain-volume']*arguments.normalize['sex']
+
         for line in metrics_agg_merged:
             # Normalize CSA value and replace in metrics_agg_merged
-            metrics_agg_merged[line]['MEAN(area)'] = normalize_csa(metrics_agg_merged[line]['MEAN(area)'], data_predictors, data_subject)
+            metrics_agg_merged[line]['MEAN(area)'] = normalize_csa(metrics_agg_merged[line]['MEAN(area)'], data_predictors, arguments.normalize)
 
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
     # QC report (only for PMJ-based CSA)
