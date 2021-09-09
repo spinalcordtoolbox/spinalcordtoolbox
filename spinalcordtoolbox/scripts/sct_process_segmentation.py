@@ -435,14 +435,14 @@ def main(argv=None):
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
-        path_model = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'data', 'csa_normalization_models', 
-                          '_'.join(sorted(arguments.normalize.columns)) + '.csv')
+        path_model = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'data', 'csa_normalization_models',
+                                  '_'.join(sorted(arguments.normalize.columns)) + '.csv')
         if not os.path.isfile(path_model):
             raise parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
         # Get normalization model
         # Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
         # TODO update link with release tag.
-        data_predictors = pd.read_csv(path_model, index_col=0)    
+        data_predictors = pd.read_csv(path_model, index_col=0)
         # Add interaction term
         arguments.normalize['inter-BV_sex'] = arguments.normalize['brain-volume']*arguments.normalize['sex']
 
