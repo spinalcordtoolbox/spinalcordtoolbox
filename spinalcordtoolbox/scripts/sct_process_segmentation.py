@@ -417,11 +417,6 @@ def main(argv=None):
     else:
         distance_pmj = None
     extent_mask = arguments.pmj_extent
-    if arguments.normalize is not None:
-        normalize = True
-        norm_args = arguments.normalize
-    else:
-        normalize = False
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
@@ -467,8 +462,8 @@ def main(argv=None):
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=group_funcs)
     metrics_agg_merged = merge_dict(metrics_agg)
-    if normalize:
-        data_predictors, data_subject = get_data_for_normalization(norm_args)
+    if arguments.normalize is not None:
+        data_predictors, data_subject = get_data_for_normalization(arguments.normalize)
         for line in metrics_agg_merged:
             # Normalize CSA value and replace in metrics_agg_merged
             metrics_agg_merged[line]['MEAN(area)'] = normalize_csa(metrics_agg_merged[line]['MEAN(area)'], data_predictors, data_subject)
