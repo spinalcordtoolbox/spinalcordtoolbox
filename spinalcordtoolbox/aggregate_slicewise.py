@@ -562,7 +562,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             spamwriter.writerow(line)
 
 
-def normalize_csa(csa, data_predictors, data_subject):
+def normalize_csa(csa_norm, data_predictors, data_subject):
     """
     Normalize CSA values with coeff from multivariate model. TODO: add REF
 
@@ -572,7 +572,6 @@ def normalize_csa(csa, data_predictors, data_subject):
 
     :return csa_norm: normalized CSA value
     """
-    csa_norm = csa
     predictors = list(data_predictors.index)
     means = data_predictors['mean']
     coeff = data_predictors['coeff']
