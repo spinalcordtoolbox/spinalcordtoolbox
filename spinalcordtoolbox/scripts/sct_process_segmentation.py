@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 
 
 class SeperateNormArgs(argparse.Action):
-    """Seperates predictors from their values, computes interaction between sex and brain-volume and puts the results in a dataframe"""
+    """Seperates predictors from their values and puts the results in a dataframe"""
 
     def __call__(self, parser, namespace, values, option_string=None):
         pred = values[::2]
