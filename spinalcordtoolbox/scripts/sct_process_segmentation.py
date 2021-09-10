@@ -446,10 +446,8 @@ def main(argv=None):
         data_predictors = pd.read_csv(path_model, index_col=0)
         # Add interaction term
         data_subject['inter-BV_sex'] = data_subject['brain-volume']*data_subject['sex']
-
-        for line in metrics_agg_merged:
-            # Normalize CSA value and replace in metrics_agg_merged
-            metrics_agg_merged[line]['MEAN(area)'] = normalize_csa(metrics_agg_merged[line]['MEAN(area)'], data_predictors, data_subject)
+        for line in metrics_agg_merged.values():
+            line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
 
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
     # QC report (only for PMJ-based CSA)
