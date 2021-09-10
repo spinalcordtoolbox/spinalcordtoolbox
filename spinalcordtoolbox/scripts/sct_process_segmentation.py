@@ -40,19 +40,18 @@ logger = logging.getLogger(__name__)
 
 
 class SeperateNormArgs(argparse.Action):
-    """Seperates predictors from their values and puts the results in a dataframe"""
+    """Seperates predictors from their values and puts the results in a dict"""
 
     def __call__(self, parser, namespace, values, option_string=None):
         pred = values[::2]
         val = values[1::2]
         if len(pred) != len(val):
             raise parser.error("Values for normalization need to be specified for each predictor.")
-        data_subject = {}
-        for i in range(len(pred)):
-            data_subject[pred[i]] = float(val[i])
-
-        df = pd.DataFrame([data_subject])
-        setattr(namespace, self.dest, df)
+        try:
+            data_subject = {pred: float(val) for pred, val in zip(values[::2], values[1::2])}
+        except ValueError:
+            raise parser.error("Normalization values must be float, and provided in the form: '-normalize predictor1 value1 predictor2 value2 [...]'")
+        setattr(namespace, self.dest, data_subject)
 
 
 def get_parser():
@@ -435,7 +434,7 @@ def main(argv=None):
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
-        data_subject = arguments.normalize
+        data_subject = pd.DataFrame([arguments.normalize])
         path_model = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'data', 'csa_normalization_models',
                                   '_'.join(sorted(data_subject.columns)) + '.csv')
         if not os.path.isfile(path_model):
