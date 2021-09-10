@@ -435,7 +435,7 @@ def main(argv=None):
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
-        data_subject = pd.Dataframe([arguments.normalize])
+        data_subject = arguments.normalize
         path_model = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'data', 'csa_normalization_models',
                                   '_'.join(sorted(data_subject.columns)) + '.csv')
         if not os.path.isfile(path_model):
