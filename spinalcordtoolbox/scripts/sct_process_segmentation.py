@@ -435,8 +435,9 @@ def main(argv=None):
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
+        data_subject = pd.Dataframe([arguments.normalize])
         path_model = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'data', 'csa_normalization_models',
-                                  '_'.join(sorted(arguments.normalize.columns)) + '.csv')
+                                  '_'.join(sorted(data_subject.columns)) + '.csv')
         if not os.path.isfile(path_model):
             raise parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
         # Get normalization model
@@ -444,11 +445,11 @@ def main(argv=None):
         # TODO update link with release tag.
         data_predictors = pd.read_csv(path_model, index_col=0)
         # Add interaction term
-        arguments.normalize['inter-BV_sex'] = arguments.normalize['brain-volume']*arguments.normalize['sex']
+        data_subject['inter-BV_sex'] = data_subject['brain-volume']*data_subject['sex']
 
         for line in metrics_agg_merged:
             # Normalize CSA value and replace in metrics_agg_merged
-            metrics_agg_merged[line]['MEAN(area)'] = normalize_csa(metrics_agg_merged[line]['MEAN(area)'], data_predictors, arguments.normalize)
+            metrics_agg_merged[line]['MEAN(area)'] = normalize_csa(metrics_agg_merged[line]['MEAN(area)'], data_predictors, data_subject)
 
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
     # QC report (only for PMJ-based CSA)
