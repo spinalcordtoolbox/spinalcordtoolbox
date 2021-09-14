@@ -25,7 +25,10 @@ The following studies (in chronological order) have used SCT:
     -  Adibi *et al.* `Quantitative Magnetic Resonance Imaging Analysis of Early Markers of Upper Cervical Cord Atrophy in Multiple Sclerosis and Neuromyelitis Optica Spectrum Disorder. <https://pubmed.ncbi.nlm.nih.gov/34306756/>`_ **Mult Scler Int.** 2021
     -  Martucci *et al.* `Spinal Cord Resting State Activity in Individuals With Fibromyalgia Who Take Opioids. <https://www.frontiersin.org/articles/10.3389/fneur.2021.694271/full>`_ **Front. Neurol.** 2021
     -  David *et al.* `Longitudinal changes of spinal cord grey and white matter following spinal cord injury. <https://jnnp.bmj.com/content/early/2021/08/11/jnnp-2021-326337.info>`_ **Journal of Neurology, Neurosurgery & Psychiatry.** 2021
-
+    -  Trevarrow *et al.* `Spinal Cord Microstructural Changes are Connected with the Aberrant Sensorimotor Cortical Oscillatory Activity in Adults with Cerebral Palsy. <https://doi.org/10.21203/rs.3.rs-842588/v1>`_ **Scientific Reports.** 2021
+    -  Alsenan *et al.* `A Deep Learning Model based on MobileNetV3 and UNet for Spinal Cord Gray Matter Segmentation. <https://ieeexplore.ieee.org/document/9522652>`_ **44th International Conference on Telecommunications and Signal Processing (TSP).** 2021
+    -  Horak *et al.* `In vivo molecular signatures of cervical spinal cord pathology in degenerative compression. <https://pubmed.ncbi.nlm.nih.gov/34428934/>`_ **J Neurotrauma.** 2021
+    -  Valošek *et al.* `Diffusion MRI reveals tract-specific microstructural correlates of electrophysiological impairments in non-myelopathic and myelopathic spinal cord compression. <https://doi.org/10.1111/ene.15027>`_ **Eur J Neurol.** 2021
 2020
 ----
 
