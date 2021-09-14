@@ -5,7 +5,9 @@ Studies using SCT
 
 The following studies (in chronological order) have used SCT:
 
-- **2021**
+2021
+----
+
     -  Querin *et al.* `Development of new outcome measures for adult SMA type III and IV: a multimodal longitudinal study. <https://pubmed.ncbi.nlm.nih.gov/33388927/>`_ **J Neurol** 2021
     -  McLachlin et al. `Spatial correspondence of spinal cord white matter tracts using diffusion tensor imaging, fibre tractography, and atlas-based segmentation. <https://link.springer.com/article/10.1007/s00234-021-02635-9>`_ **Neuroradiology** 2021
     -  Dvorak *et al.* `Comparison of multi echo T2 relaxation and steady state approaches for myelin imaging in the central nervous system. <https://www.nature.com/articles/s41598-020-80585-7>`_ **Scientific reports** 2021
@@ -24,7 +26,9 @@ The following studies (in chronological order) have used SCT:
     -  Martucci *et al.* `Spinal Cord Resting State Activity in Individuals With Fibromyalgia Who Take Opioids. <https://www.frontiersin.org/articles/10.3389/fneur.2021.694271/full>`_ **Front. Neurol.** 2021
     -  David *et al.* `Longitudinal changes of spinal cord grey and white matter following spinal cord injury. <https://jnnp.bmj.com/content/early/2021/08/11/jnnp-2021-326337.info>`_ **Journal of Neurology, Neurosurgery & Psychiatry.** 2021
 
-**2020**
+2020
+----
+
     -  Sabaghian *et al.* `Fully Automatic 3D Segmentation of the Thoracolumbar Spinal Cord and the Vertebral Canal From T2-weighted MRI Using K-means Clustering Algorithm. <https://pubmed.ncbi.nlm.nih.gov/32132652/>`__ **Spinal Cord** 2020
     -  Bonacci *et al.* `Clinical Relevance of Multiparametric MRI Assessment of Cervical Cord Damage in Multiple Sclerosis. <https://pubmed.ncbi.nlm.nih.gov/32573387/>`__ **Radiology** 2020
     -  Hori. Sodium in the `Relapsing - Remitting Multiple Sclerosis Spinal Cord: Increased Concentrations and Associations With Microstructural Tissue Anisotropy. <https://onlinelibrary.wiley.com/doi/abs/10.1002/jmri.27253>`__ **JMRI** 2020
@@ -49,7 +53,9 @@ The following studies (in chronological order) have used SCT:
     -  Azzarito *et al.* `Tracking the neurodegenerative gradient after spinal cord injury. <https://pubmed.ncbi.nlm.nih.gov/32145681/>`_ **NeuroImage Clinical** 2020
     -  Lorenzi *et al.* `Unsuspected Involvement of Spinal Cord in Alzheimer Disease. <https://www.frontiersin.org/articles/10.3389/fncel.2020.00006/full>`__ **Front Cell Neurosci** 2020
 
-**2019**
+2019
+----
+
     -  Moccia *et al.* `Advances in spinal cord imaging in multiple sclerosis. <https://journals.sagepub.com/doi/pdf/10.1177/1756286419840593>`__ **Ther Adv Neurol Disord** 2019
     -  Kitany *et al.* `Functional imaging of rostrocaudal spinal activity during upper limb motor tasks. <https://www.sciencedirect.com/science/article/pii/S1053811919304288>`__ **Neuroimage** 2019
     -  Papinutto *et al.* `Evaluation of Intra- and Interscanner Reliability of MRI Protocols for Spinal Cord Gray Matter and Total Cross-Sectional Area Measurements. <https://onlinelibrary.wiley.com/doi/epdf/10.1002/jmri.26269>`__ **J Magn Reson Imaging** 2019
@@ -61,7 +67,9 @@ The following studies (in chronological order) have used SCT:
     -  Seif *et al.* `Guidelines for the conduct of clinical trials in spinal cord injury: Neuroimaging biomarkers. <https://www.ncbi.nlm.nih.gov/pubmed/31267015>`__ **Spinal Cord** 2019
     -  Lorenzi *et al.* `Unsuspected Involvement of Spinal Cord in Alzheimer Disease. <https://www.frontiersin.org/articles/10.3389/fncel.2020.00006/full>`__ **Front Cell Neurosci** 2019
 
-**2018**
+2018
+----
+
     -  Kafali *et al.* `Phase-correcting non-local means filtering for diffusion-weighted imaging of the spinal cord. <http://onlinelibrary.wiley.com/doi/10.1002/mrm.27105/full>`__ **Magn Reson Med** 2018
     -  Albrecht *et al.* `Neuroinflammation of the spinal cord and nerve roots in chronic radicular pain patients. <https://www.ncbi.nlm.nih.gov/pubmed/29419657>`__ **Pain.** 2018
     -  Hori *et al.* `Application of Quantitative Microstructural MR Imaging with Atlas-based Analysis for the Spinal Cord in Cervical Spondylotic Myelopathy. <https://www.nature.com/articles/s41598-018-23527-8>`__ **Sci Rep** 2018
@@ -76,7 +84,9 @@ The following studies (in chronological order) have used SCT:
     -  Shokur *et al.* `Training with brain-machine interfaces, visuo-tactile feedback and assisted locomotion improves sensorimotor, visceral, and psychological signs in chronic paraplegic patients. <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0206464>`__ **Plos One** 2018
     -  Panara *et al.* `Correlations between cervical spinal cord magnetic resonance diffusion tensor and diffusion kurtosis imaging metrics and motor performance in patients with chronic ischemic brain lesions of the corticospinal tract. <https://link.springer.com/article/10.1007/s00234-018-2139-5>`__ **Neuroradiology** 2018
 
-**2017**
+2017
+----
+
     -  Battiston *et al.* `Fast and reproducible in vivo T1 mapping of the human cervical spinal cord. <http://onlinelibrary.wiley.com/doi/10.1002/mrm.26852/full>`__ **Magn Reson Med** 2017
     -  Panara *et al.* `Spinal cord microstructure integrating phase-sensitive inversion recovery and diffusional kurtosis imaging. <https://link.springer.com/article/10.1007%2Fs00234-017-1864-5>`__ **Neuroradiology** 2017
     -  Martin *et al.* `Clinically Feasible Microstructural MRI to Quantify Cervical Spinal Cord Tissue Injury Using DTI, MT, and T2*-Weighted Imaging: Assessment of Normative Data and Reliability. <https://www.ncbi.nlm.nih.gov/pubmed/28428213>`__ **AJNR** 2017
@@ -91,7 +101,9 @@ The following studies (in chronological order) have used SCT:
     -  Prados *et al.* `Spinal cord grey matter segmentation challenge. <https://www.sciencedirect.com/science/article/pii/S1053811917302185#f0005>`__  **Neuroimage** 2017
     -  Peterson *et al.* `Test-Retest and Interreader Reproducibility of Semiautomated Atlas-Based Analysis of Diffusion Tensor Imaging Data in Acute Cervical Spine Trauma in Adult Patients. <https://www.ncbi.nlm.nih.gov/pubmed/28818826>`__ **AJNR Am J Neuroradiol.** 2017
 
-**2016**
+2016
+----
+
     -  Eippert F. *et al.* `Investigating resting-state functional connectivity in the cervical spinal cord at 3T. <https://www.ncbi.nlm.nih.gov/pubmed/28027960>`__ **Neuroimage** 2016
     -  Weber K.A. *et al.* `Functional Magnetic Resonance Imaging of the Cervical Spinal Cord During Thermal Stimulation Across Consecutive Runs.  <http://www.ncbi.nlm.nih.gov/pubmed/27616641>`__ **Neuroimage** 2016
     -  Weber *et al.* `Lateralization of cervical spinal cord activity during an isometric upper extremity motor task with functional magnetic resonance imaging. <https://www.ncbi.nlm.nih.gov/pubmed/26488256>`__ **Neuroimage** 2016
@@ -110,12 +122,16 @@ The following studies (in chronological order) have used SCT:
     -  Ventura *et al.* `Cervical spinal cord atrophy in NMOSD without a history of myelitis or MRI-visible lesions. <https://www.ncbi.nlm.nih.gov/pubmed/27144215>`__ **Neurol Neuroimmunol Neuroinflamm** 2016
     -  Combes *et al.* `Cervical cord myelin water imaging shows degenerative changes over one year in multiple sclerosis but not neuromyelitis optica spectrum disorder. <http://www.sciencedirect.com/science/article/pii/S221315821730150X>`__ **Neuroimage: Clinical.** 2016
 
-**2015**
+2015
+----
+
     -  Duval *et al.* `In vivo mapping of human spinal cord microstructure at 300mT/m. <https://www.ncbi.nlm.nih.gov/pubmed/26095093>`__ **Neuroimage** 2015
     -  Yiannakas *et al.* `Fully automated segmentation of the cervical cord from T1-weighted MRI using PropSeg: Application to multiple sclerosis. <https://www.ncbi.nlm.nih.gov/pubmed/26793433>`__ **NeuroImage**: Clinical 2015
     -  Taso *et al.* `Anteroposterior compression of the spinal cord leading to cervical myelopathy: a finite element analysis. <http://www.tandfonline.com/doi/full/10.1080/10255842.2015.1069625>`__ **Comput Methods Biomech Biomed Engin** 2015
 
-**2014**
+2014
+----
+
     -  Kong *et al.* `Intrinsically organized resting state networks in the human spinal cord. <http://www.pnas.org/content/111/50/18067.abstract>`__ **PNAS** 2014
 
 
