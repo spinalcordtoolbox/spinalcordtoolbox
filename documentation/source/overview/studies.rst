@@ -3,7 +3,7 @@
 Studies using SCT
 #################
 
-The following studies (in chronological order) have used SCT:
+The following studies (in reverse chronological order) have used SCT:
 
 2021
 ----
