@@ -9,7 +9,7 @@ The following studies have used SCT:
 ----
 
 -  Querin *et al.* `Development of new outcome measures for adult SMA type III and IV: a multimodal longitudinal study. <https://pubmed.ncbi.nlm.nih.gov/33388927/>`_ **J Neurol** 2021
--  McLachlin et al. `Spatial correspondence of spinal cord white matter tracts using diffusion tensor imaging, fibre tractography, and atlas-based segmentation. <https://link.springer.com/article/10.1007/s00234-021-02635-9>`_ **Neuroradiology** 2021
+-  McLachlin *et al.* `Spatial correspondence of spinal cord white matter tracts using diffusion tensor imaging, fibre tractography, and atlas-based segmentation. <https://link.springer.com/article/10.1007/s00234-021-02635-9>`_ **Neuroradiology** 2021
 -  Dvorak *et al.* `Comparison of multi echo T2 relaxation and steady state approaches for myelin imaging in the central nervous system. <https://www.nature.com/articles/s41598-020-80585-7>`_ **Scientific reports** 2021
 -  Adanyeguh *et al.* `Multiparametric in vivo analyses of the brain and spine identify structural and metabolic biomarkers in men with adrenomyeloneuropathy. <https://www.sciencedirect.com/science/article/pii/S2213158221000103>`_ **NeuroImage: Clinical** 2021
 -  Meyer *et al.* `Optimized cervical spinal cord perfusion MRI after traumatic injury in the rat. <https://journals.sagepub.com/doi/10.1177/0271678X20982396>`_ **J. of Cerebral Blood Flow & Metabolism** 2021
