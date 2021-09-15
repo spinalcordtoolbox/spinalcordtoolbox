@@ -29,6 +29,7 @@ The following studies (in chronological order) have used SCT:
     -  Alsenan *et al.* `A Deep Learning Model based on MobileNetV3 and UNet for Spinal Cord Gray Matter Segmentation. <https://ieeexplore.ieee.org/document/9522652>`_ **44th International Conference on Telecommunications and Signal Processing (TSP).** 2021
     -  Horak *et al.* `In vivo molecular signatures of cervical spinal cord pathology in degenerative compression. <https://pubmed.ncbi.nlm.nih.gov/34428934/>`_ **J Neurotrauma.** 2021
     -  Valošek *et al.* `Diffusion MRI reveals tract-specific microstructural correlates of electrophysiological impairments in non-myelopathic and myelopathic spinal cord compression. <https://doi.org/10.1111/ene.15027>`_ **Eur J Neurol.** 2021
+
 2020
 ----
 
