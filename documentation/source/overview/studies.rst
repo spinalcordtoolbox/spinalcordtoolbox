@@ -33,6 +33,7 @@ The following studies have used SCT:
 2020
 ----
 
+-  Kerbrat *et al.* `Multiple sclerosis lesions in motor tracts from the brain to the cervical cord: spatial distribution and correlation with disability. <https://pubmed.ncbi.nlm.nih.gov/32572488/>`__ **Brain** 2020
 -  Sabaghian *et al.* `Fully Automatic 3D Segmentation of the Thoracolumbar Spinal Cord and the Vertebral Canal From T2-weighted MRI Using K-means Clustering Algorithm. <https://pubmed.ncbi.nlm.nih.gov/32132652/>`__ **Spinal Cord** 2020
 -  Bonacci *et al.* `Clinical Relevance of Multiparametric MRI Assessment of Cervical Cord Damage in Multiple Sclerosis. <https://pubmed.ncbi.nlm.nih.gov/32573387/>`__ **Radiology** 2020
 -  Hori. Sodium in the `Relapsing - Remitting Multiple Sclerosis Spinal Cord: Increased Concentrations and Associations With Microstructural Tissue Anisotropy. <https://onlinelibrary.wiley.com/doi/abs/10.1002/jmri.27253>`__ **JMRI** 2020
@@ -45,7 +46,7 @@ The following studies have used SCT:
 -  Rejc *et al.* `Spinal Cord Imaging Markers and Recovery of Volitional Leg Movement With Spinal Cord Epidural Stimulation in Individuals With Clinically Motor Complete Spinal Cord Injury. Front. Syst. Neurosci., 2020 <https://www.frontiersin.org/articles/10.3389/fnsys.2020.559313/full>`__
 -  Labounek *et al.* `HARDI-ZOOMit protocol improves specificity to microstructural changes in presymptomatic myelopathy. <https://www.nature.com/articles/s41598-020-70297-3>`__ **Scientific Reports** 2020
 -  Henmar *et al.* `What are the gray and white matter volumes of the human spinal cord? <https://pubmed.ncbi.nlm.nih.gov/33085549/>`__ **J Neurophysiol** 2020
--  Burke *et al.* `Injury Volume Extracted from MRI Predicts Neurologic Outcome in Acute Spinal Cord Injury: A Prospective TRACK-SCI Pilot Study. <https://www.sciencedirect.com/science/article/abs/pii/S0967586820316192>`__ **J Clin Neurosci** 2020
+-  Mummaneni *et al.* `Injury Volume Extracted from MRI Predicts Neurologic Outcome in Acute Spinal Cord Injury: A Prospective TRACK-SCI Pilot Study. <https://www.sciencedirect.com/science/article/abs/pii/S0967586820316192>`__ **J Clin Neurosci** 2020
 -  Mossa-Basha et al. `Segmented quantitative diffusion tensor imaging evaluation of acute traumatic cervical spinal cord injury. <https://pubmed.ncbi.nlm.nih.gov/33180553/>`__ **Br J Radiol** 2020
 -  Mariano *et al.* `Quantitative spinal cord MRI in MOG-antibody disease, neuromyelitis optica and multiple sclerosis. <https://pubmed.ncbi.nlm.nih.gov/33206944/>`__ **Brain** 2020
 -  Fratini *et al.* `Multiscale Imaging Approach for Studying the Central Nervous System: Methodology and Perspective. <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7019007/>`__ **Front Neurosci** 2020
@@ -60,6 +61,7 @@ The following studies have used SCT:
 2019
 ----
 
+-  Eden *et al.* `Spatial distribution of multiple sclerosis lesions in the cervical spinal cord. <https://www.ncbi.nlm.nih.gov/pubmed/30715195>`__ **Brain** 2019
 -  Moccia *et al.* `Advances in spinal cord imaging in multiple sclerosis. <https://journals.sagepub.com/doi/pdf/10.1177/1756286419840593>`__ **Ther Adv Neurol Disord** 2019
 -  Kitany *et al.* `Functional imaging of rostrocaudal spinal activity during upper limb motor tasks. <https://www.sciencedirect.com/science/article/pii/S1053811919304288>`__ **Neuroimage** 2019
 -  Papinutto *et al.* `Evaluation of Intra- and Interscanner Reliability of MRI Protocols for Spinal Cord Gray Matter and Total Cross-Sectional Area Measurements. <https://onlinelibrary.wiley.com/doi/epdf/10.1002/jmri.26269>`__ **J Magn Reson Imaging** 2019
