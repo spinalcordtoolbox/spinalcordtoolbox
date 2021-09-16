@@ -5,23 +5,23 @@
 # TODO: remove i/o as much as possible
 
 import os
+import logging
+
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
-from ivadomed import preprocessing as imed_preprocessing
-import nibabel as nib
-from spinalcordtoolbox.vertebrae.core import label_discs, label_segmentation, center_of_mass
-import logging
-import spinalcordtoolbox.scripts.sct_deepseg as sct_deepseg
 from scipy.signal import gaussian
+import nibabel as nib
+from ivadomed import preprocessing as imed_preprocessing
 
-logging.getLogger('matplotlib.font_manager').disabled = True
-
-from spinalcordtoolbox.metadata import get_file_label
-
-from spinalcordtoolbox.utils.sys import run_proc, printv
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.metadata import get_file_label
+from spinalcordtoolbox.vertebrae.core import label_discs, label_segmentation, center_of_mass
+from spinalcordtoolbox.utils.sys import run_proc, printv
+import spinalcordtoolbox.scripts.sct_deepseg as sct_deepseg
+
 
 logger = logging.getLogger(__name__)
+logging.getLogger('matplotlib.font_manager').disabled = True
 
 
 def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../',
@@ -33,13 +33,12 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     :param fname_seg: file name of straigthened spinal cord segmentation
     :param contrast: t1 or t2
     :param param:  advanced parameters
-    :param init_disc: reference coordinates and value for a disc. c2/c3 is often used and automatically detected with sct_label_vertebrae
+    :param init_disc:
     :param verbose:
-    :param path_template: path to the used template. Template should be a straighten image with sing-voxel labels on the posterior tip of each disc
+    :param path_template:
     :param path_output: output path for verbose=2 pictures
     :param scale_dist: float: Scaling factor to adjust average distance between two adjacent intervertebral discs
-    :return: None
-
+    :return:
     """
     logger.info('Look for template...')
     logger.info('Path template: %s', path_template)
@@ -77,14 +76,14 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     list_disc_value_template = list(range(min_level, max_level))
     # add disc above top one
     list_disc_value_template.insert(int(0), min_level - 1)
-    printv('\nDisc values from template: ' + str(list_disc_value_template), verbose)
+    logger.info('Disc values from template: %s', list_disc_value_template)
     # get disc z-values
     list_disc_z_template = data_template.nonzero()[2].tolist()
     list_disc_z_template.sort()
     list_disc_z_template.reverse()
     logger.info('Z-values for each disc: %s', list_disc_z_template)
-    list_distance_template = \
-        (np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
+    list_distance_template = (
+        np.diff(list_disc_z_template) * (-1)).tolist()  # multiplies by -1 to get positive distances
     # Update distance with scaling factor
     list_distance_template = [i * scale_dist for i in list_distance_template]
     logger.info('Distances between discs (in voxel): %s', list_distance_template)
@@ -136,11 +135,10 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     data_hm = im_hm.data
     while search_next_disc:
         logger.info('Current disc: %s (z=%s). Direction: %s', current_disc, current_z, direction)
-
         try:
             # get z corresponding to current disc on template
             current_z_template = list_disc_z_template[current_disc]
-        except Exception:
+        except:
             # in case reached the bottom (see issue #849)
             logger.warning('Reached the bottom of the template. Stop searching.')
             break
@@ -158,7 +156,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         if verbose == 2:
             ax_disc.scatter(yc + param.shift_AP_visu, current_z, c='yellow', s=10)
             ax_disc.text(yc + param.shift_AP_visu + 4, current_z, str(current_disc) + '/' + str(current_disc + 1),
-                         verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=7)
+                    verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=7)
 
         # append to main list
         if direction == 'superior':
@@ -178,24 +176,21 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             index_disc_identified = [i for i, j in enumerate(list_disc_value_template) if j in list_disc_value[:-1]]
             list_distance_template_identified = [list_distance_template[i] for i in index_disc_identified]
             # divide subject and template distances for the identified discs
-            list_subject_to_template_distance = [float(list_distance_current[i]) / list_distance_template_identified[i]
-                                                 for i in range(len(list_distance_current))]
+            list_subject_to_template_distance = [float(list_distance_current[i]) / list_distance_template_identified[i] for i in range(len(list_distance_current))]
             # average across identified discs to obtain an average correcting factor
             correcting_factor = np.mean(list_subject_to_template_distance)
             logger.info('.. correcting factor: %s', correcting_factor)
         else:
             correcting_factor = 1
         # update list_distance specific for the subject
-        list_distance = [int(np.round(list_distance_template[i] * correcting_factor)) for i in
-                         range(len(list_distance_template))]
+        list_distance = [int(np.round(list_distance_template[i] * correcting_factor)) for i in range(len(list_distance_template))]
 
         # assign new current_z and disc value
         if direction == 'superior':
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc - 1)]
             except (IndexError, ValueError):
-                logger.warning('Disc value not included in template. Using previously-calculated distance: %s',
-                               approx_distance_to_next_disc)
+                logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z + approx_distance_to_next_disc
             current_disc = current_disc - 1
@@ -203,8 +198,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             try:
                 approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
             except (IndexError, ValueError):
-                logger.warning('Disc value not included in template. Using previously-calculated distance: %s',
-                               approx_distance_to_next_disc)
+                logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z - approx_distance_to_next_disc
             current_disc = current_disc + 1
