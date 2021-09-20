@@ -1,7 +1,7 @@
 Gray matter segmentation algorithm: ``sct_deepseg_gm``
 ######################################################
 
-For segmenting the gray matter, SCT features the function ``sct_deepseg_gm``, which is based a deep learning architecture trained from 232 subjects (~4000 slices).
+For segmenting the gray matter, SCT features the function ``sct_deepseg_gm``, which is based on a deep learning architecture trained from 232 subjects (~4000 slices).
 
 * **Algorithm:** Deep learning with dilated convolutions `[Perone et al., Sci Report 2018] <https://www.nature.com/articles/s41598-018-24304-3>`_
 * **Pros:** High accuracy, robust to pathologies
