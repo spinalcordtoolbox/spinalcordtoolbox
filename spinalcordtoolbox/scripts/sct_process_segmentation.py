@@ -218,6 +218,10 @@ def get_parser():
         " \n2.sex, brain-volume. \nSpecify each value for the subject after the corresponding predictor.\n"
         "Example: -normalize sex 0 brain-volume 960606.0 thalamus-volume 13942.0 \n"
         "brain-volume and thalamus-volume are in mm^3. For sex, female: 0, male: 1."
+        "The models were generated from 804 healthy participants from the UK Biobank dataset on T1w brain images.\n"
+        "For more details on the subjects and methods used to create the models, go to :[REF]"  # TODO add ref of the paper
+        "Given the risks and lack of consensus surrounding CSA normalization, we recommend thoroughly reviewing the literature on this topic before applying this feature to your data.\n"
+        "The model has not been tested on other contrasts than T1w and on pathological patients."
     )
     optional.add_argument(
         '-qc',
