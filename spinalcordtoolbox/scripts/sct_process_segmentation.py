@@ -214,14 +214,13 @@ def get_parser():
         metavar=Metavar.list,
         action=SeperateNormArgs,
         nargs="+",
-        help="R|Normalize CSA values ('MEAN(area)'). Two models are available: \n1. sex, brain-volume, thalamus-volume."
-        " \n2. sex, brain-volume. \nSpecify each value for the subject after the corresponding predictor.\n"
-        "Example: -normalize sex 0 brain-volume 960606.0 thalamus-volume 13942.0 \n"
-        "brain-volume and thalamus-volume are in mm^3. For sex, female: 0, male: 1."
-        "The models were generated from 804 healthy participants from 48 to 80 years old from the UK Biobank dataset on T1w brain images.\n"
-        "For more details on the subjects and methods used to create the models, go to :[REF]\n"  # TODO add ref of the paper
-        "Given the risks and lack of consensus surrounding CSA normalization, we recommend thoroughly reviewing the literature on this topic before applying this feature to your data.\n"
-        "The model has not been tested on other contrasts than T1w and on pathological patients."
+        help="R|Normalize CSA values ('MEAN(area)'). \nTwo models are available: \n    1. sex, brain-volume, thalamus-volume."
+        " \n    2. sex, brain-volume. \nSpecify each value for the subject after the corresponding predictor.\n"
+        "Example:\n    -normalize sex 0 brain-volume 960606.0 thalamus-volume 13942.0 \n"
+        "*brain-volume and thalamus-volume are in mm^3. For sex, female: 0, male: 1."
+        "\n\nThe models were generated using T1w brain images from 804 healthy (non-pathological) participants ranging from 48 to 80 years old, taken from the UK Biobank dataset.\n"
+        "For more details on the subjects and methods used to create the models, go to: https://github.com/sct-pipeline/ukbiobank-spinalcord-csa#readme \n"  # TODO add ref of the paper
+        "Given the risks and lack of consensus surrounding CSA normalization, we recommend thoroughly reviewing the literature on this topic before applying this feature to your data.\n\n"
     )
     optional.add_argument(
         '-qc',
