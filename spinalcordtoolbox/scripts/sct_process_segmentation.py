@@ -219,7 +219,7 @@ def get_parser():
         "*brain-volume and thalamus-volume are in mm^3. For sex, female: 0, male: 1."
         "\n\nThe models were generated using T1w brain images from 804 healthy (non-pathological) participants ranging from 48 to 80 years old, taken from the UK Biobank dataset.\n"
         "For more details on the subjects and methods used to create the models, go to: https://github.com/sct-pipeline/ukbiobank-spinalcord-csa#readme \n"  # TODO add ref of the paper
-        "Given the risks and lack of consensus surrounding CSA normalization, we recommend thoroughly reviewing the literature on this topic before applying this feature to your data.\n\n"
+        "Given the risks and lack of consensus surrounding CSA normalization, we recommend thoroughly reviewing the literature on this topic before applying this feature to your data.\n"
     )
     optional.add_argument(
         '-qc',
