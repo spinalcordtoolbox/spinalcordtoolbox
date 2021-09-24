@@ -566,7 +566,7 @@ def normalize_csa(csa_norm, data_predictors, data_subject):
     """
     Normalize CSA values with coeff from multivariate model. TODO: add REF
 
-    :param csa: computed CSA value
+    :param csa_norm: computed CSA value
     :param data_predictors: panda.DataFrame: coefficients from multilinear regression and mean values
     :param data_subject: panda.DataFrame: demographic data of the subject for each predictor
 
