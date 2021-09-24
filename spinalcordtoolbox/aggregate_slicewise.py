@@ -564,7 +564,8 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
 
 def normalize_csa(csa_norm, data_predictors, data_subject):
     """
-    Normalize CSA values with coeff from multivariate model. TODO: add REF
+    Normalize CSA values with coeff from multivariate model. Multivariate models
+    were developed using https://github.com/sct-pipeline/ukbiobank-spinalcord-csa.
 
     :param csa_norm: computed CSA value
     :param data_predictors: panda.DataFrame: coefficients from multilinear regression and mean values
