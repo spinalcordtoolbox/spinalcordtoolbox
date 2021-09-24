@@ -39,8 +39,8 @@ from spinalcordtoolbox.utils.fs import get_absolute_path
 logger = logging.getLogger(__name__)
 
 
-class SeperateNormArgs(argparse.Action):
-    """Seperates predictors from their values and puts the results in a dict"""
+class SeparateNormArgs(argparse.Action):
+    """Separates predictors from their values and puts the results in a dict"""
 
     def __call__(self, parser, namespace, values, option_string=None):
         pred = values[::2]
@@ -212,7 +212,7 @@ def get_parser():
     optional.add_argument(
         '-normalize',
         metavar=Metavar.list,
-        action=SeperateNormArgs,
+        action=SeparateNormArgs,
         nargs="+",
         help="R|Normalize CSA values ('MEAN(area)'). \nTwo models are available: \n    1. sex, brain-volume, thalamus-volume."
         " \n    2. sex, brain-volume. \nSpecify each value for the subject after the corresponding predictor.\n"
