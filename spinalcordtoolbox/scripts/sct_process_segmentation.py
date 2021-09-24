@@ -41,7 +41,6 @@ logger = logging.getLogger(__name__)
 
 class SeparateNormArgs(argparse.Action):
     """Separates predictors from their values and puts the results in a dict"""
-
     def __call__(self, parser, namespace, values, option_string=None):
         pred = values[::2]
         val = values[1::2]
