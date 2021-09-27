@@ -231,13 +231,13 @@ def check_affines_match(im):
     try:
         hdr2.set_qform(hdr.get_sform())
     except np.linalg.LinAlgError:
-        # See https://github.com/neuropoly/spinalcordtoolbox/issues/3097
+        # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3097
         logger.warning("The sform for {} is uninitialized and may cause unexpected behaviour."
                        ''.format(im.absolutepath))
 
         if im.absolutepath is None:
             logger.error("Internal code has produced an image with an uninitialized sform. "
-                         "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
+                         "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
                          "or on the SCT forums https://forum.spinalcordmri.org/.")
 
         return(True)
@@ -298,11 +298,11 @@ class Image(object):
             raise TypeError('Image constructor takes at least one argument.')
 
         # Make sure sform and qform are the same.
-        # Context: https://github.com/neuropoly/spinalcordtoolbox/issues/2429
+        # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2429
         if check_sform and not check_affines_match(self):
             if self.absolutepath is None:
                 logger.error("Internal code has produced an image with inconsistent qform and sform "
-                             "please report this on github at https://github.com/neuropoly/spinalcordtoolbox/issues "
+                             "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
                              " or on the SCT forum https://forum.spinalcordmri.org/.")
             else:
                 logger.error(f"Image {self._path} has different qform and sform matrices. This can produce incorrect "
@@ -411,31 +411,18 @@ class Image(object):
         else:
             logger.debug("Loaded %s orientation %s shape %s", path, self.orientation, self.data.shape)
 
-    def change_shape(self, shape, generate_path=False):
+    def change_shape(self, shape):
         """
         Change data shape (in-place)
-
-        :param generate_path: whether to create a derived path name from the\
-                              original absolutepath (note: while it will generate\
-                              a file suffix, don't expect the suffix but rather\
-                              use the Image's absolutepath.\
-                              If not set, the absolutepath is voided.
 
         This is mostly useful for adding/removing a fourth dimension,
         you probably don't want to use this function.
 
         """
-        if shape is not None:
-            change_shape(self, shape, self)
-
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_shape-{}".format("-".join([str(x) for x in shape])))
-        else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+        change_shape(self, shape, self)
         return self
 
-    def change_orientation(self, orientation, inverse=False, generate_path=False):
+    def change_orientation(self, orientation, inverse=False):
         """
         Change orientation on image (in-place).
 
@@ -444,35 +431,18 @@ class Image(object):
         :param inverse: if you think backwards, use this to specify that you actually\
                         want to transform *from* the specified orientation, not *to*\
                         it.
-        :param generate_path: whether to create a derived path name from the\
-                              original absolutepath (note: while it will generate\
-                              a file suffix, don't expect the suffix but rather\
-                              use the Image's absolutepath.\
-                              If not set, the absolutepath is voided.
 
         """
-        if orientation is not None:
-            change_orientation(self, orientation, self, inverse=inverse)
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_{}".format(orientation.lower()))
-        else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+        change_orientation(self, orientation, self, inverse=inverse)
         return self
 
-    def change_type(self, dtype, generate_path=False):
+    def change_type(self, dtype):
         """
         Change data type on image.
 
         Note: the image path is voided.
         """
-        if dtype is not None:
-            change_type(self, dtype, self)
-        if generate_path and self._path is not None:
-            self._path = add_suffix(self._path, "_{}".format(dtype.name))
-        else:
-            # safe option: remove path to avoid overwrites
-            self._path = None
+        change_type(self, dtype, self)
         return self
 
     def save(self, path=None, dtype=None, verbose=1, mutable=False):
@@ -1275,9 +1245,10 @@ def zeros_like(img, dtype=None):
     intent and avoid doing a copy, which is slower than initialization with a constant.
 
     """
-    dst = change_type(img, dtype)
-    dst.data[:] = 0
-    return dst
+    zimg = Image(np.zeros_like(img.data), hdr=img.hdr.copy())
+    if dtype is not None:
+        zimg.change_type(dtype)
+    return zimg
 
 
 def empty_like(img, dtype=None):
@@ -1632,3 +1603,107 @@ def _align_dict(dictionary, use_tabs=True, delimiter=""):
             padding = " " * (len_max - len(k))
         out.append(f"{k}{padding}{delimiter}{v}")
     return '\n'.join(out)
+
+
+def apply_mask_if_soft(fname_im: str, fname_mask: str):
+    """
+    Check to see if a mask is soft (non-binary), and if it is:
+        * Apply the mask directly to the image and save it as a separate image file.
+        * Set the mask filename to None to avoid the mask being used.
+
+    This is a workaround needed for ANTs binaries (e.g. antsSliceRegularizedRegistration), because
+    they don't natively support softmasks. This fix is needed everywhere that we use those binaries.
+
+    :param fname_im: (str) Filename of the image to apply the mask to.
+    :param fname_mask: (str) Filename of the mask to check.
+    :return: Filenames of the image and mask. (If the mask was applied, the filename of the image will be
+             updated as to not overwrite the image, and the filename of the mask will be set to None.)
+    """
+    # FIXME: Since this is a problem inherent to the binaries themselves, it would be nice if this fix
+    #        was automatically applied whenever we call the binaries. For example, if we had a light wrapper for each
+    #        ANTs binary, then we could ensure that the workaround is applied in a consistent way, no matter how the
+    #        binaries are called. However, this idea is not currently compatible with how moco.py is structured.
+    #        (See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3075#issuecomment-871366336)
+    im = Image(fname_im)
+    im_mask = Image(fname_mask)
+    if not np.array_equal(im_mask.data, im_mask.data.astype(bool)):
+        fname_mask = None
+        fname_im = add_suffix(im.absolutepath, "_masked")
+        # NB: casting="unsafe" -> https://github.com/numpy/numpy/issues/7225#issuecomment-380051749
+        im.data = np.multiply(im.data, im_mask.data, casting="unsafe")
+        im.save(fname_im, mutable=True)
+    return fname_im, fname_mask
+
+
+def compute_cross_corr_3d(image: Image, coord, xrange=list(range(-10, 10)), xshift=10, yshift=10, zshift=10):
+    """
+    Compute cross-correlation between image and its mirror using a sliding window in R-L direction to find the image symmetry and adjust R-L coordinate.
+    Use a sliding window of 20x20x20 mm by default.
+    :param image: image in RPI orientation
+    :param coord: 3x1 array: coordinate where to start slidding window (in RPI)
+    :param xrange:
+    :param xshift:
+    :param yshift:
+    :param zshift:
+
+    :return: R-L coordinate of the image symmetry
+    """
+    from spinalcordtoolbox.math import correlation
+
+    nx, ny, nz, _, px, py, pz, _ = image.dim
+    x, y, z = coord
+    # initializations
+    I_corr = np.zeros(len(xrange))
+    allzeros = 0
+    # current_z = 0
+    ind_I = 0
+    # Adjust parameters with physical dimensions
+    xrange = [int(item//px) for item in xrange]
+    xshift = int(xshift//px)
+    yshift = int(yshift//py)
+    zshift = int(zshift//pz)
+    for ix in xrange:
+        # if pattern extends towards left part of the image, then crop and pad with zeros
+        if x + ix + 1 + xshift > nx:
+            padding_size = x + ix + xshift + 1 - nx
+            src = image.data[x + ix - xshift: x + ix + xshift + 1 - padding_size,
+                             y - yshift:y + yshift + 1,
+                             z - zshift: z + zshift + 1]
+            src = np.pad(src, ((0, 0), (0, 0), (0, padding_size)), 'constant',
+                         constant_values=0)
+        # if pattern extends towards right part of the image, then crop and pad with zeros
+        elif x + ix - xshift < 0:
+            padding_size = abs(ix - xshift)
+            src = image.data[x + ix - xshift + padding_size: x + ix + xshift + 1,
+                             y - yshift:y + yshift + 1,
+                             z - zshift: z + zshift + 1]
+
+            src = np.pad(src, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
+                         constant_values=0)
+        else:
+            src = image.data[x + ix - xshift: x + xshift + ix + 1,
+                             y - yshift:y + yshift + 1,
+                             z - zshift: z + zshift + 1]
+        target = src[::-1, :, :]  # Mirror of src (in R-L direction)
+        # convert to 1d
+        src_1d = src.ravel()
+        target_1d = target.ravel()
+        # check if src_1d contains at least one non-zero value
+        if (src_1d.size == target_1d.size) and np.any(src_1d):
+            I_corr[ind_I] = correlation(src_1d, target_1d)
+        else:
+            allzeros = 1
+        ind_I = ind_I + 1
+    if allzeros:
+        logger.warning('Data contained zero. We probably hit the edge of the image.')
+    if np.any(I_corr):
+        # if I_corr contains at least a non-zero value
+        ind_peak = [i for i in range(len(I_corr)) if I_corr[i] == max(I_corr)][0]  # index of max along x
+        logger.info('.. Peak found: x=%s (correlation = %s)', xrange[ind_peak], I_corr[ind_peak])
+        # TODO (maybe) check if correlation is high enough compared to previous R-L coord
+    else:
+        # if I_corr contains only zeros
+        logger.warning('Correlation vector only contains zeros.')
+    # Change adjust rl_coord
+    logger.info('R-L coordinate adjusted from %s to  %s)', x, x + xrange[ind_peak])
+    return x + xrange[ind_peak]

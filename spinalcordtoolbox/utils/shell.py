@@ -132,11 +132,11 @@ class SCTArgumentParser(argparse.ArgumentParser):
         """
             Overridden parent method. Ensures that help is printed when called with invalid args.
 
-            See https://github.com/neuropoly/spinalcordtoolbox/issues/3137.
+            See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3137.
         """
         # Source: https://stackoverflow.com/a/4042861
-        sys.stderr.write(f'{self.prog}: error: {message}\n\n')
         self.print_help(sys.stderr)
+        printv(f'\n{self.prog}: error: {message}\n', verbose=1, type='error', file=sys.stderr)
         sys.exit(2)
 
 

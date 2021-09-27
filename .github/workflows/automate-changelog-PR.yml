@@ -27,7 +27,7 @@ jobs:
     - name: Update '${{ github.event.inputs.fname_changelog }}' for '${{ github.event.repository.name }}'
       run: |
         cd ${{ github.event.repository.name }}
-        changelog neuropoly/spinalcordtoolbox --update --name "${{ github.event.inputs.fname_changelog }}" --milestone ${{ github.event.inputs.milestone_title }}
+        changelog spinalcordtoolbox/spinalcordtoolbox --update --name "${{ github.event.inputs.fname_changelog }}" --milestone ${{ github.event.inputs.milestone_title }}
         rm -f "${{ github.event.inputs.fname_changelog }}.bak"
     - name: Create pull request for updated changelog
       uses: peter-evans/create-pull-request@v3
@@ -40,5 +40,5 @@ jobs:
         body: |
           Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release.
           
-          Carried out as a part of the [release](https://github.com/neuropoly/spinalcordtoolbox/wiki/Misc%3A-Creating-a-new-release) checklist.
+          Carried out as a part of the [release](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Misc%3A-Creating-a-new-release) checklist.
         delete-branch: true

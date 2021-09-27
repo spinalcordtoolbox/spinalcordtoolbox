@@ -134,6 +134,10 @@ class ParamregMultiStep:
 def register_step_ants_slice_regularized_registration(src, dest, step, metricSize, fname_mask='', verbose=1):
     """
     """
+    # NB: If the mask is soft, fname_mask will be returned as None, so that it won't be further applied via '-x'
+    if fname_mask:
+        dest, fname_mask = image.apply_mask_if_soft(dest, fname_mask)
+
     # Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given
     # threshold.
     list_fname = [src, dest]
@@ -464,8 +468,6 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # TODO: no need to split the src or dest if it is the template (we know its centerline and orientation already)
 
     if verbose == 2:
-        import matplotlib
-        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz
@@ -721,8 +723,6 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
     # for display stuff
     if verbose == 2:
-        import matplotlib
-        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz

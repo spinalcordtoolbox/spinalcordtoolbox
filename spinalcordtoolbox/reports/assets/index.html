@@ -12,6 +12,37 @@
   <link rel="stylesheet" href="_assets/css/bootstrap-table.min.css">
   <link rel="stylesheet" type="text/css" href="_assets/css/style.css">
   <title> </title>
+   <style type="text/css">
+    table {
+        display: flex;
+        flex-flow: column;
+        width: 100%;
+        height: 75vh;
+        border: 0px solid #ddd;
+        }
+
+    thead {
+            flex: 0 0 auto;
+            border-top: 1px solid #ddd;
+            border-left: 1px solid #ddd;
+            background: lightgray;
+        }
+
+    tbody {
+            flex: 1 1 auto;
+            display: block;
+            overflow-y: auto;
+            overflow-x: hidden;
+            border-top: 1px solid #ddd;
+            border-left: 1px solid #ddd;
+        }
+
+    tr {
+            width: 100%;
+            display: table;
+            table-layout: fixed;
+        }    
+  </style>
   <script>
     function fetch_image_height()
     {
@@ -86,7 +117,7 @@
 		  data-toolbar="#dropdown"
                   data-sort-order="asc"
 		  data-search="true"
-                  data-response-handler="responseHandler" style="height:80%">
+                  data-response-handler="responseHandler">
 	                <thead>
 		                  <tr>
                               <th data-field="moddate" data-sortable="true">Date</th>
@@ -301,19 +332,20 @@
             "sct_deepseg_gm": "FILES_GMSEG",
             "sct_deepseg_lesion": "FILES_GMSEG",
             "sct_deepseg_sc": "FILES_SEG",
+            "sct_detect_pmj": "FILES_PMJ",
             "sct_dmri_moco": "FILES_TIMESERIES",
             "sct_fmri_moco": "FILES_TIMESERIES",
             "sct_label_utils": "FILES_LABEL",
             "sct_label_vertebrae": "FILES_LABEL",
             "sct_process_segmentation": "FILES_SEG",
             "sct_propseg": "FILES_SEG",
-            "sct_register_multimodal": "FILES_SEG",
-            "sct_register_to_template": "FILES_SEG",
+            "sct_register_multimodal": "FILES_REG",
+            "sct_register_to_template": "FILES_REG",
             "sct_resample": "FILES_SEG",
             "sct_run_batch": "FILES_SEG",
             "sct_smooth_spinalcord": "FILES_SEG",
             "sct_straighten_spinalcord": "FILES_SEG",
-            "sct_warp_template": "FILES_SEG",
+            "sct_warp_template": "FILES_REG",
         }
         sct_data.forEach(item => {
             if (escape(item.qc).toLowerCase().slice(2,6) === marker) {

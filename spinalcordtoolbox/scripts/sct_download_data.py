@@ -15,7 +15,7 @@ import sys
 
 from spinalcordtoolbox.download import install_data
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 
 # Dictionary containing list of URLs for data names.
@@ -149,7 +149,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     data_name = arguments.d
     if arguments.o is not None:
