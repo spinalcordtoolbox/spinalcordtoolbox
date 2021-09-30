@@ -77,7 +77,7 @@ MODELS = {
         "contrasts": ["t2"],
         "default": False,
     },
-    "model_7T_multiclass_gm_sc_unet2d": {
+    "model_7t_multiclass_gm_sc_unet2d": {
         "url": [
             "https://github.com/ivadomed/model_seg_gm-wm_t2star_7T_unet3d-multiclass/blob/main/Model_SC_GM_7T.zip"
         ],
