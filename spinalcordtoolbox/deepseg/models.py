@@ -79,7 +79,7 @@ MODELS = {
     },
     "model_7t_multiclass_gm_sc_unet2d": {
         "url": [
-            "https://github.com/ivadomed/model_seg_gm-wm_t2star_7T_unet3d-multiclass/blob/main/Model_SC_GM_7T.zip"
+            "https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass/archive/r20210930.zip"
         ],
         "description": "SC/GM multiclass segmentation at 7T t2star. Model from CRMBM-CEMEREM Aix-Marseille University",
         "contrasts": ["t2star"],
