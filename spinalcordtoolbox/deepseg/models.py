@@ -81,7 +81,7 @@ MODELS = {
         "url": [
             "https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass/archive/r20210930.zip"
         ],
-        "description": "SC/GM multiclass segmentation at 7T t2star. Model from CRMBM-CEMEREM Aix-Marseille University",
+        "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University",
         "contrasts": ["t2star"],
         "default": False,
     }
