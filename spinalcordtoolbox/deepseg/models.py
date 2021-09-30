@@ -111,7 +111,7 @@ TASKS = {
          'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']},
      'seg_gm_sc_7t_t2star':
         {'description': 'SC/GM seg on T2*-weighted at 7T',
-         'models': ['model_7T_multiclass_gm_sc_unet2d']} 
+         'models': ['model_7t_multiclass_gm_sc_unet2d']} 
 }
 
 
