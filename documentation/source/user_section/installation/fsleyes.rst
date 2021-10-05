@@ -1,8 +1,8 @@
 .. _fsleyes_installation:
 
-**********************
-Installating FSLeyes
-**********************
+******************
+Installing FSLeyes
+******************
 
 FSLeyes is a viewer for NIfTI images. SCT features a plugin script to make SCT functions integrated into
 FSLeyes' graphical user interface. To benefit from this functionality, you will need to install FSLeyes.
