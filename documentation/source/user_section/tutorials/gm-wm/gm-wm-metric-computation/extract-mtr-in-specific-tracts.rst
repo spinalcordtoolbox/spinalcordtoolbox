@@ -24,8 +24,6 @@ First, we extract the MTR from the right and left corticospinal tracts.
    :file: mtr_in_cst.csv
    :header-rows: 1
 
-.. TODO: In the SCT Course video, "Size[vox]" used to say ~1500 because it included the voxels used in all slices. Now, it shows 67/68, which I assume is the average size across all of the slices. Is this change expected? When did we make this change?
-
 We can see from the results that the MTR for both the left and right tracts is comparable, which is to be expected, given that the example data in this case was taken from a healthy adult.
 
 Dorsal columns (averages across C2-C4 vertebral levels)
@@ -35,9 +33,9 @@ Next, we extract the MTR from the dorsal columns.
 
 .. code::
 
-   sct_extract_metric -i mtr.nii.gz -f label/atlas -method wa -l 53 \
+   sct_extract_metric -i mtr.nii.gz -f label/atlas -method map -l 53 \
                       -vert 2:4 -vertfile label/template/PAM50_levels.nii.gz \
-                      -o mtr_in_dc.csv
+                      -o mtr_in_dc_map.csv
 
 :Input arguments:
    - ``-i`` : Image to extract values from.
