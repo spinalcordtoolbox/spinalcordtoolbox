@@ -15,15 +15,10 @@ Now that we have the motion-corrected time-averaged fMRI image, we can use it to
                            -owarpinv warp_fmri2template.nii.gz \
                            -qc ~/qc_singleSubj
 
-.. TODO: I don't understand the choices made for ``-dseg`` and ``-iseg``.
-
-   * Why do we supply a segmentation at all if we're using ``type=im``? Won't this ignore the segmentation image?
-   * Why do we supply t2_seg_reg.nii.gz for ``-dseg`` when ``-d`` is fmri_moco_mean? These don't seem to match up, since ``t2_seg_reg.nii.gz`` was registered to the **non-motion-corrected** fMRI image.
-   * Why don't we supply ``-iseg``? Wouldn't "$SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz" be suitable?
-
 :Input arguments:
    - ``-i`` : Source image. Here, we select the T2* version of the PAM50 template, because the T2* contrast is the closest visual match to our fMRI data.
    - ``-d`` : Destination image.
+   - ``-dseg`` : Segmentation corresponding to the destination image. Note, however, that because we supply ``type=im`` to ``-param``, the segmentation will be ignored during registration. This is intentional, as the `t2` segmentation would only coarsely match our fMRI data. The reason we supply the segmentation anyway is because ``-dseg`` is necessary to generate a QC report; it is used to roughly crop around the cord for visualization purposes (so it doesn't need to be perfect).
    - ``-param`` : The parameter settings worth noting are:
       - ``type=im`` : Since fMRI cannot be segmented reliably (due to low contrast between the spinal cord and the surrounding cerebrospinal fluid), we rely on just the anatomical images (``-i`` and ``-d``) rather than segmentation images (``-iseg`` and ``-dseg``).
       - ``algo=syn`` : This algorithm helps to compensate for the the lack of segmentation during registration. (TODO: The presenter notes describes this as "ANTs Superpower". But, can we give a more specific reason for why this is needed here in particular? My intent is to answer the question "If syn is so good, why don't we use it elsewhere by default? Why is it suited specifically for this situation?)
