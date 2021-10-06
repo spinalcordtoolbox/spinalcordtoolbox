@@ -1,7 +1,7 @@
 Motion correction for dMRI images
 #################################
 
-Now that we've cropped the image around the spinal cord, we can apply motion correction to the volumes of the fMRI data.
+Now that we have a mask highlighting the spinal cord, we can apply motion correction to the volumes of the dMRI data.
 
 The motion correction algorithm
 -------------------------------
@@ -21,18 +21,19 @@ To apply the algorithm, we use the ``sct_dmri_moco`` command:
 
 .. code::
 
-   sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt -qc ~/qc_singleSubj -qc-seg dmri_mean_seg_crop.nii.gz
+   sct_dmri_moco -i dmri.nii.gz -m mask_dmri_mean.nii.gz -bvec bvecs.txt -qc ~/qc_singleSubj -qc-seg dmri_mean_seg.nii.gz
 
 :Input arguments:
    - ``-i`` : The input dMRI image.
+   - ``-m`` : A mask used to limit the voxels considered by the motion correction algorithm.
    - ``-bvec`` : A text file with three lines, each containing a value for each volume in the input image. Together, the the three sets of values represent the ``(x, y, z)`` coordinates of the b-vectors, which indicate the direction of the diffusion encoding for each volume of the dMRI image.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
-   - ``-qc-seg`` : Segmentation of spinal cord to improve cropping in the QC report.
+   - ``-qc-seg`` : Segmentation of spinal cord to improve cropping in QC report.
 
 :Output files/folders:
-   - ``dmri_crop_moco.nii.gz`` : The motion-corrected 4D dMRI image.
-   - ``dmri_crop_moco_b0_mean.nii.gz`` : The time-average of the motion-corrected 3D volumes with ``b == 0``.
-   - ``dmri_crop_moco_dwi_mean.nii.gz`` : The time-average of the motion-corrected 3D volumes with ``b != 0``. (This image is what will be used for the template registration.)
+   - ``dmri_moco.nii.gz`` : The motion-corrected 4D dMRI image.
+   - ``dmri_moco_b0_mean.nii.gz`` : The time-average of the motion-corrected 3D volumes with ``b == 0``.
+   - ``dmri_moco_dwi_mean.nii.gz`` : The time-average of the motion-corrected 3D volumes with ``b != 0``. (This image is what will be used for the template registration.)
    - ``moco_params.tsv`` : A text file that provides a simplified overview of the motion correction, to be used for quality control. It contains the slicewise average of the axial (X-Y) translations for each 3D volume. (In reality, though, each slice of each volume will have had a different translation applied to it.)
    - ``moco_params_x.nii.gz`` : A 4D image with dimensions ``[1, 1, z, t]``. Each voxel contains the ``x`` translation corresponding to each ``z`` slice across each ``t`` volume.
    - ``moco_params_y.nii.gz`` : A 4D image with dimensions ``[1, 1, z, t]``. Each voxel contains the ``y`` translation corresponding to each ``z`` slice across each ``t`` volume.

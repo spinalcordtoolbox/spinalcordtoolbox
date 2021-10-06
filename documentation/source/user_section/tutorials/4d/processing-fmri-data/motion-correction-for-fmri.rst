@@ -22,7 +22,7 @@ To apply the algorithm, we use the ``sct_fmri_moco`` command:
 
 .. code::
 
-   sct_fmri_moco -i fmri.nii.gz -m mask_fmri.nii.gz  -qc ~/qc_singleSubj -qc-seg t2_seg_reg.nii.gz
+   sct_fmri_moco -i fmri.nii.gz -m mask_fmri.nii.gz -qc ~/qc_singleSubj -qc-seg t2_seg_reg.nii.gz
 
 :Input arguments:
    - ``-i`` : The input fMRI image.

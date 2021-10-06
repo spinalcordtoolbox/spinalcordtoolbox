@@ -86,5 +86,3 @@ Now that we have a spinal cord segmentation in the space of the fMRI data, we ca
 
 :Output files/folders:
    - ``mask_fmri.nii.gz`` : An imagine containing a mask surrounding the spinal cord.
-
-.. TODO: Why is it that we use the mask crop the image for dMRI MOCO, but for fMRI MOCO, we pass the mask directly to the function? Shouldn't these two tutorials be consistent? Why don't we use `sct_dmri_moco -m` for the dMRI tutorial?

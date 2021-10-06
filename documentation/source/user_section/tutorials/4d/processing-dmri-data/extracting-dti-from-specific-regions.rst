@@ -8,7 +8,7 @@ Now that we've registered the PAM50 template with the motion-corrected dMRI data
 
 .. code::
 
-   sct_warp_template -d dmri_crop_moco_dwi_mean.nii.gz -w warp_template2dmri.nii.gz -qc ~/qc_singleSubj
+   sct_warp_template -d dmri_moco_dwi_mean.nii.gz -w warp_template2dmri.nii.gz -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-d`` : Destination image the template will be warped to.

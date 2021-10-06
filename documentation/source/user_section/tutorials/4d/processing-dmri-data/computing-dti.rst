@@ -5,7 +5,7 @@ Here, we compute the diffusion tensor. SCT relies on the excellent ``dipy`` libr
 
 .. code::
 
-   sct_dmri_compute_dti -i dmri_crop_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
+   sct_dmri_compute_dti -i dmri_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 
 :Input arguments:
    - ``-i`` : The input dMRI image.
