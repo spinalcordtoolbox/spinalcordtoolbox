@@ -15,7 +15,7 @@ Next, we will create a `binary mask <https://homepages.inf.ed.ac.uk/rbf/HIPR2/ma
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
-   - ``mask_mt1.nii.gz`` : 3D binary mask of the segmented spinal cord
+   - ``mask_mt1.nii.gz`` : 3D binary mask surrounding the segmented spinal cord.
 
 Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`fsleyes-instructions`.
 
