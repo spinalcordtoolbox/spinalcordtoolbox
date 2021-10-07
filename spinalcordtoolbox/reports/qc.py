@@ -193,7 +193,7 @@ class QcImage(object):
         from matplotlib import colors
         import scipy.ndimage
         img = np.rint(np.ma.masked_where(mask < 1, mask))
-        labels = np.unique(img[img.mask == False]).astype(int)  # get available labels
+        labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
         ax.imshow(img,
                   cmap=colors.ListedColormap(self._labels_color[labels.min():labels.max()+1]),  # get color from min label and max label
                   # normalize with min & max of available labels, adjust for even/odd number of labels (To fix issue #3529)
