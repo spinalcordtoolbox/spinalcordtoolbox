@@ -20,6 +20,7 @@ We provide the following hands-on tutorials for SCT's command-line tools.
 #. :doc:`Gray matter segmentation <tutorials/gray-matter-segmentation>`
 
    * :doc:`tutorials/gray-matter-segmentation/gm-wm-segmentation`
+   * :doc:`tutorials/gray-matter-segmentation/gm-wm-metric-computation`
    * :doc:`tutorials/gray-matter-segmentation/improving-registration-with-gm-seg`
 
 #. :doc:`Atlas-based analysis <tutorials/atlas-based-analysis>`

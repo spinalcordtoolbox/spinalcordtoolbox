@@ -1,3 +1,5 @@
+.. _improving-registration-with-gm-seg:
+
 Improving registration results using white and gray matter segmentations
 ########################################################################
 
