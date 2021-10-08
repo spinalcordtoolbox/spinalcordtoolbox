@@ -5,13 +5,13 @@ Since we aim to improve the T1 segmentation, ensure that you are still in the T1
 
 .. code:: sh
 
-   sct_deepseg_sc -i t1.nii.gz -c t1 -qc ~/qc_singleSubj -ofolder deepseg
+   sct_deepseg_sc -i t1.nii.gz -c t1 -ofolder deepseg -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : Input image
    - ``-c`` : Contrast of the input image
-   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
    -  ``-ofolder`` : The folder to output files to. We specify this here so that we don't overwrite the ``t2_seg.nii.gz`` file output by ``sct_propseg``.
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the segmentation slice-by-slice
 
 :Output files/folders:
    - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
