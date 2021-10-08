@@ -1,8 +1,0 @@
-Working with 4D (time series) data
-##################################
-
-.. toctree::
-   :maxdepth: 1
-
-   4d/processing-dmri-data
-   4d/processing-fmri-data
