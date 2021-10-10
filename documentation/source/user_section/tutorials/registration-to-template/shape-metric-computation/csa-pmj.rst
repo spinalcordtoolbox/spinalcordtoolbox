@@ -4,12 +4,12 @@ CSA (PMJ-based)
 ###############
 
 Next, we will compute CSA based on a neurological reference, the ponto-medullary junction instead of the vertebral levels.
-Vertebral levels gives an approximation of the spinal levels `(Cadotte et al., 2015)<https://pubmed.ncbi.nlm.nih.gov/25523587/>`_. It is however imprecise and doesn’t consider neck flexion and extension. 
+Vertebral levels gives an approximation of the spinal levels `(Cadotte et al., 2015) <https://pubmed.ncbi.nlm.nih.gov/25523587/>`_. It is however imprecise and doesn’t consider neck flexion and extension. 
 To overcome this limitation, CSA can be computed from a distance of a neuroanatomical reference, the pontomedullary junction (PMJ). 
 
 
 Pontomedullary junction detection
-----------------------
+---------------------------------
 First, we proceed to the detection of the PMJ:
 
 .. code:: sh
@@ -24,7 +24,7 @@ First, we proceed to the detection of the PMJ:
 # TODO: add image of the output
 
 CSA computation
-----------------------
+---------------
 
 Second, we compute CSA from a ditstance from the PMJ.
 
