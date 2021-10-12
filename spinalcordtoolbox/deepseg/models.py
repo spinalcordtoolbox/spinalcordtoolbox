@@ -76,7 +76,15 @@ MODELS = {
         "description": "Grey/white matter seg on exvivo human T2w.",
         "contrasts": ["t2"],
         "default": False,
-    }
+    },
+     "model_7t_multiclass_gm_sc_unet2d": {
+        "url": [
+            "https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass/archive/refs/tags/r20211012.zip" 
+        ],
+        "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University, France",
+        "contrasts": ["t2star"],
+        "default": False,
+     },
 }
 
 
@@ -85,22 +93,39 @@ MODELS = {
 TASKS = {
     'seg_sc_t2star':
         {'description': 'Cord segmentation on T2*-weighted contrast.',
+         'long_description':' ',
+         'url':' ',
          'models': ['t2star_sc']},
     'seg_mice_sc':
         {'description': 'Cord segmentation on mouse MRI.',
+         'long_description':' ',
+         'url':' ',
          'models': ['mice_uqueensland_sc']},
     'seg_mice_gm':
         {'description': 'Gray matter segmentation on mouse MRI.',
+         'long_description':' ',
+         'url':' ',
          'models': ['mice_uqueensland_gm']},
     'seg_tumor_t2':
         {'description': 'Cord tumor segmentation on T2-weighted contrast.',
+         'long_description':' ',
+         'url':' ',
          'models': ['findcord_tumor', 't2_tumor']},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor segmentation.',
+         'long_description':' ',
+         'url':' ',
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']},
     'seg_exvivo_gm-wm_t2':
         {'description': 'Grey/white matter seg on exvivo human T2w.',
-         'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']}
+         'long_description':' ',
+         'url':' ',
+         'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']},
+    'seg_gm_sc_7t_t2s':
+        {'description': 'SC/GM seg on T2*-weighted contrast at 7T',
+         'long_description': 'This multiclass model (SC/GM) has been developed from 72 subjects acquired at 7T (T2*-w images of the cervical spinal cord) by N.J. Laines Medina, V. Callot and A. Le Troter in the Center for Magnetic Resonance in Biology and Medicine (CRMBM-CEMEREM, UMR 7339, CNRS, Aix-Marseille University, France) including various pathologies (HC, MS, ALS). It was validated between 9-folds (CV) single-class and multi-class models and was enriched by integrating a hybrid data augmentation (composed of classical geometric transformations, MRI artifacts and real GM/WM contrasts distorted with anatomically constrained deformation fields) finally tested with an external multicentric database. For more information visit: ',
+         'url':'https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass',
+         'models': ['model_7t_multiclass_gm_sc_unet2d']},
 }
 
 
@@ -175,8 +200,8 @@ def display_list_tasks():
     tasks = sct.deepseg.models.list_tasks()
     # Display beautiful output
     color = {True: 'green', False: 'red'}
-    print("{:<30s}{:<50s}{:<20s}MODELS".format("TASK", "DESCRIPTION", "INPUT CONTRASTS"))
-    print("-" * 120)
+    print("{:<30s}{:<50s}{:<15s}{:<40s}{:<20s}URL".format("TASK", "SHORT DESCRIPTION", "CONTRASTS", "MODELS","LONG DESCRIPTION"))
+    print("-" * 160)
     for name_task, value in tasks.items():
         path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
         are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
@@ -184,20 +209,24 @@ def display_list_tasks():
                                       colored.fg(color[all(are_models_valid)]))
         description_status = colored.stylize(value['description'].ljust(50),
                                              colored.fg(color[all(are_models_valid)]))
-        models_status = ', '.join([colored.stylize(model_name,
+        models_status = (', '.join([colored.stylize(model_name,
                                                    colored.fg(color[is_valid]))
-                                   for model_name, is_valid in zip(value['models'], are_models_valid)])
+                                   for model_name, is_valid in zip(value['models'], are_models_valid)])).ljust(53)
         input_contrasts = colored.stylize(str(', '.join(model_name for model_name in
-                                                        get_required_contrasts(name_task))).ljust(20),
+                                                        get_required_contrasts(name_task))).ljust(15),
                                           colored.fg(color[all(are_models_valid)]))
-
-        print("{}{}{}{}".format(task_status, description_status, input_contrasts, models_status))
+        long_description = colored.stylize(value['long_description'].ljust(20),
+                                             colored.fg(color[all(are_models_valid)]))
+        url = colored.stylize(value['url'].ljust(20),
+                                             colored.fg(color[all(are_models_valid)]))
+        print("{}{}{}{}{}{}".format(task_status, description_status, input_contrasts, models_status, long_description, url))
 
     print(
         '\nLegend: {} | {}\n'.format(
             colored.stylize("installed", colored.fg(color[True])),
             colored.stylize("not installed", colored.fg(color[False]))))
     exit(0)
+
 
 
 def get_metadata(folder_model):
