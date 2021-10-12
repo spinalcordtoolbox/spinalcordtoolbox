@@ -200,8 +200,8 @@ def display_list_tasks():
     tasks = sct.deepseg.models.list_tasks()
     # Display beautiful output
     color = {True: 'green', False: 'red'}
-    print("{:<30s}{:<50s}{:<15s}{:<40s}{:<20s}URL".format("TASK", "SHORT DESCRIPTION", "CONTRASTS", "MODELS","LONG DESCRIPTION"))
-    print("-" * 160)
+    print("{:<30s}{:<50s}{:<20s}MODELS".format("TASK", "DESCRIPTION", "INPUT CONTRASTS"))
+    print("-" * 120)
     for name_task, value in tasks.items():
         path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
         are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
@@ -209,17 +209,14 @@ def display_list_tasks():
                                       colored.fg(color[all(are_models_valid)]))
         description_status = colored.stylize(value['description'].ljust(50),
                                              colored.fg(color[all(are_models_valid)]))
-        models_status = (', '.join([colored.stylize(model_name,
+        models_status = ', '.join([colored.stylize(model_name,
                                                    colored.fg(color[is_valid]))
-                                   for model_name, is_valid in zip(value['models'], are_models_valid)])).ljust(53)
+                                   for model_name, is_valid in zip(value['models'], are_models_valid)])
         input_contrasts = colored.stylize(str(', '.join(model_name for model_name in
-                                                        get_required_contrasts(name_task))).ljust(15),
+                                                        get_required_contrasts(name_task))).ljust(20),
                                           colored.fg(color[all(are_models_valid)]))
-        long_description = colored.stylize(value['long_description'].ljust(20),
-                                             colored.fg(color[all(are_models_valid)]))
-        url = colored.stylize(value['url'].ljust(20),
-                                             colored.fg(color[all(are_models_valid)]))
-        print("{}{}{}{}{}{}".format(task_status, description_status, input_contrasts, models_status, long_description, url))
+
+        print("{}{}{}{}".format(task_status, description_status, input_contrasts, models_status))
 
     print(
         '\nLegend: {} | {}\n'.format(
@@ -227,7 +224,36 @@ def display_list_tasks():
             colored.stylize("not installed", colored.fg(color[False]))))
     exit(0)
 
+def list_description():
+    """
+    Display a description of tasks in more detail.
+    :return: dict: long descriptions and URL for each task
+    """
+    return {name: value for name, value in TASKS.items()}
 
+
+def display_long_description_task():
+    long_tasks_description = sct.deepseg.models.list_description()
+    # Display beautiful output
+    color = {True: 'green', False: 'red'}
+    print("{:<35s}{:<60s}URL".format("TASK", "LONG DESCRIPTION"))
+    print("-" * 100)
+    for name_task, value in long_tasks_description.items():
+        path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
+        are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
+        task_status = colored.stylize(name_task.ljust(35),
+                                      colored.fg(color[all(are_models_valid)]))
+        long_description = colored.stylize(value['long_description'].ljust(60),
+                                             colored.fg(color[all(are_models_valid)]))
+        url = colored.stylize(value['url'].ljust(20),
+                                             colored.fg(color[all(are_models_valid)]))
+        print("{}{}{}".format(task_status, long_description, url))
+
+    print(
+        '\nLegend: {} | {}\n'.format(
+            colored.stylize("installed", colored.fg(color[True])),
+            colored.stylize("not installed", colored.fg(color[False]))))
+    exit(0)
 
 def get_metadata(folder_model):
     """
