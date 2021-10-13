@@ -1,7 +1,7 @@
 Hands-on: Using ``sct_deepseg_sc`` on T1 data
 #############################################
 
-Since we aim to improve the T1 segmentation, ensure that you are still in the T1 directory (``sct_course_london20/single_subject/data/t1``). Once there, run this command:
+Since we aim to improve the T1 segmentation, ensure that you are still in the T1 directory (``{PATH_TO_DOWNLOADED_DATA}/single_subject/data/t1``). Once there, run this command:
 
 .. code:: sh
 
