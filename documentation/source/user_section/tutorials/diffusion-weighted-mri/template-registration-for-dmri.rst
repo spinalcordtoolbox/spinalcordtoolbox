@@ -23,7 +23,7 @@ As a prerequisite step, we segment the spinal cord from the 3D mean image genera
 Registering the template to the DTI space
 -----------------------------------------
 
-Usually, template registration would be perfomed using the ``sct_register_to_template`` command. That command is important because it matches the vertebral levels of the data to that of the PAM50 template. Unfortunately, though, because dMRI scans are typically acquired axially with thick slices, it is much more difficult to acquire the vertebral labels needed for the vertebral matching step..
+Usually, template registration would be performed using the ``sct_register_to_template`` command. That command is important because it matches the vertebral levels of the data to that of the PAM50 template. Unfortunately, though, because dMRI scans are typically acquired axially with thick slices, it is much more difficult to acquire the vertebral labels needed for the vertebral matching step.
 
 To get around this limitation, we recommend that you first perform :ref:`vertebral labeling <vertebral-labeling>` and :ref:`template registration <template-registration>` using a different contrast for the same subject (e.g. T2 anatomical data, where vertebral levels are much more apparent). This will provide you with warping fields between the template and the data, which you can then re-use to initialize the dMRI registration via the ``-initwarp`` and ``-initwarpinv`` flags. Doing so provides all of the benefits of vertebral matching, without having to label the dMRI data directly.
 
