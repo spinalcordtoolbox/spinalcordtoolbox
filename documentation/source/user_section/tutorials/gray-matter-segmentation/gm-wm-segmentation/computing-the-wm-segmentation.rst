@@ -6,7 +6,7 @@ In the previous step, we used ``sct_deepseg_gm`` to segment the gray matter. How
 Segmenting the full spinal cord
 -------------------------------
 
-In order to subtract the gray matter, we will first will need to get the  full spinal cord segmentation.
+In order to subtract the gray matter, we will first need to get the  full spinal cord segmentation.
 
 .. code:: sh
 
