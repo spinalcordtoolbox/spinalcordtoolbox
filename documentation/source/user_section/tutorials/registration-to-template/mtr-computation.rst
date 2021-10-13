@@ -1,7 +1,7 @@
 .. _mtr-computation:
 
-Computing MTR for PAM50-registered MT data
-##########################################
+Computing MTR using co-registration between MT0 and MT1 data
+############################################################
 
 This tutorial will demonstrate how to generate a `magnetization transfer ratio (MTR) <https://radiopaedia.org/articles/magnetisation-transfer-1>`_ image for magnetization transfer data.
 
