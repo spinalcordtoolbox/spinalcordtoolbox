@@ -14,6 +14,21 @@ SCT provides a spinal cord smoothing function that takes into account the curvat
 * It can be used to improve sensitivity of fMRI results while minimizing contamination from CSF
 * It can also be used to obtain more reliable cord segmentations, because smoothing will sharpen the edge of the cord and will blur out possible artifacts at the cord/CSF interface.
 
+Downloading the files for this tutorial
+---------------------------------------
+
+First, make sure that you have the following files in your working directory:
+
+* ``single_subject/data/t1.nii.gz``: The image without the magnetization transfer pulse.
+* ``single_subject/data/t1_seg.nii.gz``: The image with the magnetization transfer pulse.
+
+  You can get these files by downloading :sct_tutorial_data:`data_spinalcord-smoothing.zip`.
+
+Running the command
+-------------------
+
+Next, open up your terminal and run the following command:
+
 .. code::
 
    sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
