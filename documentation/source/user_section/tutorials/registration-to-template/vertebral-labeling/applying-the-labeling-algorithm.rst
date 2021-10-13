@@ -19,7 +19,7 @@ Applying the labeling algorithm
    - ``t2_seg_labeled.nii.gz`` : Image containing the labeled spinal cord. Each voxel of the segmented spinal cord is labeled with a vertebral level as though the vertebrae were projected onto the spinal cord. The convention for label values is C3-->3, C4-->4, etc.
    - ``t2_seg_labeled_discs.nii.gz`` : Image containing single-voxel intervertebral disc labels (without the segmented spinal cord). Each label is centered within the disc. The convention for label values is C2/C3-->3, C3/C4-->4, etc. This file also contains additional labels (such as the pontomedullary junction and groove), but these are not yet used.
 
-Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using either :ref:`Quality Control (QC) <qc>` reports or :ref:`fsleyes-instructions`.
+Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`Quality Control (QC) <qc>` reports. Optionally, If you have :ref:`fsleyes-instructions` installed, a ``fsleyes`` command will printed as well.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/io-sct_label_vertebrae.png
    :align: center

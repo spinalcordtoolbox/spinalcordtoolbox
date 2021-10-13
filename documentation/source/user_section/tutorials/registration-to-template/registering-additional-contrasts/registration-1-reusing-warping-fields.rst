@@ -42,4 +42,4 @@ To accomplish this, we now use the ``sct_register_multimodal`` command, which is
    - ``PAM50_t2_reg.nii.gz`` : The PAM50 template image, registered to the space of the MT1 image.
    - ``warp_template2mt.nii.gz`` : The warping field to transform the PAM50 template to the MT1 space.
 
-Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using either :ref:`Quality Control (QC) <qc>` reports or :ref:`fsleyes-instructions`.
+Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`Quality Control (QC) <qc>` reports. Optionally, If you have :ref:`fsleyes-instructions` installed, a ``fsleyes`` command will printed as well.

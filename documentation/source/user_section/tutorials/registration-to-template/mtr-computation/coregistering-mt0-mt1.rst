@@ -25,7 +25,7 @@ To align the images, we will coregister them together. In other words, we will c
    - ``warp_mt02mt1.nii.gz`` : The warping field to transform the MT0 image to the MT1 space.
    - ``warp_mt12mt0.nii.gz`` : The warping field to transform the MT1 image to the MT0 space.
 
-Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using either :ref:`Quality Control (QC) <qc>` reports or :ref:`fsleyes-instructions`.
+Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`Quality Control (QC) <qc>` reports. Optionally, If you have :ref:`fsleyes-instructions` installed, a ``fsleyes`` command will printed as well.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/mtr-computation/mt-registration-mt0-mt1.png
    :align: center
