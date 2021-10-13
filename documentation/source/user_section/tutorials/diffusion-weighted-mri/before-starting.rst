@@ -1,11 +1,7 @@
 Before starting this tutorial
 #############################
 
-1. Read through the following page to familiarize yourself with key SCT concepts:
-
-   * :ref:`inspecting-your-results`: After some steps in this tutorial, instructions are provided to open the output images using :ref:`Quality Control (QC) <qc>` reports and :ref:`fsleyes-instructions`.
-
-2. Make sure that you have the following files in your working directory:
+#. Make sure that you have the following files in your working directory:
 
    * ``single_subject/data/dmri/dmri.nii.gz`` : A 4D dMRI image comprised of 35 3D volumes.
    * ``single_subject/data/dmri/bvals.txt`` : A text file containing a b-value for each volume in the dMRI image, indicating the diffusion weightings for each of the volumes in the dMRI image.
@@ -16,7 +12,7 @@ Before starting this tutorial
    You can get these files by downloading :sct_tutorial_data:`data_processing-dmri-data.zip`.
 
 
-3. Open a terminal and navigate to the ``single_subject/data/dmri/`` directory:
+#. Open a terminal and navigate to the ``single_subject/data/dmri/`` directory:
 
 .. code:: sh
 

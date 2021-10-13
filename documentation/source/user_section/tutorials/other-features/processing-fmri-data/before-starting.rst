@@ -1,11 +1,7 @@
 Before starting this tutorial
 #############################
 
-1. Read through the following page to familiarize yourself with key SCT concepts:
-
-   * :ref:`inspecting-your-results`: After some steps in this tutorial, instructions are provided to open the output images using :ref:`Quality Control (QC) <qc>` reports and :ref:`fsleyes-instructions`.
-
-2. Make sure that you have the following files in your working directory:
+#. Make sure that you have the following files in your working directory:
 
    * ``single_subject/data/fmri/fmri.nii.gz`` : A 4D fMRI image comprised of 35 3D volumes.
    * ``single_subject/data/t2/t2.nii.gz`` : A 3D anatomical image used to create a mask around spinal cord for the fMRI image.
@@ -15,7 +11,7 @@ Before starting this tutorial
    You can get these files by downloading :sct_tutorial_data:`data_processing-fmri-data.zip`.
 
 
-3. Open a terminal and navigate to the ``single_subject/data/dmri/`` directory:
+#. Open a terminal and navigate to the ``single_subject/data/dmri/`` directory:
 
 .. code:: sh
 

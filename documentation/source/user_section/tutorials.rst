@@ -3,6 +3,10 @@
 Tutorials and Courses
 #####################
 
+.. note::
+
+   The following tutorials make use of :ref:`Quality Control (QC) <qc>` reports for inspecting processed image data. Optionally, we also recommend trying out :ref:`fsleyes-instructions` to visualize the data from these tutorials, too.
+
 Tutorial pages
 **************
 
