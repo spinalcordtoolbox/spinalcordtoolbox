@@ -29,6 +29,5 @@ Once the command has finished, at the bottom of your terminal there will be inst
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/mtr-computation/mt-registration-mt0-mt1.png
    :align: center
-   :figwidth: 65%
 
    Input/output images for ``sct_register_multimodal``

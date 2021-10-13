@@ -20,7 +20,6 @@ Once the command has finished, at the bottom of your terminal there will be inst
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/spinalcord-segmentation/t1_deepseg_before_after.png
    :align: center
-   :figwidth: 65%
 
    No leakage with ``sct_deepseg_sc``
 

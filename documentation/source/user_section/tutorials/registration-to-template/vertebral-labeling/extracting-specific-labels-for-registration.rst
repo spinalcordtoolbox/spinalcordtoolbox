@@ -21,6 +21,5 @@ Once the command has finished, at the bottom of your terminal there will be inst
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/io-sct_label_utils.png
    :align: center
-   :figwidth: 65%
 
    Input/output images for ``sct_label_utils``

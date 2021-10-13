@@ -7,7 +7,6 @@ Say that you have already registered anatomical data that was acquired in the sa
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registering-additional-contrasts/mt-registration-pipeline.png
    :align: center
-   :figwidth: 65%
 
    ``Template->T2`` (blue) + ``T2->MT1`` (green) = ``Template->MT1`` (the desired result)
 
