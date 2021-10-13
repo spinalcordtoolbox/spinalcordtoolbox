@@ -35,7 +35,7 @@ Next, we extract the MTR from the dorsal columns.
 
    sct_extract_metric -i mtr.nii.gz -f label/atlas -method map -l 53 \
                       -vert 2:4 -vertfile label/template/PAM50_levels.nii.gz \
-                      -o mtr_in_dc_map.csv
+                      -o mtr_in_dc.csv
 
 :Input arguments:
    - ``-i`` : Image to extract values from.

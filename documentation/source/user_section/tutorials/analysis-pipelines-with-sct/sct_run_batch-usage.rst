@@ -16,7 +16,7 @@ Running this command will take 10-30m depending on the capabilities of your proc
 
 .. code::
 
-   sct_run_batch -script ./process_data.sh -config ./config.yml
+   sct_run_batch -script process_data.sh -config config.yml
 
 :Input arguments:
    - ``-script`` : The path to the script you wish to run. This script should be written to accept a single argument (a path to the subject folder). That way, ``sct_run_batch`` can launch the script once for each subject, passing along each subject folder as an argument to the script.

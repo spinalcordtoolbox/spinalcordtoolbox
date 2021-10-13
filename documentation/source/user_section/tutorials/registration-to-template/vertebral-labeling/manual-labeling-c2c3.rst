@@ -5,7 +5,8 @@ If the fully automated approach fails, you can instead use a semi-automated appr
 
 .. code:: sh
 
-   sct_label_utils -i t2.nii.gz -create-viewer 3 -msg "Click at the posterior tip of C2/C3 inter-vertebral disc" -o label_c2c3.nii.gz
+   sct_label_utils -i t2.nii.gz -create-viewer 3 -o label_c2c3.nii.gz \
+                   -msg "Click at the posterior tip of C2/C3 inter-vertebral disc"
 
 :Input arguments:
    * ``-i`` : The input anatomical image.

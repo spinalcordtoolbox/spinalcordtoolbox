@@ -17,11 +17,15 @@ To accomplish this, we now use the ``sct_register_multimodal`` command, which is
 
 .. code:: sh
 
-   sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz \
-                           -d mt1.nii.gz -dseg mt1_seg.nii.gz \
-                           -m mask_mt1.nii.gz -initwarp ../t2/warp_template2anat.nii.gz \
+   sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz \
+                           -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz \
+                           -d mt1.nii.gz \
+                           -dseg mt1_seg.nii.gz \
+                           -m mask_mt1.nii.gz \
+                           -initwarp ../t2/warp_template2anat.nii.gz \
                            -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3  \
-                           -owarp warp_template2mt.nii.gz -qc ~/qc_singleSubj
+                           -owarp warp_template2mt.nii.gz \
+                           -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : Source image. Here, we select the T2 version of the PAM50 template, because the T2 contrast is the closest visual match to our MT1 data.

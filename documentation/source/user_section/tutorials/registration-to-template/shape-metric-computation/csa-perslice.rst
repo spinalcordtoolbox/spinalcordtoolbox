@@ -7,7 +7,7 @@ To compute CSA for individual slices, set the ``-perslice`` argument to 1, and u
 
 .. code:: sh
 
-   sct_process_segmentation -i t2_seg.nii.gz -perslice 1 -z 30:35 -o csa_perslice.csv
+   sct_process_segmentation -i t2_seg.nii.gz -z 30:35 -perslice 1 -o csa_perslice.csv
 
 :Input arguments:
    - ``-i`` : The input segmentation file.
