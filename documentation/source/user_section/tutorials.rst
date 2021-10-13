@@ -24,8 +24,13 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    * :doc:`tutorials/gray-matter-segmentation/improving-registration-with-gm-seg`
 
 #. :doc:`Atlas-based analysis <tutorials/atlas-based-analysis>`
-#. :doc:`Diffusion-weighted MRI <tutorials/diffusion-weighted-mri>`
+#. :doc:`Diffusion-weighted MRI (Motion correction, DTI computation) <tutorials/diffusion-weighted-mri>`
 #. :doc:`Other features <tutorials/other-features>`
+
+   * :doc:`Functional MRI (Motion correction, Spinal level labeling) <tutorials/other-features/processing-fmri-data>`
+   * :doc:`Spinal cord smoothing <tutorials/other-features/spinalcord-smoothing>`
+   * :doc:`Visualizing misaligned cords <tutorials/other-features/visualizing-misaligned-cords>`
+
 #. :doc:`Analysis pipelines with SCT <tutorials/analysis-pipelines-with-sct>`
 
 .. Note: The TOC below is hidden because neither ":maxdepth: 2" nor ":maxdepth: 1" looks correct. Instead, we manually
