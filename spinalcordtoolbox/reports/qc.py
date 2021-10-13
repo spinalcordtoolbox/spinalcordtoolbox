@@ -193,9 +193,9 @@ class QcImage(object):
         from matplotlib import colors
         import scipy.ndimage
         img = np.rint(np.ma.masked_where(mask < 1, mask))
+        labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
         ax.imshow(img,
-                  cmap=colors.ListedColormap(self._labels_color),
-                  norm=colors.Normalize(vmin=0, vmax=len(self._labels_color)),
+                  cmap=colors.ListedColormap(self._labels_color[labels.min():labels.max()+1]),  # get color from min label and max label
                   interpolation=self.interpolation,
                   alpha=1,
                   aspect=float(self.aspect_mask))

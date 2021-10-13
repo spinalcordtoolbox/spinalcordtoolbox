@@ -31,8 +31,9 @@ import wx
 import wx.lib.agw.aui as aui
 import wx.html as html
 
+from fsleyes.views import viewpanel
+
 logger = logging.getLogger(__name__)
-aui_manager = frame.auiManager  # noqa: F821 (from FSLeyes context)
 
 # keep track of all output folder text inputs so that we can update
 # all of them if one changes
@@ -269,7 +270,7 @@ class SCTPanel(wx.Panel):
     """
 
     SCT_DIR_ENV = 'SCT_DIR'
-    SCT_LOGO_REL_PATH = 'documentation/imgs/logo_sct_small.png'
+    SCT_LOGO_REL_PATH = 'documentation/source/_static/img/logo_sct_small.png'
     SCT_TUTORIAL_PATH = 'documentation/Manual_v1_SCT.pdf'  # TODO: fix this path
 
     def __init__(self, parent, id_):
@@ -754,11 +755,30 @@ class TabPanelRegisterToTemplate(SCTPanel):
         opts.cmap = 'gray'
 
 
-def run_main():
-    window = aui_manager.GetManagedWindow()
+class SCTViewPanel(viewpanel.ViewPanel):
+    """We subclass ViewPanel so we can override the getActions method.
+    """
+    def __init__(self, parent, overlayList, displayCtx, frame):
+        viewpanel.ViewPanel.__init__(
+            self, parent, overlayList, displayCtx, frame)
 
+    def destroy(self):
+        """Must be called when this ``SCTPanel`` is no longer needed.
+        Calls the :meth:`.FSLeyesPanel.destroy` method.
+        """
+        viewpanel.ViewPanel.destroy(self)
+
+    def getActions(self):
+        """Overrides :meth:`.ActionProvider.getActions`. Currently returns
+        an empty list, which prevents the 'Settings' menu from having
+        duplicated action items.
+        """
+        return []
+
+
+def run_main():
     if 'SCT_DIR' not in os.environ:
-        dlg = wx.MessageDialog(window, 'Spinal Cord Toolbox (SCT) was not '
+        dlg = wx.MessageDialog(frame.auiManager.GetManagedWindow(), 'Spinal Cord Toolbox (SCT) was not '
                                        'found in your system. Make sure you open fsleyes '
                                        'from the Terminal (not by clicking on the App). '
                                        'If you are indeed running from the Terminal, please '
@@ -769,8 +789,19 @@ def run_main():
         dlg.Destroy()
         return
 
+    # Create a new view panel which will contain the SCT notebook pages
+    sct_view_panel = frame.addViewPanel(SCTViewPanel, default=False,
+                                        title="Spinal Cord Toolbox")
+    aui_manager = sct_view_panel.auiManager
+
+    # Move panel to bottom (by default, FSLeyes puts ViewPanels to the right)
+    width, height = frame.GetClientSize().Get()
+    frame.auiManager.GetPane(sct_view_panel).Bottom()\
+                    .BestSize(width, height // 3)  # Resize, horizontal viewing
+    frame.auiManager.Update()
+
     # Adding panels
-    notebook = aui.AuiNotebook(parent=window)
+    notebook = aui.AuiNotebook(parent=aui_manager.GetManagedWindow())
     panel_propseg = TabPanelPropSeg(parent=notebook)
     panel_sc = TabPanelSCSeg(parent=notebook)
     panel_gm = TabPanelGMSeg(parent=notebook)
