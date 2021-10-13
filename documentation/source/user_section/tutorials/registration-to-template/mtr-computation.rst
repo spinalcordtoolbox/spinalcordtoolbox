@@ -10,5 +10,7 @@ This tutorial will demonstrate how to generate a `magnetization transfer ratio (
    :maxdepth: 1
 
    mtr-computation/before-starting
+   mtr-computation/spinalcord-segmentation
+   mtr-computation/creating-a-mask
    mtr-computation/coregistering-mt0-mt1
    mtr-computation/computing-mtr
