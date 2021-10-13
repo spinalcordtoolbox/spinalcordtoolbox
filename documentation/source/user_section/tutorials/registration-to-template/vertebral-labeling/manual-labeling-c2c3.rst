@@ -14,7 +14,7 @@ If the fully automated approach fails, you can instead use a semi-automated appr
    * ``-o`` : The name of the output file.
 
 :Output files/folders:
-   * ``label_c2c3.nii.gz`` : An imagine containing the single-voxel label as selected in the GUI coordinate picker.
+   * ``label_c2c3.nii.gz`` : An image containing the single-voxel label as selected in the GUI coordinate picker.
 
 You can then pass this resulting file to the ``sct_label_vertebrae`` function via the ``-initlabel`` argument. This replaces the C2-C3 detecion part of the algorithm, but preserves the remaining automated labeling steps.
 
