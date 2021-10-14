@@ -8,6 +8,10 @@ The following studies have used SCT:
 2021
 ----
 
+-  Murphy *et al.* `Filtered Diffusion-Weighted MRI of the Human Cervical Spinal Cord: Feasibility and Application to Traumatic Spinal Cord Injury. <http://www.ajnr.org/content/early/2021/10/07/ajnr.A7295>`_ **AJNR Am J Neuroradiol.** 2021
+-  Bautin *et al.* `Minimum detectable spinal cord atrophy with automatic segmentation: Investigations using an open-access dataset of healthy participants. <https://www.sciencedirect.com/science/article/pii/S221315822100293X>`_ **Neuroimage Clin.** 2021
+-  Zhang *et al.* `Utility of Advanced DWI in the Detection of Spinal Cord Microstructural Alterations and Assessment of Neurologic Function in Cervical Spondylotic Myelopathy Patients. <https://pubmed.ncbi.nlm.nih.gov/34425037/>`_ **J Magn Reson Imaging.** 2021
+-  Lukas *et al.* `Quantification of Cervical Cord Cross-Sectional Area: Which Acquisition, Vertebra Level, and Analysis Software? A Multicenter Repeatability Study on a Traveling Healthy Volunteer. <https://pubmed.ncbi.nlm.nih.gov/34421797/>`_ **Front Neurol.** 2021
 -  Querin *et al.* `Development of new outcome measures for adult SMA type III and IV: a multimodal longitudinal study. <https://pubmed.ncbi.nlm.nih.gov/33388927/>`_ **J Neurol** 2021
 -  McLachlin *et al.* `Spatial correspondence of spinal cord white matter tracts using diffusion tensor imaging, fibre tractography, and atlas-based segmentation. <https://link.springer.com/article/10.1007/s00234-021-02635-9>`_ **Neuroradiology** 2021
 -  Dvorak *et al.* `Comparison of multi echo T2 relaxation and steady state approaches for myelin imaging in the central nervous system. <https://www.nature.com/articles/s41598-020-80585-7>`_ **Scientific reports** 2021
@@ -29,10 +33,6 @@ The following studies have used SCT:
 -  Alsenan *et al.* `A Deep Learning Model based on MobileNetV3 and UNet for Spinal Cord Gray Matter Segmentation. <https://ieeexplore.ieee.org/document/9522652>`_ **44th International Conference on Telecommunications and Signal Processing (TSP).** 2021
 -  Horak *et al.* `In vivo molecular signatures of cervical spinal cord pathology in degenerative compression. <https://pubmed.ncbi.nlm.nih.gov/34428934/>`_ **J Neurotrauma.** 2021
 -  Valošek *et al.* `Diffusion MRI reveals tract-specific microstructural correlates of electrophysiological impairments in non-myelopathic and myelopathic spinal cord compression. <https://doi.org/10.1111/ene.15027>`_ **Eur J Neurol.** 2021
--  Lukas *et al.* `Quantification of Cervical Cord Cross-Sectional Area: Which Acquisition, Vertebra Level, and Analysis Software? A Multicenter Repeatability Study on a Traveling Healthy Volunteer. <https://pubmed.ncbi.nlm.nih.gov/34421797/>`_ **Front Neurol.** 2021
--  Zhang *et al.* `Utility of Advanced DWI in the Detection of Spinal Cord Microstructural Alterations and Assessment of Neurologic Function in Cervical Spondylotic Myelopathy Patients. <https://pubmed.ncbi.nlm.nih.gov/34425037/>`_ **J Magn Reson Imaging.** 2021
--  Bautin *et al.* `Minimum detectable spinal cord atrophy with automatic segmentation: Investigations using an open-access dataset of healthy participants. <https://www.sciencedirect.com/science/article/pii/S221315822100293X>`_ **Neuroimage Clin.** 2021
--  Murphy *et al.* `Filtered Diffusion-Weighted MRI of the Human Cervical Spinal Cord: Feasibility and Application to Traumatic Spinal Cord Injury. <http://www.ajnr.org/content/early/2021/10/07/ajnr.A7295>`_ **AJNR Am J Neuroradiol.** 2021
 
 2020
 ----
