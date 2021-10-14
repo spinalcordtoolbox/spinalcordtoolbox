@@ -8,6 +8,8 @@ The following studies have used SCT:
 2021
 ----
 
+-  Dario *et al.* `Spinal cord pathology revealed by MRI in traumatic spinal cord injury. <https://pubmed.ncbi.nlm.nih.gov/34619692/>`_ **Curr Opin Neurol.** 2021
+-  Valsasina *et al.* `Characterizing 1-year development of cervical cord atrophy across different MS phenotypes: A voxel-wise, multicentre analysis. <https://pubmed.ncbi.nlm.nih.gov/34605323/>`_ **Mult Scler.** 2021
 -  Murphy *et al.* `Filtered Diffusion-Weighted MRI of the Human Cervical Spinal Cord: Feasibility and Application to Traumatic Spinal Cord Injury. <http://www.ajnr.org/content/early/2021/10/07/ajnr.A7295>`_ **AJNR Am J Neuroradiol.** 2021
 -  Bautin *et al.* `Minimum detectable spinal cord atrophy with automatic segmentation: Investigations using an open-access dataset of healthy participants. <https://www.sciencedirect.com/science/article/pii/S221315822100293X>`_ **Neuroimage Clin.** 2021
 -  Zhang *et al.* `Utility of Advanced DWI in the Detection of Spinal Cord Microstructural Alterations and Assessment of Neurologic Function in Cervical Spondylotic Myelopathy Patients. <https://pubmed.ncbi.nlm.nih.gov/34425037/>`_ **J Magn Reson Imaging.** 2021
