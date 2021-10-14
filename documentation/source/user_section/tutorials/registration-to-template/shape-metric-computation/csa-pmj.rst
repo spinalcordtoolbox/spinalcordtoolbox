@@ -41,7 +41,7 @@ First, we proceed to the detection of the PMJ:
 CSA computation
 ---------------
 
-Second, we compute CSA from a ditstance from the PMJ.
+Second, we compute CSA from a distance from the PMJ.
 
 .. code:: sh
 
