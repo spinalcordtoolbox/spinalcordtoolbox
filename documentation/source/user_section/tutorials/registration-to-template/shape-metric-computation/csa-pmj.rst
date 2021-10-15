@@ -7,9 +7,14 @@ Next, we will compute CSA based on a neurological reference, the ponto-medullary
 Vertebral levels give an approximation of the spinal levels, it is however imprecise and doesn’t consider neck flexion and extension `(Cadotte et al., 2015) <https://pubmed.ncbi.nlm.nih.gov/25523587/>`_.  
 To overcome this limitation, CSA can be computed from a distance of a neuroanatomical reference, the PMJ. 
 
-Briefly, the PMJ is detected and the label is added to spinal cord segmentation. The spinal cord centerline is extracted using linear interpolation and smoothing. The distance is computed along the centerline and CSA is averaged across the extent mask centered at a specified distance
-`(Bedard & Cohen-Adad, 2021) <https://www.biorxiv.org/content/10.1101/2021.09.30.462636v1>`_.
-In this case, we will compute CSA at 64 mm with an extent mask of 30 mm, other values can be specified following the desired region to compute CSA.
+Computing the PMJ-based CSA involves a 4-step process `(Bedard & Cohen-Adad, 2021) <https://www.biorxiv.org/content/10.1101/2021.09.30.462636v1>`_: 
+
+1. The PMJ is detected using ``sct_detect_pmj``.
+2. The spinal cord centerline is extracted using a segmentation of the spinal cord, then the centerline is extended to the position of the PMJ label using linear interpolation and smoothing. 
+3. A mask is determined using two parameters: (1) distance along the centerline from the PMJ label, and (2) extent of the mask. 
+4. The CSA is computed and averaged within this mask.
+
+For this tutorial, we will compute CSA at a distance of 64 mm from the PMJ using a mask with a 30 mm extent. But, other values can be specified if you would like to alter the desired region to compute CSA.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/add-figures-pmj-tutorial/shape-metric-computation/csa-pmj-method.png
    :align: center
