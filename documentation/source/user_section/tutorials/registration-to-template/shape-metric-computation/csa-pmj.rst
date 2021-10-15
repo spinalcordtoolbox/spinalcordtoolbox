@@ -41,7 +41,7 @@ First, we proceed to the detection of the PMJ.
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/add-figures-pmj-tutorial/shape-metric-computation/io-pmj-detection.PNG
    :align: center
 
-   Pontomedullary junction (PMJ) detection for T2.
+   PMJ detection for T2.
 
 
 CSA computation
