@@ -119,7 +119,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    issues that come up and how they implement user requests regarding new features. 
    And finally, it’s really impressive how SCT has grown (since its first release 
    in 2014) in terms of the functionality it offers as well as its documentation 
-   (command-specfic help, online forum, workshops).
+   (command-specific help, online forum, workshops).
    
 
 .. admonition:: Marco Loggia, PhD | MGH, Harvard Med School | Boston 🇺🇸
