@@ -66,7 +66,7 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    datasets. Our goal is to develop quantitative markers of pain and sensorimotor 
    function, which we hope will improve our ability to diagnose and treat 
    conditions afflicting the central nervous system. We have 18 publications that 
-   have used SCT and more than 10 project that are in progress. The SCT community 
+   have used SCT and more than 10 projects that are in progress. The SCT community 
    quickly responds to any questions and issues (typically within a day), and I 
    find the SCT documentation and community forum to be very helpful and detailed. 
    Ultimately, our research would not be possible without SCT, particularly the 
