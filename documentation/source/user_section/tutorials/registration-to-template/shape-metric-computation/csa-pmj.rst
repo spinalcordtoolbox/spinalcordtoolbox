@@ -22,8 +22,8 @@ For this tutorial, we will compute CSA at a distance of 64 mm from the PMJ using
    PMJ-based CSA at 64 mm using a 30 mm extent mask.
 
 
-Pontomedullary junction detection
----------------------------------
+PMJ detection
+-------------
 
 First, we proceed to the detection of the PMJ.
 
