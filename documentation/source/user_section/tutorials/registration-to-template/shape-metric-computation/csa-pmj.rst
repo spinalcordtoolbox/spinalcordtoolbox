@@ -24,7 +24,8 @@ For this tutorial, we will compute CSA at a distance of 64 mm from the PMJ using
 
 Pontomedullary junction detection
 ---------------------------------
-First, we proceed to the detection of the PMJ:
+
+First, we proceed to the detection of the PMJ.
 
 .. code:: sh
 
