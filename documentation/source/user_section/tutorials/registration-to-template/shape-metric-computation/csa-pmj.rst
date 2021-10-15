@@ -51,7 +51,8 @@ Second, we compute CSA from a distance from the PMJ.
 
 .. code:: sh
 
-   sct_process_segmentation -i t2_seg.nii.gz -pmj t2_pmj.nii.gz -pmj-distance 64 -pmj-extent 30 -o csa_pmj.csv -qc ~/qc_singleSubj -qc-image t2.nii.gz
+   sct_process_segmentation -i t2_seg.nii.gz -pmj t2_pmj.nii.gz -pmj-distance 64 -pmj-extent 30 \
+                            -o csa_pmj.csv -qc ~/qc_singleSubj -qc-image t2.nii.gz
 
 :Input arguments:
    - ``-i`` : The input segmentation file.
