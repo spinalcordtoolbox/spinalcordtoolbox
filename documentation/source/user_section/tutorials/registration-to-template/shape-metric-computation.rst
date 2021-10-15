@@ -16,8 +16,8 @@ This section demonstrates how to compute shape metrics of the spinal cord using 
    shape-metric-computation/before-starting
    shape-metric-computation/csa-averaged
    shape-metric-computation/csa-perlevel
-   shape-metric-computation/csa-perslice
    shape-metric-computation/csa-pmj
+   shape-metric-computation/csa-perslice
    shape-metric-computation/other-shape-metrics
    shape-metric-computation/verifying-correctness
 
