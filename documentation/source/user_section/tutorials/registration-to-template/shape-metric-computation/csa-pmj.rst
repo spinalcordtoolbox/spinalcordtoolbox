@@ -59,7 +59,7 @@ Second, we compute CSA from a distance from the PMJ.
    - ``-pmj-extent``: Extent (mm) for the mask to compute and average CSA. 
    - ``-o`` : The output CSV file.
    - ``-qc``: Directory for Quality Control reporting.
-   - ``-qc-image``: Input image to display in QC report. It would be the source anatomical image used to generate the spinal cord segmentation (``t2.nii.gz``).
+   - ``-qc-image``: Image to display as the background in the QC report. Here, we supply the source anatomical image (``t2.nii.gz``) that was used to generate the spinal cord segmentation (``t2_seg.nii.gz``).
 
 :Output files/folders:
    - ``csa_pmj.csv`` : A file containing the CSA values and other shape metrics. This file is partially replicated in the table below.
