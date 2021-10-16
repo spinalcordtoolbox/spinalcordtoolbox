@@ -16,7 +16,7 @@ Computing the PMJ-based CSA involves a 4-step process `(Bedard & Cohen-Adad, 202
 
 For this tutorial, we will compute CSA at a distance of 64 mm from the PMJ using a mask with a 30 mm extent. But, other values can be specified if you would like to alter the desired region to compute CSA.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/add-figures-pmj-tutorial/shape-metric-computation/csa-pmj-method.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/shape-metric-computation/csa-pmj-method.png
    :align: center
 
    PMJ-based CSA at 64 mm using a 30 mm extent mask.
@@ -38,7 +38,7 @@ First, we proceed to the detection of the PMJ.
 :Output files/folders:
    - ``t2_pmj.nii.gz``: An image containing the single-voxel PMJ label.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/add-figures-pmj-tutorial/shape-metric-computation/io-pmj-detection.PNG
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/shape-metric-computation/io-pmj-detection.PNG
    :align: center
 
    PMJ detection for T2.
