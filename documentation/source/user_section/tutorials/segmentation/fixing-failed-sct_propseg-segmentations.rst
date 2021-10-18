@@ -60,7 +60,7 @@ To minimize leaking problems, you could try to smooth the image along the spinal
     sct_download_data -d sct_example_data
     cd sct_example_data/t1
     sct_propseg -i t1.nii.gz -c t1
-    sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz -smooth 5
+    sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz -smooth 0,0,5
     sct_propseg -i t1_smooth.nii.gz -c t1 -init-centerline t1_seg.nii.gz
 
 WARNING: you should ONLY use the smoothed spinal cord for segmentation. The rest of the processing (vertebral labeling, registration to template, etc.) should be done on the un-smoothed image.
