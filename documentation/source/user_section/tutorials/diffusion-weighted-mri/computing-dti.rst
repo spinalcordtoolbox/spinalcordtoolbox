@@ -22,8 +22,6 @@ Here, we compute the diffusion tensor. SCT relies on the excellent ``dipy`` libr
    - ``dti_MD.nii.gz`` : Mean diffusivity (MD) diffusion tensor image.
    - ``dti_RD.nii.gz`` : Radial diffusivity (RD) diffusion tensor image.
 
-.. TODO: Why doesn't sct_dmri_compute_dti output "Geodesic anisotropy (GA)"?
-
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/processing-dmri-data/io-sct_dmri_compute_dti.png
    :align: center
 

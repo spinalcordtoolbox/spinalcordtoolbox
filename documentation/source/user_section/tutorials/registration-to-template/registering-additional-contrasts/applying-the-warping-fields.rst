@@ -1,8 +1,6 @@
 Transforming the template using warping fields
 ##############################################
 
-.. TODO: Remove this step and instead move it to a part of the tutorials where the warped template would actually be used.
-
 Once we have the warping field, we can use it to warp the entire template to the MT space (including vertebral levels, WM/GM atlas, and more).
 
 .. code:: sh
