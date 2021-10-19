@@ -25,5 +25,3 @@ Once the command has finished, at the bottom of your terminal there will be inst
    :align: center
 
    Input/output images for ``sct_warp_template``
-
-Now that the atlas has been warped to the MT space, it can be used to extract MTR for specific white matter regions.

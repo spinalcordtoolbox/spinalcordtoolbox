@@ -1,7 +1,7 @@
 Preprocessing steps to highlight the spinal cord
 ################################################
 
-Similarly to the dMRI tutorial, prior to motion correction, it is useful to highlight the spinal cord region using a mask, as it helps to improve accuracy and speed up processing.
+Similarly to the preprocessing found in the :ref:`dMRI tutorial <preprocessing-dmri>`, it is useful to highlight the spinal cord region using a mask prior to motion correction, as it helps to improve accuracy and speed up processing.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/processing-fmri-data/preprocessing.png
    :align: center
@@ -22,7 +22,7 @@ First we compute the mean of the 4D fMRI data to obtain a coarse 3D approximatio
    - ``-o``: The filename of the output image.
 
 :Output files/folders:
-   - ``fmri_mean.nii.gz`` : An 3D image containing the mean of the individual volumes in the 4D dMRI image.
+   - ``fmri_mean.nii.gz`` : A 3D image containing the mean of the individual volumes in the 4D dMRI image.
 
 
 Generating a spinal cord segmentation

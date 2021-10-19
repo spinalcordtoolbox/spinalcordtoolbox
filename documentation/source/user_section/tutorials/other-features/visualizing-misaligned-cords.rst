@@ -7,7 +7,7 @@
 Visualizing misaligned cords with 2D sagittal flattening
 ########################################################
 
-Because some subjects (esp. those with scoliosis) might not be perfectly aligned in the medial plane, it can sometimes be difficult to view the spinal cord in a single 2D slice. The function ``sct_flatten_sagittal`` applies slice-wise deformation to align the cord in the medial plane.
+Because some subjects (especially those with scoliosis) might not be perfectly aligned in the medial plane, it can sometimes be difficult to view the spinal cord when inspecting a subject's images using individual 2D slices. To address this problem, the function ``sct_flatten_sagittal`` applies slice-wise deformation to align the cord in the medial plane.
 
 Downloading the files for this tutorial
 ---------------------------------------
@@ -40,4 +40,4 @@ Next, open up your terminal and run the following command:
 
 .. note::
 
-   This process should be used for visualization purposes only, as it does not preserve the internal structure of the cord. If you would like to properly align the cord along the RL and AP direction, we recommend you use ``sct_straighten_spinalcord`` instead.
+   This process should be used for visualization purposes only, as it does not preserve the internal structure of the cord. If you would like to properly align the cord along the RL and AP direction for analysis, we recommend you use ``sct_straighten_spinalcord`` instead, as that transformation is reversible.

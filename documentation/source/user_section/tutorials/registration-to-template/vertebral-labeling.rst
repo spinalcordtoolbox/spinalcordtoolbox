@@ -8,7 +8,6 @@ Vertebral labeling for anatomical images
    :height: 300px
 
 .. toctree::
-   :caption: Table of Contents
    :maxdepth: 1
 
    vertebral-labeling/before-starting

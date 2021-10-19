@@ -1,3 +1,5 @@
+.. _other-features:
+
 Other features
 ##############
 

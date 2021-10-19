@@ -6,7 +6,7 @@ Now that we have a mask highlighting the spinal cord, we can apply motion correc
 The motion correction algorithm
 -------------------------------
 
-SCT features a complex motion correction algorithm, which is inspired by `[Xu et al., Neuroimage 2013] <https://pubmed.ncbi.nlm.nih.gov/23178538/>`_. The key aspects of this algorithm are as follows:
+SCT features a complex motion correction algorithm inspired by `[Xu et al., Neuroimage 2013] <https://pubmed.ncbi.nlm.nih.gov/23178538/>`_. The key aspects of this algorithm are as follows:
 
 * **SliceReg:** Slice-wise registration regularized along the Z direction (based on the function antsSliceRegularizedRegistration from ANTs, and described in `[De Leener et al., Neuroimage 2017] <https://pubmed.ncbi.nlm.nih.gov/27720818/>`_).
 * **Grouping:** The algorithm performs group-wise registration between groups of successive dMRI volumes. If your data has a very low signal-to-noise ratio (SNR), you can use the flag ``-g`` to increase the number of successive images that are averaged into a group in order to have sufficient SNR to estimate a reliable transformation.
@@ -21,7 +21,8 @@ To apply the algorithm, we use the ``sct_dmri_moco`` command:
 
 .. code::
 
-   sct_dmri_moco -i dmri.nii.gz -m mask_dmri_mean.nii.gz -bvec bvecs.txt -qc ~/qc_singleSubj -qc-seg dmri_mean_seg.nii.gz
+   sct_dmri_moco -i dmri.nii.gz -m mask_dmri_mean.nii.gz -bvec bvecs.txt \
+                 -qc ~/qc_singleSubj -qc-seg dmri_mean_seg.nii.gz
 
 :Input arguments:
    - ``-i`` : The input dMRI image.

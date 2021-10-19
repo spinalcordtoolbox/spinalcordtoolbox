@@ -6,7 +6,7 @@ Before the PAM50 template can be used to extract values from specific regions wi
 Segmenting the spinal cord
 --------------------------
 
-As a prerequisite step, we segment the spinal cord from the 3D mean image generated during motion correction. Providing input segmentations to the registration command is optional, but doing so will help to improve the accuracy of the registration.
+As a prerequisite step, we run ``sct_deepseg_sc`` once more, this time to segment the motion corrected 3D mean image. Note that providing an input segmentation to the registration command is optional, but doing so will help to improve the accuracy of the registration.
 
 .. code::
 
@@ -19,6 +19,7 @@ As a prerequisite step, we segment the spinal cord from the 3D mean image genera
 
 :Output files/folders:
    - ``dmri_moco_dwi_mean_seg.nii.gz`` : An mask image containing the segmented spinal cord.
+
 
 Registering the template to the DTI space
 -----------------------------------------
@@ -59,3 +60,23 @@ Since we are starting the dMRI registration with the vertebral-matching transfor
    - ``dmri_moco_dwi_mean_reg.nii.gz`` : The mean dMRI image, registered to the space of the PAM50 template.
    - ``warp_template2dmri.nii.gz`` : The warping field to transform the PAM50 template to the dMRI space.
    - ``warp_dmri2template.nii.gz`` : The warping field to transform the dMRI data to the PAM50 template space.
+
+
+Preparing the PAM50 template for metric extraction
+--------------------------------------------------
+
+Finally, we use the resulting warping field to transform the full template to the space of the dMRI data. This will allow us to use the PAM50 template and atlas to extract metrics from specific regions of the image.
+
+.. code::
+
+   sct_warp_template -d dmri_moco_dwi_mean.nii.gz -w warp_template2dmri.nii.gz -qc ~/qc_singleSubj
+
+:Input arguments:
+   - ``-d`` : Destination image the template will be warped to.
+   - ``-w`` : Warping field (template space to anatomical space).
+   - ``-a`` : Because ``-a 1`` is specified, the white and gray matter atlas will also be warped.
+   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+
+:Output files/folders:
+   - ``label/template/`` : This directory contains the entirety of the PAM50 template, transformed into the DT space.
+   - ``label/atlas/`` : This direct contains 36 NIFTI volumes for WM/GM tracts, transformed into the DT space.

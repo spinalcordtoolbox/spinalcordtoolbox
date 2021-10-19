@@ -1,7 +1,9 @@
+.. _atlas-based-analysis:
+
 Atlas-based analysis
 ####################
 
-This tutorial covers how to use the PAM50 GM/WM atlas to compute metrics across individual gray matter regions and and white matter tracts.
+This tutorial covers how to use the PAM50 gray and white matter atlas to compute metrics across individual gray matter regions and and white matter tracts.
 
 .. toctree::
    :maxdepth: 1

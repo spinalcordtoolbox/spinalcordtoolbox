@@ -6,7 +6,6 @@ Computing MTR using co-registration between MT0 and MT1 data
 This tutorial will demonstrate how to generate a `magnetization transfer ratio (MTR) <https://radiopaedia.org/articles/magnetisation-transfer-1>`_ image for magnetization transfer data.
 
 .. toctree::
-   :caption: Table of Contents
    :maxdepth: 1
 
    mtr-computation/before-starting

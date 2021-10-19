@@ -8,4 +8,4 @@ In SCT, a digitalized version of the Gray’s Anatomy spinal cord white matter a
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/pam50/white_matter_atlas_detailed.png
    :align: center
 
-The atlas is composed of 30 WM tracts, 6 GM regions and the surrounding CSF. The reason for including the CSF is to be able to account for partial volume effect during metric estimation, as will be explained further in the following pages.
+The atlas is composed of 30 WM tracts, 6 GM regions and the surrounding CSF. The reason for including the CSF is to be able to account for the :ref:`partial volume effect <partial-volume-effect>` during metric estimation.

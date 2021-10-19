@@ -1,7 +1,9 @@
+.. _preprocessing-dmri:
+
 Preprocessing steps to highlight the spinal cord
 ################################################
 
-Prior to motion correction, it's often helpful to crop dMRI data around the region of interest (e.g. the spinal cord). Doing so will speed subsequent processing steps while also improving their accuracy.
+Prior to motion correction, it's often helpful to crop dMRI data around the region of interest (e.g. the spinal cord). Doing so will speed up subsequent processing steps while also improving their accuracy.
 
 To crop the data, we use the multi-step process below:
 
@@ -11,7 +13,7 @@ To crop the data, we use the multi-step process below:
 Computing a mean image
 ----------------------
 
-First we compute the mean of the 4D dMRI data to obtain a coarse 3D approximation. This step is necessary because SCT's spinal cord segmentation tools are designed for individual 3D volumes, rather than 4D images.
+First we compute the mean of the 4D dMRI data across the time axis in order to obtain a coarse 3D approximation of the image. This step is necessary because SCT's spinal cord segmentation tools are designed for individual 3D volumes, rather than 4D images.
 
 .. code::
 
@@ -23,7 +25,7 @@ First we compute the mean of the 4D dMRI data to obtain a coarse 3D approximatio
    - ``-o``: The filename of the output image.
 
 :Output files/folders:
-   - ``dmri_mean.nii.gz`` : An 3D image containing the mean of the individual volumes in the 4D dMRI image.
+   - ``dmri_mean.nii.gz`` : A 3D image containing the mean of the individual volumes in the 4D dMRI image.
 
 Generating a spinal cord segmentation
 -------------------------------------

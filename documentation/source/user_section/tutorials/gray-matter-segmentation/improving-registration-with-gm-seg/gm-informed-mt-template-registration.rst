@@ -3,7 +3,7 @@
 Reusing the GM-informed warping field to improve MTI registration
 #################################################################
 
-Now that we have estimated a transformation between the template and the T2* data, we can use this warping field to improve a registration command from :ref:`the previous MT registration tutorial step <mt-registraton-with-anat>`.
+Now that we have estimated a transformation between the template and the T2* data (based on the shape of the gray matter), we can use this warping field to improve a registration command from :ref:`the previous MT registration tutorial step <mt-registraton-with-anat>`.
 
 First, we return to the ``mt`` directory.
 
@@ -26,8 +26,8 @@ Next, we run ``sct_register_multimodal`` to compute the transformation between t
                            -qc ~/qc_singleSubj
 
 :Input arguments:
-   - The input and arguments are identical to the arguments from :ref:`the previous MT registration tutorial step <mt-registraton-with-anat>`, apart from one argument.
-   - ``-initwarp`` : Here, we specify the T2* warping field generated in the previous step. We do this because information about the GM shape is enclosed in the transformation, producing registration results that are supposedly more accurate.
+   - Since we are updating the :ref:`previous tutorial <registering-additional-contrasts>`, the input arguments are identical to ones from the :ref:`registration step <mt-registraton-with-anat>` from that tutorial, except for one argument:
+   - ``-initwarp`` : Here, we specify the T2* warping field generated in the previous step. We do this because information about the GM shape is enclosed in the transformation, which should producing registration results that are more accurate.
 
 :Output files/folders:
    - ``PAM50_t2_reg.nii.gz`` : The PAM50 template image, registered to the space of the MT1 image.

@@ -10,7 +10,6 @@ Computing shape metrics for PAM50-registered data
 This section demonstrates how to compute shape metrics of the spinal cord using the ``sct_process_segmentation`` command. Of primary interest is the cross-sectional area (CSA) of the spinal cord, but this command will also calculate other shape metrics, such as diameter, orientation, and symmetry of the cord.
 
 .. toctree::
-   :caption: Table of Contents
    :maxdepth: 1
 
    shape-metric-computation/before-starting

@@ -1,5 +1,9 @@
+.. _diffusion-weighted-mri:
+
 Diffusion-weighted MRI
 ######################
+
+This tutorial demonstrates a typical SCT processing pipeline for diffusion-weighted MRI, including motion correction, template registration, and DTI computation.
 
 .. toctree::
    :maxdepth: 1

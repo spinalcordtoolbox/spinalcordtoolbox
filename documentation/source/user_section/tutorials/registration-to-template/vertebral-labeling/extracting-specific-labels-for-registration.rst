@@ -17,7 +17,7 @@ Following the recommendations from the :ref:`previous page<how-many-labels>`, we
 :Output files/folders:
    - ``t2_labels_vert.nii.gz`` : Image containing 2 single-voxel vertebral labels, centered within the C3 and T1 vertebral bodies.
 
-Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`fsleyes-instructions`. However, it is worth noting that because the output labels are single-voxel, you may need to use zoom to see them clearly in FSLeyes.
+Once the command has finished, if you have ``fsleyes`` installed, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`fsleyes-instructions`. However, because the output labels are single-voxel, you may need to use zoom to see them clearly in FSLeyes.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/io-sct_label_utils.png
    :align: center

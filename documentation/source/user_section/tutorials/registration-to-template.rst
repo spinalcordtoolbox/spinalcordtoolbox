@@ -1,7 +1,12 @@
+.. _registration-to-template:
+
 Registration to template
 ########################
 
 This tutorial is an in-depth, multistep guide to registering anatomical images to the PAM50 template, then using the registered template to compute morphometric measures for your data.
+
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/template-registration/registration-pipeline.png
+   :align: center
 
 Each individual tutorial below is linked together as part of an overarching analysis pipeline, so we recommend that you follow each tutorial in sequence.
 

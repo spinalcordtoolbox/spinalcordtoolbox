@@ -25,6 +25,6 @@ Here, we can use this tool (alongside the gray and white matter masks) to extrac
    :file: t2s_value.csv
    :header-rows: 1
 
-In addition, an example application of this kind of signal intensity quantification can be found in `[Martin et al. PLoS One 2018] <https://doi.org/10.1371/journal.pone.0204082>`_.
-
 .. note:: The ``-f`` option can be used with any binary mask, and not just the white and gray matter segmentations.
+
+For further reading, this technique for signal intensity quantification was applied to the monitoring for myelopathic progression with multiparametric quantitative MRI in `[Martin et al. PLoS One 2018] <https://doi.org/10.1371/journal.pone.0204082>`_.

@@ -3,16 +3,19 @@
 Registration Option 1: Reusing previous warping fields
 ######################################################
 
-Say that you have already registered anatomical data that was acquired in the same session as your MT data. In that case, there is no need to run ``sct_register_to_template`` again, because you can reuse the warping field between the template and the anatomical space. Thus, the only part that is missing is transformation from the anatomical space to the MT space, as shown in the figure below.
+Say that you have already registered some T2 anatomical data, and you have MT data from the same session that you would also like to register to the template. In that case, there is no need to run ``sct_register_to_template`` again, because you can reuse the warping field between the template and the T2 anatomical space. This has several benefits:
+
+* It provides consistency between contrasts, as the "affine" part of the transformation (in other words, the matching between the vertebral levels of the data and template) will be the same for both contrasts.
+* It saves processing time, because you can skip the vertebral labeling step and part of the registration process.
+
+For the purpose of this tutorial, we will register the MT data alongside the T2 results from the previous :ref:`template-registration` tutorial. Specifically, we will reuse the ``/t2/warp_template2anat.nii.gz`` warping field to initialize the registration for the MT data.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/registering-additional-contrasts/mt-registration-pipeline.png
    :align: center
 
    ``Template->T2`` (blue) + ``T2->MT1`` (green) = ``Template->MT1`` (the desired result)
 
-For the purpose of this tutorial, we will treat the example MT data and the example T2 data as though they were acquired in the same session. So, we will be able to reuse the ``/t2/warp_template2anat.nii.gz`` warping field generated in :ref:`template-registration`.
-
-To accomplish this, we now use the ``sct_register_multimodal`` command, which is designed to co-register two images together.
+Since we are starting the MT registration with an initial transformation already applied, all that remains is fine-tuning for the MT data. So, here we use a different command: ``sct_register_multimodal``. This command is designed to register any two images together, so it can be seen as the generalized counterpart to ``sct_register_to_template``.
 
 .. code:: sh
 

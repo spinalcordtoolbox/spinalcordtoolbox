@@ -1,7 +1,7 @@
 Using the atlas to extract MTR in white matter
 ##############################################
 
-In this example, we will extract and aggregate values from the white matter region of an MTR image. The ``mtr.nii.gz`` image used here comes from the previous tutorial :ref:`mtr-computation`.
+Now that the atlas has been warped to the MT space, it can be used to extract MTR for specific white matter regions. First, we will extract MTR for the white matter as a whole.
 
 .. code::
 

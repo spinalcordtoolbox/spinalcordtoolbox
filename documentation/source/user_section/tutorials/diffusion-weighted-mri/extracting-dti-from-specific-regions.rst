@@ -1,29 +1,7 @@
 Extracting DTI from specific spinal cord regions
 ################################################
 
-Preparing the PAM50 template for metric extraction
---------------------------------------------------
-
-Now that we've registered the PAM50 template with the motion-corrected dMRI data, we can use the resulting warping field to transform the full template to the space of the dMRI data. This will allow us to use the PAM50 template and atlas to extract metrics from specific regions of the image.
-
-.. code::
-
-   sct_warp_template -d dmri_moco_dwi_mean.nii.gz -w warp_template2dmri.nii.gz -qc ~/qc_singleSubj
-
-:Input arguments:
-   - ``-d`` : Destination image the template will be warped to.
-   - ``-w`` : Warping field (template space to anatomical space).
-   - ``-a`` : Because ``-a 1`` is specified, the white and gray matter atlas will also be warped.
-   - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
-
-:Output files/folders:
-   - ``label/template/`` : This directory contains the entirety of the PAM50 template, transformed into the DT space.
-   - ``label/atlas/`` : This direct contains 36 NIFTI volumes for WM/GM tracts, transformed into the DT space.
-
-Extracting DTI values from white matter across individual verebral levels
--------------------------------------------------------------------------
-
-In this example, we will extract and aggregate values from the white matter region of the fractional anisotropy (FA) diffusion tensor image.
+Here, we will use the registered PAM50 template to extract and aggregate values from the white matter region of the fractional anisotropy (FA) diffusion tensor image.
 
 .. code:: sh
 

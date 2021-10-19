@@ -13,7 +13,7 @@ Before starting this tutorial
 
    * :ref:`mtr-computation`
 
-   Also, if you would like to learn how to register MT data with the PAM50 template (which is how the ``warp_template2mt.nii.gz`` file was generated), please visit either of the following tutorials:
+   Additionally, if you would like to learn how to register MT data with the PAM50 template (which is how the ``warp_template2mt.nii.gz`` file was generated), please visit either of the following tutorials:
 
    * :ref:`registering-additional-contrasts`
    * :ref:`gm-informed-mt-registration`

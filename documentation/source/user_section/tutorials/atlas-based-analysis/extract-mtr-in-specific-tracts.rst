@@ -1,12 +1,10 @@
 Using the atlas to extract MTR from specific white matter tracts
 ################################################################
 
-In the following examples, we will compute MTR within specific sub-regions of the white matter.
-
 Corticospinal tracts (averaged across 16 slices)
 ------------------------------------------------
 
-First, we extract the MTR from the right and left corticospinal tracts.
+Next, we will extract the MTR from the right and left corticospinal tracts.
 
 .. code::
 
@@ -29,7 +27,7 @@ We can see from the results that the MTR for both the left and right tracts is c
 Dorsal columns (averages across C2-C4 vertebral levels)
 -------------------------------------------------------
 
-Next, we extract the MTR from the dorsal columns.
+Finally, we extract the MTR from the dorsal columns.
 
 .. code::
 

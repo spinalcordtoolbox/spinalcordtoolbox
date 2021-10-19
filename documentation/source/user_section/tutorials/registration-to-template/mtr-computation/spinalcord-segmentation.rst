@@ -8,8 +8,8 @@ First, we will run the ``sct_deepseg_sc`` command to segment the spinal cord fro
    sct_deepseg_sc -i mt1.nii.gz -c t2 -qc ~/qc_singleSubj
 
 :Input arguments:
-   - ``-i`` : Input image
-   - ``-c`` : Contrast of the input image. T2 is chosen because of the visual similarity between MT1 and T2.
+   - ``-i`` : Input image.
+   - ``-c`` : Contrast of the input image. T2 is chosen because of the visual similarity between MT and T2 contrasts.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:

@@ -3,12 +3,9 @@
 Computing metrics using GM and WM segmentations
 ###############################################
 
-This tutorial demonstrates how to use gray and white matter segmentations to compute shape metrics, as well as to extract signal intensity from anatomical data.
-
-This tutorial is a follow-on for the :ref:`gm-wm-segmentation` tutorial.
+This tutorial is a follow-on for the previous :ref:`segmentation tutorial <gm-wm-segmentation>`, and demonstrates how to use the gray and white matter segmentations to compute shape metrics, as well as to extract signal intensity from anatomical data.
 
 .. toctree::
-   :caption: Table of Contents
    :maxdepth: 1
 
    gm-wm-metric-computation/before-starting

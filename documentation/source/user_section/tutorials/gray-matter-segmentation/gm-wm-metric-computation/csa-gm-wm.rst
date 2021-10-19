@@ -1,7 +1,7 @@
 Using binary masks to compute CSA for gray and white matter
 ###########################################################
 
-The computed GM and WM segmentations can be used to compute the cross sectional area of GM and WM. This is achieved using ``sct_process_segmentation``.
+First, we will use the gray and white matter segmentations to compute the cross sectional area of GM and WM. This is achieved using ``sct_process_segmentation``.
 
 .. code::
 
@@ -9,7 +9,7 @@ The computed GM and WM segmentations can be used to compute the cross sectional 
 
 .. code::
 
-   sct_process_segmentation -i t2s_gmseg.nii.gz -o csa_gm.csv- perslice 1 -angle-corr 0
+   sct_process_segmentation -i t2s_gmseg.nii.gz -o csa_gm.csv -perslice 1 -angle-corr 0
 
 :Input arguments:
    - ``-i`` : The input segmentation file.
