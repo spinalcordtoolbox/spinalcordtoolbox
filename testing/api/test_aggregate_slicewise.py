@@ -2,9 +2,6 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.aggregate_slicewise
 
-
-
-
 import sys
 import os
 import pytest
@@ -12,6 +9,7 @@ import csv
 
 import numpy as np
 import nibabel as nib
+import pandas as pd
 
 from spinalcordtoolbox import __sct_dir__, __version__
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
@@ -78,6 +76,22 @@ def dummy_vert_level():
     nii = nib.nifti1.Nifti1Image(data, affine)
     img = Image(nii.get_data(), hdr=nii.header, orientation='RPI', dim=nii.header.get_data_shape())
     return img
+
+
+@pytest.fixture(scope="session")
+def dummmy_data_predictor():
+    """Create a panda dataframe of dummy coefficient and mean."""
+    data = [[1, 0.5], [1e-6, 1156171]]
+    df = pd.DataFrame(data, columns=['coeff', 'mean'], index=['sex', 'brain-volume'])
+    return df
+
+
+@pytest.fixture(scope="session")
+def dummmy_data_subject():
+    """Create a panda dataframe of dummy data of a subject."""
+    data = [[0, 960606.0]]
+    df = pd.DataFrame(data, columns=['sex', 'brain-volume'])
+    return df
 
 
 # noinspection 801,PyShadowingNames
@@ -353,3 +367,9 @@ def test_dimension_mismatch_between_metric_and_vertfile(dummy_metrics, dummy_ver
         else:
             # Verify that no error is thrown for all other metrics
             aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], vert_level=dummy_vert_level)
+
+
+def test_normalize_csa(dummmy_data_predictor, dummmy_data_subject):
+    """"Test normalizing CSA values (MEAN(area))"""
+    csa_norm = aggregate_slicewise.normalize_csa(64, dummmy_data_predictor, dummmy_data_subject)
+    assert csa_norm == 64.695565

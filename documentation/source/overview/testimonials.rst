@@ -59,6 +59,21 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    imaging research.
 
 
+.. admonition:: Kenneth Weber, PhD | Stanford University | Palo Alto 🇺🇸
+   :class: testimonial
+
+   Our team uses SCT for processing of structural and functional spinal cord MRI 
+   datasets. Our goal is to develop quantitative markers of pain and sensorimotor 
+   function, which we hope will improve our ability to diagnose and treat 
+   conditions afflicting the central nervous system. We have 18 publications that 
+   have used SCT and more than 10 projects that are in progress. The SCT community 
+   quickly responds to any questions and issues (typically within a day), and I 
+   find the SCT documentation and community forum to be very helpful and detailed. 
+   Ultimately, our research would not be possible without SCT, particularly the 
+   normalization tools. SCT will be seen as turning point in quantitative spinal 
+   cord MRI. I have already seen rapid growth in the field since the SCT release.
+
+
 .. admonition:: Joo-won Kim, PhD | Baylor College of Medicine | Houston 🇺🇸
    :class: testimonial
 
@@ -91,6 +106,21 @@ by clicking `here <https://forms.gle/Cfos8bRJTtRNxeMt8>`_. Thank you 😊
    responsive when contacted via online forums. Not much else to say other than
    "Bravo!".
 
+
+.. admonition:: Falk Eippert, PhD | Max Planck Institute for Human Cognitive and Brain Sciences | Leipzig 🇩🇪
+   :class: testimonial
+
+   SCT is of invaluable help in the processing of spinal fMRI data - with its 
+   arrival the sometimes annoying combination of routines from SPM, FSL and ANTS 
+   that I used beforehand is now a thing of the past. The probabilistic maps that 
+   are included (e.g. tissue type or segmental level) also help a lot with respect 
+   to establishing a standardized and meaningful way of reporting results across 
+   the community. I’m especially grateful for how quickly the SCT team responds to 
+   issues that come up and how they implement user requests regarding new features. 
+   And finally, it’s really impressive how SCT has grown (since its first release 
+   in 2014) in terms of the functionality it offers as well as its documentation 
+   (command-specific help, online forum, workshops).
+   
 
 .. admonition:: Marco Loggia, PhD | MGH, Harvard Med School | Boston 🇺🇸
    :class: testimonial
