@@ -640,6 +640,16 @@ fi
   die "Failed running pip install: $?"
 
 
+## Check if installed TF/Keras requirements throw instruction set errors
+if python/envs/venv_sct/bin/python3 -c "import keras; print(keras.__version__)" 2>&1 |
+   grep -q 'The TensorFlow library was compiled to use'; then
+    # If error is thrown, then install TF compiled for older CPUs
+    echo "Instruction set error thrown by TensorFlow!"
+    echo "Installing a version of TensorFlow compiled for older CPUs..."
+    pip uninstall tensorflow -y
+    pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
+fi
+
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."
 mkdir -p "$SCT_DIR/$BIN_DIR"
