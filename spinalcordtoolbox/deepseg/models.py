@@ -84,7 +84,7 @@ MODELS = {
         "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University, France",
         "contrasts": ["t2star"],
         "default": False,
-     },
+    },
 }
 
 
