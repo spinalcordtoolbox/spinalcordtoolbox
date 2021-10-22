@@ -12,6 +12,7 @@ Since we are starting the fMRI registration with the vertebral-matching transfor
    sct_register_multimodal -i "${SCT_DIR}/data/PAM50/template/PAM50_t2s.nii.gz" \
                            -d fmri_moco_mean.nii.gz \
                            -dseg t2_seg_reg.nii.gz \
+                           -m mask_fmri.nii.gz \
                            -param step=1,type=im,algo=syn,metric=CC,iter=5,slicewise=0 \
                            -initwarp ../t2s/warp_template2t2s.nii.gz \
                            -initwarpinv ../t2s/warp_t2s2template.nii.gz \
@@ -23,6 +24,7 @@ Since we are starting the fMRI registration with the vertebral-matching transfor
    - ``-i`` : Source image. Here, we select the T2* version of the PAM50 template, because the T2* contrast is the closest visual match to our fMRI data.
    - ``-d`` : Destination image. Here, we supply the motion-corrected mean image generated in the previous steps.
    - ``-dseg`` : Because we supply ``type=im`` to ``-param``, this segmentation is not actually used during registration. The reason we supply ``-dseg`` anyway is because it will be used in the QC report to roughly crop around the cord, so that it can be better visualized.
+   - ``-m`` : Here we supply the previous cord mask, which helps us estimate the transformation within the cord only (ignoring tissue outside the cord, e.g. muscles, bone, fat, etc.)
    - ``-param`` : Typically, registration would be performed using a two-step process involving the spinal cord segmentation. However, since fMRI data cannot be segmented reliably, we need to tailor the settings for image-only registration.
       - ``type=im`` : Here, we rely on just the anatomical images (``-i`` and ``-d``) rather than segmentation images (``-iseg`` and ``-dseg``).
       - ``algo=syn`` : This algorithm helps to compensate for the the lack of segmentation during registration.
