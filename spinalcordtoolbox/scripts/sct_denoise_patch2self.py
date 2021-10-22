@@ -125,31 +125,27 @@ def main(argv=None):
     den = patch2self(data, bvals, patch_radius=patch_radius, model=model,
                      verbose=True)
 
-    axial_middle = int(data.shape[2] / 2)
-    middle_vol = int(data.shape[3] / 2)
-
-    before = data[:, :, axial_middle, middle_vol].T
-    after = den[:, :, axial_middle, middle_vol].T
-
-    diff_4d = np.absolute(den.astype('f8') - data.astype('f8'))
-    difference = np.absolute(after.astype('f8') - before.astype('f8'))
-
     if param.verbose == 2:
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots(1, 3)
+        axial_middle = int(data.shape[2] / 2)
+        middle_vol = int(data.shape[3] / 2)
+        before = data[:, :, axial_middle, middle_vol].T
         ax[0].imshow(before, cmap='gray', origin='lower')
         ax[0].set_title('before')
+        after = den[:, :, axial_middle, middle_vol].T
         ax[1].imshow(after, cmap='gray', origin='lower')
         ax[1].set_title('after')
+        difference = np.absolute(after.astype('f8') - before.astype('f8'))
         ax[2].imshow(difference, cmap='gray', origin='lower')
         ax[2].set_title('difference')
         for i in range(3):
             ax[i].set_axis_off()
-
         plt.show()
 
     # Save files
     img_denoise = nib.Nifti1Image(den, None, hdr_0)
+    diff_4d = np.absolute(den.astype('f8') - data.astype('f8'))
     img_diff = nib.Nifti1Image(diff_4d, None, hdr_0)
     if output_file_name is not None:
         output_file_name = output_file_name
