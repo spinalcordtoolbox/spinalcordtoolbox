@@ -293,6 +293,7 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
 
     return denoised
 
+
 def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
     """
     :param data_in: 4d array to denoise
