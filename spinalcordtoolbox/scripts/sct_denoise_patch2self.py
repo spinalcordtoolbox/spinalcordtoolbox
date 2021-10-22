@@ -5,7 +5,7 @@ import numpy as np
 import nibabel as nib
 from dipy.denoise.patch2self import patch2self
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel, list_type
 
 
 # DEFAULT PARAMETERS
@@ -61,12 +61,16 @@ def get_parser():
         choices=("ols", "ridge", 'lasso'),
         default="ols")
     optional.add_argument(
-        "-d",
-        type=int,
-        help="Patch Radius used to generate p-neighbourhoods withing Patch2Self",
+        "-radius",
+        help="R|Patch Radius used to generate p-neighbourhoods within Patch2Self. Notes:\n"
+             "- A radius of '0' will use 1x1x1 p-neighbourhoods, a radius of '1' will use "
+             "3x3x3 p-neighbourhoods, and so on.\n"
+             "- For ansiotropic patch sizes, provide a comma-delimited list of 3 integers. "
+             "(e.g. '-radius 0,1,0'). For isotropic patch sizes, provide a single int value "
+             "(e.g. '-radius 0').",
         metavar=Metavar.int,
         required=False,
-        default="[0, 0, 0]")
+        default="0")
     optional.add_argument(
         "-o",
         help="Name of the output NIFTI image.",
@@ -98,7 +102,10 @@ def main(argv=None):
 
     model = arguments.p
     remove_temp_files = arguments.r
-    patch_radius = arguments.d
+    if "," in arguments.radius:
+        patch_radius = list_type(",", int)(arguments.radius)
+    else:
+        patch_radius = int(arguments.radius)
 
     file_to_denoise = arguments.i
     bval_file = arguments.b
