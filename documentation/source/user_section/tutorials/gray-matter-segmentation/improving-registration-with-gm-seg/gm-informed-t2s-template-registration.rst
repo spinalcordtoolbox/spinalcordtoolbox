@@ -27,8 +27,7 @@ Since we are starting the T2* registration with an initial transformation alread
    - ``-dseg`` : Segmentation for the destination image. Here, we use the white matter segmentation for the same reasons as ``-iseg``.
    - ``-initwarp`` : Warping field used to initialize the source image. Here, we supply the ``warp_template2anat.nii.gz`` file from the previous T2 registration. (See: :ref:`template-registration`)
    - ``-initwarpinv``: Warping field used to initialize the destination image. Here, we supply the inverse warping field, ``warp_anat2template.nii.gz`` from the previous T2 registration. (See: :ref:`template-registration`)
-   - ``-param`` :
-      - TODO: Why are we using ``rigid`` specifically? The MT tutorial uses ``centermass`` instead... do we need to explain the discrepancy? (Not explained in SCT course.)
+   - ``-param`` : Here, we will tweak the default registration parameters by specifying a different nonrigid deformation. The important change is ``algo=rigid`` (rather than ``algo=centermass``). The rigid algorithm is chosen because, by default, it is a volumetric transformation (i.e. the algorithm estimates a single rigid transformation for all slices). This makes it less sensitive to flaws in the segmentation compared to slicewise transformations, which is important when working with gray/white matter segmentations (as opposed to spinal cord segmentations).
    - ``-owarp``: The name of the output warping field. This is optional, and is only specified here to make the output filename a little clearer. By default, the filename would be automatically generated from the filenames ``-i`` and ``-d``, which in this case would be the (less clear) ``warp_PAM50_t2s2t2s.nii.gz``.
    - ``-owarpinv`` : The name of the output inverse warping field. This is specified for the same reasons as ``-owarp``.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
