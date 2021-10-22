@@ -38,8 +38,6 @@ def get_parser():
         help="Input NIFTI image to be denoised. Example: image_input.nii.gz",
         metavar=Metavar.file,
     )
-
-    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-b",
         default=None,
