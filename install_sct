@@ -593,7 +593,7 @@ esac
 # Run conda installer
 run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 
-# create py3.7 venv (checking to see impact on test suite)
+# create conda environment
 python/bin/conda create -y -n venv_sct python=3.7
 
 # make sure that there is no conflict with local python install by making venv_sct an isolated environment.
