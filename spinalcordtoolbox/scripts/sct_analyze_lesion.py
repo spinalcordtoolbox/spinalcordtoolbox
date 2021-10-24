@@ -27,12 +27,12 @@ from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='R|Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
-                    '3, etc.) and then outputs morphometric measures for each lesion:\n'
-                    '- volume [mm^3]\n'
-                    '- length [mm]: length along the Superior-Inferior axis\n'
-                    '- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as a circle in the axial plane.\n\n'
-                    'If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means '
+        description='Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
+                    '3, etc.) and then outputs morphometric measures for each lesion:'
+                    '\n- `volume [mm^3]`'
+                    '\n- `length [mm]`: length along the Superior-Inferior axis'
+                    '\n- `max_equivalent_diameter [mm]`: maximum diameter of the lesion, when approximating the lesion as a circle in the axial plane.'
+                    '\n\nIf the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means '
                     'that the registered template does not fully cover the lesion. In that case you might want to '
                     'check the registration results.'
     )
@@ -48,7 +48,7 @@ def get_parser():
         "-s",
         required=True,
         help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
-             "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
+             "cord angle with respect to slice. (e.g. `t2_seg.nii.gz`)",
         metavar=Metavar.file)
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -59,7 +59,7 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-i",
-        help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
+        help='Image from which to extract average values within lesions (e.g. `t2.nii.gz`). If provided, the function '
              'computes the mean and standard deviation values of this image within each lesion.',
         metavar=Metavar.file,
         default=None,
@@ -67,8 +67,10 @@ def get_parser():
     optional.add_argument(
         "-f",
         help="Path to folder containing the atlas/template registered to the anatomical image. If provided, the "
-             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each"
-             "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
+             "function computes: "
+             "\n- (i) the distribution of each lesion depending on each vertebral level"
+             "and on each region of the template (e.g. GM, WM, WM tracts), and"
+             "\n- (ii) the proportion of ROI (e.g. vertebral level, "
              "GM, WM) occupied by lesion.",
         metavar=Metavar.str,
         default=None,
