@@ -119,10 +119,6 @@ sct_analyze_lesion
    :ref: spinalcordtoolbox.scripts.sct_analyze_lesion.parser
    :prog: sct_analyze_lesion
 
-.. argparse::
-   :ref: spinalcordtoolbox.my.module.parser
-   :prog: sample
-
 sct_analyze_texture
 ===================
 
