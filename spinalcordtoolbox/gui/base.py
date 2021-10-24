@@ -16,10 +16,7 @@ from collections import namedtuple
 import logging
 import sys
 
-import matplotlib as mpl
 import numpy as np
-
-mpl.use('Qt5Agg')
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 

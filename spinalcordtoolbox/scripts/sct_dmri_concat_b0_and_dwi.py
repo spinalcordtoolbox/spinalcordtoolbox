@@ -14,7 +14,7 @@ import sys
 import numpy as np
 from dipy.data.fetcher import read_bvals_bvecs
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
 from spinalcordtoolbox.image import Image, concat_data
 
 
@@ -106,7 +106,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # check number of input args
     if not len(arguments.i) == len(arguments.order):

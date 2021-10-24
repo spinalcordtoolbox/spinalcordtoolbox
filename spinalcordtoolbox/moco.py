@@ -24,7 +24,7 @@ import csv
 import numpy as np
 import scipy.interpolate
 
-from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, convert
+from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, convert, apply_mask_if_soft
 from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolation
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
@@ -127,7 +127,7 @@ def moco_wrapper(param):
     Wrapper that performs motion correction.
 
     :param param: ParamMoco class
-    :return: None
+    :return: fname_moco
     """
     file_data = 'data.nii'  # corresponds to the full input data (e.g. dmri or fmri)
     file_data_dirname, file_data_basename, file_data_ext = extract_fname(file_data)
@@ -150,16 +150,6 @@ def moco_wrapper(param):
     printv('  Input file ............ ' + param.fname_data, param.verbose)
     printv('  Group size ............ {}'.format(param.group_size), param.verbose)
 
-    # Get full path
-    # param.fname_data = os.path.abspath(param.fname_data)
-    # param.fname_bvecs = os.path.abspath(param.fname_bvecs)
-    # if param.fname_bvals != '':
-    #     param.fname_bvals = os.path.abspath(param.fname_bvals)
-
-    # Extract path, file and extension
-    # path_data, file_data, ext_data = extract_fname(param.fname_data)
-    # path_mask, file_mask, ext_mask = extract_fname(param.fname_mask)
-
     path_tmp = tmp_create(basename="moco")
 
     # Copying input data to tmp folder
@@ -171,6 +161,16 @@ def moco_wrapper(param):
         im_mask.save(os.path.join(path_tmp, file_mask), mutable=True, verbose=param.verbose)
         # Update field in param (because used later in another function, and param class will be passed)
         param.fname_mask = file_mask
+    if param.fname_bvals != '':
+        _, _, ext_bvals = extract_fname(param.fname_bvals)
+        file_bvals = f"bvals.{ext_bvals}"  # Use hardcoded name to avoid potential duplicate files when copying
+        copyfile(param.fname_bvals, os.path.join(path_tmp, file_bvals))
+        param.fname_bvals = file_bvals
+    if param.fname_bvecs != '':
+        _, _, ext_bvecs = extract_fname(param.fname_bvecs)
+        file_bvecs = f"bvecs.{ext_bvecs}"  # Use hardcoded name to avoid potential duplicate files when copying
+        copyfile(param.fname_bvecs, os.path.join(path_tmp, file_bvecs))
+        param.fname_bvecs = file_bvecs
 
     # Build absolute output path and go to tmp folder
     curdir = os.getcwd()
@@ -470,11 +470,11 @@ def moco_wrapper(param):
 
     # display elapsed time
     elapsed_time = time.time() - start_time
-    printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
+    printv('\nElapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
 
-    display_viewer_syntax(
-        [os.path.join(param.path_out, add_suffix(os.path.basename(param.fname_data), param.suffix)),
-         param.fname_data], mode='ortho,ortho')
+    fname_moco = os.path.join(param.path_out, add_suffix(os.path.basename(param.fname_data), param.suffix))
+
+    return fname_moco
 
 
 def moco(param):
@@ -523,16 +523,8 @@ def moco(param):
     im_target = convert(Image(param.file_target))
     im_target.save("target.nii.gz", mutable=True, verbose=0)
 
-    # Check if user specified a mask
     if not param.fname_mask == '':
-        # Check if this mask is soft (i.e., non-binary, such as a Gaussian mask)
-        im_mask = Image(param.fname_mask)
-        if not np.array_equal(im_mask.data, im_mask.data.astype(bool)):
-            # If it is a soft mask, multiply the target by the soft mask.
-            im = Image(file_target)
-            im_masked = im.copy()
-            im_masked.data = im.data * im_mask.data
-            im_masked.save(verbose=0)  # silence warning about file overwritting
+        file_target, _ = apply_mask_if_soft(file_target, param.fname_mask)
 
     # If scan is sagittal, split src and target along Z (slice)
     if param.is_sagittal:
@@ -606,17 +598,8 @@ def moco(param):
             # deal with masking (except in the 'apply' case, where masking is irrelevant)
             input_mask = None
             if not param.fname_mask == '' and not param.todo == 'apply':
-                # Check if mask is binary
-                if np.array_equal(im_maskz_list[iz].data, im_maskz_list[iz].data.astype(bool)):
-                    # If it is, pass this mask into register() to be used
-                    input_mask = im_maskz_list[iz]
-                else:
-                    # If not, do not pass this mask into register() because ANTs cannot handle non-binary masks.
-                    #  Instead, multiply the input data by the Gaussian mask.
-                    im = Image(file_data_splitZ_splitT[it])
-                    im_masked = im.copy()
-                    im_masked.data = im.data * im_maskz_list[iz].data
-                    im_masked.save(verbose=0)  # silence warning about file overwritting
+                file_data_splitZ_splitT[it], input_mask = apply_mask_if_soft(file_data_splitZ_splitT[it],
+                                                                             im_maskz_list[iz])
 
             # run 3D registration
             failed_transfo[it] = register(param, file_data_splitZ_splitT[it], file_target_splitZ[iz], file_mat[iz][it],

@@ -1,0 +1,67 @@
+name: "Create release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      milestone_title:
+        description: 'Milestone title'
+        required: true
+
+env:
+  MAIN_BRANCH: "master"
+  RELEASE_BRANCH: "release"
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout spinalcordtoolbox (main branch)
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ env.MAIN_BRANCH }}
+        fetch-depth: 0
+
+    - name: Install spinalcordtoolbox
+      run: |
+        ./install_sct -iy
+
+    - name: Set bot user data for commits
+      run: |
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "GitHub Actions Bot"
+
+    - name: Merge main branch into release branch
+      run: |
+        git checkout ${{ env.RELEASE_BRANCH }}
+        git merge --no-ff ${{ env.MAIN_BRANCH }}
+
+    - name: Update requirements-freeze.txt
+      run: |
+        source python/etc/profile.d/conda.sh
+        conda activate venv_sct
+        pip freeze | grep -v "-e git+" | grep -v "torch" > requirements-freeze.txt
+        conda deactivate
+        echo "# Platform-specific torch requirements (See SCT Issue #2745)" >> requirements-freeze.txt
+        grep "torch" requirements.txt >> requirements-freeze.txt
+
+    - name: Update version.txt
+      run: |
+        echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
+
+    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
+    - name: Commit and push
+      run: |
+        git add requirements-freeze.txt
+        git commit -m "Update requirements-freeze.txt for ${{ github.event.inputs.milestone_title }}"
+        git add spinalcordtoolbox/version.txt
+        git commit -m "Update version.txt for ${{ github.event.inputs.milestone_title }}"
+        git push
+
+    - uses: ncipollo/release-action@v1
+      name: Create release
+      with:
+        commit: ${{ env.RELEASE_BRANCH }}
+        tag: ${{ github.event.inputs.milestone_title }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+        bodyFile: ".github/workflows/release-body.md"

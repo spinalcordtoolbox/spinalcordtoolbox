@@ -775,7 +775,7 @@ class Installer:
 
         """
         This section has been temporarily removed due to known issues.
-        See https://github.com/neuropoly/spinalcordtoolbox/issues/687 for details.
+        See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/687 for details.
 
         # Checking if a new version of the toolbox is available. If so, change it.
         # Check the version on GitHub Master branch. If a new release is available,
@@ -783,7 +783,7 @@ class Installer:
 
         # fetch version of the toolbox online
         MsgUser.message("\nCheck online if you have the latest version of SCT...")
-        url_version = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/version.txt"
+        url_version = "https://raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/master/version.txt"
         file_name = "tmp.version_online.txt"
         version_result = download_file(url_version, file_name)
         if version_result.status == InstallationResult.SUCCESS:
@@ -850,7 +850,7 @@ class Installer:
 
         """
         This section has been temporarily removed due to known issues.
-        See https://github.com/neuropoly/spinalcordtoolbox/issues/687 for details.
+        See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/687 for details.
 
         # Checking if patches are available for the latest release. If so, install them. Patches installation is
         # available from release 1.1 (need to be changed to 1.2)
@@ -862,7 +862,7 @@ class Installer:
             if version_sct_online > version_sct:
                 print "\nInstalling patch_"+str(version_sct_online) + "..."
 
-                url_patch = "https://raw.githubusercontent.com/neuropoly/spinalcordtoolbox/master/patches/patch_" + \
+                url_patch = "https://raw.githubusercontent.com/spinalcordtoolbox/spinalcordtoolbox/master/patches/patch_" + \
                             str(version_sct_online) + ".zip"
                 file_name_patch = "patch_"+str(version_sct_online) + ".zip"
                 name_folder_patch = str(version_sct_online)

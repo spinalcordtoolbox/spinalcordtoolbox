@@ -29,8 +29,11 @@ from spinalcordtoolbox.math import dilate, binarize
 from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import *
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
+                                        cache_save, cache_signature, cache_valid)
+from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
+                                           printv, display_viewer_syntax)
+from spinalcordtoolbox.utils.sys import set_loglevel, init_sct
 from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
@@ -293,7 +296,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initializations
     param = Param()
@@ -466,14 +469,23 @@ def main(argv=None):
         # Change orientation of input images to RPI
         printv('\nChange orientation of input images to RPI...', verbose)
 
-        ftmp_data = Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
+        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
+        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
+        img_tmp_data.save(path=ftmp_data, mutable=True)
+
+        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
+        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
+        img_tmp_seg.save(path=ftmp_seg, mutable=True)
+
+        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
+        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
+        img_tmp_label.save(ftmp_label, mutable=True)
+
 
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if level_alignment:
             # cropping the segmentation based on the label coverage to ensure good registration with level alignment
-            # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
+            # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/1669 for details
             image_labels = Image(ftmp_label)
             coordinates_labels = image_labels.getNonZeroCoordinates(sorting='z')
             nx, ny, nz, nt, px, py, pz, pt = image_labels.dim
@@ -706,9 +718,18 @@ def main(argv=None):
 
         # Change orientation of input images to RPI
         printv('\nChange orientation of input images to RPI...', verbose)
-        ftmp_data = Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
+
+        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
+        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
+        img_tmp_data.save(path=ftmp_data, mutable=True)
+
+        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
+        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
+        img_tmp_seg.save(path=ftmp_seg, mutable=True)
+
+        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
+        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
+        img_tmp_label.save(ftmp_label, mutable=True)
 
         # Remove unused label on template. Keep only label present in the input label image
         printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
@@ -910,7 +931,8 @@ def check_labels(fname_landmarks, label_type='body'):
 
 def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg='', fname_dest_seg='', fname_src_label='',
                      fname_dest_label='', fname_mask='', fname_initwarp='', fname_initwarpinv='', identity=False,
-                     interp='linear', fname_output='', fname_output_warp='', path_out='', same_space=False):
+                     interp='linear', fname_output='', fname_output_warp='', fname_output_warpinv='',
+                     path_out='', same_space=False):
     """
     Wrapper for image registration.
 
@@ -929,6 +951,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     :param interp:
     :param fname_output:
     :param fname_output_warp:
+    :param fname_output_warpinv:
     :param path_out:
     :param same_space: Bool: Source and destination images are in the same physical space (i.e. same coordinates).
     :return: fname_src2dest, fname_dest2src, fname_output_warp, fname_output_warpinv
@@ -1013,8 +1036,8 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         if fname_initwarpinv:
             warp_inverse.append(fname_initwarpinv)
         else:
-            printv('\nWARNING: No initial inverse warping field was specified, therefore the inverse warping field '
-                   'will NOT be generated.', param.verbose, 'warning')
+            printv('\nWARNING: No initial inverse warping field was specified, therefore the registration will be '
+                   'src->dest only, and the inverse warping field will NOT be generated.', param.verbose, 'warning')
             generate_warpinv = 0
     else:
         if same_space:
@@ -1116,13 +1139,15 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         '-w', 'warp_src2dest.nii.gz',
         '-o', 'src_reg.nii',
         '-x', interp])
-    printv('\nApply transfo dest --> source...', param.verbose)
-    sct_apply_transfo.main(argv=[
-        '-i', 'dest.nii',
-        '-d', 'src.nii',
-        '-w', 'warp_dest2src.nii.gz',
-        '-o', 'dest_reg.nii',
-        '-x', interp])
+
+    if generate_warpinv:
+        printv('\nApply transfo dest --> source...', param.verbose)
+        sct_apply_transfo.main(argv=[
+            '-i', 'dest.nii',
+            '-d', 'src.nii',
+            '-w', 'warp_dest2src.nii.gz',
+            '-o', 'dest_reg.nii',
+            '-x', interp])
 
     # come back
     os.chdir(curdir)
@@ -1131,24 +1156,24 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     # ------------------------------------------------------------------------------------------------------------------
 
     printv('\nGenerate output files...', param.verbose)
-    # generate: src_reg
-    fname_src2dest = generate_output_file(
-        os.path.join(path_tmp, "src_reg.nii"), os.path.join(path_out, file_out + ext_out), param.verbose)
 
-    # generate: dest_reg
-    fname_dest2src = generate_output_file(
-        os.path.join(path_tmp, "dest_reg.nii"), os.path.join(path_out, file_out_inv + ext_dest), param.verbose)
-
-    # generate: forward warping field
+    # generate src -> dest output files
+    fname_src2dest = os.path.join(path_out, file_out + ext_out)
+    generate_output_file(os.path.join(path_tmp, "src_reg.nii"), fname_src2dest, param.verbose)
     if fname_output_warp == '':
         fname_output_warp = os.path.join(path_out, 'warp_' + file_src + '2' + file_dest + '.nii.gz')
     generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, param.verbose)
 
-    # generate: inverse warping field
+    # generate dest -> src output files
     if generate_warpinv:
-        fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
+        fname_dest2src = os.path.join(path_out, file_out_inv + ext_dest)
+        generate_output_file(os.path.join(path_tmp, "dest_reg.nii"), fname_dest2src, param.verbose)
+        if fname_output_warpinv == '':
+            fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
         generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), fname_output_warpinv, param.verbose)
     else:
+        # we skip generating files if there is no inverse warping field (i.e. we're doing a one-way registration)
+        fname_dest2src = None
         fname_output_warpinv = None
 
     # Delete temporary files

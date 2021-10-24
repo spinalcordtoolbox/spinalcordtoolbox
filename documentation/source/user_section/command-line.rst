@@ -4,11 +4,6 @@
 Command-Line Tools
 ##################
 
-.. contents::
-   :local:
-   :depth: 1
-..
-
 
 Summary of Tools
 ****************
@@ -27,7 +22,7 @@ Segmentation
 - sct_get_centerline_ - Extracts the spinal cord centerline.
 - sct_propseg_ - Segment spinal cord using propagation of deformation model (PropSeg).
 
-Segmentation analysis
+Segmentation Analysis
 =====================
 
 - sct_analyze_lesion_ - Compute statistics on segmented lesions.
@@ -110,7 +105,6 @@ System tools
 ============
 
 - sct_check_dependencies_ - Check installation and compatibility of SCT.
-- sct_testing_ - Runs complete testing to make sure SCT is working properly.
 - sct_version_ - Display SCT version.
 
 
@@ -426,11 +420,6 @@ sct_check_dependencies
 
 .. program-output:: sct_check_dependencies -h
 
-
-sct_testing
-===========
-
-.. program-output:: sct_testing -h
 
 sct_version
 ===========

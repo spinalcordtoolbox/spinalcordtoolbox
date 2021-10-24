@@ -1,4 +1,7 @@
 sphinxcontrib.programoutput
 recommonmark
 sphinx_rtd_theme
+sphinx-copybutton
+furo==2021.6.18b35
+sphinx==4.1.2
 sphinx_argparse

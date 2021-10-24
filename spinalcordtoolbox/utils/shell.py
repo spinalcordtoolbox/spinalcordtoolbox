@@ -132,11 +132,11 @@ class SCTArgumentParser(argparse.ArgumentParser):
         """
             Overridden parent method. Ensures that help is printed when called with invalid args.
 
-            See https://github.com/neuropoly/spinalcordtoolbox/issues/3137.
+            See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3137.
         """
         # Source: https://stackoverflow.com/a/4042861
-        sys.stderr.write(f'{self.prog}: error: {message}\n\n')
         self.print_help(sys.stderr)
+        printv(f'\n{self.prog}: error: {message}\n', verbose=1, type='error', file=sys.stderr)
         sys.exit(2)
 
 
@@ -196,7 +196,7 @@ class Metavar(Enum):
         return self.value
 
 
-class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
+class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
     """
     Custom formatter that inherits from HelpFormatter, which adjusts the default width to the current Terminal size,
     and that gives the possibility to bypass argparse's default formatting by adding "R|" at the beginning of the text.
@@ -211,45 +211,6 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
             self._width = shutil.get_terminal_size()[0]
         except (KeyError, ValueError):
             logger.warning('Not able to fetch Terminal width. Using default: %s', self._width)
-
-    # this is the RawTextHelpFormatter._fill_text
-    def _fill_text(self, text, width, indent):
-        # print("splot",text)
-        if text.startswith('R|'):
-            paragraphs = text[2:].splitlines()
-            rebroken = [argparse._textwrap.wrap(tpar, width) for tpar in paragraphs]
-            rebrokenstr = []
-            for tlinearr in rebroken:
-                if (len(tlinearr) == 0):
-                    rebrokenstr.append("")
-                else:
-                    for tlinepiece in tlinearr:
-                        rebrokenstr.append(tlinepiece)
-            return '\n'.join(rebrokenstr)  # (argparse._textwrap.wrap(text[2:], width))
-        return argparse.RawDescriptionHelpFormatter._fill_text(self, text, width, indent)
-
-    # this is the RawTextHelpFormatter._split_lines
-    def _split_lines(self, text, width):
-        if text.startswith('R|'):
-            lines = text[2:].splitlines()
-            while lines[0] == '':  # Discard empty start lines
-                lines = lines[1:]
-            offsets = [re.match("^[ \t]*", l).group(0) for l in lines]
-            wrapped = []
-            for i, li in enumerate(lines):
-                if len(li) > 0:
-                    o = offsets[i]
-                    ol = len(o)
-                    init_wrap = argparse._textwrap.fill(li, width).splitlines()
-                    first = init_wrap[0]
-                    rest = "\n".join(init_wrap[1:])
-                    rest_wrap = argparse._textwrap.fill(rest, width - ol).splitlines()
-                    offset_lines = [o + wl for wl in rest_wrap]
-                    wrapped = wrapped + [first] + offset_lines
-                else:
-                    wrapped = wrapped + [li]
-            return wrapped
-        return argparse.HelpFormatter._split_lines(self, text, width)
 
     def _get_help_string(self, action):
         if action.default not in [None, "", [], (), {}]:

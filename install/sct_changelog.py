@@ -2,7 +2,7 @@
 """Create a changelog file from all the merged pull requests
 
 Looking into the latest github milestone, print out all the pull requests for
-neuropoly/spinalcordtoolbox grouped by label and saved in `changlog.[tagId].md`
+spinalcordtoolbox/spinalcordtoolbox grouped by label and saved in `changlog.[tagId].md`
 in markdown format. The command makes the assumption that the milestone title
 is formatted as `Release v[MAJOR].[MINOR].[PATCH]`
 
@@ -17,7 +17,7 @@ import sys, io, logging, datetime, time, collections
 
 import requests
 
-API_URL = 'https://api.github.com/repos/neuropoly/spinalcordtoolbox/'
+API_URL = 'https://api.github.com/repos/spinalcordtoolbox/spinalcordtoolbox/'
 
 
 class RateLimiter(object):
@@ -63,14 +63,14 @@ def detailed_changelog(new_tag):
     tags_url = API_URL + 'releases'
     response = requests.get(tags_url)
     previous_tag = response.json()[0]['tag_name']
-    return ("https://github.com/neuropoly/spinalcordtoolbox/compare/%s...%s" % (previous_tag, new_tag))
+    return ("https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/%s...%s" % (previous_tag, new_tag))
 
 
 def search(milestone, label=''):
     """Return a list of merged pull requests linked to the milestone and label
     """
     search_url = 'https://api.github.com/search/issues'
-    query = 'milestone:"%s" is:pr repo:neuropoly/spinalcordtoolbox state:closed is:merged' % (milestone)
+    query = 'milestone:"%s" is:pr repo:spinalcordtoolbox/spinalcordtoolbox state:closed is:merged' % (milestone)
     if label:
         query += ' label:%s' % (label)
     payload = {'q': query}
