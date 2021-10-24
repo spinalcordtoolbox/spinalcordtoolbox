@@ -53,7 +53,8 @@ setup(
             'sphinx-copybutton',
             'furo==2021.6.18b35',
             'recommonmark',
-            'sphinx==4.1.2'
+            'sphinx==4.1.2',
+            'sphinx-argparse'
         ],
     },
     entry_points=dict(
