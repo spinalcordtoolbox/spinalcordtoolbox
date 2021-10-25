@@ -593,8 +593,8 @@ esac
 # Run conda installer
 run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 
-# create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
-python/bin/conda create -y -n venv_sct python=3.6
+# create conda environment
+python/bin/conda create -y -n venv_sct python=3.7
 
 # make sure that there is no conflict with local python install by making venv_sct an isolated environment.
 # workaround for https://github.com/conda/conda/issues/7173
@@ -634,19 +634,29 @@ else
 fi
 (
   pip install -r "$REQUIREMENTS_FILE" &&
-  # `tensorflow-tensorboard` is installed by `tensorflow==1.5.0` but is not needed,
-  # and conflicts with the other installation of `tensorboard`. So, we uninstall here.
-  # This is hacky, and should be removed as soon as we stop using `tensorflow==1.5.0`.
-  # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3035 for more info.
-  pip uninstall -y tensorflow-tensorboard &&
-  pip uninstall -y tensorboard &&
-  pip install tensorboard &&
-  # install sct itself
   print info "Installing spinalcordtoolbox..." &&
   pip install -e .
 ) ||
   die "Failed running pip install: $?"
 
+
+## Check if installed TF/Keras requirements throw instruction set errors
+if python3 -c "import keras; print(keras.__version__)" 2>&1 | grep -q 'The TensorFlow library was compiled to use'; then
+    case $OS in
+    linux*)
+      echo "Instruction set error thrown by TensorFlow!"
+      echo "Installing a version of TensorFlow compiled for older CPUs..."
+      pip uninstall tensorflow -y
+      pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
+      ;;
+    osx)
+      # We haven't yet compiled an AVX-less TensorFlow wheel for macOS. This case should be practically non-existent, as
+      # Westmere-based Macs were discontinued in 2011/2013, and there is greater pressure to upgrade for Apple devices.
+      # So, in this case, do nothing, and let `sct_check_dependencies` catch this error instead.
+      :
+      ;;
+    esac
+fi
 
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."

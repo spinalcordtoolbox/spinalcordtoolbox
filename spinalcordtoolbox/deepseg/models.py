@@ -100,6 +100,14 @@ MODELS = {
         "description": "Grey/white matter seg on exvivo human T2w.",
         "contrasts": ["t2"],
         "default": False,
+    },
+    "model_7t_multiclass_gm_sc_unet2d": {
+        "url": [
+            "https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass/archive/r20210930.zip"
+        ],
+        "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University",
+        "contrasts": ["t2star"],
+        "default": False,
     }
 }
 
@@ -136,7 +144,10 @@ TASKS = {
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']},
     'seg_exvivo_gm-wm_t2':
         {'description': 'Grey/white matter seg on exvivo human T2w.',
-         'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']}
+         'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']},
+    'seg_gm_sc_7t_t2star':
+        {'description': 'SC/GM seg on T2*-weighted at 7T.',
+         'models': ['model_7t_multiclass_gm_sc_unet2d']}
 }
 
 

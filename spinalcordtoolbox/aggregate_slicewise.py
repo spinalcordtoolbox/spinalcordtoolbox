@@ -560,3 +560,22 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
                         line.append(str(agg_metric[slicegroup][key]))
                         break
             spamwriter.writerow(line)
+
+
+def normalize_csa(csa_norm, data_predictors, data_subject):
+    """
+    Normalize CSA values with coeff from multivariate model. Multivariate models
+    were developed using https://github.com/sct-pipeline/ukbiobank-spinalcord-csa.
+
+    :param csa_norm: computed CSA value
+    :param data_predictors: panda.DataFrame: coefficients from multilinear regression and mean values
+    :param data_subject: panda.DataFrame: demographic data of the subject for each predictor
+
+    :return csa_norm: normalized CSA value
+    """
+    predictors = list(data_predictors.index)
+    means = data_predictors['mean']
+    coeff = data_predictors['coeff']
+    for predictor in predictors:
+        csa_norm = csa_norm + coeff[predictor]*(means[predictor] - data_subject[predictor][0])
+    return csa_norm

@@ -52,6 +52,35 @@ def test_sct_process_segmentation_missing_pmj_args(dummy_3d_mask_nib, dummy_3d_p
             assert e.value.code == 2
 
 
+def test_sct_process_segmentation_check_normalize(dummy_3d_mask_nib, tmp_path):
+    """ Run sct_process_segmentation with -normalize and check the results"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-normalize', 'brain-volume',
+                                        '960606.0', 'sex', '0', 'thalamus-volume', '13942.0', '-o', filename])
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        row = next(reader)
+        assert float(row['MEAN(area)']) == pytest.approx(228.20973426502943)
+
+
+def test_sct_process_segmentation_check_normalize_missing_value(dummy_3d_mask_nib, tmp_path):
+    """ Run sct_process_segmentation with -normalize when missing a value"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    with pytest.raises(SystemExit) as e:
+        sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-normalize', 'brain-volume',
+                                            '960606.0', 'sex', 'thalamus-volume', '13942.0', '-o', filename])
+        assert e.value.code == 2
+
+
+def test_sct_process_segmentation_check_normalize_missing_predictor(dummy_3d_mask_nib, tmp_path):
+    """ Run sct_process_segmentation with -normalize when missing a predictor"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    with pytest.raises(SystemExit) as e:
+        sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-normalize',
+                                            'sex', '0' 'thalamus-volume', '13942.0', '-o', filename])
+        assert e.value.code == 2
+
+
 @pytest.mark.sct_testing
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_process_segmentation_no_checks():

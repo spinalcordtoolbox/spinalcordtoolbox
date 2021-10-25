@@ -16,14 +16,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Checkout spinalcordtoolbox
+    - name: Checkout spinalcordtoolbox (main branch)
       uses: actions/checkout@v2
       with:
-        ref: ${{ env.RELEASE_BRANCH }}
+        ref: ${{ env.MAIN_BRANCH }}
+        fetch-depth: 0
 
     - name: Install spinalcordtoolbox
       run: |
         ./install_sct -iy
+
+    - name: Set bot user data for commits
+      run: |
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "GitHub Actions Bot"
+
+    - name: Merge main branch into release branch
+      run: |
+        git checkout ${{ env.RELEASE_BRANCH }}
+        git merge --no-ff ${{ env.MAIN_BRANCH }}
 
     - name: Update requirements-freeze.txt
       run: |
@@ -41,12 +52,6 @@ jobs:
     # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
     - name: Commit and push
       run: |
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "GitHub Actions Bot"
-        git fetch
-        git checkout ${{ env.MAIN_BRANCH }}
-        git checkout ${{ env.RELEASE_BRANCH }}
-        git merge --no-ff ${{ env.MAIN_BRANCH }}
         git add requirements-freeze.txt
         git commit -m "Update requirements-freeze.txt for ${{ github.event.inputs.milestone_title }}"
         git add spinalcordtoolbox/version.txt
