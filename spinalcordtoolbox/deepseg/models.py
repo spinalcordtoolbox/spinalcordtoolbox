@@ -73,7 +73,18 @@ MODELS = {
         "contrasts": ["t1"],
         "default": True,
     },
-
+    "model_label_disc_t2": {
+        "url": ["https://github.com/ivadomed/model_label_intervertebral-disc_t1-t2_hourglass-net/releases/download/temp-release-without-model/model_label_disc_t2.zip"],
+        "description": "intervertebral disc localisation model, trained on T2-weighted images",
+        "contrasts": ["t2"],
+        "default": False,
+    },
+    "model_label_disc_t1": {
+        "url": ["https://github.com/ivadomed/model_label_intervertebral-disc_t1-t2_hourglass-net/releases/download/temp-release-without-model/model_label_disc_t1.zip"],
+        "description": "intervertebral disc localisation model, trained on T1-weighted images",
+        "contrasts": ["t1"],
+        "default": False,
+    },
     "model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel": {
         "url": [
             "https://github.com/ivadomed/model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel/archive/r20201215.zip"
@@ -114,6 +125,12 @@ TASKS = {
     'find_disc_t1':
         {'description': 'locate posterior tip of each disc on T1 straighten image',
          'models': ["model_find_disc_t1"]},
+    'label_disc_t2':
+        {'description': 'locate posterior tip of each disc on T2 straighten image',
+         'models': ["model_label_disc_t2"]},
+    'label_disc_t1':
+        {'description': 'locate posterior tip of each disc on T1 straighten image',
+         'models': ["model_label_disc_t1"]},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor segmentation.',
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']},
