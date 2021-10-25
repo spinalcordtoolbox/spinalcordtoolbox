@@ -25,7 +25,7 @@ logging.getLogger('matplotlib.font_manager').disabled = True
 
 
 def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../',
-                        scale_dist=1.):
+                        scale_dist=1., method='DL-Countception'):
     """
     Find intervertebral discs in straightened image using template matching
 
@@ -124,10 +124,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     mid_index = int(np.round(nib.load(fname).header.get_data_shape()[0] / 2.0))
     image_mid = imed_preprocessing.get_midslice_average(fname, mid_index)
     nib.save(image_mid, "input_image.nii.gz")
-    if contrast == "t2":
-        sct_deepseg.main(['-i', 'input_image.nii.gz', '-task', 'find_disc_t2', '-thr', '-1', '-o', 'hm_tmp.nii.gz'])
-    elif contrast == "t1":
-        sct_deepseg.main(['-i', 'input_image.nii.gz', '-task', 'find_disc_t1', '-thr', '-1', '-o', 'hm_tmp.nii.gz'])
+    if method == 'DL-Countception':
+        task = "find_disc"
+    elif method == 'DL-Hourglass':
+        task = "label_disc"
+    sct_deepseg.main(['-i', 'input_image.nii.gz', '-task', f"{task}_{contrast}", '-thr', '-1', '-o', 'hm_tmp.nii.gz'])
 
     run_proc(['sct_resample', '-i', 'hm_tmp.nii.gz', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'hm_tmp_r.nii.gz'])
     run_proc(['sct_resample', '-i', fname_seg, '-mm', '0.5x0.5x0.5', '-x', 'nn', '-o', fname_seg])

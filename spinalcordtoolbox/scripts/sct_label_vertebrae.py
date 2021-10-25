@@ -192,7 +192,7 @@ def get_parser():
     optional.add_argument(
         '-method',
         default='TM',
-        choices=['DL', 'TM'],
+        choices=['TM', 'DL-Countception', 'DL-Hourglass'],
         help="DL to use deep learning method, TM to use 3D template matching"
     )
     optional.add_argument(
@@ -442,10 +442,10 @@ def main(argv=None):
             vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
                                 verbose=verbose, path_template=path_template, path_output=path_output,
                                 scale_dist=scale_dist)
-        elif arguments.method == 'DL':
+        elif arguments.method.startswith('DL'):
             deep_method.vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
                                             verbose=verbose, path_template=path_template, path_output=path_output,
-                                            scale_dist=scale_dist)
+                                            scale_dist=scale_dist, method=arguments.method)
 
     # un-straighten labeled spinal cord
     printv('\nUn-straighten labeling...', verbose)
@@ -458,7 +458,7 @@ def main(argv=None):
 
     # un-straighten posterior disc map
     # it won't exist if we don't use the detection since it is based on the network prediction (DL method)
-    if fname_disc is None and arguments.method == 'DL':
+    if fname_disc is None and arguments.method.startswith('DL'):
         printv('\nUn-straighten posterior disc map...', verbose)
         sct_apply_transfo.main(['-i', 'disc_posterior_tmp.nii.gz', '-d', 'segmentation.nii', '-w',
                                 'warp_straight2curve.nii.gz', '-o', 'label_disc_posterior.nii.gz',
@@ -493,7 +493,7 @@ def main(argv=None):
     printv('\nGenerate output files...', verbose)
     generate_output_file(os.path.join(path_tmp, "segmentation_labeled.nii"), fname_seg_labeled)
     generate_output_file(os.path.join(path_tmp, "segmentation_labeled_disc.nii"), os.path.join(path_output, file_seg + '_labeled_discs' + ext_seg))
-    if fname_disc is None and arguments.method == 'DL':
+    if fname_disc is None and arguments.method.startswith('DL'):
         generate_output_file(os.path.join(path_tmp, "label_disc_posterior.nii.gz"), os.path.join(path_output, file_in + '_labels-disc' + ext_in), verbose=verbose)
     # copy straightening files in case subsequent SCT functions need them
     generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose=verbose)
