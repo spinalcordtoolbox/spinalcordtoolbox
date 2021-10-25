@@ -1,6 +1,5 @@
 colored
 dipy
-futures
 # h5py is pinned to minor than 3 due to issues with Keras/TF
 # https://github.com/tensorflow/tensorflow/issues/44467
 h5py~=2.10.0
