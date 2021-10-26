@@ -8,6 +8,7 @@ The following studies have used SCT:
 2021
 ----
 
+-  Staud et *al.* `Spinal cord neural activity of patients with fibromyalgia and healthy controls during temporal summation of pain: an fMRI study. <https://pubmed.ncbi.nlm.nih.gov/34406893/>`_ **J Neurophysiol.** 2021
 -  Pfyffer *et al.* `Spinal cord pathology revealed by MRI in traumatic spinal cord injury. <https://pubmed.ncbi.nlm.nih.gov/34619692/>`_ **Curr Opin Neurol.** 2021
 -  Valsasina *et al.* `Characterizing 1-year development of cervical cord atrophy across different MS phenotypes: A voxel-wise, multicentre analysis. <https://pubmed.ncbi.nlm.nih.gov/34605323/>`_ **Mult Scler.** 2021
 -  Murphy *et al.* `Filtered Diffusion-Weighted MRI of the Human Cervical Spinal Cord: Feasibility and Application to Traumatic Spinal Cord Injury. <http://www.ajnr.org/content/early/2021/10/07/ajnr.A7295>`_ **AJNR Am J Neuroradiol.** 2021
