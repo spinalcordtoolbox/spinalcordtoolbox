@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
     ('t2/t2.nii.gz', '-mm', '0.97x1.14x1.2', (62, 48, 43, 1, 0.96774191, 1.1458334, 1.2093023, 1)),  # 3D, mm
     ('t2/t2.nii.gz', '-vox', '120x110x26', (120, 110, 26, 1, 0.5, 0.5, 2.0, 1)),                     # 3D, vox
 ])
-def test_sct_resample_output_has_expected_dimensions(path_in, type_arg, dim, expected_dim):
+def test_sct_resample_output_has_expected_dimensions(path_in, type_arg, dim, expected_dim, tmp_path):
     """Run the CLI script and verify output file exists."""
-    path_out = 'resampled.nii.gz'
+    path_out = str(tmp_path / 'resampled.nii.gz')
     sct_resample.main(argv=['-i', path_in, '-o', path_out, type_arg, dim, '-v', '1'])
     actual_dim = Image(path_out).dim
 
