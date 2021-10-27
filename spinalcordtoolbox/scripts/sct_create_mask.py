@@ -87,8 +87,8 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         '-size',
-        help='Size of the mask in the axial plane, given in pixel (Example: 35) or in millimeter (Example: 35mm). '
-             'If shape=gaussian, size corresponds to "sigma" (Example: 45).',
+        help='Diameter of the mask in the axial plane, given in pixel (Example: 35) or in millimeter (Example: 35mm). '
+             'If shape=gaussian, size instead corresponds to "sigma" (Example: 45).',
         metavar=Metavar.str,
         required=False,
         default=param_default.size)
