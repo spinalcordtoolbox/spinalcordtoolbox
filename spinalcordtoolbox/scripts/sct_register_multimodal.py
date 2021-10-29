@@ -231,7 +231,10 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Just put source into destination (no optimization)."
+        help="Supplying this option will skip registration optimization (e.g. translations, rotations, deformations) "
+             "and will only rely on the qform (from the NIfTI header) of the source and destination images. Use this "
+             "option if you wish to put the source image into the space of the destination image (i.e. match "
+             "dimension, resolution and orientation)."
     )
     optional.add_argument(
         '-z',
