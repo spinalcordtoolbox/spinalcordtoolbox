@@ -57,26 +57,33 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         p = img.header.get_zooms()
         shape = img.header.get_data_shape()
 
+        # determine the number of dimensions that should be resampled
+        ndim_r = img.ndim
         if img.ndim == 4:
-            new_size += ['1']  # needed because the code below is general, i.e., does not assume 3d input and uses img.shape
+            # For 4D images, only resample (x, y, z) dim, and preserve 't' dim
+            ndim_r = 3
 
         # compute new shape based on specific resampling method
         if new_size_type == 'vox':
-            shape_r = tuple([int(new_size[i]) for i in range(img.ndim)])
+            shape_r = tuple([int(new_size[i]) for i in range(ndim_r)])
         elif new_size_type == 'factor':
             if len(new_size) == 1:
                 # isotropic resampling
-                new_size = tuple([new_size[0] for i in range(img.ndim)])
+                new_size = tuple([new_size[0] for i in range(ndim_r)])
             # compute new shape as: shape_r = shape * f
-            shape_r = tuple([int(np.round(shape[i] * float(new_size[i]))) for i in range(img.ndim)])
+            shape_r = tuple([int(np.round(shape[i] * float(new_size[i]))) for i in range(ndim_r)])
         elif new_size_type == 'mm':
             if len(new_size) == 1:
                 # isotropic resampling
-                new_size = tuple([new_size[0] for i in range(img.ndim)])
+                new_size = tuple([new_size[0] for i in range(ndim_r)])
             # compute new shape as: shape_r = shape * (p_r / p)
-            shape_r = tuple([int(np.round(shape[i] * float(p[i]) / float(new_size[i]))) for i in range(img.ndim)])
+            shape_r = tuple([int(np.round(shape[i] * float(p[i]) / float(new_size[i]))) for i in range(ndim_r)])
         else:
             raise ValueError("'new_size_type' is not recognized.")
+
+        if img.ndim == 4:
+            # Copy over 't' dim (i.e. number of volumes should be unaffected)
+            shape_r = shape_r + (shape[3],)
 
         # Generate 3d affine transformation: R
         affine = img.affine[:4, :4]
