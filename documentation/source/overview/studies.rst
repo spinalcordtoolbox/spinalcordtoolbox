@@ -8,6 +8,7 @@ The following studies have used SCT:
 2021
 ----
 
+-  Hernandez *et al.* `Tract-Specific Spinal Cord Diffusion Tensor Imaging in Friedreich's Ataxia. <https://pubmed.ncbi.nlm.nih.gov/34713932/>`_ **Mov Disord.** 2021
 -  Staud *et al.* `Spinal cord neural activity of patients with fibromyalgia and healthy controls during temporal summation of pain: an fMRI study. <https://pubmed.ncbi.nlm.nih.gov/34406893/>`_ **J Neurophysiol.** 2021
 -  Pfyffer *et al.* `Spinal cord pathology revealed by MRI in traumatic spinal cord injury. <https://pubmed.ncbi.nlm.nih.gov/34619692/>`_ **Curr Opin Neurol.** 2021
 -  Valsasina *et al.* `Characterizing 1-year development of cervical cord atrophy across different MS phenotypes: A voxel-wise, multicentre analysis. <https://pubmed.ncbi.nlm.nih.gov/34605323/>`_ **Mult Scler.** 2021
