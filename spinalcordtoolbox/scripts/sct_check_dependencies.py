@@ -23,6 +23,7 @@ import platform
 import importlib
 import warnings
 import psutil
+import traceback
 
 import requirements
 
@@ -260,6 +261,10 @@ def main(argv=None):
     else:
         print_fail()
 
+    # Import matplotlib.pyplot here (before PyQt can be imported) in order to mitigate a libgcc error
+    # See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3511#issuecomment-912167649
+    import matplotlib.pyplot as plt
+
     for dep_pkg, dep_ver_spec in get_dependencies():
         if dep_ver_spec is None:
             print_line('Check if %s is installed' % (dep_pkg))
@@ -278,9 +283,10 @@ def main(argv=None):
             else:
                 print_ok()
 
-        except ImportError as err:
+        except Exception as err:
             print_fail()
-            print(err)
+            print(f"An error occured while importing module {dep_pkg} -> {err}")
+            print(f"Full traceback: {traceback.format_exc()}")
             install_software = 1
 
     print_line('Check if spinalcordtoolbox is installed')
@@ -288,7 +294,7 @@ def main(argv=None):
         importlib.import_module('spinalcordtoolbox')
         print_ok()
     except ImportError:
-        print_fail()
+        print_fail("Unable to import spinalcordtoolbox module.")
         install_software = 1
 
     # Check ANTs integrity
@@ -320,10 +326,9 @@ def main(argv=None):
     print_line('Check if figure can be opened with matplotlib')
     try:
         import matplotlib
-        import matplotlib.pyplot as plt
         # If matplotlib is using a GUI backend, the default 'show()` function will be overridden
         # See: https://github.com/matplotlib/matplotlib/issues/20281#issuecomment-846467732
-        fig = plt.figure()
+        fig = plt.figure()  # NB: `plt` was imported earlier in the script to avoid a libgcc error
         if getattr(fig.canvas.manager.show, "__func__", None) != matplotlib.backend_bases.FigureManagerBase.show:
             print_ok(f" (Using GUI backend: '{matplotlib.get_backend()}')")
         else:

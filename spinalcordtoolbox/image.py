@@ -1633,3 +1633,77 @@ def apply_mask_if_soft(fname_im: str, fname_mask: str):
         im.data = np.multiply(im.data, im_mask.data, casting="unsafe")
         im.save(fname_im, mutable=True)
     return fname_im, fname_mask
+
+
+def compute_cross_corr_3d(image: Image, coord, xrange=list(range(-10, 10)), xshift=10, yshift=10, zshift=10):
+    """
+    Compute cross-correlation between image and its mirror using a sliding window in R-L direction to find the image symmetry and adjust R-L coordinate.
+    Use a sliding window of 20x20x20 mm by default.
+    :param image: image in RPI orientation
+    :param coord: 3x1 array: coordinate where to start slidding window (in RPI)
+    :param xrange:
+    :param xshift:
+    :param yshift:
+    :param zshift:
+
+    :return: R-L coordinate of the image symmetry
+    """
+    from spinalcordtoolbox.math import correlation
+
+    nx, ny, nz, _, px, py, pz, _ = image.dim
+    x, y, z = coord
+    # initializations
+    I_corr = np.zeros(len(xrange))
+    allzeros = 0
+    # current_z = 0
+    ind_I = 0
+    # Adjust parameters with physical dimensions
+    xrange = [int(item//px) for item in xrange]
+    xshift = int(xshift//px)
+    yshift = int(yshift//py)
+    zshift = int(zshift//pz)
+    for ix in xrange:
+        # if pattern extends towards left part of the image, then crop and pad with zeros
+        if x + ix + 1 + xshift > nx:
+            padding_size = x + ix + xshift + 1 - nx
+            src = image.data[x + ix - xshift: x + ix + xshift + 1 - padding_size,
+                             y - yshift:y + yshift + 1,
+                             z - zshift: z + zshift + 1]
+            src = np.pad(src, ((0, 0), (0, 0), (0, padding_size)), 'constant',
+                         constant_values=0)
+        # if pattern extends towards right part of the image, then crop and pad with zeros
+        elif x + ix - xshift < 0:
+            padding_size = abs(ix - xshift)
+            src = image.data[x + ix - xshift + padding_size: x + ix + xshift + 1,
+                             y - yshift:y + yshift + 1,
+                             z - zshift: z + zshift + 1]
+
+            src = np.pad(src, ((0, 0), (0, 0), (padding_size, 0)), 'constant',
+                         constant_values=0)
+        else:
+            src = image.data[x + ix - xshift: x + xshift + ix + 1,
+                             y - yshift:y + yshift + 1,
+                             z - zshift: z + zshift + 1]
+        target = src[::-1, :, :]  # Mirror of src (in R-L direction)
+        # convert to 1d
+        src_1d = src.ravel()
+        target_1d = target.ravel()
+        # check if src_1d contains at least one non-zero value
+        if (src_1d.size == target_1d.size) and np.any(src_1d):
+            I_corr[ind_I] = correlation(src_1d, target_1d)
+        else:
+            allzeros = 1
+        ind_I = ind_I + 1
+    if allzeros:
+        logger.warning('Data contained zero. We probably hit the edge of the image.')
+    if np.any(I_corr):
+        # if I_corr contains at least a non-zero value
+        ind_peak = [i for i in range(len(I_corr)) if I_corr[i] == max(I_corr)][0]  # index of max along x
+        logger.info('.. Peak found: x=%s (correlation = %s)', xrange[ind_peak], I_corr[ind_peak])
+        # TODO (maybe) check if correlation is high enough compared to previous R-L coord
+    else:
+        # if I_corr contains only zeros
+        logger.warning('Correlation vector only contains zeros.')
+    # Change adjust rl_coord
+    logger.info('R-L coordinate adjusted from %s to  %s)', x, x + xrange[ind_peak])
+    return x + xrange[ind_peak]
