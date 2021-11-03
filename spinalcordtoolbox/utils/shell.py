@@ -197,22 +197,20 @@ class Metavar(Enum):
 
 
 class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
-    """
-    Custom formatter that inherits from HelpFormatter, which adjusts the default width to the current Terminal size,
-    and that gives the possibility to bypass argparse's default formatting by adding "R|" at the beginning of the text.
-    Inspired from: https://pythonhosted.org/skaff/_modules/skaff/cli.html
-    """
-
+    """Custom formatter that inherits from HelpFormatter to apply the same
+    tweaks across all of SCT's scripts."""
     def __init__(self, *args, **kw):
         self._add_defaults = None
         super(SmartFormatter, self).__init__(*args, **kw)
-        # Update _width to match Terminal width
+        # Tweak: Update argparse's '_width' to match Terminal width
         try:
             self._width = shutil.get_terminal_size()[0]
         except (KeyError, ValueError):
             logger.warning('Not able to fetch Terminal width. Using default: %s', self._width)
 
     def _get_help_string(self, action):
+        """Overrides the default _get_help_string method to skip writing the
+        '(default: )' text for arguments that have an empty default value."""
         if action.default not in [None, "", [], (), {}]:
             return super()._get_help_string(action)
         else:

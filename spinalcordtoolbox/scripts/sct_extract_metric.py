@@ -125,7 +125,7 @@ def get_parser():
         '-method',
         choices=['ml', 'map', 'wa', 'bin', 'median', 'max'],
         default=param_default.method,
-        help="R|Method to extract metrics.\n"
+        help="Method to extract metrics.\n"
              "  - ml: maximum likelihood.\n"
              "    This method is recommended for large labels and low noise. Also, this method should only be used"
              " with the PAM50 white/gray matter atlas, or with any custom atlas as long as the sum across all labels"
@@ -160,7 +160,7 @@ def get_parser():
         '-o',
         metavar=Metavar.file,
         default=param_default.fname_output,
-        help="R|File name of the output result file collecting the metric estimation results. Include the '.csv' "
+        help="File name of the output result file collecting the metric estimation results. Include the '.csv' "
              "file extension in the file name. Example: extract_metric.csv"
     )
     optional.add_argument(
@@ -175,7 +175,7 @@ def get_parser():
         '-z',
         metavar=Metavar.str,
         default=param_default.slices_of_interest,
-        help="R|Slice range to estimate the metric from. First slice is 0. Example: 5:23\n"
+        help="Slice range to estimate the metric from. First slice is 0. Example: 5:23\n"
              "You can also select specific slices using commas. Example: 0,2,3,5,12'"
     )
     optional.add_argument(
@@ -183,7 +183,7 @@ def get_parser():
         type=int,
         choices=(0, 1),
         default=param_default.perslice,
-        help="R|Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.\n"
+        help="Whether to output one metric per slice instead of a single output metric. 0 = no, 1 = yes.\n"
              "Please note that when methods ml or map are used, outputting a single metric per slice and then "
              "averaging them all is not the same as outputting a single metric at once across all slices."
     )
@@ -197,16 +197,16 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.file,
         default="./label/template/PAM50_levels.nii.gz",
-        help="R|Vertebral labeling file. Only use with flag -vert.\n"
-            "The input Image and the vertebral labelling file must in the same voxel coordinate system "
-            "and must match the dimensions between each other."
+        help="Vertebral labeling file. Only use with flag -vert.\n"
+             "The input Image and the vertebral labelling file must in the same voxel coordinate system "
+             "and must match the dimensions between each other."
     )
     optional.add_argument(
         '-perlevel',
         type=int,
         metavar=Metavar.int,
         default=0,
-        help="R|Whether to output one metric per vertebral level instead of a single output metric. 0 = no, 1 = yes.\n"
+        help="Whether to output one metric per vertebral level instead of a single output metric. 0 = no, 1 = yes.\n"
              "Please note that this flag needs to be used with the -vert option."
     )
     optional.add_argument(
@@ -224,7 +224,7 @@ def get_parser():
         '-param',
         metavar=Metavar.str,
         default='',
-        help="R|Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated "
+        help="Advanced parameters for the 'map' method. Separate with comma. All items must be listed (separated "
              "with comma).\n"
              "  - #1: standard deviation of metrics across labels\n"
              "  - #2: standard deviation of the noise (assumed Gaussian)"
@@ -248,7 +248,7 @@ def get_parser():
         '-norm-method',
         choices=['sbs', 'whole'],
         default='',
-        help="R|Method to use for normalization:\n"
+        help="Method to use for normalization:\n"
              "  - sbs: normalization slice-by-slice\n"
              "  - whole: normalization by the metric value in the whole label for all slices."
     )
