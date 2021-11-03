@@ -48,7 +48,7 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
       sudo apt-get install -y git
       sudo apt-get install -y gfortran
       sudo apt-get install -y libjpeg-dev
-      echo 'export DISPLAY=127.0.0.1:0.0' >> .profile
+      echo 'export DISPLAY=127.0.0.1:0.0' >> ~/.profile
 
 #. Install SCT
 
