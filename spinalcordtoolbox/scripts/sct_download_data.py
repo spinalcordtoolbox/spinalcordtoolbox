@@ -123,7 +123,7 @@ def get_parser():
         '-o',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="R|Path to a directory to save the downloaded data.\n"
+        help="Path to a directory to save the downloaded data.\n"
              "(Defaults to ./${dataset-name}. Directory will be created if it does not exist. Warning: existing "
              "data in the directory will be erased unless -k is provided.)\n"
     )

@@ -109,7 +109,7 @@ def get_parser():
         '-initz',
         metavar=Metavar.list,
         type=list_type(',', int),
-        help="R|Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). "
+        help="Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). "
              "Example: 125,3\n"
              "WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but "
              "Y in LIP orientation)."
@@ -177,7 +177,7 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
-        help=f"R|Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
+        help=f"Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
              f"  - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
              f"  - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
              f"  - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"

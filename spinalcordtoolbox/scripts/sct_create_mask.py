@@ -71,7 +71,7 @@ def get_parser():
         '-p',
         default=param_default.process,
         required=True,
-        help='R|Process to generate mask.\n'
+        help='Process to generate mask.\n'
              '  <coord,XxY>: Center mask at the X,Y coordinates. (e.g. "coord,20x15")\n'
              '  <point,FILE>: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. "point,label.nii.gz")\n'
              '  <center>: Center mask in the middle of the FOV (nx/2, ny/2).\n'
