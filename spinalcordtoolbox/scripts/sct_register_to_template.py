@@ -152,7 +152,7 @@ def get_parser():
     optional.add_argument(
         '-l',
         metavar=Metavar.file,
-        help="One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
+        help="R|One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
              "Example: anat_labels.nii.gz\n"
              "For more information about label creation, please see: "
              "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%%5FCourse%%5F20200121 (p47)"
@@ -160,7 +160,7 @@ def get_parser():
     optional.add_argument(
         '-ldisc',
         metavar=Metavar.file,
-        help="File containing disc labels. Labels can be located either at the posterior edge "
+        help="R|File containing disc labels. Labels can be located either at the posterior edge "
              "of the intervertebral discs, or at the orthogonal projection of each disc onto "
              "the spinal cord (e.g.: the file 'xxx_seg_labeled_discs.nii.gz' output by sct_label_vertebrae).\n"
              "If you are using more than 2 labels, all discs covering the region of interest should be provided. "
@@ -171,7 +171,7 @@ def get_parser():
     optional.add_argument(
         '-lspinal',
         metavar=Metavar.file,
-        help="Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
+        help="R|Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
              "mid-point of the spinal level. Example: anat_labels.nii.gz\n"
              "Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). "
              "If you are using more than 2 labels, all spinal levels covering the region of interest should be "
@@ -206,7 +206,7 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(':', str),
-        help=(f"Parameters for registration (see sct_register_multimodal). Default:"
+        help=(f"R|Parameters for registration (see sct_register_multimodal). Default:"
               f"\n"
               f"step=0\n"
               f"  - type={paramregmulti.steps['0'].type}\n"

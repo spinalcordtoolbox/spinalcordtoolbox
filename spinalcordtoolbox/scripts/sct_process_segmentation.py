@@ -142,7 +142,7 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.str,
         default='./label/template/PAM50_levels.nii.gz',
-        help="Vertebral labeling file. Only use with flag -vert.\n"
+        help="R|Vertebral labeling file. Only use with flag -vert.\n"
         "The input and the vertebral labelling file must in the same voxel coordinate system "
         "and must match the dimensions between each other. "
     )
@@ -213,7 +213,7 @@ def get_parser():
         metavar=Metavar.list,
         action=SeparateNormArgs,
         nargs="+",
-        help="Normalize CSA values ('MEAN(area)').\n"
+        help="R|Normalize CSA values ('MEAN(area)').\n"
              "Two models are available:\n"
              "    1. sex, brain-volume, thalamus-volume.\n"
              "    2. sex, brain-volume.\n"

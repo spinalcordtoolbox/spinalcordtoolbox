@@ -90,7 +90,7 @@ def get_parser():
         '-create-seg',
         metavar=Metavar.list,
         type=list_type(':', list_type(',', int)),
-        help="Create labels on a cord segmentation (or centerline) image defined by '-i'. Each label should be "
+        help="R|Create labels on a cord segmentation (or centerline) image defined by '-i'. Each label should be "
              "specified using the form 'v1,v2' where 'v1' is value of the slice index along the inferior-superior "
              "axis, and 'v2' is the value of the label. Separate each label with ':'. \n"
              "Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from "
@@ -101,7 +101,7 @@ def get_parser():
         '-create-seg-mid',
         metavar=Metavar.int,
         type=int,
-        help="Similar to '-create-seg'. This option takes a single label value, and will automatically select the "
+        help="R|Similar to '-create-seg'. This option takes a single label value, and will automatically select the "
              "mid-point slice in the inferior-superior direction (so there is no need for a slice index).\n"
              "This is useful for when you have centered the field of view of your data at a specific location. "
              "For example, if you already know that the C2-C3 disc is centered in the I-S direction, then "
@@ -144,7 +144,7 @@ def get_parser():
         '-vert-body',
         metavar=Metavar.list,
         type=list_type(',', int),
-        help="From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
+        help="R|From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
              "desired levels with ','. Example: 3,8\n"
              "To get all levels, enter 0."
     )

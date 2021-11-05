@@ -50,7 +50,7 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-centerline",
-        help="Method used for extracting the centerline:\n"
+        help="R|Method used for extracting the centerline:\n"
              " svm: Automatic detection using Support Vector Machine algorithm.\n"
              " cnn: Automatic detection using Convolutional Neural Network.\n"
              " viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer "

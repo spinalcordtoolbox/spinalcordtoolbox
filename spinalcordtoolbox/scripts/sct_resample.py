@@ -59,7 +59,7 @@ def get_parser():
     resample_types.add_argument(
         '-f',
         metavar=Metavar.str,
-        help="Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1\n"
+        help="R|Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1\n"
              "For 2x upsampling, set to 2. For 2x downsampling set to 0.5"
     )
     resample_types.add_argument(

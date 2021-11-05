@@ -50,7 +50,7 @@ def get_parser():
         "-method",
         choices=['optic', 'viewer', 'fitseg'],
         default='optic',
-        help="Method used for extracting the centerline.\n"
+        help="R|Method used for extracting the centerline.\n"
              "  - optic: automatic spinal cord detection method\n"
              "  - viewer: manual selection a few points followed by interpolation\n"
              "  - fitseg: fit a regularized centerline on an already-existing cord segmentation. It will "
