@@ -641,7 +641,7 @@ fi
 
 
 ## Check if installed TF/Keras requirements throw instruction set errors
-if python3 -c "import keras; print(keras.__version__)" 2>&1 | grep -q 'The TensorFlow library was compiled to use'; then
+if python3 -c "import keras; print(keras.__version__)" 2>&1 | grep -q 'The TensorFlow library was compiled to use\|Illegal instruction'; then
     case $OS in
     linux*)
       echo "Instruction set error thrown by TensorFlow!"
