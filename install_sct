@@ -642,18 +642,15 @@ fi
 
 ## Check if installed TF/Keras requirements throw instruction set errors
 if python3 -c "import keras; print(keras.__version__)" 2>&1 | grep -q 'The TensorFlow library was compiled to use\|Illegal instruction'; then
+    echo "Instruction set error thrown by TensorFlow!"
+    echo "Installing a version of TensorFlow compiled for older CPUs..."
+    pip uninstall tensorflow -y
     case $OS in
     linux*)
-      echo "Instruction set error thrown by TensorFlow!"
-      echo "Installing a version of TensorFlow compiled for older CPUs..."
-      pip uninstall tensorflow -y
       pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
       ;;
     osx)
-      # We haven't yet compiled an AVX-less TensorFlow wheel for macOS. This case should be practically non-existent, as
-      # Westmere-based Macs were discontinued in 2011/2013, and there is greater pressure to upgrade for Apple devices.
-      # So, in this case, do nothing, and let `sct_check_dependencies` catch this error instead.
-      :
+      pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.0-cp37-cp37m-macos_arm64.whl
       ;;
     esac
 fi
