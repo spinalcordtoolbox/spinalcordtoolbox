@@ -650,7 +650,7 @@ if python3 -c "import keras; print(keras.__version__)" 2>&1 | grep -q 'The Tenso
       pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
       ;;
     osx)
-      pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.0-cp37-cp37m-macos_arm64.whl
+      pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.0-py3-none-any.whl
       ;;
     esac
 fi
