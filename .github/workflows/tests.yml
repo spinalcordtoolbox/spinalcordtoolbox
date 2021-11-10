@@ -305,14 +305,21 @@ jobs:
         # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
     - uses: actions/checkout@v2
+    - name: Copy SCT from $GITHUB_WORKSPACE to ~
+      run: |
+        cd ..
+        cp -r spinalcordtoolbox ~/spinalcordtoolbox
     - name: Install SCT
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -i
     - name: Check dependencies
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -c
     - name: Run pytest test suite
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -t
 
   windows-wsl-ubuntu-20_04:
@@ -346,12 +353,19 @@ jobs:
         # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
     - uses: actions/checkout@v2
+    - name: Copy SCT from $GITHUB_WORKSPACE to ~
+      run: |
+        cd ..
+        cp -r spinalcordtoolbox ~/spinalcordtoolbox
     - name: Install SCT
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -i
     - name: Check dependencies
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -c
     - name: Run pytest test suite
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -t
