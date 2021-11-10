@@ -603,6 +603,9 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 print info "Creating conda environment..."
 python/bin/conda create -y -n venv_sct python=3.7
 
+# Reapply the touch fix to avoid connection issues on WSL1
+find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
+
 # make sure that there is no conflict with local python install by making venv_sct an isolated environment.
 # workaround for https://github.com/conda/conda/issues/7173
 # see also
