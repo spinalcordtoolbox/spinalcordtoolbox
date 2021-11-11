@@ -14,21 +14,33 @@ Basic installation (No GUI)
 
 Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it possible to run native Linux programs, such as SCT.
 
+#. Make sure that your version of Windows is up to date before continuing.
+
 #. Install Windows Subsystem for Linux (WSL)
 
-   - Follow the instructions on Microsoft's `Install WSL <https://docs.microsoft.com/en-us/windows/wsl/install>`_ page.
+   - In Windows, search for "Powershell" in your Start Menu, then right-click and "Run as administrator".
+
+   - In PowerShell, type the following command and press enter:
+
+     .. code::
+
+        wsl --install
+
+   - After this command finishes, you will be prompted to restart your computer.
+
+   - After restarting, the installation should automatically resume, and you will be able to create an user account inside Ubuntu by selecting a username and password.
 
 #. Decide between WSL Version 1 or WSL Version 2.
 
    By default, Microsoft's instructions will create an Ubuntu environment using Version 2 of WSL. While version 2 has been tested to work with SCT, our development team tests more thoroughly using Version 1 of WSL (due to `better support from GitHub Actions <https://github.com/actions/virtual-environments/issues/50>`_).
 
-   Because of this, we recommend that you convert the WSL2 Ubuntu environment to use WSL1 before continuing. To do this, first close Ubuntu, then run the following command in a Windows command prompt:
+   Because of this, we recommend that you convert the WSL2 Ubuntu environment to use WSL1 before continuing. To do this, first close Ubuntu, then re-open Powershell and run the following command:
 
    .. code::
 
       wsl --list --verbose
 
-   You should see a list of installed distributions (as well as their WSL versions). Find the name of the distribution you just installed (which should be something like ``Ubuntu`` or ``Ubuntu-20.04``), then run the following command:
+   If WSL installed correctly, you should see a list of installed distributions (as well as their WSL versions). Find the name of the distribution you just installed (which should be something like ``Ubuntu`` or ``Ubuntu-20.04``), then run the following command:
 
    .. code::
 
