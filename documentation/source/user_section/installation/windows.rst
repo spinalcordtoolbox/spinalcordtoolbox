@@ -34,7 +34,7 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
       wsl --set-version Ubuntu 1
 
-    You can then run ``wsl --list --verbose`` again to check that the distribution has changed from WSL2 to WSL1.
+   You can then run ``wsl --list --verbose`` again to check that the distribution has changed from WSL2 to WSL1.
 
 #. Environment preparation
 
