@@ -24,7 +24,7 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
    Because of this, your best guarantee for a stable installation of SCT is to convert the WSL2 Ubuntu environment to use WSL1 before proceeding:
 
-   .. code:
+   .. code::
 
       wsl --set-version Ubuntu 1
 
