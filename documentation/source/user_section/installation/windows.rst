@@ -38,7 +38,7 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
 #. Environment preparation
 
-   Now that you have set up an Ubuntu environment with WSL, please open Ubuntu and run the following command to install various packages that will be needed to install FSL and SCT. This will require your password
+   Now that you have set up an Ubuntu environment with WSL, please open Ubuntu and run the following command to install various packages that will be needed to install SCT. This will require your password
 
    .. code-block:: sh
 
