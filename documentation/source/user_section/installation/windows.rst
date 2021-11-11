@@ -162,7 +162,7 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
 
       source ${SCT_DIR}/python/etc/profile.d/conda.sh
       conda create -c conda-forge -p ~/fsleyes_env fsleyes -y
-      ln -s ~/fsleyes_env/bin/fsleyes /usr/local/bin/fsleyes
+      sudo ln -s ~/fsleyes_env/bin/fsleyes /usr/local/bin/fsleyes
 
    These instructions will install FSLeyes into a fresh ``conda`` environment, then create a link to FSLeyes so that you can use the ``fsleyes`` command without having to activate the conda environment each time.
 
