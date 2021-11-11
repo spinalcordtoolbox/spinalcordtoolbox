@@ -51,6 +51,7 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
    .. code-block:: sh
 
+      cd ~
       git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
       cd spinalcordtoolbox
 
