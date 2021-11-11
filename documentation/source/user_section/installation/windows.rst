@@ -92,8 +92,8 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
 #. Run the newly installed ``XLaunch`` program, then click the following settings:
 
    - On the "Display settings" page, click "Next".
-   - On the "Session type" page, click "Next".
-   - On the "Additional parameters" page, check the "No Access Control" box, then click "Next".
+   - On the "Client startup" page, click "Next".
+   - On the "Extra settings" page, check the "Disable access control" box, then click "Next".
    - Click "Finish", then click "Allow access" when prompted by Windows Firewall.
    - You should now see the X Server icon running in the bottom-right system tray in your taskbar.
 
