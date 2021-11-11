@@ -14,9 +14,19 @@ Basic installation (No GUI)
 
 Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it possible to run native Linux programs, such as SCT.
 
-#. Make sure that your version of Windows is up to date before continuing.
+#. Make sure that your version of Windows 10 is up to date before continuing.
 
-#. Install Windows Subsystem for Linux (WSL)
+   - In Windows, search for "System Information" and open the app. In the "Version" field, make sure that you are running "Build 19041" or higher.
+
+   - Then, search for "Powershell" in your Start Menu, then right-click and "Run as administrator". Then run the following command:
+
+     .. code::
+
+        wsl --update
+
+   - If this command is successful, then you can proceed to the next step. Otherwise, please update your version of Windows and try again. Additionally, please make sure that you have sufficient administrative privileges for your Windows system.
+
+#. Installing an Ubuntu distribution in Windows Subsystem for Linux (WSL)
 
    - In Windows, search for "Powershell" in your Start Menu, then right-click and "Run as administrator".
 
