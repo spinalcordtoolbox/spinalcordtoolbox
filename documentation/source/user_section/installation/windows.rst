@@ -38,7 +38,7 @@ Basic installation (No GUI)
 
    - After this command finishes, you will be prompted to restart your computer.
 
-   - After restarting, the installation should automatically resume, and you will be able to create an user account inside Ubuntu by selecting a username and password.
+   - After restarting, the installation should automatically resume, and you will be able to create a user account inside Ubuntu by selecting a username and password.
 
 #. Decide between WSL Version 1 or WSL Version 2.
 
