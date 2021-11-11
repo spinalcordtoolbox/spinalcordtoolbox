@@ -24,7 +24,15 @@ Basic installation (No GUI)
 
         wsl --update
 
-   - If this command is successful, then you can proceed to the next step. Otherwise, please update your version of Windows and try again. Additionally, please make sure that you have sufficient administrative privileges for your Windows system.
+   - If this command is successful, then you can proceed to the next step. Otherwise, please try the following troubleshooting steps:
+
+     - Make sure your version of Windows is up to date.
+     - Make sure that you have sufficient administrative privileges for your Windows system.
+     - Make sure the Windows Subsystem for Linux feature is enabled by running the following command:
+
+       .. code::
+
+          dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
 
 #. Installing an Ubuntu distribution in Windows Subsystem for Linux (WSL)
 
