@@ -34,7 +34,7 @@ Basic installation (No GUI)
 
           dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
 
-#. Installing an Ubuntu distribution in Windows Subsystem for Linux (WSL)
+#. Install an Ubuntu distribution in Windows Subsystem for Linux (WSL)
 
    - In Windows, search for "Powershell" in your Start Menu, then right-click and "Run as administrator".
 
@@ -48,7 +48,7 @@ Basic installation (No GUI)
 
    - After restarting, the installation should automatically resume, and you will be able to create a user account inside Ubuntu by selecting a username and password.
 
-#. Decide between WSL Version 1 or WSL Version 2.
+#. Choose the WSL version (1/2).
 
    By default, Microsoft's instructions will create an Ubuntu environment using Version 2 of WSL. While version 2 has been tested to work with SCT, our development team tests more thoroughly using Version 1 of WSL (due to `better support from GitHub Actions <https://github.com/actions/virtual-environments/issues/50>`_).
 
