@@ -17,7 +17,16 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 #. Install Windows Subsystem for Linux (WSL)
 
    - Follow the instructions on Microsoft's `Install WSL <https://docs.microsoft.com/en-us/windows/wsl/install>`_ page.
-   - Note: By default, these instructions will create an Ubuntu environment using Version 2 of WSL. However, SCT can be installed on either WSL1 or WSL2.
+
+#. Decide between WSL Version 1 or WSL Version 2.
+
+   By default, Microsoft's instructions will create an Ubuntu environment using Version 2 of WSL. While version 2 has been tested to work with SCT, our development team tests more thoroughly using Version 1 of WSL (due to `better support from GitHub Actions <https://github.com/actions/virtual-environments/issues/50>`_).
+
+   Because of this, your best guarantee for a stable installation of SCT is to convert the WSL2 Ubuntu environment to use WSL1 before proceeding:
+
+   .. code:
+
+      wsl --set-version Ubuntu 1
 
 #. Environment preparation
 
