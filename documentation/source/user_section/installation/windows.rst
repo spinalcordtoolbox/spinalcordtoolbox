@@ -9,10 +9,10 @@ We provides two different ways to install SCT on Windows machines. You can eithe
 Option 1: Install on Windows 10 with WSL
 ----------------------------------------
 
+Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it possible to run native Linux programs, such as SCT.
+
 Basic installation (No GUI)
 ***************************
-
-Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it possible to run native Linux programs, such as SCT.
 
 #. Make sure that your version of Windows 10 is up to date before continuing.
 
