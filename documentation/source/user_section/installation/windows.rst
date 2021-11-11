@@ -28,7 +28,7 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
       wsl --list --verbose
 
-   You should see a list of installed distributions (as well as their WSL versions). Find the name of the distribution you just installed (which should be something like ``Ubuntu`` or ``Ubuntu-20.04``), then run the following command (replacing "Ubuntu" with the name of the distribution):
+   You should see a list of installed distributions (as well as their WSL versions). Find the name of the distribution you just installed (which should be something like ``Ubuntu`` or ``Ubuntu-20.04``), then run the following command:
 
    .. code::
 
@@ -42,12 +42,12 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
    .. code-block:: sh
 
-      sudo apt-get update && sudo apt-get upgrade
+      sudo apt-get update && sudo apt-get upgrade -y
       sudo apt-get -y install gcc unzip python3-pip python3 psmisc net-tools git gfortran libjpeg-dev
 
 #. Install SCT
 
-   Download SCT:
+   First, download SCT by running the following commands in Ubuntu:
 
    .. code-block:: sh
 
@@ -105,7 +105,7 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
    - Click "Finish", then click "Allow access" when prompted by Windows Firewall.
    - You should now see the X Server icon running in the bottom-right system tray in your taskbar.
 
-#. Next, run the following commands depending on the version of WSL you are using.
+#. Next, run the following commands in Ubuntu, depending on the version of WSL you are using.
 
    WSL1:
 
@@ -123,7 +123,7 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
       echo "export LIBGL_ALWAYS_INDIRECT=0" >> ~/.bashrc
       source ~/.bashrc
 
-#. Finally, run the ``sct_check_dependencies`` command in your terminal to verify that matplotlib and PyQt figures can be opened by SCT.
+#. Finally, run the ``sct_check_dependencies`` command in Ubuntu to verify that matplotlib and PyQt figures can be opened by SCT.
 
 #. Optionally, you can install FSLeyes using the following commands:
 
