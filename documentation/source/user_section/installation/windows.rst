@@ -28,11 +28,7 @@ Basic installation (No GUI)
 
      - Make sure your version of Windows is up to date.
      - Make sure that you have sufficient administrative privileges for your Windows system.
-     - Make sure the Windows Subsystem for Linux feature is enabled by running the following command:
-
-       .. code::
-
-          dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+     - Try the instructions from Microsoft's `"Manual installation steps for older versions of WSL" <https://docs.microsoft.com/en-us/windows/wsl/install-manual>`_ page.
 
 #. Install an Ubuntu distribution in Windows Subsystem for Linux (WSL)
 
