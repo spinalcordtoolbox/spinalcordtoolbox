@@ -171,11 +171,10 @@ Option 2: Install with Docker
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker <https://docs.docker.com/install/>`_. Then, follow the examples below to create an OS-specific SCT installation.
+First, `install Docker <https://docs.docker.com/install/>`_. Then, follow either of the examples below to create an OS-specific SCT installation.
 
-
-Docker Image: Ubuntu
-^^^^^^^^^^^^^^^^^^^^
+Option 1: Ubuntu Docker Image
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: bash
 
@@ -198,8 +197,8 @@ Docker Image: Ubuntu
    docker ps -a  # list all containers
    docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu16.04
 
-Docker Image: CentOS7
-^^^^^^^^^^^^^^^^^^^^^
+Option 2: CentOS7 Docker Image
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: bash
 
