@@ -330,7 +330,7 @@ jobs:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
         #working-directory: /c/Users/runneradmin # run in the Linux filesystem, not the Windows filesystem in /mnt/c
                                                 # this is both faster and tends to avoid weird bugs
-        working-directory: C:\Users\runneradmin
+        #working-directory: C:\Users\runneradmin
     steps:
     - uses: Vampire/setup-wsl@v1
       with:
@@ -347,8 +347,12 @@ jobs:
         # https://github.com/actions/virtual-environments/issues/50#issuecomment-663920265
         git config --global core.autocrlf false
         git config --global core.eol lf
+        echo $HOME
+        cat $HOME/.gitconfig || true
     - name: Dependencies
       run: |
+        cd 
+        pwd
         # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
         # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
