@@ -328,7 +328,7 @@ jobs:
     defaults:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
-        #working-directory: /c/Users/runneradmin # run in the Linux filesystem, not the Windows filesystem in /mnt/c
+        working-directory: /c/Users/runneradmin # run in the Linux filesystem, not the Windows filesystem in /mnt/c
                                                 # this is both faster and tends to avoid weird bugs
     steps:
     - uses: Vampire/setup-wsl@v1
@@ -337,7 +337,7 @@ jobs:
         distribution: Ubuntu-20.04
     - name: Use unix line endings
       shell: bash # this has to be run in the *outer* system because.. actions/checkout is?
-      #working-directory: ....
+      working-directory: /d/a/spinalcordtoolbox/spinalcordtoolbox
       run: |
         pwd
         # Github's actions/checkout@v2 when run on Windows mangles the line-endings to DOS-style
