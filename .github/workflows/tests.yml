@@ -331,8 +331,6 @@ jobs:
         #working-directory: ~/ # run in the Linux filesystem, not the Windows filesystem in /mnt/c
                               # this is both faster and tends to avoid weird bugs
     steps:
-    - run: |
-        echo $HOME
     - uses: Vampire/setup-wsl@v1
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
@@ -340,6 +338,8 @@ jobs:
     - name: Use unix line endings
       shell: bash
       run: |
+        echo $HOME
+        set
         # Github's actions/checkout@v2 when run on Windows mangles the line-endings to DOS-style
         # but we're running Linux *on top* of Windows, so we need to not mangle them!
         # https://github.com/actions/checkout/issues/135#issuecomment-602171132
