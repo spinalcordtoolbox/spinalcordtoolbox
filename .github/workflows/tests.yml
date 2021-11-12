@@ -332,9 +332,7 @@ jobs:
                               # this is both faster and tends to avoid weird bugs
     steps:
     - run: |
-        cat <<EOF
-        ${{ toJSON(github) }}
-        EOF
+        echo $HOME
     - uses: Vampire/setup-wsl@v1
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
