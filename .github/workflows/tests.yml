@@ -328,7 +328,7 @@ jobs:
     defaults:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
-        working-directory: /c/Users/runneradmin # run in the Linux filesystem, not the Windows filesystem in /mnt/c
+        #working-directory: /c/Users/runneradmin # run in the Linux filesystem, not the Windows filesystem in /mnt/c
                                                 # this is both faster and tends to avoid weird bugs
     steps:
     - uses: Vampire/setup-wsl@v1
@@ -336,8 +336,10 @@ jobs:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
         distribution: Ubuntu-20.04
     - name: Use unix line endings
-      shell: bash
+      shell: bash # this has to be run in the *outer* system because.. actions/checkout is?
+      #working-directory: ....
       run: |
+        pwd
         # Github's actions/checkout@v2 when run on Windows mangles the line-endings to DOS-style
         # but we're running Linux *on top* of Windows, so we need to not mangle them!
         # https://github.com/actions/checkout/issues/135#issuecomment-602171132
@@ -350,6 +352,10 @@ jobs:
         # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
     - uses: actions/checkout@v2
+    - name: DEBUG Check on checkout
+      run: |
+        pwd
+        ls -l
     - name: Install SCT
       run: |
         ./.ci.sh -i
