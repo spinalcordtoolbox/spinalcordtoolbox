@@ -336,8 +336,8 @@ jobs:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
         distribution: Ubuntu-20.04
     - name: Use unix line endings
-      shell: bash # this has to be run in the *outer* system because.. actions/checkout is?
-      working-directory: /d/a/spinalcordtoolbox/spinalcordtoolbox
+      #shell: bash # this has to be run in the *outer* system because.. actions/checkout is?
+      #working-directory: /d/a/spinalcordtoolbox/spinalcordtoolbox
       run: |
         pwd
         # Github's actions/checkout@v2 when run on Windows mangles the line-endings to DOS-style
