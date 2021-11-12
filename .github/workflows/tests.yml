@@ -356,7 +356,7 @@ jobs:
     - name: Copy SCT from $GITHUB_WORKSPACE to ~
       run: |
         cd ..
-        cp -r spinalcordtoolbox ~/spinalcordtoolbox
+        cp -rp spinalcordtoolbox ~/spinalcordtoolbox
     - name: Install SCT
       run: |
         cd ~/spinalcordtoolbox
