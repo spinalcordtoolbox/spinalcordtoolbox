@@ -11,7 +11,7 @@ We provides two different ways to install SCT on Windows machines. You can eithe
 Option 1: Install on Windows 10 with WSL
 ----------------------------------------
 
-Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it possible to run native Linux programs, such as SCT.
+Windows Subsystem for Linux (WSL) makes it possible to run native Linux programs, such as SCT, on Windows 10.
 
 Basic installation (No GUI)
 ***************************
@@ -30,7 +30,7 @@ Basic installation (No GUI)
 
      - Make sure your version of Windows is up to date.
      - Make sure that you have sufficient administrative privileges for your Windows system.
-     - Try the instructions from Microsoft's `"Manual installation steps for older versions of WSL" <https://docs.microsoft.com/en-us/windows/wsl/install-manual>`_ page.
+     - If you cannot update Windows, then you can try the instructions from Microsoft's `"Manual installation steps for older versions of WSL" <https://docs.microsoft.com/en-us/windows/wsl/install-manual>`_ page.
 
 #. Install an Ubuntu distribution in Windows Subsystem for Linux (WSL)
 
@@ -56,17 +56,17 @@ Basic installation (No GUI)
 
       wsl --list --verbose
 
-   If WSL installed correctly, you should see a list of installed distributions (as well as their WSL versions). Find the name of the distribution you just installed (which should be something like ``Ubuntu`` or ``Ubuntu-20.04``), then run the following command:
+   If WSL installed correctly, you should see a list of installed distributions (as well as their WSL versions). Find the name of the distribution you just installed (which should be something like ``Ubuntu`` or ``Ubuntu-20.04``), then specify that name in the following command:
 
    .. code::
 
       wsl --set-version Ubuntu 1
 
-   You can then run ``wsl --list --verbose`` again to check that the distribution has changed from WSL2 to WSL1.
+   After you run this command, you can then run ``wsl --list --verbose`` again to check that the distribution has changed from WSL2 to WSL1.
 
 #. Environment preparation
 
-   Now that you have set up an Ubuntu environment with WSL, please open Ubuntu and run the following command to install various packages that will be needed to install SCT.
+   Now that you have set up an Ubuntu environment with WSL, please open Ubuntu and run the following commands to install various packages that will be needed to install SCT.
 
    .. code-block:: sh
 
@@ -83,7 +83,7 @@ Basic installation (No GUI)
       git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
       cd spinalcordtoolbox
 
-   To select a `specific release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, replace X.Y.Z below with the proper release number. If you prefer to use the development version, you can skip this step.
+   To select a `specific release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, replace ``X.Y`` below with the proper release number. If you prefer to use the development version, you can skip this step.
 
    .. code-block:: sh
 
@@ -134,6 +134,10 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
    - Click "Finish", then click "Allow access" when prompted by Windows Firewall.
    - You should now see the X Server icon running in the bottom-right system tray in your taskbar.
 
+   .. note::
+
+      ``XLaunch`` must be running each time you wish to use GUI programs in WSL.
+
 #. Next, run the following commands in Ubuntu, depending on the version of WSL you are using.
 
    WSL1:
@@ -163,7 +167,6 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
       sudo ln -s ~/fsleyes_env/bin/fsleyes /usr/local/bin/fsleyes
 
    These instructions will install FSLeyes into a fresh ``conda`` environment, then create a link to FSLeyes so that you can use the ``fsleyes`` command without having to activate the conda environment each time.
-
 
 .. _docker-installation:
 
