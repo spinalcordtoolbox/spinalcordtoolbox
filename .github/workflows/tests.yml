@@ -285,8 +285,8 @@ jobs:
     defaults:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
-        working-directory: ~/ # run in the Linux filesystem, not the Windows filesystem in /mnt/c
-                              # this is both faster and tends to avoid weird bugs
+        working-directory: /c/Users/runneradmin # run in the Linux filesystem, not the Windows filesystem in /mnt/c
+                                                # this is both faster and tends to avoid weird bugs
     steps:
     - uses: Vampire/setup-wsl@v1
       with:
@@ -328,8 +328,8 @@ jobs:
     defaults:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
-        #working-directory: ~/ # run in the Linux filesystem, not the Windows filesystem in /mnt/c
-                              # this is both faster and tends to avoid weird bugs
+        working-directory: /c/Users/runneradmin # run in the Linux filesystem, not the Windows filesystem in /mnt/c
+                                                # this is both faster and tends to avoid weird bugs
     steps:
     - uses: Vampire/setup-wsl@v1
       with:
@@ -338,8 +338,6 @@ jobs:
     - name: Use unix line endings
       shell: bash
       run: |
-        echo $HOME
-        set
         # Github's actions/checkout@v2 when run on Windows mangles the line-endings to DOS-style
         # but we're running Linux *on top* of Windows, so we need to not mangle them!
         # https://github.com/actions/checkout/issues/135#issuecomment-602171132
