@@ -106,7 +106,7 @@ To facilitate multi-subject analyses, commands can be chained together to build 
 
 **3. GUI (FSLeyes integration)**
 
-SCT provides a provide a graphical user interface via a FSLeyes plugin. For more details, see the `FSLeyes Integration <https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html>`_ page.
+SCT provides a graphical user interface via a FSLeyes plugin. For more details, see the `FSLeyes Integration <https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html>`_ page.
 
 
 Who is using SCT?
