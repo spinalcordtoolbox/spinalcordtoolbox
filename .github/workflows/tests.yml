@@ -328,8 +328,9 @@ jobs:
     defaults:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
-        working-directory: /c/Users/runneradmin # run in the Linux filesystem, not the Windows filesystem in /mnt/c
+        #working-directory: /c/Users/runneradmin # run in the Linux filesystem, not the Windows filesystem in /mnt/c
                                                 # this is both faster and tends to avoid weird bugs
+        working-directory: C:\Users\runneradmin
     steps:
     - uses: Vampire/setup-wsl@v1
       with:
