@@ -85,7 +85,7 @@ Basic installation (No GUI)
 
    .. code-block:: sh
 
-      git checkout X.Y.Z
+      git checkout X.Y
 
    Install SCT:
 
