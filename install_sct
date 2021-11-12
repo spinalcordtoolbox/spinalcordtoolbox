@@ -576,11 +576,11 @@ fi
 
 
 # Remove old python folder
-print info "Installing conda..."
 run rm -rf "$SCT_DIR/$PYTHON_DIR"
 run mkdir -p "$SCT_DIR/$PYTHON_DIR"
 
 # Download miniconda
+print info "Downloading Miniconda..."
 case $OS in
 linux*)
   download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -591,6 +591,7 @@ osx)
 esac
 
 # Run conda installer
+print info "Installing Miniconda..."
 run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 
 # Workaround for WSL "HTTP 000 Connection Failed" error
@@ -599,6 +600,7 @@ run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 
 # create conda environment
+print info "Creating conda environment..."
 python/bin/conda create -y -n venv_sct python=3.7
 
 # Reapply the touch fix to avoid `pip` connection issues on WSL
@@ -621,6 +623,7 @@ conda activate venv_sct
 set -u # reactivate safeties
 
 # double-check conda activated (it can be glitchy): https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3029
+print info "Validating that conda environment can be activated..."
 EXPECTED_PYTHON="$(realpath "$(command -v python/envs/venv_sct/bin/python)")"
 ACTUAL_PYTHON="$(realpath "$(command -v python)")"
 if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
