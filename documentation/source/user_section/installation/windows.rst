@@ -4,7 +4,9 @@
 Installation for Windows
 ************************
 
-We provides two different ways to install SCT on Windows machines. You can either use Windows Subsystem for Linux (WSL), or Docker.
+We provides two different ways to install SCT on Windows machines. You can either use :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>`, or :ref:`Docker <docker-installation>`.
+
+.. _wsl-installation:
 
 Option 1: Install on Windows 10 with WSL
 ----------------------------------------
@@ -162,6 +164,8 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
 
    These instructions will install FSLeyes into a fresh ``conda`` environment, then create a link to FSLeyes so that you can use the ``fsleyes`` command without having to activate the conda environment each time.
 
+
+.. _docker-installation:
 
 Option 2: Install with Docker
 -----------------------------
