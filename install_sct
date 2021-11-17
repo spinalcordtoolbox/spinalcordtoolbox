@@ -325,18 +325,18 @@ if [ "$(uname)" = "Darwin" ]; then
   (command -v realpath >/dev/null) || realpath() {
     python3 -c 'import sys, os; [print(os.path.realpath(f)) for f in sys.argv[1:]]' "$@"
   }
-
-
-  # glue over the difference between how BSD and GNU sed work with -i
-  # https://code-examples.net/en/q/56e314
-  sed_i() {
-    sed -i '' "$@"
-  }
-else
-  sed_i() {
-    sed -i "$@"
-  }
 fi
+
+sed_i() {
+  # glue over the difference between how BSD and GNU sed work with -i
+  # From https://code-examples.net/en/q/56e314:
+  #   "My recommendation, for what it is worth, is not to update-in-place
+  #    with sed (which has complex failure modes), but to generate new files
+  #    and rename them afterwards. In other words: avoid -i."
+  tmp_file="$TMP_DIR/tmp_file_sed_i"
+  sed "$1" "$2" > "$tmp_file"
+  cp -f "$tmp_file" "$2"
+}
 
 # ======================================================================================================================
 # SCRIPT STARTS HERE
