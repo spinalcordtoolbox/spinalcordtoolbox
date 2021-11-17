@@ -115,7 +115,6 @@ function finish() {
   cd "$SCT_SOURCE"
   if [[ "$value" -eq 0 ]]; then
     print info "Installation finished successfully!"
-    rm -r install_sct_log.txt  # if there's no errors, there's no need to keep this log around
   elif [[ "$value" -eq 99 ]]; then
     # Showing usage with -h
     echo ""
