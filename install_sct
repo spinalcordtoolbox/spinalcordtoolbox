@@ -120,8 +120,8 @@ function finish() {
     echo ""
   else
     print error "Installation failed!\n
-Please find the file $(pwd)/install_sct_log.txt and \n
-upload it as a .txt attachment in a new topic on SCT's forum:\n
+Please find the file $(pwd)/install_sct_log.txt, 
+then upload it as a .txt attachment in a new topic on SCT's forum:
 --> http://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
