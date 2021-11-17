@@ -121,7 +121,8 @@ function finish() {
   else
     print error "Installation failed!\n
 Please find the file $(pwd)/install_sct_log.txt and \n
-attach it to a new issue in https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/new so we can help you."
+upload it as a .txt attachment in a new topic on SCT's forum:\n
+--> http://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
   rm -rf "$TMP_DIR"
