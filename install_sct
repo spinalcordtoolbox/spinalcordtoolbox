@@ -330,7 +330,7 @@ if [ "$(uname)" = "Darwin" ]; then
   # glue over the difference between how BSD and GNU sed work with -i
   # https://code-examples.net/en/q/56e314
   sed_i() {
-    sed -i '' "$@"
+    /usr/bin/sed -i '' "$@"
   }
 else
   sed_i() {
