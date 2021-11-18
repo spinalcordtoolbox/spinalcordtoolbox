@@ -631,6 +631,8 @@ if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
   exit 1
 fi
 
+# Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
+python -m pip install -U "pip!=21.2.*"
 
 ## Install the spinalcordtoolbox into the Conda venv
 print info "Installing Python dependencies..."
