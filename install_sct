@@ -29,6 +29,8 @@
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
 
+( # | tee install_sct_log.txt
+
 # stricter shell mode
 # https://sipb.mit.edu/doc/safe-shell/
 set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
@@ -118,7 +120,8 @@ function finish() {
     echo ""
   else
     print error "Installation failed!\n
-Please copy the output of this Terminal (starting with the command install_sct) and upload it as a .txt attachment in a new topic on SCT's forum:\n
+Please find the file $(pwd)/install_sct_log.txt, 
+then upload it as a .txt attachment in a new topic on SCT's forum:
 --> http://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
@@ -759,3 +762,5 @@ else
     die "Installation validation Failed!"
   fi
 fi
+
+) 2>&1 | tee install_sct_log.txt
