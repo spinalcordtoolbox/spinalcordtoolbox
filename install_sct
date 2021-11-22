@@ -29,6 +29,8 @@
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
 
+( # | tee install_sct_log.txt
+
 # stricter shell mode
 # https://sipb.mit.edu/doc/safe-shell/
 set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
@@ -118,7 +120,8 @@ function finish() {
     echo ""
   else
     print error "Installation failed!\n
-Please copy the output of this Terminal (starting with the command install_sct) and upload it as a .txt attachment in a new topic on SCT's forum:\n
+Please find the file $(pwd)/install_sct_log.txt, 
+then upload it as a .txt attachment in a new topic on SCT's forum:
 --> http://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
@@ -324,17 +327,6 @@ if [ "$(uname)" = "Darwin" ]; then
   # this script already is just calling python at least it's reliable.
   (command -v realpath >/dev/null) || realpath() {
     python3 -c 'import sys, os; [print(os.path.realpath(f)) for f in sys.argv[1:]]' "$@"
-  }
-
-
-  # glue over the difference between how BSD and GNU sed work with -i
-  # https://code-examples.net/en/q/56e314
-  sed_i() {
-    sed -i '' "$@"
-  }
-else
-  sed_i() {
-    sed -i "$@"
   }
 fi
 
@@ -613,7 +605,7 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 # * https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3200
 # this needs to be added very early in python's boot process
 # so using sitecustomize.py or even just appending to the file are impossible.
-sed_i 's/^ENABLE_USER_SITE.*$/ENABLE_USER_SITE = False/' "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/lib/python"*"/site.py"
+perl -pi -e 's/^ENABLE_USER_SITE.*$/ENABLE_USER_SITE = False/' "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/lib/python"*"/site.py"
 
 # activate miniconda
 # shellcheck disable=SC1091
@@ -723,11 +715,11 @@ conda deactivate >/dev/null 2>&1
 if [[ -e "$RC_FILE_PATH" ]]; then
     if grep "sct_env" "$RC_FILE_PATH"; then
       print info "In case an old version SCT is already installed (4.0.0-beta.1 or before), remove 'sct_env' declaration in RC file"
-      sed_i '/sct_env/ s/^#*/#/' "$RC_FILE_PATH"
+      perl -pi -e '/sct_env/ s/^#*/#/' "$RC_FILE_PATH"
     fi
     if grep "^export MPLBACKEND=Agg" "$RC_FILE_PATH"; then
       print info "Commenting out 'export MPLBACKEND=Agg' from previous SCT installation"
-      sed_i 's/^export MPLBACKEND=Agg/# The line below has been commented out by a more recent installation of SCT,\
+      perl -pi -e 's/^export MPLBACKEND=Agg/# The line below has been commented out by a more recent installation of SCT,\
 # because export MPLBACKEND=Agg is no longer needed as of SCT v5.4.0\
 # export MPLBACKEND=Agg/' "$RC_FILE_PATH"
     fi
@@ -759,3 +751,5 @@ else
     die "Installation validation Failed!"
   fi
 fi
+
+) 2>&1 | tee install_sct_log.txt
