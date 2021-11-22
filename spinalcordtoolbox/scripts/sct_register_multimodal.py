@@ -157,7 +157,7 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(':', str),
-        help=(f"R|Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
+        help=(f"Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
               f"Example: step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,"
               f"shrink=2\n"
               f"  - step: <int> Step number (starts at 1, except for type=label).\n"
