@@ -55,15 +55,27 @@ DICT_URL = {
     "binaries_osx": [
         "https://osf.io/874cy?action=download",
     ],
-    "course_hawaii17": "https://osf.io/6exht/?action=download",
+    "course_hawaii17": [
+        "https://osf.io/6exht/?action=download",
+        "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/hawaii17.zip",
+    ],
     "course_paris18": [
         "https://osf.io/9bmn5/?action=download",
+        "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/paris18.zip",
     ],
     "course_london19": [
         "https://osf.io/4q3u7/?action=download",
+        "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/london19.zip",
     ],
     "course_beijing19": [
         "https://osf.io/ef4xz/?action=download",
+        "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/beijing19.zip",
+    ],
+    "course_london20": [
+        "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/london20.zip",
+    ],
+    "course_harvard21": [
+        "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20211116.zip",
     ],
     "deepseg_gm_models": [
         "https://github.com/spinalcordtoolbox/deepseg_gm_models/releases/download/r20180205/20180205_deepseg_gm_models.zip",
