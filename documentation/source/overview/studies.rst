@@ -61,7 +61,7 @@ The following studies have used SCT:
 -  Hoggarth *et al.* `Macromolecular changes in spinal cord white matter characterize whiplash outcome at 1-year post motor vehicle collision. <https://www.nature.com/articles/s41598-020-79190-5>`__ **Scientific Reports** 2020
 -  Stroman *et al.* `A comparison of the effectiveness of functional MRI analysis methods for pain research: The new normal. <https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0243723>`__ **PLoS One** 2020
 -  Johnson *et al.* `In vivo detection of microstructural spinal cord lesions in dogs with degenerative myelopathy using diffusion tensor imaging. <https://onlinelibrary.wiley.com/doi/10.1111/jvim.16014>`_ **J Vet Intern Med** 2020
--  Kinawy *et al.* `Dynamic Functional Connectivity of Resting-State Spinal Cord fMRI Reveals Fine-Grained Intrinsic Architecture. <https://pubmed.ncbi.nlm.nih.gov/32910894/>`_ **Neuron** 2020
+-  Kinany *et al.* `Dynamic Functional Connectivity of Resting-State Spinal Cord fMRI Reveals Fine-Grained Intrinsic Architecture. <https://pubmed.ncbi.nlm.nih.gov/32910894/>`_ **Neuron** 2020
 -  Weber *et al.* `Assessing the spatial distribution of cervical spinal cord activity during tactile stimulation of the upper extremity in humans with functional magnetic resonance imaging. <https://www.sciencedirect.com/science/article/pii/S1053811920303918>`_ **Neuroimage 2020**
 -  Azzarito *et al.* `Tracking the neurodegenerative gradient after spinal cord injury. <https://pubmed.ncbi.nlm.nih.gov/32145681/>`_ **NeuroImage Clinical** 2020
 -  Lorenzi *et al.* `Unsuspected Involvement of Spinal Cord in Alzheimer Disease. <https://www.frontiersin.org/articles/10.3389/fncel.2020.00006/full>`__ **Front Cell Neurosci** 2020
