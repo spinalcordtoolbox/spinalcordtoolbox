@@ -111,7 +111,6 @@ def get_parser():
             "If more than two labels are used, a non-linear registration will be applied to align the each "
             "intervertebral disc between the subject and the template, as described in "
             "sct_straighten_spinalcord. This the most accurate method, however it has some caveats: \n"
-            "  - Using more than two labels will only work with disc labels (i.e. '-ldisc')\n"
             "  - This feature is not compatible with the parameter '-ref subject', where only a rigid registration is performed.\n"
             "  - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the top label and below the bottom label. Applying this warping field will result in a strange-looking registered image that has the same value above the top label and below the bottom label. But if you are not interested in these regions, you do not need to worry about it.\n"
             "\n"
@@ -914,10 +913,6 @@ def check_labels(fname_landmarks, label_type='body'):
     image_label = Image(fname_landmarks)
     # -> all labels must be different
     labels = image_label.getNonZeroCoordinates(sorting='value')
-    # check if there is two labels
-    if label_type == 'body' and not len(labels) <= 2:
-        printv('ERROR: Label file has ' + str(len(labels)) + ' label(s). It must contain one or two labels.', 1,
-               'error')
     # check if labels are integer
     for label in labels:
         if not int(label.value) == label.value:
