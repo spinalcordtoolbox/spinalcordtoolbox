@@ -253,7 +253,7 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         # NB: The remaining code is fully custom
         while lines[0] == '':  # Discard empty start lines
             lines = lines[1:]
-        offsets = [re.match("^[ \t]*", l).group(0) for l in lines]
+        offsets = [re.match("^[ \t]*", line).group(0) for line in lines]
         wrapped = []
         for i, li in enumerate(lines):
             if len(li) > 0:
