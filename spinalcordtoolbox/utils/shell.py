@@ -196,7 +196,7 @@ class Metavar(Enum):
         return self.value
 
 
-class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
+class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
     """Custom formatter that inherits from HelpFormatter to apply the same
     tweaks across all of SCT's scripts."""
     def __init__(self, *args, **kw):
@@ -215,6 +215,42 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHel
             return super()._get_help_string(action)
         else:
             return action.help
+
+    # this is the RawTextHelpFormatter._fill_text
+    def _fill_text(self, text, width, indent):
+        import textwrap
+        paragraphs = text.splitlines()
+        rebroken = [textwrap.wrap(tpar, width) for tpar in paragraphs]
+        rebrokenstr = []
+        for tlinearr in rebroken:
+            if len(tlinearr) == 0:
+                rebrokenstr.append("")
+            else:
+                for tlinepiece in tlinearr:
+                    rebrokenstr.append(tlinepiece)
+        return '\n'.join(rebrokenstr)
+
+    # this is the RawTextHelpFormatter._split_lines
+    def _split_lines(self, text, width):
+        import textwrap
+        lines = text.splitlines()
+        while lines[0] == '':  # Discard empty start lines
+            lines = lines[1:]
+        offsets = [re.match("^[ \t]*", l).group(0) for l in lines]
+        wrapped = []
+        for i, li in enumerate(lines):
+            if len(li) > 0:
+                o = offsets[i]
+                ol = len(o)
+                init_wrap = textwrap.fill(li, width).splitlines()
+                first = init_wrap[0]
+                rest = "\n".join(init_wrap[1:])
+                rest_wrap = textwrap.fill(rest, width - ol).splitlines()
+                offset_lines = [o + wl for wl in rest_wrap]
+                wrapped = wrapped + [first] + offset_lines
+            else:
+                wrapped = wrapped + [li]
+        return wrapped
 
 
 def parse_num_list(str_num):
