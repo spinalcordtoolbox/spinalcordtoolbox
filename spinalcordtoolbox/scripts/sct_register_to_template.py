@@ -105,7 +105,7 @@ def get_parser():
             "scaling) will be applied. The strategy here is to define labels that cover the region of interest. For "
             "example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at "
             "C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a "
-            "mis-alignment of discs because a subject''s intervertebral discs distance might differ from that of the "
+            "mis-alignment of discs because a subject's intervertebral discs distance might differ from that of the "
             "template.\n"
             "\n"
             "If more than two labels are used, a non-linear registration will be applied to align the each "
