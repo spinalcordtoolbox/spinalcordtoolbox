@@ -216,10 +216,18 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         else:
             return action.help
 
-    # this is the RawTextHelpFormatter._fill_text
     def _fill_text(self, text, width, indent):
+        """Overrides the default _fill_text method. It takes a single string
+        (`text`) and rebuilds it so that each line wraps at the specified
+        `width`, while also preserving newlines.
+
+        This method is what gets called for the parser's `description` field.
+        """
         import textwrap
+        # NB: text.splitlines() is what's used by argparse.RawTextHelpFormatter
+        #     to preserve newline characters (`\n`) in text.
         paragraphs = text.splitlines()
+        # NB: The remaining code is fully custom
         rebroken = [textwrap.wrap(tpar, width) for tpar in paragraphs]
         rebrokenstr = []
         for tlinearr in rebroken:
@@ -230,10 +238,19 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
                     rebrokenstr.append(tlinepiece)
         return '\n'.join(rebrokenstr)
 
-    # this is the RawTextHelpFormatter._split_lines
     def _split_lines(self, text, width):
+        """Overrides the default _split_lines method. It takes a single string
+        (`text`) and rebuilds it so that each line wraps at the specified
+        `width`, while also preserving newlines, as well as any offsets within
+        the text (e.g. indented lists).
+
+        This method is what gets called for each argument's `help` field.
+        """
         import textwrap
+        # NB: text.splitlines() is what's used by argparse.RawTextHelpFormatter
+        #     to preserve newline characters (`\n`) in text.
         lines = text.splitlines()
+        # NB: The remaining code is fully custom
         while lines[0] == '':  # Discard empty start lines
             lines = lines[1:]
         offsets = [re.match("^[ \t]*", l).group(0) for l in lines]
