@@ -94,32 +94,32 @@ TASKS = {
     'seg_sc_t2star':
         {'description': 'Cord segmentation on T2*-weighted contrast.',
          'long_description': ' ',
-         'url': ' ',
+         'url': 'https://github.com/ivadomed/t2star_sc',
          'models': ['t2star_sc']},
     'seg_mice_sc':
         {'description': 'Cord segmentation on mouse MRI.',
          'long_description': ' ',
-         'url': ' ',
+         'url': 'https://github.com/ivadomed/mice_uqueensland_sc/',
          'models': ['mice_uqueensland_sc']},
     'seg_mice_gm':
         {'description': 'Gray matter segmentation on mouse MRI.',
          'long_description': ' ',
-         'url': ' ',
+         'url': 'https://github.com/ivadomed/mice_uqueensland_gm/',
          'models': ['mice_uqueensland_gm']},
     'seg_tumor_t2':
         {'description': 'Cord tumor segmentation on T2-weighted contrast.',
          'long_description': ' ',
-         'url': ' ',
+         'url': 'https://github.com/ivadomed/t2_tumor',
          'models': ['findcord_tumor', 't2_tumor']},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor segmentation.',
          'long_description': ' ',
-         'url': ' ',
+         'url': 'https://github.com/ivadomed/model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel',
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']},
     'seg_exvivo_gm-wm_t2':
         {'description': 'Grey/white matter seg on exvivo human T2w.',
          'long_description': ' ',
-         'url': ' ',
+         'url': 'https://github.com/ivadomed/model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg',
          'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']},
     'seg_gm_sc_7t_t2s':
         {'description': 'SC/GM seg on T2*-weighted contrast at 7T',
