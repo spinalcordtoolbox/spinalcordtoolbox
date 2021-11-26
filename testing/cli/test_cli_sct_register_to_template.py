@@ -33,9 +33,10 @@ def test_sct_register_to_template_non_rpi_template(tmp_path, template_lpi):
                                         '-s', 'sct_testing_data/template/template/PAM50_small_cord.nii.gz',
                                         '-ldisc', 'sct_testing_data/template/template/PAM50_small_label_disc.nii.gz',
                                         '-c', 't2', '-t', template_lpi, '-ref', 'subject',
-                                        '-param', 'step=1,type=seg,algo=centermass', '-r', '0', '-v', '2'])
+                                        '-param', 'step=1,type=seg,algo=centermass',
+                                        '-ofolder', str(tmp_path), '-r', '0', '-v', '2'])
     img_orig = Image('sct_testing_data/template/template/PAM50_small_t2.nii.gz')
-    img_reg = Image('template2anat.nii.gz')
+    img_reg = Image(str(tmp_path/'template2anat.nii.gz'))
     # Check if both images almost overlap. If they are right-left flipped, distance should be above threshold
     assert np.linalg.norm(img_orig.data - img_reg.data) < 1
 
@@ -50,9 +51,10 @@ def test_sct_register_to_template_non_rpi_data(tmp_path, template_lpi):
                                         '-s', f'{template_lpi}/template/PAM50_small_cord.nii.gz',
                                         '-ldisc', f'{template_lpi}/template/PAM50_small_label_disc.nii.gz',
                                         '-c', 't2', '-t', 'sct_testing_data/template', '-ref', 'subject',
-                                        '-param', 'step=1,type=seg,algo=centermass', '-r', '0', '-v', '2'])
+                                        '-param', 'step=1,type=seg,algo=centermass',
+                                        '-ofolder', str(tmp_path), '-r', '0', '-v', '2'])
     img_orig = Image(f'{template_lpi}/template/PAM50_small_t2.nii.gz')
-    img_reg = Image('template2anat.nii.gz')
+    img_reg = Image(str(tmp_path/'template2anat.nii.gz'))
     # Check if both images almost overlap. If they are right-left flipped, distance should be above threshold
     assert np.linalg.norm(img_orig.data - img_reg.data) < 1
 

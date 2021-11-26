@@ -71,5 +71,6 @@ def test_sct_label_vertebrae_disc_discontinuity_center_of_mass_error(tmp_path, c
 
     # Ensure the discontinuity is detected and an interpolated centerline is used instead
     sct_label_vertebrae.main(['-i', 'sct_testing_data/t2/t2.nii.gz', '-s', path_out, '-c', 't2',
-                              '-initfile', 'sct_testing_data/t2/init_label_vertebrae.txt'])
+                              '-initfile', 'sct_testing_data/t2/init_label_vertebrae.txt',
+                              '-ofolder', str(tmp_path)])
     assert "Using interpolated centerline" in caplog.text
