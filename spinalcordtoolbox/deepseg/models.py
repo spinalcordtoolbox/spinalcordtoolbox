@@ -93,32 +93,66 @@ MODELS = {
 TASKS = {
     'seg_sc_t2star':
         {'description': 'Cord segmentation on T2*-weighted contrast.',
-         'long_description': ' ',
+         'long_description': 'This segmentation model for T2*w spinal cords uses the UNet architecture, and was created '
+                             'with the `ivadomed` package. A subset of a private dataset (sct_testing_large) was used, '
+                             'and consists of 236 subjects across 9 different sessions. A total of 388 pairs of T2* '
+                             'images were used (anatomical image + manual cord segmentation). The image properties '
+                             'include various orientations (superior, inferior) and crops (C1-C3, C4-C7, etc.). The '
+                             'dataset was comprised of both non-pathological (healthy) and pathological (MS lesion) '
+                             'adult patients.',
          'url': 'https://github.com/ivadomed/t2star_sc',
          'models': ['t2star_sc']},
     'seg_mice_sc':
         {'description': 'Cord segmentation on mouse MRI.',
-         'long_description': ' ',
+         'long_description': 'This segmentation model for T1w mouse spinal cord segmentation uses the UNet '
+                             'architecture, and was created with the `ivadomed` package. Training data was provided by '
+                             'Dr. A. Althobathi of the University of Queensland, with the files consisting of T1w '
+                             'scans (and manual spinal cord segmentations) from 10 mice in total. The dataset was '
+                             'comprised of both non-pathological (healthy) and pathological (diseased) mice.',
          'url': 'https://github.com/ivadomed/mice_uqueensland_sc/',
          'models': ['mice_uqueensland_sc']},
     'seg_mice_gm':
         {'description': 'Gray matter segmentation on mouse MRI.',
-         'long_description': ' ',
+         'long_description': 'This segmentation model for T1w mouse spinal gray matter segmentation uses the UNet '
+                             'architecture, and was created with the `ivadomed` package. Training data was provided by '
+                             'Dr. A. Althobathi of the University of Queensland, with the files consisting of T1w '
+                             'scans (and manual spinal cord segmentations) from 10 mice in total. The manual '
+                             'segmentations were then processed using the `sct_deepseg_gm` to obtain gray matter '
+                             'segmentations, which were then used in training. The dataset was comprised of both '
+                             'non-pathological (healthy) and pathological (diseased) mice.',
          'url': 'https://github.com/ivadomed/mice_uqueensland_gm/',
          'models': ['mice_uqueensland_gm']},
     'seg_tumor_t2':
         {'description': 'Cord tumor segmentation on T2-weighted contrast.',
-         'long_description': ' ',
-         'url': 'https://github.com/ivadomed/t2_tumor',
+         'long_description': 'This segmentation model for T2w spinal tumor segmentation uses the UNet '
+                             'architecture, and was created with the `ivadomed` package. Training data consisted of '
+                             '380 pathological subjects in total: 120 with tumors of type Astrocytoma, 129 with '
+                             'Ependymoma, and 131 with Hemangioblastoma. This model is used in tandem with another '
+                             'model for specialized cord localisation of spinal cords with tumors '
+                             '(https://github.com/ivadomed/findcord_tumor).',
+         'url': 'https://github.com/sct-pipeline/tumor-segmentation',
          'models': ['findcord_tumor', 't2_tumor']},
     'seg_tumor-edema-cavity_t1-t2':
-        {'description': 'Multiclass cord tumor segmentation.',
-         'long_description': ' ',
+        {'description': 'Multiclass cord tumor/edema/cavity segmentation.',
+         'long_description': 'This segmentation model for T1w and T2w spinal tumor, edema, and cavity segmentation uses '
+                             'a 3D UNet architecture, and was created with the `ivadomed` package. Training data '
+                             'consisted of a subset of the dataset used for the model `seg_tumor_t2`, with 243 '
+                             'subjects in total: 49 with tumors of type Astrocytoma, 83 with Ependymoma, and 111 with '
+                             'Hemangioblastoma. For each subject, the requisite parts of the affected region (tumor, '
+                             'edema, cavity) were segmented individually for training purposes. This model is used in '
+                             'tandem with another model for specialized cord localisation of spinal cords with tumors '
+                             '(https://github.com/ivadomed/findcord_tumor).',
          'url': 'https://github.com/ivadomed/model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel',
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']},
     'seg_exvivo_gm-wm_t2':
         {'description': 'Grey/white matter seg on exvivo human T2w.',
-         'long_description': ' ',
+         'long_description': 'This segmentation model for T2w human spinal gray and white matter uses a 2D Unet '
+                             'architecture, and was created with the `ivadomed` package. Training data consisted '
+                             'of 149 2D slices taken from the scan of an ex vivo spinal cord of a single subject, with '
+                             'the gray and white matter from each slice manually segmented for training purposes. The'
+                             'data was provided by the University of Queenland, and through this collaboration, the '
+                             'model was subsequently applied to the development of an ex vivo spinal cord template '
+                             '(https://archive.ismrm.org/2020/1171.html).',
          'url': 'https://github.com/ivadomed/model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg',
          'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']},
     'seg_gm_sc_7t_t2s':
