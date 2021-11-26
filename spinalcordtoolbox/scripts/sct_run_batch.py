@@ -53,7 +53,7 @@ def get_parser():
     )
 
     parser.add_argument('-config', '-c',
-                        help='R|'
+                        help=''
                         'A json (.json) or yaml (.yml|.yaml) file with arguments. All arguments to the configuration '
                         'file are the same as the command line arguments, except all dashes (-) are replaced with '
                         'underscores (_). Using command line flags can be used to override arguments provided in '
@@ -74,7 +74,7 @@ def get_parser():
                             }\n
                             """))
     parser.add_argument('-jobs', type=int, default=1,
-                        help='R|The number of jobs to run in parallel. Either an integer greater than or equal to one '
+                        help='The number of jobs to run in parallel. Either an integer greater than or equal to one '
                         'specifying the number of cores, 0 or a negative integer specifying number of cores minus '
                         'that number. For example \'-jobs -1\' will run with all the available cores minus one job in '
                         'parallel. Set \'-jobs 0\' to use all available cores.\n'
@@ -82,21 +82,21 @@ def get_parser():
                         'parallelism. You may need to tweak both to find a balance that works best for your system.',
                         metavar=Metavar.int)
     parser.add_argument('-itk-threads', type=int, default=1,
-                        help='R|Sets the environment variable "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS".\n'
+                        help='Sets the environment variable "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS".\n'
                         'Number of threads to use for ITK based programs including ANTs. Increasing this can '
                         'provide a performance boost for high-performance (multi-core) computing environments. '
                         'However, increasing the number of threads may also result in a large increase in memory.\n'
                         'This argument enables thread-based parallelism, while \'-jobs\' enables process-based '
                         'parallelism. You may need to tweak both to find a balance that works best for your system.',
                         metavar=Metavar.int)
-    parser.add_argument('-path-data', help='R|Setting for environment variable: PATH_DATA\n'
+    parser.add_argument('-path-data', help='Setting for environment variable: PATH_DATA\n'
                         'Path containing subject directories in a consistent format')
     parser.add_argument('-subject-prefix', default='sub-',
                         help='Subject prefix, defaults to "sub-" which is the prefix used for BIDS directories. '
                         'If the subject directories do not share a common prefix, an empty string can be '
                         'passed here.')
     parser.add_argument('-path-output', default='./',
-                        help='R|Base directory for environment variables:\n'
+                        help='Base directory for environment variables:\n'
                         'PATH_DATA_PROCESSED=' + os.path.join('<path-output>', 'data_processed') + '\n'
                         'PATH_RESULTS=' + os.path.join('<path-output>', 'results') + '\n'
                         'PATH_QC=' + os.path.join('<path-output>', 'qc') + '\n'
@@ -124,7 +124,7 @@ def get_parser():
                         'a subject if they are not on this list. Inclusions are processed before exclusions. '
                         'Cannot be used with either `exclude`.', nargs='+')
     parser.add_argument('-path-segmanual', default='.',
-                        help='R|Setting for environment variable: PATH_SEGMANUAL\n'
+                        help='Setting for environment variable: PATH_SEGMANUAL\n'
                         'A path containing manual segmentations to be used by the script program.')
     parser.add_argument('-script-args', default='',
                         help='A quoted string with extra flags and arguments to pass to the script. '
