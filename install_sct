@@ -603,7 +603,7 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 # see also
 # * https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3067
 # * https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3200
-conda env config vars set PYTHONNOUSERSITE=1 -n venv_sct
+python/bin/conda env config vars set PYTHONNOUSERSITE=1 -n venv_sct
 
 # activate miniconda
 # shellcheck disable=SC1091
