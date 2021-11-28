@@ -599,11 +599,11 @@ python/bin/conda create -y -n venv_sct python=3.7
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 
 # make sure that there is no conflict with local python install by making venv_sct an isolated environment.
-# thanks @javidcf https://github.com/conda/conda/issues/7173#issuecomment-884098367
+# The fix comes from https://docs.python.org/3/library/site.html#module-site
 # see also
-# * https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3067
 # * https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3200
-python/bin/conda env config vars set PYTHONNOUSERSITE=1 -n venv_sct
+# * https://github.com/conda/conda/issues/7173#issuecomment-980496682
+echo "include-system-site-packages = false" > $SCT_DIR/$PYTHON_DIR/envs/venv_sct/pyvenv.cfg
 
 # activate miniconda
 # shellcheck disable=SC1091
