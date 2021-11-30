@@ -175,6 +175,26 @@ function fetch_os_type() {
   fi
 }
 
+# Source: https://stackoverflow.com/a/68148776
+function fetch_arch() {
+  uname_arch="$(uname -m)"  # -i is only linux, -m is linux and apple
+  if [[ "$uname_arch" = x86_64* ]]; then
+    if [[ "$(uname -a)" = *ARM64* ]]; then
+      ARCH='a64'
+    else
+      ARCH='x64'
+    fi
+  elif [[ "$uname_arch" = i*86 ]]; then
+    ARCH='x32'
+  elif [[ "$uname_arch" = arm* ]]; then
+    ARCH='a32'
+  elif test "$uname_arch" = aarch64; then
+    ARCH='a64'
+  else
+    exit 1
+  fi
+}
+
 # Checks if the necessary tools for SCT are installed on the machine
 function check_requirements() {
   print info "Checking requirements..."
@@ -644,20 +664,27 @@ fi
 ) ||
   die "Failed running pip install: $?"
 
-## Check if installed TF/Keras requirements throw instruction set errors
-if grep -q 'The TensorFlow library was compiled to use\|Illegal instruction' <<< "$(python3 -c "import keras; print(keras.__version__)" 2>&1)"; then
-    print info "Instruction set error thrown by TensorFlow!"
-    print info "Installing a version of TensorFlow compiled for older CPUs..."
+## Check if CPU supports AVX instruction set, and install precompiled TensorFlow if it isn't,
+case $OS in
+linux*)
+  if ! lscpu | grep -q " avx "; then
+    print info "AVX is not supported by this CPU! Installing a version of TensorFlow compiled for older CPUs..."
     pip uninstall tensorflow -y
-    case $OS in
-    linux*)
-      pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
-      ;;
-    osx)
-      pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.0-py3-none-any.whl
-      ;;
-    esac
-fi
+    pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
+  else
+    print info "AVX is supported on this Linux machine. Keeping default TensorFlow..."
+  fi
+  ;;
+osx)
+  if sysctl machdep.cpu.brand_string | grep -q "Apple M1"; then
+    print info "AVX is not supported on M1 Macs! Installing a version of TensorFlow compiled for M1 Macs..."
+    pip uninstall tensorflow -y
+    pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.0-py3-none-any.whl
+  else
+    print info "AVX is supported on this macOS machine. Keeping default TensorFlow..."
+  fi
+  ;;
+esac
 
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."
