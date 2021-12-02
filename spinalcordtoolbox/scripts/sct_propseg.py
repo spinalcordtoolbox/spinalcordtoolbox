@@ -447,7 +447,7 @@ def propseg(img_input, options_dict):
         fname_out = os.path.basename(add_suffix(fname_data, "_seg"))
 
     if arguments.ofolder is not None:
-        folder_output = arguments.ofolder
+        folder_output = os.path.abspath(arguments.ofolder)
     else:
         folder_output = str(pathlib.Path(fname_out).parent)
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
