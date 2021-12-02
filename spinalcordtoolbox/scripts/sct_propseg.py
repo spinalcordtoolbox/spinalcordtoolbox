@@ -54,12 +54,12 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_centerline = convert(Image(fname_centerline))
     im_centerline.save(os.path.join(path_tmp, "tmp.centerline.nii.gz"), mutable=True, verbose=0)
 
-    # go to tmp folder
+    # go to tmp folder (and store original info to use when converting back at the end)
+    fname_seg_absolute = os.path.abspath(fname_segmentation)
     curdir = os.getcwd()
     os.chdir(path_tmp)
 
-    # convert input to RPI (and store original info to use when converting back at the end)
-    fname_seg_absolute = os.path.abspath(fname_segmentation)
+    # convert input to RPI
     image_input_orientation = im_seg.orientation
     sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz -v 0".split())
     sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz -v 0".split())
