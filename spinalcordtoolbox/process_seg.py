@@ -166,7 +166,7 @@ def _properties2d(image, dim):
     minx, miny, maxx, maxy = region.bbox
     # Use those bounding box coordinates to crop the image (for faster processing)
     image_crop = image_norm[np.clip(minx-pad, 0, image_bin.shape[0]): np.clip(maxx+pad, 0, image_bin.shape[0]),
-                 np.clip(miny-pad, 0, image_bin.shape[1]): np.clip(maxy+pad, 0, image_bin.shape[1])]
+                            np.clip(miny-pad, 0, image_bin.shape[1]): np.clip(maxy+pad, 0, image_bin.shape[1])]
     # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
     # NB: channel_axis=None fixes https://github.com/scikit-image/scikit-image/issues/6092
     #     TODO: Revisit when skimage 0.19.1 is released
