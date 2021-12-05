@@ -196,7 +196,7 @@ class Metavar(Enum):
         return self.value
 
 
-class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHelpFormatter):
+class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
     """Custom formatter that inherits from HelpFormatter to apply the same
     tweaks across all of SCT's scripts."""
     def __init__(self, *args, **kw):
@@ -215,6 +215,59 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter, argparse.RawTextHel
             return super()._get_help_string(action)
         else:
             return action.help
+
+    def _fill_text(self, text, width, indent):
+        """Overrides the default _fill_text method. It takes a single string
+        (`text`) and rebuilds it so that each line wraps at the specified
+        `width`, while also preserving newlines.
+
+        This method is what gets called for the parser's `description` field.
+        """
+        import textwrap
+        # NB: text.splitlines() is what's used by argparse.RawTextHelpFormatter
+        #     to preserve newline characters (`\n`) in text.
+        paragraphs = text.splitlines()
+        # NB: The remaining code is fully custom
+        rebroken = [textwrap.wrap(tpar, width) for tpar in paragraphs]
+        rebrokenstr = []
+        for tlinearr in rebroken:
+            if len(tlinearr) == 0:
+                rebrokenstr.append("")
+            else:
+                for tlinepiece in tlinearr:
+                    rebrokenstr.append(tlinepiece)
+        return '\n'.join(rebrokenstr)
+
+    def _split_lines(self, text, width):
+        """Overrides the default _split_lines method. It takes a single string
+        (`text`) and rebuilds it so that each line wraps at the specified
+        `width`, while also preserving newlines, as well as any offsets within
+        the text (e.g. indented lists).
+
+        This method is what gets called for each argument's `help` field.
+        """
+        import textwrap
+        # NB: text.splitlines() is what's used by argparse.RawTextHelpFormatter
+        #     to preserve newline characters (`\n`) in text.
+        lines = text.splitlines()
+        # NB: The remaining code is fully custom
+        while lines[0] == '':  # Discard empty start lines
+            lines = lines[1:]
+        offsets = [re.match("^[ \t]*", line).group(0) for line in lines]
+        wrapped = []
+        for i, li in enumerate(lines):
+            if len(li) > 0:
+                o = offsets[i]
+                ol = len(o)
+                init_wrap = textwrap.fill(li, width).splitlines()
+                first = init_wrap[0]
+                rest = "\n".join(init_wrap[1:])
+                rest_wrap = textwrap.fill(rest, width - ol).splitlines()
+                offset_lines = [o + wl for wl in rest_wrap]
+                wrapped = wrapped + [first] + offset_lines
+            else:
+                wrapped = wrapped + [li]
+        return wrapped
 
 
 def parse_num_list(str_num):
