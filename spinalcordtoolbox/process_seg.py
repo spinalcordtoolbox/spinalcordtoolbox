@@ -166,9 +166,11 @@ def _properties2d(image, dim):
     minx, miny, maxx, maxy = region.bbox
     # Use those bounding box coordinates to crop the image (for faster processing)
     image_crop = image_norm[np.clip(minx-pad, 0, image_bin.shape[0]): np.clip(maxx+pad, 0, image_bin.shape[0]),
-                 np.clip(miny-pad, 0, image_bin.shape[1]): np.clip(maxy+pad, 0, image_bin.shape[1])]
+                            np.clip(miny-pad, 0, image_bin.shape[1]): np.clip(maxy+pad, 0, image_bin.shape[1])]
     # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
-    image_crop_r = transform.pyramid_expand(image_crop, upscale=upscale, sigma=None, order=1)
+    # NB: channel_axis=None fixes https://github.com/scikit-image/scikit-image/issues/6092
+    #     TODO: Revisit when skimage 0.19.1 is released
+    image_crop_r = transform.pyramid_expand(image_crop, upscale=upscale, sigma=None, order=1, channel_axis=None)
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
     image_crop_r_bin = np.array(image_crop_r > 0.5, dtype='uint8')
     # Get all closed binary regions from the image (normally there is only one)
