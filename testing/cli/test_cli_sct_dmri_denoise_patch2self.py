@@ -56,7 +56,7 @@ def dmri_concat(dmri_single_volumes, tmp_path):
     # Duplicating the last volume is the easiest way to get a "realistic"
     # 10+ volume dMRI image with the volumes we have access to.
     for volume_number in ([0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 6]):
-        order.append('b0' if volume_number is 0 else 'dwi')
+        order.append('b0' if volume_number == 0 else 'dwi')
         paths_imgs.append(dmri_single_volumes[0][volume_number])
         if volume_number != 0:  # bvals/bvecs only relevant for DWI images
             paths_bvals.append(dmri_single_volumes[1][volume_number])
