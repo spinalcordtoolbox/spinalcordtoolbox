@@ -35,14 +35,15 @@ def get_parser():
         "-i",
         default=None,
         required=True,
-        help="Input NIFTI image to be denoised. Example: image_input.nii.gz",
+        help="Input NIfTI image to be denoised. Example: image_input.nii.gz",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-b",
         default=None,
         required=True,
-        help="Input NIFTI image to be denoised. Example: filename.bval",
+        help="Input bvals file corresponding to the NIfTI file to be denoised."
+             " Example: filename.bval",
         metavar=Metavar.file,
     )
 
