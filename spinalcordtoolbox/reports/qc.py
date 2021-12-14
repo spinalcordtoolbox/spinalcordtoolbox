@@ -240,7 +240,7 @@ class QcImage(object):
                   cmap=color.ListedColormap(self._color_bin_red),
                   norm=color.Normalize(vmin=0, vmax=1),
                   interpolation=self.interpolation,
-                  alpha=10,
+                  alpha=1,
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
