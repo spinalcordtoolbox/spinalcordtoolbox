@@ -61,7 +61,7 @@ def get_parser():
         default="ols")
     optional.add_argument(
         "-radius",
-        help="R|Patch Radius used to generate p-neighbourhoods within Patch2Self. Notes:\n"
+        help="Patch Radius used to generate p-neighbourhoods within Patch2Self. Notes:\n"
              "- A radius of '0' will use 1x1x1 p-neighbourhoods, a radius of '1' will use "
              "3x3x3 p-neighbourhoods, and so on.\n"
              "- For ansiotropic patch sizes, provide a comma-delimited list of 3 integers. "
