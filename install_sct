@@ -29,6 +29,8 @@
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
 
+( # | tee install_sct_log.txt
+
 # stricter shell mode
 # https://sipb.mit.edu/doc/safe-shell/
 set -eo pipefail  # exit if non-zero error is encountered (even in a pipeline)
@@ -118,7 +120,8 @@ function finish() {
     echo ""
   else
     print error "Installation failed!\n
-Please copy the output of this Terminal (starting with the command install_sct) and upload it as a .txt attachment in a new topic on SCT's forum:\n
+Please find the file $(pwd)/install_sct_log.txt, 
+then upload it as a .txt attachment in a new topic on SCT's forum:
 --> http://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
@@ -324,17 +327,6 @@ if [ "$(uname)" = "Darwin" ]; then
   # this script already is just calling python at least it's reliable.
   (command -v realpath >/dev/null) || realpath() {
     python3 -c 'import sys, os; [print(os.path.realpath(f)) for f in sys.argv[1:]]' "$@"
-  }
-
-
-  # glue over the difference between how BSD and GNU sed work with -i
-  # https://code-examples.net/en/q/56e314
-  sed_i() {
-    sed -i '' "$@"
-  }
-else
-  sed_i() {
-    sed -i "$@"
   }
 fi
 
@@ -576,11 +568,11 @@ fi
 
 
 # Remove old python folder
-print info "Installing conda..."
 run rm -rf "$SCT_DIR/$PYTHON_DIR"
 run mkdir -p "$SCT_DIR/$PYTHON_DIR"
 
 # Download miniconda
+print info "Downloading Miniconda..."
 case $OS in
 linux*)
   download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -591,19 +583,26 @@ osx)
 esac
 
 # Run conda installer
+print info "Installing Miniconda..."
 run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 
-# create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
-python/bin/conda create -y -n venv_sct python=3.6
+# Workaround for WSL "HTTP 000 Connection Failed" error
+# See: https://github.com/conda/conda/issues/9948#issuecomment-909989810
+# Syntax explanation: https://stackoverflow.com/a/6085237
+find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
+
+# create conda environment
+print info "Creating conda environment..."
+python/bin/conda create -y -n venv_sct python=3.7
+
+# Reapply the touch fix to avoid `pip` connection issues on WSL
+find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 
 # make sure that there is no conflict with local python install by making venv_sct an isolated environment.
-# workaround for https://github.com/conda/conda/issues/7173
-# see also
-# * https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3067
-# * https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3200
-# this needs to be added very early in python's boot process
-# so using sitecustomize.py or even just appending to the file are impossible.
-sed_i 's/^ENABLE_USER_SITE.*$/ENABLE_USER_SITE = False/' "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/lib/python"*"/site.py"
+# For more information, see:
+# * Issue details: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3067
+# * Fix details: https://github.com/conda/conda/issues/7173#issuecomment-980496682
+echo "include-system-site-packages = false" > $SCT_DIR/$PYTHON_DIR/envs/venv_sct/pyvenv.cfg
 
 # activate miniconda
 # shellcheck disable=SC1091
@@ -613,6 +612,7 @@ conda activate venv_sct
 set -u # reactivate safeties
 
 # double-check conda activated (it can be glitchy): https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3029
+print info "Validating that conda environment can be activated..."
 EXPECTED_PYTHON="$(realpath "$(command -v python/envs/venv_sct/bin/python)")"
 ACTUAL_PYTHON="$(realpath "$(command -v python)")"
 if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
@@ -620,6 +620,8 @@ if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
   exit 1
 fi
 
+# Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
+python -m pip install -U "pip!=21.2.*"
 
 ## Install the spinalcordtoolbox into the Conda venv
 print info "Installing Python dependencies..."
@@ -634,19 +636,29 @@ else
 fi
 (
   pip install -r "$REQUIREMENTS_FILE" &&
-  # `tensorflow-tensorboard` is installed by `tensorflow==1.5.0` but is not needed,
-  # and conflicts with the other installation of `tensorboard`. So, we uninstall here.
-  # This is hacky, and should be removed as soon as we stop using `tensorflow==1.5.0`.
-  # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3035 for more info.
-  pip uninstall -y tensorflow-tensorboard &&
-  pip uninstall -y tensorboard &&
-  pip install tensorboard &&
-  # install sct itself
   print info "Installing spinalcordtoolbox..." &&
   pip install -e .
 ) ||
   die "Failed running pip install: $?"
 
+
+## Check if installed TF/Keras requirements throw instruction set errors
+if python3 -c "import keras; print(keras.__version__)" 2>&1 | grep -q 'The TensorFlow library was compiled to use'; then
+    case $OS in
+    linux*)
+      echo "Instruction set error thrown by TensorFlow!"
+      echo "Installing a version of TensorFlow compiled for older CPUs..."
+      pip uninstall tensorflow -y
+      pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
+      ;;
+    osx)
+      # We haven't yet compiled an AVX-less TensorFlow wheel for macOS. This case should be practically non-existent, as
+      # Westmere-based Macs were discontinued in 2011/2013, and there is greater pressure to upgrade for Apple devices.
+      # So, in this case, do nothing, and let `sct_check_dependencies` catch this error instead.
+      :
+      ;;
+    esac
+fi
 
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."
@@ -700,11 +712,11 @@ conda deactivate >/dev/null 2>&1
 if [[ -e "$RC_FILE_PATH" ]]; then
     if grep "sct_env" "$RC_FILE_PATH"; then
       print info "In case an old version SCT is already installed (4.0.0-beta.1 or before), remove 'sct_env' declaration in RC file"
-      sed_i '/sct_env/ s/^#*/#/' "$RC_FILE_PATH"
+      perl -pi -e '/sct_env/ s/^#*/#/' "$RC_FILE_PATH"
     fi
     if grep "^export MPLBACKEND=Agg" "$RC_FILE_PATH"; then
       print info "Commenting out 'export MPLBACKEND=Agg' from previous SCT installation"
-      sed_i 's/^export MPLBACKEND=Agg/# The line below has been commented out by a more recent installation of SCT,\
+      perl -pi -e 's/^export MPLBACKEND=Agg/# The line below has been commented out by a more recent installation of SCT,\
 # because export MPLBACKEND=Agg is no longer needed as of SCT v5.4.0\
 # export MPLBACKEND=Agg/' "$RC_FILE_PATH"
     fi
@@ -736,3 +748,5 @@ else
     die "Installation validation Failed!"
   fi
 fi
+
+) 2>&1 | tee install_sct_log.txt

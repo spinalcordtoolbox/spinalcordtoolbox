@@ -19,12 +19,13 @@
 import sys
 import os
 import logging
-
+import pandas as pd
+import argparse
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
-    func_sum, merge_dict
+    func_sum, merge_dict, normalize_csa
 from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
@@ -32,10 +33,24 @@ from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
 
 logger = logging.getLogger(__name__)
+
+
+class SeparateNormArgs(argparse.Action):
+    """Separates predictors from their values and puts the results in a dict"""
+    def __call__(self, parser, namespace, values, option_string=None):
+        pred = values[::2]
+        val = values[1::2]
+        if len(pred) != len(val):
+            raise parser.error("Values for normalization need to be specified for each predictor.")
+        try:
+            data_subject = {p: float(v) for p, v in zip(pred, val)}
+        except ValueError as e:
+            raise parser.error(f"Non-numeric value passed to '-normalize': {e}")
+        setattr(namespace, self.dest, data_subject)
 
 
 def get_parser():
@@ -47,7 +62,7 @@ def get_parser():
         description=(
             "Compute the following morphometric measures based on the spinal cord segmentation:\n"
             "  - area [mm^2]: Cross-sectional area, measured by counting pixels in each slice. Partial volume can be "
-            "accounted for by inputing a mask comprising values within [0,1].\n"
+            "accounted for by inputing a mask comprising values within [0,1]. Can be normalized when specifying the flag -normalize\n"
             "  - angle_AP, angle_RL: Estimated angle between the cord centerline and the axial slice. This angle is "
             "used to correct for morphometric information.\n"
             "  - diameter_AP, diameter_RL: Finds the major and minor axes of the cord and measure their length.\n"
@@ -127,7 +142,7 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.str,
         default='./label/template/PAM50_levels.nii.gz',
-        help="R|Vertebral labeling file. Only use with flag -vert.\n"
+        help="Vertebral labeling file. Only use with flag -vert.\n"
         "The input and the vertebral labelling file must in the same voxel coordinate system "
         "and must match the dimensions between each other. "
     )
@@ -192,6 +207,26 @@ def get_parser():
         default=20,
         help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
              "included in the calculation. (To be used with flag '-pmj' and '-pmj-distance'.)"
+    )
+    optional.add_argument(
+        '-normalize',
+        metavar=Metavar.list,
+        action=SeparateNormArgs,
+        nargs="+",
+        help="Normalize CSA values ('MEAN(area)').\n"
+             "Two models are available:\n"
+             "    1. sex, brain-volume, thalamus-volume.\n"
+             "    2. sex, brain-volume.\n"
+             "Specify each value for the subject after the corresponding predictor.\n"
+             "Example:\n    -normalize sex 0 brain-volume 960606.0 thalamus-volume 13942.0 \n"
+             "*brain-volume and thalamus-volume are in mm^3. For sex, female: 0, male: 1.\n"
+             "\n"
+             "The models were generated using T1w brain images from 804 healthy (non-pathological) participants "
+             "ranging from 48 to 80 years old, taken from the UK Biobank dataset.\n"
+             "For more details on the subjects and methods used to create the models, go to: "
+             "https://github.com/sct-pipeline/ukbiobank-spinalcord-csa#readme \n"  # TODO add ref of the paper
+             "Given the risks and lack of consensus surrounding CSA normalization, we recommend thoroughly reviewing "
+             "the literature on this topic before applying this feature to your data.\n"
     )
     optional.add_argument(
         '-qc',
@@ -406,6 +441,22 @@ def main(argv=None):
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=group_funcs)
     metrics_agg_merged = merge_dict(metrics_agg)
+    # Normalize CSA values (MEAN(area))
+    if arguments.normalize is not None:
+        data_subject = pd.DataFrame([arguments.normalize])
+        path_model = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'data', 'csa_normalization_models',
+                                  '_'.join(sorted(data_subject.columns)) + '.csv')
+        if not os.path.isfile(path_model):
+            raise parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
+        # Get normalization model
+        # Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
+        # TODO update link with release tag.
+        data_predictors = pd.read_csv(path_model, index_col=0)
+        # Add interaction term
+        data_subject['inter-BV_sex'] = data_subject['brain-volume']*data_subject['sex']
+        for line in metrics_agg_merged.values():
+            line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
+
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
     # QC report (only for PMJ-based CSA)
     if path_qc is not None:

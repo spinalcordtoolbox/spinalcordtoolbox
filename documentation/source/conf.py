@@ -97,7 +97,7 @@ todo_include_todos = False
 extlinks = {
     # e.g. :sct_tutorial_data:`data_template-registration.zip` gets expanded into:
     # 'https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
-    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20210609/%s', '')
+    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course-20211116/%s', '')
 }
 
 
@@ -110,7 +110,7 @@ html_theme = "furo"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = './_static/img/sct_logo_dark_grey.png'
+html_logo = './_static/img/logo_sct_whitetext.png'
 
 html_theme_options = {
     "sidebar_hide_name": True,

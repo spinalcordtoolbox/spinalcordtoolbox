@@ -157,7 +157,7 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(':', str),
-        help=(f"R|Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
+        help=(f"Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
               f"Example: step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,"
               f"shrink=2\n"
               f"  - step: <int> Step number (starts at 1, except for type=label).\n"
@@ -231,7 +231,10 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Just put source into destination (no optimization)."
+        help="Supplying this option will skip registration optimization (e.g. translations, rotations, deformations) "
+             "and will only rely on the qform (from the NIfTI header) of the source and destination images. Use this "
+             "option if you wish to put the source image into the space of the destination image (i.e. match "
+             "dimension, resolution and orientation)."
     )
     optional.add_argument(
         '-z',

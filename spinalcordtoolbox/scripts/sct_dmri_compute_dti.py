@@ -49,7 +49,7 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         '-method',
-        help='R|Type of method to calculate the diffusion tensor:\n'
+        help='Type of method to calculate the diffusion tensor:\n'
              ' standard: Standard equation [Basser, Biophys J 1994]\n'
              ' restore: Robust fitting with outlier detection [Chang, MRM 2005]',
         default='standard',
