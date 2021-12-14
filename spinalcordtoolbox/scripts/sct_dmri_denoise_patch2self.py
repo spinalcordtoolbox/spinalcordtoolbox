@@ -5,6 +5,7 @@ import numpy as np
 import nibabel as nib
 from dipy.denoise.patch2self import patch2self
 
+from spinalcordtoolbox.image import add_suffix
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel, list_type
 
 
@@ -149,11 +150,13 @@ def main(argv=None):
     diff_4d = np.absolute(den.astype('f8') - data.astype('f8'))
     img_diff = nib.Nifti1Image(diff_4d, None, hdr_0)
     if output_file_name is not None:
-        output_file_name = output_file_name
+        output_file_name_den = output_file_name
+        output_file_name_diff = add_suffix(output_file_name, "_difference")
     else:
-        output_file_name = file + '_patch2self_denoised' + ext
-    nib.save(img_denoise, output_file_name)
-    nib.save(img_diff, file + '_patch2self_difference' + ext)
+        output_file_name_den = file + '_patch2self_denoised' + ext
+        output_file_name_diff = file + '_patch2self_difference' + ext
+    nib.save(img_denoise, output_file_name_den)
+    nib.save(img_diff, output_file_name_diff)
 
     printv('\nDone! To view results, type:', param.verbose)
     printv('fsleyes ' + file_to_denoise + ' ' + output_file_name + ' & \n',
