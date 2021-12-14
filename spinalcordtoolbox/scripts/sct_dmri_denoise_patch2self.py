@@ -57,7 +57,7 @@ def get_parser():
         "-p",
         help='Type of regression model used for self-supervised training within Patch2Self.',
         required=False,
-        choices=("ols", "ridge", 'lasso'),
+        choices=("ols", "ridge", "lasso"),
         default="ols")
     optional.add_argument(
         "-radius",
