@@ -54,7 +54,7 @@ def get_parser():
         action="help",
         help="Show this help message and exit")
     optional.add_argument(
-        "-p",
+        "-model",
         help='Type of regression model used for self-supervised training within Patch2Self.',
         required=False,
         choices=("ols", "ridge", "lasso"),
@@ -99,7 +99,7 @@ def main(argv=None):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
-    model = arguments.p
+    model = arguments.model
     remove_temp_files = arguments.r
     if "," in arguments.radius:
         patch_radius = list_type(",", int)(arguments.radius)
