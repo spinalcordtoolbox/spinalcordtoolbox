@@ -69,7 +69,7 @@ The past courses handouts are listed below:
 -  `SCT course (v3.0_beta1), Montreal, 2016-04-19`_
 -  `SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15`_
 
-.. _SCT course (v4.2.1), London, 2020-01-21: https://drive.google.com/file/d/1rn6srrQRLmO6cMHJ9OSrOBD7xjMm6uzn/view?usp=sharing
+.. _SCT course (v4.2.1), London, 2020-01-21: https://drive.google.com/file/d/1TZireJ6yhV8q7PbKKXyXg7Heov9-YJMu/view?usp=sharing
 .. _Video recording: https://www.youtube.com/watch?v=whbtjYNtHko&feature=youtu.be
 .. _SCT course (v4.0.0), Beijing, 2019-08-02: https://osf.io/arfv7/
 .. _Slides with Chinese translation: https://osf.io/hnmr2/
