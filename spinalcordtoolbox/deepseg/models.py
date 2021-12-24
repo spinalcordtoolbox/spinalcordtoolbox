@@ -78,6 +78,14 @@ MODELS = {
         "contrasts": ["t2"],
         "default": False,
     },
+    "model_seg_ms_sc_mp2rage": {
+        "url": [
+            "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20211223/model_seg_ms_sc_mp2rage.zip"
+        ],
+        "description": "Segmentation of spinal cord on MP2RAGE data from MS participants.",
+        "contrasts": ["mp2rage"],
+        "default": False,
+    },
     "model_seg_ms_lesion_mp2rage": {
         "url": [
             "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20211223/model_seg_ms_lesion_mp2rage.zip"
@@ -113,6 +121,9 @@ TASKS = {
     'seg_tumor_t2':
         {'description': 'Cord tumor segmentation on T2-weighted contrast.',
          'models': ['findcord_tumor', 't2_tumor']},
+    'seg_ms_sc_mp2rage':
+        {'description': 'Cord segmentation on MP2RAGE in MS patients.',
+         'models': ['model_seg_ms_sc_mp2rage']},
     'seg_ms_lesion_mp2rage':
         {'description': 'MS lesion segmentation on MP2RAGE data.',
          'models': ['model_seg_ms_lesion_mp2rage']},
