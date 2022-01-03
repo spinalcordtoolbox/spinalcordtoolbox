@@ -1,0 +1,48 @@
+{# copied from https://github.com/pradyunsg/sphinx-basic-ng/blob/main/src/sphinx_basic_ng/theme/basic-ng/components/edit-this-page.html #}
+
+{%- macro sanitise_trailing_slash(s) -%}{{ s.rstrip("/") }}{%- endmacro -%}
+
+{%- macro determine_page_edit_link() -%}
+  {#- First, sanitise the trailing slashes. -#}
+  {%- set repo = sanitise_trailing_slash(theme_source_repository) -%}
+  {%- set branch = theme_source_branch -%}
+  {%- set subdirectory = sanitise_trailing_slash(theme_source_directory) -%}
+
+  {#- Figure out the document's source file path. -#}
+  {%- set relative_path = pagename + page_source_suffix -%}
+  {%- if not subdirectory -%}
+    {%- set document_path = relative_path -%}
+  {%- else -%}
+    {%- set document_path = subdirectory + "/" + relative_path -%}
+  {%- endif -%}
+
+  {#- Don't allow http:// URLs -#}
+  {%- if repo.startswith(
+    (
+      "http://github.com/",
+      "http://gitlab.com/",
+      "http://bitbucket.org/",
+    )
+  ) -%}
+    {{ warning("Could not use `source_repository` provided. Please use https:// links in your `conf.py` file's `html_theme_options`.") }}
+  {#- Handle the relevant cases -#}
+  {%- elif repo.startswith("https://github.com/") -%}
+    {{ repo }}/edit/{{ branch }}/{{ document_path }}
+  {%- elif repo.startswith("https://gitlab.com/") -%}
+    {{ repo }}/-/edit/{{ branch }}/{{ document_path }}
+  {%- elif repo.startswith("https://bitbucket.org/") -%}
+    {{ repo }}/src/{{ branch }}/{{ document_path }}?mode=edit&at={{ branch }}
+  {#- Fail with a warning -#}
+  {%- else -%}
+    {{ warning("Could not understand `source_repository` provided: " + repo) }}
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- if theme_source_repository -%}
+  {%- if not theme_source_branch -%}
+    {{ warning("Provided `source_repository` but not `source_branch`. ")}}
+  {%- endif -%}
+  {%- if page_source_suffix -%}
+  <a href="{{ determine_page_edit_link() }}">{{ _("Edit this page") }}</a>
+  {%- endif -%}
+{%- endif -%}
