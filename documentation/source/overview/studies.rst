@@ -5,10 +5,14 @@ Studies using SCT
 
 The following studies have used SCT:
 
+2022
+----
+-  Uhrenholt *et al.* `Advanced magnetic resonance imaging of chronic whiplash patients: a clinical practice-based feasibility study. <https://pubmed.ncbi.nlm.nih.gov/34996490/>`_ **Chiropr Man Therap.** 2022
+
 2021
 ----
 
-- Smith *et al.* `Spinal cord imaging markers and recovery of standing with epidural stimulation in individuals with clinically motor complete spinal cord injury <https://doi.org/10.1007/s00221-021-06272-9>`_. **Exp Brain Res** 2021
+-  Smith *et al.* `Spinal cord imaging markers and recovery of standing with epidural stimulation in individuals with clinically motor complete spinal cord injury <https://doi.org/10.1007/s00221-021-06272-9>`_. **Exp Brain Res** 2021
 -  Hernandez *et al.* `Tract-Specific Spinal Cord Diffusion Tensor Imaging in Friedreich's Ataxia. <https://pubmed.ncbi.nlm.nih.gov/34713932/>`_ **Mov Disord.** 2021
 -  Staud *et al.* `Spinal cord neural activity of patients with fibromyalgia and healthy controls during temporal summation of pain: an fMRI study. <https://pubmed.ncbi.nlm.nih.gov/34406893/>`_ **J Neurophysiol.** 2021
 -  Pfyffer *et al.* `Spinal cord pathology revealed by MRI in traumatic spinal cord injury. <https://pubmed.ncbi.nlm.nih.gov/34619692/>`_ **Curr Opin Neurol.** 2021
