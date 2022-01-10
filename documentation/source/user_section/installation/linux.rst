@@ -4,6 +4,9 @@
 Installation for Linux
 **********************
 
+.. warning::
+
+   If you use Windows Subsystem for Linux (WSL), please refer to the :ref:`Windows installation section <wsl-installation>`.
 
 Requirements
 ============
