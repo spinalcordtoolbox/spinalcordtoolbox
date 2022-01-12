@@ -635,7 +635,9 @@ else
   REQUIREMENTS_FILE="requirements.txt"
 fi
 (
-  pip install -r "$REQUIREMENTS_FILE" &&
+  # We use "--ignore-installed" to preserve the version of `certifi` installed into the conda
+  # env, which prevents https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3609
+  pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
   print info "Installing spinalcordtoolbox..." &&
   pip install -e .
 ) ||
