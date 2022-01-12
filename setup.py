@@ -42,6 +42,48 @@ setup(
                                     'install', 'testing']),
     include_package_data=True,
     python_requires="==3.7.*",
+    install_requires=[
+        'colored',
+        'dipy',
+        # h5py is pinned to minor than 3 due to issues with Keras/TF
+        # https://github.com/tensorflow/tensorflow/issues/44467
+        'h5py~=2.10.0',
+        'Keras==2.3.1',
+        'ivadomed',
+        'matplotlib',
+        'nibabel',
+        'numpy',
+        # onnxruntime>=1.5.1 requires `brew install libomp` on macOS.
+        # So, pin to 1.4.0 to avoid having to ask users to install libomp.
+        # ivadomed==2.5.0 would also do this, but #3035 is preventing that.
+        'onnxruntime==1.4.0',
+        'pandas',
+        'psutil',
+        'pyqt5==5.11.3',
+        'pytest',
+        'pytest-cov',
+        'raven',
+        'requests',
+        'requirements-parser',
+        'scipy',
+        'scikit-image',
+        'scikit-learn',
+        'tensorflow~=1.15.0',
+        # PyTorch's Linux/Windows distribution is very large due to its GPU support,
+        # but we only need that for training models. For users, use the CPU-only version
+        # (only available directly from the PyTorch project).
+        # The macOS version has never had GPU support, so doesn't need the workaround.
+        'torch==1.5.0+cpu; sys_platform != "darwin"',
+        'torch==1.5.0; sys_platform == "darwin"',
+        'torchvision==0.6.0+cpu; sys_platform != "darwin"',
+        'torchvision==0.6.0; sys_platform == "darwin"',
+        'xlwt',
+        'tqdm',
+        'transforms3d',
+        'urllib3[secure]',
+        'pytest_console_scripts',
+        'wquantiles',
+    ],
     extras_require={
         'docs': [
             'sphinxcontrib-programoutput',
