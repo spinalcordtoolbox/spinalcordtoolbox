@@ -641,24 +641,27 @@ fi
 ) ||
   die "Failed running pip install: $?"
 
-
-## Check if installed TF/Keras requirements throw instruction set errors
-if python3 -c "import keras; print(keras.__version__)" 2>&1 | grep -q 'The TensorFlow library was compiled to use'; then
-    case $OS in
-    linux*)
-      echo "Instruction set error thrown by TensorFlow!"
-      echo "Installing a version of TensorFlow compiled for older CPUs..."
-      pip uninstall tensorflow -y
-      pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
-      ;;
-    osx)
-      # We haven't yet compiled an AVX-less TensorFlow wheel for macOS. This case should be practically non-existent, as
-      # Westmere-based Macs were discontinued in 2011/2013, and there is greater pressure to upgrade for Apple devices.
-      # So, in this case, do nothing, and let `sct_check_dependencies` catch this error instead.
-      :
-      ;;
-    esac
-fi
+## Check if CPU supports AVX instruction set, and install precompiled TensorFlow if it isn't,
+case $OS in
+linux*)
+  if ! lscpu | grep -q " avx "; then
+    print info "AVX is not supported by this CPU! Installing a version of TensorFlow compiled for older CPUs..."
+    pip uninstall tensorflow -y
+    pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
+  else
+    print info "AVX is supported on this Linux machine. Keeping default TensorFlow..."
+  fi
+  ;;
+osx)
+  if sysctl machdep.cpu.brand_string | grep -q "Apple M1"; then
+    print info "AVX is not supported on M1 Macs! Installing a version of TensorFlow compiled for M1 Macs..."
+    pip uninstall tensorflow -y
+    pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.0-py3-none-any.whl
+  else
+    print info "AVX is supported on this macOS machine. Keeping default TensorFlow..."
+  fi
+  ;;
+esac
 
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."
