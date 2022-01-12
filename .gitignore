@@ -13,6 +13,8 @@
 *.egg
 .eggs/
 
+.venv/
+
 .idea/*
 .eggs/
 /.coverage
