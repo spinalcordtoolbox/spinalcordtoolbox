@@ -32,7 +32,7 @@ def test_sct_compute_mtr_with_int16_image_type(tmp_path):
     mtr_output_path = str(tmp_path / 'mtr_output.nii.gz')
 
     # Generate int16 test file based on sct_testing_data existing one
-    mt0 = Image('mt/mt0.nii.gz')
+    mt0 = Image('mt/mt0_reg_slicereg_goldstandard.nii.gz')
     mt0.save(mt0_path, dtype='int16')
     mt1 = Image('mt/mt1.nii.gz')
     mt1.save(mt1_path, dtype='int16')
