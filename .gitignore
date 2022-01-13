@@ -27,6 +27,7 @@ spinalcordtoolbox_v*
 dev/atlas/create_atlas/results
 dev/atlas/validate_atlas/tmp.*
 sct_testing_data
+generated_requirements.txt
 
 scripts/.idea/misc.xml
 scripts/.idea/modules.xml

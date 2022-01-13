@@ -71,6 +71,12 @@ DEFAULT_REQUIREMENTS = [
 
 frozen_dependencies = get_dependencies(path.join(here, 'requirements-freeze.txt'))
 
+dependencies = frozen_dependencies or DEFAULT_REQUIREMENTS
+
+with open(path.join(here, "generated_requirements.txt"), 'wt') as f:
+    f.write('\n'.join(dependencies))
+
+
 setup(
     name='spinalcordtoolbox',
     version=version,
@@ -100,7 +106,7 @@ setup(
                                     'install', 'testing']),
     include_package_data=True,
     python_requires="==3.7.*",
-    install_requires=frozen_dependencies or DEFAULT_REQUIREMENTS,
+    install_requires=dependencies,
     extras_require={
         'docs': [
             'sphinxcontrib-programoutput',

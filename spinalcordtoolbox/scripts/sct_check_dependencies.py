@@ -26,7 +26,6 @@ import psutil
 import traceback
 
 import requirements
-from distutils.core import run_setup
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
 from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__, set_loglevel
@@ -156,13 +155,11 @@ def add_bash_profile(string):
         file_bash.write("\n" + string)
 
 
-def get_dependencies(setup_file=None):
-    if setup_file is None:
-        setup_file = sct_dir_local_path("setup.py")
+def get_dependencies(requirements_txt=None):
+    if requirements_txt is None:
+        requirements_txt = sct_dir_local_path("generated_requirements.txt")
 
-    # TODO: fix pytorch dependencies not showing
-    setup_output = run_setup(setup_file, stop_after="init")
-    requirements_txt = '\n'.join(setup_output.install_requires)
+    requirements_txt = open(requirements_txt, "r", encoding="utf-8")
 
     # workaround for https://github.com/davidfischer/requirements-parser/issues/39
     warnings.filterwarnings(action='ignore', module='requirements')
