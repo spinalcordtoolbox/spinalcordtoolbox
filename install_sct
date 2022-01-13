@@ -637,9 +637,8 @@ fi
 (
   # We use "--ignore-installed" to preserve the version of `certifi` installed into the conda
   # env, which prevents https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3609
-  pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
   print info "Installing spinalcordtoolbox..." &&
-  pip install -e .
+  pip install -e . --ignore-installed certifi -f https://download.pytorch.org/whl/cpu/torch_stable.html
 ) ||
   die "Failed running pip install: $?"
 
