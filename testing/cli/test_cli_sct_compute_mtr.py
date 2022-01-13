@@ -43,4 +43,8 @@ def test_sct_compute_mtr_with_int16_image_type(tmp_path):
     ground_truth_mtr = Image('mt/mtr.nii.gz')
     output_mtr = Image(mtr_output_path)
 
-    assert numpy.linalg.norm(ground_truth_mtr.data - output_mtr.data) <= 0.001
+    # NB: numpy.isfinite is used to exclude nan/inf elements from comparison
+    diff = (ground_truth_mtr.data[numpy.isfinite(ground_truth_mtr.data)] -
+            output_mtr.data[numpy.isfinite(output_mtr.data)])
+
+    assert numpy.abs(numpy.average(diff)) <= 0.5
