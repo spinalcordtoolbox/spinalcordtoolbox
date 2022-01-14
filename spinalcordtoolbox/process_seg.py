@@ -170,7 +170,7 @@ def _properties2d(image, dim):
     # Oversample image to reach sufficient precision when computing shape metrics on the binary mask
     # NB: channel_axis=None fixes https://github.com/scikit-image/scikit-image/issues/6092
     #     TODO: Revisit when skimage 0.19.1 is released
-    image_crop_r = transform.pyramid_expand(image_crop, upscale=upscale, sigma=None, order=1, channel_axis=None)
+    image_crop_r = transform.pyramid_expand(image_crop, upscale=upscale, sigma=None, order=1)
     # Binarize image using threshold at 0. Necessary input for measure.regionprops
     image_crop_r_bin = np.array(image_crop_r > 0.5, dtype='uint8')
     # Get all closed binary regions from the image (normally there is only one)
