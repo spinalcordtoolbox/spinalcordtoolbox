@@ -171,7 +171,7 @@ def get_parser():
         '-d',
         required=True,
         choices=list(DATASET_DICT.keys()),
-        help=f"Name of the dataset."
+        help="Name of the dataset."
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
