@@ -39,6 +39,8 @@ def test_isct_propseg_compatibility():
 
 
 def test_sct_propseg_o_flag(tmp_path):
-    argv = ['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-o', os.path.join(str(tmp_path), 'test_seg.nii.gz')]
+    argv = ['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path), '-o', 'test_seg.nii.gz']
     sct_propseg.main(argv)
-    assert os.path.isfile(os.path.join(str(tmp_path), 'test_seg.nii.gz'))
+    output_files = sorted([f for f in os.listdir(tmp_path)
+                          if os.path.isfile(os.path.join(tmp_path, f))])
+    assert output_files == ['t2_centerline.nii.gz', 'test_seg.nii.gz']

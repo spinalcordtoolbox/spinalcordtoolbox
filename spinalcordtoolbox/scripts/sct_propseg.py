@@ -54,12 +54,12 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_centerline = convert(Image(fname_centerline))
     im_centerline.save(os.path.join(path_tmp, "tmp.centerline.nii.gz"), mutable=True, verbose=0)
 
-    # go to tmp folder
+    # go to tmp folder (and store original info to use when converting back at the end)
+    fname_seg_absolute = os.path.abspath(fname_segmentation)
     curdir = os.getcwd()
     os.chdir(path_tmp)
 
-    # convert input to RPI (and store original info to use when converting back at the end)
-    fname_seg_absolute = os.path.abspath(fname_segmentation)
+    # convert input to RPI
     image_input_orientation = im_seg.orientation
     sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz -v 0".split())
     sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz -v 0".split())
@@ -447,7 +447,7 @@ def propseg(img_input, options_dict):
         fname_out = os.path.basename(add_suffix(fname_data, "_seg"))
 
     if arguments.ofolder is not None:
-        folder_output = arguments.ofolder
+        folder_output = os.path.abspath(arguments.ofolder)
     else:
         folder_output = str(pathlib.Path(fname_out).parent)
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
@@ -469,19 +469,19 @@ def propseg(img_input, options_dict):
         cmd += ["-verbose"]
 
     # Output options
-    if arguments.mesh is not None:
+    if arguments.mesh:
         cmd += ["-mesh"]
-    if arguments.centerline_binary is not None:
+    if arguments.centerline_binary:
         cmd += ["-centerline-binary"]
-    if arguments.CSF is not None:
+    if arguments.CSF:
         cmd += ["-CSF"]
-    if arguments.centerline_coord is not None:
+    if arguments.centerline_coord:
         cmd += ["-centerline-coord"]
-    if arguments.cross is not None:
+    if arguments.cross:
         cmd += ["-cross"]
-    if arguments.init_tube is not None:
+    if arguments.init_tube:
         cmd += ["-init-tube"]
-    if arguments.low_resolution_mesh is not None:
+    if arguments.low_resolution_mesh:
         cmd += ["-low-resolution-mesh"]
     # TODO: Not present. Why is this here? Was this renamed?
     # if arguments.detect_nii is not None:
