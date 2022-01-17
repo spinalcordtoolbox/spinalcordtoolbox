@@ -25,7 +25,7 @@ To enable the ``SCT`` plugin:
 
 You should see something like this appear in the ``FSLeyes`` interface:
 
-.. image:: ../../imgs/sct_fsleyes.png
+.. image:: ../_static/img/sct_fsleyes.png
   :alt: SCT-FSLeyes Interface
 
 

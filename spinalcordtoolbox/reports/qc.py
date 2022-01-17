@@ -62,7 +62,7 @@ class QcImage(object):
                      "#7d0434", "#fb1849", "#14aab4",
                      "#a22abd", "#d58240", "#ac2aff"]
     _seg_colormap = ["#4d0000", "#ff0000"]
-
+    _ctl_colormap = ["#ff000099", '#ffff00']
 
     def __init__(self, qc_report, interpolation, action_list, process, stretch_contrast=True,
                  stretch_contrast_method='contrast_stretching', angle_line=None, fps=None):
@@ -193,9 +193,9 @@ class QcImage(object):
         from matplotlib import colors
         import scipy.ndimage
         img = np.rint(np.ma.masked_where(mask < 1, mask))
+        labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
         ax.imshow(img,
-                  cmap=colors.ListedColormap(self._labels_color),
-                  norm=colors.Normalize(vmin=0, vmax=len(self._labels_color)),
+                  cmap=colors.ListedColormap(self._labels_color[labels.min():labels.max()+1]),  # get color from min label and max label
                   interpolation=self.interpolation,
                   alpha=1,
                   aspect=float(self.aspect_mask))
@@ -240,7 +240,7 @@ class QcImage(object):
                   cmap=color.ListedColormap(self._color_bin_red),
                   norm=color.Normalize(vmin=0, vmax=1),
                   interpolation=self.interpolation,
-                  alpha=10,
+                  alpha=1,
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -261,6 +261,19 @@ class QcImage(object):
             x0, y0 = center_mosaic[0], center_mosaic[1]
             ax.axvline(x=x0, color='w', linestyle='-', linewidth=0.5)
             ax.axhline(y=y0, color='w', linestyle='-', linewidth=0.5)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    def smooth_centerline(self, mask, ax):
+        """Display smoothed centerline"""
+        mask = mask/mask.max()
+        mask[mask < 0.05] = 0  # Apply 0.5 threshold
+        img = np.ma.masked_equal(mask, 0)
+        ax.imshow(img,
+                  cmap=color.LinearSegmentedColormap.from_list("", self._ctl_colormap),
+                  norm=color.Normalize(vmin=0, vmax=1),
+                  interpolation=self.interpolation,
+                  aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -294,10 +307,9 @@ class QcImage(object):
                 [images_after_moco, images_before_moco], centermass = func(sct_slice, *args)
                 self._centermass = centermass
                 self._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
-
             else:
                 if self._angle_line is None:
-                    img, mask = func(sct_slice, *args)
+                    img, *mask = func(sct_slice, *args)
                 else:
                     [img, mask], centermass = func(sct_slice, *args)
                     self._centermass = centermass
@@ -311,8 +323,8 @@ class QcImage(object):
         Create overlay and background images for all processes that deal with 3d volumes
         (all except sct_fmri_moco and sct_dmri_moco)
 
-        :param img: list of mosaic images after motion correction
-        :param mask: list of mosaic images before motion correction
+        :param img: The base image to display underneath the overlays (typically anatomical)
+        :param mask: A list of images to be processed and overlaid on top of `img`
         :return:
         """
 
@@ -337,17 +349,17 @@ class QcImage(object):
         logger.info(self.qc_report.qc_params.abs_bkg_img_path())
         self._save(fig, self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
 
-        for action in self.action_list:
+        fig = Figure()
+        fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
+        FigureCanvas(fig)
+        for i, action in enumerate(self.action_list):
             logger.debug('Action List %s', action.__name__)
             if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
-                print("Mask type %s" % mask.dtype)
-                mask = self._func_stretch_contrast(mask)
-            fig = Figure()
-            fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
-            FigureCanvas(fig)
-            ax = fig.add_axes((0, 0, 1, 1))
-            action(self, mask, ax)
-            self._save(fig, self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
+                print("Mask type %s" % mask[i].dtype)
+                mask[i] = self._func_stretch_contrast(mask[i])
+            ax = fig.add_axes((0, 0, 1, 1), label=str(i))
+            action(self, mask[i], ax)
+        self._save(fig, self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
 
         self.qc_report.update_description_file(img.shape)
 
@@ -789,7 +801,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     # Axial orientation, switch between the image and the centerline
     elif process in ['sct_get_centerline']:
         plane = 'Axial'
-        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)],
+                                     p_resample=None)
         qcslice_operations = [QcImage.label_centerline]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)
@@ -836,7 +849,15 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         def qcslice_layout(x): return x.single()
     # Metric outputs (only graphs)
     elif process in ['sct_process_segmentation']:
-        assert os.path.isfile(path_img)
+        plane = 'Sagittal'
+        dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
+        fname_list = [fname_in1]
+        # fname_seg should be a list of 4 images: 3 for each of the `qcslice_operations`, plus an extra
+        # centerline image, which is needed to make `Sagittal.get_center_spit` work correctly
+        fname_list.extend(fname_seg)
+        qcslice_type = qcslice.Sagittal([Image(fname) for fname in fname_list], p_resample=None)
+        qcslice_operations = [QcImage.smooth_centerline, QcImage.highlight_pmj, QcImage.listed_seg]
+        def qcslice_layout(x): return x.single()
     else:
         raise ValueError("Unrecognized process: {}".format(process))
 
@@ -855,7 +876,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         qcslice_layout=qcslice_layout,
         stretch_contrast_method='equalized',
         angle_line=angle_line,
-        fps=fps,
+        fps=fps
     )
 
 

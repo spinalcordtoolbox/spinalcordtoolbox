@@ -12,7 +12,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: add flag -owarpinv
 # TODO: if user specified -param, then ignore the default paramreg
 # TODO: check syn with shrink=4
 # TODO: output name file for warp using "src" and "dest" file name, i.e. warp_filesrc2filedest.nii.gz
@@ -150,10 +149,15 @@ def get_parser():
         help="Name of output forward warping field."
     )
     optional.add_argument(
+        '-owarpinv',
+        metavar=Metavar.file,
+        help="Name of output inverse warping field."
+    )
+    optional.add_argument(
         '-param',
         metavar=Metavar.list,
         type=list_type(':', str),
-        help=(f"R|Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
+        help=(f"Parameters for registration. Separate arguments with \",\". Separate steps with \":\".\n"
               f"Example: step=1,type=seg,algo=slicereg,metric=MeanSquares:step=2,type=im,algo=syn,metric=MI,iter=5,"
               f"shrink=2\n"
               f"  - step: <int> Step number (starts at 1, except for type=label).\n"
@@ -227,7 +231,10 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Just put source into destination (no optimization)."
+        help="Supplying this option will skip registration optimization (e.g. translations, rotations, deformations) "
+             "and will only rely on the qform (from the NIfTI header) of the source and destination images. Use this "
+             "option if you wish to put the source image into the space of the destination image (i.e. match "
+             "dimension, resolution and orientation)."
     )
     optional.add_argument(
         '-z',
@@ -335,6 +342,10 @@ def main(argv=None):
         fname_output_warp = arguments.owarp
     else:
         fname_output_warp = ''
+    if arguments.owarpinv is not None:
+        fname_output_warpinv = arguments.owarpinv
+    else:
+        fname_output_warpinv = ''
     if arguments.initwarp is not None:
         fname_initwarp = os.path.abspath(arguments.initwarp)
     else:
@@ -406,7 +417,7 @@ def main(argv=None):
                          fname_dest_label=fname_dest_label, fname_mask=fname_mask, fname_initwarp=fname_initwarp,
                          fname_initwarpinv=fname_initwarpinv, identity=identity, interp=interp,
                          fname_output=fname_output,
-                         fname_output_warp=fname_output_warp,
+                         fname_output_warp=fname_output_warp, fname_output_warpinv=fname_output_warpinv,
                          path_out=path_out)
 
     # display elapsed time

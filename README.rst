@@ -106,7 +106,7 @@ To facilitate multi-subject analyses, commands can be chained together to build 
 
 **3. GUI (FSLeyes integration)**
 
-SCT provides a provide a graphical user interface via a FSLeyes plugin. For more details, see the `FSLeyes Integration <https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html>`_ page.
+SCT provides a graphical user interface via a FSLeyes plugin. For more details, see the `FSLeyes Integration <https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html>`_ page.
 
 
 Who is using SCT?
@@ -137,7 +137,7 @@ Contributing
 We happily welcome contributions. Please see the `Contributing <https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Contributing>`_ page of the developer Wiki for more information.
 
 
-.. admonition:: ⚠ ️Medical Disclaimer
+.. warning:: ️Medical Disclaimer
 
    All content found in the Spinal Cord Toolbox repository and spinalcordtoolbox.com website, including: text, images, audio, or other formats were created for informational purposes only. The content is not intended to be a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition. Never disregard professional medical advice or delay in seeking it because of something you have read on this website.
 

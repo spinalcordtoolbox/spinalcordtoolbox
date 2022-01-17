@@ -2,9 +2,6 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.aggregate_slicewise
 
-
-
-
 import sys
 import os
 import pytest
@@ -12,6 +9,7 @@ import csv
 
 import numpy as np
 import nibabel as nib
+import pandas as pd
 
 from spinalcordtoolbox import __sct_dir__, __version__
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
@@ -80,6 +78,22 @@ def dummy_vert_level():
     return img
 
 
+@pytest.fixture(scope="session")
+def dummmy_data_predictor():
+    """Create a panda dataframe of dummy coefficient and mean."""
+    data = [[1, 0.5], [1e-6, 1156171]]
+    df = pd.DataFrame(data, columns=['coeff', 'mean'], index=['sex', 'brain-volume'])
+    return df
+
+
+@pytest.fixture(scope="session")
+def dummmy_data_subject():
+    """Create a panda dataframe of dummy data of a subject."""
+    data = [[0, 960606.0]]
+    df = pd.DataFrame(data, columns=['sex', 'brain-volume'])
+    return df
+
+
 # noinspection 801,PyShadowingNames
 def test_aggregate_across_selected_slices(dummy_metrics):
     """Test extraction of metrics aggregation across slices: Selected slices"""
@@ -125,7 +139,7 @@ def test_aggregate_across_levels(dummy_metrics, dummy_vert_level):
                                                                   perslice=False, perlevel=False,
                                                                   vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[(0, 1, 2, 3)] == {'VertLevel': (2, 3), 'WA()': 35.0}
+    assert agg_metric[(0, 1, 2, 3)] == {'VertLevel': (2, 3), 'DistancePMJ': None, 'WA()': 35.0}
 
 
 # noinspection 801,PyShadowingNames
@@ -135,8 +149,8 @@ def test_aggregate_across_levels_perslice(dummy_metrics, dummy_vert_level):
                                                                   perslice=True, perlevel=False,
                                                                   vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[(0,)] == {'VertLevel': (2,), 'WA()': 29.0}
-    assert agg_metric[(2,)] == {'VertLevel': (3,), 'WA()': 39.0}
+    assert agg_metric[(0,)] == {'VertLevel': (2,), 'DistancePMJ': None, 'WA()': 29.0}
+    assert agg_metric[(2,)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 39.0}
 
 
 # noinspection 801,PyShadowingNames
@@ -145,8 +159,17 @@ def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
                                                                   perlevel=True, vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[(0, 1)] == {'VertLevel': (2,), 'WA()': 30.0}
-    assert agg_metric[(2, 3)] == {'VertLevel': (3,), 'WA()': 40.0}
+    assert agg_metric[(0, 1)] == {'VertLevel': (2,), 'DistancePMJ': None, 'WA()': 30.0}
+    assert agg_metric[(2, 3)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 40.0}
+
+
+# noinspection 801,PyShadowingNames
+def test_aggregate_slices_pmj(dummy_metrics):
+    """Test extraction of metrics aggregation within selected slices at a PMJ distance"""
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[2, 3, 4, 5],
+                                                                  distance_pmj=64, perslice=False, perlevel=False,
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    assert agg_metric[(2, 3, 4, 5)] == {'VertLevel': None, 'DistancePMJ': [64], 'WA()': 45.25}
 
 
 # noinspection 801,PyShadowingNames
@@ -226,15 +249,15 @@ def test_save_as_csv(tmp_path, dummy_metrics):
     with open(path_out, 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:] == [__version__, 'FakeFile.txt', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, 'FakeFile.txt', '3:4', '', '', '45.5', '4.5']
     # with appending
     aggregate_slicewise.save_as_csv(agg_metric, path_out)
     aggregate_slicewise.save_as_csv(agg_metric, path_out, append=True)
     with open(path_out, 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '45.5', '4.5']
-        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '', '45.5', '4.5']
+        assert next(spamreader)[1:] == [__version__, '', '3:4', '', '', '45.5', '4.5']
 
 
 # noinspection 801,PyShadowingNames
@@ -304,6 +327,21 @@ def test_save_as_csv_sorting(tmp_path, dummy_metrics):
         assert [row['Slice (I->S)'] for row in spamreader] == ['0', '1', '2', '3', '4', '5', '6', '7', '8']
 
 
+def test_save_as_csv_pmj(tmp_path, dummy_metrics):
+    """Test writing of output metric csv file with distance from PMJ method"""
+    path_out = str(tmp_path / 'tmp_file_out.csv')
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[2, 3, 4, 5],
+                                                                  distance_pmj=64.0, perslice=False, perlevel=False,
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    aggregate_slicewise.save_as_csv(agg_metric, path_out)
+    with open(path_out, 'r') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        row = next(reader)
+        assert row['Slice (I->S)'] == '2:5'
+        assert row['DistancePMJ'] == '64.0'
+        assert row['VertLevel'] == ''
+
+
 # noinspection 801,PyShadowingNames
 def test_save_as_csv_extract_metric(tmp_path, dummy_data_and_labels):
     """Test file output with extract_metric()"""
@@ -316,7 +354,7 @@ def test_save_as_csv_extract_metric(tmp_path, dummy_data_and_labels):
     with open(path_out, 'r') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',')
         next(spamreader)  # skip header
-        assert next(spamreader)[1:-1] == [__version__, '', '0:4', '', 'label_0', '2.5', '38.0']
+        assert next(spamreader)[1:-1] == [__version__, '', '0:4', '', '', 'label_0', '2.5', '38.0']
 
 
 def test_dimension_mismatch_between_metric_and_vertfile(dummy_metrics, dummy_vert_level):
@@ -329,3 +367,9 @@ def test_dimension_mismatch_between_metric_and_vertfile(dummy_metrics, dummy_ver
         else:
             # Verify that no error is thrown for all other metrics
             aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], vert_level=dummy_vert_level)
+
+
+def test_normalize_csa(dummmy_data_predictor, dummmy_data_subject):
+    """"Test normalizing CSA values (MEAN(area))"""
+    csa_norm = aggregate_slicewise.normalize_csa(64, dummmy_data_predictor, dummmy_data_subject)
+    assert csa_norm == 64.695565

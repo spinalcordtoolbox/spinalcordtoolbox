@@ -109,7 +109,7 @@ def get_parser():
         "-adap",
         metavar=Metavar.list,
         type=list_type(',', int),
-        help="R|Threshold image using Adaptive algorithm (from skimage). Provide 2 values separated by ',' that "
+        help="Threshold image using Adaptive algorithm (from skimage). Provide 2 values separated by ',' that "
              "correspond to the parameters below. For example, '-adap 7,0' corresponds to a block size of 7 and an "
              "offset of 0.\n"
              "  - Block size: Odd size of pixel neighborhood which is used to calculate the threshold value. \n"
@@ -120,7 +120,7 @@ def get_parser():
         "-otsu-median",
         metavar=Metavar.list,
         type=list_type(',', int),
-        help="R|Threshold image using Median Otsu algorithm (from dipy). Provide 2 values separated by ',' that "
+        help="Threshold image using Median Otsu algorithm (from dipy). Provide 2 values separated by ',' that "
              "correspond to the parameters below. For example, '-otsu-median 3,5' corresponds to a filter size of 3 "
              "repeated over 5 iterations.\n"
              "  - Size: Radius (in voxels) of the applied median filter.\n"
@@ -135,7 +135,13 @@ def get_parser():
     thresholding.add_argument(
         "-thr",
         type=float,
-        help='Use following number to threshold image (zero below number).',
+        help='Lower threshold limit (zero below number).',
+        metavar=Metavar.float,
+        required=False)
+    thresholding.add_argument(
+        "-uthr",
+        type=float,
+        help='Upper threshold limit (zero below number).',
         metavar=Metavar.float,
         required=False)
 
@@ -158,7 +164,7 @@ def get_parser():
         required=False)
     mathematical.add_argument(
         '-shape',
-        help="R|Shape of the structuring element for the mathematical morphology operation. Default: ball.\n"
+        help="Shape of the structuring element for the mathematical morphology operation. Default: ball.\n"
              "If a 2D shape {'disk', 'square'} is selected, -dim must be specified.",
         required=False,
         choices=('square', 'cube', 'disk', 'ball'),
@@ -190,7 +196,7 @@ def get_parser():
         required=False)
     filtering.add_argument(
         '-denoise',
-        help='R|Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with ". Example: p=1,b=3\n'
+        help='Non-local means adaptative denoising from P. Coupe et al. as implemented in dipy. Separate with ". Example: p=1,b=3\n'
              ' p: (patch radius) similar patches in the non-local means are searched for locally, inside a cube of side 2*p+1 centered at each voxel of interest. Default: p=1\n'
              ' b: (block radius) the size of the block to be used (2*b+1) in the blockwise non-local means implementation. Default: b=5 '
              '    Note, block radius must be smaller than the smaller image dimension: default value is lowered for small images)\n'
@@ -278,9 +284,8 @@ def main(argv=None):
         param = arguments.otsu_median
         data_out = sct_math.otsu_median(data, param[0], param[1])
 
-    elif arguments.thr is not None:
-        param = arguments.thr
-        data_out = sct_math.threshold(data, param)
+    elif arguments.thr is not None or arguments.uthr is not None:
+        data_out = sct_math.threshold(data, arguments.thr, arguments.uthr)
 
     elif arguments.percent is not None:
         param = arguments.percent
