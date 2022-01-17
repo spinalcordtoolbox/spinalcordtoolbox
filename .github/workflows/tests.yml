@@ -214,13 +214,13 @@ jobs:
         run: |  # NB: We use `-v` instead of `-t` here to run this one with coverage
           ./.ci.sh -v
       - name: Upload API coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           fail_ci_if_error: true
           files: ./cov-cli.xml
           flags: cli-tests
       - name: Upload CLI coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           fail_ci_if_error: true
           files: ./cov-api.xml
