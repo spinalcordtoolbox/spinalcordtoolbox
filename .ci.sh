@@ -44,6 +44,8 @@ run_tests_with_coverage(){
   activate_venv_sct
   pytest --cov=spinalcordtoolbox --cov-config setup.cfg --cov-branch --cov-report=xml:cov-api.xml testing/api
   pytest --cov=spinalcordtoolbox --cov-config setup.cfg --cov-branch --cov-report=xml:cov-cli.xml testing/cli
+  # NB: 'testing/batch_processing' can't easily be coverage by codecov, as
+  # the actual processing is invoked via a shell script, rather than pytest
 }
 
 while getopts ":ictv" opt; do
