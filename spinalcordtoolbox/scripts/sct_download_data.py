@@ -77,13 +77,13 @@ DATASET_DICT = {
         "mirrors": [
             "https://osf.io/cs6zt/?action=download",
         ],
-        "default_location": os.path.join(__sct_dir__, "bin", "binaries_linux"),
+        "default_location": os.path.join(__sct_dir__, "bin"),
     },
     "binaries_osx": {
         "mirrors": [
             "https://osf.io/874cy?action=download",
         ],
-        "default_location": os.path.join(__sct_dir__, "bin", "binaries_osx"),
+        "default_location": os.path.join(__sct_dir__, "bin"),
     },
     "course_hawaii17": {
         "mirrors": [
