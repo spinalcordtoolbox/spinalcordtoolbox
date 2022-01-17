@@ -30,134 +30,134 @@ DATASET_DICT = {
             "https://github.com/spinalcordtoolbox/sct_example_data/releases/download/r20180525/20180525_sct_example_data.zip",
             "https://osf.io/kjcgs/?action=download",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "sct_example_data"),
     },
     "sct_testing_data": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20210330230310/sct_testing_data-r20210330230310.zip",
             "https://osf.io/download/60629509229503022e6f107d/",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "sct_testing_data"),
     },
     "PAM50": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20201104/PAM50-r20201104.zip",
             "https://osf.io/download/5fa21326a5bb9d00610a5a21/",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
     },
     "MNI-Poly-AMU": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/MNI-Poly-AMU/releases/download/r20170310/20170310_MNI-Poly-AMU.zip",
             "https://osf.io/sh6h4/?action=download",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "MNI-Poly-AMU"),
     },
     "gm_model": { 
         "mirrors": [
             "https://osf.io/ugscu/?action=download"
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "gm_model"),
     },
     "optic_models": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/optic_models/releases/download/r20170413/20170413_optic_models.zip",
             "https://osf.io/g4fwn/?action=download",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "optic_models"),
     },
     "pmj_models": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/pmj_models/releases/download/r20170922/20170922_pmj_models.zip",
             "https://osf.io/4gufr/?action=download",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "pmj_models"),
     },
     "binaries_linux": { 
         "mirrors": [
             "https://osf.io/cs6zt/?action=download",
         ],
-        "default_location": f"{__sct_dir__}/bin/",
+        "default_location": os.path.join(__sct_dir__, "bin", "binaries_linux"),
     },
     "binaries_osx": { 
         "mirrors": [
             "https://osf.io/874cy?action=download",
         ],
-        "default_location": f"{__sct_dir__}/bin/",
+        "default_location": os.path.join(__sct_dir__, "bin", "binaries_osx"),
     },
     "course_hawaii17": { 
         "mirrors": [
             "https://osf.io/6exht/?action=download",
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/hawaii17.zip",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "course_hawaii17"),
     },
     "course_paris18": { 
         "mirrors": [
             "https://osf.io/9bmn5/?action=download",
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/paris18.zip",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "course_paris18"),
     },
     "course_london19": { 
         "mirrors": [
             "https://osf.io/4q3u7/?action=download",
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/london19.zip",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "course_london19"),
     },
     "course_beijing19": { 
         "mirrors": [
             "https://osf.io/ef4xz/?action=download",
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/beijing19.zip",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "course_beijing19"),
     },
     "course_london20": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/london20.zip",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "course_london20"),
     },
     "course_harvard21": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20211116.zip",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "course_harvard21"),
     },
     "deepseg_gm_models": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/deepseg_gm_models/releases/download/r20180205/20180205_deepseg_gm_models.zip",
             "https://osf.io/b9y4x/?action=download",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "deepseg_gm_models"),
     },
     "deepseg_sc_models": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/deepseg_sc_models/releases/download/r20180610/20180610_deepseg_sc_models.zip",
             "https://osf.io/avf97/?action=download",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "deepseg_sc_models"),
     },
     "deepseg_lesion_models": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/deepseg_lesion_models/releases/download/r20180613/20180613_deepseg_lesion_models.zip",
             "https://osf.io/eg7v9/?action=download",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "deepseg_lesion_models"),
     },
     "c2c3_disc_models": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/c2c3_disc_models/releases/download/r20190117/20190117_c2c3_disc_models.zip",
             "https://osf.io/t97ap/?action=download",
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "c2c3_disc_models"),
     },
     "exvivo_template": { 
         "mirrors": [
             "https://github.com/spinalcordtoolbox/exvivo-template/archive/refs/tags/r20210317.zip"
         ],
-        "default_location": f"{__sct_dir__}/data",
+        "default_location": os.path.join(__sct_dir__, "data", "exvivo_template"),
     }
 }
 
@@ -216,7 +216,7 @@ def main(argv=None):
     if arguments.o is not None:
         dest_folder = arguments.o
     else:
-        dest_folder = f"{DATASET_DICT[data_name]['default_location']}/{data_name}"
+        dest_folder = DATASET_DICT[data_name]['default_location']
 
     url = DATASET_DICT[data_name]["mirrors"]
     install_data(url, dest_folder, keep=arguments.k)
