@@ -1,2 +1,14 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        # 0.1% prevents roughly one-line changes (~0.01%) from causing PR failures
+        threshold: 0.1%
+        # An alternative to 'threshold' could be to use 'informational' mode:
+        #    https://docs.codecov.com/docs/commit-status#informational
+        # But, this will depend on the preferences of SCT's developers, and
+        # can be easily changed in the future anyway.
+
 comment:
   layout: "flags, files"
