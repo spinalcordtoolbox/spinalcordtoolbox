@@ -73,7 +73,7 @@ frozen_dependencies = get_dependencies(path.join(here, 'requirements-freeze.txt'
 
 dependencies = frozen_dependencies or DEFAULT_REQUIREMENTS
 
-with open(path.join(here, "generated_requirements.txt"), 'wt') as f:
+with open(path.join(here, "install_requirements.txt"), 'wt') as f:
     f.write('\n'.join(dependencies))
 
 
