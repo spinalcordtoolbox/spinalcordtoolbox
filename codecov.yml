@@ -9,6 +9,12 @@ coverage:
         #    https://docs.codecov.com/docs/commit-status#informational
         # But, this will depend on the preferences of SCT's developers, and
         # can be easily changed in the future anyway.
+    patch:
+      default:
+        target: auto
+        # Patch targets can be a little more lenient, since the total # of
+        # lines per file is much smaller than the project as a whole
+        threshold: 1%
 
 comment:
   layout: "flags, files"
