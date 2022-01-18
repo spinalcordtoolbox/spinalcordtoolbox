@@ -624,11 +624,10 @@ fi
 python -m pip install -U "pip!=21.2.*"
 
 ## Install the spinalcordtoolbox into the Conda venv
-print info "Installing Python dependencies..."
+print info "Installing spinalcordtoolbox and its Python dependencies..."
 (
   # We use "--ignore-installed" to preserve the version of `certifi` installed into the conda
   # env, which prevents https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3609
-  print info "Installing spinalcordtoolbox..." &&
   pip install -e . --ignore-installed certifi -f https://download.pytorch.org/whl/cpu/torch_stable.html
 ) ||
   die "Failed running pip install: $?"
