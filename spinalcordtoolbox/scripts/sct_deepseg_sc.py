@@ -75,7 +75,7 @@ def get_parser():
         "-brain",
         type=int,
         help='Indicate if the input image contains brain sections (to speed up segmentation). Only use with '
-             '"-centerline cnn".',
+             '"-centerline cnn". (default: 1 for T1/T2 contrasts, 0 for T2*/DWI contrasts)',
         choices=(0, 1))
     optional.add_argument(
         "-kernel",
