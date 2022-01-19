@@ -6,14 +6,13 @@ Contributors: charley
 """
 
 import numpy as np
-import tensorflow as tf
 
-from keras import backend as K
-from keras.engine import Input, Model
-from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, Activation, BatchNormalization
-from keras.optimizers import Adam
-from keras.models import load_model
-from keras.layers.merge import concatenate
+from tensorflow.compat.v1.keras import backend as K
+from tensorflow.compat.v1.keras import Input, Model
+from tensorflow.compat.v1.keras.layers import Conv3D, MaxPooling3D, UpSampling3D, Activation, BatchNormalization
+from tensorflow.compat.v1.keras.optimizers import Adam
+from tensorflow.compat.v1.keras.models import load_model
+from tensorflow.compat.v1.keras.layers import concatenate
 
 # Note: `K.set_image_data_format("channels_first")` was removed from this file because it interfered
 # with other tests. It may need to be re-added for this function to work properly. (See #2954)

@@ -241,7 +241,7 @@ Procedure:
    .. code:: sh
 
       # The less obscure ones may be packaged in the distribution
-      sudo apt install python3-{numpy,scipy,nibabel,matplotlib,h5py,mpi4py,keras,tqdm,sympy,requests,sklearn,skimage}
+      sudo apt install python3-{numpy,scipy,nibabel,matplotlib,tensorflow-cpu,mpi4py,tqdm,sympy,requests,sklearn,skimage}
       # The more obscure ones would be on pip
       sudo apt install libmpich-dev
       pip3 install --user distribute2mpi nipy dipy
@@ -251,7 +251,7 @@ Procedure:
    .. code:: sh
 
       # The less obscure ones may be packaged in the distribution
-      sudo apt install python3-{numpy,scipy,matplotlib,h5py,mpi4py,requests}
+      sudo apt install python3-{numpy,scipy,matplotlib,tensorflow-cpu,mpi4py,requests}
       # The more obscure ones would be on pip
       sudo apt install libmpich-dev
       pip3 install --user distribute2mpi sympy tqdm Keras nibabel nipy dipy scikit-image sklearn

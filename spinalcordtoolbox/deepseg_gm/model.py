@@ -7,14 +7,14 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
-import keras.backend as K
-from keras.models import Model
-from keras.layers import Input
-from keras.layers import Conv2D, Dropout
-from keras.layers import RepeatVector, Reshape
-from keras.layers import BatchNormalization
-from keras.layers import concatenate, GlobalAveragePooling2D
-from keras.optimizers import Adam
+import tensorflow.compat.v1.keras.backend as K
+from tensorflow.compat.v1.keras.models import Model
+from tensorflow.compat.v1.keras.layers import Input
+from tensorflow.compat.v1.keras.layers import Conv2D, Dropout
+from tensorflow.compat.v1.keras.layers import RepeatVector, Reshape
+from tensorflow.compat.v1.keras.layers import BatchNormalization
+from tensorflow.compat.v1.keras.layers import concatenate, GlobalAveragePooling2D
+from tensorflow.compat.v1.keras.optimizers import Adam
 
 # Models
 # Tuple of (model, metadata)
@@ -132,7 +132,7 @@ def create_model(nfilters, input_size=(200, 200)):
 
     # Branch for the global context
     global_pool = GlobalAveragePooling2D()(conv1)
-    global_pool = RepeatVector(input_height * input_width)(global_pool)
+    global_pool = RepeatVector(int(input_height * input_width))(global_pool)
     global_pool = Reshape((input_height, input_width, nfilters))(global_pool)
 
     # Concatenation

@@ -12,17 +12,12 @@ if sys.hexversion < 0x03000000:
     sys.stderr = io.BytesIO()
 else:
     sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
-try:
-    from keras.layers import Input, Conv2D, Conv2DTranspose
-    from keras.layers import MaxPooling2D, Cropping2D, Concatenate
-    from keras.layers import Lambda, Activation, BatchNormalization, Dropout
-    from keras.models import Model
-    from keras import backend as K
-except Exception as e:
-    sys.stderr = original_stderr
-    raise
-else:
-    sys.stderr = original_stderr
+
+from tensorflow.compat.v1.keras.layers import Input, Conv2D, Conv2DTranspose
+from tensorflow.compat.v1.keras.layers import MaxPooling2D, Cropping2D, Concatenate
+from tensorflow.compat.v1.keras.layers import Lambda, Activation, BatchNormalization, Dropout
+from tensorflow.compat.v1.keras.models import Model
+from tensorflow.compat.v1.keras import backend as K
 
 
 def downsampling_block(input_tensor, filters, padding='same', batchnorm=True, dropout=0.0):

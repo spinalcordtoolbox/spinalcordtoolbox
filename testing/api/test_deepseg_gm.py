@@ -4,7 +4,7 @@ import sys
 import pytest
 import nibabel as nib
 import numpy as np
-import keras.backend as K
+import tensorflow.compat.v1.keras.backend as K
 
 from spinalcordtoolbox.deepseg_gm import model as gm_model
 from spinalcordtoolbox.deepseg_gm import deepseg_gm as gm_core

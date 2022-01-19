@@ -22,13 +22,8 @@ if sys.hexversion < 0x03000000:
     sys.stderr = io.BytesIO()
 else:
     sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
-try:
-    from keras import backend as K
-except Exception as e:
-    sys.stderr = original_stderr
-    raise
-else:
-    sys.stderr = original_stderr
+
+import tensorflow.compat.v1.keras.backend as K
 
 from spinalcordtoolbox import resampling, __data_dir__
 from . import model

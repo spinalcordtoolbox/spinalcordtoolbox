@@ -29,10 +29,6 @@ def get_dependencies(requirements_path=None):
 DEFAULT_REQUIREMENTS = [
     'colored',
     'dipy',
-    # h5py is pinned to minor than 3 due to issues with Keras/TF
-    # https://github.com/tensorflow/tensorflow/issues/44467
-    'h5py~=2.10.0',
-    'Keras==2.3.1',
     'ivadomed',
     'matplotlib',
     'nibabel',
@@ -52,7 +48,9 @@ DEFAULT_REQUIREMENTS = [
     'scipy',
     'scikit-image',
     'scikit-learn',
-    'tensorflow~=1.15.0',
+    'intel-tensorflow~=2.7.0; sys_platform != "darwin"',
+    'tensorflow~=2.7.0; sys_platform == "darwin"',
+    'PyYAML',
     # PyTorch's Linux/Windows distribution is very large due to its GPU support,
     # but we only need that for training models. For users, use the CPU-only version
     # (only available directly from the PyTorch project).
