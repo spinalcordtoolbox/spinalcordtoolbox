@@ -628,6 +628,7 @@ print info "Installing spinalcordtoolbox and its Python dependencies..."
 (
   # We use "--ignore-installed" to preserve the version of `certifi` installed into the conda
   # env, which prevents https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3609
+  conda install -c anaconda tensorflow-mkl
   pip install -e . --ignore-installed certifi -f https://download.pytorch.org/whl/cpu/torch_stable.html
 ) ||
   die "Failed running pip install: $?"

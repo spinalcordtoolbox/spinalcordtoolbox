@@ -49,8 +49,8 @@ DEFAULT_REQUIREMENTS = [
     'scikit-image',
     'scikit-learn',
     'intel-tensorflow~=2.7.0; sys_platform != "darwin"',
-    'tensorflow~=2.7.0; sys_platform == "darwin"',
-    'tensorflow-metal; sys_platform == "darwin"',
+    # 'tensorflow~=2.7.0; sys_platform == "darwin"',
+    # 'tensorflow-metal; sys_platform == "darwin"',
     'PyYAML',
     # PyTorch's Linux/Windows distribution is very large due to its GPU support,
     # but we only need that for training models. For users, use the CPU-only version
