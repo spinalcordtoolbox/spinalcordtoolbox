@@ -40,10 +40,10 @@ jobs:
       run: |
         source python/etc/profile.d/conda.sh
         conda activate venv_sct
-        pip freeze | grep -v "-e git+" | grep -v "torch" > requirements-freeze.txt
+        pip freeze | grep -v "-e git+" | grep -v "sys_platform" > requirements-freeze.txt
         conda deactivate
-        echo "# Platform-specific torch requirements (See SCT Issue #2745)" >> requirements-freeze.txt
-        grep "torch" install_requirements.txt >> requirements-freeze.txt
+        echo "# Platform-specific requirements (See SCT Issue #2745)" >> requirements-freeze.txt
+        grep "sys_platform" install_requirements.txt >> requirements-freeze.txt
 
     - name: Update version.txt
       run: |

@@ -72,6 +72,8 @@ def resolve_module(framework_name):
         'pyqt5': ('PyQt5.QtCore', False),  # Importing Qt instead PyQt5 to be able to catch this issue #2523
         'PyYAML': ('yaml', False),
         'intel-tensorflow': ('tensorflow', False),
+        'tensorflow-macos': ('tensorflow', False),
+        'tensorflow-metal': ('tensorflow', False),
         'tensorflow-cpu': ('tensorflow', False),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
