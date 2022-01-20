@@ -87,6 +87,14 @@ def set_loglevel(verbose):
         # the loglevel changes from leaking: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3341
         pass
 
+def strip_py(fname):
+    """
+    Strip ".py" suffix from the string `fname`, if present.
+
+    :param fname: str: a filename
+    :return: a stripped copy of `fname`
+    """
+    return fname[:-3] if fname.endswith('.py') else fname
 
 # TODO: add test
 def init_sct():
@@ -126,7 +134,7 @@ def init_sct():
     # Display command (Only if called from CLI: check for .py in first arg)
     # Use next(iter()) to not fail on empty list (vs. sys.argv[0])
     if '.py' in next(iter(sys.argv), None):
-        script = os.path.basename(sys.argv[0]).strip(".py")
+        script = strip_py(os.path.basename(sys.argv[0]))
         arguments = ' '.join(sys.argv[1:])
         logger.info(f"{script} {arguments}\n"
                     f"--\n")
