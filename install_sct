@@ -624,22 +624,11 @@ fi
 python -m pip install -U "pip!=21.2.*"
 
 ## Install the spinalcordtoolbox into the Conda venv
-print info "Installing Python dependencies..."
-# Check if a frozen version of the requirements exist (for release only)
-if [[ -f "requirements-freeze.txt" ]]; then
-  print info "Using requirements-freeze.txt (release installation)"
-  REQUIREMENTS_FILE="requirements-freeze.txt"
-else
-  # Not a package
-  print info "Using requirements.txt (git installation)"
-  REQUIREMENTS_FILE="requirements.txt"
-fi
+print info "Installing spinalcordtoolbox and its Python dependencies..."
 (
   # We use "--ignore-installed" to preserve the version of `certifi` installed into the conda
   # env, which prevents https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3609
-  pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
-  print info "Installing spinalcordtoolbox..." &&
-  pip install -e .
+  pip install -e . --ignore-installed certifi -f https://download.pytorch.org/whl/cpu/torch_stable.html
 ) ||
   die "Failed running pip install: $?"
 
