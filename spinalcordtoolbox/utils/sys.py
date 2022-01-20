@@ -87,6 +87,7 @@ def set_loglevel(verbose):
         # the loglevel changes from leaking: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3341
         pass
 
+
 def strip_py(fname):
     """
     Strip ".py" suffix from the string `fname`, if present.
@@ -95,6 +96,7 @@ def strip_py(fname):
     :return: a stripped copy of `fname`
     """
     return fname[:-3] if fname.endswith('.py') else fname
+
 
 # TODO: add test
 def init_sct():
