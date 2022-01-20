@@ -378,7 +378,6 @@ def main(argv=None):
     elif arguments.symmetrize is not None:
         if arguments.symmetrize == 0:
             data_out = (data + data[::-1, :, :]) / float(2)
-            #data_out = (data + data[list(range(data.shape[0] - 1, -1, -1)), :, :]) / float(2)
         elif arguments.symmetrize == 1:
             data_out = (data + data[:, ::-1, :]) / float(2)
         elif arguments.symmetrize == 2:
