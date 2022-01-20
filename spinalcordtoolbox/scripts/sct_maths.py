@@ -10,6 +10,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from asyncio.log import logger
 import os
 import sys
 import pickle
@@ -375,7 +376,13 @@ def main(argv=None):
         data_out = sct_math.denoise_nlmeans(data, patch_radius=p, block_radius=b)
 
     elif arguments.symmetrize is not None:
-        data_out = (data + data[list(range(data.shape[0] - 1, -1, -1)), :, :]) / float(2)
+        if arguments.symmetrize==0:
+            data_out = (data + data[::-1,:,:]) / float(2)
+            #data_out = (data + data[list(range(data.shape[0] - 1, -1, -1)), :, :]) / float(2)
+        elif arguments.symmetrize==1:
+            data_out = (data + data[:,::-1,:]) / float(2)
+        elif arguments.symmetrize==2:
+            data_out = (data + data[:,:,::-1]) / float(2)
 
     elif arguments.mi is not None:
         # input 1 = from flag -i --> im
