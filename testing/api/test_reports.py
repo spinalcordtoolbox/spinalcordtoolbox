@@ -21,8 +21,8 @@ handle.setLevel(logging.DEBUG)
 logger.addHandler(handle)
 
 
-def labeled_data_test_params(path_in='sct_testing_data/t2/t2.nii.gz',
-                             path_seg='sct_testing_data/t2/labels.nii.gz'):
+def labeled_data_test_params(path_in=sct_test_path('t2', 't2.nii.gz'),
+                             path_seg=sct_test_path('t2', 'labels.nii.gz')):
     """Generate image/label pairs for various test cases of
     test_sagittal_slice_get_center_spit."""
     im_in = Image(path_in)            # Base anatomical image
