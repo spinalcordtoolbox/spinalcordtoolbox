@@ -1,2 +1,16 @@
+# Setting 'informational: true' will prevent the CI checks from failing due
+# to insufficient coverage. An alternative would be to use targets and thresholds
+# to aim for specific goals. But, given SCT's past discussion on the merits of
+# coverage, aiming for specific % targets doesn't exactly align with our goals
+# See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3463
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+
 comment:
   layout: "flags, files"
