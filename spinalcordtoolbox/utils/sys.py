@@ -381,12 +381,23 @@ def sct_dir_local_path(*args):
 
 
 def sct_test_path(*args):
-    """Construct a directory path relative to the sct testing data. Consults the
-    SCT_TESTING_DATA environment variable, if unset, paths are relative to the
-    current directory."""
+    """Construct a directory path relative to the sct testing data. Consults
+    the SCT_TESTING_DATA environment variable.
+    If unset, use the default dataset location from sct_download_data."""
 
     test_path = os.environ.get('SCT_TESTING_DATA', '')
-    return os.path.join(test_path, 'sct_testing_data', *args)
+    if test_path:
+        return os.path.join(test_path, 'sct_testing_data', *args)
+    else:
+        # NB: The default path written below is actually determined inside
+        #     sct_download_data. But, trying to import the path from the script
+        #     causes a circular dependency. So, we duplicate the path here.
+        #     This could cause bugs if the default location ever changes.
+        # TODO: Consider moving sct_test_path() inside testing/conftest.py,
+        #       since it's a testing-specific function. This would mitigate the
+        #       circular dependency, since we would no longer be importing
+        #       from sct_download_data inside sys.py.
+        return sct_dir_local_path('data', 'sct_testing_data', *args)
 
 
 def check_exe(name):

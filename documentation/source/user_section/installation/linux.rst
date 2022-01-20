@@ -4,6 +4,9 @@
 Installation for Linux
 **********************
 
+.. warning::
+
+   If you use Windows Subsystem for Linux (WSL), please refer to the :ref:`Windows installation section <wsl-installation>`.
 
 Requirements
 ============
@@ -117,13 +120,13 @@ Procedure:
 
    .. code:: sh
 
-      pip install -e .
+      pip install -e . -f https://download.pytorch.org/whl/cpu/torch_stable.html
 
    else:
 
    .. code:: sh
 
-      pip install --user -e .
+      pip install --user -e . -f https://download.pytorch.org/whl/cpu/torch_stable.html
 
 
 Option 4: Install with Docker
