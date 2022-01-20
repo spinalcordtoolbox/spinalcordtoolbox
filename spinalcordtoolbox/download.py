@@ -171,6 +171,7 @@ def install_data(url, dest_folder, keep=False):
         bundle_folder = extraction_folder
 
     # Copy over
+    logger.info(f"Copying data to: {dest_folder}")
     for cwd, ds, fs in os.walk(bundle_folder):
         ds.sort()
         fs.sort()

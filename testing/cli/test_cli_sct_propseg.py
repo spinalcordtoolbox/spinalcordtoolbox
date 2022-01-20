@@ -3,7 +3,7 @@ import pytest
 import logging
 
 from spinalcordtoolbox.image import Image, compute_dice
-from spinalcordtoolbox.utils import run_proc
+from spinalcordtoolbox.utils import run_proc, sct_test_path
 from spinalcordtoolbox.scripts import sct_propseg
 
 logger = logging.getLogger(__name__)
@@ -38,8 +38,8 @@ def test_isct_propseg_compatibility():
         'administrators.'
 
 
-def test_sct_propseg_o_flags(tmp_path):
-    argv = ['-i', 'sct_testing_data/t2/t2.nii.gz', '-c', 't2', '-ofolder', str(tmp_path), '-o', 'test_seg.nii.gz']
+def test_sct_propseg_o_flag(tmp_path):
+    argv = ['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path), '-o', 'test_seg.nii.gz']
     sct_propseg.main(argv)
     output_files = sorted([f for f in os.listdir(tmp_path)
                           if os.path.isfile(os.path.join(tmp_path, f))])

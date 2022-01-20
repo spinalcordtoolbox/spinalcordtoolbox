@@ -12,7 +12,7 @@ from spinalcordtoolbox.utils.sys import sct_dir_local_path
 
 SCT_DIR = pathlib.Path(sct_dir_local_path())
 CACHE_DIR = SCT_DIR / "testing" / "batch_processing" / "cached_results"
-OUTPUT_DIR = SCT_DIR / "sct_example_data"
+OUTPUT_DIR = SCT_DIR / "data" / "sct_example_data"
 
 # TODO: We can and should be verifying more results produced by this pipeline, but which values?
 TESTED_VALUES = [("t2/csa_c2c3.csv", 0, "MEAN(area)"),
