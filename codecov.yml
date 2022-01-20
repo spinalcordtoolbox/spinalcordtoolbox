@@ -1,20 +1,16 @@
+# Setting 'informational: true' will prevent the CI checks from failing due
+# to insufficient coverage. An alternative would be to use targets and thresholds
+# to aim for specific goals. But, given SCT's past discussion on the merits of
+# coverage, aiming for specific % targets doesn't exactly align with our goals
+# See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3463
 coverage:
   status:
     project:
       default:
-        target: auto
-        # 0.1% prevents roughly one-line changes (~0.01%) from causing PR failures
-        threshold: 0.1%
-        # An alternative to 'threshold' could be to use 'informational' mode:
-        #    https://docs.codecov.com/docs/commit-status#informational
-        # But, this will depend on the preferences of SCT's developers, and
-        # can be easily changed in the future anyway.
+        informational: true
     patch:
       default:
-        target: auto
-        # Patch targets can be a little more lenient, since the total # of
-        # lines per file is much smaller than the project as a whole
-        threshold: 1%
+        informational: true
 
 comment:
   layout: "flags, files"
