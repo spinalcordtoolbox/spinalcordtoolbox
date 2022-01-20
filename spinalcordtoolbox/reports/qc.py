@@ -750,10 +750,6 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
             logger.info('open file "%s/index.html"', path_qc)
     except ImportError:
         print("WARNING! Platform undetectable.")
-        # TODO: Remove me!
-        test = None
-        if test is not None:
-            print("Testing coverage!")
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args=None, path_qc=None,
