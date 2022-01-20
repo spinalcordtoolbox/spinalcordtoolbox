@@ -10,14 +10,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from asyncio.log import logger
-import os
 import sys
 import pickle
 import gzip
 
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 
 import spinalcordtoolbox.math as sct_math
