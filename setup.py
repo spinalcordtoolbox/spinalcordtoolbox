@@ -37,10 +37,9 @@ DEFAULT_REQUIREMENTS = [
     'matplotlib',
     'nibabel',
     'numpy',
-    # onnxruntime>=1.5.1 requires `brew install libomp` on macOS.
-    # So, pin to 1.4.0 to avoid having to ask users to install libomp.
-    # ivadomed==2.5.0 would also do this, but #3035 is preventing that.
-    'onnxruntime==1.4.0',
+    # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
+    # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
+    'onnxruntime>=1.7.0',
     'pandas',
     'psutil',
     'pyqt5==5.11.3',
