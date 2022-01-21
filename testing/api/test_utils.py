@@ -7,23 +7,6 @@ import pytest
 from spinalcordtoolbox import utils
 
 
-def test_strip_py():
-    """
-    Test that utils.strip_py() correctly removes '.py' suffix if present.
-    """
-    # The happy path
-    assert utils.strip_py("basename.py") == "basename"
-    assert utils.strip_py("basename") == "basename"
-
-    # A short string
-    assert utils.strip_py("a") == "a"
-
-    # Permutations and prefixes should not be removed
-    assert utils.strip_py("ppp.yyy") == "ppp.yyy"
-    assert utils.strip_py("no_dot_py") == "no_dot_py"
-    assert utils.strip_py(".py_prefix") == ".py_prefix"
-
-
 def test_parse_num_list_inv():
     assert utils.parse_num_list_inv([1, 2, 3, 5, 6, 9]) == '1:3;5:6;9'
     assert utils.parse_num_list_inv([3, 2, 1, 5]) == '1:3;5'
