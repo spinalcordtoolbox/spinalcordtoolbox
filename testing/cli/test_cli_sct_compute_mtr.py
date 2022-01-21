@@ -1,25 +1,12 @@
 import pytest
 import logging
 import numpy
+import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.scripts import sct_compute_mtr
 
 logger = logging.getLogger(__name__)
-
-
-@pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
-def test_sct_compute_mtr_no_checks(tmp_path):
-    """Run the CLI script without checking results."""
-    mtr_output_path = str(tmp_path / 'mtr_output.nii.gz')
-
-    sct_compute_mtr.main(argv=['-mt0', 'mt/mt0.nii.gz', '-mt1', 'mt/mt1.nii.gz', '-o', mtr_output_path])
-
-    # Comparate ground truth mtr file to new generated one
-    ground_truth_mtr = Image('mt/mtr.nii.gz')
-    output_mtr = Image(mtr_output_path)
-    assert numpy.linalg.norm(ground_truth_mtr.data - output_mtr.data) <= 0.001
 
 
 @pytest.mark.sct_testing
@@ -48,3 +35,47 @@ def test_sct_compute_mtr_with_int16_image_type(tmp_path):
             output_mtr.data[numpy.isfinite(output_mtr.data)])
 
     assert numpy.abs(numpy.average(diff)) <= 0.5
+
+
+@pytest.mark.sct_testing
+@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
+def test_sct_compute_mtr_with_dummy_int16_image_type(tmp_path):
+    """Run the CLI script with dummy int_16 image type"""
+
+    mt0_path = str(tmp_path / 'mt0_int16.nii.gz')
+    mt1_path = str(tmp_path / 'mt1_int16.nii.gz')
+    mtr_output_path = str(tmp_path / 'mtr_output.nii.gz')
+    mtr_truth_path = str(tmp_path / 'mtr_dummy_truth.nii.gz')
+
+    # Generate dummy files of inputs and output comparison
+    nx, ny, nz = 9, 9, 9  # image dimension
+
+    data = numpy.zeros((nx, ny, nz), dtype=numpy.int16)
+    data[4, 4, 4] = 100
+    affine = numpy.eye(4)
+    mt0 = nib.nifti1.Nifti1Image(data, affine)
+    nib.save(mt0, mt0_path)
+
+    data = numpy.zeros((nx, ny, nz), dtype=numpy.int16)
+    data[4, 4, 4] = 70
+    affine = numpy.eye(4)
+    mt1 = nib.nifti1.Nifti1Image(data, affine)
+    nib.save(mt1, mt1_path)
+
+    data = numpy.zeros((nx, ny, nz), dtype=numpy.float32)
+    data[4, 4, 4] = 30
+    affine = numpy.eye(4)
+    mtr_truth = nib.nifti1.Nifti1Image(data, affine)
+    nib.save(mtr_truth, mtr_truth_path)
+
+    # Compute the MTR
+    sct_compute_mtr.main(argv=['-mt0', mt0_path, '-mt1', mt1_path, '-o', mtr_output_path])
+
+    # Compare the dummy output with the mtr file newly generated
+    truth_mtr = Image(mtr_truth_path)
+    output_mtr = Image(mtr_output_path)
+
+    diff = (truth_mtr.data[numpy.isfinite(truth_mtr.data)] -
+            output_mtr.data[numpy.isfinite(output_mtr.data)])
+
+    assert numpy.abs(numpy.average(diff)) <= 30
