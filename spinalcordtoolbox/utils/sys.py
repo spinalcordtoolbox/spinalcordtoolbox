@@ -100,6 +100,7 @@ def removesuffix(self: str, suffix: str) -> str:
     else:
         return self[:]
 
+
 # TODO: add test
 def init_sct():
     """
