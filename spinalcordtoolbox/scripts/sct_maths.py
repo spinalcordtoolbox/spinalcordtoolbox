@@ -373,12 +373,7 @@ def main(argv=None):
         data_out = sct_math.denoise_nlmeans(data, patch_radius=p, block_radius=b)
 
     elif arguments.symmetrize is not None:
-        if arguments.symmetrize == 0:
-            data_out = (data + data[::-1, :, :]) / float(2)
-        elif arguments.symmetrize == 1:
-            data_out = (data + data[:, ::-1, :]) / float(2)
-        elif arguments.symmetrize == 2:
-            data_out = (data + data[:, :, ::-1]) / float(2)
+        data_out = sct_math.symmetrize(data, arguments.symmetrize)
 
     elif arguments.mi is not None:
         # input 1 = from flag -i --> im
@@ -512,4 +507,3 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-
