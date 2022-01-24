@@ -25,10 +25,13 @@ class Param:
 def get_parser():
     parser = SCTArgumentParser(
         description='Utility function to denoise diffusion MRI images. Return the denoised image and also the difference '
-                    'between the input and the output.The Patch2Self denoising algorithm is based on self-supervised denoising via statistical independence of noise'
-                    'based on method described in (Shreyas Fadnavis, Joshua Batson, Eleftherios Garyfallidis) Patch2Self: '
-                    'Denoising Diffusion MRI with Self-supervised Learning, Advances in Neural Information Processing Systems '
-                    '(NeurIPS), 2020, Vol. 33. The implementation is based on DIPY (https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self)'
+                    'between the input and the output.The Patch2Self denoising algorithm is based on self-supervised denoising via statistical independence of noise, as described in the following publications:\n'
+                    '\n'
+                    '- Fadnavis et al. Patch2Self: Denoising Diffusion MRI with Self-supervised Learning. NeurIPS, 2020, Vol. 33. (https://arxiv.org/abs/2011.01355)\n'
+                    '- Schilling et al. Patch2Self denoising of diffusion MRI in the cervical spinal cord improves intra-cord contrast, '
+                    'signal modelling, repeatability, and feature conspicuity. Preprint, 2021. (https://doi.org/10.1101/2021.10.04.21264389)\n'
+                    '\n'
+                    'The implementation is based on DIPY (https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self)'
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
