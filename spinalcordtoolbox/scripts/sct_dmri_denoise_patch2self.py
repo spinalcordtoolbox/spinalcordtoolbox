@@ -67,12 +67,6 @@ def get_parser():
         metavar=Metavar.str,
         default=None)
     optional.add_argument(
-        "-r",
-        help="Remove temporary files. Specify 0 to get access to temporary files.",
-        type=int,
-        choices=(0, 1),
-        default=1)
-    optional.add_argument(
         '-v',
         metavar=Metavar.int,
         type=int,
@@ -91,7 +85,6 @@ def main(argv=None):
     set_loglevel(verbose=verbose)
 
     model = arguments.model
-    remove_temp_files = arguments.r
     if "," in arguments.radius:
         patch_radius = list_type(",", int)(arguments.radius)
     else:
