@@ -29,6 +29,11 @@
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
 
+# Change directory to where the script is, for the duration of the script.
+# This lives outside the subshell below to guarantee the corresponding
+# popd gets run, no matter how the installation script exits.
+pushd -- "${BASH_SOURCE[0]%/*}/" || exit 1
+
 ( # | tee install_sct_log.txt
 
 # stricter shell mode
@@ -39,10 +44,9 @@ shopt -s failglob # error if a glob doesn't find any files, instead of remaining
 
 # set -v  # v: verbose
 
-
 # Where tmp file are stored
 TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR')"
-# Start Directory So we go back there at the end of the Script
+# Source directory
 SCT_SOURCE="$PWD"
 DATA_DIR="data"
 PYTHON_DIR="python"
@@ -111,8 +115,6 @@ function run() {
 function finish() {
   # Catch the last return code
   value="$?"
-  # Get back to starting point
-  cd "$SCT_SOURCE"
   if [[ "$value" -eq 0 ]]; then
     print info "Installation finished successfully!"
   elif [[ "$value" -eq 99 ]]; then
@@ -120,7 +122,7 @@ function finish() {
     echo ""
   else
     print error "Installation failed!\n
-Please find the file $(pwd)/install_sct_log.txt, 
+Please find the file \"$SCT_SOURCE/install_sct_log.txt\",
 then upload it as a .txt attachment in a new topic on SCT's forum:
 --> http://forum.spinalcordmri.org/c/sct"
   fi
@@ -405,8 +407,7 @@ check_requirements
 if [[ -e "spinalcordtoolbox/version.txt" ]]; then
   SCT_VERSION="$(cat spinalcordtoolbox/version.txt)"
 else
-  die "ERROR: version.txt not found. \n
-The install_sct script must be executed from the source directory"
+  die "ERROR: version.txt not found."
 fi
 
 # Get installation type (from git or from package) if not already specified
@@ -744,3 +745,5 @@ else
 fi
 
 ) 2>&1 | tee install_sct_log.txt
+
+popd
