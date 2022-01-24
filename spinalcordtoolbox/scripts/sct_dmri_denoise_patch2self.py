@@ -9,19 +9,6 @@ from spinalcordtoolbox.image import add_suffix
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel, list_type
 
 
-# DEFAULT PARAMETERS
-class Param:
-    # The constructor
-    def __init__(self):
-        self.debug = 0
-        self.verbose = 1  # verbose
-        self.remove_temp_files = 1
-        self.parameter = "ols"
-        self.file_to_denoise = ''
-        self.bval_file = ''
-        self.output_file_name = ''
-
-
 def get_parser():
     parser = SCTArgumentParser(
         description='Utility function to denoise diffusion MRI images. Return the denoised image and also the difference '
@@ -114,11 +101,6 @@ def main(argv=None):
     bval_file = arguments.b
     output_file_name = arguments.o
 
-    param = Param()
-    param.verbose = verbose
-    param.remove_temp_files = remove_temp_files
-    param.parameter = model
-
     path, file, ext = extract_fname(file_to_denoise)
 
     img = nib.load(file_to_denoise)
@@ -130,7 +112,7 @@ def main(argv=None):
     den = patch2self(data, bvals, patch_radius=patch_radius, model=model,
                      verbose=True)
 
-    if param.verbose == 2:
+    if verbose == 2:
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots(1, 3)
         axial_middle = int(data.shape[2] / 2)
@@ -161,9 +143,9 @@ def main(argv=None):
     nib.save(img_denoise, output_file_name_den)
     nib.save(img_diff, output_file_name_diff)
 
-    printv('\nDone! To view results, type:', param.verbose)
+    printv('\nDone! To view results, type:', verbose)
     printv('fsleyes ' + file_to_denoise + ' ' + output_file_name + ' & \n',
-           param.verbose, 'info')
+           verbose, 'info')
 
 
 # =======================================================================================================================
