@@ -88,6 +88,19 @@ def set_loglevel(verbose):
         pass
 
 
+def removesuffix(self: str, suffix: str) -> str:
+    """
+    Source: https://www.python.org/dev/peps/pep-0616/
+
+    TODO: Replace with built-in str.removesuffix method after upgrading to Python 3.9
+    """
+    # suffix='' should not call self[:-0].
+    if suffix and self.endswith(suffix):
+        return self[:-len(suffix)]
+    else:
+        return self[:]
+
+
 # TODO: add test
 def init_sct():
     """
@@ -126,7 +139,7 @@ def init_sct():
     # Display command (Only if called from CLI: check for .py in first arg)
     # Use next(iter()) to not fail on empty list (vs. sys.argv[0])
     if '.py' in next(iter(sys.argv), None):
-        script = os.path.basename(sys.argv[0]).strip(".py")
+        script = removesuffix(os.path.basename(sys.argv[0]), ".py")
         arguments = ' '.join(sys.argv[1:])
         logger.info(f"{script} {arguments}\n"
                     f"--\n")

@@ -12,7 +12,7 @@ import inspect
 
 from enum import Enum
 
-from .sys import check_exe, printv
+from .sys import check_exe, printv, removesuffix
 
 logger = logging.getLogger(__name__)
 
@@ -120,7 +120,7 @@ class SCTArgumentParser(argparse.ArgumentParser):
         # Update "usage:" message to match how SCT scripts are actually called (no '.py')
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
-        update_parent_default('prog', os.path.basename(module.__file__).strip(".py"))
+        update_parent_default('prog', removesuffix(os.path.basename(module.__file__), ".py"))
 
         # Disable "add_help", because it won't properly add '-h' to our custom argument groups
         # (We use custom argument groups because of https://stackoverflow.com/a/24181138)
