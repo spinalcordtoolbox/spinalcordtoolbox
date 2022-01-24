@@ -602,7 +602,7 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 # For more information, see:
 # * Issue details: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3067
 # * Fix details: https://github.com/conda/conda/issues/7173#issuecomment-980496682
-echo "include-system-site-packages = false" > $SCT_DIR/$PYTHON_DIR/envs/venv_sct/pyvenv.cfg
+echo "include-system-site-packages = false" > "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/pyvenv.cfg"
 
 # activate miniconda
 # shellcheck disable=SC1091
