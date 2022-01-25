@@ -744,5 +744,6 @@ else
 fi
 
 ) 2>&1 | tee install_sct_log.txt
-
+status=$?
 popd >/dev/null
+exit $status
