@@ -11,30 +11,29 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.sct_testing
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
-def test_sct_compute_mtr_with_int16_image_type(tmp_path):
-    """Run the CLI script with int_16 image type"""
+def test_sct_compute_mtr_results_are_identical(tmp_path):
+    """
+    Test the CLI script to ensure that MTR computed with sct_testing_data
+    images remains the same.
+    """
 
-    mt0_path = str(tmp_path / 'mt0_int16.nii.gz')
-    mt1_path = str(tmp_path / 'mt1_int16.nii.gz')
+    mt0_path = 'mt/mt0_reg_slicereg_goldstandard.nii.gz'
+    mt1_path = 'mt/mt1.nii.gz'
+    mtr_groundtruth_path = 'mt/mtr.nii.gz'
     mtr_output_path = str(tmp_path / 'mtr_output.nii.gz')
 
-    # Generate int16 test file based on sct_testing_data existing one
-    mt0 = Image('mt/mt0_reg_slicereg_goldstandard.nii.gz')
-    mt0.save(mt0_path, dtype='int16')
-    mt1 = Image('mt/mt1.nii.gz')
-    mt1.save(mt1_path, dtype='int16')
+    # We increase the threshold here because the default value is 100, but the
+    # original MTR file wasn't clipped to +/- 100.
+    sct_compute_mtr.main(argv=['-mt0', mt0_path, '-mt1', mt1_path,
+                               '-o', mtr_output_path, '-thr', '2000'])
 
-    sct_compute_mtr.main(argv=['-mt0', mt0_path, '-mt1', mt1_path, '-o', mtr_output_path])
-
-    # Comparate ground truth mtr file to new generated one
-    ground_truth_mtr = Image('mt/mtr.nii.gz')
+    # Compare ground truth mtr file to new generated one
+    ground_truth_mtr = Image(mtr_groundtruth_path)
     output_mtr = Image(mtr_output_path)
 
     # NB: numpy.isfinite is used to exclude nan/inf elements from comparison
-    diff = (ground_truth_mtr.data[numpy.isfinite(ground_truth_mtr.data)] -
-            output_mtr.data[numpy.isfinite(output_mtr.data)])
-
-    assert numpy.abs(numpy.average(diff)) <= 0.5
+    assert numpy.array_equal(ground_truth_mtr.data[numpy.isfinite(ground_truth_mtr.data)],
+                             output_mtr.data[numpy.isfinite(output_mtr.data)])
 
 
 @pytest.mark.sct_testing
