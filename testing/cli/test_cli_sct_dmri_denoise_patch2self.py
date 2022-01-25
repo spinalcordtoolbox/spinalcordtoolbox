@@ -1,6 +1,7 @@
 import pytest
 from dipy.data.fetcher import read_bvals_bvecs
 
+from spinalcordtoolbox.utils import sct_test_path
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.scripts import (sct_dmri_concat_b0_and_dwi,
                                        sct_dmri_denoise_patch2self,
@@ -17,13 +18,13 @@ def dmri_single_volumes(tmp_path):
     sct_dmri_separate_b0_and_dwi won't generate new bvals/bvecs file either.
     """
     # Get all bvals/bvecs corresponding to individual dMRI volumes
-    bvals, bvecs = read_bvals_bvecs('sct_testing_data/dmri/bvals.txt',
-                                    'sct_testing_data/dmri/bvecs.txt')
+    bvals, bvecs = read_bvals_bvecs(sct_test_path('dmri', 'bvals.txt'),
+                                    sct_test_path('dmri', 'bvecs.txt'))
 
     fname_dmri_imgs, fname_bvals, fname_bvecs = [], [], []
     for i, (bval, bvec) in enumerate(zip(bvals, bvecs)):
         # 1. Use existing single-volume dMRI files from sct_testing_data
-        fname_dmri_imgs.append(f'sct_testing_data/dmri/dmri_T000{i}.nii.gz')
+        fname_dmri_imgs.append(sct_test_path('dmri', f'dmri_T000{i}.nii.gz'))
 
         # 2. Copy bval into single-volume bvals file
         fname_bval = str(tmp_path/f'bvals_T000{i}.txt')
