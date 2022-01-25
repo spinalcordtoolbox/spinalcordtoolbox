@@ -132,11 +132,15 @@ html_theme_options = {
 }
 
 html_context = {
-    "display_github": True,
-    "github_user": "neuropoly",
-    "github_repo": "spinalcordtoolbox",
-    "github_version": "master",
-    "conf_py_path": "/documentations/",
+    # TODO: when the Github icon is supported natively by furo (https://github.com/pradyunsg/furo/discussions/114)
+    # then this should be moved into html_theme_options and the theme_ prefix should be dropped
+    "theme_source_repository": "https://github.com/spinalcordtoolbox/spinalcordtoolbox",
+    "theme_source_branch": "master",  # or subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]) ?
+    "theme_source_directory": "documentation/source/",
+
+    # TODO: this should be determined automatically, but it seems that *assigning* to html_context wipes out
+    # the automatically determined value?
+    "page_source_suffix": "rst",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

@@ -294,6 +294,18 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     return denoised
 
 
+def symmetrize(data, dim):
+    """
+    Symmetrize data along specified dimension.
+    :param data: numpy.array 3D data.
+    :param dim: dimension of array to symmetrize along.
+
+    :return data_out: symmetrized data
+    """
+    data_out = (data + np.flip(data, axis=dim)) / 2.0
+    return data_out
+
+
 def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
     """
     :param data_in: 4d array to denoise

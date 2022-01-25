@@ -4,13 +4,14 @@ import os
 import pytest
 
 from spinalcordtoolbox.scripts import sct_deepseg_sc
+from spinalcordtoolbox.utils import sct_test_path
 
 logger = logging.getLogger(__name__)
 
 
 def test_sct_deepseg_sc_check_output_exists(tmp_path):
     fname_out = str(tmp_path / 'test_seg.nii.gz')
-    sct_deepseg_sc.main(argv=['-i', 'sct_testing_data/t2/t2.nii.gz', '-c', 't2', '-o', fname_out])
+    sct_deepseg_sc.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-o', fname_out])
     assert os.path.isfile(fname_out)
 
 

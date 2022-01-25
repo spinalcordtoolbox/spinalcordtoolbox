@@ -58,7 +58,7 @@ start=`date +%s`
 if [[ "$SCT_BP_DOWNLOAD" == "1" ]]; then
   sct_download_data -d sct_example_data
 fi
-cd sct_example_data
+cd data/sct_example_data
 
 
 # t2
