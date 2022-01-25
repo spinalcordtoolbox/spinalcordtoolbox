@@ -88,6 +88,19 @@ def set_loglevel(verbose):
         pass
 
 
+def removesuffix(self: str, suffix: str) -> str:
+    """
+    Source: https://www.python.org/dev/peps/pep-0616/
+
+    TODO: Replace with built-in str.removesuffix method after upgrading to Python 3.9
+    """
+    # suffix='' should not call self[:-0].
+    if suffix and self.endswith(suffix):
+        return self[:-len(suffix)]
+    else:
+        return self[:]
+
+
 # TODO: add test
 def init_sct():
     """
@@ -126,7 +139,7 @@ def init_sct():
     # Display command (Only if called from CLI: check for .py in first arg)
     # Use next(iter()) to not fail on empty list (vs. sys.argv[0])
     if '.py' in next(iter(sys.argv), None):
-        script = os.path.basename(sys.argv[0]).strip(".py")
+        script = removesuffix(os.path.basename(sys.argv[0]), ".py")
         arguments = ' '.join(sys.argv[1:])
         logger.info(f"{script} {arguments}\n"
                     f"--\n")
@@ -381,12 +394,23 @@ def sct_dir_local_path(*args):
 
 
 def sct_test_path(*args):
-    """Construct a directory path relative to the sct testing data. Consults the
-    SCT_TESTING_DATA environment variable, if unset, paths are relative to the
-    current directory."""
+    """Construct a directory path relative to the sct testing data. Consults
+    the SCT_TESTING_DATA environment variable.
+    If unset, use the default dataset location from sct_download_data."""
 
     test_path = os.environ.get('SCT_TESTING_DATA', '')
-    return os.path.join(test_path, 'sct_testing_data', *args)
+    if test_path:
+        return os.path.join(test_path, 'sct_testing_data', *args)
+    else:
+        # NB: The default path written below is actually determined inside
+        #     sct_download_data. But, trying to import the path from the script
+        #     causes a circular dependency. So, we duplicate the path here.
+        #     This could cause bugs if the default location ever changes.
+        # TODO: Consider moving sct_test_path() inside testing/conftest.py,
+        #       since it's a testing-specific function. This would mitigate the
+        #       circular dependency, since we would no longer be importing
+        #       from sct_download_data inside sys.py.
+        return sct_dir_local_path('data', 'sct_testing_data', *args)
 
 
 def check_exe(name):
