@@ -290,3 +290,15 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     denoised = nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
 
     return denoised
+
+
+def symmetrize(data, dim):
+    """
+    Symmetrize data along specified dimension.
+    :param data: numpy.array 3D data.
+    :param dim: dimension of array to symmetrize along.
+
+    :return data_out: symmetrized data
+    """
+    data_out = (data + np.flip(data, axis=dim)) / 2.0
+    return data_out
