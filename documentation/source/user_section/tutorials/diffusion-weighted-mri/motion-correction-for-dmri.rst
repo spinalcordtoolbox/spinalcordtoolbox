@@ -21,8 +21,8 @@ To apply the algorithm, we use the ``sct_dmri_moco`` command:
 
 .. code::
 
-   sct_dmri_moco -i dmri.nii.gz -m mask_dmri_mean.nii.gz -bvec bvecs.txt \
-                 -qc ~/qc_singleSubj -qc-seg dmri_mean_seg.nii.gz
+   sct_dmri_moco -i dmri.nii.gz -m mask_dmri_dwi_mean.nii.gz -bvec bvecs.txt \
+                 -qc ~/qc_singleSubj -qc-seg dmri_dwi_mean_seg.nii.gz
 
 :Input arguments:
    - ``-i`` : The input dMRI image.
