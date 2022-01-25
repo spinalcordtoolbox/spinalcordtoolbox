@@ -32,7 +32,7 @@
 # Change directory to where the script is, for the duration of the script.
 # This lives outside the subshell below to guarantee the corresponding
 # popd gets run, no matter how the installation script exits.
-pushd -- "${BASH_SOURCE[0]%/*}/" || exit 1
+pushd -- "${BASH_SOURCE[0]%/*}/" >/dev/null || exit 1
 
 ( # | tee install_sct_log.txt
 
@@ -746,4 +746,4 @@ fi
 
 ) 2>&1 | tee install_sct_log.txt
 
-popd
+popd >/dev/null
