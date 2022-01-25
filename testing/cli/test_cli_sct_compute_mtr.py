@@ -36,8 +36,6 @@ def test_sct_compute_mtr_results_are_identical(tmp_path):
                              output_mtr.data[numpy.isfinite(output_mtr.data)])
 
 
-@pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_compute_mtr_with_dummy_highvalue_int16_data(tmp_path):
     """
     Test that high-valued int16 data doesn't result in clipping. See also:
