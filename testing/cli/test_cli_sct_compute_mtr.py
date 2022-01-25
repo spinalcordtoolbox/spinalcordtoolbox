@@ -48,7 +48,7 @@ def test_sct_compute_mtr_with_dummy_highvalue_int16_data(tmp_path):
     mtr_truth_path = str(tmp_path / 'mtr_dummy_truth.nii.gz')
 
     # Generate dummy files of inputs and output comparison
-    nx, ny, nz = 9, 9, 9  # image dimension # center location
+    nx, ny, nz = 9, 9, 9  # image dimension
 
     data = numpy.zeros((nx, ny, nz), dtype=numpy.int16)
     data[4, 4, 4] = 1000
