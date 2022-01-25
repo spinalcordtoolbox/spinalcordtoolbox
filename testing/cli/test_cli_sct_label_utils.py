@@ -5,6 +5,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.types import Coordinate
+from spinalcordtoolbox.utils import sct_test_path
 from spinalcordtoolbox.scripts import sct_label_utils
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ def test_sct_label_utils_create():
 
 def test_create_seg_mid(tmp_path):
     """Test the '-create-seg-mid' option in sct_label_utils."""
-    input = 'sct_testing_data/t2/t2_seg-manual.nii.gz'
+    input = sct_test_path('t2', 't2_seg-manual.nii.gz')
     output = str(tmp_path/'t2_seg_labeled.nii.gz')
 
     # Create a single label using the new syntax

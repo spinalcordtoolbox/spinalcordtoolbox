@@ -10,22 +10,21 @@ To crop the data, we use the multi-step process below:
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/processing-dmri-data/preprocessing.png
    :align: center
 
-Computing a mean image
-----------------------
+Generating a mean image
+-----------------------
 
-First we compute the mean of the 4D dMRI data across the time axis in order to obtain a coarse 3D approximation of the image. This step is necessary because SCT's spinal cord segmentation tools are designed for individual 3D volumes, rather than 4D images.
+First we generate the mean of the 4D dMRI data across the time axis in order to obtain a coarse 3D approximation of the image. This step is necessary because SCT's spinal cord segmentation tools are designed for individual 3D volumes, rather than 4D images.
 
 .. code::
 
-   sct_maths -i dmri.nii.gz -mean t -o dmri_mean.nii.gz
+   sct_dmri_separate_b0_and_dwi -i dmri.nii.gz -bvec bvecs.txt 
 
 :Input arguments:
    - ``-i`` : The input image.
-   - ``-mean`` : The dimension to compute the mean across. In this case, ``sct_maths`` will assume that the dMRI image is a 4D stack of 3D volumes, with dimension ``[x, y, z, t]``. Therefore, ``-mean t`` will average the 3D volumes across the temporal dimension.
-   - ``-o``: The filename of the output image.
+   - ``-bvec`` : The b-vector file used to separate DWI volumes from b0 volumes. 
 
 :Output files/folders:
-   - ``dmri_mean.nii.gz`` : A 3D image containing the mean of the individual volumes in the 4D dMRI image.
+   - ``dmri_dwi_mean.nii.gz`` : A 3D image containing the mean of the individual DWI volumes in the 4D dMRI image. This is the file we care most about, however the script will also output a b0 mean file, as well as 4D files containing the separated DWI and b0 volumes.
 
 Generating a spinal cord segmentation
 -------------------------------------
@@ -34,7 +33,7 @@ The resulting 3D volume can then be used to obtain a cord segmentation.
 
 .. code::
 
-   sct_deepseg_sc -i dmri_mean.nii.gz -c dwi -qc ~/qc_singleSubj
+   sct_deepseg_sc -i dmri_dwi_mean.nii.gz -c dwi -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : The input image.
@@ -42,7 +41,7 @@ The resulting 3D volume can then be used to obtain a cord segmentation.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
 
 :Output files/folders:
-   - ``dmri_mean_seg.nii.gz`` : An mask image containing the segmented spinal cord.
+   - ``dmri_dwi_mean_seg.nii.gz`` : An mask image containing the segmented spinal cord.
 
 .. note::
 
@@ -55,15 +54,15 @@ Once the segmentation is obtained, we can use it to create a mask around the cor
 
 .. code::
 
-   sct_create_mask -i dmri_mean.nii.gz -p centerline,dmri_mean_seg.nii.gz -f cylinder -size 35mm
+   sct_create_mask -i dmri_dwi_mean.nii.gz -p centerline,dmri_dwi_mean_seg.nii.gz -f cylinder -size 35mm
 
 :Input arguments:
    - ``-i`` : The input image to create the mask from.
-   - ``-p`` : The process used to position the mask. The ``centerline`` process will compute the center of mass for each slice of ``dmri_mean_seg.nii.gz``, then use those locations for the center of the mask at each slice.
+   - ``-p`` : The process used to position the mask. The ``centerline`` process will compute the center of mass for each slice of ``dmri_dwi_mean_seg.nii.gz``, then use those locations for the center of the mask at each slice.
    - ``-f``: The shape of the mask. Here, we create cylinder around the centerline.
    - ``-size``: The diameter of the mask.
 
 :Output files/folders:
-   - ``mask_dmri_mean.nii.gz`` : An imagine containing a mask surrounding the spinal cord.
+   - ``mask_dmri_dwi_mean.nii.gz`` : An imagine containing a mask surrounding the spinal cord.
 
 This mask will be passed to the motion correction script so that the algorithm will process only the spinal cord region.
