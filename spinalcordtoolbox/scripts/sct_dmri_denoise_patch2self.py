@@ -16,7 +16,7 @@ def get_parser():
                     '\n'
                     '- Fadnavis et al. Patch2Self: Denoising Diffusion MRI with Self-supervised Learning. NeurIPS, 2020, Vol. 33. (https://arxiv.org/abs/2011.01355)\n'
                     '- Schilling et al. Patch2Self denoising of diffusion MRI in the cervical spinal cord improves intra-cord contrast, '
-                    'signal modelling, repeatability, and feature conspicuity. Preprint, 2021. (https://doi.org/10.1101/2021.10.04.21264389)\n'
+                    'signal modelling, repeatability, and feature conspicuity. medRxiv, 2021. (https://doi.org/10.1101/2021.10.04.21264389)\n'
                     '\n'
                     'The implementation is based on DIPY (https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self)'
     )
