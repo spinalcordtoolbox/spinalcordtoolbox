@@ -91,7 +91,7 @@ MODELS = {
             "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20211223/model_seg_ms_lesion_mp2rage.zip"
         ],
         "description": "Segmentation of multiple sclerosis lesions on cropped MP2RAGE spinal cord data. To crop the "
-                       "data you can first segment the spinal cord using the model 'model_seg_ms_lesion_mp2rage' and "
+                       "data you can first segment the spinal cord using the model 'model_seg_ms_sc_mp2rage' and "
                        "then crop the MP2RAGE image using 'sct_crop_image -i IMAGE -m IMAGE_seg'",
         "contrasts": ["mp2rage"],
         "default": False,
