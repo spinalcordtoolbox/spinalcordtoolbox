@@ -744,6 +744,6 @@ else
 fi
 
 ) 2>&1 | tee install_sct_log.txt
-status=$?
+status=${PIPESTATUS[0]}
 popd >/dev/null
-exit $status
+exit "$status"
