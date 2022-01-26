@@ -51,7 +51,7 @@
  - Replace `sct_maths` with `sct_separate_dmri_separate_dwi_and_b0` in tutorial dMRI preprocessing.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3643)
  - Help differenciate Linux and WSL user on install documentation.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3641)
  - Add Uhrenholt et al.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3639)
- - Use furo-theme sanctioned dark mode colour controls..  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3632)
+ - Use furo-theme sanctioned dark mode colour controls.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3632)
  - Restore "Edit on GitHub" button.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3624)
  - Replace SCT Course 2020 iCloud link with Google Drive link.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3623)
  - **sct_deepseg_sc:** Indicate default value for `-brain`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3617)
