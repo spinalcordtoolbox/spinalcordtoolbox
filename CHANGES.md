@@ -1,5 +1,88 @@
 # Changelog
 
+## 5.5 (2022-01-26)
+[View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/5.4...5.5)
+
+**FEATURE**
+
+ - **sct_deepseg:** Add models for MP2RAGE SC and MS lesion segmentation.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3637)
+ - **sct_testing:** Bring back `sct_testing` as a light wrapper for `pytest`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3605)
+ - **sct_deepseg:** Add spinal cord/gray matter multiclass segmentation model for 7T data.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3527)
+ - **sct_dmri_denoise_patch2self:** Add new Patch2Self CLI script for dMRI denoising.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3510)
+
+**CI**
+
+ - Switch to 'informational mode' to prevent Codecov failures for small changes.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3655)
+ - `tests.yml`: Update runners to no longer use Ubuntu 16.04.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3538)
+ - Add coverage via `codecov`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3463)
+
+**BUG**
+
+ - Add utility function to strip '.py' extensions.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3658)
+ - **sct_maths:** Appply -symmetrize on specified dimension in `sct_maths`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3657)
+ - **sct_compute_mtr:** Convert input file to float32 before compute MTR.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3638)
+ - **sct_get_centerline:** Make sure that the QC report for `sct_get_centerline` displays properly.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3626)
+ - Set `channel_axis=None` for `pyramid_expand` to fix bug in `skimage==0.19.0`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3616)
+ - **sct_propseg:** Fix argument parsing to ensure only the requested files are output.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3611)
+ - Restore the argparse linewrapping behavior we had prior to Python 3.7.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3604)
+ - **sct_download_data:** Update outdated mirror links.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3596)
+ - Upgrade to Qt5..  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3588)
+ - **sct_resample:** Make sure dimensions are correct for 4D images resampled with `-mm`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3553)
+ - **sct_qc:** Fix colormap for vertebral labeling in the QC report.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3534)
+
+**INSTALLATION**
+
+ - Allow `install_sct` to run from any directory.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3660)
+ - Move dependencies from `requirements.txt` to `setup.py :: install_requires`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3646)
+ - Use `--ignore-installed` to preserve the version of `certifi` that gets installed during `conda create`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3618)
+ - Use a more reliable way to disable USER_SITE.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3606)
+ - `requirements.txt`: Pin `onnxruntime>=1.7.0` rather than `==1.4.0`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3595)
+ - `install_sct`: Skip `pip==21.2` to avoid suboptimal dependency resolver.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3594)
+ - `install_sct`: Replace `sed -i` with `perl -pi -e`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3591)
+ - `install_sct`: Add `touch` fixes to address WSL connection issues.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3574)
+ - Fix multiple WSL issues related to installation and display.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3573)
+ - Check CPU attributes to determine whether to install an AVX-less version of TensorFlow (M1 Macs, older Linux CPUs).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3569)
+ - Remove `futures` from our `requirements.txt` file.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3548)
+ - Use Python 3.7 instead of Python 3.6 for SCT's conda environment.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3361)
+
+**DOCUMENTATION**
+
+ - Add studies citing SCT.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3656)
+ - Replace `sct_maths` with `sct_separate_dmri_separate_dwi_and_b0` in tutorial dMRI preprocessing.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3643)
+ - Help differenciate Linux and WSL user on install documentation.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3641)
+ - Add Uhrenholt et al..  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3639)
+ - Use furo-theme sanctioned dark mode colour controls..  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3632)
+ - Restore "Edit on GitHub" button.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3624)
+ - Replace SCT Course 2020 iCloud link with Google Drive link.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3623)
+ - **sct_deepseg_sc:** `sct_deepseg_sc`: Indicate default value for `-brain`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3617)
+ - **sct_register_to_template:** Update help for 2+ labels usage, and change link from iCloud to RTD.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3603)
+ - Fix typo in `studies.rst` (Kinawy -> Kinany).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3589)
+ - Remove misleading `FSLeyes` installation instructions.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3577)
+ - `README.rst`: Fix typo.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3576)
+ - `windows.rst`: Recommend echoing DISPLAY to ~/.profile, not .profile.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3563)
+ - Remove leftover unnecessary `R|` formatting.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3561)
+ - Add Hernandez et al..  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3557)
+ - Add Staud et al..  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3551)
+ - Update testimonials and small documentation fixup.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3544)
+ - Add studies.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3543)
+ - Add PMJ-based CSA tutorial.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3542)
+ - Update studies.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3535)
+ - `fsleyes.rst`: Fix typo (Installating -> Installing).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3526)
+ - Add tutorials for the remaining material from the SCT Course.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3493)
+
+**ENHANCEMENT**
+
+ - **sct_download_data:** Add default output folders for dataset downloads.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3650)
+
+**REFACTORING**
+
+ - Remove `channel=None` bugfix that was superseded by upstream `skimage=0.19.1` patch.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3652)
+
+**GIT/GITHUB**
+
+ - Update broken link in PULL_REQUEST_TEMPLATE.md.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3644)
+ - Clean up `install/`, `issues/`, and `flirtsch/` folders in repo.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3461)
+
 ## 5.4 (2021-09-24)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/5.3.0...5.4)
 
