@@ -14,15 +14,3 @@ Supported Operating Systems
   installation/mac
   installation/linux
   installation/windows
-
-FSLeyes Integration
--------------------
-
-In addition to our `Spinal Cord Toolbox` package, we also offer a plugin which works with
-the `FSLeyes` package.
-
-.. toctree::
-  :glob:
-  :maxdepth: 1
-
-  installation/fsleyes

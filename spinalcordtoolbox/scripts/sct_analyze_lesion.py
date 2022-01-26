@@ -27,7 +27,7 @@ from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='R|Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
+        description='Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
                     '3, etc.) and then outputs morphometric measures for each lesion:\n'
                     '- volume [mm^3]\n'
                     '- length [mm]: length along the Superior-Inferior axis\n'

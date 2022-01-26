@@ -43,7 +43,7 @@ jobs:
         pip freeze | grep -v "-e git+" | grep -v "torch" > requirements-freeze.txt
         conda deactivate
         echo "# Platform-specific torch requirements (See SCT Issue #2745)" >> requirements-freeze.txt
-        grep "torch" requirements.txt >> requirements-freeze.txt
+        grep "torch" install_requirements.txt >> requirements-freeze.txt
 
     - name: Update version.txt
       run: |

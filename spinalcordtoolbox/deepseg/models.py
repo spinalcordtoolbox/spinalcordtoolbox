@@ -1,6 +1,7 @@
 # coding: utf-8
 """
 Deals with models for deepseg module. Available models are listed under MODELS.
+Important: model names (onnx or pt files) should have the same name as the enclosing folder.
 """
 
 
@@ -76,6 +77,32 @@ MODELS = {
         "description": "Grey/white matter seg on exvivo human T2w.",
         "contrasts": ["t2"],
         "default": False,
+    },
+    "model_seg_ms_sc_mp2rage": {
+        "url": [
+            "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20211223/model_seg_ms_sc_mp2rage.zip"
+        ],
+        "description": "Segmentation of spinal cord on MP2RAGE data from MS participants.",
+        "contrasts": ["mp2rage"],
+        "default": False,
+    },
+    "model_seg_ms_lesion_mp2rage": {
+        "url": [
+            "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20211223/model_seg_ms_lesion_mp2rage.zip"
+        ],
+        "description": "Segmentation of multiple sclerosis lesions on cropped MP2RAGE spinal cord data. To crop the "
+                       "data you can first segment the spinal cord using the model 'model_seg_ms_sc_mp2rage' and "
+                       "then crop the MP2RAGE image using 'sct_crop_image -i IMAGE -m IMAGE_seg'",
+        "contrasts": ["mp2rage"],
+        "default": False,
+    },
+    "model_7t_multiclass_gm_sc_unet2d": {
+        "url": [
+            "https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass/archive/r20210930.zip"
+        ],
+        "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University",
+        "contrasts": ["t2star"],
+        "default": False,
     }
 }
 
@@ -95,12 +122,21 @@ TASKS = {
     'seg_tumor_t2':
         {'description': 'Cord tumor segmentation on T2-weighted contrast.',
          'models': ['findcord_tumor', 't2_tumor']},
+    'seg_ms_sc_mp2rage':
+        {'description': 'Cord segmentation on MP2RAGE in MS patients.',
+         'models': ['model_seg_ms_sc_mp2rage']},
+    'seg_ms_lesion_mp2rage':
+        {'description': 'MS lesion segmentation on cropped MP2RAGE data.',
+         'models': ['model_seg_ms_lesion_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor segmentation.',
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']},
     'seg_exvivo_gm-wm_t2':
         {'description': 'Grey/white matter seg on exvivo human T2w.',
-         'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']}
+         'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']},
+    'seg_gm_sc_7t_t2star':
+        {'description': 'SC/GM seg on T2*-weighted at 7T.',
+         'models': ['model_7t_multiclass_gm_sc_unet2d']}
 }
 
 

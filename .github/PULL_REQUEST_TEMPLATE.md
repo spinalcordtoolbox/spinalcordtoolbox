@@ -7,7 +7,7 @@
 
 - [ ] I've given this PR a concise, self-descriptive, and meaningful title
 - [ ] I've linked relevant issues in the PR body
-- [ ] I've applied [the relevant labels](https://www.neuro.polymtl.ca/software/contributing#pr_labels) to this PR
+- [ ] I've applied [the relevant labels](https://intranet.neuro.polymtl.ca/geek-tips/contributing#pr-labels-a-href-pr-labels-id-pr-labels-a) to this PR
 - [ ] I've applied a [release milestone](https://github.com/spinalcordtoolbox/spinalcordtoolbox/milestones) (major, minor, patch) in line with [Semantic Versioning guidelines](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Misc%3A-Creating-a-new-release#convention-for-naming-releases) 
 - [ ] I've assigned a reviewer
 

@@ -140,7 +140,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
+    runs-on: ubuntu-18.04  # use an older ubuntu's kernel to closer emulate the older Debian
     container: debian:9
     steps:
       - name: Dependencies
@@ -182,7 +182,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
+    runs-on: ubuntu-18.04  # use an older ubuntu's kernel to closer emulate the older Debian
     container: centos:7
     steps:
       - name: Dependencies
@@ -210,9 +210,22 @@ jobs:
       - name: Check dependencies
         run: |
           ./.ci.sh -c
-      - name: Run pytest test suite
-        run: |
-          ./.ci.sh -t
+      - name: Run pytest test suite (with code coverage)
+        run: |  # NB: We use `-v` instead of `-t` here to run this one with coverage
+          ./.ci.sh -v
+      - name: Upload API coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true
+          files: ./cov-cli.xml
+          flags: cli-tests
+      - name: Upload CLI coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true
+          files: ./cov-api.xml
+          flags: api-tests
+
 
   ubuntu-18_04:
     name: Ubuntu 18.04 (Bionic Beaver)
@@ -305,19 +318,26 @@ jobs:
         # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
     - uses: actions/checkout@v2
+    - name: Copy SCT from $GITHUB_WORKSPACE to ~
+      run: |
+        cd ..
+        cp -r spinalcordtoolbox ~/spinalcordtoolbox
     - name: Install SCT
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -i
     - name: Check dependencies
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -c
     - name: Run pytest test suite
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -t
 
-  windows-wsl-ubuntu-16_04:
+  windows-wsl-ubuntu-20_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
-    name: WSL [Ubuntu 16.04]
+    name: WSL [Ubuntu 20.04]
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
@@ -330,7 +350,7 @@ jobs:
     - uses: Vampire/setup-wsl@v1
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
-        distribution: Ubuntu-16.04
+        distribution: Ubuntu-20.04
     - name: Use unix line endings
       shell: bash
       run: |
@@ -346,12 +366,19 @@ jobs:
         # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
     - uses: actions/checkout@v2
+    - name: Copy SCT from $GITHUB_WORKSPACE to ~
+      run: |
+        cd ..
+        cp -rp spinalcordtoolbox ~/spinalcordtoolbox
     - name: Install SCT
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -i
     - name: Check dependencies
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -c
     - name: Run pytest test suite
       run: |
+        cd ~/spinalcordtoolbox
         ./.ci.sh -t
