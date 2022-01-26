@@ -90,8 +90,9 @@ MODELS = {
         "url": [
             "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20211223/model_seg_ms_lesion_mp2rage.zip"
         ],
-        "description": "Segmentation of multiple sclerosis lesions on MP2RAGE spinal cord data. This model takes as "
-                       "input images that are closely cropped around the cervical spinal cord.",
+        "description": "Segmentation of multiple sclerosis lesions on cropped MP2RAGE spinal cord data. To crop the "
+                       "data you can first segment the spinal cord using the model 'model_seg_ms_lesion_mp2rage' and "
+                       "then crop the MP2RAGE image using 'sct_crop_image -i IMAGE -m IMAGE_seg'",
         "contrasts": ["mp2rage"],
         "default": False,
     },
@@ -125,7 +126,7 @@ TASKS = {
         {'description': 'Cord segmentation on MP2RAGE in MS patients.',
          'models': ['model_seg_ms_sc_mp2rage']},
     'seg_ms_lesion_mp2rage':
-        {'description': 'MS lesion segmentation on MP2RAGE data.',
+        {'description': 'MS lesion segmentation on cropped MP2RAGE data.',
          'models': ['model_seg_ms_lesion_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor segmentation.',
