@@ -13,6 +13,7 @@ from scipy.stats import pearsonr, spearmanr
 from dipy.denoise.noise_estimate import estimate_sigma
 from dipy.segment.mask import median_otsu
 from dipy.denoise.nlmeans import nlmeans
+from dipy.denoise.patch2self import patch2self
 from sklearn.metrics import normalized_mutual_info_score, mutual_info_score
 
 from spinalcordtoolbox.image import Image
@@ -231,7 +232,8 @@ def otsu(data, nbins):
 def adap(data, block_size, offset):
     mask = data
     for iz in range(data.shape[2]):
-        adaptive_thresh = threshold_local(data[:, :, iz], block_size, method='gaussian', offset=offset)
+        adaptive_thresh = threshold_local(data[:, :, iz], block_size,
+                                          method='gaussian', offset=offset)
         mask[:, :, iz] = mask[:, :, iz] > adaptive_thresh
     return mask
 
@@ -278,7 +280,7 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     :param data_in: nd_array to denoise
 
     .. note::
-        for more info about patch_radius and block radius, please refer to the dipy website: http://nipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
+        for more info about patch_radius and block radius, please refer to the dipy website: http://dipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
     """
 
     data_in = np.asarray(data_in)
@@ -302,3 +304,19 @@ def symmetrize(data, dim):
     """
     data_out = (data + np.flip(data, axis=dim)) / 2.0
     return data_out
+
+
+def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
+    """
+    :param data_in: 4d array to denoise
+    :param bvals_in: b-values associated with the 4D DWI data
+    :param patch_radius: radius of the p-neighbourhoods defined in the Patch2Self algorithm
+    :param model: regression model required to learn the mapping within Patch2Self
+
+    .. note::
+        for more info about patch_radius and model, please refer to the dipy website: https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self
+    """
+    denoised = patch2self(data_in, bvals_in, patch_radius=patch_radius,
+                          model=model)
+
+    return denoised
