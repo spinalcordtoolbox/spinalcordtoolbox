@@ -55,6 +55,7 @@ Diffusion MRI
 - sct_dmri_concat_bvals_ - Concatenate bval files in time.
 - sct_dmri_concat_bvecs_ - Concatenate bvec files in time.
 - sct_dmri_compute_dti_ - Compute Diffusion Tensor Images (DTI) using `dipy <https://dipy.org/>`_.
+- sct_dmri_denoise_patch2self_ - Denoise images using `dipy <https://dipy.org/>`_.
 - sct_dmri_display_bvecs_ - Display scatter plot of gradient directions from bvecs file.
 - sct_dmri_moco_ - Slice-wise motion correction of DWI data.
 - sct_dmri_separate_b0_and_dwi_ - Separate b=0 and DW images from diffusion dataset.
@@ -248,6 +249,12 @@ sct_dmri_concat_bvecs
 =====================
 
 .. program-output:: sct_dmri_concat_bvecs -h
+
+
+sct_dmri_denoise_patch2self
+===========================
+
+.. program-output:: sct_dmri_denoise_patch2self -h
 
 
 sct_dmri_display_bvecs
