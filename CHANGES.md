@@ -33,7 +33,6 @@
 **INSTALLATION**
 
  - Allow `install_sct` to run from any directory.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3660)
- - Move dependencies from `requirements.txt` to `setup.py :: install_requires`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3646)
  - Use `--ignore-installed` to preserve the version of `certifi` that gets installed during `conda create`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3618)
  - Use a more reliable way to disable USER_SITE.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3606)
  - `requirements.txt`: Pin `onnxruntime>=1.7.0` rather than `==1.4.0`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3595)
