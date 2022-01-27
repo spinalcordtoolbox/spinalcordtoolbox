@@ -101,6 +101,7 @@ Miscellaneous
 - sct_download_data_ - Download binaries from the web.
 - sct_qc_ - Generate Quality Control (QC) report following SCT processing.
 - sct_run_batch_ - Wrapper to processing scripts, which loops across subjects.
+- sct_citation_ - Output the BibTex reference for SCT.
 
 System tools
 ============
@@ -130,6 +131,11 @@ sct_apply_transfo
 
 .. program-output:: sct_apply_transfo -h
 
+
+sct_citation
+=============
+
+.. program-output:: sct_citation -h
 
 sct_compute_ernst_angle
 =======================
