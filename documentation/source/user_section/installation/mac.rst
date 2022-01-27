@@ -111,13 +111,13 @@ Procedure:
 
    .. code:: sh
 
-      pip install -e . -f https://download.pytorch.org/whl/cpu/torch_stable.html
+      pip install -e .
 
    else:
 
    .. code:: sh
 
-      pip install --user -e . -f https://download.pytorch.org/whl/cpu/torch_stable.html
+      pip install --user -e .
 
 
 Option 4: Install with Docker
