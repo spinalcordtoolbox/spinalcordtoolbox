@@ -13,69 +13,6 @@ path_version = path.join(here, 'spinalcordtoolbox', 'version.txt')
 with open(path_version) as f:
     version = f.read().strip()
 
-
-# This function does not handle all corner cases and
-#  assumes a simple requirements.txt is fed to it
-def get_dependencies(requirements_path=None):
-    if not path.exists(requirements_path):
-        return []
-
-    with open(requirements_path) as f:
-        requirements = f.read().splitlines()
-
-    return requirements
-
-
-DEFAULT_REQUIREMENTS = [
-    'colored',
-    'dipy',
-    # h5py is pinned to minor than 3 due to issues with Keras/TF
-    # https://github.com/tensorflow/tensorflow/issues/44467
-    'h5py~=2.10.0',
-    'Keras==2.3.1',
-    'ivadomed',
-    'matplotlib',
-    'nibabel',
-    'numpy',
-    # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
-    # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
-    'onnxruntime>=1.7.0',
-    'pandas',
-    'psutil',
-    'pyqt5==5.11.3',
-    'pytest',
-    'pytest-cov',
-    'raven',
-    'requests',
-    'requirements-parser',
-    'scipy',
-    'scikit-image',
-    'scikit-learn',
-    'tensorflow~=1.15.0',
-    # PyTorch's Linux/Windows distribution is very large due to its GPU support,
-    # but we only need that for training models. For users, use the CPU-only version
-    # (only available directly from the PyTorch project).
-    # The macOS version has never had GPU support, so doesn't need the workaround.
-    'torch==1.5.0+cpu; sys_platform != "darwin"',
-    'torch==1.5.0; sys_platform == "darwin"',
-    'torchvision==0.6.0+cpu; sys_platform != "darwin"',
-    'torchvision==0.6.0; sys_platform == "darwin"',
-    'xlwt',
-    'tqdm',
-    'transforms3d',
-    'urllib3[secure]',
-    'pytest_console_scripts',
-    'wquantiles',
-]
-
-frozen_dependencies = get_dependencies(path.join(here, 'requirements-freeze.txt'))
-
-dependencies = frozen_dependencies or DEFAULT_REQUIREMENTS
-
-with open(path.join(here, "install_requirements.txt"), 'wt') as f:
-    f.write('\n'.join(dependencies))
-
-
 setup(
     name='spinalcordtoolbox',
     version=version,
@@ -105,7 +42,6 @@ setup(
                                     'install', 'testing']),
     include_package_data=True,
     python_requires="==3.7.*",
-    install_requires=dependencies,
     extras_require={
         'docs': [
             'sphinxcontrib-programoutput',
