@@ -160,7 +160,8 @@ jobs:
   centos-8:
     name: CentOS 8
     runs-on: ubuntu-18.04
-    container: centos:8
+    # This centOS 8 image
+    container: quay.io/centos/centos:stream8
     steps:
       - name: Dependencies
         run: |  # NB: mesa-libGL is needed for PyQT testing (https://stackoverflow.com/a/65408967/7584115)
