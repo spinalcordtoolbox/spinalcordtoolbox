@@ -7,15 +7,8 @@ Tutorials
 
    The following tutorials make use of :ref:`Quality Control (QC) <qc>` reports for inspecting processed image data. Optionally, we also recommend trying out :ref:`fsleyes-instructions` to visualize the data from these tutorials, too.
 
-Video tutorials
-***************
-
-SCT have a `YouTube channel`_ which contains additional tutorials.
-
-.. _Youtube channel: https://www.youtube.com/playlist?list=PLJ5-Fnq9XpaVgCZfY-GOGJaT0fmZN4vji
-
 Written tutorials
-****************
+*****************
 
 We provide the following hands-on tutorials for SCT's command-line tools.
 
@@ -43,6 +36,13 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    * :doc:`Visualizing misaligned cords <tutorials/other-features/visualizing-misaligned-cords>`
 
 #. :doc:`Analysis pipelines with SCT <tutorials/analysis-pipelines-with-sct>`
+
+Video tutorials
+***************
+
+SCT have a `YouTube channel`_ which contains additional tutorials.
+
+.. _Youtube channel: https://www.youtube.com/playlist?list=PLJ5-Fnq9XpaVgCZfY-GOGJaT0fmZN4vji
 
 SCT Course
 **********
