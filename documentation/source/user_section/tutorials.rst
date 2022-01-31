@@ -44,10 +44,10 @@ We provide the following hands-on tutorials for SCT's command-line tools.
 
 #. :doc:`Analysis pipelines with SCT <tutorials/analysis-pipelines-with-sct>`
 
-Others sources of knowledge
-***************************
+SCT Course
+**********
 
-We provide a **free** in-person SCT course each year. You can know more about these courses in the :ref:`course section<courses>`.
+If you would prefer to learn how to use SCT in a guided workshop setting, we provide an in-person SCT course each year. You can learn more about past and future courses in the :ref:`course section<courses>`.
 
 
 .. Note: The TOC below is hidden because neither ":maxdepth: 2" nor ":maxdepth: 1" looks correct. Instead, we manually
