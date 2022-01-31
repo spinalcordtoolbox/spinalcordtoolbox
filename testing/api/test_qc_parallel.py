@@ -26,9 +26,9 @@ def test_many_qc():
 
     # 'spawn' fix needed to avoid hanging when running tests with coverage
     # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3661#issuecomment-1026179554
-    multiprocessing.set_start_method('spawn')
+    ctx = multiprocessing.get_context("spawn")
 
     with TemporaryDirectory(prefix="sct-qc-") as tmpdir:
         # install: sct_download_data -d sct_testing_data
-        with multiprocessing.Pool(2) as p:
+        with ctx.Pool(2) as p:
             p.map(gen_qc, ((i, tmpdir) for i in range(5)))
