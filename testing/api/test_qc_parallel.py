@@ -28,6 +28,10 @@ def test_many_qc():
     if multiprocessing.cpu_count() < 2:
         pytest.skip("Can't test parallel behaviour")
 
+    # 'spawn' fix needed to avoid hanging when running tests with coverage
+    # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3661#issuecomment-1026179554
+    multiprocessing.set_start_method('spawn')
+
     with TemporaryDirectory(prefix="sct-qc-") as tmpdir:
         # install: sct_download_data -d sct_testing_data
         with multiprocessing.Pool(2) as p:
