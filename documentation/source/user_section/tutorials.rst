@@ -14,7 +14,7 @@ SCT have a `YouTube channel`_ which contains additional tutorials.
 
 .. _Youtube channel: https://www.youtube.com/playlist?list=PLJ5-Fnq9XpaVgCZfY-GOGJaT0fmZN4vji
 
-Written tutorial
+Written tutorials
 ****************
 
 We provide the following hands-on tutorials for SCT's command-line tools.
