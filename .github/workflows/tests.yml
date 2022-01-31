@@ -160,7 +160,8 @@ jobs:
   centos-8:
     name: CentOS 8
     runs-on: ubuntu-18.04
-    # This centOS 8 image
+    # Stream8 has a 2024 EOL, while CentOS 8 has a 2021 EOL
+    # See: https://blog.centos.org/2020/12/future-is-centos-stream/
     container: quay.io/centos/centos:stream8
     steps:
       - name: Dependencies
