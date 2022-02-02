@@ -37,6 +37,7 @@ jobs:
       run: |
         ./install_sct -iy
 
+    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
     - name: Set bot user data for commits
       run: |
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -86,7 +87,6 @@ jobs:
       run: |
         sct_testing
 
-    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
     - name: Commit and push
       run: |
         git add requirements-freeze.txt
