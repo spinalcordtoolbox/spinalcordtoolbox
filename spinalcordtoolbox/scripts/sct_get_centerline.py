@@ -175,8 +175,6 @@ def main(argv=None):
     im_centerline.save(file_output)
     np.savetxt(file_output + '.csv', arr_centerline.transpose(), delimiter=",")
 
-    display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', 'red'], opacities=['', '1'])
-
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
@@ -185,6 +183,7 @@ def main(argv=None):
     if path_qc is not None:
         generate_qc(fname_input_data, fname_seg=file_output, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_get_centerline')
+
     display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
