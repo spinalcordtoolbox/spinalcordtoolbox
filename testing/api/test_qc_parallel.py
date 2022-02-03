@@ -24,6 +24,13 @@ def test_many_qc():
     if multiprocessing.cpu_count() < 2:
         pytest.skip("Can't test parallel behaviour")
 
+    p = multiprocessing.Pool(2)
+
     with TemporaryDirectory(prefix="sct-qc-") as tmpdir:
-        with multiprocessing.Pool(2) as p:
+        # This `try, finally` pattern mitigates hanging with pytest-cov
+        # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3661#issuecomment-1029057900
+        try:
             p.map(gen_qc, ((i, tmpdir) for i in range(5)))
+        finally:
+            p.close()  # Marks the pool as closed.
+            p.join()   # Waits for workers to exit.
