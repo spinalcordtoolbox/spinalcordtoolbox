@@ -29,4 +29,4 @@ The past courses handouts are listed below:
 .. _SCT course (v3.0_beta1), Montreal, 2016-04-19: https://drive.google.com/file/d/0Bx3A13n3Q_EAenltM2ZvZUNEdjQ/view?usp=sharing
 .. _SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15: https://www.dropbox.com/s/f9887yrbkcfujn9/sct_handsOn_20150605.pdf?dl=0
 
-If you would prefer to learn from webpage tutorials instead, then SCT also provides this course material in the form of step-by-step :ref:`<tutorials>`.
+If you would prefer to learn from webpage tutorials instead, then SCT also provides this course material in the form of step-by-step :ref:`tutorials`.
