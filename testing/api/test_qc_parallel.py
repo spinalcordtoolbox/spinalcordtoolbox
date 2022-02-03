@@ -25,6 +25,5 @@ def test_many_qc():
         pytest.skip("Can't test parallel behaviour")
 
     with TemporaryDirectory(prefix="sct-qc-") as tmpdir:
-        # install: sct_download_data -d sct_testing_data
         with multiprocessing.Pool(2) as p:
             p.map(gen_qc, ((i, tmpdir) for i in range(5)))
