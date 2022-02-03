@@ -1,5 +1,4 @@
-
-import sys, os
+import sys
 from tempfile import TemporaryDirectory
 import pytest
 
@@ -7,10 +6,7 @@ import multiprocessing
 
 from spinalcordtoolbox.utils import sct_test_path, sct_dir_local_path
 sys.path.append(sct_dir_local_path('scripts'))
-from spinalcordtoolbox import resampling
 import spinalcordtoolbox.reports.qc as qc
-from spinalcordtoolbox.image import Image
-import spinalcordtoolbox.reports.slice as qcslice
 
 
 def gen_qc(args):
