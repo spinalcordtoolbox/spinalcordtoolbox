@@ -9,7 +9,6 @@
 # About the license: see the file LICENSE.TXT
 
 import os
-import math
 import sys
 import pickle
 import shutil
@@ -439,8 +438,7 @@ class AnalyzeLeion:
                 [x_centerline_deriv[iz] * px, y_centerline_deriv[iz] * py, pz]))
 
             # compute the angle between the normal vector of the plane and the vector z
-            angle = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
-            self.angles[iz] = math.degrees(angle)
+            self.angles[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
