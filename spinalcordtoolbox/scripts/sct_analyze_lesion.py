@@ -255,7 +255,7 @@ class AnalyzeLeion:
 
     def _measure_diameter(self, im_data, p_lst, idx):
         area_lst = [np.sum(im_data[:, :, zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] for zz in range(im_data.shape[2])]
-        diameter_cur = 2 * np.sqrt(max(area_lst) / (4 * np.pi))
+        diameter_cur = 2 * np.sqrt(max(area_lst) / np.pi)
         self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
         printv('  Max. equivalent diameter : ' + str(np.round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
 
