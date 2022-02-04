@@ -19,7 +19,9 @@ on:
     - cron: '0 11 * * *'
 
 env:
-  MAIN_BRANCH: "master"
+  # FIXME: If you see this comment in production, revert to "master" ASAP.
+  # --> Temporarily switched to PR branch to demo an `install_sct` fix.
+  MAIN_BRANCH: "jn/3669-test-release-path-in-CI"
   RELEASE_BRANCH: "release"
   # Turns on color output for pytest. See: https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591
   PY_COLORS: "1"
