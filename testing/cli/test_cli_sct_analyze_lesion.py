@@ -68,4 +68,9 @@ def test_sct_analyze_lesion_output_file_exists(dummy_lesion, tmp_path):
 
     # Validate analysis results
     for key, expected_value in expected_measurements.items():
-        assert(measurements.at[0, key] == expected_value)
+        if key == 'volume [mm3]':
+            np.testing.assert_equal(measurements.at[0, key], expected_value)
+        else:
+            # The length/diameter won't match exactly due to spine curvature
+            np.testing.assert_allclose(measurements.at[0, key],
+                                       expected_value, rtol=0.01)
