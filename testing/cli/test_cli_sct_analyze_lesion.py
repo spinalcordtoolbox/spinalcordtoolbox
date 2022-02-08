@@ -11,11 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture()
-def dummy_lesion(tmp_path):
+def dummy_lesion(request, tmp_path):
     """Define a fake voxel lesion using the specified dimensions."""
-    # TODO: Parametrize this fixture to test other lesion dimensions
-    starting_coord = [29, 27, 25]
-    dim = [1, 4, 1]
+    starting_coord, dim = request.param
 
     # Format the coordinates into a str argument that `-create` can accept
     coordinates = []
@@ -32,7 +30,8 @@ def dummy_lesion(tmp_path):
     sct_label_utils.main(argv=['-i', path_ref, '-o', path_out,
                                '-create', create_arg])
 
-    # Compute the expected measurements from the provided dimensions
+    # Compute the expected (voxel) measurements from the provided dimensions
+    # NB: Actual measurements will differ slightly due to spine curvature
     measurements = {
         # NB: 'sct_analyze_lesion' treats lesions as cylinders. So:
         #   - Y axis: Length of the cylinder
@@ -53,8 +52,16 @@ def dummy_lesion(tmp_path):
 
 
 @pytest.mark.sct_testing
-def test_sct_analyze_lesion_output_file_exists(dummy_lesion, tmp_path):
-    """Run the CLI script and verify output file exists."""
+@pytest.mark.parametrize("dummy_lesion, rtol", [
+    # Straight region of `t2.nii.gz` -> little curvature -> smaller tolerance
+    ([(29, 45, 25), (3, 10, 2)], 0.001),
+    ([(29, 27, 25), (1, 4, 1)], 0.001),  # NB: Example from #3633
+    # Curved region of `t2.nii.gz` -> lots of curvature -> larger tolerance
+    ([(29, 0, 25), (4, 15, 3)], 0.01)
+], indirect=["dummy_lesion"])
+def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_lesion, rtol, tmp_path):
+    """Run the CLI script and verify that the lesion measurements match
+    expected values."""
     # Run the analysis on the dummy lesion file
     path_lesion, expected_measurements = dummy_lesion
     sct_analyze_lesion.main(argv=['-m', path_lesion,
@@ -73,4 +80,4 @@ def test_sct_analyze_lesion_output_file_exists(dummy_lesion, tmp_path):
         else:
             # The length/diameter won't match exactly due to spine curvature
             np.testing.assert_allclose(measurements.at[0, key],
-                                       expected_value, rtol=0.01)
+                                       expected_value, rtol=rtol)
