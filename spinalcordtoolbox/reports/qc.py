@@ -4,7 +4,6 @@
 import glob
 import sys
 import os
-import fcntl
 import json
 import logging
 import datetime
@@ -20,6 +19,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.colors as color
+import portalocker
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
@@ -638,19 +638,12 @@ class QcReport(object):
         if not os.path.exists(path_json):
             os.makedirs(path_json, exist_ok=True)
 
-        # lock the output directory
-        # because this code may be run in parallel
-        path_json_fd = os.open(path_json, os.O_RDONLY)
-        fcntl.flock(path_json_fd, fcntl.LOCK_EX)
+        # Create json file for specific QC entry
+        with open(self.qc_params.qc_results, 'w+') as qc_file:
+            json.dump(output, qc_file, indent=1)
 
-        try:
-            # Create json file
-            with open(self.qc_params.qc_results, 'w+') as qc_file:
-                json.dump(output, qc_file, indent=1)
-            self._update_html_assets(get_json_data_from_path(path_json))
-        finally:
-            # fcntl.flock(path_json_fd, fcntl.LOCK_UN) # technically, redundant, since close() triggers this too.
-            os.close(path_json_fd)
+        # Append entry to existing HTML file
+        self._update_html_assets(get_json_data_from_path(path_json))
 
     def _update_html_assets(self, json_data):
         """Update the html file and assets"""
@@ -660,7 +653,13 @@ class QcReport(object):
         with io.open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
             template = Template(template_index.read())
             output = template.substitute(sct_json_data=json.dumps(json_data))
-            io.open(os.path.join(dest_path, 'index.html'), 'w', encoding="utf-8").write(output)
+
+        # Use locking when writing to `index.html` only (since this is the only file that multiple processes
+        # would simultaneously write to)
+        dest_file = io.open(os.path.join(dest_path, 'index.html'), 'w', encoding="utf-8")
+        portalocker.lock(dest_file, portalocker.LOCK_EX)
+        dest_file.write(output)
+        dest_file.close()
 
         for path in ['css', 'js', 'imgs', 'fonts']:
             src_path = os.path.join(assets_path, '_assets', path)
