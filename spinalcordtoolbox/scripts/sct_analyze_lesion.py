@@ -248,7 +248,7 @@ class AnalyzeLeion:
         printv('  Volume : ' + str(np.round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
 
     def _measure_length(self, im_data, p_lst, idx):
-        length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in np.unique(np.where(im_data)[2])])
+        length_cur = np.sum([p_lst[2] / np.cos(self.angles[zz]) for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length : ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
