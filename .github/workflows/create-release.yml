@@ -68,7 +68,7 @@ jobs:
     - name: Update version.txt (using test value for CI)
       run: |
         echo "0.0" > spinalcordtoolbox/version.txt
-      # Only attach to release if workflow is run manually. (This allows the workflow to double as a PR test.)
+      # If the workflow *hasn't* been run manually, then it's being run as a PR test, so use a dummy version number
       if: github.event_name != 'workflow_dispatch'
 
     - name: Update version.txt (using milestone title)
