@@ -6,10 +6,27 @@ on:
       milestone_title:
         description: 'Milestone title'
         required: true
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+  schedule:
+    # https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions#onschedule
+    # > Scheduled workflows run on the latest commit on the default or base branch
+    # i.e. this can only run on master
+    - cron: '0 11 * * *'
 
 env:
   MAIN_BRANCH: "master"
   RELEASE_BRANCH: "release"
+  # Turns on color output for pytest. See: https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591
+  PY_COLORS: "1"
+  # Disable progress bars for less verbose output
+  PIP_PROGRESS_BAR: "off"
+  SCT_PROGRESS_BAR: "off"
+
 
 jobs:
   create-release:
@@ -26,6 +43,7 @@ jobs:
       run: |
         ./install_sct -iy
 
+    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
     - name: Set bot user data for commits
       run: |
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -45,11 +63,36 @@ jobs:
         echo "# Platform-specific torch requirements (See SCT Issue #2745)" >> requirements-freeze.txt
         grep "torch" requirements.txt >> requirements-freeze.txt
 
-    - name: Update version.txt
+    - name: Update version.txt (using test value for CI)
+      run: |
+        echo "0.0" > spinalcordtoolbox/version.txt
+      # If the workflow *hasn't* been run manually, then it's being run as a PR test, so use a dummy version number
+      if: github.event_name != 'workflow_dispatch'
+
+    - name: Update version.txt (using milestone title)
       run: |
         echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
+      # Only attach to release if workflow is run manually. (This allows the workflow to double as a PR test.)
+      if: github.event_name == 'workflow_dispatch'
 
-    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
+    - name: Reinstall SCT from release branch
+      run: |
+        ./install_sct -yc
+        cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+        cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+      # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+      # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+      # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+      # This workaround should be replaced by https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3198#discussion_r568225392
+
+    - name: Run sct_check_dependencies
+      run: |
+        sct_check_dependencies
+
+    - name: Run sct_testing
+      run: |
+        sct_testing
+
     - name: Commit and push
       run: |
         git add requirements-freeze.txt
@@ -57,6 +100,8 @@ jobs:
         git add spinalcordtoolbox/version.txt
         git commit -m "Update version.txt for ${{ github.event.inputs.milestone_title }}"
         git push
+      # Only commit to release if workflow is run manually. (This allows the workflow to double as a PR test.)
+      if: github.event_name == 'workflow_dispatch'
 
     - uses: ncipollo/release-action@v1
       name: Create release
@@ -65,3 +110,5 @@ jobs:
         tag: ${{ github.event.inputs.milestone_title }}
         token: ${{ secrets.GITHUB_TOKEN }}
         bodyFile: ".github/workflows/release-body.md"
+      # Only attach to release if workflow is run manually. (This allows the workflow to double as a PR test.)
+      if: github.event_name == 'workflow_dispatch'
