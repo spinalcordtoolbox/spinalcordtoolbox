@@ -73,8 +73,9 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help="File name for the centerline output file. By default, output file will be the "
-             "input with suffix '_centerline'. Example: 'centerline_optic.nii.gz'"
+        help="File name for the centerline output file. If file extension is not provided, "
+             "'.nii.gz' will be used by default. If '-o' is not provided, then the output file will "
+             "be the input with suffix '_centerline'. Example: 'centerline_optic.nii.gz'"
     )
     optional.add_argument(
         "-gap",
@@ -147,7 +148,10 @@ def main(argv=None):
 
     # Output folder
     if arguments.o is not None:
-        file_output = arguments.o
+        path_data, file_data, ext_data = extract_fname(arguments.o)
+        if not ext_data:
+            ext_data = '.nii.gz'
+        file_output = os.path.join(path_data, file_data+ext_data)
     else:
         path_data, file_data, ext_data = extract_fname(fname_data)
         file_output = os.path.join(path_data, file_data+'_centerline'+ext_data)
