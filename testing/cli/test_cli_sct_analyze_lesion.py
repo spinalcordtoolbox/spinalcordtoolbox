@@ -34,16 +34,16 @@ def dummy_lesion(request, tmp_path):
     # NB: Actual measurements will differ slightly due to spine curvature
     measurements = {
         # NB: 'sct_analyze_lesion' treats lesions as cylinders. So:
-        #   - Y axis: Length of the cylinder
+        #   - Vertical axis: Length of the cylinder
         'length [mm]': dim[1],
-        #   - X/Z plane: Cross-sectional slices of the cylinder.
-        #                Specifically, 'max_equivalent_diameter' takes the X/Z
-        #                cross-sectional area of the lesion (which is computed
-        #                using square voxels), then finds the diameter of an
-        #                equivalent *circle* with that same area:
-        #                   a = pi*r^2
-        #                -> a = pi*(d/2)^2
-        #                -> d = 2*sqrt(a/pi)
+        #   - Horizontal plane: Cross-sectional slices of the cylinder.
+        #        Specifically, 'max_equivalent_diameter' takes the
+        #        cross-sectional area of the lesion (which is computed
+        #        using square voxels), then finds the diameter of an
+        #        equivalent *circle* with that same area:
+        #           a = pi*r^2
+        #        -> a = pi*(d/2)^2
+        #        -> d = 2*sqrt(a/pi)
         'max_equivalent_diameter [mm]': 2 * np.sqrt(dim[0] * dim[2] / np.pi),
         'volume [mm3]': dim[0] * dim[1] * dim[2],
     }
@@ -78,7 +78,8 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
         if key == 'volume [mm3]':
             np.testing.assert_equal(measurements.at[0, key], expected_value)
         else:
-            # The length/diameter won't match exactly due to spine curvature
+            # The length/diameter won't match exactly due to angle adjustment
+            # from spinal cord centerline curvature
             np.testing.assert_allclose(measurements.at[0, key],
                                        expected_value, rtol=rtol)
             # The values will be adjusted according to the cos of the angle
