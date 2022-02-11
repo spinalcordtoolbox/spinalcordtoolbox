@@ -544,7 +544,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
 
     # populate data
     with open(fname_out, 'a') as csvfile:
-        spamwriter = csv.writer(csvfile, delimiter=',')
+        spamwriter = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
         for slicegroup in sorted(agg_metric.keys()):
             line = list()
             line.append(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))  # Timestamp
@@ -557,7 +557,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             for item in list_item:
                 for key in agg_metric_key:
                     if item in key:
-                        line.append(str(agg_metric[slicegroup][key]))
+                        line.append(agg_metric[slicegroup][key])
                         break
             spamwriter.writerow(line)
 
