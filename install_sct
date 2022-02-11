@@ -411,11 +411,12 @@ fi
 
 # Get installation type (from git or from package) if not already specified
 if [[ -z "$SCT_INSTALL_TYPE" ]]; then
-  if [[ -d ".git" ]]; then
-    # folder .git exist, therefore it is a git installation
-    SCT_INSTALL_TYPE="in-place"
+  # The file 'requirements-freeze.txt` only exists on the `release` branch
+  # or in stable release "Source Code" .zips (which point at tags `release`)
+  if [[ -e "requirements-freeze.txt" ]]; then
+    SCT_INSTALL_TYPE="package"   # i.e. release installations
   else
-    SCT_INSTALL_TYPE="package"
+    SCT_INSTALL_TYPE="in-place"  # i.e. dev installations
   fi
 fi
 
