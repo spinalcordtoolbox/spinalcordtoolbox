@@ -154,7 +154,7 @@ def main(argv=None):
         file_output = os.path.join(path_data, file_data+ext_data)
     else:
         path_data, file_data, ext_data = extract_fname(fname_data)
-        file_output = os.path.join(path_data, file_data+'_centerline'+ext_data)
+        file_output = os.path.join(path_data, file_data+'_centerline.nii.gz')
 
     if method == 'viewer':
         # Manual labeling of cord centerline
