@@ -81,3 +81,10 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
             # The length/diameter won't match exactly due to spine curvature
             np.testing.assert_allclose(measurements.at[0, key],
                                        expected_value, rtol=rtol)
+            # The values will be adjusted according to the cos of the angle
+            # between the spinal cord centerline and the S-I axis, as per:
+            # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3681#discussion_r804822552
+            if key == 'max_equivalent_diameter [mm]':
+                assert measurements.at[0, key] < expected_value
+            elif key == 'length [mm]':
+                assert measurements.at[0, key] > expected_value
