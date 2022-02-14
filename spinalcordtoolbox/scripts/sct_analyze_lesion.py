@@ -9,10 +9,8 @@
 # About the license: see the file LICENSE.TXT
 
 import os
-import math
 import sys
 import pickle
-import shutil
 
 import numpy as np
 import pandas as pd
@@ -250,13 +248,13 @@ class AnalyzeLeion:
         printv('  Volume : ' + str(np.round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
 
     def _measure_length(self, im_data, p_lst, idx):
-        length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in np.unique(np.where(im_data)[2])])
+        length_cur = np.sum([p_lst[2] / np.cos(self.angles[zz]) for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length : ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
     def _measure_diameter(self, im_data, p_lst, idx):
         area_lst = [np.sum(im_data[:, :, zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] for zz in range(im_data.shape[2])]
-        diameter_cur = 2 * np.sqrt(max(area_lst) / (4 * np.pi))
+        diameter_cur = 2 * np.sqrt(max(area_lst) / np.pi)
         self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
         printv('  Max. equivalent diameter : ' + str(np.round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
 
@@ -439,8 +437,7 @@ class AnalyzeLeion:
                 [x_centerline_deriv[iz] * px, y_centerline_deriv[iz] * py, pz]))
 
             # compute the angle between the normal vector of the plane and the vector z
-            angle = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
-            self.angles[iz] = math.degrees(angle)
+            self.angles[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
