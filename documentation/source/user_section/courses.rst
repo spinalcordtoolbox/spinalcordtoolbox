@@ -7,7 +7,8 @@ We organize a **free** in-person SCT course each year after the ISMRM conference
 
 The past courses handouts are listed below:
 
--  `SCT course (v4.2.1), London, 2020-01-21`_ \| `Video recording`_
+-  `SCT course (v5.4.0), Boston, 2021-11-16`_ \| `Video recording <https://www.youtube.com/watch?v=Pcg2ngc9hj8&list=PLJ5-Fnq9XpaXmDmtwDPycLyZoitv8PsTi&index=2>`__
+-  `SCT course (v4.2.1), London, 2020-01-21`_ \| `Video recording <https://www.youtube.com/watch?v=whbtjYNtHko>`__
 -  `SCT course (v4.0.0), Beijing, 2019-08-02`_ \| `Slides with Chinese translation`_
 -  `SCT course (v4.0.0_beta.4), London, 2019-01-22`_
 -  `SCT course (v3.2.2), Paris, 2018-06-12`_
@@ -17,8 +18,8 @@ The past courses handouts are listed below:
 -  `SCT course (v3.0_beta1), Montreal, 2016-04-19`_
 -  `SCT Hands-on Workshop (v2.0.4), Toronto, 2015-06-15`_
 
+.. _SCT course (v5.4.0), Boston, 2021-11-16: https://drive.google.com/file/d/1Oe9XHepUbd-nMNZvlNojh4YttEPep01P/view?usp=sharing
 .. _SCT course (v4.2.1), London, 2020-01-21: https://drive.google.com/file/d/1TZireJ6yhV8q7PbKKXyXg7Heov9-YJMu/view?usp=sharing
-.. _Video recording: https://www.youtube.com/watch?v=whbtjYNtHko&feature=youtu.be
 .. _SCT course (v4.0.0), Beijing, 2019-08-02: https://osf.io/arfv7/
 .. _Slides with Chinese translation: https://osf.io/hnmr2/
 .. _SCT course (v4.0.0_beta.4), London, 2019-01-22: https://osf.io/gvs6f/
