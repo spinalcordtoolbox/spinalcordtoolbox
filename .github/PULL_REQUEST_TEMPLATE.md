@@ -1,4 +1,4 @@
-<!-- Hi, and thank you for submitting a Pull Request! The checklist below is a brief summary of steps found in the NeuroPoly Contributing Guidelines, which can be found here: https://www.neuro.polymtl.ca/software/contributing. 
+<!-- Hi, and thank you for submitting a Pull Request! The checklist below is a brief summary of steps found in the NeuroPoly Contributing Guidelines, which can be found here: https://intranet.neuro.polymtl.ca/geek-tips/contributing. 
 -->
 
 ## Checklist
