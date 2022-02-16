@@ -558,7 +558,7 @@ class Params(object):
         self.dpi = dpi
         self.root_folder = dest_folder
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
-        self.qc_results = os.path.join(dest_folder, '_json/qc_' + self.mod_date + '.json')
+        self.qc_results = os.path.join(dest_folder, '_json', 'qc_' + self.mod_date + '.json')
         if command in ['sct_fmri_moco', 'sct_dmri_moco']:
             ext = "gif"
         else:
