@@ -25,6 +25,8 @@ from spinalcordtoolbox.math import laplacian
 from spinalcordtoolbox.registration.landmarks import register_landmarks
 from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp_create
 
+from spinalcordtoolbox.scripts import sct_image
+
 # TODO [AJ]
 # introduce potential cleanup functions in case exceptions occur and
 # filesystem is left with temp artefacts everywhere?
@@ -201,7 +203,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
     # N.B. no need to pad if iter = 0
     if not step.iter == '0':
         dest_pad = image.add_suffix(dest, '_pad')
-        run_proc(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(padding)])
+        sct_image.main(['-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(padding)])
         dest = dest_pad
 
     # apply Laplacian filter

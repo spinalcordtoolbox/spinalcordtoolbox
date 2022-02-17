@@ -20,10 +20,12 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file, convert, add_suffix
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_save, cache_signature, cache_valid, copy, \
     extract_fname, rmtree
 from spinalcordtoolbox.math import smooth
+
+from spinalcordtoolbox.scripts import sct_apply_transfo, sct_straighten_spinalcord
 
 
 class Param:
@@ -207,9 +209,9 @@ def main(argv=None):
         copy(os.path.join(curdir, 'warp_straight2curve.nii.gz'), 'warp_straight2curve.nii.gz')
         copy(os.path.join(curdir, 'straight_ref.nii.gz'), 'straight_ref.nii.gz')
         # apply straightening
-        run_proc(['sct_apply_transfo', '-i', fname_anat_rpi, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
+        sct_apply_transfo.main(['-i', fname_anat_rpi, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'])
     else:
-        run_proc(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting=' + param.algo_fitting], verbose)
+        sct_straighten_spinalcord.main(['-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting=' + param.algo_fitting])
         cache_save(cachefile, cache_sig)
         # move warping fields and straight reference file from the tmpdir to the localdir (to use caching next time)
         copy('straight_ref.nii.gz', os.path.join(curdir, 'straight_ref.nii.gz'))
@@ -233,7 +235,7 @@ def main(argv=None):
 
     # Apply the reversed warping field to get back the curved spinal cord
     printv('\nApply the reversed warping field to get back the curved spinal cord...')
-    run_proc(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)
+    sct_apply_transfo.main(['-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'])
 
     # replace zeroed voxels by original image (issue #937)
     printv('\nReplace zeroed voxels by original image...', verbose)
