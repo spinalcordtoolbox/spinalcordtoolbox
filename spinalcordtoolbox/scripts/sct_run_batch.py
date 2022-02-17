@@ -341,6 +341,10 @@ def main(argv=None):
         os_running = 'osx'
     elif platform_running.find('linux') != -1:
         os_running = 'linux'
+    elif platform_running.find('win32') != -1:
+        os_running = 'windows'
+    else:
+        os_running = platform_running
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
 
     # Display number of CPU cores
