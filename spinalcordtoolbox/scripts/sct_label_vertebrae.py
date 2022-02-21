@@ -35,26 +35,31 @@ from spinalcordtoolbox.scripts import sct_straighten_spinalcord, sct_apply_trans
 class Param:
     # The constructor
     def __init__(self):
-        self.shift_AP = 32  # 0#32  # shift the centerline towards the spine (in voxel).
-        self.size_AP = 11  # 41#11  # window size in AP direction (=y) (in voxel)
-        self.size_RL = 1  # 1 # window size in RL direction (=x) (in voxel)
+        self.shift_AP = 32  # shift the centerline towards the spine (in voxel).
+        self.size_AP = 11  # window size in AP direction (=y) (in voxel)
+        self.size_RL = 1  # window size in RL direction (=x) (in voxel)
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
-        self.shift_AP_visu = 15  # 0#15  # shift AP for displaying disc values
-        self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
-        self.gaussian_std = 1.0  # STD of the Gaussian function, centered at the most rostral point of the image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set between 0.1 (strong weighting) and 999 (no weighting).
+        self.shift_AP_visu = 15  # shift AP for displaying disc values
+        self.smooth_factor = [3, 1, 1]
         self.path_qc = None
 
     # update constructor with user's parameters
     def update(self, param_user):
-        list_objects = param_user.split(',')
-        for object in list_objects:
-            if len(object) < 2:
+        for param in param_user.split(','):
+            try:
+                key, value = param.split('=', maxsplit=1)
+                value = int(value)
+            except ValueError:
                 printv('ERROR: Wrong usage.', 1, type='error')
-            obj = object.split('=')
-            if obj[0] == 'gaussian_std':
-                setattr(self, obj[0], float(obj[1]))
+                sys.exit(1)
+            if key in ['shift_AP', 'size_AP', 'size_RL', 'size_IS', 'shift_AP_visu']:
+                setattr(self, key, value)
+            elif key == 'gaussian_std':
+                printv('WARNING: gaussian_std parameter is currently ignored, '
+                       'and will be removed in a later version.', 1, type='warning')
             else:
-                setattr(self, obj[0], int(obj[1]))
+                printv('ERROR: Wrong usage.', 1, type='error')
+                sys.exit(1)
 
 
 def get_parser():
@@ -182,10 +187,6 @@ def get_parser():
              f"  - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
              f"  - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"
              f"  - size_IS [mm]: IS window size for disc search. Default={param_default.size_IS}.\n"
-             f"  - gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the "
-             f"image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values "
-             f"to set between 0.1 (strong weighting) and 999 (no weighting). "
-             f"Default={param_default.gaussian_std}.\n"
     )
     optional.add_argument(
         '-r',

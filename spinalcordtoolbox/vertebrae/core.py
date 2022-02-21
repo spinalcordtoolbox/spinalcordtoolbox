@@ -10,7 +10,6 @@ import logging
 import numpy as np
 import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
-from scipy.signal import gaussian
 
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.metadata import get_file_label
@@ -165,7 +164,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
                                         y=yc, yshift=param.shift_AP, ysize=param.size_AP,
                                         z=current_z, zshift=0, zsize=param.size_IS,
                                         xtarget=xct, ytarget=yct, ztarget=current_z_template,
-                                        zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc), gaussian_std=999, path_output=path_output)
+                                        zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc),
+                                        path_output=path_output)
 
         # display new disc
         if verbose == 2:
@@ -339,7 +339,7 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
     img_labeled_seg_corr.save()
 
 
-def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, gaussian_std, path_output):
+def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, path_output):
     """
     FIXME doc
     Find z that maximizes correlation between src and target 3d data.
@@ -361,7 +361,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     :param zrange:
     :param verbose:
     :param save_suffix:
-    :param gaussian_std:
     :return:
     """
     # parameters
@@ -413,17 +412,15 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     if allzeros:
         logger.warning('Data contained zero. We probably hit the edge of the image.')
 
-    # adjust correlation with Gaussian function centered at the right edge of the curve (most rostral point of FOV)
-    gaussian_window = gaussian(len(I_corr) * 2, std=len(I_corr) * gaussian_std)
-    I_corr_gauss = np.multiply(I_corr, gaussian_window[0:len(I_corr)])
+    I_corr = np.array(I_corr, dtype=float)
 
     # Find global maximum
-    if np.any(I_corr_gauss):
+    if np.any(I_corr):
         # if I_corr contains at least a non-zero value
-        ind_peak = [i for i in range(len(I_corr_gauss)) if I_corr_gauss[i] == max(I_corr_gauss)][0]  # index of max along z
-        logger.info('.. Peak found: z=%s (correlation = %s)', zrange[ind_peak], I_corr_gauss[ind_peak])
+        ind_peak = [i for i in range(len(I_corr)) if I_corr[i] == max(I_corr)][0]  # index of max along z
+        logger.info('.. Peak found: z=%s (correlation = %s)', zrange[ind_peak], I_corr[ind_peak])
         # check if correlation is high enough
-        if I_corr_gauss[ind_peak] < thr_corr:
+        if I_corr[ind_peak] < thr_corr:
             logger.warning('Correlation is too low. Using adjusted template distance.')
             ind_peak = zrange.index(0)  # approx_distance_to_next_disc
     else:
@@ -454,10 +451,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         # display correlation curve
         ax = fig.add_subplot(133)
         ax.plot(zrange, I_corr)
-        ax.plot(zrange, I_corr_gauss, 'black', linestyle='dashed')
-        ax.legend(['I_corr', 'I_corr_gauss'])
-        ax.set_title('Mutual Info, gaussian_std=' + str(gaussian_std))
-        ax.plot(zrange[ind_peak], I_corr_gauss[ind_peak], 'ro')
+        ax.set_title('Mutual Info')
+        ax.plot(zrange[ind_peak], I_corr[ind_peak], 'ro')
         ax.axvline(x=zrange.index(0), linewidth=1, color='black', linestyle='dashed')
         ax.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         ax.grid()
