@@ -85,6 +85,12 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "bin"),
     },
+    "binaries_win": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/test-release/binaries_win.zip",
+        ],
+        "default_location": os.path.join(__sct_dir__, "bin"),
+    },
     "course_hawaii17": {
         "mirrors": [
             "https://osf.io/6exht/?action=download",
