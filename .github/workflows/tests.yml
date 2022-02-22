@@ -39,6 +39,11 @@ env:
     # This will be defined for non-debian platforms below too, but there's no harm in that.
     # (TravisCI quietly defined this on all their platforms, but we have to give it manually on GithubCI.)
     DEBIAN_FRONTEND: 'noninteractive'
+    # Turns on color output for pytest. See: https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591
+    PY_COLORS: "1"
+    # Disable progress bars for less verbose output
+    PIP_PROGRESS_BAR: "off"
+    SCT_PROGRESS_BAR: "off"
 
 jobs:
 
