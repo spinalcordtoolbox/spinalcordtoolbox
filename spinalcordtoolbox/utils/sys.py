@@ -294,10 +294,12 @@ def _which_sct_binaries():
     :return name of the sct binaries to use on this platform
     """
 
-    if sys.platform.startswith("linux"):
-        return "binaries_linux"
-    else:
+    if sys.platform == "darwin":
         return "binaries_osx"
+    elif sys.platform == "win32":
+        return "binaries_win"
+    else:
+        return "binaries_linux"
 
 
 def list2cmdline(lst):
@@ -312,18 +314,11 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         env = os.environ
 
     if is_sct_binary:
+        if not os.path.isdir(__bin_dir__):
+            run_proc(["sct_download_data", "-d", _which_sct_binaries(), "-k"])
+
         name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
-        path = None
-        binaries_location_default = sct_dir_local_path("bin")
-        for directory in (
-            sct_dir_local_path("bin"),
-        ):
-            candidate = os.path.join(directory, name)
-            if os.path.exists(candidate):
-                path = candidate
-        if path is None:
-            run_proc(["sct_download_data", "-d", _which_sct_binaries(), "-o", binaries_location_default])
-            path = os.path.join(binaries_location_default, name)
+        path = os.path.join(__bin_dir__, name)
 
         if isinstance(cmd, list):
             cmd[0] = path
