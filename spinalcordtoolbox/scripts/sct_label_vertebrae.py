@@ -55,6 +55,7 @@ class Param:
             if key in ['shift_AP', 'size_AP', 'size_RL', 'size_IS', 'shift_AP_visu']:
                 setattr(self, key, value)
             elif key == 'gaussian_std':
+                # TODO: remove 'gaussian_std' completely for release 6.0
                 printv('WARNING: gaussian_std parameter is currently ignored, '
                        'and will be removed in a later version.', 1, type='warning')
             else:
