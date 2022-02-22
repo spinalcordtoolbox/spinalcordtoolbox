@@ -401,7 +401,7 @@ class Image(object):
         :return:
         """
 
-        im_file = nib.load(path)
+        im_file = nib.load(path, mmap=(sys.platform != 'win32'))
         self.affine = im_file.affine.copy()
         self.data = im_file.get_data()
         self.hdr = im_file.header.copy()
