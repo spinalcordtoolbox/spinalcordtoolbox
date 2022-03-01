@@ -667,8 +667,7 @@ class QcReport(object):
                 os.makedirs(dest_full_path, exist_ok=True)
             for file_ in os.listdir(src_path):
                 if not os.path.isfile(os.path.join(dest_full_path, file_)):
-                    copy(os.path.join(src_path, file_),
-                             dest_full_path)
+                    copy(os.path.join(src_path, file_), dest_full_path)
 
         dest_file.flush()
         portalocker.unlock(dest_file)
