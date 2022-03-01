@@ -612,6 +612,17 @@ class QcReport(object):
 
         :param: dimension 2-tuple, the dimension of the image frame (w, h)
         """
+        dest_path = self.qc_params.root_folder
+        html_path = os.path.join(dest_path, 'index.html')
+        # NB: We use 'r+' because it allows us to open an existing file for locking *without* immediately truncating the
+        # existing contents prior to opening. We can then use this file to overwrite the contents later in the function.
+        mode = "r+" if os.path.isfile(html_path) else "w"
+        dest_file = open(html_path, mode, encoding="utf-8")
+        # We lock `index.html` at the start of this function so that we halt any other processes *before* they have a
+        # chance to generate or read any .json files. This ensues that the last process to write to index.html has read
+        # in all of the available .json files, preventing:
+        # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3701#discussion_r816300380
+        portalocker.lock(dest_file, portalocker.LOCK_EX)
 
         output = {
             'python': sys.executable,
@@ -644,20 +655,10 @@ class QcReport(object):
         # Append entry to existing HTML file
         json_data = get_json_data_from_path(path_json)
         assets_path = os.path.join(os.path.dirname(__file__), 'assets')
-        dest_path = self.qc_params.root_folder
-
         with open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
             template = Template(template_index.read())
             output = template.substitute(sct_json_data=json.dumps(json_data))
-
-        # Use locking when writing to `index.html` only (since this is the only file that multiple processes
-        # would simultaneously write to)
-        dest_file = open(os.path.join(dest_path, 'index.html'), 'w', encoding="utf-8")
-        portalocker.lock(dest_file, portalocker.LOCK_EX)
         dest_file.write(output)
-        dest_file.flush()
-        portalocker.unlock(dest_file)
-        dest_file.close()
 
         for path in ['css', 'js', 'imgs', 'fonts']:
             src_path = os.path.join(assets_path, '_assets', path)
@@ -668,6 +669,10 @@ class QcReport(object):
                 if not os.path.isfile(os.path.join(dest_full_path, file_)):
                     copy(os.path.join(src_path, file_),
                              dest_full_path)
+
+        dest_file.flush()
+        portalocker.unlock(dest_file)
+        dest_file.close()
 
 
 def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overlay=None,
