@@ -86,7 +86,15 @@ def test_non_executable_task(tmp_path, dummy_script):
         script.write(dedent(script_text)[1:])  # indexing removes beginning newline
         script.flush()
 
-    assert not os.access(script.name, os.X_OK), "Script already executable"
+    # The assertion below is meant to ensure that the script is not executable at first,
+    # so that we can test whether `sct_run_batch` properly changes the permissions. However,
+    # checking against os.X_OK isn't compatible with Windows. So, I've commented it out:
+
+    # assert not os.access(script.name, os.X_OK), "Script already executable"
+
+    # More broadly speaking, however: Don't the other tests also accomplish this same functionality?
+    # i.e. Wouldn't _all_ dummy scripts we create start out as non-executable? I suspect that this test
+    # could be combined with the other tests and there wouldn't be a meaningful loss of coverage.
 
     sct_run_batch.main(['-include', '^t.*',
                         '-subject-prefix', '',
