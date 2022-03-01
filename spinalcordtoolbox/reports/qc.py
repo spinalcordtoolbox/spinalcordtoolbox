@@ -7,7 +7,6 @@ import os
 import json
 import logging
 import datetime
-import io
 from string import Template
 from shutil import copyfile
 
@@ -650,13 +649,13 @@ class QcReport(object):
         assets_path = os.path.join(os.path.dirname(__file__), 'assets')
         dest_path = self.qc_params.root_folder
 
-        with io.open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
+        with open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
             template = Template(template_index.read())
             output = template.substitute(sct_json_data=json.dumps(json_data))
 
         # Use locking when writing to `index.html` only (since this is the only file that multiple processes
         # would simultaneously write to)
-        dest_file = io.open(os.path.join(dest_path, 'index.html'), 'w', encoding="utf-8")
+        dest_file = open(os.path.join(dest_path, 'index.html'), 'w', encoding="utf-8")
         portalocker.lock(dest_file, portalocker.LOCK_EX)
         dest_file.write(output)
         dest_file.close()
