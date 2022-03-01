@@ -662,6 +662,11 @@ def propseg(img_input, options_dict):
 
 def main(argv=None):
     parser = get_parser()
+    if sys.platform.startswith("win32"):
+        # This isn't *really* a parsing error, but it feels a little more official to display the help with this error
+        parser.error("`sct_propseg` is not currently supported on native Windows installations. \n\n"
+                     "For spinal cord segmentation, please migrate to the new and improved `sct_deepseg_sc` tool, "
+                     "or consider using WSL to install SCT instead.")
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
