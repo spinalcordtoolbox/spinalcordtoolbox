@@ -655,6 +655,8 @@ class QcReport(object):
         dest_file = open(os.path.join(dest_path, 'index.html'), 'w', encoding="utf-8")
         portalocker.lock(dest_file, portalocker.LOCK_EX)
         dest_file.write(output)
+        dest_file.flush()
+        portalocker.unlock(dest_file)
         dest_file.close()
 
         for path in ['css', 'js', 'imgs', 'fonts']:
