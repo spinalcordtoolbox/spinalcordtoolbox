@@ -294,9 +294,9 @@ def _which_sct_binaries():
     :return name of the sct binaries to use on this platform
     """
 
-    if sys.platform == "darwin":
+    if sys.platform.startswith("darwin"):
         return "binaries_osx"
-    elif sys.platform == "win32":
+    elif sys.platform.startswith("win32"):
         return "binaries_win"
     else:
         return "binaries_linux"
