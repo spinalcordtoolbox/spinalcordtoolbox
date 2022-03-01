@@ -642,10 +642,7 @@ class QcReport(object):
             json.dump(output, qc_file, indent=1)
 
         # Append entry to existing HTML file
-        self._update_html_assets(get_json_data_from_path(path_json))
-
-    def _update_html_assets(self, json_data):
-        """Update the html file and assets"""
+        json_data = get_json_data_from_path(path_json)
         assets_path = os.path.join(os.path.dirname(__file__), 'assets')
         dest_path = self.qc_params.root_folder
 
