@@ -65,6 +65,7 @@ exit /b 0
 
 :error
 cd %PWD%
+deactivate || BREAK
 echo Failed with error #%errorlevel%.
 exit /b %errorlevel%
 
