@@ -411,9 +411,10 @@ jobs:
     - name: Install SCT
       # NB: In real-world usage, it's assumed that the user would download the
       # install_sct.bat file from the Downloads page, and _not_ the full repo.
+      # We emulate that here by copying just the install_sct.bat to the PWD
       run: |
         set HOMEPATH=%GITHUB_WORKSPACE%
-        cd checkout/spinalcordtoolbox
+        copy checkout\spinalcordtoolbox\install_sct.bat .\
         install_sct.bat %BRANCH_NAME%
     - name: Add SCT to path
       # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
