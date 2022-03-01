@@ -414,7 +414,7 @@ jobs:
       run: |
         set HOMEPATH=%GITHUB_WORKSPACE%
         cd checkout/spinalcordtoolbox
-        .\install_sct.bat %BRANCH_NAME%
+        install_sct.bat %BRANCH_NAME%
     - name: Add SCT to path
       # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
       # In a user install, the user would perform this step using the Windows PATH-changing GUI.
