@@ -61,7 +61,7 @@ echo: 5. Click 'OK' three times. You can now access SCT's scripts in the Command
 :: Return to initial directory
 cd %PWD%
 
-
+exit /b 0
 
 :error
 cd %PWD%
