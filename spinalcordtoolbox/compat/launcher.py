@@ -35,4 +35,4 @@ def main():
             mpi_flags = "-n 1"
         cmd = ["mpiexec"] + mpi_flags.split() + cmd
 
-    return subprocess.call(" ".join(cmd), shell=True, env=env)
+    return subprocess.run(cmd, env=env).returncode
