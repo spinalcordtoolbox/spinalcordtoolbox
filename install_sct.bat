@@ -8,11 +8,8 @@
 :: Fetch version number (should be git branch, git tag, etc.)
 set git_ref=%1
 
-:: Save present working directory to return to later
-FOR /F "tokens=*" %%G IN ('cd') do (SET PWD=%%G)
-
 :: Go to user's home directory
-cd %HOMEPATH%
+pushd %HOMEPATH%
 
 :: Download SCT and check out the branch requested by the user
 echo:
@@ -59,12 +56,12 @@ echo:
 echo: 5. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
 
 :: Return to initial directory
-cd %PWD%
+popd
 
 exit /b 0
 
 :error
-cd %PWD%
+popd
 deactivate || BREAK
 echo Failed with error #%errorlevel%.
 exit /b %errorlevel%
