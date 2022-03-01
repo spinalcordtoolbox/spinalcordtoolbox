@@ -34,7 +34,7 @@ import yaml
 import psutil
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
-from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, set_loglevel
+from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, __sct_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import Tee
 
 from stat import S_IEXEC
@@ -222,6 +222,8 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
         'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(itk_threads),
         'SCT_PROGRESS_BAR': 'off'
     })
+    if 'SCT_DIR' not in envir:  # For native Windows installations, the install script won't add SCT_DIR
+        envir['SCT_DIR'] = __sct_dir__
 
     cmd = [script_full, subj_dir] + script_args.split(' ')
 
