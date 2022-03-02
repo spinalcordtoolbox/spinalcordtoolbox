@@ -37,9 +37,6 @@ echo:
 echo ### Downloading model files and binaries...
 FOR %%D IN (PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models binaries_win) DO sct_download_data -d %%D -k || goto error
 
-:: Deactivate virtual environment
-deactivate
-
 :: Give further instructions that the user add the Scripts directory to their PATH
 echo:
 echo ### Installation finished!
@@ -55,8 +52,9 @@ echo    %CD%\%venv_sct\Scripts
 echo:
 echo: 5. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
 
-:: Return to initial directory
+:: Return to initial directory and deactivate the virtual environment
 popd
+deactivate
 
 exit /b 0
 
