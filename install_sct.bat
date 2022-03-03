@@ -21,7 +21,7 @@ echo:
 echo ### Using Python to create virtual environment...
 cd spinalcordtoolbox
 python -m venv venv_sct || goto error
-CALL venv_sct\Scripts\activate.bat || goto error
+call venv_sct\Scripts\activate.bat || goto error
 echo Virtual environment created and activated successfully!
 
 rem Install SCT and its requirements
@@ -54,13 +54,13 @@ echo: 5. Click 'OK' three times. You can now access SCT's scripts in the Command
 
 rem Return to initial directory and deactivate the virtual environment
 popd
-deactivate
+call deactivate
 
 exit /b 0
 
 :error
 popd
-deactivate || BREAK
+call deactivate || BREAK
 echo Failed with error #%errorlevel%.
 exit /b %errorlevel%
 
