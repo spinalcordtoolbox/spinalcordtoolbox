@@ -48,7 +48,7 @@ echo 2. Click the 'Environment variables...' button
 echo 3. Under the section 'User variables for ____', highlight the 'Path' entry, then click the 'Edit...' button.
 echo 4. Click 'New', then copy and paste this directory:
 echo:
-echo    %CD%\%venv_sct\Scripts
+echo    %CD%\venv_sct\Scripts
 echo:
 echo: 5. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
 
