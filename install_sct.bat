@@ -43,7 +43,7 @@ echo ### Installation finished!
 echo:
 echo To use SCT's command-line scripts in Command Prompt, please follow these instructions:
 echo:
-echo 1. Open the ^Start Menu -^> Type 'path' -^> Open 'Edit the System Environment Variables'
+echo 1. Open the Start Menu -^> Type 'path' -^> Open 'Edit the System Environment Variables'
 echo 2. Click the 'Environment variables...' button
 echo 3. Under the section 'User variables for ____', highlight the 'Path' entry, then click the 'Edit...' button.
 echo 4. Click 'New', then copy and paste this directory:
