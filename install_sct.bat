@@ -1,6 +1,7 @@
-rem Usage: install_sct.bat <version>
-rem e.g.
-rem        install_sct.bat 5.5
+@rem Installation script for SCT on native Windows platforms
+@rem Usage: install_sct.bat <version>
+@rem e.g.
+@rem        install_sct.bat 5.5
 
 rem Turn off command echoing for nicer output
 @echo off
