@@ -614,10 +614,12 @@ class QcReport(object):
         """
         dest_path = self.qc_params.root_folder
         html_path = os.path.join(dest_path, 'index.html')
+        # Make sure the file exists before trying to open it in 'r+' mode (like 'touch' but without updating timestamps)
+        if not os.path.isfile(html_path):
+            open(html_path, 'a').close()
         # NB: We use 'r+' because it allows us to open an existing file for locking *without* immediately truncating the
         # existing contents prior to opening. We can then use this file to overwrite the contents later in the function.
-        mode = "r+" if os.path.isfile(html_path) else "w"
-        dest_file = open(html_path, mode, encoding="utf-8")
+        dest_file = open(html_path, 'r+', encoding="utf-8")
         # We lock `index.html` at the start of this function so that we halt any other processes *before* they have a
         # chance to generate or read any .json files. This ensues that the last process to write to index.html has read
         # in all of the available .json files, preventing:
