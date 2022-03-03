@@ -14,7 +14,7 @@ pushd %HOMEPATH%
 
 rem Download SCT and check out the branch requested by the user
 echo:
-echo ### Downloading SCT source code to %HOMEPATH%...
+echo ### Downloading SCT source code to %HOMEPATH%\spinalcordtoolbox...
 git clone -b %git_ref% --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git || goto error
 
 rem Create and activate virtual environment to install SCT into
