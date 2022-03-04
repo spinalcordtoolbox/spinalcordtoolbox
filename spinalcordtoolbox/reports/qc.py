@@ -4,11 +4,9 @@
 import glob
 import sys
 import os
-import fcntl
 import json
 import logging
 import datetime
-import io
 from string import Template
 from shutil import copyfile
 
@@ -20,6 +18,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.colors as color
+import portalocker
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
@@ -613,6 +612,18 @@ class QcReport(object):
 
         :param: dimension 2-tuple, the dimension of the image frame (w, h)
         """
+        dest_path = self.qc_params.root_folder
+        html_path = os.path.join(dest_path, 'index.html')
+        # Make sure the file exists before trying to open it in 'r+' mode
+        open(html_path, 'a').close()
+        # NB: We use 'r+' because it allows us to open an existing file for locking *without* immediately truncating the
+        # existing contents prior to opening. We can then use this file to overwrite the contents later in the function.
+        dest_file = open(html_path, 'r+', encoding="utf-8")
+        # We lock `index.html` at the start of this function so that we halt any other processes *before* they have a
+        # chance to generate or read any .json files. This ensues that the last process to write to index.html has read
+        # in all of the available .json files, preventing:
+        # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3701#discussion_r816300380
+        portalocker.lock(dest_file, portalocker.LOCK_EX)
 
         output = {
             'python': sys.executable,
@@ -638,29 +649,19 @@ class QcReport(object):
         if not os.path.exists(path_json):
             os.makedirs(path_json, exist_ok=True)
 
-        # lock the output directory
-        # because this code may be run in parallel
-        path_json_fd = os.open(path_json, os.O_RDONLY)
-        fcntl.flock(path_json_fd, fcntl.LOCK_EX)
+        # Create json file for specific QC entry
+        with open(self.qc_params.qc_results, 'w+') as qc_file:
+            json.dump(output, qc_file, indent=1)
 
-        try:
-            # Create json file
-            with open(self.qc_params.qc_results, 'w+') as qc_file:
-                json.dump(output, qc_file, indent=1)
-            self._update_html_assets(get_json_data_from_path(path_json))
-        finally:
-            # fcntl.flock(path_json_fd, fcntl.LOCK_UN) # technically, redundant, since close() triggers this too.
-            os.close(path_json_fd)
-
-    def _update_html_assets(self, json_data):
-        """Update the html file and assets"""
+        # Append entry to existing HTML file
+        json_data = get_json_data_from_path(path_json)
         assets_path = os.path.join(os.path.dirname(__file__), 'assets')
-        dest_path = self.qc_params.root_folder
-
-        with io.open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
+        with open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
             template = Template(template_index.read())
             output = template.substitute(sct_json_data=json.dumps(json_data))
-            io.open(os.path.join(dest_path, 'index.html'), 'w', encoding="utf-8").write(output)
+        # Empty the HTML file before writing, to make sure there's no leftover junk at the end
+        dest_file.truncate()
+        dest_file.write(output)
 
         for path in ['css', 'js', 'imgs', 'fonts']:
             src_path = os.path.join(assets_path, '_assets', path)
@@ -669,8 +670,11 @@ class QcReport(object):
                 os.makedirs(dest_full_path, exist_ok=True)
             for file_ in os.listdir(src_path):
                 if not os.path.isfile(os.path.join(dest_full_path, file_)):
-                    copy(os.path.join(src_path, file_),
-                             dest_full_path)
+                    copy(os.path.join(src_path, file_), dest_full_path)
+
+        dest_file.flush()
+        portalocker.unlock(dest_file)
+        dest_file.close()
 
 
 def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overlay=None,

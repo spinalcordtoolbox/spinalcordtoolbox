@@ -15,7 +15,8 @@ import sys
 
 from spinalcordtoolbox.download import install_data
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, __sct_dir__
+from spinalcordtoolbox.utils.sys import (init_sct, printv, set_loglevel,
+                                         __sct_dir__, __bin_dir__)
 
 
 # Dictionary containing list of URLs and locations for datasets.
@@ -77,13 +78,19 @@ DATASET_DICT = {
         "mirrors": [
             "https://osf.io/cs6zt/?action=download",
         ],
-        "default_location": os.path.join(__sct_dir__, "bin"),
+        "default_location": __bin_dir__,
     },
     "binaries_osx": {
         "mirrors": [
             "https://osf.io/874cy?action=download",
         ],
-        "default_location": os.path.join(__sct_dir__, "bin"),
+        "default_location": __bin_dir__,
+    },
+    "binaries_win": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/test-release/binaries_win.zip",
+        ],
+        "default_location": __bin_dir__,
     },
     "course_hawaii17": {
         "mirrors": [

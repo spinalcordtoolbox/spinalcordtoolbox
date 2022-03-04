@@ -12,6 +12,7 @@ numpy
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 onnxruntime>=1.7.0
 pandas
+portalocker
 psutil
 pyqt5==5.11.3
 pytest
