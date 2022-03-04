@@ -1,10 +1,8 @@
-@rem Installation script for SCT on native Windows platforms
-@rem Usage: install_sct.bat <version>
-@rem e.g.
-@rem        install_sct.bat 5.5
-
-rem Turn off command echoing for nicer output
 @echo off
+rem Installation script for SCT on native Windows platforms
+rem Usage: install_sct.bat <version>
+rem e.g.
+rem        install_sct.bat 5.5
 
 rem Fetch version number (should be git branch, git tag, etc.)
 set git_ref=%1
