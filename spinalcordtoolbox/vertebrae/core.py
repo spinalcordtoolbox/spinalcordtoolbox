@@ -82,7 +82,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     data = im_input.data
 
     # smooth data
-    data = gaussian_filter(data, param.smooth_factor, output=None, mode="reflect")
+    smooth_factor = [3, 1, 1]
+    data = gaussian_filter(data, smooth_factor, output=None, mode="reflect")
 
     # get dimension of src
     nx, ny, nz = data.shape

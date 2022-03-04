@@ -40,7 +40,6 @@ class Param:
         self.size_RL = 1  # window size in RL direction (=x) (in voxel)
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
         self.shift_AP_visu = 15  # shift AP for displaying disc values
-        self.smooth_factor = [3, 1, 1]
         self.path_qc = None
 
     # update constructor with user's parameters
