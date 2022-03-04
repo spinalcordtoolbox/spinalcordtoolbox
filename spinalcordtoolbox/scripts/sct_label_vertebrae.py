@@ -31,39 +31,33 @@ from spinalcordtoolbox.math import threshold, laplacian
 from spinalcordtoolbox.scripts import sct_straighten_spinalcord, sct_apply_transfo
 
 
-# PARAMETERS
-class Param:
-    # The constructor
-    def __init__(self):
-        self.shift_AP = 32  # shift the centerline towards the spine (in voxel).
-        self.size_AP = 11  # window size in AP direction (=y) (in voxel)
-        self.size_RL = 1  # window size in RL direction (=x) (in voxel)
-        self.size_IS = 19  # window size in IS direction (=z) (in voxel)
-        self.shift_AP_visu = 15  # shift AP for displaying disc values
+# for vertebral_detection
+param_default = {
+    'shift_AP': 32,  # shift the centerline towards the spine (in voxel).
+    'size_AP': 11,  # window size in AP direction (=y) (in voxel)
+    'size_RL': 1,  # window size in RL direction (=x) (in voxel)
+    'size_IS': 19,  # window size in IS direction (=z) (in voxel)
+    'shift_AP_visu': 15,  # shift AP for displaying disc values
+}
 
-    # update constructor with user's parameters
-    def update(self, param_user):
-        for param in param_user.split(','):
-            try:
-                key, value = param.split('=', maxsplit=1)
-                value = int(value)
-            except ValueError:
-                printv('ERROR: Wrong usage.', 1, type='error')
-                sys.exit(1)
-            if key in ['shift_AP', 'size_AP', 'size_RL', 'size_IS', 'shift_AP_visu']:
-                setattr(self, key, value)
-            elif key == 'gaussian_std':
-                # TODO: remove 'gaussian_std' completely for release 6.0
-                printv('WARNING: gaussian_std parameter is currently ignored, '
-                       'and will be removed in a later version.', 1, type='warning')
-            else:
-                printv('ERROR: Wrong usage.', 1, type='error')
-                sys.exit(1)
+
+def vertebral_detection_param(string):
+    """Custom parser for vertebral_detection advanced parameters."""
+    param = param_default.copy()
+    for key_value in string.split(','):
+        key, value = key_value.split('=', maxsplit=1)
+        if key in param:
+            param[key] = int(value)
+        elif key == 'gaussian_std':
+            # TODO(issue#3706): remove 'gaussian_std' completely for v5.7
+            printv('WARNING: gaussian_std parameter is currently ignored, '
+                   'and will be removed in a later version.', 1, type='warning')
+        else:
+            raise ValueError(f'Unknown parameter: {key}')
+    return param
 
 
 def get_parser():
-    # initialize default param
-    param_default = Param()
     parser = SCTArgumentParser(
         description=(
             "This function takes an anatomical image and its cord segmentation (binary file), and outputs the "
@@ -180,12 +174,13 @@ def get_parser():
     optional.add_argument(
         '-param',
         metavar=Metavar.list,
-        type=list_type(',', str),
-        help=f"Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
-             f"  - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
-             f"  - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
-             f"  - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"
-             f"  - size_IS [mm]: IS window size for disc search. Default={param_default.size_IS}.\n"
+        type=vertebral_detection_param,
+        default=param_default.copy(),
+        help=f'Advanced parameters. Assign value with "="; Separate arguments with ","\n'
+             f'  - shift_AP [mm]: AP shift of centerline for disc search (default: {param_default["shift_AP"]})\n'
+             f'  - size_AP [mm]: AP window size for disc search (default: {param_default["size_AP"]})\n'
+             f'  - size_RL [mm]: RL window size for disc search (default: {param_default["size_RL"]})\n'
+             f'  - size_IS [mm]: IS window size for disc search (default: {param_default["size_IS"]})\n',
     )
     optional.add_argument(
         '-r',
@@ -235,7 +230,6 @@ def main(argv=None):
     initcenter = ''
     fname_initlabel = ''
     file_labelz = 'labelz.nii.gz'
-    param = Param()
 
     fname_in = os.path.abspath(arguments.i)
     fname_seg = os.path.abspath(arguments.s)
@@ -268,8 +262,6 @@ def main(argv=None):
     if arguments.initlabel is not None:
         # get absolute path of label
         fname_initlabel = os.path.abspath(arguments.initlabel)
-    if arguments.param is not None:
-        param.update(arguments.param[0])
     remove_temp_files = arguments.r
     clean_labels = arguments.clean_labels
 
@@ -414,7 +406,7 @@ def main(argv=None):
 
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1
-        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
+        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, arguments.param, init_disc=init_disc,
                             verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
 
     # un-straighten labeled spinal cord

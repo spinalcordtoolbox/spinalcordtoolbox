@@ -126,15 +126,15 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         ax_disc = fig_disc.add_subplot(111)
         # ax_disc = fig_disc.add_axes((0, 0, 1, 1))
         # get percentile for automatic contrast adjustment
-        data_display = np.mean(data[xc - param.size_RL:xc + param.size_RL, :, :], axis=0).transpose()
+        data_display = np.mean(data[xc - param['size_RL']:xc + param['size_RL'], :, :], axis=0).transpose()
         percmin = np.percentile(data_display, 10)
         percmax = np.percentile(data_display, 90)
         # display image
         ax_disc.matshow(data_display, cmap='gray', clim=[percmin, percmax], origin='lower')
         ax_disc.set_title('Anatomical image')
         # ax.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        ax_disc.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=10)
-        ax_disc.text(yc + param.shift_AP_visu + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
+        ax_disc.scatter(yc + param['shift_AP_visu'], init_disc[0], c='yellow', s=10)
+        ax_disc.text(yc + param['shift_AP_visu'] + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
                      verticalalignment='center', horizontalalignment='left', color='pink', fontsize=7)
 
     # FIND DISCS
@@ -161,18 +161,18 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
         if current_disc != 1:
-            current_z = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param.size_RL,
-                                        y=yc, yshift=param.shift_AP, ysize=param.size_AP,
-                                        z=current_z, zshift=0, zsize=param.size_IS,
+            current_z = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param['size_RL'],
+                                        y=yc, yshift=param['shift_AP'], ysize=param['size_AP'],
+                                        z=current_z, zshift=0, zsize=param['size_IS'],
                                         xtarget=xct, ytarget=yct, ztarget=current_z_template,
                                         zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc),
                                         path_output=path_output)
 
         # display new disc
         if verbose == 2:
-            ax_disc.scatter(yc + param.shift_AP_visu, current_z, c='yellow', s=10)
-            ax_disc.text(yc + param.shift_AP_visu + 4, current_z, str(current_disc) + '/' + str(current_disc + 1),
-                    verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=7)
+            ax_disc.scatter(yc + param['shift_AP_visu'], current_z, c='yellow', s=10)
+            ax_disc.text(yc + param['shift_AP_visu'] + 4, current_z, str(current_disc) + '/' + str(current_disc + 1),
+                         verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=7)
 
         # append to main list
         if direction == 'superior':
