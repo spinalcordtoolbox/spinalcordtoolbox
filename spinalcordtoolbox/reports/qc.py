@@ -614,9 +614,8 @@ class QcReport(object):
         """
         dest_path = self.qc_params.root_folder
         html_path = os.path.join(dest_path, 'index.html')
-        # Make sure the file exists before trying to open it in 'r+' mode (like 'touch' but without updating timestamps)
-        if not os.path.isfile(html_path):
-            open(html_path, 'a').close()
+        # Make sure the file exists before trying to open it in 'r+' mode
+        open(html_path, 'a').close()
         # NB: We use 'r+' because it allows us to open an existing file for locking *without* immediately truncating the
         # existing contents prior to opening. We can then use this file to overwrite the contents later in the function.
         dest_file = open(html_path, 'r+', encoding="utf-8")
@@ -660,6 +659,8 @@ class QcReport(object):
         with open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
             template = Template(template_index.read())
             output = template.substitute(sct_json_data=json.dumps(json_data))
+        # Empty the HTML file before writing, to make sure there's no leftover junk at the end
+        dest_file.truncate()
         dest_file.write(output)
 
         for path in ['css', 'js', 'imgs', 'fonts']:
