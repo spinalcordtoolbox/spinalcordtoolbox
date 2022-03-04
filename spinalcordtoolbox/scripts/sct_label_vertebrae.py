@@ -272,7 +272,6 @@ def main(argv=None):
         param.update(arguments.param[0])
     remove_temp_files = arguments.r
     clean_labels = arguments.clean_labels
-    laplacian = arguments.laplacian
 
     path_tmp = tmp_create(basename="label_vertebrae")
 
@@ -399,7 +398,7 @@ def main(argv=None):
         printv('.. ' + str(init_disc), verbose)
 
         # apply laplacian filtering
-        if laplacian:
+        if arguments.laplacian:
             printv('\nApply Laplacian filter...', verbose)
             img = Image("data_straightr.nii")
 
@@ -412,7 +411,6 @@ def main(argv=None):
             # smooth data
             img.data = laplacian(img.data, sigmas)
             img.save()
-
 
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1
