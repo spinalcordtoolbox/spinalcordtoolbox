@@ -40,7 +40,6 @@ class Param:
         self.size_RL = 1  # window size in RL direction (=x) (in voxel)
         self.size_IS = 19  # window size in IS direction (=z) (in voxel)
         self.shift_AP_visu = 15  # shift AP for displaying disc values
-        self.path_qc = None
 
     # update constructor with user's parameters
     def update(self, param_user):
@@ -209,7 +208,6 @@ def get_parser():
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default=param_default.path_qc,
         help="The path where the quality control generated content will be saved."
     )
     optional.add_argument(
@@ -245,7 +243,6 @@ def main(argv=None):
     path_template = os.path.abspath(arguments.t)
     scale_dist = arguments.scale_dist
     path_output = os.path.abspath(arguments.ofolder)
-    param.path_qc = arguments.qc
     if arguments.discfile is not None:
         fname_disc = os.path.abspath(arguments.discfile)
     else:
@@ -470,7 +467,7 @@ def main(argv=None):
         rmtree(path_tmp)
 
     # Generate QC report
-    if param.path_qc is not None:
+    if arguments.qc is not None:
         path_qc = os.path.abspath(arguments.qc)
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
