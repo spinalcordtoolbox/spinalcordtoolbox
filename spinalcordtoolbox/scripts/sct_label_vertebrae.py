@@ -12,6 +12,7 @@
 
 import sys
 import os
+import argparse
 
 import numpy as np
 
@@ -45,15 +46,23 @@ def vertebral_detection_param(string):
     """Custom parser for vertebral_detection advanced parameters."""
     param = param_default.copy()
     for key_value in string.split(','):
-        key, value = key_value.split('=', maxsplit=1)
+        try:
+            key, value = key_value.split('=', maxsplit=1)
+        except ValueError:
+            raise argparse.ArgumentTypeError(
+                f'advanced parameters should be of the form "parameter=value", got "{key_value}" instead')
         if key in param:
-            param[key] = int(value)
+            try:
+                param[key] = int(value)
+            except ValueError:
+                raise argparse.ArgumentTypeError(
+                    f'advanced parameter "{key}" needs an integer value, got "{value}" instead')
         elif key == 'gaussian_std':
             # TODO(issue#3706): remove 'gaussian_std' completely for v5.7
             printv('WARNING: gaussian_std parameter is currently ignored, '
                    'and will be removed in a later version.', 1, type='warning')
         else:
-            raise ValueError(f'Unknown parameter: {key}')
+            raise argparse.ArgumentTypeError(f'Unknown advanced parameter: {key}')
     return param
 
 
