@@ -39,6 +39,11 @@ env:
     # This will be defined for non-debian platforms below too, but there's no harm in that.
     # (TravisCI quietly defined this on all their platforms, but we have to give it manually on GithubCI.)
     DEBIAN_FRONTEND: 'noninteractive'
+    # Turns on color output for pytest. See: https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591
+    PY_COLORS: "1"
+    # Disable progress bars for less verbose output
+    PIP_PROGRESS_BAR: "off"
+    SCT_PROGRESS_BAR: "off"
 
 jobs:
 
@@ -384,3 +389,40 @@ jobs:
       run: |
         cd ~/spinalcordtoolbox
         ./.ci.sh -t
+
+  windows-native:
+    name: Windows (Native)
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: cmd
+    steps:
+    - name: Get branch name (merge)
+      if: github.event_name != 'pull_request'
+      shell: bash
+      run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+    - name: Get branch name (pull request)
+      if: github.event_name == 'pull_request'
+      shell: bash
+      run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+    - uses: actions/checkout@v2
+      with:
+        path: checkout/spinalcordtoolbox
+    - name: Install SCT
+      # NB: In real-world usage, it's assumed that the user would download the
+      # install_sct.bat file from the Downloads page, and _not_ the full repo.
+      # We emulate that here by copying just the install_sct.bat to the PWD
+      run: |
+        set HOMEPATH=%GITHUB_WORKSPACE%
+        copy checkout\spinalcordtoolbox\install_sct.bat .\
+        install_sct.bat %BRANCH_NAME%
+    - name: Add SCT to path
+      # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
+      # In a user install, the user would perform this step using the Windows PATH-changing GUI.
+      shell: bash
+      run: echo "$GITHUB_WORKSPACE/spinalcordtoolbox/venv_sct/Scripts" >> $GITHUB_PATH
+    - name: Check dependencies
+      shell: cmd
+      run: sct_check_dependencies
+    - name: Run pytest test suite
+      run: sct_testing || EXIT 0
