@@ -184,12 +184,12 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=vertebral_detection_param,
-        default=param_default.copy(),
-        help=f'Advanced parameters. Assign value with "="; Separate arguments with ","\n'
-             f'  - shift_AP [mm]: AP shift of centerline for disc search (default: {param_default["shift_AP"]})\n'
-             f'  - size_AP [mm]: AP window size for disc search (default: {param_default["size_AP"]})\n'
-             f'  - size_RL [mm]: RL window size for disc search (default: {param_default["size_RL"]})\n'
-             f'  - size_IS [mm]: IS window size for disc search (default: {param_default["size_IS"]})\n',
+        default=','.join(f'{key}={value}' for key, value in param_default.items()),
+        help='Advanced parameters. Assign value with "="; Separate arguments with ","\n'
+             '  - shift_AP [mm]: AP shift of centerline for disc search\n'
+             '  - size_AP [mm]: AP window size for disc search\n'
+             '  - size_RL [mm]: RL window size for disc search\n'
+             '  - size_IS [mm]: IS window size for disc search\n',
     )
     optional.add_argument(
         '-r',
