@@ -247,18 +247,21 @@ def main(argv=None):
     initcenter = arguments.initcenter
     # if user provided text file, parse and overwrite arguments
     if arguments.initfile is not None:
-        file = open(arguments.initfile, 'r')
-        initfile = ' ' + file.read().replace('\n', '')
-        arg_initfile = initfile.split(' ')
-        for idx_arg, arg in enumerate(arg_initfile):
+        args = open(arguments.initfile).read().split()
+        iterator = iter(args)
+        for arg in iterator:
             if arg == '-initz':
-                initz = [int(x) for x in arg_initfile[idx_arg + 1].split(',')]
-                if len(initz) != 2:
-                    raise ValueError('--initz takes two arguments: position in superior-inferior direction, label value')
-            if arg == '-initcenter':
-                initcenter = int(arg_initfile[idx_arg + 1])
+                try:
+                    initz = [int(x) for x in next(iterator).split(',')]
+                except (StopIteration, ValueError):
+                    parser.error('-initz takes two arguments: position in superior-inferior direction, label value')
+            elif arg == '-initcenter':
+                try:
+                    initcenter = int(next(iterator))
+                except (StopIteration, ValueError):
+                    parser.error('-initcenter takes an integer argument')
     if initz is not None and len(initz) != 2:
-        raise ValueError('--initz takes two arguments: position in superior-inferior direction, label value')
+        parser.error('-initz takes two arguments: position in superior-inferior direction, label value')
 
     if arguments.initlabel is not None:
         fname_initlabel = os.path.abspath(arguments.initlabel)
