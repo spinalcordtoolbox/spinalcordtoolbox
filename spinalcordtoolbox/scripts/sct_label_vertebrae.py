@@ -232,10 +232,6 @@ def main(argv=None):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
-    # initializations
-    initz = ''
-    initcenter = ''
-
     fname_in = os.path.abspath(arguments.i)
     fname_seg = os.path.abspath(arguments.s)
     contrast = arguments.c
@@ -246,12 +242,9 @@ def main(argv=None):
         fname_disc = os.path.abspath(arguments.discfile)
     else:
         fname_disc = None
-    if arguments.initz is not None:
-        initz = arguments.initz
-        if len(initz) != 2:
-            raise ValueError('--initz takes two arguments: position in superior-inferior direction, label value')
-    if arguments.initcenter is not None:
-        initcenter = arguments.initcenter
+
+    initz = arguments.initz
+    initcenter = arguments.initcenter
     # if user provided text file, parse and overwrite arguments
     if arguments.initfile is not None:
         file = open(arguments.initfile, 'r')
@@ -264,6 +257,9 @@ def main(argv=None):
                     raise ValueError('--initz takes two arguments: position in superior-inferior direction, label value')
             if arg == '-initcenter':
                 initcenter = int(arg_initfile[idx_arg + 1])
+    if initz is not None and len(initz) != 2:
+        raise ValueError('--initz takes two arguments: position in superior-inferior direction, label value')
+
     if arguments.initlabel is not None:
         fname_initlabel = os.path.abspath(arguments.initlabel)
     else:
