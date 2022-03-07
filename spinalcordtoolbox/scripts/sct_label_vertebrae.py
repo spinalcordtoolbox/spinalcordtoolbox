@@ -169,7 +169,7 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help=" Clean output labeled segmentation to resemble original segmentation."
+        help="Clean output labeled segmentation to resemble original segmentation."
     )
     optional.add_argument(
         '-scale-dist',
