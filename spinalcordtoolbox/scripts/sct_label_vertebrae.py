@@ -73,9 +73,7 @@ def get_parser():
             "cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and "
             "then performs a disc search in the superior, then inferior direction, using template disc matching based "
             "on mutual information score. The automatic method uses the module implemented in "
-            "'spinalcordtoolbox/vertebrae/detect_c2c3.py' to detect the C2-C3 disc.\n"
-            "Tips: To run the function with init txt file that includes flags -initz/-initcenter:\n"
-            "  sct_label_vertebrae -i t2.nii.gz -s t2_seg-manual.nii.gz  '$(< init_label_vertebrae.txt)'"
+            "'spinalcordtoolbox/vertebrae/detect_c2c3.py' to detect the C2-C3 disc."
         )
     )
 
