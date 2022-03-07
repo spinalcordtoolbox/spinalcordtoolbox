@@ -343,15 +343,14 @@ def main(argv=None):
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
     else:
-        # create label to identify disc
         printv('\nCreate label to identify disc...', verbose)
         fname_labelz = os.path.join(path_tmp, 'labelz.nii.gz')
         if initz or initcenter:
             if initcenter:
                 # find z centered in FOV
                 nii = Image('segmentation.nii').change_orientation("RPI")
-                nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-                z_center = int(np.round(nz / 2))  # get z_center
+                nx, ny, nz, nt, px, py, pz, pt = nii.dim
+                z_center = int(np.round(nz / 2))
                 initz = [z_center, initcenter]
 
             im_label = create_labels_along_segmentation(Image('segmentation.nii'), [(initz[0], initz[1])])
