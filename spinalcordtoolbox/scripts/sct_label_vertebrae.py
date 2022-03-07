@@ -350,7 +350,7 @@ def main(argv=None):
                 # find z centered in FOV
                 nii = Image('segmentation.nii').change_orientation("RPI")
                 nx, ny, nz, nt, px, py, pz, pt = nii.dim
-                z_center = int(np.round(nz / 2))
+                z_center = round(nz / 2)
                 initz = [z_center, initcenter]
 
             im_label = create_labels_along_segmentation(Image('segmentation.nii'), [(initz[0], initz[1])])
