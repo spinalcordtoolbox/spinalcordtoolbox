@@ -236,7 +236,6 @@ def main(argv=None):
     initz = ''
     initcenter = ''
     fname_initlabel = ''
-    file_labelz = 'labelz.nii.gz'
 
     fname_in = os.path.abspath(arguments.i)
     fname_seg = os.path.abspath(arguments.s)
@@ -347,7 +346,7 @@ def main(argv=None):
     else:
         # create label to identify disc
         printv('\nCreate label to identify disc...', verbose)
-        fname_labelz = os.path.join(path_tmp, file_labelz)
+        fname_labelz = os.path.join(path_tmp, 'labelz.nii.gz')
         if initz or initcenter:
             if initcenter:
                 # find z centered in FOV
@@ -385,7 +384,7 @@ def main(argv=None):
 
         # Apply straightening to z-label
         printv('\nAnd apply straightening to label...', verbose)
-        sct_apply_transfo.main(['-i', file_labelz,
+        sct_apply_transfo.main(['-i', 'labelz.nii.gz',
                                 '-d', 'data_straightr.nii',
                                 '-w', 'warp_curve2straight.nii.gz',
                                 '-o', 'labelz_straight.nii.gz',
