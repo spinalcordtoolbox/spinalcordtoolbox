@@ -235,7 +235,6 @@ def main(argv=None):
     # initializations
     initz = ''
     initcenter = ''
-    fname_initlabel = ''
 
     fname_in = os.path.abspath(arguments.i)
     fname_seg = os.path.abspath(arguments.s)
@@ -266,8 +265,9 @@ def main(argv=None):
             if arg == '-initcenter':
                 initcenter = int(arg_initfile[idx_arg + 1])
     if arguments.initlabel is not None:
-        # get absolute path of label
         fname_initlabel = os.path.abspath(arguments.initlabel)
+    else:
+        fname_initlabel = None
     remove_temp_files = arguments.r
     clean_labels = arguments.clean_labels
 
@@ -358,10 +358,8 @@ def main(argv=None):
             im_label = create_labels_along_segmentation(Image('segmentation.nii'), [(initz[0], initz[1])])
             im_label.data = dilate(im_label.data, 3, 'ball')
             im_label.save(fname_labelz)
-
-        elif fname_initlabel:
+        elif fname_initlabel is not None:
             Image(fname_initlabel).save(fname_labelz)
-
         else:
             # automatically finds C2-C3 disc
             im_data = Image('data.nii')
