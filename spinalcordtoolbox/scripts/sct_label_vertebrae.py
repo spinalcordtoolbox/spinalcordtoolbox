@@ -354,7 +354,6 @@ def main(argv=None):
                 initz = [z_center, initcenter]
 
             im_label = create_labels_along_segmentation(Image('segmentation.nii'), [(initz[0], initz[1])])
-            im_label.data = dilate(im_label.data, 3, 'ball')
             im_label.save(fname_labelz)
         elif fname_initlabel is not None:
             Image(fname_initlabel).save(fname_labelz)
