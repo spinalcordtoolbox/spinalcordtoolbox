@@ -345,14 +345,13 @@ def main(argv=None):
     else:
         printv('\nCreate label to identify disc...', verbose)
         fname_labelz = os.path.join(path_tmp, 'labelz.nii.gz')
-        if initz or initcenter:
-            if initcenter:
-                # find z centered in FOV
-                nii = Image('segmentation.nii').change_orientation("RPI")
-                nx, ny, nz, nt, px, py, pz, pt = nii.dim
-                z_center = round(nz / 2)
-                initz = [z_center, initcenter]
-
+        if initcenter is not None:
+            # find z centered in FOV
+            nii = Image('segmentation.nii').change_orientation("RPI")
+            nx, ny, nz, nt, px, py, pz, pt = nii.dim
+            z_center = round(nz / 2)
+            initz = [z_center, initcenter]
+        if initz is not None:
             im_label = create_labels_along_segmentation(Image('segmentation.nii'), [tuple(initz)])
             im_label.save(fname_labelz)
         elif fname_initlabel is not None:
@@ -361,17 +360,14 @@ def main(argv=None):
             # automatically finds C2-C3 disc
             im_data = Image('data.nii')
             im_seg = Image('segmentation.nii')
-            if not remove_temp_files:  # because verbose is here also used for keeping temp files
-                verbose_detect_c2c3 = 2
-            else:
-                verbose_detect_c2c3 = 0
+            # because verbose is also used for keeping temp files
+            verbose_detect_c2c3 = 0 if remove_temp_files else 2
             im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose_detect_c2c3)
             ind_label = np.where(im_label_c2c3.data)
-            if not np.size(ind_label) == 0:
-                im_label_c2c3.data[ind_label] = 3
-            else:
+            if np.size(ind_label) == 0:
                 printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
                 sys.exit()
+            im_label_c2c3.data[ind_label] = 3
             im_label_c2c3.save(fname_labelz)
 
         # dilate label so it is not lost when applying warping
