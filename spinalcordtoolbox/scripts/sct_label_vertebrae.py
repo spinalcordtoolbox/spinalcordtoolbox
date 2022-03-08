@@ -238,10 +238,9 @@ def main(argv=None):
     path_template = os.path.abspath(arguments.t)
     scale_dist = arguments.scale_dist
     path_output = os.path.abspath(arguments.ofolder)
-    if arguments.discfile is not None:
-        fname_disc = os.path.abspath(arguments.discfile)
-    else:
-        fname_disc = None
+    fname_disc = arguments.discfile
+    if fname_disc is not None:
+        fname_disc = os.path.abspath(fname_disc)
 
     initz = arguments.initz
     initcenter = arguments.initcenter
@@ -263,10 +262,9 @@ def main(argv=None):
     if initz is not None and len(initz) != 2:
         parser.error('-initz takes two arguments: position in superior-inferior direction, label value')
 
-    if arguments.initlabel is not None:
-        fname_initlabel = os.path.abspath(arguments.initlabel)
-    else:
-        fname_initlabel = None
+    fname_initlabel = arguments.initlabel
+    if fname_initlabel is not None:
+        fname_initlabel = os.path.abspath(fname_initlabel)
     remove_temp_files = arguments.r
     clean_labels = arguments.clean_labels
 
