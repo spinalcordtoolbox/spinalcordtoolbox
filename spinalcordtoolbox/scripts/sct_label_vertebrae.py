@@ -366,7 +366,7 @@ def main(argv=None):
             ind_label = np.where(im_label_c2c3.data)
             if np.size(ind_label) == 0:
                 printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
-                sys.exit()
+                sys.exit(1)
             im_label_c2c3.data[ind_label] = 3
             im_label_c2c3.save(fname_labelz)
 
