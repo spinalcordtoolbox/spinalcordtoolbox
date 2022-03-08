@@ -66,6 +66,39 @@ def vertebral_detection_param(string):
     return param
 
 
+def parse_initz(string):
+    """Custom parser for -initz."""
+    try:
+        z, label = map(int, string.split(','))
+    except ValueError:
+        raise argparse.ArgumentTypeError(f'expected two integer values separated by a comma, got "{string}" instead')
+    return [z, label]
+
+
+class InitFileAction(argparse.Action):
+    """Custom action to handle the -initfile option."""
+    def __call__(self, parser, namespace, initfile, option_string=None):
+        # if user provided text file, parse and overwrite arguments
+        try:
+            args = open(initfile).read().split()
+        except OSError:
+            raise argparse.ArgumentError(self, f'error reading file "{initfile}"')
+        iterator = iter(args)
+        for arg in iterator:
+            if arg in ['-initz', '-initcenter']:
+                try:
+                    # consume the following argument
+                    string = next(iterator)
+                except StopIteration:
+                    raise argparse.ArgumentError(self, f'{arg}: missing argument')
+                action = parser._option_string_actions[arg]
+                try:
+                    value = parser._get_value(action, string)
+                    action(parser, namespace, value, option_string=arg)
+                except argparse.ArgumentError as e:
+                    raise argparse.ArgumentError(self, f'{arg}: {e.message}')
+
+
 def get_parser():
     parser = SCTArgumentParser(
         description=(
@@ -113,10 +146,9 @@ def get_parser():
     optional.add_argument(
         '-initz',
         metavar=Metavar.list,
-        type=list_type(',', int),
-        help="Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). "
-             "Example: 125,3\n"
-             "WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but "
+        type=parse_initz,
+        help="Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4).\n"
+             "WARNING: Slice number should correspond to superior-inferior direction (i.e. Z in RPI orientation, but "
              "Y in LIP orientation)."
     )
     optional.add_argument(
@@ -129,6 +161,8 @@ def get_parser():
     optional.add_argument(
         '-initfile',
         metavar=Metavar.file,
+        action=InitFileAction,
+        dest=argparse.SUPPRESS,
         help="Initialize labeling by providing a text file which includes either -initz or -initcenter flag."
     )
     optional.add_argument(
@@ -231,7 +265,6 @@ def main(argv=None):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
-
     fname_in = os.path.abspath(arguments.i)
     fname_seg = os.path.abspath(arguments.s)
     contrast = arguments.c
@@ -241,27 +274,8 @@ def main(argv=None):
     fname_disc = arguments.discfile
     if fname_disc is not None:
         fname_disc = os.path.abspath(fname_disc)
-
     initz = arguments.initz
     initcenter = arguments.initcenter
-    # if user provided text file, parse and overwrite arguments
-    if arguments.initfile is not None:
-        args = open(arguments.initfile).read().split()
-        iterator = iter(args)
-        for arg in iterator:
-            if arg == '-initz':
-                try:
-                    initz = [int(x) for x in next(iterator).split(',')]
-                except (StopIteration, ValueError):
-                    parser.error('-initz takes two arguments: position in superior-inferior direction, label value')
-            elif arg == '-initcenter':
-                try:
-                    initcenter = int(next(iterator))
-                except (StopIteration, ValueError):
-                    parser.error('-initcenter takes an integer argument')
-    if initz is not None and len(initz) != 2:
-        parser.error('-initz takes two arguments: position in superior-inferior direction, label value')
-
     fname_initlabel = arguments.initlabel
     if fname_initlabel is not None:
         fname_initlabel = os.path.abspath(fname_initlabel)
