@@ -35,10 +35,12 @@ def test_sct_label_vertebrae_initfile_qc_no_checks():
 
 
 def test_sct_label_vertebrae_initz_error():
-    with pytest.raises(ValueError):
+    with pytest.raises(SystemExit) as excinfo:
         sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),
                                   '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                                   '-c', 't2', '-initz', '40'])
+    # The exit code when argparse prints a usage message is 2
+    assert excinfo.value.code == 2
 
 
 def test_sct_label_vertebrae_high_value_warning(caplog, tmp_path):
