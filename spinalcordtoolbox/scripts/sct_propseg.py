@@ -544,7 +544,7 @@ def propseg(img_input, options_dict):
     if arguments.min_contrast is not None:
         cmd += ["-min-contrast", str(arguments.min_contrast)]
     if arguments.d is not None:
-        cmd += ["-d", str(arguments["-d"])]
+        cmd += ["-d", str(arguments.d)]
     if arguments.distance_search is not None:
         cmd += ["-dsearch", str(arguments.distance_search)]
     if arguments.alpha is not None:

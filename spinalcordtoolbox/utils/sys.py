@@ -294,10 +294,12 @@ def _which_sct_binaries():
     :return name of the sct binaries to use on this platform
     """
 
-    if sys.platform.startswith("linux"):
-        return "binaries_linux"
-    else:
+    if sys.platform.startswith("darwin"):
         return "binaries_osx"
+    elif sys.platform.startswith("win32"):
+        return "binaries_win"
+    else:
+        return "binaries_linux"
 
 
 def list2cmdline(lst):
@@ -312,18 +314,11 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         env = os.environ
 
     if is_sct_binary:
+        if not os.path.isdir(__bin_dir__):
+            run_proc(["sct_download_data", "-d", _which_sct_binaries(), "-k"])
+
         name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
-        path = None
-        binaries_location_default = sct_dir_local_path("bin")
-        for directory in (
-            sct_dir_local_path("bin"),
-        ):
-            candidate = os.path.join(directory, name)
-            if os.path.exists(candidate):
-                path = candidate
-        if path is None:
-            run_proc(["sct_download_data", "-d", _which_sct_binaries(), "-o", binaries_location_default])
-            path = os.path.join(binaries_location_default, name)
+        path = os.path.join(__bin_dir__, name)
 
         if isinstance(cmd, list):
             cmd[0] = path
@@ -538,4 +533,5 @@ def __get_git_origin(path_to_git_folder=None):
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
+__bin_dir__ = os.path.join(__sct_dir__, 'venv_sct', 'Scripts') if sys.platform == 'win32' else os.path.join(__sct_dir__, 'bin')
 __deepseg_dir__ = os.path.join(__data_dir__, 'deepseg_models')

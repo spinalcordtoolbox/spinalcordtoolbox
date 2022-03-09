@@ -3,6 +3,7 @@
 
 import sys
 import os
+import subprocess
 import multiprocessing
 
 import spinalcordtoolbox as sct
@@ -34,4 +35,4 @@ def main():
             mpi_flags = "-n 1"
         cmd = ["mpiexec"] + mpi_flags.split() + cmd
 
-    os.execvpe(cmd[0], cmd[0:], env)
+    return subprocess.run(cmd, env=env).returncode

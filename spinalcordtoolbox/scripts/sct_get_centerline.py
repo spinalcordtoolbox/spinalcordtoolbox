@@ -73,8 +73,9 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help="File name (without extension) for the centerline output files. By default, output file will be the "
-             "input with suffix '_centerline'. Example: 'centerline_optic'"
+        help="File name for the centerline output file. If file extension is not provided, "
+             "'.nii.gz' will be used by default. If '-o' is not provided, then the output file will "
+             "be the input with suffix '_centerline'. Example: 'centerline_optic.nii.gz'"
     )
     optional.add_argument(
         "-gap",
@@ -147,10 +148,13 @@ def main(argv=None):
 
     # Output folder
     if arguments.o is not None:
-        file_output = arguments.o
+        path_data, file_data, ext_data = extract_fname(arguments.o)
+        if not ext_data:
+            ext_data = '.nii.gz'
+        file_output = os.path.join(path_data, file_data+ext_data)
     else:
         path_data, file_data, ext_data = extract_fname(fname_data)
-        file_output = os.path.join(path_data, file_data + '_centerline')
+        file_output = os.path.join(path_data, file_data+'_centerline.nii.gz')
 
     if method == 'viewer':
         # Manual labeling of cord centerline
@@ -172,10 +176,8 @@ def main(argv=None):
                                                          verbose=verbose)
 
     # save centerline as nifti (discrete) and csv (continuous) files
-    im_centerline.save(file_output + '.nii.gz')
+    im_centerline.save(file_output)
     np.savetxt(file_output + '.csv', arr_centerline.transpose(), delimiter=",")
-
-    display_viewer_syntax([fname_input_data, file_output + '.nii.gz'], colormaps=['gray', 'red'], opacities=['', '1'])
 
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
@@ -183,9 +185,10 @@ def main(argv=None):
 
     # Generate QC report
     if path_qc is not None:
-        generate_qc(fname_input_data, fname_seg=file_output + '.nii.gz', args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_input_data, fname_seg=file_output, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_get_centerline')
-    display_viewer_syntax([fname_input_data, file_output + '.nii.gz'], colormaps=['gray', 'red'], opacities=['', '0.7'])
+
+    display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == "__main__":

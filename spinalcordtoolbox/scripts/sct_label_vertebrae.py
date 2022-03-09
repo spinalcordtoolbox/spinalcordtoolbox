@@ -12,6 +12,7 @@
 
 import sys
 import os
+import argparse
 
 import numpy as np
 
@@ -31,35 +32,41 @@ from spinalcordtoolbox.math import threshold, laplacian
 from spinalcordtoolbox.scripts import sct_straighten_spinalcord, sct_apply_transfo
 
 
-# PARAMETERS
-class Param:
-    # The constructor
-    def __init__(self):
-        self.shift_AP = 32  # 0#32  # shift the centerline towards the spine (in voxel).
-        self.size_AP = 11  # 41#11  # window size in AP direction (=y) (in voxel)
-        self.size_RL = 1  # 1 # window size in RL direction (=x) (in voxel)
-        self.size_IS = 19  # window size in IS direction (=z) (in voxel)
-        self.shift_AP_visu = 15  # 0#15  # shift AP for displaying disc values
-        self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
-        self.gaussian_std = 1.0  # STD of the Gaussian function, centered at the most rostral point of the image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set between 0.1 (strong weighting) and 999 (no weighting).
-        self.path_qc = None
+# for vertebral_detection
+param_default = {
+    'shift_AP': 32,  # shift the centerline towards the spine (in voxel).
+    'size_AP': 11,  # window size in AP direction (=y) (in voxel)
+    'size_RL': 1,  # window size in RL direction (=x) (in voxel)
+    'size_IS': 19,  # window size in IS direction (=z) (in voxel)
+    'shift_AP_visu': 15,  # shift AP for displaying disc values
+}
 
-    # update constructor with user's parameters
-    def update(self, param_user):
-        list_objects = param_user.split(',')
-        for object in list_objects:
-            if len(object) < 2:
-                printv('ERROR: Wrong usage.', 1, type='error')
-            obj = object.split('=')
-            if obj[0] == 'gaussian_std':
-                setattr(self, obj[0], float(obj[1]))
-            else:
-                setattr(self, obj[0], int(obj[1]))
+
+def vertebral_detection_param(string):
+    """Custom parser for vertebral_detection advanced parameters."""
+    param = param_default.copy()
+    for key_value in string.split(','):
+        try:
+            key, value = key_value.split('=', maxsplit=1)
+        except ValueError:
+            raise argparse.ArgumentTypeError(
+                f'advanced parameters should be of the form "parameter=value", got "{key_value}" instead')
+        if key in param:
+            try:
+                param[key] = int(value)
+            except ValueError:
+                raise argparse.ArgumentTypeError(
+                    f'advanced parameter "{key}" needs an integer value, got "{value}" instead')
+        elif key == 'gaussian_std':
+            # TODO(issue#3706): remove 'gaussian_std' completely for v5.7
+            printv('WARNING: gaussian_std parameter is currently ignored, '
+                   'and will be removed in a later version.', 1, type='warning')
+        else:
+            raise argparse.ArgumentTypeError(f'Unknown advanced parameter: {key}')
+    return param
 
 
 def get_parser():
-    # initialize default param
-    param_default = Param()
     parser = SCTArgumentParser(
         description=(
             "This function takes an anatomical image and its cord segmentation (binary file), and outputs the "
@@ -176,16 +183,13 @@ def get_parser():
     optional.add_argument(
         '-param',
         metavar=Metavar.list,
-        type=list_type(',', str),
-        help=f"Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
-             f"  - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
-             f"  - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
-             f"  - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"
-             f"  - size_IS [mm]: IS window size for disc search. Default={param_default.size_IS}.\n"
-             f"  - gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the "
-             f"image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values "
-             f"to set between 0.1 (strong weighting) and 999 (no weighting). "
-             f"Default={param_default.gaussian_std}.\n"
+        type=vertebral_detection_param,
+        default=','.join(f'{key}={value}' for key, value in param_default.items()),
+        help='Advanced parameters. Assign value with "="; Separate arguments with ","\n'
+             '  - shift_AP [mm]: AP shift of centerline for disc search\n'
+             '  - size_AP [mm]: AP window size for disc search\n'
+             '  - size_RL [mm]: RL window size for disc search\n'
+             '  - size_IS [mm]: IS window size for disc search\n',
     )
     optional.add_argument(
         '-r',
@@ -208,7 +212,6 @@ def get_parser():
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default=param_default.path_qc,
         help="The path where the quality control generated content will be saved."
     )
     optional.add_argument(
@@ -236,7 +239,6 @@ def main(argv=None):
     initcenter = ''
     fname_initlabel = ''
     file_labelz = 'labelz.nii.gz'
-    param = Param()
 
     fname_in = os.path.abspath(arguments.i)
     fname_seg = os.path.abspath(arguments.s)
@@ -244,7 +246,6 @@ def main(argv=None):
     path_template = os.path.abspath(arguments.t)
     scale_dist = arguments.scale_dist
     path_output = os.path.abspath(arguments.ofolder)
-    param.path_qc = arguments.qc
     if arguments.discfile is not None:
         fname_disc = os.path.abspath(arguments.discfile)
     else:
@@ -270,11 +271,8 @@ def main(argv=None):
     if arguments.initlabel is not None:
         # get absolute path of label
         fname_initlabel = os.path.abspath(arguments.initlabel)
-    if arguments.param is not None:
-        param.update(arguments.param[0])
     remove_temp_files = arguments.r
     clean_labels = arguments.clean_labels
-    laplacian = arguments.laplacian
 
     path_tmp = tmp_create(basename="label_vertebrae")
 
@@ -401,7 +399,7 @@ def main(argv=None):
         printv('.. ' + str(init_disc), verbose)
 
         # apply laplacian filtering
-        if laplacian:
+        if arguments.laplacian:
             printv('\nApply Laplacian filter...', verbose)
             img = Image("data_straightr.nii")
 
@@ -415,10 +413,9 @@ def main(argv=None):
             img.data = laplacian(img.data, sigmas)
             img.save()
 
-
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1
-        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
+        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, arguments.param, init_disc=init_disc,
                             verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
 
     # un-straighten labeled spinal cord
@@ -469,7 +466,7 @@ def main(argv=None):
         rmtree(path_tmp)
 
     # Generate QC report
-    if param.path_qc is not None:
+    if arguments.qc is not None:
         path_qc = os.path.abspath(arguments.qc)
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject

@@ -33,7 +33,7 @@
 #   z_centerline_fit_der = D[2]
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 NeuroPoly, Polytechnique Montreal <www.neuropoly.info>
+# Copyright (c) 2014 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Benjamin De Leener, Julien Touati
 
 import os

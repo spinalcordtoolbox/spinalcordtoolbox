@@ -8,6 +8,9 @@ The following studies have used SCT:
 2022
 ----
 
+-  Rowald *et al.* `Activity-dependent spinal cord neuromodulation rapidly restores trunk and leg motor functions after complete paralysis. <https://pubmed.ncbi.nlm.nih.gov/35132264/>`_ **Nat Med.** 2022
+-  Horáková *et al.* `Semi-automated detection of cervical spinal cord compression with the Spinal Cord Toolbox. <https://qims.amegroups.com/article/view/88416/html>`_ **Quant Imaging Med Surg.** 2022
+-  Kinany *et al.* `Towards reliable spinal cord fMRI: assessment of common imaging protocols. <https://pubmed.ncbi.nlm.nih.gov/35124227/>`_ **Neuroimage.** 2022
 -  David *et al.* `Extent of cord pathology in the lumbosacral enlargement in non-traumatic versus traumatic spinal cord injury. <https://pubmed.ncbi.nlm.nih.gov/35018824/>`_ **J Neurotrauma.** 2022
 -  Taheri *et al.* `Cervical Spinal Cord Atrophy can be Accurately Quantified Using Head Images. <https://pubmed.ncbi.nlm.nih.gov/35024164/>`_ **Mult Scler J Exp Transl Clin.** 2022
 -  Zhang *et al.* `Predicting postoperative recovery in cervical spondylotic myelopathy: construction and interpretation of T2*-weighted radiomic-based extra trees models. <https://pubmed.ncbi.nlm.nih.gov/35024949/>`_ **Eur Radiol.** 2022
