@@ -337,11 +337,11 @@ def main(argv=None):
     print("INFO SYSTEM")
     print("-----------")
     platform_running = sys.platform
-    if platform_running.find('darwin') != -1:
+    if platform_running.startswith('darwin'):
         os_running = 'osx'
-    elif platform_running.find('linux') != -1:
+    elif platform_running.startswith('linux'):
         os_running = 'linux'
-    elif platform_running.find('win32') != -1:
+    elif platform_running.startswith('win32'):
         os_running = 'windows'
     else:
         os_running = platform_running
