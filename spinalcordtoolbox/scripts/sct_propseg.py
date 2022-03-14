@@ -666,7 +666,9 @@ def main(argv=None):
         # This isn't *really* a parsing error, but it feels a little more official to display the help with this error
         parser.error("`sct_propseg` is not currently supported on native Windows installations. \n\n"
                      "For spinal cord segmentation, please migrate to the new and improved `sct_deepseg_sc` tool, "
-                     "or consider using WSL to install SCT instead.")
+                     "or consider using WSL to install SCT instead.\n\n"
+                     "For further updates on `sct_propseg` Windows support, please visit:\n"
+                     "https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3694")
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
