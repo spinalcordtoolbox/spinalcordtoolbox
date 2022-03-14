@@ -17,16 +17,16 @@ import argparse
 import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
-from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
-    clean_labeled_segmentation, label_vert
+from spinalcordtoolbox.vertebrae.core import (
+    get_z_and_disc_values_from_label, vertebral_detection,
+    clean_labeled_segmentation, label_vert)
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
-from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
-    copy, extract_fname, rmtree
+from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, copy, extract_fname, rmtree
 from spinalcordtoolbox.math import threshold, laplacian
 
 from spinalcordtoolbox.scripts import sct_straighten_spinalcord, sct_apply_transfo
