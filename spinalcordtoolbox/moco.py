@@ -438,7 +438,7 @@ def moco_wrapper(param):
             im_warp_concat.save(file_moco_params_y)
 
             # Writing a TSV file with the slicewise average estimate of the moco parameters. Useful for QC
-            with open(file_moco_params_csv, 'wt') as out_file:
+            with open(file_moco_params_csv, 'wt', newline='') as out_file:
                 tsv_writer = csv.writer(out_file, delimiter='\t')
                 tsv_writer.writerow(['X', 'Y'])
                 for mocop in moco_param:
