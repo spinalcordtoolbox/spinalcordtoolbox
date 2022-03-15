@@ -276,6 +276,7 @@ def main(argv=None):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
+
     fname_in = os.path.abspath(arguments.i)
     fname_seg = os.path.abspath(arguments.s)
     contrast = arguments.c
