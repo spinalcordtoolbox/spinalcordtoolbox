@@ -85,18 +85,29 @@ class InitFileAction(argparse.Action):
             raise argparse.ArgumentError(self, f'error reading file "{initfile}"')
         iterator = iter(args)
         for arg in iterator:
-            if arg in ['-initz', '-initcenter']:
+            # we only look for -initz and -initcenter, and ignore other arguments
+            if arg == '-initz':
                 try:
                     # consume the following argument
                     string = next(iterator)
                 except StopIteration:
                     raise argparse.ArgumentError(self, f'{arg}: missing argument')
-                action = parser._option_string_actions[arg]
                 try:
-                    value = parser._get_value(action, string)
-                    action(parser, namespace, value, option_string=arg)
-                except argparse.ArgumentError as e:
-                    raise argparse.ArgumentError(self, f'{arg}: {e.message}')
+                    value = parse_initz(string)
+                except argparse.ArgumentTypeError as e:
+                    raise argparse.ArgumentError(self, f'{arg}: {e}')
+                namespace.initz = value
+            elif arg == '-initcenter':
+                try:
+                    # consume the following argument
+                    string = next(iterator)
+                except StopIteration:
+                    raise argparse.ArgumentError(self, f'{arg}: missing argument')
+                try:
+                    value = int(string)
+                except ValueError:
+                    raise argparse.ArgumentError(self, f'{arg}: invalid int value: "{string}"')
+                namespace.initcenter = value
 
 
 def get_parser():
