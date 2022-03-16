@@ -11,6 +11,8 @@ import logging
 import textwrap
 import shutil
 
+import onnxruntime as ort
+
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.download
 from spinalcordtoolbox.utils import stylize
@@ -357,3 +359,23 @@ def get_metadata(folder_model):
     with open(fname_metadata, "r") as fhandle:
         metadata = json.load(fhandle)
     return metadata
+
+
+def onnx_inference(model_path, input_data):
+    """
+    Perform inference using an '.onnx' model.
+
+    NB: This function is used by sct_deepseg_sc, sct_deepseg_gm, and sct_deepseg_lesion,
+        NOT sct_deepseg. It's possible that the modules and submodules could be organized
+        differently to better indicate the distinctions between old/new deepseg functions.
+    """
+    # This option helps to combat an issue where the CPU memory arena would unnecessarily
+    # consume ~6 gigabytes of memory, when our models only truly use ~5 megabytes. See also:
+    # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3738#discussion_r881735426
+    sess_options = ort.SessionOptions()
+    sess_options.enable_cpu_mem_arena = False
+
+    ort_sess = ort.InferenceSession(model_path, sess_options=sess_options)
+    preds = ort_sess.run(output_names=["predictions"], input_feed={"input_1": input_data})
+
+    return preds

@@ -10,11 +10,10 @@ from scipy.interpolate.interpolate import interp1d
 import nibabel as nib
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, empty_like
+from spinalcordtoolbox.deepseg.models import onnx_inference
 from spinalcordtoolbox.deepseg_sc.core import find_centerline, crop_image_around_centerline, uncrop_image, _normalize_data
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.utils import sct_dir_local_path, TempFolder
-from spinalcordtoolbox.deepseg_sc.cnn_models_3d import load_trained_model
-
 
 logger = logging.getLogger(__name__)
 
@@ -84,9 +83,6 @@ def segment_3d(model_fname, contrast_type, im):
                     't2_ax': {'size': (48, 48, 48), 'mean': 835.592, 'std': 528.386},
                     't2s': {'size': (48, 48, 48), 'mean': 1011.31, 'std': 678.985}}
 
-    # load 3d model
-    seg_model = load_trained_model(model_fname)
-
     out_data = np.zeros(im.data.shape)
 
     # segment the spinal cord
@@ -103,8 +99,9 @@ def segment_3d(model_fname, contrast_type, im):
 
         if np.any(patch_im):  # Check if the patch is (not) empty, which could occur after a brain detection.
             patch_norm = _normalize_data(patch_im, dct_patch_3d[contrast_type]['mean'], dct_patch_3d[contrast_type]['std'])
-            patch_pred_proba = seg_model.predict(np.expand_dims(np.expand_dims(patch_norm, 0), 0), batch_size=BATCH_SIZE)
-            pred_seg_th = (patch_pred_proba > 0.1).astype(int)[0, 0, :, :, :]
+            x = np.expand_dims(np.expand_dims(patch_norm, 0), 0).astype(np.float32)
+            onnx_pred = onnx_inference(model_fname, x)
+            pred_seg_th = (onnx_pred[0] > 0.1).astype(int)[0, 0, :, :, :]
             if zz == z_step_keep[-1]:
                 out_data[:, :, zz:] = pred_seg_th[:, :, :z_patch_extracted]
             else:
@@ -193,7 +190,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     # segment data using 3D convolutions
     logger.info("\nSegmenting the MS lesions using deep learning on 3D patches...")
     segmentation_model_fname = sct_dir_local_path('data', 'deepseg_lesion_models',
-                                            '{}_lesion.h5'.format(contrast_type))
+                                                  '{}_lesion.onnx'.format(contrast_type))
     fname_seg_crop_res = add_suffix(fname_res3d, '_lesionseg')
     im_res3d = Image(fname_res3d)
     seg_im = segment_3d(model_fname=segmentation_model_fname,
