@@ -134,22 +134,19 @@ DATASET_DICT = {
     },
     "deepseg_gm_models": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/deepseg_gm_models/releases/download/r20180205/20180205_deepseg_gm_models.zip",
-            "https://osf.io/b9y4x/?action=download",
+            "https://github.com/spinalcordtoolbox/deepseg_gm_models/releases/download/r20180205/20220325_deepseg_gm_models_onnx.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_gm_models"),
     },
     "deepseg_sc_models": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/deepseg_sc_models/releases/download/r20180610/20180610_deepseg_sc_models.zip",
-            "https://osf.io/avf97/?action=download",
+            "https://github.com/spinalcordtoolbox/deepseg_sc_models/releases/download/r20180610/20220325_deepseg_sc_models_onnx.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_sc_models"),
     },
     "deepseg_lesion_models": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/deepseg_lesion_models/releases/download/r20180613/20180613_deepseg_lesion_models.zip",
-            "https://osf.io/eg7v9/?action=download",
+            "https://github.com/spinalcordtoolbox/deepseg_lesion_models/releases/download/r20180613/20220325_deepseg_lesion_models_onnx.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_lesion_models"),
     },
