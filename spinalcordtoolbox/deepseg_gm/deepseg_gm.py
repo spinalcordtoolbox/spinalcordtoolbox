@@ -8,7 +8,6 @@
 #     URL: https://arxiv.org/abs/1710.01269
 
 import warnings
-import json
 import os
 import sys
 import io
@@ -43,7 +42,7 @@ MODELS = {
 # Suppress warnings and TensorFlow logging
 warnings.simplefilter(action='ignore', category=FutureWarning)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-SMALL_INPUT_SIZE = 200
+INPUT_SIZE = 200
 BATCH_SIZE = 4
 
 
@@ -79,43 +78,61 @@ class DataResource(object):
         return os.path.join(self.data_root, filename)
 
 
-class CroppedRegion(object):
-    """This class holds cropping information about the volume
-    center crop.
-    """
+class ShapeTransform(object):
+    def __init__(self, original_shape, transformed_shape):
+        self.original_shape = original_shape
+        self.transformed_shape = transformed_shape
+        self.pad_mode = "symmetric"
 
-    def __init__(self, original_shape, starts, crops):
-        """Constructor for the CroppedRegion.
+    def apply(self, image):
+        """Transform the input image into the desired dimensions."""
+        self.pad_mode = "symmetric"  # Symmetry-pad if padding a smaller image to 200x200
+        return self.transform(image, old_dim=self.original_shape, new_dim=self.transformed_shape)
 
-        :param original_shape: the original volume shape.
-        :param starts: crop beginning (x, y).
-        :param crops: the crops (x, y).
-        """
-        self.originalx = original_shape[0]
-        self.originaly = original_shape[1]
-        self.startx = starts[0]
-        self.starty = starts[1]
-        self.cropx = crops[0]
-        self.cropy = crops[1]
+    def undo(self, image):
+        """Return the transformed image back into its original dimensions."""
+        self.pad_mode = "constant"  # Zero-pad if un-cropping an image to its original, larger dimensions
+        return self.transform(image, old_dim=self.transformed_shape, new_dim=self.original_shape)
 
-    def pad(self, image):
-        """This method will pad an image using the saved
-        cropped region.
+    def transform(self, image, old_dim, new_dim):
+        """Conditionally crop or pad the height and width of the image to match the requested dimensions."""
+        if image.shape != old_dim:
+            raise ValueError(f"Input shape ({image.shape}) does not match expected shape for transform ({old_dim}).")
 
-        :param image: the image to pad.
-        :return: padded image.
-        """
-        bef_x = self.startx
-        aft_x = self.originalx - (self.startx + self.cropx)
+        height, height_old = new_dim[0], old_dim[0]
+        if height - height_old > 0:
+            image = self.pad(image, height_old, height, axis=0)
+        else:
+            image = self.crop(image, height_old, height, axis=0)
 
-        bef_y = self.starty
-        aft_y = self.originaly - (self.starty + self.cropy)
+        width, width_old = new_dim[1], old_dim[1]
+        if width - width_old > 0:
+            image = self.pad(image, width_old, width, axis=1)
+        else:
+            image = self.crop(image, width_old, width, axis=1)
 
-        padded = np.pad(image,
-                        ((bef_y, aft_y),
-                         (bef_x, aft_x)),
-                        mode="constant")
-        return padded
+        return image
+
+    def pad(self, image, old_dim, new_dim, axis=0):
+        """Add zeros to a single image axis to match a requested dimension."""
+        if not new_dim > old_dim:
+            raise ValueError(f"Can't pad image. New dimension ({new_dim}) must be > starting dimension ({old_dim}).")
+        pad_1 = new_dim // 2 - (old_dim // 2)
+        pad_2 = new_dim - (pad_1 + old_dim)
+        if axis == 0:
+            return np.pad(image, ((pad_1, pad_2), (0, 0)), mode=self.pad_mode)
+        else:
+            return np.pad(image, ((0, 0), (pad_1, pad_2)), mode=self.pad_mode)
+
+    def crop(self, image, old_dim, new_dim, axis=0):
+        """Center crop a single image axis to match the requested dimension."""
+        if not new_dim <= old_dim:
+            raise ValueError(f"Can't crop image. New dimension ({new_dim}) must be <= starting dimension ({old_dim}).")
+        start = old_dim // 2 - (new_dim // 2)
+        if axis == 0:
+            return image[start:start+new_dim, :]
+        else:
+            return image[:, start:start+new_dim]
 
 
 class StandardizationTransform(object):
@@ -163,29 +180,6 @@ class VolumeStandardizationTransform(object):
         return volume
 
 
-def crop_center(img, cropx, cropy):
-    """This function will crop the center of the volume image.
-
-    :param img: image to be cropped.
-    :param cropx: x-coord of the crop.
-    :param cropy: y-coord of the crop.
-    :return: (cropped image, cropped region)
-    """
-    y, x = img.shape
-
-    startx = x // 2 - (cropx // 2)
-    starty = y // 2 - (cropy // 2)
-
-    if startx < 0 or starty < 0:
-        raise RuntimeError("Negative crop.")
-
-    cropped_region = CroppedRegion((x, y), (startx, starty),
-                                   (cropx, cropy))
-
-    return img[starty:starty + cropy,
-               startx:startx + cropx], cropped_region
-
-
 def threshold_predictions(predictions, thr=0.999):
     """This method will threshold predictions.
 
@@ -218,33 +212,17 @@ def segment_volume(ninput_volume, model_name,
     gmseg_model_challenge = DataResource('deepseg_gm_models')
     model_path, metadata_path = MODELS[model_name]
     model_abs_path = gmseg_model_challenge.get_file_path(model_path)
-    metadata_abs_path = gmseg_model_challenge.get_file_path(metadata_path)
-    with open(metadata_abs_path) as fp:
-        metadata = json.load(fp)
 
-    volume_size = np.array(ninput_volume.shape[0:2])
-    small_input = (volume_size <= SMALL_INPUT_SIZE).any()
-
-    if small_input:
-        # Smaller than the trained net, don't crop
-        net_input_size = volume_size
-    else:
-        # larger sizer, crop at 200x200
-        net_input_size = (SMALL_INPUT_SIZE, SMALL_INPUT_SIZE)
-
+    # Padding/cropping data to match the input dimensions of the model
     volume_data = ninput_volume.get_data()
     axial_slices = []
-    crops = []
-
+    transforms = []
     for slice_num in range(volume_data.shape[2]):
         data = volume_data[..., slice_num]
-
-        if not small_input:
-            data, cropreg = crop_center(data, SMALL_INPUT_SIZE,
-                                        SMALL_INPUT_SIZE)
-            crops.append(cropreg)
-
-        axial_slices.append(data)
+        transform = ShapeTransform(original_shape=data.shape,
+                                   transformed_shape=(INPUT_SIZE, INPUT_SIZE))
+        axial_slices.append(transform.apply(data))
+        transforms.append(transform)
 
     axial_slices = np.asarray(axial_slices, dtype=np.float32)
     axial_slices = np.expand_dims(axial_slices, axis=3)
@@ -271,11 +249,10 @@ def segment_volume(ninput_volume, model_name,
 
     pred_slices = []
 
-    # Un-cropping
+    # Reversing the cropping/passing to preserve original dimensions
     for slice_num in range(preds.shape[0]):
         pred_slice = preds[slice_num][..., 0]
-        if not small_input:
-            pred_slice = crops[slice_num].pad(pred_slice)
+        pred_slice = transforms[slice_num].undo(pred_slice)
         pred_slices.append(pred_slice)
 
     pred_slices = np.asarray(pred_slices, dtype=np.uint8)

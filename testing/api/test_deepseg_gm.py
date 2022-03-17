@@ -66,13 +66,16 @@ class TestCore(object):
             metadata_abs_path = resource_models.get_file_path(metadata_path)
             assert os.path.isfile(metadata_abs_path)
 
-    def test_crop_center(self):
-        """Test the cropping method, with even and odd sizes."""
-        dummy_img = np.ones((203, 202))
-        cropped_img, cropped_region = gm_core.crop_center(dummy_img, 200, 200)
-        assert cropped_img.shape == (200, 200)
-        pad_image = cropped_region.pad(cropped_img)
-        assert pad_image.shape == (203, 202)
+    def test_shape_transformation(self):
+        """Test the cropping/padding method with even and odd sizes."""
+        dim_new = (200, 200)
+        for dim_old in ((200, 200), (203, 202), (198, 197)):
+            dummy_img = np.ones(dim_old)
+            shape_transform = gm_core.ShapeTransform(dummy_img.shape, dim_new)
+            transformed_image = shape_transform.apply(dummy_img)
+            assert transformed_image.shape == dim_new
+            inverse_image = shape_transform.undo(transformed_image)
+            assert inverse_image.shape == dim_old
 
     def test_thresholding(self):
         """Test thresholding with above and below use cases."""
@@ -90,10 +93,11 @@ class TestCore(object):
 
     def test_segment_volume(self):
         """Call the segmentation routine itself with a dummy input."""
-        np_data = np.ones((200, 200, 2), dtype=np.float32)
-        img = nib.Nifti1Image(np_data, np.eye(4))
-        ret = gm_core.segment_volume(img, 'challenge')
-        assert ret.shape == (200, 200, 2)
+        for dim in ((200, 200, 3), (203, 202, 2), (198, 197, 1)):
+            np_data = np.ones(dim, dtype=np.float32)
+            img = nib.Nifti1Image(np_data, np.eye(4))
+            ret = gm_core.segment_volume(img, 'challenge')
+            assert ret.shape == dim
 
     def test_standardization_transform(self):
         """Test the standardization transform with specified parameters."""
