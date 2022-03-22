@@ -276,11 +276,8 @@ class ExtractGLCM:
             self.fname_metric_lst[m] = fname_out
 
     def reorient_data(self):
-        for f in self.fname_metric_lst:
-            os.rename(self.fname_metric_lst[f], add_suffix("".join(extract_fname(self.param.fname_im)[1:]), '_2reorient'))
-            im = Image(add_suffix("".join(extract_fname(self.param.fname_im)[1:]), '_2reorient')) \
-                .change_orientation(self.orientation_im) \
-                .save(self.fname_metric_lst[f])
+        for fname in self.fname_metric_lst.values():
+            Image(fname).change_orientation(self.orientation_im).save()
 
 
 class Param:
