@@ -364,6 +364,7 @@ class Image(object):
     def copy(self, image=None):
         from copy import deepcopy
         if image is not None:
+            self.affine = deepcopy(image.affine)
             self.data = deepcopy(image.data)
             self.hdr = deepcopy(image.hdr)
             self._path = deepcopy(image._path)
