@@ -679,7 +679,7 @@ def test_add_suffix():
 def test_splitext():
     assert msct_image.splitext('image.nii') == ('image', '.nii')
     assert msct_image.splitext('image.nii.gz') == ('image', '.nii.gz')
-    assert msct_image.splitext('folder/image.nii.gz') == (os.path.join('folder', 'image'), '.nii.gz')
+    assert msct_image.splitext(os.path.join('folder', 'image.nii.gz')) == (os.path.join('folder', 'image'), '.nii.gz')
     assert msct_image.splitext('nice.image.nii.gz') == ('nice.image', '.nii.gz')
     assert msct_image.splitext(os.path.join('nice.folder', 'image.nii.gz')) == (os.path.join('nice.folder', 'image'), '.nii.gz')
     assert msct_image.splitext('image.tar.gz') == ('image', '.tar.gz')
