@@ -95,7 +95,7 @@ def get_parser():
                         help='Subject prefix, defaults to "sub-" which is the prefix used for BIDS directories. '
                         'If the subject directories do not share a common prefix, an empty string can be '
                         'passed here.')
-    parser.add_argument('-path-output', default='./',
+    parser.add_argument('-path-output', default='.',
                         help='Base directory for environment variables:\n'
                         'PATH_DATA_PROCESSED=' + os.path.join('<path-output>', 'data_processed') + '\n'
                         'PATH_RESULTS=' + os.path.join('<path-output>', 'results') + '\n'
@@ -493,8 +493,8 @@ def main(argv=None):
 
     open_cmd = 'open' if sys.platform == 'darwin' else 'xdg-open'
 
-    print('To open the Quality Control (QC) report on a web-browser, run the following:\n'
-          '{} {}/index.html'.format(open_cmd, path_qc))
+    print(f'To open the Quality Control (QC) report on a web-browser, run the following:\n'
+          f'{open_cmd} {os.path.join(path_qc, "index.html")}')
 
     if arguments.zip:
         file_zip = 'sct_run_batch_{}'.format(time.strftime('%Y%m%d%H%M%S'))

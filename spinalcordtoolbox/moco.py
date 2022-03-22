@@ -140,7 +140,7 @@ def moco_wrapper(param):
     file_moco_params_y = 'moco_params_y.nii.gz'
     ext_data = '.nii.gz'  # workaround "too many open files" by slurping the data
     # TODO: check if .nii can be used
-    mat_final = 'mat_final/'
+    mat_final = 'mat_final'
     # ext_mat = 'Warp.nii.gz'  # warping field
 
     # Start timer

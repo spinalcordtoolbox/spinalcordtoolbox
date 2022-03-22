@@ -122,7 +122,7 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         default=param_default.path_out,
-        help="Output folder. Example: dmri_moco_results/"
+        help="Output folder. Example: dmri_moco_results"
     )
     optional.add_argument(
         "-r",

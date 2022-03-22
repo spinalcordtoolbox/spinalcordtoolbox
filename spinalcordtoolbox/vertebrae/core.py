@@ -48,7 +48,7 @@ def label_vert(fname_seg, fname_label, verbose=1):
     label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
 
-def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../',
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='..',
                         scale_dist=1.):
     """
     Find intervertebral discs in straightened image using template matching
