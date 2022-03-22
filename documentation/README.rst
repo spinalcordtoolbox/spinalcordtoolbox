@@ -43,6 +43,6 @@ That's pretty standard:
 
 .. code:: sh
 
-   make --directory=${SCT_SOURCE_DIR}/documentation/sphinx html
+   make --directory=${SCT_SOURCE_DIR}/documentation/ html
 
 

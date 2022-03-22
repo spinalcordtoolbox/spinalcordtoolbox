@@ -530,7 +530,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append or not os.path.isfile(fname_out):
-        with open(fname_out, 'w') as csvfile:
+        with open(fname_out, 'w', newline='') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
             header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel', 'DistancePMJ']
             agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
@@ -543,7 +543,7 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             writer.writeheader()
 
     # populate data
-    with open(fname_out, 'a') as csvfile:
+    with open(fname_out, 'a', newline='') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
         for slicegroup in sorted(agg_metric.keys()):
             line = list()
