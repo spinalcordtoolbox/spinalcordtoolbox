@@ -18,7 +18,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.vertebrae.core import (
-    get_z_and_disc_values_from_label, vertebral_detection,
+    get_z_and_disc_values_from_label, vertebral_detection, clean_extra_labels,
     clean_extra_and_missing_labels, label_vert)
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -210,9 +210,12 @@ def get_parser():
         '-clean-labels',
         metavar=Metavar.int,
         type=int,
-        choices=[0, 1],
-        default=0,
-        help="Clean output labeled segmentation to resemble original segmentation."
+        choices=[0, 1, 2],
+        default=1,
+        help="Clean output labeled segmentation to resemble original segmentation. "
+             "0: no cleaning, "
+             "1: remove labels that fall outside the original segmentation, "
+             "2: also fill in labels to cover the entire original segmentation."
     )
     optional.add_argument(
         '-scale-dist',
@@ -439,9 +442,11 @@ def main(argv=None):
                             '-x', 'nn',
                             '-v', '0'])
 
-    if clean_labels:
-        # Clean labeled segmentation
-        printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
+    if clean_labels == 1:
+        printv('\nClean labeled segmentation (remove labels outside segmentation)...', verbose)
+        clean_extra_labels('segmentation_labeled.nii', 'segmentation.nii')
+    elif clean_labels == 2:
+        printv('\nClean labeled segmentation (remove labels outside segmentation and fill in missing labels)...', verbose)
         clean_extra_and_missing_labels('segmentation_labeled.nii', 'segmentation.nii')
 
     # label discs
