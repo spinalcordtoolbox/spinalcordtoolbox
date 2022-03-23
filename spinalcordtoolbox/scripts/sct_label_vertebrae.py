@@ -19,7 +19,7 @@ import numpy as np
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.vertebrae.core import (
     get_z_and_disc_values_from_label, vertebral_detection,
-    clean_labeled_segmentation, label_vert)
+    clean_extra_and_missing_labels, label_vert)
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
@@ -442,7 +442,7 @@ def main(argv=None):
     if clean_labels:
         # Clean labeled segmentation
         printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
-        clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii')
+        clean_extra_and_missing_labels('segmentation_labeled.nii', 'segmentation.nii')
 
     # label discs
     printv('\nLabel discs...', verbose)

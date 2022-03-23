@@ -309,7 +309,7 @@ def get_z_and_disc_values_from_label(fname_label):
     return [z_label, value_label]
 
 
-def clean_labeled_segmentation(fname_labeled_seg, fname_seg):
+def clean_extra_and_missing_labels(fname_labeled_seg, fname_seg):
     """
     Add voxels in labeled segmentation that are present in segmentation using the nearest label,
     and remove voxels that are not present in segmentation,
