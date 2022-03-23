@@ -8,6 +8,7 @@ import os
 import logging
 
 import numpy as np
+from scipy.ndimage import distance_transform_edt
 import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
 
@@ -310,28 +311,25 @@ def get_z_and_disc_values_from_label(fname_label):
 
 def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_new):
     """
-    FIXME doc
-    Clean labeled segmentation by:\
-      (i)  removing voxels in segmentation_labeled that are not in segmentation and\
-      (ii) adding voxels in segmentation that are not in segmentation_labeled
+    Add voxels in labeled segmentation that are present in segmentation using the nearest label,
+    and remove voxels that are not present in segmentation,
+    saving the results to the original labeled segmentation file.
 
-    :param fname_labeled_seg:
-    :param fname_seg:
-    :param fname_labeled_seg_new: output
-    :return: none
+    :param str fname_labeled_seg: filename of labeled segmentation
+    :param str fname_seg: filename of segmentation
+    :param str fname_labeled_seg_new: filename of output segmentation
+    :return: None
     """
     img_labeled_seg = Image(fname_labeled_seg)
     img_seg = Image(fname_seg)
-    # dilate to add voxels in segmentation that are not in segmentation_labeled
-    data_labeled_seg_dil = dilate(img_labeled_seg.data, 2, 'ball')
-    data_labeled_seg_bin = img_labeled_seg.data > 0
-    data_diff = img_seg.data - data_labeled_seg_bin
-    ind_nonzero = np.where(data_diff)
+    # for each voxel, find the coordinates of the nearest nonzero label
+    indices = distance_transform_edt(
+        (img_labeled_seg.data == 0),
+        return_distances=False,
+        return_indices=True)
+    # label all voxels
     img_labeled_seg_corr = img_labeled_seg.copy()
-    for i_vox in range(len(ind_nonzero[0])):
-        # assign closest label value for this voxel
-        ix, iy, iz = ind_nonzero[0][i_vox], ind_nonzero[1][i_vox], ind_nonzero[2][i_vox]
-        img_labeled_seg_corr.data[ix, iy, iz] = data_labeled_seg_dil[ix, iy, iz]
+    img_labeled_seg_corr.data = img_labeled_seg.data[tuple(indices)]
     # remove voxels in segmentation_labeled that are not in segmentation
     img_labeled_seg_corr.data *= img_seg.data
     # save new label file (overwrite)
