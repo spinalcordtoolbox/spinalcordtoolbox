@@ -442,7 +442,7 @@ def main(argv=None):
     if clean_labels:
         # Clean labeled segmentation
         printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
-        clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
+        clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii')
 
     # label discs
     printv('\nLabel discs...', verbose)

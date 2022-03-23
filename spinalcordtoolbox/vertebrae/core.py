@@ -309,7 +309,7 @@ def get_z_and_disc_values_from_label(fname_label):
     return [z_label, value_label]
 
 
-def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_new):
+def clean_labeled_segmentation(fname_labeled_seg, fname_seg):
     """
     Add voxels in labeled segmentation that are present in segmentation using the nearest label,
     and remove voxels that are not present in segmentation,
@@ -317,7 +317,6 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
 
     :param str fname_labeled_seg: filename of labeled segmentation
     :param str fname_seg: filename of segmentation
-    :param str fname_labeled_seg_new: filename of output segmentation
     :return: None
     """
     img_labeled_seg = Image(fname_labeled_seg)
@@ -328,13 +327,11 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_n
         return_distances=False,
         return_indices=True)
     # label all voxels
-    img_labeled_seg_corr = img_labeled_seg.copy()
-    img_labeled_seg_corr.data = img_labeled_seg.data[tuple(indices)]
+    img_labeled_seg.data = img_labeled_seg.data[tuple(indices)]
     # remove voxels in segmentation_labeled that are not in segmentation
-    img_labeled_seg_corr.data *= img_seg.data
+    img_labeled_seg.data *= img_seg.data
     # save new label file (overwrite)
-    img_labeled_seg_corr.absolutepath = fname_labeled_seg_new
-    img_labeled_seg_corr.save()
+    img_labeled_seg.save()
 
 
 def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, path_output):
