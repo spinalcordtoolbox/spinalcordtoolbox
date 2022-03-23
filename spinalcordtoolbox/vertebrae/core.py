@@ -328,9 +328,8 @@ def clean_labeled_segmentation(fname_labeled_seg, fname_seg):
         return_indices=True)
     # label all voxels
     img_labeled_seg.data = img_labeled_seg.data[tuple(indices)]
-    # remove voxels in segmentation_labeled that are not in segmentation
+    # crop to the voxels present in img_seg (whose values are either 0 or 1)
     img_labeled_seg.data *= img_seg.data
-    # save new label file (overwrite)
     img_labeled_seg.save()
 
 
