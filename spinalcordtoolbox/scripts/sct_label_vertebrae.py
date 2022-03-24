@@ -214,8 +214,9 @@ def get_parser():
         default=1,
         help="Clean output labeled segmentation to resemble original segmentation. "
              "0: no cleaning, "
-             "1: remove labels that fall outside the original segmentation, "
-             "2: also fill in labels to cover the entire original segmentation."
+             "1: remove labeled voxels that fall outside the original segmentation, "
+             "2: `-clean-labels 1`, plus also fill in voxels so that the labels cover "
+             "the entire original segmentation."
     )
     optional.add_argument(
         '-scale-dist',
@@ -443,10 +444,10 @@ def main(argv=None):
                             '-v', '0'])
 
     if clean_labels == 1:
-        printv('\nClean labeled segmentation (remove labels outside segmentation)...', verbose)
+        printv('\nCleaning labeled segmentation (removing labeled voxels outside segmentation)...', verbose)
         clean_extra_labels('segmentation_labeled.nii', 'segmentation.nii')
     elif clean_labels == 2:
-        printv('\nClean labeled segmentation (remove labels outside segmentation and fill in missing labels)...', verbose)
+        printv('\nCleaning labeled segmentation (removing labeled voxels outside segmentation and filling in missing label voxels)...', verbose)
         clean_extra_and_missing_labels('segmentation_labeled.nii', 'segmentation.nii')
 
     # label discs
