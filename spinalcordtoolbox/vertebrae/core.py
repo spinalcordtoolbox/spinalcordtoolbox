@@ -325,28 +325,34 @@ def clean_extra_labels(fname_labeled_seg, fname_seg):
     img_labeled_seg.save()
 
 
-def clean_extra_and_missing_labels(fname_labeled_seg, fname_seg):
+def crop_labels(im_labeled_seg, im_seg):
     """
-    Add voxels in labeled segmentation that are present in segmentation using the nearest label,
-    and remove voxels that are not present in segmentation,
-    saving the results to the original labeled segmentation file.
+    Remove voxels in labeled segmentation that are not in segmentation,
+    modifying on the labeled segmentation in-place.
 
-    :param str fname_labeled_seg: filename of labeled segmentation
-    :param str fname_seg: filename of segmentation
+    :param Image im_labeled_seg: labeled segmentation
+    :param Image im_seg: segmentation (with values in [0, 1])
     :return: None
     """
-    img_labeled_seg = Image(fname_labeled_seg)
-    img_seg = Image(fname_seg)
+    im_labeled_seg.data *= im_seg.data
+
+
+def expand_labels(im_labeled_seg):
+    """
+    Fill in labels for all the voxels in the labeled segmentation,
+    using the nearest label.
+    Modifies the labeled segmentation in-place.
+
+    :param Image im_labeled_seg: labeled segmentation
+    :return: None
+    """
     # for each voxel, find the coordinates of the nearest nonzero label
     indices = distance_transform_edt(
-        (img_labeled_seg.data == 0),
+        (im_labeled_seg.data == 0),
         return_distances=False,
         return_indices=True)
     # label all voxels
-    img_labeled_seg.data = img_labeled_seg.data[tuple(indices)]
-    # crop to the voxels present in img_seg (whose values are either 0 or 1)
-    img_labeled_seg.data *= img_seg.data
-    img_labeled_seg.save()
+    im_labeled_seg.data = im_labeled_seg.data[tuple(indices)]
 
 
 def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, path_output):

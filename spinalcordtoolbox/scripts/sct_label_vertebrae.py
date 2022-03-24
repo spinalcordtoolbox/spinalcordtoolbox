@@ -18,8 +18,8 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.vertebrae.core import (
-    get_z_and_disc_values_from_label, vertebral_detection, clean_extra_labels,
-    clean_extra_and_missing_labels, label_vert)
+    get_z_and_disc_values_from_label, vertebral_detection, expand_labels,
+    crop_labels, label_vert)
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
@@ -443,12 +443,17 @@ def main(argv=None):
                             '-x', 'nn',
                             '-v', '0'])
 
-    if clean_labels == 1:
-        printv('\nCleaning labeled segmentation (removing labeled voxels outside segmentation)...', verbose)
-        clean_extra_labels('segmentation_labeled.nii', 'segmentation.nii')
-    elif clean_labels == 2:
-        printv('\nCleaning labeled segmentation (removing labeled voxels outside segmentation and filling in missing label voxels)...', verbose)
-        clean_extra_and_missing_labels('segmentation_labeled.nii', 'segmentation.nii')
+    if clean_labels >= 1:
+        printv('\nCleaning labeled segmentation:', verbose)
+        im_labeled_seg = Image('segmentation_labeled.nii')
+        im_seg = Image('segmentation.nii')
+        if clean_labels >= 2:
+            printv('  filling in missing label voxels ...', verbose)
+            expand_labels(im_labeled_seg)
+        printv('  removing labeled voxels outside segmentation...', verbose)
+        crop_labels(im_labeled_seg, im_seg)
+        printv('Done cleaning.', verbose)
+        im_labeled_seg.save()
 
     # label discs
     printv('\nLabel discs...', verbose)
