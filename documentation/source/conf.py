@@ -20,7 +20,7 @@ import os
 import sys
 
 # allows sphinx to call CLI scripts and capture --help output
-sct_root = os.path.abspath('../../')
+sct_root = os.path.abspath(os.path.join('..', '..'))
 sys.path.insert(0, sct_root)
 
 # -- General configuration ------------------------------------------------
@@ -110,7 +110,7 @@ html_theme = "furo"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = './_static/img/logo_sct_whitetext.png'
+html_logo = os.path.join('.', '_static', 'img', 'logo_sct_whitetext.png')
 
 html_theme_options = {
     "sidebar_hide_name": True,

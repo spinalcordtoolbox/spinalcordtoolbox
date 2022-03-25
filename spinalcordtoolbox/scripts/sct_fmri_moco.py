@@ -90,7 +90,7 @@ def get_parser():
         '-ofolder',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default='./',
+        default='.',
         help="Output path."
     )
     optional.add_argument(

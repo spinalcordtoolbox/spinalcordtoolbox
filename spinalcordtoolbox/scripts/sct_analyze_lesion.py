@@ -74,10 +74,10 @@ def get_parser():
         required=False)
     optional.add_argument(
         "-ofolder",
-        help='Output folder (e.g. "./")',
+        help='Output folder (e.g. ".")',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default='./',
+        default='.',
         required=False)
     optional.add_argument(
         "-r",

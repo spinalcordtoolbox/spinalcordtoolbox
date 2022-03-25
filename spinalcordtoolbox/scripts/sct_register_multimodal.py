@@ -253,7 +253,7 @@ def get_parser():
         '-ofolder',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="Output folder. Example: reg_results/"
+        help="Output folder. Example: reg_results"
     )
     optional.add_argument(
         '-qc',

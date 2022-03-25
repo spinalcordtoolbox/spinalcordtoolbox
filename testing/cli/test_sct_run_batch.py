@@ -127,4 +127,4 @@ def test_separate_sessions():
         sct_run_batch.main(['-path-data', data, '-path-out', out, '-script', script.name])
         for sub, ses in sub_ses_pairs:
             file_log = glob.glob(os.path.join(out, 'log', f'*sub-{sub}_ses-{ses}.log'))[0]
-            assert f'sub-{sub}/ses-{ses}' in open(file_log, "r").read()
+            assert os.path.join(f'sub-{sub}', f'ses-{ses}') in open(file_log, "r").read()

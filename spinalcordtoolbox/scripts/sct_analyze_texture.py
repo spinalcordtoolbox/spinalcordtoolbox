@@ -284,7 +284,7 @@ class Param:
     def __init__(self):
         self.fname_im = None
         self.fname_seg = None
-        self.path_results = './texture/'
+        self.path_results = os.path.join('.', 'texture')
         self.verbose = 1
         self.dim = 'ax'
         self.rm_tmp = True
