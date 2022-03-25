@@ -52,23 +52,22 @@ def test_sct_label_vertebrae_high_value_warning(caplog, tmp_path):
 
 
 def test_sct_label_vertebrae_clean_labels(tmp_path):
-    sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),
-                              '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
-                              '-c', 't2', '-initz', '40,3', '-clean-labels', '1',
-                              '-ofolder',  str(tmp_path/'clean')])
-    sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),
-                              '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
-                              '-c', 't2', '-initz', '40,3', '-ofolder', str(tmp_path/'no_clean')])
-    image_clean = Image(os.path.join(str(tmp_path), 'clean', 't2_seg-manual_labeled.nii.gz'))
-    image_no_clean = Image(os.path.join(str(tmp_path), 'no_clean', 't2_seg-manual_labeled.nii.gz'))
-    image_seg = Image(sct_test_path('t2', 't2_seg-manual.nii.gz'))
-    # binarization (because label are between 3 and 6)
-    image_clean.data = image_clean.data > 0.5
-    image_no_clean.data = image_no_clean.data > 0.5
-    dice_clean = compute_dice(image_clean, image_seg)
-    dice_no_clean = compute_dice(image_no_clean, image_seg)
-    # The cleaned version should be closer to the segmentation
-    assert dice_clean >= dice_no_clean
+    im_seg = Image(sct_test_path('t2', 't2_seg-manual.nii.gz'))
+    dice_score = {}
+    for i in [0, 1, 2]:
+        sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),
+                                  '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                  '-c', 't2',
+                                  '-initz', '40,3',
+                                  '-clean-labels', str(i),
+                                  '-ofolder', str(tmp_path/str(i))])
+        im_labeled_seg = Image(str(tmp_path/str(i)/'t2_seg-manual_labeled.nii.gz'))
+        # binarization (because labels are 2.0, 3.0, 4.0)
+        im_labeled_seg.data = im_labeled_seg.data > 0.5
+        dice_score[i] = compute_dice(im_labeled_seg, im_seg)
+    # the cleaner version should be closer to the segmentation
+    assert dice_score[2] >= dice_score[1]
+    assert dice_score[1] >= dice_score[0]
 
 
 def test_sct_label_vertebrae_disc_discontinuity_center_of_mass_error(tmp_path, caplog):
