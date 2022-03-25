@@ -48,7 +48,7 @@ def nn_architecture_seg_3d(input_shape, pool_size=(2, 2, 2), n_labels=1, initial
             levels.append([layer1, layer2])
 
     for layer_depth in range(depth - 2, -1, -1):
-        up_convolution = UpSampling3D(size=pool_size)
+        up_convolution = UpSampling3D(size=pool_size)(current_layer)
         concat = concatenate([up_convolution, levels[layer_depth][1]], axis=1)
         current_layer = create_convolution_block(n_filters=levels[layer_depth][1]._keras_shape[1],
                                                  input_layer=concat, batch_normalization=batch_normalization)
