@@ -15,7 +15,7 @@ from spinalcordtoolbox.utils.fs import extract_fname, copy, TempFolder
 logger = logging.getLogger(__name__)
 
 
-def centerline2roi(fname_image, folder_output='./', verbose=0):
+def centerline2roi(fname_image, folder_output='.', verbose=0):
     """
     Tis method converts a binary centerline image to a .roi centerline file
 

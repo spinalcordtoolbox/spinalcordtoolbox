@@ -122,7 +122,7 @@ def get_parser():
         help="Output folder (all outputs will go there).",
         action=ActionCreateFolder,
         required=False,
-        default='./')
+        default='.')
     optional.add_argument(
         '-centerline-algo',
         help='Algorithm for centerline fitting. Default: nurbs.',

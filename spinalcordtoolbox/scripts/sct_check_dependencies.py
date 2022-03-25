@@ -150,7 +150,7 @@ def print_fail(more=None):
 
 
 def add_bash_profile(string):
-    bash_profile = os.path.expanduser("~/bash_profile")
+    bash_profile = os.path.expanduser(os.path.join("~", ".bash_profile"))
     with io.open(bash_profile, "a") as file_bash:
         file_bash.write("\n" + string)
 
@@ -218,11 +218,11 @@ def main(argv=None):
         print(run_proc('date', verbose))
         print(run_proc('whoami', verbose))
         print(run_proc('pwd', verbose))
-        bash_profile = os.path.expanduser("~/.bash_profile")
+        bash_profile = os.path.expanduser(os.path.join("~", ".bash_profile"))
         if os.path.isfile(bash_profile):
             with io.open(bash_profile, "r") as f:
                 print(f.read())
-        bashrc = os.path.expanduser("~/.bashrc")
+        bashrc = os.path.expanduser(os.path.join("~", ".bashrc"))
         if os.path.isfile(bashrc):
             with io.open(bashrc, "r") as f:
                 print(f.read())

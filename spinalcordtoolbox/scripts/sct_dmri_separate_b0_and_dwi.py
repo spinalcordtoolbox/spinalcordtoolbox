@@ -87,8 +87,8 @@ def get_parser():
         '-ofolder',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default='./',
-        help='Output folder. Example: dmri_separate_results/',
+        default='.',
+        help='Output folder. Example: dmri_separate_results',
     )
     optional.add_argument(
         "-r",
