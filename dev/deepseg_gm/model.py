@@ -53,6 +53,10 @@ def create_model(nfilters, input_size=(200, 200)):
     :param nfilters: number of filters at each block.
     :param input_size: the network input size (H, W)
     """
+    # This is needed because the sct_deepseg_sc models use "channels_first",
+    # so converting both to ONNX in the same Jupyter notebook could cause issues.
+    K.set_image_data_format("channels_last")
+
     drop_rate_concat = 0.4
     drop_rate_hidden = 0.4
     bn_momentum = 0.1

@@ -15,8 +15,6 @@ from keras.optimizers import Adam
 from keras.models import load_model
 from keras.layers.merge import concatenate
 
-# Note: `K.set_image_data_format("channels_first")` was removed from this file because it interfered
-# with other tests. It may need to be re-added for this function to work properly. (See #2954)
 
 def dice_coefficient(y_true, y_pred, smooth=1.):
     y_true_f = K.flatten(y_true)
@@ -31,6 +29,10 @@ def dice_coefficient_loss(y_true, y_pred):
 
 def nn_architecture_seg_3d(input_shape, pool_size=(2, 2, 2), n_labels=1, initial_learning_rate=0.00001,
                            depth=3, n_base_filters=16, metrics=dice_coefficient, batch_normalization=True):
+    # This is needed because the sct_deepseg_gm model uses "channels_last",
+    # so converting both to ONNX in the same Jupyter notebook could cause issues.
+    K.set_image_data_format("channels_first")
+
     inputs = Input(input_shape)
     current_layer = inputs
     levels = list()
