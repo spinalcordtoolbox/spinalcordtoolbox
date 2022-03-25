@@ -57,7 +57,7 @@ def nn_architecture_seg_3d(input_shape, pool_size=(2, 2, 2), n_labels=1, initial
                                                  batch_normalization=batch_normalization)
 
     final_convolution = Conv3D(n_labels, (1, 1, 1))(current_layer)
-    act = Activation('sigmoid')(final_convolution)
+    act = Activation('sigmoid', name="predictions")(final_convolution)
     model = Model(inputs=inputs, outputs=act)
 
     if not isinstance(metrics, list):
