@@ -85,7 +85,7 @@ def get_parser():
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.str,
-        help='Output folder. Example: My_Output_Folder/ ',
+        help='Output folder. Example: My_Output_Folder ',
         action=ActionCreateFolder,
         default=os.getcwd())
     optional.add_argument(
