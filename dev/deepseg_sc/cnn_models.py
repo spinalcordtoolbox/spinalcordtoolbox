@@ -103,7 +103,7 @@ def nn_architecture_seg(height, width, channels=1, classes=1, features=32, depth
     x = Conv2D(filters=classes, kernel_size=(1, 1))(x)
 
     logits = Lambda(lambda z: z / temperature)(x)
-    probabilities = Activation('sigmoid')(logits)
+    probabilities = Activation('sigmoid', name="predictions")(logits)
 
     return Model(inputs=inputs, outputs=probabilities)
 
@@ -155,6 +155,6 @@ def nn_architecture_ctr(height, width, channels=1, classes=1, features=16, depth
     x = Conv2D(filters=classes, kernel_size=(1,1))(x)
 
     logits = Lambda(lambda z: z/temperature)(x)
-    probabilities = Activation('sigmoid')(logits)
+    probabilities = Activation('sigmoid', name="predictions")(logits)
 
     return Model(inputs=inputs, outputs=probabilities)
