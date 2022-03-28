@@ -25,7 +25,6 @@ def dummy_script(tmp_path):
     with open(path_out, 'w') as script:
         # indexing removes beginning newline
         script.write(dedent(script_text)[1:])
-        script.flush()
     return path_out
 
 
