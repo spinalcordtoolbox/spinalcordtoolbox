@@ -63,13 +63,13 @@ def test_config_extra_value_warning(tmp_path, dummy_script):
         sct_run_batch.main(['-c', config_path, '-script', dummy_script])
 
 
-def test_only_one_include(tmp_path):
+def test_only_one_include(tmp_path, dummy_script):
     data = tmp_path / 'data'
     data.mkdir()
     out = tmp_path / 'out'
     with pytest.raises(AssertionError, match='Only one'):
         sct_run_batch.main(['-include', 'arg', '-include-list', 'arg2',
-                            '-path-data', str(data), '-path-out', str(out), '-script', str(out)])
+                            '-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
 
 
 def test_non_executable_task(tmp_path, dummy_script):
