@@ -368,17 +368,17 @@ def main(argv=None):
     print("git commit: {}".format(__get_commit(path_to_git_folder=os.path.dirname(script))))
     print("git origin: {}".format(__get_git_origin(path_to_git_folder=os.path.dirname(script))))
     print("Copying script to output folder...")
-    try:
-        # Copy the script and record the new location
-        script_copy = os.path.abspath(shutil.copy(script, arguments.path_output))
-        print("{} -> {}".format(script, script_copy))
-        script = script_copy
-    except shutil.SameFileError:
-        print("Input and output folder are the same. Skipping copy.")
-        pass
-    except IsADirectoryError:
+    if os.path.isdir(script):
         print("Input folder is a directory (not a file). Skipping copy.")
-        pass
+    else:
+        try:
+            # Copy the script and record the new location
+            script_copy = os.path.abspath(shutil.copy(script, arguments.path_output))
+            print("{} -> {}".format(script, script_copy))
+            script = script_copy
+        except shutil.SameFileError:
+            print("Input and output folder are the same. Skipping copy.")
+            pass
 
     print("Setting execute permissions for script file {} ...".format(arguments.script))
     script_stat = os.stat(script)
