@@ -8,7 +8,6 @@ from stat import S_IEXEC
 from textwrap import dedent
 
 from spinalcordtoolbox import __sct_dir__
-from spinalcordtoolbox.utils.sys import sct_test_path
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
 from spinalcordtoolbox.scripts import sct_run_batch
@@ -81,7 +80,8 @@ def test_only_one_include(tmp_path, dummy_script):
 
 
 def test_non_executable_task(tmp_path, dummy_script):
-    data_path = sct_test_path()
+    data = tmp_path / 'data'
+    data.mkdir()
     out = tmp_path / 'out'
 
     script_text = """
@@ -104,7 +104,7 @@ def test_non_executable_task(tmp_path, dummy_script):
 
     sct_run_batch.main(['-include', '^t.*',
                         '-subject-prefix', '',
-                        '-path-data', data_path, '-path-out', str(out),
+                        '-path-data', str(data), '-path-out', str(out),
                         '-script', script.name,
                         '-continue-on-error', 0])
 
