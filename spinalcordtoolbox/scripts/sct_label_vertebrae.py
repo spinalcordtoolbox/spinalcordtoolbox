@@ -17,16 +17,16 @@ import argparse
 import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
-from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
-    clean_labeled_segmentation, label_vert
+from spinalcordtoolbox.vertebrae.core import (
+    get_z_and_disc_values_from_label, vertebral_detection, expand_labels,
+    crop_labels, label_vert)
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
-from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
-    copy, extract_fname, rmtree
+from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, copy, extract_fname, rmtree
 from spinalcordtoolbox.math import threshold, laplacian
 
 from spinalcordtoolbox.scripts import sct_straighten_spinalcord, sct_apply_transfo
@@ -210,9 +210,13 @@ def get_parser():
         '-clean-labels',
         metavar=Metavar.int,
         type=int,
-        choices=[0, 1],
-        default=0,
-        help="Clean output labeled segmentation to resemble original segmentation."
+        choices=[0, 1, 2],
+        default=1,
+        help="Clean output labeled segmentation to resemble original segmentation. "
+             "0: no cleaning, "
+             "1: remove labeled voxels that fall outside the original segmentation, "
+             "2: `-clean-labels 1`, plus also fill in voxels so that the labels cover "
+             "the entire original segmentation."
     )
     optional.add_argument(
         '-scale-dist',
@@ -439,10 +443,17 @@ def main(argv=None):
                             '-x', 'nn',
                             '-v', '0'])
 
-    if clean_labels:
-        # Clean labeled segmentation
-        printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
-        clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
+    if clean_labels >= 1:
+        printv('\nCleaning labeled segmentation:', verbose)
+        im_labeled_seg = Image('segmentation_labeled.nii')
+        im_seg = Image('segmentation.nii')
+        if clean_labels >= 2:
+            printv('  filling in missing label voxels ...', verbose)
+            expand_labels(im_labeled_seg)
+        printv('  removing labeled voxels outside segmentation...', verbose)
+        crop_labels(im_labeled_seg, im_seg)
+        printv('Done cleaning.', verbose)
+        im_labeled_seg.save()
 
     # label discs
     printv('\nLabel discs...', verbose)

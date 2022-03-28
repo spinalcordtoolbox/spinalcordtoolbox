@@ -8,6 +8,7 @@ import os
 import logging
 
 import numpy as np
+from scipy.ndimage import distance_transform_edt
 import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
 
@@ -308,36 +309,34 @@ def get_z_and_disc_values_from_label(fname_label):
     return [z_label, value_label]
 
 
-def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_new):
+def crop_labels(im_labeled_seg, im_seg):
     """
-    FIXME doc
-    Clean labeled segmentation by:\
-      (i)  removing voxels in segmentation_labeled that are not in segmentation and\
-      (ii) adding voxels in segmentation that are not in segmentation_labeled
+    Remove voxels in labeled segmentation that are not in segmentation,
+    modifying on the labeled segmentation in-place.
 
-    :param fname_labeled_seg:
-    :param fname_seg:
-    :param fname_labeled_seg_new: output
-    :return: none
+    :param Image im_labeled_seg: labeled segmentation
+    :param Image im_seg: segmentation (with values in [0, 1])
+    :return: None
     """
-    # remove voxels in segmentation_labeled that are not in segmentation
-    img_labeled_seg = Image(fname_labeled_seg)
-    img_seg = Image(fname_seg)
-    data_labeled_seg_mul = img_labeled_seg.data * img_seg.data
-    # dilate to add voxels in segmentation that are not in segmentation_labeled
-    data_labeled_seg_dil = dilate(img_labeled_seg.data, 2, 'ball')
-    data_labeled_seg_mul_bin = data_labeled_seg_mul > 0
-    data_diff = img_seg.data - data_labeled_seg_mul_bin
-    ind_nonzero = np.where(data_diff)
-    img_labeled_seg_corr = img_labeled_seg.copy()
-    img_labeled_seg_corr.data = data_labeled_seg_mul
-    for i_vox in range(len(ind_nonzero[0])):
-        # assign closest label value for this voxel
-        ix, iy, iz = ind_nonzero[0][i_vox], ind_nonzero[1][i_vox], ind_nonzero[2][i_vox]
-        img_labeled_seg_corr.data[ix, iy, iz] = data_labeled_seg_dil[ix, iy, iz]
-    # save new label file (overwrite)
-    img_labeled_seg_corr.absolutepath = fname_labeled_seg_new
-    img_labeled_seg_corr.save()
+    im_labeled_seg.data *= im_seg.data
+
+
+def expand_labels(im_labeled_seg):
+    """
+    Fill in labels for all the voxels in the labeled segmentation,
+    using the nearest label.
+    Modifies the labeled segmentation in-place.
+
+    :param Image im_labeled_seg: labeled segmentation
+    :return: None
+    """
+    # for each voxel, find the coordinates of the nearest nonzero label
+    indices = distance_transform_edt(
+        (im_labeled_seg.data == 0),
+        return_distances=False,
+        return_indices=True)
+    # label all voxels
+    im_labeled_seg.data = im_labeled_seg.data[tuple(indices)]
 
 
 def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, path_output):
