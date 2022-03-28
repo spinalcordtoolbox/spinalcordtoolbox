@@ -36,6 +36,9 @@ def dummy_script(tmp_path):
 
 
 def test_config_with_args_warning(tmp_path, dummy_script):
+    """
+    Test that an error is thrown when trying to pass an argument ('-include') alongside a config file.
+    """
     data = tmp_path / 'data'
     data.mkdir()
     out = tmp_path / 'out'
@@ -50,6 +53,9 @@ def test_config_with_args_warning(tmp_path, dummy_script):
 
 
 def test_config_extra_value_warning(tmp_path, dummy_script):
+    """
+    Test that an error is thrown for passing a non-existent argument within a config file.
+    """
     data = tmp_path / 'data'
     data.mkdir()
     out = tmp_path / 'out'
@@ -70,6 +76,9 @@ def test_config_extra_value_warning(tmp_path, dummy_script):
 
 
 def test_only_one_include(tmp_path, dummy_script):
+    """
+    Test that an error is thrown for trying to pass both '-include' and '-include-list' at the same time.
+    """
     data = tmp_path / 'data'
     data.mkdir()
     out = tmp_path / 'out'
@@ -79,6 +88,10 @@ def test_only_one_include(tmp_path, dummy_script):
 
 
 def test_non_executable_task(tmp_path, dummy_script):
+    """
+    Test that sct_run_batch can still process a non-executable script. (sct_run_batch will attempt
+    to set the execute bit if passed a non-executable script.)
+    """
     data = tmp_path / 'data'
     data.mkdir()
     out = tmp_path / 'out'
@@ -103,11 +116,13 @@ def test_non_executable_task(tmp_path, dummy_script):
 
 
 def test_no_sessions(tmp_path, dummy_script):
-    # Test that sessions ('ses') can be separated so that sct_run_batch can process each session folder separately.
+    """
+    Test that individual subjects (i.e. not in 'ses' subfolders) can be processed individually by sct_run_batch.
+    """
     data = tmp_path / 'data'
     data.mkdir()
     out = tmp_path / 'out'
-    # Create dummy BIDS directory with sessions
+    # Create dummy BIDS directory without sessions
     for sub in ['01', '02']:
         (data / f'sub-{sub}' / 'anat').mkdir(parents=True)
     sct_run_batch.main(['-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
@@ -117,7 +132,9 @@ def test_no_sessions(tmp_path, dummy_script):
 
 
 def test_separate_sessions(tmp_path, dummy_script):
-    # Test that sessions ('ses') can be separated so that sct_run_batch can process each session folder separately.
+    """
+    Test that sessions ('ses') can be separated so that sct_run_batch can process each session folder separately.
+    """
     data = tmp_path / 'data'
     data.mkdir()
     out = tmp_path / 'out'
