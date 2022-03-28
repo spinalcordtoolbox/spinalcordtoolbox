@@ -35,19 +35,18 @@ def dummy_script(tmp_path):
     return path_out
 
 
-def test_config_with_args_warning(tmp_path):
-    data = str(tmp_path / 'data')
-    out = str(tmp_path / 'out')
-    config_path = str(tmp_path / 'config.json')
+def test_config_with_args_warning(tmp_path, dummy_script):
+    data = tmp_path / 'data'
+    data.mkdir()
+    out = tmp_path / 'out'
+    config_path = tmp_path / 'config.json'
 
     with open(config_path, 'w') as f:
-        config = {"jobs": 1, "path_data": data, "path_output": out}
+        config = {"jobs": 1, "path_data": str(data), "path_output": str(out)}
         json.dump(config, f)
 
     with pytest.warns(UserWarning, match=r'-config.*discouraged'):
-        # I'm not sure how to check that argparse is printing the right error here, but I trust
-        with pytest.raises(FileNotFoundError):
-            sct_run_batch.main(['-c', config_path, '-include', 'something', '-script', 'script'])
+        sct_run_batch.main(['-c', str(config_path), '-include', 'something', '-script', dummy_script])
 
 
 def test_config_extra_value_warning(tmp_path, dummy_script):
