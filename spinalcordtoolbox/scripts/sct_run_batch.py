@@ -230,8 +230,9 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     # Make sure that a Windows-compatible bash port is used to run shell scripts
     if sys.platform.startswith("win32"):
         with open(script_full) as f:
-            shebang = f.readline()
-        if script_full.endswith('.sh') or "sh" in shebang:
+            first_line = f.readline()
+        shebang_pattern = re.compile("^#!.*/.*sh\b.*")
+        if script_full.endswith('.sh') or shebang_pattern.match(first_line):
             bash_exe = _find_nonsys32_bash_exe()
             if bash_exe:
                 cmd.insert(0, bash_exe)
