@@ -104,10 +104,6 @@ def test_non_executable_task(tmp_path, dummy_script):
     # > (via the stat.S_IWRITE and stat.S_IREAD constants or a corresponding integer value).
     # > All other bits are ignored.
 
-    # More broadly speaking, however: Don't the other tests also accomplish this same functionality?
-    # i.e. Wouldn't _all_ dummy scripts we create start out as non-executable? I suspect that this test
-    # could be combined with the other tests and there wouldn't be a meaningful loss of coverage.
-
     sct_run_batch.main(['-include', '^t.*',
                         '-subject-prefix', '',
                         '-path-data', str(data), '-path-out', str(out),
