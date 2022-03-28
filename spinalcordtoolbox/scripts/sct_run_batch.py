@@ -228,7 +228,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     cmd = [script_full, subj_dir] + script_args.split(' ')
 
     # Make sure that a Windows-compatible bash port is used to run shell scripts
-    if sys.platform == "win32":
+    if sys.platform.startswith("win32"):
         with open(script_full) as f:
             shebang = f.readline()
         if script_full.endswith('.sh') or "sh" in shebang:
