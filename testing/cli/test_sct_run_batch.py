@@ -84,11 +84,13 @@ def test_non_executable_task(tmp_path, dummy_script):
     data.mkdir()
     out = tmp_path / 'out'
 
-    # The assertion below is meant to ensure that the script is not executable at first,
-    # so that we can test whether `sct_run_batch` properly changes the permissions. However,
-    # checking against os.X_OK isn't compatible with Windows. So, I've commented it out:
-
-    # assert not os.access(script.name, os.X_OK), "Script already executable"
+    # Set "Owner has execute permission" bit to 0 to ensure script is non-executable
+    script_stat = os.stat(dummy_script)
+    os.chmod(dummy_script, script_stat.st_mode & ~S_IEXEC)
+    # NB: This does nothing on Windows. (https://docs.python.org/3/library/os.html#os.chmod)
+    # > Although Windows supports chmod(), you can only set the file’s read-only flag with it
+    # > (via the stat.S_IWRITE and stat.S_IREAD constants or a corresponding integer value).
+    # > All other bits are ignored.
 
     # More broadly speaking, however: Don't the other tests also accomplish this same functionality?
     # i.e. Wouldn't _all_ dummy scripts we create start out as non-executable? I suspect that this test
