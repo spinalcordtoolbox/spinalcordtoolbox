@@ -4,6 +4,7 @@ import sys
 import json
 
 import pytest
+from stat import S_IEXEC
 from textwrap import dedent
 
 from spinalcordtoolbox import __sct_dir__
@@ -25,6 +26,13 @@ def dummy_script(tmp_path):
     with open(path_out, 'w') as script:
         # indexing removes beginning newline
         script.write(dedent(script_text)[1:])
+    # Set "Owner has execute permission" bit to 1 to ensure script is executable
+    script_stat = os.stat(path_out)
+    os.chmod(path_out, script_stat.st_mode | S_IEXEC)
+    # NB: This does nothing on Windows. (https://docs.python.org/3/library/os.html#os.chmod)
+    # > Although Windows supports chmod(), you can only set the file’s read-only flag with it
+    # > (via the stat.S_IWRITE and stat.S_IREAD constants or a corresponding integer value).
+    # > All other bits are ignored.
     return path_out
 
 
