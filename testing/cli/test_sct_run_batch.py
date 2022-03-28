@@ -84,14 +84,6 @@ def test_non_executable_task(tmp_path, dummy_script):
     data.mkdir()
     out = tmp_path / 'out'
 
-    script_text = """
-    #!/bin/bash
-    echo $SUBJECT
-    """
-    with open(tmp_path / "dummy_nonexectuable_script.sh", 'w') as script:
-        script.write(dedent(script_text)[1:])  # indexing removes beginning newline
-        script.flush()
-
     # The assertion below is meant to ensure that the script is not executable at first,
     # so that we can test whether `sct_run_batch` properly changes the permissions. However,
     # checking against os.X_OK isn't compatible with Windows. So, I've commented it out:
@@ -105,7 +97,7 @@ def test_non_executable_task(tmp_path, dummy_script):
     sct_run_batch.main(['-include', '^t.*',
                         '-subject-prefix', '',
                         '-path-data', str(data), '-path-out', str(out),
-                        '-script', script.name,
+                        '-script', dummy_script,
                         '-continue-on-error', 0])
 
 
