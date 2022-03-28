@@ -109,8 +109,8 @@ def test_no_sessions(tmp_path, dummy_script):
     data.mkdir()
     out = tmp_path / 'out'
     # Create dummy BIDS directory with sessions
-    os.makedirs(os.path.join(data, 'sub-01', 'anat'))
-    os.makedirs(os.path.join(data, 'sub-02', 'anat'))
+    for sub in ['01', '02']:
+        (data / f'sub-{sub}' / 'anat').mkdir(parents=True)
     sct_run_batch.main(['-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
     file_log = glob.glob(os.path.join(out, 'log', '*sub-01.log'))[0]
     assert 'sub-01' in open(file_log, "r").read()
@@ -124,7 +124,7 @@ def test_separate_sessions(tmp_path, dummy_script):
     # Create dummy BIDS directory with sessions
     sub_ses_pairs = [('01', '01'), ('01', '02'), ('01', '03'), ('02', '01'), ('02', '02')]
     for sub, ses in sub_ses_pairs:
-        os.makedirs(os.path.join(data, f'sub-{sub}', f'ses-{ses}'))
+        (data / f'sub-{sub}' / f'ses-{ses}').mkdir(parents=True)
     sct_run_batch.main(['-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
     for sub, ses in sub_ses_pairs:
         file_log = glob.glob(os.path.join(out, 'log', f'*sub-{sub}_ses-{ses}.log'))[0]
