@@ -111,8 +111,9 @@ def test_no_sessions(tmp_path, dummy_script):
     for sub in ['01', '02']:
         (data / f'sub-{sub}' / 'anat').mkdir(parents=True)
     sct_run_batch.main(['-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
-    file_log = glob.glob(os.path.join(out, 'log', '*sub-01.log'))[0]
-    assert 'sub-01' in open(file_log, "r").read()
+    for sub in ['01', '02']:
+        file_log = glob.glob(os.path.join(out, 'log', f'*sub-{sub}.log'))[0]
+        assert f'sub-{sub}' in open(file_log, "r").read()
 
 
 def test_separate_sessions(tmp_path, dummy_script):
