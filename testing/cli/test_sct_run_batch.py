@@ -33,9 +33,9 @@ def test_config_with_args_warning(tmp_path):
     out = str(tmp_path / 'out')
     config_path = str(tmp_path / 'config.json')
 
-    with open(config_path, 'w') as config:
-        cnf_text = {"jobs": 1, "path_data": data, "path_output": out}
-        json.dump(cnf_text, config)
+    with open(config_path, 'w') as f:
+        config = {"jobs": 1, "path_data": data, "path_output": out}
+        json.dump(config, f)
 
     with pytest.warns(UserWarning, match=r'-config.*discouraged'):
         # I'm not sure how to check that argparse is printing the right error here, but I trust
