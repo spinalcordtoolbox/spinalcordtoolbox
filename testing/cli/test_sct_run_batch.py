@@ -43,9 +43,10 @@ def test_config_with_args_warning(tmp_path):
             sct_run_batch.main(['-c', config_path, '-include', 'something', '-script', 'script'])
 
 
-def test_config_extra_value_warning(tmp_path):
-    data = str(tmp_path / 'data')
-    out = str(tmp_path / 'out')
+def test_config_extra_value_warning(tmp_path, dummy_script):
+    data = tmp_path / 'data'
+    data.mkdir()
+    out = tmp_path / 'out'
     config_path = str(tmp_path / 'config.yml')
 
     with open(config_path, 'w') as config:
