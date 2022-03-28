@@ -309,22 +309,6 @@ def get_z_and_disc_values_from_label(fname_label):
     return [z_label, value_label]
 
 
-def clean_extra_labels(fname_labeled_seg, fname_seg):
-    """
-    Remove voxels in labeled segmentation that are not in segmentation,
-    saving the results to the original labeled segmentation file.
-
-    :param str fname_labeled_seg: filename of labeled segmentation
-    :param str fname_seg: filename of segmentation
-    :return: None
-    """
-    img_labeled_seg = Image(fname_labeled_seg)
-    img_seg = Image(fname_seg)
-    # img_seg voxel values are either 0 or 1
-    img_labeled_seg.data *= img_seg.data
-    img_labeled_seg.save()
-
-
 def crop_labels(im_labeled_seg, im_seg):
     """
     Remove voxels in labeled segmentation that are not in segmentation,
