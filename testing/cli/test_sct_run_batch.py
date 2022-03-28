@@ -59,9 +59,7 @@ def test_config_extra_value_warning(tmp_path):
         config.flush()
 
     with pytest.warns(UserWarning, match='unknowable'):
-        # I'm not sure how to check that argparse is printing the right error here, but I trust
-        with pytest.raises(FileNotFoundError):
-            sct_run_batch.main(['-c', config_path, '-script', 'script'])
+        sct_run_batch.main(['-c', config_path, '-script', dummy_script])
 
 
 def test_only_one_include(tmp_path):
