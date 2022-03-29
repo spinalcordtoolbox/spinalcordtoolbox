@@ -34,7 +34,7 @@ import yaml
 import psutil
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
-from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, set_loglevel
+from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, __sct_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import Tee
 
 from stat import S_IEXEC
@@ -154,6 +154,26 @@ def get_parser():
     return parser
 
 
+def _find_nonsys32_bash_exe():
+    """
+    Check the PATH to see if there is a non-System32 copy of bash.exe.
+
+    On newer copies of Windows. a bash.exe file is included in the System32
+    folder. When called, Windows will try to launch WSL if it's installed,
+    or it will give this message if WSL is not installed:
+
+    > Windows Subsystem for Linux has no installed distributions.
+    > Distributions can be installed by visiting the Microsoft Store:
+    > https://aka.ms/wslstore
+
+    Since we are supporting Windows natively, we don't want the WSL copy, and instead
+    want to use the next copy of bash.exe in the PATH (for example one provided by Cygwin).
+    """
+    nonsys32_paths = os.pathsep.join([p for p in os.environ['PATH'].split(os.pathsep)
+                                      if 'system32' not in p.lower()])
+    return shutil.which('bash', path=nonsys32_paths)
+
+
 def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
                path_qc, itk_threads, continue_on_error=False):
     """
@@ -202,10 +222,30 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
         'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(itk_threads),
         'SCT_PROGRESS_BAR': 'off'
     })
+    if 'SCT_DIR' not in envir:  # For native Windows installations, the install script won't add SCT_DIR
+        envir['SCT_DIR'] = __sct_dir__
+
+    cmd = [script_full, subj_dir] + script_args.split(' ')
+
+    # Make sure that a Windows-compatible bash port is used to run shell scripts
+    if sys.platform.startswith("win32"):
+        with open(script_full) as f:
+            first_line = f.readline()
+        shebang_pattern = re.compile("^#!.*/.*sh\b.*")
+        if script_full.endswith('.sh') or shebang_pattern.match(first_line):
+            bash_exe = _find_nonsys32_bash_exe()
+            if bash_exe:
+                cmd.insert(0, bash_exe)
+            else:
+                print("WARNING: No bash.exe found in PATH. Script will be run as-is.")
+                print("(If you are on Windows and trying to run a `.sh` script, please "
+                      "install Cygwin, then add C:/cygwin64/bin to your PATH.)")
+        else:
+            print("WARNING: Script passed to sct_run_batch appears to be a non-shell script.")
 
     # Ship the job out, merging stdout/stderr and piping to log file
     try:
-        res = subprocess.run([script_full, subj_dir] + script_args.split(' '),
+        res = subprocess.run(cmd,
                              env=envir,
                              stdout=open(log_file, 'w'),
                              stderr=subprocess.STDOUT)
