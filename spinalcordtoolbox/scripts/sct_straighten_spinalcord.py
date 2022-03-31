@@ -19,7 +19,7 @@ from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, removesuffix
 
 
 def get_parser():
@@ -122,7 +122,7 @@ def get_parser():
         help="Output folder (all outputs will go there).",
         action=ActionCreateFolder,
         required=False,
-        default='./')
+        default='.')
     optional.add_argument(
         '-centerline-algo',
         help='Algorithm for centerline fitting. Default: nurbs.',
@@ -269,7 +269,7 @@ def main(argv=None):
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
         generate_qc(fname_straight, args=arguments, path_qc=os.path.abspath(path_qc),
-                    dataset=qc_dataset, subject=qc_subject, process=os.path.basename(__file__.strip('.py')))
+                    dataset=qc_dataset, subject=qc_subject, process=removesuffix(os.path.basename(__file__), ".py"))
 
     display_viewer_syntax([fname_straight], verbose=verbose)
 

@@ -140,7 +140,7 @@ def moco_wrapper(param):
     file_moco_params_y = 'moco_params_y.nii.gz'
     ext_data = '.nii.gz'  # workaround "too many open files" by slurping the data
     # TODO: check if .nii can be used
-    mat_final = 'mat_final/'
+    mat_final = 'mat_final'
     # ext_mat = 'Warp.nii.gz'  # warping field
 
     # Start timer
@@ -438,7 +438,7 @@ def moco_wrapper(param):
             im_warp_concat.save(file_moco_params_y)
 
             # Writing a TSV file with the slicewise average estimate of the moco parameters. Useful for QC
-            with open(file_moco_params_csv, 'wt') as out_file:
+            with open(file_moco_params_csv, 'wt', newline='') as out_file:
                 tsv_writer = csv.writer(out_file, delimiter='\t')
                 tsv_writer.writerow(['X', 'Y'])
                 for mocop in moco_param:

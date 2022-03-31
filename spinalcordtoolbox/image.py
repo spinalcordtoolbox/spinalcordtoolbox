@@ -265,7 +265,7 @@ class Image(object):
         """
 
         # initialization of all parameters
-        self.im_file = None
+        self.affine = None
         self.data = None
         self._path = None
         self.ext = ""
@@ -364,7 +364,7 @@ class Image(object):
     def copy(self, image=None):
         from copy import deepcopy
         if image is not None:
-            self.im_file = deepcopy(image.im_file)
+            self.affine = deepcopy(image.affine)
             self.data = deepcopy(image.data)
             self.hdr = deepcopy(image.hdr)
             self._path = deepcopy(image._path)
@@ -402,9 +402,10 @@ class Image(object):
         :return:
         """
 
-        self.im_file = nib.load(path)
-        self.data = self.im_file.get_data()
-        self.hdr = self.im_file.header
+        im_file = nib.load(path, mmap=(not sys.platform.startswith('win32')))
+        self.affine = im_file.affine.copy()
+        self.data = im_file.get_data()
+        self.hdr = im_file.header.copy()
         self.absolutepath = path
         if path != self.absolutepath:
             logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
@@ -654,8 +655,8 @@ class Image(object):
         return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode, mode=border, cval=cval)
 
     def get_transform(self, im_ref, mode='affine'):
-        aff_im_self = self.im_file.affine
-        aff_im_ref = im_ref.im_file.affine
+        aff_im_self = self.affine
+        aff_im_ref = im_ref.affine
         transform = np.matmul(np.linalg.inv(aff_im_self), aff_im_ref)
         if mode == 'affine':
             transform = np.matmul(np.linalg.inv(aff_im_self), aff_im_ref)
@@ -682,8 +683,8 @@ class Image(object):
         return transform
 
     def get_inverse_transform(self, im_ref, mode='affine'):
-        aff_im_self = self.im_file.affine
-        aff_im_ref = im_ref.im_file.affine
+        aff_im_self = self.affine
+        aff_im_ref = im_ref.affine
         if mode == 'affine':
             transform = np.matmul(np.linalg.inv(aff_im_ref), aff_im_self)
         else:

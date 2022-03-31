@@ -88,6 +88,19 @@ def set_loglevel(verbose):
         pass
 
 
+def removesuffix(self: str, suffix: str) -> str:
+    """
+    Source: https://www.python.org/dev/peps/pep-0616/
+
+    TODO: Replace with built-in str.removesuffix method after upgrading to Python 3.9
+    """
+    # suffix='' should not call self[:-0].
+    if suffix and self.endswith(suffix):
+        return self[:-len(suffix)]
+    else:
+        return self[:]
+
+
 # TODO: add test
 def init_sct():
     """
@@ -126,7 +139,7 @@ def init_sct():
     # Display command (Only if called from CLI: check for .py in first arg)
     # Use next(iter()) to not fail on empty list (vs. sys.argv[0])
     if '.py' in next(iter(sys.argv), None):
-        script = os.path.basename(sys.argv[0]).strip(".py")
+        script = removesuffix(os.path.basename(sys.argv[0]), ".py")
         arguments = ' '.join(sys.argv[1:])
         logger.info(f"{script} {arguments}\n"
                     f"--\n")
@@ -281,10 +294,12 @@ def _which_sct_binaries():
     :return name of the sct binaries to use on this platform
     """
 
-    if sys.platform.startswith("linux"):
-        return "binaries_linux"
-    else:
+    if sys.platform.startswith("darwin"):
         return "binaries_osx"
+    elif sys.platform.startswith("win32"):
+        return "binaries_win"
+    else:
+        return "binaries_linux"
 
 
 def list2cmdline(lst):
@@ -299,18 +314,11 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         env = os.environ
 
     if is_sct_binary:
+        if not os.path.isdir(__bin_dir__):
+            run_proc(["sct_download_data", "-d", _which_sct_binaries(), "-k"])
+
         name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
-        path = None
-        binaries_location_default = sct_dir_local_path("bin")
-        for directory in (
-            sct_dir_local_path("bin"),
-        ):
-            candidate = os.path.join(directory, name)
-            if os.path.exists(candidate):
-                path = candidate
-        if path is None:
-            run_proc(["sct_download_data", "-d", _which_sct_binaries(), "-o", binaries_location_default])
-            path = os.path.join(binaries_location_default, name)
+        path = os.path.join(__bin_dir__, name)
 
         if isinstance(cmd, list):
             cmd[0] = path
@@ -381,12 +389,23 @@ def sct_dir_local_path(*args):
 
 
 def sct_test_path(*args):
-    """Construct a directory path relative to the sct testing data. Consults the
-    SCT_TESTING_DATA environment variable, if unset, paths are relative to the
-    current directory."""
+    """Construct a directory path relative to the sct testing data. Consults
+    the SCT_TESTING_DATA environment variable.
+    If unset, use the default dataset location from sct_download_data."""
 
     test_path = os.environ.get('SCT_TESTING_DATA', '')
-    return os.path.join(test_path, 'sct_testing_data', *args)
+    if test_path:
+        return os.path.join(test_path, 'sct_testing_data', *args)
+    else:
+        # NB: The default path written below is actually determined inside
+        #     sct_download_data. But, trying to import the path from the script
+        #     causes a circular dependency. So, we duplicate the path here.
+        #     This could cause bugs if the default location ever changes.
+        # TODO: Consider moving sct_test_path() inside testing/conftest.py,
+        #       since it's a testing-specific function. This would mitigate the
+        #       circular dependency, since we would no longer be importing
+        #       from sct_download_data inside sys.py.
+        return sct_dir_local_path('data', 'sct_testing_data', *args)
 
 
 def check_exe(name):
@@ -514,4 +533,5 @@ def __get_git_origin(path_to_git_folder=None):
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
+__bin_dir__ = os.path.join(__sct_dir__, 'venv_sct', 'Scripts') if sys.platform == 'win32' else os.path.join(__sct_dir__, 'bin')
 __deepseg_dir__ = os.path.join(__data_dir__, 'deepseg_models')

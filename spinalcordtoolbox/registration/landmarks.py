@@ -8,7 +8,7 @@
 # http://stackoverflow.com/questions/20120384/iterative-closest-point-icp-implementation-on-python
 #
 # NOTES ON ITK Transform Files:
-# http://www.neuro.polymtl.ca/tips_and_tricks/how_to_use_ants#itk_transform_file
+# https://intranet.neuro.polymtl.ca/geek-tips/image-processing-software/advanced-normalization-tools-ants.html#itk-transform-file
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>

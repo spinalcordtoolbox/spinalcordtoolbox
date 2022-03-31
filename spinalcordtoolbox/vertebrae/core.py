@@ -8,9 +8,9 @@ import os
 import logging
 
 import numpy as np
+from scipy.ndimage import distance_transform_edt
 import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
-from scipy.signal import gaussian
 
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.metadata import get_file_label
@@ -49,7 +49,7 @@ def label_vert(fname_seg, fname_label, verbose=1):
     label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
 
 
-def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../',
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='..',
                         scale_dist=1.):
     """
     Find intervertebral discs in straightened image using template matching
@@ -83,7 +83,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     data = im_input.data
 
     # smooth data
-    data = gaussian_filter(data, param.smooth_factor, output=None, mode="reflect")
+    smooth_factor = [3, 1, 1]
+    data = gaussian_filter(data, smooth_factor, output=None, mode="reflect")
 
     # get dimension of src
     nx, ny, nz = data.shape
@@ -126,15 +127,15 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         ax_disc = fig_disc.add_subplot(111)
         # ax_disc = fig_disc.add_axes((0, 0, 1, 1))
         # get percentile for automatic contrast adjustment
-        data_display = np.mean(data[xc - param.size_RL:xc + param.size_RL, :, :], axis=0).transpose()
+        data_display = np.mean(data[xc - param['size_RL']:xc + param['size_RL'], :, :], axis=0).transpose()
         percmin = np.percentile(data_display, 10)
         percmax = np.percentile(data_display, 90)
         # display image
         ax_disc.matshow(data_display, cmap='gray', clim=[percmin, percmax], origin='lower')
         ax_disc.set_title('Anatomical image')
         # ax.autoscale(enable=False)  # to prevent autoscale of axis when displaying plot
-        ax_disc.scatter(yc + param.shift_AP_visu, init_disc[0], c='yellow', s=10)
-        ax_disc.text(yc + param.shift_AP_visu + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
+        ax_disc.scatter(yc + param['shift_AP_visu'], init_disc[0], c='yellow', s=10)
+        ax_disc.text(yc + param['shift_AP_visu'] + 4, init_disc[0], str(init_disc[1]) + '/' + str(init_disc[1] + 1),
                      verticalalignment='center', horizontalalignment='left', color='pink', fontsize=7)
 
     # FIND DISCS
@@ -161,17 +162,18 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
         if current_disc != 1:
-            current_z = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param.size_RL,
-                                        y=yc, yshift=param.shift_AP, ysize=param.size_AP,
-                                        z=current_z, zshift=0, zsize=param.size_IS,
+            current_z = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param['size_RL'],
+                                        y=yc, yshift=param['shift_AP'], ysize=param['size_AP'],
+                                        z=current_z, zshift=0, zsize=param['size_IS'],
                                         xtarget=xct, ytarget=yct, ztarget=current_z_template,
-                                        zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc), gaussian_std=999, path_output=path_output)
+                                        zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc),
+                                        path_output=path_output)
 
         # display new disc
         if verbose == 2:
-            ax_disc.scatter(yc + param.shift_AP_visu, current_z, c='yellow', s=10)
-            ax_disc.text(yc + param.shift_AP_visu + 4, current_z, str(current_disc) + '/' + str(current_disc + 1),
-                    verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=7)
+            ax_disc.scatter(yc + param['shift_AP_visu'], current_z, c='yellow', s=10)
+            ax_disc.text(yc + param['shift_AP_visu'] + 4, current_z, str(current_disc) + '/' + str(current_disc + 1),
+                         verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=7)
 
         # append to main list
         if direction == 'superior':
@@ -307,39 +309,37 @@ def get_z_and_disc_values_from_label(fname_label):
     return [z_label, value_label]
 
 
-def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_new):
+def crop_labels(im_labeled_seg, im_seg):
     """
-    FIXME doc
-    Clean labeled segmentation by:\
-      (i)  removing voxels in segmentation_labeled that are not in segmentation and\
-      (ii) adding voxels in segmentation that are not in segmentation_labeled
+    Remove voxels in labeled segmentation that are not in segmentation,
+    modifying on the labeled segmentation in-place.
 
-    :param fname_labeled_seg:
-    :param fname_seg:
-    :param fname_labeled_seg_new: output
-    :return: none
+    :param Image im_labeled_seg: labeled segmentation
+    :param Image im_seg: segmentation (with values in [0, 1])
+    :return: None
     """
-    # remove voxels in segmentation_labeled that are not in segmentation
-    img_labeled_seg = Image(fname_labeled_seg)
-    img_seg = Image(fname_seg)
-    data_labeled_seg_mul = img_labeled_seg.data * img_seg.data
-    # dilate to add voxels in segmentation that are not in segmentation_labeled
-    data_labeled_seg_dil = dilate(img_labeled_seg.data, 2, 'ball')
-    data_labeled_seg_mul_bin = data_labeled_seg_mul > 0
-    data_diff = img_seg.data - data_labeled_seg_mul_bin
-    ind_nonzero = np.where(data_diff)
-    img_labeled_seg_corr = img_labeled_seg.copy()
-    img_labeled_seg_corr.data = data_labeled_seg_mul
-    for i_vox in range(len(ind_nonzero[0])):
-        # assign closest label value for this voxel
-        ix, iy, iz = ind_nonzero[0][i_vox], ind_nonzero[1][i_vox], ind_nonzero[2][i_vox]
-        img_labeled_seg_corr.data[ix, iy, iz] = data_labeled_seg_dil[ix, iy, iz]
-    # save new label file (overwrite)
-    img_labeled_seg_corr.absolutepath = fname_labeled_seg_new
-    img_labeled_seg_corr.save()
+    im_labeled_seg.data *= im_seg.data
 
 
-def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, gaussian_std, path_output):
+def expand_labels(im_labeled_seg):
+    """
+    Fill in labels for all the voxels in the labeled segmentation,
+    using the nearest label.
+    Modifies the labeled segmentation in-place.
+
+    :param Image im_labeled_seg: labeled segmentation
+    :return: None
+    """
+    # for each voxel, find the coordinates of the nearest nonzero label
+    indices = distance_transform_edt(
+        (im_labeled_seg.data == 0),
+        return_distances=False,
+        return_indices=True)
+    # label all voxels
+    im_labeled_seg.data = im_labeled_seg.data[tuple(indices)]
+
+
+def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, path_output):
     """
     FIXME doc
     Find z that maximizes correlation between src and target 3d data.
@@ -361,7 +361,6 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     :param zrange:
     :param verbose:
     :param save_suffix:
-    :param gaussian_std:
     :return:
     """
     # parameters
@@ -413,17 +412,15 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     if allzeros:
         logger.warning('Data contained zero. We probably hit the edge of the image.')
 
-    # adjust correlation with Gaussian function centered at the right edge of the curve (most rostral point of FOV)
-    gaussian_window = gaussian(len(I_corr) * 2, std=len(I_corr) * gaussian_std)
-    I_corr_gauss = np.multiply(I_corr, gaussian_window[0:len(I_corr)])
+    I_corr = np.array(I_corr, dtype=float)
 
     # Find global maximum
-    if np.any(I_corr_gauss):
+    if np.any(I_corr):
         # if I_corr contains at least a non-zero value
-        ind_peak = [i for i in range(len(I_corr_gauss)) if I_corr_gauss[i] == max(I_corr_gauss)][0]  # index of max along z
-        logger.info('.. Peak found: z=%s (correlation = %s)', zrange[ind_peak], I_corr_gauss[ind_peak])
+        ind_peak = [i for i in range(len(I_corr)) if I_corr[i] == max(I_corr)][0]  # index of max along z
+        logger.info('.. Peak found: z=%s (correlation = %s)', zrange[ind_peak], I_corr[ind_peak])
         # check if correlation is high enough
-        if I_corr_gauss[ind_peak] < thr_corr:
+        if I_corr[ind_peak] < thr_corr:
             logger.warning('Correlation is too low. Using adjusted template distance.')
             ind_peak = zrange.index(0)  # approx_distance_to_next_disc
     else:
@@ -454,10 +451,8 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
         # display correlation curve
         ax = fig.add_subplot(133)
         ax.plot(zrange, I_corr)
-        ax.plot(zrange, I_corr_gauss, 'black', linestyle='dashed')
-        ax.legend(['I_corr', 'I_corr_gauss'])
-        ax.set_title('Mutual Info, gaussian_std=' + str(gaussian_std))
-        ax.plot(zrange[ind_peak], I_corr_gauss[ind_peak], 'ro')
+        ax.set_title('Mutual Info')
+        ax.plot(zrange[ind_peak], I_corr[ind_peak], 'ro')
         ax.axvline(x=zrange.index(0), linewidth=1, color='black', linestyle='dashed')
         ax.axhline(y=thr_corr, linewidth=1, color='r', linestyle='dashed')
         ax.grid()

@@ -10,13 +10,11 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
 import sys
 import pickle
 import gzip
 
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 
 import spinalcordtoolbox.math as sct_math
@@ -375,7 +373,7 @@ def main(argv=None):
         data_out = sct_math.denoise_nlmeans(data, patch_radius=p, block_radius=b)
 
     elif arguments.symmetrize is not None:
-        data_out = (data + data[list(range(data.shape[0] - 1, -1, -1)), :, :]) / float(2)
+        data_out = sct_math.symmetrize(data, arguments.symmetrize)
 
     elif arguments.mi is not None:
         # input 1 = from flag -i --> im
@@ -509,4 +507,3 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

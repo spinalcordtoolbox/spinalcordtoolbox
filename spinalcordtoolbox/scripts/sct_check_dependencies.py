@@ -150,7 +150,7 @@ def print_fail(more=None):
 
 
 def add_bash_profile(string):
-    bash_profile = os.path.expanduser("~/bash_profile")
+    bash_profile = os.path.expanduser(os.path.join("~", ".bash_profile"))
     with io.open(bash_profile, "a") as file_bash:
         file_bash.write("\n" + string)
 
@@ -218,21 +218,22 @@ def main(argv=None):
         print(run_proc('date', verbose))
         print(run_proc('whoami', verbose))
         print(run_proc('pwd', verbose))
-        bash_profile = os.path.expanduser("~/.bash_profile")
+        bash_profile = os.path.expanduser(os.path.join("~", ".bash_profile"))
         if os.path.isfile(bash_profile):
             with io.open(bash_profile, "r") as f:
                 print(f.read())
-        bashrc = os.path.expanduser("~/.bashrc")
+        bashrc = os.path.expanduser(os.path.join("~", ".bashrc"))
         if os.path.isfile(bashrc):
             with io.open(bashrc, "r") as f:
                 print(f.read())
 
     # check OS
-    platform_running = sys.platform
-    if platform_running.find('darwin') != -1:
+    if sys.platform.startswith('darwin'):
         os_running = 'osx'
-    elif platform_running.find('linux') != -1:
+    elif sys.platform.startswith('linux'):
         os_running = 'linux'
+    elif sys.platform.startswith('win32'):
+        os_running = 'windows'
 
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
     print('CPU cores: Available: {}, Used by ITK functions: {}'.format(psutil.cpu_count(), int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))))
@@ -353,30 +354,31 @@ def main(argv=None):
             print(err)
 
     # Check version of FSLeyes
-    print_line('Check FSLeyes version')
-    cmd = 'fsleyes --version'
-    status, output = run_proc(cmd, verbose=0, raise_exception=False)
-    # Exit code 0 - command has run successfully
-    if status == 0:
-        # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
-        fsleyes_version = output.split()[2]
-        print_ok(more=(" (%s)" % fsleyes_version))
-    # Exit code 126 - Command invoked cannot execute (permission problem or command is not an executable)
-    elif status == 126:
-        print('Command not executable. Please check permissions of fsleyes command.')
-    # Exit code 127 - Command not found (possible problem with $PATH)
-    elif status == 127:
-        print('Command not found. If you installed FSLeyes as part of FSL package, please check that FSL is included '
-              'in $PATH variable. If you installed FSLeyes using conda environment, make sure that the environment is '
-              'activated. If you do not have FSLeyes installed, consider its installation to easily visualize '
-              'processing outputs and/or to use SCT within FSLeyes. More info at: '
-              'https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html')
-    # All other exit codes
-    else:
-        print(f'Exit code {status} occurred. Please report this issue on SCT GitHub: '
-              f'https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues')
-        if complete_test:
-            print(output)
+    if not sys.platform.startswith('win32'):
+        print_line('Check FSLeyes version')
+        cmd = 'fsleyes --version'
+        status, output = run_proc(cmd, verbose=0, raise_exception=False)
+        # Exit code 0 - command has run successfully
+        if status == 0:
+            # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
+            fsleyes_version = output.split()[2]
+            print_ok(more=(" (%s)" % fsleyes_version))
+        # Exit code 126 - Command invoked cannot execute (permission problem or command is not an executable)
+        elif status == 126:
+            print('Command not executable. Please check permissions of fsleyes command.')
+        # Exit code 127 - Command not found (possible problem with $PATH)
+        elif status == 127:
+            print('Command not found. If you installed FSLeyes as part of FSL package, please check that FSL is included '
+                  'in $PATH variable. If you installed FSLeyes using conda environment, make sure that the environment is '
+                  'activated. If you do not have FSLeyes installed, consider its installation to easily visualize '
+                  'processing outputs and/or to use SCT within FSLeyes. More info at: '
+                  'https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html')
+        # All other exit codes
+        else:
+            print(f'Exit code {status} occurred. Please report this issue on SCT GitHub: '
+                  f'https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues')
+            if complete_test:
+                print(output)
 
     print('')
     sys.exit(e + install_software)

@@ -76,7 +76,7 @@ def test_sct_image_pad():
 def test_sct_image_show_header_no_checks(output_format):
     """Run the CLI script without checking results. The rationale for not checking results is
     provided here: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3317#issuecomment-811429547"""
-    sct_image.main(argv=['-i', 'sct_testing_data/t2/t2.nii.gz', '-header', output_format])
+    sct_image.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-header', output_format])
 
 
 def test_sct_image_display_warp_check_output_exists():

@@ -12,63 +12,112 @@
 
 import sys
 import os
+import argparse
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
-from spinalcordtoolbox.vertebrae.core import create_label_z, get_z_and_disc_values_from_label, vertebral_detection, \
-    clean_labeled_segmentation, label_vert
+from spinalcordtoolbox.vertebrae.core import (
+    get_z_and_disc_values_from_label, vertebral_detection, expand_labels,
+    crop_labels, label_vert)
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
-from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
-    copy, extract_fname, rmtree
+from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, copy, extract_fname, rmtree
 from spinalcordtoolbox.math import threshold, laplacian
 
 from spinalcordtoolbox.scripts import sct_straighten_spinalcord, sct_apply_transfo
 
 
-# PARAMETERS
-class Param:
-    # The constructor
-    def __init__(self):
-        self.shift_AP = 32  # 0#32  # shift the centerline towards the spine (in voxel).
-        self.size_AP = 11  # 41#11  # window size in AP direction (=y) (in voxel)
-        self.size_RL = 1  # 1 # window size in RL direction (=x) (in voxel)
-        self.size_IS = 19  # window size in IS direction (=z) (in voxel)
-        self.shift_AP_visu = 15  # 0#15  # shift AP for displaying disc values
-        self.smooth_factor = [3, 1, 1]  # [3, 1, 1]
-        self.gaussian_std = 1.0  # STD of the Gaussian function, centered at the most rostral point of the image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values to set between 0.1 (strong weighting) and 999 (no weighting).
-        self.path_qc = None
+# for vertebral_detection
+param_default = {
+    'shift_AP': 32,  # shift the centerline towards the spine (in voxel).
+    'size_AP': 11,  # window size in AP direction (=y) (in voxel)
+    'size_RL': 1,  # window size in RL direction (=x) (in voxel)
+    'size_IS': 19,  # window size in IS direction (=z) (in voxel)
+    'shift_AP_visu': 15,  # shift AP for displaying disc values
+}
 
-    # update constructor with user's parameters
-    def update(self, param_user):
-        list_objects = param_user.split(',')
-        for object in list_objects:
-            if len(object) < 2:
-                printv('ERROR: Wrong usage.', 1, type='error')
-            obj = object.split('=')
-            if obj[0] == 'gaussian_std':
-                setattr(self, obj[0], float(obj[1]))
-            else:
-                setattr(self, obj[0], int(obj[1]))
+
+def vertebral_detection_param(string):
+    """Custom parser for vertebral_detection advanced parameters."""
+    param = param_default.copy()
+    for key_value in string.split(','):
+        try:
+            key, value = key_value.split('=', maxsplit=1)
+        except ValueError:
+            raise argparse.ArgumentTypeError(
+                f'advanced parameters should be of the form "parameter=value", got "{key_value}" instead')
+        if key in param:
+            try:
+                param[key] = int(value)
+            except ValueError:
+                raise argparse.ArgumentTypeError(
+                    f'advanced parameter "{key}" needs an integer value, got "{value}" instead')
+        elif key == 'gaussian_std':
+            # TODO(issue#3706): remove 'gaussian_std' completely for v5.7
+            printv('WARNING: gaussian_std parameter is currently ignored, '
+                   'and will be removed in a later version.', 1, type='warning')
+        else:
+            raise argparse.ArgumentTypeError(f'Unknown advanced parameter: {key}')
+    return param
+
+
+def parse_initz(string):
+    """Custom parser for -initz."""
+    try:
+        z, label = map(int, string.split(','))
+    except ValueError:
+        raise argparse.ArgumentTypeError(f'expected two integer values separated by a comma, got "{string}" instead')
+    return [z, label]
+
+
+class InitFileAction(argparse.Action):
+    """Custom action to handle the -initfile option."""
+    def __call__(self, parser, namespace, initfile, option_string=None):
+        # if user provided text file, parse and overwrite arguments
+        try:
+            args = open(initfile).read().split()
+        except OSError:
+            raise argparse.ArgumentError(self, f'error reading file "{initfile}"')
+        iterator = iter(args)
+        for arg in iterator:
+            # we only look for -initz and -initcenter, and ignore other arguments
+            if arg == '-initz':
+                try:
+                    # consume the following argument
+                    string = next(iterator)
+                except StopIteration:
+                    raise argparse.ArgumentError(self, f'{arg}: missing argument')
+                try:
+                    value = parse_initz(string)
+                except argparse.ArgumentTypeError as e:
+                    raise argparse.ArgumentError(self, f'{arg}: {e}')
+                namespace.initz = value
+            elif arg == '-initcenter':
+                try:
+                    # consume the following argument
+                    string = next(iterator)
+                except StopIteration:
+                    raise argparse.ArgumentError(self, f'{arg}: missing argument')
+                try:
+                    value = int(string)
+                except ValueError:
+                    raise argparse.ArgumentError(self, f'{arg}: invalid int value: "{string}"')
+                namespace.initcenter = value
 
 
 def get_parser():
-    # initialize default param
-    param_default = Param()
     parser = SCTArgumentParser(
         description=(
             "This function takes an anatomical image and its cord segmentation (binary file), and outputs the "
             "cord segmentation labeled with vertebral level. The algorithm requires an initialization (first disc) and "
             "then performs a disc search in the superior, then inferior direction, using template disc matching based "
             "on mutual information score. The automatic method uses the module implemented in "
-            "'spinalcordtoolbox/vertebrae/detect_c2c3.py' to detect the C2-C3 disc.\n"
-            "Tips: To run the function with init txt file that includes flags -initz/-initcenter:\n"
-            "  sct_label_vertebrae -i t2.nii.gz -s t2_seg-manual.nii.gz  '$(< init_label_vertebrae.txt)'"
+            "'spinalcordtoolbox/vertebrae/detect_c2c3.py' to detect the C2-C3 disc."
         )
     )
 
@@ -108,10 +157,9 @@ def get_parser():
     optional.add_argument(
         '-initz',
         metavar=Metavar.list,
-        type=list_type(',', int),
-        help="Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4). "
-             "Example: 125,3\n"
-             "WARNING: Slice number should correspond to superior-inferior direction (e.g. Z in RPI orientation, but "
+        type=parse_initz,
+        help="Initialize using slice number and disc value. Example: 68,4 (slice 68 corresponds to disc C3/C4).\n"
+             "WARNING: Slice number should correspond to superior-inferior direction (i.e. Z in RPI orientation, but "
              "Y in LIP orientation)."
     )
     optional.add_argument(
@@ -124,6 +172,8 @@ def get_parser():
     optional.add_argument(
         '-initfile',
         metavar=Metavar.file,
+        action=InitFileAction,
+        dest=argparse.SUPPRESS,
         help="Initialize labeling by providing a text file which includes either -initz or -initcenter flag."
     )
     optional.add_argument(
@@ -160,9 +210,13 @@ def get_parser():
         '-clean-labels',
         metavar=Metavar.int,
         type=int,
-        choices=[0, 1],
-        default=0,
-        help=" Clean output labeled segmentation to resemble original segmentation."
+        choices=[0, 1, 2],
+        default=1,
+        help="Clean output labeled segmentation to resemble original segmentation. "
+             "0: no cleaning, "
+             "1: remove labeled voxels that fall outside the original segmentation, "
+             "2: `-clean-labels 1`, plus also fill in voxels so that the labels cover "
+             "the entire original segmentation."
     )
     optional.add_argument(
         '-scale-dist',
@@ -176,16 +230,13 @@ def get_parser():
     optional.add_argument(
         '-param',
         metavar=Metavar.list,
-        type=list_type(',', str),
-        help=f"Advanced parameters. Assign value with \"=\"; Separate arguments with \",\"\n"
-             f"  - shift_AP [mm]: AP shift of centerline for disc search. Default={param_default.shift_AP}.\n"
-             f"  - size_AP [mm]: AP window size for disc search. Default={param_default.size_AP}.\n"
-             f"  - size_RL [mm]: RL window size for disc search. Default={param_default.size_RL}.\n"
-             f"  - size_IS [mm]: IS window size for disc search. Default={param_default.size_IS}.\n"
-             f"  - gaussian_std [mm]: STD of the Gaussian function, centered at the most rostral point of the "
-             f"image, and used to weight C2-C3 disk location finding towards the rostral portion of the FOV. Values "
-             f"to set between 0.1 (strong weighting) and 999 (no weighting). "
-             f"Default={param_default.gaussian_std}.\n"
+        type=vertebral_detection_param,
+        default=','.join(f'{key}={value}' for key, value in param_default.items()),
+        help='Advanced parameters. Assign value with "="; Separate arguments with ","\n'
+             '  - shift_AP [mm]: AP shift of centerline for disc search\n'
+             '  - size_AP [mm]: AP window size for disc search\n'
+             '  - size_RL [mm]: RL window size for disc search\n'
+             '  - size_IS [mm]: IS window size for disc search\n',
     )
     optional.add_argument(
         '-r',
@@ -208,7 +259,6 @@ def get_parser():
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default=param_default.path_qc,
         help="The path where the quality control generated content will be saved."
     )
     optional.add_argument(
@@ -231,50 +281,22 @@ def main(argv=None):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
-    # initializations
-    initz = ''
-    initcenter = ''
-    fname_initlabel = ''
-    file_labelz = 'labelz.nii.gz'
-    param = Param()
-
     fname_in = os.path.abspath(arguments.i)
     fname_seg = os.path.abspath(arguments.s)
     contrast = arguments.c
     path_template = os.path.abspath(arguments.t)
     scale_dist = arguments.scale_dist
     path_output = os.path.abspath(arguments.ofolder)
-    param.path_qc = arguments.qc
-    if arguments.discfile is not None:
-        fname_disc = os.path.abspath(arguments.discfile)
-    else:
-        fname_disc = None
-    if arguments.initz is not None:
-        initz = arguments.initz
-        if len(initz) != 2:
-            raise ValueError('--initz takes two arguments: position in superior-inferior direction, label value')
-    if arguments.initcenter is not None:
-        initcenter = arguments.initcenter
-    # if user provided text file, parse and overwrite arguments
-    if arguments.initfile is not None:
-        file = open(arguments.initfile, 'r')
-        initfile = ' ' + file.read().replace('\n', '')
-        arg_initfile = initfile.split(' ')
-        for idx_arg, arg in enumerate(arg_initfile):
-            if arg == '-initz':
-                initz = [int(x) for x in arg_initfile[idx_arg + 1].split(',')]
-                if len(initz) != 2:
-                    raise ValueError('--initz takes two arguments: position in superior-inferior direction, label value')
-            if arg == '-initcenter':
-                initcenter = int(arg_initfile[idx_arg + 1])
-    if arguments.initlabel is not None:
-        # get absolute path of label
-        fname_initlabel = os.path.abspath(arguments.initlabel)
-    if arguments.param is not None:
-        param.update(arguments.param[0])
+    fname_disc = arguments.discfile
+    if fname_disc is not None:
+        fname_disc = os.path.abspath(fname_disc)
+    initz = arguments.initz
+    initcenter = arguments.initcenter
+    fname_initlabel = arguments.initlabel
+    if fname_initlabel is not None:
+        fname_initlabel = os.path.abspath(fname_initlabel)
     remove_temp_files = arguments.r
     clean_labels = arguments.clean_labels
-    laplacian = arguments.laplacian
 
     path_tmp = tmp_create(basename="label_vertebrae")
 
@@ -349,39 +371,31 @@ def main(argv=None):
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
 
     else:
-        # create label to identify disc
         printv('\nCreate label to identify disc...', verbose)
-        fname_labelz = os.path.join(path_tmp, file_labelz)
-        if initz or initcenter:
-            if initcenter:
-                # find z centered in FOV
-                nii = Image('segmentation.nii').change_orientation("RPI")
-                nx, ny, nz, nt, px, py, pz, pt = nii.dim  # Get dimensions
-                z_center = int(np.round(nz / 2))  # get z_center
-                initz = [z_center, initcenter]
-
-            im_label = create_labels_along_segmentation(Image('segmentation.nii'), [(initz[0], initz[1])])
-            im_label.data = dilate(im_label.data, 3, 'ball')
+        fname_labelz = os.path.join(path_tmp, 'labelz.nii.gz')
+        if initcenter is not None:
+            # find z centered in FOV
+            nii = Image('segmentation.nii').change_orientation("RPI")
+            nx, ny, nz, nt, px, py, pz, pt = nii.dim
+            z_center = round(nz / 2)
+            initz = [z_center, initcenter]
+        if initz is not None:
+            im_label = create_labels_along_segmentation(Image('segmentation.nii'), [tuple(initz)])
             im_label.save(fname_labelz)
-
-        elif fname_initlabel:
+        elif fname_initlabel is not None:
             Image(fname_initlabel).save(fname_labelz)
-
         else:
             # automatically finds C2-C3 disc
             im_data = Image('data.nii')
             im_seg = Image('segmentation.nii')
-            if not remove_temp_files:  # because verbose is here also used for keeping temp files
-                verbose_detect_c2c3 = 2
-            else:
-                verbose_detect_c2c3 = 0
+            # because verbose is also used for keeping temp files
+            verbose_detect_c2c3 = 0 if remove_temp_files else 2
             im_label_c2c3 = detect_c2c3(im_data, im_seg, contrast, verbose=verbose_detect_c2c3)
             ind_label = np.where(im_label_c2c3.data)
-            if not np.size(ind_label) == 0:
-                im_label_c2c3.data[ind_label] = 3
-            else:
+            if np.size(ind_label) == 0:
                 printv('Automatic C2-C3 detection failed. Please provide manual label with sct_label_utils', 1, 'error')
-                sys.exit()
+                sys.exit(1)
+            im_label_c2c3.data[ind_label] = 3
             im_label_c2c3.save(fname_labelz)
 
         # dilate label so it is not lost when applying warping
@@ -389,7 +403,7 @@ def main(argv=None):
 
         # Apply straightening to z-label
         printv('\nAnd apply straightening to label...', verbose)
-        sct_apply_transfo.main(['-i', file_labelz,
+        sct_apply_transfo.main(['-i', 'labelz.nii.gz',
                                 '-d', 'data_straightr.nii',
                                 '-w', 'warp_curve2straight.nii.gz',
                                 '-o', 'labelz_straight.nii.gz',
@@ -401,7 +415,7 @@ def main(argv=None):
         printv('.. ' + str(init_disc), verbose)
 
         # apply laplacian filtering
-        if laplacian:
+        if arguments.laplacian:
             printv('\nApply Laplacian filter...', verbose)
             img = Image("data_straightr.nii")
 
@@ -415,10 +429,9 @@ def main(argv=None):
             img.data = laplacian(img.data, sigmas)
             img.save()
 
-
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1
-        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, param, init_disc=init_disc,
+        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, arguments.param, init_disc=init_disc,
                             verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
 
     # un-straighten labeled spinal cord
@@ -430,10 +443,17 @@ def main(argv=None):
                             '-x', 'nn',
                             '-v', '0'])
 
-    if clean_labels:
-        # Clean labeled segmentation
-        printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
-        clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
+    if clean_labels >= 1:
+        printv('\nCleaning labeled segmentation:', verbose)
+        im_labeled_seg = Image('segmentation_labeled.nii')
+        im_seg = Image('segmentation.nii')
+        if clean_labels >= 2:
+            printv('  filling in missing label voxels ...', verbose)
+            expand_labels(im_labeled_seg)
+        printv('  removing labeled voxels outside segmentation...', verbose)
+        crop_labels(im_labeled_seg, im_seg)
+        printv('Done cleaning.', verbose)
+        im_labeled_seg.save()
 
     # label discs
     printv('\nLabel discs...', verbose)
@@ -469,7 +489,7 @@ def main(argv=None):
         rmtree(path_tmp)
 
     # Generate QC report
-    if param.path_qc is not None:
+    if arguments.qc is not None:
         path_qc = os.path.abspath(arguments.qc)
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
