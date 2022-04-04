@@ -4,15 +4,19 @@ rem Usage: install_sct.bat <version>
 rem e.g.
 rem        install_sct.bat 5.5
 
-rem Fetch version number (should be git branch, git tag, etc.)
-set git_ref=%1
+rem Set git ref. If no git ref is specified when calling `install_sct.bat`, use a default instead.
+if [%1]==[] (
+  set git_ref=master
+) else (
+  set git_ref=%1
+)
 
 rem Go to user's home directory
 pushd %HOMEPATH%
 
 rem Download SCT and check out the branch requested by the user
 echo:
-echo ### Downloading SCT source code to %HOMEPATH%\spinalcordtoolbox...
+echo ### Downloading SCT source code (@ %git_ref%) to %HOMEPATH%\spinalcordtoolbox...
 git clone -b %git_ref% --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git || goto error
 
 rem Create and activate virtual environment to install SCT into
