@@ -43,9 +43,8 @@ echo:
 echo To use SCT's command-line scripts in Command Prompt, please follow these instructions:
 echo:
 echo 1. Open the Start Menu -^> Type 'path' -^> Open 'Edit environment variables for your account'
-echo 2. Click the 'Environment variables...' button
-echo 3. Under the section 'User variables for ____', highlight the 'Path' entry, then click the 'Edit...' button.
-echo 4. Click 'New', then copy and paste this directory:
+echo 2. Under the section 'User variables for ____', highlight the 'Path' entry, then click the 'Edit...' button.
+echo 3. Click 'New', then copy and paste this directory:
 echo:
 echo    %CD%\venv_sct\Scripts
 echo:
