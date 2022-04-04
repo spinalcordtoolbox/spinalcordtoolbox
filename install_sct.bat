@@ -31,7 +31,7 @@ python -m pip install --upgrade pip || goto error
 if exist requirements-freeze.txt (
   pip install -r requirements-freeze.txt || goto error
 ) else (
-  pip install -r requirements.txt || goto error)
+  pip install -r requirements.txt || goto error
 )
 pip install -e . || goto error
 
