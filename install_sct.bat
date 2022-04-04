@@ -10,6 +10,19 @@ set git_ref=%1
 rem Go to user's home directory
 pushd %HOMEPATH%
 
+rem Check to see if we're going to git clone into an existing installation of SCT
+if exist spinalcordtoolbox\ (
+  echo ### Previous spinalcordtoolbox installation found at %HOMEPATH%\spinalcordtoolbox.
+  rem NB: The rmdir command will output 'spinalcordtoolbox\, Are you sure (Y/N)?', so we don't need our own Y/N prompt
+  rem     We also use "echo set /p=" here in order to make sure that Y/N text is output on the same line.
+  echo|set /p="### Continuing will overwrite the existing installation directory "
+  rmdir /s spinalcordtoolbox\
+  if exist spinalcordtoolbox\ (
+    echo ### spinalcordtoolbox\ not removed. Quitting installation...
+    goto exit
+  )
+)
+
 rem Download SCT and check out the branch requested by the user
 echo:
 echo ### Downloading SCT source code to %HOMEPATH%\spinalcordtoolbox...
