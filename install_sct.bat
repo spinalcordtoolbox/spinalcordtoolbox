@@ -28,7 +28,11 @@ echo:
 echo ### Installing SCT and its dependencies...
 rem Pip needs to be upgraded because default p3.7 pip won't resolve dependency conflicts correctly
 python -m pip install --upgrade pip || goto error
-pip install -r requirements.txt || goto error
+if exist requirements-freeze.txt (
+  pip install -r requirements-freeze.txt || goto error
+) else (
+  pip install -r requirements.txt || goto error)
+)
 pip install -e . || goto error
 
 rem Install external dependencies
