@@ -60,7 +60,8 @@ exit /b 0
 :error
 set fatalerrorlevel=%errorlevel%
 popd
-call deactivate
+where deactivate
+if %errorlevel% EQU 0 deactivate
 echo Failed with error #%fatalerrorlevel%.
 exit /b %fatalerrorlevel%
 
