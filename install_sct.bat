@@ -52,15 +52,14 @@ echo:
 echo: 5. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
 
 rem Return to initial directory and deactivate the virtual environment
-popd
-call deactivate
-
-exit /b 0
+goto exit
 
 :error
-set fatalerrorlevel=%errorlevel%
+set cached_errorlevel=%errorlevel%
+echo Failed with error #%cached_errorlevel%.
+
+:exit
+if "%cached_errorlevel%"=="" set cached_errorlevel=0
 popd
 call deactivate
-echo Failed with error #%fatalerrorlevel%.
-exit /b %fatalerrorlevel%
-
+exit /b %cached_errorlevel%
