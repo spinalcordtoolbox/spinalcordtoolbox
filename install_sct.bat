@@ -24,15 +24,16 @@ call venv_sct\Scripts\activate.bat || goto error
 echo Virtual environment created and activated successfully!
 
 rem Install SCT and its requirements
+if exist requirements-freeze.txt (
+  set requirements_file=requirements-freeze.txt || goto error
+) else (
+  set requirements_file=requirements.txt || goto error
+)
 echo:
-echo ### Installing SCT and its dependencies...
+echo ### Installing SCT and its dependencies from %requirements_file%...
 rem Pip needs to be upgraded because default p3.7 pip won't resolve dependency conflicts correctly
 python -m pip install --upgrade pip || goto error
-if exist requirements-freeze.txt (
-  pip install -r requirements-freeze.txt || goto error
-) else (
-  pip install -r requirements.txt || goto error
-)
+pip install -r %requirements_file% || goto error
 pip install -e . || goto error
 
 rem Install external dependencies
