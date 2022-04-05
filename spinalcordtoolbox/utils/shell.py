@@ -49,7 +49,8 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     display_viewer_syntax([file1, file2, file3])
     display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
-    list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview']  # list of known viewers. Can add more.
+    # list of known viewers. Can add more.
+    list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
     dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
                     'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
     dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
@@ -81,6 +82,7 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
                 if opacities:
                     if opacities[i]:
                         cmd += ' -t ' + opacities[i]
+            cmd += ' &'
         elif cmd in ['fsleyes']:
             for i in range(len(files)):
                 cmd += ' ' + files[i]
@@ -93,7 +95,32 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
                 if opacities:
                     if opacities[i]:
                         cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
-        cmd += ' &'
+            cmd += ' &'
+        elif cmd in ['itksnap', 'itk-snap']:
+            overlay_files = []
+            for i in range(len(files)):
+                # -g is the "main image" option, and we assume that this is the first image
+                # TODO: This assumption is brittle, and could easily break if images are passed in the wrong order.
+                if i == 0:
+                    cmd += ' -g ' + files[i]
+                else:
+                    # - SCT uses colormaps to color overlaid segmentations for FSLeyes, because FSLeyes doesn't have
+                    #   any "segmentation" options, and so files must be distinguished by choosing colors manually.
+                    # - But, itk-snap requires that you explicitly specify which files are segmentation files (which
+                    #   results in a red overlay for binary segmentations, and a rainbow overlay for multi-labeled
+                    #   segmentations).
+                    # - So, here we make the assumption that any files that would have been coloured via fsleyes should
+                    #   instead be passed as segmentations to itk-snap.
+                    # - TODO: This assumption is somewhat brittle, and could  break if a colormap is used for a
+                    #   non-segmentation segmentation file. But, the alternative would be a much bigger rewrite of the
+                    #   display_viewer_syntax function.
+                    if colormaps and colormaps[i] != "gray":
+                        cmd += ' -s ' + files[i]
+                    # All extra non-segmentation files have to be passed together to the '-o' (overlay) option
+                    else:
+                        overlay_files.append(files[i])
+            if overlay_files:
+                cmd += ' -o ' + " ".join(overlay_files)
 
         if verbose:
             printv(cmd + "\n", verbose=1, type='info')
