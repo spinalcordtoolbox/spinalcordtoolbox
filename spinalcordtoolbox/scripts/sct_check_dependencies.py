@@ -315,9 +315,9 @@ def main(argv=None):
 
     # check PropSeg compatibility with OS
     if sys.platform.startswith('win32'):
-        pass  # sct_propseg is not yet supported on Windows (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3694)
+        print_line("Skipping PropSeg compatibility check ")
+        print("[  ] (Not supported on Windows)")
     else:
-        print_line('Check PropSeg compatibility with OS ')
         status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
         if status in (0, 1):
             print_ok()
