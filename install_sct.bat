@@ -82,5 +82,6 @@ echo Failed with error #%cached_errorlevel%.
 :exit
 if "%cached_errorlevel%"=="" set cached_errorlevel=0
 popd
-call deactivate
+where deactivate
+if %errorlevel% EQU 0 call deactivate
 exit /b %cached_errorlevel%
