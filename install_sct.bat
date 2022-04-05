@@ -70,7 +70,7 @@ echo 3. Click 'New', then copy and paste this directory:
 echo:
 echo    %CD%\venv_sct\Scripts
 echo:
-echo: 5. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
+echo 4. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
 
 rem Return to initial directory and deactivate the virtual environment
 goto exit
