@@ -54,49 +54,50 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
                     'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
     dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
                     'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
-    selected_viewer = None
 
-    # find viewer
     exe_viewers = [viewer for viewer in list_viewer if check_exe(viewer)]
-    if exe_viewers:
-        selected_viewer = exe_viewers[0]
-    else:
-        return
-
-    # loop across files and build syntax
-    cmd = selected_viewer
-    # add mode (only supported by fslview for the moment)
-    if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
-        cmd += ' -m ' + mode
-    for i in range(len(files)):
-        # add viewer-specific options
-        if selected_viewer in ['fslview', 'fslview_deprecated']:
-            cmd += ' ' + files[i]
-            if colormaps:
-                if colormaps[i]:
-                    cmd += ' -l ' + dict_fslview[colormaps[i]]
-            if minmax:
-                if minmax[i]:
-                    cmd += ' -b ' + minmax[i]  # a,b
-            if opacities:
-                if opacities[i]:
-                    cmd += ' -t ' + opacities[i]
-        if selected_viewer in ['fsleyes']:
-            cmd += ' ' + files[i]
-            if colormaps:
-                if colormaps[i]:
-                    cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
-            if minmax:
-                if minmax[i]:
-                    cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
-            if opacities:
-                if opacities[i]:
-                    cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
-    cmd += ' &'
 
     if verbose:
-        printv('\nDone! To view results, type:')
-        printv(cmd + '\n', verbose=1, type='info')
+        if len(exe_viewers) == 0:
+            return
+        elif len(exe_viewers) == 1:
+            printv('\nDone! To view results, type:')
+        elif len(exe_viewers) >= 2:
+            printv('\nDone! To view results, run one of the following commands (depending on your preferred viewer):')
+
+    for cmd in exe_viewers:
+        selected_viewer = cmd
+        # add mode (only supported by fslview for the moment)
+        if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
+            cmd += ' -m ' + mode
+        for i in range(len(files)):
+            # add viewer-specific options
+            if selected_viewer in ['fslview', 'fslview_deprecated']:
+                cmd += ' ' + files[i]
+                if colormaps:
+                    if colormaps[i]:
+                        cmd += ' -l ' + dict_fslview[colormaps[i]]
+                if minmax:
+                    if minmax[i]:
+                        cmd += ' -b ' + minmax[i]  # a,b
+                if opacities:
+                    if opacities[i]:
+                        cmd += ' -t ' + opacities[i]
+            if selected_viewer in ['fsleyes']:
+                cmd += ' ' + files[i]
+                if colormaps:
+                    if colormaps[i]:
+                        cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
+                if minmax:
+                    if minmax[i]:
+                        cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
+                if opacities:
+                    if opacities[i]:
+                        cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
+        cmd += ' &'
+
+        if verbose:
+            printv(cmd + "\n", verbose=1, type='info')
 
 
 class SCTArgumentParser(argparse.ArgumentParser):
