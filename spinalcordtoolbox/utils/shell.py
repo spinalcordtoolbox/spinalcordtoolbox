@@ -66,13 +66,11 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
             printv('\nDone! To view results, run one of the following commands (depending on your preferred viewer):')
 
     for cmd in exe_viewers:
-        selected_viewer = cmd
-        # add mode (only supported by fslview for the moment)
-        if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
-            cmd += ' -m ' + mode
-        for i in range(len(files)):
-            # add viewer-specific options
-            if selected_viewer in ['fslview', 'fslview_deprecated']:
+        if cmd in ['fslview', 'fslview_deprecated']:
+            # add mode (only supported by fslview for the moment)
+            if mode:
+                cmd += ' -m ' + mode
+            for i in range(len(files)):
                 cmd += ' ' + files[i]
                 if colormaps:
                     if colormaps[i]:
@@ -83,7 +81,8 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
                 if opacities:
                     if opacities[i]:
                         cmd += ' -t ' + opacities[i]
-            if selected_viewer in ['fsleyes']:
+        elif cmd in ['fsleyes']:
+            for i in range(len(files)):
                 cmd += ' ' + files[i]
                 if colormaps:
                     if colormaps[i]:
