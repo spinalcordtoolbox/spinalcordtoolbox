@@ -73,6 +73,7 @@ def resolve_module(framework_name):
         'Keras': ('keras', True),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
+        'msvc-runtime': ('msvc_runtime', False),
         'mkl-service': (None, False),
         'pytest-cov': ('pytest_cov', False),
         'urllib3[secure]': ('urllib3', False),
