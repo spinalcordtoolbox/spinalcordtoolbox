@@ -58,6 +58,11 @@ echo:
 echo ### Downloading model files and binaries...
 FOR %%D IN (PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models binaries_win) DO sct_download_data -d %%D -k || goto error
 
+rem Copying SCT scripts to an isolated folder (so we can add scripts to the PATH without adding the entire venv_sct)
+echo:
+echo ### Copying SCT's CLI scripts to %CD%\bin\
+xcopy %CD%\venv_sct\Scripts\*sct*.* %CD%\bin\ /v /y /q /i
+
 rem Give further instructions that the user add the Scripts directory to their PATH
 echo:
 echo ### Installation finished!
@@ -68,7 +73,7 @@ echo 1. Open the Start Menu -^> Type 'path' -^> Open 'Edit environment variables
 echo 2. Under the section 'User variables for ____', highlight the 'Path' entry, then click the 'Edit...' button.
 echo 3. Click 'New', then copy and paste this directory:
 echo:
-echo    %CD%\venv_sct\Scripts
+echo    %CD%\bin\
 echo:
 echo 4. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
 
