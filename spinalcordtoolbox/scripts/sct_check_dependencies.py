@@ -235,6 +235,8 @@ def main(argv=None):
         os_running = 'linux'
     elif sys.platform.startswith('win32'):
         os_running = 'windows'
+    else:
+        os_running = 'unknown'
 
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
     print('CPU cores: Available: {}, Used by ITK functions: {}'.format(psutil.cpu_count(), int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))))
