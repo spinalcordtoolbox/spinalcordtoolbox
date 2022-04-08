@@ -533,5 +533,5 @@ def __get_git_origin(path_to_git_folder=None):
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
-__bin_dir__ = os.path.join(__sct_dir__, 'venv_sct', 'Scripts') if sys.platform == 'win32' else os.path.join(__sct_dir__, 'bin')
+__bin_dir__ = os.path.join(__sct_dir__, 'venv_sct', 'Scripts') if sys.platform.startswith('win32') else os.path.join(__sct_dir__, 'bin')
 __deepseg_dir__ = os.path.join(__data_dir__, 'deepseg_models')
