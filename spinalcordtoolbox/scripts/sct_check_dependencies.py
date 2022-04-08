@@ -316,7 +316,7 @@ def main(argv=None):
     # check PropSeg compatibility with OS
     if sys.platform.startswith('win32'):
         print_line("Skipping PropSeg compatibility check ")
-        print("[  ] (Not supported on Windows)")
+        print("[  ] (Not supported on 'native' Windows (without WSL))")
     else:
         status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
         if status in (0, 1):
