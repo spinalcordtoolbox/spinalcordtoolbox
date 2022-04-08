@@ -4,6 +4,7 @@
 
 import os
 import pytest
+from stat import S_IEXEC
 
 from spinalcordtoolbox import utils
 
@@ -50,6 +51,9 @@ def temporary_viewers(supported_viewers=('fsleyes', 'fslview_deprecated', 'fslvi
     """Set up and teardown viewer files to satisfy check_exe() check within the scope of the test."""
     for viewer in supported_viewers:
         open(viewer, 'a').close()
+        # Set "Owner has execute permission" bit to 1 to ensure script is executable
+        script_stat = os.stat(viewer)
+        os.chmod(viewer, script_stat.st_mode | S_IEXEC)
     yield supported_viewers
     for viewer in supported_viewers:
         os.remove(viewer)
