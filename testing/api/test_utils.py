@@ -65,6 +65,7 @@ def test_display_viewer_syntax(temporary_viewers):
         mode="test"
     )
     for viewer in temporary_viewers:
+        assert viewer in syntax_strings.keys()
         cmd_string = syntax_strings[viewer]
         cmd_opts = cmd_string.replace(f"{viewer} ", "")
         if viewer.startswith("fsleyes"):
