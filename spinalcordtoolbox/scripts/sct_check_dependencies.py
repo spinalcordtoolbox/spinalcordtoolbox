@@ -340,7 +340,7 @@ def main(argv=None):
         print(err)
 
     print_line('Check if figure can be opened with PyQt')
-    if sys.platform == "linux" and 'DISPLAY' not in os.environ:
+    if sys.platform.startswith("linux") and 'DISPLAY' not in os.environ:
         print_fail(" ($DISPLAY not set on X11-supporting system)")
     else:
         try:
