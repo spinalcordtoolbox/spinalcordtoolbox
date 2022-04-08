@@ -42,7 +42,7 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
 
     Returns
     -------
-    None
+    cmd_strings [dict:string]: pairs of viewers and their corresponding syntax strings (that were printed).
 
     Example
     -------
@@ -66,8 +66,10 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
         elif len(exe_viewers) >= 2:
             printv('\nDone! To view results, run one of the following commands (depending on your preferred viewer):')
 
+    cmd_strings = {}
     for cmd in exe_viewers:
-        if cmd in ['fslview', 'fslview_deprecated']:
+        selected_viewer = cmd
+        if selected_viewer in ['fslview', 'fslview_deprecated']:
             # add mode (only supported by fslview for the moment)
             if mode:
                 cmd += ' -m ' + mode
@@ -83,7 +85,7 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
                     if opacities[i]:
                         cmd += ' -t ' + opacities[i]
             cmd += ' &'
-        elif cmd in ['fsleyes']:
+        elif selected_viewer in ['fsleyes']:
             for i in range(len(files)):
                 cmd += ' ' + files[i]
                 if colormaps:
@@ -96,7 +98,7 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
                     if opacities[i]:
                         cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
             cmd += ' &'
-        elif cmd in ['itksnap', 'itk-snap']:
+        elif selected_viewer in ['itksnap', 'itk-snap']:
             overlay_files = []
             for i in range(len(files)):
                 # -g is the "main image" option, and we assume that this is the first image
@@ -124,6 +126,10 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
 
         if verbose:
             printv(cmd + "\n", verbose=1, type='info')
+
+        cmd_strings[selected_viewer] = cmd
+
+    return cmd_strings
 
 
 class SCTArgumentParser(argparse.ArgumentParser):
