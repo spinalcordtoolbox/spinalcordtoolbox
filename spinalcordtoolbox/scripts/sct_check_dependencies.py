@@ -212,7 +212,6 @@ def main(argv=None):
     # initialization
     install_software = 0
     e = 0
-    os_running = 'not identified'
 
     # complete test
     if complete_test:
