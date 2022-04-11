@@ -33,10 +33,10 @@ def display_open(file, message="\nDone! To view results"):
 
     if cmd_open:
         printv(f'{message}, type:')
-        printv(f"{cmd_open} {file}\n", verbose=1, type='info')
+        printv(f"{cmd_open} {file}\n", type='info')
     else:
         printv(f'{message}, open the following file:')
-        printv(f"{file}\n", verbose=1, type='info')
+        printv(f"{file}\n", type='info')
 
 
 def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
