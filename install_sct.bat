@@ -19,8 +19,8 @@ if exist spinalcordtoolbox\ (
   echo ### Previous spinalcordtoolbox installation found at %HOMEPATH%\spinalcordtoolbox.
   rem NB: The rmdir command will output 'spinalcordtoolbox\, Are you sure (Y/N)?', so we don't need our own Y/N prompt
   rem     We also use "echo set /p=" here in order to make sure that Y/N text is output on the same line.
-  echo|set /p="### Continuing will overwrite the existing installation directory "
-  rmdir /s spinalcordtoolbox\
+  echo|set /p="### Continuing will overwrite the existing installation directory " || goto error
+  rmdir /s spinalcordtoolbox\ || goto error
   if exist spinalcordtoolbox\ (
     echo ### spinalcordtoolbox\ not removed. Quitting installation...
     goto exit
@@ -61,7 +61,7 @@ FOR %%D IN (PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_
 rem Copying SCT scripts to an isolated folder (so we can add scripts to the PATH without adding the entire venv_sct)
 echo:
 echo ### Copying SCT's CLI scripts to %CD%\bin\
-xcopy %CD%\venv_sct\Scripts\*sct*.* %CD%\bin\ /v /y /q /i
+xcopy %CD%\venv_sct\Scripts\*sct*.* %CD%\bin\ /v /y /q /i || goto error
 
 rem Give further instructions that the user add the Scripts directory to their PATH
 echo:
