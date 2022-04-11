@@ -536,7 +536,7 @@ def main(argv=None):
                           status_message + timing_message)
 
     display_open(file=os.path.join(path_qc, "index.html"),
-                 message="To open the Quality Control (QC) report on a web-browser")
+                 message="To open the Quality Control (QC) report in a web-browser")
 
     if arguments.zip:
         file_zip = 'sct_run_batch_{}'.format(time.strftime('%Y%m%d%H%M%S'))
