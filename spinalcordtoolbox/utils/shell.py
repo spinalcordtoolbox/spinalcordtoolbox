@@ -17,7 +17,7 @@ from .sys import check_exe, printv, removesuffix
 logger = logging.getLogger(__name__)
 
 
-def display_open(file, message="\nDone! To view results"):
+def display_open(file, message="Done! To view results"):
     """Print the syntax to open a file based on the platform."""
     cmd_open = None
     if sys.platform.startswith('linux'):
@@ -32,10 +32,10 @@ def display_open(file, message="\nDone! To view results"):
         cmd_open = 'start'
 
     if cmd_open:
-        printv(f'{message}, type:')
+        printv(f'\n{message}, type:')
         printv(f"{cmd_open} {file}\n", type='info')
     else:
-        printv(f'{message}, open the following file:')
+        printv(f'\n{message}, open the following file:')
         printv(f"{file}\n", type='info')
 
 
