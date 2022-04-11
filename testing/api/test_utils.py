@@ -47,7 +47,7 @@ def test_sct_argument_parser(capsys):
 
 
 @pytest.fixture()
-def temporary_viewers(supported_viewers=('fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap')):
+def temporary_viewers(supported_viewers=utils.SUPPORTED_VIEWERS):
     """Set up and teardown viewer files to satisfy check_exe() check within the scope of the test."""
     for viewer in supported_viewers:
         open(viewer, 'a').close()

@@ -17,6 +17,9 @@ from .sys import check_exe, printv, removesuffix
 logger = logging.getLogger(__name__)
 
 
+SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
+
+
 def display_open(file):
     """Print the syntax to open a file based on the platform."""
     if sys.platform == 'linux':
@@ -49,14 +52,12 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
     display_viewer_syntax([file1, file2, file3])
     display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
-    # list of known viewers. Can add more.
-    list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
     dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
                     'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
     dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
                     'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
 
-    exe_viewers = [viewer for viewer in list_viewer if check_exe(viewer)]
+    exe_viewers = [viewer for viewer in SUPPORTED_VIEWERS if check_exe(viewer)]
 
     if verbose:
         if len(exe_viewers) == 0:
