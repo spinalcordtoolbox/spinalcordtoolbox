@@ -315,16 +315,19 @@ def main(argv=None):
         print((status, output), '\n')
 
     # check PropSeg compatibility with OS
-    print_line('Check PropSeg compatibility with OS ')
-    status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
-    if status in (0, 1):
-        print_ok()
+    if sys.platform.startswith('win32'):
+        print_line("Skipping PropSeg compatibility check ")
+        print("[  ] (Not supported on 'native' Windows (without WSL))")
     else:
-        print_fail()
-        print(output)
-        e = 1
-    if complete_test:
-        print((status, output), '\n')
+        status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
+        if status in (0, 1):
+            print_ok()
+        else:
+            print_fail()
+            print(output)
+            e = 1
+        if complete_test:
+            print((status, output), '\n')
 
     print_line('Check if figure can be opened with matplotlib')
     try:

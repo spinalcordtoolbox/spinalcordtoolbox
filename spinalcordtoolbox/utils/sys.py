@@ -5,6 +5,7 @@
 import io
 import sys
 import os
+import shutil
 import logging
 import subprocess
 import time
@@ -410,25 +411,20 @@ def sct_test_path(*args):
 
 def check_exe(name):
     """
-    Ensure that a program exists
+    Ensure that a program exists and can be executed
 
-    :param name: str: name or path to program
-    :return: path of the program or None
+    :param name: str: name of program or path to program
+    :return: boolean
     """
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, _ = os.path.split(name)
-    if fpath and is_exe(name):
-        return fpath
+    _, filename = os.path.split(name)
+    # Case 1: Check full filepath directly (which may point to a location not on the PATH)
+    if os.path.isfile(name) and os.access(name, os.X_OK):
+        return True
+    # Case 2: Check filename only via the PATH
+    elif shutil.which(filename) and os.access(shutil.which(filename), os.X_OK):
+        return True
     else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            path = path.strip('"')
-            exe_file = os.path.join(path, name)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
+        return False
 
 
 def _version_string():
@@ -533,5 +529,5 @@ def __get_git_origin(path_to_git_folder=None):
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
-__bin_dir__ = os.path.join(__sct_dir__, 'venv_sct', 'Scripts') if sys.platform.startswith('win32') else os.path.join(__sct_dir__, 'bin')
+__bin_dir__ = os.path.join(__sct_dir__, 'bin')
 __deepseg_dir__ = os.path.join(__data_dir__, 'deepseg_models')
