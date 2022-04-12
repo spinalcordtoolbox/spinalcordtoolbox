@@ -225,7 +225,7 @@ class BaseDialog(QtWidgets.QWidget):
         """
         ctrl_layout = QtWidgets.QHBoxLayout()
 
-        if sys.platform.lower() == 'darwin':
+        if sys.platform.startswith('darwin'):
             cmd_key = 'Cmd'
         else:
             cmd_key = 'Ctrl'

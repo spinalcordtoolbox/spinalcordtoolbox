@@ -17,17 +17,26 @@ from .sys import check_exe, printv, removesuffix
 logger = logging.getLogger(__name__)
 
 
-def display_open(file):
+def display_open(file, message="Done! To view results"):
     """Print the syntax to open a file based on the platform."""
-    if sys.platform == 'linux':
-        printv('\nDone! To view results, type:')
-        printv('xdg-open ' + file + '\n', verbose=1, type='info')
-    elif sys.platform == 'darwin':
-        printv('\nDone! To view results, type:')
-        printv('open ' + file + '\n', verbose=1, type='info')
+    cmd_open = None
+    if sys.platform.startswith('linux'):
+        # If user runs SCT within the official Docker distribution, or in WSL, then the command xdg-open will not be
+        # working, therefore we prefer to instruct the user to manually open the file.
+        # Source for WSL environment variables: https://stackoverflow.com/a/61036356
+        if "DOCKER" not in os.environ and "IS_WSL" not in os.environ and "WSL_DISTRO_NAME" not in os.environ:
+            cmd_open = 'xdg-open'
+    elif sys.platform.startswith('darwin'):
+        cmd_open = 'open'
+    elif sys.platform.startswith('win32'):
+        cmd_open = 'start'
+
+    if cmd_open:
+        printv(f'\n{message}, type:')
+        printv(f"{cmd_open} {file}\n", type='info')
     else:
-        printv('\nDone! To view results, open the following file:')
-        printv(file + '\n', verbose=1, type='info')
+        printv(f'\n{message}, open the following file:')
+        printv(f"{file}\n", type='info')
 
 
 SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']

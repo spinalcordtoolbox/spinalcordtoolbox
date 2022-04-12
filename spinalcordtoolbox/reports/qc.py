@@ -22,7 +22,7 @@ import portalocker
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
-from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline, __version__, copy, extract_fname
+from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline, __version__, copy, extract_fname, display_open
 
 logger = logging.getLogger(__name__)
 
@@ -734,26 +734,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
             copyfile(path_img, qc_param.abs_overlay_img_path())
 
     logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
-    logger.info('Use the following command to see the results in a browser:')
-    try:
-        from sys import platform as _platform
-        if _platform == "linux" or _platform == "linux2":
-            # If user runs SCT within the official Docker distribution, the command xdg-open will not be working therefore
-            # we prefer to instruct the user to manually open the generated html file.
-            try:
-                # if user runs SCT within the official Docker distribution, the variable below is defined. More info at:
-                # https://github.com/neuropoly/sct_docker/blob/master/sct_docker.py#L84
-                os.environ["DOCKER"]
-                logger.info('please go to "%s/" and double click on the "index.html" file', path_qc)
-            except KeyError:
-                logger.info('xdg-open "%s/index.html"', path_qc)
-
-        elif _platform == "darwin":
-            logger.info('open "%s/index.html"', path_qc)
-        else:
-            logger.info('open file "%s/index.html"', path_qc)
-    except ImportError:
-        print("WARNING! Platform undetectable.")
+    display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args=None, path_qc=None,

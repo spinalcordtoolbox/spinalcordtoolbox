@@ -212,7 +212,6 @@ def main(argv=None):
     # initialization
     install_software = 0
     e = 0
-    os_running = 'not identified'
 
     # complete test
     if complete_test:
@@ -235,6 +234,8 @@ def main(argv=None):
         os_running = 'linux'
     elif sys.platform.startswith('win32'):
         os_running = 'windows'
+    else:
+        os_running = 'unknown'
 
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
     print('CPU cores: Available: {}, Used by ITK functions: {}'.format(psutil.cpu_count(), int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))))
@@ -343,7 +344,7 @@ def main(argv=None):
         print(err)
 
     print_line('Check if figure can be opened with PyQt')
-    if sys.platform == "linux" and 'DISPLAY' not in os.environ:
+    if sys.platform.startswith("linux") and 'DISPLAY' not in os.environ:
         print_fail(" ($DISPLAY not set on X11-supporting system)")
     else:
         try:
