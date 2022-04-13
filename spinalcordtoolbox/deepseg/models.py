@@ -104,7 +104,7 @@ MODELS = {
         "contrasts": ["t2star"],
         "default": False,
     },
-     "model_seg_epfl_t2w_lumbar_sc": {
+    "model_seg_epfl_t2w_lumbar_sc": {
         "url": [
             "https://github.com/ivadomed/lumbar_seg_EPFL/releases/download/r20220411/model_seg_epfl_t2w_lumbar_sc.zip"
         ],
