@@ -51,7 +51,7 @@ Git for Windows
 
 The easiest way to try out different versions of SCT is using Git.
 
-1. Download Git for Windows from `this download page <https://git-scm.com/download/win>`_.
+1. Download Git for Windows from `the Git download page <https://git-scm.com/download/win>`_.
 
 2. Run the installer.
 
@@ -88,7 +88,7 @@ We recommend that you install SCT into a Python virtual environment. To help wit
 
 Cygwin is a collection of useful Unix utilities such as ``bash``, ``cd``, ``ls``, and more that combine nicely with SCT's command-line tools. In particular, ``bash`` will allow ``sct_run_batch`` to execute bash scripts for batch processing of subjects.
 
-1. Download the Cygwin installer from `this download page <https://www.cygwin.com/install.html>`_.
+1. Download the Cygwin installer from `the Cygwin installation page <https://www.cygwin.com/install.html>`_.
 
 2. Run the installer. (You can click "Next" for every section of the installer, as the default settings are sufficient.)
 
