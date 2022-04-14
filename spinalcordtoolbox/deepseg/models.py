@@ -103,6 +103,14 @@ MODELS = {
         "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University",
         "contrasts": ["t2star"],
         "default": False,
+    },
+    "model_seg_epfl_t2w_lumbar_sc": {
+        "url": [
+            "https://github.com/ivadomed/lumbar_seg_EPFL/releases/download/r20220411/model_seg_epfl_t2w_lumbar_sc.zip"
+        ],
+        "description": "Lumbar SC segmentation on T2w contrast with 3D UNet",
+        "contrasts": ["t2"],
+        "default": False,
     }
 }
 
@@ -136,7 +144,10 @@ TASKS = {
          'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']},
     'seg_gm_sc_7t_t2star':
         {'description': 'SC/GM seg on T2*-weighted at 7T.',
-         'models': ['model_7t_multiclass_gm_sc_unet2d']}
+         'models': ['model_7t_multiclass_gm_sc_unet2d']},
+    'seg_lumbar_sc_t2w':
+        {'description': 'Lumbar SC segmentation on T2w contrast with 3D UNet.',
+         'models': ['model_seg_epfl_t2w_lumbar_sc']}
 }
 
 
