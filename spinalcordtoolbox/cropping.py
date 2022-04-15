@@ -106,7 +106,7 @@ class ImageCropper(object):
         if not len(img_ref.data.shape) == len(self.img_in.data.shape):
             logger.error("Inconsistent dimensions: n_dim(img_ref)={}; n_dim(img_in)={}"
                          .format(len(img_ref.data.shape), len(self.img_in.data.shape)))
-            raise Exception(ValueError)
+            raise ValueError('Inconsistent dimensions')
         # Fill reference data with ones
         img_ref.data[:] = 1
         # Resample new image (in reference coordinates) into input image
