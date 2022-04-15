@@ -10,7 +10,7 @@
 
 import sys
 
-from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
+from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
 
@@ -156,10 +156,9 @@ def main(argv=None):
         cropper.get_bbox_from_ref(Image(arguments.ref))
     else:
         cropper.get_bbox_from_minmax(
-            BoundingBox(arguments.xmin, arguments.xmax,
-                        arguments.ymin, arguments.ymax,
-                        arguments.zmin, arguments.zmax)
-        )
+            arguments.xmin, arguments.xmax,
+            arguments.ymin, arguments.ymax,
+            arguments.zmin, arguments.zmax)
 
     # Crop image
     img_crop = cropper.crop(background=arguments.b)

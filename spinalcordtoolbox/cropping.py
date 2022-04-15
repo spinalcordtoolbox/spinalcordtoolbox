@@ -23,35 +23,6 @@ class BoundingBox(object):
         self.zmin = zmin
         self.zmax = zmax
 
-    def get_minmax(self, img):
-        """
-        Get voxel-based bounding box from coordinates. Replaces '-1' with max dim along each axis, '-2' with max dim
-        minus 1, etc.
-
-        :param img: Image object to get dimensions
-        :return:
-        """
-        def _get_min_value(val):
-            if val is None:
-                val = 0
-            return val
-
-        def _get_max_value(val, dim):
-            if val is None:
-                val = dim
-            elif val < 0:
-                val += dim
-            return val
-
-        return BoundingBox(
-            xmin=_get_min_value(self.xmin),
-            ymin=_get_min_value(self.ymin),
-            zmin=_get_min_value(self.zmin),
-            xmax=_get_max_value(self.xmax, img.dim[0]),
-            ymax=_get_max_value(self.ymax, img.dim[1]),
-            zmax=_get_max_value(self.zmax, img.dim[2]),
-        )
-
 
 class ImageCropper(object):
     def __init__(self, img_in):
@@ -99,11 +70,18 @@ class ImageCropper(object):
 
         return img_out
 
-    def get_bbox_from_minmax(self, bbox=None):
+    def get_bbox_from_minmax(self, xmin, xmax, ymin, ymax, zmin, zmax):
         """
-        Get voxel bounding box from xmin, xmax, ymin, ymax, zmin, zmax user input
+        Get voxel bounding box from xmin, xmax, ymin, ymax, zmin, zmax user input.
+        Replaces '-1' with max dim along each axis, '-2' with max dim minus 1, etc.
         """
-        self.bbox = bbox.get_minmax(img=self.img_in)
+        if xmax < 0:
+            xmax += self.img_in.dim[0]
+        if ymax < 0:
+            ymax += self.img_in.dim[1]
+        if zmax < 0:
+            zmax += self.img_in.dim[2]
+        self.bbox = BoundingBox(xmin, xmax, ymin, ymax, zmin, zmax)
 
     def get_bbox_from_mask(self, img_mask):
         """
