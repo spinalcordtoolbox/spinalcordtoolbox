@@ -57,11 +57,13 @@ class ImageCropper(object):
             # set a more permissive threshold for reading the qform
             # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3703 for details)
             img_out.hdr.quaternion_threshold = -1e-6
-            # adapt the origin in the sform and qform matrix
+            # adapt the origin in the qform matrix
             new_origin = np.dot(img_out.hdr.get_qform(), [bbox.xmin, bbox.ymin, bbox.zmin, 1])
             img_out.hdr.structarr['qoffset_x'] = new_origin[0]
             img_out.hdr.structarr['qoffset_y'] = new_origin[1]
             img_out.hdr.structarr['qoffset_z'] = new_origin[2]
+            # adapt the origin in the sform matrix
+            new_origin = np.dot(img_out.hdr.get_sform(), [bbox.xmin, bbox.ymin, bbox.zmin, 1])
             img_out.hdr.structarr['srow_x'][-1] = new_origin[0]
             img_out.hdr.structarr['srow_y'][-1] = new_origin[1]
             img_out.hdr.structarr['srow_z'][-1] = new_origin[2]
