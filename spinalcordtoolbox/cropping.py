@@ -13,9 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class BoundingBox(object):
-    """
-    """
-    def __init__(self, xmin=None, xmax=None, ymin=None, ymax=None, zmin=None, zmax=None):
+    def __init__(self, xmin, xmax, ymin, ymax, zmin, zmax):
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
@@ -30,7 +28,12 @@ class ImageCropper(object):
         :param img_in:
         """
         self.img_in = img_in
-        self.bbox = BoundingBox()
+        # the default is to keep the whole image
+        self.bbox = BoundingBox(
+            0, img_in.dim[0]-1,
+            0, img_in.dim[1]-1,
+            0, img_in.dim[2]-1,
+        )
 
     def crop(self, background=None):
         """
