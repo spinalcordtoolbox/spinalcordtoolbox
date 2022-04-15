@@ -23,7 +23,7 @@ class BoundingBox(object):
         self.zmin = zmin
         self.zmax = zmax
 
-    def get_minmax(self, img=None):
+    def get_minmax(self, img):
         """
         Get voxel-based bounding box from coordinates. Replaces '-1' with max dim along each axis, '-2' with max dim
         minus 1, etc.
@@ -31,34 +31,26 @@ class BoundingBox(object):
         :param img: Image object to get dimensions
         :return:
         """
-        def _get_min_value(input):
-            if input is None:
-                return 0
-            else:
-                return input
+        def _get_min_value(val):
+            if val is None:
+                val = 0
+            return val
 
-        def _get_max_value(input, dim):
-            # If empty, return maximum dimension (i.e. no change)
-            if input is None:
-                return dim
-            # If input is "-1", return maximum dimension (i.e. no change). If input is "-2", returns maximum
-            # dimension minus one, etc.
-            elif np.sign(input) == -1:
-                return input + dim
-            # If user specified a non-negative value, use that
-            else:
-                return input
+        def _get_max_value(val, dim):
+            if val is None:
+                val = dim
+            elif val < 0:
+                val += dim
+            return val
 
-        xyz_to_num = {'x': 0, 'y': 1, 'z': 2}
-        bbox_voxel = BoundingBox()
-        for attr, value in self.__dict__.items():
-            if attr[-3:] == 'min':
-                bbox_voxel.__setattr__(attr, _get_min_value(self.__getattribute__(attr)))
-            elif attr[-3:] == 'max':
-                bbox_voxel.__setattr__(attr, _get_max_value(self.__getattribute__(attr), img.dim[xyz_to_num[attr[0]]]))
-            else:
-                raise Exception(ValueError)
-        return bbox_voxel
+        return BoundingBox(
+            xmin=_get_min_value(self.xmin),
+            ymin=_get_min_value(self.ymin),
+            zmin=_get_min_value(self.zmin),
+            xmax=_get_max_value(self.xmax, img.dim[0]),
+            ymax=_get_max_value(self.ymax, img.dim[1]),
+            zmax=_get_max_value(self.zmax, img.dim[2]),
+        )
 
 
 class ImageCropper(object):
