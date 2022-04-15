@@ -54,18 +54,12 @@ class BoundingBox(object):
 
 
 class ImageCropper(object):
-    def __init__(self, img_in, mask=None, bbox=BoundingBox(), ref=None):
+    def __init__(self, img_in):
         """
-
         :param img_in:
-        :param mask:
-        :param bbox: BoundingBox object with min and max values for each dimension, used for cropping.
-        :param ref:
         """
         self.img_in = img_in
-        self.mask = mask
-        self.bbox = bbox
-        self.ref = ref
+        self.bbox = BoundingBox()
 
     def crop(self, background=None):
         """
