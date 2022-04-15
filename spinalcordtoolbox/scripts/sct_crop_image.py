@@ -9,7 +9,6 @@
 # About the license: see the file LICENSE.TXT
 
 import sys
-import os
 
 from spinalcordtoolbox.cropping import ImageCropper, BoundingBox
 from spinalcordtoolbox.image import Image, add_suffix
