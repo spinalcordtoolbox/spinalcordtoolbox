@@ -190,7 +190,7 @@ sct_crop_image -i dmri.nii.gz -m mask_dmri_dwi_mean.nii.gz -o dmri_crop.nii.gz
 # motion correction
 # Tips: if data have very low SNR you can increase the number of successive images that are averaged into group with "-g". Also see: sct_dmri_moco -h
 sct_dmri_moco -i dmri_crop.nii.gz -bvec bvecs.txt
-# segmentation with propseg
+# segmentat spinal cord
 sct_deepseg_sc -i dmri_crop_moco_dwi_mean.nii.gz -c dwi -qc "$SCT_BP_QC_FOLDER"
 # Generate QC for sct_dmri_moco ('dmri_crop_moco_dwi_mean_seg.nii.gz' is needed to align each slice in the QC mosaic)
 sct_qc -i dmri_crop.nii.gz -d dmri_crop_moco.nii.gz -s dmri_crop_moco_dwi_mean_seg.nii.gz -p sct_dmri_moco -qc "$SCT_BP_QC_FOLDER"
