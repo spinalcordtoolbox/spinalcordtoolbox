@@ -368,7 +368,7 @@ def main(argv=None):
                   'label'),
                  verbose=verbose
                  )
-        label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
+        label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz')
 
     else:
         printv('\nCreate label to identify disc...', verbose)

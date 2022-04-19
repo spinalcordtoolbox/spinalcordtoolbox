@@ -20,14 +20,13 @@ from spinalcordtoolbox.centerline.core import get_centerline
 logger = logging.getLogger(__name__)
 
 
-def label_vert(fname_seg, fname_label, verbose=1):
+def label_vert(fname_seg, fname_label):
     """
     Label segmentation using vertebral labeling information. No orientation expected.
 
     :param fname_seg: file name of segmentation.
     :param fname_label: file name for a labelled segmentation that will be used to label the input segmentation
     :param fname_out: file name of the output labeled segmentation. If empty, will add suffix "_labeled" to fname_seg
-    :param verbose:
     :return:
     """
     # Open labels
@@ -45,8 +44,8 @@ def label_vert(fname_seg, fname_label, verbose=1):
     list_disc_value = [x for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
     list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
     # label segmentation
-    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
-    label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    label_segmentation(fname_seg, list_disc_z, list_disc_value)
+    label_discs(fname_seg, list_disc_z, list_disc_value)
 
 
 def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='..',
@@ -250,8 +249,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     list_disc_value.insert(0, upper_disc - 1)
 
     # Label segmentation
-    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
-    label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    label_segmentation(fname_seg, list_disc_z, list_disc_value)
+    label_discs(fname_seg, list_disc_z, list_disc_value)
 
 
 class EmptyArrayError(ValueError):
@@ -463,14 +462,13 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     return z + zrange[ind_peak] - zshift
 
 
-def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
+def label_segmentation(fname_seg, list_disc_z, list_disc_value):
     """
     Label segmentation image
 
     :param fname_seg: fname of the segmentation, no orientation expected
     :param list_disc_z: list of z that correspond to a disc
     :param list_disc_value: list of associated disc values
-    :param verbose:
     :return:
     """
 
@@ -501,14 +499,13 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled'))
 
 
-def label_discs(fname_seg, list_disc_z, list_disc_value, verbose=1):
+def label_discs(fname_seg, list_disc_z, list_disc_value):
     """
     Create file with single voxel label in the middle of the spinal cord for each disc.
 
     :param fname_seg: fname of the segmentation, no orientation expected
     :param list_disc_z: list of z that correspond to a disc
     :param list_disc_value: list of associated disc values
-    :param verbose:
     :return:
     """
     seg = Image(fname_seg)
