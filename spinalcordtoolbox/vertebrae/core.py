@@ -477,9 +477,7 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value):
     init_orientation = seg.orientation
     seg.change_orientation("RPI")
 
-    dim = seg.dim
-    ny = dim[1]
-    nz = dim[2]
+    nz = seg.dim[2]
     # loop across z
     for iz in range(nz):
         # get index of the disc right above iz
