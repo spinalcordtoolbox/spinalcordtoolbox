@@ -467,17 +467,14 @@ def label_segmentation(fname_seg, discs):
     seg.change_orientation("RPI")
 
     nz = seg.dim[2]
-    # loop across z
     for iz in range(nz):
-        # get index of the disc right above iz
+        # get value of the disc right above iz
         try:
-            ind_above_iz = max([i for i in range(len(discs)) if discs[i][0] > iz])
+            # +1 because iz is BELOW the disc
+            _, vertebral_level = min((z, value+1) for (z, value) in discs if z > iz)
         except ValueError:
-            # if ind_above_iz is empty, attribute value 0
+            # if no discs are above iz, default to 0
             vertebral_level = 0
-        else:
-            # assign vertebral level (add one because iz is BELOW the disk)
-            vertebral_level = discs[ind_above_iz][1] + 1
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
