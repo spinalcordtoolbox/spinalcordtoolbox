@@ -27,16 +27,11 @@ def label_vert(fname_seg, fname_label):
     :param fname_seg: file name of segmentation.
     :param fname_label: file name for a labelled segmentation that will be used to label the input segmentation
     :param fname_out: file name of the output labeled segmentation. If empty, will add suffix "_labeled" to fname_seg
-    :return:
     """
-    # Open labels
-    im_disc = Image(fname_label).change_orientation("RPI")
     # retrieve all labels
-    coord_label = im_disc.getNonZeroCoordinates()
-    discs = []
-    for i in range(len(coord_label)):
-        # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
-        discs.insert(0, (coord_label[i].z, coord_label[i].value - 1))
+    coord_labels = Image(fname_label).change_orientation("RPI").getNonZeroCoordinates()
+    # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
+    discs = [(cl.z, cl.value - 1) for cl in reversed(coord_labels)]
     discs.sort(reverse=True)
     # label segmentation
     label_segmentation(fname_seg, discs)
