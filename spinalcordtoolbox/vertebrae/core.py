@@ -141,8 +141,8 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         logger.info('Current disc: %s (z=%s). Direction: %s', current_value, current_z, direction)
         try:
             # get z corresponding to current disc on template
-            current_z_template = list_disc_z_template[current_value]
-        except IndexError:
+            current_z_template = list_disc_z_template[list_disc_value_template.index(current_value)]
+        except (ValueError, IndexError):
             # in case reached the bottom (see issue #849)
             logger.warning('Reached the bottom of the template. Stop searching.')
             break
