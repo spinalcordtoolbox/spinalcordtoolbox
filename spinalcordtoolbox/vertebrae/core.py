@@ -86,7 +86,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     xct = int(np.round(nxt / 2))  # direction RL
     yct = int(np.round(nyt / 2))  # direction AP
 
-    # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
+    # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C3/C4], ..., [L1/L2 -> L2/L3]
     centerline_level = data_disc_template[xct, yct, :]
     # attribute value to each disc. Starts from max level, then decrease.
     min_level = centerline_level[centerline_level.nonzero()].min()
