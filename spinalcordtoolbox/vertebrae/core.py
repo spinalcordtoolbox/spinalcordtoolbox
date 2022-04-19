@@ -33,19 +33,14 @@ def label_vert(fname_seg, fname_label):
     im_disc = Image(fname_label).change_orientation("RPI")
     # retrieve all labels
     coord_label = im_disc.getNonZeroCoordinates()
-    # compute list_disc_z and list_disc_value
-    list_disc_z = []
-    list_disc_value = []
+    discs = []
     for i in range(len(coord_label)):
-        list_disc_z.insert(0, coord_label[i].z)
         # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
-        list_disc_value.insert(0, coord_label[i].value - 1)
-
-    list_disc_value = [x for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
-    list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
+        discs.insert(0, (coord_label[i].z, coord_label[i].value - 1))
+    discs.sort(reverse=True)
     # label segmentation
-    label_segmentation(fname_seg, list_disc_z, list_disc_value)
-    label_discs(fname_seg, list_disc_z, list_disc_value)
+    label_segmentation(fname_seg, discs)
+    label_discs(fname_seg, discs)
 
 
 def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='..',
@@ -249,8 +244,9 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     list_disc_value.insert(0, upper_disc - 1)
 
     # Label segmentation
-    label_segmentation(fname_seg, list_disc_z, list_disc_value)
-    label_discs(fname_seg, list_disc_z, list_disc_value)
+    discs = list(zip(list_disc_z, list_disc_value))
+    label_segmentation(fname_seg, discs)
+    label_discs(fname_seg, discs)
 
 
 class EmptyArrayError(ValueError):
@@ -462,14 +458,12 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     return z + zrange[ind_peak] - zshift
 
 
-def label_segmentation(fname_seg, list_disc_z, list_disc_value):
+def label_segmentation(fname_seg, discs):
     """
     Label segmentation image
 
     :param fname_seg: fname of the segmentation, no orientation expected
-    :param list_disc_z: list of z that correspond to a disc
-    :param list_disc_value: list of associated disc values
-    :return:
+    :param discs: list of (z, value) pairs, one for each disc
     """
 
     # open segmentation
@@ -482,13 +476,13 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value):
     for iz in range(nz):
         # get index of the disc right above iz
         try:
-            ind_above_iz = max([i for i in range(len(list_disc_z)) if list_disc_z[i] > iz])
+            ind_above_iz = max([i for i in range(len(discs)) if discs[i][0] > iz])
         except ValueError:
             # if ind_above_iz is empty, attribute value 0
             vertebral_level = 0
         else:
             # assign vertebral level (add one because iz is BELOW the disk)
-            vertebral_level = list_disc_value[ind_above_iz] + 1
+            vertebral_level = discs[ind_above_iz][1] + 1
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
@@ -497,14 +491,12 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value):
     seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled'))
 
 
-def label_discs(fname_seg, list_disc_z, list_disc_value):
+def label_discs(fname_seg, discs):
     """
     Create file with single voxel label in the middle of the spinal cord for each disc.
 
     :param fname_seg: fname of the segmentation, no orientation expected
-    :param list_disc_z: list of z that correspond to a disc
-    :param list_disc_value: list of associated disc values
-    :return:
+    :param discs: list of (z, value) pairs, one for each disc
     """
     seg = Image(fname_seg)
     init_orientation = seg.orientation
@@ -512,21 +504,21 @@ def label_discs(fname_seg, list_disc_z, list_disc_value):
     disc_data = np.zeros_like(seg.data)
     nx, ny, nz = seg.data.shape
 
-    for i in range(len(list_disc_z)):
-        if list_disc_z[i] < nz:
+    for disc_z, disc_value in discs:
+        if disc_z < nz:
             try:
-                slices = seg.data[:, :, list_disc_z[i]]
+                slices = seg.data[:, :, disc_z]
                 cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
             except EmptyArrayError:
                 logger.warning("During disc labeling, center of mass calculation failed due to discontinuities in "
                                "segmented spinal cord; please check the quality of your segmentation. Using "
                                "interpolated centerline as a fallback.")
                 interpolated_centerline, _, _, _ = get_centerline(seg)
-                slices = interpolated_centerline.data[:, :, list_disc_z[i]]
+                slices = interpolated_centerline.data[:, :, disc_z]
                 cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
 
             # Disc value are offset by one due to legacy code
-            disc_data[cx, cy, list_disc_z[i]] = list_disc_value[i] + 1
+            disc_data[cx, cy, disc_z] = disc_value + 1
 
     seg.data = disc_data
     seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled_disc'))
