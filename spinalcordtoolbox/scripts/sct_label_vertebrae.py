@@ -431,8 +431,12 @@ def main(argv=None):
 
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1
-        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, arguments.param, init_disc=init_disc,
-                            verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
+        try:
+            vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, arguments.param, init_disc=init_disc,
+                                verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
+        except ValueError as e:
+            printv(f'Vertebral detection failed: {e}', 1, 'error')
+            sys.exit(1)
 
     # un-straighten labeled spinal cord
     printv('\nUn-straighten labeling...', verbose)

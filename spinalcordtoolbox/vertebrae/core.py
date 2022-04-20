@@ -131,6 +131,9 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # ===========================================================================
     logger.info('Detect intervertebral discs...')
     current_z, current_value = init_disc
+    if (current_value not in list_disc_value_template) or (current_value-1 not in list_disc_value_template):
+        logger.error('Initial disk (%s) is not in template. Cannot detect intervertebral discs.', current_value)
+        raise ValueError('Initial disk is not in template.')
     # create list for z and disc
     list_disc_z = []
     list_disc_value = []
