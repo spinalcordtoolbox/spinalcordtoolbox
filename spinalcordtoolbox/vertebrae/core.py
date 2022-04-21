@@ -216,7 +216,11 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
             logger.info('.. Switching to inferior direction.')
             direction = 'inferior'
             current_value = init_disc[1] + 1
-            current_z = init_disc[0] - list_distance[list_disc_value_template.index(current_value)]
+            try:
+                current_z = init_disc[0] - list_distance[list_disc_value_template.index(current_value)]
+            except ValueError:
+                logger.info('No disc is inferior to the initial disc.')
+                search_next_disc = False
         # if current_z is lower than searching zone, stop searching
         if current_z <= 0:
             search_next_disc = False
