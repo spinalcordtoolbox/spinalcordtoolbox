@@ -119,34 +119,34 @@ MODELS = {
 # Regions could be: sc, gm, lesion, tumor
 TASKS = {
     'seg_sc_t2star':
-        {'description': 'Cord segmentation on T2*-weighted contrast.',
+        {'description': 'Cord segmentation on T2*-weighted contrast',
          'models': ['t2star_sc']},
     'seg_mice_sc':
-        {'description': 'Cord segmentation on mouse MRI.',
+        {'description': 'Cord segmentation on mouse MRI',
          'models': ['mice_uqueensland_sc']},
     'seg_mice_gm':
-        {'description': 'Gray matter segmentation on mouse MRI.',
+        {'description': 'Gray matter segmentation on mouse MRI',
          'models': ['mice_uqueensland_gm']},
     'seg_tumor_t2':
-        {'description': 'Cord tumor segmentation on T2-weighted contrast.',
+        {'description': 'Cord tumor segmentation on T2-weighted contrast',
          'models': ['findcord_tumor', 't2_tumor']},
     'seg_ms_sc_mp2rage':
-        {'description': 'Cord segmentation on MP2RAGE in MS patients.',
+        {'description': 'Cord segmentation on MP2RAGE in MS patients',
          'models': ['model_seg_ms_sc_mp2rage']},
     'seg_ms_lesion_mp2rage':
-        {'description': 'MS lesion segmentation on cropped MP2RAGE data.',
+        {'description': 'MS lesion segmentation on cropped MP2RAGE data',
          'models': ['model_seg_ms_lesion_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
-        {'description': 'Multiclass cord tumor segmentation.',
+        {'description': 'Multiclass cord tumor segmentation',
          'models': ['findcord_tumor', 'model_seg_sctumor-edema-cavity_t2-t1_unet3d-multichannel']},
     'seg_exvivo_gm-wm_t2':
-        {'description': 'Grey/white matter seg on exvivo human T2w.',
+        {'description': 'Grey/white matter seg on exvivo human T2w',
          'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']},
     'seg_gm_sc_7t_t2star':
-        {'description': 'SC/GM seg on T2*-weighted at 7T.',
+        {'description': 'SC/GM seg on T2*-weighted at 7T',
          'models': ['model_7t_multiclass_gm_sc_unet2d']},
     'seg_lumbar_sc_t2w':
-        {'description': 'Lumbar SC segmentation with 3D UNet',
+        {'description': 'Lumbar cord segmentation with 3D UNet',
          'models': ['model_seg_epfl_t2w_lumbar_sc']}
 }
 
