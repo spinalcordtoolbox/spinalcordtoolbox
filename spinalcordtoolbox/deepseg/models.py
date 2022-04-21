@@ -146,7 +146,7 @@ TASKS = {
         {'description': 'SC/GM seg on T2*-weighted at 7T.',
          'models': ['model_7t_multiclass_gm_sc_unet2d']},
     'seg_lumbar_sc_t2w':
-        {'description': 'Lumbar SC segmentation on T2w contrast with 3D UNet.',
+        {'description': 'Lumbar SC segmentation with 3D UNet',
          'models': ['model_seg_epfl_t2w_lumbar_sc']}
 }
 
