@@ -89,4 +89,5 @@ if "%cached_errorlevel%"=="" set cached_errorlevel=0
 popd
 where deactivate
 if %errorlevel% EQU 0 call deactivate
+PAUSE
 exit /b %cached_errorlevel%
