@@ -96,9 +96,10 @@ class ImageCropper(object):
         """
         data_nonzero = np.nonzero(img_mask.data)
         # find min and max boundaries of the mask
-        dim = len(data_nonzero)
-        self.bbox.xmin, self.bbox.ymin, self.bbox.zmin = [min(data_nonzero[i]) for i in range(dim)]
-        self.bbox.xmax, self.bbox.ymax, self.bbox.zmax = [max(data_nonzero[i]) for i in range(dim)]
+        self.bbox = BoundingBox(
+            min(data_nonzero[0]), max(data_nonzero[0]),
+            min(data_nonzero[1]), max(data_nonzero[1]),
+            min(data_nonzero[2]), max(data_nonzero[2]))
 
     def get_bbox_from_ref(self, img_ref):
         """
@@ -145,15 +146,11 @@ class ImageCropper(object):
         img_labels.change_orientation(native_orientation)
         cropping_coord = img_labels.getNonZeroCoordinates(sorting='value')
         # Since there is no cropping along the R-L direction, xmin/xmax are based on image dimension
-        self.bbox.xmin, self.bbox.ymin, self.bbox.zmin = (
-            0,
+        self.bbox = BoundingBox(
+            0, img_labels.dim[0],
             min(cropping_coord[0].y, cropping_coord[1].y),
-            min(cropping_coord[0].z, cropping_coord[1].z),
-        )
-        self.bbox.xmax, self.bbox.ymax, self.bbox.zmax = (
-            img_labels.dim[0],
             max(cropping_coord[0].y, cropping_coord[1].y),
-            max(cropping_coord[0].z, cropping_coord[1].z),
-        )
+            min(cropping_coord[0].z, cropping_coord[1].z),
+            max(cropping_coord[0].z, cropping_coord[1].z))
         # Put back input image in native orientation
         self.img_in.change_orientation(native_orientation)
