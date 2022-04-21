@@ -19,7 +19,7 @@ import numpy as np
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.vertebrae.core import (
     get_z_and_disc_values_from_label, vertebral_detection, expand_labels,
-    crop_labels, label_vert)
+    crop_labels, label_vert, EmptyArrayError)
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
@@ -411,7 +411,11 @@ def main(argv=None):
                                 '-v', '0'])
         # get z value and disk value to initialize labeling
         printv('\nGet z and disc values from straight label...', verbose)
-        init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
+        try:
+            init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
+        except EmptyArrayError:
+            printv('Vertebral detection failed: Missing label or zero label for initial disc.', 1, 'error')
+            sys.exit(1)
         printv('.. ' + str(init_disc), verbose)
 
         # apply laplacian filtering
