@@ -28,12 +28,8 @@ class ImageCropper(object):
         :param img_in:
         """
         self.img_in = img_in
-        # the default is to keep the whole image
-        self.bbox = BoundingBox(
-            0, img_in.dim[0]-1,
-            0, img_in.dim[1]-1,
-            0, img_in.dim[2]-1,
-        )
+        # Call one of the `get_bbox_from_*` methods to set the bounding box.
+        self.bbox = None
 
     def crop(self, background=None):
         """
@@ -44,7 +40,10 @@ class ImageCropper(object):
         :return Image: img_out
         """
         bbox = self.bbox
-
+        if bbox is None:
+            raise ValueError(
+                'Use one of the `get_bbox_from_*` methods to set the bounding '
+                'box before calling `ImageCropper.crop()`.')
         logger.info("Bounding box: x=[{}, {}], y=[{}, {}], z=[{}, {}]"
                     .format(bbox.xmin, bbox.xmax+1, bbox.ymin, bbox.ymax+1, bbox.zmin, bbox.zmax+1))
 
