@@ -86,7 +86,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     xct = int(np.round(nxt / 2))  # direction RL
     yct = int(np.round(nyt / 2))  # direction AP
 
-    # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
+    # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C3/C4], ..., [L1/L2 -> L2/L3]
     centerline_level = data_disc_template[xct, yct, :]
     # attribute value to each disc. Starts from max level, then decrease.
     min_level = centerline_level[centerline_level.nonzero()].min()
@@ -130,9 +130,10 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # FIND DISCS
     # ===========================================================================
     logger.info('Detect intervertebral discs...')
-    # assign initial z and disc
-    current_z = init_disc[0]
-    current_disc = init_disc[1]
+    current_z, current_value = init_disc
+    if (current_value not in list_disc_value_template) or (current_value-1 not in list_disc_value_template):
+        logger.error('Initial disc (%s) is not in template. Cannot detect intervertebral discs.', current_value)
+        raise ValueError('Initial disc is not in template.')
     # create list for z and disc
     list_disc_z = []
     list_disc_value = []
@@ -140,39 +141,39 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     direction = 'superior'
     search_next_disc = True
     while search_next_disc:
-        logger.info('Current disc: %s (z=%s). Direction: %s', current_disc, current_z, direction)
+        logger.info('Current disc: %s (z=%s). Direction: %s', current_value, current_z, direction)
         try:
             # get z corresponding to current disc on template
-            current_z_template = list_disc_z_template[current_disc]
-        except:
+            current_z_template = list_disc_z_template[current_value]
+        except IndexError:
             # in case reached the bottom (see issue #849)
             logger.warning('Reached the bottom of the template. Stop searching.')
             break
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
-        if current_disc != 1:
+        if current_value != 1:
             current_z = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param['size_RL'],
                                         y=yc, yshift=param['shift_AP'], ysize=param['size_AP'],
                                         z=current_z, zshift=0, zsize=param['size_IS'],
                                         xtarget=xct, ytarget=yct, ztarget=current_z_template,
-                                        zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc),
+                                        zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_value),
                                         path_output=path_output)
 
         # display new disc
         if verbose == 2:
             ax_disc.scatter(yc + param['shift_AP_visu'], current_z, c='yellow', s=10)
-            ax_disc.text(yc + param['shift_AP_visu'] + 4, current_z, str(current_disc) + '/' + str(current_disc + 1),
+            ax_disc.text(yc + param['shift_AP_visu'] + 4, current_z, str(current_value) + '/' + str(current_value + 1),
                          verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=7)
 
         # append to main list
         if direction == 'superior':
             # append at the beginning
             list_disc_z.insert(0, current_z)
-            list_disc_value.insert(0, current_disc)
+            list_disc_value.insert(0, current_value)
         elif direction == 'inferior':
             # append at the end
             list_disc_z.append(current_z)
-            list_disc_value.append(current_disc)
+            list_disc_value.append(current_value)
 
         # adjust correcting factor based on already-identified discs
         if len(list_disc_z) > 1:
@@ -194,28 +195,32 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # assign new current_z and disc value
         if direction == 'superior':
             try:
-                approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc - 1)]
+                approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_value - 1)]
             except ValueError:
                 logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z + approx_distance_to_next_disc
-            current_disc = current_disc - 1
+            current_value = current_value - 1
         elif direction == 'inferior':
             try:
-                approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
+                approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_value)]
             except ValueError:
                 logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z - approx_distance_to_next_disc
-            current_disc = current_disc + 1
+            current_value = current_value + 1
 
         # if current_z is larger than searching zone, switch direction (and start from initial z minus approximate
         # distance from updated template distance)
-        if current_z >= nz or current_disc == 0:
+        if current_z >= nz or current_value == 0:
             logger.info('.. Switching to inferior direction.')
             direction = 'inferior'
-            current_disc = init_disc[1] + 1
-            current_z = init_disc[0] - list_distance[list_disc_value_template.index(current_disc)]
+            current_value = init_disc[1] + 1
+            try:
+                current_z = init_disc[0] - list_distance[list_disc_value_template.index(current_value)]
+            except ValueError:
+                logger.info('No disc is inferior to the initial disc.')
+                search_next_disc = False
         # if current_z is lower than searching zone, stop searching
         if current_z <= 0:
             search_next_disc = False
