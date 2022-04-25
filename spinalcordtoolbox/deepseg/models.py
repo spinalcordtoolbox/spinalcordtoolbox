@@ -8,10 +8,10 @@ Important: model names (onnx or pt files) should have the same name as the enclo
 import os
 import json
 import logging
-import colored
 
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.download
+from spinalcordtoolbox.utils import stylize
 
 
 logger = logging.getLogger(__name__)
@@ -221,29 +221,29 @@ def list_tasks():
 def display_list_tasks():
     tasks = sct.deepseg.models.list_tasks()
     # Display beautiful output
-    color = {True: 'green', False: 'red'}
+    color = {True: 'LightGreen', False: 'LightRed'}
     print("{:<30s}{:<50s}{:<15s}MODELS".format("TASK", "DESCRIPTION", "CONTRAST"))
     print("-" * 120)
     for name_task, value in tasks.items():
         path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
         are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
-        task_status = colored.stylize(name_task.ljust(30),
-                                      colored.fg(color[all(are_models_valid)]))
-        description_status = colored.stylize(value['description'].ljust(50),
-                                             colored.fg(color[all(are_models_valid)]))
-        models_status = ', '.join([colored.stylize(model_name,
-                                                   colored.fg(color[is_valid]))
+        task_status = stylize(name_task.ljust(30),
+                              color[all(are_models_valid)])
+        description_status = stylize(value['description'].ljust(50),
+                                     color[all(are_models_valid)])
+        models_status = ', '.join([stylize(model_name,
+                                           color[is_valid])
                                    for model_name, is_valid in zip(value['models'], are_models_valid)])
-        input_contrasts = colored.stylize(str(', '.join(model_name for model_name in
-                                                        get_required_contrasts(name_task))).ljust(15),
-                                          colored.fg(color[all(are_models_valid)]))
+        input_contrasts = stylize(str(', '.join(model_name for model_name in
+                                                get_required_contrasts(name_task))).ljust(15),
+                                  color[all(are_models_valid)])
 
         print("{}{}{}{}".format(task_status, description_status, input_contrasts, models_status))
 
     print(
         '\nLegend: {} | {}\n'.format(
-            colored.stylize("installed", colored.fg(color[True])),
-            colored.stylize("not installed", colored.fg(color[False]))))
+            stylize("installed", color[True]),
+            stylize("not installed", color[False])))
     exit(0)
 
 
