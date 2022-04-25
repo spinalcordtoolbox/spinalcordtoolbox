@@ -19,7 +19,7 @@ import numpy as np
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.vertebrae.core import (
     get_z_and_disc_values_from_label, vertebral_detection, expand_labels,
-    crop_labels, label_vert)
+    crop_labels, label_vert, EmptyArrayError)
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
@@ -411,7 +411,11 @@ def main(argv=None):
                                 '-v', '0'])
         # get z value and disk value to initialize labeling
         printv('\nGet z and disc values from straight label...', verbose)
-        init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
+        try:
+            init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
+        except EmptyArrayError:
+            printv('Vertebral detection failed: Missing label or zero label for initial disc.', 1, 'error')
+            sys.exit(1)
         printv('.. ' + str(init_disc), verbose)
 
         # apply laplacian filtering
@@ -431,8 +435,12 @@ def main(argv=None):
 
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1
-        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, arguments.param, init_disc=init_disc,
-                            verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
+        try:
+            vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, arguments.param, init_disc=init_disc,
+                                verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
+        except ValueError as e:
+            printv(f'Vertebral detection failed: {e}', 1, 'error')
+            sys.exit(1)
 
     # un-straighten labeled spinal cord
     printv('\nUn-straighten labeling...', verbose)

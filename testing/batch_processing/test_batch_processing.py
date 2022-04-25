@@ -46,7 +46,9 @@ def test_batch_processing_results(csv_filepath, row, column):
     # These values should be considered a failure, but because the cause is known, skipping the
     # test saves us the intermittent interruptions on PRs until we can fix the issue.
     # TODO: Remove this skip once we can implement a long-term workaround for the issue
-    if actual_value in [0.780605541771859, 0.77461183127549, 54.42425823974834]:
+    if (actual_value == pytest.approx(0.780605541771859) or
+            actual_value == pytest.approx(0.77461183127549) or
+            actual_value == pytest.approx(54.42425823974834)):
         pytest.skip("Values associated with Xeon(R) Platinum 8370C CPU detected!")
     else:
         assert actual_value == pytest.approx(expected_value)  # Default rel_tolerance: 1e-6
