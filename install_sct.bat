@@ -19,7 +19,7 @@ if exist spinalcordtoolbox\ (
   echo ### Previous spinalcordtoolbox installation found at %HOMEPATH%\spinalcordtoolbox.
   rem NB: The rmdir command will output 'spinalcordtoolbox\, Are you sure (Y/N)?', so we don't need our own Y/N prompt
   rem     We also use "echo set /p=" here in order to make sure that Y/N text is output on the same line.
-  echo|set /p="### Continuing will overwrite the existing installation directory " || goto error
+  echo|set /p="### Continuing will overwrite the existing installation directory "
   rmdir /s spinalcordtoolbox\ || goto error
   if exist spinalcordtoolbox\ (
     echo ### spinalcordtoolbox\ not removed. Quitting installation...
@@ -89,4 +89,5 @@ if "%cached_errorlevel%"=="" set cached_errorlevel=0
 popd
 where deactivate >nul 2>&1
 if %errorlevel% EQU 0 call deactivate
+PAUSE
 exit /b %cached_errorlevel%
