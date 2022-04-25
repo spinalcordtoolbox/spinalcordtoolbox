@@ -1,4 +1,3 @@
-colored
 dipy
 # h5py is pinned to minor than 3 due to issues with Keras/TF
 # https://github.com/tensorflow/tensorflow/issues/44467
