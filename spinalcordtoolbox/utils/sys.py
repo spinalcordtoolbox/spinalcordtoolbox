@@ -423,7 +423,7 @@ def printv(string, verbose=1, type='normal', file=None):
     Enables to print color-coded messages, depending on verbose status. Only use in command-line programs (e.g.,
     sct_propseg).
     """
-    colors = {'normal': ANSIColors16.ResetAll, 'info': ANSIColors16.LightGreen, 
+    colors = {'normal': ANSIColors16.ResetAll, 'info': ANSIColors16.LightGreen,
               'warning': ANSIColors16.LightYellow + ANSIColors16.Bold,
               'error': ANSIColors16.LightRed + ANSIColors16.Bold,
               'code': ANSIColors16.LightBlue, 'bold': ANSIColors16.Bold, 'process': ANSIColors16.LightMagenta}
