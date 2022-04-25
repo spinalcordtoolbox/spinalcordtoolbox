@@ -23,16 +23,68 @@ import tqdm
 logger = logging.getLogger(__name__)
 
 
-class bcolors(object):
-    normal = '\033[0m'
-    red = '\033[91m'
-    green = '\033[92m'
-    yellow = '\033[93m'
-    blue = '\033[94m'
-    magenta = '\033[95m'
-    cyan = '\033[96m'
-    bold = '\033[1m'
-    underline = '\033[4m'
+class ANSIColors16(object):
+    """This class defines the ANSI color escape codes for terminals that support 16 colors.
+
+    Notes:
+        - Most terminals support 8 colors (base color set) or 16 colors (base colors + light colors).
+        - We use these codes instead of dedicated color packages (colored, colorama) because those packages
+          are meant for 256-color coloring, which only some terminals support. (Notably, the Windows Command Prompt
+          does not support 256 colors.)
+        - Further reading: https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#rich-text
+        - Source for codes: https://pkg.go.dev/github.com/whitedevops/colors
+    """
+    ResetAll = "\033[0m"
+
+    Bold = "\033[1m"
+    Dim = "\033[2m"
+    Underlined = "\033[4m"
+    Blink = "\033[5m"
+    Reverse = "\033[7m"
+    Hidden = "\033[8m"
+
+    ResetBold = "\033[21m"
+    ResetDim = "\033[22m"
+    ResetUnderlined = "\033[24m"
+    ResetBlink = "\033[25m"
+    ResetReverse = "\033[27m"
+    ResetHidden = "\033[28m"
+
+    Default = "\033[39m"
+    Black = "\033[30m"
+    Red = "\033[31m"
+    Green = "\033[32m"
+    Yellow = "\033[33m"
+    Blue = "\033[34m"
+    Magenta = "\033[35m"
+    Cyan = "\033[36m"
+    LightGray = "\033[37m"
+    DarkGray = "\033[90m"
+    LightRed = "\033[91m"
+    LightGreen = "\033[92m"
+    LightYellow = "\033[93m"
+    LightBlue = "\033[94m"
+    LightMagenta = "\033[95m"
+    LightCyan = "\033[96m"
+    White = "\033[97m"
+
+    BackgroundDefault = "\033[49m"
+    BackgroundBlack = "\033[40m"
+    BackgroundRed = "\033[41m"
+    BackgroundGreen = "\033[42m"
+    BackgroundYellow = "\033[43m"
+    BackgroundBlue = "\033[44m"
+    BackgroundMagenta = "\033[45m"
+    BackgroundCyan = "\033[46m"
+    BackgroundLightGray = "\033[47m"
+    BackgroundDarkGray = "\033[100m"
+    BackgroundLightRed = "\033[101m"
+    BackgroundLightGreen = "\033[102m"
+    BackgroundLightYellow = "\033[103m"
+    BackgroundLightBlue = "\033[104m"
+    BackgroundLightMagenta = "\033[105m"
+    BackgroundLightCyan = "\033[106m"
+    BackgroundWhite = "\033[107m"
 
 
 if os.getenv('SENTRY_DSN', None):
@@ -363,8 +415,10 @@ def printv(string, verbose=1, type='normal', file=None):
     Enables to print color-coded messages, depending on verbose status. Only use in command-line programs (e.g.,
     sct_propseg).
     """
-    colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow + bcolors.bold, 'error': bcolors.red + bcolors.bold,
-              'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
+    colors = {'normal': ANSIColors16.ResetAll, 'info': ANSIColors16.LightGreen, 
+              'warning': ANSIColors16.LightYellow + ANSIColors16.Bold,
+              'error': ANSIColors16.LightRed + ANSIColors16.Bold,
+              'code': ANSIColors16.LightBlue, 'bold': ANSIColors16.Bold, 'process': ANSIColors16.LightMagenta}
 
     if file is None:
         # replicate the logic from print()
@@ -376,8 +430,8 @@ def printv(string, verbose=1, type='normal', file=None):
         try:
             # Print color only if the output is the terminal
             if file.isatty():
-                color = colors.get(type, bcolors.normal)
-                print(color + string + bcolors.normal, file=file)
+                color = colors.get(type, ANSIColors16.ResetAll)
+                print(color + string + ANSIColors16.ResetAll, file=file)
             else:
                 print(string, file=file)
         except Exception as e:
