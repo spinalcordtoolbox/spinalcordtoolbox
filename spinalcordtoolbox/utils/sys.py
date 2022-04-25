@@ -23,6 +23,14 @@ import tqdm
 logger = logging.getLogger(__name__)
 
 
+def stylize(string, styles):
+    """Helper function that mimics colored.stylize to reduce boilerplate when coloring text."""
+    if not isinstance(styles, list):
+        styles = [styles]
+    style_codes = "".join([getattr(ANSIColors16, style, ANSIColors16.ResetAll) for style in styles])
+    return style_codes + string + ANSIColors16.ResetAll
+
+
 class ANSIColors16(object):
     """This class defines the ANSI color escape codes for terminals that support 16 colors.
 
