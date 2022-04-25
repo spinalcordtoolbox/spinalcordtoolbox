@@ -442,7 +442,7 @@ def printv(string, verbose=1, type='normal', file=None):
                 print(color + string + ANSIColors16.ResetAll, file=file)
             else:
                 print(string, file=file)
-        except Exception as e:
+        except Exception:
             print(string)
 
 
