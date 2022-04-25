@@ -28,16 +28,8 @@ import traceback
 import requirements
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
-from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__, set_loglevel
-
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
+from spinalcordtoolbox.utils.sys import (sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__,
+                                         __data_dir__, set_loglevel, ANSIColors16)
 
 
 def _test_condition(condition):
@@ -139,15 +131,15 @@ def print_line(string):
 
 
 def print_ok(more=None):
-    print("[{}OK{}]{}".format(bcolors.OKGREEN, bcolors.ENDC, more if more is not None else ""))
+    print("[{}OK{}]{}".format(ANSIColors16.LightGreen, ANSIColors16.ResetAll, more if more is not None else ""))
 
 
 def print_warning(more=None):
-    print("[{}WARNING{}]{}".format(bcolors.WARNING, bcolors.ENDC, more if more is not None else ""))
+    print("[{}WARNING{}]{}".format(ANSIColors16.LightYellow, ANSIColors16.ResetAll, more if more is not None else ""))
 
 
 def print_fail(more=None):
-    print("[{}FAIL{}]{}".format(bcolors.FAIL, bcolors.ENDC, more if more is not None else ""))
+    print("[{}FAIL{}]{}".format(ANSIColors16.LightRed, ANSIColors16.ResetAll, more if more is not None else ""))
 
 
 def add_bash_profile(string):
