@@ -205,6 +205,11 @@ TASKS = {
          'models': ['model_7t_multiclass_gm_sc_unet2d']},
     'seg_lumbar_sc_t2w':
         {'description': 'Lumbar cord segmentation with 3D UNet',
+         'long_description': 'This segmentation model for T2w spinal cord segmentation uses a 3D UNet architecture, '
+                             'and was created with the ivadomed package. Training data was provided by Nawal Kinany '
+                             'and Dimitry Van De Ville of EPFL, with the files consisting of lumbar T2w scans (and '
+                             'manual spinal cord segmentations) of 11 healthy (non-pathological) patients.',
+         'url': 'https://github.com/ivadomed/lumbar_seg_EPFL',
          'models': ['model_seg_epfl_t2w_lumbar_sc']}
 }
 
