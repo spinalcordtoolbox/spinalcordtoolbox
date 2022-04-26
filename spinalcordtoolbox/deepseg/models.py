@@ -193,7 +193,15 @@ TASKS = {
          'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']},
     'seg_gm_sc_7t_t2s':
         {'description': 'SC/GM seg on T2*-weighted contrast at 7T',
-         'long_description': 'This multiclass model (SC/GM) has been developed from 72 subjects acquired at 7T (T2*-w images of the cervical spinal cord) by N.J. Laines Medina, V. Callot and A. Le Troter in the Center for Magnetic Resonance in Biology and Medicine (CRMBM-CEMEREM, UMR 7339, CNRS, Aix-Marseille University, France) including various pathologies (HC, MS, ALS). It was validated between 9-folds (CV) single-class and multi-class models and was enriched by integrating a hybrid data augmentation (composed of classical geometric transformations, MRI artifacts and real GM/WM contrasts distorted with anatomically constrained deformation fields) finally tested with an external multicentric database. For more information visit: ',
+         'long_description': 'This multiclass model (SC/GM) has been developed from 72 subjects acquired at 7T '
+                             '(T2*-w images of the cervical spinal cord) by N.J. Laines Medina, V. Callot and '
+                             'A. Le Troter in the Center for Magnetic Resonance in Biology and Medicine '
+                             '(CRMBM-CEMEREM, UMR 7339, CNRS, Aix-Marseille University, France) including various '
+                             'pathologies (HC, MS, ALS). It was validated between 9-folds (CV) single-class and '
+                             'multi-class models and was enriched by integrating a hybrid data augmentation (composed '
+                             'of classical geometric transformations, MRI artifacts and real GM/WM contrasts distorted '
+                             'with anatomically constrained deformation fields) finally tested with an external '
+                             'multicentric database. For more information visit: ',
          'url': 'https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass',
          'models': ['model_7t_multiclass_gm_sc_unet2d']},
     'seg_lumbar_sc_t2w':
