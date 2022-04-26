@@ -318,6 +318,11 @@ def display_list_tasks():
         '\nLegend: {} | {}\n'.format(
             stylize("installed", color[True]),
             stylize("not installed", color[False])))
+
+    print('To read an in-depth description of the training data, model architecture, etc. used for any of these tasks, '
+          'type the following command:\n'
+          '\n'
+          '    {}'.format(stylize('sct_deepseg -task-description TASK_NAME', ['LightBlue', 'Bold'])))
     exit(0)
 
 
