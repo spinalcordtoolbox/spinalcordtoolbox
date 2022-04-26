@@ -122,13 +122,13 @@ MODELS = {
 TASKS = {
     'seg_sc_t2star':
         {'description': 'Cord segmentation on T2*-weighted contrast.',
-         'long_description': 'This segmentation model for T2*w spinal cords uses the UNet architecture, and was created '
-                             'with the `ivadomed` package. A subset of a private dataset (sct_testing_large) was used, '
-                             'and consists of 236 subjects across 9 different sessions. A total of 388 pairs of T2* '
-                             'images were used (anatomical image + manual cord segmentation). The image properties '
-                             'include various orientations (superior, inferior) and crops (C1-C3, C4-C7, etc.). The '
-                             'dataset was comprised of both non-pathological (healthy) and pathological (MS lesion) '
-                             'adult patients.',
+         'long_description': 'This segmentation model for T2*w spinal cords uses the UNet architecture, and was '
+                             'created with the `ivadomed` package. A subset of a private dataset (sct_testing_large) '
+                             'was used, and consists of 236 subjects across 9 different sessions. A total of 388 pairs '
+                             'of T2* images were used (anatomical image + manual cord segmentation). The image '
+                             'properties include various orientations (superior, inferior) and crops (C1-C3, C4-C7, '
+                             'etc.). The dataset was comprised of both non-pathological (healthy) and pathological (MS '
+                             'lesion) adult patients.',
          'url': 'https://github.com/ivadomed/t2star_sc',
          'models': ['t2star_sc']},
     'seg_mice_sc':
@@ -169,8 +169,8 @@ TASKS = {
          'models': ['model_seg_ms_lesion_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor/edema/cavity segmentation.',
-         'long_description': 'This segmentation model for T1w and T2w spinal tumor, edema, and cavity segmentation uses '
-                             'a 3D UNet architecture, and was created with the `ivadomed` package. Training data '
+         'long_description': 'This segmentation model for T1w and T2w spinal tumor, edema, and cavity segmentation '
+                             'uses a 3D UNet architecture, and was created with the `ivadomed` package. Training data '
                              'consisted of a subset of the dataset used for the model `seg_tumor_t2`, with 243 '
                              'subjects in total: 49 with tumors of type Astrocytoma, 83 with Ependymoma, and 111 with '
                              'Hemangioblastoma. For each subject, the requisite parts of the affected region (tumor, '
