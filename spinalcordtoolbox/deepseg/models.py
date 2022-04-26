@@ -163,9 +163,20 @@ TASKS = {
          'models': ['findcord_tumor', 't2_tumor']},
     'seg_ms_sc_mp2rage':
         {'description': 'Cord segmentation on MP2RAGE in MS patients',
+         'long_description': 'This segmentation model for MP2RAGE spinal cord segmentation uses a Modified3DUNet '
+                             'architecture, and was created with the `ivadomed` package. Training data consisted of '
+                             'scans from 30 pathological (MS) patients, and the dataset included manual segmentations '
+                             'of MS lesions. This dataset was provided by the University of Basel.',
+         'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_sc_mp2rage']},
     'seg_ms_lesion_mp2rage':
         {'description': 'MS lesion segmentation on cropped MP2RAGE data',
+         'long_description': 'This segmentation model for MP2RAGE MS lesion segmentation uses a Modified3DUNet '
+                             'architecture, and was created with the `ivadomed` package. Training data consisted of'
+                             '30 pathological (MS) patients that included manual segmentations of the spinal cord '
+                             'and MS lesions. The dataset was preprocessed to crop around the spinal cord prior to '
+                             'training. This dataset was provided by the University of Basel.',
+         'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor/edema/cavity segmentation.',
