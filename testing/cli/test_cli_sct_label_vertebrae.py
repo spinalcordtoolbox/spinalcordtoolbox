@@ -43,12 +43,68 @@ def test_sct_label_vertebrae_initz_error():
     assert excinfo.value.code == 2
 
 
+# At least for the (default) PAM50 template, there are 3 cases
+# when using a high initial disc value:
+#
+# value=19: the code does the 'superior' direction of the loop,
+#   then does two iterations in the 'inferior' direction, and emits
+#   a warning for 'Disc value not included in template.'
+#
+# value=20: the code does the 'superior' direction of the loop,
+#   then tries to switch to the 'inferior' direction, but
+#   notices that the initial disc was the most 'inferior' disc already.
+#   This is arguably not an error but may be surprising,
+#   so the code emits an informational log.
+#
+# value=21 (or more): the initial disc value is outside the
+#   template, so the code detects this condition and errors out
+#   with a sensible error message.
+
 def test_sct_label_vertebrae_high_value_warning(caplog, tmp_path):
     sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),
                               '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
                               '-c', 't2', '-initz', '40,19',
                               '-ofolder', str(tmp_path)])
     assert 'Disc value not included in template.' in caplog.text
+
+
+def test_sct_label_vertebrae_initial_disc_no_inferior(caplog, tmp_path):
+    caplog.set_level(logging.INFO)
+    sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),
+                              '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                              '-c', 't2', '-initz', '40,20',
+                              '-ofolder', str(tmp_path)])
+    assert 'No disc is inferior to the initial disc.' in caplog.text
+
+
+def test_sct_label_vertebrae_initial_disc_too_high(capsys, tmp_path):
+    with pytest.raises(SystemExit) as excinfo:
+        sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),
+                                  '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                  '-c', 't2', '-initz', '40,21',
+                                  '-ofolder', str(tmp_path)])
+    assert excinfo.value.code == 1
+    assert 'Initial disc is not in template.' in capsys.readouterr().out
+
+
+def test_sct_label_vertebrae_initial_disc_zero(capsys, tmp_path):
+    with pytest.raises(SystemExit) as excinfo:
+        sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),
+                                  '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                  '-c', 't2', '-initz', '40,0',
+                                  '-ofolder', str(tmp_path)])
+    assert excinfo.value.code == 1
+    assert 'Missing label or zero label for initial disc.' in capsys.readouterr().out
+
+
+def test_sct_label_vertebrae_initial_disc_too_low(capsys, tmp_path):
+    with pytest.raises(SystemExit) as excinfo:
+        sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),
+                                  '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                  '-c', 't2', '-initz', '40,-1',
+                                  '-ofolder', str(tmp_path)])
+    assert excinfo.value.code == 1
+    assert 'Initial disc is not in template.' in capsys.readouterr().out
 
 
 def test_sct_label_vertebrae_clean_labels(tmp_path):

@@ -28,16 +28,8 @@ import traceback
 import requirements
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
-from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__, set_loglevel
-
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
+from spinalcordtoolbox.utils.sys import (sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__,
+                                         __data_dir__, set_loglevel, ANSIColors16)
 
 
 def _test_condition(condition):
@@ -73,6 +65,7 @@ def resolve_module(framework_name):
         'Keras': ('keras', True),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
+        'msvc-runtime': ('msvc_runtime', False),
         'mkl-service': (None, False),
         'pytest-cov': ('pytest_cov', False),
         'urllib3[secure]': ('urllib3', False),
@@ -138,15 +131,15 @@ def print_line(string):
 
 
 def print_ok(more=None):
-    print("[{}OK{}]{}".format(bcolors.OKGREEN, bcolors.ENDC, more if more is not None else ""))
+    print("[{}OK{}]{}".format(ANSIColors16.LightGreen, ANSIColors16.ResetAll, more if more is not None else ""))
 
 
 def print_warning(more=None):
-    print("[{}WARNING{}]{}".format(bcolors.WARNING, bcolors.ENDC, more if more is not None else ""))
+    print("[{}WARNING{}]{}".format(ANSIColors16.LightYellow, ANSIColors16.ResetAll, more if more is not None else ""))
 
 
 def print_fail(more=None):
-    print("[{}FAIL{}]{}".format(bcolors.FAIL, bcolors.ENDC, more if more is not None else ""))
+    print("[{}FAIL{}]{}".format(ANSIColors16.LightRed, ANSIColors16.ResetAll, more if more is not None else ""))
 
 
 def add_bash_profile(string):
@@ -211,7 +204,6 @@ def main(argv=None):
     # initialization
     install_software = 0
     e = 0
-    os_running = 'not identified'
 
     # complete test
     if complete_test:
@@ -234,6 +226,8 @@ def main(argv=None):
         os_running = 'linux'
     elif sys.platform.startswith('win32'):
         os_running = 'windows'
+    else:
+        os_running = 'unknown'
 
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
     print('CPU cores: Available: {}, Used by ITK functions: {}'.format(psutil.cpu_count(), int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))))
@@ -313,16 +307,19 @@ def main(argv=None):
         print((status, output), '\n')
 
     # check PropSeg compatibility with OS
-    print_line('Check PropSeg compatibility with OS ')
-    status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
-    if status in (0, 1):
-        print_ok()
+    if sys.platform.startswith('win32'):
+        print_line("Skipping PropSeg compatibility check ")
+        print("[  ] (Not supported on 'native' Windows (without WSL))")
     else:
-        print_fail()
-        print(output)
-        e = 1
-    if complete_test:
-        print((status, output), '\n')
+        status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
+        if status in (0, 1):
+            print_ok()
+        else:
+            print_fail()
+            print(output)
+            e = 1
+        if complete_test:
+            print((status, output), '\n')
 
     print_line('Check if figure can be opened with matplotlib')
     try:
@@ -339,7 +336,7 @@ def main(argv=None):
         print(err)
 
     print_line('Check if figure can be opened with PyQt')
-    if sys.platform == "linux" and 'DISPLAY' not in os.environ:
+    if sys.platform.startswith("linux") and 'DISPLAY' not in os.environ:
         print_fail(" ($DISPLAY not set on X11-supporting system)")
     else:
         try:

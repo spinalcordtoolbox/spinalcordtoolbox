@@ -33,7 +33,7 @@ from textwrap import dedent
 import yaml
 import psutil
 
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_open
 from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, __sct_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import Tee
 
@@ -535,10 +535,8 @@ def main(argv=None):
         send_notification('sct_run_batch: Run completed',
                           status_message + timing_message)
 
-    open_cmd = 'open' if sys.platform == 'darwin' else 'xdg-open'
-
-    print(f'To open the Quality Control (QC) report on a web-browser, run the following:\n'
-          f'{open_cmd} {os.path.join(path_qc, "index.html")}')
+    display_open(file=os.path.join(path_qc, "index.html"),
+                 message="To open the Quality Control (QC) report in a web-browser")
 
     if arguments.zip:
         file_zip = 'sct_run_batch_{}'.format(time.strftime('%Y%m%d%H%M%S'))

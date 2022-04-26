@@ -14,6 +14,7 @@ import shutil
 
 import spinalcordtoolbox as sct
 import spinalcordtoolbox.download
+from spinalcordtoolbox.utils import stylize
 
 
 logger = logging.getLogger(__name__)
@@ -106,6 +107,14 @@ MODELS = {
         "contrasts": ["t2star"],
         "default": False,
     },
+    "model_seg_epfl_t2w_lumbar_sc": {
+        "url": [
+            "https://github.com/ivadomed/lumbar_seg_EPFL/releases/download/r20220411/model_seg_epfl_t2w_lumbar_sc.zip"
+        ],
+        "description": "Lumbar SC segmentation on T2w contrast with 3D UNet",
+        "contrasts": ["t2"],
+        "default": False,
+    }
 }
 
 
@@ -154,10 +163,10 @@ TASKS = {
          'url': 'https://github.com/sct-pipeline/tumor-segmentation',
          'models': ['findcord_tumor', 't2_tumor']},
     'seg_ms_sc_mp2rage':
-        {'description': 'Cord segmentation on MP2RAGE in MS patients.',
+        {'description': 'Cord segmentation on MP2RAGE in MS patients',
          'models': ['model_seg_ms_sc_mp2rage']},
     'seg_ms_lesion_mp2rage':
-        {'description': 'MS lesion segmentation on cropped MP2RAGE data.',
+        {'description': 'MS lesion segmentation on cropped MP2RAGE data',
          'models': ['model_seg_ms_lesion_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor/edema/cavity segmentation.',
@@ -187,6 +196,9 @@ TASKS = {
          'long_description': 'This multiclass model (SC/GM) has been developed from 72 subjects acquired at 7T (T2*-w images of the cervical spinal cord) by N.J. Laines Medina, V. Callot and A. Le Troter in the Center for Magnetic Resonance in Biology and Medicine (CRMBM-CEMEREM, UMR 7339, CNRS, Aix-Marseille University, France) including various pathologies (HC, MS, ALS). It was validated between 9-folds (CV) single-class and multi-class models and was enriched by integrating a hybrid data augmentation (composed of classical geometric transformations, MRI artifacts and real GM/WM contrasts distorted with anatomically constrained deformation fields) finally tested with an external multicentric database. For more information visit: ',
          'url': 'https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass',
          'models': ['model_7t_multiclass_gm_sc_unet2d']},
+    'seg_lumbar_sc_t2w':
+      {'description': 'Lumbar cord segmentation with 3D UNet',
+       'models': ['model_seg_epfl_t2w_lumbar_sc']}
 }
 
 
@@ -260,29 +272,29 @@ def list_tasks():
 def display_list_tasks():
     tasks = sct.deepseg.models.list_tasks()
     # Display beautiful output
-    color = {True: 'green', False: 'red'}
-    print("{:<30s}{:<50s}{:<20s}MODELS".format("TASK", "DESCRIPTION", "INPUT CONTRASTS"))
+    color = {True: 'LightGreen', False: 'LightRed'}
+    print("{:<30s}{:<50s}{:<15s}MODELS".format("TASK", "DESCRIPTION", "CONTRAST"))
     print("-" * 120)
     for name_task, value in tasks.items():
         path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
         are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
-        task_status = colored.stylize(name_task.ljust(30),
-                                      colored.fg(color[all(are_models_valid)]))
-        description_status = colored.stylize(value['description'].ljust(50),
-                                             colored.fg(color[all(are_models_valid)]))
-        models_status = ', '.join([colored.stylize(model_name,
-                                                   colored.fg(color[is_valid]))
+        task_status = stylize(name_task.ljust(30),
+                              color[all(are_models_valid)])
+        description_status = stylize(value['description'].ljust(50),
+                                     color[all(are_models_valid)])
+        models_status = ', '.join([stylize(model_name,
+                                           color[is_valid])
                                    for model_name, is_valid in zip(value['models'], are_models_valid)])
-        input_contrasts = colored.stylize(str(', '.join(model_name for model_name in
-                                                        get_required_contrasts(name_task))).ljust(20),
-                                          colored.fg(color[all(are_models_valid)]))
+        input_contrasts = stylize(str(', '.join(model_name for model_name in
+                                                get_required_contrasts(name_task))).ljust(15),
+                                  color[all(are_models_valid)])
 
         print("{}{}{}{}".format(task_status, description_status, input_contrasts, models_status))
 
     print(
         '\nLegend: {} | {}\n'.format(
-            colored.stylize("installed", colored.fg(color[True])),
-            colored.stylize("not installed", colored.fg(color[False]))))
+            stylize("installed", color[True]),
+            stylize("not installed", color[False])))
     exit(0)
 
 

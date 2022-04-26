@@ -1,4 +1,3 @@
-colored
 dipy
 # h5py is pinned to minor than 3 due to issues with Keras/TF
 # https://github.com/tensorflow/tensorflow/issues/44467
@@ -6,6 +5,12 @@ h5py~=2.10.0
 Keras==2.3.1
 ivadomed
 matplotlib
+# Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
+# Installing "Microsoft Visual C++ Redistributable for Visual Studio" will fix this too, but
+# we'd prefer not to burden users with another prerequisite. 
+# NB: It's possible this fix gets included upstream in a future skimage release, see:
+#     https://github.com/scikit-image/scikit-image/issues/4780#issuecomment-824678872
+msvc-runtime; sys.platform == 'win32'
 nibabel
 numpy
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.

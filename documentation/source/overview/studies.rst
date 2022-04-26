@@ -8,6 +8,7 @@ The following studies have used SCT:
 2022
 ----
 
+-  Kumar *et al.* `Mapping pediatric spinal cord development with age <https://www.spiedigitallibrary.org/conference-proceedings-of-spie/12032/1203213/Mapping-pediatric-spinal-cord-development-with-age/10.1117/12.2612210.short?SSO=1>`_. **Proceedings SPIE** 2022
 -  Trevarrow *et al.* `Spinal cord microstructural changes are connected with the aberrant sensorimotor cortical oscillatory activity in adults with cerebral palsy <https://pubmed.ncbi.nlm.nih.gov/35314729/>`_ **Sci Rep.** 2022
 -  Rowald *et al.* `Activity-dependent spinal cord neuromodulation rapidly restores trunk and leg motor functions after complete paralysis. <https://pubmed.ncbi.nlm.nih.gov/35132264/>`_ **Nat Med.** 2022
 -  Horáková *et al.* `Semi-automated detection of cervical spinal cord compression with the Spinal Cord Toolbox. <https://qims.amegroups.com/article/view/88416/html>`_ **Quant Imaging Med Surg.** 2022
