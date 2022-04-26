@@ -8,7 +8,6 @@ Important: model names (onnx or pt files) should have the same name as the enclo
 import os
 import json
 import logging
-import colored
 import textwrap
 import shutil
 
@@ -320,9 +319,9 @@ def display_long_description_task(name_task):
     path_models = [sct.deepseg.models.folder(name_model)
                    for name_model in value['models']]
     if all([sct.deepseg.models.is_valid(path_model) for path_model in path_models]):
-        installed = colored.stylize("Yes", colored.fg('green'))
+        installed = stylize("Yes", 'LightGreen')
     else:
-        installed = colored.stylize("No", colored.fg('red'))
+        installed = stylize("No", 'LightRed')
     print("{}{}".format("INSTALLED:".ljust(indent_len), installed))
 
     exit(0)
