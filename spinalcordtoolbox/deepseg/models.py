@@ -201,7 +201,7 @@ TASKS = {
                              '(https://archive.ismrm.org/2020/1171.html).',
          'url': 'https://github.com/ivadomed/model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg',
          'models': ['model_seg_exvivo_gm-wm_t2_unet2d-multichannel-softseg']},
-    'seg_gm_sc_7t_t2s':
+    'seg_gm_sc_7t_t2star':
         {'description': 'SC/GM seg on T2*-weighted contrast at 7T',
          'long_description': 'This multiclass model (SC/GM) has been developed from 72 subjects acquired at 7T '
                              '(T2*-w images of the cervical spinal cord) by N.J. Laines Medina, V. Callot and '
