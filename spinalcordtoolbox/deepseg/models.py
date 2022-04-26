@@ -204,8 +204,8 @@ TASKS = {
          'url': 'https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass',
          'models': ['model_7t_multiclass_gm_sc_unet2d']},
     'seg_lumbar_sc_t2w':
-      {'description': 'Lumbar cord segmentation with 3D UNet',
-       'models': ['model_seg_epfl_t2w_lumbar_sc']}
+        {'description': 'Lumbar cord segmentation with 3D UNet',
+         'models': ['model_seg_epfl_t2w_lumbar_sc']}
 }
 
 
