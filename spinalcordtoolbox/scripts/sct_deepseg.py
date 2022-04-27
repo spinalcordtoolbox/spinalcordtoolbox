@@ -139,7 +139,7 @@ def main(argv=None):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
-    if (arguments.list_tasks is False and arguments.list_tasks_long is None
+    if (arguments.list_tasks is False and arguments.list_tasks_long is False
             and arguments.install_task is None
             and (arguments.i is None or arguments.task is None)):
         parser.error("You must specify either '-list-tasks', '-list-tasks-long', '-install-task', "
