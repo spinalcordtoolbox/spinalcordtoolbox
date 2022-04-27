@@ -172,7 +172,7 @@ TASKS = {
     'seg_ms_lesion_mp2rage':
         {'description': 'MS lesion segmentation on cropped MP2RAGE data',
          'long_description': 'This segmentation model for MP2RAGE MS lesion segmentation uses a Modified3DUNet '
-                             'architecture, and was created with the `ivadomed` package. Training data consisted of'
+                             'architecture, and was created with the `ivadomed` package. Training data consisted of '
                              '30 multiple sclerosis (MS) patients that included manual segmentations of the spinal '
                              'cord and MS lesions. The dataset was preprocessed to crop around the spinal cord prior '
                              'to training. This dataset was provided by the University of Basel.',
@@ -195,7 +195,7 @@ TASKS = {
          'long_description': 'This segmentation model for T2w human spinal gray and white matter uses a 2D Unet '
                              'architecture, and was created with the `ivadomed` package. Training data consisted '
                              'of 149 2D slices taken from the scan of an ex vivo spinal cord of a single subject, with '
-                             'the gray and white matter from each slice manually segmented for training purposes. The'
+                             'the gray and white matter from each slice manually segmented for training purposes. The '
                              'data was provided by the University of Queenland, and through this collaboration, the '
                              'model was subsequently applied to the development of an ex vivo spinal cord template '
                              '(https://archive.ismrm.org/2020/1171.html).',
