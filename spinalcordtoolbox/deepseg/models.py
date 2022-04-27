@@ -136,8 +136,9 @@ TASKS = {
          'long_description': 'This segmentation model for T1w mouse spinal cord segmentation uses the UNet '
                              'architecture, and was created with the `ivadomed` package. Training data was provided by '
                              'Dr. A. Althobathi of the University of Queensland, with the files consisting of T1w '
-                             'scans (and manual spinal cord segmentations) from 10 mice in total. The dataset was '
-                             'comprised of both non-pathological (healthy) and pathological (diseased) mice.',
+                             'scans (along with manual spinal cord + gray matter segmentations) from 10 mice in total. '
+                             'The dataset was comprised of both non-pathological (healthy) and pathological (diseased) '
+                             'mice.',
          'url': 'https://github.com/ivadomed/mice_uqueensland_sc/',
          'models': ['mice_uqueensland_sc']},
     'seg_mice_gm':
@@ -145,10 +146,9 @@ TASKS = {
          'long_description': 'This segmentation model for T1w mouse spinal gray matter segmentation uses the UNet '
                              'architecture, and was created with the `ivadomed` package. Training data was provided by '
                              'Dr. A. Althobathi of the University of Queensland, with the files consisting of T1w '
-                             'scans (and manual spinal cord segmentations) from 10 mice in total. The manual '
-                             'segmentations were then processed using the `sct_deepseg_gm` to obtain gray matter '
-                             'segmentations, which were then used in training. The dataset was comprised of both '
-                             'non-pathological (healthy) and pathological (diseased) mice.',
+                             'scans (along with manual spinal cord + gray matter segmentations) from 10 mice in total. '
+                             'The dataset was comprised of both non-pathological (healthy) and pathological (diseased) '
+                             'mice.',
          'url': 'https://github.com/ivadomed/mice_uqueensland_gm/',
          'models': ['mice_uqueensland_gm']},
     'seg_tumor_t2':
