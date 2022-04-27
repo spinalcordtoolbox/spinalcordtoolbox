@@ -331,7 +331,7 @@ def display_list_tasks_long():
         indent_len = len("LONG_DESCRIPTION: ")
         print("{}{}".format("TASK:".ljust(indent_len), stylize(name_task, ['DarkGray', 'Bold'])))
         print('\n'.join(textwrap.wrap(value['long_description'],
-                        width=shutil.get_terminal_size()[0],
+                        width=shutil.get_terminal_size()[0]-1,
                         initial_indent="LONG_DESCRIPTION: ",
                         subsequent_indent=' '*indent_len)))
         print("{}{}".format("URL:".ljust(indent_len), stylize(value['url'], 'Cyan')))
