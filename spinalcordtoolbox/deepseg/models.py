@@ -319,32 +319,30 @@ def display_list_tasks():
             stylize("installed", color[True]),
             stylize("not installed", color[False])))
 
-    print('To read an in-depth description of the training data, model architecture, etc. used for any of these tasks, '
+    print('To read in-depth descriptions of the training data, model architecture, etc. used for these tasks, '
           'type the following command:\n'
           '\n'
-          '    {}'.format(stylize('sct_deepseg -task-description TASK_NAME', ['LightBlue', 'Bold'])))
+          '    {}'.format(stylize('sct_deepseg -list-tasks-long', ['LightBlue', 'Bold'])))
     exit(0)
 
 
-def display_long_description_task(name_task):
-    value = sct.deepseg.models.list_tasks()[name_task]
+def display_list_tasks_long():
+    for name_task, value in sct.deepseg.models.list_tasks().items():
+        indent_len = len("LONG_DESCRIPTION: ")
+        print("{}{}".format("TASK:".ljust(indent_len), name_task))
+        print('\n'.join(textwrap.wrap(value['long_description'],
+                        width=shutil.get_terminal_size()[0],
+                        initial_indent="LONG_DESCRIPTION: ",
+                        subsequent_indent=' '*indent_len)))
+        print("{}{}".format("URL:".ljust(indent_len), value['url']))
 
-    indent_len = len("LONG_DESCRIPTION: ")
-    print("{}{}".format("TASK:".ljust(indent_len), name_task))
-    print('\n'.join(textwrap.wrap(value['long_description'],
-                    width=shutil.get_terminal_size()[0],
-                    initial_indent="LONG_DESCRIPTION: ",
-                    subsequent_indent=' '*indent_len)))
-    print("{}{}".format("URL:".ljust(indent_len), value['url']))
-
-    path_models = [sct.deepseg.models.folder(name_model)
-                   for name_model in value['models']]
-    if all([sct.deepseg.models.is_valid(path_model) for path_model in path_models]):
-        installed = stylize("Yes", 'LightGreen')
-    else:
-        installed = stylize("No", 'LightRed')
-    print("{}{}".format("INSTALLED:".ljust(indent_len), installed))
-
+        path_models = [sct.deepseg.models.folder(name_model)
+                       for name_model in value['models']]
+        if all([sct.deepseg.models.is_valid(path_model) for path_model in path_models]):
+            installed = stylize("Yes", 'LightGreen')
+        else:
+            installed = stylize("No", 'LightRed')
+        print("{}{}\n".format("INSTALLED:".ljust(indent_len), installed))
     exit(0)
 
 
