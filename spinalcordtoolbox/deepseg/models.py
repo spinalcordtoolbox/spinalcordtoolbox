@@ -329,7 +329,7 @@ def display_list_tasks():
 def display_list_tasks_long():
     for name_task, value in sct.deepseg.models.list_tasks().items():
         indent_len = len("LONG_DESCRIPTION: ")
-        print("{}{}".format("TASK:".ljust(indent_len), stylize(name_task, ['DarkGray', 'Bold'])))
+        print("{}{}".format("TASK:".ljust(indent_len), stylize(name_task, 'Bold')))
         print('\n'.join(textwrap.wrap(value['long_description'],
                         width=shutil.get_terminal_size()[0]-1,
                         initial_indent="LONG_DESCRIPTION: ",
