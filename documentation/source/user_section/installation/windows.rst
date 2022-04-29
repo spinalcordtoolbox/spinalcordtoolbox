@@ -69,9 +69,9 @@ The easiest way to try out different versions of SCT is using Git.
 
 We recommend that you install SCT into a Python virtual environment. To help with this process, SCT provides an installer script that will automate the process of creating a Python virtual environment for you.
 
-1. Download the ``install_sct.bat`` script using `this link <https://downgit.github.io/#/home?url=https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/install_sct.bat>`_, then extract the ``install_sct.bat`` file to your User folder (``C:/Users/<username>``).
+1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`_ , then download the ``install_sct.bat`` script from the "Assets" section of the latest release. 
 
-2. Open your Start Menu and type Command Prompt, then run that program. In the newly-opened Command Prompt window, type ``install_sct.bat`` and press enter.
+2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Python virtual environment for you.
 
 3. Once the installer finishes, follow the instructions given at the end of the Command Prompt window, which will instruct you to add SCT to your PATH.
 
