@@ -5,6 +5,7 @@
 import io
 import sys
 import os
+import shutil
 import logging
 import subprocess
 import time
@@ -22,16 +23,76 @@ import tqdm
 logger = logging.getLogger(__name__)
 
 
-class bcolors(object):
-    normal = '\033[0m'
-    red = '\033[91m'
-    green = '\033[92m'
-    yellow = '\033[93m'
-    blue = '\033[94m'
-    magenta = '\033[95m'
-    cyan = '\033[96m'
-    bold = '\033[1m'
-    underline = '\033[4m'
+def stylize(string, styles):
+    """Helper function that mimics colored.stylize to reduce boilerplate when coloring text."""
+    if not isinstance(styles, list):
+        styles = [styles]
+    style_codes = "".join([getattr(ANSIColors16, style, ANSIColors16.ResetAll) for style in styles])
+    return style_codes + string + ANSIColors16.ResetAll
+
+
+class ANSIColors16(object):
+    """This class defines the ANSI color escape codes for terminals that support 16 colors.
+
+    Notes:
+        - Most terminals support 8 colors (base color set) or 16 colors (base colors + light colors).
+        - We use these codes instead of dedicated color packages (colored, colorama) because those packages
+          are meant for 256-color coloring, which only some terminals support. (Notably, the Windows Command Prompt
+          does not support 256 colors.)
+        - Further reading: https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#rich-text
+        - Source for codes: https://pkg.go.dev/github.com/whitedevops/colors
+    """
+    ResetAll = "\033[0m"
+
+    Bold = "\033[1m"
+    Dim = "\033[2m"
+    Underlined = "\033[4m"
+    Blink = "\033[5m"
+    Reverse = "\033[7m"
+    Hidden = "\033[8m"
+
+    ResetBold = "\033[21m"
+    ResetDim = "\033[22m"
+    ResetUnderlined = "\033[24m"
+    ResetBlink = "\033[25m"
+    ResetReverse = "\033[27m"
+    ResetHidden = "\033[28m"
+
+    Default = "\033[39m"
+    Black = "\033[30m"
+    Red = "\033[31m"
+    Green = "\033[32m"
+    Yellow = "\033[33m"
+    Blue = "\033[34m"
+    Magenta = "\033[35m"
+    Cyan = "\033[36m"
+    LightGray = "\033[37m"
+    DarkGray = "\033[90m"
+    LightRed = "\033[91m"
+    LightGreen = "\033[92m"
+    LightYellow = "\033[93m"
+    LightBlue = "\033[94m"
+    LightMagenta = "\033[95m"
+    LightCyan = "\033[96m"
+    White = "\033[97m"
+
+    BackgroundDefault = "\033[49m"
+    BackgroundBlack = "\033[40m"
+    BackgroundRed = "\033[41m"
+    BackgroundGreen = "\033[42m"
+    BackgroundYellow = "\033[43m"
+    BackgroundBlue = "\033[44m"
+    BackgroundMagenta = "\033[45m"
+    BackgroundCyan = "\033[46m"
+    BackgroundLightGray = "\033[47m"
+    BackgroundDarkGray = "\033[100m"
+    BackgroundLightRed = "\033[101m"
+    BackgroundLightGreen = "\033[102m"
+    BackgroundLightYellow = "\033[103m"
+    BackgroundLightBlue = "\033[104m"
+    BackgroundLightMagenta = "\033[105m"
+    BackgroundLightCyan = "\033[106m"
+    BackgroundWhite = "\033[107m"
 
 
 if os.getenv('SENTRY_DSN', None):
@@ -362,8 +423,10 @@ def printv(string, verbose=1, type='normal', file=None):
     Enables to print color-coded messages, depending on verbose status. Only use in command-line programs (e.g.,
     sct_propseg).
     """
-    colors = {'normal': bcolors.normal, 'info': bcolors.green, 'warning': bcolors.yellow + bcolors.bold, 'error': bcolors.red + bcolors.bold,
-              'code': bcolors.blue, 'bold': bcolors.bold, 'process': bcolors.magenta}
+    colors = {'normal': ANSIColors16.ResetAll, 'info': ANSIColors16.LightGreen,
+              'warning': ANSIColors16.LightYellow + ANSIColors16.Bold,
+              'error': ANSIColors16.LightRed + ANSIColors16.Bold,
+              'code': ANSIColors16.LightBlue, 'bold': ANSIColors16.Bold, 'process': ANSIColors16.LightMagenta}
 
     if file is None:
         # replicate the logic from print()
@@ -375,11 +438,11 @@ def printv(string, verbose=1, type='normal', file=None):
         try:
             # Print color only if the output is the terminal
             if file.isatty():
-                color = colors.get(type, bcolors.normal)
-                print(color + string + bcolors.normal, file=file)
+                color = colors.get(type, ANSIColors16.ResetAll)
+                print(color + string + ANSIColors16.ResetAll, file=file)
             else:
                 print(string, file=file)
-        except Exception as e:
+        except Exception:
             print(string)
 
 
@@ -410,25 +473,20 @@ def sct_test_path(*args):
 
 def check_exe(name):
     """
-    Ensure that a program exists
+    Ensure that a program exists and can be executed
 
-    :param name: str: name or path to program
-    :return: path of the program or None
+    :param name: str: name of program or path to program
+    :return: boolean
     """
-    def is_exe(fpath):
-        return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
-    fpath, _ = os.path.split(name)
-    if fpath and is_exe(name):
-        return fpath
+    _, filename = os.path.split(name)
+    # Case 1: Check full filepath directly (which may point to a location not on the PATH)
+    if os.path.isfile(name) and os.access(name, os.X_OK):
+        return True
+    # Case 2: Check filename only via the PATH
+    elif shutil.which(filename) and os.access(shutil.which(filename), os.X_OK):
+        return True
     else:
-        for path in os.environ["PATH"].split(os.pathsep):
-            path = path.strip('"')
-            exe_file = os.path.join(path, name)
-            if is_exe(exe_file):
-                return exe_file
-
-    return None
+        return False
 
 
 def _version_string():
@@ -533,5 +591,5 @@ def __get_git_origin(path_to_git_folder=None):
 __sct_dir__ = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 __version__ = _version_string()
 __data_dir__ = os.path.join(__sct_dir__, 'data')
-__bin_dir__ = os.path.join(__sct_dir__, 'venv_sct', 'Scripts') if sys.platform == 'win32' else os.path.join(__sct_dir__, 'bin')
+__bin_dir__ = os.path.join(__sct_dir__, 'bin')
 __deepseg_dir__ = os.path.join(__data_dir__, 'deepseg_models')

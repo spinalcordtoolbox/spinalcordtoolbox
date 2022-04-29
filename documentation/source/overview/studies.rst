@@ -8,6 +8,9 @@ The following studies have used SCT:
 2022
 ----
 
+- Kim *et al.* `Confounder-adjusted MRI-based predictors of multiple sclerosis disability <https://www.medrxiv.org/content/10.1101/2022.04.18.22273974v1>`_. (preprint) 2022
+-  Kumar *et al.* `Mapping pediatric spinal cord development with age <https://www.spiedigitallibrary.org/conference-proceedings-of-spie/12032/1203213/Mapping-pediatric-spinal-cord-development-with-age/10.1117/12.2612210.short?SSO=1>`_. **Proceedings SPIE** 2022
+-  Trevarrow *et al.* `Spinal cord microstructural changes are connected with the aberrant sensorimotor cortical oscillatory activity in adults with cerebral palsy <https://pubmed.ncbi.nlm.nih.gov/35314729/>`_ **Sci Rep.** 2022
 -  Rowald *et al.* `Activity-dependent spinal cord neuromodulation rapidly restores trunk and leg motor functions after complete paralysis. <https://pubmed.ncbi.nlm.nih.gov/35132264/>`_ **Nat Med.** 2022
 -  Horáková *et al.* `Semi-automated detection of cervical spinal cord compression with the Spinal Cord Toolbox. <https://qims.amegroups.com/article/view/88416/html>`_ **Quant Imaging Med Surg.** 2022
 -  Kinany *et al.* `Towards reliable spinal cord fMRI: assessment of common imaging protocols. <https://pubmed.ncbi.nlm.nih.gov/35124227/>`_ **Neuroimage.** 2022
@@ -46,7 +49,6 @@ The following studies have used SCT:
 -  Adibi *et al.* `Quantitative Magnetic Resonance Imaging Analysis of Early Markers of Upper Cervical Cord Atrophy in Multiple Sclerosis and Neuromyelitis Optica Spectrum Disorder. <https://pubmed.ncbi.nlm.nih.gov/34306756/>`_ **Mult Scler Int.** 2021
 -  Martucci *et al.* `Spinal Cord Resting State Activity in Individuals With Fibromyalgia Who Take Opioids. <https://www.frontiersin.org/articles/10.3389/fneur.2021.694271/full>`_ **Front. Neurol.** 2021
 -  David *et al.* `Longitudinal changes of spinal cord grey and white matter following spinal cord injury. <https://jnnp.bmj.com/content/early/2021/08/11/jnnp-2021-326337.info>`_ **Journal of Neurology, Neurosurgery & Psychiatry.** 2021
--  Trevarrow *et al.* `Spinal Cord Microstructural Changes are Connected with the Aberrant Sensorimotor Cortical Oscillatory Activity in Adults with Cerebral Palsy. <https://doi.org/10.21203/rs.3.rs-842588/v1>`_ **Scientific Reports.** 2021
 -  Alsenan *et al.* `A Deep Learning Model based on MobileNetV3 and UNet for Spinal Cord Gray Matter Segmentation. <https://ieeexplore.ieee.org/document/9522652>`_ **44th International Conference on Telecommunications and Signal Processing (TSP).** 2021
 -  Horak *et al.* `In vivo molecular signatures of cervical spinal cord pathology in degenerative compression. <https://pubmed.ncbi.nlm.nih.gov/34428934/>`_ **J Neurotrauma.** 2021
 -  Valošek *et al.* `Diffusion MRI reveals tract-specific microstructural correlates of electrophysiological impairments in non-myelopathic and myelopathic spinal cord compression. <https://doi.org/10.1111/ene.15027>`_ **Eur J Neurol.** 2021

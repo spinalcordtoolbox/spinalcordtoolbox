@@ -1,5 +1,78 @@
 # Changelog
 
+## 5.6 (2022-04-29)
+[View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/5.5...5.6)
+
+**FEATURE**
+
+ - **sct_deepseg:** Add model for T2w lumbar SC segmentation.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3766)
+ - Add new native Windows install script and GitHub Actions CI runner.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3701)
+
+**CI**
+
+ - Add temporary skip for hardware-specific GitHub Actions runner issue.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3688)
+ - Test release path in CI.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3678)
+ - Replace CentOS 8 with CentOS Stream 8 to address December 2021 EOL.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3676)
+
+**BUG**
+
+ - **sct_deepseg:** Rewrite ANSI color code snippets to support terminals limited to 16-colors.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3782)
+ - **sct_label_vertebrae:** Output a better error message when the initial disc is invalid.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3775)
+ - Set a more permissive threshold for reading the qform.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3771)
+ - **sct_check_dependencies:** Skip checking `isct_propseg` on Windows.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3753)
+ - **sct_analyze_texture:** Stop using a tempfile for data reorientation.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3727)
+ - Open CSV files using `newline=''` to fix `\r\r\n` issue.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3726)
+ - **sct_run_batch:** Check `isdir` directly, rather than trying to catch `IsADirectoryError`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3725)
+ - **sct_dice_coefficient:** Update `CMakeLists.txt` to include bugfix for unresolved external symbol errors.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3723)
+ - **sct_run_batch:** Account for non-UNIX platforms in `sys.platform` checks.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3722)
+ - Replace hardcoded `/tmp` directory with `tmp_path`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3721)
+ - Clean-up Windows-incompatible hardcoded `/` path separators.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3720)
+ - **sct_run_batch:** Add better support for shell script batch processing on Windows.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3719)
+ - Improve how image overwriting is handled for memory-mapped data arrays on Windows.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3718)
+ - **sct_propseg:** Attempt to fixup isct_propseg build (but ultimately skip sct_propseg on Windows).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3717)
+ - **sct_label_vertebrae:** Refactor `-param` parsing to address several bugs.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3700)
+ - **sct_propseg:** Fix parsing of `-d` argument in script.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3687)
+ - **sct_analyze_lesion:** Fix computation of estimated lesion length and diameter.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3681)
+ - Rewrite QC test to use `Pool.close()` to avoid stalling with pytest-cov.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3680)
+ - **sct_get_centerline:** Stop appending `.nii.gz` to the centerline output filepath if `-o` has an extension.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3677)
+
+**INSTALLATION**
+
+ - Suppress output of `where deactivate` check.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3781)
+ - Allow `install_sct.bat` file execution from double click.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3778)
+ - Isolate SCT script launchers from the `venv_sct/Scripts/` directory on Windows.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3756)
+ - Add `msvc-runtime` to our requirements to avoid DLL load error on Windows.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3752)
+ - `install_sct.bat` Only deactivate if script is available on PATH.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3750)
+ - `install_sct.bat`: Use `requirements-freeze.txt` if present.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3749)
+ - `install_sct.bat`: Add a default value for `git ref`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3748)
+ - `install_sct.bat`: Allow overwriting of existing spinalcordtoolbox installations.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3747)
+ - `install_sct.bat`: Use a non-admin way of adding SCT to the PATH.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3746)
+ - `requirements.txt`: Update `-f` link for PyTorch CPU HTML page.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3679)
+ - Revert "requirements.txt -> setup.py" PR to restore old dependency-checking behavior.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3671)
+
+**DOCUMENTATION**
+
+ - Fix inaccurate comment in `batch_processing.sh`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3773)
+ - Update documentation build instructions.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3734)
+ - Fix broken links to neuro.polymtl.ca.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3690)
+ - Add links to the newly-updated 2021 SCT Course material.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3689)
+ - Add new "Pipelines" page to the sidebar of SCT's RTD documentation.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3668)
+ - Split "SCT Courses" and "Tutorials" into two separate documentation pages.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3666)
+ - **sct_deepseg:** Add new option `-list-tasks-long` to print in-depth descriptions of deepseg tasks.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3541)
+
+**ENHANCEMENT**
+
+ - Cosmetic fixes on `-list-tasks`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3777)
+ - Add support for ITK-Snap + multiple viewers to `display_viewer_syntax`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3754)
+ - **sct_label_vertebrae:** Improve the label cleaning function.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3739)
+
+**REFACTORING**
+
+ - **sct_label_vertebrae:** Code cleanup.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3774)
+ - Refactor `sys.platform` checks to include Windows and use `.startswith()` idiom.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3757)
+ - **sct_label_vertebrae:** Refactor argument parsing code.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3731)
+ - Rename and move CLI tests from `testing/api/` to `testing/cli/`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3729)
+
 ## 5.5 (2022-01-26)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/5.4...5.5)
 

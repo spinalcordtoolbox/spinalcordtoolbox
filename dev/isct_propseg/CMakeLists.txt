@@ -55,40 +55,5 @@ aux_source_directory(. SRC_LIST)
 aux_source_directory(./util SRC_LIST)
 add_executable(${PROJECT_NAME} ${SRC_LIST})
 
-TARGET_LINK_LIBRARIES(isct_propseg
-ITKIONIFTI
-ITKIOImageBase
-ITKCommon
-ITKIONRRD
-ITKIOMRC
-ITKIOMeta
-ITKIOPNG
-ITKIOJPEG
-ITKIOIPL
-ITKIOLSM
-ITKIOMesh
-ITKIOTIFF
-ITKIOSiemens
-ITKIOSpatialObjects
-ITKIOVTK
-ITKIOXML
-ITKIOStimulate
-ITKIOBioRad
-ITKIOBMP
-ITKIOCSV
-ITKIOGDCM
-ITKIOGE
-ITKIOGIPL
-ITKIOHDF5
-ITKOptimizers
-ITKIOTransformBase
-vtkalglib
-vtkCommonCore
-vtkCommonDataModel
-vtkIOLegacy
-vtkCommonExecutionModel
-vtkFiltersCore
-vtkFiltersModeling
-vtkIOGeometry
-vtkFiltersGeneral
-)
+target_link_libraries(isct_propseg ${VTK_LIBRARIES} ${ITK_LIBRARIES})
+vtk_module_autoinit(TARGETS isct_propseg MODULES ${VTK_LIBRARIES} )

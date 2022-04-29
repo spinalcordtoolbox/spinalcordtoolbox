@@ -2,7 +2,9 @@
 # -*- coding: utf-8
 # pytest unit tests for utils
 
+import os
 import pytest
+from stat import S_IEXEC
 
 from spinalcordtoolbox import utils
 
@@ -42,3 +44,46 @@ def test_sct_argument_parser(capsys):
     with pytest.raises(SystemExit) as e:
         parser3.parse_args(['-h'])
     assert e.value.code == 0
+
+
+@pytest.fixture()
+def temporary_viewers(supported_viewers=utils.SUPPORTED_VIEWERS):
+    """Set up and teardown viewer files to satisfy check_exe() check within the scope of the test."""
+    for viewer in supported_viewers:
+        open(viewer, 'a').close()
+        # Set "Owner has execute permission" bit to 1 to ensure script is executable
+        script_stat = os.stat(viewer)
+        os.chmod(viewer, script_stat.st_mode | S_IEXEC)
+    yield supported_viewers
+    for viewer in supported_viewers:
+        os.remove(viewer)
+
+
+def test_display_viewer_syntax(temporary_viewers):
+    """Test that sample input produces the required syntax string output."""
+    syntax_strings = utils.display_viewer_syntax(
+        files=["test_img.nii.gz", "test_img_2.nii.gz", "test_seg.nii.gz", "test_img_3.nii.gz"],
+        colormaps=['gray', 'gray', 'red', 'gray'],
+        minmax=['', '0,1', '0.25,0.75', ''],
+        opacities=['', '0.7', '1.0', ''],
+        mode="test"
+    )
+    for viewer in temporary_viewers:
+        assert viewer in syntax_strings.keys()
+        cmd_string = syntax_strings[viewer]
+        cmd_opts = cmd_string.replace(f"{viewer} ", "")
+        if viewer.startswith("fsleyes"):
+            assert cmd_opts == ("test_img.nii.gz -cm greyscale "
+                                "test_img_2.nii.gz -cm greyscale -dr 0 1 -a 70.0 "
+                                "test_seg.nii.gz -cm red -dr 0.25 0.75 -a 100.0 "
+                                "test_img_3.nii.gz -cm greyscale &")
+        elif viewer.startswith("fslview"):
+            assert cmd_opts == ("-m test "
+                                "test_img.nii.gz -l Greyscale "
+                                "test_img_2.nii.gz -l Greyscale -b 0,1 -t 0.7 "
+                                "test_seg.nii.gz -l Red -b 0.25,0.75 -t 1.0 "
+                                "test_img_3.nii.gz -l Greyscale &")
+        elif viewer.startswith("itk"):
+            assert cmd_opts == ("-g test_img.nii.gz "
+                                "-s test_seg.nii.gz "
+                                "-o test_img_2.nii.gz test_img_3.nii.gz")

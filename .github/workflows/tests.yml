@@ -420,9 +420,9 @@ jobs:
       # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
       # In a user install, the user would perform this step using the Windows PATH-changing GUI.
       shell: bash
-      run: echo "$GITHUB_WORKSPACE/spinalcordtoolbox/venv_sct/Scripts" >> $GITHUB_PATH
+      run: echo "$GITHUB_WORKSPACE/spinalcordtoolbox/bin" >> $GITHUB_PATH
     - name: Check dependencies
       shell: cmd
       run: sct_check_dependencies
     - name: Run pytest test suite
-      run: sct_testing || EXIT 0
+      run: sct_testing
