@@ -8,6 +8,7 @@ The following studies have used SCT:
 2022
 ----
 
+- Tinnermann *et al.* `Opioid analgesia alters corticospinal coupling along the descending pain system in healthy participants <https://elifesciences.org/articles/74293>`_ **eLife** 2022
 - Kim *et al.* `Confounder-adjusted MRI-based predictors of multiple sclerosis disability <https://www.medrxiv.org/content/10.1101/2022.04.18.22273974v1>`_. (preprint) 2022
 -  Kumar *et al.* `Mapping pediatric spinal cord development with age <https://www.spiedigitallibrary.org/conference-proceedings-of-spie/12032/1203213/Mapping-pediatric-spinal-cord-development-with-age/10.1117/12.2612210.short?SSO=1>`_. **Proceedings SPIE** 2022
 -  Trevarrow *et al.* `Spinal cord microstructural changes are connected with the aberrant sensorimotor cortical oscillatory activity in adults with cerebral palsy <https://pubmed.ncbi.nlm.nih.gov/35314729/>`_ **Sci Rep.** 2022
