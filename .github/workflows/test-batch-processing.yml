@@ -54,11 +54,9 @@ jobs:
 
       - name: Validate new results
         run: |
-          source python/etc/profile.d/conda.sh
-          conda activate venv_sct
           # Auto-pass macOS as it would fail due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3194
           if [ "$RUNNER_OS" == "macOS" ]; then
-               pytest testing/batch_processing/test_batch_processing.py || exit 0
+               sct_testing testing/batch_processing/test_batch_processing.py || exit 0
           else
-               pytest testing/batch_processing/test_batch_processing.py
+               sct_testing testing/batch_processing/test_batch_processing.py
           fi
