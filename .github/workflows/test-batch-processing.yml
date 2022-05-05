@@ -31,6 +31,12 @@ jobs:
       matrix:
         os: [ ubuntu-18.04, macos-10.15, windows-2019 ]
     runs-on: ${{ matrix.os }}
+    # NB: Setting `bash` as the default shell is a bit of a hack workaround for Windows to allow it to run .sh scripts.
+    #     Normally, we would ask the user to install a Windows-compatible bash via either Cygwin or Git for Windows.
+    #     But, setting `bash` here is the quickest/easiest way to get a cross-OS compatible GHA workflow.
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Get branch name (merge)
         if: github.event_name != 'pull_request'
@@ -79,7 +85,7 @@ jobs:
       - name: Run batch_processing.sh
         run: |
           cd $INSTALL_DIR
-          ./batch_processing.sh
+          bash batch_processing.sh
 
       - name: Validate new results
         run: |
