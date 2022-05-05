@@ -18,8 +18,6 @@ on:
 env:
   # Turns on color output for pytest. See: https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591
   PY_COLORS: "1"
-  # Used in 'pytest.mark.skipif()' for test, which prevents the test from being run during the usual test suite
-  TEST_BATCH_PROCESSING: "1"
   # Disable progress bars for less verbose output
   PIP_PROGRESS_BAR: "off"
   SCT_PROGRESS_BAR: "off"
