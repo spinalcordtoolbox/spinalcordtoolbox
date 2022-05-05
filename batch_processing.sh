@@ -252,7 +252,8 @@ echo "Ran on:          `uname -nsr`"
 echo "Duration:        $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 echo "---"
 # The file `test_batch_processing.py` will output tested values when run as a script
-./python/envs/venv_sct/bin/python testing/batch_processing/test_batch_processing.py
+./python/envs/venv_sct/bin/python testing/batch_processing/test_batch_processing.py ||
+./venv_sct/Scripts/python.exe testing/batch_processing/test_batch_processing.py
 echo "~~~"
 
 # Display syntax to open QC report on web browser
