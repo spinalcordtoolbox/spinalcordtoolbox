@@ -12,13 +12,13 @@
 #
 # Usage:
 #
-#   [option] $SCT_DIR/batch_processing.sh
+#   [option] ./batch_processing.sh
 #
 #   Prevent (re-)downloading sct_example_data:
-#   SCT_BP_DOWNLOAD=0 $SCT_DIR/batch_processing.sh
+#   SCT_BP_DOWNLOAD=0 ./batch_processing.sh
 #
 #   Specify quality control (QC) folder (Default is ~/qc_batch_processing):
-#   SCT_BP_QC_FOLDER=/user/toto/my_qc_folder $SCT_DIR/batch_processing.sh
+#   SCT_BP_QC_FOLDER=/user/toto/my_qc_folder ./batch_processing.sh
 
 # Abort on error
 set -ve
@@ -81,7 +81,7 @@ sct_register_to_template -i t2.nii.gz -s t2_seg.nii.gz -l labels_vert.nii.gz -c 
 # For example here, we would like to take into account the rotation of the cord, as well as
 # adding a 3rd registration step that uses the image intensity (not only cord segmentations).
 # so we could do something like this:
-# sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2s.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d t2s.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz
+# sct_register_multimodal -i ../../../data/PAM50/template/PAM50_t2s.nii.gz -iseg ../../../data/PAM50/template/PAM50_cord.nii.gz -d t2s.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz
 # Warp template without the white matter atlas (we don't need it at this point)
 sct_warp_template -d t2.nii.gz -w warp_template2anat.nii.gz -a 0
 # Compute cross-sectional area (and other morphometry measures) for each slice
@@ -105,7 +105,7 @@ sct_deepseg_sc -i t2s.nii.gz -c t2s -qc "$SCT_BP_QC_FOLDER"
 # Segment gray matter
 sct_deepseg_gm -i t2s.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Register template->t2s (using warping field generated from template<->t2 registration)
-sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2s.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d t2s.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3:step=3,type=im,algo=syn,slicewise=1,iter=1,metric=CC -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -owarp warp_template2t2s.nii.gz -owarpinv warp_t2s2template.nii.gz
+sct_register_multimodal -i ../../../data/PAM50/template/PAM50_t2s.nii.gz -iseg ../../../data/PAM50/template/PAM50_cord.nii.gz -d t2s.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3:step=3,type=im,algo=syn,slicewise=1,iter=1,metric=CC -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -owarp warp_template2t2s.nii.gz -owarpinv warp_t2s2template.nii.gz
 # Warp template
 sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz
 # Subtract GM segmentation from cord segmentation to obtain WM segmentation
@@ -116,7 +116,7 @@ sct_process_segmentation -i t2s_gmseg.nii.gz -vert 2:5 -perlevel 1 -o csa_gm.csv
 # OPTIONAL: Update template registration using information from gray matter segmentation
 # # <<<
 # # Register WM/GM template to WM/GM seg
-# sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_wm.nii.gz -d t2s_wmseg.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=im,algo=syn,slicewise=1,iter=5 -initwarp warp_template2t2s.nii.gz -initwarpinv warp_t2s2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2t2s.nii.gz -owarpinv warp_t2s2template.nii.gz
+# sct_register_multimodal -i ../../../data/PAM50/template/PAM50_wm.nii.gz -d t2s_wmseg.nii.gz -dseg t2s_seg.nii.gz -param step=1,type=im,algo=syn,slicewise=1,iter=5 -initwarp warp_template2t2s.nii.gz -initwarpinv warp_t2s2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2t2s.nii.gz -owarpinv warp_t2s2template.nii.gz
 # # Warp template (this time corrected for internal structure)
 # sct_warp_template -d t2s.nii.gz -w warp_template2t2s.nii.gz
 # # >>>
@@ -155,7 +155,7 @@ sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -dseg mt1_crop_seg.nii.
 # Register template->mt1
 # Tips: here we only use the segmentations due to poor SC/CSF contrast at the bottom slice.
 # Tips: First step: slicereg based on images, with large smoothing to capture potential motion between anat and mt, then at second step: bpslinesyn in order to adapt the shape of the cord to the mt modality (in case there are distortions between anat and mt).
-sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d mt1_crop.nii.gz -dseg mt1_crop_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -owarp warp_template2mt.nii.gz -owarpinv warp_mt2template.nii.gz
+sct_register_multimodal -i ../../../data/PAM50/template/PAM50_t2.nii.gz -iseg ../../../data/PAM50/template/PAM50_cord.nii.gz -d mt1_crop.nii.gz -dseg mt1_crop_seg.nii.gz -param step=1,type=seg,algo=slicereg,smooth=3:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -owarp warp_template2mt.nii.gz -owarpinv warp_mt2template.nii.gz
 # Warp template
 sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Compute mtr
@@ -172,7 +172,7 @@ sct_extract_metric -i mtr.nii.gz -method map -o mtr_in_wm.csv -l 51 -vert 2:5
 sct_extract_metric -i mtsat.nii.gz -method map -o mtsat_in_wm.csv -l 51 -vert 2:5
 sct_extract_metric -i t1map.nii.gz -method map -o t1_in_wm.csv -l 51 -vert 2:5
 # Bring MTR to template space (e.g. for group mapping)
-sct_apply_transfo -i mtr.nii.gz -d $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -w warp_mt2template.nii.gz
+sct_apply_transfo -i mtr.nii.gz -d ../../../data/PAM50/template/PAM50_t2.nii.gz -w warp_mt2template.nii.gz
 # Go back to root folder
 cd ..
 
@@ -196,7 +196,7 @@ sct_deepseg_sc -i dmri_crop_moco_dwi_mean.nii.gz -c dwi -qc "$SCT_BP_QC_FOLDER"
 sct_qc -i dmri_crop.nii.gz -d dmri_crop_moco.nii.gz -s dmri_crop_moco_dwi_mean_seg.nii.gz -p sct_dmri_moco -qc "$SCT_BP_QC_FOLDER"
 # Register template to dwi
 # Tips: Again, here, we prefer to stick to segmentation-based registration. If there are susceptibility distortions in your EPI, then you might consider adding a third step with bsplinesyn or syn transformation for local adjustment.
-sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t1.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d dmri_crop_moco_dwi_mean.nii.gz -dseg dmri_crop_moco_dwi_mean_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,smooth=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2dmri.nii.gz -owarpinv warp_dmri2template.nii.gz
+sct_register_multimodal -i ../../../data/PAM50/template/PAM50_t1.nii.gz -iseg ../../../data/PAM50/template/PAM50_cord.nii.gz -d dmri_crop_moco_dwi_mean.nii.gz -dseg dmri_crop_moco_dwi_mean_seg.nii.gz -param step=1,type=seg,algo=centermass:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,smooth=1,iter=3 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2dmri.nii.gz -owarpinv warp_dmri2template.nii.gz
 # Warp template and white matter atlas
 sct_warp_template -d dmri_crop_moco_dwi_mean.nii.gz -w warp_template2dmri.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Compute DTI metrics
@@ -205,7 +205,7 @@ sct_dmri_compute_dti -i dmri_crop_moco.nii.gz -bval bvals.txt -bvec bvecs.txt
 # Compute FA within right and left lateral corticospinal tracts from slices 2 to 14 using weighted average method
 sct_extract_metric -i dti_FA.nii.gz -z 2:14 -method wa -l 4,5 -o fa_in_cst.csv
 # Bring metric to template space (e.g. for group mapping)
-sct_apply_transfo -i dti_FA.nii.gz -d $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -w warp_dmri2template.nii.gz
+sct_apply_transfo -i dti_FA.nii.gz -d ../../../data/PAM50/template/PAM50_t2.nii.gz -w warp_dmri2template.nii.gz
 # Go back to root folder
 cd ..
 
@@ -231,12 +231,14 @@ sct_fmri_moco -i fmri_crop.nii.gz -g 1
 # Generate QC for sct_fmri_moco ('fmri_crop_moco_mean_seg_manual.nii.gz' is needed to align each slice in the QC mosaic)
 sct_qc -i fmri_crop.nii.gz -d fmri_crop_moco.nii.gz -s fmri_crop_moco_mean_seg_manual.nii.gz -p sct_fmri_moco -qc "$SCT_BP_QC_FOLDER"
 # Register template->fmri
-sct_register_multimodal -i $SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz -iseg $SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz -d fmri_crop_moco_mean.nii.gz -dseg fmri_crop_moco_mean_seg_manual.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2fmri.nii.gz -owarpinv warp_fmri2template.nii.gz
+sct_register_multimodal -i ../../../data/PAM50/template/PAM50_t2.nii.gz -iseg ../../../data/PAM50/template/PAM50_cord.nii.gz -d fmri_crop_moco_mean.nii.gz -dseg fmri_crop_moco_mean_seg_manual.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2fmri.nii.gz -owarpinv warp_fmri2template.nii.gz
 # Warp template and spinal levels (here we don't need the WM atlas)
 sct_warp_template -d fmri_crop_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
 # Note, once you have computed fMRI statistics in the subject's space, you can use
 # warp_fmri2template.nii.gz to bring the statistical maps on the template space, for group analysis.
-cd ..
+
+# Go back to sct_example_data -> data -> $SCT_DIR
+cd ../../..
 
 
 # Display results (to easily compare integrity across SCT versions)
@@ -250,7 +252,7 @@ echo "Ran on:          `uname -nsr`"
 echo "Duration:        $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 echo "---"
 # The file `test_batch_processing.py` will output tested values when run as a script
-"$SCT_DIR"/python/envs/venv_sct/bin/python "$SCT_DIR"/testing/batch_processing/test_batch_processing.py
+./python/envs/venv_sct/bin/python testing/batch_processing/test_batch_processing.py
 echo "~~~"
 
 # Display syntax to open QC report on web browser
