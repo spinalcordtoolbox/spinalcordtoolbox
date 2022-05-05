@@ -46,6 +46,9 @@ jobs:
           cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
           cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
 
+      - name: Check dependencies
+        run: sct_check_dependencies
+
       - name: Run batch_processing.sh
         run: |
           ./batch_processing.sh
