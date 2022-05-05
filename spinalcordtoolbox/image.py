@@ -402,11 +402,11 @@ class Image(object):
         :return:
         """
 
-        im_file = nib.load(path, mmap=(not sys.platform.startswith('win32')))
+        self.absolutepath = os.path.abspath(path)
+        im_file = nib.load(self.absolutepath, mmap=(not sys.platform.startswith('win32')))
         self.affine = im_file.affine.copy()
         self.data = im_file.get_data()
         self.hdr = im_file.header.copy()
-        self.absolutepath = path
         if path != self.absolutepath:
             logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
         else:
