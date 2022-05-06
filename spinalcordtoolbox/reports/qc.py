@@ -4,11 +4,9 @@
 import glob
 import sys
 import os
-import fcntl
 import json
 import logging
 import datetime
-import io
 from string import Template
 from shutil import copyfile
 
@@ -20,10 +18,11 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.colors as color
+import portalocker
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
-from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline, __version__, copy, extract_fname
+from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline, __version__, copy, extract_fname, display_open
 
 logger = logging.getLogger(__name__)
 
@@ -240,7 +239,7 @@ class QcImage(object):
                   cmap=color.ListedColormap(self._color_bin_red),
                   norm=color.Normalize(vmin=0, vmax=1),
                   interpolation=self.interpolation,
-                  alpha=10,
+                  alpha=1,
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -559,7 +558,7 @@ class Params(object):
         self.dpi = dpi
         self.root_folder = dest_folder
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
-        self.qc_results = os.path.join(dest_folder, '_json/qc_' + self.mod_date + '.json')
+        self.qc_results = os.path.join(dest_folder, '_json', f'qc_{self.mod_date}.json')
         if command in ['sct_fmri_moco', 'sct_dmri_moco']:
             ext = "gif"
         else:
@@ -613,6 +612,18 @@ class QcReport(object):
 
         :param: dimension 2-tuple, the dimension of the image frame (w, h)
         """
+        dest_path = self.qc_params.root_folder
+        html_path = os.path.join(dest_path, 'index.html')
+        # Make sure the file exists before trying to open it in 'r+' mode
+        open(html_path, 'a').close()
+        # NB: We use 'r+' because it allows us to open an existing file for locking *without* immediately truncating the
+        # existing contents prior to opening. We can then use this file to overwrite the contents later in the function.
+        dest_file = open(html_path, 'r+', encoding="utf-8")
+        # We lock `index.html` at the start of this function so that we halt any other processes *before* they have a
+        # chance to generate or read any .json files. This ensues that the last process to write to index.html has read
+        # in all of the available .json files, preventing:
+        # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3701#discussion_r816300380
+        portalocker.lock(dest_file, portalocker.LOCK_EX)
 
         output = {
             'python': sys.executable,
@@ -638,29 +649,19 @@ class QcReport(object):
         if not os.path.exists(path_json):
             os.makedirs(path_json, exist_ok=True)
 
-        # lock the output directory
-        # because this code may be run in parallel
-        path_json_fd = os.open(path_json, os.O_RDONLY)
-        fcntl.flock(path_json_fd, fcntl.LOCK_EX)
+        # Create json file for specific QC entry
+        with open(self.qc_params.qc_results, 'w+') as qc_file:
+            json.dump(output, qc_file, indent=1)
 
-        try:
-            # Create json file
-            with open(self.qc_params.qc_results, 'w+') as qc_file:
-                json.dump(output, qc_file, indent=1)
-            self._update_html_assets(get_json_data_from_path(path_json))
-        finally:
-            # fcntl.flock(path_json_fd, fcntl.LOCK_UN) # technically, redundant, since close() triggers this too.
-            os.close(path_json_fd)
-
-    def _update_html_assets(self, json_data):
-        """Update the html file and assets"""
+        # Append entry to existing HTML file
+        json_data = get_json_data_from_path(path_json)
         assets_path = os.path.join(os.path.dirname(__file__), 'assets')
-        dest_path = self.qc_params.root_folder
-
-        with io.open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
+        with open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
             template = Template(template_index.read())
             output = template.substitute(sct_json_data=json.dumps(json_data))
-            io.open(os.path.join(dest_path, 'index.html'), 'w', encoding="utf-8").write(output)
+        # Empty the HTML file before writing, to make sure there's no leftover junk at the end
+        dest_file.truncate()
+        dest_file.write(output)
 
         for path in ['css', 'js', 'imgs', 'fonts']:
             src_path = os.path.join(assets_path, '_assets', path)
@@ -669,8 +670,11 @@ class QcReport(object):
                 os.makedirs(dest_full_path, exist_ok=True)
             for file_ in os.listdir(src_path):
                 if not os.path.isfile(os.path.join(dest_full_path, file_)):
-                    copy(os.path.join(src_path, file_),
-                             dest_full_path)
+                    copy(os.path.join(src_path, file_), dest_full_path)
+
+        dest_file.flush()
+        portalocker.unlock(dest_file)
+        dest_file.close()
 
 
 def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overlay=None,
@@ -730,26 +734,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
             copyfile(path_img, qc_param.abs_overlay_img_path())
 
     logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
-    logger.info('Use the following command to see the results in a browser:')
-    try:
-        from sys import platform as _platform
-        if _platform == "linux" or _platform == "linux2":
-            # If user runs SCT within the official Docker distribution, the command xdg-open will not be working therefore
-            # we prefer to instruct the user to manually open the generated html file.
-            try:
-                # if user runs SCT within the official Docker distribution, the variable below is defined. More info at:
-                # https://github.com/neuropoly/sct_docker/blob/master/sct_docker.py#L84
-                os.environ["DOCKER"]
-                logger.info('please go to "%s/" and double click on the "index.html" file', path_qc)
-            except KeyError:
-                logger.info('xdg-open "%s/index.html"', path_qc)
-
-        elif _platform == "darwin":
-            logger.info('open "%s/index.html"', path_qc)
-        else:
-            logger.info('open file "%s/index.html"', path_qc)
-    except ImportError:
-        print("WARNING! Platform undetectable.")
+    display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args=None, path_qc=None,
@@ -801,7 +786,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     # Axial orientation, switch between the image and the centerline
     elif process in ['sct_get_centerline']:
         plane = 'Axial'
-        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)],
+                                     p_resample=None)
         qcslice_operations = [QcImage.label_centerline]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)

@@ -68,6 +68,11 @@ def get_parser():
         action='store_true',
         help="Display a list of tasks that can be achieved.")
     seg.add_argument(
+        "-list-tasks-long",
+        action='store_true',
+        help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
+             "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
+    seg.add_argument(
         "-install-task",
         help="Install models that are required for specified task.",
         choices=list(deepseg.models.TASKS.keys()))
@@ -134,14 +139,18 @@ def main(argv=None):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
-    if (arguments.list_tasks is False
+    if (arguments.list_tasks is False and arguments.list_tasks_long is False
             and arguments.install_task is None
             and (arguments.i is None or arguments.task is None)):
-        parser.error("You must specify either '-list-tasks', '-install-task', or both '-i' + '-task'.")
+        parser.error("You must specify either '-list-tasks', '-list-tasks-long', '-install-task', "
+                     "or both '-i' + '-task'.")
 
     # Deal with task
     if arguments.list_tasks:
         deepseg.models.display_list_tasks()
+    # Deal with task long description
+    if arguments.list_tasks_long:
+        deepseg.models.display_list_tasks_long()
 
     if arguments.install_task is not None:
         for name_model in deepseg.models.TASKS[arguments.install_task]['models']:

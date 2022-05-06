@@ -20,7 +20,7 @@ import os
 import sys
 
 # allows sphinx to call CLI scripts and capture --help output
-sct_root = os.path.abspath('../../')
+sct_root = os.path.abspath(os.path.join('..', '..'))
 sys.path.insert(0, sct_root)
 
 # -- General configuration ------------------------------------------------
@@ -115,7 +115,7 @@ todo_include_todos = False
 extlinks = {
     # e.g. :sct_tutorial_data:`data_template-registration.zip` gets expanded into:
     # 'https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
-    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20210609/%s', '')
+    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20220125/%s', '')
 }
 
 
@@ -128,7 +128,7 @@ html_theme = "furo"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = './_static/img/logo_sct_whitetext.png'
+html_logo = os.path.join('.', '_static', 'img', 'logo_sct_whitetext.png')
 
 html_theme_options = {
     "sidebar_hide_name": True,
@@ -150,11 +150,15 @@ html_theme_options = {
 }
 
 html_context = {
-    "display_github": True,
-    "github_user": "neuropoly",
-    "github_repo": "spinalcordtoolbox",
-    "github_version": "master",
-    "conf_py_path": "/documentations/",
+    # TODO: when the Github icon is supported natively by furo (https://github.com/pradyunsg/furo/discussions/114)
+    # then this should be moved into html_theme_options and the theme_ prefix should be dropped
+    "theme_source_repository": "https://github.com/spinalcordtoolbox/spinalcordtoolbox",
+    "theme_source_branch": "master",  # or subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]) ?
+    "theme_source_directory": "documentation/source/",
+
+    # TODO: this should be determined automatically, but it seems that *assigning* to html_context wipes out
+    # the automatically determined value?
+    "page_source_suffix": "rst",
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

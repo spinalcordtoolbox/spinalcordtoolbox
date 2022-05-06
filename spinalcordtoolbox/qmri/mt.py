@@ -44,8 +44,14 @@ def compute_mtr(nii_mt1, nii_mt0, threshold_mtr=100):
     :param threshold_mtr: float: value above which number will be clipped
     :return: nii_mtr
     """
+    # Convert input to avoid numerical errors from int16 data
+    # Related issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3636
+    nii_mt1.change_type('float32')
+    nii_mt0.change_type('float32')
+
     # Initialize Image object
     nii_mtr = nii_mt1.copy()
+
     # Compute MTR
     nii_mtr.data = divide_after_removing_zero(100 * (nii_mt0.data - nii_mt1.data), nii_mt0.data, threshold_mtr)
     return nii_mtr

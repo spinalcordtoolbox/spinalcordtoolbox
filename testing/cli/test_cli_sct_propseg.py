@@ -1,14 +1,16 @@
 import os
+import sys
 import pytest
 import logging
 
 from spinalcordtoolbox.image import Image, compute_dice
-from spinalcordtoolbox.utils import run_proc
+from spinalcordtoolbox.utils import run_proc, sct_test_path
 from spinalcordtoolbox.scripts import sct_propseg
 
 logger = logging.getLogger(__name__)
 
 
+@pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
 @pytest.mark.sct_testing
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_propseg_check_dice_coefficient_against_groundtruth():
@@ -27,6 +29,7 @@ def test_sct_propseg_check_dice_coefficient_against_groundtruth():
     assert dice_segmentation > 0.9
 
 
+@pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
 @pytest.mark.sct_testing
 def test_isct_propseg_compatibility():
     # TODO: Move this check to `sct_check_dependencies`. (It was in `sct_testing`, so it is put here for now.)
@@ -38,7 +41,10 @@ def test_isct_propseg_compatibility():
         'administrators.'
 
 
+@pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
 def test_sct_propseg_o_flag(tmp_path):
-    argv = ['-i', 'sct_testing_data/t2/t2.nii.gz', '-c', 't2', '-o', os.path.join(str(tmp_path), 'test_seg.nii.gz')]
+    argv = ['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path), '-o', 'test_seg.nii.gz']
     sct_propseg.main(argv)
-    assert os.path.isfile(os.path.join(str(tmp_path), 'test_seg.nii.gz'))
+    output_files = sorted([f for f in os.listdir(tmp_path)
+                          if os.path.isfile(os.path.join(tmp_path, f))])
+    assert output_files == ['t2_centerline.nii.gz', 'test_seg.nii.gz']

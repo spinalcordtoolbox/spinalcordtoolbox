@@ -35,20 +35,20 @@ check_dependencies() {
 
 run_tests() {
   activate_venv_sct
-  pytest
+  pytest testing/api testing/cli
+  # NB: 'testing/batch_processing' is run by a separate CI workflow
 }
 
 run_tests_with_coverage(){
-  # NB: Coverage does not currently work: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2702
+  # NB: Testing using example from https://github.com/codecov/example-python
   activate_venv_sct
-  pip install coverage
-  echo -ne "import coverage\ncov = coverage.process_startup()\n" > sitecustomize.py
-  echo -ne "[run]\nconcurrency = multiprocessing\nparallel = True\n" > .coveragerc
-  COVERAGE_PROCESS_START="$PWD/.coveragerc" COVERAGE_FILE="$PWD/.coverage" pytest
-  coverage combine
+  pytest --cov=spinalcordtoolbox --cov-config setup.cfg --cov-branch --cov-report=xml:cov-api.xml testing/api
+  pytest --cov=spinalcordtoolbox --cov-config setup.cfg --cov-branch --cov-report=xml:cov-cli.xml testing/cli
+  # NB: 'testing/batch_processing' can't easily be coverage by codecov, as
+  # the actual processing is invoked via a shell script, rather than pytest
 }
 
-while getopts ":ict" opt; do
+while getopts ":ictv" opt; do
   case $opt in
   i)
     install_sct
@@ -58,6 +58,9 @@ while getopts ":ict" opt; do
     ;;
   t)
     run_tests
+    ;;
+  v)
+    run_tests_with_coverage
     ;;
   *)
     exit 99

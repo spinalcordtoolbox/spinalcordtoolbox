@@ -51,7 +51,7 @@ setup(
             'sphinxcontrib-programoutput',
             'sphinx_rtd_theme',
             'sphinx-copybutton',
-            'furo==2021.6.18b35',
+            'furo==2021.11.23',
             'recommonmark',
             'sphinx==4.1.2',
             'sphinx-argparse'
@@ -90,6 +90,7 @@ setup(
                 'sct_dmri_concat_b0_and_dwi',
                 'sct_dmri_concat_bvals',
                 'sct_dmri_concat_bvecs',
+                'sct_dmri_denoise_patch2self',
                 'sct_dmri_display_bvecs',
                 'sct_dmri_moco',
                 'sct_dmri_separate_b0_and_dwi',
@@ -114,6 +115,7 @@ setup(
                 'sct_resample',
                 'sct_smooth_spinalcord',
                 'sct_straighten_spinalcord',
+                'sct_testing',
                 'sct_version',
                 'sct_warp_template',
             ]

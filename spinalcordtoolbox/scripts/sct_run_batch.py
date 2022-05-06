@@ -33,8 +33,8 @@ from textwrap import dedent
 import yaml
 import psutil
 
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
-from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, set_loglevel
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_open
+from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, __sct_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import Tee
 
 from stat import S_IEXEC
@@ -53,7 +53,7 @@ def get_parser():
     )
 
     parser.add_argument('-config', '-c',
-                        help='R|'
+                        help=''
                         'A json (.json) or yaml (.yml|.yaml) file with arguments. All arguments to the configuration '
                         'file are the same as the command line arguments, except all dashes (-) are replaced with '
                         'underscores (_). Using command line flags can be used to override arguments provided in '
@@ -74,7 +74,7 @@ def get_parser():
                             }\n
                             """))
     parser.add_argument('-jobs', type=int, default=1,
-                        help='R|The number of jobs to run in parallel. Either an integer greater than or equal to one '
+                        help='The number of jobs to run in parallel. Either an integer greater than or equal to one '
                         'specifying the number of cores, 0 or a negative integer specifying number of cores minus '
                         'that number. For example \'-jobs -1\' will run with all the available cores minus one job in '
                         'parallel. Set \'-jobs 0\' to use all available cores.\n'
@@ -82,21 +82,21 @@ def get_parser():
                         'parallelism. You may need to tweak both to find a balance that works best for your system.',
                         metavar=Metavar.int)
     parser.add_argument('-itk-threads', type=int, default=1,
-                        help='R|Sets the environment variable "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS".\n'
+                        help='Sets the environment variable "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS".\n'
                         'Number of threads to use for ITK based programs including ANTs. Increasing this can '
                         'provide a performance boost for high-performance (multi-core) computing environments. '
                         'However, increasing the number of threads may also result in a large increase in memory.\n'
                         'This argument enables thread-based parallelism, while \'-jobs\' enables process-based '
                         'parallelism. You may need to tweak both to find a balance that works best for your system.',
                         metavar=Metavar.int)
-    parser.add_argument('-path-data', help='R|Setting for environment variable: PATH_DATA\n'
+    parser.add_argument('-path-data', help='Setting for environment variable: PATH_DATA\n'
                         'Path containing subject directories in a consistent format')
     parser.add_argument('-subject-prefix', default='sub-',
                         help='Subject prefix, defaults to "sub-" which is the prefix used for BIDS directories. '
                         'If the subject directories do not share a common prefix, an empty string can be '
                         'passed here.')
-    parser.add_argument('-path-output', default='./',
-                        help='R|Base directory for environment variables:\n'
+    parser.add_argument('-path-output', default='.',
+                        help='Base directory for environment variables:\n'
                         'PATH_DATA_PROCESSED=' + os.path.join('<path-output>', 'data_processed') + '\n'
                         'PATH_RESULTS=' + os.path.join('<path-output>', 'results') + '\n'
                         'PATH_QC=' + os.path.join('<path-output>', 'qc') + '\n'
@@ -124,7 +124,7 @@ def get_parser():
                         'a subject if they are not on this list. Inclusions are processed before exclusions. '
                         'Cannot be used with either `exclude`.', nargs='+')
     parser.add_argument('-path-segmanual', default='.',
-                        help='R|Setting for environment variable: PATH_SEGMANUAL\n'
+                        help='Setting for environment variable: PATH_SEGMANUAL\n'
                         'A path containing manual segmentations to be used by the script program.')
     parser.add_argument('-script-args', default='',
                         help='A quoted string with extra flags and arguments to pass to the script. '
@@ -152,6 +152,26 @@ def get_parser():
     parser.add_argument('-h', "--help", action="help", help="show this help message and exit")
 
     return parser
+
+
+def _find_nonsys32_bash_exe():
+    """
+    Check the PATH to see if there is a non-System32 copy of bash.exe.
+
+    On newer copies of Windows. a bash.exe file is included in the System32
+    folder. When called, Windows will try to launch WSL if it's installed,
+    or it will give this message if WSL is not installed:
+
+    > Windows Subsystem for Linux has no installed distributions.
+    > Distributions can be installed by visiting the Microsoft Store:
+    > https://aka.ms/wslstore
+
+    Since we are supporting Windows natively, we don't want the WSL copy, and instead
+    want to use the next copy of bash.exe in the PATH (for example one provided by Cygwin).
+    """
+    nonsys32_paths = os.pathsep.join([p for p in os.environ['PATH'].split(os.pathsep)
+                                      if 'system32' not in p.lower()])
+    return shutil.which('bash', path=nonsys32_paths)
 
 
 def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
@@ -202,10 +222,30 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
         'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(itk_threads),
         'SCT_PROGRESS_BAR': 'off'
     })
+    if 'SCT_DIR' not in envir:  # For native Windows installations, the install script won't add SCT_DIR
+        envir['SCT_DIR'] = __sct_dir__
+
+    cmd = [script_full, subj_dir] + script_args.split(' ')
+
+    # Make sure that a Windows-compatible bash port is used to run shell scripts
+    if sys.platform.startswith("win32"):
+        with open(script_full) as f:
+            first_line = f.readline()
+        shebang_pattern = re.compile("^#!.*/.*sh\b.*")
+        if script_full.endswith('.sh') or shebang_pattern.match(first_line):
+            bash_exe = _find_nonsys32_bash_exe()
+            if bash_exe:
+                cmd.insert(0, bash_exe)
+            else:
+                print("WARNING: No bash.exe found in PATH. Script will be run as-is.")
+                print("(If you are on Windows and trying to run a `.sh` script, please "
+                      "install Cygwin, then add C:/cygwin64/bin to your PATH.)")
+        else:
+            print("WARNING: Script passed to sct_run_batch appears to be a non-shell script.")
 
     # Ship the job out, merging stdout/stderr and piping to log file
     try:
-        res = subprocess.run([script_full, subj_dir] + script_args.split(' '),
+        res = subprocess.run(cmd,
                              env=envir,
                              stdout=open(log_file, 'w'),
                              stderr=subprocess.STDOUT)
@@ -337,10 +377,14 @@ def main(argv=None):
     print("INFO SYSTEM")
     print("-----------")
     platform_running = sys.platform
-    if platform_running.find('darwin') != -1:
+    if platform_running.startswith('darwin'):
         os_running = 'osx'
-    elif platform_running.find('linux') != -1:
+    elif platform_running.startswith('linux'):
         os_running = 'linux'
+    elif platform_running.startswith('win32'):
+        os_running = 'windows'
+    else:
+        os_running = platform_running
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
 
     # Display number of CPU cores
@@ -364,17 +408,17 @@ def main(argv=None):
     print("git commit: {}".format(__get_commit(path_to_git_folder=os.path.dirname(script))))
     print("git origin: {}".format(__get_git_origin(path_to_git_folder=os.path.dirname(script))))
     print("Copying script to output folder...")
-    try:
-        # Copy the script and record the new location
-        script_copy = os.path.abspath(shutil.copy(script, arguments.path_output))
-        print("{} -> {}".format(script, script_copy))
-        script = script_copy
-    except shutil.SameFileError:
-        print("Input and output folder are the same. Skipping copy.")
-        pass
-    except IsADirectoryError:
+    if os.path.isdir(script):
         print("Input folder is a directory (not a file). Skipping copy.")
-        pass
+    else:
+        try:
+            # Copy the script and record the new location
+            script_copy = os.path.abspath(shutil.copy(script, arguments.path_output))
+            print("{} -> {}".format(script, script_copy))
+            script = script_copy
+        except shutil.SameFileError:
+            print("Input and output folder are the same. Skipping copy.")
+            pass
 
     print("Setting execute permissions for script file {} ...".format(arguments.script))
     script_stat = os.stat(script)
@@ -491,10 +535,8 @@ def main(argv=None):
         send_notification('sct_run_batch: Run completed',
                           status_message + timing_message)
 
-    open_cmd = 'open' if sys.platform == 'darwin' else 'xdg-open'
-
-    print('To open the Quality Control (QC) report on a web-browser, run the following:\n'
-          '{} {}/index.html'.format(open_cmd, path_qc))
+    display_open(file=os.path.join(path_qc, "index.html"),
+                 message="To open the Quality Control (QC) report in a web-browser")
 
     if arguments.zip:
         file_zip = 'sct_run_batch_{}'.format(time.strftime('%Y%m%d%H%M%S'))

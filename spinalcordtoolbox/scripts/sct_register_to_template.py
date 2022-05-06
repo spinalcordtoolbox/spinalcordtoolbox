@@ -102,19 +102,23 @@ def get_parser():
             "template label. No scaling will be performed. \n"
             "\n"
             "If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear "
-            "scaling) will be applied. The strategy here is to defined labels that cover the region of interest. For "
+            "scaling) will be applied. The strategy here is to define labels that cover the region of interest. For "
             "example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at "
             "C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a "
-            "mis-alignment of discs because a subject''s intervertebral discs distance might differ from that of the "
+            "mis-alignment of discs because a subject's intervertebral discs distance might differ from that of the "
             "template.\n"
             "\n"
-            "If more than two labels (only with the parameter '-disc') are used, a non-linear registration will be "
-            "applied to align the each intervertebral disc between the subject and the template, as described in "
-            "sct_straighten_spinalcord. This the most accurate and preferred method. This feature does not work with "
-            "the parameter '-ref subject', where only a rigid registration is performed.\n"
+            "If more than two labels are used, a non-linear registration will be applied to align the each "
+            "intervertebral disc between the subject and the template, as described in "
+            "sct_straighten_spinalcord. This the most accurate method, however it has some serious caveats: \n"
+            "  - This feature is not compatible with the parameter '-ref subject', where only a rigid registration is performed.\n"
+            "  - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the top label and below the bottom label. Applying this warping field will result in a strange-looking registered image that has the same value above the top label and below the bottom label. But if you are not interested in these regions, you do not need to worry about it.\n"
+            "\n"
+            "We recommend starting with 2 labels, then trying the other "
+            "options on a case-by-case basis depending on your data.\n"
             "\n"
             "More information about label creation can be found at "
-            "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%%5FCourse%%5F20200121 (p47)"
+            "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
         )
     )
 
@@ -152,26 +156,26 @@ def get_parser():
     optional.add_argument(
         '-l',
         metavar=Metavar.file,
-        help="R|One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
+        help="One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
              "Example: anat_labels.nii.gz\n"
              "For more information about label creation, please see: "
-             "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%%5FCourse%%5F20200121 (p47)"
+             "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
     )
     optional.add_argument(
         '-ldisc',
         metavar=Metavar.file,
-        help="R|File containing disc labels. Labels can be located either at the posterior edge "
+        help="File containing disc labels. Labels can be located either at the posterior edge "
              "of the intervertebral discs, or at the orthogonal projection of each disc onto "
              "the spinal cord (e.g.: the file 'xxx_seg_labeled_discs.nii.gz' output by sct_label_vertebrae).\n"
              "If you are using more than 2 labels, all discs covering the region of interest should be provided. "
              "E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. "
              "For more information about label creation, please refer to "
-             "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%%5FCourse%%5F20200121 (p47)"
+             "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
     )
     optional.add_argument(
         '-lspinal',
         metavar=Metavar.file,
-        help="R|Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
+        help="Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
              "mid-point of the spinal level. Example: anat_labels.nii.gz\n"
              "Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). "
              "If you are using more than 2 labels, all spinal levels covering the region of interest should be "
@@ -206,7 +210,7 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(':', str),
-        help=(f"R|Parameters for registration (see sct_register_multimodal). Default:"
+        help=(f"Parameters for registration (see sct_register_multimodal). Default:"
               f"\n"
               f"step=0\n"
               f"  - type={paramregmulti.steps['0'].type}\n"
@@ -547,7 +551,7 @@ def main(argv=None):
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
             sc_straight.param_centerline = param_centerline
             sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
-            sc_straight.path_output = './'
+            sc_straight.path_output = '.'
             sc_straight.qc = '0'
             sc_straight.remove_temp_files = param.remove_temp_files
             sc_straight.verbose = verbose
@@ -601,7 +605,7 @@ def main(argv=None):
                                    fname_affine='straight2templateAffine.txt', verbose=verbose)
             except RuntimeError:
                 raise('Input labels do not seem to be at the right place. Please check the position of the labels. '
-                      'See documentation for more details: https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)')
+                      'See documentation for more details: https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html')
 
             # Concatenate transformations: curve --> straight --> affine
             printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
@@ -912,10 +916,6 @@ def check_labels(fname_landmarks, label_type='body'):
     image_label = Image(fname_landmarks)
     # -> all labels must be different
     labels = image_label.getNonZeroCoordinates(sorting='value')
-    # check if there is two labels
-    if label_type == 'body' and not len(labels) <= 2:
-        printv('ERROR: Label file has ' + str(len(labels)) + ' label(s). It must contain one or two labels.', 1,
-               'error')
     # check if labels are integer
     for label in labels:
         if not int(label.value) == label.value:

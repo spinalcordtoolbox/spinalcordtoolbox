@@ -4,66 +4,191 @@
 Installation for Windows
 ************************
 
-Requirements
-============
+We currently provide 3 different ways to install SCT on Windows machines:
 
-Supported Operating Systems
----------------------------
-
-* Windows 10 with Windows Subsystem for Linux (WSL)
+- :ref:`Native Windows installation (recommended) <native-installation>`
+- :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>`
+- :ref:`Docker <docker-installation>`
 
 
-Installation Options
-====================
+-----
 
-Option 1: Install on Windows 10 with WSL
-----------------------------------------
 
-Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it possible to run native Linux programs, such as SCT.
+.. _native-installation:
 
-#. Install Windows Subsystem for Linux (WSL)
+Native Windows installation (recommended)
+-----------------------------------------
 
-   - Install `Xming <https://sourceforge.net/projects/xming/>`_.
+This set of instructions will show you how to install SCT directly on Windows.
 
-   - Install  `Windows subsystem for linux and initialize it <https://docs.microsoft.com/en-us/windows/wsl/install-win10>`_.
+.. note::
 
-     .. warning::
+   This method was first introduced to SCT in April 2022 as part of the Version 5.6 release. Previous versions of SCT required the use of :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>` or :ref:`Docker <docker-installation>` in order to support Windows.
 
-        Make sure to install WSL1. SCT can work with WSL2, but the installation procedure described here refers to WSL1.
-        If you are comfortable with installing SCT with WSL2, please feel free to do so.
+   Because this method is new to SCT, we would greatly appreciate hearing any feedback you may have about your experiences using SCT on Windows. If you encounter any issues, or have any questions or concerns, feel free to post on the `Spinalcordmri.org forums <https://forum.spinalcordmri.org/c/sct/8>`_, and SCT's development team will be happy to help.
 
-        When asked what Linux version to install, select the Ubuntu 18.04 LTS distro.
+1. Installing Prerequisites
+***************************
+
+SCT depends on two pieces of software that must be set up prior to the installation of SCT.
+
+Python 3.7
+^^^^^^^^^^
+
+Since SCT is a Python package, Python must be installed on your system before SCT can be installed.
+
+1. Download a "Windows x86-64" installer from `the Python 3.7.9 download page <https://www.python.org/downloads/release/python-379/>`_.
+
+2. Run the installer file. (**Important:** Before clicking "Install Now", make sure to first check the "Add Python 3.7 to PATH" checkbox at the bottom of the window.)
+
+3. After the installation has finished, open your Start Menu and type Command Prompt, then run it. In the Command Prompt window, type ``python --version`` and press enter.
+
+   (Make sure that you see the text ``Python 3.7.9`` before continuing.)
+
+
+Git for Windows
+^^^^^^^^^^^^^^^
+
+The easiest way to try out different versions of SCT is using Git.
+
+1. Download Git for Windows from `the Git download page <https://git-scm.com/download/win>`_.
+
+2. Run the installer.
+
+   - You can click "Next" for most of the options in the installer.
+   - However, on the "Adjusting your PATH environment" page, we strongly recommend that you choose the "Use Git and optional Unix tools from the Command Prompt". Selecting this option will provide you with useful Unix utilities such as ``bash``, ``cd``, ``ls``, and more that combine nicely with SCT's command-line tools. In particular, ``bash`` will allow ``sct_run_batch`` to execute bash scripts for batch processing of subjects.
+   - **Note:** If you prefer, you may instead choose to :ref:`install Cygwin<installing_cygwin>` (rather than selecting the "Use Git and optional Unix tools" option) in order to gain access to these same Unix utilities.
+
+3. After the installation has finished, open your Start Menu and type Command Prompt, then run it. In the Command Prompt window, type ``git --version`` and press enter.
+
+   (Make sure that you see the text ``git version <number>`` before continuing.)
+
+
+2. Installing SCT
+*****************
+
+We recommend that you install SCT into a Python virtual environment. To help with this process, SCT provides an installer script that will automate the process of creating a Python virtual environment for you.
+
+1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`_ , then download the ``install_sct.bat`` script from the "Assets" section of the latest release. 
+
+2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Python virtual environment for you.
+
+3. Once the installer finishes, follow the instructions given at the end of the Command Prompt window, which will instruct you to add SCT to your PATH.
+
+4. Finally, in the Command Prompt window, type ``sct_check_dependencies`` and press enter. Make sure that you see a status report containing all "OKs" before continuing.
+
+5. You are now free to use SCT's command line tools to process your data. If you would like to learn how to use SCT, we recommend starting with SCT's :ref:`tutorials` pages.
+
+.. _installing_cygwin:
+
+3. (Optional) Installing Cygwin
+*******************************
+
+.. note:: You do not need to install Cygwin if you already selected the "Use Git and optional Unix tools from the Command Prompt" option during the Git installation step.
+
+Cygwin is a collection of useful Unix utilities such as ``bash``, ``cd``, ``ls``, and more that combine nicely with SCT's command-line tools. In particular, ``bash`` will allow ``sct_run_batch`` to execute bash scripts for batch processing of subjects.
+
+1. Download the Cygwin installer from `the Cygwin installation page <https://www.cygwin.com/install.html>`_.
+
+2. Run the installer. (You can click "Next" for every section of the installer, as the default settings are sufficient.)
+
+3. After the installer is finished, you will need to add Cygwin's programs to the PATH.
+
+   - Open the Start Menu -> Type 'path' -> Open 'Edit environment variables for your account'
+   - Under the section 'User variables for ____', highlight the 'Path' entry, then click the 'Edit...' button.
+   - Click 'New', then copy and paste "``C:\cygwin64\bin``".
+   - Finally, click "Ok" three times.
+
+4. Finally, open your Start Menu and type Command Prompt, then run it. In the Command Prompt window, type ``cygcheck --version`` and press enter. Make sure that you see the text ``cygcheck (cygwin)`` before continuing.
+
+   - Note: If you see a "not recognized" error, please repeat Step 3, making sure that the directory you added corresponds to the installation directory of Cygwin.
+
+
+-----
+
+
+.. _wsl-installation:
+
+Windows Subsystem for Linux (WSL) installation
+----------------------------------------------
+
+Windows Subsystem for Linux (WSL) makes it possible to run native Linux programs on Windows 10. Here, WSL is used to install the Linux version of SCT within Windows (as opposed to the :ref:`native Windows version <native-installation>`).
+
+Basic installation (No GUI)
+***************************
+
+#. Make sure that your version of Windows 10 is up to date before continuing.
+
+   - In Windows, search for "System Information" and open the app. In the "Version" field, make sure that you are running "Build 19041" or higher.
+
+   - Then, search for "Powershell" in your Start Menu, then right-click and "Run as administrator". Then run the following command:
+
+     .. code::
+
+        wsl --update
+
+   - If this command is successful, then you can proceed to the next step. Otherwise, please try the following troubleshooting steps:
+
+     - Make sure your version of Windows is up to date.
+     - Make sure that you have sufficient administrative privileges for your Windows system.
+     - If you cannot update Windows, then you can try the instructions from Microsoft's `"Manual installation steps for older versions of WSL" <https://docs.microsoft.com/en-us/windows/wsl/install-manual>`_ page.
+
+#. Install an Ubuntu distribution in Windows Subsystem for Linux (WSL)
+
+   - In Windows, search for "Powershell" in your Start Menu, then right-click and "Run as administrator".
+
+   - In PowerShell, type the following command and press enter:
+
+     .. code::
+
+        wsl --install
+
+   - After this command finishes, you will be prompted to restart your computer.
+
+   - After restarting, the installation should automatically resume, and you will be able to create a user account inside Ubuntu by selecting a username and password.
+
+#. Choose the WSL version (1/2).
+
+   By default, Microsoft's instructions will create an Ubuntu environment using Version 2 of WSL. While version 2 has been tested to work with SCT, our development team tests more thoroughly using Version 1 of WSL (due to `better support from GitHub Actions <https://github.com/actions/virtual-environments/issues/50>`_).
+
+   Because of this, we recommend that you convert the WSL2 Ubuntu environment to use WSL1 before continuing. To do this, first close Ubuntu, then re-open Powershell and run the following command:
+
+   .. code::
+
+      wsl --list --verbose
+
+   If WSL installed correctly, you should see a list of installed distributions (as well as their WSL versions). Find the name of the distribution you just installed (which should be something like ``Ubuntu`` or ``Ubuntu-20.04``), then specify that name in the following command:
+
+   .. code::
+
+      wsl --set-version Ubuntu 1
+
+   After you run this command, you can then run ``wsl --list --verbose`` again to check that the distribution has changed from WSL2 to WSL1.
 
 #. Environment preparation
 
-   Run the following command to install various packages that will be needed to install FSL and SCT. This will require your password
+   Now that you have set up an Ubuntu environment with WSL, please open Ubuntu and run the following commands to install various packages that will be needed to install SCT.
 
    .. code-block:: sh
 
-      sudo apt-get update
-      sudo apt-get -y install gcc
-      sudo apt-get -y install unzip
-      sudo apt-get install -y python-pip python
-      sudo apt-get install -y psmisc net-tools
-      sudo apt-get install -y git
-      sudo apt-get install -y gfortran
-      sudo apt-get install -y libjpeg-dev
-      echo 'export DISPLAY=127.0.0.1:0.0' >> .profile
+      sudo apt-get update && sudo apt-get upgrade -y
+      sudo apt-get -y install gcc unzip python3-pip python3 psmisc net-tools git gfortran libjpeg-dev
 
 #. Install SCT
 
-   Download SCT:
+   First, download SCT by running the following commands in Ubuntu:
 
    .. code-block:: sh
 
-      git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
-      cd sct
+      cd ~
+      git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git
+      cd spinalcordtoolbox
 
-   To select a `specific release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, replace X.Y.Z below with the proper release number. If you prefer to use the development version, you can skip this step.
+   To select a `specific release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, replace ``X.Y`` below with the proper release number. If you prefer to use the development version, you can skip this step.
 
    .. code-block:: sh
 
-      git checkout X.Y.Z
+      git checkout X.Y
 
    Install SCT:
 
@@ -71,13 +196,22 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
 
       ./install_sct -y
 
-   To complete the installation of these software run:
+   .. note::
+
+      At the end of this installation step, you may see the following warnings:
+
+      .. code::
+
+         Check if figure can be opened with matplotlib.......[FAIL] (Using non-GUI backend 'agg')
+         Check if figure can be opened with PyQt.............[FAIL] ($DISPLAY not set on X11-supporting system)
+
+      This is expected, because WSL does not come with the ability to display GUI programs by default. Later on in this page, there will be optional GUI settings you can configure for WSL to address these warnings.
+
+   To complete the installation of SCT, run:
 
    .. code:: sh
 
-      cd ~
-      source .profile
-      source .bashrc
+      source ~/.bashrc
 
    You can now use SCT. Your local C drive is located under ``/mnt/c``. You can access it by running:
 
@@ -86,26 +220,73 @@ Windows Subsystem for Linux (WSL) is available on Windows 10 and it makes it pos
       cd /mnt/c
 
 
-Option 2: Install with Docker
------------------------------
+WSL Installation with GUI (Optional)
+************************************
+
+If you would like to use SCT's GUI features, or if you would like to try FSLeyes within the same Ubuntu environment, first complete the previous "Basic Installation" section, then continue on to the steps below.
+
+#. Download and install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`_, a program that makes it possible to run Linux GUI programs installed with WSL.
+
+#. Run the newly installed ``XLaunch`` program, then click the following settings:
+
+   - On the "Display settings" page, click "Next".
+   - On the "Client startup" page, click "Next".
+   - On the "Extra settings" page, check the "Disable access control" box, then click "Next".
+   - Click "Finish", then click "Allow access" when prompted by Windows Firewall.
+   - You should now see the X Server icon running in the bottom-right system tray in your taskbar.
+
+   .. note::
+
+      ``XLaunch`` must be running each time you wish to use GUI programs in WSL.
+
+#. Next, run the following commands in Ubuntu, depending on the version of WSL you are using.
+
+   WSL1:
+
+   .. code::
+
+      echo "export DISPLAY=localhost:0.0" >> ~/.bashrc
+      echo "export LIBGL_ALWAYS_INDIRECT=0" >> ~/.bashrc
+      source ~/.bashrc
+
+   WSL2:
+
+   .. code::
+
+      echo "export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0.0" >> ~/.bashrc
+      echo "export LIBGL_ALWAYS_INDIRECT=0" >> ~/.bashrc
+      source ~/.bashrc
+
+#. Finally, run the ``sct_check_dependencies`` command in Ubuntu to verify that matplotlib and PyQt figures can be opened by SCT.
+
+#. Optionally, you can install FSLeyes using the following commands:
+
+   .. code::
+
+      source ${SCT_DIR}/python/etc/profile.d/conda.sh
+      conda create -c conda-forge -p ~/fsleyes_env fsleyes -y
+      sudo ln -s ~/fsleyes_env/bin/fsleyes /usr/local/bin/fsleyes
+
+   These instructions will install FSLeyes into a fresh ``conda`` environment, then create a link to FSLeyes so that you can use the ``fsleyes`` command without having to activate the conda environment each time.
+
+
+-----
+
+
+.. _docker-installation:
+
+Docker installation
+-------------------
 
 `Docker <https://www.docker.com/what-container>`_ is a portable (Linux, macOS, Windows) container platform.
-
-In the context of SCT, it can be used:
-
-- To run SCT on Windows, until SCT can run natively there
-- For development testing of SCT, faster than running a full-fledged
-  virtual machine
-- <your reason here>
 
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker <https://docs.docker.com/install/>`_. Then, follow the examples below to create an OS-specific SCT installation.
+First, `install Docker <https://docs.docker.com/install/>`_. Then, follow either of the examples below to create an OS-specific SCT installation.
 
-
-Docker Image: Ubuntu
-^^^^^^^^^^^^^^^^^^^^
+Option 1: Ubuntu Docker Image
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: bash
 
@@ -128,8 +309,8 @@ Docker Image: Ubuntu
    docker ps -a  # list all containers
    docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu16.04
 
-Docker Image: CentOS7
-^^^^^^^^^^^^^^^^^^^^^
+Option 2: CentOS7 Docker Image
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code:: bash
 

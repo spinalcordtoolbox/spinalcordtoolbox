@@ -17,6 +17,7 @@ from typing import Sequence
 import numpy as np
 from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
+import nibabel as nib
 
 from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
@@ -37,10 +38,10 @@ def get_parser():
         '-i',
         nargs='+',
         metavar=Metavar.file,
-        help='R|Input file(s). Example: "data.nii.gz"\n'
+        help='Input file(s). Example: "data.nii.gz"\n'
              'Note: Only "-concat" or "-omc" support multiple input files. In those cases, separate filenames using '
              'spaces. Example usage: "sct_image -i data1.nii.gz data2.nii.gz -concat"',
-        required = True)
+        required=True)
     optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
     optional.add_argument(
         '-h',
@@ -311,9 +312,9 @@ def main(argv=None):
     elif arguments.header is not None:
         header = im_in.header
         # Necessary because of https://github.com/nipy/nibabel/issues/480#issuecomment-239227821
-        if hasattr(im_in, "im_file"):
-            header.structarr['scl_slope'] = im_in.im_file.dataobj.slope
-            header.structarr['scl_inter'] = im_in.im_file.dataobj.inter
+        im_file = nib.load(im_in.absolutepath)
+        header.structarr['scl_slope'] = im_file.dataobj.slope
+        header.structarr['scl_inter'] = im_file.dataobj.inter
         printv(create_formatted_header_string(header=header, output_format=arguments.header), verbose=verbose)
         im_out = None
 

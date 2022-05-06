@@ -8,6 +8,7 @@
 #
 # About the license: see the file LICENSE.TXT
 
+import os
 import sys
 
 from spinalcordtoolbox.utils import init_sct, set_loglevel, SCTArgumentParser
@@ -45,7 +46,7 @@ def get_parser():
                         metavar='QC',
                         help='Path to save QC report. Default: ./qc',
                         required=False,
-                        default='./qc')
+                        default=os.path.join('.', 'qc'))
     parser.add_argument('-qc-dataset',
                         metavar='DATASET',
                         help='If provided, this string will be mentioned in the QC report as the dataset the process '
