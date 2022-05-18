@@ -77,6 +77,12 @@ jobs:
         ref: ${{ env.MAIN_BRANCH }}
         fetch-depth: 0
 
+    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
+    - name: Set bot user data for commits
+      run: |
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "GitHub Actions Bot"
+
     - name: Merge main branch into release branch
       working-directory: checkout/spinalcordtoolbox
       run: |
