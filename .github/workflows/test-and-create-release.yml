@@ -70,10 +70,12 @@ jobs:
       run:
         shell: bash
     steps:
-    - name: Checkout SCT
+    - name: Checkout spinalcordtoolbox (main branch)
       uses: actions/checkout@v2
       with:
         path: checkout/spinalcordtoolbox
+        ref: ${{ env.MAIN_BRANCH }}
+        fetch-depth: 0
 
     - name: Merge main branch into release branch
       working-directory: checkout/spinalcordtoolbox
@@ -143,8 +145,12 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     steps:
 
-    - name: Checkout SCT
+    - name: Checkout spinalcordtoolbox (main branch)
       uses: actions/checkout@v2
+      with:
+        path: checkout/spinalcordtoolbox
+        ref: ${{ env.MAIN_BRANCH }}
+        fetch-depth: 0
 
     - name: Merge main branch into release branch
       run: |
