@@ -73,9 +73,6 @@ jobs:
     steps:
     - name: Checkout spinalcordtoolbox (main branch)
       uses: actions/checkout@v2
-      with:
-        ref: ${{ env.MAIN_BRANCH }}
-        fetch-depth: 0
 
     # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
     - name: Set bot user data for commits
