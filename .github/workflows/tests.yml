@@ -411,7 +411,6 @@ jobs:
       shell: bash
       run: echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
     - name: Check dependencies
-      shell: cmd
       run: sct_check_dependencies
     - name: Run pytest test suite
       run: sct_testing
