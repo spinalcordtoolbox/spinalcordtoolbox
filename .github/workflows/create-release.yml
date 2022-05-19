@@ -49,8 +49,8 @@ jobs:
         conda activate venv_sct
         pip freeze | grep -v "-e git+" | grep -v "torch" > requirements-freeze.txt
         conda deactivate
-        echo "# Platform-specific torch requirements (See SCT Issue #2745)" >> requirements-freeze.txt
-        grep "torch" requirements.txt >> requirements-freeze.txt
+        echo "# Platform-specific requirements (For torch, see SCT Issue #2745)" >> requirements-freeze.txt
+        grep "sys.platform" requirements.txt >> requirements-freeze.txt
 
     - name: Upload requirements-freeze.txt
       uses: actions/upload-artifact@v3
