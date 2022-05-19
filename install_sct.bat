@@ -37,7 +37,7 @@ if exist .git\ (
 
   rem Download SCT and check out the branch requested by the user
   echo:
-  echo ### Downloading SCT source code (@ %git_ref%) to %HOMEPATH%\spinalcordtoolbox...
+  echo ### Downloading SCT source code ^(@ %git_ref%^) to %HOMEPATH%\spinalcordtoolbox...
   git clone -b %git_ref% --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git || goto error
   cd spinalcordtoolbox
 )
