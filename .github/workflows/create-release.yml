@@ -59,6 +59,9 @@ jobs:
         path: requirements-freeze.txt
 
   test-release:
+    # The purpose of this step is to run tests using the requirements-freeze file
+    # In 99% of cases, this will be identical to running tests using `requirements.txt`. But, sometimes
+    # there are unique bugs that arise from using the `requirements-freeze.txt` file.
     needs: generate-requirements-freeze
     strategy:
       matrix:
@@ -73,17 +76,6 @@ jobs:
     steps:
     - name: Checkout spinalcordtoolbox (main branch)
       uses: actions/checkout@v2
-
-    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
-    - name: Set bot user data for commits
-      run: |
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "GitHub Actions Bot"
-
-    - name: Merge main branch into release branch
-      run: |
-        git checkout ${{ env.RELEASE_BRANCH }}
-        git merge --no-ff ${{ env.MAIN_BRANCH }}
 
     - name: Download requirements-freeze.txt
       uses: actions/download-artifact@v3
@@ -142,11 +134,6 @@ jobs:
         ref: ${{ env.MAIN_BRANCH }}
         fetch-depth: 0
 
-    - name: Merge main branch into release branch
-      run: |
-        git checkout ${{ env.RELEASE_BRANCH }}
-        git merge --no-ff ${{ env.MAIN_BRANCH }}
-
     - name: Download requirements-freeze.txt
       uses: actions/download-artifact@v3
       with:
@@ -164,16 +151,17 @@ jobs:
 
     - name: Commit and push
       run: |
+        git checkout -b bot/${{ github.event.inputs.milestone_title }}
         git add requirements-freeze.txt
         git commit -m "Update requirements-freeze.txt for ${{ github.event.inputs.milestone_title }}"
         git add spinalcordtoolbox/version.txt
         git commit -m "Update version.txt for ${{ github.event.inputs.milestone_title }}"
-        git push
+        git tag ${{ github.event.inputs.milestone_title }}
+        git push --tags
 
     - uses: ncipollo/release-action@v1
       name: Create release
       with:
-        commit: ${{ env.RELEASE_BRANCH }}
         tag: ${{ github.event.inputs.milestone_title }}
         token: ${{ secrets.GITHUB_TOKEN }}
         bodyFile: ".github/workflows/release-body.md"
