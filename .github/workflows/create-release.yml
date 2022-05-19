@@ -50,7 +50,7 @@ jobs:
         pip freeze | grep -v "-e git+" | grep -v "torch" > requirements-freeze.txt
         conda deactivate
         echo "# Platform-specific requirements (For torch, see SCT Issue #2745)" >> requirements-freeze.txt
-        grep "sys.platform" requirements.txt >> requirements-freeze.txt
+        grep "sys_platform" requirements.txt >> requirements-freeze.txt
 
     - name: Upload requirements-freeze.txt
       uses: actions/upload-artifact@v3
