@@ -4,34 +4,40 @@ rem Usage: install_sct.bat <version>
 rem e.g.
 rem        install_sct.bat 5.5
 
-rem Set git ref. If no git ref is specified when calling `install_sct.bat`, use a default instead.
-if [%1]==[] (
-  set git_ref=master
+if exist .git\ (
+  rem If install_sct.bat is being run from a git repository, we assume that this is a git clone of SCT
+  rem So, stay in this folder, skip git clone, and assume that we want to install SCT from the current state of the repository
+  pushd .
 ) else (
-  set git_ref=%1
-)
+  rem Not an in-place install, so go to user's home directory
+  pushd %HOMEPATH%
 
-rem Go to user's home directory
-pushd %HOMEPATH%
-
-rem Check to see if we're going to git clone into an existing installation of SCT
-if exist spinalcordtoolbox\ (
-  echo ### Previous spinalcordtoolbox installation found at %HOMEPATH%\spinalcordtoolbox.
-  rem NB: The rmdir command will output 'spinalcordtoolbox\, Are you sure (Y/N)?', so we don't need our own Y/N prompt
-  rem     We also use "echo set /p=" here in order to make sure that Y/N text is output on the same line.
-  echo|set /p="### Continuing will overwrite the existing installation directory "
-  rmdir /s spinalcordtoolbox\ || goto error
+  rem Check to see if we're going to git clone into an existing installation of SCT
   if exist spinalcordtoolbox\ (
-    echo ### spinalcordtoolbox\ not removed. Quitting installation...
-    goto exit
+    echo ### Previous spinalcordtoolbox installation found at %HOMEPATH%\spinalcordtoolbox.
+    rem NB: The rmdir command will output 'spinalcordtoolbox\, Are you sure (Y/N)?', so we don't need our own Y/N prompt
+    rem     We also use "echo set /p=" here in order to make sure that Y/N text is output on the same line.
+    echo|set /p="### Continuing will overwrite the existing installation directory "
+    rmdir /s spinalcordtoolbox\ || goto error
+    if exist spinalcordtoolbox\ (
+      echo ### spinalcordtoolbox\ not removed. Quitting installation...
+      goto exit
+    )
   )
-)
 
-rem Download SCT and check out the branch requested by the user
-echo:
-echo ### Downloading SCT source code (@ %git_ref%) to %HOMEPATH%\spinalcordtoolbox...
-git clone -b %git_ref% --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git || goto error
-cd spinalcordtoolbox
+  rem Set git ref. If no git ref is specified when calling `install_sct.bat`, use a default instead.
+  if [%1]==[] (
+    set git_ref=master
+  ) else (
+    set git_ref=%1
+  )
+
+  rem Download SCT and check out the branch requested by the user
+  echo:
+  echo ### Downloading SCT source code (@ %git_ref%) to %HOMEPATH%\spinalcordtoolbox...
+  git clone -b %git_ref% --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git || goto error
+  cd spinalcordtoolbox
+)
 
 rem Create and activate virtual environment to install SCT into
 echo:
