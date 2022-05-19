@@ -31,11 +31,11 @@ rem Download SCT and check out the branch requested by the user
 echo:
 echo ### Downloading SCT source code (@ %git_ref%) to %HOMEPATH%\spinalcordtoolbox...
 git clone -b %git_ref% --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git || goto error
+cd spinalcordtoolbox
 
 rem Create and activate virtual environment to install SCT into
 echo:
 echo ### Using Python to create virtual environment...
-cd spinalcordtoolbox
 python -m venv venv_sct || goto error
 call venv_sct\Scripts\activate.bat || goto error
 echo Virtual environment created and activated successfully!
