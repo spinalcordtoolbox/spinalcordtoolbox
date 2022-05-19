@@ -8,6 +8,9 @@ if exist .git\ (
   rem If install_sct.bat is being run from a git repository, we assume that this is a git clone of SCT
   rem So, stay in this folder, skip git clone, and assume that we want to install SCT from the current state of the repository
   pushd .
+  echo ### Current working directory is a git repository. Installing SCT from current state of the repository:
+  echo:
+  git status
 ) else (
   rem Not an in-place install, so go to user's home directory
   pushd %HOMEPATH%
