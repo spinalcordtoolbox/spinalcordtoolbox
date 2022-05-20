@@ -11,39 +11,58 @@ device = 'cpu'
 os.environ['VXM_BACKEND'] = 'pytorch'
 import voxelmorph as vxm
 
+
 print("\n### Loading data files...")
-# Load preprocessed data (scaled between 0 and 1 and with the moving data in the space of the fixed one)
+# Load preprocessed data (scaled between 0 and 1 and with the moving data in
+# the space of the fixed one)
+# N.B. These data are in my local computer but any data could be used to
+# perform the same analysis. It only needs to be scaled and set in a common
+# space (e.g. using sct_register_multimodal with -identity 1)
 fixed = nib.load("data/sct_example_data/t1/t1.nii.gz")
 moving = nib.load("data/sct_example_data/t2/t2.nii.gz")
-# N.B. These data are in my local computer but any data could be used to perform the same analysis.
-# It only needs to be scaled and set in a common space (e.g. using sct_register_multimodal with -identity 1)
-
 fx_img_shape = fixed.get_fdata().shape
 mov_img_shape = moving.get_fdata().shape
 print(f"\n### Input shape for fixed image: {fx_img_shape}")
 print(f"### Input shape for moving image: {mov_img_shape}")
 
-print("\n### Padding data files...")
-# Define the input shape of the model (smallest divider of 16 above the input data shape)
-# Ensure that the volumes can be used in the registration model
-max_img_shape = max(fx_img_shape, mov_img_shape)
-new_img_shape = (int(np.ceil(max_img_shape[0] // 16)) * 16, int(np.ceil(max_img_shape[1] // 16)) * 16,
-                 int(np.ceil(max_img_shape[2] // 16)) * 16)
 
+print("\n### Padding data files...")
+# Define the input shape of the model (smallest divider of 16 above the input
+# data shape) Ensure that the volumes can be used in the registration model
+max_img_shape = max(fx_img_shape, mov_img_shape)
+new_img_shape = (int(np.ceil(max_img_shape[0] // 16)) * 16,
+                 int(np.ceil(max_img_shape[1] // 16)) * 16,
+                 int(np.ceil(max_img_shape[2] // 16)) * 16)
 # Pad the volumes to the max shape
-fx_paded = resample_img(fixed, target_affine=fixed.affine, target_shape=new_img_shape, interpolation='continuous')
-mov_paded = resample_img(moving, target_affine=moving.affine, target_shape=new_img_shape, interpolation='continuous')
+fx_paded = resample_img(fixed,
+                        target_affine=fixed.affine,
+                        target_shape=new_img_shape,
+                        interpolation='continuous')
+mov_paded = resample_img(moving,
+                         target_affine=moving.affine,
+                         target_shape=new_img_shape,
+                         interpolation='continuous')
 input_shape = list(new_img_shape)
+
 
 print("\n### Creating data tensors...")
 # Prepare the data for inference
-data_moving = np.expand_dims(mov_paded.get_fdata().squeeze(), axis=(0, -1)).astype(np.float32)
-data_fixed = np.expand_dims(fx_paded.get_fdata().squeeze(), axis=(0, -1)).astype(np.float32)
+data_moving = np.expand_dims(mov_paded.get_fdata().squeeze(),
+                             axis=(0, -1)).astype(np.float32)
+data_fixed = np.expand_dims(fx_paded.get_fdata().squeeze(),
+                            axis=(0, -1)).astype(np.float32)
 # Set up tensors and permute for inference
-input_moving = torch.from_numpy(data_moving).to(device).float().permute(0, 4, 1, 2, 3)
-input_fixed = torch.from_numpy(data_fixed).to(device).float().permute(0, 4, 1, 2, 3)
+input_moving = torch.from_numpy(data_moving)\
+    .to(device)\
+    .float()\
+    .permute(0, 4, 1, 2, 3)
+input_fixed = torch.from_numpy(data_fixed)\
+    .to(device)\
+    .float()\
+    .permute(0, 4, 1, 2, 3)
 print(f"\n### Input shape for fixed tensor: {input_fixed.shape}")
 print(f"### Input shape for moving tensor: {input_moving.shape}")
+
 
 # Set the parameters of the registration model
 reg_args = dict(
@@ -55,6 +74,7 @@ reg_args = dict(
 )
 print("\n### Creating VxmDense models with arguments:")
 print(reg_args)
+
 
 # ---- First Model ---- #
 print("\n### Loading first VxmDense model...")
@@ -73,6 +93,22 @@ for k, v in torchparam.items():
         i += 1
 pt_first_model.load_state_dict(torchparam)
 pt_first_model.eval()
+
+# Predict using cascaded networks
+print("\n### Predicting using first VxmDense model...")
+moved, warp_tensor = pt_first_model(input_moving, input_fixed,
+                                    registration=True)
+# TODO: This point is never reached, because the call to `pt_first_model`
+#       results in "Process finished with exit code 137 (interrupted by signal
+#                   9: SIGKILL)"
+warp_data_first = warp_tensor[0].permute(1, 2, 3, 0).detach().numpy()
+# Saved the moved data after the first step of the process to directly observe
+# the results
+print("\n### Saving first prediction...")
+moved_first_reg_data = moved[0][0].detach().numpy()
+moved_nifti = nib.Nifti1Image(moved_first_reg_data, fixed.affine)
+nib.save(moved_nifti, 'moved_first_reg.nii.gz')
+
 
 # ---- Second Model ---- #
 print("\n### Loading second VxmDense model...")
@@ -93,37 +129,29 @@ pt_second_model.load_state_dict(torchparam)
 pt_second_model.eval()
 
 # Predict using cascaded networks
-print("\n### Predicting using first VxmDense model...")
-moved, warp_tensor = pt_first_model(input_moving, input_fixed, registration=True)
-# TODO: This point is never reached, because the call to `pt_first_model`
-#       results in "Process finished with exit code 137 (interrupted by signal
-#                   9: SIGKILL)"
-warp_data_first = warp_tensor[0].permute(1, 2, 3, 0).detach().numpy()
-
-# Saved the moved data after the first step of the process to directly observe the results
-print("\n### Saving first prediction...")
-moved_first_reg_data = moved[0][0].detach().numpy()
-moved_nifti = nib.Nifti1Image(moved_first_reg_data, fixed.affine)
-nib.save(moved_nifti, 'moved_first_reg.nii.gz')
-
 print("\n### Predicting using second VxmDense model...")
-moved_final, warp_tensor = pt_second_model(moved, input_fixed, registration=True)
+moved_final, warp_tensor = pt_second_model(moved, input_fixed,
+                                           registration=True)
 warp_data_second = warp_tensor[0].permute(1, 2, 3, 0).detach().numpy()
-
 # Saved the moved data at the end of the registration process
 print("\n### Saving second prediction...")
 moved_data = moved_final[0][0].detach().numpy()
 nib.save(nib.Nifti1Image(moved_data, fixed.affine), 'moved.nii.gz')
 
-# Warping field
-# Modify the warp data so it can be used with sct_apply_transfo()
-# (add a time dimension, change the sign of some axes and set the intent code to vector)
 
-# Change the sign of the vectors and the order of the axes components to be correctly used with sct_apply_transfo
-# and to to get the same results with sct_apply_transfo() and when using model.predict() or vxm.networks.Transform()
+# Warping field
+# - Modify the warp data so it can be used with sct_apply_transfo()
+# - (add a time dimension, change the sign of some axes and set the intent code
+#   to vector)
+# - Change the sign of the vectors and the order of the axes components to be
+#   correctly used with sct_apply_transfo and to to get the same results with
+#   sct_apply_transfo() and when using model.predict() or
+#   vxm.networks.Transform()
 orientation_conv = "LPS"
 fx_im_orientation = list(nib.aff2axcodes(fixed.affine))
-opposite_character = {'L': 'R', 'R': 'L', 'A': 'P', 'P': 'A', 'I': 'S', 'S': 'I'}
+opposite_character = {'L': 'R', 'R': 'L',
+                      'A': 'P', 'P': 'A',
+                      'I': 'S', 'S': 'I'}
 perm = [0, 1, 2]
 inversion = [1, 1, 1]
 for i, character in enumerate(orientation_conv):
@@ -132,6 +160,7 @@ for i, character in enumerate(orientation_conv):
     except ValueError:
         perm[i] = fx_im_orientation.index(opposite_character[character])
         inversion[i] = -1
+
 
 # First Warping Field
 # Add the time dimension
@@ -145,6 +174,7 @@ warp.header['intent_code'] = 1007
 
 # Save the warping field that can be later used with sct_apply_transfo
 nib.save(warp, f'warp_field_first_reg.nii.gz')
+
 
 # Second Warping Field
 # Add the time dimension
