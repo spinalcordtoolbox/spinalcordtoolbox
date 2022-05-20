@@ -18,8 +18,8 @@ print("\n### Loading data files...")
 # N.B. These data are in my local computer but any data could be used to
 # perform the same analysis. It only needs to be scaled and set in a common
 # space (e.g. using sct_register_multimodal with -identity 1)
-fixed = nib.load("T1w.nii.gz")
-moving = nib.load("T2w.nii.gz")
+fixed = nib.load(os.path.join("data", "T1w.nii.gz"))
+moving = nib.load(os.path.join("data", "T2w.nii.gz"))
 fx_img_shape = fixed.get_fdata().shape
 mov_img_shape = moving.get_fdata().shape
 print(f"\n### Input shape for fixed image: {fx_img_shape}")
@@ -79,7 +79,9 @@ print(reg_args)
 # ---- First Model ---- #
 print("\n### Loading first VxmDense model...")
 pt_first_model = vxm.networks.VxmDense(**reg_args)
-trained_state_dict_first_model = torch.load('pt_cascaded_first_model.pt')
+trained_state_dict_first_model = torch.load(
+    os.path.join('model', 'pt_cascaded_first_model.pt')
+)
 # Load the weights to the PyTorch model
 weights_first_model = []
 for k in trained_state_dict_first_model:
@@ -113,7 +115,9 @@ nib.save(moved_nifti, 'moved_first_reg.nii.gz')
 # ---- Second Model ---- #
 print("\n### Loading second VxmDense model...")
 pt_second_model = vxm.networks.VxmDense(**reg_args)
-trained_state_dict_second_model = torch.load('pt_cascaded_second_model.pt')
+trained_state_dict_second_model = torch.load(
+    os.path.join('model', 'pt_cascaded_second_model.pt')
+)
 # Load the weights to the PyTorch model
 weights_second_model = []
 for k in trained_state_dict_second_model:
