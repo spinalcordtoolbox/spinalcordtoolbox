@@ -5,6 +5,8 @@ import nibabel as nib
 from nilearn.image import resample_img
 
 import torch
+# Specify the PyTorch device
+device = 'cpu'
 # import VoxelMorph with pytorch backend
 os.environ['VXM_BACKEND'] = 'pytorch'
 import voxelmorph as vxm
@@ -28,6 +30,13 @@ new_img_shape = (int(np.ceil(max_img_shape[0] // 16)) * 16, int(np.ceil(max_img_
 fx_paded = resample_img(fixed, target_affine=fixed.affine, target_shape=new_img_shape, interpolation='continuous')
 mov_paded = resample_img(moving, target_affine=moving.affine, target_shape=new_img_shape, interpolation='continuous')
 input_shape = list(new_img_shape)
+
+# Prepare the data for inference
+data_moving = np.expand_dims(mov_paded.get_fdata().squeeze(), axis=(0, -1)).astype(np.float32)
+data_fixed = np.expand_dims(fx_paded.get_fdata().squeeze(), axis=(0, -1)).astype(np.float32)
+# Set up tensors and permute for inference
+input_moving = torch.from_numpy(data_moving).to(device).float().permute(0, 4, 1, 2, 3)
+input_fixed = torch.from_numpy(data_fixed).to(device).float().permute(0, 4, 1, 2, 3)
 
 # Set the parameters of the registration model
 reg_args = dict(
@@ -74,12 +83,7 @@ for k, v in torchparam.items():
 pt_second_model.load_state_dict(torchparam)
 pt_second_model.eval()
 
-# Prepare the data for inference
-data_moving = np.expand_dims(mov_paded.get_fdata().squeeze(), axis=(0, -1)).astype(np.float32)
-data_fixed = np.expand_dims(fx_paded.get_fdata().squeeze(), axis=(0, -1)).astype(np.float32)
-# Set up tensors and permute for inference
-input_moving = torch.from_numpy(data_moving).to(device).float().permute(0, 4, 1, 2, 3)
-input_fixed = torch.from_numpy(data_fixed).to(device).float().permute(0, 4, 1, 2, 3)
+
 
 # Predict using cascaded networks
 moved, warp_tensor = pt_first_model(input_moving, input_fixed, registration=True)
