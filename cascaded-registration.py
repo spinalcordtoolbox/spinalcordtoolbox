@@ -10,8 +10,8 @@ os.environ['VXM_BACKEND'] = 'pytorch'
 import voxelmorph as vxm
 
 # Load preprocessed data (scaled between 0 and 1 and with the moving data in the space of the fixed one)
-fixed = nib.load("data_processed_time_analysis/data2/sub-geneva06/anat/sub-geneva06_T1w.nii.gz")
-moving = nib.load("data_processed_time_analysis/data2/sub-geneva06/anat/sub-geneva06_T2w.nii.gz")
+fixed = nib.load("data/sct_example_data/t1/t1.nii.gz")
+moving = nib.load("data/sct_example_data/t2/t2.nii.gz")
 # N.B.
 # These data are in my local computer but any data could be used to perform the same analysis.
 # It only needs to be scaled and set in a common space (e.g. using sct_register_multimodal with -identity 1)
