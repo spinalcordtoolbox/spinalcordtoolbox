@@ -18,8 +18,8 @@ print("\n### Loading data files...")
 # N.B. These data are in my local computer but any data could be used to
 # perform the same analysis. It only needs to be scaled and set in a common
 # space (e.g. using sct_register_multimodal with -identity 1)
-fixed = nib.load("data/sct_example_data/t1/t1.nii.gz")
-moving = nib.load("data/sct_example_data/t2/t2.nii.gz")
+fixed = nib.load("T1w.nii.gz")
+moving = nib.load("T2w.nii.gz")
 fx_img_shape = fixed.get_fdata().shape
 mov_img_shape = moving.get_fdata().shape
 print(f"\n### Input shape for fixed image: {fx_img_shape}")
