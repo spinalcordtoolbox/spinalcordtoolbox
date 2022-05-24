@@ -33,7 +33,7 @@
 ( # | tee install_sct_log.txt
 
 # Change directory to where the script is, for the duration of the script.
-cd "${BASH_SOURCE[0]%/*}/" || exit 1
+cd "$(dirname $0)" || exit 1
 
 # stricter shell mode
 # https://sipb.mit.edu/doc/safe-shell/
