@@ -755,5 +755,4 @@ else
 fi
 
 ) 2>&1 | tee install_sct_log.txt
-status=${PIPESTATUS[0]}
-exit "$status"
+exit "${PIPESTATUS[0]}"
