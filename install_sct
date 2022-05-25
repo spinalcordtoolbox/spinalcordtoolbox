@@ -29,12 +29,11 @@
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
 
-# Change directory to where the script is, for the duration of the script.
-# This lives outside the subshell below to guarantee the corresponding
-# popd gets run, no matter how the installation script exits.
-pushd -- "${BASH_SOURCE[0]%/*}/" >/dev/null || exit 1
 
 ( # | tee install_sct_log.txt
+
+# Change directory to where the script is, for the duration of the script.
+cd "$(dirname $0)" || exit 1
 
 # stricter shell mode
 # https://sipb.mit.edu/doc/safe-shell/
@@ -756,6 +755,4 @@ else
 fi
 
 ) 2>&1 | tee install_sct_log.txt
-status=${PIPESTATUS[0]}
-popd >/dev/null
-exit "$status"
+exit "${PIPESTATUS[0]}"
