@@ -18,7 +18,6 @@ from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, 
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.utils import sct_dir_local_path, TempFolder
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # Thresholds to apply to binarize segmentations from the output of the 2D CNN. These thresholds were obtained by
 # minimizing the standard deviation of cross-sectional area across contrasts. For more details, see:
 # https://github.com/sct-pipeline/deepseg-threshold

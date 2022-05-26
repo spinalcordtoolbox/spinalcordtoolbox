@@ -1,68 +1,17 @@
 import os
-import sys
 
-import pytest
 import nibabel as nib
 import numpy as np
-import keras.backend as K
 
-from spinalcordtoolbox.deepseg_gm import model as gm_model
 from spinalcordtoolbox.deepseg_gm import deepseg_gm as gm_core
-
-
-class TestModel(object):
-    """This class will test the model module from deepseg_gm."""
-
-    def test_dice_coef_max(self):
-        """Test the upper-bound of the dice coefficient."""
-        y_true = np.ones((2, 1, 200, 200))
-        y_pred = np.ones((2, 1, 200, 200))
-        var_y_true = K.variable(y_true)
-        var_y_pred = K.variable(y_pred)
-        out_loss = gm_model.dice_coef(var_y_true, var_y_pred)
-        res = K.eval(out_loss)
-        assert res == 1.0
-
-    def test_dice_coef_min(self):
-        """Test the lower-bound of the dice coefficient."""
-        y_true = np.ones((2, 1, 200, 200))
-        y_pred = np.zeros((2, 1, 200, 200))
-        var_y_true = K.variable(y_true)
-        var_y_pred = K.variable(y_pred)
-        out_loss = gm_model.dice_coef(var_y_true, var_y_pred)
-        res = K.eval(out_loss)
-        # Smoothing term makes it never reach zero
-        assert res == pytest.approx(0.0, abs=0.001)
-
-    def test_dice_loss(self):
-        """Test the loss itself, should be negative of upper-bound."""
-        y_true = np.ones((2, 1, 200, 200))
-        y_pred = np.ones((2, 1, 200, 200))
-        var_y_true = K.variable(y_true)
-        var_y_pred = K.variable(y_pred)
-        out_loss = gm_model.dice_coef_loss(var_y_true, var_y_pred)
-        res = K.eval(out_loss)
-        assert res == -1.0
-
-    def test_create_model(self):
-        """Test the model creation with 32 and 64 filter p/ layer."""
-        model = gm_model.create_model(32)
-        assert model.count_params() == 127585
-        model = gm_model.create_model(64)
-        assert model.count_params() == 478017
-
-        diff_size_model = gm_model.create_model(32, (103, 102))
-        axial_slices_mock = np.random.randn(1, 103, 102, 1)
-        preds = diff_size_model.predict(axial_slices_mock, batch_size=8)
-        assert preds.shape == axial_slices_mock.shape
 
 
 class TestCore(object):
     def test_data_resource(self):
         """Test the DataResource manager, and check if files exists."""
         resource_models = gm_core.DataResource('deepseg_gm_models')
-        for model_name in gm_model.MODELS.keys():
-            model_path, metadata_path = gm_model.MODELS[model_name]
+        for model_name in gm_core.MODELS.keys():
+            model_path, metadata_path = gm_core.MODELS[model_name]
             metadata_abs_path = resource_models.get_file_path(metadata_path)
             assert os.path.isfile(metadata_abs_path)
 

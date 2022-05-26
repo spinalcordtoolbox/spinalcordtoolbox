@@ -7,27 +7,10 @@
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
 
-import warnings
 import os
-import sys
-import io
 
 import nibabel as nib
 import numpy as np
-
-# Avoid Keras logging
-original_stderr = sys.stderr
-if sys.hexversion < 0x03000000:
-    sys.stderr = io.BytesIO()
-else:
-    sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
-try:
-    from keras import backend as K
-except Exception as e:
-    sys.stderr = original_stderr
-    raise
-else:
-    sys.stderr = original_stderr
 
 from spinalcordtoolbox import resampling, __data_dir__
 from spinalcordtoolbox.deepseg.models import onnx_inference
@@ -39,22 +22,8 @@ MODELS = {
     'large': ('large_model.onnx', 'large_model.json'),
 }
 
-# Suppress warnings and TensorFlow logging
-warnings.simplefilter(action='ignore', category=FutureWarning)
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 INPUT_SIZE = 200
 BATCH_SIZE = 4
-
-
-def check_backend():
-    """This function will check for the current backend and
-    then it will warn the user if the backend is theano."""
-    if K.backend() != 'tensorflow':
-        print("\nWARNING: you're using a Keras backend different than\n"
-              "Tensorflow, which is not recommended. Please verify\n"
-              "your configuration file according to: https://keras.io/backend/\n"
-              "to make sure you're using Tensorflow Keras backend.\n")
-    return K.backend()
 
 
 class DataResource(object):

@@ -14,6 +14,7 @@ import os
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
 from spinalcordtoolbox.image import add_suffix
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.deepseg_gm import deepseg_gm
 
 
 def get_parser():
@@ -112,9 +113,6 @@ def main(argv=None):
     # Threshold zero means no thresholding
     if threshold == 0.0:
         threshold = None
-
-    from spinalcordtoolbox.deepseg_gm import deepseg_gm
-    deepseg_gm.check_backend()
 
     out_fname = deepseg_gm.segment_file(input_filename, output_filename,
                                         model_name, threshold, int(verbose),

@@ -5,7 +5,6 @@
 import pytest
 import numpy as np
 import nibabel as nib
-from keras import backend as K
 
 import spinalcordtoolbox as sct
 from spinalcordtoolbox.image import Image
