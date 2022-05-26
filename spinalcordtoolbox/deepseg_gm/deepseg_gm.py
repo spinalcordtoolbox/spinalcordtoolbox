@@ -31,8 +31,13 @@ else:
     sys.stderr = original_stderr
 
 from spinalcordtoolbox import resampling, __data_dir__
-from . import model
 
+# Models
+# Tuple of (model, metadata)
+MODELS = {
+    'challenge': ('challenge_model.hdf5', 'challenge_model.json'),
+    'large': ('large_model.hdf5', 'large_model.json'),
+}
 
 # Suppress warnings and TensorFlow logging
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -210,7 +215,7 @@ def segment_volume(ninput_volume, model_name,
     :return: segmented slices.
     """
     gmseg_model_challenge = DataResource('deepseg_gm_models')
-    model_path, metadata_path = model.MODELS[model_name]
+    model_path, metadata_path = MODELS[model_name]
 
     metadata_abs_path = gmseg_model_challenge.get_file_path(metadata_path)
     with open(metadata_abs_path) as fp:
