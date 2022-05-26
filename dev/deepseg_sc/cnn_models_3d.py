@@ -30,7 +30,7 @@ def dice_coefficient_loss(y_true, y_pred):
 
 
 def nn_architecture_seg_3d(input_shape, pool_size=(2, 2, 2), n_labels=1, initial_learning_rate=0.00001,
-                        depth=3, n_base_filters=16, metrics=dice_coefficient, batch_normalization=True):
+                           depth=3, n_base_filters=16, metrics=dice_coefficient, batch_normalization=True):
     inputs = Input(input_shape)
     current_layer = inputs
     levels = list()
@@ -68,8 +68,8 @@ def nn_architecture_seg_3d(input_shape, pool_size=(2, 2, 2), n_labels=1, initial
 
 
 def create_convolution_block(input_layer, n_filters, batch_normalization=False,
-                            kernel=(3, 3, 3), activation=None, padding='same',
-                            strides=(1, 1, 1)):
+                             kernel=(3, 3, 3), activation=None, padding='same',
+                             strides=(1, 1, 1)):
     layer = Conv3D(n_filters, kernel, padding=padding, strides=strides)(input_layer)
     if batch_normalization:
         layer = BatchNormalization(axis=1)(layer)
