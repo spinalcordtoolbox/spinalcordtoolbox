@@ -39,10 +39,6 @@ class Param:
         self.warp_spinal_levels = 0
         self.warp_histo = 0
         self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
-        self.list_labels_nn_histo = ['_200um_Naxons.nii.gz', '_200um_MVF.nii.gz', '_200um_AVF.nii.gz',
-                                     '_200um_EquivDiameter.nii.gz', '_200um_EquivDiameter14.nii.gz',
-                                     '_200um_EquivDiameter48.nii.gz', '_200um_Eccentricity.nii.gz']
-
         self.verbose = 1  # verbose
         self.path_qc = None
 
