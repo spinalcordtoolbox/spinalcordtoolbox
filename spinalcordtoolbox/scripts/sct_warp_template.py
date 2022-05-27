@@ -41,7 +41,6 @@ class Param:
         self.path_qc = None
         self.warp_histo = 0
         self.folder_histo = 'histology'
-        self.file_info_label_histo = 'description.txt'
         self.list_labels_nn_histo = ['_200um_Naxons.nii.gz', '_200um_MVF.nii.gz', '_200um_AVF.nii.gz',
                                      '_200um_EquivDiameter.nii.gz', '_200um_EquivDiameter14.nii.gz',
                                      '_200um_EquivDiameter48.nii.gz', '_200um_Eccentricity.nii.gz']
@@ -50,7 +49,7 @@ class Param:
 class WarpTemplate:
     def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
                  folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn,
-                 verbose, warp_histo, folder_histo, file_info_label_histo):
+                 verbose, warp_histo, folder_histo):
 
         # Initialization
         self.fname_src = fname_src
@@ -67,7 +66,6 @@ class WarpTemplate:
         self.verbose = verbose
         self.warp_histo = warp_histo
         self.folder_histo = folder_histo
-        self.file_info_label_histo = file_info_label_histo
 
         # printv(arguments)
         # printv(arguments)
@@ -102,7 +100,7 @@ class WarpTemplate:
         # Warp histology atlas
         if self.warp_histo == 1:
             printv('\nWARP HISTOLOGY ATLAS:', self.verbose)
-            warp_label(self.path_template, self.folder_histo, self.file_info_label_histo, self.fname_src,
+            warp_label(self.path_template, self.folder_histo, self.file_info_label, self.fname_src,
                        self.fname_transfo, self.folder_out, self.list_labels_nn, self.verbose)
 
 
@@ -278,12 +276,11 @@ def main(argv=None):
     list_labels_nn = param.list_labels_nn
     warp_histo = arguments.histo
     folder_histo = param.folder_histo
-    file_info_label_histo = param.file_info_label_histo
 
     # call main function
     w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
                      folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn,
-                     verbose, warp_histo, folder_histo, file_info_label_histo)
+                     verbose, warp_histo, folder_histo)
 
     path_template = os.path.join(w.folder_out, w.folder_template)
 
