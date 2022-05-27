@@ -32,18 +32,19 @@ class Param:
         self.folder_template = 'template'
         self.folder_atlas = 'atlas'
         self.folder_spinal_levels = 'spinal_levels'
+        self.folder_histo = 'histology'
         self.file_info_label = 'info_label.txt'
         # self.warp_template = 1
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
-        self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
-        self.verbose = 1  # verbose
-        self.path_qc = None
         self.warp_histo = 0
-        self.folder_histo = 'histology'
+        self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
         self.list_labels_nn_histo = ['_200um_Naxons.nii.gz', '_200um_MVF.nii.gz', '_200um_AVF.nii.gz',
                                      '_200um_EquivDiameter.nii.gz', '_200um_EquivDiameter14.nii.gz',
                                      '_200um_EquivDiameter48.nii.gz', '_200um_Eccentricity.nii.gz']
+
+        self.verbose = 1  # verbose
+        self.path_qc = None
 
 
 class WarpTemplate:
@@ -56,16 +57,16 @@ class WarpTemplate:
         self.fname_transfo = fname_transfo
         self.warp_atlas = warp_atlas
         self.warp_spinal_levels = warp_spinal_levels
+        self.warp_histo = warp_histo
         self.folder_out = folder_out
         self.path_template = path_template
         self.folder_template = folder_template
         self.folder_atlas = folder_atlas
         self.folder_spinal_levels = folder_spinal_levels
+        self.folder_histo = folder_histo
         self.file_info_label = file_info_label
         self.list_labels_nn = list_labels_nn
         self.verbose = verbose
-        self.warp_histo = warp_histo
-        self.folder_histo = folder_histo
 
         # printv(arguments)
         # printv(arguments)
@@ -264,6 +265,7 @@ def main(argv=None):
     fname_transfo = arguments.w
     warp_atlas = arguments.a
     warp_spinal_levels = arguments.s
+    warp_histo = arguments.histo
     folder_out = arguments.ofolder
     path_template = arguments.t
     path_qc = arguments.qc
@@ -272,10 +274,9 @@ def main(argv=None):
     folder_template = param.folder_template
     folder_atlas = param.folder_atlas
     folder_spinal_levels = param.folder_spinal_levels
+    folder_histo = param.folder_histo
     file_info_label = param.file_info_label
     list_labels_nn = param.list_labels_nn
-    warp_histo = arguments.histo
-    folder_histo = param.folder_histo
 
     # call main function
     w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
