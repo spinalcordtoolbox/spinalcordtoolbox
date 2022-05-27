@@ -276,7 +276,7 @@ def main(argv=None):
     folder_spinal_levels = param.folder_spinal_levels
     file_info_label = param.file_info_label
     list_labels_nn = param.list_labels_nn
-    warp_histo = arguments.warp_histo
+    warp_histo = arguments.histo
     folder_histo = param.folder_histo
 
     # call main function
