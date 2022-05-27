@@ -278,11 +278,12 @@ def main(argv=None):
     list_labels_nn = param.list_labels_nn
     warp_histo = arguments.histo
     folder_histo = param.folder_histo
+    file_info_label_histo = param.file_info_label_histo
 
     # call main function
     w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
                      folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn,
-                     verbose, warp_histo, folder_histo)
+                     verbose, warp_histo, folder_histo, file_info_label_histo)
 
     path_template = os.path.join(w.folder_out, w.folder_template)
 
