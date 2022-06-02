@@ -6,7 +6,8 @@ Keras==2.3.1
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu
-ivadomed@git+https://github.com/ivadomed/ivadomed@ng/cu113
+ivadomed@git+https://github.com/ivadomed/ivadomed
+#ivadomed>=2.9.6
 matplotlib
 # Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
 # Installing "Microsoft Visual C++ Redistributable for Visual Studio" will fix this too, but
