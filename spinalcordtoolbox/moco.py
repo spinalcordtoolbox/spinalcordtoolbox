@@ -26,7 +26,7 @@ import nibabel as nib
 import scipy.interpolate
 
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, convert, apply_mask_if_soft
-from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolation
+from spinalcordtoolbox.utils.shell import get_interpolation
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy, mv
 
@@ -479,6 +479,7 @@ def moco_wrapper(param):
     return fname_moco
 
     return im_moco
+
 
 def moco(param):
     """
@@ -1027,7 +1028,7 @@ def moco_wrapper_interleaved(param):
     # ==================================================================================================================
     printv('\nGenerate merged output files...', param.verbose)
     # save moco corrected image
-        
+
     fname_moco = os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco'))
     generate_output_file(os.path.join(path_tmp, add_suffix(file_data, '_merged')), fname_moco)
     # save b0_moco_mean and dwi_moco_mean
