@@ -70,6 +70,7 @@ def resolve_module(framework_name):
         'pytest-cov': ('pytest_cov', False),
         'urllib3[secure]': ('urllib3', False),
         'pytest-xdist': ('xdist', False),
+        'protobuf': ('google.protobuf', False)
     }
 
     try:

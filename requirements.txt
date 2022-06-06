@@ -1,5 +1,8 @@
 dipy
-ivadomed
+# PyTorch's Linux distribution is very large due to its GPU support,
+# but we only need that for training models. Our users only need CPU.
+--extra-index-url https://download.pytorch.org/whl/cpu
+ivadomed~=2.9.6
 matplotlib
 # Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
 # Installing "Microsoft Visual C++ Redistributable for Visual Studio" will fix this too, but
@@ -13,6 +16,11 @@ numpy
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 onnxruntime>=1.7.0
 pandas
+# This is pinned to address an upstream breaking change from protobuf 4.21.0
+# (Yes, you're reading that right. protobuf updated its major version from 3.20.1 to 4.21.0.)
+# The protobuf update breaks Keras specifically, but we can remove the fix once we drop Keras in
+# https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3738
+protobuf==3.20.1
 portalocker
 psutil
 pyqt5==5.11.3
@@ -24,16 +32,6 @@ requirements-parser
 scipy
 scikit-image
 scikit-learn
-# PyTorch's Linux/Windows distribution is very large due to its GPU support,
-# but we only need that for training models. For users, use the CPU-only version
-# (only available directly from the PyTorch project).
-# The macOS version has never had GPU support, so doesn't need the workaround.
--f https://download.pytorch.org/whl/torch/
--f https://download.pytorch.org/whl/torchvision/
-torch==1.5.0+cpu; sys_platform != "darwin"
-torch==1.5.0; sys_platform == "darwin"
-torchvision==0.6.0+cpu; sys_platform != "darwin"
-torchvision==0.6.0; sys_platform == "darwin"
 xlwt
 tqdm
 transforms3d
