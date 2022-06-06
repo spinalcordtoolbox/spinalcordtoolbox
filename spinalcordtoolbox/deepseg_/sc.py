@@ -13,7 +13,7 @@ from scipy.ndimage import distance_transform_edt
 
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.deepseg.models import onnx_inference
-from .postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
+from spinalcordtoolbox.deepseg_.postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, add_suffix, concat_data, split_img_data
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.utils import sct_dir_local_path, TempFolder

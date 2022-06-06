@@ -4,7 +4,7 @@ import numpy as np
 import nibabel as nib
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.deepseg_lesion import core as deepseg_lesion
+import spinalcordtoolbox.deepseg_.lesion as deepseg_lesion
 from spinalcordtoolbox.utils import __sct_dir__
 
 

@@ -14,7 +14,7 @@ import os
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
 from spinalcordtoolbox.image import add_suffix
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.deepseg_gm import deepseg_gm
+from spinalcordtoolbox.deepseg_.gm import segment_file
 
 
 def get_parser():
@@ -114,9 +114,9 @@ def main(argv=None):
     if threshold == 0.0:
         threshold = None
 
-    out_fname = deepseg_gm.segment_file(input_filename, output_filename,
-                                        model_name, threshold, int(verbose),
-                                        use_tta)
+    out_fname = segment_file(input_filename, output_filename,
+                             model_name, threshold, int(verbose),
+                             use_tta)
 
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset

@@ -8,7 +8,7 @@ import numpy as np
 from scipy.ndimage.measurements import label
 from scipy.ndimage.morphology import binary_fill_holes
 
-from ..process_seg import compute_shape
+from spinalcordtoolbox.process_seg import compute_shape
 
 
 logger = logging.getLogger(__name__)
