@@ -1027,8 +1027,9 @@ def moco_wrapper_interleaved(param):
     # ==================================================================================================================
     printv('\nGenerate merged output files...', param.verbose)
     # save moco corrected image
-    generate_output_file(os.path.join(path_tmp, add_suffix(file_data, '_merged')),
-                         os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco')))
+        
+    fname_moco = os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco'))
+    generate_output_file(os.path.join(path_tmp, add_suffix(file_data, '_merged')), fname_moco)
     # save b0_moco_mean and dwi_moco_mean
     generate_output_file(fname_b0_mean,
                          os.path.join(path_out_abs, add_suffix(os.path.basename(orig_name), '_moco_b0_mean')))
@@ -1054,6 +1055,8 @@ def moco_wrapper_interleaved(param):
     # display elapsed time
     elapsed_time = time.time() - start_time
     printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', param.verbose)
+
+    return fname_moco
 
 
 def split_to_even_and_odd(data_to_split, file_name):
