@@ -21,7 +21,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file, convert
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname, rmtree
 
 from spinalcordtoolbox.scripts.sct_image import split_data, concat_data
@@ -75,7 +75,7 @@ def get_parser():
         '-bval',
         metavar=Metavar.file,
         default="",
-        help='bvals file. Used to identify low b-values (in case different from 0). Example: bvals.nii.gz',
+        help='bvals file. Used to identify low b-values (in case different from 0). Example: bvals.txt',
     )
     optional.add_argument(
         '-bvalmin',
@@ -87,8 +87,8 @@ def get_parser():
         '-ofolder',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default='./',
-        help='Output folder. Example: dmri_separate_results/',
+        default='.',
+        help='Output folder. Example: dmri_separate_results',
     )
     optional.add_argument(
         "-r",
@@ -113,7 +113,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initialize parameters
     param = Param()

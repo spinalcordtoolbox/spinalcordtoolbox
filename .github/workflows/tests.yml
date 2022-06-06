@@ -1,10 +1,10 @@
 name: Tests
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
-      - release
   pull_request:
     branches:
       - '*'
@@ -39,6 +39,11 @@ env:
     # This will be defined for non-debian platforms below too, but there's no harm in that.
     # (TravisCI quietly defined this on all their platforms, but we have to give it manually on GithubCI.)
     DEBIAN_FRONTEND: 'noninteractive'
+    # Turns on color output for pytest. See: https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591
+    PY_COLORS: "1"
+    # Disable progress bars for less verbose output
+    PIP_PROGRESS_BAR: "off"
+    SCT_PROGRESS_BAR: "off"
 
 jobs:
 
@@ -47,156 +52,231 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-18.04
     container: archlinux
     steps:
       - name: Dependencies
-        run: |
-          pacman -Syu --noconfirm gcc git curl
+        run: |  # NB: glu is needed for PyQT testing (https://stackoverflow.com/a/66486957/7584115)
+          pacman -Syu --noconfirm gcc git curl glu
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   debian-rolling:
     name: Debian Rolling Release
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-18.04
     container: debian:sid
     steps:
       - name: Dependencies
-        run: |
-          apt update && apt install -y libglib2.0-0 procps gcc git curl
+        run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
+          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   debian-testing:
     name: Debian Testing
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-18.04
     container: debian:testing
     steps:
       - name: Dependencies
-        run: |
-          apt update && apt install -y libglib2.0-0 procps gcc git curl
+        run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
+          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   debian-10:
     name: Debian 10
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-18.04
     container: debian:10
     steps:
       - name: Dependencies
-        run: |
-          apt update && apt install -y libglib2.0-0 procps gcc git curl
+        run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
+          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl libgl1-mesa-dev
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   debian-9:
     name: Debian 9
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
-    runs-on: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-18.04  # use an older ubuntu's kernel to closer emulate the older Debian
     container: debian:9
     steps:
       - name: Dependencies
-        run: |
-          apt update && apt install -y libglib2.0-0 procps gcc git curl
+        run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
+          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   centos-8:
-    name: CentOS 8
+    name: CentOS Stream 8
     runs-on: ubuntu-18.04
-    container: centos:8
+    # Stream8 has a 2024 EOL, while CentOS 8 has a 2021 EOL
+    # See: https://blog.centos.org/2020/12/future-is-centos-stream/
+    container: quay.io/centos/centos:stream8
     steps:
       - name: Dependencies
-        run: |
-          yum install -y gcc git curl
+        run: |  # NB: mesa-libGL is needed for PyQT testing (https://stackoverflow.com/a/65408967/7584115)
+          yum install -y gcc git curl mesa-libGL
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   centos-7:
     name: CentOS 7
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
-    runs-on: ubuntu-16.04 # use an older ubuntu's kernel to closer emulate the older Debian
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-18.04  # use an older ubuntu's kernel to closer emulate the older Debian
     container: centos:7
     steps:
       - name: Dependencies
-        run: |
-          yum install -y gcc git curl
+        run: |  # NB: mesa-libGL is needed for PyQT testing (https://stackoverflow.com/a/65408967/7584115)
+          yum install -y gcc git curl mesa-libGL
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
+
+  ubuntu-20_04:
+    name: Ubuntu 20.04 (Focal Fossa)
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install SCT
+        run: |
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite (with code coverage)
+        run: |  # NB: We use `-v` instead of `-t` here to run this one with coverage
+          ./.ci.sh -v
+      - name: Upload API coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true
+          files: ./cov-cli.xml
+          flags: cli-tests
+      - name: Upload CLI coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true
+          files: ./cov-api.xml
+          flags: api-tests
+
 
   ubuntu-18_04:
     name: Ubuntu 18.04 (Bionic Beaver)
-    runs-on: ubuntu-18.04
-    steps:
-      - uses: actions/checkout@v2
-      - name: CI
-        run: |
-          ./.ci.sh
-
-  ubuntu-16_04:
-    name: Ubuntu 16.04 (Xenial)
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
-    runs-on: ubuntu-16.04
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-18.04
     steps:
       - name: Dependencies
         run: |
           # github runners come with dev-tools pre-installed
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   macos-10_15:
    name: macOS 10.15 (Catalina)
    runs-on: macos-10.15
    steps:
      - uses: actions/checkout@v2
-     - name: CI
+     - name: Install SCT
        run: |
-         ./.ci.sh
+         ./.ci.sh -i
+     - name: Check dependencies
+       run: |
+         ./.ci.sh -c
+     - name: Run pytest test suite
+       run: |
+         ./.ci.sh -t
 
   macos-11:
     name: macOS 11.0 (Big Sur)
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    #if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    #if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     if: false # overloaded on Github currently, and we're not really using it yet.
     runs-on: macos-11.0
     steps:
@@ -204,9 +284,15 @@ jobs:
         run: |
           # github runners come with dev-tools pre-installed
       - uses: actions/checkout@v2
-      - name: CI
+      - name: Install SCT
         run: |
-          ./.ci.sh
+          ./.ci.sh -i
+      - name: Check dependencies
+        run: |
+          ./.ci.sh -c
+      - name: Run pytest test suite
+        run: |
+          ./.ci.sh -t
 
   windows-wsl-ubuntu-18_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
@@ -214,7 +300,7 @@ jobs:
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: windows-2019
     defaults:
       run:
@@ -236,19 +322,33 @@ jobs:
     - name: Dependencies
       run: |
         # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
-        sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl
+        # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
+        sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
     - uses: actions/checkout@v2
-    - name: CI
+    - name: Copy SCT from $GITHUB_WORKSPACE to ~
       run: |
-        ./.ci.sh
+        cd ..
+        cp -r spinalcordtoolbox ~/spinalcordtoolbox
+    - name: Install SCT
+      run: |
+        cd ~/spinalcordtoolbox
+        ./.ci.sh -i
+    - name: Check dependencies
+      run: |
+        cd ~/spinalcordtoolbox
+        ./.ci.sh -c
+    - name: Run pytest test suite
+      run: |
+        cd ~/spinalcordtoolbox
+        ./.ci.sh -t
 
-  windows-wsl-ubuntu-16_04:
+  windows-wsl-ubuntu-20_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
-    name: WSL [Ubuntu 16.04]
+    name: WSL [Ubuntu 20.04]
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' }}
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: windows-2019
     defaults:
       run:
@@ -257,7 +357,7 @@ jobs:
     - uses: Vampire/setup-wsl@v1
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
-        distribution: Ubuntu-16.04
+        distribution: Ubuntu-20.04
     - name: Use unix line endings
       shell: bash
       run: |
@@ -270,8 +370,59 @@ jobs:
     - name: Dependencies
       run: |
         # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
-        sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl
+        # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
+        sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
     - uses: actions/checkout@v2
-    - name: CI
+    - name: Copy SCT from $GITHUB_WORKSPACE to ~
       run: |
-        ./.ci.sh
+        cd ..
+        cp -rp spinalcordtoolbox ~/spinalcordtoolbox
+    - name: Install SCT
+      run: |
+        cd ~/spinalcordtoolbox
+        ./.ci.sh -i
+    - name: Check dependencies
+      run: |
+        cd ~/spinalcordtoolbox
+        ./.ci.sh -c
+    - name: Run pytest test suite
+      run: |
+        cd ~/spinalcordtoolbox
+        ./.ci.sh -t
+
+  windows-native:
+    name: Windows (Native)
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: cmd
+    steps:
+    - name: Get branch name (merge)
+      if: github.event_name != 'pull_request'
+      shell: bash
+      run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+    - name: Get branch name (pull request)
+      if: github.event_name == 'pull_request'
+      shell: bash
+      run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
+    - uses: actions/checkout@v2
+      with:
+        path: checkout/spinalcordtoolbox
+    - name: Install SCT
+      # NB: In real-world usage, it's assumed that the user would download the
+      # install_sct.bat file from the Downloads page, and _not_ the full repo.
+      # We emulate that here by copying just the install_sct.bat to the PWD
+      run: |
+        set HOMEPATH=%GITHUB_WORKSPACE%
+        copy checkout\spinalcordtoolbox\install_sct.bat .\
+        install_sct.bat %BRANCH_NAME%
+    - name: Add SCT to path
+      # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
+      # In a user install, the user would perform this step using the Windows PATH-changing GUI.
+      shell: bash
+      run: echo "$GITHUB_WORKSPACE/spinalcordtoolbox/bin" >> $GITHUB_PATH
+    - name: Check dependencies
+      shell: cmd
+      run: sct_check_dependencies
+    - name: Run pytest test suite
+      run: sct_testing

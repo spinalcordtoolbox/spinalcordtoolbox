@@ -23,7 +23,7 @@ from scipy import ndimage as ndi
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, convert
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, extract_fname, mv, copy
 from spinalcordtoolbox.centerline import optic
 from spinalcordtoolbox.reports.qc import generate_qc
@@ -54,12 +54,12 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     im_centerline = convert(Image(fname_centerline))
     im_centerline.save(os.path.join(path_tmp, "tmp.centerline.nii.gz"), mutable=True, verbose=0)
 
-    # go to tmp folder
+    # go to tmp folder (and store original info to use when converting back at the end)
+    fname_seg_absolute = os.path.abspath(fname_segmentation)
     curdir = os.getcwd()
     os.chdir(path_tmp)
 
-    # convert input to RPI (and store original info to use when converting back at the end)
-    fname_seg_absolute = os.path.abspath(fname_segmentation)
+    # convert input to RPI
     image_input_orientation = im_seg.orientation
     sct_image.main("-i tmp.segmentation.nii.gz -setorient RPI -o tmp.segmentation_RPI.nii.gz -v 0".split())
     sct_image.main("-i tmp.centerline.nii.gz -setorient RPI -o tmp.centerline_RPI.nii.gz -v 0".split())
@@ -206,6 +206,12 @@ def get_parser():
         help='Output filename. Example: spinal_seg.nii.gz '
         )
     optional.add_argument(
+        '-ofolder',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="Output folder."
+    )
+    optional.add_argument(
         '-down',
         metavar=Metavar.int,
         type=int,
@@ -272,7 +278,7 @@ def get_parser():
     optional.add_argument(
         '-init-centerline',
         metavar=Metavar.file,
-        help="R|Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in "
+        help="Filename of centerline to use for the propagation. Use format .txt or .nii; see file structure in "
              "documentation.\n"
              "Replace filename by 'viewer' to use interactive viewer for providing centerline. Example: "
              "-init-centerline viewer"
@@ -286,7 +292,7 @@ def get_parser():
     optional.add_argument(
         '-init-mask',
         metavar=Metavar.file,
-        help="R|Mask containing three center of the spinal cord, used to initiate the propagation.\n"
+        help="Mask containing three center of the spinal cord, used to initiate the propagation.\n"
              "Replace filename by 'viewer' to use interactive viewer for providing mask. Example: -init-mask viewer"
     )
     optional.add_argument(
@@ -439,13 +445,16 @@ def propseg(img_input, options_dict):
         fname_out = arguments.o
     else:
         fname_out = os.path.basename(add_suffix(fname_data, "_seg"))
-    
-    folder_output = str(pathlib.Path(fname_out).parent)
-    cmd += ['-o', folder_output]
+
+    if arguments.ofolder is not None:
+        folder_output = os.path.abspath(arguments.ofolder)
+    else:
+        folder_output = str(pathlib.Path(fname_out).parent)
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
         logger.error("output directory %s is not a valid directory" % folder_output)
     if not os.path.exists(folder_output):
         os.makedirs(folder_output)
+    cmd += ['-o', folder_output]
 
     if arguments.down is not None:
         cmd += ["-down", str(arguments.down)]
@@ -460,19 +469,19 @@ def propseg(img_input, options_dict):
         cmd += ["-verbose"]
 
     # Output options
-    if arguments.mesh is not None:
+    if arguments.mesh:
         cmd += ["-mesh"]
-    if arguments.centerline_binary is not None:
+    if arguments.centerline_binary:
         cmd += ["-centerline-binary"]
-    if arguments.CSF is not None:
+    if arguments.CSF:
         cmd += ["-CSF"]
-    if arguments.centerline_coord is not None:
+    if arguments.centerline_coord:
         cmd += ["-centerline-coord"]
-    if arguments.cross is not None:
+    if arguments.cross:
         cmd += ["-cross"]
-    if arguments.init_tube is not None:
+    if arguments.init_tube:
         cmd += ["-init-tube"]
-    if arguments.low_resolution_mesh is not None:
+    if arguments.low_resolution_mesh:
         cmd += ["-low-resolution-mesh"]
     # TODO: Not present. Why is this here? Was this renamed?
     # if arguments.detect_nii is not None:
@@ -497,7 +506,7 @@ def propseg(img_input, options_dict):
         elif str(arguments.init_centerline) == "hough":
             use_optic = False
         else:
-            if rescale_header is not 1:
+            if rescale_header != 1.0:
                 fname_labels_viewer = func_rescale_header(str(arguments.init_centerline), rescale_header, verbose=verbose)
             else:
                 fname_labels_viewer = str(arguments.init_centerline)
@@ -507,7 +516,7 @@ def propseg(img_input, options_dict):
         if str(arguments.init_mask) == "viewer":
             use_viewer = "mask"
         else:
-            if rescale_header is not 1:
+            if rescale_header != 1.0:
                 fname_labels_viewer = func_rescale_header(str(arguments.init_mask), rescale_header)
             else:
                 fname_labels_viewer = str(arguments.init_mask)
@@ -535,7 +544,7 @@ def propseg(img_input, options_dict):
     if arguments.min_contrast is not None:
         cmd += ["-min-contrast", str(arguments.min_contrast)]
     if arguments.d is not None:
-        cmd += ["-d", str(arguments["-d"])]
+        cmd += ["-d", str(arguments.d)]
     if arguments.distance_search is not None:
         cmd += ["-dsearch", str(arguments.distance_search)]
     if arguments.alpha is not None:
@@ -552,7 +561,7 @@ def propseg(img_input, options_dict):
     path_tmp = tmp_create(basename="label_vertebrae")
 
     # rescale header (see issue #1406)
-    if rescale_header is not 1:
+    if rescale_header != 1.0:
         fname_data_propseg = func_rescale_header(fname_data, rescale_header)
     else:
         fname_data_propseg = fname_data
@@ -618,22 +627,20 @@ def propseg(img_input, options_dict):
                    1, 'error')
         sys.exit(1)
 
-    # build output filename
+    # rename output files
+    fname_seg_old = os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_seg"))
     fname_seg = os.path.join(folder_output, fname_out)
+    mv(fname_seg_old, fname_seg)
+    fname_centerline_old = os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_centerline"))
     fname_centerline = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_centerline")))
-    # in case header was rescaled, we need to update the output file names by removing the "_rescaled"
-    if rescale_header is not 1:
-        mv(os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_seg")),
-               fname_seg)
-        mv(os.path.join(folder_output, add_suffix(os.path.basename(fname_data_propseg), "_centerline")),
-               fname_centerline)
-        # if user was used, copy the labelled points to the output folder (they will then be scaled back)
-        if use_viewer:
-            fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(add_suffix(fname_data,
-                                                                                              "_labels_viewer")))
-            copy(fname_labels_viewer, fname_labels_viewer_new)
-            # update variable (used later)
-            fname_labels_viewer = fname_labels_viewer_new
+    mv(fname_centerline_old, fname_centerline)
+
+    # if viewer was used, copy the labelled points to the output folder
+    if use_viewer:
+        fname_labels_viewer_new = os.path.join(folder_output, os.path.basename(add_suffix(fname_data, "_labels_viewer")))
+        copy(fname_labels_viewer, fname_labels_viewer_new)
+        # update variable (used later)
+        fname_labels_viewer = fname_labels_viewer_new
 
     # check consistency of segmentation
     if arguments.correct_seg:
@@ -655,9 +662,16 @@ def propseg(img_input, options_dict):
 
 def main(argv=None):
     parser = get_parser()
+    if sys.platform.startswith("win32"):
+        # This isn't *really* a parsing error, but it feels a little more official to display the help with this error
+        parser.error("`sct_propseg` is not currently supported on native Windows installations. \n\n"
+                     "For spinal cord segmentation, please migrate to the new and improved `sct_deepseg_sc` tool, "
+                     "or consider using WSL to install SCT instead.\n\n"
+                     "For further updates on `sct_propseg` Windows support, please visit:\n"
+                     "https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3694")
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     fname_input_data = os.path.abspath(arguments.i)
     img_input = Image(fname_input_data)

@@ -30,7 +30,9 @@ import sys
 import os
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper, moco_wrapper_interleaved
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
+from spinalcordtoolbox.reports.qc import generate_qc
 
 
 def get_parser():
@@ -73,7 +75,7 @@ def get_parser():
         '-bval',
         metavar=Metavar.file,
         default=param_default.fname_bvals,
-        help='Bvals file. Example: bvals.nii.gz',
+        help='Bvals file. Example: bvals.txt',
     )
     optional.add_argument(
         '-bvalmin',
@@ -105,7 +107,7 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(',', str),
-        help=f"R|Advanced parameters. Assign value with \"=\", and separate arguments with \",\".\n"
+        help=f"Advanced parameters. Assign value with \"=\", and separate arguments with \",\".\n"
              f"  - poly [int]: Degree of polynomial function used for regularization along Z. For no regularization "
              f"set to 0. Default={param_default.poly}.\n"
              f"  - smooth [mm]: Smoothing kernel. Default={param_default.smooth}.\n"
@@ -126,7 +128,7 @@ def get_parser():
         metavar=Metavar.folder,
         action=ActionCreateFolder,
         default=param_default.path_out,
-        help="Output folder. Example: dmri_moco_results/"
+        help="Output folder. Example: dmri_moco_results"
     )
     optional.add_argument(
         "-r",
@@ -141,7 +143,39 @@ def get_parser():
         choices=[0, 1, 2],
         default=1,
         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
+    )
+    optional.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="The path where the quality control generated content will be saved. (Note: "
+             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+    )
+    optional.add_argument(
+        '-qc-seg',
+        metavar=Metavar.file,
+        help="Segmentation of spinal cord to improve cropping in qc report. (Note: "
+             "Both '-qc' and '-qc-seg' are required in order to generate a QC report.)"
+    )
+    optional.add_argument(
+        '-qc-fps',
+        metavar=Metavar.float,
+        type=float,
+        default=3,
+        help="This float number is the number of frames per second for the output gif images."
+    )
+    optional.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+    )
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
+
     return parser
 
 
@@ -149,14 +183,14 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initialization
     param = ParamMoco(is_diffusion=True, group_size=3, metric='MI', smooth='1')
 
     # Fetch user arguments
     param.fname_data = arguments.i
-    param.fname_bvecs = os.path.abspath(arguments.bvec)
+    param.fname_bvecs = arguments.bvec
     param.fname_bvals = arguments.bval
     param.bval_min = arguments.bvalmin
     param.group_size = arguments.g
@@ -168,12 +202,33 @@ def main(argv=None):
     if arguments.param is not None:
         param.update(arguments.param)
 
+    path_qc = arguments.qc
+    qc_fps = arguments.qc_fps
+    qc_dataset = arguments.qc_dataset
+    qc_subject = arguments.qc_subject
+    qc_seg = arguments.qc_seg
+
+    mutually_inclusive_args = (path_qc, qc_seg)
+    is_qc_none, is_seg_none = [arg is None for arg in mutually_inclusive_args]
+    if not (is_qc_none == is_seg_none):
+        raise parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
+
     # run moco
     if param.interleaved == '1':
         # split input data to two datasets (even and odd slices), run moco in each sub-dataset and merge back the data
-        moco_wrapper_interleaved(param)
+        fname_output_image = moco_wrapper_interleaved(param)
     else:
-        moco_wrapper(param)
+        fname_output_image = moco_wrapper(param)
+
+    set_loglevel(verbose)  # moco_wrapper changes verbose to 0, see issue #3341
+
+    # QC report
+    if path_qc is not None:
+        generate_qc(fname_in1=fname_output_image, fname_in2=param.fname_data, fname_seg=qc_seg,
+                    args=sys.argv[1:], path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset,
+                    subject=qc_subject, process='sct_dmri_moco')
+
+    display_viewer_syntax([fname_output_image, param.fname_data], mode='ortho,ortho')
 
 
 if __name__ == "__main__":

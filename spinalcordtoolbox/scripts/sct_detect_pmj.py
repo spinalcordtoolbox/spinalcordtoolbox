@@ -2,35 +2,50 @@
 
 """Detect Ponto-Medullary Junction.
 
+The models were trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
+in section 2.1.2, except that the cords are not straightened for the PMJ disc detection task.
+
+To train a new model:
+- Install SCT v3.2.7 (https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/v3.2.7)
+- Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
+- Run "source sct_launcher" in a terminal
+- Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
+- Save the trained model in https://github.com/spinalcordtoolbox/pmj_models
+
+NB: The files in the `dev/` folder are not actively maintained, so these training steps are not guaranteed to
+    work with more recent versions of SCT.
+
 Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 Author: Charley
-Created: 2017-07-21
-Modified: 2017-09-12
 
 About the license: see the file LICENSE.TXT
 """
 
 import os
 import sys
+import logging
 
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
 import numpy as np
 
-from spinalcordtoolbox.image import Image, zeros_like
+from spinalcordtoolbox.image import Image, zeros_like, compute_cross_corr_3d
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
+
+logger = logging.getLogger(__name__)
 
 
 def get_parser():
     parser = SCTArgumentParser(
         description='Detection of the Ponto-Medullary Junction (PMJ). '
-                    ' This method is machine-learning based and adapted for T1w-like or '
-                    ' T2w-like images. '
-                    ' If the PMJ is detected from the input image, a nifti mask is output '
-                    ' ("*_pmj.nii.gz") with one voxel (value=50) located at the predicted PMJ '
-                    ' position. If the PMJ is not detected, nothing is output.'
+                    'This method is based on a machine-learning algorithm published in (Gros et al. 2018, Medical '
+                    'Image Analysis, https://doi.org/10.1016/j.media.2017.12.001). Two models are available: one for '
+                    'T1w-like and another for T2w-like images. '
+                    'If the PMJ is detected from the input image, a NIfTI mask is output '
+                    '("*_pmj.nii.gz") with one voxel (value=50) located at the predicted PMJ '
+                    'position. If the PMJ is not detected, nothing is output.'
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -47,7 +62,6 @@ def get_parser():
         help="Type of image contrast, if your contrast is not in the available options (t1, t2), "
              "use t1 (cord bright/ CSF dark) or t2 (cord dark / CSF bright)",
     )
-
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -64,7 +78,7 @@ def get_parser():
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
-        help='Output folder. Example: My_Output_Folder/',
+        help='Output folder. Example: My_Output_Folder',
         action=ActionCreateFolder,
         required=False)
     optional.add_argument(
@@ -134,7 +148,7 @@ class DetectPMJ:
 
         self.orient2pir()  # orient data to PIR orientation
 
-        self.extract_sagital_slice()  # extract a sagital slice, used to do the detection
+        self.extract_pmj_symmetrical_sagittal_slice()  # extracts slice based on PMJ symmetry point, contains a detection, but only used to select the ROI for correlation
 
         self.detect()  # run the detection
 
@@ -182,7 +196,6 @@ class DetectPMJ:
             img_pred_maxValue = np.max(img_pred.data)  # get the max value of the detection map
             self.pa_coord = np.where(img_pred.data == img_pred_maxValue)[0][0]
             self.is_coord = np.where(img_pred.data == img_pred_maxValue)[1][0]
-
             printv('\nPonto-Medullary Junction detected', self.verbose, 'normal')
 
         else:
@@ -205,14 +218,14 @@ class DetectPMJ:
 
         self.dection_map_pmj += '.nii'  # fname of the resulting detection map
 
-    def extract_sagital_slice(self):
-        """Extract the sagital slice where the detection is done.
+    def extract_sagittal_slice(self):
+        """Extract the sagittal slice where the detection is done.
 
         If the segmentation is provided,
-            the 2D sagital slice is choosen accoding to the segmentation.
+            the 2D sagittal slice is choosen accoding to the segmentation.
 
         If the segmentation is not provided,
-            the 2D sagital slice is choosen as the mid-sagital slice of the input image.
+            the 2D sagittal slice is choosen as the mid-sagittal slice of the input image.
         """
         # TODO: get the mean across multiple sagittal slices to reduce noise
 
@@ -233,13 +246,25 @@ class DetectPMJ:
 
         run_proc(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
 
+    def extract_pmj_symmetrical_sagittal_slice(self):
+        """Extract a slice that is symmetrical about the estimated PMJ location."""
+        # Here, detection is used just as a way to determine the ROI for the sliding window approach
+        self.extract_sagittal_slice()
+        self.detect()
+        self.get_max_position()
+        image = Image(self.fname_im)  # img in PIR orientation
+        self.rl_coord = compute_cross_corr_3d(image.change_orientation('RPI'), [self.rl_coord, self.pa_coord, self.is_coord, ])  # Find R-L symmetry
+
+        # Replace the mid-sagittal slice, to be used for the "main" PMJ detection
+        run_proc(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
+
     def orient2pir(self):
         """Orient input data to PIR orientation."""
         if self.orientation_im != 'PIR':  # open image and re-orient it to PIR if needed
-            Image(self.fname_im).change_orientation("PIR").save(''.join(extract_fname(self.fname_im)[1:]))
+            Image(self.fname_im).change_orientation("PIR").save(''.join(extract_fname(self.fname_im)[1:]), verbose=0)
 
             if self.fname_seg is not None:
-                Image(self.fname_seg).change_orientation('PIR').save(''.join(extract_fname(self.fname_seg)[1:]))
+                Image(self.fname_seg).change_orientation('PIR').save(''.join(extract_fname(self.fname_seg)[1:]), verbose=0)
 
     def ifolder2tmp(self):
         """Copy data to tmp folder."""
@@ -261,7 +286,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # Set param arguments ad inputted by user
     fname_in = arguments.i

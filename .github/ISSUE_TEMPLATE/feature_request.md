@@ -5,7 +5,7 @@ about: Want improvements or new features in SCT?
 ---
 
 Hi, thanks for opening a feature request, please take some time to consider the applicable guidelines:
-https://github.com/neuropoly/spinalcordtoolbox/blob/master/CONTRIBUTING.rst#reporting-a-bug-or-requesting-a-feature
+https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/CONTRIBUTING.rst#reporting-a-bug-or-requesting-a-feature
 (about how to suitably describe issues or requests) prior to deleting this blurb when about to submit the issue.
 
 **Feature justification: Is your feature request related to a problem? Please describe.**

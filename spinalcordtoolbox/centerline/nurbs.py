@@ -33,7 +33,7 @@
 #   z_centerline_fit_der = D[2]
 #
 # ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 NeuroPoly, Polytechnique Montreal <www.neuropoly.info>
+# Copyright (c) 2014 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Benjamin De Leener, Julien Touati
 
 import os
@@ -1082,8 +1082,6 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
         if not twodim:
             PC_z = [p[2] for p in PC]
 
-        import matplotlib
-        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
         if not twodim:
             plt.figure(1)

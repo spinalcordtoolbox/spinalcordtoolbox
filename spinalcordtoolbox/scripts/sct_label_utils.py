@@ -27,7 +27,7 @@ from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, printv,
-                                     parse_num_list, set_global_loglevel)
+                                     parse_num_list, set_loglevel)
 from spinalcordtoolbox.utils.shell import display_viewer_syntax
 
 
@@ -90,7 +90,7 @@ def get_parser():
         '-create-seg',
         metavar=Metavar.list,
         type=list_type(':', list_type(',', int)),
-        help="R|Create labels on a cord segmentation (or centerline) image defined by '-i'. Each label should be "
+        help="Create labels on a cord segmentation (or centerline) image defined by '-i'. Each label should be "
              "specified using the form 'v1,v2' where 'v1' is value of the slice index along the inferior-superior "
              "axis, and 'v2' is the value of the label. Separate each label with ':'. \n"
              "Example: '-create-seg 5,1:14,2:23,3' adds three labels at the axial slices 5, 14, and 23 (starting from "
@@ -101,7 +101,7 @@ def get_parser():
         '-create-seg-mid',
         metavar=Metavar.int,
         type=int,
-        help="R|Similar to '-create-seg'. This option takes a single label value, and will automatically select the "
+        help="Similar to '-create-seg'. This option takes a single label value, and will automatically select the "
              "mid-point slice in the inferior-superior direction (so there is no need for a slice index).\n"
              "This is useful for when you have centered the field of view of your data at a specific location. "
              "For example, if you already know that the C2-C3 disc is centered in the I-S direction, then "
@@ -144,7 +144,7 @@ def get_parser():
         '-vert-body',
         metavar=Metavar.list,
         type=list_type(',', int),
-        help="R|From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
+        help="From vertebral labeling, create points that are centered at the mid-vertebral levels. Separate "
              "desired levels with ','. Example: 3,8\n"
              "To get all levels, enter 0."
     )
@@ -245,7 +245,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     input_filename = arguments.i
     output_fname = arguments.o

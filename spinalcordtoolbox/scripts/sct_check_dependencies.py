@@ -23,20 +23,13 @@ import platform
 import importlib
 import warnings
 import psutil
+import traceback
 
 import requirements
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
-from spinalcordtoolbox.utils.sys import sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__, __data_dir__, set_global_loglevel
-
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
+from spinalcordtoolbox.utils.sys import (sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__,
+                                         __data_dir__, set_loglevel, ANSIColors16)
 
 
 def _test_condition(condition):
@@ -72,10 +65,12 @@ def resolve_module(framework_name):
         'Keras': ('keras', True),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
+        'msvc-runtime': ('msvc_runtime', False),
         'mkl-service': (None, False),
         'pytest-cov': ('pytest_cov', False),
         'urllib3[secure]': ('urllib3', False),
         'pytest-xdist': ('xdist', False),
+        'protobuf': ('google.protobuf', False)
     }
 
     try:
@@ -119,7 +114,7 @@ def get_version(module):
     if module.__name__ == 'PyQt5.QtCore':
         # Unfortunately importing PyQt5.Qt makes sklearn import crash on Ubuntu 14.04 (corresponding to Debian's jessie)
         # so we don't display the version for this distros.
-        # See: https://github.com/neuropoly/spinalcordtoolbox/pull/2522#issuecomment-559310454
+        # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2522#issuecomment-559310454
         if 'jessie' in platform.platform():
             version = None
         else:
@@ -137,19 +132,19 @@ def print_line(string):
 
 
 def print_ok(more=None):
-    print("[{}OK{}]{}".format(bcolors.OKGREEN, bcolors.ENDC, more if more is not None else ""))
+    print("[{}OK{}]{}".format(ANSIColors16.LightGreen, ANSIColors16.ResetAll, more if more is not None else ""))
 
 
 def print_warning(more=None):
-    print("[{}WARNING{}]{}".format(bcolors.WARNING, bcolors.ENDC, more if more is not None else ""))
+    print("[{}WARNING{}]{}".format(ANSIColors16.LightYellow, ANSIColors16.ResetAll, more if more is not None else ""))
 
 
 def print_fail(more=None):
-    print("[{}FAIL{}]{}".format(bcolors.FAIL, bcolors.ENDC, more if more is not None else ""))
+    print("[{}FAIL{}]{}".format(ANSIColors16.LightRed, ANSIColors16.ResetAll, more if more is not None else ""))
 
 
 def add_bash_profile(string):
-    bash_profile = os.path.expanduser("~/bash_profile")
+    bash_profile = os.path.expanduser(os.path.join("~", ".bash_profile"))
     with io.open(bash_profile, "a") as file_bash:
         file_bash.write("\n" + string)
 
@@ -201,7 +196,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = complete_test = arguments.complete
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     print("SCT info:")
     print("- version: {}".format(__version__))
@@ -210,28 +205,30 @@ def main(argv=None):
     # initialization
     install_software = 0
     e = 0
-    os_running = 'not identified'
 
     # complete test
     if complete_test:
         print(run_proc('date', verbose))
         print(run_proc('whoami', verbose))
         print(run_proc('pwd', verbose))
-        bash_profile = os.path.expanduser("~/.bash_profile")
+        bash_profile = os.path.expanduser(os.path.join("~", ".bash_profile"))
         if os.path.isfile(bash_profile):
             with io.open(bash_profile, "r") as f:
                 print(f.read())
-        bashrc = os.path.expanduser("~/.bashrc")
+        bashrc = os.path.expanduser(os.path.join("~", ".bashrc"))
         if os.path.isfile(bashrc):
             with io.open(bashrc, "r") as f:
                 print(f.read())
 
     # check OS
-    platform_running = sys.platform
-    if platform_running.find('darwin') != -1:
+    if sys.platform.startswith('darwin'):
         os_running = 'osx'
-    elif platform_running.find('linux') != -1:
+    elif sys.platform.startswith('linux'):
         os_running = 'linux'
+    elif sys.platform.startswith('win32'):
+        os_running = 'windows'
+    else:
+        os_running = 'unknown'
 
     print('OS: ' + os_running + ' (' + platform.platform() + ')')
     print('CPU cores: Available: {}, Used by ITK functions: {}'.format(psutil.cpu_count(), int(os.getenv('ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS', 0))))
@@ -260,6 +257,10 @@ def main(argv=None):
     else:
         print_fail()
 
+    # Import matplotlib.pyplot here (before PyQt can be imported) in order to mitigate a libgcc error
+    # See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3511#issuecomment-912167649
+    import matplotlib.pyplot as plt
+
     for dep_pkg, dep_ver_spec in get_dependencies():
         if dep_ver_spec is None:
             print_line('Check if %s is installed' % (dep_pkg))
@@ -278,9 +279,10 @@ def main(argv=None):
             else:
                 print_ok()
 
-        except ImportError as err:
+        except Exception as err:
             print_fail()
-            print(err)
+            print(f"An error occured while importing module {dep_pkg} -> {err}")
+            print(f"Full traceback: {traceback.format_exc()}")
             install_software = 1
 
     print_line('Check if spinalcordtoolbox is installed')
@@ -288,7 +290,7 @@ def main(argv=None):
         importlib.import_module('spinalcordtoolbox')
         print_ok()
     except ImportError:
-        print_fail()
+        print_fail("Unable to import spinalcordtoolbox module.")
         install_software = 1
 
     # Check ANTs integrity
@@ -306,27 +308,41 @@ def main(argv=None):
         print((status, output), '\n')
 
     # check PropSeg compatibility with OS
-    print_line('Check PropSeg compatibility with OS ')
-    status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
-    if status in (0, 1):
-        print_ok()
+    if sys.platform.startswith('win32'):
+        print_line("Skipping PropSeg compatibility check ")
+        print("[  ] (Not supported on 'native' Windows (without WSL))")
     else:
-        print_fail()
-        print(output)
-        e = 1
-    if complete_test:
-        print((status, output), '\n')
+        status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
+        if status in (0, 1):
+            print_ok()
+        else:
+            print_fail()
+            print(output)
+            e = 1
+        if complete_test:
+            print((status, output), '\n')
 
-    print_line('Check if DISPLAY variable is set')
+    print_line('Check if figure can be opened with matplotlib')
     try:
-        os.environ['DISPLAY']
-        print_ok()
+        import matplotlib
+        # If matplotlib is using a GUI backend, the default 'show()` function will be overridden
+        # See: https://github.com/matplotlib/matplotlib/issues/20281#issuecomment-846467732
+        fig = plt.figure()  # NB: `plt` was imported earlier in the script to avoid a libgcc error
+        if getattr(fig.canvas.manager.show, "__func__", None) != matplotlib.backend_bases.FigureManagerBase.show:
+            print_ok(f" (Using GUI backend: '{matplotlib.get_backend()}')")
+        else:
+            print_fail(f" (Using non-GUI backend '{matplotlib.get_backend()}')")
+    except Exception as err:
+        print_fail()
+        print(err)
 
-        # Further check with PyQt specifically
-        print_line('Check if figure can be opened with PyQt')
-        from PyQt5.QtWidgets import QApplication, QLabel
+    print_line('Check if figure can be opened with PyQt')
+    if sys.platform.startswith("linux") and 'DISPLAY' not in os.environ:
+        print_fail(" ($DISPLAY not set on X11-supporting system)")
+    else:
         try:
-            app = QApplication([])
+            from PyQt5.QtWidgets import QApplication, QLabel
+            _ = QApplication([])
             label = QLabel('Hello World!')
             label.show()
             label.close()
@@ -335,8 +351,32 @@ def main(argv=None):
             print_fail()
             print(err)
 
-    except KeyError:
-        print_fail()
+    # Check version of FSLeyes
+    if not sys.platform.startswith('win32'):
+        print_line('Check FSLeyes version')
+        cmd = 'fsleyes --version'
+        status, output = run_proc(cmd, verbose=0, raise_exception=False)
+        # Exit code 0 - command has run successfully
+        if status == 0:
+            # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
+            fsleyes_version = output.split()[2]
+            print_ok(more=(" (%s)" % fsleyes_version))
+        # Exit code 126 - Command invoked cannot execute (permission problem or command is not an executable)
+        elif status == 126:
+            print('Command not executable. Please check permissions of fsleyes command.')
+        # Exit code 127 - Command not found (possible problem with $PATH)
+        elif status == 127:
+            print('Command not found. If you installed FSLeyes as part of FSL package, please check that FSL is included '
+                  'in $PATH variable. If you installed FSLeyes using conda environment, make sure that the environment is '
+                  'activated. If you do not have FSLeyes installed, consider its installation to easily visualize '
+                  'processing outputs and/or to use SCT within FSLeyes. More info at: '
+                  'https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html')
+        # All other exit codes
+        else:
+            print(f'Exit code {status} occurred. Please report this issue on SCT GitHub: '
+                  f'https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues')
+            if complete_test:
+                print(output)
 
     print('')
     sys.exit(e + install_software)

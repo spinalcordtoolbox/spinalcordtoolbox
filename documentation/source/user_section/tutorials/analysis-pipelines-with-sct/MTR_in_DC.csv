@@ -1,0 +1,4 @@
+Filename,Slice (I->S),VertLevel,Label,Size [vox],MAP(),STD()
+sub-01/anat/mtr.nii.gz,3:16,2:5,dorsal columns,370.15204844543,49.7198531140872,4.99870360243909
+sub-03/anat/mtr.nii.gz,3:15,2:5,dorsal columns,282.686966627213,49.3521578793729,5.19981366995629
+sub-05/anat/mtr.nii.gz,4:13,2:5,dorsal columns,229.620127825366,49.2113270517532,4.76773091479419

@@ -4,11 +4,9 @@
 import glob
 import sys
 import os
-import fcntl
 import json
 import logging
 import datetime
-import io
 from string import Template
 from shutil import copyfile
 
@@ -18,11 +16,13 @@ import skimage.io
 import skimage.exposure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
+from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.colors as color
+import portalocker
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
-from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline, __version__, copy, extract_fname
+from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline, __version__, copy, extract_fname, display_open
 
 logger = logging.getLogger(__name__)
 
@@ -60,24 +60,33 @@ class QcImage(object):
                      "#9f89b0", "#e08e08", "#3d2b54",
                      "#7d0434", "#fb1849", "#14aab4",
                      "#a22abd", "#d58240", "#ac2aff"]
-    # _seg_colormap = plt.cm.autumn
+    _seg_colormap = ["#4d0000", "#ff0000"]
+    _ctl_colormap = ["#ff000099", '#ffff00']
 
-    def __init__(self, qc_report, interpolation, action_list, stretch_contrast=True,
-                 stretch_contrast_method='contrast_stretching', angle_line=None):
+    def __init__(self, qc_report, interpolation, action_list, process, stretch_contrast=True,
+                 stretch_contrast_method='contrast_stretching', angle_line=None, fps=None):
         """
         :param qc_report: QcReport: The QC report object
         :param interpolation: str: Type of interpolation used in matplotlib
         :param action_list: list: List of functions that generates a specific type of images
+        :param process: str: Name of SCT function. e.g., sct_propseg
         :param stretch_contrast: adjust image so as to improve contrast
         :param stretch_contrast_method: str: {'contrast_stretching', 'equalized'}: Method for stretching contrast
         :param angle_line: float: See generate_qc()
+        :param fps: float: Number of frames per second for output gif images. It is only used for sct_fmri_moco and\
+        sct_dmri_moco
         """
         self.qc_report = qc_report
         self.interpolation = interpolation
         self.action_list = action_list
+        self.process = process
         self._stretch_contrast = stretch_contrast
         self._stretch_contrast_method = stretch_contrast_method
+        if stretch_contrast_method not in ['equalized', 'contrast_stretching']:
+            raise ValueError("Unrecognized stretch_contrast_method: {}.".format(stretch_contrast_method),
+                             "Try 'equalized' or 'contrast_stretching'")
         self._angle_line = angle_line
+        self._fps = fps
         self._centermass = None  # center of mass returned by slice.Axial.get_center()
     """
     action_list contain the list of images that has to be generated.
@@ -121,12 +130,11 @@ class QcImage(object):
 
     def listed_seg(self, mask, ax):
         """Create figure with red segmentation. Common scenario."""
-        img = np.rint(np.ma.masked_where(mask < 1, mask))
+        img = np.ma.masked_equal(mask, 0)
         ax.imshow(img,
-                  cmap=color.ListedColormap(self._color_bin_red),
-                  norm=color.Normalize(vmin=0, vmax=1),
+                  cmap=color.LinearSegmentedColormap.from_list("", self._seg_colormap),
+                  norm=color.Normalize(vmin=0.5, vmax=1),
                   interpolation=self.interpolation,
-                  alpha=1,
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -184,9 +192,9 @@ class QcImage(object):
         from matplotlib import colors
         import scipy.ndimage
         img = np.rint(np.ma.masked_where(mask < 1, mask))
+        labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
         ax.imshow(img,
-                  cmap=colors.ListedColormap(self._labels_color),
-                  norm=colors.Normalize(vmin=0, vmax=len(self._labels_color)),
+                  cmap=colors.ListedColormap(self._labels_color[labels.min():labels.max()+1]),  # get color from min label and max label
                   interpolation=self.interpolation,
                   alpha=1,
                   aspect=float(self.aspect_mask))
@@ -214,7 +222,7 @@ class QcImage(object):
         y, x = np.where(mask == 50)
         img = np.full_like(mask, np.nan)
         ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
-        ax.text(x, y, 'X', color='lime', clip_on=True)
+        ax.plot(x, y, 'x', color='lime', markersize=6)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -231,7 +239,7 @@ class QcImage(object):
                   cmap=color.ListedColormap(self._color_bin_red),
                   norm=color.Normalize(vmin=0, vmax=1),
                   interpolation=self.interpolation,
-                  alpha=10,
+                  alpha=1,
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -241,6 +249,30 @@ class QcImage(object):
         img = np.full_like(mask, np.nan)
         ax.imshow(img, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
         ax.axvline(x=img.shape[1] / 2.0, color='r', linewidth=2)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    def grid(self, mask, ax):
+        """Centered grid to assess quality of motion correction"""
+        grid = np.full_like(mask, 0)
+        ax.imshow(grid, cmap='gray', alpha=0, aspect=float(self.aspect_mask))
+        for center_mosaic in self._centermass:
+            x0, y0 = center_mosaic[0], center_mosaic[1]
+            ax.axvline(x=x0, color='w', linestyle='-', linewidth=0.5)
+            ax.axhline(y=y0, color='w', linestyle='-', linewidth=0.5)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+
+    def smooth_centerline(self, mask, ax):
+        """Display smoothed centerline"""
+        mask = mask/mask.max()
+        mask[mask < 0.05] = 0  # Apply 0.5 threshold
+        img = np.ma.masked_equal(mask, 0)
+        ax.imshow(img,
+                  cmap=color.LinearSegmentedColormap.from_list("", self._ctl_colormap),
+                  norm=color.Normalize(vmin=0, vmax=1),
+                  interpolation=self.interpolation,
+                  aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -265,84 +297,128 @@ class QcImage(object):
             self.qc_report.slice_name = sct_slice.get_name()
 
             # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
-            aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
+            self.aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
 
             self.qc_report.make_content_path()
             logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
 
-            if self._angle_line is None:
-                img, mask = func(sct_slice, *args)
-            else:
-                [img, mask], centermass = func(sct_slice, *args)
+            if self.process in ['sct_fmri_moco', 'sct_dmri_moco']:
+                [images_after_moco, images_before_moco], centermass = func(sct_slice, *args)
                 self._centermass = centermass
+                self._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
+            else:
+                if self._angle_line is None:
+                    img, *mask = func(sct_slice, *args)
+                else:
+                    [img, mask], centermass = func(sct_slice, *args)
+                    self._centermass = centermass
 
-            if self._stretch_contrast:
-                def equalized(a):
-                    """
-                    Perform histogram equalization using CLAHE
-
-                    Notes:
-
-                    - Image value range is preserved
-                    - Workaround for adapthist artifact by padding (#1664)
-                    """
-                    winsize = 16
-                    min_, max_ = a.min(), a.max()
-                    b = (np.float32(a) - min_) / (max_ - min_)
-                    b[b >= 1] = 1  # 1+eps numerical error may happen (#1691)
-
-                    h, w = b.shape
-                    h1 = (h + (winsize - 1)) // winsize * winsize
-                    w1 = (w + (winsize - 1)) // winsize * winsize
-                    if h != h1 or w != w1:
-                        b1 = np.zeros((h1, w1), dtype=b.dtype)
-                        b1[:h, :w] = b
-                        b = b1
-                    c = skimage.exposure.equalize_adapthist(b, kernel_size=(winsize, winsize))
-                    if h != h1 or w != w1:
-                        c = c[:h, :w]
-                    return np.array(c * (max_ - min_) + min_, dtype=a.dtype)
-
-                def contrast_stretching(a):
-                    p2, p98 = np.percentile(a, (2, 98))
-                    return skimage.exposure.rescale_intensity(a, in_range=(p2, p98))
-
-                func_stretch_contrast = {'equalized': equalized,
-                                         'contrast_stretching': contrast_stretching}
-
-                img = func_stretch_contrast[self._stretch_contrast_method](img)
-
-            fig = Figure()
-            # if axial mosaic restrict width
-            if sct_slice.get_name() == 'Axial':
-                size_fig = [5, 5 * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
-            # if sagittal orientation restrict height
-            elif sct_slice.get_name() == 'Sagittal':
-                size_fig = [5 * img.shape[1] / img.shape[0], 5]
-            fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
-            FigureCanvas(fig)
-            ax = fig.add_axes((0, 0, 1, 1))
-            ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(aspect_img))
-            self._add_orientation_label(ax)
-            ax.get_xaxis().set_visible(False)
-            ax.get_yaxis().set_visible(False)
-            self._save(fig, self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
-
-            for action in self.action_list:
-                logger.debug('Action List %s', action.__name__)
-                if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
-                    print("Mask type %s" % mask.dtype)
-                    mask = func_stretch_contrast[self._stretch_contrast_method](mask)
-                fig = Figure()
-                fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
-                FigureCanvas(fig)
-                ax = fig.add_axes((0, 0, 1, 1))
-                action(self, mask, ax)
-                self._save(fig, self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
-
-            self.qc_report.update_description_file(img.shape)
+                self._make_QC_image_for_3d_volumes(img, mask, slice_orientation=sct_slice.get_name())
 
         return wrapped_f
+
+    def _make_QC_image_for_3d_volumes(self, img, mask, slice_orientation):
+        """
+        Create overlay and background images for all processes that deal with 3d volumes
+        (all except sct_fmri_moco and sct_dmri_moco)
+
+        :param img: The base image to display underneath the overlays (typically anatomical)
+        :param mask: A list of images to be processed and overlaid on top of `img`
+        :return:
+        """
+
+        if self._stretch_contrast:
+            img = self._func_stretch_contrast(img)
+
+        # if axial mosaic restrict width
+        if slice_orientation == 'Axial':
+            size_fig = [5, 5 * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
+        # if sagittal orientation restrict height
+        elif slice_orientation == 'Sagittal':
+            size_fig = [5 * img.shape[1] / img.shape[0], 5]
+
+        fig = Figure()
+        fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
+        FigureCanvas(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(self.aspect_img))
+        self._add_orientation_label(ax)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        logger.info(self.qc_report.qc_params.abs_bkg_img_path())
+        self._save(fig, self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
+
+        fig = Figure()
+        fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
+        FigureCanvas(fig)
+        for i, action in enumerate(self.action_list):
+            logger.debug('Action List %s', action.__name__)
+            if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
+                print("Mask type %s" % mask[i].dtype)
+                mask[i] = self._func_stretch_contrast(mask[i])
+            ax = fig.add_axes((0, 0, 1, 1), label=str(i))
+            action(self, mask[i], ax)
+        self._save(fig, self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
+
+        self.qc_report.update_description_file(img.shape)
+
+    def _make_QC_image_for_4d_volumes(self, images_after_moco, images_before_moco):
+        """
+        Generate background and overlay gifs for sct_fmri_moco and sct_dmri_moco
+
+        :param images_after_moco: list of mosaic images after motion correction
+        :param images_before_moco: list of mosaic images before motion correction
+        :return:
+        """
+
+        size_fig = [5, 10 * images_after_moco[0].shape[0] / images_after_moco[0].shape[1] + 0.5]
+        if self._stretch_contrast:
+            for i in range(len(images_after_moco)):
+                images_after_moco[i] = self._func_stretch_contrast(images_after_moco[i])
+                images_before_moco[i] = self._func_stretch_contrast(images_before_moco[i])
+
+        self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig)
+        self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig, is_mask=True)
+
+        w, h = (self.qc_report.qc_params.dpi * size_fig[0], self.qc_report.qc_params.dpi * size_fig[1])
+        self.qc_report.update_description_file((w, h))
+
+    def _func_stretch_contrast(self, img):
+        if self._stretch_contrast_method == "equalized":
+            return self._equalize_histogram(img)
+        else:  # stretch_contrast_method == "contrast_stretching":
+            return self._stretch_intensity_levels(img)
+
+    def _stretch_intensity_levels(self, img):
+        p2, p98 = np.percentile(img, (2, 98))
+        return skimage.exposure.rescale_intensity(img, in_range=(p2, p98))
+
+    def _equalize_histogram(self, img):
+        """
+        Perform histogram equalization using CLAHE
+
+        Notes:
+
+        - Image value range is preserved
+        - Workaround for adapthist artifact by padding (#1664)
+        """
+        winsize = 16
+        min_, max_ = img.min(), img.max()
+        b = (np.float32(img) - min_) / (max_ - min_)
+        b[b >= 1] = 1  # 1+eps numerical error may happen (#1691)
+
+        h, w = b.shape
+        h1 = (h + (winsize - 1)) // winsize * winsize
+        w1 = (w + (winsize - 1)) // winsize * winsize
+        if h != h1 or w != w1:
+            b1 = np.zeros((h1, w1), dtype=b.dtype)
+            b1[:h, :w] = b
+            b = b1
+        c = skimage.exposure.equalize_adapthist(b, kernel_size=(winsize, winsize))
+        if h != h1 or w != w1:
+            c = c[:h, :w]
+
+        return np.array(c * (max_ - min_) + min_, dtype=img.dtype)
 
     def _add_orientation_label(self, ax):
         """
@@ -357,6 +433,70 @@ class QcImage(object):
             ax.text(12, 28, 'P', color='yellow', size=4)
             ax.text(0, 18, 'L', color='yellow', size=4)
             ax.text(24, 18, 'R', color='yellow', size=4)
+
+    def _generate_and_save_gif(self, top_images, bottom_images, size_fig, is_mask=False):
+        """
+        Create figure with two images for sct_fmri_moco and sct_dmri_moco and save gif
+
+        :param top_images: list of images of mosaic before motion correction
+        :param bottom_images: list of images of mosaic after motion correction
+        :param size_fig: size of figure in inches
+        :param is_mask: display grid on top of mosaic
+        :return:
+        """
+
+        if is_mask:
+            aspect = self.aspect_mask
+        else:
+            aspect = self.aspect_img
+
+        fig = Figure()
+        FigureCanvas(fig)
+        fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
+        fig.subplots_adjust(left=0, top=0.9, bottom=0.1)
+
+        ax1 = fig.add_subplot(211)
+        null_image = np.zeros(np.shape(top_images[0]))
+        img1 = ax1.imshow(null_image, cmap='gray', aspect=float(aspect))
+        ax1.set_title('Before motion correction', fontsize=8, loc='left', pad=2)
+        ax1.get_xaxis().set_visible(False)
+        ax1.get_yaxis().set_visible(False)
+        self._add_orientation_label(ax1)
+        if is_mask:
+            QcImage.grid(self, top_images[0], ax1)
+
+        ax2 = fig.add_subplot(212)
+        img2 = ax2.imshow(null_image, cmap='gray', aspect=float(aspect))
+        ax2.set_title('After motion correction', fontsize=8, loc='left', pad=2)
+        ax2.get_xaxis().set_visible(False)
+        ax2.get_yaxis().set_visible(False)
+        self._add_orientation_label(ax2)
+        if is_mask:
+            QcImage.grid(self, bottom_images[0], ax2)
+
+        ann = ax2.annotate('', xy=(0, .025), xycoords='figure fraction', horizontalalignment='left',
+                           verticalalignment='bottom', fontsize=6)
+
+        def update_figure(i):
+            img1.set_data(top_images[i])
+            img1.set_clim(vmin=np.amin(top_images[i]), vmax=np.amax(top_images[i]))
+            img2.set_data(bottom_images[i])
+            img2.set_clim(vmin=np.amin(bottom_images[i]), vmax=np.amax(bottom_images[i]))
+            ann.set_text(f'Volume: {i + 1}/{len(top_images)}')
+
+        # FuncAnimation creates an animation by repeatedly calling the function update_figure for each frame
+        ani = FuncAnimation(fig, update_figure, frames=len(top_images))
+
+        if is_mask:
+            gif_out_path = self.qc_report.qc_params.abs_overlay_img_path()
+        else:
+            gif_out_path = self.qc_report.qc_params.abs_bkg_img_path()
+
+        if self._fps is None:
+            self._fps = 3
+        writer = PillowWriter(self._fps)
+        logger.info('Saving gif %s', gif_out_path)
+        ani.save(gif_out_path, writer=writer, dpi=self.qc_report.qc_params.dpi)
 
     def _save(self, fig, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
         """
@@ -418,9 +558,13 @@ class Params(object):
         self.dpi = dpi
         self.root_folder = dest_folder
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
-        self.qc_results = os.path.join(dest_folder, '_json/qc_' + self.mod_date + '.json')
-        self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'bkg_img.png')
-        self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, 'overlay_img.png')
+        self.qc_results = os.path.join(dest_folder, '_json', f'qc_{self.mod_date}.json')
+        if command in ['sct_fmri_moco', 'sct_dmri_moco']:
+            ext = "gif"
+        else:
+            ext = "png"
+        self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, f"bkg_img.{ext}")
+        self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, f"overlay_img.{ext}")
 
     def abs_bkg_img_path(self):
         return os.path.join(self.root_folder, self.bkg_img_path)
@@ -457,7 +601,6 @@ class QcReport(object):
         """
         # make a new or update Qc directory
         target_img_folder = os.path.dirname(self.qc_params.abs_bkg_img_path())
-
         try:
             os.makedirs(target_img_folder, exist_ok=True)
         except OSError as err:
@@ -469,6 +612,18 @@ class QcReport(object):
 
         :param: dimension 2-tuple, the dimension of the image frame (w, h)
         """
+        dest_path = self.qc_params.root_folder
+        html_path = os.path.join(dest_path, 'index.html')
+        # Make sure the file exists before trying to open it in 'r+' mode
+        open(html_path, 'a').close()
+        # NB: We use 'r+' because it allows us to open an existing file for locking *without* immediately truncating the
+        # existing contents prior to opening. We can then use this file to overwrite the contents later in the function.
+        dest_file = open(html_path, 'r+', encoding="utf-8")
+        # We lock `index.html` at the start of this function so that we halt any other processes *before* they have a
+        # chance to generate or read any .json files. This ensues that the last process to write to index.html has read
+        # in all of the available .json files, preventing:
+        # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3701#discussion_r816300380
+        portalocker.lock(dest_file, portalocker.LOCK_EX)
 
         output = {
             'python': sys.executable,
@@ -484,7 +639,8 @@ class QcReport(object):
             'background_img': self.qc_params.bkg_img_path,
             'overlay_img': self.qc_params.overlay_img_path,
             'dimension': '%dx%d' % dimension,
-            'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'qc': ""
         }
         logger.debug('Description file: %s', self.qc_params.qc_results)
         # results = []
@@ -493,29 +649,19 @@ class QcReport(object):
         if not os.path.exists(path_json):
             os.makedirs(path_json, exist_ok=True)
 
-        # lock the output directory
-        # because this code may be run in parallel
-        path_json_fd = os.open(path_json, os.O_RDONLY)
-        fcntl.flock(path_json_fd, fcntl.LOCK_EX)
+        # Create json file for specific QC entry
+        with open(self.qc_params.qc_results, 'w+') as qc_file:
+            json.dump(output, qc_file, indent=1)
 
-        try:
-            # Create json file
-            with open(self.qc_params.qc_results, 'w+') as qc_file:
-                json.dump(output, qc_file, indent=1)
-            self._update_html_assets(get_json_data_from_path(path_json))
-        finally:
-            # fcntl.flock(path_json_fd, fcntl.LOCK_UN) # technically, redundant, since close() triggers this too.
-            os.close(path_json_fd)
-
-    def _update_html_assets(self, json_data):
-        """Update the html file and assets"""
+        # Append entry to existing HTML file
+        json_data = get_json_data_from_path(path_json)
         assets_path = os.path.join(os.path.dirname(__file__), 'assets')
-        dest_path = self.qc_params.root_folder
-
-        with io.open(os.path.join(assets_path, 'index.html')) as template_index:
+        with open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
             template = Template(template_index.read())
             output = template.substitute(sct_json_data=json.dumps(json_data))
-            io.open(os.path.join(dest_path, 'index.html'), 'w').write(output)
+        # Empty the HTML file before writing, to make sure there's no leftover junk at the end
+        dest_file.truncate()
+        dest_file.write(output)
 
         for path in ['css', 'js', 'imgs', 'fonts']:
             src_path = os.path.join(assets_path, '_assets', path)
@@ -524,8 +670,11 @@ class QcReport(object):
                 os.makedirs(dest_full_path, exist_ok=True)
             for file_ in os.listdir(src_path):
                 if not os.path.isfile(os.path.join(dest_full_path, file_)):
-                    copy(os.path.join(src_path, file_),
-                             dest_full_path)
+                    copy(os.path.join(src_path, file_), dest_full_path)
+
+        dest_file.flush()
+        portalocker.unlock(dest_file)
+        dest_file.close()
 
 
 def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overlay=None,
@@ -535,6 +684,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
               dpi=300,
               stretch_contrast_method='contrast_stretching',
               angle_line=None,
+              fps=None,
               dataset=None,
               subject=None):
     """
@@ -553,6 +703,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
     :param dpi: int: Output resolution of the image
     :param stretch_contrast_method: Method for stretching contrast. See QcImage
     :param angle_line: [float]: See generate_qc()
+    :param fps: float: Number of frames per second for output gif images
     :param dataset: str: Dataset name
     :param subject: str: Subject name
     :return:
@@ -563,7 +714,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
 
     if qcslice is not None:
         @QcImage(report, 'none', qcslice_operations, stretch_contrast_method=stretch_contrast_method,
-                 angle_line=angle_line)
+                 angle_line=angle_line, process=process, fps=fps)
         def layout(qslice):
             # This will call qc.__call__(self, func):
             return qcslice_layout(qslice)
@@ -583,30 +734,11 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
             copyfile(path_img, qc_param.abs_overlay_img_path())
 
     logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
-    logger.info('Use the following command to see the results in a browser:')
-    try:
-        from sys import platform as _platform
-        if _platform == "linux" or _platform == "linux2":
-            # If user runs SCT within the official Docker distribution, the command xdg-open will not be working therefore
-            # we prefer to instruct the user to manually open the generated html file.
-            try:
-                # if user runs SCT within the official Docker distribution, the variable below is defined. More info at:
-                # https://github.com/neuropoly/sct_docker/blob/master/sct_docker.py#L84
-                os.environ["DOCKER"]
-                logger.info('please go to "%s/" and double click on the "index.html" file', path_qc)
-            except KeyError:
-                logger.info('xdg-open "%s/index.html"', path_qc)
-
-        elif _platform == "darwin":
-            logger.info('open "%s/index.html"', path_qc)
-        else:
-            logger.info('open file "%s/index.html"', path_qc)
-    except ImportError:
-        print("WARNING! Platform undetectable.")
+    display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
 
 
-def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args=None, path_qc=None, dataset=None,
-                subject=None, path_img=None, process=None):
+def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args=None, path_qc=None,
+                dataset=None, subject=None, path_img=None, process=None, fps=None):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
     scripts (e.g. sct_propseg).
@@ -622,6 +754,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     :param subject: str: Subject name
     :param path_img: dict: Path to image to display (e.g., a graph), instead of computing the image from MRI.
     :param process: str: Name of SCT function. e.g., sct_propseg
+    :param fps: float: Number of frames per second for output gif images. Used only for sct_frmi_moco and sct_dmri_moco.
     :return: None
     """
     logger.info('\n*** Generate Quality Control (QC) html report ***')
@@ -630,6 +763,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     qcslice_type = None
     qcslice_operations = None
     qcslice_layout = None
+
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
@@ -652,7 +786,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     # Axial orientation, switch between the image and the centerline
     elif process in ['sct_get_centerline']:
         plane = 'Axial'
-        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)],
+                                     p_resample=None)
         qcslice_operations = [QcImage.label_centerline]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)
@@ -661,6 +796,14 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
         qcslice_operations = [QcImage.template]
         def qcslice_layout(x): return x.mosaic()
+    # Axial orientation, switch between gif image (before and after motion correction) and grid overlay
+    elif process in ['sct_dmri_moco', 'sct_fmri_moco']:
+        plane = 'Axial'
+        if fname_seg is None:
+            raise Exception("Segmentation is needed to ensure proper cropping around spinal cord.")
+        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        qcslice_operations = [QcImage.grid]
+        def qcslice_layout(x): return x.mosaics_through_time()
     # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
         plane = 'Sagittal'
@@ -691,7 +834,15 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         def qcslice_layout(x): return x.single()
     # Metric outputs (only graphs)
     elif process in ['sct_process_segmentation']:
-        assert os.path.isfile(path_img)
+        plane = 'Sagittal'
+        dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
+        fname_list = [fname_in1]
+        # fname_seg should be a list of 4 images: 3 for each of the `qcslice_operations`, plus an extra
+        # centerline image, which is needed to make `Sagittal.get_center_spit` work correctly
+        fname_list.extend(fname_seg)
+        qcslice_type = qcslice.Sagittal([Image(fname) for fname in fname_list], p_resample=None)
+        qcslice_operations = [QcImage.smooth_centerline, QcImage.highlight_pmj, QcImage.listed_seg]
+        def qcslice_layout(x): return x.single()
     else:
         raise ValueError("Unrecognized process: {}".format(process))
 
@@ -709,7 +860,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         qcslice_operations=qcslice_operations,
         qcslice_layout=qcslice_layout,
         stretch_contrast_method='equalized',
-        angle_line=angle_line
+        angle_line=angle_line,
+        fps=fps
     )
 
 

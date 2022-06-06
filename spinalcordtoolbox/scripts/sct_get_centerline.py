@@ -9,7 +9,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 
 
@@ -50,7 +50,7 @@ def get_parser():
         "-method",
         choices=['optic', 'viewer', 'fitseg'],
         default='optic',
-        help="R|Method used for extracting the centerline.\n"
+        help="Method used for extracting the centerline.\n"
              "  - optic: automatic spinal cord detection method\n"
              "  - viewer: manual selection a few points followed by interpolation\n"
              "  - fitseg: fit a regularized centerline on an already-existing cord segmentation. It will "
@@ -73,8 +73,9 @@ def get_parser():
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
-        help="File name (without extension) for the centerline output files. By default, output file will be the "
-             "input with suffix '_centerline'. Example: 'centerline_optic'"
+        help="File name for the centerline output file. If file extension is not provided, "
+             "'.nii.gz' will be used by default. If '-o' is not provided, then the output file will "
+             "be the input with suffix '_centerline'. Example: 'centerline_optic.nii.gz'"
     )
     optional.add_argument(
         "-gap",
@@ -120,7 +121,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # Input filename
     fname_input_data = arguments.i
@@ -147,10 +148,13 @@ def main(argv=None):
 
     # Output folder
     if arguments.o is not None:
-        file_output = arguments.o
+        path_data, file_data, ext_data = extract_fname(arguments.o)
+        if not ext_data:
+            ext_data = '.nii.gz'
+        file_output = os.path.join(path_data, file_data+ext_data)
     else:
         path_data, file_data, ext_data = extract_fname(fname_data)
-        file_output = os.path.join(path_data, file_data + '_centerline')
+        file_output = os.path.join(path_data, file_data+'_centerline.nii.gz')
 
     if method == 'viewer':
         # Manual labeling of cord centerline
@@ -172,10 +176,8 @@ def main(argv=None):
                                                          verbose=verbose)
 
     # save centerline as nifti (discrete) and csv (continuous) files
-    im_centerline.save(file_output + '.nii.gz')
+    im_centerline.save(file_output)
     np.savetxt(file_output + '.csv', arr_centerline.transpose(), delimiter=",")
-
-    display_viewer_syntax([fname_input_data, file_output + '.nii.gz'], colormaps=['gray', 'red'], opacities=['', '1'])
 
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
@@ -183,9 +185,10 @@ def main(argv=None):
 
     # Generate QC report
     if path_qc is not None:
-        generate_qc(fname_input_data, fname_seg=file_output + '.nii.gz', args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_input_data, fname_seg=file_output, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_get_centerline')
-    display_viewer_syntax([fname_input_data, file_output + '.nii.gz'], colormaps=['gray', 'red'], opacities=['', '0.7'])
+
+    display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', 'red'], opacities=['', '0.7'])
 
 
 if __name__ == "__main__":

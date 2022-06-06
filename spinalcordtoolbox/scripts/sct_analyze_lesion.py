@@ -9,10 +9,8 @@
 # About the license: see the file LICENSE.TXT
 
 import os
-import math
 import sys
 import pickle
-import shutil
 
 import numpy as np
 import pandas as pd
@@ -21,13 +19,13 @@ from skimage.measure import label
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='R|Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
+        description='Compute statistics on segmented lesions. The function assigns an ID value to each lesion (1, 2, '
                     '3, etc.) and then outputs morphometric measures for each lesion:\n'
                     '- volume [mm^3]\n'
                     '- length [mm]: length along the Superior-Inferior axis\n'
@@ -76,10 +74,10 @@ def get_parser():
         required=False)
     optional.add_argument(
         "-ofolder",
-        help='Output folder (e.g. "./")',
+        help='Output folder (e.g. ".")',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default='./',
+        default='.',
         required=False)
     optional.add_argument(
         "-r",
@@ -250,13 +248,13 @@ class AnalyzeLeion:
         printv('  Volume : ' + str(np.round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
 
     def _measure_length(self, im_data, p_lst, idx):
-        length_cur = np.sum([np.cos(self.angles[zz]) * p_lst[2] for zz in np.unique(np.where(im_data)[2])])
+        length_cur = np.sum([p_lst[2] / np.cos(self.angles[zz]) for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length : ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
     def _measure_diameter(self, im_data, p_lst, idx):
         area_lst = [np.sum(im_data[:, :, zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] for zz in range(im_data.shape[2])]
-        diameter_cur = 2 * np.sqrt(max(area_lst) / (4 * np.pi))
+        diameter_cur = 2 * np.sqrt(max(area_lst) / np.pi)
         self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
         printv('  Max. equivalent diameter : ' + str(np.round(diameter_cur, 2)) + ' mm', self.verbose, type='info')
 
@@ -439,8 +437,7 @@ class AnalyzeLeion:
                 [x_centerline_deriv[iz] * px, y_centerline_deriv[iz] * py, pz]))
 
             # compute the angle between the normal vector of the plane and the vector z
-            angle = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
-            self.angles[iz] = math.degrees(angle)
+            self.angles[iz] = np.arccos(np.vdot(tangent_vect, np.array([0, 0, 1])))
 
     def label_lesion(self):
         printv('\nLabel connected regions of the masked image...', self.verbose, 'normal')
@@ -515,7 +512,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     fname_mask = arguments.m
     fname_sc = arguments.s

@@ -21,12 +21,19 @@
 #  -y   Install without interruption with 'yes' as default answer
 #  -d   Prevent the (re)-installation of the data/ directory
 #  -b   Prevent the (re)-installation of the SCT binaries files
+#  -c   Prevent checks from being run to validate the installation
 #  -v   Full verbose
 #
 #
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
+
+
+( # | tee install_sct_log.txt
+
+# Change directory to where the script is, for the duration of the script.
+cd "$(dirname $0)" || exit 1
 
 # stricter shell mode
 # https://sipb.mit.edu/doc/safe-shell/
@@ -36,10 +43,8 @@ shopt -s failglob # error if a glob doesn't find any files, instead of remaining
 
 # set -v  # v: verbose
 
-
 # Where tmp file are stored
 TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR')"
-# Start Directory So we go back there at the end of the Script
 SCT_SOURCE="$PWD"
 DATA_DIR="data"
 PYTHON_DIR="python"
@@ -51,6 +56,7 @@ SCT_INSTALL_TYPE=""
 NONINTERACTIVE=""
 NO_DATA_INSTALL=""
 NO_SCT_BIN_INSTALL=""
+NO_INSTALL_VALIDATION=""
 
 # ======================================================================================================================
 # FUNCTIONS
@@ -107,8 +113,6 @@ function run() {
 function finish() {
   # Catch the last return code
   value="$?"
-  # Get back to starting point
-  cd "$SCT_SOURCE"
   if [[ "$value" -eq 0 ]]; then
     print info "Installation finished successfully!"
   elif [[ "$value" -eq 99 ]]; then
@@ -116,7 +120,8 @@ function finish() {
     echo ""
   else
     print error "Installation failed!\n
-Please copy the output of this Terminal (starting with the command install_sct) and upload it as a .txt attachment in a new topic on SCT's forum:\n
+Please find the file \"$SCT_SOURCE/install_sct_log.txt\",
+then upload it as a .txt attachment in a new topic on SCT's forum:
 --> http://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
@@ -265,10 +270,8 @@ function edit_shellrc() {
     # Switch between shell
     if [[ "$THE_RC" == "bash" ]]; then
       echo "export SCT_DIR=$SCT_DIR"
-      echo "export MPLBACKEND=Agg"
     elif [[ "$THE_RC" == "csh" ]]; then
       echo "setenv SCT_DIR $SCT_DIR"
-      echo "setenv MPLBACKEND Agg"
     fi
     # add line
     echo ""
@@ -277,8 +280,8 @@ function edit_shellrc() {
 
 # Download from URL using curl/wget
 function download() {
-  ( (command -v wget >/dev/null) && run wget -O "$1" "$2" ) ||
-  ( (command -v curl >/dev/null) && run curl -o "$1" -L "$2" ) ||
+  ( (command -v wget >/dev/null) && run wget -nv -O "$1" "$2" ) ||
+  ( (command -v curl >/dev/null) && run curl -sS -o "$1" -L "$2" ) ||
   die "The download of $2 failed
 Please check that you have wget or curl installed, and
 your internet connection before relaunching the installer"
@@ -343,7 +346,7 @@ for arg in "$@"; do
   esac
 done
 
-while getopts ":iydbvh" opt; do
+while getopts ":iydbcvh" opt; do
   case $opt in
   i)
     SCT_INSTALL_TYPE="in-place"
@@ -359,6 +362,10 @@ while getopts ":iydbvh" opt; do
   b)
     echo " SCT binaries will not be (re)-installed "
     NO_SCT_BIN_INSTALL="yes"
+    ;;
+  c)
+    echo " no checks will be run (installation will not be validated)"
+    NO_INSTALL_VALIDATION="yes"
     ;;
   v)
     echo " Full verbose!"
@@ -398,17 +405,17 @@ check_requirements
 if [[ -e "spinalcordtoolbox/version.txt" ]]; then
   SCT_VERSION="$(cat spinalcordtoolbox/version.txt)"
 else
-  die "ERROR: version.txt not found. \n
-The install_sct script must be executed from the source directory"
+  die "ERROR: version.txt not found."
 fi
 
 # Get installation type (from git or from package) if not already specified
 if [[ -z "$SCT_INSTALL_TYPE" ]]; then
-  if [[ -d ".git" ]]; then
-    # folder .git exist, therefore it is a git installation
-    SCT_INSTALL_TYPE="in-place"
+  # The file 'requirements-freeze.txt` only exists on the `release` branch
+  # or in stable release "Source Code" .zips (which point at tags `release`)
+  if [[ -e "requirements-freeze.txt" ]]; then
+    SCT_INSTALL_TYPE="package"   # i.e. release installations
   else
-    SCT_INSTALL_TYPE="package"
+    SCT_INSTALL_TYPE="in-place"  # i.e. dev installations
   fi
 fi
 
@@ -493,6 +500,13 @@ Do you agree? [y]es/[n]o: "
   fi
 done
 
+space_regex="[[:space:]]+"
+if [[ $SCT_DIR =~ $space_regex ]]; then
+  die "ERROR: Install directory $SCT_DIR contains spaces.\n\
+       SCT uses conda, which does not permit spaces in installation paths.\n\
+       More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
+fi
+
 # update PATH environment?
 add_to_path=""
 while [[ ! "$add_to_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
@@ -524,11 +538,6 @@ else
   die "This variable is not recognized: THE_RC=$THE_RC"
 fi
 
-# Update MPLBACKEND on headless system. See: https://github.com/neuropoly/spinalcordtoolbox/issues/2137
-if [[ -z "${MLBACKEND:-}" ]]; then
-  export MPLBACKEND=Agg
-fi
-
 # Copy files to destination directory
 if [[ "$SCT_DIR" != "$SCT_SOURCE" ]]; then
   print info "Copying source files from $SCT_SOURCE to $SCT_DIR"
@@ -557,16 +566,13 @@ fi
 # Install Python
 # ----------------------------------------------------------------------------------------------------------------------
 
-# We make sure that there is no conflict with local python install by unsetting PYTHONPATH and forcing PYTHONNOUSERSITE
-unset PYTHONPATH
-export PYTHONNOUSERSITE=1
 
 # Remove old python folder
-print info "Installing conda..."
 run rm -rf "$SCT_DIR/$PYTHON_DIR"
 run mkdir -p "$SCT_DIR/$PYTHON_DIR"
 
 # Download miniconda
+print info "Downloading Miniconda..."
 case $OS in
 linux*)
   download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -577,10 +583,26 @@ osx)
 esac
 
 # Run conda installer
+print info "Installing Miniconda..."
 run bash "$TMP_DIR/miniconda.sh" -p "$SCT_DIR/$PYTHON_DIR" -b -f
 
-# create py3.6 venv (for Keras/TF compatibility with Centos7, see issue #2270)
-python/bin/conda create -y -n venv_sct python=3.6
+# Workaround for WSL "HTTP 000 Connection Failed" error
+# See: https://github.com/conda/conda/issues/9948#issuecomment-909989810
+# Syntax explanation: https://stackoverflow.com/a/6085237
+find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
+
+# create conda environment
+print info "Creating conda environment..."
+python/bin/conda create -y -n venv_sct python=3.7
+
+# Reapply the touch fix to avoid `pip` connection issues on WSL
+find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
+
+# make sure that there is no conflict with local python install by making venv_sct an isolated environment.
+# For more information, see:
+# * Issue details: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3067
+# * Fix details: https://github.com/conda/conda/issues/7173#issuecomment-980496682
+echo "include-system-site-packages = false" > "$SCT_DIR/$PYTHON_DIR/envs/venv_sct/pyvenv.cfg"
 
 # activate miniconda
 # shellcheck disable=SC1091
@@ -589,7 +611,8 @@ set +u #disable safeties, for conda is not written to their standard.
 conda activate venv_sct
 set -u # reactivate safeties
 
-# double-check conda activated (it can be glitchy): https://github.com/neuropoly/spinalcordtoolbox/issues/3029
+# double-check conda activated (it can be glitchy): https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3029
+print info "Validating that conda environment can be activated..."
 EXPECTED_PYTHON="$(realpath "$(command -v python/envs/venv_sct/bin/python)")"
 ACTUAL_PYTHON="$(realpath "$(command -v python)")"
 if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
@@ -597,6 +620,8 @@ if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
   exit 1
 fi
 
+# Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
+python -m pip install -U "pip!=21.2.*"
 
 ## Install the spinalcordtoolbox into the Conda venv
 print info "Installing Python dependencies..."
@@ -610,20 +635,35 @@ else
   REQUIREMENTS_FILE="requirements.txt"
 fi
 (
-  pip install -r "$REQUIREMENTS_FILE" &&
-  # `tensorflow-tensorboard` is installed by `tensorflow==1.5.0` but is not needed,
-  # and conflicts with the other installation of `tensorboard`. So, we uninstall here.
-  # This is hacky, and should be removed as soon as we stop using `tensorflow==1.5.0`.
-  # See https://github.com/neuropoly/spinalcordtoolbox/issues/3035 for more info.
-  pip uninstall -y tensorflow-tensorboard &&
-  pip uninstall -y tensorboard &&
-  pip install tensorboard &&
-  # install sct itself
+  # We use "--ignore-installed" to preserve the version of `certifi` installed into the conda
+  # env, which prevents https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3609
+  pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
   print info "Installing spinalcordtoolbox..." &&
   pip install -e .
 ) ||
   die "Failed running pip install: $?"
 
+## Check if CPU supports AVX instruction set, and install precompiled TensorFlow if it isn't,
+case $OS in
+linux*)
+  if ! lscpu | grep -q " avx "; then
+    print info "AVX is not supported by this CPU! Installing a version of TensorFlow compiled for older CPUs..."
+    pip uninstall tensorflow -y
+    pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
+  else
+    print info "AVX is supported on this Linux machine. Keeping default TensorFlow..."
+  fi
+  ;;
+osx)
+  if sysctl machdep.cpu.brand_string | grep -q "Apple M1"; then
+    print info "AVX is not supported on M1 Macs! Installing a version of TensorFlow compiled for M1 Macs..."
+    pip uninstall tensorflow -y
+    pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.0-py3-none-any.whl
+  else
+    print info "AVX is supported on this macOS machine. Keeping default TensorFlow..."
+  fi
+  ;;
+esac
 
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."
@@ -644,7 +684,7 @@ if [[ -n "$NO_SCT_BIN_INSTALL" ]]; then
   print warning "WARNING: SCT binaries will not be (re)-installed"
 else
   print info "Installing binaries..."
-  run sct_download_data -d "binaries_${OS}" -o "${SCT_DIR}/${BIN_DIR}" -k
+  run sct_download_data -d "binaries_${OS}" -k
 fi
 print info "All requirements installed!"
 
@@ -657,7 +697,7 @@ else
   run rm -rf "$SCT_DIR/$DATA_DIR"
   run mkdir -p "$SCT_DIR/$DATA_DIR"
   for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
-    run sct_download_data -d "$data" -o "$SCT_DIR/$DATA_DIR/$data"
+    run sct_download_data -d "$data"
   done
 fi
 
@@ -677,7 +717,13 @@ conda deactivate >/dev/null 2>&1
 if [[ -e "$RC_FILE_PATH" ]]; then
     if grep "sct_env" "$RC_FILE_PATH"; then
       print info "In case an old version SCT is already installed (4.0.0-beta.1 or before), remove 'sct_env' declaration in RC file"
-      sed -ie '/sct_env/ s/^#*/#/' "$RC_FILE_PATH"
+      perl -pi -e 's/^(# )?(.*bin/sct_env)/# \2/' "$RC_FILE_PATH"
+    fi
+    if grep "^export MPLBACKEND=Agg" "$RC_FILE_PATH"; then
+      print info "Commenting out 'export MPLBACKEND=Agg' from previous SCT installation"
+      perl -pi -e 's/^export MPLBACKEND=Agg/# The line below has been commented out by a more recent installation of SCT,\
+# because export MPLBACKEND=Agg is no longer needed as of SCT v5.4.0\
+# export MPLBACKEND=Agg/' "$RC_FILE_PATH"
     fi
 fi
 
@@ -688,18 +734,25 @@ else
 You can always add it later or call SCT functions with full path $SCT_DIR/$BIN_DIR/sct_xxx"
 fi
 
-# run sct_check_dependencies
-print info "Validate installation..."
-# We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
-# it creates is cleaned properly
-if sct_check_dependencies; then
-  if [[ "$add_to_path" =~ ^[Nn] ]]; then
-    print info "To use SCT, please update your environment by running:
-$DISPLAY_UPDATE_PATH"
-  else
-    print info "Open a new Terminal window to load environment variables, or run:
-source $RC_FILE_PATH"
-  fi
+if [[ -n "$NO_INSTALL_VALIDATION" ]]; then
+    print warning "WARNING: no checks will be run (installation will not be validated)"
 else
-  die "Installation validation Failed!"
+  # run sct_check_dependencies
+  print info "Validate installation..."
+  # We run the sct_check_dependencies in the TMP_DIR so the tmp.XXX output
+  # it creates is cleaned properly
+  if sct_check_dependencies; then
+    if [[ "$add_to_path" =~ ^[Nn] ]]; then
+      print info "To use SCT, please update your environment by running:
+  $DISPLAY_UPDATE_PATH"
+    else
+      print info "Open a new Terminal window to load environment variables, or run:
+  source $RC_FILE_PATH"
+    fi
+  else
+    die "Installation validation Failed!"
+  fi
 fi
+
+) 2>&1 | tee install_sct_log.txt
+exit "${PIPESTATUS[0]}"

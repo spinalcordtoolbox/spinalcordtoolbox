@@ -134,8 +134,12 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
     # assert images are in the same orientation
     assert im_target.orientation == im_sc_seg.orientation, "ERROR: the image to segment and it's SC segmentation are not in the same orientation"
 
-    im_target_rpi = im_target.copy().change_orientation('RPI', generate_path=True).save()
-    im_sc_seg_rpi = im_sc_seg.copy().change_orientation('RPI', generate_path=True).save()
+    im_target_rpi = im_target.copy().change_orientation('RPI')
+    im_target_rpi.save(path=add_suffix(im_target_rpi.absolutepath, "_rpi"), mutable=True)
+
+    im_sc_seg_rpi = im_sc_seg.copy().change_orientation('RPI')
+    im_sc_seg_rpi.save(path=add_suffix(im_sc_seg_rpi.absolutepath, "_rpi"), mutable=True)
+
     original_info['im_sc_seg_rpi'] = im_sc_seg_rpi.copy()  # target image in RPI will be used to post-process segmentations
 
     # denoise using P. Coupe non local means algorithm (see [Manjon et al. JMRI 2010]) implemented in dipy

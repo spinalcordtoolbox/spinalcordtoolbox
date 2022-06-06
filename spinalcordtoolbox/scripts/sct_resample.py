@@ -15,7 +15,7 @@
 import os
 import sys
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
 import spinalcordtoolbox.resampling
 
 
@@ -59,7 +59,7 @@ def get_parser():
     resample_types.add_argument(
         '-f',
         metavar=Metavar.str,
-        help="R|Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1\n"
+        help="Resampling factor in each dimensions (x,y,z). Separate with 'x'. Example: 0.5x0.5x1\n"
              "For 2x upsampling, set to 2. For 2x downsampling set to 0.5"
     )
     resample_types.add_argument(
@@ -113,7 +113,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     param.fname_data = arguments.i
     arg = 0

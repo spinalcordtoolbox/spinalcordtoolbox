@@ -16,7 +16,7 @@ import os
 import sys
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 
 
@@ -37,7 +37,7 @@ def get_parser():
     mandatory.add_argument(
         "-c",
         required=True,
-        help='R|Type of image contrast.\n'
+        help='Type of image contrast.\n'
              ' t2: T2w scan with isotropic or anisotropic resolution.\n'
              ' t2_ax: T2w scan with axial orientation and thick slices.\n'
              ' t2s: T2*w scan with axial orientation and thick slices.',
@@ -53,7 +53,7 @@ def get_parser():
     )
     optional.add_argument(
         "-centerline",
-        help="R|Method used for extracting the centerline:\n"
+        help="Method used for extracting the centerline:\n"
              " svm: Automatic detection using Support Vector Machine algorithm.\n"
              " cnn: Automatic detection using Convolutional Neural Network.\n"
              " viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer "
@@ -77,7 +77,7 @@ def get_parser():
         default=1)
     optional.add_argument(
         "-ofolder",
-        help='Output folder. Example: My_Output_Folder/ ',
+        help='Output folder. Example: My_Output_Folder',
         required=False,
         action=ActionCreateFolder,
         metavar=Metavar.str,
@@ -111,7 +111,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     fname_image = arguments.i
     contrast_type = arguments.c

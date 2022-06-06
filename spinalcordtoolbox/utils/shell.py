@@ -12,22 +12,34 @@ import inspect
 
 from enum import Enum
 
-from .sys import check_exe, printv
+from .sys import check_exe, printv, removesuffix
 
 logger = logging.getLogger(__name__)
 
 
-def display_open(file):
+def display_open(file, message="Done! To view results"):
     """Print the syntax to open a file based on the platform."""
-    if sys.platform == 'linux':
-        printv('\nDone! To view results, type:')
-        printv('xdg-open ' + file + '\n', verbose=1, type='info')
-    elif sys.platform == 'darwin':
-        printv('\nDone! To view results, type:')
-        printv('open ' + file + '\n', verbose=1, type='info')
+    cmd_open = None
+    if sys.platform.startswith('linux'):
+        # If user runs SCT within the official Docker distribution, or in WSL, then the command xdg-open will not be
+        # working, therefore we prefer to instruct the user to manually open the file.
+        # Source for WSL environment variables: https://stackoverflow.com/a/61036356
+        if "DOCKER" not in os.environ and "IS_WSL" not in os.environ and "WSL_DISTRO_NAME" not in os.environ:
+            cmd_open = 'xdg-open'
+    elif sys.platform.startswith('darwin'):
+        cmd_open = 'open'
+    elif sys.platform.startswith('win32'):
+        cmd_open = 'start'
+
+    if cmd_open:
+        printv(f'\n{message}, type:')
+        printv(f"{cmd_open} {file}\n", type='info')
     else:
-        printv('\nDone! To view results, open the following file:')
-        printv(file + '\n', verbose=1, type='info')
+        printv(f'\n{message}, open the following file:')
+        printv(f"{file}\n", type='info')
+
+
+SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
 
 
 def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
@@ -42,61 +54,114 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
 
     Returns
     -------
-    None
+    cmd_strings [dict:string]: pairs of viewers and their corresponding syntax strings (that were printed).
 
     Example
     -------
     display_viewer_syntax([file1, file2, file3])
     display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
-    list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview']  # list of known viewers. Can add more.
-    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
-                    'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
-    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
-                    'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
-    selected_viewer = None
-
-    # find viewer
-    exe_viewers = [viewer for viewer in list_viewer if check_exe(viewer)]
-    if exe_viewers:
-        selected_viewer = exe_viewers[0]
-    else:
-        return
-
-    # loop across files and build syntax
-    cmd = selected_viewer
-    # add mode (only supported by fslview for the moment)
-    if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
-        cmd += ' -m ' + mode
-    for i in range(len(files)):
-        # add viewer-specific options
-        if selected_viewer in ['fslview', 'fslview_deprecated']:
-            cmd += ' ' + files[i]
-            if colormaps:
-                if colormaps[i]:
-                    cmd += ' -l ' + dict_fslview[colormaps[i]]
-            if minmax:
-                if minmax[i]:
-                    cmd += ' -b ' + minmax[i]  # a,b
-            if opacities:
-                if opacities[i]:
-                    cmd += ' -t ' + opacities[i]
-        if selected_viewer in ['fsleyes']:
-            cmd += ' ' + files[i]
-            if colormaps:
-                if colormaps[i]:
-                    cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
-            if minmax:
-                if minmax[i]:
-                    cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
-            if opacities:
-                if opacities[i]:
-                    cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
-    cmd += ' &'
+    available_viewers = [viewer for viewer in SUPPORTED_VIEWERS if check_exe(viewer)]
 
     if verbose:
-        printv('\nDone! To view results, type:')
-        printv(cmd + '\n', verbose=1, type='info')
+        if len(available_viewers) == 0:
+            return
+        elif len(available_viewers) == 1:
+            printv('\nDone! To view results, type:')
+        elif len(available_viewers) >= 2:
+            printv('\nDone! To view results, run one of the following commands (depending on your preferred viewer):')
+
+    cmd_strings = {}
+    for viewer in available_viewers:
+        if viewer in ['fslview', 'fslview_deprecated']:
+            cmd = _construct_fslview_syntax(viewer, files, colormaps, minmax, opacities, mode)
+        elif viewer in ['fsleyes']:
+            cmd = _construct_fsleyes_syntax(viewer, files, colormaps, minmax, opacities)
+        elif viewer in ['itksnap', 'itk-snap']:
+            cmd = _construct_itksnap_syntax(viewer, files, colormaps)
+        else:
+            cmd = ""  # This should never be reached, because SUPPORTED_VIEWERS should match the 'if' cases exactly
+        cmd_strings[viewer] = cmd
+
+        if verbose:
+            printv(cmd + "\n", verbose=1, type='info')
+
+    return cmd_strings
+
+
+def _construct_fslview_syntax(viewer, files, colormaps, minmax, opacities, mode):
+    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
+                    'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
+
+    cmd = viewer
+    # add mode (only supported by fslview for the moment)
+    if mode:
+        cmd += ' -m ' + mode
+    for i in range(len(files)):
+        cmd += ' ' + files[i]
+        if colormaps:
+            if colormaps[i]:
+                cmd += ' -l ' + dict_fslview[colormaps[i]]
+        if minmax:
+            if minmax[i]:
+                cmd += ' -b ' + minmax[i]  # a,b
+        if opacities:
+            if opacities[i]:
+                cmd += ' -t ' + opacities[i]
+    cmd += ' &'
+
+    return cmd
+
+
+def _construct_fsleyes_syntax(viewer, files, colormaps, minmax, opacities):
+    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
+                    'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
+
+    cmd = viewer
+    for i in range(len(files)):
+        cmd += ' ' + files[i]
+        if colormaps:
+            if colormaps[i]:
+                cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
+        if minmax:
+            if minmax[i]:
+                cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
+        if opacities:
+            if opacities[i]:
+                cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
+    cmd += ' &'
+
+    return cmd
+
+
+def _construct_itksnap_syntax(viewer, files, colormaps):
+    cmd = viewer
+    overlay_files = []
+    for i in range(len(files)):
+        # -g is the "main image" option, and we assume that this is the first image
+        # TODO: This assumption is brittle, and could easily break if images are passed in the wrong order.
+        if i == 0:
+            cmd += ' -g ' + files[i]
+        else:
+            # - SCT uses colormaps to color overlaid segmentations for FSLeyes, because FSLeyes doesn't have
+            #   any "segmentation" options, and so files must be distinguished by choosing colors manually.
+            # - But, itk-snap requires that you explicitly specify which files are segmentation files (which
+            #   results in a red overlay for binary segmentations, and a rainbow overlay for multi-labeled
+            #   segmentations).
+            # - So, here we make the assumption that any files that would have been coloured (via fsleyes) should
+            #   instead be passed as segmentations to itk-snap.
+            # - TODO: This assumption is somewhat brittle, and could break if a colormap is used for a
+            #   non-segmentation segmentation file. But, the alternative would be a much bigger rewrite of the
+            #   display_viewer_syntax function.
+            if colormaps and colormaps[i] != "gray":
+                cmd += ' -s ' + files[i]
+            # All extra non-segmentation files have to be passed together to the '-o' (overlay) option
+            else:
+                overlay_files.append(files[i])
+    if overlay_files:
+        cmd += ' -o ' + " ".join(overlay_files)
+
+    return cmd
 
 
 class SCTArgumentParser(argparse.ArgumentParser):
@@ -120,7 +185,7 @@ class SCTArgumentParser(argparse.ArgumentParser):
         # Update "usage:" message to match how SCT scripts are actually called (no '.py')
         frame = inspect.stack()[1]
         module = inspect.getmodule(frame[0])
-        update_parent_default('prog', os.path.basename(module.__file__).strip(".py"))
+        update_parent_default('prog', removesuffix(os.path.basename(module.__file__), ".py"))
 
         # Disable "add_help", because it won't properly add '-h' to our custom argument groups
         # (We use custom argument groups because of https://stackoverflow.com/a/24181138)
@@ -132,11 +197,11 @@ class SCTArgumentParser(argparse.ArgumentParser):
         """
             Overridden parent method. Ensures that help is printed when called with invalid args.
 
-            See https://github.com/neuropoly/spinalcordtoolbox/issues/3137.
+            See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3137.
         """
         # Source: https://stackoverflow.com/a/4042861
-        sys.stderr.write(f'{self.prog}: error: {message}\n\n')
         self.print_help(sys.stderr)
+        printv(f'\n{self.prog}: error: {message}\n', verbose=1, type='error', file=sys.stderr)
         sys.exit(2)
 
 
@@ -197,65 +262,77 @@ class Metavar(Enum):
 
 
 class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
-    """
-    Custom formatter that inherits from HelpFormatter, which adjusts the default width to the current Terminal size,
-    and that gives the possibility to bypass argparse's default formatting by adding "R|" at the beginning of the text.
-    Inspired from: https://pythonhosted.org/skaff/_modules/skaff/cli.html
-    """
-
+    """Custom formatter that inherits from HelpFormatter to apply the same
+    tweaks across all of SCT's scripts."""
     def __init__(self, *args, **kw):
         self._add_defaults = None
         super(SmartFormatter, self).__init__(*args, **kw)
-        # Update _width to match Terminal width
+        # Tweak: Update argparse's '_width' to match Terminal width
         try:
             self._width = shutil.get_terminal_size()[0]
         except (KeyError, ValueError):
             logger.warning('Not able to fetch Terminal width. Using default: %s', self._width)
 
-    # this is the RawTextHelpFormatter._fill_text
-    def _fill_text(self, text, width, indent):
-        # print("splot",text)
-        if text.startswith('R|'):
-            paragraphs = text[2:].splitlines()
-            rebroken = [argparse._textwrap.wrap(tpar, width) for tpar in paragraphs]
-            rebrokenstr = []
-            for tlinearr in rebroken:
-                if (len(tlinearr) == 0):
-                    rebrokenstr.append("")
-                else:
-                    for tlinepiece in tlinearr:
-                        rebrokenstr.append(tlinepiece)
-            return '\n'.join(rebrokenstr)  # (argparse._textwrap.wrap(text[2:], width))
-        return argparse.RawDescriptionHelpFormatter._fill_text(self, text, width, indent)
-
-    # this is the RawTextHelpFormatter._split_lines
-    def _split_lines(self, text, width):
-        if text.startswith('R|'):
-            lines = text[2:].splitlines()
-            while lines[0] == '':  # Discard empty start lines
-                lines = lines[1:]
-            offsets = [re.match("^[ \t]*", l).group(0) for l in lines]
-            wrapped = []
-            for i, li in enumerate(lines):
-                if len(li) > 0:
-                    o = offsets[i]
-                    ol = len(o)
-                    init_wrap = argparse._textwrap.fill(li, width).splitlines()
-                    first = init_wrap[0]
-                    rest = "\n".join(init_wrap[1:])
-                    rest_wrap = argparse._textwrap.fill(rest, width - ol).splitlines()
-                    offset_lines = [o + wl for wl in rest_wrap]
-                    wrapped = wrapped + [first] + offset_lines
-                else:
-                    wrapped = wrapped + [li]
-            return wrapped
-        return argparse.HelpFormatter._split_lines(self, text, width)
-
     def _get_help_string(self, action):
+        """Overrides the default _get_help_string method to skip writing the
+        '(default: )' text for arguments that have an empty default value."""
         if action.default not in [None, "", [], (), {}]:
             return super()._get_help_string(action)
         else:
             return action.help
+
+    def _fill_text(self, text, width, indent):
+        """Overrides the default _fill_text method. It takes a single string
+        (`text`) and rebuilds it so that each line wraps at the specified
+        `width`, while also preserving newlines.
+
+        This method is what gets called for the parser's `description` field.
+        """
+        import textwrap
+        # NB: text.splitlines() is what's used by argparse.RawTextHelpFormatter
+        #     to preserve newline characters (`\n`) in text.
+        paragraphs = text.splitlines()
+        # NB: The remaining code is fully custom
+        rebroken = [textwrap.wrap(tpar, width) for tpar in paragraphs]
+        rebrokenstr = []
+        for tlinearr in rebroken:
+            if len(tlinearr) == 0:
+                rebrokenstr.append("")
+            else:
+                for tlinepiece in tlinearr:
+                    rebrokenstr.append(tlinepiece)
+        return '\n'.join(rebrokenstr)
+
+    def _split_lines(self, text, width):
+        """Overrides the default _split_lines method. It takes a single string
+        (`text`) and rebuilds it so that each line wraps at the specified
+        `width`, while also preserving newlines, as well as any offsets within
+        the text (e.g. indented lists).
+
+        This method is what gets called for each argument's `help` field.
+        """
+        import textwrap
+        # NB: text.splitlines() is what's used by argparse.RawTextHelpFormatter
+        #     to preserve newline characters (`\n`) in text.
+        lines = text.splitlines()
+        # NB: The remaining code is fully custom
+        while lines[0] == '':  # Discard empty start lines
+            lines = lines[1:]
+        offsets = [re.match("^[ \t]*", line).group(0) for line in lines]
+        wrapped = []
+        for i, li in enumerate(lines):
+            if len(li) > 0:
+                o = offsets[i]
+                ol = len(o)
+                init_wrap = textwrap.fill(li, width).splitlines()
+                first = init_wrap[0]
+                rest = "\n".join(init_wrap[1:])
+                rest_wrap = textwrap.fill(rest, width - ol).splitlines()
+                offset_lines = [o + wl for wl in rest_wrap]
+                wrapped = wrapped + [first] + offset_lines
+            else:
+                wrapped = wrapped + [li]
+        return wrapped
 
 
 def parse_num_list(str_num):

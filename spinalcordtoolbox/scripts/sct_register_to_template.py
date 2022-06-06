@@ -29,8 +29,11 @@ from spinalcordtoolbox.math import dilate, binarize
 from spinalcordtoolbox.registration.register import *
 from spinalcordtoolbox.registration.landmarks import *
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import *
-from spinalcordtoolbox.utils import Metavar
+from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
+                                        cache_save, cache_signature, cache_valid)
+from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
+                                           printv, display_viewer_syntax)
+from spinalcordtoolbox.utils.sys import set_loglevel, init_sct
 from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
@@ -99,19 +102,23 @@ def get_parser():
             "template label. No scaling will be performed. \n"
             "\n"
             "If two labels are provided, a linear transformation (translation + rotation + superior-inferior linear "
-            "scaling) will be applied. The strategy here is to defined labels that cover the region of interest. For "
+            "scaling) will be applied. The strategy here is to define labels that cover the region of interest. For "
             "example, if you are interested in studying C2 to C6 levels, then provide one label at C2 and another at "
             "C6. However, note that if the two labels are very far apart (e.g. C2 and T12), there might be a "
-            "mis-alignment of discs because a subject''s intervertebral discs distance might differ from that of the "
+            "mis-alignment of discs because a subject's intervertebral discs distance might differ from that of the "
             "template.\n"
             "\n"
-            "If more than two labels (only with the parameter '-disc') are used, a non-linear registration will be "
-            "applied to align the each intervertebral disc between the subject and the template, as described in "
-            "sct_straighten_spinalcord. This the most accurate and preferred method. This feature does not work with "
-            "the parameter '-ref subject', where only a rigid registration is performed.\n"
+            "If more than two labels are used, a non-linear registration will be applied to align the each "
+            "intervertebral disc between the subject and the template, as described in "
+            "sct_straighten_spinalcord. This the most accurate method, however it has some serious caveats: \n"
+            "  - This feature is not compatible with the parameter '-ref subject', where only a rigid registration is performed.\n"
+            "  - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the top label and below the bottom label. Applying this warping field will result in a strange-looking registered image that has the same value above the top label and below the bottom label. But if you are not interested in these regions, you do not need to worry about it.\n"
+            "\n"
+            "We recommend starting with 2 labels, then trying the other "
+            "options on a case-by-case basis depending on your data.\n"
             "\n"
             "More information about label creation can be found at "
-            "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%%5FCourse%%5F20200121 (p47)"
+            "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
         )
     )
 
@@ -149,26 +156,26 @@ def get_parser():
     optional.add_argument(
         '-l',
         metavar=Metavar.file,
-        help="R|One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
+        help="One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
              "Example: anat_labels.nii.gz\n"
              "For more information about label creation, please see: "
-             "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%%5FCourse%%5F20200121 (p47)"
+             "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
     )
     optional.add_argument(
         '-ldisc',
         metavar=Metavar.file,
-        help="R|File containing disc labels. Labels can be located either at the posterior edge "
+        help="File containing disc labels. Labels can be located either at the posterior edge "
              "of the intervertebral discs, or at the orthogonal projection of each disc onto "
              "the spinal cord (e.g.: the file 'xxx_seg_labeled_discs.nii.gz' output by sct_label_vertebrae).\n"
              "If you are using more than 2 labels, all discs covering the region of interest should be provided. "
              "E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. "
              "For more information about label creation, please refer to "
-             "https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%%5FCourse%%5F20200121 (p47)"
+             "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
     )
     optional.add_argument(
         '-lspinal',
         metavar=Metavar.file,
-        help="R|Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
+        help="Labels located in the center of the spinal cord, at the superior-inferior level corresponding to the "
              "mid-point of the spinal level. Example: anat_labels.nii.gz\n"
              "Each label is a single voxel, which value corresponds to the spinal level (e.g.: 2 for spinal level 2). "
              "If you are using more than 2 labels, all spinal levels covering the region of interest should be "
@@ -203,7 +210,7 @@ def get_parser():
         '-param',
         metavar=Metavar.list,
         type=list_type(':', str),
-        help=(f"R|Parameters for registration (see sct_register_multimodal). Default:"
+        help=(f"Parameters for registration (see sct_register_multimodal). Default:"
               f"\n"
               f"step=0\n"
               f"  - type={paramregmulti.steps['0'].type}\n"
@@ -293,7 +300,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initializations
     param = Param()
@@ -466,14 +473,23 @@ def main(argv=None):
         # Change orientation of input images to RPI
         printv('\nChange orientation of input images to RPI...', verbose)
 
-        ftmp_data = Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
+        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
+        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
+        img_tmp_data.save(path=ftmp_data, mutable=True)
+
+        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
+        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
+        img_tmp_seg.save(path=ftmp_seg, mutable=True)
+
+        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
+        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
+        img_tmp_label.save(ftmp_label, mutable=True)
+
 
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if level_alignment:
             # cropping the segmentation based on the label coverage to ensure good registration with level alignment
-            # See https://github.com/neuropoly/spinalcordtoolbox/pull/1669 for details
+            # See https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/1669 for details
             image_labels = Image(ftmp_label)
             coordinates_labels = image_labels.getNonZeroCoordinates(sorting='z')
             nx, ny, nz, nt, px, py, pz, pt = image_labels.dim
@@ -535,7 +551,7 @@ def main(argv=None):
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
             sc_straight.param_centerline = param_centerline
             sc_straight.output_filename = add_suffix(ftmp_seg, '_straight')
-            sc_straight.path_output = './'
+            sc_straight.path_output = '.'
             sc_straight.qc = '0'
             sc_straight.remove_temp_files = param.remove_temp_files
             sc_straight.verbose = verbose
@@ -589,7 +605,7 @@ def main(argv=None):
                                    fname_affine='straight2templateAffine.txt', verbose=verbose)
             except RuntimeError:
                 raise('Input labels do not seem to be at the right place. Please check the position of the labels. '
-                      'See documentation for more details: https://www.icloud.com/keynote/0th8lcatyVPkM_W14zpjynr5g#SCT%5FCourse%5F20200121 (p47)')
+                      'See documentation for more details: https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html')
 
             # Concatenate transformations: curve --> straight --> affine
             printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
@@ -706,9 +722,18 @@ def main(argv=None):
 
         # Change orientation of input images to RPI
         printv('\nChange orientation of input images to RPI...', verbose)
-        ftmp_data = Image(ftmp_data).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_seg = Image(ftmp_seg).change_orientation("RPI", generate_path=True).save().absolutepath
-        ftmp_label = Image(ftmp_label).change_orientation("RPI", generate_path=True).save().absolutepath
+
+        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
+        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
+        img_tmp_data.save(path=ftmp_data, mutable=True)
+
+        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
+        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
+        img_tmp_seg.save(path=ftmp_seg, mutable=True)
+
+        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
+        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
+        img_tmp_label.save(ftmp_label, mutable=True)
 
         # Remove unused label on template. Keep only label present in the input label image
         printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
@@ -891,10 +916,6 @@ def check_labels(fname_landmarks, label_type='body'):
     image_label = Image(fname_landmarks)
     # -> all labels must be different
     labels = image_label.getNonZeroCoordinates(sorting='value')
-    # check if there is two labels
-    if label_type == 'body' and not len(labels) <= 2:
-        printv('ERROR: Label file has ' + str(len(labels)) + ' label(s). It must contain one or two labels.', 1,
-               'error')
     # check if labels are integer
     for label in labels:
         if not int(label.value) == label.value:
@@ -910,7 +931,8 @@ def check_labels(fname_landmarks, label_type='body'):
 
 def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg='', fname_dest_seg='', fname_src_label='',
                      fname_dest_label='', fname_mask='', fname_initwarp='', fname_initwarpinv='', identity=False,
-                     interp='linear', fname_output='', fname_output_warp='', path_out='', same_space=False):
+                     interp='linear', fname_output='', fname_output_warp='', fname_output_warpinv='',
+                     path_out='', same_space=False):
     """
     Wrapper for image registration.
 
@@ -929,6 +951,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     :param interp:
     :param fname_output:
     :param fname_output_warp:
+    :param fname_output_warpinv:
     :param path_out:
     :param same_space: Bool: Source and destination images are in the same physical space (i.e. same coordinates).
     :return: fname_src2dest, fname_dest2src, fname_output_warp, fname_output_warpinv
@@ -1013,8 +1036,8 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         if fname_initwarpinv:
             warp_inverse.append(fname_initwarpinv)
         else:
-            printv('\nWARNING: No initial inverse warping field was specified, therefore the inverse warping field '
-                   'will NOT be generated.', param.verbose, 'warning')
+            printv('\nWARNING: No initial inverse warping field was specified, therefore the registration will be '
+                   'src->dest only, and the inverse warping field will NOT be generated.', param.verbose, 'warning')
             generate_warpinv = 0
     else:
         if same_space:
@@ -1116,13 +1139,15 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         '-w', 'warp_src2dest.nii.gz',
         '-o', 'src_reg.nii',
         '-x', interp])
-    printv('\nApply transfo dest --> source...', param.verbose)
-    sct_apply_transfo.main(argv=[
-        '-i', 'dest.nii',
-        '-d', 'src.nii',
-        '-w', 'warp_dest2src.nii.gz',
-        '-o', 'dest_reg.nii',
-        '-x', interp])
+
+    if generate_warpinv:
+        printv('\nApply transfo dest --> source...', param.verbose)
+        sct_apply_transfo.main(argv=[
+            '-i', 'dest.nii',
+            '-d', 'src.nii',
+            '-w', 'warp_dest2src.nii.gz',
+            '-o', 'dest_reg.nii',
+            '-x', interp])
 
     # come back
     os.chdir(curdir)
@@ -1131,24 +1156,24 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     # ------------------------------------------------------------------------------------------------------------------
 
     printv('\nGenerate output files...', param.verbose)
-    # generate: src_reg
-    fname_src2dest = generate_output_file(
-        os.path.join(path_tmp, "src_reg.nii"), os.path.join(path_out, file_out + ext_out), param.verbose)
 
-    # generate: dest_reg
-    fname_dest2src = generate_output_file(
-        os.path.join(path_tmp, "dest_reg.nii"), os.path.join(path_out, file_out_inv + ext_dest), param.verbose)
-
-    # generate: forward warping field
+    # generate src -> dest output files
+    fname_src2dest = os.path.join(path_out, file_out + ext_out)
+    generate_output_file(os.path.join(path_tmp, "src_reg.nii"), fname_src2dest, param.verbose)
     if fname_output_warp == '':
         fname_output_warp = os.path.join(path_out, 'warp_' + file_src + '2' + file_dest + '.nii.gz')
     generate_output_file(os.path.join(path_tmp, "warp_src2dest.nii.gz"), fname_output_warp, param.verbose)
 
-    # generate: inverse warping field
+    # generate dest -> src output files
     if generate_warpinv:
-        fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
+        fname_dest2src = os.path.join(path_out, file_out_inv + ext_dest)
+        generate_output_file(os.path.join(path_tmp, "dest_reg.nii"), fname_dest2src, param.verbose)
+        if fname_output_warpinv == '':
+            fname_output_warpinv = os.path.join(path_out, 'warp_' + file_dest + '2' + file_src + '.nii.gz')
         generate_output_file(os.path.join(path_tmp, "warp_dest2src.nii.gz"), fname_output_warpinv, param.verbose)
     else:
+        # we skip generating files if there is no inverse warping field (i.e. we're doing a one-way registration)
+        fname_dest2src = None
         fname_output_warpinv = None
 
     # Delete temporary files

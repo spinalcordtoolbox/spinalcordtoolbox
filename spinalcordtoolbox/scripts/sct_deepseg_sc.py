@@ -15,7 +15,7 @@ import os
 import sys
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import Image, check_dim
 from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
@@ -50,7 +50,7 @@ def get_parser():
         help="show this help message and exit")
     optional.add_argument(
         "-centerline",
-        help="R|Method used for extracting the centerline:\n"
+        help="Method used for extracting the centerline:\n"
              " svm: Automatic detection using Support Vector Machine algorithm.\n"
              " cnn: Automatic detection using Convolutional Neural Network.\n"
              " viewer: Semi-automatic detection using manual selection of a few points with an interactive viewer "
@@ -75,7 +75,7 @@ def get_parser():
         "-brain",
         type=int,
         help='Indicate if the input image contains brain sections (to speed up segmentation). Only use with '
-             '"-centerline cnn".',
+             '"-centerline cnn". (default: 1 for T1/T2 contrasts, 0 for T2*/DWI contrasts)',
         choices=(0, 1))
     optional.add_argument(
         "-kernel",
@@ -85,7 +85,7 @@ def get_parser():
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.str,
-        help='Output folder. Example: My_Output_Folder/ ',
+        help='Output folder. Example: My_Output_Folder ',
         action=ActionCreateFolder,
         default=os.getcwd())
     optional.add_argument(
@@ -132,7 +132,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     fname_image = os.path.abspath(arguments.i)
     contrast_type = arguments.c

@@ -17,7 +17,7 @@ from skimage.feature import greycomatrix, greycoprops
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, concat_data
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, run_proc, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
@@ -276,18 +276,15 @@ class ExtractGLCM:
             self.fname_metric_lst[m] = fname_out
 
     def reorient_data(self):
-        for f in self.fname_metric_lst:
-            os.rename(self.fname_metric_lst[f], add_suffix("".join(extract_fname(self.param.fname_im)[1:]), '_2reorient'))
-            im = Image(add_suffix("".join(extract_fname(self.param.fname_im)[1:]), '_2reorient')) \
-                .change_orientation(self.orientation_im) \
-                .save(self.fname_metric_lst[f])
+        for fname in self.fname_metric_lst.values():
+            Image(fname).change_orientation(self.orientation_im).save()
 
 
 class Param:
     def __init__(self):
         self.fname_im = None
         self.fname_seg = None
-        self.path_results = './texture/'
+        self.path_results = os.path.join('.', 'texture')
         self.verbose = 1
         self.dim = 'ax'
         self.rm_tmp = True
@@ -311,7 +308,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # create param object
     param = Param()

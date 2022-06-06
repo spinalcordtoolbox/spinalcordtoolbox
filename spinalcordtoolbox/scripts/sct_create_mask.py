@@ -24,7 +24,7 @@ from scipy import ndimage
 
 from spinalcordtoolbox.image import Image, empty_like
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_global_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, extract_fname, rmtree, copy
 from spinalcordtoolbox.labels import create_labels
 from spinalcordtoolbox.types import Coordinate
@@ -71,7 +71,7 @@ def get_parser():
         '-p',
         default=param_default.process,
         required=True,
-        help='R|Process to generate mask.\n'
+        help='Process to generate mask.\n'
              '  <coord,XxY>: Center mask at the X,Y coordinates. (e.g. "coord,20x15")\n'
              '  <point,FILE>: Center mask at the X,Y coordinates of the label defined in input volume FILE. (e.g. "point,label.nii.gz")\n'
              '  <center>: Center mask in the middle of the FOV (nx/2, ny/2).\n'
@@ -87,8 +87,8 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         '-size',
-        help='Size of the mask in the axial plane, given in pixel (Example: 35) or in millimeter (Example: 35mm). '
-             'If shape=gaussian, size corresponds to "sigma" (Example: 45).',
+        help='Diameter of the mask in the axial plane, given in pixel (Example: 35) or in millimeter (Example: 35mm). '
+             'If shape=gaussian, size instead corresponds to "sigma" (Example: 45).',
         metavar=Metavar.str,
         required=False,
         default=param_default.size)
@@ -131,7 +131,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     param = Param()
     param.fname_data = os.path.abspath(arguments.i)

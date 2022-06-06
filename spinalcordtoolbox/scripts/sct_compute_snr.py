@@ -5,21 +5,21 @@
 # Measurement of signal-to-noise ratios in MR images: Influence of multichannel coils,
 # parallel imaging, and reconstruction filters (2007).
 #
+# Also see this discussion: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3481
+#
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Simon LEVY
+# Authors: Simon Levy, Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 ########################################################################################
 
 import sys
-import os
-
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, empty_like, add_suffix
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, parse_num_list, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, parse_num_list, init_sct, printv, set_loglevel
 
 
 # PARAMETERS
@@ -28,9 +28,6 @@ class Param(object):
     def __init__(self):
         self.almost_zero = np.finfo(float).eps
 
-# PARSER
-# ==========================================================================================
-
 
 def get_parser():
     parser = SCTArgumentParser(
@@ -38,14 +35,16 @@ def get_parser():
                     ' signal-to-noise ratios in MR images: Influence of multichannel coils, parallel '
                     'imaging, and reconstruction filters. J Magn Reson Imaging 2007; 26(2): 375-385].'
     )
-
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatoryArguments.add_argument(
         '-i',
         required=True,
-        help='4D data to compute the SNR on (along the 4th dimension). Example: b0s.nii.gz',
+        help="Image to compute the SNR on. (Example: b0s.nii.gz)\n"
+             "- For '-method diff' and '-method mult', the image must be 4D, as SNR will be computed "
+             "along the 4th dimension.\n"
+             "- For '-method single', the image can either be 3D or 4D. If a 4D image is passed, a specific "
+             "3D volume should be specified using the '-vol' argument.",
         metavar=Metavar.file)
-
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         "-h",
@@ -58,18 +57,42 @@ def get_parser():
         metavar=Metavar.file,
         default='')
     optional.add_argument(
+        '-m-noise',
+        help="Binary (or weighted) mask within which noise will be calculated. Only valid for '-method single'.",
+        metavar=Metavar.file,
+        default='')
+    optional.add_argument(
         '-method',
-        help='R|Method to use to compute the SNR:\n'
-             ' diff (default): Substract two volumes (defined by -vol) and estimate noise variance within the ROI (flag -m is required).\n'
-             ' mult: Estimate noise variance over time across volumes specified with -vol.',
-        choices=('diff', 'mult'),
+        help='Method to use to compute the SNR (default: diff):\n'
+             "  - diff: Substract two volumes (defined by -vol) and estimate noise variance within the ROI "
+             "(flag '-m' is required). Requires a 4D volume.\n"
+             "  - mult: Estimate noise variance over time across volumes specified with '-vol'. Requires a 4D volume.\n"
+             "  - single: Compute the mean signal in the mask specified by '-m' and estimate the noise variance in a "
+             "mask specified by '-m-noise'. If the noise mask is in the background (air), the noise variance needs to "
+             "be corrected for Rayleigh distribution (set '-rayleigh 1'). If the noise mask is located in a "
+             "region with high signal (eg: tissue), noise distribution can be assumed Gaussian and there is no need to "
+             "correct for Rayleigh distribution (use '-rayleigh 0'). This implementation corresponds to the SNRstdv "
+             "in the Dietrich et al. article. Uses a 3D or a 4D volume. If a 4D volume is input, the volume to "
+             "compute SNR on is specified by '-vol'.",
+        choices=('diff', 'mult', 'single'),
         default='diff')
     optional.add_argument(
         '-vol',
-        help='Volumes to compute SNR from. Separate with "," (Example: -vol 0,1), or select range '
-             'using ":" (Example: -vol 2:50). By default, all volumes in series are selected.',
+        help="Volumes to compute SNR from. Separate with ',' (Example: '-vol 0,1'), or select range "
+             "using ':' (Example: '-vol 2:50'). If this argument is not passed:\n"
+             "  - For '-method mult', all volumes will be used.\n"
+             "  - For '-method diff', the first two volumes will be used.\n"
+             "  - For '-method single', the first volume will be used.",
         metavar=Metavar.str,
         default='')
+    optional.add_argument(
+        '-rayleigh',
+        type=int,
+        help="Correct for Rayleigh distribution. It is recommended to always use this correction for the 'diff' method "
+             "and to use it with the 'single' method in case the noise mask is taken in a region with low SNR (e.g., "
+             "the air). ",
+        default=1,
+        choices=(0, 1))
     optional.add_argument(
         '-r',
         type=int,
@@ -84,11 +107,17 @@ def get_parser():
         default=1,
         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
-
+    optional.add_argument(
+        '-o',
+        metavar=Metavar.str,
+        type=str,
+        default=None,
+        help="File name to write the computed SNR to."
+    )
     return parser
 
 
-def weighted_avg_and_std(values, weights):
+def weighted_std(values, weights):
     """
     Return the weighted average and standard deviation.
     values, weights -- Numpy ndarrays with the same shape.
@@ -97,51 +126,61 @@ def weighted_avg_and_std(values, weights):
     average = np.average(values, weights=weights)
     # Fast and numerically precise:
     variance = np.average((values - average) ** 2, weights=weights)
-    return (average, np.sqrt(variance))
+    return np.sqrt(variance)
 
 
 def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
-
+    set_loglevel(verbose=verbose)
+    
     # Default params
     param = Param()
 
     # Get parser info
     fname_data = arguments.i
-    if arguments.m is not None:
-        fname_mask = arguments.m
-    else:
-        fname_mask = ''
+    fname_mask = arguments.m
+    fname_mask_noise = arguments.m_noise
     method = arguments.method
-    if arguments.vol is not None:
-        index_vol_user = arguments.vol
-    else:
-        index_vol_user = ''
+    file_name = arguments.o
+    rayleigh_correction = arguments.rayleigh
 
     # Check parameters
-    if method == 'diff':
+    if method in ['diff', 'single']:
         if not fname_mask:
-            printv('You need to provide a mask with -method diff. Exit.', 1, type='error')
+            raise parser.error(f"Argument '-m' must be specified when using '-method {method}'.")
 
-    # Load data and orient to RPI
-    im_data = Image(fname_data).change_orientation('RPI')
+    # Load data
+    im_data = Image(fname_data)
     data = im_data.data
+    dim = len(data.shape)
+    nz = data.shape[2]
     if fname_mask:
-        mask = Image(fname_mask).change_orientation('RPI').data
+        mask = Image(fname_mask).data
+
+    # Check dimensionality
+    if method in ['diff', 'mult']:
+        if dim != 4:
+            raise ValueError(f"Input data dimension: {dim}. Input dimension for this method should be 4.")
+    if method in ['single']:
+        if dim not in [3, 4]:
+            raise ValueError(f"Input data dimension: {dim}. Input dimension for this method should be 3 or 4.")
+
+    # Check dimensionality of mask
+    if fname_mask:
+        if len(mask.shape) != 3:
+            raise ValueError(f"Mask should be a 3D image, but the input mask has shape '{mask.shape}'.")
 
     # Retrieve selected volumes
-    if index_vol_user:
-        index_vol = parse_num_list(index_vol_user)
-    else:
-        index_vol = range(data.shape[3])
-
-    # Make sure user selected 2 volumes with diff method
-    if method == 'diff':
-        if not len(index_vol) == 2:
-            printv('Method "diff" should be used with exactly two volumes (specify with flag "-vol").', 1, 'error')
+    index_vol = parse_num_list(arguments.vol)
+    if not index_vol:
+        if method == 'mult':
+            index_vol = range(data.shape[3])
+        elif method == 'diff':
+            index_vol = [0, 1]
+        elif method == 'single':
+            index_vol = [0]
 
     # Compute SNR
     # NB: "time" is assumed to be the 4th dimension of the variable "data"
@@ -167,24 +206,72 @@ def main(argv=None):
         im_stdnonzero.save(fname_stdnonzero, dtype=np.float32)
         # Compute SNR in ROI
         if fname_mask:
-            mean_in_roi = np.average(data_mean[mask_std_nonzero], weights=mask[mask_std_nonzero])
-            std_in_roi = np.average(data_std[mask_std_nonzero], weights=mask[mask_std_nonzero])
-            snr_roi = mean_in_roi / std_in_roi
-            # snr_roi = np.average(snr_map[mask_std_nonzero], weights=mask[mask_std_nonzero])
+            snr_roi = np.average(snr_map[mask_std_nonzero], weights=mask[mask_std_nonzero])
 
     elif method == 'diff':
+        # Check user selected exactly 2 volumes for this method.
+        if not len(index_vol) == 2:
+            raise ValueError(f"Number of selected volumes: {len(index_vol)}. The method 'diff' should be used with "
+                             f"exactly 2 volumes. You can specify the number of volumes with the flag '-vol'.")
         data_2vol = np.take(data, index_vol, axis=3)
-        # Compute mean in ROI
+        # Compute mean across the two volumes
         data_mean = np.mean(data_2vol, axis=3)
-        mean_in_roi = np.average(data_mean, weights=mask)
+        # Compute mean in ROI for each z-slice, if the slice in the mask is not null
+        mean_in_roi = [np.average(data_mean[..., iz], weights=mask[..., iz])
+                       for iz in range(nz) if np.any(mask[..., iz])]
         data_sub = np.subtract(data_2vol[:, :, :, 1], data_2vol[:, :, :, 0])
-        _, std_in_roi = weighted_avg_and_std(data_sub, mask)
-        # Compute SNR, correcting for Rayleigh noise (see eq. 7 in Dietrich et al.)
-        snr_roi = (2 / np.sqrt(2)) * mean_in_roi / std_in_roi
+        # Compute STD in the ROI for each z-slice. The "np.sqrt(2)" results from the variance of the subtraction of two
+        # distributions: var(A-B) = var(A) + var(B).
+        # More context in: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3481
+        std_in_roi = [weighted_std(data_sub[..., iz] / np.sqrt(2), weights=mask[..., iz])
+                      for iz in range(nz) if np.any(mask[..., iz])]
+        # Compute SNR
+        snr_roi_slicewise = [m/s for m, s in zip(mean_in_roi, std_in_roi)]
+        snr_roi = sum(snr_roi_slicewise) / len(snr_roi_slicewise)
+
+    elif method == 'single':
+        # Check that the input volume is 3D, or if it is 4D, that the user selected exactly 1 volume for this method.
+        if dim == 3:
+            data3d = data
+        elif dim == 4:
+            if not len(index_vol) == 1:
+                raise ValueError(f"Selected volumes: {index_vol}. The method 'single' should be used with "
+                                 f"exactly 1 volume. You can specify the index of the volume with the flag '-vol'.")
+            data3d = np.squeeze(data[..., index_vol])
+        # Check that input noise mask is provided
+        if fname_mask_noise:
+            mask_noise = Image(fname_mask_noise).data
+        else:
+            raise parser.error("A noise mask is mandatory with '-method single'.")
+        # Check dimensionality of the noise mask
+        if len(mask_noise.shape) != 3:
+            raise ValueError(f"Input noise mask dimension: {dim}. Input dimension for the noise mask should be 3.")
+        # Check that non-null slices are consistent between mask and mask_noise.
+        for iz in range(nz):
+            if not np.any(mask[..., iz]) == np.any(mask_noise[..., iz]):
+                raise ValueError(f"Slice {iz} is empty in either mask or mask_noise. Non-null slices should be "
+                                 f"consistent between mask and mask_noise.")
+        # Compute mean in ROI for each z-slice, if the slice in the mask is not null
+        mean_in_roi = [np.average(data3d[..., iz], weights=mask[..., iz])
+                       for iz in range(nz) if np.any(mask[..., iz])]
+        std_in_roi = [weighted_std(data3d[..., iz], weights=mask_noise[..., iz])
+                      for iz in range(nz) if np.any(mask_noise[..., iz])]
+        # Compute SNR
+        snr_roi_slicewise = [m/s for m, s in zip(mean_in_roi, std_in_roi)]
+        snr_roi = sum(snr_roi_slicewise) / len(snr_roi_slicewise)
+        if rayleigh_correction:
+            # Correcting for Rayleigh noise (see eq. A12 in Dietrich et al.)
+            snr_roi *= np.sqrt((4 - np.pi) / 2)
 
     # Display result
     if fname_mask:
         printv('\nSNR_' + method + ' = ' + str(snr_roi) + '\n', type='info')
+
+    # Added function for text file
+    if file_name is not None:
+        with open(file_name, "w") as f:
+            f.write(str(snr_roi))
+            printv('\nFile saved to ' + file_name)
 
 
 if __name__ == "__main__":

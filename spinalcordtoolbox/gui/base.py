@@ -16,10 +16,7 @@ from collections import namedtuple
 import logging
 import sys
 
-import matplotlib as mpl
 import numpy as np
-
-mpl.use('Qt5Agg')
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -228,7 +225,7 @@ class BaseDialog(QtWidgets.QWidget):
         """
         ctrl_layout = QtWidgets.QHBoxLayout()
 
-        if sys.platform.lower() == 'darwin':
+        if sys.platform.startswith('darwin'):
             cmd_key = 'Cmd'
         else:
             cmd_key = 'Ctrl'

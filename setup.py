@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
-import os
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 path_version = path.join(here, 'spinalcordtoolbox', 'version.txt')
@@ -19,41 +18,43 @@ setup(
     version=version,
     description='Library of analysis tools for MRI of the spinal cord',
     long_description=long_description,
-    url='http://www.neuro.polymtl.ca/home',
+    url='https://www.neuro.polymtl.ca/',
     author='NeuroPoly Lab, Polytechnique Montreal',
     author_email='neuropoly@googlegroups.com',
-    license='MIT',
+    license='LGPLv3',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Healthcare Industry',
         'Intended Audience :: Education',
+        'Topic :: Scientific/Engineering :: Image Processing',
+        'Topic :: Scientific/Engineering :: Image Recognition',
+        'Topic :: Scientific/Engineering :: Information Analysis',
         'Topic :: Scientific/Engineering :: Medical Science Apps.',
-        'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
         'Operating System :: Unix',
         'Operating System :: MacOS',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.7',
     ],
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
     packages=find_packages(exclude=['.git', 'data', 'dev', 'dev.*',
                                     'install', 'testing']),
     include_package_data=True,
+    python_requires="==3.7.*",
     extras_require={
         'docs': [
-        'sphinx',
-        'sphinxcontrib-programoutput',
-        'sphinx_rtd_theme',
-        'recommonmark'
-        ],
-        'mpi': [
-        'mpich==3.2',
-        'mpi4py==3.0.0',
+            'sphinxcontrib-programoutput',
+            'sphinx_rtd_theme',
+            'sphinx-copybutton',
+            'furo==2021.11.23',
+            'recommonmark',
+            'sphinx==4.1.2'
         ],
     },
     entry_points=dict(
         console_scripts=[
-            '{}=spinalcordtoolbox.compat.launcher:main'.format(x) for x in \
+            '{}=spinalcordtoolbox.compat.launcher:main'.format(x) for x in
             [
                 'isct_convert_binary_to_trilinear',
                 'isct_minc2volume-viewer',
@@ -84,6 +85,7 @@ setup(
                 'sct_dmri_concat_b0_and_dwi',
                 'sct_dmri_concat_bvals',
                 'sct_dmri_concat_bvecs',
+                'sct_dmri_denoise_patch2self',
                 'sct_dmri_display_bvecs',
                 'sct_dmri_moco',
                 'sct_dmri_separate_b0_and_dwi',

@@ -134,6 +134,10 @@ class ParamregMultiStep:
 def register_step_ants_slice_regularized_registration(src, dest, step, metricSize, fname_mask='', verbose=1):
     """
     """
+    # NB: If the mask is soft, fname_mask will be returned as None, so that it won't be further applied via '-x'
+    if fname_mask:
+        dest, fname_mask = image.apply_mask_if_soft(dest, fname_mask)
+
     # Find the min (and max) z-slice index below which (and above which) slices only have voxels below a given
     # threshold.
     list_fname = [src, dest]
@@ -327,7 +331,7 @@ def register_step_label(src, dest, step, verbose=1):
 
 def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp_forward_out='step0Warp.nii.gz',
                        warp_inverse_out='step0InverseWarp.nii.gz', ants_registration_params=None,
-                       path_qc='./', remove_temp_files=0, verbose=0):
+                       path_qc='.', remove_temp_files=0, verbose=0):
     """
     Main function that calls various methods for slicewise registration.
 
@@ -435,7 +439,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
 
 
 def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='warp_forward.nii.gz',
-                             fname_warp_inv='warp_inverse.nii.gz', rot_method='pca', filter_size=0, path_qc='./',
+                             fname_warp_inv='warp_inverse.nii.gz', rot_method='pca', filter_size=0, path_qc='.',
                              verbose=0, pca_eigenratio_th=1.6, th_max_angle=40):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
@@ -464,8 +468,6 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # TODO: no need to split the src or dest if it is the template (we know its centerline and orientation already)
 
     if verbose == 2:
-        import matplotlib
-        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz
@@ -700,7 +702,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     generate_warping_field(fname_src[0], warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
 
 
-def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0, path_qc='./', smoothWarpXY=1):
+def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0, path_qc='.', smoothWarpXY=1):
     """
     Column-wise non-linear registration of segmentations. Based on an idea from Allan Martin.
     - Assumes src/dest are segmentations (not necessarily binary), and already registered by center of mass
@@ -721,8 +723,6 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 
     # for display stuff
     if verbose == 2:
-        import matplotlib
-        matplotlib.use('Agg')  # prevent display figure
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz

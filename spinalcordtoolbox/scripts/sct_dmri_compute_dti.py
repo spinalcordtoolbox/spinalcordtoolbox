@@ -13,7 +13,7 @@
 import os
 import sys
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_global_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
 
 
 def get_parser():
@@ -49,7 +49,7 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         '-method',
-        help='R|Type of method to calculate the diffusion tensor:\n'
+        help='Type of method to calculate the diffusion tensor:\n'
              ' standard: Standard equation [Basser, Biophys J 1994]\n'
              ' restore: Robust fitting with outlier detection [Chang, MRM 2005]',
         default='standard',
@@ -88,7 +88,7 @@ def main(argv=None):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_global_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)
 
     # initialization
     file_mask = ''

@@ -232,8 +232,8 @@ def func_wa(data, mask=None, map_clusters=None):
     return np.average(data, weights=mask), None
 
 
-def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], perslice=None, perlevel=False,
-                                 vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None):
+def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distance_pmj=None, perslice=None,
+                                 perlevel=False, vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
 
@@ -241,6 +241,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
     :param mask: Class Metric(): mask to use for aggregating the data. Optional.
     :param slices: List[int]: Slices to aggregate metric from. If empty, select all slices.
     :param levels: List[int]: Vertebral levels to aggregate metric from. It has priority over "slices".
+    :param distance_pmj: float: Distance from Ponto-Medullary Junction (PMJ) in mm.
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False). Has priority over "perslice".
     :param vert_level: Vertebral level. Could be either an Image or a file name.
@@ -273,6 +274,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
         slices = range(metric.data.shape[ndim-1])
 
     # aggregation based on levels
+    vertgroups = None
     if levels:
         im_vert_level = Image(vert_level).change_orientation('RPI')
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
@@ -293,7 +295,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
             vertgroups = [tuple([level for level in levels])]
     # aggregation based on slices
     else:
-        vertgroups = None
         if perslice:
             # slicegroups = [(0,), (1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,)]
             slicegroups = [tuple([slice]) for slice in slices]
@@ -301,9 +302,13 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], persli
             # slicegroups = [(0, 1, 2, 3, 4, 5, 6, 7, 8)]
             slicegroups = [tuple(slices)]
     agg_metric = dict((slicegroup, dict()) for slicegroup in slicegroups)
-
     # loop across slice group
     for slicegroup in slicegroups:
+        # add distance from PMJ info
+        if distance_pmj is not None:
+            agg_metric[slicegroup]['DistancePMJ'] = [distance_pmj]
+        else:
+            agg_metric[slicegroup]['DistancePMJ'] = None
         # add level info
         if vertgroups is None:
             agg_metric[slicegroup]['VertLevel'] = None
@@ -525,9 +530,9 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
     # TODO: if append=True but file does not exist yet, raise warning and set append=False
     # write header (only if append=False)
     if not append or not os.path.isfile(fname_out):
-        with open(fname_out, 'w') as csvfile:
+        with open(fname_out, 'w', newline='') as csvfile:
             # spamwriter = csv.writer(csvfile, delimiter=',')
-            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel']
+            header = ['Timestamp', 'SCT Version', 'Filename', 'Slice (I->S)', 'VertLevel', 'DistancePMJ']
             agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:
@@ -538,8 +543,8 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             writer.writeheader()
 
     # populate data
-    with open(fname_out, 'a') as csvfile:
-        spamwriter = csv.writer(csvfile, delimiter=',')
+    with open(fname_out, 'a', newline='') as csvfile:
+        spamwriter = csv.writer(csvfile, delimiter=',', quoting=csv.QUOTE_NONNUMERIC)
         for slicegroup in sorted(agg_metric.keys()):
             line = list()
             line.append(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))  # Timestamp
@@ -547,10 +552,30 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
             line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
+            line.append(parse_num_list_inv(agg_metric[slicegroup]['DistancePMJ']))  # list distance from PMJ
             agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:
                     if item in key:
-                        line.append(str(agg_metric[slicegroup][key]))
+                        line.append(agg_metric[slicegroup][key])
                         break
             spamwriter.writerow(line)
+
+
+def normalize_csa(csa_norm, data_predictors, data_subject):
+    """
+    Normalize CSA values with coeff from multivariate model. Multivariate models
+    were developed using https://github.com/sct-pipeline/ukbiobank-spinalcord-csa.
+
+    :param csa_norm: computed CSA value
+    :param data_predictors: panda.DataFrame: coefficients from multilinear regression and mean values
+    :param data_subject: panda.DataFrame: demographic data of the subject for each predictor
+
+    :return csa_norm: normalized CSA value
+    """
+    predictors = list(data_predictors.index)
+    means = data_predictors['mean']
+    coeff = data_predictors['coeff']
+    for predictor in predictors:
+        csa_norm = csa_norm + coeff[predictor]*(means[predictor] - data_subject[predictor][0])
+    return csa_norm
