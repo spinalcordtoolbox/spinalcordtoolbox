@@ -13,7 +13,7 @@ import nibabel as nib
 import numpy as np
 
 from spinalcordtoolbox import resampling, __data_dir__
-from spinalcordtoolbox.deepseg.models import onnx_inference
+from spinalcordtoolbox.deepseg_.onnx import onnx_inference
 
 # Models
 # Tuple of (model, metadata)

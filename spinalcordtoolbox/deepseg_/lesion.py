@@ -10,7 +10,7 @@ from scipy.interpolate.interpolate import interp1d
 import nibabel as nib
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, empty_like
-from spinalcordtoolbox.deepseg.models import onnx_inference
+from spinalcordtoolbox.deepseg_.onnx import onnx_inference
 from spinalcordtoolbox.deepseg_.sc import find_centerline, crop_image_around_centerline, uncrop_image, _normalize_data
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.utils import sct_dir_local_path, TempFolder
