@@ -16,11 +16,6 @@ numpy
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 onnxruntime>=1.7.0
 pandas
-# This is pinned to address an upstream breaking change from protobuf 4.21.0
-# (Yes, you're reading that right. protobuf updated its major version from 3.20.1 to 4.21.0.)
-# The protobuf update breaks Keras specifically, but we can remove the fix once we drop Keras in
-# https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3738
-protobuf==3.20.1
 portalocker
 psutil
 pyqt5==5.11.3
