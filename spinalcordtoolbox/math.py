@@ -260,19 +260,36 @@ def binarize(data, bin_thr=0):
     return data > bin_thr
 
 
-def concatenate_along_4th_dimension(data1, data2):
+def concatenate_along_last_dimension(data):
     """
-    Concatenate two data along 4th dimension.
+    Concatenate multiple data arrays, while ensuring that the last axis of the
+    array ("N") is safe to use for operations involving "axis=-1" (e.g. `np.sum(axis=-1)`).
 
-    :param data1: 3d or 4d array
-    :param data2: 3d or 4d array
-    :return data_concat: concate(data1, data2)
+      * 3D (X,Y,Z)   -> 4D (X,Y,Z,N)
+      * 4D (X,Y,Z,T) -> 5D (X,Y,Z,T,N)
+      * 3D + 4D      -> 4D (X,Y,Z,N)
+
+    :param data: List of ndarrays.
+    :return data_concat: concatenate([data])
     """
-    if len(np.shape(data1)) == 3:
-        data1 = data1[..., np.newaxis]
-    if len(np.shape(data2)) == 3:
-        data2 = data2[..., np.newaxis]
-    return np.concatenate((data1, data2), axis=3)
+    ndims = set([arr.ndim for arr in data])
+
+    # Case 1: All images have the same ndim, so add a new axis to every image
+    if ndims == {3} or ndims == {4}:
+        data = [arr[..., np.newaxis] for arr in data]
+
+    # Case 2: Mix of 3D and 4D images --> Only add a new axis to the smaller images
+    elif ndims == {3, 4}:
+        data = [arr[..., np.newaxis] if len(np.shape(arr)) == 3 else arr
+                for arr in data]
+        # NB: We assume that if the user is trying to process 3D and 4D image together, then they
+        #     wish to combine the 3D volumes from the 4D image with the 3D image.
+
+    # Case 3: 2D/5D/etc. images --> Not supported
+    else:
+        raise ValueError(f"Can only process 3D/4D images, but received images with ndim = {ndims - {3,4}}")
+
+    return np.concatenate(data, axis=-1)
 
 
 def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
