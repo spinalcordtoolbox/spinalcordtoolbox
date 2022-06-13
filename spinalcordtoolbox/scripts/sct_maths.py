@@ -294,12 +294,12 @@ def main(argv=None):
         data_out = sct_math.binarize(data, bin_thr=bin_thr)
 
     elif arguments.add is not None:
-        data2 = get_data_or_scalar(arguments.add, data)
+        data_list = get_data_or_scalar(arguments.add, data)
         data_concat = sct_math.concatenate_along_4th_dimension(data, data2)
         data_out = np.sum(data_concat, axis=3)
 
     elif arguments.sub is not None:
-        data2 = get_data_or_scalar(arguments.sub, data)
+        data_list = get_data_or_scalar(arguments.sub, data)
         data_out = data - data2
 
     elif arguments.laplacian is not None:
@@ -314,12 +314,12 @@ def main(argv=None):
         data_out = sct_math.laplacian(data, sigmas)
 
     elif arguments.mul is not None:
-        data2 = get_data_or_scalar(arguments.mul, data)
+        data_list = get_data_or_scalar(arguments.mul, data)
         data_concat = sct_math.concatenate_along_4th_dimension(data, data2)
         data_out = np.prod(data_concat, axis=3)
 
     elif arguments.div is not None:
-        data2 = get_data_or_scalar(arguments.div, data)
+        data_list = get_data_or_scalar(arguments.div, data)
         data_out = np.divide(data, data2)
 
     elif arguments.mean is not None:
@@ -441,21 +441,17 @@ def get_data(list_fname):
     """
     Get data from list of file names
     :param list_fname:
-    :return: 3D or 4D numpy array.
+    :return: List of numpy arrays.
     """
     try:
-        nii = [Image(f_in) for f_in in list_fname]
+        data = [Image(f_in).data for f_in in list_fname]
     except Exception as e:
         printv(str(e), 1, 'error')  # file does not exist, exit program
-    data0 = nii[0].data
-    data = nii[0].data
     # check that every images have same shape
-    for i in range(1, len(nii)):
-        if not np.shape(nii[i].data) == np.shape(data0):
-            printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(nii[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data0)), 1, 'warning')
+    for i in range(1, len(data)):
+        if not np.shape(data[i]) == np.shape(data[0]):
+            printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(data[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data[0])), 1, 'warning')
             printv('\nERROR: All input images must have same dimensions.', 1, 'error')
-        else:
-            data = sct_math.concatenate_along_4th_dimension(data, nii[i].data)
     return data
 
 
