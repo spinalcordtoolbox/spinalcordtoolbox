@@ -462,7 +462,7 @@ def get_data(list_fname):
         printv(str(e), 1, 'error')  # file does not exist, exit program
     # check that every images have same shape
     for i in range(1, len(data)):
-        if not np.shape(data[i]) == np.shape(data[0]):
+        if not np.shape(data[i])[0:3] == np.shape(data[0])[0:3]:
             printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(data[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data[0])), 1, 'warning')
             printv('\nERROR: All input images must have same dimensions.', 1, 'error')
     return data
