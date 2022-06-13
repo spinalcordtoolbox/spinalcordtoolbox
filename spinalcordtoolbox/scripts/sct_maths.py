@@ -65,7 +65,8 @@ def get_parser():
         "-sub",
         metavar='',
         nargs="+",
-        help='Subtract following input. Can be a number or an image.',
+        help='Subtract following input. Can be a number, or one or more 3D/4D images (separated with space).'
+             '\nNote: Dimensions must match the dimensions of the input image.',
         required=False)
     basic.add_argument(
         "-mul",
@@ -77,7 +78,8 @@ def get_parser():
         "-div",
         metavar='',
         nargs="+",
-        help='Divide by following input. Can be a number or an image.',
+        help='Divide by following input. Can be a number, or one or more 3D/4D images (separated with space).'
+             '\nNote: Dimensions must match the dimensions of the input image.',
         required=False)
     basic.add_argument(
         '-mean',
@@ -305,7 +307,8 @@ def main(argv=None):
 
     elif arguments.sub is not None:
         data_list = get_data_or_scalar(arguments.sub, data)
-        data_out = data - data2
+        data_to_sub = sct_math.concatenate_along_last_dimension(data_list)
+        data_out = np.subtract(data, np.sum(data_to_sub, axis=-1))
 
     elif arguments.laplacian is not None:
         sigmas = arguments.laplacian
@@ -325,7 +328,8 @@ def main(argv=None):
 
     elif arguments.div is not None:
         data_list = get_data_or_scalar(arguments.div, data)
-        data_out = np.divide(data, data2)
+        data_to_div = sct_math.concatenate_along_last_dimension(data_list)
+        data_out = np.divide(data, np.prod(data_to_div, axis=-1))
 
     elif arguments.mean is not None:
         dim = dim_list.index(arguments.mean)
