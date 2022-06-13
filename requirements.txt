@@ -37,4 +37,4 @@ wquantiles
 # I've temporarily separated the VoxelMorph requirements into a separate
 # requirements file so that I can test Evan's script in a fresh virtual env.
 # TODO: Move the requirements back into this file once the feature is ready.
--r requirements-voxelmorph.txt
+-r cascaded-registration-requirements.txt

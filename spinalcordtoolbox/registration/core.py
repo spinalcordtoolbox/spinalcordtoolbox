@@ -392,6 +392,19 @@ def register(src, dest, step, param):
             verbose=param.verbose,
         )
 
+    # deep learning registration using cascaded models
+    elif step.algo == 'dl':
+        # check if user provided a mask-- if so, inform it will be ignored
+        if fname_mask:
+            printv('\nWARNING: algo ' + step.algo + ' will ignore the provided mask.\n', 1, 'warning')
+
+        warp_forward_out, warp_inverse_out = algorithms.register_step_dl_multimodal_cascaded_reg(
+            src=src,
+            dest=dest,
+            step=step,
+            verbose=param.verbose,
+        )
+
     else:
         printv('\nERROR: algo ' + step.algo + ' does not exist. Exit program\n', 1, 'error')
 

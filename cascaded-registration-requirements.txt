@@ -2,4 +2,4 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
 torch
 nilearn
-voxelmorph@git+https://github.com/voxelmorph/voxelmorph@579a995492bddfe9ce38161e58cf260fc155c4fd
+voxelmorph

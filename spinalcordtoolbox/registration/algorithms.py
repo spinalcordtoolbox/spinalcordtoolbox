@@ -15,15 +15,21 @@ from math import asin, cos, sin, acos
 
 import numpy as np
 from scipy import ndimage
-from nibabel import load, Nifti1Image, save
+from nibabel import load, Nifti1Image, save, aff2axcodes
+from nilearn.image import resample_img
 from scipy.signal import argrelmax, medfilt
 from sklearn.decomposition import PCA
 from scipy.io import loadmat
+import torch
+# import VoxelMorph and Neurite (used in VoxelMorph) with pytorch backend
+os.environ['VXM_BACKEND'] = 'pytorch'
+os.environ['NEURITE_BACKEND'] = 'pytorch'
+import voxelmorph as vxm
 
 import spinalcordtoolbox.image as image
 from spinalcordtoolbox.math import laplacian
 from spinalcordtoolbox.registration.landmarks import register_landmarks
-from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp_create
+from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp_create, sct_dir_local_path
 
 # TODO [AJ]
 # introduce potential cleanup functions in case exceptions occur and
@@ -327,6 +333,220 @@ def register_step_label(src, dest, step, verbose=1):
                        verbose=verbose)
 
     return warp_forward_out, warp_inverse_out
+
+
+def register_step_dl_multimodal_cascaded_reg(src, dest, step, verbose=1):
+    """
+    """
+    # Preprocessing steps - TODO maybe not include these here so there is an option for the user to test different ones
+    logger.info(f"\nPreprocess data by setting an isotropic resolution of 1mm "
+                f"and bringing the source image into same space as moving image...")
+    # Isotropic resolution
+    dest_iso_res = image.add_suffix(dest, '_iso_res')
+    run_proc(['sct_resample', '-i', dest, '-o', dest_iso_res, '-mm', '1x1x1'])
+    # Bring source image into same space as moving image
+    src_same_space = image.add_suffix(src, '_same_space')
+    run_proc(['sct_register_multimodal', '-i', src, '-d', dest_iso_res, '-o', src_same_space, '-identity', '1'])
+
+    dest = dest_iso_res
+    src = src_same_space
+
+    warp_forward_out = 'step' + str(step.step) + 'DLWarp.nii.gz'
+    warp_inverse_out = 'step' + str(step.step) + 'DLInverseWarp.nii.gz'
+
+    register_dl_multimodal_cascaded_reg(src, dest, warp_forward_out, warp_inverse_out, verbose=verbose)
+
+    return warp_forward_out, warp_inverse_out
+
+
+def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forward, fname_warp_reverse, verbose=1):
+    """
+    Deep learning based multimodal registration using cascaded networks based on the work done
+    in the project https://github.com/ivadomed/multimodal-registration
+    First the two images are scaled (voxel value between 0 and 1).
+    The registration models are then built using the size of the input images and pretrained weights.
+    The two deep learning models are used successively.
+    Eventually the warping fields are transformed to use the same convention as the other functions
+    and they are composed to output a unique warping field.
+
+    !! Warning !!
+    Before using this registration, the two images need:
+        1. to have an isotropic resolution (ideally 1mm): `sct_resample -i dest.nii.gz -mm 1x1x1
+        2. to be into a common space : `sct_register_multimodal -i src.nii.gz -d dest.nii.gz -identity 1
+    --> It has been included as prior steps in register_step_dl_multimodal_cascaded_reg
+
+    :param fname_src: Name of moving image (iso 1mm resolution and same space as fixed image)
+    :param fname_dest: Name of fixed image (iso 1mm resolution and same space as moving image)
+    :param fname_warp_forward: Name of the composed warping field resulting from the cascaded registration for the forward registration
+    :param fname_warp_reverse: Name of the composed warping field resulting from the cascaded registration for the reverse registration
+    :param verbose: 0, 1, 2
+    :return:
+    """
+
+    # Load data
+    logger.info(f"\nLoad data to register...")
+    src_img = load(fname_src)
+    dest_img = load(fname_dest)
+
+    # ---- Additional preprocessing steps ---- #
+    # Scale the data between 0 and 1
+    fx_img = dest_img.get_fdata()
+    scaled_fx_img = (fx_img - np.min(fx_img)) / (np.max(fx_img) - np.min(fx_img))
+    scaled_fx_nii = Nifti1Image(scaled_fx_img, dest_img.affine)
+    mov_img = src_img.get_fdata()
+    scaled_mov_img = (mov_img - np.min(mov_img)) / (np.max(mov_img) - np.min(mov_img))
+    scaled_mov_nii = Nifti1Image(scaled_mov_img, src_img.affine)
+    # Ensure that the volumes can be used in the registration model
+    # (size multiple of 16 because 4 encoder reducing the size by 2)
+    fx_img_shape = scaled_fx_img.shape
+    mov_img_shape = scaled_mov_img.shape
+    max_img_shape = max(fx_img_shape, mov_img_shape)
+    new_img_shape = (int(np.ceil(max_img_shape[0] / 16)) * 16, int(np.ceil(max_img_shape[1] / 16)) * 16,
+                     int(np.ceil(max_img_shape[2] / 16)) * 16)
+    # Pad the volumes to the new image shape
+    fx_preproc_nii = resample_img(scaled_fx_nii, target_affine=scaled_fx_nii.affine,
+                                  target_shape=new_img_shape, interpolation='continuous')
+    mov_preproc_nii = resample_img(scaled_mov_nii, target_affine=scaled_mov_nii.affine,
+                                   target_shape=new_img_shape, interpolation='continuous')
+
+    # ---- Creating data tensors ---- #
+    # Specify the PyTorch device
+    device = 'cpu'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    logger.info(f"\n Creating data tensors...")
+    # Prepare the data for inference
+    data_moving = np.expand_dims(mov_preproc_nii.get_fdata().squeeze(), axis=(0, -1)).astype(np.float32)
+    data_fixed = np.expand_dims(fx_preproc_nii.get_fdata().squeeze(), axis=(0, -1)).astype(np.float32)
+    # Set up tensors and permute for inference
+    input_moving = torch.from_numpy(data_moving) \
+        .to(device) \
+        .float() \
+        .permute(0, 4, 1, 2, 3)
+    input_fixed = torch.from_numpy(data_fixed) \
+        .to(device) \
+        .float() \
+        .permute(0, 4, 1, 2, 3)
+    logger.info(f"\n Input shape for fixed tensor: {input_fixed.shape}")
+    logger.info(f"\n Input shape for moving tensor: {input_moving.shape}")
+
+    # ---- Loading and preparing deep learning models ---- #
+
+    # Set the parameters of the registration model
+    reg_args = dict(
+        inshape=list(new_img_shape),
+        int_steps=5,
+        int_downsize=2,
+        unet_half_res=True,
+        nb_unet_features=([256, 256, 256, 256], [256, 256, 256, 256, 256, 256])
+    )
+    logger.info(f"\n Creating VxmDense models with arguments:")
+    logger.info(f"\n{reg_args}")
+
+    # ---- First Model ---- #
+    logger.info(f"\n Loading first VxmDense model...")
+    logger.info(f"\n{os.getcwd()}")
+    pt_first_model = vxm.networks.VxmDense(**reg_args)
+    # TODO --> DEFINE WHERE THE MODELS WILL BE AND CHANGE THE PATH IN CONSEQUENCE
+    #  [they will probably be put in the data folder --> maybe data/deepreg_models ?]
+    model1_path = sct_dir_local_path('test_data_models', 'pt_cascaded_first_model.pt')
+    trained_state_dict_first_model = torch.load(model1_path)
+    # Load the weights to the PyTorch model
+    weights_first_model = []
+    for k in trained_state_dict_first_model:
+        weights_first_model.append(trained_state_dict_first_model[k])
+    i = 0
+    i_max = len(list(pt_first_model.named_parameters()))
+    torchparam = pt_first_model.state_dict()
+    for k, v in torchparam.items():
+        if i < i_max:
+            torchparam[k] = weights_first_model[i]
+            i += 1
+    pt_first_model.load_state_dict(torchparam)
+    pt_first_model.to(device)
+    pt_first_model.eval()
+
+    # ---- Second Model ---- #
+    logger.info(f"\n Loading second VxmDense model...")
+    pt_second_model = vxm.networks.VxmDense(**reg_args)
+    # TODO --> DEFINE WHERE THE MODELS WILL BE AND CHANGE THE PATH IN CONSEQUENCE
+    #  [they will probably be put in the data folder --> maybe data/deepreg_models ?]
+    model2_path = sct_dir_local_path('test_data_models', 'pt_cascaded_second_model.pt')
+    trained_state_dict_second_model = torch.load(model2_path)
+    # Load the weights to the PyTorch model
+    weights_second_model = []
+    for k in trained_state_dict_second_model:
+        weights_second_model.append(trained_state_dict_second_model[k])
+    i = 0
+    i_max = len(list(pt_second_model.named_parameters()))
+    torchparam = pt_second_model.state_dict()
+    for k, v in torchparam.items():
+        if i < i_max:
+            torchparam[k] = weights_second_model[i]
+            i += 1
+    pt_second_model.load_state_dict(torchparam)
+    pt_second_model.to(device)
+    pt_second_model.eval()
+
+    # ---- Registration ---- #
+    logger.info(f"\n Predicting using first VxmDense model...")
+    moved, warp_tensor_first = pt_first_model(input_moving, input_fixed, registration=True)
+    warp_data_first = warp_tensor_first[0].permute(1, 2, 3, 0).detach().numpy()
+
+    logger.info(f"\n Predicting using second VxmDense model...")
+    moved_final, warp_tensor_second = pt_second_model(moved, input_fixed, registration=True)
+    warp_data_second = warp_tensor_second[0].permute(1, 2, 3, 0).detach().numpy()
+
+    # ---- Warping fields ---- #
+    # Modify the warp data so it can be used with sct_apply_transfo()
+    # (add a time dimension, change the sign of some axes and set the intent code to vector)
+    orientation_conv = "LPS"
+    fx_im_orientation = list(aff2axcodes(fx_preproc_nii.affine))
+    opposite_character = {'L': 'R', 'R': 'L',
+                          'A': 'P', 'P': 'A',
+                          'I': 'S', 'S': 'I'}
+    perm = [0, 1, 2]
+    inversion = [1, 1, 1]
+    for i, character in enumerate(orientation_conv):
+        try:
+            perm[i] = fx_im_orientation.index(character)
+        except ValueError:
+            perm[i] = fx_im_orientation.index(opposite_character[character])
+            inversion[i] = -1
+
+    # First Warping Field
+    # Add the time dimension
+    warp_data_exp_first = np.expand_dims(warp_data_first, axis=3)
+    warp_data_exp_first_copy = np.copy(warp_data_exp_first)
+    # Permute the axes if needed
+    warp_data_exp_first[..., 0] = inversion[0] * warp_data_exp_first_copy[..., perm[0]]
+    warp_data_exp_first[..., 1] = inversion[1] * warp_data_exp_first_copy[..., perm[1]]
+    warp_data_exp_first[..., 2] = inversion[2] * warp_data_exp_first_copy[..., perm[2]]
+
+    # Second Warping Field
+    # Add the time dimension
+    warp_data_exp_second = np.expand_dims(warp_data_second, axis=3)
+    warp_data_exp_second_copy = np.copy(warp_data_exp_second)
+    # Permute the axes if needed
+    warp_data_exp_second[..., 0] = inversion[0] * warp_data_exp_second_copy[..., perm[0]]
+    warp_data_exp_second[..., 1] = inversion[1] * warp_data_exp_second_copy[..., perm[1]]
+    warp_data_exp_second[..., 2] = inversion[2] * warp_data_exp_second_copy[..., perm[2]]
+
+    # Compose the two warping fields together (from the first and second registration)
+
+    # Forward registration
+    warp_data = warp_data_exp_first + warp_data_exp_second
+    warp = Nifti1Image(warp_data, fx_preproc_nii.affine)
+    # Set the intent code to vector
+    warp.header['intent_code'] = 1007
+    # Save the composed warping field [forward]
+    save(warp, fname_warp_forward)
+
+    # Reverse registration
+    warp_data_rev = -warp_data  # TODO - observe if it provides good results
+    warp_rev = Nifti1Image(warp_data_rev, fx_preproc_nii.affine)
+    warp_rev.header['intent_code'] = 1007
+    # Save the composed warping field [reverse]
+    save(warp_rev, fname_warp_reverse)
 
 
 def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp_forward_out='step0Warp.nii.gz',
