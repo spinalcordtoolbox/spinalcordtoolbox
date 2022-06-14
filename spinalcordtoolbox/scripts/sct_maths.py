@@ -54,7 +54,12 @@ def get_parser():
         "-add",
         metavar='',
         nargs="+",
-        help='Add following input. Can be a number or multiple images (separated with space).',
+        help='Add following input. Can be a number or one or more 3D/4D images (separated with space). Examples:'
+             '\n  - sct_maths -i 3D.nii.gz -add 5           (Result: 3D image with "5" added to each voxel)'
+             '\n  - sct_maths -i 3D.nii.gz -add 3D_2.nii.gz (Result: 3D image)'
+             '\n  - sct_maths -i 4D.nii.gz -add 4D_2.nii.gz (Result: 4D image)'
+             '\nNote: In some cases, you may want to instead sum 3D volumes within a 4D image:'
+             '\n  - sct_maths -i 4D.nii.gz -add 3D.nii.gz   (Result: 3D image, with 3D volumes summed from both images)',
         required=False)
     basic.add_argument(
         "-sub",
@@ -66,7 +71,7 @@ def get_parser():
         "-mul",
         metavar='',
         nargs="+",
-        help='Multiply by following input. Can be a number or multiple images (separated with space).',
+        help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
     basic.add_argument(
         "-div",
@@ -295,8 +300,8 @@ def main(argv=None):
 
     elif arguments.add is not None:
         data_list = get_data_or_scalar(arguments.add, data)
-        data_concat = sct_math.concatenate_along_4th_dimension(data, data2)
-        data_out = np.sum(data_concat, axis=3)
+        data_concat = sct_math.concatenate_along_last_dimension([data] + data_list)
+        data_out = np.sum(data_concat, axis=-1)
 
     elif arguments.sub is not None:
         data_list = get_data_or_scalar(arguments.sub, data)
@@ -315,8 +320,8 @@ def main(argv=None):
 
     elif arguments.mul is not None:
         data_list = get_data_or_scalar(arguments.mul, data)
-        data_concat = sct_math.concatenate_along_4th_dimension(data, data2)
-        data_out = np.prod(data_concat, axis=3)
+        data_to_mul = sct_math.concatenate_along_last_dimension([data] + data_list)
+        data_out = np.prod(data_to_mul, axis=-1)
 
     elif arguments.div is not None:
         data_list = get_data_or_scalar(arguments.div, data)
