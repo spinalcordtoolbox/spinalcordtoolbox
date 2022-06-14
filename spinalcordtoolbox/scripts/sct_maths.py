@@ -26,8 +26,7 @@ from spinalcordtoolbox.utils.fs import extract_fname
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='Perform mathematical operations on images. Some inputs can be either a number or a 4d image or '
-                    'several 3d images separated with ","'
+        description='Perform mathematical operations on images.'
     )
 
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
@@ -60,7 +59,9 @@ def get_parser():
              '\n  - sct_maths -i 4D.nii.gz -add 4D_2.nii.gz (Result: 4D image)'
              '\nNote: In some cases, you may want to instead sum 3D volumes within a 4D image:'
              '\n  - sct_maths -i 4D.nii.gz -add 3D.nii.gz   (Result: 3D image, with 3D volumes summed from both images)'
-             '\n  - sct_maths -i 4D.nii.gz -add             (Result: 3D image, with 3D volumes summed within 4D image)',
+             '\n  - sct_maths -i 4D.nii.gz -add             (Result: 3D image, with 3D volumes summed within 4D image)'
+             '\nNote: If your terminal supports it, you can also specify multiple images using a pattern:'
+             '\n  - sct_maths -i 3D.nii.gz -add 3D_*.nii.gz (Result: Adding 3D_2.nii.gz, 3D_3.nii.gz, etc.)',
         required=False)
     basic.add_argument(
         "-sub",
