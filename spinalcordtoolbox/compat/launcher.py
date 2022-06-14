@@ -21,6 +21,11 @@ def main():
     if "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS" not in os.environ:
         env["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(multiprocessing.cpu_count())
 
+    # Needed to allow `sct_check_dependencies` to import voxelmorph/neurite without
+    # failing due to a missing `tensorflow` dependency (since the backend defaults to TF)
+    env['VXM_BACKEND'] = 'pytorch'
+    env['NEURITE_BACKEND'] = 'pytorch'
+
     command = os.path.basename(sys.argv[0])
     pkg_dir = os.path.dirname(sct.__file__)
 
