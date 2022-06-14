@@ -4,22 +4,22 @@ import numpy as np
 import nibabel as nib
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.deepseg_lesion import core as deepseg_lesion
+import spinalcordtoolbox.deepseg_.lesion as deepseg_lesion
 from spinalcordtoolbox.utils import __sct_dir__
 
 
 def test_model_file_exists():
     for model_name in deepseg_lesion.MODEL_LST:
-        model_path = os.path.join(__sct_dir__, 'data', 'deepseg_lesion_models', '{}_lesion.h5'.format(model_name))
+        model_path = os.path.join(__sct_dir__, 'data', 'deepseg_lesion_models', '{}_lesion.onnx'.format(model_name))
         assert os.path.isfile(model_path)
 
 
 def test_segment():
     contrast_test = 't2'
-    model_path = os.path.join(__sct_dir__, 'data', 'deepseg_lesion_models', '{}_lesion.h5'.format(contrast_test))
+    model_path = os.path.join(__sct_dir__, 'data', 'deepseg_lesion_models', '{}_lesion.onnx'.format(contrast_test))
 
     # create fake data
-    data = np.zeros((48,48,96))
+    data = np.zeros((48, 48, 96))
     xx, yy = np.mgrid[:48, :48]
     circle = (xx - 24) ** 2 + (yy - 24) ** 2
     for zz in range(data.shape[2]):
