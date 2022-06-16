@@ -20,20 +20,24 @@ import time
 
 import numpy as np
 
+from spinalcordtoolbox.registration.algorithms import (register_step_label, register_step_ants_registration,
+                                                       register_step_ants_slice_regularized_registration,
+                                                       register_step_slicewise, register_step_slicewise_ants,
+                                                       Paramreg, ParamregMultiStep)
+from spinalcordtoolbox.registration.landmarks import register_landmarks
+
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, concat_warp2d
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
 from spinalcordtoolbox.math import dilate, binarize
-from spinalcordtoolbox.registration.algorithms import *
-from spinalcordtoolbox.registration.landmarks import *
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
-                                        cache_save, cache_signature, cache_valid)
+                                        cache_save, cache_signature, cache_valid, tmp_create)
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
                                            printv, display_viewer_syntax)
-from spinalcordtoolbox.utils.sys import set_loglevel, init_sct
+from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc
 from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
