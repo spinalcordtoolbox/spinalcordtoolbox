@@ -16,10 +16,8 @@
 
 import os
 
-from spinalcordtoolbox.registration.algorithms import (register_step_label, register_step_ants_registration,
-                                                       register_step_ants_slice_regularized_registration,
-                                                       register_step_slicewise, register_step_slicewise_ants,
-                                                       Paramreg, ParamregMultiStep)
+from spinalcordtoolbox.registration import algorithms
+
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
 from spinalcordtoolbox.utils.fs import  extract_fname, rmtree, tmp_create
 from spinalcordtoolbox.utils.shell import printv
@@ -114,8 +112,8 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
 
     if identity:
         # overwrite paramregmulti and only do one identity transformation
-        step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5')
-        paramregmulti = ParamregMultiStep([step0])
+        step0 = algorithms.Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5')
+        paramregmulti = algorithms.ParamregMultiStep([step0])
 
     # initialize list of warping fields
     warp_forward = []
@@ -337,7 +335,7 @@ def register(src, dest, step, param):
 
     # # landmark-based registration
     if step.type in ['label']:
-        warp_forward_out, warp_inverse_out = register_step_label(
+        warp_forward_out, warp_inverse_out = algorithms.register_step_label(
             src=src,
             dest=dest,
             step=step,
@@ -345,7 +343,7 @@ def register(src, dest, step, param):
         )
 
     elif step.algo == 'slicereg':
-        warp_forward_out, warp_inverse_out, _ = register_step_ants_slice_regularized_registration(
+        warp_forward_out, warp_inverse_out, _ = algorithms.register_step_ants_slice_regularized_registration(
             src=src,
             dest=dest,
             step=step,
@@ -356,7 +354,7 @@ def register(src, dest, step, param):
 
     # ANTS 3d
     elif step.algo.lower() in ants_registration_params and step.slicewise == '0':  # FIXME [AJ]
-        warp_forward_out, warp_inverse_out = register_step_ants_registration(
+        warp_forward_out, warp_inverse_out = algorithms.register_step_ants_registration(
             src=src,
             dest=dest,
             step=step,
@@ -369,7 +367,7 @@ def register(src, dest, step, param):
 
     # ANTS 2d
     elif step.algo.lower() in ants_registration_params and step.slicewise == '1':  # FIXME [AJ]
-        warp_forward_out, warp_inverse_out = register_step_slicewise_ants(
+        warp_forward_out, warp_inverse_out = algorithms.register_step_slicewise_ants(
             src=src,
             dest=dest,
             step=step,
@@ -385,7 +383,7 @@ def register(src, dest, step, param):
         if fname_mask:
             printv('\nWARNING: algo ' + step.algo + ' will ignore the provided mask.\n', 1, 'warning')
 
-        warp_forward_out, warp_inverse_out = register_step_slicewise(
+        warp_forward_out, warp_inverse_out = algorithms.register_step_slicewise(
             src=src,
             dest=dest,
             step=step,
