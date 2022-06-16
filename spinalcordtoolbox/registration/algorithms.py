@@ -29,7 +29,8 @@ import voxelmorph as vxm
 import spinalcordtoolbox.image as image
 from spinalcordtoolbox.math import laplacian
 from spinalcordtoolbox.registration.landmarks import register_landmarks
-from spinalcordtoolbox.scripts import sct_resample, sct_register_multimodal
+from spinalcordtoolbox.registration import core
+from spinalcordtoolbox.scripts import sct_resample
 from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp_create, sct_dir_local_path
 
 # TODO [AJ]
@@ -347,7 +348,11 @@ def register_step_dl_multimodal_cascaded_reg(src, dest, step, verbose=1):
     sct_resample.main(['-i', dest, '-o', dest_iso_res, '-mm', '1x1x1'])
     # Bring source image into same space as moving image
     src_same_space = image.add_suffix(src, '_same_space')
-    sct_register_multimodal.main(['-i', src, '-d', dest_iso_res, '-o', src_same_space, '-identity', '1'])
+    # NB: `register_wrapper()` requires a 'Param' object that is defined on the fly in `sct_register_` CLI scripts
+    #     It would be nice to one day rewrite `register_wrapper` to replace Param() with actual individual arguments
+    param = type('Param', (object,), {'padding': 5, 'fname_mask': None, 'verbose': 0, 'remove_temp_files': 1})()
+    core.register_wrapper(src, dest_iso_res, param=param, paramregmulti=ParamregMultiStep(),
+                          identity=1, fname_output=src_same_space)
 
     dest = dest_iso_res
     src = src_same_space
