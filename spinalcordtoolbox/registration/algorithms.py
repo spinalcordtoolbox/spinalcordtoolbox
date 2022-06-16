@@ -446,9 +446,7 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     logger.info(f"\n Loading first VxmDense model...")
     logger.info(f"\n{os.getcwd()}")
     pt_first_model = vxm.networks.VxmDense(**reg_args)
-    # TODO --> DEFINE WHERE THE MODELS WILL BE AND CHANGE THE PATH IN CONSEQUENCE
-    #  [they will probably be put in the data folder --> maybe data/deepreg_models ?]
-    model1_path = sct_dir_local_path('test_data_models', 'pt_cascaded_first_model.pt')
+    model1_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_first_model.pt')
     trained_state_dict_first_model = torch.load(model1_path)
     # Load the weights to the PyTorch model
     weights_first_model = []
@@ -468,9 +466,7 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     # ---- Second Model ---- #
     logger.info(f"\n Loading second VxmDense model...")
     pt_second_model = vxm.networks.VxmDense(**reg_args)
-    # TODO --> DEFINE WHERE THE MODELS WILL BE AND CHANGE THE PATH IN CONSEQUENCE
-    #  [they will probably be put in the data folder --> maybe data/deepreg_models ?]
-    model2_path = sct_dir_local_path('test_data_models', 'pt_cascaded_second_model.pt')
+    model2_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_second_model.pt')
     trained_state_dict_second_model = torch.load(model2_path)
     # Load the weights to the PyTorch model
     weights_second_model = []
