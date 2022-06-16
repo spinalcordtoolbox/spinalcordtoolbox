@@ -27,12 +27,11 @@ from spinalcordtoolbox.registration.labeling import (add_orthogonal_label, check
 from spinalcordtoolbox.registration.landmarks import register_landmarks
 
 from spinalcordtoolbox.metadata import get_file_label
-from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, concat_warp2d
-from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
+from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
 from spinalcordtoolbox.math import dilate, binarize
-from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
                                         cache_save, cache_signature, cache_valid, tmp_create)
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
@@ -42,7 +41,6 @@ from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.scripts import sct_apply_transfo
-from spinalcordtoolbox.scripts.sct_image import split_data
 
 
 class Param:

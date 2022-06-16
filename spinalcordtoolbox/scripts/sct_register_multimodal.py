@@ -41,7 +41,6 @@ from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.registration.algorithms import Paramreg, ParamregMultiStep
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
-from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import check_dim
 
 from spinalcordtoolbox.registration.core import register_wrapper
