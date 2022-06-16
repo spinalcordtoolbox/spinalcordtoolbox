@@ -19,7 +19,7 @@ import os
 from spinalcordtoolbox.registration import algorithms
 
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
-from spinalcordtoolbox.utils.fs import  extract_fname, rmtree, tmp_create
+from spinalcordtoolbox.utils.fs import extract_fname, rmtree, tmp_create
 from spinalcordtoolbox.utils.shell import printv
 from spinalcordtoolbox.utils.sys import run_proc
 from spinalcordtoolbox.scripts import sct_apply_transfo
