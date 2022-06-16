@@ -44,7 +44,7 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import check_dim
 
-from spinalcordtoolbox.scripts.sct_register_to_template import register_wrapper
+from spinalcordtoolbox.registration.core import register_wrapper
 
 # Default registration parameters
 step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
