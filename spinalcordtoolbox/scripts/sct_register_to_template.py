@@ -26,7 +26,7 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.resampling import resample_file
 from spinalcordtoolbox.math import dilate, binarize
-from spinalcordtoolbox.registration.register import *
+from spinalcordtoolbox.registration.algorithms import *
 from spinalcordtoolbox.registration.landmarks import *
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, rmtree,
