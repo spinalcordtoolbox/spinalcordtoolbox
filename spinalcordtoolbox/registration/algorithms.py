@@ -339,8 +339,8 @@ def register_step_dl_multimodal_cascaded_reg(src, dest, step, verbose=1):
     """
     """
     # Preprocessing steps - TODO maybe not include these here so there is an option for the user to test different ones
-    logger.info(f"\nPreprocess data by setting an isotropic resolution of 1mm "
-                f"and bringing the source image into same space as moving image...")
+    logger.info("\nPreprocess data by setting an isotropic resolution of 1mm "
+                "and bringing the source image into same space as moving image...")
     # Isotropic resolution
     dest_iso_res = image.add_suffix(dest, '_iso_res')
     run_proc(['sct_resample', '-i', dest, '-o', dest_iso_res, '-mm', '1x1x1'])
@@ -384,7 +384,7 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     """
 
     # Load data
-    logger.info(f"\nLoad data to register...")
+    logger.info("\nLoad data to register...")
     src_img = load(fname_src)
     dest_img = load(fname_dest)
 
@@ -413,7 +413,7 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     # Specify the PyTorch device
     device = 'cpu'
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-    logger.info(f"\n Creating data tensors...")
+    logger.info("\n Creating data tensors...")
     # Prepare the data for inference
     data_moving = np.expand_dims(mov_preproc_nii.get_fdata().squeeze(), axis=(0, -1)).astype(np.float32)
     data_fixed = np.expand_dims(fx_preproc_nii.get_fdata().squeeze(), axis=(0, -1)).astype(np.float32)
@@ -439,11 +439,11 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
         unet_half_res=True,
         nb_unet_features=([256, 256, 256, 256], [256, 256, 256, 256, 256, 256])
     )
-    logger.info(f"\n Creating VxmDense models with arguments:")
+    logger.info("\n Creating VxmDense models with arguments:")
     logger.info(f"\n{reg_args}")
 
     # ---- First Model ---- #
-    logger.info(f"\n Loading first VxmDense model...")
+    logger.info("\n Loading first VxmDense model...")
     logger.info(f"\n{os.getcwd()}")
     pt_first_model = vxm.networks.VxmDense(**reg_args)
     model1_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_first_model.pt')
@@ -464,7 +464,7 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     pt_first_model.eval()
 
     # ---- Second Model ---- #
-    logger.info(f"\n Loading second VxmDense model...")
+    logger.info("\n Loading second VxmDense model...")
     pt_second_model = vxm.networks.VxmDense(**reg_args)
     model2_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_second_model.pt')
     trained_state_dict_second_model = torch.load(model2_path)
@@ -484,11 +484,11 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     pt_second_model.eval()
 
     # ---- Registration ---- #
-    logger.info(f"\n Predicting using first VxmDense model...")
+    logger.info("\n Predicting using first VxmDense model...")
     moved, warp_tensor_first = pt_first_model(input_moving, input_fixed, registration=True)
     warp_data_first = warp_tensor_first[0].permute(1, 2, 3, 0).detach().numpy()
 
-    logger.info(f"\n Predicting using second VxmDense model...")
+    logger.info("\n Predicting using second VxmDense model...")
     moved_final, warp_tensor_second = pt_second_model(moved, input_fixed, registration=True)
     warp_data_second = warp_tensor_second[0].permute(1, 2, 3, 0).detach().numpy()
 
