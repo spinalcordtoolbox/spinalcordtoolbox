@@ -49,11 +49,6 @@ jobs:
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --global user.name "GitHub Actions Bot"
 
-    - name: Merge main branch into release branch
-      run: |
-        git checkout ${{ env.RELEASE_BRANCH }}
-        git merge --no-ff ${{ env.MAIN_BRANCH }}
-
     - name: Update requirements-freeze.txt
       run: |
         source python/etc/profile.d/conda.sh
@@ -95,18 +90,19 @@ jobs:
 
     - name: Commit and push
       run: |
+        git checkout -b bot/${{ github.event.inputs.milestone_title }}
         git add requirements-freeze.txt
         git commit -m "Update requirements-freeze.txt for ${{ github.event.inputs.milestone_title }}"
         git add spinalcordtoolbox/version.txt
         git commit -m "Update version.txt for ${{ github.event.inputs.milestone_title }}"
-        git push
+        git tag ${{ github.event.inputs.milestone_title }}
+        git push --tags
       # Only commit to release if workflow is run manually. (This allows the workflow to double as a PR test.)
       if: github.event_name == 'workflow_dispatch'
 
     - uses: ncipollo/release-action@v1
       name: Create release
       with:
-        commit: ${{ env.RELEASE_BRANCH }}
         tag: ${{ github.event.inputs.milestone_title }}
         token: ${{ secrets.GITHUB_TOKEN }}
         bodyFile: ".github/workflows/release-body.md"
