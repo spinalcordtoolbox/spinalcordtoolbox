@@ -35,7 +35,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     :param fname_src:
     :param fname_dest:
     :param param: Class Param(): See definition in sct_register_multimodal
-    :param paramregmulti: Class ParamregMultiStep(): See definition in this file
+    :param paramregmulti: Class ParamregMultiStep(): See definition in algorithms.py
     :param fname_src_seg:
     :param fname_dest_seg:
     :param fname_src_label:
