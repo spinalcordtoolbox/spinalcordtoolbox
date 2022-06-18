@@ -2,6 +2,8 @@
 
 import os
 import pytest
+import nibabel
+import numpy as np
 
 from spinalcordtoolbox.utils import sct_test_path
 
@@ -10,7 +12,7 @@ from spinalcordtoolbox.scripts import sct_compute_mtsat
 out_mstat = "out_mtsat.nii.gz"
 out_t1map = "out_t1map.nii.gz"
 
-INPUT_PARAMS_NO_JSON = [
+INPUT_PARAMS = [
     ['-mt', sct_test_path('mt', 'mt1.nii.gz'),
      '-pd', sct_test_path('mt', 'mt0.nii.gz'),
      '-t1', sct_test_path('mt', 't1w.nii.gz'),
@@ -24,31 +26,11 @@ INPUT_PARAMS_NO_JSON = [
      '-trmt', '51', '-trpd', '52', '-trt1', '10', '-famt', '4', '-fapd', '5', '-fat1', '14'],
     ]
 
-INPUT_PARAMS_USING_JSON = [
-    ['-mt', sct_test_path('mt', 'mt1.nii.gz'),
-     '-pd', sct_test_path('mt', 'mt0.nii.gz'),
-     '-t1', sct_test_path('mt', 't1w.nii.gz'),
-     '-omtsat', out_mstat,
-     '-ot1map', out_t1map],
-    ['-mt', sct_test_path('mt', 'mt1.nii.gz'),
-     '-pd', sct_test_path('mt', 'mt0.nii.gz'),
-     '-t1', sct_test_path('mt', 't1w.nii.gz'),
-     '-omtsat', out_mstat,
-     '-ot1map', out_t1map],
-    ]
-
-@pytest.mark.parametrize('input_params_no_json', INPUT_PARAMS_NO_JSON)
-def test_without_json_sidecar(input_params_no_json):
-    sct_compute_mtsat.main(input_params_no_json)
+@pytest.mark.parametrize('input_params', INPUT_PARAMS)
+def test_without_json_sidecar(input_params):
+    sct_compute_mtsat.main(input_params)
     # Check if output files exist
     for f in [out_mstat, out_t1map]:
         assert os.path.isfile(f)
         os.remove(f)
 
-@pytest.mark.parametrize('input_params_using_json', INPUT_PARAMS_USING_JSON)
-def test_without_json_sidecar(input_params_using_json):
-    sct_compute_mtsat.main(input_params_using_json)
-    # Check if output files exist
-    for f in [out_mstat, out_t1map]:
-        assert os.path.isfile(f)
-        os.remove(f)
