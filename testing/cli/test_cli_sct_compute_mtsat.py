@@ -27,7 +27,7 @@ INPUT_PARAMS = [
     ]
 
 @pytest.mark.parametrize('input_params', INPUT_PARAMS)
-def test_without_json_sidecar(input_params):
+def test_files_are_created(input_params):
     sct_compute_mtsat.main(input_params)
     # Check if output files exist
     for f in [out_mstat, out_t1map]:
