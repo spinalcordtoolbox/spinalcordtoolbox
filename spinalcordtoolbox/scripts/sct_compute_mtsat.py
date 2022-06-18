@@ -176,11 +176,11 @@ def main(argv=None):
         nii_b1map = Image(arguments.b1map)
 
     if arguments.trmt is None:
-        arguments.trmt = fetch_metadata(get_json_file_name(arguments.mt, check_exist=True), 'RepetitionTime') * 1000 # converted from s to ms
+        arguments.trmt = fetch_metadata(get_json_file_name(arguments.mt, check_exist=True), 'RepetitionTime') * 1000  # converted from s to ms
     if arguments.trpd is None:
-        arguments.trpd = fetch_metadata(get_json_file_name(arguments.pd, check_exist=True), 'RepetitionTime') * 1000 # converted from s to ms
+        arguments.trpd = fetch_metadata(get_json_file_name(arguments.pd, check_exist=True), 'RepetitionTime') * 1000  # converted from s to ms
     if arguments.trt1 is None:
-        arguments.trt1 = fetch_metadata(get_json_file_name(arguments.t1, check_exist=True), 'RepetitionTime') * 1000 # converted from s to ms
+        arguments.trt1 = fetch_metadata(get_json_file_name(arguments.t1, check_exist=True), 'RepetitionTime') * 1000  # converted from s to ms
     if arguments.famt is None:
         arguments.famt = fetch_metadata(get_json_file_name(arguments.mt, check_exist=True), 'FlipAngle')
     if arguments.fapd is None:
