@@ -26,7 +26,7 @@ INPUT_PARAMS = [
      '-t1', sct_test_path('mt', 't1w.nii.gz'),
      '-omtsat', out_mstat,
      '-ot1map', out_t1map,
-     '-trmt', '30', '-trpd', '30', '-trt1', '15', '-famt', '9', '-fapd', '9', '-fat1', '15'],
+     '-trmt', '0.030', '-trpd', '0.030', '-trt1', '0.015', '-famt', '9', '-fapd', '9', '-fat1', '15'],
     ]
 
 
