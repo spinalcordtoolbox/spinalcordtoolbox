@@ -12,6 +12,9 @@ from spinalcordtoolbox.scripts import sct_compute_mtsat
 out_mstat = "out_mtsat.nii.gz"
 out_t1map = "out_t1map.nii.gz"
 
+expected_mean_mtsat = 1.95260
+expected_mean_t1 = 1.19374
+
 INPUT_PARAMS = [
     ['-mt', sct_test_path('mt', 'mt1.nii.gz'),
      '-pd', sct_test_path('mt', 'mt0.nii.gz'),
@@ -23,7 +26,7 @@ INPUT_PARAMS = [
      '-t1', sct_test_path('mt', 't1w.nii.gz'),
      '-omtsat', out_mstat,
      '-ot1map', out_t1map,
-     '-trmt', '51', '-trpd', '52', '-trt1', '10', '-famt', '4', '-fapd', '5', '-fat1', '14'],
+     '-trmt', '30', '-trpd', '30', '-trt1', '15', '-famt', '9', '-fapd', '9', '-fat1', '15'],
     ]
 
 @pytest.mark.parametrize('input_params', INPUT_PARAMS)
@@ -32,5 +35,30 @@ def test_files_are_created(input_params):
     # Check if output files exist
     for f in [out_mstat, out_t1map]:
         assert os.path.isfile(f)
+        os.remove(f)
+
+@pytest.mark.parametrize('input_params', INPUT_PARAMS)
+def test_expected_mtsat_values(input_params):
+    sct_compute_mtsat.main(input_params)
+    
+    mtsat=nibabel.load(out_mstat)
+    mtsat_img = mtsat.get_fdata()
+    np.testing.assert_almost_equal(mtsat_img.mean(), expected_mean_mtsat, decimal=3)
+    
+    # Remove files
+    for f in [out_mstat, out_t1map]:
+        os.remove(f)
+
+@pytest.mark.parametrize('input_params', INPUT_PARAMS)
+def test_expected_t1_values(input_params):
+    sct_compute_mtsat.main(input_params)
+    
+    t1map=nibabel.load(out_t1map)
+    t1map_img = t1map.get_fdata()
+
+    np.testing.assert_almost_equal(t1map_img.mean(),expected_mean_t1, decimal=3)
+    
+    # Remove files
+    for f in [out_mstat, out_t1map]:
         os.remove(f)
 
