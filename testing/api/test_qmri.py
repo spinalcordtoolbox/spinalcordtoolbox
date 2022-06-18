@@ -46,3 +46,4 @@ def test_compute_mtsat():
                                             fa_t1=15
                                             )
     assert img_mtsat.data[0] == pytest.approx(1.5327, 0.0001)
+    assert img_t1map.data[0] == pytest.approx(0.8916, 0.0001)
