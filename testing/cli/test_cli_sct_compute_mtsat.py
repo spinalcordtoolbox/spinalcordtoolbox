@@ -29,36 +29,39 @@ INPUT_PARAMS = [
      '-trmt', '30', '-trpd', '30', '-trt1', '15', '-famt', '9', '-fapd', '9', '-fat1', '15'],
     ]
 
+
 @pytest.mark.parametrize('input_params', INPUT_PARAMS)
 def test_files_are_created(input_params):
     sct_compute_mtsat.main(input_params)
+    
     # Check if output files exist
     for f in [out_mstat, out_t1map]:
         assert os.path.isfile(f)
         os.remove(f)
 
+
 @pytest.mark.parametrize('input_params', INPUT_PARAMS)
 def test_expected_mtsat_values(input_params):
     sct_compute_mtsat.main(input_params)
-    
+
     mtsat=nibabel.load(out_mstat)
     mtsat_img = mtsat.get_fdata()
     np.testing.assert_almost_equal(mtsat_img.mean(), expected_mean_mtsat, decimal=3)
-    
+
     # Remove files
     for f in [out_mstat, out_t1map]:
         os.remove(f)
+
 
 @pytest.mark.parametrize('input_params', INPUT_PARAMS)
 def test_expected_t1_values(input_params):
     sct_compute_mtsat.main(input_params)
-    
+
     t1map=nibabel.load(out_t1map)
     t1map_img = t1map.get_fdata()
 
-    np.testing.assert_almost_equal(t1map_img.mean(),expected_mean_t1, decimal=3)
-    
+    np.testing.assert_almost_equal(t1map_img.mean(), expected_mean_t1, decimal=3)
+
     # Remove files
     for f in [out_mstat, out_t1map]:
         os.remove(f)
-
