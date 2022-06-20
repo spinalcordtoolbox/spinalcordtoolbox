@@ -8,9 +8,10 @@ import os
 import pytest
 import numpy as np
 
-from spinalcordtoolbox.scripts.sct_register_to_template import Param, register
-from spinalcordtoolbox.registration.register import (Paramreg, register_step_ants_registration, register_step_label,
-                                                     register_step_ants_slice_regularized_registration)
+from spinalcordtoolbox.scripts.sct_register_to_template import Param
+from spinalcordtoolbox.registration.core import register
+from spinalcordtoolbox.registration.algorithms import (Paramreg, register_step_ants_registration, register_step_label,
+                                                       register_step_ants_slice_regularized_registration)
 from spinalcordtoolbox.utils import sct_test_path
 
 logger = logging.getLogger(__name__)
