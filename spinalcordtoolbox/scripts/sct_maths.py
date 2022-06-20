@@ -458,23 +458,33 @@ def get_data_or_scalar(argument, data_in):
     :param data_in: if argument is scalar, use data to get np.shape
     :return: 3d or 4d numpy array
     """
-    # try to convert argument in float
-    try:
-        # build data2 with same shape as data
-        data_out = data_in[:, :, :] * 0 + float(argument[0])
-    # if conversion fails, it should be a string (i.e. file name)
-    except (ValueError, IndexError):
+    def is_float(element):
         try:
-            data_out = [Image(f_in).data for f_in in argument]
-        except Exception as e:
-            printv(str(e), 1, 'error')  # file does not exist, exit program
-        # check that every images have same shape
-        for i in range(1, len(data_out)):
-            if not np.shape(data_out[i])[0:3] == np.shape(data_out[0])[0:3]:
-                printv('\nWARNING: shape(' + argument[i] + ')=' + str(
-                    np.shape(data_out[i].data)) + ' incompatible with shape(' + argument[0] + ')=' + str(
-                    np.shape(data_out[0])), 1, 'warning')
-                printv('\nERROR: All input images must have sget_dataame dimensions.', 1, 'error')
+            float(element)
+            return True
+        except ValueError:
+            return False
+
+    data_out = []
+    for arg in argument:
+        # Case 1: Argument is a float
+        if is_float(arg):
+            data_out.append(data_in[:, :, :] * 0 + float(arg))
+        # Case 2: If argument is not a float, assume argument is a path to an image file
+        else:
+            try:
+                data_out.append(Image(arg).data)
+            except Exception as e:
+                printv(str(e), 1, 'error')  # file does not exist, exit program
+
+    # check that every images have same shape
+    for i in range(1, len(data_out)):
+        if not np.shape(data_out[i])[0:3] == np.shape(data_out[0])[0:3]:
+            printv('\nWARNING: shape(' + argument[i] + ')=' + str(
+                np.shape(data_out[i].data)) + ' incompatible with shape(' + argument[0] + ')=' + str(
+                np.shape(data_out[0])), 1, 'warning')
+            printv('\nERROR: All input images must have sget_dataame dimensions.', 1, 'error')
+
     return data_out
 
 
