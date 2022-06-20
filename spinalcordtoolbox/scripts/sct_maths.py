@@ -472,10 +472,7 @@ def get_data_or_scalar(argument, data_in):
             data_out.append(data_in[:, :, :] * 0 + float(arg))
         # Case 2: If argument is not a float, assume argument is a path to an image file
         else:
-            try:
-                data_out.append(Image(arg).data)
-            except Exception as e:
-                printv(str(e), 1, 'error')  # file does not exist, exit program
+            data_out.append(Image(arg).data)
 
     # check that every images have same shape
     for i in range(1, len(data_out)):
