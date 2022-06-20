@@ -472,15 +472,11 @@ def get_data_or_scalar(argument, data_in):
             data_out.append(np.full_like(data_in, float(arg)))
         # Case 2: If argument is not a float, assume argument is a path to an image file
         else:
-            data_out.append(Image(arg).data)
-
-    # check that every images have same shape
-    for i in range(1, len(data_out)):
-        if not np.shape(data_out[i])[0:3] == np.shape(data_out[0])[0:3]:
-            printv('\nWARNING: shape(' + argument[i] + ')=' + str(
-                np.shape(data_out[i].data)) + ' incompatible with shape(' + argument[0] + ')=' + str(
-                np.shape(data_out[0])), 1, 'warning')
-            printv('\nERROR: All input images must have sget_dataame dimensions.', 1, 'error')
+            data = Image(arg).data
+            if data.shape[0:3] == data_in.shape[0:3]:
+                data_out.append(data)
+            else:
+                raise ValueError(f"Dimensions of '{arg}' ({data.shape}) must match input image ({data_in.shape}).")
 
     return data_out
 
