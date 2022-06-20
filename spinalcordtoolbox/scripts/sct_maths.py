@@ -96,10 +96,10 @@ def get_parser():
              '\n  - sct_maths -i 3D.nii.gz -add 5           (Result: 3D image with "5" added to each voxel)'
              '\n  - sct_maths -i 3D.nii.gz -add 3D_2.nii.gz (Result: 3D image)'
              '\n  - sct_maths -i 4D.nii.gz -add 4D_2.nii.gz (Result: 4D image)'
-             '\nNote: In some cases, you may want to instead sum 3D volumes within a 4D image:'
-             '\n  - sct_maths -i 4D.nii.gz -add             (Result: 3D image, with 3D volumes summed within 4D image)'
              '\nNote: If your terminal supports it, you can also specify multiple images using a pattern:'
-             '\n  - sct_maths -i 3D.nii.gz -add 3D_*.nii.gz (Result: Adding 3D_2.nii.gz, 3D_3.nii.gz, etc.)',
+             '\n  - sct_maths -i 3D.nii.gz -add 3D_*.nii.gz (Result: Adding 3D_2.nii.gz, 3D_3.nii.gz, etc.)'
+             '\nNote: If the input image is 4D, you can also leave "-add" empty to sum the 3D volumes within the image:'
+             '\n  - sct_maths -i 4D.nii.gz -add             (Result: 3D image, with 3D volumes summed within 4D image)',
         required=False)
     basic.add_argument(
         "-sub",
