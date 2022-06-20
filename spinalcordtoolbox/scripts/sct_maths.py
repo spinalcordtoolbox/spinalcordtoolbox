@@ -113,7 +113,7 @@ def get_parser():
     basic.add_argument(
         "-mul",
         metavar='',
-        nargs="+",
+        nargs="*",
         action=ParseDataOrScalarArgument,
         help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space).'
              '\nNote: Dimensions must match the dimensions of the input image.',
@@ -368,7 +368,10 @@ def main(argv=None):
         data_out = sct_math.laplacian(data, sigmas)
 
     elif arguments.mul is not None:
-        data_to_mul = sct_math.concatenate_along_last_dimension([data] + arguments.mul)
+        if data.ndim == 4 and len(arguments.mul) == 0:
+            data_to_mul = data  # Special case for summing 3D volumes within a single 4D image (i.e. "-add" by itself)
+        else:
+            data_to_mul = sct_math.concatenate_along_last_dimension([data] + arguments.mul)
         data_out = np.prod(data_to_mul, axis=-1)
 
     elif arguments.div is not None:

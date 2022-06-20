@@ -96,19 +96,24 @@ def test_sub_div_output_dimensions(op, ndims, tmp_path):
     assert dim_out == dim_expected, f"Calling {op} on ndims {ndims} resulted in mismatch."
 
 
-def test_add_4d_image_with_no_argument(tmp_path):
-    """Test that passing a 4D image with bare -add sums the 3D volumes."""
+@pytest.mark.parametrize('op', ['-add', '-mul'])
+def test_add_mul_4d_image_with_no_argument(op, tmp_path):
+    """Test that passing a 4D image with bare '-add' or '-mul' operates on the 3D volumes."""
     # Generate input image
     base_dim = [20, 20, 20]
     n_vol = 5
     dim = base_dim + [n_vol]
     path_im = str(tmp_path / "im.nii.gz")
-    Image(np.ones(dim)).save(path_im)
+    val = 2
+    Image(np.ones(dim) * val).save(path_im)
     # Generate output image
     path_out = str(tmp_path / "im_out-add.nii.gz")
-    sct_maths.main(["-i", path_im, '-add', "-o", path_out])
+    sct_maths.main(["-i", path_im, op, "-o", path_out])
     # Validate output data
     data_out = Image(path_out).data
     dim_out = list(data_out.shape)
     assert dim_out == base_dim
-    assert data_out.mean() == n_vol
+    if op == '-add':
+        assert data_out.mean() == val * n_vol
+    elif op == '-mul':
+        assert data_out.mean() == val ** n_vol
