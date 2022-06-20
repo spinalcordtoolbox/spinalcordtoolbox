@@ -451,24 +451,6 @@ def main(argv=None):
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
 
 
-def get_data(list_fname):
-    """
-    Get data from list of file names
-    :param list_fname:
-    :return: List of numpy arrays.
-    """
-    try:
-        data = [Image(f_in).data for f_in in list_fname]
-    except Exception as e:
-        printv(str(e), 1, 'error')  # file does not exist, exit program
-    # check that every images have same shape
-    for i in range(1, len(data)):
-        if not np.shape(data[i])[0:3] == np.shape(data[0])[0:3]:
-            printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(data[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data[0])), 1, 'warning')
-            printv('\nERROR: All input images must have same dimensions.', 1, 'error')
-    return data
-
-
 def get_data_or_scalar(argument, data_in):
     """
     Get data from list of file names (scenario 1) or scalar (scenario 2)
@@ -482,7 +464,17 @@ def get_data_or_scalar(argument, data_in):
         data_out = data_in[:, :, :] * 0 + float(argument[0])
     # if conversion fails, it should be a string (i.e. file name)
     except (ValueError, IndexError):
-        data_out = get_data(argument)
+        try:
+            data_out = [Image(f_in).data for f_in in argument]
+        except Exception as e:
+            printv(str(e), 1, 'error')  # file does not exist, exit program
+        # check that every images have same shape
+        for i in range(1, len(data_out)):
+            if not np.shape(data_out[i])[0:3] == np.shape(data_out[0])[0:3]:
+                printv('\nWARNING: shape(' + argument[i] + ')=' + str(
+                    np.shape(data_out[i].data)) + ' incompatible with shape(' + argument[0] + ')=' + str(
+                    np.shape(data_out[0])), 1, 'warning')
+                printv('\nERROR: All input images must have sget_dataame dimensions.', 1, 'error')
     return data_out
 
 
