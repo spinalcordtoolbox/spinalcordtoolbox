@@ -67,7 +67,7 @@ def get_parser():
     )
     optional.add_argument(
         "-trpd",
-        help="TR [in s] for pd image. By default, will be fetch from the json sidecar (if it exists).",
+        help="TR [in s] for proton density weighted image (MT off). By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
     )
