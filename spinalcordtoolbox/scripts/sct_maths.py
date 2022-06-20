@@ -469,7 +469,7 @@ def get_data_or_scalar(argument, data_in):
     for arg in argument:
         # Case 1: Argument is a float
         if is_float(arg):
-            data_out.append(data_in[:, :, :] * 0 + float(arg))
+            data_out.append(np.full_like(data_in, float(arg)))
         # Case 2: If argument is not a float, assume argument is a path to an image file
         else:
             data_out.append(Image(arg).data)
