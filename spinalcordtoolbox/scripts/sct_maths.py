@@ -99,16 +99,14 @@ def get_parser():
              '\nNote: In some cases, you may want to instead sum 3D volumes within a 4D image:'
              '\n  - sct_maths -i 4D.nii.gz -add             (Result: 3D image, with 3D volumes summed within 4D image)'
              '\nNote: If your terminal supports it, you can also specify multiple images using a pattern:'
-             '\n  - sct_maths -i 3D.nii.gz -add 3D_*.nii.gz (Result: Adding 3D_2.nii.gz, 3D_3.nii.gz, etc.)'
-             '\nNote: Dimensions must match the dimensions of the input image.',
+             '\n  - sct_maths -i 3D.nii.gz -add 3D_*.nii.gz (Result: Adding 3D_2.nii.gz, 3D_3.nii.gz, etc.)',
         required=False)
     basic.add_argument(
         "-sub",
         metavar='',
         nargs="+",
         action=ParseDataOrScalarArgument,
-        help='Subtract following input. Can be a number, or one or more 3D/4D images (separated with space).'
-             '\nNote: Dimensions must match the dimensions of the input image.',
+        help='Subtract following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
     basic.add_argument(
         "-mul",
@@ -116,16 +114,14 @@ def get_parser():
         nargs="*",
         action=ParseDataOrScalarArgument,
         help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space). '
-             '(See -add for examples.)'
-             '\nNote: Dimensions must match the dimensions of the input image.',
+             '(See -add for examples.)',
         required=False)
     basic.add_argument(
         "-div",
         metavar='',
         nargs="+",
         action=ParseDataOrScalarArgument,
-        help='Divide by following input. Can be a number, or one or more 3D/4D images (separated with space).'
-             '\nNote: Dimensions must match the dimensions of the input image.',
+        help='Divide by following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
     basic.add_argument(
         '-mean',
