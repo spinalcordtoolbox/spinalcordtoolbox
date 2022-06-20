@@ -45,12 +45,12 @@ def test_expected_values(input_params):
     sct_compute_mtsat.main(input_params)
 
     mtsat = nibabel.load(out_mstat)
-    mtsat_img = mtsat.get_fdata()
-    np.testing.assert_almost_equal(mtsat_img.mean(), expected_mean_mtsat, decimal=3)
+    mtsat_data = mtsat.get_fdata()
+    np.testing.assert_almost_equal(mtsat_data.mean(), expected_mean_mtsat, decimal=3)
 
     t1map = nibabel.load(out_t1map)
-    t1map_img = t1map.get_fdata()
-    np.testing.assert_almost_equal(t1map_img.mean(), expected_mean_t1, decimal=3)
+    t1map_data = t1map.get_fdata()
+    np.testing.assert_almost_equal(t1map_data.mean(), expected_mean_t1, decimal=3)
 
     # Remove files
     for f in [out_mstat, out_t1map]:
