@@ -60,10 +60,7 @@ def run_arithmetic_operation(tmp_path, dims, op):
     return Image(path_out).data
 
 
-@pytest.mark.parametrize('ndims', [(3, 3), (4, 4),
-                                   (3, 4), (4, 3),
-                                   (3, 3, 3), (3, 4, 4), (3, 4, 3),
-                                   (4, 4, 4), (4, 3, 3), (4, 4, 3)])
+@pytest.mark.parametrize('ndims', [(3, 3), (4, 4), (3, 3, 3), (4, 4, 4)])
 @pytest.mark.parametrize('op', ['-add', '-mul'])
 def test_add_mul_output_dimensions(tmp_path, ndims, op):
     """Test that '-add' and '-mul' return the correct dimensions across various combinations

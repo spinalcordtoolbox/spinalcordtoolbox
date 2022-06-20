@@ -58,10 +58,10 @@ def get_parser():
              '\n  - sct_maths -i 3D.nii.gz -add 3D_2.nii.gz (Result: 3D image)'
              '\n  - sct_maths -i 4D.nii.gz -add 4D_2.nii.gz (Result: 4D image)'
              '\nNote: In some cases, you may want to instead sum 3D volumes within a 4D image:'
-             '\n  - sct_maths -i 4D.nii.gz -add 3D.nii.gz   (Result: 3D image, with 3D volumes summed from both images)'
              '\n  - sct_maths -i 4D.nii.gz -add             (Result: 3D image, with 3D volumes summed within 4D image)'
              '\nNote: If your terminal supports it, you can also specify multiple images using a pattern:'
-             '\n  - sct_maths -i 3D.nii.gz -add 3D_*.nii.gz (Result: Adding 3D_2.nii.gz, 3D_3.nii.gz, etc.)',
+             '\n  - sct_maths -i 3D.nii.gz -add 3D_*.nii.gz (Result: Adding 3D_2.nii.gz, 3D_3.nii.gz, etc.)'
+             '\nNote: Dimensions must match the dimensions of the input image.',
         required=False)
     basic.add_argument(
         "-sub",
@@ -74,7 +74,8 @@ def get_parser():
         "-mul",
         metavar='',
         nargs="+",
-        help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space).',
+        help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space).'
+             '\nNote: Dimensions must match the dimensions of the input image.',
         required=False)
     basic.add_argument(
         "-div",
@@ -473,7 +474,7 @@ def get_data_or_scalar(argument, data_in):
         # Case 2: If argument is not a float, assume argument is a path to an image file
         else:
             data = Image(arg).data
-            if data.shape[0:3] == data_in.shape[0:3]:
+            if data.shape == data_in.shape:
                 data_out.append(data)
             else:
                 raise ValueError(f"Dimensions of '{arg}' ({data.shape}) must match input image ({data_in.shape}).")
