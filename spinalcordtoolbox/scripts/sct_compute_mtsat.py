@@ -61,7 +61,7 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         "-trmt",
-        help="TR [in s] for mt image. By default, will be fetch from the json sidecar (if it exists).",
+        help="TR [in s] for the MT image (MT on). By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
     )
