@@ -73,7 +73,7 @@ def get_parser():
     )
     optional.add_argument(
         "-trt1",
-        help="TR [in s] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
+        help="TR [in s] for T1-weighted image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
     )
