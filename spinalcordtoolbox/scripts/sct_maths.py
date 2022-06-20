@@ -115,7 +115,8 @@ def get_parser():
         metavar='',
         nargs="*",
         action=ParseDataOrScalarArgument,
-        help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space).'
+        help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space). '
+             '(See -add for examples.)'
              '\nNote: Dimensions must match the dimensions of the input image.',
         required=False)
     basic.add_argument(
