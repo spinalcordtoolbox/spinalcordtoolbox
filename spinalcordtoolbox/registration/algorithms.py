@@ -546,7 +546,7 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     save(warp, fname_warp_forward)
 
     # Reverse registration
-    warp_data_rev = -warp_data  # TODO - observe if it provides good results
+    warp_data_rev = -warp_data
     warp_rev = Nifti1Image(warp_data_rev, fx_preproc_nii.affine)
     warp_rev.header['intent_code'] = 1007
     # Save the composed warping field [reverse]
