@@ -114,6 +114,6 @@ def test_add_mul_4d_image_with_no_argument(op, tmp_path):
     dim_out = list(data_out.shape)
     assert dim_out == base_dim
     if op == '-add':
-        assert data_out.mean() == val * n_vol
+        assert np.all(data_out == val * n_vol)
     elif op == '-mul':
-        assert data_out.mean() == val ** n_vol
+        assert np.all(data_out == val ** n_vol)
