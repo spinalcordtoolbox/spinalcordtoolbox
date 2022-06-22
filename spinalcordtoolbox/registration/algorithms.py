@@ -450,7 +450,6 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
 
     # ---- First Model ---- #
     logger.info("\n Loading first VxmDense model...")
-    logger.info(f"\n{os.getcwd()}")
     pt_first_model = vxm.networks.VxmDense(**reg_args)
     model1_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_first_model.pt')
     trained_state_dict_first_model = torch.load(model1_path)
@@ -539,6 +538,9 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     warp_data = warp_data_exp_first + warp_data_exp_second
     warp = Nifti1Image(warp_data, fx_preproc_nii.affine)
     # Set the intent code to vector
+    # The intent code 1007 was chosen based on information found on:
+    #     -  https://brainder.org/2012/09/23/the-nifti-file-format/
+    #     -  http://users.bmap.ucla.edu/~mchamber/npl/nifti_8h_source.html#l00470
     warp.header['intent_code'] = 1007
     # Save the composed warping field [forward]
     save(warp, fname_warp_forward)
