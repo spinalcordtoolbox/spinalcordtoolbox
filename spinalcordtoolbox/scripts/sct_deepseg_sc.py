@@ -18,7 +18,7 @@ from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCrea
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import Image, check_dim
-from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
+from spinalcordtoolbox.deepseg_.sc import deep_segmentation_spinalcord
 from spinalcordtoolbox.reports.qc import generate_qc
 
 

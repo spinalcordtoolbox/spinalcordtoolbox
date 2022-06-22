@@ -36,49 +36,27 @@ jobs:
       run:
         shell: bash
     steps:
-      - name: Get branch name (merge)
-        if: github.event_name != 'pull_request'
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
-
-      - name: Get branch name (pull request)
-        if: github.event_name == 'pull_request'
-        run: echo "BRANCH_NAME=$(echo ${GITHUB_HEAD_REF})" >> $GITHUB_ENV
-
       - name: Checkout SCT
         uses: actions/checkout@v2
-        with:
-          path: checkout/spinalcordtoolbox
 
       - name: Install SCT (Unix)
         if: matrix.os != 'windows-2019'
-        run: |
-          cd checkout/spinalcordtoolbox
-          ./install_sct -y
+        run: ./install_sct -y
 
-      # NB: install_sct.bat uses %HOMEPATH% internally; it will typically be set on user accounts, but isn't for GHA.
       - name: Install SCT (Windows)
         if: matrix.os == 'windows-2019'
         shell: cmd
-        run: |
-          set HOMEPATH=%GITHUB_WORKSPACE%
-          copy checkout\spinalcordtoolbox\install_sct.bat .\
-          install_sct.bat %BRANCH_NAME%
+        run: install_sct.bat
 
       - name: Update environment variables
         run: |
           if [ "$RUNNER_OS" == "Windows" ]; then
 
-            # NB: `INSTALL_DIR` is only used for GitHub Actions, and wouldn't be set in a normal install.
-            echo "INSTALL_DIR=$GITHUB_WORKSPACE/spinalcordtoolbox" >> $GITHUB_ENV
-
             # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
             # In a user install, the user would perform this step using the Windows PATH-changing GUI.
-            echo "$GITHUB_WORKSPACE/spinalcordtoolbox/bin" >> $GITHUB_PATH
+            echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
 
           else
-
-            # NB: `INSTALL_DIR` is only used for GitHub Actions, and wouldn't be set in a normal install.
-            echo "INSTALL_DIR=$GITHUB_WORKSPACE/checkout/spinalcordtoolbox" >> $GITHUB_ENV
 
             # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
             # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
@@ -93,13 +71,10 @@ jobs:
         run: sct_check_dependencies
 
       - name: Run batch_processing.sh
-        run: |
-          cd $INSTALL_DIR
-          bash batch_processing.sh
+        run: bash batch_processing.sh
 
       - name: Validate new results
         run: |
-          cd $INSTALL_DIR
           # Auto-pass macOS as it would fail due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3194
           if [ "$RUNNER_OS" == "macOS" ]; then
                sct_testing testing/batch_processing/test_batch_processing.py || exit 0

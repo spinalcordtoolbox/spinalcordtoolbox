@@ -1,8 +1,4 @@
 dipy
-# h5py is pinned to minor than 3 due to issues with Keras/TF
-# https://github.com/tensorflow/tensorflow/issues/44467
-h5py~=2.10.0
-Keras==2.3.1
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu
@@ -20,11 +16,6 @@ numpy
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 onnxruntime>=1.7.0
 pandas
-# This is pinned to address an upstream breaking change from protobuf 4.21.0
-# (Yes, you're reading that right. protobuf updated its major version from 3.20.1 to 4.21.0.)
-# The protobuf update breaks Keras specifically, but we can remove the fix once we drop Keras in
-# https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3738
-protobuf==3.20.1
 portalocker
 psutil
 pyqt5==5.11.3
@@ -36,10 +27,10 @@ requirements-parser
 scipy
 scikit-image
 scikit-learn
-tensorflow~=1.15.0
 xlwt
 tqdm
 transforms3d
 urllib3[secure]
 pytest_console_scripts
+pyyaml
 wquantiles
