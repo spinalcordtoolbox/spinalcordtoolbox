@@ -107,7 +107,7 @@ def test_add_mul_4d_image_with_no_argument(op, tmp_path):
     val = 2
     Image(np.ones(dim) * val).save(path_im)
     # Generate output image
-    path_out = str(tmp_path / "im_out-add.nii.gz")
+    path_out = str(tmp_path / "im_out.nii.gz")
     sct_maths.main(["-i", path_im, op, "-o", path_out])
     # Validate output data
     data_out = Image(path_out).data
