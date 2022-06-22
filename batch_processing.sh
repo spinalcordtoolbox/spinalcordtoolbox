@@ -126,11 +126,23 @@ cd ..
 # t1
 # ===========================================================================================
 cd t1
-# Segment spinal cord
-sct_deepseg_sc -i t1.nii.gz -c t1 -qc "$SCT_BP_QC_FOLDER"
-# Smooth spinal cord along superior-inferior axis
+# Contrast-agnostic registration
+# 1. t1w preprocessing (cropping around spinal cord)
+sct_deepseg_sc -i t1.nii.gz -c t1 -centerline cnn
+sct_create_mask -i t1.nii.gz -p centerline,t1_seg.nii.gz -size 35mm -f cylinder -o mask_t1.nii.gz
+sct_crop_image -i t1.nii.gz -m mask_t1.nii.gz
+# 2. t2w preprocessing (cropping around spinal cord)
+cp ../t2/t2.nii.gz ./t2.nii.gz
+sct_deepseg_sc -i t2.nii.gz -c t2
+sct_create_mask -i t2.nii.gz -p centerline,t2_seg.nii.gz -size 35mm -f cylinder -o mask_t2.nii.gz
+sct_crop_image -i t2.nii.gz -m mask_t2.nii.gz
+# 3. Perform registration
+sct_register_multimodal -i t1_crop.nii.gz -d t2_crop.nii.gz -param step=1,type=im,algo=dl
+
+# Other useful utilities
+# 1. Smooth spinal cord along superior-inferior axis
 sct_smooth_spinalcord -i t1.nii.gz -s t1_seg.nii.gz
-# Flatten cord in the right-left direction (to make nice figure)
+# 2. Flatten cord in the right-left direction (to make nice figure)
 sct_flatten_sagittal -i t1.nii.gz -s t1_seg.nii.gz
 # Go back to root folder
 cd ..
