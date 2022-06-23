@@ -198,6 +198,9 @@ def main(argv=None):
     verbose = complete_test = arguments.complete
     set_loglevel(verbose=verbose)
 
+    print("\nSYSTEM INFORMATION"
+          "\n------------------")
+
     print("SCT info:")
     print("- version: {}".format(__version__))
     print("- path: {0}".format(__sct_dir__))
@@ -239,6 +242,9 @@ def main(argv=None):
 
     if arguments.short:
         sys.exit()
+
+    print("\nMANDATORY DEPENDENCIES"
+          "\n----------------------")
 
     # check if Python path is within SCT path
     print_line('Check Python executable')
@@ -353,6 +359,9 @@ def main(argv=None):
 
     # Check version of FSLeyes
     if not sys.platform.startswith('win32'):
+        print("\nOPTIONAL DEPENDENCIES"
+              "\n---------------------")
+
         print_line('Check FSLeyes version')
         cmd = 'fsleyes --version'
         status, output = run_proc(cmd, verbose=0, raise_exception=False)
