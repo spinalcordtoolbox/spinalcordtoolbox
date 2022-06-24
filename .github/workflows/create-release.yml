@@ -41,6 +41,7 @@ jobs:
         ./install_sct -iy
 
     - name: Update requirements-freeze.txt
+      continue-on-error: true
       run: |
         echo "Running pip freeze..."
         ./python/envs/venv_sct/bin/pip freeze | grep -v "-e git+" | grep -v "torch" > requirements-freeze.txt
@@ -50,6 +51,8 @@ jobs:
         grep "sys_platform" requirements.txt >> requirements-freeze.txt
         echo "Grepping for http URLs..."
         grep -- "-f http" requirements.txt >> requirements-freeze.txt 
+        echo "Catting requirements-freeze.txt
+        cat requirements-freeze.txt
 
     - name: Upload requirements-freeze.txt
       uses: actions/upload-artifact@v3
