@@ -42,14 +42,8 @@ jobs:
 
     - name: Update requirements-freeze.txt
       run: |
-        echo "Sourcing conda script..."
-        source python/etc/profile.d/conda.sh
-        echo "Activating venv_sct conda environment..."
-        conda activate venv_sct
         echo "Running pip freeze..."
-        pip freeze | grep -v "-e git+" | grep -v "torch" > requirements-freeze.txt
-        echo "Deactivating conda environment...
-        conda deactivate
+        ./python/envs/venv_sct/bin/pip freeze | grep -v "-e git+" | grep -v "torch" > requirements-freeze.txt
         echo "Echoing comment into requirements-freeze.txt"
         echo "# Platform-specific requirements (For torch, see SCT Issue #2745)" >> requirements-freeze.txt
         echo "Grepping for sys_platform..."
