@@ -42,10 +42,6 @@ jobs:
 
     - name: Update requirements-freeze.txt
       run: |
-        echo "Viewing file tree..."
-        ls
-        ls python/
-        ls python/etc/profile.d/
         echo "Sourcing conda script..."
         source python/etc/profile.d/conda.sh
         echo "Activating venv_sct conda environment..."
