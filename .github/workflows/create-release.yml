@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Checkout spinalcordtoolbox (main branch)
+    - name: Checkout spinalcordtoolbox
       uses: actions/checkout@v2
 
     - name: Install spinalcordtoolbox
@@ -42,12 +42,23 @@ jobs:
 
     - name: Update requirements-freeze.txt
       run: |
+        echo "Viewing file tree..."
+        ls
+        ls python/
+        ls python/etc/profile.d/
+        echo "Sourcing conda script..."
         source python/etc/profile.d/conda.sh
+        echo "Activating venv_sct conda environment..."
         conda activate venv_sct
+        echo "Running pip freeze..."
         pip freeze | grep -v "-e git+" | grep -v "torch" > requirements-freeze.txt
+        echo "Deactivating conda environment...
         conda deactivate
+        echo "Echoing comment into requirements-freeze.txt"
         echo "# Platform-specific requirements (For torch, see SCT Issue #2745)" >> requirements-freeze.txt
+        echo "Grepping for sys_platform..."
         grep "sys_platform" requirements.txt >> requirements-freeze.txt
+        echo "Grepping for http URLs..."
         grep -- "-f http" requirements.txt >> requirements-freeze.txt 
 
     - name: Upload requirements-freeze.txt
