@@ -14,6 +14,7 @@ import sys
 import pickle
 import gzip
 
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -24,10 +25,46 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 
 
+class ParseDataOrScalarArgument(argparse.Action):
+    """
+    Parses arguments that can take the following forms:
+
+    - '-arg 5'                      (Int argument)
+    - '-arg 5.0'                    (Float argument)
+    - '-arg image.nii.gz'           (Image)
+    - '-arg im1.nii.gz im2.nii.gz'  (List of images)
+    """
+    def __call__(self, parser, namespace, values, option_string=None):
+        def is_float(element):
+            try:
+                float(element)
+                return True
+            except ValueError:
+                return False
+
+        # '-i' is mandatory, and the first argument in the parser, so this *should* be parsed first
+        data_in = Image(namespace.i).data
+
+        data_out = []
+        for val in values:
+            # Case 1: Argument is a float
+            if is_float(val):
+                data_out.append(np.full_like(data_in, float(val)))
+            # Case 2: If argument is not a float, assume argument is a path to an image file
+            else:
+                data = Image(val).data
+                if data.shape == data_in.shape:
+                    data_out.append(data)
+                else:
+                    raise parser.error(f"Dimensions of '{val}' ({data.shape}) "
+                                       f"must match input image ({data_in.shape}).")
+
+        setattr(namespace, self.dest, data_out)
+
+
 def get_parser():
     parser = SCTArgumentParser(
-        description='Perform mathematical operations on images. Some inputs can be either a number or a 4d image or '
-                    'several 3d images separated with ","'
+        description='Perform mathematical operations on images.'
     )
 
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
@@ -53,26 +90,39 @@ def get_parser():
     basic.add_argument(
         "-add",
         metavar='',
-        nargs="+",
-        help='Add following input. Can be a number or multiple images (separated with space).',
+        nargs="*",
+        action=ParseDataOrScalarArgument,
+        help='Add following input. Can be a number or one or more 3D/4D images (separated with space). Examples:'
+             '\n  - sct_maths -i 3D.nii.gz -add 5                       (Result: 3D image with "5" added to each voxel)'
+             '\n  - sct_maths -i 3D.nii.gz -add 3D_2.nii.gz             (Result: 3D image)'
+             '\n  - sct_maths -i 4D.nii.gz -add 4D_2.nii.gz             (Result: 4D image)'
+             '\n  - sct_maths -i 4D_nii.gz -add 4D_2.nii.gz 4D_3.nii.gz (Result: 4D image)'
+             '\nNote: If your terminal supports it, you can also specify multiple images using a pattern:'
+             '\n  - sct_maths -i 4D.nii.gz -add 4D_*.nii.gz (Result: Adding 4D_2.nii.gz, 4D_3.nii.gz, etc.)'
+             '\nNote: If the input image is 4D, you can also leave "-add" empty to sum the 3D volumes within the image:'
+             '\n  - sct_maths -i 4D.nii.gz -add             (Result: 3D image, with 3D volumes summed within 4D image)',
         required=False)
     basic.add_argument(
         "-sub",
         metavar='',
         nargs="+",
-        help='Subtract following input. Can be a number or an image.',
+        action=ParseDataOrScalarArgument,
+        help='Subtract following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
     basic.add_argument(
         "-mul",
         metavar='',
-        nargs="+",
-        help='Multiply by following input. Can be a number or multiple images (separated with space).',
+        nargs="*",
+        action=ParseDataOrScalarArgument,
+        help='Multiply by following input. Can be a number, or one or more 3D/4D images (separated with space). '
+             '(See -add for examples.)',
         required=False)
     basic.add_argument(
         "-div",
         metavar='',
         nargs="+",
-        help='Divide by following input. Can be a number or an image.',
+        action=ParseDataOrScalarArgument,
+        help='Divide by following input. Can be a number, or one or more 3D/4D images (separated with space).',
         required=False)
     basic.add_argument(
         '-mean',
@@ -294,13 +344,15 @@ def main(argv=None):
         data_out = sct_math.binarize(data, bin_thr=bin_thr)
 
     elif arguments.add is not None:
-        data2 = get_data_or_scalar(arguments.add, data)
-        data_concat = sct_math.concatenate_along_4th_dimension(data, data2)
-        data_out = np.sum(data_concat, axis=3)
+        if data.ndim == 4 and len(arguments.add) == 0:
+            data_to_add = data  # Special case for summing 3D volumes within a single 4D image (i.e. "-add" by itself)
+        else:
+            data_to_add = sct_math.concatenate_along_last_dimension([data] + arguments.add)
+        data_out = np.sum(data_to_add, axis=-1)
 
     elif arguments.sub is not None:
-        data2 = get_data_or_scalar(arguments.sub, data)
-        data_out = data - data2
+        data_to_sub = sct_math.concatenate_along_last_dimension(arguments.sub)
+        data_out = np.subtract(data, np.sum(data_to_sub, axis=-1))
 
     elif arguments.laplacian is not None:
         sigmas = arguments.laplacian
@@ -314,13 +366,15 @@ def main(argv=None):
         data_out = sct_math.laplacian(data, sigmas)
 
     elif arguments.mul is not None:
-        data2 = get_data_or_scalar(arguments.mul, data)
-        data_concat = sct_math.concatenate_along_4th_dimension(data, data2)
-        data_out = np.prod(data_concat, axis=3)
+        if data.ndim == 4 and len(arguments.mul) == 0:
+            data_to_mul = data  # Special case for summing 3D volumes within a single 4D image (i.e. "-add" by itself)
+        else:
+            data_to_mul = sct_math.concatenate_along_last_dimension([data] + arguments.mul)
+        data_out = np.prod(data_to_mul, axis=-1)
 
     elif arguments.div is not None:
-        data2 = get_data_or_scalar(arguments.div, data)
-        data_out = np.divide(data, data2)
+        data_to_div = sct_math.concatenate_along_last_dimension(arguments.div)
+        data_out = np.divide(data, np.prod(data_to_div, axis=-1))
 
     elif arguments.mean is not None:
         dim = dim_list.index(arguments.mean)
@@ -435,45 +489,6 @@ def main(argv=None):
         display_viewer_syntax([fname_out], verbose=verbose)
     else:
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
-
-
-def get_data(list_fname):
-    """
-    Get data from list of file names
-    :param list_fname:
-    :return: 3D or 4D numpy array.
-    """
-    try:
-        nii = [Image(f_in) for f_in in list_fname]
-    except Exception as e:
-        printv(str(e), 1, 'error')  # file does not exist, exit program
-    data0 = nii[0].data
-    data = nii[0].data
-    # check that every images have same shape
-    for i in range(1, len(nii)):
-        if not np.shape(nii[i].data) == np.shape(data0):
-            printv('\nWARNING: shape(' + list_fname[i] + ')=' + str(np.shape(nii[i].data)) + ' incompatible with shape(' + list_fname[0] + ')=' + str(np.shape(data0)), 1, 'warning')
-            printv('\nERROR: All input images must have same dimensions.', 1, 'error')
-        else:
-            data = sct_math.concatenate_along_4th_dimension(data, nii[i].data)
-    return data
-
-
-def get_data_or_scalar(argument, data_in):
-    """
-    Get data from list of file names (scenario 1) or scalar (scenario 2)
-    :param argument: list of file names of scalar
-    :param data_in: if argument is scalar, use data to get np.shape
-    :return: 3d or 4d numpy array
-    """
-    # try to convert argument in float
-    try:
-        # build data2 with same shape as data
-        data_out = data_in[:, :, :] * 0 + float(argument[0])
-    # if conversion fails, it should be a string (i.e. file name)
-    except ValueError:
-        data_out = get_data(argument)
-    return data_out
 
 
 def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, metric_full: str, verbose):
