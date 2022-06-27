@@ -1,4 +1,5 @@
 import pytest
+import traceback as tb
 import logging
 
 import numpy as np
@@ -71,6 +72,17 @@ def test_arithmetic_operation_output_dimensions(tmp_path, ndims, op):
     dim_expected = dims[0]  # Expected dimension should match the input image
     dim_out = list(data_out.shape)
     assert dim_out == dim_expected, f"Calling {op} on ndims {ndims} resulted in mismatch."
+
+
+@pytest.mark.parametrize('ndims', [(3, 4), (3, 4, 5)])
+@pytest.mark.parametrize('op', ['-add', '-mul', '-sub', '-div'])
+def test_mismatched_dimensions_error(tmp_path, ndims, op):
+    """Test that passing images of mismatched dimensions returns the proper parser error."""
+    possible_dims = {3: [10, 15, 20], 4: [10, 15, 20, 5], 5: [10, 15, 20, 5, 1]}
+    dims = [possible_dims[n] for n in ndims]
+    with pytest.raises(SystemExit) as e:
+        run_arithmetic_operation(tmp_path, dims, op)
+    assert 'parser.error(f"Dimensions of' in str(tb.format_list(tb.extract_tb(e.tb)))
 
 
 @pytest.mark.parametrize('op', ['-add', '-mul'])
