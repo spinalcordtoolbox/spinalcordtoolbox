@@ -61,37 +61,14 @@ def run_arithmetic_operation(tmp_path, dims, op):
 
 
 @pytest.mark.parametrize('ndims', [(3, 3), (4, 4), (3, 3, 3), (4, 4, 4)])
-@pytest.mark.parametrize('op', ['-add', '-mul'])
-def test_add_mul_output_dimensions(tmp_path, ndims, op):
-    """Test that '-add' and '-mul' return the correct dimensions across various combinations
+@pytest.mark.parametrize('op', ['-add', '-mul', '-sub', '-div'])
+def test_arithmetic_operation_output_dimensions(tmp_path, ndims, op):
+    """Test that arithmetic operations return the correct dimensions across various combinations
        of 3D and 4D images."""
     possible_dims = {3: [10, 15, 20], 4: [10, 15, 20, 5]}
     dims = [possible_dims[n] for n in ndims]
     data_out = run_arithmetic_operation(tmp_path, dims, op)
-    # For `-add` and `-mul`, output dimensions should match the minimum ndim
-    # - 3D {+,*} 3D = 3D
-    # - 4D {+,*} 4D = 4D
-    # - 3D {+,*} 4D = 3D  (i.e. we add/mul all the 3D volumes within the 4D image)
-    # - 4D {+,*} 3D = 3D  (i.e. we add/mul all the 3D volumes within the 4D image)
-    dim_expected = possible_dims[min(ndims)]
-    dim_out = list(data_out.shape)
-    assert dim_out == dim_expected, f"Calling {op} on ndims {ndims} resulted in mismatch."
-
-
-# NB: -sub/-div do not currently support mis-matched 3D/4D ndims:
-#      ('ndims', [(3, 4), (4, 3), (3, 4, 4), (3, 4, 3), (4, 3, 3), (4, 4, 3)])
-@pytest.mark.parametrize('ndims', [(3, 3), (4, 4), (3, 3, 3), (4, 4, 4)])
-@pytest.mark.parametrize('op', ['-sub', '-div'])
-def test_sub_div_output_dimensions(op, ndims, tmp_path):
-    """Test that '-sub' and '-div' return the correct dimensions across various combinations
-       of 3D and 4D images."""
-    possible_dims = {3: [10, 15, 20], 4: [10, 15, 20, 5]}
-    dims = [possible_dims[n] for n in ndims]
-    data_out = run_arithmetic_operation(tmp_path, dims, op)
-    # For `-sub` and `-div`, output dimensions should match the dimensions of the input image
-    # - 3D {-,/} 3D = 3D
-    # - 4D {-,/} 4D = 4D
-    dim_expected = dims[0]
+    dim_expected = dims[0]  # Expected dimension should match the input image
     dim_out = list(data_out.shape)
     assert dim_out == dim_expected, f"Calling {op} on ndims {ndims} resulted in mismatch."
 
