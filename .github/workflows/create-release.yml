@@ -44,7 +44,7 @@ jobs:
       continue-on-error: true
       run: |
         echo "Running pip freeze..."
-        ./python/envs/venv_sct/bin/pip freeze | grep -v "-e git+" | grep -v "torch" > requirements-freeze.txt
+        ./python/envs/venv_sct/bin/pip freeze | grep -v "-e git+" | grep -v "torch" | grep -v "@ file" > requirements-freeze.txt
         echo "Echoing comment into requirements-freeze.txt"
         echo "# Platform-specific requirements (For torch, see SCT Issue #2745)" >> requirements-freeze.txt
         echo "Grepping for sys_platform..."
