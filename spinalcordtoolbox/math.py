@@ -278,12 +278,9 @@ def concatenate_along_last_dimension(data):
     if ndims == {3} or ndims == {4}:
         data = [arr[..., np.newaxis] for arr in data]
 
-    # Case 2: Mix of 3D and 4D images --> Only add a new axis to the smaller images
+    # Case 2: Mix of 3D and 4D images --> No longer supported
     elif ndims == {3, 4}:
-        data = [arr[..., np.newaxis] if len(np.shape(arr)) == 3 else arr
-                for arr in data]
-        # NB: We assume that if the user is trying to process 3D and 4D image together, then they
-        #     wish to combine the 3D volumes from the 4D image with the 3D image.
+        raise ValueError(f"Can only process images with the same number of dimensions, but got mix: {ndims}")
 
     # Case 3: 2D/5D/etc. images --> Not supported
     else:
