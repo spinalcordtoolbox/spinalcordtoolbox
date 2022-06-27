@@ -61,19 +61,19 @@ def get_parser():
         help="Show this help message and exit")
     optional.add_argument(
         "-trmt",
-        help="TR [in ms] for mt image. By default, will be fetch from the json sidecar (if it exists).",
+        help="TR [in s] for the MT image (MT on). By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
     )
     optional.add_argument(
         "-trpd",
-        help="TR [in ms] for pd image. By default, will be fetch from the json sidecar (if it exists).",
+        help="TR [in s] for proton density weighted image (MT off). By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
     )
     optional.add_argument(
         "-trt1",
-        help="TR [in ms] for t1 image. By default, will be fetch from the json sidecar (if it exists).",
+        help="TR [in s] for T1-weighted image. By default, will be fetch from the json sidecar (if it exists).",
         type=float,
         metavar=Metavar.float,
     )

@@ -49,11 +49,12 @@ jobs:
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --global user.name "GitHub Actions Bot"
 
+    # TODO: "grep certifi" should be removed following an upstream fix for: https://github.com/conda/conda/issues/11580
     - name: Update requirements-freeze.txt
       run: |
         source python/etc/profile.d/conda.sh
         conda activate venv_sct
-        pip freeze | grep -v "-e git+" | grep -v "torch" > requirements-freeze.txt
+        pip freeze | grep -v "-e git+" | grep -v "torch" | grep -v "certifi @ file" > requirements-freeze.txt
         conda deactivate
         echo "# Platform-specific torch requirements (See SCT Issue #2745)" >> requirements-freeze.txt
         grep "torch" requirements.txt >> requirements-freeze.txt
