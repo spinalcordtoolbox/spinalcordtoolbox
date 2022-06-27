@@ -67,9 +67,9 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     :param nii_mt: Image object for MTw
     :param nii_pd: Image object for PDw
     :param nii_t1: Image object for T1w
-    :param tr_mt: Float: Repetition time for MTw image
-    :param tr_pd: Float: Repetition time for PDw image
-    :param tr_t1: Float: Repetition time for T1w image
+    :param tr_mt: Float: Repetition time (in s) for MTw image
+    :param tr_pd: Float: Repetition time (in s) for PDw image
+    :param tr_t1: Float: Repetition time (in s) for T1w image
     :param fa_mt: Float: Flip angle (in deg) for MTw image
     :param fa_pd: Float: Flip angle (in deg) for PDw image
     :param fa_t1: Float: Flip angle (in deg) for T1w image
@@ -86,11 +86,6 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     r1_threshold = 0.01  # R1=0.01 s^-1 corresponds to T1=100s which is a reasonable threshold
     # Similarly, we also set a threshold for MTsat values
     mtsat_threshold = 1  # we expect MTsat to be on the order of 0.01
-
-    # convert all TRs in s
-    tr_mt *= 0.001
-    tr_pd *= 0.001
-    tr_t1 *= 0.001
 
     # Convert flip angles into radians
     fa_mt_rad = np.radians(fa_mt)

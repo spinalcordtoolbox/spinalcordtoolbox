@@ -8,6 +8,8 @@ The following studies have used SCT:
 2022
 ----
 
+-  Han *et al.* `Application of Neurite Orientation Dispersion and Density Imaging to Evaluate and Predict the Surgical Outcome for Degenerative Cervical Myelopathy <https://onlinelibrary.wiley.com/doi/full/10.1111/os.13326>`_, **Orthop Surg.** 2022
+-  Madsen *et al.* `Linking lesions in sensorimotor cortex to contralateral hand function in multiple sclerosis: a 7 T MRI study <https://pubmed.ncbi.nlm.nih.gov/35653498/>`_, **Brain** 2022
 -  Jayasekera *et al.* `Analysis of combined clinical and diffusion basis spectrum imaging metrics to predict the outcome of chronic cervical spondylotic myelopathy following cervical decompression surgery <https://thejns.org/spine/view/journals/j-neurosurg-spine/aop/article-10.3171-2022.3.SPINE2294/article-10.3171-2022.3.SPINE2294.xml>`_ **Journal of Neurosurgery** 2022
 -  Tinnermann *et al.* `Opioid analgesia alters corticospinal coupling along the descending pain system in healthy participants <https://elifesciences.org/articles/74293>`_ **eLife** 2022
 -  Kim *et al.* `Confounder-adjusted MRI-based predictors of multiple sclerosis disability <https://www.medrxiv.org/content/10.1101/2022.04.18.22273974v1>`_. (preprint) 2022

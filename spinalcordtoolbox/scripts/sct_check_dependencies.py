@@ -62,7 +62,7 @@ def resolve_module(framework_name):
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
         'pyqt5': ('PyQt5.QtCore', False),  # Importing Qt instead PyQt5 to be able to catch this issue #2523
-        'Keras': ('keras', True),
+        'pyyaml': ('yaml', False),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
         'msvc-runtime': ('msvc_runtime', False),
@@ -70,6 +70,7 @@ def resolve_module(framework_name):
         'pytest-cov': ('pytest_cov', False),
         'urllib3[secure]': ('urllib3', False),
         'pytest-xdist': ('xdist', False),
+        'protobuf': ('google.protobuf', False)
     }
 
     try:
