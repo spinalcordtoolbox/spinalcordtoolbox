@@ -293,6 +293,8 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
             slicegroups = [tuple([val for sublist in slicegroups for val in sublist])]  # flatten into single tuple
             # vertgroups = [(2, 3, 4)]
             vertgroups = [tuple([level for level in levels])]
+        # Intersection between specified slices and each element of slicegroups
+        slicegroups = [tuple(set(slicegroup) & set(slices)) for slicegroup in slicegroups]
     # aggregation based on slices
     else:
         if perslice:
