@@ -172,7 +172,7 @@ def test_aggregate_across_levels_and_slices(dummy_metrics, dummy_vert_level):
                                                                   vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
     assert (1, 2, 3) in agg_metric.keys()
-    assert agg_metric[(1,2,3)] == {'VertLevel': (2, 3), 'DistancePMJ': None, 'WA()': 37.0}
+    assert agg_metric[(1, 2, 3)] == {'VertLevel': (2, 3), 'DistancePMJ': None, 'WA()': 37.0}
 
 
 # noinspection 801,PyShadowingNames
