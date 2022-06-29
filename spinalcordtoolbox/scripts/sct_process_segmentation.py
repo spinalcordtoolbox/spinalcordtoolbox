@@ -136,7 +136,9 @@ def get_parser():
     optional.add_argument(
         '-vert',
         metavar=Metavar.str,
-        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2."
+        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2. If you also specify a range of"
+             "slices with flag `-z`, the intersection between the specified slices and vertebral levels will be "
+             "considered."
     )
     optional.add_argument(
         '-vertfile',
