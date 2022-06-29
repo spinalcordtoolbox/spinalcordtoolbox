@@ -164,6 +164,27 @@ def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
 
 
 # noinspection 801,PyShadowingNames
+def test_aggregate_across_levels_and_slices(dummy_metrics, dummy_vert_level):
+    """Test extraction of metrics aggregation across vertebral levels, while imposing a slice range
+    Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3822"""
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[1, 2, 3, 4, 6],
+                                                                  levels=[2, 3], perlevel=False, perslice=False,
+                                                                  vert_level=dummy_vert_level,
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    assert (1, 2, 3) in agg_metric.keys()
+    assert agg_metric[(1, 2, 3)] == {'VertLevel': (2, 3), 'DistancePMJ': None, 'WA()': 37.0}
+
+    agg_metric_ps = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[1, 2, 3, 4, 6],
+                                                                     levels=[2, 3], perlevel=False, perslice=True,
+                                                                     vert_level=dummy_vert_level,
+                                                                     group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    assert ((1,), (2,), (3,)) == tuple(agg_metric_ps.keys())
+    assert agg_metric_ps[(1,)] == {'VertLevel': (2,), 'DistancePMJ': None, 'WA()': 31.0}
+    assert agg_metric_ps[(2,)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 39.0}
+    assert agg_metric_ps[(3,)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 41.0}
+
+
+# noinspection 801,PyShadowingNames
 def test_aggregate_slices_pmj(dummy_metrics):
     """Test extraction of metrics aggregation within selected slices at a PMJ distance"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[2, 3, 4, 5],
