@@ -243,6 +243,26 @@ def main(argv=None):
     if arguments.short:
         sys.exit()
 
+    # Check version of FSLeyes
+    # NB: We put this section first because typically, it will error out, since FSLeyes isn't installed by default.
+    #     SCT devs want to have access to this information, but we don't want to scare our users into thinking that
+    #     there's a critical error. So, we put it up top to allow the installation to end on a nice "OK" note.
+    if not sys.platform.startswith('win32'):
+        print("\nOPTIONAL DEPENDENCIES"
+              "\n---------------------")
+
+        print_line('Check FSLeyes version')
+        cmd = 'fsleyes --version'
+        status, output = run_proc(cmd, verbose=0, raise_exception=False)
+        # Exit code 0 - command has run successfully
+        if status == 0:
+            # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
+            fsleyes_version = output.split()[2]
+            print_ok(more=(" (%s)" % fsleyes_version))
+        else:
+            print('[  ]')
+            print('  ', (status, output))
+
     print("\nMANDATORY DEPENDENCIES"
           "\n----------------------")
 
@@ -356,23 +376,6 @@ def main(argv=None):
         except Exception as err:
             print_fail()
             print(err)
-
-    # Check version of FSLeyes
-    if not sys.platform.startswith('win32'):
-        print("\nOPTIONAL DEPENDENCIES"
-              "\n---------------------")
-
-        print_line('Check FSLeyes version')
-        cmd = 'fsleyes --version'
-        status, output = run_proc(cmd, verbose=0, raise_exception=False)
-        # Exit code 0 - command has run successfully
-        if status == 0:
-            # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
-            fsleyes_version = output.split()[2]
-            print_ok(more=(" (%s)" % fsleyes_version))
-        else:
-            print('[  ]')
-            print('  ', (status, output), '\n')
 
     print('')
     sys.exit(e + install_software)
