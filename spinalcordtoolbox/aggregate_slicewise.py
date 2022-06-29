@@ -279,6 +279,8 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
         im_vert_level = Image(vert_level).change_orientation('RPI')
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
         slicegroups = [tuple(get_slices_from_vertebral_levels(im_vert_level, level)) for level in levels]
+        # Intersection between specified slices and each element of slicegroups
+        slicegroups = [tuple(set(slicegroup) & set(slices)) for slicegroup in slicegroups]
         if perlevel:
             # vertgroups = [(2,), (3,), (4,)]
             vertgroups = [tuple([level]) for level in levels]
@@ -293,8 +295,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
             slicegroups = [tuple([val for sublist in slicegroups for val in sublist])]  # flatten into single tuple
             # vertgroups = [(2, 3, 4)]
             vertgroups = [tuple([level for level in levels])]
-        # Intersection between specified slices and each element of slicegroups
-        slicegroups = [tuple(set(slicegroup) & set(slices)) for slicegroup in slicegroups]
     # aggregation based on slices
     else:
         if perslice:
