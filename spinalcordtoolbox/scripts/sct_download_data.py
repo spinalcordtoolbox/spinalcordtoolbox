@@ -162,6 +162,12 @@ DATASET_DICT = {
             "https://github.com/spinalcordtoolbox/exvivo-template/archive/refs/tags/r20210317.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "exvivo_template"),
+    },
+    "deepreg_models": {
+        "mirrors": [
+            "https://github.com/ivadomed/multimodal-registration/releases/download/r20220512/models.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "deepreg_models"),
     }
 }
 

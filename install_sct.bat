@@ -65,7 +65,7 @@ pip install -e . || goto error
 rem Install external dependencies
 echo:
 echo ### Downloading model files and binaries...
-FOR %%D IN (PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models binaries_win) DO sct_download_data -d %%D -k || goto error
+FOR %%D IN (PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models binaries_win deepreg_models) DO sct_download_data -d %%D -k || goto error
 
 rem Copying SCT scripts to an isolated folder (so we can add scripts to the PATH without adding the entire venv_sct)
 echo:
