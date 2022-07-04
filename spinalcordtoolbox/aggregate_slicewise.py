@@ -240,7 +240,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
     :param metric: Class Metric(): data to aggregate.
     :param mask: Class Metric(): mask to use for aggregating the data. Optional.
     :param slices: List[int]: Slices to aggregate metric from. If empty, select all slices.
-    :param levels: List[int]: Vertebral levels to aggregate metric from. It has priority over "slices".
+    :param levels: List[int]: Vertebral levels to aggregate metric from. It respects the restriction to "slices".
     :param distance_pmj: float: Distance from Ponto-Medullary Junction (PMJ) in mm.
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False). Has priority over "perslice".
