@@ -22,7 +22,6 @@ param_deepseg = [
 ]
 
 
-# noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('params', param_deepseg)
 def test_deep_segmentation_spinalcord(params):
     """High level segmentation API"""
