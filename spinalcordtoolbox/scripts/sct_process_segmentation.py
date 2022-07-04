@@ -136,7 +136,9 @@ def get_parser():
     optional.add_argument(
         '-vert',
         metavar=Metavar.str,
-        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2."
+        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2. If you also specify a range of"
+             "slices with flag `-z`, the intersection between the specified slices and vertebral levels will be "
+             "considered."
     )
     optional.add_argument(
         '-vertfile',
@@ -444,7 +446,7 @@ def main(argv=None):
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
         data_subject = pd.DataFrame([arguments.normalize])
-        path_model = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'data', 'csa_normalization_models',
+        path_model = os.path.join(__sct_dir__, 'data', 'csa_normalization_models',
                                   '_'.join(sorted(data_subject.columns)) + '.csv')
         if not os.path.isfile(path_model):
             raise parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
