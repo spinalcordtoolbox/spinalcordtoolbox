@@ -17,4 +17,3 @@ Each individual tutorial below is linked together as part of an overarching anal
    registration-to-template/template-registration
    registration-to-template/shape-metric-computation
    registration-to-template/registering-additional-contrasts
-   registration-to-template/mtr-computation
