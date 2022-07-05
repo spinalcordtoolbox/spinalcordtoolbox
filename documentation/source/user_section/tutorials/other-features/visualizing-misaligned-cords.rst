@@ -14,8 +14,8 @@ Downloading the files for this tutorial
 
 First, make sure that you have the following files in your working directory:
 
-* ``single_subject/data/t1.nii.gz``: The image without the magnetization transfer pulse.
-* ``single_subject/data/t1_seg.nii.gz``: The image with the magnetization transfer pulse.
+* ``single_subject/data/t1.nii.gz``: An anatomical spinal cord scan in the T1 contrast.
+* ``single_subject/data/t1_seg.nii.gz``: 3D segmentation of the spinal cord, corresponding to the T1 image.
 
   You can get these files by downloading :sct_tutorial_data:`data_visualizing-misaligned-cords.zip`.
 
