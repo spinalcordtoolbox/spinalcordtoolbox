@@ -9,3 +9,4 @@ This section focuses on additional registration examples that involve co-registe
    :maxdepth: 1
 
    non-template-registration/mtr-computation
+   non-template-registration/contrast-agnostic-registration

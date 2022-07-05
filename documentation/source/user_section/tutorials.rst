@@ -23,6 +23,7 @@ We provide the following hands-on tutorials for SCT's command-line tools.
 #. :doc:`Non-template registration <tutorials/non-template-registration>`
 
    * :doc:`tutorials/non-template-registration/mtr-computation`
+   * :doc:`tutorials/non-template-registration/contrast-agnostic-registration`
 
 #. :doc:`Gray matter segmentation <tutorials/gray-matter-segmentation>`
 
