@@ -1472,13 +1472,24 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
         logger.warning(f"File {os.path.join(path_out, file_out + ext_out)} already exists. Deleting it..")
         os.remove(os.path.join(path_out, file_out + ext_out))
 
+    # Generate output file with extension change (using nibabel to save to the new extension)
     if ext_in != ext_out:
         img = Image(fname_in)
         img = convert(img, squeeze_data=squeeze_data)
         img.save(fname_out)
+    # Generate output file without changing the extension
     else:
-        # Generate output file without changing the extension
-        shutil.move(fname_in, fname_out)
+        # Compare devices for src/dest filepaths
+        # NB: For (non-absolute) filenames, `path_<>` == '', but you can't run lstat() on '', so we check '.' instead.
+        src_device = os.lstat(path_in).st_dev if path_in != '' else os.lstat('.').st_dev
+        dest_device = os.lstat(path_out).st_dev if path_out != '' else os.lstat('.').st_dev
+        if src_device == dest_device:
+            # src and dest are on same device, so move the file
+            shutil.move(fname_in, fname_out)
+        else:
+            # src and dest are on different devices, so copy the file instead, because shutil.move() will fail:
+            # https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3832
+            shutil.copyfile(fname_in, fname_out)
 
     logger.info("File created: %s", os.path.join(path_out, file_out + ext_out))
     return os.path.join(path_out, file_out + ext_out)
