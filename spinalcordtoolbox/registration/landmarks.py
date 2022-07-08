@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #########################################################################################
 #
 # This file contains an implementation of the iterative closest point algorithm.

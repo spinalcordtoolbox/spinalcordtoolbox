@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8
 # Core functions dealing with centerline extraction from 3D data.
 

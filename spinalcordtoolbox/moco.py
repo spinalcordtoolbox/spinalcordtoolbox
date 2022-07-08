@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8
 # Tools for motion correction (moco)
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad

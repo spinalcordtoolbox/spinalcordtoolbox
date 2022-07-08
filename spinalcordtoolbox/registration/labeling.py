@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #########################################################################################
 #
 # Module containing labeling functions used during registration.

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8
 # Deals with postprocessing on generated segmentation: remove outliers, fill holes, etc.
 

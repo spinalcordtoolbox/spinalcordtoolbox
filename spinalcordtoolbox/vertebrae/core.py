@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8
 # Core functions dealing with vertebral labeling
 

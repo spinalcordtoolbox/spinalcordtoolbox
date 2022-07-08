@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8
 # Functions dealing with 2d and 3d curve fitting
 # TODO: implement robust fitting, i.e., detection and removal of outliers. See:

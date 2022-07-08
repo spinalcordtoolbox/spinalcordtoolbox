@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # @package nurbs
 # Approximate a 3D curve with a B-Spline curve from either a set of data points or a set of control points
 #

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8
 # Functions dealing with metrics aggregation (mean, std, etc.) across slices and/or vertebral levels
 
