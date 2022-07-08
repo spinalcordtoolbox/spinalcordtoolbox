@@ -1,4 +1,3 @@
-# -*- coding: utf-8
 # Functions dealing with spinal cord straightening
 
 # TODO: move _get_centerline inside Class

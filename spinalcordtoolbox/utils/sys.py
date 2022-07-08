@@ -1,4 +1,3 @@
-# -*- coding: utf-8
 # System related utilities
 
 import io

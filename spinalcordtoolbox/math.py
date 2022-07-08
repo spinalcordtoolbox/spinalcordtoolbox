@@ -1,4 +1,3 @@
-# -*- coding: utf-8
 # Functions that perform mathematical operations on an image.
 
 

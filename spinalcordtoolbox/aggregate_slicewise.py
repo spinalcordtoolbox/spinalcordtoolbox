@@ -1,4 +1,3 @@
-# -*- coding: utf-8
 # Functions dealing with metrics aggregation (mean, std, etc.) across slices and/or vertebral levels
 
 # TODO: when mask is empty, raise specific message instead of throwing "Weight sum to zero..."

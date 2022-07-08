@@ -1,4 +1,3 @@
-# -*- coding: utf-8
 # Functions dealing with deepseg_sc
 
 import os

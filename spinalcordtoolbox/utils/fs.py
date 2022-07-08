@@ -1,4 +1,3 @@
-# -*- coding: utf-8
 # Filesystem related helpers and utilities
 
 import sys

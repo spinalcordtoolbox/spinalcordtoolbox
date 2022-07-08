@@ -1,4 +1,3 @@
-# -*- coding: utf-8
 # Core functions dealing with vertebral labeling
 
 # TODO: remove i/o as much as possible

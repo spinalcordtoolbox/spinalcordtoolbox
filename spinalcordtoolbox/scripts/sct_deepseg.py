@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 """
 This command-line tool is the interface for the deepseg API that performs segmentation using deep learning from the
 ivadomed package.
