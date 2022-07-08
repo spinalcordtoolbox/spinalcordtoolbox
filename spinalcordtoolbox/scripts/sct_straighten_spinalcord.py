@@ -1,4 +1,4 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 #
 # This program takes as input an anatomic image and the centerline or segmentation of its spinal cord (that you can get
 # using sct_get_centerline.py or sct_segmentation_propagation) and returns the anatomic image where the spinal
