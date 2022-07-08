@@ -61,7 +61,7 @@ If you wish to benefit from the cutting-edge version of SCT, or if you wish to c
 
       cd spinalcordtoolbox
 
-#. Checkout the revision of interest, if different from `master`:
+#. (Optional) Checkout the revision of interest, if different from `master`:
 
    .. code:: sh
 

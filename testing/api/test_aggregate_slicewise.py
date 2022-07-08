@@ -94,7 +94,6 @@ def dummmy_data_subject():
     return df
 
 
-# noinspection 801,PyShadowingNames
 def test_aggregate_across_selected_slices(dummy_metrics):
     """Test extraction of metrics aggregation across slices: Selected slices"""
     agg_metrics = {}
@@ -114,7 +113,6 @@ def test_aggregate_across_selected_slices(dummy_metrics):
                                                            "types according to the casting rule ''safe''"
 
 
-# noinspection 801,PyShadowingNames
 def test_aggregate_across_all_slices(dummy_metrics):
     """Test extraction of metrics aggregation across slices: All slices by default"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], perslice=False,
@@ -122,7 +120,6 @@ def test_aggregate_across_all_slices(dummy_metrics):
     assert agg_metric[list(agg_metric)[0]]['WA()'] == 48.0
 
 
-# noinspection 801,PyShadowingNames
 def test_aggregate_per_slice(dummy_metrics):
     """Test extraction of metrics aggregation per slice: Selected slices"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[3, 4],
@@ -132,7 +129,6 @@ def test_aggregate_per_slice(dummy_metrics):
     assert agg_metric[(4,)]['WA()'] == 50.0
 
 
-# noinspection 801,PyShadowingNames
 def test_aggregate_across_levels(dummy_metrics, dummy_vert_level):
     """Test extraction of metrics aggregation across vertebral levels"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
@@ -142,7 +138,6 @@ def test_aggregate_across_levels(dummy_metrics, dummy_vert_level):
     assert agg_metric[(0, 1, 2, 3)] == {'VertLevel': (2, 3), 'DistancePMJ': None, 'WA()': 35.0}
 
 
-# noinspection 801,PyShadowingNames
 def test_aggregate_across_levels_perslice(dummy_metrics, dummy_vert_level):
     """Test extraction of metrics aggregation within selected vertebral levels and per slice"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
@@ -153,7 +148,6 @@ def test_aggregate_across_levels_perslice(dummy_metrics, dummy_vert_level):
     assert agg_metric[(2,)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 39.0}
 
 
-# noinspection 801,PyShadowingNames
 def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
     """Test extraction of metrics aggregation per vertebral level"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
@@ -163,7 +157,26 @@ def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
     assert agg_metric[(2, 3)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 40.0}
 
 
-# noinspection 801,PyShadowingNames
+def test_aggregate_across_levels_and_slices(dummy_metrics, dummy_vert_level):
+    """Test extraction of metrics aggregation across vertebral levels, while imposing a slice range
+    Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3822"""
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[1, 2, 3, 4, 6],
+                                                                  levels=[2, 3], perlevel=False, perslice=False,
+                                                                  vert_level=dummy_vert_level,
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    assert (1, 2, 3) in agg_metric.keys()
+    assert agg_metric[(1, 2, 3)] == {'VertLevel': (2, 3), 'DistancePMJ': None, 'WA()': 37.0}
+
+    agg_metric_ps = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[1, 2, 3, 4, 6],
+                                                                     levels=[2, 3], perlevel=False, perslice=True,
+                                                                     vert_level=dummy_vert_level,
+                                                                     group_funcs=(('WA', aggregate_slicewise.func_wa),))
+    assert ((1,), (2,), (3,)) == tuple(agg_metric_ps.keys())
+    assert agg_metric_ps[(1,)] == {'VertLevel': (2,), 'DistancePMJ': None, 'WA()': 31.0}
+    assert agg_metric_ps[(2,)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 39.0}
+    assert agg_metric_ps[(3,)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 41.0}
+
+
 def test_aggregate_slices_pmj(dummy_metrics):
     """Test extraction of metrics aggregation within selected slices at a PMJ distance"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[2, 3, 4, 5],
@@ -172,7 +185,6 @@ def test_aggregate_slices_pmj(dummy_metrics):
     assert agg_metric[(2, 3, 4, 5)] == {'VertLevel': None, 'DistancePMJ': [64], 'WA()': 45.25}
 
 
-# noinspection 801,PyShadowingNames
 def test_extract_metric(dummy_data_and_labels):
     """Test different estimation methods."""
     # Weighted average
@@ -222,7 +234,6 @@ def test_extract_metric(dummy_data_and_labels):
     assert agg_metric[list(agg_metric)[0]]['MAP()'] == pytest.approx(20.0, rel=0.01)
 
 
-# noinspection 801,PyShadowingNames
 def test_extract_metric_2d(dummy_data_and_labels_2d):
     """Test different estimation methods with 2D input array"""
     agg_metric = aggregate_slicewise.extract_metric(dummy_data_and_labels_2d[0], labels=dummy_data_and_labels_2d[1],
@@ -236,7 +247,6 @@ def test_extract_metric_2d(dummy_data_and_labels_2d):
     assert agg_metric[list(agg_metric)[0]]['MEDIAN()'] == 5.0
 
 
-# noinspection 801,PyShadowingNames
 def test_save_as_csv(tmp_path, dummy_metrics):
     """Test writing of output metric csv file"""
     path_out = str(tmp_path / 'tmp_file_out.csv')
@@ -260,7 +270,6 @@ def test_save_as_csv(tmp_path, dummy_metrics):
         assert next(spamreader)[1:] == [__version__, '', '3:4', '', '', '45.5', '4.5']
 
 
-# noinspection 801,PyShadowingNames
 def test_save_as_csv_slices(tmp_path, dummy_metrics, dummy_vert_level):
     """Make sure slices are listed in reduced form"""
     path_out = str(tmp_path / 'tmp_file_out.csv')
@@ -276,7 +285,6 @@ def test_save_as_csv_slices(tmp_path, dummy_metrics, dummy_vert_level):
         assert row['VertLevel'] == '3:4'
 
 
-# noinspection 801,PyShadowingNames
 def test_save_as_csv_per_level(tmp_path, dummy_metrics, dummy_vert_level):
     """Make sure slices are listed in reduced form"""
     path_out = str(tmp_path / 'tmp_file_out.csv')
@@ -292,7 +300,6 @@ def test_save_as_csv_per_level(tmp_path, dummy_metrics, dummy_vert_level):
         assert row['VertLevel'] == '3'
 
 
-# noinspection 801,PyShadowingNames
 def test_save_as_csv_per_slice_then_per_level(dummy_metrics, dummy_vert_level, tmp_path):
     """Test with and without specifying perlevel. See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2141"""
     path_out = str(tmp_path / 'tmp_file_out.csv')
@@ -315,7 +322,6 @@ def test_save_as_csv_per_slice_then_per_level(dummy_metrics, dummy_vert_level, t
         assert row['VertLevel'] == ''
 
 
-# noinspection 801,PyShadowingNames
 def test_save_as_csv_sorting(tmp_path, dummy_metrics):
     """Make sure slices are sorted in output csv file"""
     path_out = str(tmp_path / 'tmp_file_out.csv')
@@ -342,7 +348,6 @@ def test_save_as_csv_pmj(tmp_path, dummy_metrics):
         assert row['VertLevel'] == ''
 
 
-# noinspection 801,PyShadowingNames
 def test_save_as_csv_extract_metric(tmp_path, dummy_data_and_labels):
     """Test file output with extract_metric()"""
     path_out = str(tmp_path / 'tmp_file_out.csv')

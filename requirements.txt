@@ -11,6 +11,7 @@ matplotlib
 #     https://github.com/scikit-image/scikit-image/issues/4780#issuecomment-824678872
 msvc-runtime; sys.platform == 'win32'
 nibabel
+nilearn
 numpy
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
@@ -33,4 +34,5 @@ transforms3d
 urllib3[secure]
 pytest_console_scripts
 pyyaml
+voxelmorph
 wquantiles

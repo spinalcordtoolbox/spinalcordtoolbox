@@ -240,7 +240,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
     :param metric: Class Metric(): data to aggregate.
     :param mask: Class Metric(): mask to use for aggregating the data. Optional.
     :param slices: List[int]: Slices to aggregate metric from. If empty, select all slices.
-    :param levels: List[int]: Vertebral levels to aggregate metric from. It has priority over "slices".
+    :param levels: List[int]: Vertebral levels to aggregate metric from. It respects the restriction to "slices".
     :param distance_pmj: float: Distance from Ponto-Medullary Junction (PMJ) in mm.
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False). Has priority over "perslice".
@@ -279,6 +279,8 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
         im_vert_level = Image(vert_level).change_orientation('RPI')
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
         slicegroups = [tuple(get_slices_from_vertebral_levels(im_vert_level, level)) for level in levels]
+        # Intersection between specified slices and each element of slicegroups
+        slicegroups = [tuple(set(slicegroup) & set(slices)) for slicegroup in slicegroups]
         if perlevel:
             # vertgroups = [(2,), (3,), (4,)]
             vertgroups = [tuple([level]) for level in levels]

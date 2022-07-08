@@ -86,7 +86,6 @@ param_optic = [
 ]
 
 
-# noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected', im_ctl_find_and_sort_coord)
 def test_find_and_sort_coord(img_ctl, expected):
     img = img_ctl[0].copy()
@@ -95,7 +94,6 @@ def test_find_and_sort_coord(img_ctl, expected):
     assert np.linalg.norm(centermass - img_ctl[2]) == 0
 
 
-# noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected', im_ctl_zeroslice)
 def test_get_centerline_polyfit_minmax(img_ctl, expected):
     """Test centerline fitting with minmax=True"""
@@ -106,7 +104,6 @@ def test_get_centerline_polyfit_minmax(img_ctl, expected):
     assert arr_out.shape == expected
 
 
-# noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
 def test_get_centerline_polyfit(img_ctl, expected, params):
     """Test centerline fitting using polyfit"""
@@ -122,7 +119,6 @@ def test_get_centerline_polyfit(img_ctl, expected, params):
         assert np.linalg.norm(find_and_sort_coord(img) - arr_out) < expected['norm']
 
 
-# noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
 def test_get_centerline_bspline(img_ctl, expected, params):
     """Test centerline fitting using bspline"""
@@ -134,7 +130,6 @@ def test_get_centerline_bspline(img_ctl, expected, params):
     assert fit_results.laplacian_max < expected['laplacian']
 
 
-# noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
 def test_get_centerline_linear(img_ctl, expected, params):
     """Test centerline fitting using linear interpolation"""
@@ -145,7 +140,6 @@ def test_get_centerline_linear(img_ctl, expected, params):
     assert fit_results.laplacian_max < expected['laplacian']
 
 
-# noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('img_ctl,expected,params', im_centerlines)
 def test_get_centerline_nurbs(img_ctl, expected, params):
     """Test centerline fitting using nurbs"""
@@ -158,7 +152,6 @@ def test_get_centerline_nurbs(img_ctl, expected, params):
     assert fit_results.laplacian_max < expected['laplacian']
 
 
-# noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('params', param_optic)
 def test_get_centerline_optic(params):
     """Test centerline extraction with optic"""
