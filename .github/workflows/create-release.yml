@@ -33,11 +33,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Checkout spinalcordtoolbox (main branch)
+    - name: Checkout spinalcordtoolbox
       uses: actions/checkout@v2
-      with:
-        ref: ${{ env.MAIN_BRANCH }}
-        fetch-depth: 0
 
     - name: Install spinalcordtoolbox
       run: |
@@ -67,11 +64,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Checkout spinalcordtoolbox (main branch)
+    - name: Checkout spinalcordtoolbox
       uses: actions/checkout@v2
-      with:
-        ref: ${{ env.MAIN_BRANCH }}
-        fetch-depth: 0
 
     - name: Download requirements-freeze.txt
       uses: actions/download-artifact@v3
