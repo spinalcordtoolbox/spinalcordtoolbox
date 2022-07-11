@@ -9,6 +9,7 @@ matplotlib
 # we'd prefer not to burden users with another prerequisite. 
 # NB: It's possible this fix gets included upstream in a future skimage release, see:
 #     https://github.com/scikit-image/scikit-image/issues/4780#issuecomment-824678872
+# (The version is pinned because this line gets copied to requirements-freeze.txt when preparing a release, not because we're avoiding bugs with a specific version. Feel free to update it to the latest version.)
 msvc-runtime==14.29.30133; sys.platform == 'win32'
 nibabel
 nilearn
