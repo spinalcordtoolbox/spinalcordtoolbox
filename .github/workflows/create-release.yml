@@ -65,7 +65,7 @@ jobs:
       # Only attach to release if workflow is run manually. (This allows the workflow to double as a PR test.)
       if: github.event_name == 'workflow_dispatch'
 
-    - name: Reinstall SCT from release branch
+    - name: Reinstall SCT using `requirements-freeze.txt`
       run: |
         ./install_sct -yc
         cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
