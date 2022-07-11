@@ -29,7 +29,7 @@ env:
 
 
 jobs:
-  create-release:
+  generate-requirements-freeze:
     runs-on: ubuntu-latest
     steps:
 
@@ -53,17 +53,34 @@ jobs:
         echo "# Platform-specific torch requirements (See SCT Issue #2745)" >> requirements-freeze.txt
         grep "torch" requirements.txt >> requirements-freeze.txt
 
+    - name: Upload requirements-freeze.txt
+      uses: actions/upload-artifact@v3
+      with:
+        name: requirements-freeze
+        path: requirements-freeze.txt
+
+  test-release:
+    # The purpose of this step is to run tests using the requirements-freeze file
+    # In 99% of cases, this will be identical to running tests using `requirements.txt`. But, sometimes
+    # there are unique bugs that arise from using the `requirements-freeze.txt` file.
+    needs: generate-requirements-freeze
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout spinalcordtoolbox (main branch)
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ env.MAIN_BRANCH }}
+        fetch-depth: 0
+
+    - name: Download requirements-freeze.txt
+      uses: actions/download-artifact@v3
+      with:
+        name: requirements-freeze
+
     - name: Update version.txt (using test value for CI)
       run: |
         echo "0.0" > spinalcordtoolbox/version.txt
-      # If the workflow *hasn't* been run manually, then it's being run as a PR test, so use a dummy version number
-      if: github.event_name != 'workflow_dispatch'
-
-    - name: Update version.txt (using milestone title)
-      run: |
-        echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
-      # Only attach to release if workflow is run manually. (This allows the workflow to double as a PR test.)
-      if: github.event_name == 'workflow_dispatch'
 
     - name: Reinstall SCT using `requirements-freeze.txt`
       run: |
@@ -83,6 +100,28 @@ jobs:
       run: |
         sct_testing
 
+  create-release:
+    needs: test-release
+    runs-on: ubuntu-latest
+    # Only create the release if workflow is run manually. (This allows the other steps in the workflow to test PRs.)
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+
+    - name: Checkout spinalcordtoolbox (main branch)
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ env.MAIN_BRANCH }}
+        fetch-depth: 0
+
+    - name: Download requirements-freeze.txt
+      uses: actions/download-artifact@v3
+      with:
+        name: requirements-freeze
+
+    - name: Update version.txt (using milestone title)
+      run: |
+        echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
+
     # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
     - name: Set bot user data for commits
       run: |
@@ -98,8 +137,6 @@ jobs:
         git commit -m "Update version.txt for ${{ github.event.inputs.milestone_title }}"
         git tag ${{ github.event.inputs.milestone_title }}
         git push --tags
-      # Only commit to release if workflow is run manually. (This allows the workflow to double as a PR test.)
-      if: github.event_name == 'workflow_dispatch'
 
     - uses: ncipollo/release-action@v1
       name: Create release
@@ -107,5 +144,3 @@ jobs:
         tag: ${{ github.event.inputs.milestone_title }}
         token: ${{ secrets.GITHUB_TOKEN }}
         bodyFile: ".github/workflows/release-body.md"
-      # Only attach to release if workflow is run manually. (This allows the workflow to double as a PR test.)
-      if: github.event_name == 'workflow_dispatch'
