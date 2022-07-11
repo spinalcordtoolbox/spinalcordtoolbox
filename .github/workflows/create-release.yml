@@ -49,7 +49,7 @@ jobs:
         conda deactivate
         echo "# Prioritize CPU version of torch (See https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3790#discussion_r888573886)" >> requirements-freeze.txt
         grep "torch" requirements.txt >> requirements-freeze.txt
-        echo "# Preserve platform-specific requirements missed by `pip freeze`" >> requirements-freeze.txt
+        echo "# Preserve platform-specific requirements missed by 'pip freeze'" >> requirements-freeze.txt
         grep "sys.platform" requirements.txt >> requirements-freeze.txt
 
     - name: Upload requirements-freeze.txt
