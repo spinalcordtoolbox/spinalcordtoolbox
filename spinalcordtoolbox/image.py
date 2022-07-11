@@ -1478,7 +1478,10 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
         img.save(fname_out)
     else:
         # Generate output file without changing the extension
-        shutil.move(fname_in, fname_out)
+        # NB: We specify `shutil.copy` to override the default of `shutil.copy2`.
+        #     (`copy2` copies metadata using `copystat`, but `copystat` fails on WSL installations where the src/dest
+        #     are on different devices. So, we use `copy` instead, which skips the `copystat` step.)
+        shutil.move(fname_in, fname_out, copy_function=shutil.copy)
 
     logger.info("File created: %s", os.path.join(path_out, file_out + ext_out))
     return os.path.join(path_out, file_out + ext_out)
