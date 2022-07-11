@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Compatibility layer to launch old scripts
 
 import sys

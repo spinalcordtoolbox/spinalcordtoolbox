@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 #########################################################################################
 #
 # Function to segment the multiple sclerosis lesions using convolutional neural networks

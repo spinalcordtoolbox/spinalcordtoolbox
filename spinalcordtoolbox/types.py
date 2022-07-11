@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #########################################################################################
 #
 # This file contains many useful (and tiny) classes corresponding to data types.

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Functions that utilize the template (e.g., PAM50)
 
 import logging

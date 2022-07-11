@@ -1,4 +1,3 @@
-# -*- coding: utf-8
 # Collection of functions to create data for testing
 
 import numpy as np

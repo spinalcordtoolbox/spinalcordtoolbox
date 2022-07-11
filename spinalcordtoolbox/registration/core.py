@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #########################################################################################
 #
 # Module containing core entry points for registration functionality.

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Functions dealing with centerline detection and manipulation
 
 import os

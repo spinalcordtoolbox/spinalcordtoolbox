@@ -1,8 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Deal with SCT dataset metadata
 
-import io, os, re
+import io
+import os
+import re
 from operator import itemgetter
 
 from spinalcordtoolbox.utils import parse_num_list

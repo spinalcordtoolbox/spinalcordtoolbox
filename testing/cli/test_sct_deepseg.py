@@ -39,7 +39,6 @@ def test_model_dict():
         assert('default' in value)
 
 
-# noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('fname_image, fname_seg_manual, fname_out, task', [
     (sct_test_path('t2s', 't2s.nii.gz'),
      sct_test_path('t2s', 't2s_seg-deepseg.nii.gz'),
