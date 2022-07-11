@@ -1,4 +1,3 @@
-# coding: utf-8
 # This is the interface API to compute MT-related metrics
 # Code is based on QMRLab: https://github.com/neuropoly/qMRLab
 # Author: Julien Cohen-Adad

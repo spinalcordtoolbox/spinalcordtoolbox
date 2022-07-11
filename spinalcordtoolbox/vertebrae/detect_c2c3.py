@@ -1,4 +1,3 @@
-# coding: utf-8
 # This is the interface API to detect the posterior edge of C2-C3 disc.
 #
 # The models have been trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),

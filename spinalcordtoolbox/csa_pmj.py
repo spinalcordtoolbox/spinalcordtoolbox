@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Functions to get distance from PMJ for processing segmentation data
 # Author: Sandrine Bédard
 import logging

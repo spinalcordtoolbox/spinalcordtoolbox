@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 #########################################################################################
 #
 # Compute MT saturation map and T1 map from a PD-weigthed, a T1-weighted and MT-weighted FLASH images

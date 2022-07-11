@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 # This command-line tool is the interface for the deepseg_gm API
 # that implements the model for the Spinal Cord Gray Matter Segmentation.
 #
