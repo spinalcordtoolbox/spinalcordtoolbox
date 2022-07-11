@@ -43,12 +43,6 @@ jobs:
       run: |
         ./install_sct -iy
 
-    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
-    - name: Set bot user data for commits
-      run: |
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "GitHub Actions Bot"
-
     # TODO: "grep certifi" should be removed following an upstream fix for: https://github.com/conda/conda/issues/11580
     - name: Update requirements-freeze.txt
       run: |
@@ -88,6 +82,12 @@ jobs:
     - name: Run sct_testing
       run: |
         sct_testing
+
+    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
+    - name: Set bot user data for commits
+      run: |
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "GitHub Actions Bot"
 
     - name: Commit and push
       run: |
