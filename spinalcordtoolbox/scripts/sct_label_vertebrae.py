@@ -57,10 +57,6 @@ def vertebral_detection_param(string):
             except ValueError:
                 raise argparse.ArgumentTypeError(
                     f'advanced parameter "{key}" needs an integer value, got "{value}" instead')
-        elif key == 'gaussian_std':
-            # TODO(issue#3706): remove 'gaussian_std' completely for v5.7
-            printv('WARNING: gaussian_std parameter is currently ignored, '
-                   'and will be removed in a later version.', 1, type='warning')
         else:
             raise argparse.ArgumentTypeError(f'Unknown advanced parameter: {key}')
     return param
