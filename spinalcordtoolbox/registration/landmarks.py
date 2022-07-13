@@ -282,7 +282,7 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
         # plt.show()
         plt.savefig('getRigidTransformFromLandmarks_plot.png')
 
-        fig2 = plt.figure()
+        plt.figure()  # fig2
         plt.plot(sse_results)
         plt.grid()
         plt.title('#Iterations: ' + str(res.nit) + ', #FuncEval: ' + str(res.nfev) + ', Error: ' + str(res.fun))

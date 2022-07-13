@@ -753,7 +753,7 @@ class Centerline:
         import matplotlib.pyplot as plt
 
         plt.figure(1)
-        ax = plt.subplot(211)
+        ax = plt.subplot(211)  # noqa: F841
 
         if mode == 'absolute':
             plt.plot([coord[2] for coord in self.points], [coord[0] for coord in self.points])
@@ -771,7 +771,7 @@ class Centerline:
         # ax.set_aspect('equal')
         plt.xlabel('z')
         plt.ylabel('x')
-        ax = plt.subplot(212)
+        ax = plt.subplot(212)  # noqa: F841
 
         if mode == 'absolute':
             plt.plot([coord[2] for coord in self.points], [coord[1] for coord in self.points])
