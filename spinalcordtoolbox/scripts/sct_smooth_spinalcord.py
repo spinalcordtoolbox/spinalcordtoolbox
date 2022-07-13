@@ -91,7 +91,7 @@ def get_parser():
         metavar=Metavar.str,
         choices=['bspline', 'polyfit'],
         default=param_default.algo_fitting,
-        help=f"Algorithm for curve fitting. For more information, see sct_straighten_spinalcord."
+        help="Algorithm for curve fitting. For more information, see sct_straighten_spinalcord."
     )
     optional.add_argument(
         "-o",

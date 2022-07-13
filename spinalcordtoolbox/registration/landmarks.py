@@ -156,7 +156,7 @@ def Metric_Images(imageA, imageB, type=''):
         result_metric = 1.0 / (len(list_A)) * np.sum(np.absolute(np.array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])))
 
     if type == 'MI':
-        logger.info(f"\nto do: MI")
+        logger.info("\nto do: MI")
 
     # Return results
     logger.info(f"\nResult of metric is: {str(result_metric)}")

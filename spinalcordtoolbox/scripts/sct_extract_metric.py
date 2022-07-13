@@ -67,22 +67,22 @@ def get_parser():
 
     parser = SCTArgumentParser(
         description=(
-            f"This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or "
-            f"a folder generated with 'sct_warp_template' containing multiple label files and a label "
-            f"description file (info_label.txt). The labels should be in the same space coordinates as the "
-            f"input image.\n"
-            f"\n"
-            f"The labels used by default are taken from the PAM50 template. To learn about the available PAM50 "
-            f"white/grey matter atlas labels and their corresponding ID values, please refer to: "
-            f"https://spinalcordtoolbox.com/en/latest/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas\n"
-            f"\n"
-            f"To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:\n"
-            f"sct_extract_metric -i dti_FA.nii.gz -l 0,2,3 -vert 2:7 -method bin\n"
-            f"\n"
-            f"To compute average MTR in a region defined by a single label file (could be binary or 0-1 "
-            f"weighted mask) between slices 1 and 4:\n"
-            f"sct_extract_metric -i mtr.nii.gz -f "
-            f"my_mask.nii.gz -z 1:4 -method wa")
+            "This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or "
+            "a folder generated with 'sct_warp_template' containing multiple label files and a label "
+            "description file (info_label.txt). The labels should be in the same space coordinates as the "
+            "input image.\n"
+            "\n"
+            "The labels used by default are taken from the PAM50 template. To learn about the available PAM50 "
+            "white/grey matter atlas labels and their corresponding ID values, please refer to: "
+            "https://spinalcordtoolbox.com/en/latest/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas\n"
+            "\n"
+            "To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:\n"
+            "sct_extract_metric -i dti_FA.nii.gz -l 0,2,3 -vert 2:7 -method bin\n"
+            "\n"
+            "To compute average MTR in a region defined by a single label file (could be binary or 0-1 "
+            "weighted mask) between slices 1 and 4:\n"
+            "sct_extract_metric -i mtr.nii.gz -f "
+            "my_mask.nii.gz -z 1:4 -method wa")
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
