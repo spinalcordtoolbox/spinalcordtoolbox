@@ -118,7 +118,6 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     if np.any(pred > 0):
         logger.info('C2-C3 detected...')
 
-        pred_bin = (pred > 0).astype(np.int_)
         coord_max = np.where(pred == np.max(pred))
         pa_c2c3, is_c2c3 = coord_max[0][0], coord_max[1][0]
         nii_seg.change_orientation('PIR')
