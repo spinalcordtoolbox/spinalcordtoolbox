@@ -94,7 +94,7 @@ def module_import(module_name, suppress_stderr=False):
             sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
         try:
             module = importlib.import_module(module_name)
-        except Exception as e:
+        except Exception:
             sys.stderr = original_stderr
             raise
         else:

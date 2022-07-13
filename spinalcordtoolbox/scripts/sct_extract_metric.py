@@ -278,7 +278,6 @@ def main(argv=None):
 
     param_default = Param()
 
-    overwrite = 0  # TODO: Not used. Why?
     fname_data = get_absolute_path(arguments.i)
     path_label = arguments.f
     method = arguments.method
@@ -286,18 +285,11 @@ def main(argv=None):
     append_csv = arguments.append
     combine_labels = arguments.combine
     labels_user = arguments.l
-    adv_param_user = arguments.param  # TODO: Not used. Why?
     slices = parse_num_list(arguments.z)
     levels = parse_num_list(arguments.vert)
     fname_vertebral_labeling = arguments.vertfile
     perslice = arguments.perslice
     perlevel = arguments.perlevel
-    fname_normalizing_label = arguments.norm_file  # TODO: Not used. Why?
-    normalization_method = arguments.norm_method  # TODO: Not used. Why?
-    label_to_fix = arguments.fix_label  # TODO: Not used. Why?
-    fname_output_metric_map = arguments.output_map  # TODO: Not used. Why?
-    fname_mask_weight = arguments.mask_weighted  # TODO: Not used. Why?
-    discard_negative_values = int(arguments.discard_neg_val)  # TODO: Not used. Why?
 
     # check if path_label is a file (e.g., single binary mask) instead of a folder (e.g., SCT atlas structure which
     # contains info_label.txt file)
