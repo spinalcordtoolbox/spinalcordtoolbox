@@ -279,7 +279,7 @@ class Image(object):
         self.verbose = verbose
 
         # load an image from file
-        if isinstance(param, str) or (sys.hexversion < 0x03000000 and isinstance(param, unicode)):
+        if isinstance(param, str):
             self.loadFromPath(param, verbose)
         # copy constructor
         elif isinstance(param, type(self)):
