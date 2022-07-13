@@ -1340,7 +1340,6 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         # convert to array
         x_disp_a = np.asarray(x_displacement)
         y_disp_a = np.asarray(y_displacement)
-        theta_rot_a = np.asarray(theta_rotation)
         # Generate warping field
         generate_warping_field(fname_dest, x_disp_a, y_disp_a, fname_warp=fname_warp)  # name_warp='step'+str(paramreg.step)
         # Inverse warping field
