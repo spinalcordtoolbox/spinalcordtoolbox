@@ -47,10 +47,7 @@ jobs:
         conda activate venv_sct
         pip freeze | grep -v "-e git+" | grep -v "torch" | grep -v "certifi @ file" > requirements-freeze.txt
         conda deactivate
-        echo "# Prioritize CPU version of torch (See https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3790#discussion_r888573886)" >> requirements-freeze.txt
-        grep "torch" requirements.txt >> requirements-freeze.txt
-        echo "# Preserve platform-specific requirements missed by 'pip freeze'" >> requirements-freeze.txt
-        grep "sys.platform" requirements.txt >> requirements-freeze.txt
+        grep "# append_to_freeze" requirements.txt >> requirements-freeze.txt
 
     - name: Upload requirements-freeze.txt
       uses: actions/upload-artifact@v3

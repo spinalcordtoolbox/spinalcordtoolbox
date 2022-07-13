@@ -1,7 +1,11 @@
+# NB: Any lines marked with 'append_to_freeze' will be copied over to `requirements-freeze.txt` when creating SCT's
+#     stable releases. We do this because `pip freeze` will not capture options (e.g. --extra-index-url) or
+#     platform-specific requirements (e.g. sys.platform == 'win32')
+
 dipy
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
---extra-index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
 ivadomed~=2.9.6
 matplotlib
 # Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
@@ -10,7 +14,7 @@ matplotlib
 # NB: It's possible this fix gets included upstream in a future skimage release, see:
 #     https://github.com/scikit-image/scikit-image/issues/4780#issuecomment-824678872
 # (The version is pinned because this line gets copied to requirements-freeze.txt when preparing a release, not because we're avoiding bugs with a specific version. Feel free to update it to the latest version.)
-msvc-runtime==14.29.30133; sys.platform == 'win32'
+msvc-runtime==14.29.30133; sys.platform == 'win32' # append_to_freeze
 nibabel
 nilearn
 numpy
