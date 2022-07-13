@@ -147,7 +147,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     # create regularized curve, within Y-Z plane (A-P), located at x=nx/2:
     x = [round(nx / 2.)] * len(range(nz))
     # and passing through the following points:
-    #y = np.array([round(ny / 4.), round(ny / 2.), round(3 * ny / 4.)])  # oblique curve (changing AP points across SI)
+    # y = np.array([round(ny / 4.), round(ny / 2.), round(3 * ny / 4.)])  # oblique curve (changing AP points across SI)
     y = [round(ny / 2.), round(ny / 2.), round(ny / 2.)]               # straight curve (same location of AP across SI)
     z = np.array([0, round(nz / 2.), nz - 1])
     # we use poly (instead of bspline) in order to allow change of scalar for each term of polynomial function
@@ -232,6 +232,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
         img.save('tmp_dummy_seg_'+datetime.now().strftime("%Y%m%d%H%M%S%f")+'.nii.gz')
     return img
 
+
 def dummy_segmentation_4d(vol_num=10, create_bvecs=False, size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.float64,
                           orientation='LPI', shape='rectangle', angle_RL=0, angle_AP=0, angle_IS=0, radius_RL=5.0,
                           radius_AP=3.0, degree=2, interleaved=False, zeroslice=[], debug=False):
@@ -246,7 +247,7 @@ def dummy_segmentation_4d(vol_num=10, create_bvecs=False, size_arr=(256, 256, 25
     img_list = []
 
     # Loop across individual volumes of 4D data
-    for volume in range(0,vol_num):
+    for volume in range(0, vol_num):
         # set debug=True in line below for saving individual volumes into individual nii files
         img_list.append(dummy_segmentation(size_arr=size_arr, pixdim=pixdim, dtype=dtype, orientation=orientation,
                                            shape=shape, angle_RL=angle_RL, angle_AP=angle_AP, angle_IS=angle_IS,
@@ -266,8 +267,8 @@ def dummy_segmentation_4d(vol_num=10, create_bvecs=False, size_arr=(256, 256, 25
         n_dwi = vol_num-n_b0    # number of dwi
         bvecs_dummy = ['', '', '']
         bvec_b0 = np.array([[0.0, 0.0, 0.0]] * n_b0)
-        bvec_dwi = np.array([[uniform(0,1), uniform(0,1), uniform(0,1)]] * n_dwi)
-        bvec = np.concatenate((bvec_b0,bvec_dwi),axis=0)
+        bvec_dwi = np.array([[uniform(0, 1), uniform(0, 1), uniform(0, 1)]] * n_dwi)
+        bvec = np.concatenate((bvec_b0, bvec_dwi), axis=0)
         # Concatenate bvecs
         for i in (0, 1, 2):
             bvecs_dummy[i] += ' '.join(str(v) for v in map(lambda n: '%.16f' % n, bvec[:, i]))

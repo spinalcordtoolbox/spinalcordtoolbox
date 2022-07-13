@@ -185,4 +185,3 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

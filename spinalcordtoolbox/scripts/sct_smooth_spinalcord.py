@@ -225,7 +225,7 @@ def main(argv=None):
     if len(sigmas) == 1:
         sigmas = [sigmas[0] for i in range(len(img.data.shape))]
     elif len(sigmas) != len(img.data.shape):
-            raise ValueError("-smooth need the same number of inputs as the number of image dimension OR only one input")
+        raise ValueError("-smooth need the same number of inputs as the number of image dimension OR only one input")
 
     sigmas = [sigmas[i] / img.dim[i + 4] for i in range(3)]
     out.data = smooth(out.data, sigmas)
@@ -267,4 +267,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

@@ -7,6 +7,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 def polyfit_1d(x, y, xref, deg=5):
     """
     1d Polynomial fitting using numpy's Polynomial.fit

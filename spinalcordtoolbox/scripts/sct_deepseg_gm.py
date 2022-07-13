@@ -125,12 +125,11 @@ def main(argv=None):
                     dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_gm')
 
     display_viewer_syntax([input_filename, format(out_fname)],
-                              colormaps=['gray', 'red'],
-                              opacities=['1', '0.7'],
-                              verbose=verbose)
+                          colormaps=['gray', 'red'],
+                          opacities=['1', '0.7'],
+                          verbose=verbose)
 
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

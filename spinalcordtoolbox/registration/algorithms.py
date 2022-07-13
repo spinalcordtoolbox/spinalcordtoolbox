@@ -8,7 +8,7 @@
 #########################################################################################
 
 import logging
-import os # FIXME
+import os  # FIXME
 import shutil
 from math import asin, cos, sin, acos
 
@@ -769,7 +769,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
             if rot_method in ['hog', 'pcahog']:
                 angle_src_hog, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :],
                                                                px, py, angle_range=th_max_angle)
-                angle_dest_hog, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[ iz, : ],
+                angle_dest_hog, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :],
                                                                  px, py, angle_range=th_max_angle)
                 # In case no maxima is found (it should never happen)
                 if (angle_src_hog is None) or (angle_dest_hog is None):
@@ -1009,7 +1009,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         src2d = data_src[:, :, iz]
         dest2d = data_dest[:, :, iz]
         # julien 20161105
-        #<<<
+        # <<<
         # threshold at 0.5
         src2d[src2d < th_nonzero] = 0
         dest2d[dest2d < th_nonzero] = 0
@@ -1019,7 +1019,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         # here we use 0.5 as threshold for non-zero value
         # coord_src2d = np.array(np.where(src2d > th_nonzero)).T
         # coord_dest2d = np.array(np.where(dest2d > th_nonzero)).T
-        #>>>
+        # >>>
 
         # SCALING R-L (X dimension)
         # ============================================================
@@ -1036,7 +1036,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             # for i in range(len(src1d)):
             #     if src1d[i] > 0.5:
             #         found index above 0.5, exit loop
-                    # break
+            #         break
             # get indices (in continuous space) at half-maximum of upward and downward slope
             # src1d_min, src1d_max = find_index_halfmax(src1d)
             # dest1d_min, dest1d_max = find_index_halfmax(dest1d)
@@ -1187,7 +1187,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz',
                fname_warp_inv='warp_inverse.nii.gz',
                paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0',
-                   gradStep='0.5'),
+                                 gradStep='0.5'),
                ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '',
                                          'translation': '', 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                          'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'},
@@ -1275,16 +1275,16 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         # main command for registration
         # TODO fixup isct_ants* parsers
         cmd = ['isct_antsRegistration',
-         '--dimensionality', '2',
-         '--transform', paramreg.algo + '[' + str(paramreg.gradStep) + ants_registration_params[paramreg.algo.lower()] + ']',
-         '--metric', paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + ']',  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
-         '--convergence', str(paramreg.iter),
-         '--shrink-factors', str(paramreg.shrink),
-         '--smoothing-sigmas', str(paramreg.smooth) + 'mm',
-         '--output', '[' + prefix_warp2d + ',src_Z' + num + '_reg.nii]',    #--> file.mat (contains Tx,Ty, theta)
-         '--interpolation', 'BSpline[3]',
-         '--verbose', '1',
-        ] + masking
+               '--dimensionality', '2',
+               '--transform', paramreg.algo + '[' + str(paramreg.gradStep) + ants_registration_params[paramreg.algo.lower()] + ']',
+               '--metric', paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + ']',  # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+               '--convergence', str(paramreg.iter),
+               '--shrink-factors', str(paramreg.shrink),
+               '--smoothing-sigmas', str(paramreg.smooth) + 'mm',
+               '--output', '[' + prefix_warp2d + ',src_Z' + num + '_reg.nii]',    # --> file.mat (contains Tx,Ty, theta)
+               '--interpolation', 'BSpline[3]',
+               '--verbose', '1',
+               ] + masking
         # add init translation
         if not paramreg.init == '':
             init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
@@ -1313,14 +1313,14 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                 # Generating null 2d warping field (for subsequent concatenation with affine transformation)
                 # TODO fixup isct_ants* parsers
                 run_proc(['isct_antsRegistration',
-                 '-d', '2',
-                 '-t', 'SyN[1,1,1]',
-                 '-c', '0',
-                 '-m', 'MI[dest_Z' + num + '.nii,src_Z' + num + '.nii,1,32]',
-                 '-o', 'warp2d_null',
-                 '-f', '1',
-                 '-s', '0',
-                ], is_sct_binary=True)
+                          '-d', '2',
+                          '-t', 'SyN[1,1,1]',
+                          '-c', '0',
+                          '-m', 'MI[dest_Z' + num + '.nii,src_Z' + num + '.nii,1,32]',
+                          '-o', 'warp2d_null',
+                          '-f', '1',
+                          '-s', '0',
+                          ], is_sct_binary=True)
                 # --> outputs: warp2d_null0Warp.nii.gz, warp2d_null0InverseWarp.nii.gz
                 file_mat = prefix_warp2d + '0GenericAffine.mat'
                 # Concatenating mat transfo and null 2d warping field to obtain 2d warping field of affine transformation
@@ -1342,7 +1342,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         y_disp_a = np.asarray(y_displacement)
         theta_rot_a = np.asarray(theta_rotation)
         # Generate warping field
-        generate_warping_field(fname_dest, x_disp_a, y_disp_a, fname_warp=fname_warp)  #name_warp= 'step'+str(paramreg.step)
+        generate_warping_field(fname_dest, x_disp_a, y_disp_a, fname_warp=fname_warp)  # name_warp='step'+str(paramreg.step)
         # Inverse warping field
         generate_warping_field(fname_src, -x_disp_a, -y_disp_a, fname_warp=fname_warp_inv)
 

@@ -25,7 +25,6 @@ from spinalcordtoolbox.utils.sys import init_sct, run_proc, __data_dir__, printv
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, rmtree
 
 
-
 class Param:
     def __init__(self):
         self.debug = 0

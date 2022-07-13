@@ -351,7 +351,6 @@ def main(argv=None):
     img.data = threshold(img.data, 0.5)
     img.save()
 
-
     # If disc label file is provided, label vertebrae using that file instead of automatically
     if fname_disc:
         # Apply straightening to disc-label
@@ -472,7 +471,6 @@ def main(argv=None):
              is_sct_binary=True,
              )
 
-
     # come back
     os.chdir(curdir)
 
@@ -507,4 +505,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

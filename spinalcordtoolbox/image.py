@@ -309,7 +309,6 @@ class Image(object):
                              f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
             raise ValueError("Image sform does not match qform")
 
-
     @property
     def dim(self):
         return get_dimension(self)

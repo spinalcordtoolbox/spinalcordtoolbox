@@ -54,7 +54,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     z_seg_max = np.max(np.where(nii_seg.change_orientation('PIR').data)[1])
 
     # Flatten sagittal
-    nii_im = flatten_sagittal(nii_im, nii_seg,verbose=verbose)
+    nii_im = flatten_sagittal(nii_im, nii_seg, verbose=verbose)
     nii_seg_flat = flatten_sagittal(nii_seg, nii_seg, verbose=verbose)
 
     # create temporary folder with intermediate results
@@ -67,7 +67,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     nii_seg_flat.change_orientation('PIR')
     mid_RL = int(np.rint(nii_im.dim[2] * 1.0 / 2))
     nb_sag_avg_half = int(nb_sag_avg / 2 / nii_im.dim[6])
-    midSlice = np.mean(nii_im.data[:, :, mid_RL-nb_sag_avg_half:mid_RL+nb_sag_avg_half+1], 2) # average 7 slices
+    midSlice = np.mean(nii_im.data[:, :, mid_RL-nb_sag_avg_half:mid_RL+nb_sag_avg_half+1], 2)  # average 7 slices
     midSlice_seg = nii_seg_flat.data[:, :, mid_RL]
     nii_midSlice = zeros_like(nii_im)
     nii_midSlice.data = midSlice

@@ -154,7 +154,7 @@ def main(argv=None):
     if kernel_size == '3d' and contrast_type == 'dwi':
         kernel_size = '2d'
         printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.',
-                   type="warning")
+               type="warning")
 
     if ctr_algo == 'file' and arguments.file_centerline is None:
         printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')

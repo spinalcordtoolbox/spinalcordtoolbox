@@ -193,7 +193,7 @@ def _properties2d(image, dim):
                   'eccentricity': region.eccentricity,
                   'orientation': orientation,
                   'solidity': solidity  # convexity measure
-    }
+                  }
 
     return properties
 

@@ -101,7 +101,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
                                                            points_moving_barycenter[2]))
     text_file.close()
 
-    
+
 def getNeighbors(point, set_points, k=1):
     '''
     Locate most similar neighbours
@@ -128,7 +128,7 @@ def SSE(pointsA, pointsB):
     return np.sum(np.array(pointsA[:, 0:3] - pointsB[:, 0:3])**2.0)
 
 
-def real_optimization_parameters(param_from_optimizer, initial_param = 0, initial_step = 10):
+def real_optimization_parameters(param_from_optimizer, initial_param=0, initial_step=10):
     # The initial step for the Nelder-Mead algorithm is of (initial_param * 5e-2) which is too small when we want initial_param = 30 pix and step = 5 or 10.
     # This function allows to choose the scale of the steps after the first movement
     step_factor = float(initial_step) / float(initial_param * 5e-2)
@@ -150,7 +150,7 @@ def Metric_Images(imageA, imageB, type=''):
     # Calculate metric depending on the type
     if type == 'MeanSquares':
         result_metric = 1.0 / (len(list_A)) * np.sum(np.array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])**2)
-        #result_metric = 1/(len(list_A)) * np.sum(np.array(list_A - list_B)**2)
+        # result_metric = 1/(len(list_A)) * np.sum(np.array(list_A - list_B)**2)
 
     if type == 'Correlation':
         result_metric = 1.0 / (len(list_A)) * np.sum(np.absolute(np.array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])))
@@ -185,8 +185,8 @@ def minimize_transform(params, points_dest, points_src, constraints):
     tx, ty, tz, alpha, beta, gamma, scx, scy, scz = dof[0], dof[1], dof[2], dof[3], dof[4], dof[5], dof[6], dof[7], dof[8]
     # build rotation matrix
     rotation_matrix = np.matrix([[np.cos(alpha) * np.cos(beta), np.cos(alpha) * np.sin(beta) * np.sin(gamma) - np.sin(alpha) * np.cos(gamma), np.cos(alpha) * np.sin(beta) * np.cos(gamma) + np.sin(alpha) * np.sin(gamma)],
-                              [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma), np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma)],
-                              [-np.sin(beta), np.cos(beta) * np.sin(gamma), np.cos(beta) * np.cos(gamma)]])
+                                 [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma), np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma)],
+                                 [-np.sin(beta), np.cos(beta) * np.sin(gamma), np.cos(beta) * np.cos(gamma)]])
     # build scaling matrix
     scaling_matrix = np.matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
     # compute rotation+scaling matrix
@@ -240,8 +240,8 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     translation_array = np.matrix([tx, ty, tz])
     # build rotation matrix
     rotation_matrix = np.matrix([[np.cos(alpha) * np.cos(beta), np.cos(alpha) * np.sin(beta) * np.sin(gamma) - np.sin(alpha) * np.cos(gamma), np.cos(alpha) * np.sin(beta) * np.cos(gamma) + np.sin(alpha) * np.sin(gamma)],
-                              [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma), np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma)],
-                              [-np.sin(beta), np.cos(beta) * np.sin(gamma), np.cos(beta) * np.cos(gamma)]])
+                                 [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma), np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma)],
+                                 [-np.sin(beta), np.cos(beta) * np.sin(gamma), np.cos(beta) * np.cos(gamma)]])
     # build scaling matrix
     scaling_matrix = np.matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
     # compute rotation+scaling matrix

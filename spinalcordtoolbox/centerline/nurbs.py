@@ -1083,7 +1083,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
         import matplotlib.pyplot as plt
         if not twodim:
             plt.figure(1)
-            #ax = plt.subplot(211)
+            # ax = plt.subplot(211)
             plt.subplot(211)
             plt.plot(z, x, 'r.')
             plt.plot(z_fit, x_fit)
@@ -1092,7 +1092,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
             plt.xlabel('z')
             plt.ylabel('x')
             plt.legend(["centerline", "NURBS", "control points"])
-            #ay = plt.subplot(212)
+            # ay = plt.subplot(212)
             plt.subplot(212)
             plt.plot(z, y, 'r.')
             plt.plot(z_fit, y_fit)
@@ -1100,7 +1100,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
             # ay.set_aspect('equal')
             plt.xlabel('z')
             plt.ylabel('y')
-            plt.legend(["centerline", "NURBS", "control points"],loc=4)
+            plt.legend(["centerline", "NURBS", "control points"], loc=4)
             # plt.show()
         else:
             plt.figure(1)

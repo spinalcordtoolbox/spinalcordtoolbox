@@ -403,7 +403,7 @@ def moco_wrapper(param):
                 im_warp.data = np.expand_dims(np.expand_dims(im_warp.data[0, 0, :, :, :], axis=0), axis=0)
 
                 # These three lines allow to generate one file instead of two, containing X, Y and Z moco parameters
-                #fname_warp_crop = fname_warp + '_crop_' + ext_mat
+                # fname_warp_crop = fname_warp + '_crop_' + ext_mat
                 # files_warp.append(fname_warp_crop)
                 # im_warp.save(fname_warp_crop)
 
