@@ -521,10 +521,10 @@ class Centerline:
         if self.label_reference not in self.index_disk:
             upper = 31
             label_reference = ''
-            for l in self.index_disk:
-                if self.labels_regions[l] < upper:
-                    label_reference = l
-                    upper = self.labels_regions[l]
+            for label in self.index_disk:
+                if self.labels_regions[label] < upper:
+                    label_reference = label
+                    upper = self.labels_regions[label]
             self.label_reference = label_reference
 
         self.distance_from_C1label = {}

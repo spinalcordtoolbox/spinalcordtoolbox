@@ -798,10 +798,10 @@ class NURBS:
     def reconstructGlobalInterpolation(self, P_x, P_y, P_z, p):  # now in 3D
         global Nik_temp
         n = 13
-        l = len(P_x)
-        newPx = P_x[::int(np.round(l / (n - 1)))]
-        newPy = P_y[::int(np.round(l / (n - 1)))]
-        newPz = P_y[::int(np.round(l / (n - 1)))]
+        length = len(P_x)
+        newPx = P_x[::int(np.round(length / (n - 1)))]
+        newPy = P_y[::int(np.round(length / (n - 1)))]
+        newPz = P_y[::int(np.round(length / (n - 1)))]
         newPx.append(P_x[-1])
         newPy.append(P_y[-1])
         newPz.append(P_z[-1])
