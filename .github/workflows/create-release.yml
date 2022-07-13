@@ -29,25 +29,16 @@ env:
 
 
 jobs:
-  create-release:
+  generate-requirements-freeze:
     runs-on: ubuntu-latest
     steps:
 
-    - name: Checkout spinalcordtoolbox (main branch)
+    - name: Checkout spinalcordtoolbox
       uses: actions/checkout@v2
-      with:
-        ref: ${{ env.MAIN_BRANCH }}
-        fetch-depth: 0
 
     - name: Install spinalcordtoolbox
       run: |
         ./install_sct -iy
-
-    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
-    - name: Set bot user data for commits
-      run: |
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "GitHub Actions Bot"
 
     # TODO: "grep certifi" should be removed following an upstream fix for: https://github.com/conda/conda/issues/11580
     - name: Update requirements-freeze.txt
@@ -56,30 +47,66 @@ jobs:
         conda activate venv_sct
         pip freeze | grep -v "-e git+" | grep -v "torch" | grep -v "certifi @ file" > requirements-freeze.txt
         conda deactivate
-        echo "# Platform-specific torch requirements (See SCT Issue #2745)" >> requirements-freeze.txt
-        grep "torch" requirements.txt >> requirements-freeze.txt
+        grep "# append_to_freeze" requirements.txt >> requirements-freeze.txt
+
+    - name: Upload requirements-freeze.txt
+      uses: actions/upload-artifact@v3
+      with:
+        name: requirements-freeze
+        path: requirements-freeze.txt
+
+  test-release:
+    # The purpose of this step is to run tests using the requirements-freeze file
+    # In 99% of cases, this will be identical to running tests using `requirements.txt`. But, sometimes
+    # there are unique bugs that arise from using the `requirements-freeze.txt` file.
+    needs: generate-requirements-freeze
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-10.15, windows-2019]
+    runs-on: ${{ matrix.os }}
+    # NB: Setting `bash` as the default shell is a bit of a hack workaround for Windows to allow it to run .sh scripts.
+    #     Normally, we would ask the user to install a Windows-compatible bash via either Cygwin or Git for Windows.
+    #     But, setting `bash` here is the quickest/easiest way to get a cross-OS compatible GHA workflow.
+    defaults:
+      run:
+        shell: bash
+    steps:
+
+    - name: Checkout spinalcordtoolbox
+      uses: actions/checkout@v2
+
+    - name: Download requirements-freeze.txt
+      uses: actions/download-artifact@v3
+      with:
+        name: requirements-freeze
 
     - name: Update version.txt (using test value for CI)
       run: |
         echo "0.0" > spinalcordtoolbox/version.txt
-      # If the workflow *hasn't* been run manually, then it's being run as a PR test, so use a dummy version number
-      if: github.event_name != 'workflow_dispatch'
 
-    - name: Update version.txt (using milestone title)
-      run: |
-        echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
-      # Only attach to release if workflow is run manually. (This allows the workflow to double as a PR test.)
-      if: github.event_name == 'workflow_dispatch'
+    - name: Install SCT from release branch (Unix)
+      if: matrix.os != 'windows-2019'
+      run: ./install_sct -yc
 
-    - name: Reinstall SCT from release branch
+    - name: Install SCT from release branch (Windows)
+      if: matrix.os == 'windows-2019'
+      shell: cmd
+      run: install_sct.bat
+
+    - name: Update environment variables
       run: |
-        ./install_sct -yc
-        cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
-        cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
-      # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
-      # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
-      # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
-      # This workaround should be replaced by https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3198#discussion_r568225392
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
+          # In a user install, the user would perform this step using the Windows PATH-changing GUI.
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+        else
+          # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
+          # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
+          # Relevant documentation: https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#environment-files
+          # This workaround should be replaced by https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3198#discussion_r568225392
+          cat ~/.bashrc | grep "export SCT_DIR" | cut -d " " -f 2 >> $GITHUB_ENV
+          cat ~/.bashrc | grep "export PATH" | grep -o "/.*" | cut -d ':' -f 1 >> $GITHUB_PATH
+        fi
 
     - name: Run sct_check_dependencies
       run: |
@@ -88,6 +115,34 @@ jobs:
     - name: Run sct_testing
       run: |
         sct_testing
+
+  create-release:
+    needs: test-release
+    runs-on: ubuntu-latest
+    # Only create the release if workflow is run manually. (This allows the other steps in the workflow to test PRs.)
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+
+    - name: Checkout spinalcordtoolbox (main branch)
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ env.MAIN_BRANCH }}
+        fetch-depth: 0
+
+    - name: Download requirements-freeze.txt
+      uses: actions/download-artifact@v3
+      with:
+        name: requirements-freeze
+
+    - name: Update version.txt (using milestone title)
+      run: |
+        echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
+
+    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
+    - name: Set bot user data for commits
+      run: |
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "GitHub Actions Bot"
 
     - name: Commit and push
       run: |
@@ -98,8 +153,6 @@ jobs:
         git commit -m "Update version.txt for ${{ github.event.inputs.milestone_title }}"
         git tag ${{ github.event.inputs.milestone_title }}
         git push --tags
-      # Only commit to release if workflow is run manually. (This allows the workflow to double as a PR test.)
-      if: github.event_name == 'workflow_dispatch'
 
     - uses: ncipollo/release-action@v1
       name: Create release
@@ -107,5 +160,3 @@ jobs:
         tag: ${{ github.event.inputs.milestone_title }}
         token: ${{ secrets.GITHUB_TOKEN }}
         bodyFile: ".github/workflows/release-body.md"
-      # Only attach to release if workflow is run manually. (This allows the workflow to double as a PR test.)
-      if: github.event_name == 'workflow_dispatch'
