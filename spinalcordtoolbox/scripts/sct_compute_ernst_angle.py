@@ -53,7 +53,7 @@ class ErnstAngle:
         printv("\nDrawing", type='info')
         plt.plot(tr_range, theta_E, linewidth=1.0)
         plt.xlabel("TR (in $ms$)")
-        plt.ylabel("$\Theta_E$ (in degree)")
+        plt.ylabel("$\\Theta_E$ (in degree)")
         plt.ylim(min(theta_E), max(theta_E) + 2)
         plt.title("Ernst Angle with T1=" + str(self.t1) + "ms")
         plt.grid(True)
