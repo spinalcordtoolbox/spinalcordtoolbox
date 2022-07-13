@@ -42,7 +42,23 @@ def get_parser():
     # Initialize the parser
 
     parser = SCTArgumentParser(
-        description='Merge images to the same space'
+        description=(
+            "Merge multiple source images onto destination space. All images are warped to the destination space and "
+            "then added."
+            "\n"
+            "\nTo deal with overlap during merging (e.g. one voxel in destination image is shared with two input "
+            "images), the resulting voxel is divided by the sum of the partial volume of each image."
+            "\n"
+            "\nFor example, if src(x,y,z)=1 is mapped to dest(i,j,k) with a partial volume of 0.5 (because destination "
+            "voxel is bigger), then its value after linear interpolation will be 0.5. To account for partial volume, "
+            "the resulting voxel will be: dest(i,j,k) = 0.5*0.5/0.5 = 0.5."
+            "\n"
+            "\nNow, if two voxels overlap in the destination space, let's say: src(x,y,z)=1 and src2'(x',y',z')=1, "
+            "then the resulting value will be: dest(i,j,k) = (0.5*0.5 + 0.5*0.5) / (0.5+0.5) = 0.5. "
+            "\n"
+            "\nSo this function acts like a weighted average operator, only in destination voxels that share multiple "
+            "source voxels."
+        )
     )
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
