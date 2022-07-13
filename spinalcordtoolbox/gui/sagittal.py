@@ -7,7 +7,7 @@
 import logging
 
 import numpy as np
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtWidgets
 
 from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui import widgets

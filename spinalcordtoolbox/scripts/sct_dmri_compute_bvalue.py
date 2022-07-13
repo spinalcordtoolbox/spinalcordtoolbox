@@ -14,7 +14,6 @@
 #########################################################################################
 
 import sys
-import os
 import math
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel

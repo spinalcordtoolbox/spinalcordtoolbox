@@ -1,8 +1,5 @@
-# Functions dealing with data download and installation from the Internet.
-
 import os
 import shutil
-import distutils.dir_util
 import logging
 import cgi
 import tempfile
@@ -14,8 +11,6 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
 
 from spinalcordtoolbox.utils import sct_progress_bar, tmp_create
-
-import spinalcordtoolbox as sct
 
 logger = logging.getLogger(__name__)
 

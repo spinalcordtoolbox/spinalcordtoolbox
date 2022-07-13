@@ -5,11 +5,10 @@ import platform
 import numpy as np
 from skimage import measure, transform
 import logging
-import nibabel
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
-from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils import sct_progress_bar
 

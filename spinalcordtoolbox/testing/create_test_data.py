@@ -2,7 +2,6 @@
 
 import numpy as np
 import numpy.matlib
-from numpy.polynomial import Polynomial as P
 from datetime import datetime
 import itertools
 from skimage.transform import rotate
@@ -14,7 +13,7 @@ import nibabel as nib
 
 from spinalcordtoolbox.image import Image, concat_data
 from spinalcordtoolbox.resampling import resample_nib
-from spinalcordtoolbox.centerline.curve_fitting import bspline, polyfit_1d
+from spinalcordtoolbox.centerline.curve_fitting import bspline
 
 # TODO: retrieve os.environ['SCT_DEBUG']
 DEBUG = False  # Save img_sub

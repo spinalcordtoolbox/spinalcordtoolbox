@@ -23,7 +23,7 @@ import numpy as np
 import scipy.interpolate
 
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, convert, apply_mask_if_soft
-from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolation
+from spinalcordtoolbox.utils.shell import get_interpolation
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
 

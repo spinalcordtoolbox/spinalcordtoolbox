@@ -6,7 +6,6 @@
 import os
 import time
 import logging
-import inspect
 import bisect
 
 import numpy as np

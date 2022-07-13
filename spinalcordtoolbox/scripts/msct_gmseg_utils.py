@@ -12,12 +12,7 @@
 # About the license: see the file LICENSE.TXT
 ########################################################################################################################
 
-import sys
-import io
 import os
-import time
-import random
-import shutil
 
 import numpy as np
 

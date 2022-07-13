@@ -12,7 +12,6 @@
 
 # TODO: add possiblity to resample to destination image
 
-import os
 import sys
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel

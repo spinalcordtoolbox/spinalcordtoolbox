@@ -8,7 +8,6 @@
 # About the license: see the file LICENSE.TXT
 
 
-import os
 import sys
 
 import numpy as np

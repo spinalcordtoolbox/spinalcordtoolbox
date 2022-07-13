@@ -12,7 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis, zeros
+from numpy import dot, cross, array, einsum, tile, multiply, stack, rollaxis, zeros
 from numpy.linalg import norm, inv
 import numpy as np
 from scipy.spatial import cKDTree

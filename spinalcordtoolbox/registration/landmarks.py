@@ -21,7 +21,7 @@
 # TODO: add full affine transfo
 # TODO: normalize SSE: currently, it depends on the number of landmarks
 
-import sys, io, os
+import os
 import logging
 
 from operator import itemgetter
@@ -257,7 +257,6 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
 
     if verbose == 2:
         import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D
 
         fig = plt.figure()
         ax = fig.gca(projection='3d')

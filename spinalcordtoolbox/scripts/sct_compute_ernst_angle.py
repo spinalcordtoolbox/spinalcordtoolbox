@@ -12,7 +12,6 @@
 #########################################################################################
 
 import sys
-import os
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel

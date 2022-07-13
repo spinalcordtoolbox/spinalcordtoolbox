@@ -22,7 +22,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
 import sys
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, extract_fname, printv, set_loglevel

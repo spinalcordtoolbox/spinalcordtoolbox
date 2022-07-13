@@ -17,7 +17,7 @@ import numpy as np
 from scipy import ndimage
 
 from spinalcordtoolbox.image import Image, zeros_like
-from spinalcordtoolbox.types import Coordinate, CoordinateValue
+from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 logger = logging.getLogger(__name__)

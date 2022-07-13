@@ -12,7 +12,6 @@
 #########################################################################################
 
 import sys
-import os
 import logging
 
 from spinalcordtoolbox.image import Image, add_suffix
