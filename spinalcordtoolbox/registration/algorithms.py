@@ -1274,17 +1274,18 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             masking = []
         # main command for registration
         # TODO fixup isct_ants* parsers
-        cmd = ['isct_antsRegistration',
-               '--dimensionality', '2',
-               '--transform', paramreg.algo + '[' + str(paramreg.gradStep) + ants_registration_params[paramreg.algo.lower()] + ']',
-               '--metric', paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + ']',  # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
-               '--convergence', str(paramreg.iter),
-               '--shrink-factors', str(paramreg.shrink),
-               '--smoothing-sigmas', str(paramreg.smooth) + 'mm',
-               '--output', '[' + prefix_warp2d + ',src_Z' + num + '_reg.nii]',    # --> file.mat (contains Tx,Ty, theta)
-               '--interpolation', 'BSpline[3]',
-               '--verbose', '1',
-               ] + masking
+        cmd = [
+            'isct_antsRegistration',
+            '--dimensionality', '2',
+            '--transform', paramreg.algo + '[' + str(paramreg.gradStep) + ants_registration_params[paramreg.algo.lower()] + ']',
+            '--metric', paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + ']',  # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+            '--convergence', str(paramreg.iter),
+            '--shrink-factors', str(paramreg.shrink),
+            '--smoothing-sigmas', str(paramreg.smooth) + 'mm',
+            '--output', '[' + prefix_warp2d + ',src_Z' + num + '_reg.nii]',    # --> file.mat (contains Tx,Ty, theta)
+            '--interpolation', 'BSpline[3]',
+            '--verbose', '1',
+        ] + masking
         # add init translation
         if not paramreg.init == '':
             init_dict = {'geometric': '0', 'centermass': '1', 'origin': '2'}
@@ -1312,15 +1313,16 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             if paramreg.algo in ['Rigid', 'Affine']:
                 # Generating null 2d warping field (for subsequent concatenation with affine transformation)
                 # TODO fixup isct_ants* parsers
-                run_proc(['isct_antsRegistration',
-                          '-d', '2',
-                          '-t', 'SyN[1,1,1]',
-                          '-c', '0',
-                          '-m', 'MI[dest_Z' + num + '.nii,src_Z' + num + '.nii,1,32]',
-                          '-o', 'warp2d_null',
-                          '-f', '1',
-                          '-s', '0',
-                          ], is_sct_binary=True)
+                run_proc([
+                    'isct_antsRegistration',
+                    '-d', '2',
+                    '-t', 'SyN[1,1,1]',
+                    '-c', '0',
+                    '-m', 'MI[dest_Z' + num + '.nii,src_Z' + num + '.nii,1,32]',
+                    '-o', 'warp2d_null',
+                    '-f', '1',
+                    '-s', '0',
+                ], is_sct_binary=True)
                 # --> outputs: warp2d_null0Warp.nii.gz, warp2d_null0InverseWarp.nii.gz
                 file_mat = prefix_warp2d + '0GenericAffine.mat'
                 # Concatenating mat transfo and null 2d warping field to obtain 2d warping field of affine transformation

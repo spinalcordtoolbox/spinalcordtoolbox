@@ -186,14 +186,15 @@ def _properties2d(image, dim):
     else:
         solidity = region.solidity
     # Fill up dictionary
-    properties = {'area': area,
-                  'diameter_AP': diameter_AP,
-                  'diameter_RL': diameter_RL,
-                  'centroid': region.centroid,
-                  'eccentricity': region.eccentricity,
-                  'orientation': orientation,
-                  'solidity': solidity  # convexity measure
-                  }
+    properties = {
+        'area': area,
+        'diameter_AP': diameter_AP,
+        'diameter_RL': diameter_RL,
+        'centroid': region.centroid,
+        'eccentricity': region.eccentricity,
+        'orientation': orientation,
+        'solidity': solidity,  # convexity measure
+    }
 
     return properties
 
