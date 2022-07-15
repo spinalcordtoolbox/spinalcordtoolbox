@@ -6,7 +6,6 @@
 import os
 import time
 import logging
-import inspect
 import bisect
 
 import numpy as np
@@ -525,7 +524,6 @@ class SpinalCordStraightener(object):
                                     '-x', 'spline',
                                     '-v', '0'])
 
-
         if self.accuracy_results:
             time_accuracy_results = time.time()
             # compute the error between the straightened centerline/segmentation and the central vertical line.
@@ -577,24 +575,24 @@ class SpinalCordStraightener(object):
         logger.info('Generate output files...')
         if self.curved2straight:
             generate_output_file(os.path.join(path_tmp, "tmp.curve2straight.nii.gz"),
-                                     os.path.join(self.path_output, "warp_curve2straight.nii.gz"), verbose)
+                                 os.path.join(self.path_output, "warp_curve2straight.nii.gz"), verbose)
         if self.straight2curved:
             generate_output_file(os.path.join(path_tmp, "tmp.straight2curve.nii.gz"),
-                                     os.path.join(self.path_output, "warp_straight2curve.nii.gz"), verbose)
+                                 os.path.join(self.path_output, "warp_straight2curve.nii.gz"), verbose)
 
         # create ref_straight.nii.gz file that can be used by other SCT functions that need a straight reference space
         if self.curved2straight:
             copy(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
-                     os.path.join(self.path_output, "straight_ref.nii.gz"))
+                 os.path.join(self.path_output, "straight_ref.nii.gz"))
             # move straightened input file
             if fname_output == '':
                 fname_straight = generate_output_file(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
-                                                          os.path.join(self.path_output,
-                                                                       file_anat + "_straight" + ext_anat), verbose)
+                                                      os.path.join(self.path_output,
+                                                                   file_anat + "_straight" + ext_anat), verbose)
             else:
                 fname_straight = generate_output_file(os.path.join(path_tmp, "tmp.anat_rigid_warp.nii.gz"),
-                                                          os.path.join(self.path_output, fname_output),
-                                                          verbose)  # straightened anatomic
+                                                      os.path.join(self.path_output, fname_output),
+                                                      verbose)  # straightened anatomic
 
         # Remove temporary files
         if remove_temp_files:

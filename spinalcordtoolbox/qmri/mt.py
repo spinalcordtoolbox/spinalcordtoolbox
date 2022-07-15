@@ -147,4 +147,3 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     np.seterr(**seterr_old)
 
     return nii_mtsat, nii_t1map
-

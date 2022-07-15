@@ -175,4 +175,3 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     display_viewer_syntax([fname_out], verbose=verbose)
 
     return nii_r
-

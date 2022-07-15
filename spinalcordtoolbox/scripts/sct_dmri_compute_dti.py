@@ -10,7 +10,6 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
 import sys
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
@@ -186,4 +185,3 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

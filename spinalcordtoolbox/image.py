@@ -25,11 +25,10 @@ import pathlib
 from contrib import fslhd
 
 import transforms3d.affines as affines
-import re
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import sct_dir_local_path, extract_fname
+from spinalcordtoolbox.utils import extract_fname
 
 logger = logging.getLogger(__name__)
 
@@ -280,7 +279,7 @@ class Image(object):
         self.verbose = verbose
 
         # load an image from file
-        if isinstance(param, str) or (sys.hexversion < 0x03000000 and isinstance(param, unicode)):
+        if isinstance(param, str):
             self.loadFromPath(param, verbose)
         # copy constructor
         elif isinstance(param, type(self)):
@@ -309,7 +308,6 @@ class Image(object):
                              f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
                              f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
             raise ValueError("Image sform does not match qform")
-
 
     @property
     def dim(self):

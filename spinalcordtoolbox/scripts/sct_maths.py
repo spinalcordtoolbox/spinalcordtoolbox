@@ -496,7 +496,7 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
     Sanitize input and compute similarity metric between two images data.
     """
     if img1.data.size != img2.data.size:
-        raise ValueError(f"Input images don't have the same size! \nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space")
+        raise ValueError("Input images don't have the same size! \nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space")
 
     res, data1_1d, data2_1d = sct_math.compute_similarity(img1.data, img2.data, metric=metric)
 

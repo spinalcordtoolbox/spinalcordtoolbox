@@ -8,7 +8,6 @@
 # About the license: see the file LICENSE.TXT
 
 
-import os
 import sys
 
 import numpy as np
@@ -156,4 +155,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

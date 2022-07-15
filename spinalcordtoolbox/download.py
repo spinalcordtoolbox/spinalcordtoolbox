@@ -1,8 +1,5 @@
-# Functions dealing with data download and installation from the Internet.
-
 import os
 import shutil
-import distutils.dir_util
 import logging
 import cgi
 import tempfile
@@ -14,8 +11,6 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util import Retry
 
 from spinalcordtoolbox.utils import sct_progress_bar, tmp_create
-
-import spinalcordtoolbox as sct
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +168,7 @@ def install_data(url, dest_folder, keep=False):
     for cwd, ds, fs in os.walk(bundle_folder):
         ds.sort()
         fs.sort()
-        ds[:] = [ d for d in ds if d not in ("__MACOSX",) ]
+        ds[:] = [d for d in ds if d not in ("__MACOSX",)]
         for d in ds:
             srcpath = os.path.join(cwd, d)
             relpath = os.path.relpath(srcpath, bundle_folder)

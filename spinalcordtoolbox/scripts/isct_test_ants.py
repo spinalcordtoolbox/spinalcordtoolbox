@@ -22,6 +22,7 @@ import nibabel as nib
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree
 
+
 # main
 # =======================================================================================================================
 def main():

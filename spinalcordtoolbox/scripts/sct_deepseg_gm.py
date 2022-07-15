@@ -124,13 +124,14 @@ def main(argv=None):
         generate_qc(fname_in1=input_filename, fname_seg=out_fname, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_gm')
 
-    display_viewer_syntax([input_filename, format(out_fname)],
-                              colormaps=['gray', 'red'],
-                              opacities=['1', '0.7'],
-                              verbose=verbose)
+    display_viewer_syntax(
+        [input_filename, format(out_fname)],
+        colormaps=['gray', 'red'],
+        opacities=['1', '0.7'],
+        verbose=verbose,
+    )
 
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-
