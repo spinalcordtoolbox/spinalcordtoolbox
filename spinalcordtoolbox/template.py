@@ -50,4 +50,3 @@ def get_vertebral_level_from_slice(im_vertlevel, idx_slice):
         logger.debug('Empty slice: z=%s (%s)', idx_slice, e)
         vert_level = None
     return vert_level
-

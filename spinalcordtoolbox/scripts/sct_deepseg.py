@@ -18,7 +18,6 @@ from ivadomed import inference as imed_inference
 import nibabel as nib
 
 import spinalcordtoolbox as sct
-from spinalcordtoolbox import image
 import spinalcordtoolbox.deepseg as deepseg
 import spinalcordtoolbox.deepseg.models
 

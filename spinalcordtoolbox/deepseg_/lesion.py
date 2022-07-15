@@ -155,12 +155,12 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     logger.info("\nFinding the spinal cord centerline...")
     contrast_type_ctr = contrast_type.split('_')[0]
     _, im_ctl, im_labels_viewer = find_centerline(algo=ctr_algo,
-                                                    image_fname=fname_orient,
-                                                    contrast_type=contrast_type_ctr,
-                                                    brain_bool=brain_bool,
-                                                    folder_output=tmp_folder_path,
-                                                    remove_temp_files=remove_temp_files,
-                                                    centerline_fname=file_ctr)
+                                                  image_fname=fname_orient,
+                                                  contrast_type=contrast_type_ctr,
+                                                  brain_bool=brain_bool,
+                                                  folder_output=tmp_folder_path,
+                                                  remove_temp_files=remove_temp_files,
+                                                  centerline_fname=file_ctr)
     if ctr_algo == 'file':
         im_ctl = \
             resampling.resample_nib(im_ctl, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
@@ -169,8 +169,8 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     logger.info("\nCropping the image around the spinal cord...")
     crop_size = 48
     X_CROP_LST, Y_CROP_LST, Z_CROP_LST, im_crop_nii = crop_image_around_centerline(im_in=im_image_res,
-                                                                                  ctr_in=im_ctl,
-                                                                                  crop_size=crop_size)
+                                                                                   ctr_in=im_ctl,
+                                                                                   crop_size=crop_size)
     del im_ctl
 
     # normalize the intensity of the images
@@ -201,7 +201,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     fname_seg_res2d = add_suffix(fname_seg_crop_res, '_resampled2d')
     initial_2d_resolution = 'x'.join(['0.5', '0.5', str(input_resolution[2])])
     resampling.resample_file(fname_seg_crop_res, fname_seg_res2d, initial_2d_resolution,
-                                                           'mm', 'linear', verbose=0)
+                             'mm', 'linear', verbose=0)
     seg_crop = Image(fname_seg_res2d)
 
     # reconstruct the segmentation from the crop data
@@ -217,15 +217,15 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     initial_resolution = 'x'.join([str(input_resolution[0]), str(input_resolution[1]), str(input_resolution[2])])
     fname_seg_RPI = add_suffix(fname_in, '_RPI_seg')
     resampling.resample_file(fname_seg_res_RPI, fname_seg_RPI, initial_resolution,
-                                                           'mm', 'linear', verbose=0)
+                             'mm', 'linear', verbose=0)
     seg_initres_nii = Image(fname_seg_RPI)
 
     if ctr_algo == 'viewer':  # resample and reorient the viewer labels
         im_labels_viewer_nib = nib.nifti1.Nifti1Image(im_labels_viewer.data, im_labels_viewer.hdr.get_best_affine())
         im_viewer_r_nib = resampling.resample_nib(im_labels_viewer_nib, new_size=input_resolution, new_size_type='mm',
-                                                    interpolation='linear')
+                                                  interpolation='linear')
         im_viewer = Image(im_viewer_r_nib.get_data(), hdr=im_viewer_r_nib.header, orientation='RPI',
-                            dim=im_viewer_r_nib.header.get_data_shape()).change_orientation(original_orientation)
+                          dim=im_viewer_r_nib.header.get_data_shape()).change_orientation(original_orientation)
 
     else:
         im_viewer = None
@@ -233,7 +233,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     if verbose == 2:
         fname_res_ctr = add_suffix(fname_orient, '_ctr')
         resampling.resample_file(fname_res_ctr, fname_res_ctr, initial_resolution,
-                                                           'mm', 'linear', verbose=0)
+                                 'mm', 'linear', verbose=0)
         im_image_res_ctr_downsamp = Image(fname_res_ctr).change_orientation(original_orientation)
     else:
         im_image_res_ctr_downsamp = None

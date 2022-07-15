@@ -12,7 +12,6 @@
 #########################################################################################
 
 import sys
-import os
 import logging
 
 from spinalcordtoolbox.image import Image, add_suffix
@@ -103,4 +102,3 @@ def get_parser():
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

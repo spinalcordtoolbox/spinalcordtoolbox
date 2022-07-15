@@ -13,7 +13,6 @@
 # TODO: add output check in convert
 
 import sys
-import os
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
 import spinalcordtoolbox.image as image

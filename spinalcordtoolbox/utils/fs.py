@@ -7,7 +7,6 @@ import shutil
 import tempfile
 import datetime
 import logging
-import pathlib
 
 from .sys import printv
 

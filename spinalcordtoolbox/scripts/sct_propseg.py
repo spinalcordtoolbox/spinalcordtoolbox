@@ -32,6 +32,7 @@ from spinalcordtoolbox.scripts import sct_image
 
 logger = logging.getLogger(__name__)
 
+
 def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_output='', threshold_distance=5.0,
                                    remove_temp_files=1, verbose=0):
     """
@@ -624,7 +625,7 @@ def propseg(img_input, options_dict):
     # check status is not 0
     if not status == 0:
         printv('Automatic cord detection failed. Please initialize using -init-centerline or -init-mask (see help)',
-                   1, 'error')
+               1, 'error')
         sys.exit(1)
 
     # rename output files

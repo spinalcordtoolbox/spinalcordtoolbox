@@ -487,7 +487,6 @@ def main(argv=None):
         ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
         img_tmp_label.save(ftmp_label, mutable=True)
 
-
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if level_alignment:
             # cropping the segmentation based on the label coverage to ensure good registration with level alignment

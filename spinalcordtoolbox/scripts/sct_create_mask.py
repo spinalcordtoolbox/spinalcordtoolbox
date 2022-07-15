@@ -226,7 +226,7 @@ def create_mask(param):
     centerline = nibabel.load(fname_centerline)  # open centerline
     hdr = centerline.get_header()  # get header
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
-    spacing = hdr.structarr['pixdim']
+    # spacing = hdr.structarr['pixdim']
     data_centerline = centerline.get_data()  # get centerline
     # if data is 2D, reshape with empty third dimension
     if len(data_centerline.shape) == 2:
