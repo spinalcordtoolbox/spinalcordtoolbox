@@ -212,9 +212,9 @@ def compute_similarity(data1, data2, metric):
     # compute similarity metric
     if metric == 'mi':
         res = mutual_information(data1_1d, data2_1d, normalized=False)
-    if metric == 'minorm':
+    elif metric == 'minorm':
         res = mutual_information(data1_1d, data2_1d, normalized=True)
-    if metric == 'corr':
+    elif metric == 'corr':
         res = correlation(data1_1d, data2_1d)
     else:
         raise ValueError(f"Don't know what metric to use! Got unsupported: {metric}")
