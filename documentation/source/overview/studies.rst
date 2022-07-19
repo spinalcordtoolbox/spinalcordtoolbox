@@ -8,6 +8,7 @@ The following studies have used SCT:
 2022
 ----
 
+-  Kinany *et al.* `Spinal Cord fMRI: A New Window into the Central Nervous System <https://journals.sagepub.com/doi/full/10.1177/10738584221101827>`_, **The Neuroscientist** 2022
 -  Usuda *et al.* `Quantitative comparison of corticospinal tracts arising from different cortical areas in humans <https://www.sciencedirect.com/science/article/pii/S0168010222001894>`_, **Neuroscience Research**, 2022
 -  Shinn *et al.* `MRI diffusion tensor imaging scalar values in dogs with intervertebral disc herniation: A comparison between manual and semiautomated region of interest methods <https://onlinelibrary.wiley.com/doi/full/10.1111/vru.13126>`_, **Veterinary Radiology & Ultrasound** 2022
 -  Han *et al.* `Application of Neurite Orientation Dispersion and Density Imaging to Evaluate and Predict the Surgical Outcome for Degenerative Cervical Myelopathy <https://onlinelibrary.wiley.com/doi/full/10.1111/os.13326>`_, **Orthop Surg.** 2022
