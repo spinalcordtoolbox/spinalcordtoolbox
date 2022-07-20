@@ -122,7 +122,7 @@ def test_similarity_metrics(tmp_path, similarity_arg):
     if similarity_arg == "-mi":
         # NB: This number is image-dependent, since MI between identical signals is just the entropy of the signal.
         #     (https://stats.stackexchange.com/a/372685). So, we just hardcode the value for t2.nii.gz here.
-        assert similarity_metric == 1.808459087078572
+        assert np.isclose(similarity_metric, 1.80845908)
     else:
         # Otherwise, adjusted similarity metrics should be ~1 for identical signals
         assert np.isclose(similarity_metric, 1)
