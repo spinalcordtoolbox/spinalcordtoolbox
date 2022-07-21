@@ -220,8 +220,7 @@ def cache_save(cachefile, sig):
 
 
 def mv(src, dst, verbose=1):
-    """Move a file from src to dst, almost like os.rename
-    """
+    """Move a file from src to dst (adding a logging message)."""
     printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
     os.rename(src, dst)
 
