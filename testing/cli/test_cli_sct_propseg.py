@@ -43,10 +43,10 @@ def test_isct_propseg_compatibility():
 
 @pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
 def test_sct_propseg_o_flag(tmp_path):
-    argv = ['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path), '-o', 'test_seg.nii.gz']
-    sct_propseg.main(argv)
-    output_files = sorted([f for f in os.listdir(tmp_path)])
-    assert output_files == ['t2_centerline.nii.gz', 'test_seg.nii.gz']
+    sct_propseg.main(['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path),
+                      '-o', 'test_seg.nii.gz'])
+    output_files = set([f for f in os.listdir(tmp_path)])
+    assert output_files == {'t2_centerline.nii.gz', 'test_seg.nii.gz'}
 
 
 @pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
