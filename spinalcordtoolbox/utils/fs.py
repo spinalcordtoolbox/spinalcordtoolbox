@@ -222,7 +222,11 @@ def cache_save(cachefile, sig):
 def mv(src, dst, verbose=1):
     """Move a file from src to dst (adding a logging message)."""
     printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
-    os.rename(src, dst)
+    # NB: We specify `shutil.copyfile` to override the default of `shutil.copy2`.
+    #     (`copy2` copies file metadata, but doing so fails with a PermissionError on WSL installations where the
+    #     src/dest are on different devices. So, we use `copyfile` instead, which doesn't preserve file metadata.)
+    #     Fixes https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3832.
+    shutil.move(src, dst, copy_function=shutil.copyfile)
 
 
 def copy(src, dst, verbose=1):
