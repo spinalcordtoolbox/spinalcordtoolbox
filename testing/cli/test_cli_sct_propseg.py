@@ -45,7 +45,7 @@ def test_isct_propseg_compatibility():
 def test_sct_propseg_o_flag(tmp_path):
     sct_propseg.main(['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path),
                       '-o', 'test_seg.nii.gz'])
-    output_files = set([f for f in os.listdir(tmp_path)])
+    output_files = {f for f in os.listdir(tmp_path)}
     assert output_files == {'t2_centerline.nii.gz', 'test_seg.nii.gz'}
 
 
@@ -53,7 +53,7 @@ def test_sct_propseg_o_flag(tmp_path):
 def test_sct_propseg_optional_output_files(tmp_path):
     sct_propseg.main(['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path),
                       '-mesh', '-CSF', '-centerline-coord', '-cross', '-init-tube', '-low-resolution-mesh'])
-    output_files = set([f for f in os.listdir(tmp_path)])
+    output_files = {f for f in os.listdir(tmp_path)}
     assert output_files == {
         't2_seg.nii.gz', 't2_centerline.nii.gz',     # default output files
         't2_mesh.vtk',                               # '-mesh'
