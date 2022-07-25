@@ -156,7 +156,23 @@ jobs:
 
     - uses: ncipollo/release-action@v1
       name: Create release
+      id: create_release
       with:
         tag: ${{ github.event.inputs.milestone_title }}
         token: ${{ secrets.GITHUB_TOKEN }}
         bodyFile: ".github/workflows/release-body.md"
+
+    - name: Create ${{ github.event.inputs.milestone_title }} Native Windows install script
+      run: |
+        cp install_sct.bat install_sct-${{ github.event.inputs.milestone_title }}_win.bat
+        perl -pi -e 's/set git_ref=master/set git_ref=${{ github.event.inputs.milestone_title }}/' install_sct-${{ github.event.inputs.milestone_title }}_win.bat
+    
+    - uses: xresloader/upload-to-github-release@v1
+      name: Attach Native Windows install script to release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        file: "install_sct-${{ github.event.inputs.milestone_title }}_win.bat"
+        draft: false
+        tag_name: ${{ github.event.inputs.milestone_title }}
+        release_id: ${{ steps.create_release.outputs.id }}
