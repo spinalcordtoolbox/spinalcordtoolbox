@@ -106,3 +106,23 @@ def test_add_mul_4d_image_with_no_argument(op, tmp_path):
         assert np.all(data_out == val * n_vol)
     elif op == '-mul':
         assert np.all(data_out == val ** n_vol)
+
+
+@pytest.mark.parametrize('similarity_arg', ['-mi', '-minorm', '-corr'])
+def test_similarity_metrics(tmp_path, similarity_arg):
+    # Compute similarity between identical images
+    path_in = sct_test_path('t2', 't2.nii.gz')
+    path_out = str(tmp_path / f"output_metric{similarity_arg}.txt")
+    sct_maths.main(['-i', path_in, similarity_arg, path_in, '-o', path_out])
+    # Validate output values
+    with open(path_out, 'r') as f:
+        output = f.read().split("\n")
+    assert len(output) == 2  # Text file takes the form "<metric name>: \n<value>"
+    similarity_metric = float(output[1])
+    if similarity_arg == "-mi":
+        # NB: This number is image-dependent, since MI between identical signals is just the entropy of the signal.
+        #     (https://stats.stackexchange.com/a/372685). So, we just hardcode the value for t2.nii.gz here.
+        assert np.isclose(similarity_metric, 1.80845908)
+    else:
+        # Otherwise, adjusted similarity metrics should be ~1 for identical signals
+        assert np.isclose(similarity_metric, 1)
