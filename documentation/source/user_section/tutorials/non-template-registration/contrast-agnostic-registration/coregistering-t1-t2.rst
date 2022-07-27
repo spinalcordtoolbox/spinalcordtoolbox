@@ -13,7 +13,10 @@ To align the images, we will coregister them together. In other words, we will c
 :Input arguments:
    - ``-i`` : Source image.
    - ``-d`` : Destination image.
-   - ``-param`` : Here, we specify ``algo=dl``, a deep learning-based registration algorithm that was trained to be agnostic to image contrasts.
+   - ``-param`` : Here, we use very basic registration parameters as an example. (For more complex configurations, please refer to the :ref:`customizing-registration-section` section.)
+      - ``step=1`` : As ``sct_register_multimodal`` can perform multi-step registration, each step is prefixed with ``step=#``. (In this example, though, we only use a single-step registration.)
+      - ``type=im`` : Since this registration method only uses the input images ``-i`` and ``-d`` during registration, we specify ``type=im``, rather than ``type=seg`` or ``type=imseg``.
+      - ``algo=dl`` : This corresponds to the contrast agnostic, deep learning (DL) registration method.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
    - ``-dseg``:  Segmentation corresponding to the destination image. (Note: `-dseg` is not necessary for registration, but is provided for the `-qc` reporting to help with spinal cord visualization.)
 
