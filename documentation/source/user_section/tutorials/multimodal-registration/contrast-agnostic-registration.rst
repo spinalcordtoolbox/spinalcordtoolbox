@@ -3,7 +3,7 @@
 Contrast-agnostic registration with deep learning
 #################################################
 
-This tutorial will demonstrate how to coregister two images together that have different contrasts. As an example, this tutorial will use T1w and T2w images.
+This tutorial will demonstrate how to coregister two images together that have different contrasts using deep learning. The algorithm is based on [SynthMorph](https://arxiv.org/pdf/2004.10282.pdf). More details of its implementation in SCT can be found [here](https://github.com/ivadomed/multimodal-registration).
 
 .. toctree::
    :maxdepth: 1
