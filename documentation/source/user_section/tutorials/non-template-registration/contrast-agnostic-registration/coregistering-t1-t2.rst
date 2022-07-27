@@ -23,7 +23,7 @@ To align the images, we will coregister them together. In other words, we will c
    - ``warp_t1_crop2t2_crop.nii.gz`` : The warping field to transform the T1w image to the T2w space.
    - ``warp_t2_crop2t1_crop.nii.gz`` : The warping field to transform the T2w image to the T1w space.
 
-Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`Quality Control (QC) <qc>` reports. Optionally, If you have :ref:`fsleyes-instructions` installed, a ``fsleyes`` command will printed as well.
+Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`Quality Control (QC) <qc>` reports. Optionally, If you have :ref:`fsleyes-instructions` installed, two ``fsleyes`` commands will printed to open each of the registered images.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/contrast-agnostic-registration/coregistration-t1-t2.png
    :align: center
