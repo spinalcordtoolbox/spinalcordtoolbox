@@ -1,7 +1,7 @@
 .. _contrast-agnostic-registration:
 
-Contrast agnostic registration using T1w and T2w spinal cord images
-###################################################################
+Contrast-agnostic registration with deep learning
+#################################################
 
 This tutorial will demonstrate how to coregister two images together that have different contrasts. As an example, this tutorial will use T1w and T2w images.
 
