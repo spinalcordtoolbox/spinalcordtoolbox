@@ -1,9 +1,9 @@
 Coregistering T1w with T2w
 ##########################
 
-Now that we've preprocessed our images, we can align the T1w image with the T2w image.
+Now that we've preprocessed our images, we can register the T1w image with the T2w image.
 
-To align the images, we will coregister them together. In other words, we will compute two different transformations: One to bring the T1w image into the T2w space, and one to bring the T2w image into the T1w space. To perform coregistration, we use the ``sct_register_multimodal`` command.
+To co-register the two images together, we will compute two different transformations: One to bring the T1w image into the T2w space (forward warping field), and one to bring the T2w image into the T1w space (inverse warping field). To perform coregistration, we use the ``sct_register_multimodal`` command. Multiple algorithms are available, and here we demonstrate SCT's deep learning-based registration method, which works well for registering two images with very different contrasts. Another advantage of the deep learning method compared to ANTs is that fewer parameters need to be tweaked (i.e., it works better "out of the box").
 
 .. code:: sh
 
