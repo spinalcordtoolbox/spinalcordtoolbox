@@ -8,13 +8,14 @@ To align the images, we will coregister them together. In other words, we will c
 .. code:: sh
 
    sct_register_multimodal -i t1_crop.nii.gz -d ../t2/t2_crop.nii.gz \
-                           -param step=1,type=im,algo=dl -qc ~/qc_singleSubj
+                           -param step=1,type=im,algo=dl -qc ~/qc_singleSubj -dseg ../t2/t2_seg.nii.gz
 
 :Input arguments:
    - ``-i`` : Source image.
    - ``-d`` : Destination image.
    - ``-param`` : Here, we specify ``algo=dl``, a deep learning-based registration algorithm that was trained to be agnostic to image contrasts.
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
+   - ``-dseg``:  Segmentation corresponding to the destination image. (Note: `-dseg` is not necessary for registration, but is provided for the `-qc` reporting to help with spinal cord visualization.)
 
 :Output files/folders:
    - ``t1_crop_reg.nii.gz`` : The T1w image registered to the T2w space.
