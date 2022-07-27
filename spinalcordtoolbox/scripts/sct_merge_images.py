@@ -219,10 +219,7 @@ def main(argv=None):
     assert len(list_fname_src) == len(list_fname_warp), "ERROR: list of files are not of the same length"
 
     # merge src images to destination image
-    try:
-        merge_images(list_fname_src, fname_dest, list_fname_warp, param)
-    except Exception as e:
-        printv(str(e), 1, 'error')
+    merge_images(list_fname_src, fname_dest, list_fname_warp, param)
 
     display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)])
 
@@ -230,4 +227,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

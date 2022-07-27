@@ -317,4 +317,3 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

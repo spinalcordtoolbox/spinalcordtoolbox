@@ -67,22 +67,22 @@ def get_parser():
 
     parser = SCTArgumentParser(
         description=(
-            f"This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or "
-            f"a folder generated with 'sct_warp_template' containing multiple label files and a label "
-            f"description file (info_label.txt). The labels should be in the same space coordinates as the "
-            f"input image.\n"
-            f"\n"
-            f"The labels used by default are taken from the PAM50 template. To learn about the available PAM50 "
-            f"white/grey matter atlas labels and their corresponding ID values, please refer to: "
-            f"https://spinalcordtoolbox.com/en/latest/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas\n"
-            f"\n"
-            f"To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:\n"
-            f"sct_extract_metric -i dti_FA.nii.gz -l 0,2,3 -vert 2:7 -method bin\n"
-            f"\n"
-            f"To compute average MTR in a region defined by a single label file (could be binary or 0-1 "
-            f"weighted mask) between slices 1 and 4:\n"
-            f"sct_extract_metric -i mtr.nii.gz -f "
-            f"my_mask.nii.gz -z 1:4 -method wa")
+            "This program extracts metrics (e.g., DTI or MTR) within labels. Labels could be a single file or "
+            "a folder generated with 'sct_warp_template' containing multiple label files and a label "
+            "description file (info_label.txt). The labels should be in the same space coordinates as the "
+            "input image.\n"
+            "\n"
+            "The labels used by default are taken from the PAM50 template. To learn about the available PAM50 "
+            "white/grey matter atlas labels and their corresponding ID values, please refer to: "
+            "https://spinalcordtoolbox.com/en/latest/overview/concepts/pam50.html#white-and-grey-matter-atlas-pam50-atlas\n"
+            "\n"
+            "To compute FA within labels 0, 2 and 3 within vertebral levels C2 to C7 using binary method:\n"
+            "sct_extract_metric -i dti_FA.nii.gz -l 0,2,3 -vert 2:7 -method bin\n"
+            "\n"
+            "To compute average MTR in a region defined by a single label file (could be binary or 0-1 "
+            "weighted mask) between slices 1 and 4:\n"
+            "sct_extract_metric -i mtr.nii.gz -f "
+            "my_mask.nii.gz -z 1:4 -method wa")
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -278,7 +278,6 @@ def main(argv=None):
 
     param_default = Param()
 
-    overwrite = 0  # TODO: Not used. Why?
     fname_data = get_absolute_path(arguments.i)
     path_label = arguments.f
     method = arguments.method
@@ -286,18 +285,11 @@ def main(argv=None):
     append_csv = arguments.append
     combine_labels = arguments.combine
     labels_user = arguments.l
-    adv_param_user = arguments.param  # TODO: Not used. Why?
     slices = parse_num_list(arguments.z)
     levels = parse_num_list(arguments.vert)
     fname_vertebral_labeling = arguments.vertfile
     perslice = arguments.perslice
     perlevel = arguments.perlevel
-    fname_normalizing_label = arguments.norm_file  # TODO: Not used. Why?
-    normalization_method = arguments.norm_method  # TODO: Not used. Why?
-    label_to_fix = arguments.fix_label  # TODO: Not used. Why?
-    fname_output_metric_map = arguments.output_map  # TODO: Not used. Why?
-    fname_mask_weight = arguments.mask_weighted  # TODO: Not used. Why?
-    discard_negative_values = int(arguments.discard_neg_val)  # TODO: Not used. Why?
 
     # check if path_label is a file (e.g., single binary mask) instead of a folder (e.g., SCT atlas structure which
     # contains info_label.txt file)
@@ -397,4 +389,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

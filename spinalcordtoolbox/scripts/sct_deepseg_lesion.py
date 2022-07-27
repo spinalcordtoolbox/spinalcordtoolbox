@@ -155,13 +155,13 @@ def main(argv=None):
     if ctr_algo == 'viewer':
         # Save labels
         fname_labels = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_labels-centerline' +
-                                               extract_fname(fname_image)[2]))
+                                                    extract_fname(fname_image)[2]))
         im_labels_viewer.save(fname_labels)
 
     if verbose == 2:
         # Save ctr
         fname_ctr = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_centerline' +
-                                               extract_fname(fname_image)[2]))
+                                                 extract_fname(fname_image)[2]))
         im_ctr.save(fname_ctr)
 
     display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
@@ -170,4 +170,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

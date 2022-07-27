@@ -108,7 +108,7 @@ def _remove_isolated_voxels_on_the_edge(im_seg, n_slices=5):
     # Compute shape info across segmentation
     metrics, _ = compute_shape(im_seg, angle_correction=False)
     # Extract CSA and get min/max index, corresponding to the top/bottom edges of the segmentation
-    ind_nonnan = np.where(np.isnan(metrics['area'].data) == False)[0]
+    ind_nonnan = np.where(np.isnan(metrics['area'].data) == False)[0]  # noqa: E712
     ind_min, ind_max = ind_nonnan[0], ind_nonnan[-1]
     # Check if the CSA at the edge is inferior to half of the median across adjacent slices...
     # ... for the top slice

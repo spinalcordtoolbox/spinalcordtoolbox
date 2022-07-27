@@ -15,7 +15,6 @@ import os
 import itertools
 import warnings
 import logging
-import shutil
 import math
 from typing import Sequence
 
@@ -25,11 +24,10 @@ import pathlib
 from contrib import fslhd
 
 import transforms3d.affines as affines
-import re
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import sct_dir_local_path, extract_fname
+from spinalcordtoolbox.utils import extract_fname, mv
 
 logger = logging.getLogger(__name__)
 
@@ -280,7 +278,7 @@ class Image(object):
         self.verbose = verbose
 
         # load an image from file
-        if isinstance(param, str) or (sys.hexversion < 0x03000000 and isinstance(param, unicode)):
+        if isinstance(param, str):
             self.loadFromPath(param, verbose)
         # copy constructor
         elif isinstance(param, type(self)):
@@ -309,7 +307,6 @@ class Image(object):
                              f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
                              f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
             raise ValueError("Image sform does not match qform")
-
 
     @property
     def dim(self):
@@ -1477,11 +1474,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
         img.save(fname_out)
     else:
         # Generate output file without changing the extension
-        # NB: We specify `shutil.copyfile` to override the default of `shutil.copy2`.
-        #     (`copy2` copies file metadata, but doing so fails with a PermissionError on WSL installations where the
-        #     src/dest are on different devices. So, we use `copyfile` instead, which doesn't preserve file metadata.)
-        #     Fixes https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3832.
-        shutil.move(fname_in, fname_out, copy_function=shutil.copyfile)
+        mv(fname_in, fname_out, verbose=verbose)
 
     logger.info("File created: %s", os.path.join(path_out, file_out + ext_out))
     return os.path.join(path_out, file_out + ext_out)

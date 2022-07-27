@@ -243,9 +243,9 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  macos-10_15:
-   name: macOS 10.15 (Catalina)
-   runs-on: macos-10.15
+  macos-11:
+   name: macOS 11.0 (Big Sur)
+   runs-on: macos-11
    steps:
      - uses: actions/checkout@v2
      - name: Install SCT
@@ -258,14 +258,13 @@ jobs:
        run: |
          ./.ci.sh -t
 
-  macos-11:
-    name: macOS 11.0 (Big Sur)
+  macos-12:
+    name: macOS 12.0 (Monterey)
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
-    #if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    if: false # overloaded on Github currently, and we're not really using it yet.
-    runs-on: macos-11.0
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    runs-on: macos-12
     steps:
       - name: Dependencies
         run: |

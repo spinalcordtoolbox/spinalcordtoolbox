@@ -35,15 +35,15 @@ from spinalcordtoolbox.utils.sys import (sct_dir_local_path, init_sct, run_proc,
 def _test_condition(condition):
     """Test condition formatted in requirements"""
     # Define Environment markers (https://www.python.org/dev/peps/pep-0508/#environment-markers)
-    os_name = os.name
-    platform_machine = platform.machine()
-    platform_release = platform.release()
-    platform_system = platform.system()
-    platform_version = platform.version()
-    python_full_version = platform.python_version()
-    platform_python_implementation = platform.python_implementation()
-    python_version = platform.python_version()[:3]
-    sys_platform = sys.platform
+    os_name = os.name  # noqa: F841
+    platform_machine = platform.machine()  # noqa: F841
+    platform_release = platform.release()  # noqa: F841
+    platform_system = platform.system()  # noqa: F841
+    platform_version = platform.version()  # noqa: F841
+    python_full_version = platform.python_version()  # noqa: F841
+    platform_python_implementation = platform.python_implementation()  # noqa: F841
+    python_version = platform.python_version()[:3]  # noqa: F841
+    sys_platform = sys.platform  # noqa: F841
     # Test condition
     return eval(condition)
 
@@ -94,7 +94,7 @@ def module_import(module_name, suppress_stderr=False):
             sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
         try:
             module = importlib.import_module(module_name)
-        except Exception as e:
+        except Exception:
             sys.stderr = original_stderr
             raise
         else:

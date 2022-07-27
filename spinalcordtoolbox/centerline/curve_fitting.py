@@ -7,6 +7,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 def polyfit_1d(x, y, xref, deg=5):
     """
     1d Polynomial fitting using numpy's Polynomial.fit
@@ -121,8 +122,8 @@ def smooth1d(x, window_len, window='hanning'):
         logger.warning("Window length needs to be >= 3. Returning input signal.")
         return x
 
-    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
+    if window not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+        raise ValueError("Window should be one of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
     # Pad signal using central symmetry
     s = np.r_[2 * x[0] - x[window_len - 1:0:-1], x, 2 * x[-1] - x[-2:-window_len - 1:-1]]

@@ -16,12 +16,11 @@
 import sys
 import os
 import functools
-import argparse
 
 from spinalcordtoolbox.image import Image, check_dim, generate_output_file
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, SmartFormatter
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, printv, run_proc, set_loglevel
-from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, check_file_exist
+from spinalcordtoolbox.utils.fs import extract_fname, check_file_exist
 
 
 class Param:
