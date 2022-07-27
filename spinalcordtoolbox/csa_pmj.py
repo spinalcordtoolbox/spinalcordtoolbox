@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 NEAR_ZERO_THRESHOLD = 1e-6
 
 
-def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_centerline=None, verbose=1):
+def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_centerline=None, perslice=None, verbose=1):
     """
     Interpolate centerline with pontomedullary junction (PMJ) label and compute distance from PMJ along the centerline.
     Generate a mask from segmentation of the slices used to process segmentation data corresponding to a distance from PMJ.
@@ -26,6 +26,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     :return slices:
 
     """
+    print(perslice)
     im_seg = Image(segmentation).change_orientation('RPI')
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')

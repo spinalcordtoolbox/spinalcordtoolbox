@@ -404,8 +404,10 @@ def main(argv=None):
 
     mutually_inclusive_args = (fname_pmj, distance_pmj)
     is_pmj_none, is_distance_none = [arg is None for arg in mutually_inclusive_args]
-    if not (is_pmj_none == is_distance_none):
-        raise parser.error("Both '-pmj' and '-pmj-distance' are required in order to process segmentation from PMJ.")
+    # Only raise error if perslice is None
+    if not arguments.perslice:
+        if not (is_pmj_none == is_distance_none):
+            raise parser.error("Both '-pmj' and '-pmj-distance' are required in order to process segmentation from PMJ.")
 
     # update fields
     metrics_agg = {}
@@ -419,7 +421,7 @@ def main(argv=None):
     if fname_pmj is not None:
         im_ctl, mask, slices, centerline = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
                                                                        distance_pmj, extent_mask,
-                                                                       param_centerline=param_centerline,
+                                                                       param_centerline=param_centerline, perslice=arguments.perslice,
                                                                        verbose=verbose)
 
         # Save array of the centerline in a .csv file if verbose == 2
