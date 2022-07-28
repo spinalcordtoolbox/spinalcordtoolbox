@@ -14,7 +14,7 @@
  - Update GitHub Actions runners to match current (non-beta) up-to-date versions.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3853)
  - Add `install_sct.bat` as a release asset during `create-release.yml` workflow.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3850)
  - Remove coverage reporting via `codecov`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3837)
- - Refactor release workflow into 3 stages to properly test PR branches .  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3836)
+ - Refactor release workflow into 3 stages to properly test PR branches.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3836)
  - Exclude `certifi @ file` from pip freeze to work around upstream conda bug.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3819)
  - Expand `batch_processing.sh` test to support macOS and Windows.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3770)
 
@@ -23,17 +23,17 @@
  - **sct_propseg:** Prevent from overwriting files by outputting to a tempdir prior to renaming.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3847)
  - **sct_maths:** Swap `if` for `elif` to prevent error from being thrown when calling `sct_maths -mi`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3846)
  - **sct_merge_images:** Remove catch-all exception handling.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3839)
- - Use `shutil.copyfile` for output files if src/dest are on different filesystems.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3833)
+ - **image.py:** Use `shutil.copyfile` for output files if src/dest are on different filesystems.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3833)
  - **sct_process_segmentation:** Move CSA normalization models to `./data/` at the root of the SCT repo.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3821)
  - **sct_maths:** Rewrite `-add`/`-sub`/`-mul`/`-div` to match expected behavior for 3D/4D images.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3808)
- - `image.py`: Use absolutepath when loading images.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3792)
+ - **image.py:** Use absolutepath when loading images.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3792)
 
 **INSTALLATION**
 
  - Repair automated commenting out of pre-4.0 sct settings.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3805)
- - `requirements.txt`: Pin `protobuf` to fix upstream Keras issue.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3802)
+ - **requirements.txt:** Pin `protobuf` to fix upstream Keras issue.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3802)
  - Replace pushd/popd with cd-in-a-subshell.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3796)
- - Use CPU `--extra-index-url` to remove strict dependency pinning for `torch`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3790)
+ - **requirements.txt:** Use CPU `--extra-index-url` to remove strict dependency pinning for `torch`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3790)
  - **sct_download_data:** Use binaries that are packaged by the `spinalcordtoolbox-binaries` repo.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2668)
 
 **DOCUMENTATION**
@@ -45,22 +45,22 @@
 **ENHANCEMENT**
 
  - **sct_check_dependencies:** Clean up FSLeyes version checking to be less verbose/confusing.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3820)
- - Account for `None` orientation strings when printing image headers.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3815)
+ - **fslhd:** Account for `None` orientation strings when printing image headers.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3815)
  - **sct_deepseg_sc,sct_deepseg_gm,sct_deepseg_lesion:** Replace Tensorflow/Keras-based inference (`.h5`) with onnxruntime (`.ONNX`).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3738)
 
 **REFACTORING**
 
- - Unify calls to `shutil.move` by using only `utils.fs.mv`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3848)
+ - **utils.py:** Unify calls to `shutil.move` by using only `utils.fs.mv`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3848)
  - Reduce flake8 warnings throughout the codebase.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3842)
  - **sct_label_vertebrae:** Remove deprecation warning for previously-removed `gaussian_std` argument.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3841)
  - Fix executable file permissions and remove unnecessary header declarations.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3835)
- - Update docstring for the `aggregate_per_slice_or_level` function.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3830)
+ - **aggregate_slicewise.py:** Update docstring for the `aggregate_per_slice_or_level` function.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3830)
  - **sct_register_to_template,sct_register_multimodal:** Fix circular and star importing in registration CLI scripts.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3811)
 
 **GIT/GITHUB**
 
  - Delete the entire `dev/` folder from the `master` branch.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3827)
- - `create-release.yml`: Release directly from the `master` branch.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3813)
+ - **create-release.yml:** Release directly from the `master` branch.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3813)
 
 ## 5.6 (2022-04-29)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/5.5...5.6)
