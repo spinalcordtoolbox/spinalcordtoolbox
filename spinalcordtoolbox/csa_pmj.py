@@ -26,7 +26,6 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     :return slices:
 
     """
-    print(perslice)
     im_seg = Image(segmentation).change_orientation('RPI')
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')
@@ -58,28 +57,34 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     # From this incremental distance, find the indices corresponding to the requested distance +/- extent/2 from the PMJ
     # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
     z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
-    zmin = z_ref[np.argmin(np.array([np.abs(i - distance - extent/2) for i in length_from_pmj]))]
-    zmax = z_ref[np.argmin(np.array([np.abs(i - distance + extent/2) for i in length_from_pmj]))]
+    if not perslice:
+        zmin = z_ref[np.argmin(np.array([np.abs(i - distance - extent/2) for i in length_from_pmj]))]
+        zmax = z_ref[np.argmin(np.array([np.abs(i - distance + extent/2) for i in length_from_pmj]))]
 
-    # Check if distance is out of bounds
-    if distance > length_from_pmj[0]:
-        raise ValueError("Input distance of " + str(distance) + " mm is out of bounds for maximum distance of " + str(length_from_pmj[0]) + " mm")
+        # Check if distance is out of bounds
+        if distance > length_from_pmj[0]:
+            raise ValueError("Input distance of " + str(distance) + " mm is out of bounds for maximum distance of " + str(length_from_pmj[0]) + " mm")
 
-    if distance < length_from_pmj[-1]:
-        raise ValueError("Input distance of " + str(distance) + " mm is out of bounds for minimum distance of " + str(length_from_pmj[-1]) + " mm")
+        if distance < length_from_pmj[-1]:
+            raise ValueError("Input distance of " + str(distance) + " mm is out of bounds for minimum distance of " + str(length_from_pmj[-1]) + " mm")
 
-    # Check if the range of selected slices are covered by the segmentation
-    if not all(np.any(im_seg.data[:, :, z]) for z in range(zmin, zmax)):
-        raise ValueError(f"The requested distances from the PMJ are not fully covered by the segmentation.\n"
-                         f"The range of slices are: [{zmin}, {zmax}]")
+        # Check if the range of selected slices are covered by the segmentation
+        if not all(np.any(im_seg.data[:, :, z]) for z in range(zmin, zmax)):
+            raise ValueError(f"The requested distances from the PMJ are not fully covered by the segmentation.\n"
+                            f"The range of slices are: [{zmin}, {zmax}]")
 
-    # Create mask from segmentation centered on distance from PMJ and with extent length on z axis.
-    mask = im_seg.copy()
-    mask.data[:, :, 0:zmin] = 0
-    mask.data[:, :, zmax:] = 0
-    mask.change_orientation(native_orientation)
+        # Create mask from segmentation centered on distance from PMJ and with extent length on z axis.
+        mask = im_seg.copy()
+        mask.data[:, :, 0:zmin] = 0
+        mask.data[:, :, zmax:] = 0
+        mask.change_orientation(native_orientation)
 
-    # Get corresponding slices
-    slices = "{}:{}".format(zmin, zmax-1)  # -1 since the last slice is included to compute CSA after.
+        # Get corresponding slices
+        slices = "{}:{}".format(zmin, zmax-1)  # -1 since the last slice is included to compute CSA after.
+    else:
+        slices = None
+        mask = im_seg.copy()
+        # Concatenate to have the slice distance of corresponding length
+        length_from_pmj = np.concatenate(([length_from_pmj], [z_ref]))
 
-    return im_ctl_seg_with_pmj.change_orientation(native_orientation), mask, slices, arr_ctl
+    return im_ctl_seg_with_pmj.change_orientation(native_orientation), mask, slices, arr_ctl, length_from_pmj
