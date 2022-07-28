@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 """
 This command-line tool is the interface for the deepseg API that performs segmentation using deep learning from the
 ivadomed package.
@@ -19,7 +18,6 @@ from ivadomed import inference as imed_inference
 import nibabel as nib
 
 import spinalcordtoolbox as sct
-from spinalcordtoolbox import image
 import spinalcordtoolbox.deepseg as deepseg
 import spinalcordtoolbox.deepseg.models
 

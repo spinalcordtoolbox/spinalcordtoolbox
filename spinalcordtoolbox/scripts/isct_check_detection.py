@@ -83,7 +83,7 @@ def main():
             status = 1
             break
 
-    if status is not 0:
+    if status != 0:
         printv('ERROR: detected point is not in segmentation', 1, 'warning')
     else:
         printv('OK: detected point is in segmentation')

@@ -323,7 +323,7 @@ class Transform:
                     img_out = cropper.crop(background=0)
                 elif crop_reference == 2:
                     printv('Cropping strategy is: crop around warping field (the size of warping field will '
-                               'change)')
+                           'change)')
                     img_out = cropper.crop()
                 img_out.save(fname_out)
 
@@ -363,4 +363,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

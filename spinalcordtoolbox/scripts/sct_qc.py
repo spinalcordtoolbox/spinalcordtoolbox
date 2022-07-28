@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 #
 # Generate QC report
 #
@@ -101,4 +100,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 #########################################################################################
 #
 # Compute MT saturation map and T1 map from a PD-weigthed, a T1-weighted and MT-weighted FLASH images
@@ -199,11 +198,13 @@ def main(argv=None):
     nii_mtsat.save(arguments.omtsat)
     nii_t1map.save(arguments.ot1map)
 
-    display_viewer_syntax([arguments.omtsat, arguments.ot1map],
-                              colormaps=['gray', 'gray'],
-                              minmax=['-10,10', '0, 3'],
-                              opacities=['1', '1'],
-                              verbose=verbose)
+    display_viewer_syntax(
+        [arguments.omtsat, arguments.ot1map],
+        colormaps=['gray', 'gray'],
+        minmax=['-10,10', '0, 3'],
+        opacities=['1', '1'],
+        verbose=verbose,
+    )
 
 
 if __name__ == "__main__":

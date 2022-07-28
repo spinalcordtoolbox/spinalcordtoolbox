@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Functions processing segmentation data
 
 import math
@@ -7,11 +5,10 @@ import platform
 import numpy as np
 from skimage import measure, transform
 import logging
-import nibabel
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
-from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
+from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils import sct_progress_bar
 
@@ -189,13 +186,14 @@ def _properties2d(image, dim):
     else:
         solidity = region.solidity
     # Fill up dictionary
-    properties = {'area': area,
-                  'diameter_AP': diameter_AP,
-                  'diameter_RL': diameter_RL,
-                  'centroid': region.centroid,
-                  'eccentricity': region.eccentricity,
-                  'orientation': orientation,
-                  'solidity': solidity  # convexity measure
+    properties = {
+        'area': area,
+        'diameter_AP': diameter_AP,
+        'diameter_RL': diameter_RL,
+        'centroid': region.centroid,
+        'eccentricity': region.eccentricity,
+        'orientation': orientation,
+        'solidity': solidity,  # convexity measure
     }
 
     return properties

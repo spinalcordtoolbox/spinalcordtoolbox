@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Tools for motion correction (moco)
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
 
@@ -25,7 +23,7 @@ import numpy as np
 import scipy.interpolate
 
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, convert, apply_mask_if_soft
-from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolation
+from spinalcordtoolbox.utils.shell import get_interpolation
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
 
@@ -405,7 +403,7 @@ def moco_wrapper(param):
                 im_warp.data = np.expand_dims(np.expand_dims(im_warp.data[0, 0, :, :, :], axis=0), axis=0)
 
                 # These three lines allow to generate one file instead of two, containing X, Y and Z moco parameters
-                #fname_warp_crop = fname_warp + '_crop_' + ext_mat
+                # fname_warp_crop = fname_warp + '_crop_' + ext_mat
                 # files_warp.append(fname_warp_crop)
                 # im_warp.save(fname_warp_crop)
 

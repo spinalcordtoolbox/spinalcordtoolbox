@@ -220,7 +220,6 @@ class ComputeDistances:
                     self.im2.change_orientation('IRP')
                     self.im2.save(path=add_suffix(self.im2.absolutepath, "_irp"), mutable=True)
 
-
         if self.param.thinning:
             self.thinning1 = Thinning(self.im1, self.param.verbose)
             self.thinning1.thinned_image.save()
@@ -265,7 +264,7 @@ class ComputeDistances:
                     self.res += 'Slice ' + str(i) + ': ' + str(d.H * self.dim_pix) + '  -  ' + str(med1 * self.dim_pix) + '  -  ' + str(med2 * self.dim_pix) + ' \n'
 
         printv('-----------------------------------------------------------------------------\n' +
-                   self.res, self.param.verbose, 'normal')
+               self.res, self.param.verbose, 'normal')
 
         if self.param.verbose == 2:
             self.show_results()

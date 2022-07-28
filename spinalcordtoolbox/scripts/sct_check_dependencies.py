@@ -35,15 +35,15 @@ from spinalcordtoolbox.utils.sys import (sct_dir_local_path, init_sct, run_proc,
 def _test_condition(condition):
     """Test condition formatted in requirements"""
     # Define Environment markers (https://www.python.org/dev/peps/pep-0508/#environment-markers)
-    os_name = os.name
-    platform_machine = platform.machine()
-    platform_release = platform.release()
-    platform_system = platform.system()
-    platform_version = platform.version()
-    python_full_version = platform.python_version()
-    platform_python_implementation = platform.python_implementation()
-    python_version = platform.python_version()[:3]
-    sys_platform = sys.platform
+    os_name = os.name  # noqa: F841
+    platform_machine = platform.machine()  # noqa: F841
+    platform_release = platform.release()  # noqa: F841
+    platform_system = platform.system()  # noqa: F841
+    platform_version = platform.version()  # noqa: F841
+    python_full_version = platform.python_version()  # noqa: F841
+    platform_python_implementation = platform.python_implementation()  # noqa: F841
+    python_version = platform.python_version()[:3]  # noqa: F841
+    sys_platform = sys.platform  # noqa: F841
     # Test condition
     return eval(condition)
 
@@ -94,7 +94,7 @@ def module_import(module_name, suppress_stderr=False):
             sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
         try:
             module = importlib.import_module(module_name)
-        except Exception as e:
+        except Exception:
             sys.stderr = original_stderr
             raise
         else:
@@ -198,6 +198,9 @@ def main(argv=None):
     verbose = complete_test = arguments.complete
     set_loglevel(verbose=verbose)
 
+    print("\nSYSTEM INFORMATION"
+          "\n------------------")
+
     print("SCT info:")
     print("- version: {}".format(__version__))
     print("- path: {0}".format(__sct_dir__))
@@ -239,6 +242,29 @@ def main(argv=None):
 
     if arguments.short:
         sys.exit()
+
+    # Check version of FSLeyes
+    # NB: We put this section first because typically, it will error out, since FSLeyes isn't installed by default.
+    #     SCT devs want to have access to this information, but we don't want to scare our users into thinking that
+    #     there's a critical error. So, we put it up top to allow the installation to end on a nice "OK" note.
+    if not sys.platform.startswith('win32'):
+        print("\nOPTIONAL DEPENDENCIES"
+              "\n---------------------")
+
+        print_line('Check FSLeyes version')
+        cmd = 'fsleyes --version'
+        status, output = run_proc(cmd, verbose=0, raise_exception=False)
+        # Exit code 0 - command has run successfully
+        if status == 0:
+            # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
+            fsleyes_version = output.split()[2]
+            print_ok(more=(" (%s)" % fsleyes_version))
+        else:
+            print('[  ]')
+            print('  ', (status, output))
+
+    print("\nMANDATORY DEPENDENCIES"
+          "\n----------------------")
 
     # check if Python path is within SCT path
     print_line('Check Python executable')
@@ -350,33 +376,6 @@ def main(argv=None):
         except Exception as err:
             print_fail()
             print(err)
-
-    # Check version of FSLeyes
-    if not sys.platform.startswith('win32'):
-        print_line('Check FSLeyes version')
-        cmd = 'fsleyes --version'
-        status, output = run_proc(cmd, verbose=0, raise_exception=False)
-        # Exit code 0 - command has run successfully
-        if status == 0:
-            # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
-            fsleyes_version = output.split()[2]
-            print_ok(more=(" (%s)" % fsleyes_version))
-        # Exit code 126 - Command invoked cannot execute (permission problem or command is not an executable)
-        elif status == 126:
-            print('Command not executable. Please check permissions of fsleyes command.')
-        # Exit code 127 - Command not found (possible problem with $PATH)
-        elif status == 127:
-            print('Command not found. If you installed FSLeyes as part of FSL package, please check that FSL is included '
-                  'in $PATH variable. If you installed FSLeyes using conda environment, make sure that the environment is '
-                  'activated. If you do not have FSLeyes installed, consider its installation to easily visualize '
-                  'processing outputs and/or to use SCT within FSLeyes. More info at: '
-                  'https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html')
-        # All other exit codes
-        else:
-            print(f'Exit code {status} occurred. Please report this issue on SCT GitHub: '
-                  f'https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues')
-            if complete_test:
-                print(output)
 
     print('')
     sys.exit(e + install_software)

@@ -411,4 +411,3 @@ def launch_manual_label_gui(img: Image, input_labels_img: Image, labels: Sequenc
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

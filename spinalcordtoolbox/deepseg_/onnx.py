@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Functions dealing with onnxruntime (used by sct_deepseg_sc, sct_deepseg_gm, and sct_deepseg_lesion)
 
 import onnxruntime as ort
