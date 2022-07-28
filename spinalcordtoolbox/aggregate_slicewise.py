@@ -231,7 +231,7 @@ def func_wa(data, mask=None, map_clusters=None):
 
 
 def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distance_pmj=None, perslice=None,
-                                 perlevel=False, vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None):
+                                 perlevel=False, vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None, length_pmj=None):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
 
@@ -306,7 +306,13 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
     for slicegroup in slicegroups:
         # add distance from PMJ info
         if distance_pmj is not None:
-            agg_metric[slicegroup]['DistancePMJ'] = [distance_pmj]
+            agg_metric[slicegroup]['DistancePMJ'] = distance_pmj
+        elif length_pmj is not None:
+            index = np.where(length_pmj[1,:]==slicegroup)[0]
+            if index:
+                agg_metric[slicegroup]['DistancePMJ'] = round(length_pmj[0,index[0]],2)
+            else:
+                agg_metric[slicegroup]['DistancePMJ'] = None
         else:
             agg_metric[slicegroup]['DistancePMJ'] = None
         # add level info
@@ -352,6 +358,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
             except Exception as e:
                 logging.warning(e)
                 agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = str(e)
+
     return agg_metric
 
 
@@ -552,7 +559,10 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
             line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
-            line.append(parse_num_list_inv(agg_metric[slicegroup]['DistancePMJ']))  # list distance from PMJ
+            if agg_metric[slicegroup]['DistancePMJ'] is not None:
+                line.append(str(agg_metric[slicegroup]['DistancePMJ']))  # distance from PMJ
+            else:
+                line.append('')
             agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:
