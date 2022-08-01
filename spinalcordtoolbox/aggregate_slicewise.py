@@ -305,14 +305,14 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
     # loop across slice group
     for slicegroup in slicegroups:
         # add distance from PMJ info
-        if distance_pmj is not None:
-            agg_metric[slicegroup]['DistancePMJ'] = distance_pmj
-        elif length_pmj is not None:
+        if length_pmj is not None:
             index = np.where(length_pmj[1,:]==slicegroup)[0]
             if index:
                 agg_metric[slicegroup]['DistancePMJ'] = round(length_pmj[0,index[0]],2)
             else:
                 agg_metric[slicegroup]['DistancePMJ'] = None
+        elif distance_pmj is not None:
+            agg_metric[slicegroup]['DistancePMJ'] = distance_pmj
         else:
             agg_metric[slicegroup]['DistancePMJ'] = None
         # add level info
