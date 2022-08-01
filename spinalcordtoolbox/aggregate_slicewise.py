@@ -265,7 +265,9 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
             perslice = True
         else:
             perslice = False
-
+    else:
+        # If perslice is specified, put distance_pmj to None to prioritize perslice
+        distance_pmj = None
     # if slices is empty, select all available slices from the metric
     ndim = metric.data.ndim
     if not slices:
@@ -305,14 +307,15 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
     # loop across slice group
     for slicegroup in slicegroups:
         # add distance from PMJ info
-        if length_pmj is not None:
+        if distance_pmj is not None:
+            agg_metric[slicegroup]['DistancePMJ'] = distance_pmj
+            length_pmj = None
+        elif length_pmj is not None:
             index = np.where(length_pmj[1, :] == slicegroup)[0]
             if index:
                 agg_metric[slicegroup]['DistancePMJ'] = round(length_pmj[0, index[0]], 2)
             else:
                 agg_metric[slicegroup]['DistancePMJ'] = None
-        elif distance_pmj is not None:
-            agg_metric[slicegroup]['DistancePMJ'] = distance_pmj
         else:
             agg_metric[slicegroup]['DistancePMJ'] = None
         # add level info
