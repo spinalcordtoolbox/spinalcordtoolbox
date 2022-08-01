@@ -260,14 +260,14 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
 
     # If user neither specified slices nor levels, set perslice=True, otherwise, the output will likely contain nan
     # because in many cases the segmentation does not span the whole I-S dimension.
-    if not perslice:
+    if perslice:
+        # If perslice is specified, put distance_pmj to None to prioritize perslice
+        distance_pmj = None
+    if perslice is None:
         if not slices and not levels:
             perslice = True
         else:
             perslice = False
-    else:
-        # If perslice is specified, put distance_pmj to None to prioritize perslice
-        distance_pmj = None
     # if slices is empty, select all available slices from the metric
     ndim = metric.data.ndim
     if not slices:
