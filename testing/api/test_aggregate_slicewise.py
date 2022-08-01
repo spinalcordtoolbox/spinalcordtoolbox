@@ -348,6 +348,23 @@ def test_save_as_csv_pmj(tmp_path, dummy_metrics):
         assert row['VertLevel'] == ''
 
 
+def test_save_as_csv_pmj_perslice(tmp_path, dummy_metrics):
+    """Test writing of output metric csv file with distance from PMJ perslice"""
+    path_out = str(tmp_path / 'tmp_file_out.csv')
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[2, 3, 4, 5],
+                                                                  distance_pmj=None, perslice=True, perlevel=False,
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),), length_pmj=np.array([[15, 16, 17, 18],[2, 3, 4, 5]]))
+    aggregate_slicewise.save_as_csv(agg_metric, path_out)
+    with open(path_out, 'r') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        rows = list(reader)
+        row =rows[2]
+        assert row['Slice (I->S)'] == '4'
+        assert row['DistancePMJ'] == '17'
+        assert row['VertLevel'] == ''
+
+
+
 def test_save_as_csv_extract_metric(tmp_path, dummy_data_and_labels):
     """Test file output with extract_metric()"""
     path_out = str(tmp_path / 'tmp_file_out.csv')
