@@ -420,9 +420,9 @@ def main(argv=None):
                                          verbose=verbose)
     if fname_pmj is not None:
         im_ctl, mask, slices, centerline, length_from_pmj = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
-                                                                       distance_pmj, extent_mask,
-                                                                       param_centerline=param_centerline, perslice=arguments.perslice,
-                                                                       verbose=verbose)
+                                                                                        distance_pmj, extent_mask,
+                                                                                        param_centerline=param_centerline, perslice=arguments.perslice,
+                                                                                        verbose=verbose)
 
         # Save array of the centerline in a .csv file if verbose == 2
         if verbose == 2:

@@ -71,7 +71,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
         # Check if the range of selected slices are covered by the segmentation
         if not all(np.any(im_seg.data[:, :, z]) for z in range(zmin, zmax)):
             raise ValueError(f"The requested distances from the PMJ are not fully covered by the segmentation.\n"
-                            f"The range of slices are: [{zmin}, {zmax}]")
+                             f"The range of slices are: [{zmin}, {zmax}]")
 
         # Create mask from segmentation centered on distance from PMJ and with extent length on z axis.
         mask = im_seg.copy()
