@@ -182,7 +182,7 @@ def test_aggregate_slices_pmj(dummy_metrics):
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[2, 3, 4, 5],
                                                                   distance_pmj=64, perslice=False, perlevel=False,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[(2, 3, 4, 5)] == {'VertLevel': None, 'DistancePMJ': [64], 'WA()': 45.25}
+    assert agg_metric[(2, 3, 4, 5)] == {'VertLevel': None, 'DistancePMJ': 64, 'WA()': 45.25}
 
 
 def test_extract_metric(dummy_data_and_labels):
