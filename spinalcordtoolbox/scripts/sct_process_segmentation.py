@@ -405,7 +405,7 @@ def main(argv=None):
     mutually_inclusive_args = (fname_pmj, distance_pmj)
     is_pmj_none, is_distance_none = [arg is None for arg in mutually_inclusive_args]
     # Only raise error if perslice is False
-    if not perslice :
+    if not perslice:
         if not (is_pmj_none == is_distance_none):
             raise parser.error("Both '-pmj' and '-pmj-distance' are required in order to process segmentation from PMJ.")
 
