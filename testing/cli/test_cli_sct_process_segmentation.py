@@ -48,7 +48,7 @@ def test_sct_process_segmentation_check_pmj_perslice(dummy_3d_mask_nib, dummy_3d
     """ Run sct_process_segmentation with -pmj, -perslice and check the results"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-pmj', dummy_3d_pmj_label,
-                                        '-perslice', '1','-o', filename])
+                                        '-perslice', '1', '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         rows = list(reader)
