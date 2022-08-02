@@ -8,6 +8,7 @@ The following studies have used SCT:
 2022
 ----
 
+-  Combes *et al.* `Functional connectivity in the dorsal network of the cervical spinal cord is correlated with diffusion tensor imaging indices in relapsing-remitting multiple sclerosis <https://doi.org/10.1016/j.nicl.2022.103127>`_, **NeuroImage: Clinical** 2022
 -  Rezende *et al.* `RFC1-Related Disorder: In Vivo Evaluation of Spinal Cord Damage <https://doi.org/10.1002/mds.29169>`_, **Movement Disorders** 2022
 -  Kinany *et al.* `Spinal Cord fMRI: A New Window into the Central Nervous System <https://journals.sagepub.com/doi/full/10.1177/10738584221101827>`_, **The Neuroscientist** 2022
 -  Usuda *et al.* `Quantitative comparison of corticospinal tracts arising from different cortical areas in humans <https://www.sciencedirect.com/science/article/pii/S0168010222001894>`_, **Neuroscience Research** 2022
