@@ -26,7 +26,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     :return slices:
 
     """
-    im_seg = Image(segmentation).change_orientation('RPI')
+    im_seg = Image(segmentation)
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')
     im_pmj = Image(pmj).change_orientation('RPI')
