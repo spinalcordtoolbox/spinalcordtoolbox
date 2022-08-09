@@ -82,7 +82,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
         # Get corresponding slices
         slices = "{}:{}".format(zmin, zmax-1)  # -1 since the last slice is included to compute CSA after.
     else:
-        slices = None
+        slices = ""
         mask = im_seg.copy()
         mask.change_orientation(native_orientation)
         # Concatenate to have the slice distance of corresponding length
