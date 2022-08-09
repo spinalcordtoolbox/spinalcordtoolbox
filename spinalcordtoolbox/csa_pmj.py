@@ -84,6 +84,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     else:
         slices = None
         mask = im_seg.copy()
+        mask.change_orientation(native_orientation)
         # Concatenate to have the slice distance of corresponding length
         length_from_pmj = np.concatenate(([length_from_pmj], [z_ref]))
 
