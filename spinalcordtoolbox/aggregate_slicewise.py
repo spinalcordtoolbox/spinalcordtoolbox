@@ -259,12 +259,12 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
                              f"Please verify that your vertfile has the same number of slices as your input image, "
                              f"and that your metric is RPI/LPI oriented.")
 
+    # If perslice is specified, put distance_pmj to None to prioritize perslice
+    if perslice:
+        distance_pmj = None
     # If user neither specified slices nor levels, set perslice=True, otherwise, the output will likely contain nan
     # because in many cases the segmentation does not span the whole I-S dimension.
-    if perslice:
-        # If perslice is specified, put distance_pmj to None to prioritize perslice
-        distance_pmj = None
-    if perslice is None:
+    if not perslice:
         if not slices and not levels:
             perslice = True
         else:
