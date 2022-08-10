@@ -26,7 +26,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     :return mask:
     :return slices:
     :return arr_ctl: ndarray: coordinates of the centerline.
-    :return length_from_pmj: dict: distance from the PMJ with corresponding slices.
+    :return length_from_pmj_dict: dict: distance from the PMJ with corresponding slices.
 
     """
     im_seg = Image(segmentation)
@@ -84,11 +84,12 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
 
         # Get corresponding slices
         slices = "{}:{}".format(zmin, zmax-1)  # -1 since the last slice is included to compute CSA after.
+        length_from_pmj_dict = None
     else:
         slices = ""
         mask = im_seg.copy()
         mask.change_orientation(native_orientation)
         # Concatenate to have the slice distance of corresponding length
-        length_from_pmj = np.concatenate(([length_from_pmj], [z_ref]))
+        length_from_pmj_dict = np.concatenate(([length_from_pmj], [z_ref]))
 
-    return im_ctl_seg_with_pmj.change_orientation(native_orientation), mask, slices, arr_ctl, length_from_pmj
+    return im_ctl_seg_with_pmj.change_orientation(native_orientation), mask, slices, arr_ctl, length_from_pmj_dict
