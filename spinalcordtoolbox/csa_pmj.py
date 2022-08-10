@@ -20,6 +20,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     :param distance: float: Distance from PMJ in mm.
     :param extent: extent of the coverage mask in mm.
     :param param_centerline: see centerline.core.ParamCenterline()
+    :param perslice: bool: Output the metrics perslice.
     :param verbose:
     :return im_ctl:
     :return mask:
