@@ -310,7 +310,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
         # add distance from PMJ info
         if distance_pmj is not None:
             agg_metric[slicegroup]['DistancePMJ'] = distance_pmj
-            length_pmj = None
         elif length_pmj is not None:
             agg_metric[slicegroup]['DistancePMJ'] = None
             for slice in slicegroup:
