@@ -312,13 +312,14 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
             agg_metric[slicegroup]['DistancePMJ'] = distance_pmj
             length_pmj = None
         elif length_pmj is not None:
-            index = np.where(length_pmj[1, :] == slicegroup)[0]
-            if index:
-                agg_metric[slicegroup]['DistancePMJ'] = round(length_pmj[0, index[0]], 2)
-            else:
-                agg_metric[slicegroup]['DistancePMJ'] = None
+            agg_metric[slicegroup]['DistancePMJ'] = None
+            for slice in slicegroup:
+                if slice in length_pmj.keys():
+                    agg_metric[slicegroup]['DistancePMJ'] = round(length_pmj[slice], 2)
+                break
         else:
             agg_metric[slicegroup]['DistancePMJ'] = None
+        
         # add level info
         if vertgroups is None:
             agg_metric[slicegroup]['VertLevel'] = None
