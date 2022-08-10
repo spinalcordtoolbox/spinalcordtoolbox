@@ -25,6 +25,8 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     :return im_ctl:
     :return mask:
     :return slices:
+    :return arr_ctl: ndarray: coordinates of the centerline.
+    :return length_from_pmj: dict: distance from the PMJ with corresponding slices.
 
     """
     im_seg = Image(segmentation)
