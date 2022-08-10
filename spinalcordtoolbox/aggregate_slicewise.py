@@ -246,6 +246,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
     :param tuple group_funcs: Name and function to apply on metric. Example: (('MEAN', func_wa),)). Note, the function
       has special requirements in terms of i/o. See the definition to func_wa and use it as a template.
     :param map_clusters: list of list of int: See func_map()
+    :param length_pmj: distance from the PMJ with corresponding slices.
     :return: Aggregated metric
     """
     if vert_level:
