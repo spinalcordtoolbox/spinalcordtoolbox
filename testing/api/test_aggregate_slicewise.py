@@ -353,7 +353,7 @@ def test_save_as_csv_pmj_perslice(tmp_path, dummy_metrics):
     path_out = str(tmp_path / 'tmp_file_out.csv')
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[2, 3, 4, 5],
                                                                   distance_pmj=None, perslice=True, perlevel=False,
-                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),), length_pmj={2:15, 3:16, 4:17, 5:18})
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),), length_pmj={2: 15, 3: 16, 4: 17, 5: 18})
     aggregate_slicewise.save_as_csv(agg_metric, path_out)
     with open(path_out, 'r') as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')

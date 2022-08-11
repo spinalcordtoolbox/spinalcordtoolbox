@@ -318,7 +318,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
                 break
         else:
             agg_metric[slicegroup]['DistancePMJ'] = None
-        
+
         # add level info
         if vertgroups is None:
             agg_metric[slicegroup]['VertLevel'] = None
