@@ -313,9 +313,9 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
         elif length_pmj is not None:
             agg_metric[slicegroup]['DistancePMJ'] = None
             for slice in slicegroup:
-                if slice in length_pmj.keys():
+                if slice in length_pmj:
                     agg_metric[slicegroup]['DistancePMJ'] = round(length_pmj[slice], 2)
-                break
+                    break
         else:
             agg_metric[slicegroup]['DistancePMJ'] = None
 
