@@ -182,7 +182,7 @@ def test_aggregate_slices_pmj(dummy_metrics):
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[2, 3, 4, 5],
                                                                   distance_pmj=64, perslice=False, perlevel=False,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
-    assert agg_metric[(2, 3, 4, 5)] == {'VertLevel': None, 'DistancePMJ': [64], 'WA()': 45.25}
+    assert agg_metric[(2, 3, 4, 5)] == {'VertLevel': None, 'DistancePMJ': 64, 'WA()': 45.25}
 
 
 def test_extract_metric(dummy_data_and_labels):
@@ -345,6 +345,22 @@ def test_save_as_csv_pmj(tmp_path, dummy_metrics):
         row = next(reader)
         assert row['Slice (I->S)'] == '2:5'
         assert row['DistancePMJ'] == '64.0'
+        assert row['VertLevel'] == ''
+
+
+def test_save_as_csv_pmj_perslice(tmp_path, dummy_metrics):
+    """Test writing of output metric csv file with distance from PMJ perslice"""
+    path_out = str(tmp_path / 'tmp_file_out.csv')
+    agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[2, 3, 4, 5],
+                                                                  distance_pmj=None, perslice=True, perlevel=False,
+                                                                  group_funcs=(('WA', aggregate_slicewise.func_wa),), length_pmj={2: 15, 3: 16, 4: 17, 5: 18})
+    aggregate_slicewise.save_as_csv(agg_metric, path_out)
+    with open(path_out, 'r') as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        rows = list(reader)
+        row = rows[2]
+        assert row['Slice (I->S)'] == '4'
+        assert row['DistancePMJ'] == '17'
         assert row['VertLevel'] == ''
 
 

@@ -404,8 +404,10 @@ def main(argv=None):
 
     mutually_inclusive_args = (fname_pmj, distance_pmj)
     is_pmj_none, is_distance_none = [arg is None for arg in mutually_inclusive_args]
-    if not (is_pmj_none == is_distance_none):
-        raise parser.error("Both '-pmj' and '-pmj-distance' are required in order to process segmentation from PMJ.")
+    if distance_pmj is not None and fname_pmj is None:
+        parser.error("Option '-pmj-distance' requires option '-pmj'.")
+    if fname_pmj is not None and distance_pmj is None and perslice == 0:
+        parser.error("Option '-pmj' requires option '-pmj-distance' or '-perslice 1'.")
 
     # update fields
     metrics_agg = {}
@@ -417,16 +419,17 @@ def main(argv=None):
                                          param_centerline=param_centerline,
                                          verbose=verbose)
     if fname_pmj is not None:
-        im_ctl, mask, slices, centerline = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
-                                                                       distance_pmj, extent_mask,
-                                                                       param_centerline=param_centerline,
-                                                                       verbose=verbose)
+        im_ctl, mask, slices, centerline, length_from_pmj = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
+                                                                                        distance_pmj, extent_mask,
+                                                                                        param_centerline=param_centerline, perslice=perslice,
+                                                                                        verbose=verbose)
 
         # Save array of the centerline in a .csv file if verbose == 2
         if verbose == 2:
             fname_ctl_csv, _ = splitext(add_suffix(arguments.i, '_centerline_extrapolated'))
             np.savetxt(fname_ctl_csv + '.csv', centerline, delimiter=",")
-
+    else:
+        length_from_pmj = None
     for key in metrics:
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
@@ -434,14 +437,14 @@ def main(argv=None):
                                                             levels=parse_num_list(vert_levels),
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
-                                                            group_funcs=(('SUM', func_sum),))
+                                                            group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
         else:
             # For other metrics, we compute the average and standard deviation across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
                                                             levels=parse_num_list(vert_levels),
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
-                                                            group_funcs=group_funcs)
+                                                            group_funcs=group_funcs, length_pmj=length_from_pmj)
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
