@@ -8,6 +8,7 @@ The following studies have used SCT:
 2022
 ----
 
+-  Kaptan *et al.* `Automated slice-specific z-shimming for functional magnetic resonance imaging of the human spinal cord <https://doi.org/10.1002/hbm.26018>`_, **Human Brain Mapping** 2022
 -  Combes *et al.* `Functional connectivity in the dorsal network of the cervical spinal cord is correlated with diffusion tensor imaging indices in relapsing-remitting multiple sclerosis <https://doi.org/10.1016/j.nicl.2022.103127>`_, **NeuroImage: Clinical** 2022
 -  Rezende *et al.* `RFC1-Related Disorder: In Vivo Evaluation of Spinal Cord Damage <https://doi.org/10.1002/mds.29169>`_, **Movement Disorders** 2022
 -  Kinany *et al.* `Spinal Cord fMRI: A New Window into the Central Nervous System <https://journals.sagepub.com/doi/full/10.1177/10738584221101827>`_, **The Neuroscientist** 2022
