@@ -160,14 +160,6 @@ def get_parser():
              "to be used with flag -vert."
     )
     optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Removes temporary folder used for the algorithm at the end of execution."
-    )
-    optional.add_argument(
         '-angle-corr',
         metavar=Metavar.int,
         type=int,
@@ -369,7 +361,6 @@ def main(argv=None):
     else:
         levels = []
         vert_level = None
-    remove_temp_files = arguments.r
     if arguments.perlevel is not None:
         perlevel = arguments.perlevel
     else:
