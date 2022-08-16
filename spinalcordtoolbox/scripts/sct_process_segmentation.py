@@ -137,7 +137,8 @@ def get_parser():
     optional.add_argument(
         '-vert',
         metavar=Metavar.str,
-        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2. If you also specify a range of"
+        type=parse_num_list,
+        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2. If you also specify a range of "
              "slices with flag `-z`, the intersection between the specified slices and vertebral levels will be "
              "considered."
     )
@@ -363,11 +364,11 @@ def main(argv=None):
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
     if arguments.vert is not None:
-        vert_levels = arguments.vert
-        fname_vert_levels = arguments.vertfile
+        levels = arguments.vert
+        vert_level = arguments.vertfile
     else:
-        vert_levels = ''
-        fname_vert_levels = ''
+        levels = []
+        vert_level = None
     remove_temp_files = arguments.r
     if arguments.perlevel is not None:
         perlevel = arguments.perlevel
@@ -427,16 +428,16 @@ def main(argv=None):
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                            levels=parse_num_list(vert_levels),
+                                                            levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, vert_level=fname_vert_levels,
+                                                            perlevel=perlevel, vert_level=vert_level,
                                                             group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
         else:
             # For other metrics, we compute the average and standard deviation across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                            levels=parse_num_list(vert_levels),
+                                                            levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, vert_level=fname_vert_levels,
+                                                            perlevel=perlevel, vert_level=vert_level,
                                                             group_funcs=group_funcs, length_pmj=length_from_pmj)
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))
