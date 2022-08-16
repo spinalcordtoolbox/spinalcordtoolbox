@@ -15,6 +15,7 @@
 
 import os
 import sys
+import pathlib
 from getpass import getpass
 import multiprocessing
 import subprocess
@@ -184,7 +185,11 @@ def _filter_directories(dir_list, include=None, include_list=None, exclude=None,
 
     if include_list is not None:
         # TODO decide if we should warn users if one of their inclusions isn't around
-        dir_list = [f for f in dir_list if f in include_list]
+        dir_list = [f for f in dir_list
+                    # Check if include_list specified entire path (e.g. "sub-01/ses-01")
+                    if f in include_list
+                    # Check if include_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
+                    or any([p in include_list for p in pathlib.Path(f).parts])]
 
     # Handle exclusions
     assert not ((exclude is not None) and (exclude_list is not None)), \
@@ -194,7 +199,11 @@ def _filter_directories(dir_list, include=None, include_list=None, exclude=None,
         dir_list = [f for f in dir_list if re.search(exclude, f) is None]
 
     if exclude_list is not None:
-        dir_list = [f for f in dir_list if f not in exclude_list]
+        dir_list = [f for f in dir_list
+                    # Check if exclude_list specified entire path (e.g. "sub-01/ses-01")
+                    if f not in exclude_list
+                    # Check if exclude_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
+                    and all([p not in exclude_list for p in pathlib.Path(f).parts])]
 
     return dir_list
 

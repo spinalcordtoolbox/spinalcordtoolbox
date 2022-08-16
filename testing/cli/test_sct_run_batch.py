@@ -111,7 +111,6 @@ def test_directory_inclusion_exclusion():
     assert filter_dirs(sess_dir_list, include="sub01") == ['sub01/ses01', 'sub01/ses02']
     assert filter_dirs(sess_dir_list, include="ses01") == ['sub01/ses01', 'sub02/ses01', 'sub03/ses01']
     assert filter_dirs(sess_dir_list, include_list=["sub01/ses01", "sub01/ses02"]) == ['sub01/ses01', 'sub01/ses02']
-    # This test will fail, because `include_list` doesn't filter subjects with `ses` folders
     assert filter_dirs(sess_dir_list, include_list=["sub01", "sub02"]) == ['sub01/ses01', 'sub01/ses02',
                                                                            'sub02/ses01', 'sub02/ses02']
     assert filter_dirs(sess_dir_list, exclude="sub01") == ['sub02/ses01', 'sub02/ses02', 'sub03/ses01', 'sub03/ses02']
