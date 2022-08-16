@@ -204,7 +204,7 @@ def main(argv=None):
     mutually_inclusive_args = (path_qc, qc_seg)
     is_qc_none, is_seg_none = [arg is None for arg in mutually_inclusive_args]
     if not (is_qc_none == is_seg_none):
-        raise parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
+        parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
 
     # run moco
     fname_output_image = moco_wrapper(param)
