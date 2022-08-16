@@ -373,10 +373,7 @@ def main(argv=None):
         fname_pmj = get_absolute_path(arguments.pmj)
     else:
         fname_pmj = None
-    if arguments.pmj_distance is not None:
-        distance_pmj = arguments.pmj_distance
-    else:
-        distance_pmj = None
+    distance_pmj = arguments.pmj_distance
     extent_mask = arguments.pmj_extent
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
