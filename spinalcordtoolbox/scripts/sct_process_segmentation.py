@@ -361,10 +361,7 @@ def main(argv=None):
     fname_segmentation = get_absolute_path(arguments.i)
 
     file_out = os.path.abspath(arguments.o)
-    if arguments.append is not None:
-        append = arguments.append
-    else:
-        append = 0
+    append = bool(arguments.append)
     if arguments.vert is not None:
         vert_levels = arguments.vert
         fname_vert_levels = arguments.vertfile
