@@ -177,9 +177,6 @@ def _find_nonsys32_bash_exe():
 
 def _filter_directories(dir_list, include=None, include_list=None, exclude=None, exclude_list=None):
     # Handle inclusion lists
-    assert not ((include is not None) and (include_list is not None)),\
-        'Only one of `include` and `include-list` can be used'
-
     if include is not None:
         dir_list = [f for f in dir_list if re.search(include, f) is not None]
 
@@ -192,9 +189,6 @@ def _filter_directories(dir_list, include=None, include_list=None, exclude=None,
                     or any([p in include_list for p in pathlib.Path(f).parts])]
 
     # Handle exclusions
-    assert not ((exclude is not None) and (exclude_list is not None)), \
-        'Only one of `exclude` and `exclude-list` can be used'
-
     if exclude is not None:
         dir_list = [f for f in dir_list if re.search(exclude, f) is None]
 
@@ -479,6 +473,12 @@ def main(argv=None):
                 session_dirs.sort()
                 for isess in session_dirs:
                     subject_dirs.append(os.path.join(isub, isess))
+
+    if (arguments.include is not None) and (arguments.include_list is not None):
+        parser.error('Only one of `include` and `include-list` can be used')
+
+    if (arguments.exclude is not None) and (arguments.exclude_list is not None):
+        parser.error('Only one of `exclude` and `exclude-list` can be used')
 
     subject_dirs = _filter_directories(subject_dirs,
                                        arguments.include, arguments.exclude,
