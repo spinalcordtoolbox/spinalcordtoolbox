@@ -382,8 +382,6 @@ def main(argv=None):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
-    mutually_inclusive_args = (fname_pmj, distance_pmj)
-    is_pmj_none, is_distance_none = [arg is None for arg in mutually_inclusive_args]
     if distance_pmj is not None and fname_pmj is None:
         parser.error("Option '-pmj-distance' requires option '-pmj'.")
     if fname_pmj is not None and distance_pmj is None and not perslice:
