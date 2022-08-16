@@ -363,10 +363,7 @@ def main(argv=None):
         vert_level = None
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
-    if arguments.perslice is not None:
-        perslice = arguments.perslice
-    else:
-        perslice = None
+    perslice = bool(arguments.perslice)
     angle_correction = arguments.angle_corr
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
@@ -389,7 +386,7 @@ def main(argv=None):
     is_pmj_none, is_distance_none = [arg is None for arg in mutually_inclusive_args]
     if distance_pmj is not None and fname_pmj is None:
         parser.error("Option '-pmj-distance' requires option '-pmj'.")
-    if fname_pmj is not None and distance_pmj is None and perslice == 0:
+    if fname_pmj is not None and distance_pmj is None and not perslice:
         parser.error("Option '-pmj' requires option '-pmj-distance' or '-perslice 1'.")
 
     # update fields
