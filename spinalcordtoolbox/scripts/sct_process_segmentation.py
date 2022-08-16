@@ -375,7 +375,10 @@ def main(argv=None):
         fname_pmj = None
     distance_pmj = arguments.pmj_distance
     extent_pmj = arguments.pmj_extent
-    path_qc = arguments.qc
+    if arguments.qc is not None:
+        path_qc = os.path.abspath(arguments.qc)
+    else:
+        path_qc = None
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
@@ -465,7 +468,7 @@ def main(argv=None):
                             # doesn't work for this, so we have to repeat `fname_ctl_smooth` at the end of the list.
                             fname_seg=[fname_ctl_smooth, fname_pmj, fname_mask_out, fname_ctl_smooth],
                             args=sys.argv[1:],
-                            path_qc=os.path.abspath(path_qc),
+                            path_qc=path_qc,
                             dataset=qc_dataset,
                             subject=qc_subject,
                             process='sct_process_segmentation')
