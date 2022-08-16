@@ -121,7 +121,8 @@ def get_parser():
     optional.add_argument(
         '-z',
         metavar=Metavar.str,
-        type=str,
+        type=parse_num_list,
+        default='',
         help="Slice range to compute the metrics across. Example: 5:23"
     )
     optional.add_argument(
@@ -348,7 +349,6 @@ def main(argv=None):
     set_loglevel(verbose=verbose)
 
     # Initialization
-    slices = ''
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
     fname_segmentation = get_absolute_path(arguments.i)
@@ -362,8 +362,7 @@ def main(argv=None):
         levels = []
         vert_level = None
     perlevel = bool(arguments.perlevel)
-    if arguments.z is not None:
-        slices = arguments.z
+    slices = arguments.z
     if arguments.perslice is not None:
         perslice = arguments.perslice
     else:
@@ -415,14 +414,14 @@ def main(argv=None):
     for key in metrics:
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
-            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
                                                             levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=vert_level,
                                                             group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
         else:
             # For other metrics, we compute the average and standard deviation across slices
-            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
                                                             levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=vert_level,
