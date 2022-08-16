@@ -361,10 +361,7 @@ def main(argv=None):
     else:
         levels = []
         vert_level = None
-    if arguments.perlevel is not None:
-        perlevel = arguments.perlevel
-    else:
-        perlevel = None
+    perlevel = bool(arguments.perlevel)
     if arguments.z is not None:
         slices = arguments.z
     if arguments.perslice is not None:
