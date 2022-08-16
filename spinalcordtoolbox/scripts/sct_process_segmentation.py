@@ -201,7 +201,7 @@ def get_parser():
         '-pmj-extent',
         type=float,
         metavar=Metavar.float,
-        default=20,
+        default=20.0,
         help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
              "included in the calculation. (To be used with flag '-pmj' and '-pmj-distance'.)"
     )
@@ -374,7 +374,7 @@ def main(argv=None):
     else:
         fname_pmj = None
     distance_pmj = arguments.pmj_distance
-    extent_mask = arguments.pmj_extent
+    extent_pmj = arguments.pmj_extent
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
@@ -395,7 +395,7 @@ def main(argv=None):
                                          verbose=verbose)
     if fname_pmj is not None:
         im_ctl, mask, slices, centerline, length_from_pmj = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
-                                                                                        distance_pmj, extent_mask,
+                                                                                        distance_pmj, extent_pmj,
                                                                                         param_centerline=param_centerline, perslice=perslice,
                                                                                         verbose=verbose)
 
