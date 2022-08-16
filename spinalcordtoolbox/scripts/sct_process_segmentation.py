@@ -107,7 +107,8 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help="Output file name (add extension). Default: csa.csv."
+        default='csa.csv',
+        help="Output file name (add extension)."
     )
     optional.add_argument(
         '-append',
@@ -359,10 +360,7 @@ def main(argv=None):
 
     fname_segmentation = get_absolute_path(arguments.i)
 
-    if arguments.o is not None:
-        file_out = os.path.abspath(arguments.o)
-    else:
-        file_out = ''
+    file_out = os.path.abspath(arguments.o)
     if arguments.append is not None:
         append = arguments.append
     else:
@@ -411,8 +409,6 @@ def main(argv=None):
 
     # update fields
     metrics_agg = {}
-    if not file_out:
-        file_out = 'csa.csv'
 
     metrics, fit_results = compute_shape(fname_segmentation,
                                          angle_correction=angle_correction,
