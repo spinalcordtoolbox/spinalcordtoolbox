@@ -174,6 +174,31 @@ def _find_nonsys32_bash_exe():
     return shutil.which('bash', path=nonsys32_paths)
 
 
+def _filter_directories(dir_list, include=None, include_list=None, exclude=None, exclude_list=None):
+    # Handle inclusion lists
+    assert not ((include is not None) and (include_list is not None)),\
+        'Only one of `include` and `include-list` can be used'
+
+    if include is not None:
+        dir_list = [f for f in dir_list if re.search(include, f) is not None]
+
+    if include_list is not None:
+        # TODO decide if we should warn users if one of their inclusions isn't around
+        dir_list = [f for f in dir_list if f in include_list]
+
+    # Handle exclusions
+    assert not ((exclude is not None) and (exclude_list is not None)), \
+        'Only one of `exclude` and `exclude-list` can be used'
+
+    if exclude is not None:
+        dir_list = [f for f in dir_list if re.search(exclude, f) is None]
+
+    if exclude_list is not None:
+        dir_list = [f for f in dir_list if f not in exclude_list]
+
+    return dir_list
+
+
 def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
                path_qc, itk_threads, continue_on_error=False):
     """
@@ -446,26 +471,9 @@ def main(argv=None):
                 for isess in session_dirs:
                     subject_dirs.append(os.path.join(isub, isess))
 
-    # Handle inclusion lists
-    assert not ((arguments.include is not None) and (arguments.include_list is not None)),\
-        'Only one of `include` and `include-list` can be used'
-
-    if arguments.include is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(arguments.include, f) is not None]
-
-    if arguments.include_list is not None:
-        # TODO decide if we should warn users if one of their inclusions isn't around
-        subject_dirs = [f for f in subject_dirs if f in arguments.include_list]
-
-    # Handle exclusions
-    assert not ((arguments.exclude is not None) and (arguments.exclude_list is not None)),\
-        'Only one of `exclude` and `exclude-list` can be used'
-
-    if arguments.exclude is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(arguments.exclude, f) is None]
-
-    if arguments.exclude_list is not None:
-        subject_dirs = [f for f in subject_dirs if f not in arguments.exclude_list]
+    subject_dirs = _filter_directories(subject_dirs,
+                                       arguments.include, arguments.exclude,
+                                       arguments.include_list, arguments.exclude_list)
 
     # Determine the number of jobs we can run simultaneously
     if arguments.jobs < 1:
