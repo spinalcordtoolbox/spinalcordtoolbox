@@ -181,7 +181,6 @@ def _filter_directories(dir_list, include=None, include_list=None, exclude=None,
         dir_list = [f for f in dir_list if re.search(include, f) is not None]
 
     if include_list is not None:
-        # TODO decide if we should warn users if one of their inclusions isn't around
         dir_list = [f for f in dir_list
                     # Check if include_list specified entire path (e.g. "sub-01/ses-01")
                     if f in include_list
