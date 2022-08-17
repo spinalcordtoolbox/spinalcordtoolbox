@@ -184,7 +184,7 @@ def _filter_directories(dir_list, include=None, include_list=None, exclude=None,
     """
     # Handle inclusions (regex OR explicit list, but not both)
     if include is not None:
-        dir_list = [f for f in dir_list if re.search(include, f) is not None]
+        dir_list = [f for f in dir_list if re.search(include, f)]
     elif include_list is not None:
         dir_list = [f for f in dir_list
                     # Check if include_list specified entire path (e.g. "sub-01/ses-01")
@@ -194,7 +194,7 @@ def _filter_directories(dir_list, include=None, include_list=None, exclude=None,
 
     # Handle exclusions (regex OR explicit list, but not both)
     if exclude is not None:
-        dir_list = [f for f in dir_list if re.search(exclude, f) is None]
+        dir_list = [f for f in dir_list if not re.search(exclude, f)]
     elif exclude_list is not None:
         dir_list = [f for f in dir_list
                     # Check if exclude_list specified entire path (e.g. "sub-01/ses-01")
