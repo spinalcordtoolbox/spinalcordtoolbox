@@ -339,7 +339,8 @@ def main(argv=None):
     if fname_out is not None:
         if path_qc is not None:
             from spinalcordtoolbox.reports.qc import generate_qc
-            generate_qc(fname_in, fname_seg=fname_out, args=sys.argv[1:], path_qc=os.path.abspath(path_qc), process='sct_detect_pmj')
+            generate_qc(fname_in, fname_seg=fname_out, args=argv, path_qc=os.path.abspath(path_qc),
+                        process='sct_detect_pmj')
 
         display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'])
 

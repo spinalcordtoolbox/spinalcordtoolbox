@@ -190,7 +190,7 @@ def main(argv=None):
     # QC report
     if path_qc is not None:
         generate_qc(fname_in1=fname_output_image, fname_in2=param.fname_data, fname_seg=qc_seg,
-                    args=sys.argv[1:], path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset,
+                    args=argv, path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset,
                     subject=qc_subject, process='sct_fmri_moco')
 
     display_viewer_syntax([fname_output_image, param.fname_data], mode='ortho,ortho')
