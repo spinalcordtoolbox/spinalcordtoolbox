@@ -176,22 +176,26 @@ def _find_nonsys32_bash_exe():
 
 
 def _filter_directories(dir_list, include=None, include_list=None, exclude=None, exclude_list=None):
-    # Handle inclusion lists
+    """
+    Filter a list of directories using inclusion/exclusion regex patterns or explicit lists.
+
+    NB: Only one of [include, include_list] and only one of [exclude, exclude_list] should be passed.
+        (Currently, this requirement is handled at the argument-parsing level, because we use `parser.error`.)
+    """
+    # Handle inclusions (regex OR explicit list, but not both)
     if include is not None:
         dir_list = [f for f in dir_list if re.search(include, f) is not None]
-
-    if include_list is not None:
+    elif include_list is not None:
         dir_list = [f for f in dir_list
                     # Check if include_list specified entire path (e.g. "sub-01/ses-01")
                     if f in include_list
                     # Check if include_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
                     or any([p in include_list for p in pathlib.Path(f).parts])]
 
-    # Handle exclusions
+    # Handle exclusions (regex OR explicit list, but not both)
     if exclude is not None:
         dir_list = [f for f in dir_list if re.search(exclude, f) is None]
-
-    if exclude_list is not None:
+    elif exclude_list is not None:
         dir_list = [f for f in dir_list
                     # Check if exclude_list specified entire path (e.g. "sub-01/ses-01")
                     if f not in exclude_list
