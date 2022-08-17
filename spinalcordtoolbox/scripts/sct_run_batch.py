@@ -190,7 +190,7 @@ def _filter_directories(dir_list, include=None, include_list=None, exclude=None,
                     # Check if include_list specified entire path (e.g. "sub-01/ses-01")
                     if f in include_list
                     # Check if include_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
-                    or any([p in include_list for p in pathlib.Path(f).parts])]
+                    or any(p in include_list for p in pathlib.Path(f).parts)]
 
     # Handle exclusions (regex OR explicit list, but not both)
     if exclude is not None:
@@ -200,7 +200,7 @@ def _filter_directories(dir_list, include=None, include_list=None, exclude=None,
                     # Check if exclude_list specified entire path (e.g. "sub-01/ses-01")
                     if f not in exclude_list
                     # Check if exclude_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
-                    and all([p not in exclude_list for p in pathlib.Path(f).parts])]
+                    and all(p not in exclude_list for p in pathlib.Path(f).parts)]
 
     return dir_list
 
