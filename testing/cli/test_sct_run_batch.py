@@ -75,15 +75,19 @@ def test_config_extra_value_warning(tmp_path, dummy_script):
         sct_run_batch.main(['-c', config_path, '-script', dummy_script])
 
 
-def test_only_one_include(tmp_path, dummy_script):
+def test_only_one_include_exclude(tmp_path, dummy_script):
     """
-    Test that an error is thrown for trying to pass both '-include' and '-include-list' at the same time.
+    Test that an error is thrown for trying to pass both '-include'/'-include-list', or '-exclude'/'-exclude-list'.
     """
     data = tmp_path / 'data'
     data.mkdir()
     out = tmp_path / 'out'
     with pytest.raises(SystemExit) as e:
         sct_run_batch.main(['-include', 'arg', '-include-list', 'arg2',
+                            '-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
+    assert e.value.code == 2  # Default error code given by `parser.error` within an ArgumentParser
+    with pytest.raises(SystemExit) as e:
+        sct_run_batch.main(['-exclude', 'arg', '-exclude-list', 'arg2',
                             '-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
     assert e.value.code == 2  # Default error code given by `parser.error` within an ArgumentParser
 
