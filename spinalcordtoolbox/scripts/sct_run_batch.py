@@ -437,14 +437,14 @@ def main(argv=None):
         # Only consider folders
         if os.path.isdir(os.path.join(path_data, isub)):
             session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
-            if not session_dirs:
-                # There is no session folder, so we consider only sub- directory: sub-XX
-                subject_dirs.append(isub)
-            else:
+            if session_dirs:
                 # There is a session folder, so we concatenate: sub-XX/ses-YY
                 session_dirs.sort()
                 for isess in session_dirs:
                     subject_dirs.append(os.path.join(isub, isess))
+            else:
+                # There is no session folder, so we consider only sub- directory: sub-XX
+                subject_dirs.append(isub)
 
     # Handle inclusion lists
     assert not ((arguments.include is not None) and (arguments.include_list is not None)),\
