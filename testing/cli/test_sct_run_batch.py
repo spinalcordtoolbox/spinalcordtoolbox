@@ -82,9 +82,10 @@ def test_only_one_include(tmp_path, dummy_script):
     data = tmp_path / 'data'
     data.mkdir()
     out = tmp_path / 'out'
-    with pytest.raises(AssertionError, match='Only one'):
+    with pytest.raises(SystemExit) as e:
         sct_run_batch.main(['-include', 'arg', '-include-list', 'arg2',
                             '-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
+    assert e.value.code == 2  # Default error code given by `parser.error` within an ArgumentParser
 
 
 def test_directory_inclusion_exclusion():
