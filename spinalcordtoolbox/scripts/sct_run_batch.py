@@ -123,6 +123,11 @@ def get_parser():
                         help='Optional space separated list of subjects to exclude. Only process '
                         'a subject if they are not on this list. Inclusions are processed before exclusions. '
                         'Cannot be used with either `exclude`.', nargs='+')
+    parser.add_argument('-ignore-ses', action='store_true',
+                        help="By default, if 'ses' subfolders are present, then 'sct_run_batch' will run the script "
+                             "within each individual 'ses' subfolder. Passing `-ignore-ses` will change the behavior "
+                             "so that 'sct_run_batch' will not go into each 'ses' folder. Instead, it will run the "
+                             "script on just the top-level subject folders.")
     parser.add_argument('-path-segmanual', default='.',
                         help='Setting for environment variable: PATH_SEGMANUAL\n'
                         'A path containing manual segmentations to be used by the script program.')
@@ -437,13 +442,13 @@ def main(argv=None):
         # Only consider folders
         if os.path.isdir(os.path.join(path_data, isub)):
             session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
-            if session_dirs:
-                # There is a session folder, so we concatenate: sub-XX/ses-YY
+            if session_dirs and arguments.ignore_ses is not True:
+                # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
                 session_dirs.sort()
                 for isess in session_dirs:
                     subject_dirs.append(os.path.join(isub, isess))
             else:
-                # There is no session folder, so we consider only sub- directory: sub-XX
+                # Otherwise, consider only 'sub-' directories and don't include 'ses-' subdirectories: e.g. sub-XX
                 subject_dirs.append(isub)
 
     # Handle inclusion lists
