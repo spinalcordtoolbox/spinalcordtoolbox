@@ -10,7 +10,7 @@ import inspect
 
 from enum import Enum
 
-from .sys import check_exe, printv, removesuffix
+from .sys import check_exe, printv, removesuffix, ANSIColors16
 
 logger = logging.getLogger(__name__)
 
@@ -199,8 +199,10 @@ class SCTArgumentParser(argparse.ArgumentParser):
         """
         # Source: https://stackoverflow.com/a/4042861
         self.print_help(sys.stderr)
-        printv(f'\n{self.prog}: error: {message}\n', verbose=1, type='error', file=sys.stderr)
-        sys.exit(2)
+        message_formatted = (ANSIColors16.Bold + ANSIColors16.LightRed
+                             + f'\n{self.prog}: error: {message}\n\n'
+                             + ANSIColors16.ResetAll)
+        self.exit(2, message_formatted)
 
 
 class ActionCreateFolder(argparse.Action):
