@@ -187,6 +187,7 @@ def get_parser():
     optional.add_argument(
         '-pmj',
         metavar=Metavar.file,
+        type=get_absolute_path,
         help="Ponto-Medullary Junction (PMJ) label file. "
              "Example: pmj.nii.gz"
     )
@@ -228,6 +229,7 @@ def get_parser():
     optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
+        type=os.path.abspath,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved."
              " The QC report is only available for PMJ-based CSA (with flag '-pmj')."
@@ -369,16 +371,10 @@ def main(argv=None):
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
         minmax=True)
-    if arguments.pmj is not None:
-        fname_pmj = get_absolute_path(arguments.pmj)
-    else:
-        fname_pmj = None
+    fname_pmj = arguments.pmj
     distance_pmj = arguments.pmj_distance
     extent_pmj = arguments.pmj_extent
-    if arguments.qc is not None:
-        path_qc = os.path.abspath(arguments.qc)
-    else:
-        path_qc = None
+    path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
