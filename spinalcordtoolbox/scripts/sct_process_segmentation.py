@@ -357,10 +357,10 @@ def main(argv=None):
     append = bool(arguments.append)
     if arguments.vert is not None:
         levels = arguments.vert
-        vert_level = arguments.vertfile
+        fname_vert_level = arguments.vertfile
     else:
         levels = []
-        vert_level = None
+        fname_vert_level = None
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
     perslice = bool(arguments.perslice)
@@ -412,14 +412,14 @@ def main(argv=None):
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
                                                             levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, vert_level=vert_level,
+                                                            perlevel=perlevel, fname_vert_level=fname_vert_level,
                                                             group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
         else:
             # For other metrics, we compute the average and standard deviation across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
                                                             levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, vert_level=vert_level,
+                                                            perlevel=perlevel, fname_vert_level=fname_vert_level,
                                                             group_funcs=group_funcs, length_pmj=length_from_pmj)
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))

@@ -287,7 +287,7 @@ def main(argv=None):
     labels_user = arguments.l
     slices = parse_num_list(arguments.z)
     levels = parse_num_list(arguments.vert)
-    fname_vertebral_labeling = arguments.vertfile
+    fname_vert_level = arguments.vertfile
     perslice = arguments.perslice
     perlevel = arguments.perlevel
 
@@ -358,7 +358,7 @@ def main(argv=None):
     labels = np.concatenate(labels_tmp[:], 3)  # labels: (x,y,z,label)
     # Load vertebral levels
     if not levels:
-        fname_vertebral_labeling = None
+        fname_vert_level = None
 
     # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
@@ -378,7 +378,7 @@ def main(argv=None):
     for id_label in labels_id_user:
         printv('Estimation for label: ' + label_struc[id_label].name, verbose)
         agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
-                                    perlevel=perlevel, vert_level=fname_vertebral_labeling, method=method,
+                                    perlevel=perlevel, fname_vert_level=fname_vert_level, method=method,
                                     label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)
