@@ -271,6 +271,11 @@ def get_parser():
 
 
 def main(argv=None):
+    # Ensure that the "-list-labels" argument is always parsed last. That way, if `-f` is passed, then `-list-labels`
+    # will see the new location and look there. (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3634)
+    if "-list-labels" in argv:
+        argv.append(argv.pop(argv.index("-list-labels")))
+
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
