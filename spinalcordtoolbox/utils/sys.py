@@ -423,8 +423,10 @@ def printv(string, verbose=1, type='normal', file=None):
     """
     colors = {'normal': ANSIColors16.ResetAll, 'info': ANSIColors16.LightGreen,
               'warning': ANSIColors16.LightYellow + ANSIColors16.Bold,
-              'error': ANSIColors16.LightRed + ANSIColors16.Bold,
               'code': ANSIColors16.LightBlue, 'bold': ANSIColors16.Bold, 'process': ANSIColors16.LightMagenta}
+
+    if type == 'error':
+        raise Exception(string)
 
     if file is None:
         # replicate the logic from print()
