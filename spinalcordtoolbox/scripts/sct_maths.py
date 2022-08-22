@@ -56,8 +56,8 @@ class ParseDataOrScalarArgument(argparse.Action):
                 if data.shape == data_in.shape:
                     data_out.append(data)
                 else:
-                    raise parser.error(f"Dimensions of '{val}' ({data.shape}) "
-                                       f"must match input image ({data_in.shape}).")
+                    parser.error(f"Dimensions of '{val}' ({data.shape}) "
+                                 f"must match input image ({data_in.shape}).")
 
         setattr(namespace, self.dest, data_out)
 

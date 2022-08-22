@@ -50,7 +50,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
     elif type(image) == Image:
         img = nib.nifti1.Nifti1Image(image.data, image.hdr.get_best_affine())
     else:
-        raise Exception(TypeError)
+        raise TypeError(f'Invalid image type: {type(image)}')
 
     if image_dest is None:
         # Get dimensions of data
@@ -108,7 +108,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         elif type(image_dest) == Image:
             reference = nib.nifti1.Nifti1Image(image_dest.data, image_dest.hdr.get_best_affine())
         else:
-            raise Exception(TypeError)
+            raise TypeError(f'Invalid image type: {type(image_dest)}')
 
     if img.ndim == 3:
         # we use mode 'nearest' to overcome issue #2453

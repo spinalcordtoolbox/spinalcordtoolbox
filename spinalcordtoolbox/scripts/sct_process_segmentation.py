@@ -45,11 +45,11 @@ class SeparateNormArgs(argparse.Action):
         pred = values[::2]
         val = values[1::2]
         if len(pred) != len(val):
-            raise parser.error("Values for normalization need to be specified for each predictor.")
+            parser.error("Values for normalization need to be specified for each predictor.")
         try:
             data_subject = {p: float(v) for p, v in zip(pred, val)}
         except ValueError as e:
-            raise parser.error(f"Non-numeric value passed to '-normalize': {e}")
+            parser.error(f"Non-numeric value passed to '-normalize': {e}")
         setattr(namespace, self.dest, data_subject)
 
 
@@ -424,7 +424,7 @@ def main(argv=None):
         path_model = os.path.join(__sct_dir__, 'data', 'csa_normalization_models',
                                   '_'.join(sorted(data_subject.columns)) + '.csv')
         if not os.path.isfile(path_model):
-            raise parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
+            parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
         # Get normalization model
         # Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
         # TODO update link with release tag.
@@ -467,7 +467,7 @@ def main(argv=None):
                             subject=qc_subject,
                             process='sct_process_segmentation')
             else:
-                raise parser.error('-qc-image is required to display QC report.')
+                parser.error('-qc-image is required to display QC report.')
         else:
             logger.warning('QC report only available for PMJ-based CSA. QC report not generated.')
 
