@@ -182,7 +182,7 @@ def _find_nonsys32_bash_exe():
 
 def _parse_dataset_directory(path_data, subject_prefix="sub-", ignore_ses=False):
     """
-    Parse a dataset directory to find subject directories (and session subdirectories, if present).
+    Parse a dataset directory to find subject directories (or session subdirectories, if present).
 
     Notes:
         - The dataset is assumed to be structured in a (somewhat) BIDS-compliant way, see:
@@ -190,22 +190,23 @@ def _parse_dataset_directory(path_data, subject_prefix="sub-", ignore_ses=False)
         - This function is a rudimentary version of the library PyBIDS: https://github.com/bids-standard/pybids.
           TODO: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3415
     """
-    subject_dirs = []
-    subject_flat_dirs = [f for f in os.listdir(path_data) if f.startswith(subject_prefix)]
-    for isub in subject_flat_dirs:
-        # Only consider folders
-        if os.path.isdir(os.path.join(path_data, isub)):
-            session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
-            if session_dirs and not ignore_ses:
-                # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
-                session_dirs.sort()
-                for isess in session_dirs:
-                    subject_dirs.append(os.path.join(isub, isess))
-            else:
-                # Otherwise, consider only 'sub-' directories and don't include 'ses-' subdirectories: e.g. sub-XX
-                subject_dirs.append(isub)
+    # Find subject directories within the root dataset folder
+    subject_dirs = sorted([f for f in os.listdir(path_data)
+                           if f.startswith(subject_prefix) and os.path.isdir(os.path.join(path_data, f))])
 
-    return subject_dirs
+    # Find session subdirectories within subject directories
+    session_dirs = []
+    for sub_dir in subject_dirs:
+        path_sub = os.path.join(path_data, sub_dir)
+        subject_session_dirs = sorted([os.path.join(sub_dir, f) for f in os.listdir(path_sub)
+                                       if f.startswith("ses-") and os.path.isdir(os.path.join(path_sub, f))])
+        session_dirs.extend(subject_session_dirs)
+
+    # Determine which directories to return
+    if session_dirs and not ignore_ses:
+        return session_dirs
+    else:
+        return subject_dirs
 
 
 def _filter_directories(dir_list, include=None, include_list=None, exclude=None, exclude_list=None):
