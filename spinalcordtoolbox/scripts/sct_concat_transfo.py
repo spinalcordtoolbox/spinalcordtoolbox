@@ -16,6 +16,7 @@
 import sys
 import os
 import functools
+from typing import List
 
 from spinalcordtoolbox.image import Image, check_dim, generate_output_file
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
@@ -29,7 +30,7 @@ class Param:
         self.fname_warp_final = 'warp_final.nii.gz'
 
 
-def main(argv=None):
+def main(argv: List[str]):
     """
     Main function
     :param argv:

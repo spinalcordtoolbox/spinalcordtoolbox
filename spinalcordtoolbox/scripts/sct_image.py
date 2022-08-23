@@ -12,7 +12,7 @@
 
 import os
 import sys
-from typing import Sequence
+from typing import List, Sequence
 
 import numpy as np
 from nibabel import Nifti1Image
@@ -186,7 +186,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: List[str]):
     """
     Main function
     :param argv:

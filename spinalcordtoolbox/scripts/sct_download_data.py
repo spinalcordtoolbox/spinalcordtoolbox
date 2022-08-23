@@ -12,6 +12,7 @@
 
 import os
 import sys
+from typing import List
 
 from spinalcordtoolbox.download import install_data
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
@@ -216,7 +217,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: List[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

@@ -12,6 +12,7 @@
 
 import sys
 import os
+from typing import List
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
@@ -101,7 +102,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: List[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

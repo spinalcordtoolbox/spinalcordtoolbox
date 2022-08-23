@@ -11,6 +11,7 @@
 #########################################################################################
 
 import sys
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -109,7 +110,7 @@ def create_custom_legend(fig, shell_colors, bvals):
 # MAIN
 # ==========================================================================================
 
-def main(argv=None):
+def main(argv: List[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

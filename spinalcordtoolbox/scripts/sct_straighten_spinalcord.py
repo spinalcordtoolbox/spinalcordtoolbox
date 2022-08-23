@@ -14,6 +14,7 @@
 
 import sys
 import os
+from typing import List
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
@@ -188,7 +189,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: List[str]):
     """
     Main function
     :param argv:

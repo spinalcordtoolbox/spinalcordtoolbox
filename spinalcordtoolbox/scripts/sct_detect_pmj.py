@@ -24,6 +24,7 @@ About the license: see the file LICENSE.TXT
 import os
 import sys
 import logging
+from typing import List
 
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
@@ -282,7 +283,7 @@ class DetectPMJ:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(argv=None):
+def main(argv: List[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

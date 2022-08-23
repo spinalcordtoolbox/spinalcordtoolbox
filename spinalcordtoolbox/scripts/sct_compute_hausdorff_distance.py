@@ -12,6 +12,7 @@
 
 import sys
 import os
+from typing import List
 
 import numpy as np
 
@@ -496,7 +497,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: List[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

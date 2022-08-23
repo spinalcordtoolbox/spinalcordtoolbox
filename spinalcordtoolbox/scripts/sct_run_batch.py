@@ -28,6 +28,7 @@ import json
 import tempfile
 import warnings
 import shutil
+from typing import List
 from types import SimpleNamespace
 from textwrap import dedent
 
@@ -300,7 +301,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     return res
 
 
-def main(argv=None):
+def main(argv: List[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

@@ -13,6 +13,7 @@ ivadomed package.
 import os
 import sys
 import logging
+from typing import List
 
 from ivadomed import inference as imed_inference
 import nibabel as nib
@@ -131,7 +132,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: List[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

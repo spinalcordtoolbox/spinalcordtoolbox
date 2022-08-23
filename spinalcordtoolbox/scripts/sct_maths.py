@@ -13,8 +13,9 @@
 import sys
 import pickle
 import gzip
-
 import argparse
+from typing import List
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -297,7 +298,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: List[str]):
     """
     Main function
     :param argv:

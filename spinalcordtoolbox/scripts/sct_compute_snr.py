@@ -15,6 +15,7 @@
 ########################################################################################
 
 import sys
+from typing import List
 
 import numpy as np
 
@@ -129,7 +130,7 @@ def weighted_std(values, weights):
     return np.sqrt(variance)
 
 
-def main(argv=None):
+def main(argv: List[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
