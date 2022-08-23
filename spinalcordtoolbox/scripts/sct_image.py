@@ -23,9 +23,8 @@ from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
                                      create_formatted_header_string, HEADER_FORMATS)
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, run_proc
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
-
 
 def get_parser():
     parser = SCTArgumentParser(
@@ -78,7 +77,7 @@ def get_parser():
         choices=('x', 'y', 'z', 't'))
     image.add_argument(
         '-stitch',
-        help='Stitch multiple images acquired in the same orientation utilizing'
+        help='Stitch multiple images acquired in the same orientation utilizing '
              'the algorithm by Lavdas, Glocker et al.',
         required=False)
     image.add_argument(
@@ -330,11 +329,22 @@ def main(argv=None):
         im_out = split_data(im_in, dim)
 
     elif arguments.stitch is not None:
-        im_ref = im_in_list[0]
+        orig_ornt = im_in_list[0].orientation
+        print(orig_ornt)
         # convert images to correct orientation
         im_out = [change_orientation(im_in, 'RAI')]
         # pass them to stitching algorithm
+        cmd = ['stitching', f'-i {"".join(im_out)}', f'-o output.nii.gz','-a']
+        status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+
+        if status != 0:
+            raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+
+        # read result nifti image (make sure there is no name collision
+        im_out = Image('output.nii.gz')
         # receive result and convert to original orientation
+        im_out = [change_orientation(im_out, orig_ornt)]
+        # remove generated image
         print(im_in_list)
 
     elif arguments.type is not None:
