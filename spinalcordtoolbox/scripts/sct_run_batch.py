@@ -180,6 +180,34 @@ def _find_nonsys32_bash_exe():
     return shutil.which('bash', path=nonsys32_paths)
 
 
+def _parse_dataset_directory(path_data, subject_prefix="sub-", ignore_ses=False):
+    """
+    Parse a dataset directory to find subject directories (and session subdirectories, if present).
+
+    Notes:
+        - The dataset is assumed to be structured in a (somewhat) BIDS-compliant way, see:
+          https://bids-specification.readthedocs.io/en/stable/02-common-principles.html#file-name-structure
+        - This function is a rudimentary version of the library PyBIDS: https://github.com/bids-standard/pybids.
+          TODO: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3415
+    """
+    subject_dirs = []
+    subject_flat_dirs = [f for f in os.listdir(path_data) if f.startswith(subject_prefix)]
+    for isub in subject_flat_dirs:
+        # Only consider folders
+        if os.path.isdir(os.path.join(path_data, isub)):
+            session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
+            if session_dirs and not ignore_ses:
+                # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
+                session_dirs.sort()
+                for isess in session_dirs:
+                    subject_dirs.append(os.path.join(isub, isess))
+            else:
+                # Otherwise, consider only 'sub-' directories and don't include 'ses-' subdirectories: e.g. sub-XX
+                subject_dirs.append(isub)
+
+    return subject_dirs
+
+
 def _filter_directories(dir_list, include=None, include_list=None, exclude=None, exclude_list=None):
     """
     Filter a list of directories using inclusion/exclusion regex patterns or explicit lists.
@@ -466,21 +494,7 @@ def main(argv=None):
     print("git commit: {}".format(__get_commit(path_to_git_folder=path_data)))
     print("git origin: {}\n".format(__get_git_origin(path_to_git_folder=path_data)))
 
-    # Find subjects and process inclusion/exclusions
-    subject_dirs = []
-    subject_flat_dirs = [f for f in os.listdir(path_data) if f.startswith(arguments.subject_prefix)]
-    for isub in subject_flat_dirs:
-        # Only consider folders
-        if os.path.isdir(os.path.join(path_data, isub)):
-            session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
-            if session_dirs and not arguments.ignore_ses:
-                # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
-                session_dirs.sort()
-                for isess in session_dirs:
-                    subject_dirs.append(os.path.join(isub, isess))
-            else:
-                # Otherwise, consider only 'sub-' directories and don't include 'ses-' subdirectories: e.g. sub-XX
-                subject_dirs.append(isub)
+    subject_dirs = _parse_dataset_directory(path_data, arguments.subject_prefix, arguments.ignore_ses)
 
     if (arguments.include is not None) and (arguments.include_list is not None):
         parser.error('Only one of `include` and `include-list` can be used')
