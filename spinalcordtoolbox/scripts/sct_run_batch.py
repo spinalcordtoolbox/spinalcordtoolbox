@@ -442,7 +442,7 @@ def main(argv=None):
         # Only consider folders
         if os.path.isdir(os.path.join(path_data, isub)):
             session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
-            if session_dirs and arguments.ignore_ses is not True:
+            if session_dirs and not arguments.ignore_ses:
                 # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
                 session_dirs.sort()
                 for isess in session_dirs:
