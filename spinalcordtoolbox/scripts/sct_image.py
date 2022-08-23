@@ -26,6 +26,7 @@ from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_vi
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, run_proc
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
+
 def get_parser():
     parser = SCTArgumentParser(
         description='Perform manipulations on images (e.g., pad, change space, split along dimension). '
