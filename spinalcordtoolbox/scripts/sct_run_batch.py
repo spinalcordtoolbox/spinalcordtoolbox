@@ -15,6 +15,7 @@
 
 import os
 import sys
+import pathlib
 from getpass import getpass
 import multiprocessing
 import subprocess
@@ -177,6 +178,36 @@ def _find_nonsys32_bash_exe():
     nonsys32_paths = os.pathsep.join([p for p in os.environ['PATH'].split(os.pathsep)
                                       if 'system32' not in p.lower()])
     return shutil.which('bash', path=nonsys32_paths)
+
+
+def _filter_directories(dir_list, include=None, include_list=None, exclude=None, exclude_list=None):
+    """
+    Filter a list of directories using inclusion/exclusion regex patterns or explicit lists.
+
+    NB: Only one of [include, include_list] and only one of [exclude, exclude_list] should be passed.
+        (Currently, this requirement is handled at the argument-parsing level, because we use `parser.error`.)
+    """
+    # Handle inclusions (regex OR explicit list, but not both)
+    if include is not None:
+        dir_list = [f for f in dir_list if re.search(include, f)]
+    elif include_list is not None:
+        dir_list = [f for f in dir_list
+                    # Check if include_list specified entire path (e.g. "sub-01/ses-01")
+                    if f in include_list
+                    # Check if include_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
+                    or any(p in include_list for p in pathlib.Path(f).parts)]
+
+    # Handle exclusions (regex OR explicit list, but not both)
+    if exclude is not None:
+        dir_list = [f for f in dir_list if not re.search(exclude, f)]
+    elif exclude_list is not None:
+        dir_list = [f for f in dir_list
+                    # Check if exclude_list specified entire path (e.g. "sub-01/ses-01")
+                    if f not in exclude_list
+                    # Check if exclude_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
+                    and all(p not in exclude_list for p in pathlib.Path(f).parts)]
+
+    return dir_list
 
 
 def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
@@ -451,26 +482,15 @@ def main(argv=None):
                 # Otherwise, consider only 'sub-' directories and don't include 'ses-' subdirectories: e.g. sub-XX
                 subject_dirs.append(isub)
 
-    # Handle inclusion lists
-    assert not ((arguments.include is not None) and (arguments.include_list is not None)),\
-        'Only one of `include` and `include-list` can be used'
+    if (arguments.include is not None) and (arguments.include_list is not None):
+        parser.error('Only one of `include` and `include-list` can be used')
 
-    if arguments.include is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(arguments.include, f) is not None]
+    if (arguments.exclude is not None) and (arguments.exclude_list is not None):
+        parser.error('Only one of `exclude` and `exclude-list` can be used')
 
-    if arguments.include_list is not None:
-        # TODO decide if we should warn users if one of their inclusions isn't around
-        subject_dirs = [f for f in subject_dirs if f in arguments.include_list]
-
-    # Handle exclusions
-    assert not ((arguments.exclude is not None) and (arguments.exclude_list is not None)),\
-        'Only one of `exclude` and `exclude-list` can be used'
-
-    if arguments.exclude is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(arguments.exclude, f) is None]
-
-    if arguments.exclude_list is not None:
-        subject_dirs = [f for f in subject_dirs if f not in arguments.exclude_list]
+    subject_dirs = _filter_directories(subject_dirs,
+                                       arguments.include, arguments.exclude,
+                                       arguments.include_list, arguments.exclude_list)
 
     # Determine the number of jobs we can run simultaneously
     if arguments.jobs < 1:
