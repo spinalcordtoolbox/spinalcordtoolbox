@@ -334,12 +334,11 @@ def main(argv=None):
         # convert images to correct orientation
         im_out = [change_orientation(im_in, 'RAI')]
         # pass them to stitching algorithm
-        cmd = ['stitching', f'-i {"".join(im_out)}', f'-o output.nii.gz','-a']
+        img_list = ''.join(im_out)
+        cmd = ['stitching', f'-i {}', f'-o output.nii.gz', '-a']
         status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-
         if status != 0:
             raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
-
         # read result nifti image (make sure there is no name collision
         im_out = Image('output.nii.gz')
         # receive result and convert to original orientation
