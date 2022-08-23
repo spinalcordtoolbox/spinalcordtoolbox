@@ -330,21 +330,38 @@ def main(argv=None):
         im_out = split_data(im_in, dim)
 
     elif arguments.stitch is not None:
+        # preserve original orientation
         orig_ornt = im_in_list[0].orientation
-        print(orig_ornt)
-        # convert images to correct orientation
-        im_out = [change_orientation(im_in, 'RAI')]
-        # pass them to stitching algorithm
-        cmd = ['stitching', f'-i {"".join(im_out)}', '-o output.nii.gz', '-a']
+        # reorient images to PIL to use stitching module
+        im_ornt = []
+
+        # use SCT to reorient images
+        for idx, i in enumerate(arguments.i):
+            # TODO: replace 0.nii.gz, etc. by temp files
+            # TODO: where does SCT save this, temp dir?
+            cmd = ['sct_image', '-i',str(i), f"-o {idx}.nii.gz", '-setorient', 'RPI']
+            im_ornt.append(f"{idx}.nii.gz")
+            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+            if status != 0:
+                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+
+        ornt_img = " ".join(im_ornt)
+
+        # stitching using Lavdas, Glocker et al. modul
+        # TODO, label output file correctly (with an appropriate temp name?)
+        im_out = f"sct_stitching_output.nii.gz"
+        cmd = ['stitching', '-i ', ornt_img, '-o sct_stitching_output.nii.gz', '-a']
         status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
         if status != 0:
             raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
-        # read result nifti image (make sure there is no name collision
-        im_out = Image('output.nii.gz')
-        # receive result and convert to original orientation
-        im_out = [change_orientation(im_out, orig_ornt)]
-        # remove generated image
-        print(im_in_list)
+
+        # overwrite stitched image with properly oriented stitched image
+        cmd = ['sct_image', '-i ', str(i), '-setorient', ' RPI', f" -o {im_out}"]
+        status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+        if status != 0:
+            raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+
+        im_out = None # to comply with other modules
 
     elif arguments.type is not None:
         output_type = arguments.type
