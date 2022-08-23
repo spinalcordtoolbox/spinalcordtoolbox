@@ -339,7 +339,7 @@ def main(argv=None):
         for idx, i in enumerate(arguments.i):
             # TODO: replace 0.nii.gz, etc. by temp files
             # TODO: where does SCT save this, temp dir?
-            cmd = ['sct_image', '-i',str(i), f"-o {idx}.nii.gz", '-setorient', 'RPI']
+            cmd = ['sct_image', '-i', str(i), f"-o {idx}.nii.gz", '-setorient', 'RPI']
             im_ornt.append(f"{idx}.nii.gz")
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
             if status != 0:
@@ -349,19 +349,20 @@ def main(argv=None):
 
         # stitching using Lavdas, Glocker et al. modul
         # TODO, label output file correctly (with an appropriate temp name?)
-        im_out = f"sct_stitching_output.nii.gz"
+        im_out = 'sct_stitching_output.nii.gz'
         cmd = ['stitching', '-i ', ornt_img, '-o sct_stitching_output.nii.gz', '-a']
         status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
         if status != 0:
             raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
         # overwrite stitched image with properly oriented stitched image
-        cmd = ['sct_image', '-i ', str(i), '-setorient', ' RPI', f" -o {im_out}"]
+        cmd = ['sct_image', '-i ', str(i), '-setorient', f"{orig_ornt}", f" -o {im_out}"]
         status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
         if status != 0:
             raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
-        im_out = None # to comply with other modules
+        # to comply with other modules
+        im_out = None
 
     elif arguments.type is not None:
         output_type = arguments.type
