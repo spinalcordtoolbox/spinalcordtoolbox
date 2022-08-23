@@ -39,7 +39,7 @@ def get_parser():
         nargs='+',
         metavar=Metavar.file,
         help='Input file(s). Example: "data.nii.gz"\n'
-             'Note: Only "-concat" or "-omc" support multiple input files. In those cases, separate filenames using '
+             'Note: Only "-concat", "-omc" or "-stitch" support multiple input files. In those cases, separate filenames using '
              'spaces. Example usage: "sct_image -i data1.nii.gz data2.nii.gz -concat"',
         required=True)
     optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
@@ -76,6 +76,11 @@ def get_parser():
         help='Concatenate data along the specified dimension',
         required=False,
         choices=('x', 'y', 'z', 't'))
+    image.add_argument(
+        '-stitch',
+        help='Stitch multiple images acquired in the same orientation utilizing'
+             'the algorithm by Lavdas, Glocker et al.',
+        required=False)
     image.add_argument(
         '-remove-vol',
         metavar=Metavar.list,
@@ -204,8 +209,8 @@ def main(argv=None):
     fname_in = arguments.i
 
     im_in_list = [Image(fname) for fname in fname_in]
-    if len(im_in_list) > 1 and arguments.concat is None and arguments.omc is None:
-        parser.error("Multi-image input is only supported for the '-concat' and '-omc' arguments.")
+    if len(im_in_list) > 1 and arguments.concat is None and arguments.omc is None and arguments.stitch is None:
+        parser.error("Multi-image input is only supported for the '-concat','-omc' and '-stitch' arguments.")
 
     # Apply initialization steps to all input images first
     if arguments.set_sform_to_qform:
@@ -323,6 +328,14 @@ def main(argv=None):
         assert dim in dim_list
         dim = dim_list.index(dim)
         im_out = split_data(im_in, dim)
+
+    elif arguments.stitch is not None:
+        im_ref = im_in_list[0]
+        # convert images to correct orientation
+        im_out = [change_orientation(im_in, 'RAI')]
+        # pass them to stitching algorithm
+        # receive result and convert to original orientation
+        print(im_in_list)
 
     elif arguments.type is not None:
         output_type = arguments.type
