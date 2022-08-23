@@ -77,8 +77,9 @@ def get_parser():
         choices=('x', 'y', 'z', 't'))
     image.add_argument(
         '-stitch',
+        action='store_true',
         help='Stitch multiple images acquired in the same orientation utilizing '
-             'the algorithm by Lavdas, Glocker et al.',
+             'the algorithm by Lavdas, Glocker et al. (https://doi.org/10.1016/j.crad.2019.01.012).',
         required=False)
     image.add_argument(
         '-remove-vol',
@@ -334,8 +335,7 @@ def main(argv=None):
         # convert images to correct orientation
         im_out = [change_orientation(im_in, 'RAI')]
         # pass them to stitching algorithm
-        img_list = ''.join(im_out)
-        cmd = ['stitching', f'-i {}', f'-o output.nii.gz', '-a']
+        cmd = ['stitching', f'-i {"".join(im_out)}', '-o output.nii.gz', '-a']
         status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
         if status != 0:
             raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
