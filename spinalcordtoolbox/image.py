@@ -1721,9 +1721,9 @@ def stitch_images(fnames_in: list):
     fname_out = 'stitched.nii.gz'
 
     print(fnames_cmd)
-    print(os.path.join(os.getcwd(),fname_out))
+    print(os.path.join(os.getcwd(), fname_out))
 
-    cmd = ['stitching', '-i', fnames_cmd, f'-o {os.path.join(os.getcwd(),fname_out)}', '-a']
+    cmd = ['stitching', '-i', fnames_cmd, '-o', os.path.join(os.getcwd(),fname_out), '-a']
     status, output = run_proc(cmd, verbose='verbose', is_sct_binary=True)
     print(status, output)
     if status != 0:
