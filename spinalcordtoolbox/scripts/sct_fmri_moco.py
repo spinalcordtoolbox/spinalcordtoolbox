@@ -105,7 +105,7 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=1,
-        help="Remove temporary files. O = no, 1 = yes"
+        help="Remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
         '-v',
