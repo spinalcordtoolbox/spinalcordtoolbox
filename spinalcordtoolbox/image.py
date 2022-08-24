@@ -1707,18 +1707,25 @@ def compute_cross_corr_3d(image: Image, coord, xrange=list(range(-10, 10)), xshi
     return x + xrange[ind_peak]
 
 
-def stitch_images(fnames_in: list, fname_out):
+def stitch_images(fnames_in: list):
     """
     Stitch two (or more) images utilizing the C++-precompiled binaries of Biomedia-MIRA's stitching toolkit
     (https://github.com/biomedia-mira/stitching) by placing a system call.
 
     :param fnames_in: list of filenames of scans in RPI orientation. e.g. [stack1.nii.gz, stack2.nii.gz]
-    :param fname_out: stitched image (in RPI orientation).
+    :param directory: path to temp directory where we store the result of stitching.nii.gz
     :return: none
     """
     # stringify the fname list to parsable cmd parameter
-    fnames_cmd = " ".join(str(fnames_in))
-    cmd = ['stitching', '-i ', fnames_cmd, f'-o {fname_out}', '-a']
+    fnames_cmd = " ".join(fnames_in)
+
+    print(fnames_cmd)
+
+    fname_out = 'stitched.nii.gz'
+    cmd = ['stitching', '-i ', fnames_cmd, f'-o {os.path.join(os.getcwd(),fname_out)}', '-a']
     status, output = run_proc(cmd, verbose='verbose', is_sct_binary=True)
+    print(status, output)
     if status != 0:
         raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+
+    return Image(fname_out)

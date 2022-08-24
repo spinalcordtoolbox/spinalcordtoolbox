@@ -19,12 +19,12 @@ from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 import nibabel as nib
 
-from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample, sct_image
+from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
-                                     create_formatted_header_string, HEADER_FORMATS)
+                                     create_formatted_header_string, HEADER_FORMATS, stitch_images)
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, run_proc
-from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
 
 
 def get_parser():
@@ -331,24 +331,41 @@ def main(argv=None):
         im_out = split_data(im_in, dim)
 
     elif arguments.stitch is not None:
-        '''
-        # preserve original orientation
+
+        # preserve original orientation (we assume it's consistent among all images)
         orig_ornt = im_in_list[0].orientation
-        # reorient images to PIL to use stitching module
-        im_ornt = []
-        # use SCT to reorient images
-        for idx, i in enumerate(arguments.i):
-            # TODO: replace 0.nii.gz, etc. by temp files
-            # TODO: where does SCT save this, temp dir?
 
-            sct_image.main(['-i', str(i), f"-o {idx}.nii.gz", '-setorient', 'RPI'])
-            im_ornt.append(f"{idx}.nii.gz")
+        # preserve current directory
+        curdir = os.getcwd()
 
-        # overwrite stitched image with properly oriented stitched image
-        sct_image.main(['-i', im_out, f"-o {idx}.nii.gz", '-setorient', f"{orig_ornt}"])
-        # to comply with other modules
-        '''
-        im_out = None
+        # creating a temporary folder in which all temporary files will be placed and deleted afterwards
+        path_tmp = tmp_create(basename="image-stitching")
+
+        print(curdir)
+        print(path_tmp)
+
+        fnames_in = []
+
+        # copy all files to temporary, reorient and place in temp directory
+        for file in arguments.i:
+            file_name = os.path.basename(file)
+            temp_file_path = os.path.join(path_tmp, file_name)
+            print(temp_file_path)
+            copy(file, temp_file_path, verbose='verbose')
+            im_in = Image(temp_file_path)
+            im_out = change_orientation(im_in, 'RPI')
+            im_out.save(temp_file_path, dtype=output_type, verbose=verbose)
+            # display_viewer_syntax([temp_file_path], verbose=verbose)
+            fnames_in.append(file_name)
+
+        os.chdir(path_tmp)
+
+        print(fnames_in)
+        # stitch and reorient
+        im_out = stitch_images(fnames_in=fnames_in)
+        im_out = change_orientation(im_out, orig_ornt)
+        rmtree(path_tmp)
+        os.chdir(curdir)
 
     elif arguments.type is not None:
         output_type = arguments.type
