@@ -231,7 +231,7 @@ def func_wa(data, mask=None, map_clusters=None):
 
 
 def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distance_pmj=None, perslice=None,
-                                 perlevel=False, vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None, length_pmj=None):
+                                 perlevel=False, fname_vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None, length_pmj=None):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
 
@@ -242,16 +242,16 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
     :param distance_pmj: float: Distance from Ponto-Medullary Junction (PMJ) in mm.
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False). Has priority over "perslice".
-    :param vert_level: Vertebral level. Could be either an Image or a file name.
+    :param fname_vert_level: Vertebral level. Could be either an Image or a file name.
     :param tuple group_funcs: Name and function to apply on metric. Example: (('MEAN', func_wa),)). Note, the function
       has special requirements in terms of i/o. See the definition to func_wa and use it as a template.
     :param map_clusters: list of list of int: See func_map()
     :param length_pmj: distance from the PMJ with corresponding slices.
     :return: Aggregated metric
     """
-    if vert_level:
-        # Assumption: vert_level image will only ever be 3D or 4D
-        vert_level_slices = Image(vert_level).change_orientation('RPI').data.shape[2]
+    if fname_vert_level is not None:
+        # Assumption: fname_vert_level image will only ever be 3D or 4D
+        vert_level_slices = Image(fname_vert_level).change_orientation('RPI').data.shape[2]
         # Get slices ('z') from metrics regardless of whether they're 1D [z], 3D [x, y, z], and 4D [x, y, z, t]
         metric_slices = metric.data.shape[2] if len(metric.data.shape) >= 3 else metric.data.shape[0]
         if vert_level_slices != metric_slices:
@@ -277,7 +277,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
     # aggregation based on levels
     vertgroups = None
     if levels:
-        im_vert_level = Image(vert_level).change_orientation('RPI')
+        im_vert_level = Image(fname_vert_level).change_orientation('RPI')
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
         slicegroups = [tuple(get_slices_from_vertebral_levels(im_vert_level, level)) for level in levels]
         # Intersection between specified slices and each element of slicegroups
@@ -401,7 +401,7 @@ def diff_between_list_or_int(l1, l2):
 
 
 def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, perlevel=False,
-                   vert_level=None, method=None, label_struc=None, id_label=None, indiv_labels_ids=None):
+                   fname_vert_level=None, method=None, label_struc=None, id_label=None, indiv_labels_ids=None):
     """
     Extract metric within a data, using mask and a given method.
 
@@ -411,7 +411,7 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     :param levels:
     :param perslice:
     :param perlevel:
-    :param vert_level:
+    :param fname_vert_level:
     :param method:
     :param label_struc: LabelStruc class defined above
     :param id_label: int: ID of label to select
@@ -471,7 +471,7 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
         group_funcs = (('MAX', func_max),)
 
     return aggregate_per_slice_or_level(data, mask=mask, slices=slices, levels=levels, perslice=perslice,
-                                        perlevel=perlevel, vert_level=vert_level, group_funcs=group_funcs,
+                                        perlevel=perlevel, fname_vert_level=fname_vert_level, group_funcs=group_funcs,
                                         map_clusters=map_clusters)
 
 

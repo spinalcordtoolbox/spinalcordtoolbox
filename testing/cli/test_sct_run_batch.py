@@ -75,16 +75,44 @@ def test_config_extra_value_warning(tmp_path, dummy_script):
         sct_run_batch.main(['-c', config_path, '-script', dummy_script])
 
 
-def test_only_one_include(tmp_path, dummy_script):
+def test_only_one_include_exclude(tmp_path, dummy_script):
     """
-    Test that an error is thrown for trying to pass both '-include' and '-include-list' at the same time.
+    Test that an error is thrown for trying to pass both '-include'/'-include-list', or '-exclude'/'-exclude-list'.
     """
     data = tmp_path / 'data'
     data.mkdir()
     out = tmp_path / 'out'
-    with pytest.raises(AssertionError, match='Only one'):
+    with pytest.raises(SystemExit) as e:
         sct_run_batch.main(['-include', 'arg', '-include-list', 'arg2',
                             '-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
+    assert e.value.code == 2  # Default error code given by `parser.error` within an ArgumentParser
+    with pytest.raises(SystemExit) as e:
+        sct_run_batch.main(['-exclude', 'arg', '-exclude-list', 'arg2',
+                            '-path-data', str(data), '-path-out', str(out), '-script', dummy_script])
+    assert e.value.code == 2  # Default error code given by `parser.error` within an ArgumentParser
+
+
+def test_directory_inclusion_exclusion():
+    """
+    Test that -include, -include-list, -exclude, and -exclude-list properly filter directories.
+    """
+    filter_dirs = sct_run_batch._filter_directories  # for brevity
+
+    # Test list of subjects by themselves
+    sub_dir_list = ['sub001', 'sub002', 'sub003', 'sub010', 'sub011', 'sub012']
+    assert filter_dirs(sub_dir_list, include="sub.*2") == ['sub002', 'sub012']
+    assert filter_dirs(sub_dir_list, include_list=["sub001", "sub002"]) == ['sub001', 'sub002']
+    assert filter_dirs(sub_dir_list, exclude="sub001") == ['sub002', 'sub003', 'sub010', 'sub011', 'sub012']
+    assert filter_dirs(sub_dir_list, exclude_list=['sub010', 'sub011', 'sub012']) == ['sub001', 'sub002', 'sub003']
+
+    # Test list of subjects with session subdirectories
+    sess_dir_list = ['sub01/ses01', 'sub01/ses02', 'sub02/ses01', 'sub02/ses02', 'sub03/ses01', 'sub03/ses02']
+    assert filter_dirs(sess_dir_list, include="sub01") == ['sub01/ses01', 'sub01/ses02']
+    # NB: The `include_list` case below is tied to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3598
+    assert filter_dirs(sess_dir_list, include_list=["sub01", "sub02"]) == ['sub01/ses01', 'sub01/ses02',
+                                                                           'sub02/ses01', 'sub02/ses02']
+    assert filter_dirs(sess_dir_list, exclude="sub01") == ['sub02/ses01', 'sub02/ses02', 'sub03/ses01', 'sub03/ses02']
+    assert filter_dirs(sess_dir_list, exclude_list=['sub01', 'sub02']) == ['sub03/ses01', 'sub03/ses02']
 
 
 def test_non_executable_task(tmp_path, dummy_script):
