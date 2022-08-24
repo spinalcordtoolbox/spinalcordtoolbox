@@ -20,6 +20,7 @@
 import sys
 import os
 import argparse
+from typing import List
 
 import numpy as np
 
@@ -270,7 +271,17 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: List[str]):
+    """
+    Main function. When this script is run via CLI, sys.argv[1:] is passed to 'argv'.
+
+    :param argv: A list of unparsed arguments, which is passed to ArgumentParser.parse_args()
+    """
+    # Ensure that the "-list-labels" argument is always parsed last. That way, if `-f` is passed, then `-list-labels`
+    # will see the new location and look there. (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3634)
+    if "-list-labels" in argv:
+        argv.append(argv.pop(argv.index("-list-labels")))
+
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
