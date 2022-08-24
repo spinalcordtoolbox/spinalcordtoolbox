@@ -19,7 +19,7 @@ from nibabel import Nifti1Image
 from nibabel.processing import resample_from_to
 import nibabel as nib
 
-from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
+from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample, sct_image
 from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
                                      create_formatted_header_string, HEADER_FORMATS)
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
@@ -340,11 +340,9 @@ def main(argv=None):
         for idx, i in enumerate(arguments.i):
             # TODO: replace 0.nii.gz, etc. by temp files
             # TODO: where does SCT save this, temp dir?
-            cmd = ['sct_image', '-i', str(i), f"-o {idx}.nii.gz", '-setorient', 'RPI']
+
+            sct_image.main(['-i', str(i), f"-o {idx}.nii.gz", '-setorient', 'RPI'])
             im_ornt.append(f"{idx}.nii.gz")
-            status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-            if status != 0:
-                raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
         ornt_img = " ".join(im_ornt)
 
@@ -357,11 +355,7 @@ def main(argv=None):
             raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
         # overwrite stitched image with properly oriented stitched image
-        cmd = ['sct_image', '-i ', str(i), '-setorient', f"{orig_ornt}", f" -o {im_out}"]
-        status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-        if status != 0:
-            raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
-
+        sct_image.main(['-i', im_out, f"-o {idx}.nii.gz", '-setorient', f"{orig_ornt}"])
         # to comply with other modules
         im_out = None
 
