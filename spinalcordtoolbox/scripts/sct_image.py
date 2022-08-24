@@ -331,11 +331,11 @@ def main(argv=None):
         im_out = split_data(im_in, dim)
 
     elif arguments.stitch is not None:
+        '''
         # preserve original orientation
         orig_ornt = im_in_list[0].orientation
         # reorient images to PIL to use stitching module
         im_ornt = []
-
         # use SCT to reorient images
         for idx, i in enumerate(arguments.i):
             # TODO: replace 0.nii.gz, etc. by temp files
@@ -344,19 +344,10 @@ def main(argv=None):
             sct_image.main(['-i', str(i), f"-o {idx}.nii.gz", '-setorient', 'RPI'])
             im_ornt.append(f"{idx}.nii.gz")
 
-        ornt_img = " ".join(im_ornt)
-
-        # stitching using Lavdas, Glocker et al. modul
-        # TODO, label output file correctly (with an appropriate temp name?)
-        im_out = 'sct_stitching_output.nii.gz'
-        cmd = ['stitching', '-i ', ornt_img, '-o sct_stitching_output.nii.gz', '-a']
-        status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-        if status != 0:
-            raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
-
         # overwrite stitched image with properly oriented stitched image
         sct_image.main(['-i', im_out, f"-o {idx}.nii.gz", '-setorient', f"{orig_ornt}"])
         # to comply with other modules
+        '''
         im_out = None
 
     elif arguments.type is not None:
