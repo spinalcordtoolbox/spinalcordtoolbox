@@ -1718,11 +1718,12 @@ def stitch_images(fnames_in: list):
     """
     # stringify the fname list to parsable cmd parameter
     fnames_cmd = " ".join(fnames_in)
+    fname_out = 'stitched.nii.gz'
 
     print(fnames_cmd)
+    print(os.path.join(os.getcwd(),fname_out))
 
-    fname_out = 'stitched.nii.gz'
-    cmd = ['stitching', '-i ', fnames_cmd, f'-o {os.path.join(os.getcwd(),fname_out)}', '-a']
+    cmd = ['stitching', '-i', fnames_cmd, f'-o {os.path.join(os.getcwd(),fname_out)}', '-a']
     status, output = run_proc(cmd, verbose='verbose', is_sct_binary=True)
     print(status, output)
     if status != 0:
