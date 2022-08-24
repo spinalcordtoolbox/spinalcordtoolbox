@@ -341,9 +341,6 @@ def main(argv=None):
         # creating a temporary folder in which all temporary files will be placed and deleted afterwards
         path_tmp = tmp_create(basename="image-stitching")
 
-        print(curdir)
-        print(path_tmp)
-
         fnames_in = []
 
         # copy all files to temporary, reorient and place in temp directory
@@ -360,7 +357,6 @@ def main(argv=None):
 
         os.chdir(path_tmp)
 
-        print(fnames_in)
         # stitch and reorient
         im_out = stitch_images(fnames_in=fnames_in)
         im_out = [change_orientation(im_out, orig_ornt)]
