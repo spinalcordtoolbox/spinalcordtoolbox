@@ -363,7 +363,7 @@ def main(argv=None):
         print(fnames_in)
         # stitch and reorient
         im_out = stitch_images(fnames_in=fnames_in)
-        im_out = change_orientation(im_out, orig_ornt)
+        im_out = [change_orientation(im_out, orig_ornt)]
         rmtree(path_tmp)
         os.chdir(curdir)
 
