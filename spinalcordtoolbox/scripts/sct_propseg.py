@@ -17,7 +17,7 @@ import os
 import pathlib
 import sys
 import logging
-from typing import List
+from typing import Sequence
 
 import numpy as np
 from scipy import ndimage as ndi
@@ -669,7 +669,7 @@ def propseg(img_input, options_dict):
     return Image(fname_seg)
 
 
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     parser = get_parser()
     if sys.platform.startswith("win32"):
         # This isn't *really* a parsing error, but it feels a little more official to display the help with this error

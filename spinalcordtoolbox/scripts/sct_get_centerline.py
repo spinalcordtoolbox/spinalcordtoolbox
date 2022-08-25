@@ -2,7 +2,7 @@
 
 import os
 import sys
-from typing import List
+from typing import Sequence
 
 import numpy as np
 
@@ -118,7 +118,7 @@ def get_parser():
     return parser
 
 
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

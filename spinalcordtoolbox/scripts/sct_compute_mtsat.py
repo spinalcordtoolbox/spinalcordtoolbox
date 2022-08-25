@@ -18,7 +18,7 @@
 import sys
 import os
 import json
-from typing import List
+from typing import Sequence
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, display_viewer_syntax, set_loglevel
 from spinalcordtoolbox.qmri.mt import compute_mtsat
@@ -160,7 +160,7 @@ def fetch_metadata(fname_json, field):
         return metadata[field]
 
 
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

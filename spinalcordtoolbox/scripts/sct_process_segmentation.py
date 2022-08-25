@@ -20,7 +20,7 @@ import sys
 import os
 import logging
 import argparse
-from typing import List
+from typing import Sequence
 
 import pandas as pd
 import numpy as np
@@ -346,7 +346,7 @@ def _make_figure(metric, fit_results):
     return fname_img
 
 
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

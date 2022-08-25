@@ -18,7 +18,7 @@
 
 import os
 import sys
-from typing import List, Sequence
+from typing import Sequence
 
 import numpy as np
 
@@ -231,7 +231,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     """
     Main function. When this script is run via CLI, the main function is called using main(sys.argv[1:]).
 

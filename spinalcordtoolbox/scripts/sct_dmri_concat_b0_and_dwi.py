@@ -9,7 +9,7 @@
 
 
 import sys
-from typing import List
+from typing import Sequence
 
 import numpy as np
 from dipy.data.fetcher import read_bvals_bvecs
@@ -97,7 +97,7 @@ def get_parser():
     return parser
 
 
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:

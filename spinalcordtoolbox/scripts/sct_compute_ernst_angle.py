@@ -12,7 +12,7 @@
 #########################################################################################
 
 import sys
-from typing import List
+from typing import Sequence
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -129,7 +129,7 @@ def get_parser():
 
 # main
 # =======================================================================================================================
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

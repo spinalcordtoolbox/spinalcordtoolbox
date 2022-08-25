@@ -13,7 +13,7 @@
 # TODO: add possiblity to resample to destination image
 
 import sys
-from typing import List
+from typing import Sequence
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
 import spinalcordtoolbox.resampling
@@ -109,7 +109,7 @@ def get_parser():
     return parser
 
 
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

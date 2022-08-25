@@ -14,7 +14,7 @@ import sys
 import pickle
 import gzip
 import argparse
-from typing import List
+from typing import Sequence
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -298,7 +298,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:

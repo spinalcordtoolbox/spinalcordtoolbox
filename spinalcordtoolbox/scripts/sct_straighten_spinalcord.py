@@ -14,7 +14,7 @@
 
 import sys
 import os
-from typing import List
+from typing import Sequence
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
@@ -189,7 +189,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:

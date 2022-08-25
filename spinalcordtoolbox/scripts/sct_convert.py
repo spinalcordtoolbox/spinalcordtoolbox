@@ -13,7 +13,7 @@
 # TODO: add output check in convert
 
 import sys
-from typing import List
+from typing import Sequence
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
 import spinalcordtoolbox.image as image
@@ -65,7 +65,7 @@ def get_parser():
     return parser
 
 
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     """
     Main function
     :param args:

@@ -9,7 +9,7 @@
 
 import sys
 import os
-from typing import List
+from typing import Sequence
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
 from spinalcordtoolbox.image import add_suffix
@@ -91,7 +91,7 @@ def get_parser():
     return parser
 
 
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

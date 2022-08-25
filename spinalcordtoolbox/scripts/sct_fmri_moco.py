@@ -13,7 +13,7 @@
 
 import sys
 import os
-from typing import List
+from typing import Sequence
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
@@ -151,7 +151,7 @@ def get_parser():
     return parser
 
 
-def main(argv: List[str]):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
