@@ -264,7 +264,7 @@ def main(argv=None):
             fname_wm = os.path.join(
                 w.folder_out, w.folder_template, spinalcordtoolbox.metadata.get_file_label(path_template, id_label=4))  # label = 'white matter mask (probabilistic)'
             generate_qc(
-                fname_src, fname_seg=fname_wm, args=sys.argv[1:], path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
+                fname_src, fname_seg=fname_wm, args=argv, path_qc=os.path.abspath(path_qc), dataset=qc_dataset,
                 subject=qc_subject, process='sct_warp_template')
         # If label is missing, get_file_label() throws a RuntimeError
         except RuntimeError:
