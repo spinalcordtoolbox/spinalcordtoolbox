@@ -41,7 +41,7 @@ def download_data(urls):
             filename = os.path.basename(urllib.parse.urlparse(url).path)
             if "Content-Disposition" in response.headers:
                 _, content = cgi.parse_header(response.headers['Content-Disposition'])
-                filename = content["filename"]
+                filename = content.get("filename", filename)  # Fall-back on original 'filename' if header is malformed
 
             # protect against directory traversal
             filename = os.path.basename(filename)
