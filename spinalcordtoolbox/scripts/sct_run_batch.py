@@ -190,22 +190,22 @@ def _parse_dataset_directory(path_data, subject_prefix="sub-", ignore_ses=False)
         - This function is a rudimentary version of the library PyBIDS: https://github.com/bids-standard/pybids.
           TODO: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3415
     """
-    subject_dirs = []
-    subject_flat_dirs = [f for f in os.listdir(path_data) if f.startswith(subject_prefix)]
-    for isub in subject_flat_dirs:
+    dirs = []
+    subject_dirs = [f for f in os.listdir(path_data) if f.startswith(subject_prefix)]
+    for sub_dir in subject_dirs:
         # Only consider folders
-        if os.path.isdir(os.path.join(path_data, isub)):
-            session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
+        if os.path.isdir(os.path.join(path_data, sub_dir)):
+            session_dirs = [f for f in os.listdir(os.path.join(path_data, sub_dir)) if f.startswith('ses-')]
             if session_dirs and not ignore_ses:
                 # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
                 session_dirs.sort()
-                for isess in session_dirs:
-                    subject_dirs.append(os.path.join(isub, isess))
+                for sess_dir in session_dirs:
+                    dirs.append(os.path.join(sub_dir, sess_dir))
             else:
                 # Otherwise, consider only 'sub-' directories and don't include 'ses-' subdirectories: e.g. sub-XX
-                subject_dirs.append(isub)
+                dirs.append(sub_dir)
 
-    return subject_dirs
+    return dirs
 
 
 def _filter_directories(dir_list, include=None, include_list=None, exclude=None, exclude_list=None):
