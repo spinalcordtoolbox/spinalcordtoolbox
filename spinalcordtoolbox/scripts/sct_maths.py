@@ -299,11 +299,6 @@ def get_parser():
 # MAIN
 # ==========================================================================================
 def main(argv: Sequence[str]):
-    """
-    Main function
-    :param argv:
-    :return:
-    """
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
