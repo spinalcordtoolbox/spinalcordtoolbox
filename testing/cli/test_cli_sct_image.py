@@ -92,7 +92,7 @@ def test_sct_image_display_warp_check_output_exists():
 def test_sct_image_stitch():
     """Run the CLI script and check that the stitched file was generated."""
     # crop images for testing stitching function
-    path_in = os.path.join(('t2', 't2.nii.gz'))
+    path_in = os.path.join('t2', 't2.nii.gz')
     fname_roi1 = 't2_roi1.nii.gz'
     fname_roi2 = 't2_roi2.nii.gz'
     sct_crop_image.main(argv=['-i', path_in, '-o', fname_roi1, '-xmin', '0', '-xmax', '59',
