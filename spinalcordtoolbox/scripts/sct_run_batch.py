@@ -191,18 +191,20 @@ def _parse_dataset_directory(path_data, subject_prefix="sub-", ignore_ses=False)
           TODO: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3415
     """
     dirs = []
-    subject_dirs = sorted([f for f in os.listdir(path_data) if f.startswith(subject_prefix)])
+    subject_dirs = sorted([f for f in os.listdir(path_data)
+                           if f.startswith(subject_prefix)
+                           and os.path.isdir(os.path.join(path_data, f))])
     for sub_dir in subject_dirs:
-        # Only consider folders
-        if os.path.isdir(os.path.join(path_data, sub_dir)):
-            session_dirs = sorted([f for f in os.listdir(os.path.join(path_data, sub_dir)) if f.startswith('ses-')])
-            if session_dirs and not ignore_ses:
-                # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
-                for sess_dir in session_dirs:
-                    dirs.append(os.path.join(sub_dir, sess_dir))
-            else:
-                # Otherwise, consider only 'sub-' directories and don't include 'ses-' subdirectories: e.g. sub-XX
-                dirs.append(sub_dir)
+        session_dirs = sorted([f for f in os.listdir(os.path.join(path_data, sub_dir))
+                               if f.startswith('ses-')
+                               and os.path.isdir(os.path.join(path_data, sub_dir, f))])
+        if session_dirs and not ignore_ses:
+            # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
+            for sess_dir in session_dirs:
+                dirs.append(os.path.join(sub_dir, sess_dir))
+        else:
+            # Otherwise, consider only 'sub-' directories and don't include 'ses-' subdirectories: e.g. sub-XX
+            dirs.append(sub_dir)
 
     return dirs
 
