@@ -89,6 +89,7 @@ def test_sct_image_display_warp_check_output_exists():
 
 
 @pytest.mark.skipif(not sys.platform.startswith("linux"), reason="temporarily testing 'stitching' on just linux")
+@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_image_stitch():
     """Run the CLI script and check that the stitched file was generated."""
     # crop images for testing stitching function
