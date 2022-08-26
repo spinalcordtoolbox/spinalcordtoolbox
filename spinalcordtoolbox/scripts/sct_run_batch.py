@@ -191,13 +191,13 @@ def _parse_dataset_directory(path_data, subject_prefix="sub-", ignore_ses=False)
           TODO: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3415
     """
     dirs = []
-    subject_dirs = sorted([f for f in os.listdir(path_data)
-                           if f.startswith(subject_prefix)
-                           and os.path.isdir(os.path.join(path_data, f))])
+    subject_dirs = sorted([d.name for d in os.scandir(path_data)
+                           if d.name.startswith(subject_prefix)
+                           and d.is_dir()])
     for sub_dir in subject_dirs:
-        session_dirs = sorted([f for f in os.listdir(os.path.join(path_data, sub_dir))
-                               if f.startswith('ses-')
-                               and os.path.isdir(os.path.join(path_data, sub_dir, f))])
+        session_dirs = sorted([d.name for d in os.scandir(os.path.join(path_data, sub_dir))
+                               if d.name.startswith('ses-')
+                               and d.is_dir()])
         if session_dirs and not ignore_ses:
             # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
             for sess_dir in session_dirs:
