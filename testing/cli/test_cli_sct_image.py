@@ -101,7 +101,6 @@ def test_sct_image_stitch():
     sct_crop_image.main(argv=['-i', path_in, '-o', fname_roi2, '-xmin', '0', '-xmax', '59',
                               '-ymin', '20', '-ymax', '40', '-zmin', '0', '-zmax', '51'])
 
-    fnames_in = " ".join([fname_roi1, fname_roi2])
     fname_out = 'stitched.nii.gz'
-    sct_image.main(argv=['-i', fnames_in, '-o', fname_out, '-stitch'])
+    sct_image.main(argv=['-i', fname_roi1, fname_roi2, '-o', fname_out, '-stitch'])
     assert os.path.exists(sct_test_path('t2', fname_out))
