@@ -78,7 +78,7 @@ DATASET_DICT = {
         "mirrors": [
             #  "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20220516-2/spinalcordtoolbox-binaries_linux.tar.gz",
             #  only for testing purposes
-            "https://syncandshare.lrz.de/dl/fi9eCRkTSJBH55a6qmpXc2k7/spinalcordtoolbox-binaries_linux.tar.gz",
+            "https://github.com/jqmcginnis/build_biomedia_stitching/releases/download/temp-release/spinalcordtoolbox-binaries_linux.tar.gz",
         ],
         "default_location": __bin_dir__,
     },
