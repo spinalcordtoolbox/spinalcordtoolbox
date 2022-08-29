@@ -34,6 +34,7 @@ import sys
 import os
 import time
 from copy import deepcopy
+from typing import Sequence
 
 import numpy as np
 
@@ -304,7 +305,7 @@ class Param:
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

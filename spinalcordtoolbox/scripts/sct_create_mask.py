@@ -16,6 +16,7 @@
 
 import sys
 import os
+from typing import Sequence
 
 import numpy as np
 
@@ -120,7 +121,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:

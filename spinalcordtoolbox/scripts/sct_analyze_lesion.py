@@ -11,6 +11,7 @@
 import os
 import sys
 import pickle
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
@@ -503,7 +504,7 @@ class AnalyzeLeion:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:

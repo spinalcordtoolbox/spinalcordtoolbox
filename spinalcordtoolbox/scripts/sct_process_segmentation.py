@@ -19,8 +19,10 @@
 import sys
 import os
 import logging
-import pandas as pd
 import argparse
+from typing import Sequence
+
+import pandas as pd
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
@@ -344,7 +346,7 @@ def _make_figure(metric, fit_results):
     return fname_img
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

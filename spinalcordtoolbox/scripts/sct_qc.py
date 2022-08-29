@@ -9,6 +9,7 @@
 
 import os
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.utils import init_sct, set_loglevel, SCTArgumentParser
 
@@ -73,7 +74,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
