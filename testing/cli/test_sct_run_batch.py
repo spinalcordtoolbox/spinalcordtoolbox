@@ -130,11 +130,12 @@ def test_directory_parsing(tmp_path):
     assert parse_dir(tmp_path, subject_prefix="subject-") == []
 
     session_names = ['ses-001', 'ses-002']
-    for sub in subject_names:
+    for sub in subject_names[:-1]:  # Skip creating 'ses' dirs in [-1] to test a mix of 'sub' and 'sub/ses' directories
         for ses in session_names:
             (tmp_path / sub / ses).mkdir()
             (tmp_path / sub / f"{ses}.txt").touch()  # Add false positive files to ensure only directories are returned
-    assert parse_dir(tmp_path) == [os.path.join(sub, ses) for sub in subject_names for ses in session_names]
+    assert parse_dir(tmp_path) == ([os.path.join(sub, ses) for sub in subject_names[:-1] for ses in session_names]
+                                   + [subject_names[-1]])  # Last subject shouldn't have any session subdirectories
     assert parse_dir(tmp_path, ignore_ses=True) == subject_names
 
 
