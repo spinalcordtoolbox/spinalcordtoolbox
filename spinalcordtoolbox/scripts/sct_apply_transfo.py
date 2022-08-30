@@ -17,6 +17,7 @@
 import sys
 import os
 import functools
+from typing import Sequence
 
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.cropping import ImageCropper
@@ -332,7 +333,7 @@ class Transform:
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Entry point for sct_apply_transfo
     :param argv: list of input arguments.

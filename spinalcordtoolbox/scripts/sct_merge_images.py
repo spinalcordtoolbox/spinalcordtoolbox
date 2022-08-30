@@ -15,6 +15,7 @@
 
 import sys
 import os
+from typing import Sequence
 
 import numpy as np
 
@@ -196,7 +197,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

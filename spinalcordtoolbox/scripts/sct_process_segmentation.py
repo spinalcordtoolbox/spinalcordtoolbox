@@ -19,8 +19,10 @@
 import sys
 import os
 import logging
-import pandas as pd
 import argparse
+from typing import Sequence
+
+import pandas as pd
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
@@ -344,7 +346,7 @@ def _make_figure(metric, fit_results):
     return fname_img
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -461,7 +463,7 @@ def main(argv=None):
                             # is called during QC, and it uses `fname_seg[-1]` to center the slices. `fname_mask_out`
                             # doesn't work for this, so we have to repeat `fname_ctl_smooth` at the end of the list.
                             fname_seg=[fname_ctl_smooth, fname_pmj, fname_mask_out, fname_ctl_smooth],
-                            args=sys.argv[1:],
+                            args=argv,
                             path_qc=path_qc,
                             dataset=qc_dataset,
                             subject=qc_subject,

@@ -11,6 +11,7 @@
 import os
 import sys
 import itertools
+from typing import Sequence
 
 import numpy as np
 from skimage.feature import greycomatrix, greycoprops
@@ -298,7 +299,7 @@ class ParamGLCM(object):
         self.angle = '0,45,90,135'  # Rotation angles for co-occurrence matrix
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:

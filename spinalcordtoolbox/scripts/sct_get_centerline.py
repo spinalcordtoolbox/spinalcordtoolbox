@@ -2,6 +2,7 @@
 
 import os
 import sys
+from typing import Sequence
 
 import numpy as np
 
@@ -117,7 +118,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -185,7 +186,7 @@ def main(argv=None):
 
     # Generate QC report
     if path_qc is not None:
-        generate_qc(fname_input_data, fname_seg=file_output, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_input_data, fname_seg=file_output, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_get_centerline')
 
     display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', 'red'], opacities=['', '0.7'])

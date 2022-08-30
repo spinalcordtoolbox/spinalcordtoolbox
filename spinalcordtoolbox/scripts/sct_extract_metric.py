@@ -20,6 +20,7 @@
 import sys
 import os
 import argparse
+from typing import Sequence
 
 import numpy as np
 
@@ -270,7 +271,12 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
+    # Ensure that the "-list-labels" argument is always parsed last. That way, if `-f` is passed, then `-list-labels`
+    # will see the new location and look there. (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3634)
+    if "-list-labels" in argv:
+        argv = [s for s in argv if s != "-list-labels"] + ["-list-labels"]
+
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
