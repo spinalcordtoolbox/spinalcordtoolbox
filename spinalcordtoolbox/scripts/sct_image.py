@@ -342,6 +342,7 @@ def main(argv=None):
         path_tmp = tmp_create(basename="image-stitching")
 
         fnames_in = []
+        dims_in = []
 
         # copy all files to temporary, reorient and place in temp directory
         for file in arguments.i:
@@ -350,11 +351,15 @@ def main(argv=None):
             print(temp_file_path)
             copy(file, temp_file_path, verbose='verbose')
             im_in = Image(temp_file_path)
+            dims_in.append(max(im_in.dim))
             im_out = change_orientation(im_in, 'RPI')
             im_out.save(temp_file_path, dtype=output_type, verbose=verbose)
             # display_viewer_syntax([temp_file_path], verbose=verbose)
             fnames_in.append(file_name)
 
+        # order fs_names w.r.t. dimension
+        i_sorted = np.argsort(-np.array(dims_in))   # descending order
+        fnames_in = [fnames_in[i] for i in i_sorted]
         os.chdir(path_tmp)
 
         # stitch and reorient
