@@ -505,8 +505,8 @@ def main(argv: Sequence[str]):
         parser.error('Only one of `exclude` and `exclude-list` can be used')
 
     subject_dirs = _filter_directories(subject_dirs,
-                                       arguments.include, arguments.exclude,
-                                       arguments.include_list, arguments.exclude_list)
+                                       include=arguments.include, include_list=arguments.include_list,
+                                       exclude=arguments.exclude, exclude_list=arguments.exclude_list)
 
     # Determine the number of jobs we can run simultaneously
     if arguments.jobs < 1:
