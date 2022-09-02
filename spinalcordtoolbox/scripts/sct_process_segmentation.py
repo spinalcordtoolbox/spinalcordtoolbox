@@ -23,6 +23,7 @@ import pandas as pd
 import argparse
 import numpy as np
 from matplotlib.ticker import MaxNLocator
+from operator import truediv
 
 from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, save_as_csv, func_wa, func_std, \
     func_sum, merge_dict, normalize_csa
@@ -35,6 +36,7 @@ from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
+from spinalcordtoolbox import __data_dir__
 
 logger = logging.getLogger(__name__)
 
@@ -42,15 +44,18 @@ logger = logging.getLogger(__name__)
 class SeparateNormArgs(argparse.Action):
     """Separates predictors from their values and puts the results in a dict"""
     def __call__(self, parser, namespace, values, option_string=None):
-        pred = values[::2]
-        val = values[1::2]
-        if len(pred) != len(val):
-            raise parser.error("Values for normalization need to be specified for each predictor.")
-        try:
-            data_subject = {p: float(v) for p, v in zip(pred, val)}
-        except ValueError as e:
-            raise parser.error(f"Non-numeric value passed to '-normalize': {e}")
-        setattr(namespace, self.dest, data_subject)
+        if 'PAM50' not in values:
+            pred = values[::2]
+            val = values[1::2]
+            if len(pred) != len(val):
+                raise parser.error("Values for normalization need to be specified for each predictor.")
+            try:
+                data_subject = {p: float(v) for p, v in zip(pred, val)}
+            except ValueError as e:
+                raise parser.error(f"Non-numeric value passed to '-normalize': {e}")
+            setattr(namespace, self.dest, data_subject)
+        
+        setattr(namespace, self.dest, 'PAM50')
 
 
 def get_parser():
@@ -222,6 +227,8 @@ def get_parser():
              "Specify each value for the subject after the corresponding predictor.\n"
              "Example:\n    -normalize sex 0 brain-volume 960606.0 thalamus-volume 13942.0 \n"
              "*brain-volume and thalamus-volume are in mm^3. For sex, female: 0, male: 1.\n"
+             "To normalize every metric with the PAM50 template perlevel:"
+             "-normalize PAM50"
              "\n"
              "The models were generated using T1w brain images from 804 healthy (non-pathological) participants "
              "ranging from 48 to 80 years old, taken from the UK Biobank dataset.\n"
@@ -402,6 +409,8 @@ def main(argv=None):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
+    # TODO: add normalize PAM50 only with perlevel
+
     mutually_inclusive_args = (fname_pmj, distance_pmj)
     is_pmj_none, is_distance_none = [arg is None for arg in mutually_inclusive_args]
     if distance_pmj is not None and fname_pmj is None:
@@ -411,6 +420,7 @@ def main(argv=None):
 
     # update fields
     metrics_agg = {}
+
     if not file_out:
         file_out = 'csa.csv'
 
@@ -418,6 +428,17 @@ def main(argv=None):
                                          angle_correction=angle_correction,
                                          param_centerline=param_centerline,
                                          verbose=verbose)
+    if arguments.normalize == 'PAM50':
+        metrics_agg_PAM50 = {}
+        file_out_norm_PAM50 = file_out.split('.')[0] + '_norm_PAM50.' + file_out.split('.')[1]
+        fname_segmentation_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_cord.nii.gz')
+        fname_vert_levels_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
+
+        metrics_PAM50, fit_results_PAM50 = compute_shape(fname_segmentation_PAM50,
+                                         angle_correction=angle_correction,
+                                         param_centerline=param_centerline,
+                                         verbose=verbose)
+
     if fname_pmj is not None:
         im_ctl, mask, slices, centerline, length_from_pmj = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
                                                                                         distance_pmj, extent_mask,
@@ -438,6 +459,7 @@ def main(argv=None):
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
+            # TODO? add PAM50 for length too?
         else:
             # For other metrics, we compute the average and standard deviation across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
@@ -445,24 +467,49 @@ def main(argv=None):
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, vert_level=fname_vert_levels,
                                                             group_funcs=group_funcs, length_pmj=length_from_pmj)
+            if arguments.normalize == 'PAM50':
+                metrics_agg_PAM50[key] = aggregate_per_slice_or_level(metrics_PAM50[key], slices=parse_num_list(slices),
+                                                                levels=parse_num_list(vert_levels),
+                                                                distance_pmj=distance_pmj, perslice=perslice,
+                                                                perlevel=perlevel, vert_level=fname_vert_levels_PAM50,
+                                                                group_funcs=group_funcs, length_pmj=length_from_pmj)
+
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
-        data_subject = pd.DataFrame([arguments.normalize])
-        path_model = os.path.join(__sct_dir__, 'data', 'csa_normalization_models',
-                                  '_'.join(sorted(data_subject.columns)) + '.csv')
-        if not os.path.isfile(path_model):
-            raise parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
-        # Get normalization model
-        # Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
-        # TODO update link with release tag.
-        data_predictors = pd.read_csv(path_model, index_col=0)
-        # Add interaction term
-        data_subject['inter-BV_sex'] = data_subject['brain-volume']*data_subject['sex']
-        for line in metrics_agg_merged.values():
-            line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
+        if arguments.normalize != 'PAM50':
+            data_subject = pd.DataFrame([arguments.normalize])
+            path_model = os.path.join(__sct_dir__, 'data', 'csa_normalization_models',
+                                    '_'.join(sorted(data_subject.columns)) + '.csv')
+            if not os.path.isfile(path_model):
+                raise parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
+            # Get normalization model
+            # Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
+            # TODO update link with release tag.
+            data_predictors = pd.read_csv(path_model, index_col=0)
+            # Add interaction term
+            data_subject['inter-BV_sex'] = data_subject['brain-volume']*data_subject['sex']
+            for line in metrics_agg_merged.values():
+                line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
 
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
+    # Save normalized values using PAM50 as a .csv
+    if arguments.normalize == 'PAM50':
+        metrics_agg_merged_PAM50 = merge_dict(metrics_agg_PAM50)
+        for (line_PAM50, line) in zip(metrics_agg_merged_PAM50.values(), metrics_agg_merged.values()):
+            line_norm = list(map(truediv, list(line.values())[2::], (list(line_PAM50.values())[2::])))
+            list_2_first = (list(line.values())[0:2])
+            line_norm = list_2_first.append(line_norm)
+            i = 0
+            for key in line_PAM50.keys():
+                if isinstance(line_PAM50[key], float):
+                    line_PAM50[key] = line[key]/line_PAM50[key]
+                    if 'STD' in key:
+                        line_PAM50[key] = 0
+                i = i + 1
+        save_as_csv(metrics_agg_merged_PAM50, file_out_norm_PAM50, fname_in=fname_segmentation, append=append)
+
+
     # QC report (only for PMJ-based CSA)
     if path_qc is not None:
         if fname_pmj is not None:
