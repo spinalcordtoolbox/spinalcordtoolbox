@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 
 import pytest
 import numpy as np
@@ -88,7 +87,6 @@ def test_sct_image_display_warp_check_output_exists():
     assert os.path.exists(sct_test_path('t2', fname_out))
 
 
-@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="temporarily testing 'stitching' on just linux")
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_image_stitch():
     """Run the CLI script and check that the stitched file was generated."""
