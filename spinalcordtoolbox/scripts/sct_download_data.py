@@ -78,19 +78,19 @@ DATASET_DICT = {
         "mirrors": [
             #  "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20220516-2/spinalcordtoolbox-binaries_linux.tar.gz",
             #  only for testing purposes
-            "https://github.com/jqmcginnis/build_biomedia_stitching/releases/download/temp-release/spinalcordtoolbox-binaries_linux.tar.gz",
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/refs%2Fpull%2F4%2Fmerge-2981942540/spinalcordtoolbox-binaries_linux.tar.gz",
         ],
         "default_location": __bin_dir__,
     },
     "binaries_osx": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20220516-2/spinalcordtoolbox-binaries_osx.tar.gz",
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/refs%2Fpull%2F4%2Fmerge-2981942540/spinalcordtoolbox-binaries_osx.tar.gz",
         ],
         "default_location": __bin_dir__,
     },
     "binaries_win": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20220516-2/spinalcordtoolbox-binaries_windows.tar.gz",
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/refs%2Fpull%2F4%2Fmerge-2981942540//spinalcordtoolbox-binaries_windows.tar.gz",
         ],
         "default_location": __bin_dir__,
     },
