@@ -9,7 +9,7 @@ import nibabel as nib
 from dipy.denoise.patch2self import patch2self
 
 from spinalcordtoolbox.image import add_suffix
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel, list_type
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel, list_type, display_viewer_syntax
 
 
 def get_parser():
@@ -131,9 +131,7 @@ def main(argv: Sequence[str]):
     nib.save(nii_denoised, output_file_name_denoised)
     nib.save(nii_diff, output_file_name_diff)
 
-    printv("\nDone! To view results, type:", verbose)
-    printv("fsleyes " + file_to_denoise + " " + output_file_name_denoised + " " + output_file_name_diff + " & \n",
-           verbose, 'info')
+    display_viewer_syntax([file_to_denoise, output_file_name_denoised, output_file_name_diff])
 
 
 if __name__ == '__main__':
