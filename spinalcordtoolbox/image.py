@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #########################################################################################
 #
 # SCT Image API
@@ -16,7 +15,6 @@ import os
 import itertools
 import warnings
 import logging
-import shutil
 import math
 from typing import Sequence
 
@@ -26,11 +24,10 @@ import pathlib
 from contrib import fslhd
 
 import transforms3d.affines as affines
-import re
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import sct_dir_local_path, extract_fname
+from spinalcordtoolbox.utils import extract_fname, mv
 
 logger = logging.getLogger(__name__)
 
@@ -281,7 +278,7 @@ class Image(object):
         self.verbose = verbose
 
         # load an image from file
-        if isinstance(param, str) or (sys.hexversion < 0x03000000 and isinstance(param, unicode)):
+        if isinstance(param, str):
             self.loadFromPath(param, verbose)
         # copy constructor
         elif isinstance(param, type(self)):
@@ -310,7 +307,6 @@ class Image(object):
                              f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
                              f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
             raise ValueError("Image sform does not match qform")
-
 
     @property
     def dim(self):
@@ -402,11 +398,11 @@ class Image(object):
         :return:
         """
 
-        im_file = nib.load(path, mmap=(not sys.platform.startswith('win32')))
+        self.absolutepath = os.path.abspath(path)
+        im_file = nib.load(self.absolutepath, mmap=(not sys.platform.startswith('win32')))
         self.affine = im_file.affine.copy()
         self.data = im_file.get_data()
         self.hdr = im_file.header.copy()
-        self.absolutepath = path
         if path != self.absolutepath:
             logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
         else:
@@ -1478,7 +1474,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
         img.save(fname_out)
     else:
         # Generate output file without changing the extension
-        shutil.move(fname_in, fname_out)
+        mv(fname_in, fname_out, verbose=verbose)
 
     logger.info("File created: %s", os.path.join(path_out, file_out + ext_out))
     return os.path.join(path_out, file_out + ext_out)

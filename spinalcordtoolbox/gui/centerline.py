@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-#  Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
 #
 # About the license: see the file LICENSE.TXT
 
@@ -154,7 +153,7 @@ class Centerline(base.BaseDialog):
         group.setFlat(True)
         layout = QtWidgets.QHBoxLayout()
 
-        if sys.platform.lower() == 'darwin':
+        if sys.platform.startswith('darwin'):
             cmd_key = 'Cmd'
         else:
             cmd_key = 'Ctrl'
@@ -187,7 +186,7 @@ class Centerline(base.BaseDialog):
     def _init_footer(self, parent):
         ctrl_layout = super(Centerline, self)._init_footer(parent)
 
-        if sys.platform.lower() == 'darwin':
+        if sys.platform.startswith('darwin'):
             cmd_key = 'Cmd'
         else:
             cmd_key = 'Ctrl'

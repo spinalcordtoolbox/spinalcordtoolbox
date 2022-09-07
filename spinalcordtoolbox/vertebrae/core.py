@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Core functions dealing with vertebral labeling
 
 # TODO: remove i/o as much as possible
@@ -8,6 +6,7 @@ import os
 import logging
 
 import numpy as np
+from scipy.ndimage import distance_transform_edt
 import scipy.ndimage.measurements
 from scipy.ndimage.filters import gaussian_filter
 
@@ -19,36 +18,25 @@ from spinalcordtoolbox.centerline.core import get_centerline
 logger = logging.getLogger(__name__)
 
 
-def label_vert(fname_seg, fname_label, verbose=1):
+def label_vert(fname_seg, fname_label):
     """
     Label segmentation using vertebral labeling information. No orientation expected.
 
     :param fname_seg: file name of segmentation.
     :param fname_label: file name for a labelled segmentation that will be used to label the input segmentation
     :param fname_out: file name of the output labeled segmentation. If empty, will add suffix "_labeled" to fname_seg
-    :param verbose:
-    :return:
     """
-    # Open labels
-    im_disc = Image(fname_label).change_orientation("RPI")
     # retrieve all labels
-    coord_label = im_disc.getNonZeroCoordinates()
-    # compute list_disc_z and list_disc_value
-    list_disc_z = []
-    list_disc_value = []
-    for i in range(len(coord_label)):
-        list_disc_z.insert(0, coord_label[i].z)
-        # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
-        list_disc_value.insert(0, coord_label[i].value - 1)
-
-    list_disc_value = [x for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
-    list_disc_z = [y for (y, x) in sorted(zip(list_disc_z, list_disc_value), reverse=True)]
+    coord_labels = Image(fname_label).change_orientation("RPI").getNonZeroCoordinates()
+    # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
+    discs = [(cl.z, cl.value - 1) for cl in reversed(coord_labels)]
+    discs.sort(reverse=True)
     # label segmentation
-    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
-    label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    label_segmentation(fname_seg, discs)
+    label_discs(fname_seg, discs)
 
 
-def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='../',
+def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1, path_template='', path_output='..',
                         scale_dist=1.):
     """
     Find intervertebral discs in straightened image using template matching
@@ -96,7 +84,7 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     xct = int(np.round(nxt / 2))  # direction RL
     yct = int(np.round(nyt / 2))  # direction AP
 
-    # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C4/C5], ..., [L1/L2 -> L2/L3]
+    # define mean distance (in voxel) between adjacent discs: [C1/C2 -> C2/C3], [C2/C3 -> C3/C4], ..., [L1/L2 -> L2/L3]
     centerline_level = data_disc_template[xct, yct, :]
     # attribute value to each disc. Starts from max level, then decrease.
     min_level = centerline_level[centerline_level.nonzero()].min()
@@ -140,9 +128,10 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     # FIND DISCS
     # ===========================================================================
     logger.info('Detect intervertebral discs...')
-    # assign initial z and disc
-    current_z = init_disc[0]
-    current_disc = init_disc[1]
+    current_z, current_value = init_disc
+    if (current_value not in list_disc_value_template) or (current_value-1 not in list_disc_value_template):
+        logger.error('Initial disc (%s) is not in template. Cannot detect intervertebral discs.', current_value)
+        raise ValueError('Initial disc is not in template.')
     # create list for z and disc
     list_disc_z = []
     list_disc_value = []
@@ -150,39 +139,39 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     direction = 'superior'
     search_next_disc = True
     while search_next_disc:
-        logger.info('Current disc: %s (z=%s). Direction: %s', current_disc, current_z, direction)
+        logger.info('Current disc: %s (z=%s). Direction: %s', current_value, current_z, direction)
         try:
             # get z corresponding to current disc on template
-            current_z_template = list_disc_z_template[current_disc]
-        except:
+            current_z_template = list_disc_z_template[current_value]
+        except IndexError:
             # in case reached the bottom (see issue #849)
             logger.warning('Reached the bottom of the template. Stop searching.')
             break
         # find next disc
         # N.B. Do not search for C1/C2 disc (because poorly visible), use template distance instead
-        if current_disc != 1:
+        if current_value != 1:
             current_z = compute_corr_3d(data, data_template, x=xc, xshift=0, xsize=param['size_RL'],
                                         y=yc, yshift=param['shift_AP'], ysize=param['size_AP'],
                                         z=current_z, zshift=0, zsize=param['size_IS'],
                                         xtarget=xct, ytarget=yct, ztarget=current_z_template,
-                                        zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_disc),
+                                        zrange=zrange, verbose=verbose, save_suffix='_disc' + str(current_value),
                                         path_output=path_output)
 
         # display new disc
         if verbose == 2:
             ax_disc.scatter(yc + param['shift_AP_visu'], current_z, c='yellow', s=10)
-            ax_disc.text(yc + param['shift_AP_visu'] + 4, current_z, str(current_disc) + '/' + str(current_disc + 1),
+            ax_disc.text(yc + param['shift_AP_visu'] + 4, current_z, str(current_value) + '/' + str(current_value + 1),
                          verticalalignment='center', horizontalalignment='left', color='yellow', fontsize=7)
 
         # append to main list
         if direction == 'superior':
             # append at the beginning
             list_disc_z.insert(0, current_z)
-            list_disc_value.insert(0, current_disc)
+            list_disc_value.insert(0, current_value)
         elif direction == 'inferior':
             # append at the end
             list_disc_z.append(current_z)
-            list_disc_value.append(current_disc)
+            list_disc_value.append(current_value)
 
         # adjust correcting factor based on already-identified discs
         if len(list_disc_z) > 1:
@@ -204,28 +193,32 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
         # assign new current_z and disc value
         if direction == 'superior':
             try:
-                approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc - 1)]
+                approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_value - 1)]
             except ValueError:
                 logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z + approx_distance_to_next_disc
-            current_disc = current_disc - 1
+            current_value = current_value - 1
         elif direction == 'inferior':
             try:
-                approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_disc)]
+                approx_distance_to_next_disc = list_distance[list_disc_value_template.index(current_value)]
             except ValueError:
                 logger.warning('Disc value not included in template. Using previously-calculated distance: %s', approx_distance_to_next_disc)
             # assign new current_z and disc value
             current_z = current_z - approx_distance_to_next_disc
-            current_disc = current_disc + 1
+            current_value = current_value + 1
 
         # if current_z is larger than searching zone, switch direction (and start from initial z minus approximate
         # distance from updated template distance)
-        if current_z >= nz or current_disc == 0:
+        if current_z >= nz or current_value == 0:
             logger.info('.. Switching to inferior direction.')
             direction = 'inferior'
-            current_disc = init_disc[1] + 1
-            current_z = init_disc[0] - list_distance[list_disc_value_template.index(current_disc)]
+            current_value = init_disc[1] + 1
+            try:
+                current_z = init_disc[0] - list_distance[list_disc_value_template.index(current_value)]
+            except ValueError:
+                logger.info('No disc is inferior to the initial disc.')
+                search_next_disc = False
         # if current_z is lower than searching zone, stop searching
         if current_z <= 0:
             search_next_disc = False
@@ -249,8 +242,9 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     list_disc_value.insert(0, upper_disc - 1)
 
     # Label segmentation
-    label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
-    label_discs(fname_seg, list_disc_z, list_disc_value, verbose=verbose)
+    discs = list(zip(list_disc_z, list_disc_value))
+    label_segmentation(fname_seg, discs)
+    label_discs(fname_seg, discs)
 
 
 class EmptyArrayError(ValueError):
@@ -308,36 +302,34 @@ def get_z_and_disc_values_from_label(fname_label):
     return [z_label, value_label]
 
 
-def clean_labeled_segmentation(fname_labeled_seg, fname_seg, fname_labeled_seg_new):
+def crop_labels(im_labeled_seg, im_seg):
     """
-    FIXME doc
-    Clean labeled segmentation by:\
-      (i)  removing voxels in segmentation_labeled that are not in segmentation and\
-      (ii) adding voxels in segmentation that are not in segmentation_labeled
+    Remove voxels in labeled segmentation that are not in segmentation,
+    modifying on the labeled segmentation in-place.
 
-    :param fname_labeled_seg:
-    :param fname_seg:
-    :param fname_labeled_seg_new: output
-    :return: none
+    :param Image im_labeled_seg: labeled segmentation
+    :param Image im_seg: segmentation (with values in [0, 1])
+    :return: None
     """
-    # remove voxels in segmentation_labeled that are not in segmentation
-    img_labeled_seg = Image(fname_labeled_seg)
-    img_seg = Image(fname_seg)
-    data_labeled_seg_mul = img_labeled_seg.data * img_seg.data
-    # dilate to add voxels in segmentation that are not in segmentation_labeled
-    data_labeled_seg_dil = dilate(img_labeled_seg.data, 2, 'ball')
-    data_labeled_seg_mul_bin = data_labeled_seg_mul > 0
-    data_diff = img_seg.data - data_labeled_seg_mul_bin
-    ind_nonzero = np.where(data_diff)
-    img_labeled_seg_corr = img_labeled_seg.copy()
-    img_labeled_seg_corr.data = data_labeled_seg_mul
-    for i_vox in range(len(ind_nonzero[0])):
-        # assign closest label value for this voxel
-        ix, iy, iz = ind_nonzero[0][i_vox], ind_nonzero[1][i_vox], ind_nonzero[2][i_vox]
-        img_labeled_seg_corr.data[ix, iy, iz] = data_labeled_seg_dil[ix, iy, iz]
-    # save new label file (overwrite)
-    img_labeled_seg_corr.absolutepath = fname_labeled_seg_new
-    img_labeled_seg_corr.save()
+    im_labeled_seg.data *= im_seg.data
+
+
+def expand_labels(im_labeled_seg):
+    """
+    Fill in labels for all the voxels in the labeled segmentation,
+    using the nearest label.
+    Modifies the labeled segmentation in-place.
+
+    :param Image im_labeled_seg: labeled segmentation
+    :return: None
+    """
+    # for each voxel, find the coordinates of the nearest nonzero label
+    indices = distance_transform_edt(
+        (im_labeled_seg.data == 0),
+        return_distances=False,
+        return_indices=True)
+    # label all voxels
+    im_labeled_seg.data = im_labeled_seg.data[tuple(indices)]
 
 
 def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, zsize, xtarget, ytarget, ztarget, zrange, verbose, save_suffix, path_output):
@@ -464,15 +456,12 @@ def compute_corr_3d(src, target, x, xshift, xsize, y, yshift, ysize, z, zshift, 
     return z + zrange[ind_peak] - zshift
 
 
-def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
+def label_segmentation(fname_seg, discs):
     """
     Label segmentation image
 
     :param fname_seg: fname of the segmentation, no orientation expected
-    :param list_disc_z: list of z that correspond to a disc
-    :param list_disc_value: list of associated disc values
-    :param verbose:
-    :return:
+    :param discs: list of (z, value) pairs, one for each disc
     """
 
     # open segmentation
@@ -480,20 +469,15 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     init_orientation = seg.orientation
     seg.change_orientation("RPI")
 
-    dim = seg.dim
-    ny = dim[1]
-    nz = dim[2]
-    # loop across z
+    nz = seg.dim[2]
     for iz in range(nz):
-        # get index of the disc right above iz
+        # get value of the disc right above iz
         try:
-            ind_above_iz = max([i for i in range(len(list_disc_z)) if list_disc_z[i] > iz])
+            # +1 because iz is BELOW the disc
+            _, vertebral_level = min((z, value+1) for (z, value) in discs if z > iz)
         except ValueError:
-            # if ind_above_iz is empty, attribute value 0
+            # if no discs are above iz, default to 0
             vertebral_level = 0
-        else:
-            # assign vertebral level (add one because iz is BELOW the disk)
-            vertebral_level = list_disc_value[ind_above_iz] + 1
         # get voxels in mask
         ind_nonzero = np.nonzero(seg.data[:, :, iz])
         seg.data[ind_nonzero[0], ind_nonzero[1], iz] = vertebral_level
@@ -502,15 +486,12 @@ def label_segmentation(fname_seg, list_disc_z, list_disc_value, verbose=1):
     seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled'))
 
 
-def label_discs(fname_seg, list_disc_z, list_disc_value, verbose=1):
+def label_discs(fname_seg, discs):
     """
     Create file with single voxel label in the middle of the spinal cord for each disc.
 
     :param fname_seg: fname of the segmentation, no orientation expected
-    :param list_disc_z: list of z that correspond to a disc
-    :param list_disc_value: list of associated disc values
-    :param verbose:
-    :return:
+    :param discs: list of (z, value) pairs, one for each disc
     """
     seg = Image(fname_seg)
     init_orientation = seg.orientation
@@ -518,21 +499,19 @@ def label_discs(fname_seg, list_disc_z, list_disc_value, verbose=1):
     disc_data = np.zeros_like(seg.data)
     nx, ny, nz = seg.data.shape
 
-    for i in range(len(list_disc_z)):
-        if list_disc_z[i] < nz:
-            try:
-                slices = seg.data[:, :, list_disc_z[i]]
-                cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
-            except EmptyArrayError:
+    for disc_z, disc_value in discs:
+        if disc_z < nz:
+            slices = seg.data[:, :, disc_z]
+            if (slices == 0).all():
                 logger.warning("During disc labeling, center of mass calculation failed due to discontinuities in "
                                "segmented spinal cord; please check the quality of your segmentation. Using "
                                "interpolated centerline as a fallback.")
                 interpolated_centerline, _, _, _ = get_centerline(seg)
-                slices = interpolated_centerline.data[:, :, list_disc_z[i]]
-                cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
+                slices = interpolated_centerline.data[:, :, disc_z]
+            cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
 
             # Disc value are offset by one due to legacy code
-            disc_data[cx, cy, list_disc_z[i]] = list_disc_value[i] + 1
+            disc_data[cx, cy, disc_z] = disc_value + 1
 
     seg.data = disc_data
     seg.change_orientation(init_orientation).save(add_suffix(fname_seg, '_labeled_disc'))

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #########################################################################################
 #
 # This file contains many useful (and tiny) classes corresponding to data types.
@@ -13,7 +12,7 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-from numpy import dot, cross, array, dstack, einsum, tile, multiply, stack, rollaxis, zeros
+from numpy import dot, cross, array, einsum, tile, multiply, stack, rollaxis, zeros
 from numpy.linalg import norm, inv
 import numpy as np
 from scipy.spatial import cKDTree
@@ -211,7 +210,7 @@ class Centerline:
                            'T4': 21.761237991438083, 'T5': 22.633281372803687, 'T6': 23.801974227738132,
                            'T7': 24.358357813758332, 'T8': 25.200266294477885, 'T9': 25.315272064638506,
                            'T10': 25.501856729317133, 'T11': 27.619238824308123, 'T12': 29.465119270009946,
-                            'L1': 31.89272719870084, 'L2': 33.511890474486449, 'L3': 35.721413718617441}
+                           'L1': 31.89272719870084, 'L2': 33.511890474486449, 'L3': 35.721413718617441}
 
     """
     {'T10': ['T10', 25.543101799896391, 2.0015883550878457], 'T11': ['T11', 27.192970855618441, 1.9996136135271434], 'T12': ['T12', 29.559890137292335, 2.0204112073304121], 'PMG': ['PMG', 12.429867526011929, 2.9899172582983007], 'C3': ['C3', 18.229087873095388, 1.3299710200291315], 'C2': ['C2', 18.859365127066937, 1.5764843286826156], 'C1': ['C1', 0.0, 0.0], 'C7': ['C7', 15.543004729447034, 1.5597730786882851], 'C6': ['C6', 15.967482996580138, 1.4698898678270345], 'PMJ': ['PMJ', 11.38265467206886, 1.5641456310519117], 'C4': ['C4', 17.486130819790912, 1.5888243108648978], 'T8': ['T8', 25.649136105105754, 4.6835454011234718], 'T9': ['T9', 25.581999112288241, 1.9565018840832449], 'T6': ['T6', 23.539740893750668, 1.9073272889977211], 'T7': ['T7', 24.388589291326571, 1.828160893366733], 'T4': ['T4', 22.076131620822075, 1.726133989579701], 'T5': ['T5', 22.402770293433733, 2.0157113843189087], 'T2': ['T2', 19.800131846755267, 1.7600195442391204], 'T3': ['T3', 21.287064228802027, 1.8123109081532691], 'T1': ['T1', 16.525065003339993, 1.6130238001641826], 'L2': ['L2', 34.382300279977912, 2.378543023223767], 'L3': ['L3', 34.804841812064133, 2.7878124182683481], 'L1': ['L1', 32.02934490161379, 2.7697447948338381], 'C5': ['C5', 16.878263370935201, 1.6952832966782569]}
@@ -278,15 +277,15 @@ class Centerline:
     def compute_length(self):
         for i in range(0, self.number_of_points - 1):
             distance = np.sqrt((self.points[i][0] - self.points[i + 1][0]) ** 2 +
-                            (self.points[i][1] - self.points[i + 1][1]) ** 2 +
-                            (self.points[i][2] - self.points[i + 1][2]) ** 2)
+                               (self.points[i][1] - self.points[i + 1][1]) ** 2 +
+                               (self.points[i][2] - self.points[i + 1][2]) ** 2)
             self.length += distance
             self.progressive_length.append(distance)
             self.incremental_length.append(self.incremental_length[-1] + distance)
         for i in range(self.number_of_points - 1, 0, -1):
             distance = np.sqrt((self.points[i][0] - self.points[i - 1][0]) ** 2 +
-                            (self.points[i][1] - self.points[i - 1][1]) ** 2 +
-                            (self.points[i][2] - self.points[i - 1][2]) ** 2)
+                               (self.points[i][1] - self.points[i - 1][1]) ** 2 +
+                               (self.points[i][2] - self.points[i - 1][2]) ** 2)
             self.progressive_length_inverse.append(distance)
             self.incremental_length_inverse.append(self.incremental_length_inverse[-1] + distance)
 
@@ -522,10 +521,10 @@ class Centerline:
         if self.label_reference not in self.index_disk:
             upper = 31
             label_reference = ''
-            for l in self.index_disk:
-                if self.labels_regions[l] < upper:
-                    label_reference = l
-                    upper = self.labels_regions[l]
+            for label in self.index_disk:
+                if self.labels_regions[label] < upper:
+                    label_reference = label
+                    upper = self.labels_regions[label]
             self.label_reference = label_reference
 
         self.distance_from_C1label = {}
@@ -754,7 +753,7 @@ class Centerline:
         import matplotlib.pyplot as plt
 
         plt.figure(1)
-        ax = plt.subplot(211)
+        ax = plt.subplot(211)  # noqa: F841
 
         if mode == 'absolute':
             plt.plot([coord[2] for coord in self.points], [coord[0] for coord in self.points])
@@ -769,10 +768,10 @@ class Centerline:
 
         plt.grid()
         plt.title("X")
-        #ax.set_aspect('equal')
+        # ax.set_aspect('equal')
         plt.xlabel('z')
         plt.ylabel('x')
-        ax = plt.subplot(212)
+        ax = plt.subplot(212)  # noqa: F841
 
         if mode == 'absolute':
             plt.plot([coord[2] for coord in self.points], [coord[1] for coord in self.points])
@@ -787,7 +786,7 @@ class Centerline:
 
         plt.grid()
         plt.title("Y")
-        #ax.set_aspect('equal')
+        # ax.set_aspect('equal')
         plt.xlabel('z')
         plt.ylabel('y')
         plt.show()

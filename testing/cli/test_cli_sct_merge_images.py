@@ -11,6 +11,6 @@ logger = logging.getLogger(__name__)
 def test_sct_merge_images_no_checks():
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
-    sct_merge_images.main(argv=['-i', 'template/template/PAM50_small_cord.nii.gz,t2/t2_seg-manual.nii.gz',
-                                '-w', 'mt/warp_template2mt.nii.gz,t2/warp_template2anat.nii.gz',
+    sct_merge_images.main(argv=['-i', 'template/template/PAM50_small_cord.nii.gz', 't2/t2_seg-manual.nii.gz',
+                                '-w', 'mt/warp_template2mt.nii.gz', 't2/warp_template2anat.nii.gz',
                                 '-d' 'mt/mt1.nii.gz'])

@@ -24,6 +24,7 @@ About the license: see the file LICENSE.TXT
 import os
 import sys
 import logging
+from typing import Sequence
 
 from scipy.ndimage.measurements import center_of_mass
 import nibabel as nib
@@ -79,7 +80,7 @@ def get_parser():
     optional.add_argument(
         "-ofolder",
         metavar=Metavar.folder,
-        help='Output folder. Example: My_Output_Folder/',
+        help='Output folder. Example: My_Output_Folder',
         action=ActionCreateFolder,
         required=False)
     optional.add_argument(
@@ -283,7 +284,7 @@ class DetectPMJ:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -340,7 +341,8 @@ def main(argv=None):
     if fname_out is not None:
         if path_qc is not None:
             from spinalcordtoolbox.reports.qc import generate_qc
-            generate_qc(fname_in, fname_seg=fname_out, args=sys.argv[1:], path_qc=os.path.abspath(path_qc), process='sct_detect_pmj')
+            generate_qc(fname_in, fname_seg=fname_out, args=argv, path_qc=os.path.abspath(path_qc),
+                        process='sct_detect_pmj')
 
         display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'])
 

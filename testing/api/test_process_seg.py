@@ -43,7 +43,6 @@ dict_test_orientation = [
     ]
 
 
-# noinspection 801,PyShadowingNames
 @pytest.mark.parametrize('test_orient', dict_test_orientation)
 def test_fix_orientation(test_orient):
     assert process_seg.fix_orientation(test_orient['input']) == pytest.approx(test_orient['expected'], rel=0.0001)
@@ -110,7 +109,7 @@ im_segs = [
      {'angle_corr': False, 'slice': 2})
     ]
 
-# noinspection 801,PyShadowingNames
+
 @pytest.mark.parametrize('im_seg,expected,params', im_segs)
 def test_compute_shape(im_seg, expected, params):
     metrics, fit_results = process_seg.compute_shape(im_seg,

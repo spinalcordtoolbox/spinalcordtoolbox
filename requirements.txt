@@ -1,12 +1,22 @@
-colored
+# NB: Any lines marked with 'append_to_freeze' will be copied over to `requirements-freeze.txt` when creating SCT's
+#     stable releases. We do this because `pip freeze` will not capture options (e.g. --extra-index-url) or
+#     platform-specific requirements (e.g. sys.platform == 'win32')
+
 dipy
-# h5py is pinned to minor than 3 due to issues with Keras/TF
-# https://github.com/tensorflow/tensorflow/issues/44467
-h5py~=2.10.0
-Keras==2.3.1
-ivadomed
+# PyTorch's Linux distribution is very large due to its GPU support,
+# but we only need that for training models. Our users only need CPU.
+--extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
+ivadomed~=2.9.6
 matplotlib
+# Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
+# Installing "Microsoft Visual C++ Redistributable for Visual Studio" will fix this too, but
+# we'd prefer not to burden users with another prerequisite. 
+# NB: It's possible this fix gets included upstream in a future skimage release, see:
+#     https://github.com/scikit-image/scikit-image/issues/4780#issuecomment-824678872
+# (The version is pinned because this line gets copied to requirements-freeze.txt when preparing a release, not because we're avoiding bugs with a specific version. Feel free to update it to the latest version.)
+msvc-runtime==14.29.30133; sys.platform == 'win32' # append_to_freeze
 nibabel
+nilearn
 numpy
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
@@ -23,20 +33,11 @@ requirements-parser
 scipy
 scikit-image
 scikit-learn
-tensorflow~=1.15.0
-# PyTorch's Linux/Windows distribution is very large due to its GPU support,
-# but we only need that for training models. For users, use the CPU-only version
-# (only available directly from the PyTorch project).
-# The macOS version has never had GPU support, so doesn't need the workaround.
--f https://download.pytorch.org/whl/torch/
--f https://download.pytorch.org/whl/torchvision/
-torch==1.5.0+cpu; sys_platform != "darwin"
-torch==1.5.0; sys_platform == "darwin"
-torchvision==0.6.0+cpu; sys_platform != "darwin"
-torchvision==0.6.0; sys_platform == "darwin"
 xlwt
 tqdm
 transforms3d
 urllib3[secure]
 pytest_console_scripts
+pyyaml
+voxelmorph
 wquantiles

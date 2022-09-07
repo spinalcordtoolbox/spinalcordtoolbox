@@ -15,6 +15,7 @@
 
 import os
 import sys
+import pathlib
 from getpass import getpass
 import multiprocessing
 import subprocess
@@ -27,14 +28,15 @@ import json
 import tempfile
 import warnings
 import shutil
+from typing import Sequence
 from types import SimpleNamespace
 from textwrap import dedent
 
 import yaml
 import psutil
 
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
-from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, set_loglevel
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_open
+from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, __sct_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import Tee
 
 from stat import S_IEXEC
@@ -95,7 +97,7 @@ def get_parser():
                         help='Subject prefix, defaults to "sub-" which is the prefix used for BIDS directories. '
                         'If the subject directories do not share a common prefix, an empty string can be '
                         'passed here.')
-    parser.add_argument('-path-output', default='./',
+    parser.add_argument('-path-output', default='.',
                         help='Base directory for environment variables:\n'
                         'PATH_DATA_PROCESSED=' + os.path.join('<path-output>', 'data_processed') + '\n'
                         'PATH_RESULTS=' + os.path.join('<path-output>', 'results') + '\n'
@@ -123,6 +125,11 @@ def get_parser():
                         help='Optional space separated list of subjects to exclude. Only process '
                         'a subject if they are not on this list. Inclusions are processed before exclusions. '
                         'Cannot be used with either `exclude`.', nargs='+')
+    parser.add_argument('-ignore-ses', action='store_true',
+                        help="By default, if 'ses' subfolders are present, then 'sct_run_batch' will run the script "
+                             "within each individual 'ses' subfolder. Passing `-ignore-ses` will change the behavior "
+                             "so that 'sct_run_batch' will not go into each 'ses' folder. Instead, it will run the "
+                             "script on just the top-level subject folders.")
     parser.add_argument('-path-segmanual', default='.',
                         help='Setting for environment variable: PATH_SEGMANUAL\n'
                         'A path containing manual segmentations to be used by the script program.')
@@ -152,6 +159,85 @@ def get_parser():
     parser.add_argument('-h', "--help", action="help", help="show this help message and exit")
 
     return parser
+
+
+def _find_nonsys32_bash_exe():
+    """
+    Check the PATH to see if there is a non-System32 copy of bash.exe.
+
+    On newer copies of Windows. a bash.exe file is included in the System32
+    folder. When called, Windows will try to launch WSL if it's installed,
+    or it will give this message if WSL is not installed:
+
+    > Windows Subsystem for Linux has no installed distributions.
+    > Distributions can be installed by visiting the Microsoft Store:
+    > https://aka.ms/wslstore
+
+    Since we are supporting Windows natively, we don't want the WSL copy, and instead
+    want to use the next copy of bash.exe in the PATH (for example one provided by Cygwin).
+    """
+    nonsys32_paths = os.pathsep.join([p for p in os.environ['PATH'].split(os.pathsep)
+                                      if 'system32' not in p.lower()])
+    return shutil.which('bash', path=nonsys32_paths)
+
+
+def _parse_dataset_directory(path_data, subject_prefix="sub-", ignore_ses=False):
+    """
+    Parse a dataset directory to find subject directories (and session subdirectories, if present).
+
+    Notes:
+        - The dataset is assumed to be structured in a (somewhat) BIDS-compliant way, see:
+          https://bids-specification.readthedocs.io/en/stable/02-common-principles.html#file-name-structure
+        - This function is a rudimentary version of the library PyBIDS: https://github.com/bids-standard/pybids.
+          TODO: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3415
+    """
+    dirs = []
+    subject_dirs = sorted([d.name for d in os.scandir(path_data)
+                           if d.name.startswith(subject_prefix)
+                           and d.is_dir()])
+    for sub_dir in subject_dirs:
+        session_dirs = sorted([d.name for d in os.scandir(os.path.join(path_data, sub_dir))
+                               if d.name.startswith('ses-')
+                               and d.is_dir()])
+        if session_dirs and not ignore_ses:
+            # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
+            for sess_dir in session_dirs:
+                dirs.append(os.path.join(sub_dir, sess_dir))
+        else:
+            # Otherwise, consider only 'sub-' directories and don't include 'ses-' subdirectories: e.g. sub-XX
+            dirs.append(sub_dir)
+
+    return dirs
+
+
+def _filter_directories(dir_list, include=None, include_list=None, exclude=None, exclude_list=None):
+    """
+    Filter a list of directories using inclusion/exclusion regex patterns or explicit lists.
+
+    NB: Only one of [include, include_list] and only one of [exclude, exclude_list] should be passed.
+        (Currently, this requirement is handled at the argument-parsing level, because we use `parser.error`.)
+    """
+    # Handle inclusions (regex OR explicit list, but not both)
+    if include is not None:
+        dir_list = [f for f in dir_list if re.search(include, f)]
+    elif include_list is not None:
+        dir_list = [f for f in dir_list
+                    # Check if include_list specified entire path (e.g. "sub-01/ses-01")
+                    if f in include_list
+                    # Check if include_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
+                    or any(p in include_list for p in pathlib.Path(f).parts)]
+
+    # Handle exclusions (regex OR explicit list, but not both)
+    if exclude is not None:
+        dir_list = [f for f in dir_list if not re.search(exclude, f)]
+    elif exclude_list is not None:
+        dir_list = [f for f in dir_list
+                    # Check if exclude_list specified entire path (e.g. "sub-01/ses-01")
+                    if f not in exclude_list
+                    # Check if exclude_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
+                    and all(p not in exclude_list for p in pathlib.Path(f).parts)]
+
+    return dir_list
 
 
 def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
@@ -202,10 +288,30 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
         'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(itk_threads),
         'SCT_PROGRESS_BAR': 'off'
     })
+    if 'SCT_DIR' not in envir:  # For native Windows installations, the install script won't add SCT_DIR
+        envir['SCT_DIR'] = __sct_dir__
+
+    cmd = [script_full, subj_dir] + script_args.split(' ')
+
+    # Make sure that a Windows-compatible bash port is used to run shell scripts
+    if sys.platform.startswith("win32"):
+        with open(script_full) as f:
+            first_line = f.readline()
+        shebang_pattern = re.compile("^#!.*/.*sh\b.*")
+        if script_full.endswith('.sh') or shebang_pattern.match(first_line):
+            bash_exe = _find_nonsys32_bash_exe()
+            if bash_exe:
+                cmd.insert(0, bash_exe)
+            else:
+                print("WARNING: No bash.exe found in PATH. Script will be run as-is.")
+                print("(If you are on Windows and trying to run a `.sh` script, please "
+                      "install Cygwin, then add C:/cygwin64/bin to your PATH.)")
+        else:
+            print("WARNING: Script passed to sct_run_batch appears to be a non-shell script.")
 
     # Ship the job out, merging stdout/stderr and piping to log file
     try:
-        res = subprocess.run([script_full, subj_dir] + script_args.split(' '),
+        res = subprocess.run(cmd,
                              env=envir,
                              stdout=open(log_file, 'w'),
                              stderr=subprocess.STDOUT)
@@ -229,7 +335,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     return res
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -368,17 +474,17 @@ def main(argv=None):
     print("git commit: {}".format(__get_commit(path_to_git_folder=os.path.dirname(script))))
     print("git origin: {}".format(__get_git_origin(path_to_git_folder=os.path.dirname(script))))
     print("Copying script to output folder...")
-    try:
-        # Copy the script and record the new location
-        script_copy = os.path.abspath(shutil.copy(script, arguments.path_output))
-        print("{} -> {}".format(script, script_copy))
-        script = script_copy
-    except shutil.SameFileError:
-        print("Input and output folder are the same. Skipping copy.")
-        pass
-    except IsADirectoryError:
+    if os.path.isdir(script):
         print("Input folder is a directory (not a file). Skipping copy.")
-        pass
+    else:
+        try:
+            # Copy the script and record the new location
+            script_copy = os.path.abspath(shutil.copy(script, arguments.path_output))
+            print("{} -> {}".format(script, script_copy))
+            script = script_copy
+        except shutil.SameFileError:
+            print("Input and output folder are the same. Skipping copy.")
+            pass
 
     print("Setting execute permissions for script file {} ...".format(arguments.script))
     script_stat = os.stat(script)
@@ -390,42 +496,17 @@ def main(argv=None):
     print("git commit: {}".format(__get_commit(path_to_git_folder=path_data)))
     print("git origin: {}\n".format(__get_git_origin(path_to_git_folder=path_data)))
 
-    # Find subjects and process inclusion/exclusions
-    subject_dirs = []
-    subject_flat_dirs = [f for f in os.listdir(path_data) if f.startswith(arguments.subject_prefix)]
-    for isub in subject_flat_dirs:
-        # Only consider folders
-        if os.path.isdir(os.path.join(path_data, isub)):
-            session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
-            if not session_dirs:
-                # There is no session folder, so we consider only sub- directory: sub-XX
-                subject_dirs.append(isub)
-            else:
-                # There is a session folder, so we concatenate: sub-XX/ses-YY
-                session_dirs.sort()
-                for isess in session_dirs:
-                    subject_dirs.append(os.path.join(isub, isess))
+    subject_dirs = _parse_dataset_directory(path_data, arguments.subject_prefix, arguments.ignore_ses)
 
-    # Handle inclusion lists
-    assert not ((arguments.include is not None) and (arguments.include_list is not None)),\
-        'Only one of `include` and `include-list` can be used'
+    if (arguments.include is not None) and (arguments.include_list is not None):
+        parser.error('Only one of `include` and `include-list` can be used')
 
-    if arguments.include is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(arguments.include, f) is not None]
+    if (arguments.exclude is not None) and (arguments.exclude_list is not None):
+        parser.error('Only one of `exclude` and `exclude-list` can be used')
 
-    if arguments.include_list is not None:
-        # TODO decide if we should warn users if one of their inclusions isn't around
-        subject_dirs = [f for f in subject_dirs if f in arguments.include_list]
-
-    # Handle exclusions
-    assert not ((arguments.exclude is not None) and (arguments.exclude_list is not None)),\
-        'Only one of `exclude` and `exclude-list` can be used'
-
-    if arguments.exclude is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(arguments.exclude, f) is None]
-
-    if arguments.exclude_list is not None:
-        subject_dirs = [f for f in subject_dirs if f not in arguments.exclude_list]
+    subject_dirs = _filter_directories(subject_dirs,
+                                       include=arguments.include, include_list=arguments.include_list,
+                                       exclude=arguments.exclude, exclude_list=arguments.exclude_list)
 
     # Determine the number of jobs we can run simultaneously
     if arguments.jobs < 1:
@@ -495,10 +576,8 @@ def main(argv=None):
         send_notification('sct_run_batch: Run completed',
                           status_message + timing_message)
 
-    open_cmd = 'open' if sys.platform == 'darwin' else 'xdg-open'
-
-    print('To open the Quality Control (QC) report on a web-browser, run the following:\n'
-          '{} {}/index.html'.format(open_cmd, path_qc))
+    display_open(file=os.path.join(path_qc, "index.html"),
+                 message="To open the Quality Control (QC) report in a web-browser")
 
     if arguments.zip:
         file_zip = 'sct_run_batch_{}'.format(time.strftime('%Y%m%d%H%M%S'))

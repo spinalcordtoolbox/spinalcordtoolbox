@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Functions dealing with metrics aggregation (mean, std, etc.) across slices and/or vertebral levels
 
 # TODO: when mask is empty, raise specific message instead of throwing "Weight sum to zero..."
@@ -233,26 +231,27 @@ def func_wa(data, mask=None, map_clusters=None):
 
 
 def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distance_pmj=None, perslice=None,
-                                 perlevel=False, vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None):
+                                 perlevel=False, fname_vert_level=None, group_funcs=(('MEAN', func_wa),), map_clusters=None, length_pmj=None):
     """
     The aggregation will be performed along the last dimension of 'metric' ndarray.
 
     :param metric: Class Metric(): data to aggregate.
     :param mask: Class Metric(): mask to use for aggregating the data. Optional.
     :param slices: List[int]: Slices to aggregate metric from. If empty, select all slices.
-    :param levels: List[int]: Vertebral levels to aggregate metric from. It has priority over "slices".
+    :param levels: List[int]: Vertebral levels to aggregate metric from. It respects the restriction to "slices".
     :param distance_pmj: float: Distance from Ponto-Medullary Junction (PMJ) in mm.
     :param Bool perslice: Aggregate per slice (True) or across slices (False)
     :param Bool perlevel: Aggregate per level (True) or across levels (False). Has priority over "perslice".
-    :param vert_level: Vertebral level. Could be either an Image or a file name.
+    :param fname_vert_level: Vertebral level. Could be either an Image or a file name.
     :param tuple group_funcs: Name and function to apply on metric. Example: (('MEAN', func_wa),)). Note, the function
       has special requirements in terms of i/o. See the definition to func_wa and use it as a template.
     :param map_clusters: list of list of int: See func_map()
+    :param length_pmj: distance from the PMJ with corresponding slices.
     :return: Aggregated metric
     """
-    if vert_level:
-        # Assumption: vert_level image will only ever be 3D or 4D
-        vert_level_slices = Image(vert_level).change_orientation('RPI').data.shape[2]
+    if fname_vert_level is not None:
+        # Assumption: fname_vert_level image will only ever be 3D or 4D
+        vert_level_slices = Image(fname_vert_level).change_orientation('RPI').data.shape[2]
         # Get slices ('z') from metrics regardless of whether they're 1D [z], 3D [x, y, z], and 4D [x, y, z, t]
         metric_slices = metric.data.shape[2] if len(metric.data.shape) >= 3 else metric.data.shape[0]
         if vert_level_slices != metric_slices:
@@ -260,6 +259,9 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
                              f"Please verify that your vertfile has the same number of slices as your input image, "
                              f"and that your metric is RPI/LPI oriented.")
 
+    # If perslice is specified, put distance_pmj to None to prioritize perslice
+    if perslice:
+        distance_pmj = None
     # If user neither specified slices nor levels, set perslice=True, otherwise, the output will likely contain nan
     # because in many cases the segmentation does not span the whole I-S dimension.
     if perslice is None:
@@ -267,7 +269,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
             perslice = True
         else:
             perslice = False
-
     # if slices is empty, select all available slices from the metric
     ndim = metric.data.ndim
     if not slices:
@@ -276,9 +277,11 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
     # aggregation based on levels
     vertgroups = None
     if levels:
-        im_vert_level = Image(vert_level).change_orientation('RPI')
+        im_vert_level = Image(fname_vert_level).change_orientation('RPI')
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
         slicegroups = [tuple(get_slices_from_vertebral_levels(im_vert_level, level)) for level in levels]
+        # Intersection between specified slices and each element of slicegroups
+        slicegroups = [tuple(set(slicegroup) & set(slices)) for slicegroup in slicegroups]
         if perlevel:
             # vertgroups = [(2,), (3,), (4,)]
             vertgroups = [tuple([level]) for level in levels]
@@ -306,9 +309,16 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
     for slicegroup in slicegroups:
         # add distance from PMJ info
         if distance_pmj is not None:
-            agg_metric[slicegroup]['DistancePMJ'] = [distance_pmj]
+            agg_metric[slicegroup]['DistancePMJ'] = distance_pmj
+        elif length_pmj is not None:
+            agg_metric[slicegroup]['DistancePMJ'] = None
+            for slice in slicegroup:
+                if slice in length_pmj:
+                    agg_metric[slicegroup]['DistancePMJ'] = round(length_pmj[slice], 2)
+                    break
         else:
             agg_metric[slicegroup]['DistancePMJ'] = None
+
         # add level info
         if vertgroups is None:
             agg_metric[slicegroup]['VertLevel'] = None
@@ -326,7 +336,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
                 else:
                     mask_slicegroup = np.ones(data_slicegroup.shape)
                 # Ignore nonfinite values
-                i_nonfinite = np.where(np.isfinite(data_slicegroup) == False)
+                i_nonfinite = np.where(np.isfinite(data_slicegroup) == False)  # noqa: E712
                 data_slicegroup[i_nonfinite] = 0.
                 # TODO: the lines below could probably be done more elegantly
                 if mask_slicegroup.ndim == data_slicegroup.ndim + 1:
@@ -352,6 +362,7 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
             except Exception as e:
                 logging.warning(e)
                 agg_metric[slicegroup]['{}({})'.format(name, metric.label)] = str(e)
+
     return agg_metric
 
 
@@ -390,7 +401,7 @@ def diff_between_list_or_int(l1, l2):
 
 
 def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, perlevel=False,
-                   vert_level=None, method=None, label_struc=None, id_label=None, indiv_labels_ids=None):
+                   fname_vert_level=None, method=None, label_struc=None, id_label=None, indiv_labels_ids=None):
     """
     Extract metric within a data, using mask and a given method.
 
@@ -400,7 +411,7 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
     :param levels:
     :param perslice:
     :param perlevel:
-    :param vert_level:
+    :param fname_vert_level:
     :param method:
     :param label_struc: LabelStruc class defined above
     :param id_label: int: ID of label to select
@@ -460,7 +471,7 @@ def extract_metric(data, labels=None, slices=None, levels=None, perslice=True, p
         group_funcs = (('MAX', func_max),)
 
     return aggregate_per_slice_or_level(data, mask=mask, slices=slices, levels=levels, perslice=perslice,
-                                        perlevel=perlevel, vert_level=vert_level, group_funcs=group_funcs,
+                                        perlevel=perlevel, fname_vert_level=fname_vert_level, group_funcs=group_funcs,
                                         map_clusters=map_clusters)
 
 
@@ -552,7 +563,10 @@ def save_as_csv(agg_metric, fname_out, fname_in=None, append=False):
             line.append(fname_in)  # file name associated with the results
             line.append(parse_num_list_inv(slicegroup))  # list all slices in slicegroup
             line.append(parse_num_list_inv(agg_metric[slicegroup]['VertLevel']))  # list vertebral levels
-            line.append(parse_num_list_inv(agg_metric[slicegroup]['DistancePMJ']))  # list distance from PMJ
+            if agg_metric[slicegroup]['DistancePMJ'] is not None:
+                line.append(str(agg_metric[slicegroup]['DistancePMJ']))  # distance from PMJ
+            else:
+                line.append('')
             agg_metric_key = [v for i, (k, v) in enumerate(agg_metric.items())][0]
             for item in list_item:
                 for key in agg_metric_key:

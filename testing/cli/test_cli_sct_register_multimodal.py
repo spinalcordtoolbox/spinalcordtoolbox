@@ -48,6 +48,7 @@ def test_sct_register_multimodal_mask_files_exist(tmp_path):
 @pytest.mark.parametrize("use_seg,param,fname_gt", [
     (False, 'step=1,algo=syn,type=im,iter=1,smooth=1,shrink=2,metric=MI', 'mt/mt0_reg_syn_goldstandard.nii.gz'),
     (False, 'step=1,algo=slicereg,type=im,iter=5,smooth=0,metric=MeanSquares', 'mt/mt0_reg_slicereg_goldstandard.nii.gz'),
+    (False, 'step=1,algo=dl,type=im', None),
     (True, 'step=1,algo=centermassrot,type=seg,rot_method=pca', None),
     (True, 'step=1,algo=centermassrot,type=imseg,rot_method=hog', None),
     (True, 'step=1,algo=centermassrot,type=imseg,rot_method=pcahog', None),

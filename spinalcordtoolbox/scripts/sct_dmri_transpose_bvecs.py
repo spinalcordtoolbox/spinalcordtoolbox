@@ -10,20 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-#!/usr/bin/env python
-#########################################################################################
-#
-# Compute DTI.
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
-
-import os
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, extract_fname, printv, set_loglevel
 
@@ -68,7 +56,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -102,4 +90,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

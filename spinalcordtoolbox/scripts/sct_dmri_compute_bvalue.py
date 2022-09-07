@@ -14,13 +14,13 @@
 #########################################################################################
 
 import sys
-import os
 import math
+from typing import Sequence
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -101,4 +101,3 @@ def get_parser():
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

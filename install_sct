@@ -29,12 +29,11 @@
 # Authors: PO Quirion, J Cohen-Adad, J Carretero
 # License: see the file LICENSE.TXT
 
-# Change directory to where the script is, for the duration of the script.
-# This lives outside the subshell below to guarantee the corresponding
-# popd gets run, no matter how the installation script exits.
-pushd -- "${BASH_SOURCE[0]%/*}/" >/dev/null || exit 1
 
 ( # | tee install_sct_log.txt
+
+# Change directory to where the script is, for the duration of the script.
+cd "$(dirname $0)" || exit 1
 
 # stricter shell mode
 # https://sipb.mit.edu/doc/safe-shell/
@@ -644,28 +643,6 @@ fi
 ) ||
   die "Failed running pip install: $?"
 
-## Check if CPU supports AVX instruction set, and install precompiled TensorFlow if it isn't,
-case $OS in
-linux*)
-  if ! lscpu | grep -q " avx "; then
-    print info "AVX is not supported by this CPU! Installing a version of TensorFlow compiled for older CPUs..."
-    pip uninstall tensorflow -y
-    pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
-  else
-    print info "AVX is supported on this Linux machine. Keeping default TensorFlow..."
-  fi
-  ;;
-osx)
-  if sysctl machdep.cpu.brand_string | grep -q "Apple M1"; then
-    print info "AVX is not supported on M1 Macs! Installing a version of TensorFlow compiled for M1 Macs..."
-    pip uninstall tensorflow -y
-    pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.0-py3-none-any.whl
-  else
-    print info "AVX is supported on this macOS machine. Keeping default TensorFlow..."
-  fi
-  ;;
-esac
-
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."
 mkdir -p "$SCT_DIR/$BIN_DIR"
@@ -695,9 +672,8 @@ if [[ -n "$NO_DATA_INSTALL" ]]; then
 else
   # Download data
   print info "Installing data..."
-  run rm -rf "$SCT_DIR/$DATA_DIR"
   run mkdir -p "$SCT_DIR/$DATA_DIR"
-  for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
+  for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models deepreg_models; do
     run sct_download_data -d "$data"
   done
 fi
@@ -718,7 +694,7 @@ conda deactivate >/dev/null 2>&1
 if [[ -e "$RC_FILE_PATH" ]]; then
     if grep "sct_env" "$RC_FILE_PATH"; then
       print info "In case an old version SCT is already installed (4.0.0-beta.1 or before), remove 'sct_env' declaration in RC file"
-      perl -pi -e '/sct_env/ s/^#*/#/' "$RC_FILE_PATH"
+      perl -pi -e 's/^(# )?(.*bin\/sct_env)/# \2/' "$RC_FILE_PATH"
     fi
     if grep "^export MPLBACKEND=Agg" "$RC_FILE_PATH"; then
       print info "Commenting out 'export MPLBACKEND=Agg' from previous SCT installation"
@@ -756,6 +732,4 @@ else
 fi
 
 ) 2>&1 | tee install_sct_log.txt
-status=${PIPESTATUS[0]}
-popd >/dev/null
-exit "$status"
+exit "${PIPESTATUS[0]}"

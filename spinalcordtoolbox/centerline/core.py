@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Core functions dealing with centerline extraction from 3D data.
 
 
@@ -238,10 +236,10 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
         plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
         plt.close()
 
-    return im_centerline, \
-           np.array([x_centerline_fit, y_centerline_fit, z_ref]), \
-           np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)]), \
-           fit_results
+    return (im_centerline,
+            np.array([x_centerline_fit, y_centerline_fit, z_ref]),
+            np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)]),
+            fit_results)
 
 
 def round_and_clip(arr, clip=None):

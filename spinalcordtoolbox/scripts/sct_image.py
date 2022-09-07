@@ -52,30 +52,30 @@ def get_parser():
         '-o',
         metavar=Metavar.file,
         help='Output file. Example: data_pad.nii.gz',
-        required = False)
+        required=False)
 
     image = parser.add_argument_group('IMAGE OPERATIONS')
     image.add_argument(
         '-pad',
         metavar=Metavar.list,
         help='Pad 3D image. Specify padding as: "x,y,z" (in voxel). Example: "0,0,1"',
-        required = False)
+        required=False)
     image.add_argument(
         '-pad-asym',
         metavar=Metavar.list,
         help='Pad 3D image with asymmetric padding. Specify padding as: "x_i,x_f,y_i,y_f,z_i,z_f" (in voxel). '
              'Example: "0,0,5,10,1,1"',
-        required = False)
+        required=False)
     image.add_argument(
         '-split',
         help='Split data along the specified dimension. The suffix _DIM+NUMBER will be added to the intput file name.',
-        required = False,
-        choices = ('x', 'y', 'z', 't'))
+        required=False,
+        choices=('x', 'y', 'z', 't'))
     image.add_argument(
         '-concat',
         help='Concatenate data along the specified dimension',
-        required = False,
-        choices = ('x', 'y', 'z', 't'))
+        required=False,
+        choices=('x', 'y', 'z', 't'))
     image.add_argument(
         '-remove-vol',
         metavar=Metavar.list,
@@ -89,8 +89,8 @@ def get_parser():
     image.add_argument(
         '-type',
         help='Change file type',
-        required = False,
-        choices = ('uint8','int16','int32','float32','complex64','float64','int8','uint16','uint32','int64','uint64'))
+        required=False,
+        choices=('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64', 'uint64'))
 
     header = parser.add_argument_group('HEADER OPERATIONS')
     header.add_argument(
@@ -106,7 +106,7 @@ def get_parser():
         metavar=Metavar.file,
         help='Copy the header of the source image (specified in -i) to the destination image (specified here) '
              'and save it into a new image (specified in -o)',
-        required = False)
+        required=False)
     affine_fixes = header.add_mutually_exclusive_group(required=False)
     affine_fixes.add_argument(
         '-set-sform-to-qform',
@@ -133,12 +133,12 @@ def get_parser():
         '-setorient',
         help='Set orientation of the input image (only modifies the header).',
         choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
-        required = False)
+        required=False)
     orientation.add_argument(
         '-setorient-data',
         help='Set orientation of the input image\'s data (does NOT modify the header, but the data). Use with care !',
         choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
-        required = False)
+        required=False)
 
     multi = parser.add_argument_group('MULTI-COMPONENT OPERATIONS ON ITK COMPOSITE WARPING FIELDS')
     multi.add_argument(
@@ -169,7 +169,7 @@ def get_parser():
         'validated so consider checking the results of `applywarp` against `sct_apply_transfo` before using in FSL '
         'pipelines. Example syntax: "sct_image -i WARP_SRC2DEST -to-fsl IM_SRC (IM_DEST) -o WARP_FSL", '
         'followed by FSL: "applywarp -i IM_SRC -r IM_DEST -w WARP_FSL --abs -o IM_SRC2DEST" ',
-        nargs = '*',
+        nargs='*',
         required=False)
 
     misc = parser.add_argument_group('Misc')
@@ -186,7 +186,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -251,7 +251,7 @@ def main(argv=None):
     elif arguments.keep_vol is not None:
         index_vol = (arguments.keep_vol).split(',')
         for iindex_vol, vol in enumerate(index_vol):
-                index_vol[iindex_vol] = int(vol)
+            index_vol[iindex_vol] = int(vol)
         im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
     elif arguments.mcs:
@@ -333,10 +333,10 @@ def main(argv=None):
         if len(space_files) > 2 or len(space_files) < 1:
             printv(parser.error('ERROR: -to-fsl expects 1 or 2 arguments'))
             return
-        spaces = [ Image(s) for s in space_files ]
+        spaces = [Image(s) for s in space_files]
         if len(spaces) < 2:
             spaces.append(None)
-        im_out = [ displacement_to_abs_fsl(im_in, spaces[0], spaces[1]) ]
+        im_out = [displacement_to_abs_fsl(im_in, spaces[0], spaces[1])]
 
     # If these arguments are used standalone, simply pass the input image to the output (the affines were set earlier)
     elif arguments.set_sform_to_qform or arguments.set_qform_to_sform:
@@ -378,7 +378,8 @@ def main(argv=None):
     elif arguments.display_warp:
         printv('Warping grid generated.', verbose, 'info')
 
-def displacement_to_abs_fsl(disp_im, src, tgt = None):
+
+def displacement_to_abs_fsl(disp_im, src, tgt=None):
     """ Convert an ITK style displacement field to an FSL compatible absolute coordinate field.
         this can be applied using `applywarp` from FSL using the `--abs` flag. Or converted to a
         normal relative displacement field with `convertwarp --abs --relout`
@@ -394,47 +395,47 @@ def displacement_to_abs_fsl(disp_im, src, tgt = None):
 
     def pad1_3vec(vec_arr):
         """ Pad a 3d array of 3 vectors by 1 to make a 3d array of 4 vectors for affine transformation """
-        return np.pad(vec_arr, ((0,0),(0,0),(0,0),(0,1)), constant_values = 1)
+        return np.pad(vec_arr, ((0, 0), (0, 0), (0, 0), (0, 1)), constant_values=1)
 
     def apply_affine(data, aff):
         """ Transform a 3d array of 3 vectors by a 4x4 affine matrix" s.t. y = A x for each x in the array """
-        return np.dot(pad1_3vec(data), aff.T)[...,0:3]
+        return np.dot(pad1_3vec(data), aff.T)[..., 0:3]
 
-    #Drop 5d to 4d displacement
+    # Drop 5d to 4d displacement
     disp_im.data = disp_im.data.squeeze(-2)
 
-    #If the target and displacement are in different spaces, resample the displacement to
-    #the target space
+    # If the target and displacement are in different spaces, resample the displacement to
+    # the target space
     if tgt is not None:
         hdr = disp_im.header.copy()
         shp = disp_im.data.shape
         hdr.set_data_shape(shp)
         disp_nib = Nifti1Image(disp_im.data.copy(), aff(disp_im), hdr)
-        disp_resampled = resample_from_to(disp_nib, (shp, aff(tgt)), order = 1)
+        disp_resampled = resample_from_to(disp_nib, (shp, aff(tgt)), order=1)
         disp_im.data = disp_resampled.dataobj.copy()
         disp_im.header = disp_resampled.header.copy()
 
-    #Generate an array of voxel coordinates for the target (note disp_im is in the same space as the target)
+    # Generate an array of voxel coordinates for the target (note disp_im is in the same space as the target)
     disp_dims = disp_im.data.shape[0:3]
-    disp_coords = np.mgrid[0:disp_dims[0], 0:disp_dims[1], 0:disp_dims[2]].transpose((1,2,3,0))
+    disp_coords = np.mgrid[0:disp_dims[0], 0:disp_dims[1], 0:disp_dims[2]].transpose((1, 2, 3, 0))
 
-    #Convert those to world coordinates
+    # Convert those to world coordinates
     tgt_coords_world = apply_affine(disp_coords, aff(disp_im))
 
-    #Apply the displacement. TODO check if this works for all tgt orientations [works for RPI]
-    src_coords_world = tgt_coords_world + disp_im.data * [-1,-1,1]
+    # Apply the displacement. TODO check if this works for all tgt orientations [works for RPI]
+    src_coords_world = tgt_coords_world + disp_im.data * [-1, -1, 1]
 
-    #Convert these to voxel coordinates in the source image
+    # Convert these to voxel coordinates in the source image
     sw2v = np.linalg.inv(aff(src))  # world to voxel matrix for the source image
     src_coords = apply_affine(src_coords_world, sw2v)
 
-    #Convert from voxel coordinates to FSL "mm" units (not really mm)
-    #First we handle the case where the src or tgt image space has a positive
-    #determinant by inverting the x coordinate
+    # Convert from voxel coordinates to FSL "mm" units (not really mm)
+    # First we handle the case where the src or tgt image space has a positive
+    # determinant by inverting the x coordinate
     if np.linalg.det(aff(src)) > 0:
         src_coords[..., 0] = (src.data.shape[0] - 1) - src_coords[..., 0]
 
-    # #Then we multiply by the voxel sizes and we're done
+    # Then we multiply by the voxel sizes and we're done
     src_coords_mm = src_coords * src.header.get_zooms()[0:3]
 
     out_im = disp_im.copy()
@@ -447,6 +448,7 @@ def split_data(im_in, dim, squeeze_data=True):
     """
     # backwards compat
     return split_img_data(src_img=im_in, dim=dim, squeeze_data=squeeze_data)
+
 
 def remove_vol(im_in, index_vol_user, todo):
     """
@@ -472,6 +474,7 @@ def remove_vol(im_in, index_vol_user, todo):
     im_out = im_in.copy()
     im_out.data = data_out
     return im_out
+
 
 def multicomponent_split(im):
     """

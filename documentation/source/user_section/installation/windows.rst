@@ -4,14 +4,115 @@
 Installation for Windows
 ************************
 
-We provides two different ways to install SCT on Windows machines. You can either use :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>`, or :ref:`Docker <docker-installation>`.
+We currently provide 3 different ways to install SCT on Windows machines:
+
+- :ref:`Native Windows installation (recommended) <native-installation>`
+- :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>`
+- :ref:`Docker <docker-installation>`
+
+
+-----
+
+
+.. _native-installation:
+
+Native Windows installation (recommended)
+-----------------------------------------
+
+This set of instructions will show you how to install SCT directly on Windows.
+
+.. note::
+
+   This method was first introduced to SCT in April 2022 as part of the Version 5.6 release. Previous versions of SCT required the use of :ref:`Windows Subsystem for Linux (WSL) <wsl-installation>` or :ref:`Docker <docker-installation>` in order to support Windows.
+
+   Because this method is new to SCT, we would greatly appreciate hearing any feedback you may have about your experiences using SCT on Windows. If you encounter any issues, or have any questions or concerns, feel free to post on the `Spinalcordmri.org forums <https://forum.spinalcordmri.org/c/sct/8>`_, and SCT's development team will be happy to help.
+
+1. Installing Prerequisites
+***************************
+
+SCT depends on two pieces of software that must be set up prior to the installation of SCT.
+
+Python 3.7
+^^^^^^^^^^
+
+Since SCT is a Python package, Python must be installed on your system before SCT can be installed.
+
+1. Download a "Windows x86-64" installer from `the Python 3.7.9 download page <https://www.python.org/downloads/release/python-379/>`_.
+
+2. Run the installer file. (**Important:** Before clicking "Install Now", make sure to first check the "Add Python 3.7 to PATH" checkbox at the bottom of the window.)
+
+3. After the installation has finished, open your Start Menu and type Command Prompt, then run it. In the Command Prompt window, type ``python --version`` and press enter.
+
+   (Make sure that you see the text ``Python 3.7.9`` before continuing.)
+
+
+Git for Windows
+^^^^^^^^^^^^^^^
+
+The easiest way to try out different versions of SCT is using Git.
+
+1. Download Git for Windows from `the Git download page <https://git-scm.com/download/win>`_.
+
+2. Run the installer.
+
+   - You can click "Next" for most of the options in the installer.
+   - However, on the "Adjusting your PATH environment" page, we strongly recommend that you choose the "Use Git and optional Unix tools from the Command Prompt". Selecting this option will provide you with useful Unix utilities such as ``bash``, ``cd``, ``ls``, and more that combine nicely with SCT's command-line tools. In particular, ``bash`` will allow ``sct_run_batch`` to execute bash scripts for batch processing of subjects.
+   - **Note:** If you prefer, you may instead choose to :ref:`install Cygwin<installing_cygwin>` (rather than selecting the "Use Git and optional Unix tools" option) in order to gain access to these same Unix utilities.
+
+3. After the installation has finished, open your Start Menu and type Command Prompt, then run it. In the Command Prompt window, type ``git --version`` and press enter.
+
+   (Make sure that you see the text ``git version <number>`` before continuing.)
+
+
+2. Installing SCT
+*****************
+
+We recommend that you install SCT into a Python virtual environment. To help with this process, SCT provides an installer script that will automate the process of creating a Python virtual environment for you.
+
+1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`_ , then download the ``install_sct.bat`` script from the "Assets" section of the latest release. 
+
+2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Python virtual environment for you.
+
+3. Once the installer finishes, follow the instructions given at the end of the Command Prompt window, which will instruct you to add SCT to your PATH.
+
+4. Finally, in the Command Prompt window, type ``sct_check_dependencies`` and press enter. Make sure that you see a status report containing all "OKs" before continuing.
+
+5. You are now free to use SCT's command line tools to process your data. If you would like to learn how to use SCT, we recommend starting with SCT's :ref:`tutorials` pages.
+
+.. _installing_cygwin:
+
+3. (Optional) Installing Cygwin
+*******************************
+
+.. note:: You do not need to install Cygwin if you already selected the "Use Git and optional Unix tools from the Command Prompt" option during the Git installation step.
+
+Cygwin is a collection of useful Unix utilities such as ``bash``, ``cd``, ``ls``, and more that combine nicely with SCT's command-line tools. In particular, ``bash`` will allow ``sct_run_batch`` to execute bash scripts for batch processing of subjects.
+
+1. Download the Cygwin installer from `the Cygwin installation page <https://www.cygwin.com/install.html>`_.
+
+2. Run the installer. (You can click "Next" for every section of the installer, as the default settings are sufficient.)
+
+3. After the installer is finished, you will need to add Cygwin's programs to the PATH.
+
+   - Open the Start Menu -> Type 'path' -> Open 'Edit environment variables for your account'
+   - Under the section 'User variables for ____', highlight the 'Path' entry, then click the 'Edit...' button.
+   - Click 'New', then copy and paste "``C:\cygwin64\bin``".
+   - Finally, click "Ok" three times.
+
+4. Finally, open your Start Menu and type Command Prompt, then run it. In the Command Prompt window, type ``cygcheck --version`` and press enter. Make sure that you see the text ``cygcheck (cygwin)`` before continuing.
+
+   - Note: If you see a "not recognized" error, please repeat Step 3, making sure that the directory you added corresponds to the installation directory of Cygwin.
+
+
+-----
+
 
 .. _wsl-installation:
 
-Option 1: Install on Windows 10 with WSL
-----------------------------------------
+Windows Subsystem for Linux (WSL) installation
+----------------------------------------------
 
-Windows Subsystem for Linux (WSL) makes it possible to run native Linux programs, such as SCT, on Windows 10.
+Windows Subsystem for Linux (WSL) makes it possible to run native Linux programs on Windows 10. Here, WSL is used to install the Linux version of SCT within Windows (as opposed to the :ref:`native Windows version <native-installation>`).
 
 Basic installation (No GUI)
 ***************************
@@ -168,10 +269,14 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
 
    These instructions will install FSLeyes into a fresh ``conda`` environment, then create a link to FSLeyes so that you can use the ``fsleyes`` command without having to activate the conda environment each time.
 
+
+-----
+
+
 .. _docker-installation:
 
-Option 2: Install with Docker
------------------------------
+Docker installation
+-------------------
 
 `Docker <https://www.docker.com/what-container>`_ is a portable (Linux, macOS, Windows) container platform.
 

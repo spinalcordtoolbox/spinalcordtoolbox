@@ -16,6 +16,7 @@
 
 import sys
 import os
+from typing import Sequence
 
 import numpy as np
 
@@ -28,9 +29,7 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, extract_fname, rmtree, copy
 from spinalcordtoolbox.labels import create_labels
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.math import concatenate_along_4th_dimension
 
-from spinalcordtoolbox.scripts.sct_maths import get_data_or_scalar
 from spinalcordtoolbox.scripts.sct_image import concat_data
 
 
@@ -122,7 +121,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -228,7 +227,7 @@ def create_mask(param):
     centerline = nibabel.load(fname_centerline)  # open centerline
     hdr = centerline.get_header()  # get header
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
-    spacing = hdr.structarr['pixdim']
+    # spacing = hdr.structarr['pixdim']
     data_centerline = centerline.get_data()  # get centerline
     # if data is 2D, reshape with empty third dimension
     if len(data_centerline.shape) == 2:
@@ -283,9 +282,7 @@ def create_line(param, fname, coord, nz):
 
     # set all voxels to zero
     img = Image('line.nii')
-    data = get_data_or_scalar('0', img.data)
-    data_concat = concatenate_along_4th_dimension(img.data, data)
-    img.data = np.prod(data_concat, axis=3)
+    img.data = np.zeros_like(img.data)
     img.save()
 
     labels = []

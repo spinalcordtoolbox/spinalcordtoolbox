@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Convenience/shell related utilites
 
 import os
@@ -17,17 +15,29 @@ from .sys import check_exe, printv, removesuffix
 logger = logging.getLogger(__name__)
 
 
-def display_open(file):
+def display_open(file, message="Done! To view results"):
     """Print the syntax to open a file based on the platform."""
-    if sys.platform == 'linux':
-        printv('\nDone! To view results, type:')
-        printv('xdg-open ' + file + '\n', verbose=1, type='info')
-    elif sys.platform == 'darwin':
-        printv('\nDone! To view results, type:')
-        printv('open ' + file + '\n', verbose=1, type='info')
+    cmd_open = None
+    if sys.platform.startswith('linux'):
+        # If user runs SCT within the official Docker distribution, or in WSL, then the command xdg-open will not be
+        # working, therefore we prefer to instruct the user to manually open the file.
+        # Source for WSL environment variables: https://stackoverflow.com/a/61036356
+        if "DOCKER" not in os.environ and "IS_WSL" not in os.environ and "WSL_DISTRO_NAME" not in os.environ:
+            cmd_open = 'xdg-open'
+    elif sys.platform.startswith('darwin'):
+        cmd_open = 'open'
+    elif sys.platform.startswith('win32'):
+        cmd_open = 'start'
+
+    if cmd_open:
+        printv(f'\n{message}, type:')
+        printv(f"{cmd_open} {file}\n", type='info')
     else:
-        printv('\nDone! To view results, open the following file:')
-        printv(file + '\n', verbose=1, type='info')
+        printv(f'\n{message}, open the following file:')
+        printv(f"{file}\n", type='info')
+
+
+SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
 
 
 def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
@@ -42,61 +52,114 @@ def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='',
 
     Returns
     -------
-    None
+    cmd_strings [dict:string]: pairs of viewers and their corresponding syntax strings (that were printed).
 
     Example
     -------
     display_viewer_syntax([file1, file2, file3])
     display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
-    list_viewer = ['fsleyes', 'fslview_deprecated', 'fslview']  # list of known viewers. Can add more.
-    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
-                    'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
-    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
-                    'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
-    selected_viewer = None
-
-    # find viewer
-    exe_viewers = [viewer for viewer in list_viewer if check_exe(viewer)]
-    if exe_viewers:
-        selected_viewer = exe_viewers[0]
-    else:
-        return
-
-    # loop across files and build syntax
-    cmd = selected_viewer
-    # add mode (only supported by fslview for the moment)
-    if mode and selected_viewer in ['fslview', 'fslview_deprecated']:
-        cmd += ' -m ' + mode
-    for i in range(len(files)):
-        # add viewer-specific options
-        if selected_viewer in ['fslview', 'fslview_deprecated']:
-            cmd += ' ' + files[i]
-            if colormaps:
-                if colormaps[i]:
-                    cmd += ' -l ' + dict_fslview[colormaps[i]]
-            if minmax:
-                if minmax[i]:
-                    cmd += ' -b ' + minmax[i]  # a,b
-            if opacities:
-                if opacities[i]:
-                    cmd += ' -t ' + opacities[i]
-        if selected_viewer in ['fsleyes']:
-            cmd += ' ' + files[i]
-            if colormaps:
-                if colormaps[i]:
-                    cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
-            if minmax:
-                if minmax[i]:
-                    cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
-            if opacities:
-                if opacities[i]:
-                    cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
-    cmd += ' &'
+    available_viewers = [viewer for viewer in SUPPORTED_VIEWERS if check_exe(viewer)]
 
     if verbose:
-        printv('\nDone! To view results, type:')
-        printv(cmd + '\n', verbose=1, type='info')
+        if len(available_viewers) == 0:
+            return
+        elif len(available_viewers) == 1:
+            printv('\nDone! To view results, type:')
+        elif len(available_viewers) >= 2:
+            printv('\nDone! To view results, run one of the following commands (depending on your preferred viewer):')
+
+    cmd_strings = {}
+    for viewer in available_viewers:
+        if viewer in ['fslview', 'fslview_deprecated']:
+            cmd = _construct_fslview_syntax(viewer, files, colormaps, minmax, opacities, mode)
+        elif viewer in ['fsleyes']:
+            cmd = _construct_fsleyes_syntax(viewer, files, colormaps, minmax, opacities)
+        elif viewer in ['itksnap', 'itk-snap']:
+            cmd = _construct_itksnap_syntax(viewer, files, colormaps)
+        else:
+            cmd = ""  # This should never be reached, because SUPPORTED_VIEWERS should match the 'if' cases exactly
+        cmd_strings[viewer] = cmd
+
+        if verbose:
+            printv(cmd + "\n", verbose=1, type='info')
+
+    return cmd_strings
+
+
+def _construct_fslview_syntax(viewer, files, colormaps, minmax, opacities, mode):
+    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
+                    'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
+
+    cmd = viewer
+    # add mode (only supported by fslview for the moment)
+    if mode:
+        cmd += ' -m ' + mode
+    for i in range(len(files)):
+        cmd += ' ' + files[i]
+        if colormaps:
+            if colormaps[i]:
+                cmd += ' -l ' + dict_fslview[colormaps[i]]
+        if minmax:
+            if minmax[i]:
+                cmd += ' -b ' + minmax[i]  # a,b
+        if opacities:
+            if opacities[i]:
+                cmd += ' -t ' + opacities[i]
+    cmd += ' &'
+
+    return cmd
+
+
+def _construct_fsleyes_syntax(viewer, files, colormaps, minmax, opacities):
+    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
+                    'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
+
+    cmd = viewer
+    for i in range(len(files)):
+        cmd += ' ' + files[i]
+        if colormaps:
+            if colormaps[i]:
+                cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
+        if minmax:
+            if minmax[i]:
+                cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
+        if opacities:
+            if opacities[i]:
+                cmd += ' -a ' + str(float(opacities[i]) * 100)  # in percentage
+    cmd += ' &'
+
+    return cmd
+
+
+def _construct_itksnap_syntax(viewer, files, colormaps):
+    cmd = viewer
+    overlay_files = []
+    for i in range(len(files)):
+        # -g is the "main image" option, and we assume that this is the first image
+        # TODO: This assumption is brittle, and could easily break if images are passed in the wrong order.
+        if i == 0:
+            cmd += ' -g ' + files[i]
+        else:
+            # - SCT uses colormaps to color overlaid segmentations for FSLeyes, because FSLeyes doesn't have
+            #   any "segmentation" options, and so files must be distinguished by choosing colors manually.
+            # - But, itk-snap requires that you explicitly specify which files are segmentation files (which
+            #   results in a red overlay for binary segmentations, and a rainbow overlay for multi-labeled
+            #   segmentations).
+            # - So, here we make the assumption that any files that would have been coloured (via fsleyes) should
+            #   instead be passed as segmentations to itk-snap.
+            # - TODO: This assumption is somewhat brittle, and could break if a colormap is used for a
+            #   non-segmentation segmentation file. But, the alternative would be a much bigger rewrite of the
+            #   display_viewer_syntax function.
+            if colormaps and colormaps[i] != "gray":
+                cmd += ' -s ' + files[i]
+            # All extra non-segmentation files have to be passed together to the '-o' (overlay) option
+            else:
+                overlay_files.append(files[i])
+    if overlay_files:
+        cmd += ' -o ' + " ".join(overlay_files)
+
+    return cmd
 
 
 class SCTArgumentParser(argparse.ArgumentParser):
@@ -181,7 +244,7 @@ def list_type(delimiter, subtype):
     return list_typecast_func
 
 
-class Metavar(Enum):
+class Metavar(str, Enum):
     """
     This class is used to display intuitive input types via the metavar field of argparse
     """

@@ -13,21 +13,22 @@
 import sys
 import os
 import argparse
+from typing import Sequence
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file
-from spinalcordtoolbox.vertebrae.core import get_z_and_disc_values_from_label, vertebral_detection, \
-    clean_labeled_segmentation, label_vert
+from spinalcordtoolbox.vertebrae.core import (
+    get_z_and_disc_values_from_label, vertebral_detection, expand_labels,
+    crop_labels, label_vert, EmptyArrayError)
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import create_labels_along_segmentation
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, __data_dir__, set_loglevel
-from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, \
-    copy, extract_fname, rmtree
-from spinalcordtoolbox.math import threshold
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
+from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, copy, extract_fname, rmtree
+from spinalcordtoolbox.math import threshold, laplacian
 
 from spinalcordtoolbox.scripts import sct_straighten_spinalcord, sct_apply_transfo, sct_resample
 
@@ -57,10 +58,6 @@ def vertebral_detection_param(string):
             except ValueError:
                 raise argparse.ArgumentTypeError(
                     f'advanced parameter "{key}" needs an integer value, got "{value}" instead')
-        elif key == 'gaussian_std':
-            # TODO(issue#3706): remove 'gaussian_std' completely for v5.7
-            printv('WARNING: gaussian_std parameter is currently ignored, '
-                   'and will be removed in a later version.', 1, type='warning')
         else:
             raise argparse.ArgumentTypeError(f'Unknown advanced parameter: {key}')
     return param
@@ -210,9 +207,13 @@ def get_parser():
         '-clean-labels',
         metavar=Metavar.int,
         type=int,
-        choices=[0, 1],
-        default=0,
-        help="Clean output labeled segmentation to resemble original segmentation."
+        choices=[0, 1, 2],
+        default=1,
+        help="Clean output labeled segmentation to resemble original segmentation. "
+             "0: no cleaning, "
+             "1: remove labeled voxels that fall outside the original segmentation, "
+             "2: `-clean-labels 1`, plus also fill in voxels so that the labels cover "
+             "the entire original segmentation."
     )
     optional.add_argument(
         '-scale-dist',
@@ -271,7 +272,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -351,14 +352,13 @@ def main(argv=None):
     img.data = threshold(img.data, 0.5)
     img.save()
 
-
     # If disc label file is provided, label vertebrae using that file instead of automatically
     if fname_disc:
         # Apply straightening to disc-label
         printv('\nApply straightening to disc labels...', verbose)
         sct_apply_transfo.main(['-i', fname_disc, '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz',
                                 '-o', 'labeldisc_straight.nii.gz', '-x', 'label'])
-        label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz', verbose=1)
+        label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz')
 
     else:
         printv('\nCreate label to identify disc...', verbose)
@@ -401,7 +401,11 @@ def main(argv=None):
                                 '-v', '0'])
         # get z value and disk value to initialize labeling
         printv('\nGet z and disc values from straight label...', verbose)
-        init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
+        try:
+            init_disc = get_z_and_disc_values_from_label('labelz_straight.nii.gz')
+        except EmptyArrayError:
+            printv('Vertebral detection failed: Missing label or zero label for initial disc.', 1, 'error')
+            sys.exit(1)
         printv('.. ' + str(init_disc), verbose)
 
         # apply laplacian filtering
@@ -421,8 +425,12 @@ def main(argv=None):
 
         # detect vertebral levels on straight spinal cord
         init_disc[1] = init_disc[1] - 1
-        vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, arguments.param, init_disc=init_disc,
-                            verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
+        try:
+            vertebral_detection('data_straightr.nii', 'segmentation_straight.nii', contrast, arguments.param, init_disc=init_disc,
+                                verbose=verbose, path_template=path_template, path_output=path_output, scale_dist=scale_dist)
+        except ValueError as e:
+            printv(f'Vertebral detection failed: {e}', 1, 'error')
+            sys.exit(1)
 
     # un-straighten labeled spinal cord
     printv('\nUn-straighten labeling...', verbose)
@@ -433,10 +441,17 @@ def main(argv=None):
                             '-x', 'nn',
                             '-v', '0'])
 
-    if clean_labels:
-        # Clean labeled segmentation
-        printv('\nClean labeled segmentation (correct interpolation errors)...', verbose)
-        clean_labeled_segmentation('segmentation_labeled.nii', 'segmentation.nii', 'segmentation_labeled.nii')
+    if clean_labels >= 1:
+        printv('\nCleaning labeled segmentation:', verbose)
+        im_labeled_seg = Image('segmentation_labeled.nii')
+        im_seg = Image('segmentation.nii')
+        if clean_labels >= 2:
+            printv('  filling in missing label voxels ...', verbose)
+            expand_labels(im_labeled_seg)
+        printv('  removing labeled voxels outside segmentation...', verbose)
+        crop_labels(im_labeled_seg, im_seg)
+        printv('Done cleaning.', verbose)
+        im_labeled_seg.save()
 
     # label discs
     printv('\nLabel discs...', verbose)
@@ -480,4 +495,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

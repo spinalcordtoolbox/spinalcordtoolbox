@@ -8,6 +8,20 @@ The following studies have used SCT:
 2022
 ----
 
+-  Kossowski *et al.* `Relapsing antibody-negative patients with features of neuromyelitis optica spectrum disorders: Differences in N-acetylaspartate level in the cervical spinal cord indicate distinct underlying processes <https://journals.sagepub.com/doi/10.1177/13524585221115304>`_, **Mult Scler** 2022
+-  Kaptan *et al.* `Automated slice-specific z-shimming for functional magnetic resonance imaging of the human spinal cord <https://doi.org/10.1002/hbm.26018>`_, **Human Brain Mapping** 2022
+-  Combes *et al.* `Functional connectivity in the dorsal network of the cervical spinal cord is correlated with diffusion tensor imaging indices in relapsing-remitting multiple sclerosis <https://doi.org/10.1016/j.nicl.2022.103127>`_, **NeuroImage: Clinical** 2022
+-  Rezende *et al.* `RFC1-Related Disorder: In Vivo Evaluation of Spinal Cord Damage <https://doi.org/10.1002/mds.29169>`_, **Movement Disorders** 2022
+-  Kinany *et al.* `Spinal Cord fMRI: A New Window into the Central Nervous System <https://journals.sagepub.com/doi/full/10.1177/10738584221101827>`_, **The Neuroscientist** 2022
+-  Usuda *et al.* `Quantitative comparison of corticospinal tracts arising from different cortical areas in humans <https://www.sciencedirect.com/science/article/pii/S0168010222001894>`_, **Neuroscience Research** 2022
+-  Shinn *et al.* `MRI diffusion tensor imaging scalar values in dogs with intervertebral disc herniation: A comparison between manual and semiautomated region of interest methods <https://onlinelibrary.wiley.com/doi/full/10.1111/vru.13126>`_, **Veterinary Radiology & Ultrasound** 2022
+-  Han *et al.* `Application of Neurite Orientation Dispersion and Density Imaging to Evaluate and Predict the Surgical Outcome for Degenerative Cervical Myelopathy <https://onlinelibrary.wiley.com/doi/full/10.1111/os.13326>`_, **Orthop Surg.** 2022
+-  Madsen *et al.* `Linking lesions in sensorimotor cortex to contralateral hand function in multiple sclerosis: a 7 T MRI study <https://pubmed.ncbi.nlm.nih.gov/35653498/>`_, **Brain** 2022
+-  Jayasekera *et al.* `Analysis of combined clinical and diffusion basis spectrum imaging metrics to predict the outcome of chronic cervical spondylotic myelopathy following cervical decompression surgery <https://thejns.org/spine/view/journals/j-neurosurg-spine/aop/article-10.3171-2022.3.SPINE2294/article-10.3171-2022.3.SPINE2294.xml>`_ **Journal of Neurosurgery** 2022
+-  Tinnermann *et al.* `Opioid analgesia alters corticospinal coupling along the descending pain system in healthy participants <https://elifesciences.org/articles/74293>`_ **eLife** 2022
+-  Kim *et al.* `Confounder-adjusted MRI-based predictors of multiple sclerosis disability <https://www.medrxiv.org/content/10.1101/2022.04.18.22273974v1>`_. (preprint) 2022
+-  Kumar *et al.* `Mapping pediatric spinal cord development with age <https://www.spiedigitallibrary.org/conference-proceedings-of-spie/12032/1203213/Mapping-pediatric-spinal-cord-development-with-age/10.1117/12.2612210.short?SSO=1>`_. **Proceedings SPIE** 2022
+-  Trevarrow *et al.* `Spinal cord microstructural changes are connected with the aberrant sensorimotor cortical oscillatory activity in adults with cerebral palsy <https://pubmed.ncbi.nlm.nih.gov/35314729/>`_ **Sci Rep.** 2022
 -  Rowald *et al.* `Activity-dependent spinal cord neuromodulation rapidly restores trunk and leg motor functions after complete paralysis. <https://pubmed.ncbi.nlm.nih.gov/35132264/>`_ **Nat Med.** 2022
 -  Horáková *et al.* `Semi-automated detection of cervical spinal cord compression with the Spinal Cord Toolbox. <https://qims.amegroups.com/article/view/88416/html>`_ **Quant Imaging Med Surg.** 2022
 -  Kinany *et al.* `Towards reliable spinal cord fMRI: assessment of common imaging protocols. <https://pubmed.ncbi.nlm.nih.gov/35124227/>`_ **Neuroimage.** 2022
@@ -46,7 +60,6 @@ The following studies have used SCT:
 -  Adibi *et al.* `Quantitative Magnetic Resonance Imaging Analysis of Early Markers of Upper Cervical Cord Atrophy in Multiple Sclerosis and Neuromyelitis Optica Spectrum Disorder. <https://pubmed.ncbi.nlm.nih.gov/34306756/>`_ **Mult Scler Int.** 2021
 -  Martucci *et al.* `Spinal Cord Resting State Activity in Individuals With Fibromyalgia Who Take Opioids. <https://www.frontiersin.org/articles/10.3389/fneur.2021.694271/full>`_ **Front. Neurol.** 2021
 -  David *et al.* `Longitudinal changes of spinal cord grey and white matter following spinal cord injury. <https://jnnp.bmj.com/content/early/2021/08/11/jnnp-2021-326337.info>`_ **Journal of Neurology, Neurosurgery & Psychiatry.** 2021
--  Trevarrow *et al.* `Spinal Cord Microstructural Changes are Connected with the Aberrant Sensorimotor Cortical Oscillatory Activity in Adults with Cerebral Palsy. <https://doi.org/10.21203/rs.3.rs-842588/v1>`_ **Scientific Reports.** 2021
 -  Alsenan *et al.* `A Deep Learning Model based on MobileNetV3 and UNet for Spinal Cord Gray Matter Segmentation. <https://ieeexplore.ieee.org/document/9522652>`_ **44th International Conference on Telecommunications and Signal Processing (TSP).** 2021
 -  Horak *et al.* `In vivo molecular signatures of cervical spinal cord pathology in degenerative compression. <https://pubmed.ncbi.nlm.nih.gov/34428934/>`_ **J Neurotrauma.** 2021
 -  Valošek *et al.* `Diffusion MRI reveals tract-specific microstructural correlates of electrophysiological impairments in non-myelopathic and myelopathic spinal cord compression. <https://doi.org/10.1111/ene.15027>`_ **Eur J Neurol.** 2021
@@ -64,7 +77,7 @@ The following studies have used SCT:
 -  Azzarito *et al.* `Simultaneous voxel‐wise analysis of brain and spinal cord morphometry and microstructure within the SPM framework. <https://pubmed.ncbi.nlm.nih.gov/32991031/>`__ **Human Brain Mapping** 2020
 -  Paliwal *et al.* `Magnetization Transfer Ratio and Morphometrics Of the Spinal Cord Associates withSurgical Recovery in Patients with Degenerative Cervical Myelopathy. <https://pubmed.ncbi.nlm.nih.gov/33010502/>`__ **World Neurosurgery** 2020
 -  Tinnermann *et al.* `Cortico-spinal imaging to study pain. <https://www.sciencedirect.com/science/article/pii/S1053811920309241?via%3Dihub>`__ **NeuroImage** 2020
--  Rejc *et al.* `Spinal Cord Imaging Markers and Recovery of Volitional Leg Movement With Spinal Cord Epidural Stimulation in Individuals With Clinically Motor Complete Spinal Cord Injury. Front. Syst. Neurosci., 2020 <https://www.frontiersin.org/articles/10.3389/fnsys.2020.559313/full>`__
+-  Rejc *et al.* `Spinal Cord Imaging Markers and Recovery of Volitional Leg Movement With Spinal Cord Epidural Stimulation in Individuals With Clinically Motor Complete Spinal Cord Injury. <https://www.frontiersin.org/articles/10.3389/fnsys.2020.559313/full>`_ **Front. Syst. Neurosci.** 2020
 -  Labounek *et al.* `HARDI-ZOOMit protocol improves specificity to microstructural changes in presymptomatic myelopathy. <https://www.nature.com/articles/s41598-020-70297-3>`__ **Scientific Reports** 2020
 -  Henmar *et al.* `What are the gray and white matter volumes of the human spinal cord? <https://pubmed.ncbi.nlm.nih.gov/33085549/>`__ **J Neurophysiol** 2020
 -  Mummaneni *et al.* `Injury Volume Extracted from MRI Predicts Neurologic Outcome in Acute Spinal Cord Injury: A Prospective TRACK-SCI Pilot Study. <https://www.sciencedirect.com/science/article/abs/pii/S0967586820316192>`__ **J Clin Neurosci** 2020
@@ -144,7 +157,7 @@ The following studies have used SCT:
 -  Grabher *et al.* `Voxel-based analysis of grey and white matter degeneration in cervical spondylotic myelopathy. <https://www.ncbi.nlm.nih.gov/pubmed/27095134>`__ **Sci Rep** 2016
 -  Talbott JF, Narvid J, Chazen JL, Chin CT, Shah V. `An Imaging Based Approach to Spinal Cord Infection. <http://www.journals.elsevier.com/seminars-in-ultrasound-ct-and-mri/recent-articles>`__ **Semin Ultrasound CT MR** 2016
 -  McCoy *et al.* `MRI Atlas-Based Measurement of Spinal Cord Injury Predicts Outcome in Acute Flaccid Myelitis. <http://www.ajnr.org/content/early/2016/12/15/ajnr.A5044.abstract>`__ **AJNR** 2016
--  De Leener *et al.* `Segmentation of the human spinal cord. <https://www.ncbi.nlm.nih.gov/pubmed/26724926>`__ MAGMA. 2016
+-  De Leener *et al.* `Segmentation of the human spinal cord. <https://www.ncbi.nlm.nih.gov/pubmed/26724926>`__ **MAGMA** 2016
 -  Cohen-Adad *et al.* `Functional Magnetic Resonance Imaging of the Spinal Cord: Current Status and Future Developments. <http://www.sciencedirect.com/science/article/pii/S088721711630049X>`__ **Semin Ultrasound CT MR** 2016
 -  Ventura *et al.* `Cervical spinal cord atrophy in NMOSD without a history of myelitis or MRI-visible lesions. <https://www.ncbi.nlm.nih.gov/pubmed/27144215>`__ **Neurol Neuroimmunol Neuroinflamm** 2016
 -  Combes *et al.* `Cervical cord myelin water imaging shows degenerative changes over one year in multiple sclerosis but not neuromyelitis optica spectrum disorder. <http://www.sciencedirect.com/science/article/pii/S221315821730150X>`__ **Neuroimage: Clinical.** 2016

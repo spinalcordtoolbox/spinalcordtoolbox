@@ -12,6 +12,7 @@
 
 import sys
 import os
+from typing import Sequence
 
 import numpy as np
 
@@ -222,7 +223,6 @@ class ComputeDistances:
                     self.im2.change_orientation('IRP')
                     self.im2.save(path=add_suffix(self.im2.absolutepath, "_irp"), mutable=True)
 
-
         if self.param.thinning:
             self.thinning1 = Thinning(self.im1, self.param.verbose)
             self.thinning1.thinned_image.save()
@@ -267,7 +267,7 @@ class ComputeDistances:
                     self.res += 'Slice ' + str(i) + ': ' + str(d.H * self.dim_pix) + '  -  ' + str(med1 * self.dim_pix) + '  -  ' + str(med2 * self.dim_pix) + ' \n'
 
         printv('-----------------------------------------------------------------------------\n' +
-                   self.res, self.param.verbose, 'normal')
+               self.res, self.param.verbose, 'normal')
 
         if self.param.verbose == 2:
             self.show_results()
@@ -499,7 +499,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

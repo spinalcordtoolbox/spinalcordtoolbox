@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 #
 # Generate QC report
 #
@@ -8,7 +7,9 @@
 #
 # About the license: see the file LICENSE.TXT
 
+import os
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.utils import init_sct, set_loglevel, SCTArgumentParser
 
@@ -45,7 +46,7 @@ def get_parser():
                         metavar='QC',
                         help='Path to save QC report. Default: ./qc',
                         required=False,
-                        default='./qc')
+                        default=os.path.join('.', 'qc'))
     parser.add_argument('-qc-dataset',
                         metavar='DATASET',
                         help='If provided, this string will be mentioned in the QC report as the dataset the process '
@@ -73,7 +74,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -100,4 +101,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

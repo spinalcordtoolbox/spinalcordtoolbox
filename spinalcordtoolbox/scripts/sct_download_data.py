@@ -12,6 +12,7 @@
 
 import os
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.download import install_data
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
@@ -76,19 +77,19 @@ DATASET_DICT = {
     },
     "binaries_linux": {
         "mirrors": [
-            "https://osf.io/cs6zt/?action=download",
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20220516-2/spinalcordtoolbox-binaries_linux.tar.gz",
         ],
         "default_location": __bin_dir__,
     },
     "binaries_osx": {
         "mirrors": [
-            "https://osf.io/874cy?action=download",
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20220516-2/spinalcordtoolbox-binaries_osx.tar.gz",
         ],
         "default_location": __bin_dir__,
     },
     "binaries_win": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/test-release/binaries_win.zip",
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20220516-2/spinalcordtoolbox-binaries_windows.tar.gz",
         ],
         "default_location": __bin_dir__,
     },
@@ -134,22 +135,19 @@ DATASET_DICT = {
     },
     "deepseg_gm_models": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/deepseg_gm_models/releases/download/r20180205/20180205_deepseg_gm_models.zip",
-            "https://osf.io/b9y4x/?action=download",
+            "https://github.com/spinalcordtoolbox/deepseg_gm_models/releases/download/r20180205/20220325_deepseg_gm_models_onnx.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_gm_models"),
     },
     "deepseg_sc_models": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/deepseg_sc_models/releases/download/r20180610/20180610_deepseg_sc_models.zip",
-            "https://osf.io/avf97/?action=download",
+            "https://github.com/spinalcordtoolbox/deepseg_sc_models/releases/download/r20180610/20220325_deepseg_sc_models_onnx.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_sc_models"),
     },
     "deepseg_lesion_models": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/deepseg_lesion_models/releases/download/r20180613/20180613_deepseg_lesion_models.zip",
-            "https://osf.io/eg7v9/?action=download",
+            "https://github.com/spinalcordtoolbox/deepseg_lesion_models/releases/download/r20180613/20220325_deepseg_lesion_models_onnx.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_lesion_models"),
     },
@@ -165,6 +163,12 @@ DATASET_DICT = {
             "https://github.com/spinalcordtoolbox/exvivo-template/archive/refs/tags/r20210317.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "exvivo_template"),
+    },
+    "deepreg_models": {
+        "mirrors": [
+            "https://github.com/ivadomed/multimodal-registration/releases/download/r20220512/models.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "deepreg_models"),
     }
 }
 
@@ -213,7 +217,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -234,4 +238,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

@@ -34,17 +34,17 @@ import sys
 import os
 import time
 from copy import deepcopy
+from typing import Sequence
 
 import numpy as np
 
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.registration.register import Paramreg, ParamregMultiStep
+from spinalcordtoolbox.registration.algorithms import Paramreg, ParamregMultiStep
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
-from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import check_dim
 
-from spinalcordtoolbox.scripts.sct_register_to_template import register_wrapper
+from spinalcordtoolbox.registration.core import register_wrapper
 
 # Default registration parameters
 step0 = Paramreg(step='0', type='im', algo='syn', metric='MI', iter='0', shrink='1', smooth='0', gradStep='0.5',
@@ -174,6 +174,7 @@ def get_parser():
               f"    * centermassrot: slicewise center of mass and rotation alignment using method specified in "
               f"'rot_method'\n"
               f"    * columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
+              f"    * dl: Contrast-agnostic, deep learning-based registration based on the SynthMorph architecture. \n"
               f"  - slicewise: <int> Slice-by-slice 2d transformation. "
               f"Default={DEFAULT_PARAMREGMULTI.steps['1'].slicewise}.\n"
               f"  - metric: {{CC, MI, MeanSquares}}. Default={DEFAULT_PARAMREGMULTI.steps['1'].metric}.\n"
@@ -253,7 +254,7 @@ def get_parser():
         '-ofolder',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="Output folder. Example: reg_results/"
+        help="Output folder. Example: reg_results"
     )
     optional.add_argument(
         '-qc',
@@ -304,7 +305,7 @@ class Param:
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

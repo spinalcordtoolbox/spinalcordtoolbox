@@ -11,6 +11,7 @@
 import os
 import sys
 import pickle
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
@@ -74,10 +75,10 @@ def get_parser():
         required=False)
     optional.add_argument(
         "-ofolder",
-        help='Output folder (e.g. "./")',
+        help='Output folder (e.g. ".")',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default='./',
+        default='.',
         required=False)
     optional.add_argument(
         "-r",
@@ -503,7 +504,7 @@ class AnalyzeLeion:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:

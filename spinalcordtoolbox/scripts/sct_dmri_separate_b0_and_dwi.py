@@ -16,6 +16,7 @@ import sys
 import math
 import time
 import os
+from typing import Sequence
 
 import numpy as np
 
@@ -87,8 +88,8 @@ def get_parser():
         '-ofolder',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        default='./',
-        help='Output folder. Example: dmri_separate_results/',
+        default='.',
+        help='Output folder. Example: dmri_separate_results',
     )
     optional.add_argument(
         "-r",
@@ -109,7 +110,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -317,4 +318,3 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-
