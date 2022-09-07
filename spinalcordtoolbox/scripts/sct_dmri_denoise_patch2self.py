@@ -88,13 +88,12 @@ def main(argv: Sequence[str]):
         patch_radius = int(arguments.radius)
 
     file_to_denoise = arguments.i
-    bval_file = arguments.b
     output_file_name = arguments.o
 
     path, file, ext = extract_fname(file_to_denoise)
 
     img = nib.load(file_to_denoise)
-    bvals = np.loadtxt(bval_file)
+    bvals = np.loadtxt(arguments.b)
     hdr_0 = img.get_header()
     data = img.get_data()
 
