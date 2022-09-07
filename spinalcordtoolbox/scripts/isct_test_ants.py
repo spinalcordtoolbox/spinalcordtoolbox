@@ -22,6 +22,8 @@ import nibabel as nib
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree
 
+from spinalcordtoolbox.scripts import sct_dice_coefficient
+
 
 # main
 # =======================================================================================================================
@@ -94,7 +96,7 @@ def main():
 
     # # Apply rigid transformation
     # printv('\nApply rigid transformation to curved landmarks...', verbose)
-    # run_proc('sct_apply_transfo -i data_src.nii.gz -o data_src_rigid.nii.gz -d data_dest.nii.gz -w curve2straight_rigid.txt -p nn', verbose)
+    # sct_apply_transfo.main(["-i", "data_src.nii.gz", "-o", "data_src_rigid.nii.gz", "-d", "data_dest.nii.gz", "-w", "curve2straight_rigid.txt", "-p", "nn"])
     #
     # # Estimate b-spline transformation curve --> straight
     # printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
@@ -108,14 +110,15 @@ def main():
     #
     # # Apply deformation to input image
     # printv('\nApply transformation to input image...', verbose)
-    # run_proc('sct_apply_transfo -i data_src.nii.gz -o data_src_warp.nii.gz -d data_dest.nii.gz -w warp_curve2straight.nii.gz -p nn', verbose)
+    # sct_apply_transfo(["-i", "data_src.nii.gz", "-o", "data_src_warp.nii.gz", "-d", "data_dest.nii.gz", "-w", "warp_curve2straight.nii.gz", "-p", "nn"])
     #
     # Compute DICE coefficient between src and dest
     printv('\nCompute DICE coefficient...', verbose)
-    run_proc(["sct_dice_coefficient",
-              "-i", "data_dest.nii.gz",
-              "-d", "data_src_reg.nii.gz",
-              "-o", "dice.txt"], verbose)
+    sct_dice_coefficient.main([
+        "-i", "data_dest.nii.gz",
+        "-d", "data_src_reg.nii.gz",
+        "-o", "dice.txt",
+    ])
     with open("dice.txt", "r") as file_dice:
         dice = float(file_dice.read().replace('3D Dice coefficient = ', ''))
     printv('Dice coeff = ' + str(dice) + ' (should be above ' + str(dice_acceptable) + ')', verbose)
