@@ -20,7 +20,7 @@ def get_parser():
                     '- Schilling et al. Patch2Self denoising of diffusion MRI in the cervical spinal cord improves intra-cord contrast, '
                     'signal modelling, repeatability, and feature conspicuity. medRxiv, 2021. (https://doi.org/10.1101/2021.10.04.21264389)\n'
                     '\n'
-                    'The implementation is based on DIPY (https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self)'
+                    'The implementation is based on DIPY (https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self).'
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -45,7 +45,7 @@ def get_parser():
         "-h",
         "--help",
         action="help",
-        help="Show this help message and exit")
+        help="Show this help message and exit.")
     optional.add_argument(
         "-model",
         help='Type of regression model used for self-supervised training within Patch2Self.',
@@ -75,7 +75,7 @@ def get_parser():
         choices=[0, 1, 2],
         default=1,
         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode.")
 
     return parser
 
