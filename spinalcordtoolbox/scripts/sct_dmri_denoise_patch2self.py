@@ -105,8 +105,8 @@ def main(argv: Sequence[str]):
 
     nii = nib.load(file_to_denoise)
     bvals = np.loadtxt(arguments.b)
-    hdr = nii.get_header()
-    data = nii.get_data()
+    hdr = nii.header
+    data = nii.get_fdata()
 
     printv("Applying Patch2Self Denoising...")
     data_denoised = patch2self(data, bvals, patch_radius, model, verbose=True)
