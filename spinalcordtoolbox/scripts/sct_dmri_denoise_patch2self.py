@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import sys
 from typing import Sequence
 
@@ -8,7 +9,7 @@ import nibabel as nib
 from dipy.denoise.patch2self import patch2self
 
 from spinalcordtoolbox.image import add_suffix
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel, list_type
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel, list_type
 
 
 def get_parser():
@@ -88,9 +89,13 @@ def main(argv: Sequence[str]):
         patch_radius = int(arguments.radius)
 
     file_to_denoise = arguments.i
-    output_file_name = arguments.o
-
-    path, file, ext = extract_fname(file_to_denoise)
+    if arguments.o is not None:
+        output_file_name_denoised = arguments.o
+        output_file_name_diff = add_suffix(arguments.o, "_difference")
+    else:
+        _, filename = os.path.split(file_to_denoise)
+        output_file_name_denoised = add_suffix(filename, "_patch2self_denoised")
+        output_file_name_diff = add_suffix(filename, "_patch2self_difference")
 
     img = nib.load(file_to_denoise)
     bvals = np.loadtxt(arguments.b)
@@ -123,17 +128,11 @@ def main(argv: Sequence[str]):
     img_denoised = nib.Nifti1Image(denoised, None, hdr_0)
     diff_4d = np.absolute(denoised.astype('f8') - data.astype('f8'))
     img_diff = nib.Nifti1Image(diff_4d, None, hdr_0)
-    if output_file_name is not None:
-        output_file_name_denoised = output_file_name
-        output_file_name_diff = add_suffix(output_file_name, "_difference")
-    else:
-        output_file_name_denoised = file + '_patch2self_denoised' + ext
-        output_file_name_diff = file + '_patch2self_difference' + ext
     nib.save(img_denoised, output_file_name_denoised)
     nib.save(img_diff, output_file_name_diff)
 
     printv('\nDone! To view results, type:', verbose)
-    printv('fsleyes ' + file_to_denoise + ' ' + output_file_name + ' & \n',
+    printv('fsleyes ' + file_to_denoise + ' ' + output_file_name_denoised + ' & \n',
            verbose, 'info')
 
 
