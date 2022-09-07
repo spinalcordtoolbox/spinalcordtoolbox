@@ -244,7 +244,7 @@ def list_type(delimiter, subtype):
     return list_typecast_func
 
 
-class Metavar(Enum):
+class Metavar(str, Enum):
     """
     This class is used to display intuitive input types via the metavar field of argparse
     """
