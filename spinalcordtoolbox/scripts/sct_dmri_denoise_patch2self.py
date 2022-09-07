@@ -9,7 +9,8 @@ import nibabel as nib
 from dipy.denoise.patch2self import patch2self
 
 from spinalcordtoolbox.image import add_suffix
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 
 
 def get_parser():
