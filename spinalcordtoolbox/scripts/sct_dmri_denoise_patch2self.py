@@ -132,7 +132,7 @@ def main(argv: Sequence[str]):
     nib.save(img_diff, output_file_name_diff)
 
     printv('\nDone! To view results, type:', verbose)
-    printv('fsleyes ' + file_to_denoise + ' ' + output_file_name_denoised + ' & \n',
+    printv('fsleyes ' + file_to_denoise + ' ' + output_file_name_denoised + ' ' + output_file_name_diff + ' & \n',
            verbose, 'info')
 
 
