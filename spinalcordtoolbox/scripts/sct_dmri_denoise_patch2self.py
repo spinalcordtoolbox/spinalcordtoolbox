@@ -105,6 +105,7 @@ def main(argv: Sequence[str]):
     printv("Applying Patch2Self Denoising...")
     data_denoised = patch2self(data, bvals, patch_radius=patch_radius, model=model,
                                verbose=True)
+    data_diff = np.absolute(data_denoised.astype('f8') - data.astype('f8'))
 
     if verbose == 2:
         import matplotlib.pyplot as plt
@@ -117,7 +118,7 @@ def main(argv: Sequence[str]):
         after = data_denoised[:, :, axial_middle, middle_vol].T
         ax[1].imshow(after, cmap='gray', origin='lower')
         ax[1].set_title("after")
-        difference = np.absolute(after.astype('f8') - before.astype('f8'))
+        difference = data_diff[:, :, axial_middle, middle_vol].T
         ax[2].imshow(difference, cmap='gray', origin='lower')
         ax[2].set_title("difference")
         for i in range(3):
@@ -126,7 +127,6 @@ def main(argv: Sequence[str]):
 
     # Save files
     nii_denoised = nib.Nifti1Image(data_denoised, None, hdr)
-    data_diff = np.absolute(data_denoised.astype('f8') - data.astype('f8'))
     nii_diff = nib.Nifti1Image(data_diff, None, hdr)
     nib.save(nii_denoised, output_file_name_denoised)
     nib.save(nii_diff, output_file_name_diff)
