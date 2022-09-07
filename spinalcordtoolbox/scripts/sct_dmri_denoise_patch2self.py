@@ -15,14 +15,17 @@ from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 
 def get_parser():
     parser = SCTArgumentParser(
-        description="Utility function to denoise diffusion MRI images. Returns the denoised image and also the difference "
-                    "between the input and the output. The Patch2Self denoising algorithm is based on self-supervised denoising via statistical independence of noise, as described in the following publications:\n"
-                    "\n"
-                    "- Fadnavis et al. Patch2Self: Denoising Diffusion MRI with Self-supervised Learning. NeurIPS, 2020, Vol. 33. (https://arxiv.org/abs/2011.01355)\n"
-                    "- Schilling et al. Patch2Self denoising of diffusion MRI in the cervical spinal cord improves intra-cord contrast, "
-                    "signal modelling, repeatability, and feature conspicuity. medRxiv, 2021. (https://doi.org/10.1101/2021.10.04.21264389)\n"
-                    "\n"
-                    "The implementation is based on DIPY (https://dipy.org/documentation/1.5.0/examples_built/denoise_patch2self/)."
+        description="Utility function to denoise diffusion MRI images. Returns the denoised image and also the "
+                    "difference between the input and the output. The Patch2Self denoising algorithm is based on "
+                    "self-supervised denoising via statistical independence of noise, as described in the following "
+                    "publications:\n\n"
+                    "- Fadnavis et al. Patch2Self: Denoising Diffusion MRI with Self-supervised Learning. NeurIPS, "
+                    "2020, Vol. 33. (https://arxiv.org/abs/2011.01355)\n"
+                    "- Schilling et al. Patch2Self denoising of diffusion MRI in the cervical spinal cord improves "
+                    "intra-cord contrast, signal modelling, repeatability, and feature conspicuity. medRxiv, 2021. "
+                    "(https://doi.org/10.1101/2021.10.04.21264389)\n\n"
+                    "The implementation is based on DIPY "
+                    "(https://dipy.org/documentation/1.5.0/examples_built/denoise_patch2self/)."
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -35,8 +38,7 @@ def get_parser():
     mandatory.add_argument(
         "-b",
         required=True,
-        help="Input bvals file corresponding to the NIfTI file to be denoised."
-             " Example: filename.bval",
+        help="Input bvals file corresponding to the NIfTI file to be denoised. Example: filename.bval",
         metavar=Metavar.file,
     )
 
@@ -54,11 +56,10 @@ def get_parser():
     optional.add_argument(
         "-radius",
         help="Patch Radius used to generate p-neighbourhoods within Patch2Self. Notes:\n"
-             "- A radius of '0' will use 1x1x1 p-neighbourhoods, a radius of '1' will use "
-             "3x3x3 p-neighbourhoods, and so on.\n"
-             "- For anisotropic patch sizes, provide a comma-delimited list of 3 integers. "
-             "(e.g. '-radius 0,1,0'). For isotropic patch sizes, provide a single int value "
-             "(e.g. '-radius 0').",
+             "- A radius of '0' will use 1x1x1 p-neighbourhoods, a radius of '1' will use 3x3x3 p-neighbourhoods, "
+             "and so on.\n"
+             "- For anisotropic patch sizes, provide a comma-delimited list of 3 integers. (e.g. '-radius 0,1,0'). "
+             "For isotropic patch sizes, provide a single int value (e.g. '-radius 0').",
         metavar=Metavar.int,
         default="0")
     optional.add_argument(
@@ -104,8 +105,7 @@ def main(argv: Sequence[str]):
     data = nii.get_data()
 
     printv("Applying Patch2Self Denoising...")
-    data_denoised = patch2self(data, bvals, patch_radius=patch_radius, model=model,
-                               verbose=True)
+    data_denoised = patch2self(data, bvals, patch_radius=patch_radius, model=model, verbose=True)
     data_diff = np.absolute(data_denoised.astype('f8') - data.astype('f8'))
 
     if verbose == 2:
