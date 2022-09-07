@@ -110,7 +110,7 @@ def main():
     #
     # # Apply deformation to input image
     # printv('\nApply transformation to input image...', verbose)
-    # sct_apply_transfo(["-i", "data_src.nii.gz", "-o", "data_src_warp.nii.gz", "-d", "data_dest.nii.gz", "-w", "warp_curve2straight.nii.gz", "-p", "nn"])
+    # sct_apply_transfo.main(["-i", "data_src.nii.gz", "-o", "data_src_warp.nii.gz", "-d", "data_dest.nii.gz", "-w", "warp_curve2straight.nii.gz", "-p", "nn"])
     #
     # Compute DICE coefficient between src and dest
     printv('\nCompute DICE coefficient...', verbose)
