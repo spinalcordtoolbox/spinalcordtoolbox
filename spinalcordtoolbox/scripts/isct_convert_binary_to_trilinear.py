@@ -124,11 +124,13 @@ def main():
 
     # Smooth along centerline
     printv('\nSmooth along centerline...', verbose)
-    sct_smooth_spinalcord.main(["-i", "data_up.nii",
-                                "-s", "data_up.nii",
-                                "-smooth", str(smoothing_sigma),
-                                "-r", str(remove_temp_files),
-                                "-v", str(verbose), ])
+    sct_smooth_spinalcord.main([
+        "-i", "data_up.nii",
+        "-s", "data_up.nii",
+        "-smooth", str(smoothing_sigma),
+        "-r", str(remove_temp_files),
+        "-v", str(verbose),
+    ])
 
     # downsample data
     printv('\nDownsample data...', verbose)
