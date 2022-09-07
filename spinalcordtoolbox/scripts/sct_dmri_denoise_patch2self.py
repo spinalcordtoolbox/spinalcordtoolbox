@@ -14,14 +14,14 @@ from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='Utility function to denoise diffusion MRI images. Returns the denoised image and also the difference '
-                    'between the input and the output. The Patch2Self denoising algorithm is based on self-supervised denoising via statistical independence of noise, as described in the following publications:\n'
-                    '\n'
-                    '- Fadnavis et al. Patch2Self: Denoising Diffusion MRI with Self-supervised Learning. NeurIPS, 2020, Vol. 33. (https://arxiv.org/abs/2011.01355)\n'
-                    '- Schilling et al. Patch2Self denoising of diffusion MRI in the cervical spinal cord improves intra-cord contrast, '
-                    'signal modelling, repeatability, and feature conspicuity. medRxiv, 2021. (https://doi.org/10.1101/2021.10.04.21264389)\n'
-                    '\n'
-                    'The implementation is based on DIPY (https://dipy.org/documentation/1.5.0/examples_built/denoise_patch2self/).'
+        description="Utility function to denoise diffusion MRI images. Returns the denoised image and also the difference "
+                    "between the input and the output. The Patch2Self denoising algorithm is based on self-supervised denoising via statistical independence of noise, as described in the following publications:\n"
+                    "\n"
+                    "- Fadnavis et al. Patch2Self: Denoising Diffusion MRI with Self-supervised Learning. NeurIPS, 2020, Vol. 33. (https://arxiv.org/abs/2011.01355)\n"
+                    "- Schilling et al. Patch2Self denoising of diffusion MRI in the cervical spinal cord improves intra-cord contrast, "
+                    "signal modelling, repeatability, and feature conspicuity. medRxiv, 2021. (https://doi.org/10.1101/2021.10.04.21264389)\n"
+                    "\n"
+                    "The implementation is based on DIPY (https://dipy.org/documentation/1.5.0/examples_built/denoise_patch2self/)."
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -43,13 +43,13 @@ def get_parser():
     optional.add_argument(
         "-h",
         "--help",
-        action="help",
+        action='help',
         help="Show this help message and exit.")
     optional.add_argument(
         "-model",
-        help='Type of regression model used for self-supervised training within Patch2Self.',
-        choices=("ols", "ridge", "lasso"),
-        default="ols")
+        help="Type of regression model used for self-supervised training within Patch2Self.",
+        choices=('ols', 'ridge', 'lasso'),
+        default='ols')
     optional.add_argument(
         "-radius",
         help="Patch Radius used to generate p-neighbourhoods within Patch2Self. Notes:\n"
@@ -66,7 +66,7 @@ def get_parser():
         metavar=Metavar.str,
         )
     optional.add_argument(
-        '-v',
+        "-v",
         metavar=Metavar.int,
         type=int,
         choices=[0, 1, 2],
@@ -102,7 +102,7 @@ def main(argv: Sequence[str]):
     hdr_0 = img.get_header()
     data = img.get_data()
 
-    printv('Applying Patch2Self Denoising...')
+    printv("Applying Patch2Self Denoising...")
     denoised = patch2self(data, bvals, patch_radius=patch_radius, model=model,
                           verbose=True)
 
@@ -113,13 +113,13 @@ def main(argv: Sequence[str]):
         middle_vol = int(data.shape[3] / 2)
         before = data[:, :, axial_middle, middle_vol].T
         ax[0].imshow(before, cmap='gray', origin='lower')
-        ax[0].set_title('before')
+        ax[0].set_title("before")
         after = denoised[:, :, axial_middle, middle_vol].T
         ax[1].imshow(after, cmap='gray', origin='lower')
-        ax[1].set_title('after')
+        ax[1].set_title("after")
         difference = np.absolute(after.astype('f8') - before.astype('f8'))
         ax[2].imshow(difference, cmap='gray', origin='lower')
-        ax[2].set_title('difference')
+        ax[2].set_title("difference")
         for i in range(3):
             ax[i].set_axis_off()
         plt.show()
@@ -131,14 +131,14 @@ def main(argv: Sequence[str]):
     nib.save(img_denoised, output_file_name_denoised)
     nib.save(img_diff, output_file_name_diff)
 
-    printv('\nDone! To view results, type:', verbose)
-    printv('fsleyes ' + file_to_denoise + ' ' + output_file_name_denoised + ' ' + output_file_name_diff + ' & \n',
+    printv("\nDone! To view results, type:", verbose)
+    printv("fsleyes " + file_to_denoise + " " + output_file_name_denoised + " " + output_file_name_diff + " & \n",
            verbose, 'info')
 
 
 # =======================================================================================================================
 # Start program
 # =======================================================================================================================
-if __name__ == "__main__":
+if __name__ == '__main__':
     init_sct()
     main(sys.argv[1:])
