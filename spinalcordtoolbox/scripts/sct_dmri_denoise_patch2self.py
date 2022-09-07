@@ -13,8 +13,8 @@ from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='Utility function to denoise diffusion MRI images. Return the denoised image and also the difference '
-                    'between the input and the output.The Patch2Self denoising algorithm is based on self-supervised denoising via statistical independence of noise, as described in the following publications:\n'
+        description='Utility function to denoise diffusion MRI images. Returns the denoised image and also the difference '
+                    'between the input and the output. The Patch2Self denoising algorithm is based on self-supervised denoising via statistical independence of noise, as described in the following publications:\n'
                     '\n'
                     '- Fadnavis et al. Patch2Self: Denoising Diffusion MRI with Self-supervised Learning. NeurIPS, 2020, Vol. 33. (https://arxiv.org/abs/2011.01355)\n'
                     '- Schilling et al. Patch2Self denoising of diffusion MRI in the cervical spinal cord improves intra-cord contrast, '
@@ -57,7 +57,7 @@ def get_parser():
         help="Patch Radius used to generate p-neighbourhoods within Patch2Self. Notes:\n"
              "- A radius of '0' will use 1x1x1 p-neighbourhoods, a radius of '1' will use "
              "3x3x3 p-neighbourhoods, and so on.\n"
-             "- For ansiotropic patch sizes, provide a comma-delimited list of 3 integers. "
+             "- For anisotropic patch sizes, provide a comma-delimited list of 3 integers. "
              "(e.g. '-radius 0,1,0'). For isotropic patch sizes, provide a single int value "
              "(e.g. '-radius 0').",
         metavar=Metavar.int,
