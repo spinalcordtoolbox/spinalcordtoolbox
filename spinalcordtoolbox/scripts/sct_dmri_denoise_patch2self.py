@@ -26,14 +26,12 @@ def get_parser():
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         "-i",
-        default=None,
         required=True,
         help="Input NIfTI image to be denoised. Example: image_input.nii.gz",
         metavar=Metavar.file,
     )
     mandatory.add_argument(
         "-b",
-        default=None,
         required=True,
         help="Input bvals file corresponding to the NIfTI file to be denoised."
              " Example: filename.bval",
@@ -49,7 +47,6 @@ def get_parser():
     optional.add_argument(
         "-model",
         help='Type of regression model used for self-supervised training within Patch2Self.',
-        required=False,
         choices=("ols", "ridge", "lasso"),
         default="ols")
     optional.add_argument(
@@ -61,13 +58,12 @@ def get_parser():
              "(e.g. '-radius 0,1,0'). For isotropic patch sizes, provide a single int value "
              "(e.g. '-radius 0').",
         metavar=Metavar.int,
-        required=False,
         default="0")
     optional.add_argument(
         "-o",
         help="Name of the output NIFTI image.",
         metavar=Metavar.str,
-        default=None)
+        )
     optional.add_argument(
         '-v',
         metavar=Metavar.int,
