@@ -98,8 +98,8 @@ def main(argv: Sequence[str]):
     data = img.get_data()
 
     printv('Applying Patch2Self Denoising...')
-    den = patch2self(data, bvals, patch_radius=patch_radius, model=model,
-                     verbose=True)
+    denoised = patch2self(data, bvals, patch_radius=patch_radius, model=model,
+                          verbose=True)
 
     if verbose == 2:
         import matplotlib.pyplot as plt
@@ -109,7 +109,7 @@ def main(argv: Sequence[str]):
         before = data[:, :, axial_middle, middle_vol].T
         ax[0].imshow(before, cmap='gray', origin='lower')
         ax[0].set_title('before')
-        after = den[:, :, axial_middle, middle_vol].T
+        after = denoised[:, :, axial_middle, middle_vol].T
         ax[1].imshow(after, cmap='gray', origin='lower')
         ax[1].set_title('after')
         difference = np.absolute(after.astype('f8') - before.astype('f8'))
@@ -120,16 +120,16 @@ def main(argv: Sequence[str]):
         plt.show()
 
     # Save files
-    img_denoise = nib.Nifti1Image(den, None, hdr_0)
-    diff_4d = np.absolute(den.astype('f8') - data.astype('f8'))
+    img_denoised = nib.Nifti1Image(denoised, None, hdr_0)
+    diff_4d = np.absolute(denoised.astype('f8') - data.astype('f8'))
     img_diff = nib.Nifti1Image(diff_4d, None, hdr_0)
     if output_file_name is not None:
-        output_file_name_den = output_file_name
+        output_file_name_denoised = output_file_name
         output_file_name_diff = add_suffix(output_file_name, "_difference")
     else:
-        output_file_name_den = file + '_patch2self_denoised' + ext
+        output_file_name_denoised = file + '_patch2self_denoised' + ext
         output_file_name_diff = file + '_patch2self_difference' + ext
-    nib.save(img_denoise, output_file_name_den)
+    nib.save(img_denoised, output_file_name_denoised)
     nib.save(img_diff, output_file_name_diff)
 
     printv('\nDone! To view results, type:', verbose)
