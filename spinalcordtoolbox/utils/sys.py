@@ -418,8 +418,15 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
 
 def printv(string, verbose=1, type='normal', file=None):
     """
-    Enables to print color-coded messages, depending on verbose status. Only use in command-line programs (e.g.,
-    sct_propseg).
+    Print a message that is color-coded based on the message type, then exit if type='error'.
+
+    Notes:
+        - This function is intended for top-level, user-focused communication. So, it should be the sole
+          form of message logging in CLI scripts (e.g. sct_propseg).
+        - This function also acts as a way to throw an error without displaying a traceback. So, in CLI scripts,
+           calling `printv(type='error')` should be prioritized over throwing Exceptions.
+        - However, API modules *should not* use this function. They should instead use `logging` for
+          info/warning messages, and Exceptions for throwing errors.
     """
     colors = {'normal': ANSIColors16.ResetAll, 'info': ANSIColors16.LightGreen,
               'warning': ANSIColors16.LightYellow + ANSIColors16.Bold,
