@@ -99,7 +99,7 @@ def main(argv: Sequence[str]):
 
     img = nib.load(file_to_denoise)
     bvals = np.loadtxt(arguments.b)
-    hdr_0 = img.get_header()
+    hdr = img.get_header()
     data = img.get_data()
 
     printv("Applying Patch2Self Denoising...")
@@ -125,9 +125,9 @@ def main(argv: Sequence[str]):
         plt.show()
 
     # Save files
-    img_denoised = nib.Nifti1Image(denoised, None, hdr_0)
+    img_denoised = nib.Nifti1Image(denoised, None, hdr)
     diff_4d = np.absolute(denoised.astype('f8') - data.astype('f8'))
-    img_diff = nib.Nifti1Image(diff_4d, None, hdr_0)
+    img_diff = nib.Nifti1Image(diff_4d, None, hdr)
     nib.save(img_denoised, output_file_name_denoised)
     nib.save(img_diff, output_file_name_diff)
 
