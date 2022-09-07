@@ -109,7 +109,7 @@ def main(argv: Sequence[str]):
     data = nii.get_data()
 
     printv("Applying Patch2Self Denoising...")
-    data_denoised = patch2self(data, bvals, patch_radius=patch_radius, model=model, verbose=True)
+    data_denoised = patch2self(data, bvals, patch_radius, model, verbose=True)
     data_diff = np.absolute(data_denoised.astype('f8') - data.astype('f8'))
 
     if verbose == 2:
