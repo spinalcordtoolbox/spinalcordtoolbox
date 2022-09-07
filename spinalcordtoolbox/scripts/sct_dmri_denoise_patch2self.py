@@ -97,14 +97,14 @@ def main(argv: Sequence[str]):
         output_file_name_denoised = add_suffix(filename, "_patch2self_denoised")
         output_file_name_diff = add_suffix(filename, "_patch2self_difference")
 
-    img = nib.load(file_to_denoise)
+    nii = nib.load(file_to_denoise)
     bvals = np.loadtxt(arguments.b)
-    hdr = img.get_header()
-    data = img.get_data()
+    hdr = nii.get_header()
+    data = nii.get_data()
 
     printv("Applying Patch2Self Denoising...")
-    denoised = patch2self(data, bvals, patch_radius=patch_radius, model=model,
-                          verbose=True)
+    data_denoised = patch2self(data, bvals, patch_radius=patch_radius, model=model,
+                               verbose=True)
 
     if verbose == 2:
         import matplotlib.pyplot as plt
@@ -114,7 +114,7 @@ def main(argv: Sequence[str]):
         before = data[:, :, axial_middle, middle_vol].T
         ax[0].imshow(before, cmap='gray', origin='lower')
         ax[0].set_title("before")
-        after = denoised[:, :, axial_middle, middle_vol].T
+        after = data_denoised[:, :, axial_middle, middle_vol].T
         ax[1].imshow(after, cmap='gray', origin='lower')
         ax[1].set_title("after")
         difference = np.absolute(after.astype('f8') - before.astype('f8'))
@@ -125,11 +125,11 @@ def main(argv: Sequence[str]):
         plt.show()
 
     # Save files
-    img_denoised = nib.Nifti1Image(denoised, None, hdr)
-    diff_4d = np.absolute(denoised.astype('f8') - data.astype('f8'))
-    img_diff = nib.Nifti1Image(diff_4d, None, hdr)
-    nib.save(img_denoised, output_file_name_denoised)
-    nib.save(img_diff, output_file_name_diff)
+    nii_denoised = nib.Nifti1Image(data_denoised, None, hdr)
+    data_diff = np.absolute(data_denoised.astype('f8') - data.astype('f8'))
+    nii_diff = nib.Nifti1Image(data_diff, None, hdr)
+    nib.save(nii_denoised, output_file_name_denoised)
+    nib.save(nii_diff, output_file_name_diff)
 
     printv("\nDone! To view results, type:", verbose)
     printv("fsleyes " + file_to_denoise + " " + output_file_name_denoised + " " + output_file_name_diff + " & \n",
