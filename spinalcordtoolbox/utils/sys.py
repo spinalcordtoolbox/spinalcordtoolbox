@@ -443,6 +443,9 @@ def printv(string, verbose=1, type='normal', file=None):
         except Exception:
             print(string)
 
+    if type == 'error':
+        sys.exit(1)
+
 
 def sct_dir_local_path(*args):
     """Construct a directory path relative to __sct_dir__"""
