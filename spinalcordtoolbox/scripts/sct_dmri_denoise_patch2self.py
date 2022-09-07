@@ -110,8 +110,8 @@ def main(argv: Sequence[str]):
     if verbose == 2:
         import matplotlib.pyplot as plt
         fig, ax = plt.subplots(1, 3)
-        axial_middle = int(data.shape[2] / 2)
-        middle_vol = int(data.shape[3] / 2)
+        axial_middle = data.shape[2] // 2
+        middle_vol = data.shape[3] // 2
         before = data[:, :, axial_middle, middle_vol].T
         ax[0].imshow(before, cmap='gray', origin='lower')
         ax[0].set_title("before")
