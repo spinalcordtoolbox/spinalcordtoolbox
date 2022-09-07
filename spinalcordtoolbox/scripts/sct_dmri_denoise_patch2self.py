@@ -47,12 +47,14 @@ def get_parser():
         "-h",
         "--help",
         action='help',
-        help="Show this help message and exit.")
+        help="Show this help message and exit.",
+    )
     optional.add_argument(
         "-model",
         help="Type of regression model used for self-supervised training within Patch2Self.",
         choices=('ols', 'ridge', 'lasso'),
-        default='ols')
+        default='ols',
+    )
     optional.add_argument(
         "-radius",
         help="Patch Radius used to generate p-neighbourhoods within Patch2Self. Notes:\n"
@@ -61,19 +63,21 @@ def get_parser():
              "- For anisotropic patch sizes, provide a comma-delimited list of 3 integers. (e.g. '-radius 0,1,0'). "
              "For isotropic patch sizes, provide a single int value (e.g. '-radius 0').",
         metavar=Metavar.int,
-        default="0")
+        default="0",
+    )
     optional.add_argument(
         "-o",
         help="Name of the output NIFTI image.",
         metavar=Metavar.str,
-        )
+    )
     optional.add_argument(
         "-v",
         metavar=Metavar.int,
         type=int,
         choices=[0, 1, 2],
         default=1,
-        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode.")
+        help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode.",
+    )
 
     return parser
 
