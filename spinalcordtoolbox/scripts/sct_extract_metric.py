@@ -20,6 +20,7 @@
 import sys
 import os
 import argparse
+from typing import Sequence
 
 import numpy as np
 
@@ -270,7 +271,12 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
+    # Ensure that the "-list-labels" argument is always parsed last. That way, if `-f` is passed, then `-list-labels`
+    # will see the new location and look there. (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3634)
+    if "-list-labels" in argv:
+        argv = [s for s in argv if s != "-list-labels"] + ["-list-labels"]
+
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -287,7 +293,7 @@ def main(argv=None):
     labels_user = arguments.l
     slices = parse_num_list(arguments.z)
     levels = parse_num_list(arguments.vert)
-    fname_vertebral_labeling = arguments.vertfile
+    fname_vert_level = arguments.vertfile
     perslice = arguments.perslice
     perlevel = arguments.perlevel
 
@@ -358,7 +364,7 @@ def main(argv=None):
     labels = np.concatenate(labels_tmp[:], 3)  # labels: (x,y,z,label)
     # Load vertebral levels
     if not levels:
-        fname_vertebral_labeling = None
+        fname_vert_level = None
 
     # Get dimensions of data and labels
     nx, ny, nz = data.data.shape
@@ -378,7 +384,7 @@ def main(argv=None):
     for id_label in labels_id_user:
         printv('Estimation for label: ' + label_struc[id_label].name, verbose)
         agg_metric = extract_metric(data, labels=labels, slices=slices, levels=levels, perslice=perslice,
-                                    perlevel=perlevel, vert_level=fname_vertebral_labeling, method=method,
+                                    perlevel=perlevel, fname_vert_level=fname_vert_level, method=method,
                                     label_struc=label_struc, id_label=id_label, indiv_labels_ids=indiv_labels_ids)
 
         save_as_csv(agg_metric, fname_output, fname_in=fname_data, append=append_csv)

@@ -133,7 +133,7 @@ def test_aggregate_across_levels(dummy_metrics, dummy_vert_level):
     """Test extraction of metrics aggregation across vertebral levels"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
                                                                   perslice=False, perlevel=False,
-                                                                  vert_level=dummy_vert_level,
+                                                                  fname_vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
     assert agg_metric[(0, 1, 2, 3)] == {'VertLevel': (2, 3), 'DistancePMJ': None, 'WA()': 35.0}
 
@@ -142,7 +142,7 @@ def test_aggregate_across_levels_perslice(dummy_metrics, dummy_vert_level):
     """Test extraction of metrics aggregation within selected vertebral levels and per slice"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
                                                                   perslice=True, perlevel=False,
-                                                                  vert_level=dummy_vert_level,
+                                                                  fname_vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
     assert agg_metric[(0,)] == {'VertLevel': (2,), 'DistancePMJ': None, 'WA()': 29.0}
     assert agg_metric[(2,)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 39.0}
@@ -151,7 +151,7 @@ def test_aggregate_across_levels_perslice(dummy_metrics, dummy_vert_level):
 def test_aggregate_per_level(dummy_metrics, dummy_vert_level):
     """Test extraction of metrics aggregation per vertebral level"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[2, 3],
-                                                                  perlevel=True, vert_level=dummy_vert_level,
+                                                                  perlevel=True, fname_vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
     assert agg_metric[(0, 1)] == {'VertLevel': (2,), 'DistancePMJ': None, 'WA()': 30.0}
     assert agg_metric[(2, 3)] == {'VertLevel': (3,), 'DistancePMJ': None, 'WA()': 40.0}
@@ -162,14 +162,14 @@ def test_aggregate_across_levels_and_slices(dummy_metrics, dummy_vert_level):
     Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3822"""
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[1, 2, 3, 4, 6],
                                                                   levels=[2, 3], perlevel=False, perslice=False,
-                                                                  vert_level=dummy_vert_level,
+                                                                  fname_vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
     assert (1, 2, 3) in agg_metric.keys()
     assert agg_metric[(1, 2, 3)] == {'VertLevel': (2, 3), 'DistancePMJ': None, 'WA()': 37.0}
 
     agg_metric_ps = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[1, 2, 3, 4, 6],
                                                                      levels=[2, 3], perlevel=False, perslice=True,
-                                                                     vert_level=dummy_vert_level,
+                                                                     fname_vert_level=dummy_vert_level,
                                                                      group_funcs=(('WA', aggregate_slicewise.func_wa),))
     assert ((1,), (2,), (3,)) == tuple(agg_metric_ps.keys())
     assert agg_metric_ps[(1,)] == {'VertLevel': (2,), 'DistancePMJ': None, 'WA()': 31.0}
@@ -275,7 +275,7 @@ def test_save_as_csv_slices(tmp_path, dummy_metrics, dummy_vert_level):
     path_out = str(tmp_path / 'tmp_file_out.csv')
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
                                                                   perslice=False, perlevel=False,
-                                                                  vert_level=dummy_vert_level,
+                                                                  fname_vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
     aggregate_slicewise.save_as_csv(agg_metric, path_out)
     with open(path_out, 'r') as csvfile:
@@ -290,7 +290,7 @@ def test_save_as_csv_per_level(tmp_path, dummy_metrics, dummy_vert_level):
     path_out = str(tmp_path / 'tmp_file_out.csv')
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
                                                                   perlevel=True,
-                                                                  vert_level=dummy_vert_level,
+                                                                  fname_vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
     aggregate_slicewise.save_as_csv(agg_metric, path_out)
     with open(path_out, 'r') as csvfile:
@@ -305,7 +305,7 @@ def test_save_as_csv_per_slice_then_per_level(dummy_metrics, dummy_vert_level, t
     path_out = str(tmp_path / 'tmp_file_out.csv')
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], levels=[3, 4],
                                                                   perlevel=True,
-                                                                  vert_level=dummy_vert_level,
+                                                                  fname_vert_level=dummy_vert_level,
                                                                   group_funcs=(('WA', aggregate_slicewise.func_wa),))
     aggregate_slicewise.save_as_csv(agg_metric, path_out)
     agg_metric = aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics['with float'], slices=[0],
@@ -383,11 +383,11 @@ def test_dimension_mismatch_between_metric_and_vertfile(dummy_metrics, dummy_ver
     for metric in dummy_metrics:
         if metric == 'inconsistent length':
             with pytest.raises(ValueError) as err:
-                aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], vert_level=dummy_vert_level)
+                aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], fname_vert_level=dummy_vert_level)
             assert "mismatch" in str(err.value)
         else:
             # Verify that no error is thrown for all other metrics
-            aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], vert_level=dummy_vert_level)
+            aggregate_slicewise.aggregate_per_slice_or_level(dummy_metrics[metric], fname_vert_level=dummy_vert_level)
 
 
 def test_normalize_csa(dummmy_data_predictor, dummmy_data_subject):

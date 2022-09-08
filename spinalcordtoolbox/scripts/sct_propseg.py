@@ -17,6 +17,7 @@ import os
 import pathlib
 import sys
 import logging
+from typing import Sequence
 
 import numpy as np
 from scipy import ndimage as ndi
@@ -668,7 +669,7 @@ def propseg(img_input, options_dict):
     return Image(fname_seg)
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     if sys.platform.startswith("win32"):
         # This isn't *really* a parsing error, but it feels a little more official to display the help with this error
@@ -689,8 +690,8 @@ def main(argv=None):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
     if path_qc is not None:
-        generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=arguments, path_qc=os.path.abspath(path_qc),
-                    dataset=qc_dataset, subject=qc_subject, process='sct_propseg')
+        generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=argv,
+                    path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject, process='sct_propseg')
     display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'])
 
 

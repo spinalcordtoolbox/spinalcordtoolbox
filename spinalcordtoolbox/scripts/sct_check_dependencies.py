@@ -24,6 +24,7 @@ import importlib
 import warnings
 import psutil
 import traceback
+from typing import Sequence
 
 import requirements
 
@@ -192,7 +193,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = complete_test = arguments.complete

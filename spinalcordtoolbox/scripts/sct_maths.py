@@ -13,8 +13,9 @@
 import sys
 import pickle
 import gzip
-
 import argparse
+from typing import Sequence
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -297,12 +298,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
-    """
-    Main function
-    :param argv:
-    :return:
-    """
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

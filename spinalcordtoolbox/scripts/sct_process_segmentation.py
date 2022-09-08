@@ -19,8 +19,10 @@
 import sys
 import os
 import logging
-import pandas as pd
 import argparse
+from typing import Sequence
+
+import pandas as pd
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
@@ -107,7 +109,8 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help="Output file name (add extension). Default: csa.csv."
+        default='csa.csv',
+        help="Output file name (add extension)."
     )
     optional.add_argument(
         '-append',
@@ -120,7 +123,8 @@ def get_parser():
     optional.add_argument(
         '-z',
         metavar=Metavar.str,
-        type=str,
+        type=parse_num_list,
+        default='',
         help="Slice range to compute the metrics across. Example: 5:23"
     )
     optional.add_argument(
@@ -136,7 +140,8 @@ def get_parser():
     optional.add_argument(
         '-vert',
         metavar=Metavar.str,
-        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2. If you also specify a range of"
+        type=parse_num_list,
+        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2. If you also specify a range of "
              "slices with flag `-z`, the intersection between the specified slices and vertebral levels will be "
              "considered."
     )
@@ -156,14 +161,6 @@ def get_parser():
         default=0,
         help="Set to 1 to output one metric per vertebral level instead of a single output metric. This flag needs "
              "to be used with flag -vert."
-    )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Removes temporary folder used for the algorithm at the end of execution."
     )
     optional.add_argument(
         '-angle-corr',
@@ -192,6 +189,7 @@ def get_parser():
     optional.add_argument(
         '-pmj',
         metavar=Metavar.file,
+        type=get_absolute_path,
         help="Ponto-Medullary Junction (PMJ) label file. "
              "Example: pmj.nii.gz"
     )
@@ -206,7 +204,7 @@ def get_parser():
         '-pmj-extent',
         type=float,
         metavar=Metavar.float,
-        default=20,
+        default=20.0,
         help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
              "included in the calculation. (To be used with flag '-pmj' and '-pmj-distance'.)"
     )
@@ -233,6 +231,7 @@ def get_parser():
     optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
+        type=os.path.abspath,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved."
              " The QC report is only available for PMJ-based CSA (with flag '-pmj')."
@@ -347,72 +346,47 @@ def _make_figure(metric, fit_results):
     return fname_img
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
     # Initialization
-    slices = ''
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
     fname_segmentation = get_absolute_path(arguments.i)
 
-    if arguments.o is not None:
-        file_out = os.path.abspath(arguments.o)
-    else:
-        file_out = ''
-    if arguments.append is not None:
-        append = arguments.append
-    else:
-        append = 0
+    file_out = os.path.abspath(arguments.o)
+    append = bool(arguments.append)
     if arguments.vert is not None:
-        vert_levels = arguments.vert
-        fname_vert_levels = arguments.vertfile
+        levels = arguments.vert
+        fname_vert_level = arguments.vertfile
     else:
-        vert_levels = ''
-        fname_vert_levels = ''
-    remove_temp_files = arguments.r
-    if arguments.perlevel is not None:
-        perlevel = arguments.perlevel
-    else:
-        perlevel = None
-    if arguments.z is not None:
-        slices = arguments.z
-    if arguments.perslice is not None:
-        perslice = arguments.perslice
-    else:
-        perslice = None
-    angle_correction = arguments.angle_corr
+        levels = []
+        fname_vert_level = None
+    perlevel = bool(arguments.perlevel)
+    slices = arguments.z
+    perslice = bool(arguments.perslice)
+    angle_correction = bool(arguments.angle_corr)
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
         minmax=True)
-    if arguments.pmj is not None:
-        fname_pmj = get_absolute_path(arguments.pmj)
-    else:
-        fname_pmj = None
-    if arguments.pmj_distance is not None:
-        distance_pmj = arguments.pmj_distance
-    else:
-        distance_pmj = None
-    extent_mask = arguments.pmj_extent
+    fname_pmj = arguments.pmj
+    distance_pmj = arguments.pmj_distance
+    extent_pmj = arguments.pmj_extent
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
-    mutually_inclusive_args = (fname_pmj, distance_pmj)
-    is_pmj_none, is_distance_none = [arg is None for arg in mutually_inclusive_args]
     if distance_pmj is not None and fname_pmj is None:
         parser.error("Option '-pmj-distance' requires option '-pmj'.")
-    if fname_pmj is not None and distance_pmj is None and perslice == 0:
+    if fname_pmj is not None and distance_pmj is None and not perslice:
         parser.error("Option '-pmj' requires option '-pmj-distance' or '-perslice 1'.")
 
     # update fields
     metrics_agg = {}
-    if not file_out:
-        file_out = 'csa.csv'
 
     metrics, fit_results = compute_shape(fname_segmentation,
                                          angle_correction=angle_correction,
@@ -420,7 +394,7 @@ def main(argv=None):
                                          verbose=verbose)
     if fname_pmj is not None:
         im_ctl, mask, slices, centerline, length_from_pmj = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
-                                                                                        distance_pmj, extent_mask,
+                                                                                        distance_pmj, extent_pmj,
                                                                                         param_centerline=param_centerline, perslice=perslice,
                                                                                         verbose=verbose)
 
@@ -433,17 +407,17 @@ def main(argv=None):
     for key in metrics:
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
-            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                            levels=parse_num_list(vert_levels),
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
+                                                            levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, vert_level=fname_vert_levels,
+                                                            perlevel=perlevel, fname_vert_level=fname_vert_level,
                                                             group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
         else:
             # For other metrics, we compute the average and standard deviation across slices
-            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                            levels=parse_num_list(vert_levels),
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
+                                                            levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, vert_level=fname_vert_levels,
+                                                            perlevel=perlevel, fname_vert_level=fname_vert_level,
                                                             group_funcs=group_funcs, length_pmj=length_from_pmj)
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))
@@ -489,8 +463,8 @@ def main(argv=None):
                             # is called during QC, and it uses `fname_seg[-1]` to center the slices. `fname_mask_out`
                             # doesn't work for this, so we have to repeat `fname_ctl_smooth` at the end of the list.
                             fname_seg=[fname_ctl_smooth, fname_pmj, fname_mask_out, fname_ctl_smooth],
-                            args=sys.argv[1:],
-                            path_qc=os.path.abspath(path_qc),
+                            args=argv,
+                            path_qc=path_qc,
                             dataset=qc_dataset,
                             subject=qc_subject,
                             process='sct_process_segmentation')

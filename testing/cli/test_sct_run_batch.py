@@ -115,6 +115,30 @@ def test_directory_inclusion_exclusion():
     assert filter_dirs(sess_dir_list, exclude_list=['sub01', 'sub02']) == ['sub03/ses01', 'sub03/ses02']
 
 
+def test_directory_parsing(tmp_path):
+    """
+    Test that subject and session subdirectories are parsed correctly within a sample dataset structure.
+    """
+
+    parse_dir = sct_run_batch._parse_dataset_directory  # for brevity
+
+    subject_names = ['sub-001', 'sub-002', 'sub-003']
+    for sub in subject_names:
+        (tmp_path / sub).mkdir()
+        (tmp_path / f"{sub}.txt").touch()  # Add false positive files to ensure only directories are returned
+    assert parse_dir(tmp_path) == subject_names
+    assert parse_dir(tmp_path, subject_prefix="subject-") == []
+
+    session_names = ['ses-001', 'ses-002']
+    for sub in subject_names[:-1]:  # Skip creating 'ses' dirs in [-1] to test a mix of 'sub' and 'sub/ses' directories
+        for ses in session_names:
+            (tmp_path / sub / ses).mkdir()
+            (tmp_path / sub / f"{ses}.txt").touch()  # Add false positive files to ensure only directories are returned
+    assert parse_dir(tmp_path) == ([os.path.join(sub, ses) for sub in subject_names[:-1] for ses in session_names]
+                                   + [subject_names[-1]])  # Last subject shouldn't have any session subdirectories
+    assert parse_dir(tmp_path, ignore_ses=True) == subject_names
+
+
 def test_non_executable_task(tmp_path, dummy_script):
     """
     Test that sct_run_batch can still process a non-executable script. (sct_run_batch will attempt
