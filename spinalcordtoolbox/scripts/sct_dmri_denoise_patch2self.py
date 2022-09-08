@@ -25,7 +25,7 @@ def get_parser():
                     "intra-cord contrast, signal modelling, repeatability, and feature conspicuity. medRxiv, 2021. "
                     "(https://doi.org/10.1101/2021.10.04.21264389)\n\n"
                     "The implementation is based on DIPY "
-                    "(https://dipy.org/documentation/1.5.0/examples_built/denoise_patch2self/)."
+                    "(https://dipy.org/documentation/latest/examples_built/denoise_patch2self/)."
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
