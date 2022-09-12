@@ -218,7 +218,7 @@ def main(argv: Sequence[str]):
                     args=argv, path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset,
                     subject=qc_subject, process='sct_dmri_moco')
 
-    display_viewer_syntax([fname_output_image, param.fname_data], mode='ortho,ortho')
+    display_viewer_syntax([fname_output_image, param.fname_data], mode='ortho,ortho', verbose=verbose)
 
 
 if __name__ == "__main__":

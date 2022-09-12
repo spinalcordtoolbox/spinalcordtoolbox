@@ -189,7 +189,7 @@ def main(argv: Sequence[str]):
         generate_qc(fname_input_data, fname_seg=file_output, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_get_centerline')
 
-    display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', 'red'], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":

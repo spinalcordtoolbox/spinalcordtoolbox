@@ -344,7 +344,7 @@ def main(argv: Sequence[str]):
             generate_qc(fname_in, fname_seg=fname_out, args=argv, path_qc=os.path.abspath(path_qc),
                         process='sct_detect_pmj')
 
-        display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'])
+        display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'], verbose=verbose)
 
 
 if __name__ == "__main__":

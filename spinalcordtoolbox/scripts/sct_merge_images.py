@@ -225,7 +225,7 @@ def main(argv: Sequence[str]):
     # merge src images to destination image
     merge_images(list_fname_src, fname_dest, list_fname_warp, param)
 
-    display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)])
+    display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)], verbose=verbose)
 
 
 if __name__ == "__main__":

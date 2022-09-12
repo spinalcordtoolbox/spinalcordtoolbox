@@ -363,14 +363,14 @@ def main(argv: Sequence[str]):
             for i_dim in range(3):
                 l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].save(l_fname_out[i_dim], verbose=verbose)
-            display_viewer_syntax(fname_out)
+            display_viewer_syntax(fname_out, verbose=verbose)
         if arguments.split is not None:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []
             for i, im in enumerate(im_out):
                 l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.save(l_fname_out[i])
-            display_viewer_syntax(l_fname_out)
+            display_viewer_syntax(l_fname_out, verbose=verbose)
 
     elif arguments.getorient:
         printv(orient)

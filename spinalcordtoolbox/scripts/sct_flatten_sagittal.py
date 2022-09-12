@@ -58,7 +58,7 @@ def main(argv: Sequence[str]):
     fname_out = add_suffix(fname_anat, '_flatten')
     im_anat_flattened.save(fname_out)
 
-    display_viewer_syntax([fname_anat, fname_out])
+    display_viewer_syntax([fname_anat, fname_out], verbose=verbose)
 
 
 def get_parser():

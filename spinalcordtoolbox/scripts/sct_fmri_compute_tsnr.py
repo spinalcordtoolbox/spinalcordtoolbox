@@ -117,7 +117,7 @@ def main(argv: Sequence[str]):
     tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)
     tsnr.compute()
 
-    display_viewer_syntax([fname_dst])
+    display_viewer_syntax([fname_dst], verbose=verbose)
 
 
 if __name__ == "__main__":
