@@ -58,8 +58,6 @@ class Tsnr:
         nii_tsnr.data = data_tsnr
         nii_tsnr.save(fname_tsnr, dtype=np.float32)
 
-        display_viewer_syntax([fname_tsnr])
-
 
 # PARSER
 # ==========================================================================================
@@ -118,6 +116,8 @@ def main(argv: Sequence[str]):
     # call main function
     tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)
     tsnr.compute()
+
+    display_viewer_syntax([fname_dst])
 
 
 if __name__ == "__main__":
