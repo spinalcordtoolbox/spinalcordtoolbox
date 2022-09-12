@@ -323,7 +323,7 @@ def main(argv: Sequence[str]):
         copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
         copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
         # apply straightening
-        sct_apply_transfo.main(['-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
+        sct_apply_transfo.main(['-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii', '-v', '0'])
     else:
         sct_straighten_spinalcord.main(argv=[
             '-i', 'data.nii',
@@ -335,7 +335,7 @@ def main(argv: Sequence[str]):
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
-    sct_resample.main(['-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'])
+    sct_resample.main(['-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii', '-v', '0'])
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -357,7 +357,7 @@ def main(argv: Sequence[str]):
         # Apply straightening to disc-label
         printv('\nApply straightening to disc labels...', verbose)
         sct_apply_transfo.main(['-i', fname_disc, '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz',
-                                '-o', 'labeldisc_straight.nii.gz', '-x', 'label'])
+                                '-o', 'labeldisc_straight.nii.gz', '-x', 'label', '-v', '0'])
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz')
 
     else:
@@ -460,7 +460,8 @@ def main(argv: Sequence[str]):
                             '-d', 'segmentation.nii',
                             '-w', 'warp_straight2curve.nii.gz',
                             '-o', 'segmentation_labeled_disc.nii',
-                            '-x', 'label'])
+                            '-x', 'label',
+                            '-v', '0'])
     # come back
     os.chdir(curdir)
 

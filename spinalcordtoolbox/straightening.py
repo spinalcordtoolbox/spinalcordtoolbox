@@ -136,7 +136,8 @@ class SpinalCordStraightener(object):
             sct_resample.main([
                 '-i', 'centerline_rpi_native.nii.gz',
                 '-mm', str(px_r) + 'x' + str(py_r) + 'x' + str(pz_r),
-                '-o', 'centerline_rpi.nii.gz'
+                '-o', 'centerline_rpi.nii.gz',
+                '-v', '0',
             ])
             image_centerline = Image('centerline_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
@@ -259,6 +260,7 @@ class SpinalCordStraightener(object):
                     '-i', 'centerline_rpi_native.nii.gz',
                     '-o', 'tmp.centerline_pad_native.nii.gz',
                     '-pad', '0,0,' + str(padding_z),
+                    '-v', '0',
                 ])
                 image_centerline_pad = Image('centerline_rpi_native.nii.gz')
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim

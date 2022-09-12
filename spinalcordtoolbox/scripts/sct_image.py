@@ -553,12 +553,12 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
         fname_grid = 'grid_' + str(step) + '.nii.gz'
         im_grid.save(fname_grid)
         fname_grid_resample = add_suffix(fname_grid, '_resample')
-        sct_resample.main(argv=['-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
+        sct_resample.main(argv=['-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample, '-v', '0'])
         fname_grid = os.path.join(tmp_dir, fname_grid_resample)
         os.chdir(curdir)
     path_warp, file_warp, ext_warp = extract_fname(fname_warp)
     grid_warped = os.path.join(path_warp, extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp)
-    sct_apply_transfo.main(argv=['-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
+    sct_apply_transfo.main(argv=['-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped, '-v', '0'])
     if rm_tmp:
         rmtree(tmp_dir)
 

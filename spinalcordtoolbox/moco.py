@@ -628,7 +628,8 @@ def moco(param):
                                              '-d', file_target,
                                              '-w', file_mat[iz][fT[it]] + 'Warp.nii.gz',
                                              '-o', file_data_splitZ_splitT_moco[fT[it]],
-                                             '-x', param.interp])
+                                             '-x', param.interp,
+                                             '-v', '0'])
             else:
                 # exit program if no transformation exists.
                 printv('\nERROR in ' + os.path.basename(__file__) + ': No good transformation exist. Exit program.\n', verbose, 'error')

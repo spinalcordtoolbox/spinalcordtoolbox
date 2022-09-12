@@ -547,7 +547,9 @@ def main(argv: Sequence[str]):
                 '-i', ftmp_seg,
                 '-w', 'warp_curve2straight.nii.gz',
                 '-d', 'straight_ref.nii.gz',
-                '-o', add_suffix(ftmp_seg, '_straight')])
+                '-o', add_suffix(ftmp_seg, '_straight',),
+                '-v', '0',
+            ])
         else:
             from spinalcordtoolbox.straightening import SpinalCordStraightener
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
@@ -597,7 +599,9 @@ def main(argv: Sequence[str]):
                 '-o', add_suffix(ftmp_label, '_straight'),
                 '-d', add_suffix(ftmp_seg, '_straight'),
                 '-w', 'warp_curve2straight.nii.gz',
-                '-x', 'nn'])
+                '-x', 'nn',
+                '-v', '0',
+            ])
             ftmp_label = add_suffix(ftmp_label, '_straight')
 
             # Compute rigid transformation straight landmarks --> template landmarks
@@ -624,14 +628,18 @@ def main(argv: Sequence[str]):
             '-i', ftmp_data,
             '-o', add_suffix(ftmp_data, '_straightAffine'),
             '-d', ftmp_template,
-            '-w', 'warp_curve2straightAffine.nii.gz'])
+            '-w', 'warp_curve2straightAffine.nii.gz',
+            '-v', '0',
+        ])
         ftmp_data = add_suffix(ftmp_data, '_straightAffine')
         sct_apply_transfo.main(argv=[
             '-i', ftmp_seg,
             '-o', add_suffix(ftmp_seg, '_straightAffine'),
             '-d', ftmp_template,
             '-w', 'warp_curve2straightAffine.nii.gz',
-            '-x', 'linear'])
+            '-x', 'linear',
+            '-v', '0',
+        ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
 
         """
@@ -672,13 +680,13 @@ def main(argv: Sequence[str]):
         # sub-sample in z-direction
         # TODO: refactor to use python module instead of doing i/o
         printv('\nSub-sample in z-direction (for faster processing)...', verbose)
-        sct_resample.main(['-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample])
+        sct_resample.main(['-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
         ftmp_template = add_suffix(ftmp_template, '_sub')
-        sct_resample.main(['-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_sub'), '-f', '1x1x' + zsubsample])
+        sct_resample.main(['-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
         ftmp_template_seg = add_suffix(ftmp_template_seg, '_sub')
-        sct_resample.main(['-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', '1x1x' + zsubsample])
+        sct_resample.main(['-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
         ftmp_data = add_suffix(ftmp_data, '_sub')
-        sct_resample.main(['-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'), '-f', '1x1x' + zsubsample])
+        sct_resample.main(['-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
         ftmp_seg = add_suffix(ftmp_seg, '_sub')
 
         # Registration straight spinal cord to template
@@ -756,8 +764,8 @@ def main(argv: Sequence[str]):
         os.rename(warp_inverse, 'warp_anat2template.nii.gz')
 
     # Apply warping fields to anat and template
-    sct_apply_transfo.main(['-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '0'])
-    sct_apply_transfo.main(['-i', 'data.nii', '-o', 'anat2template.nii.gz', '-d', 'template.nii', '-w', 'warp_anat2template.nii.gz', '-crop', '0'])
+    sct_apply_transfo.main(['-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '0', '-v', '0'])
+    sct_apply_transfo.main(['-i', 'data.nii', '-o', 'anat2template.nii.gz', '-d', 'template.nii', '-w', 'warp_anat2template.nii.gz', '-crop', '0', '-v', '0'])
 
     # come back
     os.chdir(curdir)

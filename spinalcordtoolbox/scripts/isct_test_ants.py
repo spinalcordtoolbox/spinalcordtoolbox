@@ -96,7 +96,7 @@ def main():
 
     # # Apply rigid transformation
     # printv('\nApply rigid transformation to curved landmarks...', verbose)
-    # sct_apply_transfo.main(["-i", "data_src.nii.gz", "-o", "data_src_rigid.nii.gz", "-d", "data_dest.nii.gz", "-w", "curve2straight_rigid.txt", "-p", "nn"])
+    # sct_apply_transfo.main(["-i", "data_src.nii.gz", "-o", "data_src_rigid.nii.gz", "-d", "data_dest.nii.gz", "-w", "curve2straight_rigid.txt", "-p", "nn", "-v", "0"])
     #
     # # Estimate b-spline transformation curve --> straight
     # printv('\nEstimate b-spline transformation: curve --> straight...', verbose)
@@ -110,7 +110,7 @@ def main():
     #
     # # Apply deformation to input image
     # printv('\nApply transformation to input image...', verbose)
-    # sct_apply_transfo.main(["-i", "data_src.nii.gz", "-o", "data_src_warp.nii.gz", "-d", "data_dest.nii.gz", "-w", "warp_curve2straight.nii.gz", "-p", "nn"])
+    # sct_apply_transfo.main(["-i", "data_src.nii.gz", "-o", "data_src_warp.nii.gz", "-d", "data_dest.nii.gz", "-w", "warp_curve2straight.nii.gz", "-p", "nn", "-v", "0"])
     #
     # Compute DICE coefficient between src and dest
     printv('\nCompute DICE coefficient...', verbose)
@@ -118,6 +118,7 @@ def main():
         "-i", "data_dest.nii.gz",
         "-d", "data_src_reg.nii.gz",
         "-o", "dice.txt",
+        "-v", "0",
     ])
     with open("dice.txt", "r") as file_dice:
         dice = float(file_dice.read().replace('3D Dice coefficient = ', ''))
