@@ -328,7 +328,7 @@ class Transform:
                     img_out = cropper.crop()
                 img_out.save(fname_out)
 
-        display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
+        return fname_dest, fname_out
 
 
 # MAIN
@@ -353,12 +353,14 @@ def main(argv: Sequence[str]):
                           list_warpinv=warpinv_filename)
 
     transform.crop = arguments.crop
-    transform.output_filename = arguments.o
+    transform.output_filename = fname_out = arguments.o
     transform.interp = arguments.x
     transform.remove_temp_files = arguments.r
     transform.verbose = verbose
 
     transform.apply()
+
+    display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
 
 
 if __name__ == "__main__":
