@@ -114,6 +114,7 @@ def main(argv: Sequence[str]):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
+    param.verbose = verbose
 
     param.fname_data = arguments.i
     arg = 0
