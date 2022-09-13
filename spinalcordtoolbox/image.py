@@ -1404,7 +1404,7 @@ def add_suffix(fname, suffix):
         add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
     stem, ext = splitext(fname)
-    return os.path.join(stem + suffix + ext)
+    return stem + suffix + ext
 
 
 def splitext(fname):

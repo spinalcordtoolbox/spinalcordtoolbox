@@ -30,7 +30,7 @@ from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__
 from spinalcordtoolbox.utils.fs import tmp_create, cache_signature, cache_valid, cache_save, copy, extract_fname, rmtree
 from spinalcordtoolbox.math import threshold, laplacian
 
-from spinalcordtoolbox.scripts import sct_straighten_spinalcord, sct_apply_transfo
+from spinalcordtoolbox.scripts import sct_straighten_spinalcord, sct_apply_transfo, sct_resample
 
 
 # for vertebral_detection
@@ -323,7 +323,7 @@ def main(argv: Sequence[str]):
         copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
         copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
         # apply straightening
-        s, o = run_proc(['sct_apply_transfo', '-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
+        sct_apply_transfo.main(['-i', 'data.nii', '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'data_straight.nii'])
     else:
         sct_straighten_spinalcord.main(argv=[
             '-i', 'data.nii',
@@ -335,7 +335,7 @@ def main(argv: Sequence[str]):
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
-    s, o = run_proc(['sct_resample', '-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'], verbose=verbose)
+    sct_resample.main(['-i', 'data_straight.nii', '-mm', '0.5x0.5x0.5', '-x', 'linear', '-o', 'data_straightr.nii'])
 
     # Apply straightening to segmentation
     # N.B. Output is RPI
@@ -356,14 +356,8 @@ def main(argv: Sequence[str]):
     if fname_disc:
         # Apply straightening to disc-label
         printv('\nApply straightening to disc labels...', verbose)
-        run_proc('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
-                 (fname_disc,
-                  'data_straightr.nii',
-                  'warp_curve2straight.nii.gz',
-                  'labeldisc_straight.nii.gz',
-                  'label'),
-                 verbose=verbose
-                 )
+        sct_apply_transfo.main(['-i', fname_disc, '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz',
+                                '-o', 'labeldisc_straight.nii.gz', '-x', 'label'])
         label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz')
 
     else:
@@ -462,16 +456,11 @@ def main(argv: Sequence[str]):
     # label discs
     printv('\nLabel discs...', verbose)
     printv('\nUn-straighten labeled discs...', verbose)
-    run_proc('sct_apply_transfo -i %s -d %s -w %s -o %s -x %s' %
-             ('segmentation_straight_labeled_disc.nii',
-              'segmentation.nii',
-              'warp_straight2curve.nii.gz',
-              'segmentation_labeled_disc.nii',
-              'label'),
-             verbose=verbose,
-             is_sct_binary=True,
-             )
-
+    sct_apply_transfo.main(['-i', 'segmentation_straight_labeled_disc.nii',
+                            '-d', 'segmentation.nii',
+                            '-w', 'warp_straight2curve.nii.gz',
+                            '-o', 'segmentation_labeled_disc.nii',
+                            '-x', 'label'])
     # come back
     os.chdir(curdir)
 
