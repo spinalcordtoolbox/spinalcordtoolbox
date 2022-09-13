@@ -14,10 +14,10 @@ from nibabel import Nifti1Image, save
 from spinalcordtoolbox.types import Centerline
 from spinalcordtoolbox.image import Image, spatial_crop, generate_output_file, pad_image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc
+from spinalcordtoolbox.utils.sys import sct_progress_bar
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree, copy, mv, extract_fname
 
-from spinalcordtoolbox.scripts import sct_apply_transfo
+from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample, sct_image
 
 logger = logging.getLogger(__name__)
 
@@ -133,8 +133,11 @@ class SpinalCordStraightener(object):
             mv('centerline_rpi.nii.gz', 'centerline_rpi_native.nii.gz')
             pz_native = pz
             # TODO: remove system call
-            run_proc(['sct_resample', '-i', 'centerline_rpi_native.nii.gz', '-mm',
-                      str(px_r) + 'x' + str(py_r) + 'x' + str(pz_r), '-o', 'centerline_rpi.nii.gz'])
+            sct_resample.main([
+                '-i', 'centerline_rpi_native.nii.gz',
+                '-mm', str(px_r) + 'x' + str(py_r) + 'x' + str(pz_r),
+                '-o', 'centerline_rpi.nii.gz'
+            ])
             image_centerline = Image('centerline_rpi.nii.gz')
             nx, ny, nz, nt, px, py, pz, pt = image_centerline.dim
 
@@ -252,9 +255,11 @@ class SpinalCordStraightener(object):
             # TODO: Maybe this if case is not needed?
             if intermediate_resampling:
                 padding_z = int(np.ceil(1.5 * ((length_centerline - size_z_centerline) / 2.0) / pz_native))
-                run_proc(
-                    ['sct_image', '-i', 'centerline_rpi_native.nii.gz', '-o', 'tmp.centerline_pad_native.nii.gz',
-                     '-pad', '0,0,' + str(padding_z)])
+                sct_image.main([
+                    '-i', 'centerline_rpi_native.nii.gz',
+                    '-o', 'tmp.centerline_pad_native.nii.gz',
+                    '-pad', '0,0,' + str(padding_z),
+                ])
                 image_centerline_pad = Image('centerline_rpi_native.nii.gz')
                 nx, ny, nz, nt, px, py, pz, pt = image_centerline_pad.dim
                 start_point_coord_native = image_centerline_pad.transfo_phys2pix([[0, 0, start_point]])[0]

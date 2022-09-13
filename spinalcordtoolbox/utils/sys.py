@@ -373,9 +373,6 @@ def run_proc(cmd, verbose=1, raise_exception=True, cwd=None, env=None, is_sct_bi
         env = os.environ
 
     if is_sct_binary:
-        if not os.path.isdir(__bin_dir__):
-            run_proc(["sct_download_data", "-d", _which_sct_binaries(), "-k"])
-
         name = cmd[0] if isinstance(cmd, list) else cmd.split(" ", 1)[0]
         path = os.path.join(__bin_dir__, name)
 
