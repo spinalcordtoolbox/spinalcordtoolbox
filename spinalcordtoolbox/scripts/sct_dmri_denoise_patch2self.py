@@ -95,6 +95,7 @@ def main(argv: Sequence[str]):
         patch_radius = int(arguments.radius)
 
     file_to_denoise = arguments.i
+    fname_bvals = arguments.b
     if arguments.o is not None:
         output_file_name_denoised = arguments.o
         output_file_name_diff = add_suffix(arguments.o, "_difference")
@@ -104,7 +105,7 @@ def main(argv: Sequence[str]):
         output_file_name_diff = add_suffix(filename, "_patch2self_difference")
 
     nii = nib.load(file_to_denoise)
-    bvals = np.loadtxt(arguments.b)
+    bvals = np.loadtxt(fname_bvals)
     hdr = nii.header
     data = nii.get_fdata()
 
