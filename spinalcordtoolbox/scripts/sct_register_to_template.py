@@ -592,6 +592,7 @@ def main(argv: Sequence[str]):
 
             # Apply straightening to labels
             printv('\nApply straightening to labels...', verbose)
+            label_vals_src = {coord.value for coord in Image(ftmp_label).getCoordinatesAveragedByValue()}
             sct_apply_transfo.main(argv=[
                 '-i', ftmp_label,
                 '-o', add_suffix(ftmp_label, '_straight'),
@@ -599,6 +600,14 @@ def main(argv: Sequence[str]):
                 '-w', 'warp_curve2straight.nii.gz',
                 '-x', 'nn'])
             ftmp_label = add_suffix(ftmp_label, '_straight')
+            label_vals_out = {coord.value for coord in Image(ftmp_label).getCoordinatesAveragedByValue()}
+            missing_labels = label_vals_src - label_vals_out
+            if missing_labels:
+                printv(
+                    f"ERROR: Labels {missing_labels} were lost during straightening transform. This can be caused by "
+                    f"the labels being outside the ROI of the spinal cord segmentation. Please make sure all labels "
+                    f"are within the ROI of the spinal cord segmentation.", type='error'
+                )
 
             # Compute rigid transformation straight landmarks --> template landmarks
             printv('\nEstimate transformation for step #0...', verbose)
