@@ -286,8 +286,16 @@ class Image(object):
                 self.loadFromPath(param, mmap, verbose)
             except OSError as e:
                 if str(e) == "[Errno 24] Too many open files":
-                    raise OSError("[Errno 24] Too many open files. Please try increasing your system's file descriptor "
-                                  "limit by using the command `ulimit -Sn`.")
+                    try:
+                        # Only load images into memory if there are no more available file descriptors
+                        self.loadFromPath(param, False, verbose)
+                    except OSError as e:
+                        # If for some reason, an OSError is still thrown, then give the user a helpful error message
+                        if str(e) == "[Errno 24] Too many open files":
+                            raise OSError("[Errno 24] Too many open files. Please try increasing your system's file "
+                                          "descriptor limit by using the command `ulimit -Sn`.")
+                        else:
+                            raise e
                 else:
                     raise e
         # copy constructor
