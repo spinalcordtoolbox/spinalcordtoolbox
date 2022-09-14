@@ -279,7 +279,14 @@ class Image(object):
 
         # load an image from file
         if isinstance(param, str):
-            self.loadFromPath(param, verbose)
+            try:
+                self.loadFromPath(param, verbose)
+            except OSError as e:
+                if str(e) == "[Errno 24] Too many open files":
+                    raise OSError("[Errno 24] Too many open files. Please try increasing your system's file descriptor "
+                                  "limit by using the command `ulimit -Sn`.")
+                else:
+                    raise e
         # copy constructor
         elif isinstance(param, type(self)):
             self.copy(param)
