@@ -248,14 +248,17 @@ class Image(object):
     a few methods (load, save) that deal with image dtype.
     """
 
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1,
-                 check_sform=False):
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None,
+                 mmap=(not sys.platform.startswith('win32')), verbose=1, check_sform=False):
         """
         :param param: string indicating a path to a image file or an `Image` object.
         :param hdr: a nibabel header object to use as the header for the image (overwritten if `param` is provided)
         :param orientation: a three character orientation code (e.g. RPI).
         :param absolutepath: a relative path to associate with the image.
         :param dim: The dimensions of the image, defaults to automatically determined.
+        :param mmap: Whether to load data arrays as np.memmaps. Defaults to False (i.e. np.array) on Windows, and True
+          (i.e. np.memmap) on every other platform. (The context for defaulting to False on Windows is:
+          https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3695)
         :param verbose: integer how verbose to be 0 is silent 1 is chatty.
         :param check_sform: whether or not to check whether the sform matches the qform. If this is set to `True`,
           `Image` will fail raise an error if they don't match.
@@ -280,7 +283,7 @@ class Image(object):
         # load an image from file
         if isinstance(param, str):
             try:
-                self.loadFromPath(param, verbose)
+                self.loadFromPath(param, mmap, verbose)
             except OSError as e:
                 if str(e) == "[Errno 24] Too many open files":
                     raise OSError("[Errno 24] Too many open files. Please try increasing your system's file descriptor "
@@ -397,7 +400,7 @@ class Image(object):
         self.hdr.set_qform(self.hdr.get_sform())
         self.hdr._structarr['qform_code'] = self.hdr._structarr['sform_code']
 
-    def loadFromPath(self, path, verbose):
+    def loadFromPath(self, path, mmap, verbose):
         """
         This function load an image from an absolute path using nibabel library
 
@@ -406,7 +409,7 @@ class Image(object):
         """
 
         self.absolutepath = os.path.abspath(path)
-        im_file = nib.load(self.absolutepath, mmap=(not sys.platform.startswith('win32')))
+        im_file = nib.load(self.absolutepath, mmap=mmap)
         self.affine = im_file.affine.copy()
         self.data = im_file.get_data()
         self.hdr = im_file.header.copy()
