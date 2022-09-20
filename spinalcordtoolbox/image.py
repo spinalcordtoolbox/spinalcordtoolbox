@@ -1729,3 +1729,44 @@ def stitch_images(fnames_in: list, fname_out='stitched.nii.gz'):
         raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
     return Image(fname_out)
+
+
+def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image):
+    """
+    Pad input and output images, so that a QC report can compare between the output of
+    'stitching', vs. the naive output of concatenating the input images together.
+    """
+    # find the max shape of all input images
+    shape_max = [max(im.data.shape[0] for im in ims_in),
+                 max(im.data.shape[1] for im in ims_in),
+                 max(im.data.shape[2] for im in ims_in)]
+
+    # pad any input images that are smaller than the max shape
+    # (the stitching tool can handle mismatched image shapes natively, but we have to manage it ourselves)
+    for im in ims_in:
+        for i in [0, 1]:
+            diff = shape_max[i] - im.data.shape[i]
+            if diff:
+                padding = [[0, 0], [0, 0], [0, 0]]
+                padding[i][0] = round(diff / 2)
+                padding[i][1] = diff // 2
+                im.data = np.pad(im.data, padding)
+
+    # create a 1-voxel blank image for visual clarity
+    im_blank = Image([shape_max[0], shape_max[1], 1])
+
+    # create a naively-stitched (RPI) image for comparison in QC report
+    # NB: we reverse the list of images because numpy's origin location (bottom) is are different than nibabel's (top)
+    im_concat_list = list(reversed(ims_in))
+    for i in range(1, len(im_concat_list), 2):  # insert blank 'spacer' images in between each image
+        im_concat_list.insert(i, im_blank)
+    im_concat = concat_data(im_concat_list, dim=2)
+
+    # naively-stitched image will be bigger than the actual stitched image
+    # so, we create a zeros-like image, then copy the im_out data into it
+    im_out_padded = zeros_like(im_concat)
+    im_out_padded.data[0:im_out.data.shape[0],
+                       0:im_out.data.shape[1],
+                       0:im_out.data.shape[2]] = im_out.data
+
+    return im_concat, im_out_padded

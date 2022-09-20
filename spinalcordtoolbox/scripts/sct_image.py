@@ -21,8 +21,10 @@ import nibabel as nib
 
 from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
-                                     create_formatted_header_string, HEADER_FORMATS, stitch_images)
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
+                                     create_formatted_header_string, HEADER_FORMATS,
+                                     stitch_images, generate_stitched_qc_images)
+from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
@@ -82,6 +84,13 @@ def get_parser():
         help='Stitch multiple images acquired in the same orientation utilizing '
              'the algorithm by Lavdas, Glocker et al. (https://doi.org/10.1016/j.crad.2019.01.012).',
         required=False)
+    image.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="The path where the quality control generated content will be saved. "
+             "(Note: QC reporting is only available for 'sct_image -stitch')."
+    )
     image.add_argument(
         '-remove-vol',
         metavar=Metavar.list,
@@ -395,6 +404,27 @@ def main(argv=None):
                 l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.save(l_fname_out[i])
             display_viewer_syntax(l_fname_out)
+
+    # Generate QC report (for `sct_image -stitch` only)
+    if arguments.qc is not None:
+        if arguments.stitch is not None:
+            # NB: The variables `path_tmp`, `fnames_in`, and `im_out_rpi` are generated earlier by `-stitch`
+            printv("Generating QC Report...", verbose=verbose)
+            # specify filenames to use in QC report
+            fname_qc_concat = os.path.join(path_tmp, "concatenated_input_images.nii.gz")
+            fname_qc_out = os.path.join(path_tmp, os.path.basename(fname_out))
+            # generate 2 images to compare in QC report
+            # (1. naively concatenated input images, and 2. stitched image, padded to the larger size of the concat im)
+            ims_in = [Image(fname) for fname in fnames_in]  # NB: `fnames_in` preserves the user's original sorting
+            im_concat, im_out_padded = generate_stitched_qc_images(ims_in, im_out_rpi)
+            im_concat.save(fname_qc_concat)
+            im_out_padded.save(fname_qc_out)
+            # generate the QC report itself
+            generate_qc(fname_in1=fname_qc_out, fname_in2=fname_qc_concat, args=sys.argv[1:],
+                        path_qc=os.path.abspath(arguments.qc), process='sct_image -stitch')
+        else:
+            printv("WARNING: '-qc' is only supported for 'sct_image -stitch'. QC report will not be generated.",
+                   type='warning')
 
     elif arguments.getorient:
         printv(orient)
