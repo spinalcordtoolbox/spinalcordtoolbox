@@ -359,8 +359,8 @@ def main(argv=None):
         fnames_in_sorted = [fnames_in[i] for i in i_sorted]
 
         # stitch and reorient
-        im_out = stitch_images(fnames_in=fnames_in_sorted, fname_out=os.path.join(path_tmp, 'stitched.nii.gz'))
-        im_out = [change_orientation(im_out, orig_ornt)]
+        im_out_rpi = stitch_images(fnames_in=fnames_in_sorted, fname_out=os.path.join(path_tmp, 'stitched.nii.gz'))
+        im_out = [change_orientation(im_out_rpi, orig_ornt)]
         rmtree(path_tmp)
 
     elif arguments.type is not None:
