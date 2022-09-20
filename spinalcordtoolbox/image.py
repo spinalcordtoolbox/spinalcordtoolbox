@@ -287,10 +287,9 @@ class Image(object):
                 self.loadFromPath(param, mmap, verbose)
             except OSError as e:
                 if e.errno == errno.EMFILE:
-                    raise OSError("[Errno 24] Too many open files. Please try increasing your system's file descriptor "
-                                  "limit by using the command `ulimit -Sn`.")
-                else:
-                    raise e
+                    e.strerror += (". Please try increasing your system's file descriptor "
+                                   "limit by using the command `ulimit -Sn`.")
+                raise e
         # copy constructor
         elif isinstance(param, type(self)):
             self.copy(param)
