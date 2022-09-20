@@ -24,7 +24,7 @@ from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orie
                                      create_formatted_header_string, HEADER_FORMATS, stitch_images)
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
-from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
+from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
 
 def get_parser():
@@ -345,8 +345,7 @@ def main(argv=None):
         for file in arguments.i:
             temp_file_path = os.path.join(path_tmp, os.path.basename(file))
             print(temp_file_path)
-            copy(file, temp_file_path, verbose='verbose')
-            im_in = Image(temp_file_path)
+            im_in = Image(file)
             im_out = change_orientation(im_in, 'RPI')
             im_out.save(temp_file_path, dtype=output_type, verbose=verbose)
             # display_viewer_syntax([temp_file_path], verbose=verbose)
