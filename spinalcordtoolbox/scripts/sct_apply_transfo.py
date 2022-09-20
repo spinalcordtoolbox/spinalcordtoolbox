@@ -328,8 +328,6 @@ class Transform:
                     img_out = cropper.crop()
                 img_out.save(fname_out)
 
-        return fname_dest, fname_out
-
 
 # MAIN
 # ==========================================================================================
