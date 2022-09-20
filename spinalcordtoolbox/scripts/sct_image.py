@@ -346,8 +346,8 @@ def main(argv=None):
             temp_file_path = os.path.join(path_tmp, os.path.basename(file))
             print(temp_file_path)
             im_in = Image(file)
-            im_out = change_orientation(im_in, 'RPI')
-            im_out.save(temp_file_path, dtype=output_type, verbose=verbose)
+            im_in_rpi = change_orientation(im_in, 'RPI')
+            im_in_rpi.save(temp_file_path, dtype=output_type, verbose=verbose)
             # display_viewer_syntax([temp_file_path], verbose=verbose)
             fnames_in.append(temp_file_path)
 
