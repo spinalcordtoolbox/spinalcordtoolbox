@@ -88,7 +88,7 @@ def test_sct_image_display_warp_check_output_exists():
 
 
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
-def test_sct_image_stitch():
+def test_sct_image_stitch(tmp_path):
     """Run the CLI script and check that the stitched file was generated."""
     # crop images for testing stitching function
     path_in = os.path.join('t2', 't2.nii.gz')
@@ -100,5 +100,5 @@ def test_sct_image_stitch():
                               '-ymin', '20', '-ymax', '40', '-zmin', '0', '-zmax', '51'])
 
     fname_out = sct_test_path('t2', 'stitched.nii.gz')
-    sct_image.main(argv=['-i', fname_roi1, fname_roi2, '-o', fname_out, '-stitch'])
+    sct_image.main(argv=['-i', fname_roi1, fname_roi2, '-o', fname_out, '-stitch', '-qc', str(tmp_path)])
     assert os.path.exists(fname_out)
