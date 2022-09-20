@@ -95,9 +95,9 @@ def test_sct_image_stitch(tmp_path):
     fname_roi1 = 't2_roi1.nii.gz'
     fname_roi2 = 't2_roi2.nii.gz'
     sct_crop_image.main(argv=['-i', path_in, '-o', fname_roi1, '-xmin', '0', '-xmax', '59',
-                              '-ymin', '0', '-ymax', '20', '-zmin', '0', '-zmax', '51'])
-    sct_crop_image.main(argv=['-i', path_in, '-o', fname_roi2, '-xmin', '0', '-xmax', '59',
                               '-ymin', '20', '-ymax', '40', '-zmin', '0', '-zmax', '51'])
+    sct_crop_image.main(argv=['-i', path_in, '-o', fname_roi2, '-xmin', '0', '-xmax', '59',
+                              '-ymin', '0', '-ymax', '20', '-zmin', '0', '-zmax', '51'])
 
     fname_out = sct_test_path('t2', 'stitched.nii.gz')
     sct_image.main(argv=['-i', fname_roi1, fname_roi2, '-o', fname_out, '-stitch', '-qc', str(tmp_path)])
