@@ -344,11 +344,9 @@ def main(argv=None):
         # copy all files to temporary, reorient and place in temp directory
         for file in arguments.i:
             temp_file_path = os.path.join(path_tmp, os.path.basename(file))
-            print(temp_file_path)
             im_in = Image(file)
             im_in_rpi = change_orientation(im_in, 'RPI')
             im_in_rpi.save(temp_file_path, dtype=output_type, verbose=verbose)
-            # display_viewer_syntax([temp_file_path], verbose=verbose)
             fnames_in.append(temp_file_path)
 
         # order fs_names in descending order based on dimensions (largest -> smallest)
