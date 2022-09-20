@@ -12,6 +12,7 @@
 
 import sys
 import os
+import errno
 import itertools
 import warnings
 import logging
@@ -285,7 +286,7 @@ class Image(object):
             try:
                 self.loadFromPath(param, mmap, verbose)
             except OSError as e:
-                if str(e) == "[Errno 24] Too many open files":
+                if e.errno == errno.EMFILE:
                     raise OSError("[Errno 24] Too many open files. Please try increasing your system's file descriptor "
                                   "limit by using the command `ulimit -Sn`.")
                 else:
