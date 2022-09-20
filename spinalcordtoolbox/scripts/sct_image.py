@@ -356,10 +356,10 @@ def main(argv=None):
 
         # order fs_names w.r.t. dimension
         i_sorted = np.argsort(-np.array(dims_in))   # descending order
-        fnames_in = [fnames_in[i] for i in i_sorted]
+        fnames_in_sorted = [fnames_in[i] for i in i_sorted]
 
         # stitch and reorient
-        im_out = stitch_images(fnames_in=fnames_in, fname_out=os.path.join(path_tmp, 'stitched.nii.gz'))
+        im_out = stitch_images(fnames_in=fnames_in_sorted, fname_out=os.path.join(path_tmp, 'stitched.nii.gz'))
         im_out = [change_orientation(im_out, orig_ornt)]
         rmtree(path_tmp)
 
