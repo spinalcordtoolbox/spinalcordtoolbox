@@ -40,7 +40,7 @@ def display_open(file, message="Done! To view results"):
 SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
 
 
-def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
+def display_viewer_syntax(files, verbose, colormaps=[], minmax=[], opacities=[], mode=''):
     """
     Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
     Parameters
