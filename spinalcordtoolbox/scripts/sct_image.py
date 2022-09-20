@@ -332,16 +332,12 @@ def main(argv=None):
         im_out = split_data(im_in, dim)
 
     elif arguments.stitch is not None:
-
         # preserve original orientation (we assume it's consistent among all images)
         orig_ornt = im_in_list[0].orientation
 
-        # creating a temporary folder in which all temporary files will be placed and deleted afterwards
+        # reorient input files and save them to a temp directory
         path_tmp = tmp_create(basename="image-stitching")
-
         fnames_in = []
-
-        # copy all files to temporary, reorient and place in temp directory
         for file in arguments.i:
             temp_file_path = os.path.join(path_tmp, os.path.basename(file))
             im_in = Image(file)
