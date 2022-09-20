@@ -226,7 +226,8 @@ def main(argv=None):
     if arguments.o is not None:
         fname_out = arguments.o
     else:
-        fname_out = None
+        # in case fname_out is not defined, use first element of input file name list
+        fname_out = fname_in[0]
 
     # Run command
     # Arguments are sorted alphabetically (not according to the usage order)
@@ -237,7 +238,7 @@ def main(argv=None):
         im_out = [concat_data(im_in_list, dim)]
 
     elif arguments.copy_header is not None:
-        if fname_out is None:
+        if arguments.o is None:
             raise ValueError("Need to specify output image with -o!")
         im_dest = Image(arguments.copy_header)
         im_dest_new = im_in.copy()
@@ -389,10 +390,6 @@ def main(argv=None):
     else:
         im_out = None
         printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
-
-    # in case fname_out is not defined, use first element of input file name list
-    if fname_out is None:
-        fname_out = fname_in[0]
 
     # Write output
     if im_out is not None:
