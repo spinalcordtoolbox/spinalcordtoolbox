@@ -336,9 +336,6 @@ def main(argv=None):
         # preserve original orientation (we assume it's consistent among all images)
         orig_ornt = im_in_list[0].orientation
 
-        # preserve current directory
-        curdir = os.getcwd()
-
         # creating a temporary folder in which all temporary files will be placed and deleted afterwards
         path_tmp = tmp_create(basename="image-stitching")
 
@@ -347,8 +344,7 @@ def main(argv=None):
 
         # copy all files to temporary, reorient and place in temp directory
         for file in arguments.i:
-            file_name = os.path.basename(file)
-            temp_file_path = os.path.join(path_tmp, file_name)
+            temp_file_path = os.path.join(path_tmp, os.path.basename(file))
             print(temp_file_path)
             copy(file, temp_file_path, verbose='verbose')
             im_in = Image(temp_file_path)
@@ -356,18 +352,16 @@ def main(argv=None):
             im_out = change_orientation(im_in, 'RPI')
             im_out.save(temp_file_path, dtype=output_type, verbose=verbose)
             # display_viewer_syntax([temp_file_path], verbose=verbose)
-            fnames_in.append(file_name)
+            fnames_in.append(temp_file_path)
 
         # order fs_names w.r.t. dimension
         i_sorted = np.argsort(-np.array(dims_in))   # descending order
         fnames_in = [fnames_in[i] for i in i_sorted]
-        os.chdir(path_tmp)
 
         # stitch and reorient
-        im_out = stitch_images(fnames_in=fnames_in)
+        im_out = stitch_images(fnames_in=fnames_in, fname_out=os.path.join(path_tmp, 'stitched.nii.gz'))
         im_out = [change_orientation(im_out, orig_ornt)]
         rmtree(path_tmp)
-        os.chdir(curdir)
 
     elif arguments.type is not None:
         output_type = arguments.type
