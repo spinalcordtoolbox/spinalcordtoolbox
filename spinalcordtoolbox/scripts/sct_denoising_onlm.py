@@ -8,7 +8,8 @@ import numpy as np
 import nibabel as nib
 from dipy.denoise.nlmeans import nlmeans
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel
+from spinalcordtoolbox.utils import (SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel,
+                                     display_viewer_syntax)
 
 
 # DEFAULT PARAMETERS
@@ -186,8 +187,7 @@ def main(argv: Sequence[str]):
     nib.save(img_denoise, output_file_name)
     nib.save(img_diff, file + '_difference' + ext)
 
-    printv('\nDone! To view results, type:', param.verbose)
-    printv('fsleyes ' + file_to_denoise + ' ' + output_file_name + ' & \n', param.verbose, 'info')
+    display_viewer_syntax(files=[file_to_denoise, output_file_name], verbose=verbose)
 
 
 # =======================================================================================================================
