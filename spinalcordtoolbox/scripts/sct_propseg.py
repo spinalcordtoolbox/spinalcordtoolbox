@@ -692,7 +692,7 @@ def main(argv: Sequence[str]):
     if path_qc is not None:
         generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=argv,
                     path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject, process='sct_propseg')
-    display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'])
+    display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'], verbose=verbose)
 
 
 if __name__ == "__main__":

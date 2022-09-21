@@ -120,6 +120,7 @@ def main():
         "-x", "linear",
         "-vox", str(nx * interp_factor) + 'x' + str(ny * interp_factor) + 'x' + str(nz * interp_factor),
         "-o", "data_up.nii",
+        "-v", "0",
     ])
 
     # Smooth along centerline
@@ -129,7 +130,7 @@ def main():
         "-s", "data_up.nii",
         "-smooth", str(smoothing_sigma),
         "-r", str(remove_temp_files),
-        "-v", str(verbose),
+        "-v", "0",
     ])
 
     # downsample data
@@ -139,6 +140,7 @@ def main():
         "-x", "linear",
         "-vox", str(nx) + 'x' + str(ny) + 'x' + str(nz),
         "-o", "data_up_smooth_down.nii",
+        "-v", "0",
     ])
 
     # come back

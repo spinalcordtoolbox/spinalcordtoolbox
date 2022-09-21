@@ -137,7 +137,7 @@ def main(argv: Sequence[str]):
     nib.save(nii_denoised, output_file_name_denoised)
     nib.save(nii_diff, output_file_name_diff)
 
-    display_viewer_syntax([file_to_denoise, output_file_name_denoised, output_file_name_diff])
+    display_viewer_syntax([file_to_denoise, output_file_name_denoised, output_file_name_diff], verbose=verbose)
 
 
 if __name__ == '__main__':

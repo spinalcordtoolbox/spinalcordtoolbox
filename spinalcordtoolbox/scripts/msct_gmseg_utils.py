@@ -146,7 +146,7 @@ def pre_processing(fname_target, fname_sc_seg, fname_level=None, fname_manual_gm
         size = int(np.ceil(max(size_x, size_y)))
         # create mask
         fname_mask = 'mask_pre_crop.nii.gz'
-        sct_create_mask.main(['-i', im_target_rpi.absolutepath, '-p', 'centerline,' + im_sc_seg_rpi.absolutepath, '-f', 'box', '-size', str(size), '-o', fname_mask])
+        sct_create_mask.main(['-i', im_target_rpi.absolutepath, '-p', 'centerline,' + im_sc_seg_rpi.absolutepath, '-f', 'box', '-size', str(size), '-o', fname_mask, '-v', '0'])
         # crop image
         cropper = ImageCropper(im_target_rpi)
         cropper.get_bbox_from_mask(Image(fname_mask))
@@ -459,7 +459,8 @@ def register_data(im_src, im_dest, param_reg, path_copy_warp=None, rm_tmp=True):
                                        '-d', fname_dest,
                                        '-iseg', fname_src_seg,
                                        '-dseg', fname_dest_seg,
-                                       '-param', param_reg])
+                                       '-param', param_reg,
+                                       '-v', '0'])
 
     # get registration result
     fname_src_reg = add_suffix(fname_src, '_reg')
@@ -503,7 +504,8 @@ def apply_transfo(im_src, im_dest, warp, interp='spline', rm_tmp=True):
     sct_apply_transfo.main(argv=['-i', fname_src,
                                  '-d', fname_dest,
                                  '-w', warp,
-                                 '-x', interp])
+                                 '-x', interp,
+                                 '-v', '0'])
 
     im_src_reg = Image(fname_src_reg)
     # get out of tmp dir

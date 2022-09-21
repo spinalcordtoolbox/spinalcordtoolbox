@@ -165,7 +165,7 @@ def main(argv: Sequence[str]):
                                                  extract_fname(fname_image)[2]))
         im_ctr.save(fname_ctr)
 
-    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":

@@ -210,7 +210,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
     # N.B. no need to pad if iter = 0
     if not step.iter == '0':
         dest_pad = image.add_suffix(dest, '_pad')
-        sct_image.main(['-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(padding)])
+        sct_image.main(['-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(padding), '-v', '0'])
         dest = dest_pad
 
     # apply Laplacian filter
@@ -346,7 +346,7 @@ def register_step_dl_multimodal_cascaded_reg(src, dest, step, verbose=1):
                 "and bringing the source image into same space as moving image...")
     # Isotropic resolution
     dest_iso_res = image.add_suffix(dest, '_iso_res')
-    sct_resample.main(['-i', dest, '-o', dest_iso_res, '-mm', '1x1x1'])
+    sct_resample.main(['-i', dest, '-o', dest_iso_res, '-mm', '1x1x1', '-v', '0'])
     # Bring source image into same space as moving image
     src_same_space = image.add_suffix(src, '_same_space')
     # NB: `register_wrapper()` requires a 'Param' object that is defined on the fly in `sct_register_` CLI scripts

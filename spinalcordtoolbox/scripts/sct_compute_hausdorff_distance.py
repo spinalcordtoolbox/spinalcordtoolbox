@@ -398,12 +398,13 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if nz == 1:
             # when data is 2d: we convert it to a 3d image in order to avoid conversion problem with 2d data
             # TODO: check if this above problem is still present (now that we are using nibabel instead of nipy)
-            sct_image.main(['-i', ','.join([fname, fname]), '-concat', 'z', '-o', fname])
+            sct_image.main(['-i', ','.join([fname, fname]), '-concat', 'z', '-o', fname, '-v', '0'])
 
-        sct_resample.main(['-i', fname, '-mm', str(npx) + 'x' + str(npy) + 'x' + str(pz), '-o', name_resample, '-x', interpolation])
+        sct_resample.main(['-i', fname, '-mm', str(npx) + 'x' + str(npy) + 'x' + str(pz), '-o', name_resample,
+                           '-x', interpolation, '-v', '0'])
 
         if nz == 1:  # when input data was 2d: re-convert data 3d-->2d
-            sct_image.main(['-i', name_resample, '-split', 'z'])
+            sct_image.main(['-i', name_resample, '-split', 'z', '-v', '0'])
             im_split = Image(name_resample.split('.nii.gz')[0] + '_Z0000.nii.gz')
             im_split.save(name_resample)
 

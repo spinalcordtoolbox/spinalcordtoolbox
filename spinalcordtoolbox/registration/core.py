@@ -173,6 +173,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
                     '-d', dest[ifile],
                     '-o', add_suffix(src[ifile], '_reg'),
                     '-x', interp_step[ifile],
+                    '-v', '0',
                     '-w'] + warp_forward
                 )
                 src[ifile] = add_suffix(src[ifile], '_reg')
@@ -233,7 +234,9 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         '-d', 'dest.nii',
         '-w', 'warp_src2dest.nii.gz',
         '-o', 'src_reg.nii',
-        '-x', interp])
+        '-x', interp,
+        '-v', '0',
+    ])
 
     if generate_warpinv:
         printv('\nApply transfo dest --> source...', param.verbose)
@@ -242,7 +245,9 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
             '-d', 'src.nii',
             '-w', 'warp_dest2src.nii.gz',
             '-o', 'dest_reg.nii',
-            '-x', interp])
+            '-x', interp,
+            '-v', '0',
+        ])
 
     # come back
     os.chdir(curdir)

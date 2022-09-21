@@ -246,7 +246,8 @@ class DetectPMJ:
             self.rl_coord = int(img.dim[2] / 2)  # Right_left coordinate
             del img
 
-        sct_crop_image.main(['-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
+        sct_crop_image.main(['-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1),
+                             '-o', self.slice2D_im, '-v', '0'])
 
     def extract_pmj_symmetrical_sagittal_slice(self):
         """Extract a slice that is symmetrical about the estimated PMJ location."""
@@ -258,7 +259,8 @@ class DetectPMJ:
         self.rl_coord = compute_cross_corr_3d(image.change_orientation('RPI'), [self.rl_coord, self.pa_coord, self.is_coord, ])  # Find R-L symmetry
 
         # Replace the mid-sagittal slice, to be used for the "main" PMJ detection
-        sct_crop_image.main(['-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
+        sct_crop_image.main(['-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1),
+                             '-o', self.slice2D_im, '-v', '0'])
 
     def orient2pir(self):
         """Orient input data to PIR orientation."""
@@ -344,7 +346,7 @@ def main(argv: Sequence[str]):
             generate_qc(fname_in, fname_seg=fname_out, args=argv, path_qc=os.path.abspath(path_qc),
                         process='sct_detect_pmj')
 
-        display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'])
+        display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'], verbose=verbose)
 
 
 if __name__ == "__main__":

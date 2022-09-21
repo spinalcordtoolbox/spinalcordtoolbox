@@ -313,7 +313,7 @@ def main(argv: Sequence[str]):
 
     printv("Generating output files...")
     out.save(path=output_fname, dtype=dtype)
-    display_viewer_syntax([input_filename, output_fname])
+    display_viewer_syntax([input_filename, output_fname], verbose=verbose)
 
     if arguments.qc is not None:
         generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=argv,

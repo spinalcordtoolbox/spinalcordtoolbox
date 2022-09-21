@@ -455,7 +455,7 @@ def main(argv: Sequence[str]):
                 # Save extrapolated centerline
                 im_ctl.save(fname_ctl)
                 # Generated centerline smoothed in RL direction for visualization (and QC report)
-                sct_maths.main(['-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth])
+                sct_maths.main(['-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth, '-v', '0'])
 
                 generate_qc(fname_in1=get_absolute_path(arguments.qc_image),
                             # NB: For this QC figure, the centerline has to be first in the list in order for the centerline

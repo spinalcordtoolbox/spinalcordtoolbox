@@ -161,7 +161,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-w', list_fname_warp[i_file],
             '-x', param.interp,
             '-o', 'src_' + str(i_file) + '_template.nii.gz',
-            '-v', str(param.verbose)])
+            '-v', '0'])
 
         # create binary mask from input file by assigning one to all non-null voxels
         img = Image(fname_src)
@@ -175,7 +175,8 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
             '-x', param.interp,
-            '-o', 'src_' + str(i_file) + '_template_partialVolume.nii.gz'])
+            '-o', 'src_' + str(i_file) + '_template_partialVolume.nii.gz',
+            '-v', '0'])
 
         # open data
         data[:, :, :, i_file] = Image('src_' + str(i_file) + '_template.nii.gz').data
@@ -225,7 +226,7 @@ def main(argv: Sequence[str]):
     # merge src images to destination image
     merge_images(list_fname_src, fname_dest, list_fname_warp, param)
 
-    display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)])
+    display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)], verbose=verbose)
 
 
 if __name__ == "__main__":

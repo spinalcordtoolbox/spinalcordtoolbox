@@ -151,6 +151,8 @@ def main(argv: Sequence[str]):
     # run main program
     create_mask(param)
 
+    display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'], verbose=verbose)
+
 
 def create_mask(param):
     # parse argument for method
@@ -263,8 +265,6 @@ def create_mask(param):
     if param.remove_temp_files == 1:
         printv('\nRemove temporary files...', param.verbose)
         rmtree(path_tmp)
-
-    display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'])
 
 
 def create_line(param, fname, coord, nz):

@@ -170,7 +170,7 @@ def main(argv: Sequence[str]):
         fname_out = arguments.o
     img_crop.save(fname_out)
 
-    display_viewer_syntax([arguments.i, fname_out])
+    display_viewer_syntax([arguments.i, fname_out], verbose=verbose)
 
 
 if __name__ == "__main__":

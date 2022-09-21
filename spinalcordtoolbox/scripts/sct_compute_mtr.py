@@ -86,7 +86,7 @@ def main(argv: Sequence[str]):
     # save MTR file
     nii_mtr.save(fname_mtr, dtype='float32')
 
-    display_viewer_syntax([arguments.mt0, arguments.mt1, fname_mtr])
+    display_viewer_syntax([arguments.mt0, arguments.mt1, fname_mtr], verbose=verbose)
 
 
 if __name__ == "__main__":
