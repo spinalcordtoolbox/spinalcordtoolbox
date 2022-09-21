@@ -638,7 +638,7 @@ def moco(param):
         # Merge data along T
         file_data_splitZ_moco.append(add_suffix(file, suffix))
         if todo != 'estimate':
-            im_data_splitZ_splitT_moco = [Image(fname) for fname in file_data_splitZ_splitT_moco]
+            im_data_splitZ_splitT_moco = [Image(fname, mmap=False) for fname in file_data_splitZ_splitT_moco]
             im_out = concat_data(im_data_splitZ_splitT_moco, 3)
             im_out.absolutepath = file_data_splitZ_moco[iz]
             im_out.save(verbose=0)
