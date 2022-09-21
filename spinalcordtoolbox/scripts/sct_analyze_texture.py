@@ -17,7 +17,7 @@ import numpy as np
 from skimage.feature import greycomatrix, greycoprops
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, concat_data
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
@@ -347,8 +347,12 @@ def main(argv: Sequence[str]):
     if param.rm_tmp:
         rmtree(glcm.tmp_dir)
 
-    printv('\nDone! To view results, type:', param.verbose)
-    printv('fsleyes ' + arguments.i + ' ' + ' -cm red-yellow -a 70.0 '.join(fname_out_lst) + ' -cm Red-Yellow -a 70.0 & \n', param.verbose, 'info')
+    display_viewer_syntax(
+        files=[arguments.i] + fname_out_lst,
+        colormaps=['gray'] + ['red-yellow'] * len(fname_out_lst),
+        opacities=['1.0'] + ['0.7'] * len(fname_out_lst),
+        verbose=verbose
+    )
 
 
 if __name__ == "__main__":
