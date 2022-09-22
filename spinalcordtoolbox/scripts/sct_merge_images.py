@@ -32,7 +32,7 @@ class Param:
     def __init__(self):
         self.fname_out = 'merged_images.nii.gz'
         self.interp = 'linear'
-        self.rm_tmp = True
+        self.rm_tmp = 1
         self.verbose = 1
         self.almost_zero = 0.00000001
 
@@ -97,7 +97,7 @@ def get_parser():
     misc = parser.add_argument_group('MISC')
     misc.add_argument(
         "-r",
-        type=bool,
+        type=int,
         help='Remove temporary files.',
         required=False,
         default=Param().rm_tmp,
