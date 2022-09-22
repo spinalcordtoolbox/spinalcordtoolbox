@@ -102,6 +102,7 @@ def get_parser():
         help="Output filename. Example: smooth_sc.nii.gz. By default, the suffix '_smooth' will be added to the input file name."),
     optional.add_argument(
         '-r',
+        type=int,
         choices=[0, 1],
         default=1,
         help="Whether to remove temporary files. 0 = no, 1 = yes"
