@@ -8,6 +8,7 @@ The following studies have used SCT:
 2022
 ----
 
+-  Budde *et al.* `Acute Magnetic Resonance Imaging Predictors of Chronic Motor Function and Tissue Sparing in Rat Cervical Spinal Cord Injury <https://doi.org/10.1089/neu.2022.0034>`_, **J. Neurotrauma** 2022
 -  Barry *et al.* `Selective atrophy of the cervical enlargement in whole spinal cord MRI of amyotrophic lateral sclerosis <https://doi.org/10.1016/j.nicl.2022.103199>`_, **NeuroImage: Clinical** 2022
 -  Yang *et al.* `Utility of Diffusion and Magnetization Transfer MRI in Cervical Spondylotic Myelopathy: A Pilot Study <https://doi.org/10.3390/diagnostics12092090>`_, **Diagnostics** 2022
 -  Kossowski *et al.* `Relapsing antibody-negative patients with features of neuromyelitis optica spectrum disorders: Differences in N-acetylaspartate level in the cervical spinal cord indicate distinct underlying processes <https://journals.sagepub.com/doi/10.1177/13524585221115304>`_, **Mult Scler** 2022
