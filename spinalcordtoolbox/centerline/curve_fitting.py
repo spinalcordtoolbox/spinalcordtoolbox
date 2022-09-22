@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Functions dealing with 2d and 3d curve fitting
 # TODO: implement robust fitting, i.e., detection and removal of outliers. See:
 #  https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/24ec6668d623be00194b21038f275134c82122de/scripts/msct_smooth.py#L568
@@ -8,6 +6,7 @@ import logging
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
 
 def polyfit_1d(x, y, xref, deg=5):
     """
@@ -123,8 +122,8 @@ def smooth1d(x, window_len, window='hanning'):
         logger.warning("Window length needs to be >= 3. Returning input signal.")
         return x
 
-    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
-        raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
+    if window not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+        raise ValueError("Window should be one of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
     # Pad signal using central symmetry
     s = np.r_[2 * x[0] - x[window_len - 1:0:-1], x, 2 * x[-1] - x[-2:-window_len - 1:-1]]

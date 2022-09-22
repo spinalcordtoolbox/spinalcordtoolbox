@@ -34,6 +34,7 @@ import sys
 import os
 import time
 from copy import deepcopy
+from typing import Sequence
 
 import numpy as np
 
@@ -173,6 +174,7 @@ def get_parser():
               f"    * centermassrot: slicewise center of mass and rotation alignment using method specified in "
               f"'rot_method'\n"
               f"    * columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
+              f"    * dl: Contrast-agnostic, deep learning-based registration based on the SynthMorph architecture. \n"
               f"  - slicewise: <int> Slice-by-slice 2d transformation. "
               f"Default={DEFAULT_PARAMREGMULTI.steps['1'].slicewise}.\n"
               f"  - metric: {{CC, MI, MeanSquares}}. Default={DEFAULT_PARAMREGMULTI.steps['1'].metric}.\n"
@@ -303,7 +305,7 @@ class Param:
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

@@ -12,8 +12,8 @@
 #########################################################################################
 
 import sys
-import os
 import logging
+from typing import Sequence
 
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
@@ -31,7 +31,7 @@ class Param:
         self.verbose = 1
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param fname_anat:
@@ -58,7 +58,7 @@ def main(argv=None):
     fname_out = add_suffix(fname_anat, '_flatten')
     im_anat_flattened.save(fname_out)
 
-    display_viewer_syntax([fname_anat, fname_out])
+    display_viewer_syntax([fname_anat, fname_out], verbose=verbose)
 
 
 def get_parser():
@@ -103,4 +103,3 @@ def get_parser():
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

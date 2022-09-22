@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #########################################################################################
 # Spinal Cord Registration module
 #
@@ -9,7 +8,7 @@
 #########################################################################################
 
 import logging
-import os # FIXME
+import os  # FIXME
 import shutil
 from math import asin, cos, sin, acos
 
@@ -32,6 +31,8 @@ from spinalcordtoolbox.registration.landmarks import register_landmarks
 from spinalcordtoolbox.registration import core
 from spinalcordtoolbox.scripts import sct_resample
 from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp_create, sct_dir_local_path
+
+from spinalcordtoolbox.scripts import sct_image
 
 # TODO [AJ]
 # introduce potential cleanup functions in case exceptions occur and
@@ -209,12 +210,12 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
     # N.B. no need to pad if iter = 0
     if not step.iter == '0':
         dest_pad = image.add_suffix(dest, '_pad')
-        run_proc(['sct_image', '-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(padding)])
+        sct_image.main(['-i', dest, '-o', dest_pad, '-pad', '0,0,' + str(padding), '-v', '0'])
         dest = dest_pad
 
     # apply Laplacian filter
     if not step.laplacian == '0':
-        logger.info(f"\nApply Laplacian filter")
+        logger.info("\nApply Laplacian filter")
 
         sigmas = [step.laplacian, step.laplacian, 0]
 
@@ -235,7 +236,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
         dest_out.save(path=dest)
 
     # Estimate transformation
-    logger.info(f"\nEstimate transformation")
+    logger.info("\nEstimate transformation")
     scr_regStep = image.add_suffix(src, '_regStep' + str(step.step))
 
     cmd = ['isct_antsRegistration',
@@ -276,7 +277,7 @@ def register_step_slicewise_ants(src, dest, step, ants_registration_params, fnam
     """
     # if shrink!=1, force it to be 1 (otherwise, it generates a wrong 3d warping field). TODO: fix that!
     if not step.shrink == '1':
-        logger.warning(f"\nWhen using slicewise with SyN or BSplineSyN, shrink factor needs to be one. Forcing shrink=1")
+        logger.warning("\nWhen using slicewise with SyN or BSplineSyN, shrink factor needs to be one. Forcing shrink=1")
         step.shrink = '1'
 
     warp_forward_out = 'step' + str(step.step) + 'Warp.nii.gz'
@@ -345,7 +346,7 @@ def register_step_dl_multimodal_cascaded_reg(src, dest, step, verbose=1):
                 "and bringing the source image into same space as moving image...")
     # Isotropic resolution
     dest_iso_res = image.add_suffix(dest, '_iso_res')
-    sct_resample.main(['-i', dest, '-o', dest_iso_res, '-mm', '1x1x1'])
+    sct_resample.main(['-i', dest, '-o', dest_iso_res, '-mm', '1x1x1', '-v', '0'])
     # Bring source image into same space as moving image
     src_same_space = image.add_suffix(src, '_same_space')
     # NB: `register_wrapper()` requires a 'Param' object that is defined on the fly in `sct_register_` CLI scripts
@@ -576,7 +577,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     path_tmp = tmp_create(basename="register")
 
     # copy data to temp folder
-    logger.info(f"\nCopy input data to temp folder...")
+    logger.info("\nCopy input data to temp folder...")
     if isinstance(fname_src, list):
         # TODO: swap 0 and 1 (to be consistent with the child function below)
         src_img = image.convert(image.Image(fname_src[0]))
@@ -650,7 +651,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
                    verbose=verbose,
                    )
 
-    logger.info(f"\nMove warping fields...")
+    logger.info("\nMove warping fields...")
     copy_helper(warp_forward_out, curdir)
     copy_helper(warp_inverse_out, curdir)
 
@@ -695,21 +696,21 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz
-    logger.info(f"\nGet image dimensions of destination image...")
+    logger.info("\nGet image dimensions of destination image...")
     nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest[0]).dim
 
     logger.info(f"  matrix size: {str(nx)} x {str(ny)} x {str(nz)}")
     logger.info(f"  voxel size: {str(px)}mm x {str(py)}mm x {str(nz)}mm")
 
     # Split source volume along z
-    logger.info(f"\nSplit input segmentation...")
+    logger.info("\nSplit input segmentation...")
     im_src = image.Image(fname_src[0])
     split_source_list = image.split_img_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
-    logger.info(f"\nSplit destination segmentation...")
+    logger.info("\nSplit destination segmentation...")
     im_dest = image.Image(fname_dest[0])
     split_dest_list = image.split_img_data(im_dest, 2)
     for im in split_dest_list:
@@ -729,14 +730,14 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # Deal with cases where both an image and segmentation are input
     if len(fname_src) > 1:
         # Split source volume along z
-        logger.info(f"\nSplit input image...")
+        logger.info("\nSplit input image...")
         im_src_im = image.Image(fname_src[1])
         split_source_list = image.split_img_data(im_src_im, 2)
         for im in split_source_list:
             im.save()
 
         # Split destination volume along z
-        logger.info(f"\nSplit destination image...")
+        logger.info("\nSplit destination image...")
         im_dest_im = image.Image(fname_dest[1])
         split_dest_list = image.split_img_data(im_dest_im, 2)
         for im in split_dest_list:
@@ -770,7 +771,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
             if rot_method in ['hog', 'pcahog']:
                 angle_src_hog, conf_score_src = find_angle_hog(data_src_im[:, :, iz], centermass_src[iz, :],
                                                                px, py, angle_range=th_max_angle)
-                angle_dest_hog, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[ iz, : ],
+                angle_dest_hog, conf_score_dest = find_angle_hog(data_dest_im[:, :, iz], centermass_dest[iz, :],
                                                                  px, py, angle_range=th_max_angle)
                 # In case no maxima is found (it should never happen)
                 if (angle_src_hog is None) or (angle_dest_hog is None):
@@ -950,21 +951,21 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         import matplotlib.pyplot as plt
 
     # Get image dimensions and retrieve nz
-    logger.info(f"\nGet image dimensions of destination image...")
+    logger.info("\nGet image dimensions of destination image...")
     nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest).dim
 
     logger.info(f"  matrix size: {str(nx)} x {str(ny)} x {str(nz)}")
     logger.info(f"  voxel size: {str(px)}mm x {str(py)}mm x {str(nz)}mm")
 
     # Split source volume along z
-    logger.info(f"\nSplit input volume...")
+    logger.info("\nSplit input volume...")
     im_src = image.Image('src.nii')
     split_source_list = image.split_img_data(im_src, 2)
     for im in split_source_list:
         im.save()
 
     # Split destination volume along z
-    logger.info(f"\nSplit destination volume...")
+    logger.info("\nSplit destination volume...")
     im_dest = image.Image('dest.nii')
     split_dest_list = image.split_img_data(im_dest, 2)
     for im in split_dest_list:
@@ -991,7 +992,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     warp_inv_y = np.zeros(data_src.shape)
 
     # Loop across slices
-    logger.info(f"\nEstimate columnwise transformation...")
+    logger.info("\nEstimate columnwise transformation...")
     for iz in range(0, nz):
         logger.info(f"{str(iz)}/{str(nz)}..")
 
@@ -1010,7 +1011,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         src2d = data_src[:, :, iz]
         dest2d = data_dest[:, :, iz]
         # julien 20161105
-        #<<<
+        # <<<
         # threshold at 0.5
         src2d[src2d < th_nonzero] = 0
         dest2d[dest2d < th_nonzero] = 0
@@ -1020,7 +1021,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         # here we use 0.5 as threshold for non-zero value
         # coord_src2d = np.array(np.where(src2d > th_nonzero)).T
         # coord_dest2d = np.array(np.where(dest2d > th_nonzero)).T
-        #>>>
+        # >>>
 
         # SCALING R-L (X dimension)
         # ============================================================
@@ -1037,7 +1038,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             # for i in range(len(src1d)):
             #     if src1d[i] > 0.5:
             #         found index above 0.5, exit loop
-                    # break
+            #         break
             # get indices (in continuous space) at half-maximum of upward and downward slope
             # src1d_min, src1d_max = find_index_halfmax(src1d)
             # dest1d_min, dest1d_max = find_index_halfmax(dest1d)
@@ -1188,7 +1189,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
 def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz',
                fname_warp_inv='warp_inverse.nii.gz',
                paramreg=Paramreg(step='0', type='im', algo='Translation', metric='MI', iter='5', shrink='1', smooth='0',
-                   gradStep='0.5'),
+                                 gradStep='0.5'),
                ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '',
                                          'translation': '', 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                          'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'},
@@ -1224,14 +1225,14 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         metricSize = '4'  # corresponds to radius (for CC, MeanSquares...)
 
     # Get image dimensions and retrieve nz
-    logger.info(f"\nGet image dimensions of destination image...")
+    logger.info("\nGet image dimensions of destination image...")
     nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest).dim
 
     logger.info(f"  matrix size: {str(nx)} x {str(ny)} x {str(nz)}")
     logger.info(f"  voxel size: {str(px)}mm x {str(py)}mm x {str(nz)}mm")
 
     # Split input volume along z
-    logger.info(f"\nSplit input volume...")
+    logger.info("\nSplit input volume...")
 
     im_src = image.Image(fname_src)
     split_source_list = image.split_img_data(im_src, 2)
@@ -1239,7 +1240,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         im.save()
 
     # Split destination volume along z
-    logger.info(f"\nSplit destination volume...")
+    logger.info("\nSplit destination volume...")
     im_dest = image.Image(fname_dest)
     split_dest_list = image.split_img_data(im_dest, 2)
     for im in split_dest_list:
@@ -1247,7 +1248,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
     # Split mask volume along z
     if fname_mask != '':
-        logger.info(f"\nSplit mask volume...")
+        logger.info("\nSplit mask volume...")
         im_mask = image.Image('mask.nii.gz')
         split_mask_list = image.split_img_data(im_mask, 2)
         for im in split_mask_list:
@@ -1275,16 +1276,17 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             masking = []
         # main command for registration
         # TODO fixup isct_ants* parsers
-        cmd = ['isct_antsRegistration',
-         '--dimensionality', '2',
-         '--transform', paramreg.algo + '[' + str(paramreg.gradStep) + ants_registration_params[paramreg.algo.lower()] + ']',
-         '--metric', paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + ']',  #[fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
-         '--convergence', str(paramreg.iter),
-         '--shrink-factors', str(paramreg.shrink),
-         '--smoothing-sigmas', str(paramreg.smooth) + 'mm',
-         '--output', '[' + prefix_warp2d + ',src_Z' + num + '_reg.nii]',    #--> file.mat (contains Tx,Ty, theta)
-         '--interpolation', 'BSpline[3]',
-         '--verbose', '1',
+        cmd = [
+            'isct_antsRegistration',
+            '--dimensionality', '2',
+            '--transform', paramreg.algo + '[' + str(paramreg.gradStep) + ants_registration_params[paramreg.algo.lower()] + ']',
+            '--metric', paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + ']',  # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+            '--convergence', str(paramreg.iter),
+            '--shrink-factors', str(paramreg.shrink),
+            '--smoothing-sigmas', str(paramreg.smooth) + 'mm',
+            '--output', '[' + prefix_warp2d + ',src_Z' + num + '_reg.nii]',    # --> file.mat (contains Tx,Ty, theta)
+            '--interpolation', 'BSpline[3]',
+            '--verbose', '1',
         ] + masking
         # add init translation
         if not paramreg.init == '':
@@ -1313,14 +1315,15 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             if paramreg.algo in ['Rigid', 'Affine']:
                 # Generating null 2d warping field (for subsequent concatenation with affine transformation)
                 # TODO fixup isct_ants* parsers
-                run_proc(['isct_antsRegistration',
-                 '-d', '2',
-                 '-t', 'SyN[1,1,1]',
-                 '-c', '0',
-                 '-m', 'MI[dest_Z' + num + '.nii,src_Z' + num + '.nii,1,32]',
-                 '-o', 'warp2d_null',
-                 '-f', '1',
-                 '-s', '0',
+                run_proc([
+                    'isct_antsRegistration',
+                    '-d', '2',
+                    '-t', 'SyN[1,1,1]',
+                    '-c', '0',
+                    '-m', 'MI[dest_Z' + num + '.nii,src_Z' + num + '.nii,1,32]',
+                    '-o', 'warp2d_null',
+                    '-f', '1',
+                    '-s', '0',
                 ], is_sct_binary=True)
                 # --> outputs: warp2d_null0Warp.nii.gz, warp2d_null0InverseWarp.nii.gz
                 file_mat = prefix_warp2d + '0GenericAffine.mat'
@@ -1335,15 +1338,14 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             logger.error(f"Exception occurred. \n {e}")
 
     # Merge warping field along z
-    logger.info(f"\nMerge warping fields along z...")
+    logger.info("\nMerge warping fields along z...")
 
     if paramreg.algo in ['Translation']:
         # convert to array
         x_disp_a = np.asarray(x_displacement)
         y_disp_a = np.asarray(y_displacement)
-        theta_rot_a = np.asarray(theta_rotation)
         # Generate warping field
-        generate_warping_field(fname_dest, x_disp_a, y_disp_a, fname_warp=fname_warp)  #name_warp= 'step'+str(paramreg.step)
+        generate_warping_field(fname_dest, x_disp_a, y_disp_a, fname_warp=fname_warp)  # name_warp='step'+str(paramreg.step)
         # Inverse warping field
         generate_warping_field(fname_src, -x_disp_a, -y_disp_a, fname_warp=fname_warp_inv)
 
@@ -1384,7 +1386,7 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
     :param verbose:
     :return:
     """
-    logger.info(f"\nGenerate warping field...")
+    logger.info("\nGenerate warping field...")
 
     # Get image dimensions
     nx, ny, nz, nt, px, py, pz, pt = image.Image(fname_dest).dim

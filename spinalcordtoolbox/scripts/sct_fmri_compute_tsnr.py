@@ -13,7 +13,7 @@
 # ######################################################################################################################
 
 import sys
-import os
+from typing import Sequence
 
 import numpy as np
 
@@ -58,8 +58,6 @@ class Tsnr:
         nii_tsnr.data = data_tsnr
         nii_tsnr.save(fname_tsnr, dtype=np.float32)
 
-        display_viewer_syntax([fname_tsnr])
-
 
 # PARSER
 # ==========================================================================================
@@ -101,7 +99,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -119,8 +117,9 @@ def main(argv=None):
     tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)
     tsnr.compute()
 
+    display_viewer_syntax([fname_dst], verbose=verbose)
+
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

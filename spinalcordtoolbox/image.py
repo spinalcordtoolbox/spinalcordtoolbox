@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #########################################################################################
 #
 # SCT Image API
@@ -13,10 +12,10 @@
 
 import sys
 import os
+import errno
 import itertools
 import warnings
 import logging
-import shutil
 import math
 from typing import Sequence
 
@@ -26,11 +25,10 @@ import pathlib
 from contrib import fslhd
 
 import transforms3d.affines as affines
-import re
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import sct_dir_local_path, extract_fname
+from spinalcordtoolbox.utils import extract_fname, mv
 
 logger = logging.getLogger(__name__)
 
@@ -251,14 +249,17 @@ class Image(object):
     a few methods (load, save) that deal with image dtype.
     """
 
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1,
-                 check_sform=False):
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None,
+                 mmap=(not sys.platform.startswith('win32')), verbose=1, check_sform=False):
         """
         :param param: string indicating a path to a image file or an `Image` object.
         :param hdr: a nibabel header object to use as the header for the image (overwritten if `param` is provided)
         :param orientation: a three character orientation code (e.g. RPI).
         :param absolutepath: a relative path to associate with the image.
         :param dim: The dimensions of the image, defaults to automatically determined.
+        :param mmap: Whether to load data arrays as np.memmaps. Defaults to False (i.e. np.array) on Windows, and True
+          (i.e. np.memmap) on every other platform. (The context for defaulting to False on Windows is:
+          https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3695)
         :param verbose: integer how verbose to be 0 is silent 1 is chatty.
         :param check_sform: whether or not to check whether the sform matches the qform. If this is set to `True`,
           `Image` will fail raise an error if they don't match.
@@ -281,8 +282,14 @@ class Image(object):
         self.verbose = verbose
 
         # load an image from file
-        if isinstance(param, str) or (sys.hexversion < 0x03000000 and isinstance(param, unicode)):
-            self.loadFromPath(param, verbose)
+        if isinstance(param, str):
+            try:
+                self.loadFromPath(param, mmap, verbose)
+            except OSError as e:
+                if e.errno == errno.EMFILE:
+                    e.strerror += (". Please try increasing your system's file descriptor "
+                                   "limit by using the command `ulimit -Sn`.")
+                raise e
         # copy constructor
         elif isinstance(param, type(self)):
             self.copy(param)
@@ -310,7 +317,6 @@ class Image(object):
                              f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
                              f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
             raise ValueError("Image sform does not match qform")
-
 
     @property
     def dim(self):
@@ -394,7 +400,7 @@ class Image(object):
         self.hdr.set_qform(self.hdr.get_sform())
         self.hdr._structarr['qform_code'] = self.hdr._structarr['sform_code']
 
-    def loadFromPath(self, path, verbose):
+    def loadFromPath(self, path, mmap, verbose):
         """
         This function load an image from an absolute path using nibabel library
 
@@ -403,7 +409,7 @@ class Image(object):
         """
 
         self.absolutepath = os.path.abspath(path)
-        im_file = nib.load(self.absolutepath, mmap=(not sys.platform.startswith('win32')))
+        im_file = nib.load(self.absolutepath, mmap=mmap)
         self.affine = im_file.affine.copy()
         self.data = im_file.get_data()
         self.hdr = im_file.header.copy()
@@ -1408,7 +1414,7 @@ def add_suffix(fname, suffix):
         add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
     stem, ext = splitext(fname)
-    return os.path.join(stem + suffix + ext)
+    return stem + suffix + ext
 
 
 def splitext(fname):
@@ -1478,7 +1484,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
         img.save(fname_out)
     else:
         # Generate output file without changing the extension
-        shutil.move(fname_in, fname_out)
+        mv(fname_in, fname_out, verbose=verbose)
 
     logger.info("File created: %s", os.path.join(path_out, file_out + ext_out))
     return os.path.join(path_out, file_out + ext_out)

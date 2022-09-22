@@ -12,7 +12,7 @@
 #########################################################################################
 
 import sys
-import os
+from typing import Sequence
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -54,14 +54,14 @@ class ErnstAngle:
         printv("\nDrawing", type='info')
         plt.plot(tr_range, theta_E, linewidth=1.0)
         plt.xlabel("TR (in $ms$)")
-        plt.ylabel("$\Theta_E$ (in degree)")
+        plt.ylabel("$\\Theta_E$ (in degree)")
         plt.ylim(min(theta_E), max(theta_E) + 2)
         plt.title("Ernst Angle with T1=" + str(self.t1) + "ms")
         plt.grid(True)
 
         if self.tr is not None:
             plt.plot(self.tr, self.getErnstAngle(self.tr), 'ro')
-        if self.fname_output is not None :
+        if self.fname_output is not None:
             printv("\nSaving figure", type='info')
             plt.savefig(self.fname_output, format='png')
         plt.show()
@@ -128,8 +128,8 @@ def get_parser():
 
 
 # main
-#=======================================================================================================================
-def main(argv=None):
+# =======================================================================================================================
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -171,10 +171,9 @@ def main(argv=None):
         graph.draw(input_tr_min, input_tr_max)
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # Start program
-#=======================================================================================================================
+# =======================================================================================================================
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 #########################################################################################
 #
 # Compute MT saturation map and T1 map from a PD-weigthed, a T1-weighted and MT-weighted FLASH images
@@ -19,6 +18,7 @@
 import sys
 import os
 import json
+from typing import Sequence
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, display_viewer_syntax, set_loglevel
 from spinalcordtoolbox.qmri.mt import compute_mtsat
@@ -160,7 +160,7 @@ def fetch_metadata(fname_json, field):
         return metadata[field]
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -199,11 +199,13 @@ def main(argv=None):
     nii_mtsat.save(arguments.omtsat)
     nii_t1map.save(arguments.ot1map)
 
-    display_viewer_syntax([arguments.omtsat, arguments.ot1map],
-                              colormaps=['gray', 'gray'],
-                              minmax=['-10,10', '0, 3'],
-                              opacities=['1', '1'],
-                              verbose=verbose)
+    display_viewer_syntax(
+        [arguments.omtsat, arguments.ot1map],
+        colormaps=['gray', 'gray'],
+        minmax=['-10,10', '0, 3'],
+        opacities=['1', '1'],
+        verbose=verbose,
+    )
 
 
 if __name__ == "__main__":

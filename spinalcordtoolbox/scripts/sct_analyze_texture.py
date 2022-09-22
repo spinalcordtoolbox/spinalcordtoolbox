@@ -11,6 +11,7 @@
 import os
 import sys
 import itertools
+from typing import Sequence
 
 import numpy as np
 from skimage.feature import greycomatrix, greycoprops
@@ -167,7 +168,7 @@ class ExtractGLCM:
         printv('\nSave resulting files...', self.param.verbose, 'normal')
         for f in self.fname_metric_lst:  # Copy from tmp folder to ofolder
             copy(os.path.join(self.tmp_dir, self.fname_metric_lst[f]),
-                     os.path.join(self.param.path_results, self.fname_metric_lst[f]))
+                 os.path.join(self.param.path_results, self.fname_metric_lst[f]))
 
     def ifolder2tmp(self):
         self.curdir = os.getcwd()
@@ -203,11 +204,11 @@ class ExtractGLCM:
             # Average across angles and save it as wrk_folder/fnameIn_feature_distance_mean.extension
             fname_out = im_m + str(self.param_glcm.distance) + '_mean' + extension
 
-            dim_idx = 3 # img is [x, y, z, angle] so specify 4th dimension (angle)
+            dim_idx = 3  # img is [x, y, z, angle] so specify 4th dimension (angle)
 
             img = concat_data(im_mean_list, dim_idx).save(fname_out, mutable=True)
 
-            if len(np.shape(img.data)) < 4: # in case input volume is 3d and dim=t
+            if len(np.shape(img.data)) < 4:  # in case input volume is 3d and dim=t
                 img.data = img.data[..., np.newaxis]
             img.data = np.mean(img.data, dim_idx)
             img.save()
@@ -223,7 +224,6 @@ class ExtractGLCM:
 
         # extract axial slices in self.dct_im_seg
         self.dct_im_seg['im'], self.dct_im_seg['seg'] = [im.data[:, :, z] for z in range(im.dim[2])], [seg.data[:, :, z] for z in range(im.dim[2])]
-
 
     def compute_texture(self):
 
@@ -299,7 +299,7 @@ class ParamGLCM(object):
         self.angle = '0,45,90,135'  # Rotation angles for co-occurrence matrix
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:

@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Convenience/shell related utilites
 
 import os
@@ -12,7 +10,7 @@ import inspect
 
 from enum import Enum
 
-from .sys import check_exe, printv, removesuffix
+from .sys import check_exe, printv, removesuffix, ANSIColors16
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +40,7 @@ def display_open(file, message="Done! To view results"):
 SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
 
 
-def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
+def display_viewer_syntax(files, verbose, colormaps=[], minmax=[], opacities=[], mode=''):
     """
     Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
     Parameters
@@ -201,8 +199,10 @@ class SCTArgumentParser(argparse.ArgumentParser):
         """
         # Source: https://stackoverflow.com/a/4042861
         self.print_help(sys.stderr)
-        printv(f'\n{self.prog}: error: {message}\n', verbose=1, type='error', file=sys.stderr)
-        sys.exit(2)
+        message_formatted = (ANSIColors16.Bold + ANSIColors16.LightRed
+                             + f'\n{self.prog}: error: {message}\n\n'
+                             + ANSIColors16.ResetAll)
+        self.exit(2, message_formatted)
 
 
 class ActionCreateFolder(argparse.Action):
@@ -246,7 +246,7 @@ def list_type(delimiter, subtype):
     return list_typecast_func
 
 
-class Metavar(Enum):
+class Metavar(str, Enum):
     """
     This class is used to display intuitive input types via the metavar field of argparse
     """

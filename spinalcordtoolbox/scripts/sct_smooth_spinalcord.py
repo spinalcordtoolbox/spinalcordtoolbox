@@ -15,15 +15,18 @@
 import sys
 import os
 import time
+from typing import Sequence
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file, convert, add_suffix
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, cache_save, cache_signature, cache_valid, copy, \
     extract_fname, rmtree
 from spinalcordtoolbox.math import smooth
+
+from spinalcordtoolbox.scripts import sct_apply_transfo, sct_straighten_spinalcord
 
 
 class Param:
@@ -91,7 +94,7 @@ def get_parser():
         metavar=Metavar.str,
         choices=['bspline', 'polyfit'],
         default=param_default.algo_fitting,
-        help=f"Algorithm for curve fitting. For more information, see sct_straighten_spinalcord."
+        help="Algorithm for curve fitting. For more information, see sct_straighten_spinalcord."
     )
     optional.add_argument(
         "-o",
@@ -118,7 +121,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -207,9 +210,9 @@ def main(argv=None):
         copy(os.path.join(curdir, 'warp_straight2curve.nii.gz'), 'warp_straight2curve.nii.gz')
         copy(os.path.join(curdir, 'straight_ref.nii.gz'), 'straight_ref.nii.gz')
         # apply straightening
-        run_proc(['sct_apply_transfo', '-i', fname_anat_rpi, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline'], verbose)
+        sct_apply_transfo.main(['-i', fname_anat_rpi, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline', '-v', '0'])
     else:
-        run_proc(['sct_straighten_spinalcord', '-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting=' + param.algo_fitting], verbose)
+        sct_straighten_spinalcord.main(['-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting=' + param.algo_fitting, '-v', '0'])
         cache_save(cachefile, cache_sig)
         # move warping fields and straight reference file from the tmpdir to the localdir (to use caching next time)
         copy('straight_ref.nii.gz', os.path.join(curdir, 'straight_ref.nii.gz'))
@@ -225,7 +228,7 @@ def main(argv=None):
     if len(sigmas) == 1:
         sigmas = [sigmas[0] for i in range(len(img.data.shape))]
     elif len(sigmas) != len(img.data.shape):
-            raise ValueError("-smooth need the same number of inputs as the number of image dimension OR only one input")
+        raise ValueError("-smooth need the same number of inputs as the number of image dimension OR only one input")
 
     sigmas = [sigmas[i] / img.dim[i + 4] for i in range(3)]
     out.data = smooth(out.data, sigmas)
@@ -233,7 +236,7 @@ def main(argv=None):
 
     # Apply the reversed warping field to get back the curved spinal cord
     printv('\nApply the reversed warping field to get back the curved spinal cord...')
-    run_proc(['sct_apply_transfo', '-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline'], verbose)
+    sct_apply_transfo.main(['-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline', '-v', '0'])
 
     # replace zeroed voxels by original image (issue #937)
     printv('\nReplace zeroed voxels by original image...', verbose)
@@ -267,4 +270,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

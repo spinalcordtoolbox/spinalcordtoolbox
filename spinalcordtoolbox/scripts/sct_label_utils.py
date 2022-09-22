@@ -232,11 +232,6 @@ def get_parser():
 # MAIN
 # ==========================================================================================
 def main(argv: Sequence[str]):
-    """
-    Main function. When this script is run via CLI, the main function is called using main(sys.argv[1:]).
-
-    :param argv: A list of unparsed arguments, which is passed to ArgumentParser.parse_args()
-    """
     for i, arg in enumerate(argv):
         if arg == '-create-seg' and len(argv) > i+1 and '-1,' in argv[i+1]:
             raise DeprecationWarning("The use of '-1' for '-create-seg' has been deprecated. Please use "
@@ -318,7 +313,7 @@ def main(argv: Sequence[str]):
 
     printv("Generating output files...")
     out.save(path=output_fname, dtype=dtype)
-    display_viewer_syntax([input_filename, output_fname])
+    display_viewer_syntax([input_filename, output_fname], verbose=verbose)
 
     if arguments.qc is not None:
         generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=argv,
@@ -411,4 +406,3 @@ def launch_manual_label_gui(img: Image, input_labels_img: Image, labels: Sequenc
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

@@ -8,8 +8,8 @@
 # About the license: see the file LICENSE.TXT
 
 
-import os
 import sys
+from typing import Sequence
 
 import numpy as np
 from dipy.data.fetcher import read_bvals_bvecs
@@ -97,7 +97,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -156,4 +156,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

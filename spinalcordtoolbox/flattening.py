@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #########################################################################################
 #
 # Module for spinal cord flattening in different planes.

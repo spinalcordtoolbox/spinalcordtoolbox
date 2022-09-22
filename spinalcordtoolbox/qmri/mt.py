@@ -1,4 +1,3 @@
-# coding: utf-8
 # This is the interface API to compute MT-related metrics
 # Code is based on QMRLab: https://github.com/neuropoly/qMRLab
 # Author: Julien Cohen-Adad
@@ -148,4 +147,3 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     np.seterr(**seterr_old)
 
     return nii_mtsat, nii_t1map
-

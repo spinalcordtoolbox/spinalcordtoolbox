@@ -16,6 +16,7 @@
 
 import sys
 import os
+from typing import Sequence
 
 import numpy as np
 
@@ -120,7 +121,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -149,6 +150,8 @@ def main(argv=None):
 
     # run main program
     create_mask(param)
+
+    display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'], verbose=verbose)
 
 
 def create_mask(param):
@@ -226,7 +229,7 @@ def create_mask(param):
     centerline = nibabel.load(fname_centerline)  # open centerline
     hdr = centerline.get_header()  # get header
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
-    spacing = hdr.structarr['pixdim']
+    # spacing = hdr.structarr['pixdim']
     data_centerline = centerline.get_data()  # get centerline
     # if data is 2D, reshape with empty third dimension
     if len(data_centerline.shape) == 2:
@@ -262,8 +265,6 @@ def create_mask(param):
     if param.remove_temp_files == 1:
         printv('\nRemove temporary files...', param.verbose)
         rmtree(path_tmp)
-
-    display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'])
 
 
 def create_line(param, fname, coord, nz):

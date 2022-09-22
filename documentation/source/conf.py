@@ -86,7 +86,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['*/api', "*/api.rst"]
+exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 # pygments_style = "monokai"
@@ -97,7 +97,7 @@ todo_include_todos = False
 extlinks = {
     # e.g. :sct_tutorial_data:`data_template-registration.zip` gets expanded into:
     # 'https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
-    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20220125/%s', '')
+    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20220728/%s', '')
 }
 
 

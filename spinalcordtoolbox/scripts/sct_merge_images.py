@@ -15,6 +15,7 @@
 
 import sys
 import os
+from typing import Sequence
 
 import numpy as np
 
@@ -42,7 +43,19 @@ def get_parser():
     # Initialize the parser
 
     parser = SCTArgumentParser(
-        description='Merge images to the same space'
+        description=(
+            "Merge multiple source images (-i) onto destination space (-d). (All images are warped to the destination "
+            "space and then added together.)"
+            "\n"
+            "\nTo deal with overlap during merging (e.g. multiple input images map to the same voxel regions in the "
+            "destination space), the output voxels are divided by the sum of the partial volume values for each image."
+            "\n"
+            "\nSpecifically, the per-voxel calculation used is:"
+            "\n    im_out = (im_1*pv_1 + im_2*pv_2 + ...) / (pv_1 + pv_2 + ...)"
+            "\n"
+            "\nSo this function acts like a weighted average operator, only in destination voxels that share multiple "
+            "source voxels."
+        )
     )
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
@@ -103,14 +116,17 @@ def get_parser():
 
 def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
     """
-    Merge multiple source images onto destination space. All images are warped to the destination space and then added.
-    To deal with overlap during merging (e.g. one voxel in destination image is shared with two input images), the
-    resulting voxel is divided by the sum of the partial volume of each image. For example, if src(x,y,z)=1 is mapped to
-    dest(i,j,k) with a partial volume of 0.5 (because destination voxel is bigger), then its value after linear interpolation
-    will be 0.5. To account for partial volume, the resulting voxel will be: dest(i,j,k) = 0.5*0.5/0.5 = 0.5.
-    Now, if two voxels overlap in the destination space, let's say: src(x,y,z)=1 and src2'(x',y',z')=1, then the
-    resulting value will be: dest(i,j,k) = (0.5*0.5 + 0.5*0.5) / (0.5+0.5) = 0.5. So this function acts like a weighted
-    average operator, only in destination voxels that share multiple source voxels.
+    Merge multiple source images (-i) onto destination space (-d). (All images are warped to the destination
+    space and then added together.)
+
+    To deal with overlap during merging (e.g. multiple input images map to the same voxel regions in the
+    destination space), the output voxels are divided by the sum of the partial volume values for each image.
+
+    Specifically, the per-voxel calculation used is:
+        im_out = (im_1*pv_1 + im_2*pv_2 + ...) / (pv_1 + pv_2 + ...)
+
+    So this function acts like a weighted average operator, only in destination voxels that share multiple
+    source voxels.
 
     Parameters
     ----------
@@ -145,7 +161,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-w', list_fname_warp[i_file],
             '-x', param.interp,
             '-o', 'src_' + str(i_file) + '_template.nii.gz',
-            '-v', str(param.verbose)])
+            '-v', '0'])
 
         # create binary mask from input file by assigning one to all non-null voxels
         img = Image(fname_src)
@@ -159,7 +175,8 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
             '-x', param.interp,
-            '-o', 'src_' + str(i_file) + '_template_partialVolume.nii.gz'])
+            '-o', 'src_' + str(i_file) + '_template_partialVolume.nii.gz',
+            '-v', '0'])
 
         # open data
         data[:, :, :, i_file] = Image('src_' + str(i_file) + '_template.nii.gz').data
@@ -181,7 +198,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -207,15 +224,11 @@ def main(argv=None):
     assert len(list_fname_src) == len(list_fname_warp), "ERROR: list of files are not of the same length"
 
     # merge src images to destination image
-    try:
-        merge_images(list_fname_src, fname_dest, list_fname_warp, param)
-    except Exception as e:
-        printv(str(e), 1, 'error')
+    merge_images(list_fname_src, fname_dest, list_fname_warp, param)
 
-    display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)])
+    display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)], verbose=verbose)
 
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

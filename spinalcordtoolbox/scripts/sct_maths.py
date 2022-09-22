@@ -13,8 +13,9 @@
 import sys
 import pickle
 import gzip
-
 import argparse
+from typing import Sequence
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -56,8 +57,8 @@ class ParseDataOrScalarArgument(argparse.Action):
                 if data.shape == data_in.shape:
                     data_out.append(data)
                 else:
-                    raise parser.error(f"Dimensions of '{val}' ({data.shape}) "
-                                       f"must match input image ({data_in.shape}).")
+                    parser.error(f"Dimensions of '{val}' ({data.shape}) "
+                                 f"must match input image ({data_in.shape}).")
 
         setattr(namespace, self.dest, data_out)
 
@@ -297,12 +298,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
-    """
-    Main function
-    :param argv:
-    :return:
-    """
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -496,7 +492,7 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
     Sanitize input and compute similarity metric between two images data.
     """
     if img1.data.size != img2.data.size:
-        raise ValueError(f"Input images don't have the same size! \nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space")
+        raise ValueError("Input images don't have the same size! \nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space")
 
     res, data1_1d, data2_1d = sct_math.compute_similarity(img1.data, img2.data, metric=metric)
 

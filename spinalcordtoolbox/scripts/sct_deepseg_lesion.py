@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 #########################################################################################
 #
 # Function to segment the multiple sclerosis lesions using convolutional neural networks
@@ -14,6 +13,7 @@
 
 import os
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -106,7 +106,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """Main function."""
     parser = get_parser()
     arguments = parser.parse_args(argv)
@@ -156,19 +156,18 @@ def main(argv=None):
     if ctr_algo == 'viewer':
         # Save labels
         fname_labels = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_labels-centerline' +
-                                               extract_fname(fname_image)[2]))
+                                                    extract_fname(fname_image)[2]))
         im_labels_viewer.save(fname_labels)
 
     if verbose == 2:
         # Save ctr
         fname_ctr = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_centerline' +
-                                               extract_fname(fname_image)[2]))
+                                                 extract_fname(fname_image)[2]))
         im_ctr.save(fname_ctr)
 
-    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

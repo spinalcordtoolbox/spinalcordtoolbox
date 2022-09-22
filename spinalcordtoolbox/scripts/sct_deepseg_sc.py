@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 #########################################################################################
 #
 # Function to segment the spinal cord using convolutional neural networks
@@ -13,6 +12,7 @@
 
 import os
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -127,7 +127,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """Main function."""
     parser = get_parser()
     arguments = parser.parse_args(argv)
@@ -155,7 +155,7 @@ def main(argv=None):
     if kernel_size == '3d' and contrast_type == 'dwi':
         kernel_size = '2d'
         printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.',
-                   type="warning")
+               type="warning")
 
     if ctr_algo == 'file' and arguments.file_centerline is None:
         printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')
@@ -204,9 +204,9 @@ def main(argv=None):
 
     # Generate QC report
     if path_qc is not None:
-        generate_qc(fname_image, fname_seg=fname_seg, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_image, fname_seg=fname_seg, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
-    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":

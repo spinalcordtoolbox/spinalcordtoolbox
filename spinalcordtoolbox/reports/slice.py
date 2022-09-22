@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # TODO: Replace slice by spinalcordtoolbox.image.Slicer
 
 import abc

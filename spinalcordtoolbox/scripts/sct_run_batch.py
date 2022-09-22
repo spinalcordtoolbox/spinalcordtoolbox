@@ -15,6 +15,7 @@
 
 import os
 import sys
+import pathlib
 from getpass import getpass
 import multiprocessing
 import subprocess
@@ -27,6 +28,7 @@ import json
 import tempfile
 import warnings
 import shutil
+from typing import Sequence
 from types import SimpleNamespace
 from textwrap import dedent
 
@@ -123,6 +125,11 @@ def get_parser():
                         help='Optional space separated list of subjects to exclude. Only process '
                         'a subject if they are not on this list. Inclusions are processed before exclusions. '
                         'Cannot be used with either `exclude`.', nargs='+')
+    parser.add_argument('-ignore-ses', action='store_true',
+                        help="By default, if 'ses' subfolders are present, then 'sct_run_batch' will run the script "
+                             "within each individual 'ses' subfolder. Passing `-ignore-ses` will change the behavior "
+                             "so that 'sct_run_batch' will not go into each 'ses' folder. Instead, it will run the "
+                             "script on just the top-level subject folders.")
     parser.add_argument('-path-segmanual', default='.',
                         help='Setting for environment variable: PATH_SEGMANUAL\n'
                         'A path containing manual segmentations to be used by the script program.')
@@ -172,6 +179,65 @@ def _find_nonsys32_bash_exe():
     nonsys32_paths = os.pathsep.join([p for p in os.environ['PATH'].split(os.pathsep)
                                       if 'system32' not in p.lower()])
     return shutil.which('bash', path=nonsys32_paths)
+
+
+def _parse_dataset_directory(path_data, subject_prefix="sub-", ignore_ses=False):
+    """
+    Parse a dataset directory to find subject directories (and session subdirectories, if present).
+
+    Notes:
+        - The dataset is assumed to be structured in a (somewhat) BIDS-compliant way, see:
+          https://bids-specification.readthedocs.io/en/stable/02-common-principles.html#file-name-structure
+        - This function is a rudimentary version of the library PyBIDS: https://github.com/bids-standard/pybids.
+          TODO: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3415
+    """
+    dirs = []
+    subject_dirs = sorted([d.name for d in os.scandir(path_data)
+                           if d.name.startswith(subject_prefix)
+                           and d.is_dir()])
+    for sub_dir in subject_dirs:
+        session_dirs = sorted([d.name for d in os.scandir(os.path.join(path_data, sub_dir))
+                               if d.name.startswith('ses-')
+                               and d.is_dir()])
+        if session_dirs and not ignore_ses:
+            # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
+            for sess_dir in session_dirs:
+                dirs.append(os.path.join(sub_dir, sess_dir))
+        else:
+            # Otherwise, consider only 'sub-' directories and don't include 'ses-' subdirectories: e.g. sub-XX
+            dirs.append(sub_dir)
+
+    return dirs
+
+
+def _filter_directories(dir_list, include=None, include_list=None, exclude=None, exclude_list=None):
+    """
+    Filter a list of directories using inclusion/exclusion regex patterns or explicit lists.
+
+    NB: Only one of [include, include_list] and only one of [exclude, exclude_list] should be passed.
+        (Currently, this requirement is handled at the argument-parsing level, because we use `parser.error`.)
+    """
+    # Handle inclusions (regex OR explicit list, but not both)
+    if include is not None:
+        dir_list = [f for f in dir_list if re.search(include, f)]
+    elif include_list is not None:
+        dir_list = [f for f in dir_list
+                    # Check if include_list specified entire path (e.g. "sub-01/ses-01")
+                    if f in include_list
+                    # Check if include_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
+                    or any(p in include_list for p in pathlib.Path(f).parts)]
+
+    # Handle exclusions (regex OR explicit list, but not both)
+    if exclude is not None:
+        dir_list = [f for f in dir_list if not re.search(exclude, f)]
+    elif exclude_list is not None:
+        dir_list = [f for f in dir_list
+                    # Check if exclude_list specified entire path (e.g. "sub-01/ses-01")
+                    if f not in exclude_list
+                    # Check if exclude_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
+                    and all(p not in exclude_list for p in pathlib.Path(f).parts)]
+
+    return dir_list
 
 
 def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
@@ -269,7 +335,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     return res
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -430,42 +496,17 @@ def main(argv=None):
     print("git commit: {}".format(__get_commit(path_to_git_folder=path_data)))
     print("git origin: {}\n".format(__get_git_origin(path_to_git_folder=path_data)))
 
-    # Find subjects and process inclusion/exclusions
-    subject_dirs = []
-    subject_flat_dirs = [f for f in os.listdir(path_data) if f.startswith(arguments.subject_prefix)]
-    for isub in subject_flat_dirs:
-        # Only consider folders
-        if os.path.isdir(os.path.join(path_data, isub)):
-            session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
-            if not session_dirs:
-                # There is no session folder, so we consider only sub- directory: sub-XX
-                subject_dirs.append(isub)
-            else:
-                # There is a session folder, so we concatenate: sub-XX/ses-YY
-                session_dirs.sort()
-                for isess in session_dirs:
-                    subject_dirs.append(os.path.join(isub, isess))
+    subject_dirs = _parse_dataset_directory(path_data, arguments.subject_prefix, arguments.ignore_ses)
 
-    # Handle inclusion lists
-    assert not ((arguments.include is not None) and (arguments.include_list is not None)),\
-        'Only one of `include` and `include-list` can be used'
+    if (arguments.include is not None) and (arguments.include_list is not None):
+        parser.error('Only one of `include` and `include-list` can be used')
 
-    if arguments.include is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(arguments.include, f) is not None]
+    if (arguments.exclude is not None) and (arguments.exclude_list is not None):
+        parser.error('Only one of `exclude` and `exclude-list` can be used')
 
-    if arguments.include_list is not None:
-        # TODO decide if we should warn users if one of their inclusions isn't around
-        subject_dirs = [f for f in subject_dirs if f in arguments.include_list]
-
-    # Handle exclusions
-    assert not ((arguments.exclude is not None) and (arguments.exclude_list is not None)),\
-        'Only one of `exclude` and `exclude-list` can be used'
-
-    if arguments.exclude is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(arguments.exclude, f) is None]
-
-    if arguments.exclude_list is not None:
-        subject_dirs = [f for f in subject_dirs if f not in arguments.exclude_list]
+    subject_dirs = _filter_directories(subject_dirs,
+                                       include=arguments.include, include_list=arguments.include_list,
+                                       exclude=arguments.exclude, exclude_list=arguments.exclude_list)
 
     # Determine the number of jobs we can run simultaneously
     if arguments.jobs < 1:

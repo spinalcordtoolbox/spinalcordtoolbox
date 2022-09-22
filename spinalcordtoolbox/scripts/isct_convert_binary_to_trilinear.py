@@ -21,9 +21,10 @@ import time
 import numpy as np
 
 from spinalcordtoolbox.image import Image, generate_output_file, convert
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, __data_dir__, printv
-from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, rmtree
+from spinalcordtoolbox.utils.sys import init_sct, __data_dir__, printv
+from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, rmtree, extract_fname
 
+from spinalcordtoolbox.scripts import sct_resample, sct_smooth_spinalcord
 
 
 class Param:
@@ -114,28 +115,33 @@ def main():
 
     # upsample data
     printv('\nUpsample data...', verbose)
-    run_proc(["sct_resample",
-              "-i", "data.nii",
-              "-x", "linear",
-              "-vox", str(nx * interp_factor) + 'x' + str(ny * interp_factor) + 'x' + str(nz * interp_factor),
-              "-o", "data_up.nii"], verbose)
+    sct_resample.main([
+        "-i", "data.nii",
+        "-x", "linear",
+        "-vox", str(nx * interp_factor) + 'x' + str(ny * interp_factor) + 'x' + str(nz * interp_factor),
+        "-o", "data_up.nii",
+        "-v", "0",
+    ])
 
     # Smooth along centerline
     printv('\nSmooth along centerline...', verbose)
-    run_proc(["sct_smooth_spinalcord",
-              "-i", "data_up.nii",
-              "-s", "data_up.nii",
-              "-smooth", str(smoothing_sigma),
-              "-r", str(remove_temp_files),
-              "-v", str(verbose)], verbose)
+    sct_smooth_spinalcord.main([
+        "-i", "data_up.nii",
+        "-s", "data_up.nii",
+        "-smooth", str(smoothing_sigma),
+        "-r", str(remove_temp_files),
+        "-v", "0",
+    ])
 
     # downsample data
     printv('\nDownsample data...', verbose)
-    run_proc(["sct_resample",
-              "-i", "data_up_smooth.nii",
-              "-x", "linear",
-              "-vox", str(nx) + 'x' + str(ny) + 'x' + str(nz),
-              "-o", "data_up_smooth_down.nii"], verbose)
+    sct_resample.main([
+        "-i", "data_up_smooth.nii",
+        "-x", "linear",
+        "-vox", str(nx) + 'x' + str(ny) + 'x' + str(nz),
+        "-o", "data_up_smooth_down.nii",
+        "-v", "0",
+    ])
 
     # come back
     os.chdir(curdir)

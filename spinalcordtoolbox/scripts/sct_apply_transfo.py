@@ -17,6 +17,7 @@
 import sys
 import os
 import functools
+from typing import Sequence
 
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.cropping import ImageCropper
@@ -323,16 +324,14 @@ class Transform:
                     img_out = cropper.crop(background=0)
                 elif crop_reference == 2:
                     printv('Cropping strategy is: crop around warping field (the size of warping field will '
-                               'change)')
+                           'change)')
                     img_out = cropper.crop()
                 img_out.save(fname_out)
-
-        display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
 
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Entry point for sct_apply_transfo
     :param argv: list of input arguments.
@@ -352,15 +351,16 @@ def main(argv=None):
                           list_warpinv=warpinv_filename)
 
     transform.crop = arguments.crop
-    transform.output_filename = arguments.o
+    transform.output_filename = fname_out = arguments.o
     transform.interp = arguments.x
     transform.remove_temp_files = arguments.r
     transform.verbose = verbose
 
     transform.apply()
 
+    display_viewer_syntax([fname_dest, fname_out], verbose=verbose)
+
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

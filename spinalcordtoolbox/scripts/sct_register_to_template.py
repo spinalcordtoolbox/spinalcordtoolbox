@@ -17,6 +17,7 @@
 import sys
 import os
 import time
+from typing import Sequence
 
 import numpy as np
 
@@ -40,7 +41,7 @@ from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc
 from spinalcordtoolbox import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
-from spinalcordtoolbox.scripts import sct_apply_transfo
+from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 
 
 class Param:
@@ -298,7 +299,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -487,7 +488,6 @@ def main(argv=None):
         ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
         img_tmp_label.save(ftmp_label, mutable=True)
 
-
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if level_alignment:
             # cropping the segmentation based on the label coverage to ensure good registration with level alignment
@@ -547,7 +547,9 @@ def main(argv=None):
                 '-i', ftmp_seg,
                 '-w', 'warp_curve2straight.nii.gz',
                 '-d', 'straight_ref.nii.gz',
-                '-o', add_suffix(ftmp_seg, '_straight')])
+                '-o', add_suffix(ftmp_seg, '_straight',),
+                '-v', '0',
+            ])
         else:
             from spinalcordtoolbox.straightening import SpinalCordStraightener
             sc_straight = SpinalCordStraightener(ftmp_seg, ftmp_seg)
@@ -592,13 +594,24 @@ def main(argv=None):
 
             # Apply straightening to labels
             printv('\nApply straightening to labels...', verbose)
+            label_vals_src = {coord.value for coord in Image(ftmp_label).getCoordinatesAveragedByValue()}
             sct_apply_transfo.main(argv=[
                 '-i', ftmp_label,
                 '-o', add_suffix(ftmp_label, '_straight'),
                 '-d', add_suffix(ftmp_seg, '_straight'),
                 '-w', 'warp_curve2straight.nii.gz',
-                '-x', 'nn'])
+                '-x', 'nn',
+                '-v', '0',
+            ])
             ftmp_label = add_suffix(ftmp_label, '_straight')
+            label_vals_out = {coord.value for coord in Image(ftmp_label).getCoordinatesAveragedByValue()}
+            missing_labels = label_vals_src - label_vals_out
+            if missing_labels:
+                printv(
+                    f"ERROR: Labels {missing_labels} were lost during straightening transform. This can be caused by "
+                    f"the labels being outside the ROI of the spinal cord segmentation. Please make sure all labels "
+                    f"are within the ROI of the spinal cord segmentation.", type='error'
+                )
 
             # Compute rigid transformation straight landmarks --> template landmarks
             printv('\nEstimate transformation for step #0...', verbose)
@@ -624,14 +637,18 @@ def main(argv=None):
             '-i', ftmp_data,
             '-o', add_suffix(ftmp_data, '_straightAffine'),
             '-d', ftmp_template,
-            '-w', 'warp_curve2straightAffine.nii.gz'])
+            '-w', 'warp_curve2straightAffine.nii.gz',
+            '-v', '0',
+        ])
         ftmp_data = add_suffix(ftmp_data, '_straightAffine')
         sct_apply_transfo.main(argv=[
             '-i', ftmp_seg,
             '-o', add_suffix(ftmp_seg, '_straightAffine'),
             '-d', ftmp_template,
             '-w', 'warp_curve2straightAffine.nii.gz',
-            '-x', 'linear'])
+            '-x', 'linear',
+            '-v', '0',
+        ])
         ftmp_seg = add_suffix(ftmp_seg, '_straightAffine')
 
         """
@@ -672,13 +689,13 @@ def main(argv=None):
         # sub-sample in z-direction
         # TODO: refactor to use python module instead of doing i/o
         printv('\nSub-sample in z-direction (for faster processing)...', verbose)
-        run_proc(['sct_resample', '-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        sct_resample.main(['-i', ftmp_template, '-o', add_suffix(ftmp_template, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
         ftmp_template = add_suffix(ftmp_template, '_sub')
-        run_proc(['sct_resample', '-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        sct_resample.main(['-i', ftmp_template_seg, '-o', add_suffix(ftmp_template_seg, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
         ftmp_template_seg = add_suffix(ftmp_template_seg, '_sub')
-        run_proc(['sct_resample', '-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        sct_resample.main(['-i', ftmp_data, '-o', add_suffix(ftmp_data, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
         ftmp_data = add_suffix(ftmp_data, '_sub')
-        run_proc(['sct_resample', '-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'), '-f', '1x1x' + zsubsample], verbose)
+        sct_resample.main(['-i', ftmp_seg, '-o', add_suffix(ftmp_seg, '_sub'), '-f', '1x1x' + zsubsample, '-v', '0'])
         ftmp_seg = add_suffix(ftmp_seg, '_sub')
 
         # Registration straight spinal cord to template
@@ -756,8 +773,8 @@ def main(argv=None):
         os.rename(warp_inverse, 'warp_anat2template.nii.gz')
 
     # Apply warping fields to anat and template
-    run_proc(['sct_apply_transfo', '-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '0'], verbose)
-    run_proc(['sct_apply_transfo', '-i', 'data.nii', '-o', 'anat2template.nii.gz', '-d', 'template.nii', '-w', 'warp_anat2template.nii.gz', '-crop', '0'], verbose)
+    sct_apply_transfo.main(['-i', 'template.nii', '-o', 'template2anat.nii.gz', '-d', 'data.nii', '-w', 'warp_template2anat.nii.gz', '-crop', '0', '-v', '0'])
+    sct_apply_transfo.main(['-i', 'data.nii', '-o', 'anat2template.nii.gz', '-d', 'template.nii', '-w', 'warp_anat2template.nii.gz', '-crop', '0', '-v', '0'])
 
     # come back
     os.chdir(curdir)

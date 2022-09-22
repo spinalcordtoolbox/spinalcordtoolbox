@@ -14,7 +14,6 @@ import nibabel
 import numpy
 
 from spinalcordtoolbox.metadata import read_label_file
-from spinalcordtoolbox.scripts import sct_extract_metric
 
 
 def get_fractional_volume_per_label(atlas_folder, file_label, nb_RL_labels=15):
