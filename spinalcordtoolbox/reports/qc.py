@@ -330,9 +330,9 @@ class QcImage(object):
         # if axial mosaic restrict width
         if slice_orientation == 'Axial':
             size_fig = [5, 5 * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
-        # if sagittal orientation restrict height
+        # if sagittal, set fixed size (to be stable for images with sagittal as well as axial orientation)
         elif slice_orientation == 'Sagittal':
-            size_fig = [5 * img.shape[1] / img.shape[0], 5]
+            size_fig = [5, 5]
 
         fig = Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
