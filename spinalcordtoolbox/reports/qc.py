@@ -210,8 +210,8 @@ class QcImage(object):
                     x += 10
                     label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
                     ax.text(x, y, label, color='black', clip_on=True)
-                    x -= 0.5
-                    y -= 0.5
+                    x -= y/500
+                    y -= y/500
                     ax.text(x, y, label, color=color, clip_on=True)
 
     def highlight_pmj(self, mask, ax):
