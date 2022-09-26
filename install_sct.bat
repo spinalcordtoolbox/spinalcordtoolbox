@@ -4,6 +4,10 @@ rem Usage: install_sct.bat <version>
 rem e.g.
 rem        install_sct.bat 5.5
 
+rem This option is needed for expanding !git_ref!, which is set (*and expanded*!) inside the 'if' statement below.
+rem See also https://stackoverflow.com/q/9102422 for a further description of this behavior.
+setLocal EnableDelayedExpansion
+
 if exist .git\ (
   rem If install_sct.bat is being run from a git repository, we assume that this is a git clone of SCT
   rem So, stay in this folder, skip git clone, and assume that we want to install SCT from the current state of the repository
@@ -37,8 +41,8 @@ if exist .git\ (
 
   rem Download SCT and check out the branch requested by the user
   echo:
-  echo ### Downloading SCT source code ^(@ %git_ref%^) to %HOMEPATH%\spinalcordtoolbox...
-  git clone -b %git_ref% --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git || goto error
+  echo ### Downloading SCT source code ^(@ !git_ref!^) to %HOMEPATH%\spinalcordtoolbox...
+  git clone -b !git_ref! --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git || goto error
   cd spinalcordtoolbox
 )
 
