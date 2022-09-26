@@ -327,10 +327,13 @@ class QcImage(object):
         if self._stretch_contrast:
             img = self._func_stretch_contrast(img)
 
-        # if axial mosaic restrict width
+        # Axial views into images == A mosaic of axial slices. For QC reports, axial mosaics will often have smaller
+        # height than width (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
         if slice_orientation == 'Axial':
-            size_fig = [5, 5 * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
-        # if sagittal, set fixed size (to be stable for images with sagittal as well as axial orientation)
+            # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
+            size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+        # Sagittal views into images, on the other hand, use a single image instead of a mosaic of slices.
+        # This sagittal view will typically have H ~= W, so there is no need to adjust the dimensions of the figure.
         elif slice_orientation == 'Sagittal':
             size_fig = [5, 5]
 
