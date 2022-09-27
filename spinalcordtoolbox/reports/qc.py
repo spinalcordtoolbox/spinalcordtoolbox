@@ -180,8 +180,9 @@ class QcImage(object):
         horiz_offset = mask.shape[1] / 50
         for coord in coord_labels:
             ax.plot(coord[1], coord[0], 'o', color='lime', markersize=5)
-            ax.text(coord[1] + horiz_offset, coord[0], str(round(mask[coord[0], coord[1]])), color='lime', fontsize=15,
-                    verticalalignment='center', clip_on=True)
+            label_text = ax.text(coord[1] + horiz_offset, coord[0], str(round(mask[coord[0], coord[1]])), color='lime',
+                                 fontsize=15, verticalalignment='center', clip_on=True)
+            label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'), path_effects.Normal()])
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
