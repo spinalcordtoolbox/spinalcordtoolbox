@@ -340,7 +340,7 @@ def main(argv=None):
         dim = dim_list.index(dim)
         im_out = split_data(im_in, dim)
 
-    elif arguments.stitch is not None:
+    elif arguments.stitch:
         # preserve original orientation (we assume it's consistent among all images)
         orig_ornt = im_in_list[0].orientation
 
