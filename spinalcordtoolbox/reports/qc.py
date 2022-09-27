@@ -15,6 +15,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.colors as color
+import matplotlib.patheffects as path_effects
 import portalocker
 
 from spinalcordtoolbox.image import Image
@@ -209,10 +210,9 @@ class QcImage(object):
                     # Draw text with a shadow
                     x += 10
                     label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
-                    ax.text(x, y, label, color='black', clip_on=True)
-                    x -= y/500
-                    y -= y/500
-                    ax.text(x, y, label, color=color, clip_on=True)
+                    label_text = ax.text(x, y, label, color=color, clip_on=True)
+                    label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'),
+                                                 path_effects.Normal()])
 
     def highlight_pmj(self, mask, ax):
         """Hook to show a rectangle where PMJ is on the slice"""
