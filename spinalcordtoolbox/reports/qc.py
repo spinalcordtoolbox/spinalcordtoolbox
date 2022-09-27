@@ -38,26 +38,69 @@ class QcImage(object):
                        'Co': 30}
     _color_bin_green = ["#ffffff", "#00ff00"]
     _color_bin_red = ["#ffffff", "#ff0000"]
-    _labels_color = ["#04663c", "#ff0000", "#50ff30",
-                     "#ed1339", "#ffffff", "#e002e8",
-                     "#ffee00", "#00c7ff", "#199f26",
-                     "#563691", "#848545", "#ce2fe1",
-                     "#2142a6", "#3edd76", "#c4c253",
-                     "#e8618a", "#3128a3", "#1a41db",
-                     "#939e41", "#3bec02", "#1c2c79",
-                     "#18584e", "#b49992", "#e9e73a",
-                     "#3b0e6e", "#6e856f", "#637394",
-                     "#36e05b", "#530a1f", "#8179c4",
-                     "#e1320c", "#52a4df", "#000ab5",
-                     "#4a4242", "#0b53a5", "#b49c19",
-                     "#50e7a9", "#bf5a42", "#fa8d8e",
-                     "#83839a", "#320fef", "#82ffbf",
-                     "#360ee7", "#551960", "#11371e",
-                     "#e900c3", "#a21360", "#58a601",
-                     "#811c90", "#235acf", "#49395d",
-                     "#9f89b0", "#e08e08", "#3d2b54",
-                     "#7d0434", "#fb1849", "#14aab4",
-                     "#a22abd", "#d58240", "#ac2aff"]
+    # Contrast ratios against #000000 taken from https://webaim.org/resources/contrastchecker/
+    _labels_color = [
+        "#04663c",  # Dark green  ( 2.97:1)
+        "#ff0000",  # Red         ( 5.25:1)
+        "#50ff30",  # Light green (15.68:1)
+        "#ed1339",  # Red         ( 4.75:1)
+        "#ffffff",  # White       (21.00:1)
+        "#e002e8",  # Magenta     ( 5.34:1)
+        "#ffee00",  # Yellow      (17.48:1)
+        "#00c7ff",  # Light blue  (10.61:1)
+        "#199f26",  # Green       ( 6.02:1)
+        "#563691",  # Dark purple ( 2.33:1)
+        "#848545",  # Sand  beige ( 5.42:1)
+        "#ce2fe1",  # Magenta     ( 5.11:1)
+        "#2142a6",  # Dark blue   ( 2.39:1)
+        "#3edd76",  # Light green (11.80:1)
+        "#c4c253",  # Sand yellow (11.18:1)
+        "#e8618a",  # Salmon pink ( 6.50:1)
+        "#3128a3",  # Dark blue   ( 1.96:1)
+        "#1a41db",  # Light blue  ( 2.82:1)
+        "#939e41",  # Sand beige  ( 7.20:1)
+        "#3bec02",  # Light green (13.18:1)
+        "#1c2c79",  # Dark blue   ( 1.68:1)
+        "#18584e",  # Dark teal   ( 2.54:1)
+        "#b49992",  # Pink-grey   ( 7.91:1)
+        "#e9e73a",  # Yellow      (15.95:1)
+        "#3b0e6e",  # Dark purple ( 1.47:1)
+        "#6e856f",  # Slate grey  ( 5.24:1)
+        "#637394",  # Blue-grey   ( 4.41:1)
+        "#36e05b",  # Light green (11.97:1)
+        "#530a1f",  # Dark maroon ( 1.43:1)
+        "#8179c4",  # Purple-grey ( 5.46:1)
+        "#e1320c",  # Orange-red  ( 4.66:1)
+        "#52a4df",  # Blue        ( 7.73:1)
+        "#000ab5",  # Dark blue   ( 1.71:1)
+        "#4a4242",  # Dark grey   ( 2.14:1)
+        "#0b53a5",  # Dark blue   ( 2.79:1)
+        "#b49c19",  # Sand yellow ( 7.71:1)
+        "#50e7a9",  # Light teal  (13.34:1)
+        "#bf5a42",  # Orange-grey ( 4.75:1)
+        "#fa8d8e",  # Pink        ( 9.26:1)
+        "#83839a",  # Grey        ( 5.67:1)
+        "#320fef",  # Blue        ( 2.45:1)
+        "#82ffbf",  # Light teal  (17.00:1)
+        "#360ee7",  # Blue        ( 2.37:1)
+        "#551960",  # Dark purple ( 1.69:1)
+        "#11371e",  # Dark green  ( 1.58:1)
+        "#e900c3",  # Magenta     ( 5.25:1)
+        "#a21360",  # Dark pink   ( 2.79:1)
+        "#58a601",  # Moss green  ( 6.86:1)
+        "#811c90",  # Dark purple ( 2.50:1)
+        "#235acf",  # Blue        ( 3.43:1)
+        "#49395d",  # Dark grey   ( 2.02:1)
+        "#9f89b0",  # Light grey  ( 6.67:1)
+        "#e08e08",  # Orange      ( 8.04:1)
+        "#3d2b54",  # Dark purple ( 1.67:1)
+        "#7d0434",  # Dark red    ( 1.93:1)
+        "#fb1849",  # Light red   ( 5.32:1)
+        "#14aab4",  # Light blue  ( 7.43:1)
+        "#a22abd",  # Purple      ( 3.60:1)
+        "#d58240",  # Orange      ( 7.09:1)
+        "#ac2aff",  # Purple      ( 4.52:1)
+    ]
     _seg_colormap = ["#4d0000", "#ff0000"]
     _ctl_colormap = ["#ff000099", '#ffff00']
 
@@ -209,7 +252,7 @@ class QcImage(object):
                     color = self._labels_color[index]
                     y, x = scipy.ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
                     # Draw text with a shadow
-                    x += 10
+                    x += data.shape[1] / 25
                     label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
                     label_text = ax.text(x, y, label, color=color, clip_on=True)
                     label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'),
