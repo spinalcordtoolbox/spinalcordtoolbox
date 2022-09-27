@@ -430,10 +430,15 @@ class QcImage(object):
         """
         if self.qc_report.qc_params.orientation == 'Axial':
             # If mosaic of axial slices, display orientation labels
-            ax.text(12, 6, 'A', color='yellow', size=4)
-            ax.text(12, 28, 'P', color='yellow', size=4)
-            ax.text(0, 18, 'L', color='yellow', size=4)
-            ax.text(24, 18, 'R', color='yellow', size=4)
+            text_a = ax.text(12, 6, 'A', color='yellow', size=4)
+            text_p = ax.text(12, 28, 'P', color='yellow', size=4)
+            text_l = ax.text(0, 18, 'L', color='yellow', size=4)
+            text_r = ax.text(24, 18, 'R', color='yellow', size=4)
+            # Add a black outline surrounding the text
+            text_a.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
+            text_p.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
+            text_l.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
+            text_r.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
 
     def _generate_and_save_gif(self, top_images, bottom_images, size_fig, is_mask=False):
         """
