@@ -15,6 +15,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.colors as color
+import matplotlib.patheffects as path_effects
 import portalocker
 
 from spinalcordtoolbox.image import Image
@@ -37,26 +38,16 @@ class QcImage(object):
                        'Co': 30}
     _color_bin_green = ["#ffffff", "#00ff00"]
     _color_bin_red = ["#ffffff", "#ff0000"]
-    _labels_color = ["#04663c", "#ff0000", "#50ff30",
-                     "#ed1339", "#ffffff", "#e002e8",
-                     "#ffee00", "#00c7ff", "#199f26",
-                     "#563691", "#848545", "#ce2fe1",
-                     "#2142a6", "#3edd76", "#c4c253",
-                     "#e8618a", "#3128a3", "#1a41db",
-                     "#939e41", "#3bec02", "#1c2c79",
-                     "#18584e", "#b49992", "#e9e73a",
-                     "#3b0e6e", "#6e856f", "#637394",
-                     "#36e05b", "#530a1f", "#8179c4",
-                     "#e1320c", "#52a4df", "#000ab5",
-                     "#4a4242", "#0b53a5", "#b49c19",
-                     "#50e7a9", "#bf5a42", "#fa8d8e",
-                     "#83839a", "#320fef", "#82ffbf",
-                     "#360ee7", "#551960", "#11371e",
-                     "#e900c3", "#a21360", "#58a601",
-                     "#811c90", "#235acf", "#49395d",
-                     "#9f89b0", "#e08e08", "#3d2b54",
-                     "#7d0434", "#fb1849", "#14aab4",
-                     "#a22abd", "#d58240", "#ac2aff"]
+    # Contrast ratios against #000000 taken from https://webaim.org/resources/contrastchecker/
+    _labels_color = [
+        "#ffffff",  # White       (21.00:1)
+        "#F28C28",  # Orange      ( 8.55:1)
+        "#0096FF",  # Blue        ( 6.80:1)
+        "#ffee00",  # Yellow      (17.48:1)
+        "#ff0000",  # Red         ( 5.25:1)
+        "#50ff30",  # Green       (15.68:1)
+        "#F749FD",  # Magenta     ( 7.32:1)
+    ] * 15
     _seg_colormap = ["#4d0000", "#ff0000"]
     _ctl_colormap = ["#ff000099", '#ffff00']
 
@@ -179,8 +170,9 @@ class QcImage(object):
         horiz_offset = mask.shape[1] / 50
         for coord in coord_labels:
             ax.plot(coord[1], coord[0], 'o', color='lime', markersize=5)
-            ax.text(coord[1] + horiz_offset, coord[0], str(round(mask[coord[0], coord[1]])), color='lime', fontsize=15,
-                    verticalalignment='center', clip_on=True)
+            label_text = ax.text(coord[1] + horiz_offset, coord[0], str(round(mask[coord[0], coord[1]])), color='lime',
+                                 fontsize=15, verticalalignment='center', clip_on=True)
+            label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'), path_effects.Normal()])
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
@@ -207,12 +199,11 @@ class QcImage(object):
                     color = self._labels_color[index]
                     y, x = scipy.ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
                     # Draw text with a shadow
-                    x += 10
+                    x += data.shape[1] / 25
                     label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
-                    ax.text(x, y, label, color='black', clip_on=True)
-                    x -= 0.5
-                    y -= 0.5
-                    ax.text(x, y, label, color=color, clip_on=True)
+                    label_text = ax.text(x, y, label, color=color, clip_on=True)
+                    label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'),
+                                                 path_effects.Normal()])
 
     def highlight_pmj(self, mask, ax):
         """Hook to show a rectangle where PMJ is on the slice"""
@@ -327,12 +318,15 @@ class QcImage(object):
         if self._stretch_contrast:
             img = self._func_stretch_contrast(img)
 
-        # if axial mosaic restrict width
+        # Axial views into images == A mosaic of axial slices. For QC reports, axial mosaics will often have smaller
+        # height than width (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
         if slice_orientation == 'Axial':
-            size_fig = [5, 5 * img.shape[0] / img.shape[1]]  # with dpi=300, will give 1500pix width
-        # if sagittal orientation restrict height
+            # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
+            size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+        # Sagittal views into images, on the other hand, use a single image instead of a mosaic of slices.
+        # This sagittal view will typically have H ~= W, so there is no need to adjust the dimensions of the figure.
         elif slice_orientation == 'Sagittal':
-            size_fig = [5 * img.shape[1] / img.shape[0], 5]
+            size_fig = [5, 5]
 
         fig = Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
@@ -426,10 +420,15 @@ class QcImage(object):
         """
         if self.qc_report.qc_params.orientation == 'Axial':
             # If mosaic of axial slices, display orientation labels
-            ax.text(12, 6, 'A', color='yellow', size=4)
-            ax.text(12, 28, 'P', color='yellow', size=4)
-            ax.text(0, 18, 'L', color='yellow', size=4)
-            ax.text(24, 18, 'R', color='yellow', size=4)
+            text_a = ax.text(12, 6, 'A', color='yellow', size=4)
+            text_p = ax.text(12, 28, 'P', color='yellow', size=4)
+            text_l = ax.text(0, 18, 'L', color='yellow', size=4)
+            text_r = ax.text(24, 18, 'R', color='yellow', size=4)
+            # Add a black outline surrounding the text
+            text_a.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
+            text_p.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
+            text_l.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
+            text_r.set_path_effects([path_effects.Stroke(linewidth=1, foreground='black'), path_effects.Normal()])
 
     def _generate_and_save_gif(self, top_images, bottom_images, size_fig, is_mask=False):
         """
