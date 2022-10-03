@@ -15,6 +15,8 @@
 
 import os
 
+import logging
+
 from spinalcordtoolbox.registration import algorithms
 
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
@@ -22,6 +24,8 @@ from spinalcordtoolbox.utils.fs import extract_fname, rmtree, tmp_create
 from spinalcordtoolbox.utils.shell import printv
 from spinalcordtoolbox.utils.sys import run_proc
 from spinalcordtoolbox.scripts import sct_apply_transfo
+
+logger = logging.getLogger(__name__)
 
 
 def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg='', fname_dest_seg='', fname_src_label='',
@@ -339,6 +343,8 @@ def register(src, dest, step, param):
 
     # # landmark-based registration
     if step.type in ['label']:
+        if step.algo:
+            logger.warning(f"Specifying 'algo={step.algo}' has no effect for 'type=label' registration.")
         warp_forward_out, warp_inverse_out = algorithms.register_step_label(
             src=src,
             dest=dest,
