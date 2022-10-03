@@ -424,17 +424,18 @@ def register(src, dest, step, param):
                '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     else:
         # rename warping fields
-        if (step.algo.lower() in ['rigid', 'affine', 'translation'] and
+        if step.type in ['label']:
+            # if label-based registration is used --> outputs .txt file
+            warp_forward = 'warp_forward_' + str(step.step) + '.txt'
+            os.rename(warp_forward_out, warp_forward)
+            warp_inverse = '-warp_forward_' + str(step.step) + '.txt'
+        elif (step.algo.lower() in ['rigid', 'affine', 'translation'] and
                 step.slicewise == '0'):
             # if ANTs is used with affine/rigid --> outputs .mat file
             warp_forward = 'warp_forward_' + str(step.step) + '.mat'
             os.rename(warp_forward_out, warp_forward)
             warp_inverse = '-warp_forward_' + str(step.step) + '.mat'
-        elif step.type in ['label']:
-            # if label-based registration is used --> outputs .txt file
-            warp_forward = 'warp_forward_' + str(step.step) + '.txt'
-            os.rename(warp_forward_out, warp_forward)
-            warp_inverse = '-warp_forward_' + str(step.step) + '.txt'
+
         else:
             warp_forward = 'warp_forward_' + str(step.step) + '.nii.gz'
             warp_inverse = 'warp_inverse_' + str(step.step) + '.nii.gz'
