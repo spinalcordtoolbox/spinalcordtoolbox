@@ -136,10 +136,10 @@ def main():
     # downsample data
     printv('\nDownsample data...', verbose)
     sct_resample.main([
-        "-i", "data_up_smooth.nii",
+        "-i", "data_up_smooth.nii.gz",
         "-x", "linear",
         "-vox", str(nx) + 'x' + str(ny) + 'x' + str(nz),
-        "-o", "data_up_smooth_down.nii",
+        "-o", "data_up_smooth_down.nii.gz",
         "-v", "0",
     ])
 
@@ -148,7 +148,7 @@ def main():
 
     # Generate output files
     printv('\nGenerate output files...')
-    fname_out = generate_output_file(os.path.join(path_tmp, "data_up_smooth_down.nii"), '' + file_data + suffix + ext_data)
+    fname_out = generate_output_file(os.path.join(path_tmp, "data_up_smooth_down.nii.gz"), '' + file_data + suffix + ext_data)
 
     # Delete temporary files
     if remove_temp_files == 1:
