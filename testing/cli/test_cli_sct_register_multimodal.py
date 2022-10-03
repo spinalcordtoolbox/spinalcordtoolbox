@@ -118,3 +118,33 @@ def test_sct_register_multimodal_with_softmask(tmp_path):
     # im_t2_seg, _, _ = deep_segmentation_spinalcord(Image(fname_t2), contrast_type='t2', ctr_algo='svm')
     # dice_score_t1_reg = dice(im_t2_seg.data, im_t1_reg_seg.data)
     # assert dice_score_t1_reg > 0.9
+
+
+@pytest.mark.parametrize('algo', [',algo=rigid', ''])
+def test_sct_register_multimodal_with_labels(caplog, tmp_path, algo):
+    """
+    Test registration with '-param type=label' set.
+    
+    NB: Label-based registration is a little different from normal registration.
+    The path of execution goes from 'register()' onto 'register_step_label()'
+    and then 'register_landmarks()', which is its own ITK-based landmarks
+    registration function that entirely ignores the choice of 'algo'.
+
+    Because of this, we run registration with and without 'algo', and ensure
+    that 'algo' really is ignored, but that registration doesn't actually fail.
+
+    See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3893.
+    """
+    # NB: Registering the t2 image with itself is non-representative, but it's the only
+    #     sct_testing_data image we have that has an associated vertebral label file.
+    sct_register_multimodal.main(['-i', sct_test_path('t2', 't2.nii.gz'),
+                                  '-d', sct_test_path('t2', 't2.nii.gz'),
+                                  '-ilabel', sct_test_path('t2', 'labels.nii.gz'),
+                                  '-dlabel', sct_test_path('t2', 'labels.nii.gz'),
+                                  '-param', 'step=0,type=label' + algo,
+                                  '-ofolder', str(tmp_path)])
+    for file in ['t2_dest_reg.nii.gz', 't2_src_reg.nii.gz', 'warp_t22t2.nii.gz']:
+        assert os.path.isfile(tmp_path / file)
+    if algo:
+        assert "has no effect for 'type=label' registration." in caplog.text
+
