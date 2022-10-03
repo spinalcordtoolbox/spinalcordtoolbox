@@ -23,6 +23,7 @@ import numpy as np
 from spinalcordtoolbox.image import Image, generate_output_file, convert
 from spinalcordtoolbox.utils.sys import init_sct, __data_dir__, printv
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, rmtree, extract_fname
+from spinalcordtoolbox.utils.shell import display_viewer_syntax
 
 from spinalcordtoolbox.scripts import sct_resample, sct_smooth_spinalcord
 
@@ -160,8 +161,7 @@ def main():
     printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's')
 
     # to view results
-    printv('\nTo view results, type:')
-    printv('fslview ' + file_data + ' ' + file_data + suffix + ' &\n')
+    display_viewer_syntax([fname_data, fname_out], verbose=verbose)
 
 
 # printv(usage)
