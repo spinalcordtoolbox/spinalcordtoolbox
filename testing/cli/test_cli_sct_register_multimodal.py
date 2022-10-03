@@ -124,7 +124,7 @@ def test_sct_register_multimodal_with_softmask(tmp_path):
 def test_sct_register_multimodal_with_labels(caplog, tmp_path, algo):
     """
     Test registration with '-param type=label' set.
-    
+
     NB: Label-based registration is a little different from normal registration.
     The path of execution goes from 'register()' onto 'register_step_label()'
     and then 'register_landmarks()', which is its own ITK-based landmarks
@@ -147,4 +147,3 @@ def test_sct_register_multimodal_with_labels(caplog, tmp_path, algo):
         assert os.path.isfile(tmp_path / file)
     if algo:
         assert "has no effect for 'type=label' registration." in caplog.text
-
