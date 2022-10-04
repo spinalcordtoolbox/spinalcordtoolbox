@@ -128,12 +128,12 @@ def test_sct_register_multimodal_with_labels(capsys, tmp_path, algo):
     NB: Label-based registration is a little different from normal registration.
     The path of execution goes from 'register()' onto 'register_step_label()'
     and then 'register_landmarks()', which is its own ITK-based landmarks
-    registration function that entirely ignores the choice of 'algo'.
+    registration function separate from ANTs that entirely ignores the choice of 'algo'.
 
-    Because of this, we run registration with and without 'algo', and ensure
+    Because of this, we run registration with and without 'algo' set, and ensure
     that 'algo' really is ignored, but that registration doesn't actually fail.
 
-    See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3893.
+    See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3893 for bug context.
     """
     # NB: Registering the t2 image with itself is non-representative, but it's the only
     #     sct_testing_data image we have that has an associated vertebral label file.
