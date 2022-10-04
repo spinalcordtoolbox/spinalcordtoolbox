@@ -17,6 +17,7 @@ import warnings
 import logging
 import math
 from typing import Sequence, Tuple
+from copy import deepcopy
 
 import nibabel as nib
 import numpy as np
@@ -1749,7 +1750,8 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
 
     # pad any input images that are smaller than the max shape
     # (the stitching tool can handle mismatched image shapes natively, but we have to manage it ourselves)
-    for im in ims_in:
+    ims_in_padded = deepcopy(ims_in)
+    for im in ims_in_padded:
         # the images get concatenated in the z direction,
         # so we only need to pad in the x, y directions
         x_diff = shape_max[0] - im.data.shape[0]
@@ -1767,7 +1769,7 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
 
     # create a naively-stitched (RPI) image for comparison in QC report
     # NB: we reverse the list of images because numpy's origin location (bottom) is are different than nibabel's (top)
-    im_concat_list = list(reversed(ims_in))
+    im_concat_list = list(reversed(ims_in_padded))
     for i in range(1, (len(im_concat_list)*2)-1, 2):
         im_concat_list.insert(i, im_blank)  # insert blank 'spacer' images in between each image
     im_concat = concat_data(im_concat_list, dim=2)
