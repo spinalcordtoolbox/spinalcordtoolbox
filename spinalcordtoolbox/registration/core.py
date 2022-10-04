@@ -15,6 +15,8 @@
 
 import os
 
+import logging
+
 from spinalcordtoolbox.registration import algorithms
 
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file
@@ -22,6 +24,8 @@ from spinalcordtoolbox.utils.fs import extract_fname, rmtree, tmp_create
 from spinalcordtoolbox.utils.shell import printv
 from spinalcordtoolbox.utils.sys import run_proc
 from spinalcordtoolbox.scripts import sct_apply_transfo
+
+logger = logging.getLogger(__name__)
 
 
 def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg='', fname_dest_seg='', fname_src_label='',
@@ -339,6 +343,8 @@ def register(src, dest, step, param):
 
     # # landmark-based registration
     if step.type in ['label']:
+        if step.algo:
+            printv(f"Parameter 'algo={step.algo}' has no effect for 'type=label' registration.", type='warning')
         warp_forward_out, warp_inverse_out = algorithms.register_step_label(
             src=src,
             dest=dest,
@@ -424,17 +430,11 @@ def register(src, dest, step, param):
                '\nERROR: ANTs failed. Exit program.\n', 1, 'error')
     else:
         # rename warping fields
-        if (step.algo.lower() in ['rigid', 'affine', 'translation'] and
-                step.slicewise == '0'):
-            # if ANTs is used with affine/rigid --> outputs .mat file
-            warp_forward = 'warp_forward_' + str(step.step) + '.mat'
+        _, _, output_ext = extract_fname(warp_forward_out)
+        if output_ext in ['.txt', '.mat']:
+            warp_forward = 'warp_forward_' + str(step.step) + output_ext
             os.rename(warp_forward_out, warp_forward)
-            warp_inverse = '-warp_forward_' + str(step.step) + '.mat'
-        elif step.type in ['label']:
-            # if label-based registration is used --> outputs .txt file
-            warp_forward = 'warp_forward_' + str(step.step) + '.txt'
-            os.rename(warp_forward_out, warp_forward)
-            warp_inverse = '-warp_forward_' + str(step.step) + '.txt'
+            warp_inverse = '-warp_forward_' + str(step.step) + output_ext
         else:
             warp_forward = 'warp_forward_' + str(step.step) + '.nii.gz'
             warp_inverse = 'warp_inverse_' + str(step.step) + '.nii.gz'
