@@ -121,7 +121,7 @@ def test_sct_register_multimodal_with_softmask(tmp_path):
 
 
 @pytest.mark.parametrize('algo', [',algo=rigid', ''])
-def test_sct_register_multimodal_with_labels(caplog, tmp_path, algo):
+def test_sct_register_multimodal_with_labels(capsys, tmp_path, algo):
     """
     Test registration with '-param type=label' set.
 
@@ -146,4 +146,4 @@ def test_sct_register_multimodal_with_labels(caplog, tmp_path, algo):
     for file in ['t2_dest_reg.nii.gz', 't2_src_reg.nii.gz', 'warp_t22t2.nii.gz']:
         assert os.path.isfile(tmp_path / file)
     if algo:
-        assert "has no effect for 'type=label' registration." in caplog.text
+        assert "has no effect for 'type=label' registration." in capsys.readouterr().out
