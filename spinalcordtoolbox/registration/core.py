@@ -344,7 +344,7 @@ def register(src, dest, step, param):
     # # landmark-based registration
     if step.type in ['label']:
         if step.algo:
-            printv(f"Specifying 'algo={step.algo}' has no effect for 'type=label' registration.", type='warning')
+            printv(f"Parameter 'algo={step.algo}' has no effect for 'type=label' registration.", type='warning')
         warp_forward_out, warp_inverse_out = algorithms.register_step_label(
             src=src,
             dest=dest,
