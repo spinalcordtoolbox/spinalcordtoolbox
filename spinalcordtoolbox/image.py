@@ -1733,14 +1733,14 @@ def stitch_images(fnames_in: list, fname_out='stitched.nii.gz'):
 
 def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple[Image, Image]:
     """
-    Pad input and output images to the same resolution, so that a QC report can compare between the output of
+    Pad input and output images to the same dimensions, so that a QC report can compare between the output of
     'stitching', vs. the naive output of concatenating the input images together.
 
     :param ims_in: A sequence of Image objects (i.e. the input images that were stitched).
     :param im_out: An Image object (i.e. the output stitched image).
-    :return: Two Image objects with the same resolution, such that they can be toggled back and forth in a QC report:
+    :return: Two Image objects with the same dimensions, such that they can be toggled back and forth in a QC report:
                1. A naive concatenation of `ims_in` (so that the images can be displayed side by side)
-               2. A padded version of `im_out` (so that it matches the resolution of the naive concatenation)
+               2. A padded version of `im_out` (so that it matches the dimensions of the naive concatenation)
     """
     # find the max shape of all input images
     shape_max = [max(im.data.shape[0] for im in ims_in),
