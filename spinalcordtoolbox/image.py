@@ -1744,13 +1744,17 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image):
     # pad any input images that are smaller than the max shape
     # (the stitching tool can handle mismatched image shapes natively, but we have to manage it ourselves)
     for im in ims_in:
-        for i in [0, 1]:
-            diff = shape_max[i] - im.data.shape[i]
-            if diff:
-                padding = [[0, 0], [0, 0], [0, 0]]
-                padding[i][0] = round(diff / 2)
-                padding[i][1] = diff // 2
-                im.data = np.pad(im.data, padding)
+        # the images get concatenated in the z direction,
+        # so we only need to pad in the x, y directions
+        x_diff = shape_max[0] - im.data.shape[0]
+        y_diff = shape_max[1] - im.data.shape[1]
+        if (x_diff, y_diff) != (0, 0):
+            # note that (diff // 2) + ((diff + 1) // 2) == diff
+            im.data = np.pad(im.data, [
+                [x_diff // 2, (x_diff + 1) // 2],
+                [y_diff // 2, (y_diff + 1) // 2],
+                [0, 0],
+            ])
 
     # create a 1-voxel blank image for visual clarity
     im_blank = Image([shape_max[0], shape_max[1], 1])
