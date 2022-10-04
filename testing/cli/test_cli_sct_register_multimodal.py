@@ -145,5 +145,6 @@ def test_sct_register_multimodal_with_labels(capsys, tmp_path, algo):
                                   '-ofolder', str(tmp_path)])
     for file in ['t2_dest_reg.nii.gz', 't2_src_reg.nii.gz', 'warp_t22t2.nii.gz']:
         assert os.path.isfile(tmp_path / file)
-    if algo:
-        assert "has no effect for 'type=label' registration." in capsys.readouterr().out
+    # NB: Right now, a warning will be thrown regardless of whether `algo` is explicitly
+    #     specified by the user, because `algo` has a default, non-empty setting.
+    assert "has no effect for 'type=label' registration." in capsys.readouterr().out
