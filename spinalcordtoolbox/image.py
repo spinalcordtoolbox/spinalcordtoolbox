@@ -1762,7 +1762,7 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
                 [0, 0],
             ])
 
-    # create a 1-voxel blank image for visual clarity
+    # create a 1-voxel blank image, to be used to create a gap between each input image to distinguish between them
     im_blank = Image([shape_max[0], shape_max[1], 1])
 
     # create a naively-stitched (RPI) image for comparison in QC report
