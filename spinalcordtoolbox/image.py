@@ -358,11 +358,9 @@ class Image(object):
         self.hdr = value
 
     def __deepcopy__(self, memo):
-        from copy import deepcopy
         return type(self)(deepcopy(self.data, memo), deepcopy(self.hdr, memo), deepcopy(self.orientation, memo), deepcopy(self.absolutepath, memo), deepcopy(self.dim, memo))
 
     def copy(self, image=None):
-        from copy import deepcopy
         if image is not None:
             self.affine = deepcopy(image.affine)
             self.data = deepcopy(image.data)
