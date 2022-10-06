@@ -110,7 +110,7 @@ def dilate(data, size, shape, dim=None):
         im_out.data = dilate(data.data, size, shape, dim)
         return im_out
     else:
-        return dilation(data, selem=_get_selem(shape, size, dim), out=None)
+        return dilation(data, footprint=_get_selem(shape, size, dim), out=None)
 
 
 def erode(data, size, shape, dim=None):
@@ -130,7 +130,7 @@ def erode(data, size, shape, dim=None):
         im_out.data = erode(data.data, size, shape, dim)
         return im_out
     else:
-        return erosion(data, selem=_get_selem(shape, size, dim), out=None)
+        return erosion(data, footprint=_get_selem(shape, size, dim), out=None)
 
 
 def mutual_information(x, y, nbins=32, normalized=False):
