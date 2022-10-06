@@ -3,6 +3,24 @@
 Studies using SCT
 #################
 
+Summary graphs
+==============
+
+The graphs below summarize the pathologies, tools, species, and count per year of SCT citations:
+
+.. raw:: html
+
+       <iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSwyEvoiTOMflrJveD277xWYSb_1QSwkpxWsZoMSucgHBS7BHcgfvzGG21--1bLRFO_DIV4EhL9lBl2/pubchart?oid=1220039972&amp;format=interactive"></iframe>
+
+       <iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSwyEvoiTOMflrJveD277xWYSb_1QSwkpxWsZoMSucgHBS7BHcgfvzGG21--1bLRFO_DIV4EhL9lBl2/pubchart?oid=366269532&amp;format=interactive"></iframe>
+
+       <iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSwyEvoiTOMflrJveD277xWYSb_1QSwkpxWsZoMSucgHBS7BHcgfvzGG21--1bLRFO_DIV4EhL9lBl2/pubchart?oid=819409616&amp;format=interactive"></iframe>
+
+       <iframe width="600" height="371" seamless frameborder="0" scrolling="no" src="https://docs.google.com/spreadsheets/d/e/2PACX-1vSwyEvoiTOMflrJveD277xWYSb_1QSwkpxWsZoMSucgHBS7BHcgfvzGG21--1bLRFO_DIV4EhL9lBl2/pubchart?oid=1302662251&amp;format=interactive"></iframe>
+
+Citation list
+=============
+
 The following studies have used SCT:
 
 2022
