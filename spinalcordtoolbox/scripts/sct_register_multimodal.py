@@ -376,16 +376,16 @@ def main(argv: Sequence[str]):
 
     # printv(arguments)
     printv('\nInput parameters:')
-    printv('  Source .............. ' + fname_src + f" {Image(fname_src).data.shape}")
-    printv('  Destination ......... ' + fname_dest + f" {Image(fname_dest).data.shape}")
-    printv('  Init transfo ........ ' + fname_initwarp)
-    printv('  Mask ................ ' + fname_mask)
-    printv('  Output name ......... ' + fname_output)
-    # printv('  Algorithm ........... '+paramregmulti.algo)
-    # printv('  Number of iterations  '+paramregmulti.iter)
-    # printv('  Metric .............. '+paramregmulti.metric)
-    printv('  Remove temp files ... ' + str(remove_temp_files))
-    printv('  Verbose ............. ' + str(verbose))
+    printv(f'  Source .............. {fname_src} {Image(fname_src).data.shape}')
+    printv(f'  Destination ......... {fname_dest} {Image(fname_dest).data.shape}')
+    printv(f'  Init transfo ........ {fname_initwarp}')
+    printv(f'  Mask ................ {fname_mask}')
+    printv(f'  Output name ......... {fname_output}')
+    # printv(f'  Algorithm ........... {paramregmulti.algo}')
+    # printv(f'  Number of iterations  {paramregmulti.iter}')
+    # printv(f'  Metric .............. {paramregmulti.metric}')
+    printv(f'  Remove temp files ... {remove_temp_files}')
+    printv(f'  Verbose ............. {verbose}')
 
     # update param
     param.verbose = verbose
