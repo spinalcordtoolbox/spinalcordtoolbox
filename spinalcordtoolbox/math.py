@@ -41,7 +41,7 @@ def _get_footprint(shape, size, dim):
     elif shape == 'ball':
         footprint = ball(size)
     else:
-        ValueError("This shape is not a valid entry: {}".format(shape))
+        raise ValueError("This shape is not a valid entry: {}".format(shape))
 
     if not (len(footprint.shape) in [2, 3] and footprint.shape[0] == footprint.shape[1]):
         raise ValueError("Invalid shape")
