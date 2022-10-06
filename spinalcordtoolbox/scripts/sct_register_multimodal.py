@@ -42,7 +42,7 @@ from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.registration.algorithms import Paramreg, ParamregMultiStep
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
-from spinalcordtoolbox.image import check_dim
+from spinalcordtoolbox.image import check_dim, Image
 
 from spinalcordtoolbox.registration.core import register_wrapper
 
@@ -376,16 +376,16 @@ def main(argv: Sequence[str]):
 
     # printv(arguments)
     printv('\nInput parameters:')
-    printv('  Source .............. ' + fname_src)
-    printv('  Destination ......... ' + fname_dest)
-    printv('  Init transfo ........ ' + fname_initwarp)
-    printv('  Mask ................ ' + fname_mask)
-    printv('  Output name ......... ' + fname_output)
-    # printv('  Algorithm ........... '+paramregmulti.algo)
-    # printv('  Number of iterations  '+paramregmulti.iter)
-    # printv('  Metric .............. '+paramregmulti.metric)
-    printv('  Remove temp files ... ' + str(remove_temp_files))
-    printv('  Verbose ............. ' + str(verbose))
+    printv(f'  Source .............. {fname_src} {Image(fname_src).data.shape}')
+    printv(f'  Destination ......... {fname_dest} {Image(fname_dest).data.shape}')
+    printv(f'  Init transfo ........ {fname_initwarp}')
+    printv(f'  Mask ................ {fname_mask}')
+    printv(f'  Output name ......... {fname_output}')
+    # printv(f'  Algorithm ........... {paramregmulti.algo}')
+    # printv(f'  Number of iterations  {paramregmulti.iter}')
+    # printv(f'  Metric .............. {paramregmulti.metric}')
+    printv(f'  Remove temp files ... {remove_temp_files}')
+    printv(f'  Verbose ............. {verbose}')
 
     # update param
     param.verbose = verbose
