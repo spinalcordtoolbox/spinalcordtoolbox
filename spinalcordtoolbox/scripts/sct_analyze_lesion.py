@@ -19,7 +19,7 @@ from skimage.measure import label
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
@@ -554,11 +554,20 @@ def main(argv: Sequence[str]):
     if rm_tmp:
         rmtree(lesion_obj.tmp_dir)
 
-    printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
     if fname_ref is not None:
-        printv('fsleyes ' + fname_mask + ' ' + os.path.join(path_results, lesion_obj.fname_label) + ' -cm red-yellow -a 70.0 & \n', verbose, 'info')
+        display_viewer_syntax(
+            files=[fname_mask, os.path.join(path_results, lesion_obj.fname_label)],
+            colormaps=['gray', 'red-yellow'],
+            opacities=['1.0', '0.7'],
+            verbose=verbose
+        )
     else:
-        printv('fsleyes ' + os.path.join(path_results, lesion_obj.fname_label) + ' -cm red-yellow -a 70.0 & \n', verbose, 'info')
+        display_viewer_syntax(
+            files=[os.path.join(path_results, lesion_obj.fname_label)],
+            colormaps=['red-yellow'],
+            opacities=['0.7'],
+            verbose=verbose
+        )
 
 
 if __name__ == "__main__":

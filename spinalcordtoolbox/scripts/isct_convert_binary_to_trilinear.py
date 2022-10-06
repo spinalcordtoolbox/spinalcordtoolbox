@@ -23,6 +23,7 @@ import numpy as np
 from spinalcordtoolbox.image import Image, generate_output_file, convert
 from spinalcordtoolbox.utils.sys import init_sct, __data_dir__, printv
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, rmtree, extract_fname
+from spinalcordtoolbox.utils.shell import display_viewer_syntax
 
 from spinalcordtoolbox.scripts import sct_resample, sct_smooth_spinalcord
 
@@ -136,10 +137,10 @@ def main():
     # downsample data
     printv('\nDownsample data...', verbose)
     sct_resample.main([
-        "-i", "data_up_smooth.nii",
+        "-i", "data_up_smooth.nii.gz",
         "-x", "linear",
         "-vox", str(nx) + 'x' + str(ny) + 'x' + str(nz),
-        "-o", "data_up_smooth_down.nii",
+        "-o", "data_up_smooth_down.nii.gz",
         "-v", "0",
     ])
 
@@ -148,7 +149,7 @@ def main():
 
     # Generate output files
     printv('\nGenerate output files...')
-    fname_out = generate_output_file(os.path.join(path_tmp, "data_up_smooth_down.nii"), '' + file_data + suffix + ext_data)
+    fname_out = generate_output_file(os.path.join(path_tmp, "data_up_smooth_down.nii.gz"), '' + file_data + suffix + ext_data)
 
     # Delete temporary files
     if remove_temp_files == 1:
@@ -160,8 +161,7 @@ def main():
     printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's')
 
     # to view results
-    printv('\nTo view results, type:')
-    printv('fslview ' + file_data + ' ' + file_data + suffix + ' &\n')
+    display_viewer_syntax([fname_data, fname_out], verbose=verbose)
 
 
 # printv(usage)
