@@ -10,7 +10,6 @@
 # About the license: see the file LICENSE.TXT
 ###############################################################################
 
-import sys
 import os
 import logging
 from typing import Mapping
@@ -18,7 +17,7 @@ from hashlib import md5
 
 import pytest
 
-from spinalcordtoolbox.utils.sys import sct_dir_local_path, sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.download import install_named_dataset
 
 
