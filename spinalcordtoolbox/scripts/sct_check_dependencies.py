@@ -339,6 +339,7 @@ def main(argv: Sequence[str]):
         print_line("Skipping PropSeg compatibility check ")
         print("[  ] (Not supported on 'native' Windows (without WSL))")
     else:
+        print_line('Check PropSeg compatibility with OS ')
         status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
         if status in (0, 1):
             print_ok()
