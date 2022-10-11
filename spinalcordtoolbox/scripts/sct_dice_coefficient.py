@@ -117,8 +117,8 @@ def main(argv: Sequence[str]):
     # copy input files to tmp directory
     fname_input1_tmp = 'tmp1_' + ''.join(extract_fname(fname_input1)[1:])
     fname_input2_tmp = 'tmp2_' + ''.join(extract_fname(fname_input2)[1:])
-    copy(fname_input1, os.path.join(tmp_dir, fname_input1_tmp))
-    copy(fname_input2, os.path.join(tmp_dir, fname_input2_tmp))
+    copy(fname_input1, os.path.join(tmp_dir, fname_input1_tmp), verbose=verbose)
+    copy(fname_input2, os.path.join(tmp_dir, fname_input2_tmp), verbose=verbose)
     fname_input1 = fname_input1_tmp
     fname_input2 = fname_input2_tmp
 
@@ -174,11 +174,11 @@ def main(argv: Sequence[str]):
 
     # copy output file into original directory
     if arguments.o is not None:
-        copy(os.path.join(tmp_dir, fname_output + ext), os.path.join(path_output, fname_output + ext))
+        copy(os.path.join(tmp_dir, fname_output + ext), os.path.join(path_output, fname_output + ext), verbose=verbose)
 
     # remove tmp_dir
     if rm_tmp:
-        rmtree(tmp_dir)
+        rmtree(tmp_dir, verbose)
 
     printv(output, verbose)
 
