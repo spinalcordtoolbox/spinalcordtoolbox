@@ -9,7 +9,7 @@ from spinalcordtoolbox.utils.fs import tmp_create, rmtree
 from spinalcordtoolbox.scripts import sct_dice_coefficient
 
 
-def test_ants_registration():
+def test_ants_registration(verbose=1):
     """
     This function test the integrity of ANTs output, given that some versions of ANTs give a wrong BSpline transform,
     notably when using sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField.
@@ -20,7 +20,6 @@ def test_ants_registration():
     dice_acceptable = 0.39  # computed DICE should be 0.931034
     test_passed = 0
     remove_temp_files = 1
-    verbose = 1
 
     path_tmp = tmp_create(basename="test_ants")
 
