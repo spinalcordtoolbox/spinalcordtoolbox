@@ -28,6 +28,7 @@ from typing import Sequence
 
 import requirements
 
+from spinalcordtoolbox.testing.isct_test_ants import test_ants_registration
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
 from spinalcordtoolbox.utils.sys import (sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__,
                                          __data_dir__, set_loglevel, ANSIColors16)
@@ -322,8 +323,7 @@ def main(argv: Sequence[str]):
 
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
-    cmd = 'isct_test_ants'
-    status, output = run_proc(cmd, verbose=0, raise_exception=False)
+    status = test_ants_registration()
     if status == 0:
         print_ok()
     else:
