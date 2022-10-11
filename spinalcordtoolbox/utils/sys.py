@@ -122,7 +122,7 @@ def set_loglevel(verbose):
     """
     dict_log_levels = {
         '0': 'WARNING', '1': 'INFO', '2': 'DEBUG',  # Older scheme
-        'False': 'INFO', 'True': 'DEBUG',           # Newer scheme (See issue #2676)
+        'False': 'WARNING', 'True': 'DEBUG',        # Newer scheme (See issue #2676)
     }
 
     if str(verbose) not in dict_log_levels.keys():
