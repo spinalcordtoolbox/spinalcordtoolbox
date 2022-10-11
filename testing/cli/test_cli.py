@@ -23,5 +23,5 @@ def test_calling_scripts_with_no_args_shows_usage(capsys, script):
         mod.main(argv=[])
     captured = capsys.readouterr()
 
-    assert system_err.value.code is 2
+    assert system_err.value.code == 2
     assert 'usage' in captured.err.lower()
