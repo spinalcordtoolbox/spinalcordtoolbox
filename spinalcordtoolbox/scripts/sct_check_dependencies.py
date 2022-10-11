@@ -323,7 +323,7 @@ def main(argv: Sequence[str]):
 
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
-    status = test_ants_registration()
+    status = test_ants_registration(verbose=0)
     if status == 0:
         print_ok()
     else:
