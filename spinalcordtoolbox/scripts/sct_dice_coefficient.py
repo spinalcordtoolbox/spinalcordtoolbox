@@ -114,19 +114,21 @@ def main(argv: Sequence[str]):
     tmp_dir = tmp_create()  # create tmp directory
     tmp_dir = os.path.abspath(tmp_dir)
 
-    # copy input files to tmp directory
+    # copy header of im_1 to im_2
+    im_1 = Image(fname_input1)
+    im_2 = Image(fname_input2)
+    im_2.header = im_1.header.copy()
+
+    # save input files to tmp directory
     fname_input1_tmp = 'tmp1_' + ''.join(extract_fname(fname_input1)[1:])
     fname_input2_tmp = 'tmp2_' + ''.join(extract_fname(fname_input2)[1:])
-    copy(fname_input1, os.path.join(tmp_dir, fname_input1_tmp), verbose=verbose)
-    copy(fname_input2, os.path.join(tmp_dir, fname_input2_tmp), verbose=verbose)
+    im_1.save(os.path.join(tmp_dir, fname_input1_tmp))
+    im_2.save(os.path.join(tmp_dir, fname_input2_tmp))
     fname_input1 = fname_input1_tmp
     fname_input2 = fname_input2_tmp
 
     curdir = os.getcwd()
     os.chdir(tmp_dir)  # go to tmp directory
-
-    im_1 = Image(fname_input1)
-    im_2 = Image(fname_input2)
 
     if arguments.bin is not None:
         im_1.data = binarize(im_1.data, 0)
@@ -140,10 +142,6 @@ def main(argv: Sequence[str]):
         # Use binarized images in subsequent steps
         fname_input1 = fname_input1_bin
         fname_input2 = fname_input2_bin
-
-    # copy header of im_1 to im_2
-    im_2.header = im_1.header
-    im_2.save()
 
     cmd = ['isct_dice_coefficient', fname_input1, fname_input2]
 
