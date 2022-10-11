@@ -56,8 +56,6 @@ setup(
         console_scripts=[
             '{}=spinalcordtoolbox.compat.launcher:main'.format(x) for x in
             [
-                'isct_convert_binary_to_trilinear',
-                'isct_minc2volume-viewer',
                 'isct_test_ants',
                 'sct_analyze_lesion',
                 'sct_analyze_texture',
