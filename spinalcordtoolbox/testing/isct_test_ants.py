@@ -103,7 +103,7 @@ def test_ants_registration(verbose=1):
     # Delete temporary files
     if remove_temp_files == 1:
         printv('\nDelete temporary files...', verbose)
-        rmtree(path_tmp)
+        rmtree(path_tmp, verbose)
 
     # output result for parent function
     if test_passed:
