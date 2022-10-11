@@ -149,8 +149,8 @@ class AnalyzeLeion:
         self.distrib_matrix_dct = {}
 
         # output names
-        self.pickle_name = extract_fname(self.fname_mask)[1] + '_analyzis.pkl'
-        self.excel_name = extract_fname(self.fname_mask)[1] + '_analyzis.xls'
+        self.pickle_name = extract_fname(self.fname_mask)[1] + '_analysis.pkl'
+        self.excel_name = extract_fname(self.fname_mask)[1] + '_analysis.xls'
 
     def analyze(self):
         self.ifolder2tmp()
