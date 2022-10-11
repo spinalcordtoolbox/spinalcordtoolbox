@@ -349,3 +349,18 @@ def install_data(url, dest_folder, keep=False):
     logger.info("Removing temporary folders...")
     shutil.rmtree(os.path.dirname(tmp_file))
     shutil.rmtree(extraction_folder)
+
+
+def install_named_dataset(dataset_name, dest_folder=None, keep=False):
+    """
+    A light wrapper for the 'install_data' function to allow downstream consumers to download
+    datasets using only the dataset's name (i.e. without needing to access DATASET_DICT fields).
+    """
+    if dataset_name not in DATASET_DICT.keys():
+        raise ValueError(f"{dataset_name} is not contained in list of datasets. Choose from: {DATASET_DICT.keys()}")
+
+    urls = DATASET_DICT[dataset_name]["mirrors"]
+    if dest_folder is None:
+        dest_folder = DATASET_DICT[dataset_name]["default_location"]
+
+    install_data(urls, dest_folder, keep)

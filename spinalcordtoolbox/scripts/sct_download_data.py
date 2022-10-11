@@ -10,11 +10,10 @@
 # About the license: see the file LICENSE.TXT
 ###############################################################################
 
-import os
 import sys
 from typing import Sequence
 
-from spinalcordtoolbox.download import install_data, DATASET_DICT
+from spinalcordtoolbox.download import install_named_dataset, DATASET_DICT
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
@@ -69,14 +68,7 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
-    data_name = arguments.d
-    if arguments.o is not None:
-        dest_folder = arguments.o
-    else:
-        dest_folder = DATASET_DICT[data_name]['default_location']
-
-    url = DATASET_DICT[data_name]["mirrors"]
-    install_data(url, dest_folder, keep=arguments.k)
+    install_named_dataset(arguments.d, dest_folder=arguments.o, keep=arguments.k)
 
     printv('Done!\n', verbose)
 
