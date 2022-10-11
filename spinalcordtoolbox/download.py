@@ -10,8 +10,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
-from spinalcordtoolbox.utils import sct_progress_bar, tmp_create
-from spinalcordtoolbox.utils.sys import __sct_dir__, __bin_dir__
+from spinalcordtoolbox.utils.fs import tmp_create
+from spinalcordtoolbox.utils.sys import sct_progress_bar, __sct_dir__, __bin_dir__
 
 logger = logging.getLogger(__name__)
 
