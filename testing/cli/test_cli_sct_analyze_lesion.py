@@ -70,7 +70,7 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
 
     # Load analysis results from pickled pandas.Dataframe
     _, fname, _ = extract_fname(path_lesion)
-    with open(tmp_path/f"{fname}_analyzis.pkl", 'rb') as f:
+    with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
         measurements = pickle.load(f)['measures']
 
     # Validate analysis results
