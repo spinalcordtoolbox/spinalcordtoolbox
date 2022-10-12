@@ -437,18 +437,6 @@ Internal Commands
 These scripts are tailored to the developers.
 
 
-isct_convert_binary_to_trilinear
-================================
-
-.. program-output:: isct_convert_binary_to_trilinear -h
-
-
-isct_minc2volume-viewer
-=======================
-
-.. program-output:: isct_minc2volume-viewer -h
-
-
 isct_test_ants
 ==============
 
