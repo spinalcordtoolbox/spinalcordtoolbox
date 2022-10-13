@@ -1771,7 +1771,10 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
     im_concat_list[::2] = reversed(ims_in_padded)             # Assign so that: [im_in1, im_blank, im_in2, im_blank ...]
     im_concat = concat_data(im_concat_list, dim=2)            # Concatenate the input images and spacer images together
 
-    # We can't assume that the [z] dimensions match, because concatenating and stitching produce very
+    # We assume that the [x,y] dimensions match for both of the two QC images
+    assert im_concat.data.shape[0:2] == im_out.data.shape[0:2]
+
+    # However, we can't assume that the [z] dimensions match, because concatenating and stitching produce very
     # different results (lengthwise). So, we pad the smaller image to make the dimensions match.
     z_max = max(im_out.data.shape[2], im_concat.data.shape[2])
     for im in [im_out, im_concat]:
@@ -1782,5 +1785,8 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
                 [0, 0],
                 [z_diff // 2, (z_diff + 1) // 2],
             ])
+
+    # Double-check that the shapes are identical (which is a necessary condition for toggling images in QC reports)
+    assert im_concat.data.shape == im_out.data.shape
 
     return im_concat, im_out
