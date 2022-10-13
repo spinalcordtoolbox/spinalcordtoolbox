@@ -1771,6 +1771,10 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
     im_concat_list[::2] = reversed(ims_in_padded)             # Assign so that: [im_in1, im_blank, im_in2, im_blank ...]
     im_concat = concat_data(im_concat_list, dim=2)            # Concatenate the input images and spacer images together
 
+    # in case natively stitched is smaller
+    while im_concat.data.shape[2] <= im_out.data.shape[2]:
+        im_concat = concat_data([im_concat, im_blank], dim=2)
+
     # naively-stitched image will be bigger than the actual stitched image
     # so, we create a zeros-like image, then copy the im_out data into it
     im_out_padded = zeros_like(im_concat)
