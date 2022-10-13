@@ -15,6 +15,7 @@
 
 import sys
 import os
+from typing import Sequence
 
 import numpy as np
 
@@ -31,7 +32,7 @@ class Param:
     def __init__(self):
         self.fname_out = 'merged_images.nii.gz'
         self.interp = 'linear'
-        self.rm_tmp = True
+        self.rm_tmp = 1
         self.verbose = 1
         self.almost_zero = 0.00000001
 
@@ -96,7 +97,7 @@ def get_parser():
     misc = parser.add_argument_group('MISC')
     misc.add_argument(
         "-r",
-        type=bool,
+        type=int,
         help='Remove temporary files.',
         required=False,
         default=Param().rm_tmp,
@@ -160,7 +161,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-w', list_fname_warp[i_file],
             '-x', param.interp,
             '-o', 'src_' + str(i_file) + '_template.nii.gz',
-            '-v', str(param.verbose)])
+            '-v', '0'])
 
         # create binary mask from input file by assigning one to all non-null voxels
         img = Image(fname_src)
@@ -174,7 +175,8 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
             '-x', param.interp,
-            '-o', 'src_' + str(i_file) + '_template_partialVolume.nii.gz'])
+            '-o', 'src_' + str(i_file) + '_template_partialVolume.nii.gz',
+            '-v', '0'])
 
         # open data
         data[:, :, :, i_file] = Image('src_' + str(i_file) + '_template.nii.gz').data
@@ -196,7 +198,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -224,7 +226,7 @@ def main(argv=None):
     # merge src images to destination image
     merge_images(list_fname_src, fname_dest, list_fname_warp, param)
 
-    display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)])
+    display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)], verbose=verbose)
 
 
 if __name__ == "__main__":

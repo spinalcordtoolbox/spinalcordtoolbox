@@ -13,6 +13,7 @@ ivadomed package.
 import os
 import sys
 import logging
+from typing import Sequence
 
 from ivadomed import inference as imed_inference
 import nibabel as nib
@@ -131,7 +132,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -244,7 +245,7 @@ def main(argv=None):
         fname_prior = fname_seg
 
     for output_filename in output_filenames:
-        display_viewer_syntax([arguments.i[0], output_filename], colormaps=['gray', 'red'], opacities=['', '0.7'])
+        display_viewer_syntax([arguments.i[0], output_filename], colormaps=['gray', 'red'], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":

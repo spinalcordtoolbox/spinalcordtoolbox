@@ -14,6 +14,7 @@
 
 import sys
 import os
+from typing import Sequence
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
@@ -188,7 +189,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -268,7 +269,7 @@ def main(argv=None):
         path_qc = os.path.abspath(path_qc)
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
-        generate_qc(fname_straight, args=arguments, path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_straight, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process=removesuffix(os.path.basename(__file__), ".py"))
 
     display_viewer_syntax([fname_straight], verbose=verbose)

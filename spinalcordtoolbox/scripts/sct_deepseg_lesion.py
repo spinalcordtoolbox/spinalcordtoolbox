@@ -13,6 +13,7 @@
 
 import os
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -105,7 +106,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """Main function."""
     parser = get_parser()
     arguments = parser.parse_args(argv)
@@ -164,7 +165,7 @@ def main(argv=None):
                                                  extract_fname(fname_image)[2]))
         im_ctr.save(fname_ctr)
 
-    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":

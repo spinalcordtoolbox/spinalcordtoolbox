@@ -13,6 +13,7 @@
 
 import sys
 import os
+from typing import Sequence
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, printv, set_loglevel
 from spinalcordtoolbox.image import Image
@@ -70,7 +71,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -85,7 +86,7 @@ def main(argv=None):
     # save MTR file
     nii_mtr.save(fname_mtr, dtype='float32')
 
-    display_viewer_syntax([arguments.mt0, arguments.mt1, fname_mtr])
+    display_viewer_syntax([arguments.mt0, arguments.mt1, fname_mtr], verbose=verbose)
 
 
 if __name__ == "__main__":

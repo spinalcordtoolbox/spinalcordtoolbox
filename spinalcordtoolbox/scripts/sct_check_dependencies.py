@@ -24,6 +24,7 @@ import importlib
 import warnings
 import psutil
 import traceback
+from typing import Sequence
 
 import requirements
 
@@ -192,7 +193,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = complete_test = arguments.complete
@@ -338,6 +339,7 @@ def main(argv=None):
         print_line("Skipping PropSeg compatibility check ")
         print("[  ] (Not supported on 'native' Windows (without WSL))")
     else:
+        print_line('Check PropSeg compatibility with OS ')
         status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
         if status in (0, 1):
             print_ok()

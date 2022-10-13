@@ -11,6 +11,7 @@
 #########################################################################################
 
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, extract_fname, set_loglevel
 
@@ -53,7 +54,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v

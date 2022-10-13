@@ -201,7 +201,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -396,14 +396,14 @@ def main(argv=None):
             for i_dim in range(3):
                 l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].save(l_fname_out[i_dim], verbose=verbose)
-            display_viewer_syntax(fname_out)
+            display_viewer_syntax(fname_out, verbose=verbose)
         if arguments.split is not None:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []
             for i, im in enumerate(im_out):
                 l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.save(l_fname_out[i])
-            display_viewer_syntax(l_fname_out)
+            display_viewer_syntax(l_fname_out, verbose=verbose)
 
     # Generate QC report (for `sct_image -stitch` only)
     if arguments.qc is not None:
@@ -607,12 +607,12 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
         fname_grid = 'grid_' + str(step) + '.nii.gz'
         im_grid.save(fname_grid)
         fname_grid_resample = add_suffix(fname_grid, '_resample')
-        sct_resample.main(argv=['-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
+        sct_resample.main(argv=['-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample, '-v', '0'])
         fname_grid = os.path.join(tmp_dir, fname_grid_resample)
         os.chdir(curdir)
     path_warp, file_warp, ext_warp = extract_fname(fname_warp)
     grid_warped = os.path.join(path_warp, extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp)
-    sct_apply_transfo.main(argv=['-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
+    sct_apply_transfo.main(argv=['-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped, '-v', '0'])
     if rm_tmp:
         rmtree(tmp_dir)
 

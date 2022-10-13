@@ -8,6 +8,7 @@
 # About the license: see the file LICENSE.TXT
 
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.image import Image, add_suffix
@@ -131,7 +132,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -169,7 +170,7 @@ def main(argv=None):
         fname_out = arguments.o
     img_crop.save(fname_out)
 
-    display_viewer_syntax([arguments.i, fname_out])
+    display_viewer_syntax([arguments.i, fname_out], verbose=verbose)
 
 
 if __name__ == "__main__":
