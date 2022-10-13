@@ -1746,8 +1746,8 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
                  max(im.data.shape[1] for im in ims_in),
                  max(im.data.shape[2] for im in ims_in)]
 
-    # pad any input images that are smaller than the max shape
-    # (the stitching tool can handle mismatched image shapes natively, but we have to manage it ourselves)
+    # pad any input images that are smaller than the max [x,y] shape
+    # (the stitching tool can handle mismatched [x,y] image shapes natively, but we have to manage it ourselves)
     ims_in_padded = deepcopy(ims_in)
     for im in ims_in_padded:
         # the images get concatenated in the z direction,
