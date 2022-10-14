@@ -53,7 +53,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container: archlinux
     steps:
       - name: Dependencies
@@ -76,7 +76,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container: debian:sid
     steps:
       - name: Dependencies
@@ -99,7 +99,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container: debian:testing
     steps:
       - name: Dependencies
@@ -122,7 +122,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container: debian:10
     steps:
       - name: Dependencies
@@ -145,7 +145,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04  # use an older ubuntu's kernel to closer emulate the older Debian
+    runs-on: ubuntu-20.04
     container: debian:9
     steps:
       - name: Dependencies
@@ -164,7 +164,7 @@ jobs:
 
   centos-8:
     name: CentOS Stream 8
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     # Stream8 has a 2024 EOL, while CentOS 8 has a 2021 EOL
     # See: https://blog.centos.org/2020/12/future-is-centos-stream/
     container: quay.io/centos/centos:stream8
@@ -189,7 +189,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04  # use an older ubuntu's kernel to closer emulate the older Debian
+    runs-on: ubuntu-20.04
     container: centos:7
     steps:
       - name: Dependencies
@@ -221,13 +221,13 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  ubuntu-18_04:
-    name: Ubuntu 18.04 (Bionic Beaver)
+  ubuntu-22_04:
+    name: Ubuntu 22.04 (Jammy Jellyfish)
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-
     steps:
       - name: Dependencies
         run: |
@@ -280,9 +280,9 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  windows-wsl-ubuntu-18_04:
+  windows-wsl-ubuntu-22_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
-    name: WSL [Ubuntu 18.04]
+    name: WSL [Ubuntu 22.04]
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
@@ -295,7 +295,7 @@ jobs:
     - uses: Vampire/setup-wsl@v1
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
-        distribution: Ubuntu-18.04
+        distribution: Ubuntu-22.04
     - name: Use unix line endings
       shell: bash
       run: |
