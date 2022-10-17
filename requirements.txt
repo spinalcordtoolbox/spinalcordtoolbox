@@ -25,6 +25,7 @@ pandas
 portalocker
 psutil
 pyqt5==5.11.3
+pyqt5-tools
 pytest
 pytest-cov
 raven
