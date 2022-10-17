@@ -380,7 +380,15 @@ def main(argv: Sequence[str]):
             print(err)
 
     print('')
-    sys.exit(e + install_software)
+    print("Error code testing...")
+    print(f"Value of e: {e}")
+    print(f"Value of install_software: {install_software}")
+    code_sum = e + install_software
+    print(f"Value of code_sum: {code_sum}")
+    print("Exiting....")
+    raise SystemExit(code_sum)
+    sys.exit(code_sum)
+    print("This code should be unreachable! It is after a sys.exit call.")
 
 
 if __name__ == "__main__":
