@@ -384,6 +384,11 @@ jobs:
         shell: cmd
     steps:
     - uses: actions/checkout@v2
+    # NB: For Windows installations, users must install Python beforehand
+    - uses: actions/setup-python@v4
+      if: matrix.os == 'windows-2019'
+      with:
+        python-version: '3.8'
     - name: Install SCT
       # NB: In real-world usage, it's assumed that the user would download the
       # install_sct.bat file from the Downloads page, and _not_ the full repo.
