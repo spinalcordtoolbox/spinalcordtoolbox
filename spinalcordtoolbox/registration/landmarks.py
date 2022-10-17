@@ -259,7 +259,7 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
         import matplotlib.pyplot as plt
 
         fig = plt.figure()
-        ax = fig.gca(projection='3d')
+        ax = fig.add_subplot(projection='3d')
         points_src_matrix = np.matrix(points_src)
         points_dest_matrix = np.matrix(points_dest)
 
