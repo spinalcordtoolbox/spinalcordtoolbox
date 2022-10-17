@@ -227,7 +227,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-
+    runs-on: ubuntu-22.04
     steps:
       - name: Dependencies
         run: |
@@ -383,7 +383,7 @@ jobs:
       run:
         shell: cmd
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v3ush
     - name: Install SCT
       # NB: In real-world usage, it's assumed that the user would download the
       # install_sct.bat file from the Downloads page, and _not_ the full repo.
