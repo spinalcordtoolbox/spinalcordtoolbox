@@ -3,7 +3,6 @@ import shutil
 import logging
 import cgi
 import tempfile
-import pprint
 import urllib.parse
 import tarfile
 import zipfile
@@ -359,7 +358,7 @@ def install_named_dataset(dataset_name, dest_folder=None, keep=False):
     """
     if dataset_name not in DATASET_DICT.keys():
         raise ValueError(f"Dataset '{dataset_name}' is not contained in list of datasets. Choose from:\n\n "
-                         f"{pprint.pformat(set(DATASET_DICT.keys()))}")
+                         f"{list(DATASET_DICT.keys())}")
 
     urls = DATASET_DICT[dataset_name]["mirrors"]
     if dest_folder is None:
