@@ -357,9 +357,9 @@ def main(argv: Sequence[str]):
         try:
             from PyQt5.QtWidgets import QApplication, QLabel
             _ = QApplication([])
-            QLabel('Hello World!')
-            # label.show()
-            # label.close()
+            label = QLabel('Hello World!')
+            label.show()
+            label.close()
             print_ok()
         except Exception as err:
             print_fail()
