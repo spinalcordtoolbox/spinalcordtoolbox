@@ -350,20 +350,6 @@ def main(argv: Sequence[str]):
         if complete_test:
             print((status, output), '\n')
 
-    print_line('Check if figure can be opened with matplotlib')
-    try:
-        import matplotlib
-        # If matplotlib is using a GUI backend, the default 'show()` function will be overridden
-        # See: https://github.com/matplotlib/matplotlib/issues/20281#issuecomment-846467732
-        fig = plt.figure()  # NB: `plt` was imported earlier in the script to avoid a libgcc error
-        if getattr(fig.canvas.manager.show, "__func__", None) != matplotlib.backend_bases.FigureManagerBase.show:
-            print_ok(f" (Using GUI backend: '{matplotlib.get_backend()}')")
-        else:
-            print_fail(f" (Using non-GUI backend '{matplotlib.get_backend()}')")
-    except Exception as err:
-        print_fail()
-        print(err)
-
     print_line('Check if figure can be opened with PyQt')
     if sys.platform.startswith("linux") and 'DISPLAY' not in os.environ:
         print_fail(" ($DISPLAY not set on X11-supporting system)")
@@ -378,6 +364,20 @@ def main(argv: Sequence[str]):
         except Exception as err:
             print_fail()
             print(err)
+
+    print_line('Check if figure can be opened with matplotlib')
+    try:
+        import matplotlib
+        # If matplotlib is using a GUI backend, the default 'show()` function will be overridden
+        # See: https://github.com/matplotlib/matplotlib/issues/20281#issuecomment-846467732
+        fig = plt.figure()  # NB: `plt` was imported earlier in the script to avoid a libgcc error
+        if getattr(fig.canvas.manager.show, "__func__", None) != matplotlib.backend_bases.FigureManagerBase.show:
+            print_ok(f" (Using GUI backend: '{matplotlib.get_backend()}')")
+        else:
+            print_fail(f" (Using non-GUI backend '{matplotlib.get_backend()}')")
+    except Exception as err:
+        print_fail()
+        print(err)
 
     print('')
     sys.exit(e + install_software)
