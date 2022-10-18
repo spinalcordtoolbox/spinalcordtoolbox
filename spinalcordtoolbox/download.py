@@ -357,8 +357,9 @@ def install_named_dataset(dataset_name, dest_folder=None, keep=False):
     datasets using only the dataset's name (i.e. without needing to access DATASET_DICT fields).
     """
     if dataset_name not in DATASET_DICT.keys():
+        # This `lambda` accounts for capitals (A, a, B, b), see https://stackoverflow.com/a/10269828
         raise ValueError(f"Dataset '{dataset_name}' is not contained in list of datasets. Choose from:\n\n "
-                         f"{list(DATASET_DICT.keys())}")
+                         f"{sorted(list(DATASET_DICT.keys()), key=str.casefold)}")
 
     urls = DATASET_DICT[dataset_name]["mirrors"]
     if dest_folder is None:

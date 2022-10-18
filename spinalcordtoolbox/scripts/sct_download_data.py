@@ -26,7 +26,7 @@ def get_parser():
     mandatory.add_argument(
         '-d',
         required=True,
-        choices=list(DATASET_DICT.keys()),
+        choices=sorted(list(DATASET_DICT.keys()), key=str.casefold),
         help="Name of the dataset."
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
