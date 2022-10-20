@@ -21,7 +21,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree
 from spinalcordtoolbox.math import binarize
 
