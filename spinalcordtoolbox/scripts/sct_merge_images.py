@@ -148,7 +148,6 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
     # initialize variables
     data = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2], len(list_fname_src)])
     partial_volume = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2], len(list_fname_src)])
-    data_merge = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2]])
 
     # loop across files
     i_file = 0
