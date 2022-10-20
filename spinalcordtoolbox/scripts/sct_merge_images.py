@@ -167,11 +167,11 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
         img = Image(fname_src)
         out = img.copy()
         out.data = binarize(out.data, param.almost_zero)
-        out.save(path=f"src_{i_file}native_bin.nii.gz")
+        out.save(path=f"src{i_file}_native_bin.nii.gz")
 
         # apply transformation to binary mask to compute partial volume
         sct_apply_transfo.main(argv=[
-            '-i', 'src_' + str(i_file) + 'native_bin.nii.gz',
+            '-i',  f"src{i_file}_native_bin.nii.gz",
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
             '-x', param.interp,
