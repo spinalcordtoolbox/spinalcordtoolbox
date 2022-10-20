@@ -147,32 +147,35 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, fname_out, interp,
 
     for i_file, fname_src in enumerate(list_fname_src):
         # apply transformation src --> dest
+        fname_src_warped = os.path.join(path_tmp, 'src_' + str(i_file) + '_template.nii.gz')
         sct_apply_transfo.main(argv=[
             '-i', fname_src,
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
             '-x', interp,
-            '-o', 'src_' + str(i_file) + '_template.nii.gz',
+            '-o', fname_src_warped,
             '-v', '0'])
 
         # create binary mask from input file by assigning one to all non-null voxels
         img = Image(fname_src)
         out = img.copy()
         out.data = binarize(out.data, ALMOST_ZERO)
-        out.save(path=f"src{i_file}_native_bin.nii.gz")
+        fname_src_bin = os.path.join(path_tmp, f"src{i_file}_native_bin.nii.gz")
+        out.save(path=fname_src_bin)
 
         # apply transformation to binary mask to compute partial volume
+        fname_src_pv = os.path.join(path_tmp, 'src_' + str(i_file) + '_template_partialVolume.nii.gz')
         sct_apply_transfo.main(argv=[
-            '-i',  f"src{i_file}_native_bin.nii.gz",
+            '-i', fname_src_bin,
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
             '-x', interp,
-            '-o', 'src_' + str(i_file) + '_template_partialVolume.nii.gz',
+            '-o', fname_src_pv,
             '-v', '0'])
 
         # open data
-        data[:, :, :, i_file] = Image('src_' + str(i_file) + '_template.nii.gz').data
-        partial_volume[:, :, :, i_file] = Image('src_' + str(i_file) + '_template_partialVolume.nii.gz').data
+        data[:, :, :, i_file] = Image(fname_src_warped).data
+        partial_volume[:, :, :, i_file] = Image(fname_src_pv).data
 
     # merge files using partial volume information (and convert nan resulting from division by zero to zeros)
     data_merge = np.divide(np.sum(data * partial_volume, axis=3), np.sum(partial_volume, axis=3))
