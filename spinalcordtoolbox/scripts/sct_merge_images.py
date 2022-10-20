@@ -204,9 +204,6 @@ def main(argv: Sequence[str]):
     fname_dest = arguments.d
     list_fname_warp = arguments.w
     fname_out = arguments.o
-
-    # if arguments.ofolder is not None
-    #     path_results = arguments.ofolder
     interp = arguments.x
     rm_tmp = arguments.r
 
