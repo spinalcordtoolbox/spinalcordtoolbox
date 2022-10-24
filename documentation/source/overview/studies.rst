@@ -26,6 +26,7 @@ The following studies have used SCT:
 2022
 ----
 
+-  Cortese *et al.* `Differentiating Multiple Sclerosis From AQP4-Neuromyelitis Optica Spectrum Disorder and MOG-Antibody Disease With Imaging <https://doi.org/10.1212/WNL.0000000000201465>`_, **Neurology** 2022
 -  Joers *et al.* `Spinal cord magnetic resonance imaging and spectroscopy detect early-stage alterations and disease progression in Friedreich ataxia  <https://doi.org/10.1093/braincomms/fcac246>`_, **Brain Commun.** 2022
 -  Olafson *et al.* `Frontoparietal network activation is associated with motor recovery in ischemic stroke patients <https://doi.org/10.1038/s42003-022-03950-4>`_, **Commun. Biol** 2022
 -  Budde *et al.* `Acute Magnetic Resonance Imaging Predictors of Chronic Motor Function and Tissue Sparing in Rat Cervical Spinal Cord Injury <https://doi.org/10.1089/neu.2022.0034>`_, **J. Neurotrauma** 2022
