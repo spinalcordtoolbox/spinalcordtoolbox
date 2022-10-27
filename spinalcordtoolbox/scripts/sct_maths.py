@@ -190,7 +190,7 @@ def get_parser():
     thresholding.add_argument(
         "-uthr",
         type=float,
-        help='Upper threshold limit (zero below number).',
+        help='Upper threshold limit (zero above number).',
         metavar=Metavar.float,
         required=False)
 
