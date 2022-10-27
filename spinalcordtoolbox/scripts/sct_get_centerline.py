@@ -178,7 +178,9 @@ def main(argv: Sequence[str]):
 
     # save centerline as nifti (discrete) and csv (continuous) files
     im_centerline.save(file_output)
-    np.savetxt(file_output + '.csv', arr_centerline.transpose(), delimiter=",")
+    # Replace `.nii.gz` extension with `.csv` extension
+    path_output, filename_output, _ = extract_fname(file_output)
+    np.savetxt(os.path.join(path_output, f"{filename_output}.csv"), arr_centerline.transpose(), delimiter=",")
 
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
