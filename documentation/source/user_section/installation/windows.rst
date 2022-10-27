@@ -32,18 +32,18 @@ This set of instructions will show you how to install SCT directly on Windows.
 
 SCT depends on two pieces of software that must be set up prior to the installation of SCT.
 
-Python 3.7
+Python 3.8
 ^^^^^^^^^^
 
 Since SCT is a Python package, Python must be installed on your system before SCT can be installed.
 
-1. Download a "Windows x86-64" installer from `the Python 3.7.9 download page <https://www.python.org/downloads/release/python-379/>`_.
+1. Download a "Windows x86-64" installer from `the Python 3.8.10 download page <https://www.python.org/downloads/release/python-3810/>`_.
 
-2. Run the installer file. (**Important:** Before clicking "Install Now", make sure to first check the "Add Python 3.7 to PATH" checkbox at the bottom of the window.)
+2. Run the installer file. (**Important:** Before clicking "Install Now", make sure to first check the "Add Python 3.8 to PATH" checkbox at the bottom of the window.)
 
 3. After the installation has finished, open your Start Menu and type Command Prompt, then run it. In the Command Prompt window, type ``python --version`` and press enter.
 
-   (Make sure that you see the text ``Python 3.7.9`` before continuing.)
+   (Make sure that you see the text ``Python 3.8.10`` before continuing.)
 
 
 Git for Windows
