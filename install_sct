@@ -621,7 +621,9 @@ if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
 fi
 
 # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927)
-conda install -y -c conda-forge libstdcxx-ng
+if [[ $OS == linux* ]]; then
+  conda install -y -c conda-forge libstdcxx-ng
+fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
 python -m pip install -U "pip!=21.2.*"
