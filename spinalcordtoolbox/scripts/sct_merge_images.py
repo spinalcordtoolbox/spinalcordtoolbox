@@ -145,10 +145,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, fname_out, interp,
     data = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2], len(list_fname_src)])
     partial_volume = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2], len(list_fname_src)])
 
-    # loop across files
-    i_file = 0
-    for fname_src in list_fname_src:
-
+    for i_file, fname_src in enumerate(list_fname_src):
         # apply transformation src --> dest
         sct_apply_transfo.main(argv=[
             '-i', fname_src,
@@ -176,7 +173,6 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, fname_out, interp,
         # open data
         data[:, :, :, i_file] = Image('src_' + str(i_file) + '_template.nii.gz').data
         partial_volume[:, :, :, i_file] = Image('src_' + str(i_file) + '_template_partialVolume.nii.gz').data
-        i_file += 1
 
     # merge files using partial volume information (and convert nan resulting from division by zero to zeros)
     data_merge = np.divide(np.sum(data * partial_volume, axis=3), np.sum(partial_volume, axis=3))
