@@ -271,17 +271,12 @@ class Image(object):
         self._path = None
         self.ext = ""
 
-        if hdr is None:
-            hdr = self.hdr = nib.Nifti1Header()  # an empty header
-        else:
-            self.hdr = hdr
-
         if absolutepath is not None:
             self._path = os.path.abspath(absolutepath)
 
         self.verbose = verbose
 
-        # load an image from file
+        # Case 1: load an image from file
         if isinstance(param, str):
             try:
                 self.loadFromPath(param, mmap, verbose)
@@ -290,17 +285,19 @@ class Image(object):
                     e.strerror += (". Please try increasing your system's file descriptor "
                                    "limit by using the command `ulimit -Sn`.")
                 raise e
-        # copy constructor
+        # Case 2: create a copy of an existing `Image` object
         elif isinstance(param, type(self)):
             self.copy(param)
-        # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
+        # Case 3: create a blank image from a list of dimensions
         elif isinstance(param, list):
             self.data = np.zeros(param)
-            self.hdr = hdr
-        # create a copy of im_ref
+            self.hdr = hdr.copy() if hdr is not None else nib.Nifti1Header()
+            self.hdr.set_data_shape(self.data.shape)
+        # Case 4: create an image from an existing data array
         elif isinstance(param, (np.ndarray, np.generic)):
             self.data = param
-            self.hdr = hdr
+            self.hdr = hdr.copy() if hdr is not None else nib.Nifti1Header()
+            self.hdr.set_data_shape(self.data.shape)
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
