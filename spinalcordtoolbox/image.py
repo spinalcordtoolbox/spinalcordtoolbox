@@ -1716,7 +1716,7 @@ def compute_cross_corr_3d(image: Image, coord, xrange=list(range(-10, 10)), xshi
     return x + xrange[ind_peak]
 
 
-def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', verbose: int = 0) -> Image:
+def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', verbose: int = 1) -> Image:
     """
     Stitch two (or more) images utilizing the C++-precompiled binaries of Biomedia-MIRA's stitching toolkit
     (https://github.com/biomedia-mira/stitching) by placing a system call.
