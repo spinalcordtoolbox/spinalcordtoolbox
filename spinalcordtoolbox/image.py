@@ -271,11 +271,6 @@ class Image(object):
         self._path = None
         self.ext = ""
 
-        if hdr is None:
-            hdr = self.hdr = nib.Nifti1Header()  # an empty header
-        else:
-            self.hdr = hdr
-
         if absolutepath is not None:
             self._path = os.path.abspath(absolutepath)
 
@@ -296,12 +291,12 @@ class Image(object):
         # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
         elif isinstance(param, list):
             self.data = np.zeros(param)
-            self.hdr = hdr.copy()
+            self.hdr = hdr.copy() if hdr is not None else nib.Nifti1Header()
             self.hdr.set_data_shape(self.data.shape)
         # create a copy of im_ref
         elif isinstance(param, (np.ndarray, np.generic)):
             self.data = param
-            self.hdr = hdr.copy()
+            self.hdr = hdr.copy() if hdr is not None else nib.Nifti1Header()
             self.hdr.set_data_shape(self.data.shape)
         else:
             raise TypeError('Image constructor takes at least one argument.')
