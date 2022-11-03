@@ -1737,6 +1737,14 @@ def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', 
         im_in_rpi = change_orientation(im_in, 'RPI')
         im_in_rpi.save(temp_file_path, verbose=verbose)
         fnames_in.append(temp_file_path)
+
+    # C++ stitching module by Glocker et al. uses the first image as reference image
+    # and allocates an array (to be filled by subsequent images along the z-axis)
+    # based on the dimensions (x,y) of the reference image.
+    # As subsequent images are padded to the x-/y- dimensions of the reference image,
+    # it is important to use the image with the largest dimensions as the first
+    # argument to the input of the C++ binary, to ensure the images are not cropped.
+
     # order fs_names in descending order based on dimensions (largest -> smallest)
     fnames_in_sorted = sorted(fnames_in, key=lambda fname: max(Image(fname).dim), reverse=True)
 
