@@ -1739,13 +1739,11 @@ def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', 
         fnames_in.append(temp_file_path)
     # order fs_names in descending order based on dimensions (largest -> smallest)
     fnames_in_sorted = sorted(fnames_in, key=lambda fname: max(Image(fname).dim), reverse=True)
-    # stringify the fname list to parsable cmd parameter
-    fnames_cmd = " ".join(fnames_in_sorted)
 
     # ensure that a tmp_path is used for the output of the stitching binary, since sct_image will re-save the image
     fname_out = os.path.join(path_tmp, os.path.basename(fname_out))
 
-    cmd = ['isct_stitching', '-i', fnames_cmd, '-o', fname_out, '-a']
+    cmd = ['isct_stitching', '-i'] + fnames_in_sorted + ['-o', fname_out, '-a']
     status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
     print(status, output)
     if status != 0:
