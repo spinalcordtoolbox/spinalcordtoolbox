@@ -219,7 +219,7 @@ def main(argv: Sequence[str]):
     fname_in = arguments.i
 
     im_in_list = [Image(fname) for fname in fname_in]
-    if len(im_in_list) > 1 and arguments.concat is None and arguments.omc is None and arguments.stitch is None:
+    if len(im_in_list) > 1 and not arguments.concat and not arguments.omc and not arguments.stitch:
         parser.error("Multi-image input is only supported for the '-concat','-omc' and '-stitch' arguments.")
 
     # Apply initialization steps to all input images first
