@@ -351,7 +351,7 @@ def main(argv: Sequence[str]):
             temp_file_path = os.path.join(path_tmp, os.path.basename(file))
             im_in = Image(file)
             im_in_rpi = change_orientation(im_in, 'RPI')
-            im_in_rpi.save(temp_file_path, dtype=output_type, verbose=verbose)
+            im_in_rpi.save(temp_file_path, verbose=verbose)
             fnames_in.append(temp_file_path)
 
         # order fs_names in descending order based on dimensions (largest -> smallest)
