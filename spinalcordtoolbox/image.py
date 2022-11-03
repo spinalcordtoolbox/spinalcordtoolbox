@@ -29,7 +29,7 @@ import transforms3d.affines as affines
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import extract_fname, mv, run_proc
+from spinalcordtoolbox.utils import extract_fname, mv, run_proc, tmp_create
 
 
 logger = logging.getLogger(__name__)
@@ -1716,18 +1716,34 @@ def compute_cross_corr_3d(image: Image, coord, xrange=list(range(-10, 10)), xshi
     return x + xrange[ind_peak]
 
 
-def stitch_images(fnames_in: list, fname_out='stitched.nii.gz'):
+def stitch_images(im_list: Sequence[Image], fname_out='stitched.nii.gz', verbose=0):
     """
     Stitch two (or more) images utilizing the C++-precompiled binaries of Biomedia-MIRA's stitching toolkit
     (https://github.com/biomedia-mira/stitching) by placing a system call.
 
-    :param fnames_in: list of filenames of scans in RPI orientation. e.g. [stack1.nii.gz, stack2.nii.gz]
-    :param fname_out: filename for stitched output scan.
-    :param directory: path to temp directory where we store the result of stitching.nii.gz
-    :return: none
+    :param im_list: list of Image objects to stitch
+    :param fname_out: filename for stitched output image
+    :param verbose: adjusts the verbosity of the logging
+    :return: An Image object containing the stitched data array
     """
+    # preserve original orientation (we assume it's consistent among all images)
+    orig_ornt = im_list[0].orientation
+
+    # reorient input files and save them to a temp directory
+    path_tmp = tmp_create(basename="image-stitching")
+    fnames_in = []
+    for im_in in im_list:
+        temp_file_path = os.path.join(path_tmp, os.path.basename(im_in.absolutepath))
+        im_in_rpi = change_orientation(im_in, 'RPI')
+        im_in_rpi.save(temp_file_path, verbose=verbose)
+        fnames_in.append(temp_file_path)
+    # order fs_names in descending order based on dimensions (largest -> smallest)
+    fnames_in_sorted = sorted(fnames_in, key=lambda fname: max(Image(fname).dim), reverse=True)
     # stringify the fname list to parsable cmd parameter
-    fnames_cmd = " ".join(fnames_in)
+    fnames_cmd = " ".join(fnames_in_sorted)
+
+    # ensure that a tmp_path is used for the output of the stitching binary, since sct_image will re-save the image
+    fname_out = os.path.join(path_tmp, os.path.basename(fname_out))
 
     cmd = ['isct_stitching', '-i', fnames_cmd, '-o', fname_out, '-a']
     status, output = run_proc(cmd, verbose='verbose', is_sct_binary=True)
@@ -1735,7 +1751,10 @@ def stitch_images(fnames_in: list, fname_out='stitched.nii.gz'):
     if status != 0:
         raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
-    return Image(fname_out)
+    # reorient the output image back to the original orientation of the input images
+    im_out = change_orientation(Image(fname_out), orig_ornt)
+
+    return im_out
 
 
 def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple[Image, Image]:
@@ -1749,6 +1768,10 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
                1. A naive concatenation of `ims_in` (so that the images can be displayed side by side)
                2. A padded version of `im_out` (so that it matches the dimensions of the naive concatenation)
     """
+    # Ensure all images are in RPI orientation (since make the assumption that that (x,y,z) = (LR,AP,SI))
+    for im in list(ims_in) + [im_out]:
+        im.change_orientation("RPI")
+
     # find the max shape of all input images
     shape_max = [max(im.data.shape[0] for im in ims_in),
                  max(im.data.shape[1] for im in ims_in),

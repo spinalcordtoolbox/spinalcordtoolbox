@@ -341,25 +341,7 @@ def main(argv: Sequence[str]):
         im_out = split_data(im_in, dim)
 
     elif arguments.stitch:
-        # preserve original orientation (we assume it's consistent among all images)
-        orig_ornt = im_in_list[0].orientation
-
-        # reorient input files and save them to a temp directory
-        path_tmp = tmp_create(basename="image-stitching")
-        fnames_in = []
-        for file in arguments.i:
-            temp_file_path = os.path.join(path_tmp, os.path.basename(file))
-            im_in = Image(file)
-            im_in_rpi = change_orientation(im_in, 'RPI')
-            im_in_rpi.save(temp_file_path, verbose=verbose)
-            fnames_in.append(temp_file_path)
-
-        # order fs_names in descending order based on dimensions (largest -> smallest)
-        fnames_in_sorted = sorted(fnames_in, key=lambda fname: max(Image(fname).dim), reverse=True)
-
-        # stitch and reorient
-        im_out_rpi = stitch_images(fnames_in=fnames_in_sorted, fname_out=os.path.join(path_tmp, 'stitched.nii.gz'))
-        im_out = [change_orientation(im_out_rpi, orig_ornt)]
+        im_out = [stitch_images(im_in_list)]
 
     elif arguments.type is not None:
         output_type = arguments.type
@@ -408,15 +390,14 @@ def main(argv: Sequence[str]):
     # Generate QC report (for `sct_image -stitch` only)
     if arguments.qc is not None:
         if arguments.stitch is not None:
-            # NB: The variables `path_tmp`, `fnames_in`, and `im_out_rpi` are generated earlier by `-stitch`
             printv("Generating QC Report...", verbose=verbose)
             # specify filenames to use in QC report
+            path_tmp = tmp_create("stitching-QC")
             fname_qc_concat = os.path.join(path_tmp, "concatenated_input_images.nii.gz")
             fname_qc_out = os.path.join(path_tmp, os.path.basename(fname_out))
             # generate 2 images to compare in QC report
             # (1. naively concatenated input images, and 2. stitched image, padded to the larger size of the concat im)
-            ims_in = [Image(fname) for fname in fnames_in]  # NB: `fnames_in` preserves the user's original sorting
-            im_concat, im_out_padded = generate_stitched_qc_images(ims_in, im_out_rpi)
+            im_concat, im_out_padded = generate_stitched_qc_images(im_in_list, im_out[0])
             im_concat.save(fname_qc_concat)
             im_out_padded.save(fname_qc_out)
             # generate the QC report itself
