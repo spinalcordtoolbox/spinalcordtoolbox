@@ -299,12 +299,10 @@ class Image(object):
         elif isinstance(param, list):
             self.data = np.zeros(param)
             self.hdr = hdr
-            self.hdr.set_data_shape(self.data.shape)
         # create a copy of im_ref
         elif isinstance(param, (np.ndarray, np.generic)):
             self.data = param
             self.hdr = hdr
-            self.hdr.set_data_shape(self.data.shape)
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
