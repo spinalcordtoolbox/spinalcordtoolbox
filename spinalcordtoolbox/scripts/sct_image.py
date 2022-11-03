@@ -396,7 +396,7 @@ def main(argv: Sequence[str]):
             fname_qc_concat = os.path.join(path_tmp, "concatenated_input_images.nii.gz")
             fname_qc_out = os.path.join(path_tmp, os.path.basename(fname_out))
             # generate 2 images to compare in QC report
-            # (1. naively concatenated input images, and 2. stitched image, padded to the larger size of the concat im)
+            # (1. naively concatenated input images, and 2. stitched image) padded so both have same dimensions
             im_concat, im_out_padded = generate_stitched_qc_images(im_in_list, im_out[0])
             im_concat.save(fname_qc_concat)
             im_out_padded.save(fname_qc_out)
