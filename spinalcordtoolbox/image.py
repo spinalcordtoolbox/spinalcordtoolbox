@@ -1797,7 +1797,7 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
     im_blank = Image([shape_max[0], shape_max[1], 1])
 
     # create a naively-stitched (RPI) image for comparison in QC report
-    # NB: we reverse the list of images because numpy's origin location (bottom) is are different than nibabel's (top)
+    # NB: we reverse the list of images because numpy's origin location (bottom) is different than nibabel's (top)
     im_concat_list = [im_blank] * (2*len(ims_in_padded) - 1)  # Preallocate a list of blank spacer images
     im_concat_list[::2] = reversed(ims_in_padded)             # Assign so that: [im_in1, im_blank, im_in2, im_blank ...]
     im_concat = concat_data(im_concat_list, dim=2)            # Concatenate the input images and spacer images together
