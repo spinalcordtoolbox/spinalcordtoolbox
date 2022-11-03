@@ -1746,7 +1746,7 @@ def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', 
     fname_out = os.path.join(path_tmp, os.path.basename(fname_out))
 
     cmd = ['isct_stitching', '-i', fnames_cmd, '-o', fname_out, '-a']
-    status, output = run_proc(cmd, verbose='verbose', is_sct_binary=True)
+    status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
     print(status, output)
     if status != 0:
         raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
@@ -1797,7 +1797,7 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
     im_blank = Image([shape_max[0], shape_max[1], 1])
 
     # create a naively-stitched (RPI) image for comparison in QC report
-    # NB: we reverse the list of images because numpy's origin location (bottom) is different than nibabel's (top)
+    # NB: we reverse the list of images because numpy's origin location (bottom) isverbose= different than nibabel's (top)
     im_concat_list = [im_blank] * (2*len(ims_in_padded) - 1)  # Preallocate a list of blank spacer images
     im_concat_list[::2] = reversed(ims_in_padded)             # Assign so that: [im_in1, im_blank, im_in2, im_blank ...]
     im_concat = concat_data(im_concat_list, dim=2)            # Concatenate the input images and spacer images together
