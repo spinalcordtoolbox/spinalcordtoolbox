@@ -147,7 +147,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, fname_out, interp,
 
     for i_file, fname_src in enumerate(list_fname_src):
         # apply transformation src --> dest
-        fname_src_warped = os.path.join(path_tmp, f"src_{i_file}_template.nii.gz")
+        fname_src_warped = os.path.join(path_tmp, f"src{i_file}_template.nii.gz")
         sct_apply_transfo.main(argv=[
             '-i', fname_src,
             '-d', fname_dest,
@@ -164,7 +164,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, fname_out, interp,
         out.save(path=fname_src_bin)
 
         # apply transformation to binary mask to compute partial volume
-        fname_src_pv = os.path.join(path_tmp, f"src_{i_file}_template_partialVolume.nii.gz")
+        fname_src_pv = os.path.join(path_tmp, f"src{i_file}_template_partialVolume.nii.gz")
         sct_apply_transfo.main(argv=[
             '-i', fname_src_bin,
             '-d', fname_dest,
