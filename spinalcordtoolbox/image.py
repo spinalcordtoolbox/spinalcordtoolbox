@@ -296,11 +296,11 @@ class Image(object):
         # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
         elif isinstance(param, list):
             self.data = np.zeros(param)
-            self.hdr = hdr
+            self.hdr = hdr.copy()
         # create a copy of im_ref
         elif isinstance(param, (np.ndarray, np.generic)):
             self.data = param
-            self.hdr = hdr
+            self.hdr = hdr.copy()
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
