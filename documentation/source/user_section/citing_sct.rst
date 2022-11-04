@@ -68,6 +68,8 @@ The table below provides individual references for novel methods used in SCT's :
      - `Gros et al. Automatic spinal cord localization, robust to MRI contrasts using global curve optimization. Med Image Anal 2018 <https://www.sciencedirect.com/science/article/pii/S136184151730186X>`__
    * - ``sct_label_vertebrae``
      - `Ullmann et al. Automatic labeling of vertebral levels using a robust template-based approach. Int J Biomed Imaging 2014 <http://downloads.hindawi.com/journals/ijbi/2014/719520.pdf>`__
+   * - ``sct_process_segmentation -pmj``
+     - `Bédard S, Cohen-Adad J. Automatic measure and normalization of spinal cord cross-sectional area using the pontomedullary junction. Frontiers in Neuroimaging 2022 <https://doi.org/10.3389/fnimg.2022.1031253>`__
    * - ``sct_propseg``
      - `De Leener et al. Robust, accurate and fast automatic segmentation of the spinal cord. Neuroimage 2014 <https://www.ncbi.nlm.nih.gov/pubmed/24780696>`__
    * - ``sct_propseg -CSF``
