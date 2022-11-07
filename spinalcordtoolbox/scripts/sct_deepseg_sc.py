@@ -66,7 +66,7 @@ def get_parser():
         "-thr",
         type=float,
         help="Binarization threshold (between 0 and 1) to apply to the segmentation prediction. Set to -1 for no "
-             "binarization (i.e. soft segmentation output). The default threshold is specific to each contrast and was"
+             "binarization (i.e. soft segmentation output). The default threshold is specific to each contrast and was "
              "estimated using an optimization algorithm. More details at: "
              "https://github.com/sct-pipeline/deepseg-threshold.",
         metavar=Metavar.float,
