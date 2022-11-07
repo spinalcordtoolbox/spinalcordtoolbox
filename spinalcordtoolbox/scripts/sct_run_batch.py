@@ -69,9 +69,9 @@ def get_parser():
                             jobs        : -1\n
                             Example JSON configuration:
                             {
-                            "path_data"   : "~/sct_data"
-                            "path_output" : "~/pipeline_results"
-                            "script"      : "nature_paper_analysis.sh"
+                            "path_data"   : "~/sct_data",
+                            "path_output" : "~/pipeline_results",
+                            "script"      : "nature_paper_analysis.sh",
                             "jobs"        : -1
                             }\n
                             """))
