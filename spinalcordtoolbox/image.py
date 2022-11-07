@@ -1753,9 +1753,9 @@ def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', 
 
     cmd = ['isct_stitching', '-i'] + fnames_in_sorted + ['-o', fname_out, '-a']
     status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
-    print(status, output)
     if status != 0:
-        raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
+        raise RuntimeError(f"Subprocess call to `isct_stitching` returned exit code {status} along with the following "
+                           f"output:\n{output}")
 
     # reorient the output image back to the original orientation of the input images
     im_out = change_orientation(Image(fname_out), orig_ornt)
