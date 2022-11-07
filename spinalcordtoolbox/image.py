@@ -1774,6 +1774,10 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
                1. A naive concatenation of `ims_in` (so that the images can be displayed side by side)
                2. A padded version of `im_out` (so that it matches the dimensions of the naive concatenation)
     """
+    # Work with copies of the images to avoid mutating the original output
+    ims_in = deepcopy(ims_in)
+    im_out = deepcopy(im_out)
+
     # Ensure all images are in RPI orientation (since make the assumption that that (x,y,z) = (LR,AP,SI))
     for im in list(ims_in) + [im_out]:
         im.change_orientation("RPI")
@@ -1785,8 +1789,7 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
 
     # pad any input images that are smaller than the max [x,y] shape
     # (the stitching tool can handle mismatched [x,y] image shapes natively, but we have to manage it ourselves)
-    ims_in_padded = deepcopy(ims_in)
-    for im in ims_in_padded:
+    for im in ims_in:
         # the images get concatenated in the z direction,
         # so we only need to pad in the x, y directions
         x_diff = shape_max[0] - im.data.shape[0]
@@ -1804,9 +1807,9 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
 
     # create a naively-stitched (RPI) image for comparison in QC report
     # NB: we reverse the list of images because numpy's origin location (bottom) is different than nibabel's (top)
-    im_concat_list = [im_blank] * (2*len(ims_in_padded) - 1)  # Preallocate a list of blank spacer images
-    im_concat_list[::2] = reversed(ims_in_padded)             # Assign so that: [im_in1, im_blank, im_in2, im_blank ...]
-    im_concat = concat_data(im_concat_list, dim=2)            # Concatenate the input images and spacer images together
+    im_concat_list = [im_blank] * (2*len(ims_in) - 1)  # Preallocate a list of blank spacer images
+    im_concat_list[::2] = reversed(ims_in)             # Assign so that: [im_in1, im_blank, im_in2, im_blank ...]
+    im_concat = concat_data(im_concat_list, dim=2)     # Concatenate the input images and spacer images together
 
     # We assume that the [x,y] dimensions match for both of the two QC images
     assert im_concat.data.shape[0:2] == im_out.data.shape[0:2]
