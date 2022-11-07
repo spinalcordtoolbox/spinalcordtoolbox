@@ -56,7 +56,6 @@ setup(
         console_scripts=[
             '{}=spinalcordtoolbox.compat.launcher:main'.format(x) for x in
             [
-                'isct_test_ants',
                 'sct_analyze_lesion',
                 'sct_analyze_texture',
                 'sct_apply_transfo',

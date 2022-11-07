@@ -1,56 +1,30 @@
 #!/usr/bin/env python
 #########################################################################################
-#
-# This function test the integrity of ANTs output, given that some versions of ANTs give a wrong BSpline transform,
-# notably when using sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField.
-#
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Authors: Julien Cohen-Adad
-# Modified: 2014-07-02
-#
-# About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import sys
-import getopt
 import os
 
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv
+from spinalcordtoolbox.utils.sys import run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree
 
 from spinalcordtoolbox.scripts import sct_dice_coefficient
 
 
-# main
-# =======================================================================================================================
-def main():
-
+def test_ants_registration():
+    """
+    This function test the integrity of ANTs output, given that some versions of ANTs give a wrong BSpline transform,
+    notably when using sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField.
+    """
     # Initialization
     size_data = 61
     size_label = 1  # put zero for labels that are single points.
     dice_acceptable = 0.39  # computed DICE should be 0.931034
-    test_passed = 0
-    remove_temp_files = 1
     verbose = 1
-
-    # Check input parameters
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], 'hvr:')
-    except getopt.GetoptError:
-        usage()
-        raise SystemExit(2)
-    for opt, arg in opts:
-        if opt == '-h':
-            usage()
-            return
-        elif opt in ('-v'):
-            verbose = int(arg)
-        elif opt in ('-r'):
-            remove_temp_files = int(arg)
 
     path_tmp = tmp_create(basename="test_ants")
 
@@ -124,51 +98,10 @@ def main():
         dice = float(file_dice.read().replace('3D Dice coefficient = ', ''))
     printv('Dice coeff = ' + str(dice) + ' (should be above ' + str(dice_acceptable) + ')', verbose)
 
-    # Check if DICE coefficient is above acceptable value
-    if dice > dice_acceptable:
-        test_passed = 1
-
     # come back
     os.chdir(curdir)
 
-    # Delete temporary files
-    if remove_temp_files == 1:
-        printv('\nDelete temporary files...', verbose)
-        rmtree(path_tmp)
+    printv('\nDelete temporary files...', verbose)
+    rmtree(path_tmp)
 
-    # output result for parent function
-    if test_passed:
-        printv('\nTest passed!\n', verbose)
-    else:
-        printv('\nTest failed!\n', verbose)
-        raise SystemExit(1)
-
-
-# printv(usage)
-# ==========================================================================================
-def usage():
-    print('\n'
-          '' + os.path.basename(__file__) + '\n'
-          '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n'
-          'Part of the Spinal Cord Toolbox <https://sourceforge.net/projects/spinalcordtoolbox>\n'
-          '\n'
-          'DESCRIPTION\n'
-          '  This function test the integrity of ANTs output, given that some versions of ANTs give a wrong BSpline '
-          '  transform notably when using sct_ANTSUseLandmarkImagesToGetBSplineDisplacementField..\n'
-          '\n'
-          'USAGE\n'
-          '  ' + os.path.basename(__file__) + '\n'
-          '\n'
-          'OPTIONAL ARGUMENTS\n'
-          '  -h                         show this help\n'
-          '  -r {0, 1}                  remove temp files. Default=1\n'
-          '  -v {0, 1}                  verbose. Default=1\n'
-          '\n')
-
-
-# Start program
-# =======================================================================================================================
-if __name__ == "__main__":
-    init_sct()
-    # call main function
-    main()
+    assert dice > dice_acceptable
