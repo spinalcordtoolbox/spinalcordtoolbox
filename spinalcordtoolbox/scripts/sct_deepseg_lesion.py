@@ -22,8 +22,8 @@ from spinalcordtoolbox.utils.fs import extract_fname
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='MS lesion Segmentation using convolutional networks. Reference: Gros C et al. Automatic'
-                    'segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional'
+        description='MS lesion Segmentation using convolutional networks. Reference: Gros C et al. Automatic '
+                    'segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional '
                     'neural networks. Neuroimage. 2018 Oct 6;184:901-915.'
     )
 
