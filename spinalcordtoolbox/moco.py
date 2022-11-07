@@ -764,7 +764,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                'mutual information. Either the mask you provided is '
                'too small, or the subject moved a lot. If you see too '
                'many messages like this try with a bigger mask. '
-               'Using previous transformation for this volume (if it'
+               'Using previous transformation for this volume (if it '
                'exists).', param.verbose, 'warning')
         failed_transfo = 1
 

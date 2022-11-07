@@ -21,20 +21,14 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, rmtree
 from spinalcordtoolbox.math import binarize
 
 from spinalcordtoolbox.scripts import sct_apply_transfo
 
 
-class Param:
-    def __init__(self):
-        self.fname_out = 'merged_images.nii.gz'
-        self.interp = 'linear'
-        self.rm_tmp = 1
-        self.verbose = 1
-        self.almost_zero = 0.00000001
+ALMOST_ZERO = 0.00000001
 
 
 # PARSER
@@ -86,13 +80,13 @@ def get_parser():
         metavar=Metavar.str,
         help="Interpolation for warping the input images to the destination image. Default is linear",
         required=False,
-        default=Param().interp)
+        default='linear')
     optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help="Output image",
         required=False,
-        default=Param().fname_out)
+        default='merged_images.nii.gz')
 
     misc = parser.add_argument_group('MISC')
     misc.add_argument(
@@ -100,7 +94,7 @@ def get_parser():
         type=int,
         help='Remove temporary files.',
         required=False,
-        default=Param().rm_tmp,
+        default=1,
         choices=(0, 1))
     optional.add_argument(
         '-v',
@@ -114,7 +108,7 @@ def get_parser():
     return parser
 
 
-def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
+def merge_images(list_fname_src, fname_dest, list_fname_warp, fname_out, interp, rm_tmp):
     """
     Merge multiple source images (-i) onto destination space (-d). (All images are warped to the destination
     space and then added together.)
@@ -133,7 +127,9 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
     list_fname_src
     fname_dest
     list_fname_warp
-    param
+    fname_out
+    interp
+    rm_tmp
 
     Returns
     -------
@@ -148,40 +144,38 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
     # initialize variables
     data = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2], len(list_fname_src)])
     partial_volume = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2], len(list_fname_src)])
-    data_merge = np.zeros([nii_dest.dim[0], nii_dest.dim[1], nii_dest.dim[2]])
 
-    # loop across files
-    i_file = 0
-    for fname_src in list_fname_src:
-
+    for i_file, fname_src in enumerate(list_fname_src):
         # apply transformation src --> dest
+        fname_src_warped = os.path.join(path_tmp, f"src{i_file}_template.nii.gz")
         sct_apply_transfo.main(argv=[
             '-i', fname_src,
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
-            '-x', param.interp,
-            '-o', 'src_' + str(i_file) + '_template.nii.gz',
+            '-x', interp,
+            '-o', fname_src_warped,
             '-v', '0'])
 
         # create binary mask from input file by assigning one to all non-null voxels
         img = Image(fname_src)
         out = img.copy()
-        out.data = binarize(out.data, param.almost_zero)
-        out.save(path=f"src_{i_file}native_bin.nii.gz")
+        out.data = binarize(out.data, ALMOST_ZERO)
+        fname_src_bin = os.path.join(path_tmp, f"src{i_file}_native_bin.nii.gz")
+        out.save(path=fname_src_bin)
 
         # apply transformation to binary mask to compute partial volume
+        fname_src_pv = os.path.join(path_tmp, f"src{i_file}_template_partialVolume.nii.gz")
         sct_apply_transfo.main(argv=[
-            '-i', 'src_' + str(i_file) + 'native_bin.nii.gz',
+            '-i', fname_src_bin,
             '-d', fname_dest,
             '-w', list_fname_warp[i_file],
-            '-x', param.interp,
-            '-o', 'src_' + str(i_file) + '_template_partialVolume.nii.gz',
+            '-x', interp,
+            '-o', fname_src_pv,
             '-v', '0'])
 
         # open data
-        data[:, :, :, i_file] = Image('src_' + str(i_file) + '_template.nii.gz').data
-        partial_volume[:, :, :, i_file] = Image('src_' + str(i_file) + '_template_partialVolume.nii.gz').data
-        i_file += 1
+        data[:, :, :, i_file] = Image(fname_src_warped).data
+        partial_volume[:, :, :, i_file] = Image(fname_src_pv).data
 
     # merge files using partial volume information (and convert nan resulting from division by zero to zeros)
     data_merge = np.divide(np.sum(data * partial_volume, axis=3), np.sum(partial_volume, axis=3))
@@ -189,10 +183,10 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, param):
 
     # write result in file
     nii_dest.data = data_merge
-    nii_dest.save(param.fname_out)
+    nii_dest.save(fname_out)
 
     # remove temporary folder
-    if param.rm_tmp:
+    if rm_tmp:
         rmtree(path_tmp)
 
 
@@ -204,29 +198,21 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
-    # create param objects
-    param = Param()
-
     # set param arguments ad inputted by user
     list_fname_src = arguments.i
     fname_dest = arguments.d
     list_fname_warp = arguments.w
-    param.fname_out = arguments.o
-
-    # if arguments.ofolder is not None
-    #     path_results = arguments.ofolder
-    if arguments.x is not None:
-        param.interp = arguments.x
-    if arguments.r is not None:
-        param.rm_tmp = arguments.r
+    fname_out = arguments.o
+    interp = arguments.x
+    rm_tmp = arguments.r
 
     # check if list of input files and warping fields have same length
     assert len(list_fname_src) == len(list_fname_warp), "ERROR: list of files are not of the same length"
 
     # merge src images to destination image
-    merge_images(list_fname_src, fname_dest, list_fname_warp, param)
+    merge_images(list_fname_src, fname_dest, list_fname_warp, fname_out, interp, rm_tmp)
 
-    display_viewer_syntax([fname_dest, os.path.abspath(param.fname_out)], verbose=verbose)
+    display_viewer_syntax([fname_dest, os.path.abspath(fname_out)], verbose=verbose)
 
 
 if __name__ == "__main__":

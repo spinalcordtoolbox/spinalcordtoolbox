@@ -67,7 +67,7 @@ def get_parser():
     optional.add_argument(
         "-f",
         help="Path to folder containing the atlas/template registered to the anatomical image. If provided, the "
-             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each"
+             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each "
              "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
              "GM, WM) occupied by lesion.",
         metavar=Metavar.str,

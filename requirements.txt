@@ -24,7 +24,7 @@ onnxruntime>=1.7.0
 pandas
 portalocker
 psutil
-pyqt5==5.11.3
+pyqt5
 pytest
 pytest-cov
 raven
