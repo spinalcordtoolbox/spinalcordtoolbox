@@ -1778,7 +1778,7 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
     ims_in = deepcopy(ims_in)
     im_out = deepcopy(im_out)
 
-    # Ensure all images are in RPI orientation (since make the assumption that that (x,y,z) = (LR,AP,SI))
+    # Ensure all images are in RPI orientation (since we make the assumption that that (x,y,z) = (LR,AP,SI))
     for im in list(ims_in) + [im_out]:
         im.change_orientation("RPI")
 
