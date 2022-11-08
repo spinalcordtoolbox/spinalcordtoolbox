@@ -303,6 +303,10 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
+        # set a more permissive threshold for reading the qform
+        # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3703 for details)
+        self.hdr.quaternion_threshold = -1e-6
+
         # Make sure sform and qform are the same.
         # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2429
         if check_sform and not check_affines_match(self):
