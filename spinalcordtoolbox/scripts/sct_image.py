@@ -146,12 +146,18 @@ def get_parser():
         required=False)
     orientation.add_argument(
         '-setorient',
-        help='Set orientation of the input image (only modifies the header).',
+        help='Set orientation of the input image (modifies BOTH the header and data array, similar to `fslswapdim`).',
         choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
         required=False)
     orientation.add_argument(
         '-setorient-data',
-        help='Set orientation of the input image\'s data (does NOT modify the header, but the data). Use with care !',
+        help='Set orientation of the input image\'s data (modifies ONLY the data array, and leaves the header alone).\n'
+             'Example usage: If `-getorient` returns "RPI", then:\n'
+             '  - Calling `-setorient-data LPI` will flip the LR axis of the data array.\n'
+             '  - Calling `-setorient-data IPR` will rearrange the first and last axes of the data array.\n'
+             '  - In both cases, the header of the image will still return "RPI".\n'
+             'WARNING: Use with care, as improper usage may introduce a mismatch between orientation of the header, '
+             'and the orientation of the data array.\n',
         choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
         required=False)
 
