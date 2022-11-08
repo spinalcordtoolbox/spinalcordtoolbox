@@ -345,7 +345,7 @@ class QcImage(object):
         for i, action in enumerate(self.action_list):
             logger.debug('Action List %s', action.__name__)
             if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
-                print("Mask type %s" % mask[i].dtype)
+                logger.debug("Mask type %s" % mask[i].dtype)
                 mask[i] = self._func_stretch_contrast(mask[i])
             ax = fig.add_axes((0, 0, 1, 1), label=str(i))
             action(self, mask[i], ax)
@@ -838,6 +838,12 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         fname_list.extend(fname_seg)
         qcslice_type = qcslice.Sagittal([Image(fname) for fname in fname_list], p_resample=None)
         qcslice_operations = [QcImage.smooth_centerline, QcImage.highlight_pmj, QcImage.listed_seg]
+        def qcslice_layout(x): return x.single()
+    elif process in ['sct_image -stitch']:
+        plane = 'Sagittal'
+        dpi = 150
+        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_in2)], p_resample=None)
+        qcslice_operations = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.single()
     else:
         raise ValueError("Unrecognized process: {}".format(process))

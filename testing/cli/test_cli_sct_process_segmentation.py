@@ -92,7 +92,7 @@ def test_sct_process_segmentation_check_normalize_missing_predictor(dummy_3d_mas
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
         sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-normalize',
-                                            'sex', '0' 'thalamus-volume', '13942.0', '-o', filename])
+                                            'sex', '0', 'thalamus-volume', '13942.0', '-o', filename])
         assert e.value.code == 2
 
 
