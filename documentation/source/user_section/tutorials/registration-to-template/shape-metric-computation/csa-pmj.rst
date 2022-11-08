@@ -7,7 +7,7 @@ Although using vertebral levels as a reference to :ref:`compute CSA <csa-perleve
 
 To overcome this limitation, the CSA can instead be computed as a function of the distance to a neuroanatomical reference point. Here, we use the pontomedullary junction (PMJ) as a reference for computing CSA, since the distance from the PMJ along the spinal cord will vary depending on the position of the neck.
 
-Computing the PMJ-based CSA involves a 4-step process `(Bedard & Cohen-Adad, 2021) <https://www.biorxiv.org/content/10.1101/2021.09.30.462636v1>`_: 
+Computing the PMJ-based CSA involves a 4-step process `(Bedard & Cohen-Adad, 2022) <https://doi.org/10.3389/fnimg.2022.1031253>`_: 
 
 1. The PMJ is detected using ``sct_detect_pmj``.
 2. The spinal cord centerline is extracted using a segmentation of the spinal cord, then the centerline is extended to the position of the PMJ label using linear interpolation and smoothing. 
