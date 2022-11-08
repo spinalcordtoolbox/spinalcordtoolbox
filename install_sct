@@ -574,7 +574,7 @@ run mkdir -p "$SCT_DIR/$PYTHON_DIR"
 # Download miniconda
 print info "Downloading Miniconda..."
 case $OS in
-linux*)
+linux)
   download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
   ;;
 osx)
@@ -618,6 +618,11 @@ ACTUAL_PYTHON="$(realpath "$(command -v python)")"
 if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
   echo "Error: Activating venv_sct failed to switch Python interpreter to Miniconda. (Incorrect interpreter loaded: $ACTUAL_PYTHON)" >&2
   exit 1
+fi
+
+# Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927)
+if [[ $OS == linux ]]; then
+  conda install -y -c conda-forge libstdcxx-ng
 fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
