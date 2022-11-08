@@ -88,8 +88,9 @@ def get_parser():
             "      (For option 3, you can also add '-perlevel' to compute metrics for each vertebral level, rather "
             "than averaging.)\n"
             "\n"
-            "Reference for '-pmj': Bédard S, Cohen-Adad J. Automatic measure and normalization of spinal cord "
-            "cross-sectional area using the pontomedullary junction. Frontiers in Neuroimaging 2022.\n"
+            "Reference for '-pmj' and for '-normalize':\n"
+            "Bédard S, Cohen-Adad J. Automatic measure and normalization of spinal cord cross-sectional area using "
+            "the pontomedullary junction. Frontiers in Neuroimaging 2022.\n"
             "doi.org/10.3389/fnimg.2022.1031253"
         )
     )
