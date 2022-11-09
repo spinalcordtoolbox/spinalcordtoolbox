@@ -155,7 +155,8 @@ def get_parser():
              'Example usage: If `-getorient` returns "RPI", then:\n'
              '  - Calling `-setorient-data LPI` will flip the LR axis of the data array.\n'
              '  - Calling `-setorient-data IPR` will rearrange the first and last axes of the data array.\n'
-             '  - In both cases, the header of the image will still return "RPI".\n'
+             '  - In both cases, calling `-getorient` afterwards will still return "RPI", because the header is '
+             'not modified.\n'
              'WARNING: Use with care, as improper usage may introduce a mismatch between orientation of the header, '
              'and the orientation of the data array.\n',
         choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
