@@ -24,7 +24,10 @@ onnxruntime>=1.7.0
 pandas
 portalocker
 psutil
-pyqt5
+# pyqt5=5.11.X causes https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3916#discussion_r997435037
+# pyqt5=5.15.X causes https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3925
+# So, we limit the range to 5.12-5.14.
+pyqt5>=5.12.0,<5.15.0
 pytest
 pytest-cov
 raven
