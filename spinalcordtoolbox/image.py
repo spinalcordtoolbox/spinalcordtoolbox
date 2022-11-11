@@ -303,6 +303,14 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
+        # Check to see if there's a mismatch between the array's datatype and the header datatype
+        dtype_data = self.data.dtype
+        dtype_header = self.hdr.get_data_dtype()
+        if dtype_data != dtype_header:
+            logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type"
+                           f"type '{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
+            self.hdr.set_data_dtype(dtype_data)
+
         # set a more permissive threshold for reading the qform
         # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3703 for details)
         self.hdr.quaternion_threshold = -1e-6
