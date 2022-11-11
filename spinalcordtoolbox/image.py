@@ -509,9 +509,17 @@ class Image(object):
         hdr = self.hdr.copy() if self.hdr else None
         if hdr:
             hdr.set_data_shape(data.shape)
-            # Update dtype if provided (but not if based on SCT-specific values: 'minimize')
-            if (dtype is not None) and (dtype not in ['minimize', 'minimize_int']):
-                hdr.set_data_dtype(dtype)
+            # Update dtype to match that of the data array
+            dtype_data = data.dtype
+            dtype_header = hdr.get_data_dtype()
+            if dtype_data != dtype_header:
+                logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type"
+                               f"type '{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
+                if dtype_data == 'bool':
+                    # Sometimes we create boolean arrays, apparently! But, using 'bool' for nibabel headers triggers:
+                    # `nibabel.spatialimages.HeaderDataError: data dtype "bool" not supported`, so use `int16` instead
+                    dtype_data = np.int16
+                hdr.set_data_dtype(dtype_data)
 
         # nb. that copy() is important because if it were a memory map, save()
         # would corrupt it
