@@ -173,3 +173,4 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
         bodyFile: ".github/workflows/release-body.md"
         artifacts: "install_sct-${{ github.event.inputs.milestone_title }}_win.bat"
+        draft: true
