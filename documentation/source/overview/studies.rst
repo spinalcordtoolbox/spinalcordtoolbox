@@ -26,6 +26,7 @@ The following studies have used SCT:
 2022
 ----
 
+-  Hoggarth *et al.* `Effects of variability in manually contoured spinal cord masks on fMRI co-registration and interpretation <https://doi.org/10.3389/fneur.2022.907581>`_, **Front. Neurol.**, 2022
 -  Rezende *et al.* `Progressive Spinal Cord Degeneration in Friedreich's Ataxia: Results from ENIGMA-Ataxia <https://doi.org/10.1002/mds.29261>`_, **Mov. Disord.**, 2022
 -  Taso *et al.* `Fast-spin-echo versus rapid gradient-echo for 3D magnetization-prepared acquisitions: Application to inhomogeneous magnetization transfer <https://doi.org/10.1002/mrm.29461>`_, **Magn. Reson. Med.** 2022
 -  Meyer *et al.* `Differential Trajectory of Diffusion and Perfusion MRI of Rat Spinal Cord Injury <https://doi.org/10.1089/neu.2022.0283>`_, **J. Neurotrauma**, 2022
