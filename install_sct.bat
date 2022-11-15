@@ -8,6 +8,14 @@ rem This option is needed for expanding !git_ref!, which is set (*and expanded*!
 rem See also https://stackoverflow.com/q/9102422 for a further description of this behavior.
 setLocal EnableDelayedExpansion
 
+rem Try to ensure that Git is available on the PATH prior to invoking `git clone` to avoid 'command not found' errors
+rem   - See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3912
+rem NB: This *should* be handled by the git installer, and we even have reports of people running git --version
+rem successfully and still getting an error. However, there are perhaps situations where someone has installed git but
+rem hasn't refreshed their terminal. Manually modifying the PATH is a bit of a hacky workaround, especially if Git has
+rem been installed somewhere else, but if this mitigates a user post on the forum, this will save us some dev time.
+PATH=%PATH%;C:\Program Files\Git
+
 if exist .git\ (
   rem If install_sct.bat is being run from a git repository, we assume that this is a git clone of SCT
   rem So, stay in this folder, skip git clone, and assume that we want to install SCT from the current state of the repository
