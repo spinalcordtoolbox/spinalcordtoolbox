@@ -307,8 +307,8 @@ class Image(object):
         dtype_data = self.data.dtype
         dtype_header = self.hdr.get_data_dtype()
         if dtype_data != dtype_header:
-            logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type"
-                           f"type '{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
+            logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type "
+                           f"'{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
             self.hdr.set_data_dtype(dtype_data)
 
         # set a more permissive threshold for reading the qform
