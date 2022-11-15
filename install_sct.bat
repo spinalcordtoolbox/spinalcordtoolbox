@@ -15,6 +15,9 @@ rem successfully and still getting an error. However, there are perhaps situatio
 rem hasn't refreshed their terminal. Manually modifying the PATH is a bit of a hacky workaround, especially if Git has
 rem been installed somewhere else, but if this mitigates a user post on the forum, this will save us some dev time.
 PATH=%PATH%;C:\Program Files\Git
+git -version >nul 2>&1 || (
+    echo ### git not found. Make sure that git is installed ^(and a fresh Command Prompt window has been opened^) before running the SCT installer.
+)
 
 if exist .git\ (
   rem If install_sct.bat is being run from a git repository, we assume that this is a git clone of SCT
