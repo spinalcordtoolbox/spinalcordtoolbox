@@ -304,12 +304,7 @@ class Image(object):
             raise TypeError('Image constructor takes at least one argument.')
 
         # Check to see if there's a mismatch between the array's datatype and the header datatype
-        dtype_data = self.data.dtype
-        dtype_header = self.hdr.get_data_dtype()
-        if dtype_data != dtype_header:
-            logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type "
-                           f"'{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
-            self.hdr.set_data_dtype(dtype_data)
+        self.fix_header_dtype()
 
         # set a more permissive threshold for reading the qform
         # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3703 for details)
@@ -408,6 +403,25 @@ class Image(object):
         """Use this or (set_sform_to_qform) when matching matrices are required."""
         self.hdr.set_qform(self.hdr.get_sform())
         self.hdr._structarr['qform_code'] = self.hdr._structarr['sform_code']
+
+    def fix_header_dtype(self, header='self', array='self'):
+        """
+        Change the header dtype to the match the datatype of the array.
+
+        Note: This method defaults to operating on the image's `data` and `hdr` properties,
+              but the fix can also be applied to supplied arrays and headers, too."""
+        hdr = self.hdr if header == 'self' else header
+        data = self.data if array == 'self' else array
+        dtype_header = hdr.get_data_dtype()
+        dtype_data = data.dtype
+        if dtype_data != dtype_header:
+            if dtype_data == 'bool':
+                # Sometimes we create boolean arrays, apparently! But, using 'bool' for nibabel headers triggers:
+                # `nibabel.spatialimages.HeaderDataError: data dtype "bool" not supported`, so use `int16` instead
+                dtype_data = np.int16
+            logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type "
+                           f"'{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
+            hdr.set_data_dtype(dtype_data)
 
     def loadFromPath(self, path, mmap, verbose):
         """
@@ -510,16 +524,7 @@ class Image(object):
         if hdr:
             hdr.set_data_shape(data.shape)
             # Update dtype to match that of the data array
-            dtype_data = data.dtype
-            dtype_header = hdr.get_data_dtype()
-            if dtype_data != dtype_header:
-                logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type"
-                               f"type '{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
-                if dtype_data == 'bool':
-                    # Sometimes we create boolean arrays, apparently! But, using 'bool' for nibabel headers triggers:
-                    # `nibabel.spatialimages.HeaderDataError: data dtype "bool" not supported`, so use `int16` instead
-                    dtype_data = np.int16
-                hdr.set_data_dtype(dtype_data)
+            self.fix_header_dtype(header=hdr, array=data)
 
         # nb. that copy() is important because if it were a memory map, save()
         # would corrupt it
