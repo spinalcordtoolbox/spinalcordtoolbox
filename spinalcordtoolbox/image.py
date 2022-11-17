@@ -417,8 +417,8 @@ class Image(object):
         if dtype_data != dtype_header:
             if dtype_data == 'bool':
                 # Sometimes we create boolean arrays, apparently! But, using 'bool' for nibabel headers triggers:
-                # `nibabel.spatialimages.HeaderDataError: data dtype "bool" not supported`, so use `int16` instead
-                dtype_data = np.int16
+                # `nibabel.spatialimages.HeaderDataError: data dtype "bool" not supported`, so use `uint8` instead
+                dtype_data = np.uint8
             logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type "
                            f"'{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
             hdr.set_data_dtype(dtype_data)
