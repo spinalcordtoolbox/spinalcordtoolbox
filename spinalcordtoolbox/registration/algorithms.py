@@ -10,6 +10,7 @@
 import logging
 import os  # FIXME
 import shutil
+import psutil
 from math import asin, cos, sin, acos
 
 import numpy as np
@@ -447,7 +448,16 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
         nb_unet_features=([256, 256, 256, 256], [256, 256, 256, 256, 256, 256])
     )
     logger.info("\n Creating VxmDense models with arguments:")
-    logger.info(f"\n{reg_args}")
+    logger.info(f"{reg_args}")
+
+    volume_m = (new_img_shape[0] * new_img_shape[1] * new_img_shape[2] / 1e6)
+    ram_estimated = round((volume_m * 3.52) + 0.0538, 2)
+    ram_free = round(psutil.virtual_memory().free / 1024 ** 3, 2)
+    if ram_estimated + 1 > ram_free:
+        logger.warning(f"\nWARNING: System has {ram_free}GB of free memory, but inference may require as much as "
+                       f"{ram_estimated}GB to register images of size {new_img_shape}. As a result, the script may "
+                       f"quit unexpectedly due to lack of memory. To reduce memory requirements, please consider "
+                       f"cropping your images around the spinal cord prior to registration.")
 
     logger.info("\n Predicting using first VxmDense model...")
     moved, warp_data_first = register_dl_inference('pt_cascaded_first_model.pt', input_moving, input_fixed, reg_args, device)
