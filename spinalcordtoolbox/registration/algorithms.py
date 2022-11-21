@@ -449,54 +449,8 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     logger.info("\n Creating VxmDense models with arguments:")
     logger.info(f"\n{reg_args}")
 
-    # ---- First Model ---- #
-    logger.info("\n Loading first VxmDense model...")
-    pt_first_model = vxm.networks.VxmDense(**reg_args)
-    model1_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_first_model.pt')
-    trained_state_dict_first_model = torch.load(model1_path)
-    # Load the weights to the PyTorch model
-    weights_first_model = []
-    for k in trained_state_dict_first_model:
-        weights_first_model.append(trained_state_dict_first_model[k])
-    i = 0
-    i_max = len(list(pt_first_model.named_parameters()))
-    torchparam = pt_first_model.state_dict()
-    for k, v in torchparam.items():
-        if i < i_max:
-            torchparam[k] = weights_first_model[i]
-            i += 1
-    pt_first_model.load_state_dict(torchparam)
-    pt_first_model.to(device)
-    pt_first_model.eval()
-
-    # ---- Second Model ---- #
-    logger.info("\n Loading second VxmDense model...")
-    pt_second_model = vxm.networks.VxmDense(**reg_args)
-    model2_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_second_model.pt')
-    trained_state_dict_second_model = torch.load(model2_path)
-    # Load the weights to the PyTorch model
-    weights_second_model = []
-    for k in trained_state_dict_second_model:
-        weights_second_model.append(trained_state_dict_second_model[k])
-    i = 0
-    i_max = len(list(pt_second_model.named_parameters()))
-    torchparam = pt_second_model.state_dict()
-    for k, v in torchparam.items():
-        if i < i_max:
-            torchparam[k] = weights_second_model[i]
-            i += 1
-    pt_second_model.load_state_dict(torchparam)
-    pt_second_model.to(device)
-    pt_second_model.eval()
-
-    # ---- Registration ---- #
-    logger.info("\n Predicting using first VxmDense model...")
-    moved, warp_tensor_first = pt_first_model(input_moving, input_fixed, registration=True)
-    warp_data_first = warp_tensor_first[0].permute(1, 2, 3, 0).detach().numpy()
-
-    logger.info("\n Predicting using second VxmDense model...")
-    moved_final, warp_tensor_second = pt_second_model(moved, input_fixed, registration=True)
-    warp_data_second = warp_tensor_second[0].permute(1, 2, 3, 0).detach().numpy()
+    moved, warp_data_first = register_dl_first_model(input_moving, input_fixed, reg_args, device)
+    moved_final, warp_data_second = register_dl_second_model(moved, input_fixed, reg_args, device)
 
     # ---- Warping fields ---- #
     # Modify the warp data so it can be used with sct_apply_transfo()
@@ -552,6 +506,63 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     warp_rev.header['intent_code'] = 1007
     # Save the composed warping field [reverse]
     save(warp_rev, fname_warp_reverse)
+
+
+def register_dl_first_model(input_moving, input_fixed, reg_args, device):
+    # ---- First Model ---- #
+    logger.info("\n Loading first VxmDense model...")
+    pt_first_model = vxm.networks.VxmDense(**reg_args)
+    model1_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_first_model.pt')
+    trained_state_dict_first_model = torch.load(model1_path)
+    # Load the weights to the PyTorch model
+    weights_first_model = []
+    for k in trained_state_dict_first_model:
+        weights_first_model.append(trained_state_dict_first_model[k])
+    i = 0
+    i_max = len(list(pt_first_model.named_parameters()))
+    torchparam = pt_first_model.state_dict()
+    for k, v in torchparam.items():
+        if i < i_max:
+            torchparam[k] = weights_first_model[i]
+            i += 1
+    pt_first_model.load_state_dict(torchparam)
+    pt_first_model.to(device)
+    pt_first_model.eval()
+
+    # ---- Registration ---- #
+    logger.info("\n Predicting using first VxmDense model...")
+    moved, warp_tensor_first = pt_first_model(input_moving, input_fixed, registration=True)
+    warp_data_first = warp_tensor_first[0].permute(1, 2, 3, 0).detach().numpy()
+
+    return moved, warp_data_first
+
+
+def register_dl_second_model(moved, input_fixed, reg_args, device):
+    # ---- Second Model ---- #
+    logger.info("\n Loading second VxmDense model...")
+    pt_second_model = vxm.networks.VxmDense(**reg_args)
+    model2_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_second_model.pt')
+    trained_state_dict_second_model = torch.load(model2_path)
+    # Load the weights to the PyTorch model
+    weights_second_model = []
+    for k in trained_state_dict_second_model:
+        weights_second_model.append(trained_state_dict_second_model[k])
+    i = 0
+    i_max = len(list(pt_second_model.named_parameters()))
+    torchparam = pt_second_model.state_dict()
+    for k, v in torchparam.items():
+        if i < i_max:
+            torchparam[k] = weights_second_model[i]
+            i += 1
+    pt_second_model.load_state_dict(torchparam)
+    pt_second_model.to(device)
+    pt_second_model.eval()
+
+    logger.info("\n Predicting using second VxmDense model...")
+    moved_final, warp_tensor_second = pt_second_model(moved, input_fixed, registration=True)
+    warp_data_second = warp_tensor_second[0].permute(1, 2, 3, 0).detach().numpy()
+
+    return moved_final, warp_data_second
 
 
 def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp_forward_out='step0Warp.nii.gz',
