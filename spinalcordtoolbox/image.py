@@ -303,7 +303,7 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
-        # Check to see if there's a mismatch between the array's datatype and the header datatype
+        # Fix any mismatch between the array's datatype and the header datatype
         self.fix_header_dtype()
 
         # set a more permissive threshold for reading the qform
@@ -404,24 +404,22 @@ class Image(object):
         self.hdr.set_qform(self.hdr.get_sform())
         self.hdr._structarr['qform_code'] = self.hdr._structarr['sform_code']
 
-    def fix_header_dtype(self, header='self', array='self'):
+    def fix_header_dtype(self):
         """
         Change the header dtype to the match the datatype of the array.
+        """
+        # Using bool for nibabel headers is unsupported, so use uint8 instead:
+        # `nibabel.spatialimages.HeaderDataError: data dtype "bool" not supported`
+        dtype_data = self.data.dtype
+        if dtype_data == bool:
+            dtype_data = np.uint8
 
-        Note: This method defaults to operating on the image's `data` and `hdr` properties,
-              but the fix can also be applied to supplied arrays and headers, too."""
-        hdr = self.hdr if header == 'self' else header
-        data = self.data if array == 'self' else array
-        dtype_header = hdr.get_data_dtype()
-        dtype_data = data.dtype
-        if dtype_data != dtype_header:
-            if dtype_data == 'bool':
-                # Sometimes we create boolean arrays, apparently! But, using 'bool' for nibabel headers triggers:
-                # `nibabel.spatialimages.HeaderDataError: data dtype "bool" not supported`, so use `uint8` instead
-                dtype_data = np.uint8
+        dtype_header = self.hdr.get_data_dtype()
+        if dtype_header != dtype_data:
             logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type "
                            f"'{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
-            hdr.set_data_dtype(dtype_data)
+
+        self.hdr.set_data_dtype(dtype_data)
 
     def loadFromPath(self, path, mmap, verbose):
         """
