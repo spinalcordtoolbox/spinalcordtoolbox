@@ -503,53 +503,44 @@ class Image(object):
 
         :param mutable: whether to update members with newly created path or dtype
         """
+        if not mutable:
+            self.copy().save(path, dtype, verbose, mutable=True)
+            return self
 
-        if path is None and self.absolutepath is None:
-            raise RuntimeError("Don't know where to save the image (no absolutepath or path parameter)")
-        elif path is not None and os.path.isdir(path) and self.absolutepath is not None:
+        if path is None:
+            # Use self.absolutepath by default
+            if self.absolutepath is None:
+                raise ValueError("Don't know where to save the image (no absolutepath or path parameter)")
+            path = self.absolutepath
+        elif os.path.isdir(path):
             # Save to destination directory with original basename
+            if self.absolutepath is None:
+                raise ValueError("Don't know where to save the image (no absolutepath and path parameter is dir)")
             path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
-
-        path = path or self.absolutepath
-
-        if dtype is not None:
-            dst = self.copy()
-            dst.change_type(dtype)
-            data = dst.data
-        else:
-            data = self.data
-
-        # update header
-        hdr = self.hdr.copy() if self.hdr else None
-        if hdr:
-            hdr.set_data_shape(data.shape)
-            # Update dtype to match that of the data array
-            self.fix_header_dtype(header=hdr, array=data)
-
-        # nb. that copy() is important because if it were a memory map, save()
-        # would corrupt it
-        img = nib.nifti1.Nifti1Image(data.copy(), None, hdr)
-        if os.path.isfile(path):
-            if verbose:
-                logger.warning('File ' + path + ' already exists. Will overwrite it.')
-
-        # save file
+        self.absolutepath = path
+        if os.path.isfile(path) and verbose:
+            logger.warning("File %s already exists. Will overwrite it.", path)
         if os.path.isabs(path):
             logger.debug("Saving image to %s orientation %s shape %s",
-                         path, self.orientation, data.shape)
+                         path, self.orientation, self.data.shape)
         else:
             logger.debug("Saving image to %s (%s) orientation %s shape %s",
-                         path, os.path.abspath(path), self.orientation, data.shape)
+                         path, os.path.abspath(path), self.orientation, self.data.shape)
 
-        nib.save(img, path)
+        if dtype is not None:
+            self.change_type(dtype)
 
-        if mutable:
-            self.absolutepath = path
-            self.data = data
+        if self.hdr is not None:
+            self.hdr.set_data_shape(self.data.shape)
+            self.fix_header_dtype()
 
+        # nb. that copy() is important because if it were a memory map, save() would corrupt it
+        dataobj = self.data.copy()
+        affine = None
+        header = self.hdr.copy() if self.hdr is not None else None
+        nib.save(nib.nifti1.Nifti1Image(dataobj, affine, header), path)
         if not os.path.isfile(path):
-            raise RuntimeError("Couldn't save {}".format(path))
-
+            raise RuntimeError(f"Couldn't save {path}")
         return self
 
     def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
