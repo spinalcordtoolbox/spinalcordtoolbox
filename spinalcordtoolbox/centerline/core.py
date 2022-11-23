@@ -81,13 +81,14 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
+def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
 
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
     :param param: ParamCenterline() class:
     :param verbose: int: verbose level
+    :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
     :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
     :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
@@ -148,7 +149,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
         # and directly output results.
         from spinalcordtoolbox.centerline import optic
         assert param.contrast is not None
-        im_centerline = optic.detect_centerline(im_seg, param.contrast)
+        im_centerline = optic.detect_centerline(im_seg, param.contrast, remove_temp_files)
         x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
         # TODO: Fix below with reorientation of axes
