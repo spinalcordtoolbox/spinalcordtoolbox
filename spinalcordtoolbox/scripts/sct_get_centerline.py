@@ -100,6 +100,14 @@ def get_parser():
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
+        '-r',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,
+        help="Whether to remove temporary files. 0 = no, 1 = yes"
+    )
+    optional.add_argument(
         "-qc",
         metavar=Metavar.folder,
         action=ActionCreateFolder,
@@ -174,7 +182,8 @@ def main(argv: Sequence[str]):
     # Extrapolate and regularize (or detect if optic) cord centerline
     im_centerline, arr_centerline, _, _ = get_centerline(im_labels,
                                                          param=param_centerline,
-                                                         verbose=verbose)
+                                                         verbose=verbose,
+                                                         remove_temp_files=arguments.r)
 
     # save centerline as nifti (discrete) and csv (continuous) files
     im_centerline.save(file_output)
