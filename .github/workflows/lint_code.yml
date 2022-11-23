@@ -17,6 +17,4 @@ jobs:
       run: pip install flake8
     # Note: flake8 picks up project-wide configuration options from 'setup.cfg' in SCT's root directory
     - name: Lint with flake8
-      # NB: 'master...branch' is syntactic sugar for 'git diff `git merge-base master branch`..branch'
-      # NB: You can exclude the second ref ('branch') and git diff will take the currently checked-out ref
-      run: git diff origin/master... | flake8 --diff
+      run: git diff --name-only --diff-filter=d --merge-base master | grep '\.py$' | xargs --delimiter='\n' --no-run-if-empty flake8
