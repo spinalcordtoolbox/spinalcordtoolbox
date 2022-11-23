@@ -14,7 +14,7 @@ jobs:
       with:
         python-version: 3.8
     - name: Install dependencies
-      run: pip install flake8
+      run: pip install flake8<6.0.0
     # Note: flake8 picks up project-wide configuration options from 'setup.cfg' in SCT's root directory
     - name: Lint with flake8
       # NB: 'master...branch' is syntactic sugar for 'git diff `git merge-base master branch`..branch'
