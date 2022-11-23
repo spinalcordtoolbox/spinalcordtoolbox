@@ -148,7 +148,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
         # and directly output results.
         from spinalcordtoolbox.centerline import optic
         assert param.contrast is not None
-        im_centerline = optic.detect_centerline(im_seg, param.contrast, verbose)
+        im_centerline = optic.detect_centerline(im_seg, param.contrast)
         x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
         # TODO: Fix below with reorientation of axes
