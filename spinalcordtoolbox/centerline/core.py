@@ -1,11 +1,12 @@
 # Core functions dealing with centerline extraction from 3D data.
 
-
+import os
 import logging
 import numpy as np
 
-from spinalcordtoolbox.image import Image, zeros_like
+from spinalcordtoolbox.image import Image, zeros_like, add_suffix
 from spinalcordtoolbox.centerline import curve_fitting
+from spinalcordtoolbox.utils.fs import tmp_create
 
 logger = logging.getLogger(__name__)
 
@@ -236,6 +237,11 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
 
         plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
         plt.close()
+
+    # Save centerline image to tmp_folder (but only if user hasn't opted to `remove_temp_files`)
+    if not remove_temp_files:
+        tmp_folder = tmp_create("centerline")
+        im_centerline.save(os.path.join(tmp_folder, add_suffix(im_seg.absolutepath, "_ctr")), mutable=True)
 
     return (im_centerline,
             np.array([x_centerline_fit, y_centerline_fit, z_ref]),
