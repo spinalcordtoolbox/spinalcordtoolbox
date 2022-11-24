@@ -513,8 +513,8 @@ class Image(object):
                 if self.absolutepath:  # Use the original filename, but save to the directory specified by `path`
                     path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
                 else:
-                    raise ValueError(
-                        "Don't know where to save the image (path parameter is dir, but absolutepath is missing)")
+                    raise ValueError("Don't know where to save the image (path parameter is dir, but absolutepath is "
+                                     "missing)")
             # Case 3: `path` points to a file (or a *nonexistent* directory) so use its value as-is
             #    (We're okay with letting nonexistent directories slip through, because it's difficult to distinguish
             #     between nonexistent directories and nonexistent files. Plus, `nibabel` will catch any further errors.)
