@@ -501,18 +501,25 @@ class Image(object):
 
         :param mutable: whether to update members with newly created path or dtype
         """
-        if mutable:
-            # do all modifications in-place
+        if mutable:  # do all modifications in-place
+            # Case 1: `path` not specified
             if path is None:
-                # Use self.absolutepath by default
-                if self.absolutepath is None:
+                if self.absolutepath:  # Fallback to the original filepath
+                    path = self.absolutepath
+                else:
                     raise ValueError("Don't know where to save the image (no absolutepath or path parameter)")
-                path = self.absolutepath
+            # Case 2: `path` points to an existing directory
             elif os.path.isdir(path):
-                # Save to destination directory with original basename
-                if self.absolutepath is None:
-                    raise ValueError("Don't know where to save the image (no absolutepath and path parameter is dir)")
-                path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
+                if self.absolutepath:  # Use the original filename, but save to the directory specified by `path`
+                    path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
+                else:
+                    raise ValueError(
+                        "Don't know where to save the image (path parameter is dir, but absolutepath is missing)")
+            # Case 3: `path` points to a file (or a *nonexistent* directory) so use its value as-is
+            #    (We're okay with letting nonexistent directories slip through, because it's difficult to distinguish
+            #     between nonexistent directories and nonexistent files. Plus, `nibabel` will catch any further errors.)
+            else:
+                pass
             self.absolutepath = path
             if os.path.isfile(path) and verbose:
                 logger.warning("File %s already exists. Will overwrite it.", path)
