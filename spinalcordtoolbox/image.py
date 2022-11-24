@@ -501,44 +501,45 @@ class Image(object):
 
         :param mutable: whether to update members with newly created path or dtype
         """
-        if not mutable:
-            self.copy().save(path, dtype, verbose, mutable=True)
-            return self
+        if mutable:
+            # do all modifications in-place
+            if path is None:
+                # Use self.absolutepath by default
+                if self.absolutepath is None:
+                    raise ValueError("Don't know where to save the image (no absolutepath or path parameter)")
+                path = self.absolutepath
+            elif os.path.isdir(path):
+                # Save to destination directory with original basename
+                if self.absolutepath is None:
+                    raise ValueError("Don't know where to save the image (no absolutepath and path parameter is dir)")
+                path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
+            self.absolutepath = path
+            if os.path.isfile(path) and verbose:
+                logger.warning("File %s already exists. Will overwrite it.", path)
+            if os.path.isabs(path):
+                logger.debug("Saving image to %s orientation %s shape %s",
+                             path, self.orientation, self.data.shape)
+            else:
+                logger.debug("Saving image to %s (%s) orientation %s shape %s",
+                             path, os.path.abspath(path), self.orientation, self.data.shape)
 
-        if path is None:
-            # Use self.absolutepath by default
-            if self.absolutepath is None:
-                raise ValueError("Don't know where to save the image (no absolutepath or path parameter)")
-            path = self.absolutepath
-        elif os.path.isdir(path):
-            # Save to destination directory with original basename
-            if self.absolutepath is None:
-                raise ValueError("Don't know where to save the image (no absolutepath and path parameter is dir)")
-            path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
-        self.absolutepath = path
-        if os.path.isfile(path) and verbose:
-            logger.warning("File %s already exists. Will overwrite it.", path)
-        if os.path.isabs(path):
-            logger.debug("Saving image to %s orientation %s shape %s",
-                         path, self.orientation, self.data.shape)
+            if dtype is not None:
+                self.change_type(dtype)
+
+            if self.hdr is not None:
+                self.hdr.set_data_shape(self.data.shape)
+                self.fix_header_dtype()
+
+            # nb. that copy() is important because if it were a memory map, save() would corrupt it
+            dataobj = self.data.copy()
+            affine = None
+            header = self.hdr.copy() if self.hdr is not None else None
+            nib.save(nib.nifti1.Nifti1Image(dataobj, affine, header), path)
+            if not os.path.isfile(path):
+                raise RuntimeError(f"Couldn't save {path}")
         else:
-            logger.debug("Saving image to %s (%s) orientation %s shape %s",
-                         path, os.path.abspath(path), self.orientation, self.data.shape)
-
-        if dtype is not None:
-            self.change_type(dtype)
-
-        if self.hdr is not None:
-            self.hdr.set_data_shape(self.data.shape)
-            self.fix_header_dtype()
-
-        # nb. that copy() is important because if it were a memory map, save() would corrupt it
-        dataobj = self.data.copy()
-        affine = None
-        header = self.hdr.copy() if self.hdr is not None else None
-        nib.save(nib.nifti1.Nifti1Image(dataobj, affine, header), path)
-        if not os.path.isfile(path):
-            raise RuntimeError(f"Couldn't save {path}")
+            # make any required modifications on a throw-away copy
+            self.copy().save(path, dtype, verbose, mutable=True)
         return self
 
     def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
