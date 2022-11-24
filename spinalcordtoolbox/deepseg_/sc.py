@@ -56,7 +56,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         # # TODO: replace with get_centerline(method=optic)
         im_ctl, _, _, _ = get_centerline(im,
                                          ParamCenterline(algo_fitting='optic', contrast=contrast_type),
-                                         remove_temp_files)
+                                         remove_temp_files=remove_temp_files)
 
     elif algo == 'cnn':
         # CNN parameters
@@ -76,7 +76,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                                     brain_bool=brain_bool)
         im_ctl, _, _, _ = get_centerline(im_heatmap,
                                          ParamCenterline(algo_fitting='optic', contrast=contrast_type),
-                                         remove_temp_files)
+                                         remove_temp_files=remove_temp_files)
 
         if z_max is not None:
             logger.info('Cropping brain section.')
