@@ -519,7 +519,7 @@ class Image(object):
             #     between nonexistent directories and nonexistent files. Plus, `nibabel` will catch any further errors.)
             else:
                 pass
-            self.absolutepath = path
+
             if os.path.isfile(path) and verbose:
                 logger.warning("File %s already exists. Will overwrite it.", path)
             if os.path.isabs(path):
@@ -528,6 +528,9 @@ class Image(object):
             else:
                 logger.debug("Saving image to %s (%s) orientation %s shape %s",
                              path, os.path.abspath(path), self.orientation, self.data.shape)
+
+            # Now that `path` has been set and log messages have been written, we can assign it to the image itself
+            self.absolutepath = os.path.abspath(path)
 
             if dtype is not None:
                 self.change_type(dtype)
@@ -540,9 +543,9 @@ class Image(object):
             dataobj = self.data.copy()
             affine = None
             header = self.hdr.copy() if self.hdr is not None else None
-            nib.save(nib.nifti1.Nifti1Image(dataobj, affine, header), path)
-            if not os.path.isfile(path):
-                raise RuntimeError(f"Couldn't save {path}")
+            nib.save(nib.nifti1.Nifti1Image(dataobj, affine, header), self.absolutepath)
+            if not os.path.isfile(self.absolutepath):
+                raise RuntimeError(f"Couldn't save image to {self.absolutepath}")
         else:
             # make any required modifications on a throw-away copy
             self.copy().save(path, dtype, verbose, mutable=True)
