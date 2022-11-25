@@ -547,7 +547,7 @@ class Image(object):
             if not os.path.isfile(self.absolutepath):
                 raise RuntimeError(f"Couldn't save image to {self.absolutepath}")
         else:
-            # make any required modifications on a throw-away copy
+            # if we're not operating in-place, then make any required modifications on a throw-away copy
             self.copy().save(path, dtype, verbose, mutable=True)
         return self
 
