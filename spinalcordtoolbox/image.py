@@ -303,6 +303,9 @@ class Image(object):
         else:
             raise TypeError('Image constructor takes at least one argument.')
 
+        # Fix any mismatch between the array's datatype and the header datatype
+        self.fix_header_dtype()
+
         # set a more permissive threshold for reading the qform
         # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3703 for details)
         self.hdr.quaternion_threshold = -1e-6
@@ -401,6 +404,22 @@ class Image(object):
         self.hdr.set_qform(self.hdr.get_sform())
         self.hdr._structarr['qform_code'] = self.hdr._structarr['sform_code']
 
+    def fix_header_dtype(self):
+        """
+        Change the header dtype to the match the datatype of the array.
+        """
+        # Using bool for nibabel headers is unsupported, so use uint8 instead:
+        # `nibabel.spatialimages.HeaderDataError: data dtype "bool" not supported`
+        dtype_data = self.data.dtype
+        if dtype_data == bool:
+            dtype_data = np.uint8
+
+        dtype_header = self.hdr.get_data_dtype()
+        if dtype_header != dtype_data:
+            logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type "
+                           f"'{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
+            self.hdr.set_data_dtype(dtype_data)
+
     def loadFromPath(self, path, mmap, verbose):
         """
         This function load an image from an absolute path using nibabel library
@@ -481,54 +500,55 @@ class Image(object):
 
         :param mutable: whether to update members with newly created path or dtype
         """
+        if mutable:  # do all modifications in-place
+            # Case 1: `path` not specified
+            if path is None:
+                if self.absolutepath:  # Fallback to the original filepath
+                    path = self.absolutepath
+                else:
+                    raise ValueError("Don't know where to save the image (no absolutepath or path parameter)")
+            # Case 2: `path` points to an existing directory
+            elif os.path.isdir(path):
+                if self.absolutepath:  # Use the original filename, but save to the directory specified by `path`
+                    path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
+                else:
+                    raise ValueError("Don't know where to save the image (path parameter is dir, but absolutepath is "
+                                     "missing)")
+            # Case 3: `path` points to a file (or a *nonexistent* directory) so use its value as-is
+            #    (We're okay with letting nonexistent directories slip through, because it's difficult to distinguish
+            #     between nonexistent directories and nonexistent files. Plus, `nibabel` will catch any further errors.)
+            else:
+                pass
 
-        if path is None and self.absolutepath is None:
-            raise RuntimeError("Don't know where to save the image (no absolutepath or path parameter)")
-        elif path is not None and os.path.isdir(path) and self.absolutepath is not None:
-            # Save to destination directory with original basename
-            path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
+            if os.path.isfile(path) and verbose:
+                logger.warning("File %s already exists. Will overwrite it.", path)
+            if os.path.isabs(path):
+                logger.debug("Saving image to %s orientation %s shape %s",
+                             path, self.orientation, self.data.shape)
+            else:
+                logger.debug("Saving image to %s (%s) orientation %s shape %s",
+                             path, os.path.abspath(path), self.orientation, self.data.shape)
 
-        path = path or self.absolutepath
+            # Now that `path` has been set and log messages have been written, we can assign it to the image itself
+            self.absolutepath = os.path.abspath(path)
 
-        if dtype is not None:
-            dst = self.copy()
-            dst.change_type(dtype)
-            data = dst.data
+            if dtype is not None:
+                self.change_type(dtype)
+
+            if self.hdr is not None:
+                self.hdr.set_data_shape(self.data.shape)
+                self.fix_header_dtype()
+
+            # nb. that copy() is important because if it were a memory map, save() would corrupt it
+            dataobj = self.data.copy()
+            affine = None
+            header = self.hdr.copy() if self.hdr is not None else None
+            nib.save(nib.nifti1.Nifti1Image(dataobj, affine, header), self.absolutepath)
+            if not os.path.isfile(self.absolutepath):
+                raise RuntimeError(f"Couldn't save image to {self.absolutepath}")
         else:
-            data = self.data
-
-        # update header
-        hdr = self.hdr.copy() if self.hdr else None
-        if hdr:
-            hdr.set_data_shape(data.shape)
-            # Update dtype if provided (but not if based on SCT-specific values: 'minimize')
-            if (dtype is not None) and (dtype not in ['minimize', 'minimize_int']):
-                hdr.set_data_dtype(dtype)
-
-        # nb. that copy() is important because if it were a memory map, save()
-        # would corrupt it
-        img = nib.nifti1.Nifti1Image(data.copy(), None, hdr)
-        if os.path.isfile(path):
-            if verbose:
-                logger.warning('File ' + path + ' already exists. Will overwrite it.')
-
-        # save file
-        if os.path.isabs(path):
-            logger.debug("Saving image to %s orientation %s shape %s",
-                         path, self.orientation, data.shape)
-        else:
-            logger.debug("Saving image to %s (%s) orientation %s shape %s",
-                         path, os.path.abspath(path), self.orientation, data.shape)
-
-        nib.save(img, path)
-
-        if mutable:
-            self.absolutepath = path
-            self.data = data
-
-        if not os.path.isfile(path):
-            raise RuntimeError("Couldn't save {}".format(path))
-
+            # if we're not operating in-place, then make any required modifications on a throw-away copy
+            self.copy().save(path, dtype, verbose, mutable=True)
         return self
 
     def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
