@@ -99,7 +99,7 @@ The table below provides references relevant to the :ref:`pam50` used by SCT, in
    * - Template/atlas
      - References
    * - PAM50 template
-     - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2017. <http://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
+     - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2018. <http://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
    * - MNI-Poly-AMU template
      - `Fonov et al. Framework for integrated MRI average of the spinal cord white and gray matter: The MNI-Poly-AMU template. Neuroimage 2014. <https://www.ncbi.nlm.nih.gov/pubmed/25204864>`__
    * - White matter atlas
