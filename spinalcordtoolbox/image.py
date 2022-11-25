@@ -418,8 +418,7 @@ class Image(object):
         if dtype_header != dtype_data:
             logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type "
                            f"'{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
-
-        self.hdr.set_data_dtype(dtype_data)
+            self.hdr.set_data_dtype(dtype_data)
 
     def loadFromPath(self, path, mmap, verbose):
         """
