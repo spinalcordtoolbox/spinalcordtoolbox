@@ -797,8 +797,6 @@ def main(argv: Sequence[str]):
     if param.remove_temp_files:
         printv('\nDelete temporary files...', verbose)
         rmtree(path_tmp, verbose=verbose)
-    else:
-        printv(f'\nKeeping temporary files in {path_tmp}', verbose)
 
     # display elapsed time
     elapsed_time = time.time() - start_time

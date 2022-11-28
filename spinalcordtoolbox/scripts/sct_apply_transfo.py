@@ -288,8 +288,6 @@ class Transform:
             if remove_temp_files:
                 printv('\nRemove temporary files...', verbose)
                 rmtree(path_tmp, verbose=verbose)
-            else:
-                printv(f'\nKeeping temporary files in {path_tmp}', verbose)
 
         # Copy affine matrix from destination space to make sure qform/sform are the same
         printv("Copy affine matrix from destination space to make sure qform/sform are the same.", verbose)
@@ -304,8 +302,6 @@ class Transform:
             if remove_temp_files:
                 printv('\nRemove temporary files...', verbose)
                 rmtree(path_tmp, verbose=verbose)
-            else:
-                printv(f'\nKeeping temporary files in {path_tmp}', verbose)
 
         # Crop the resulting image using dimensions from the warping field
         warping_field = fname_warp_list_invert[-1]

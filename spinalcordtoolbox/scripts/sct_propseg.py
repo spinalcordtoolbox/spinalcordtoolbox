@@ -144,10 +144,8 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
 
     # remove temporary files
     if remove_temp_files:
-        printv("\nRemove temporary files...", verbose)
+        # printv("\nRemove temporary files...", verbose)
         rmtree(path_tmp)
-    else:
-        printv(f'\nKeeping temporary files in {path_tmp}', verbose)
 
 
 def get_parser():

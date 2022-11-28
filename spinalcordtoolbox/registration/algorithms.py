@@ -661,8 +661,6 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     if remove_temp_files:
         logger.info(f"rm -rf {path_tmp}")
         shutil.rmtree(path_tmp)
-    else:
-        logger.info(f'Keeping temporary files in {path_tmp}')
 
 
 def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='warp_forward.nii.gz',

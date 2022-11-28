@@ -265,8 +265,6 @@ def create_mask(param):
     if param.remove_temp_files == 1:
         printv('\nRemove temporary files...', param.verbose)
         rmtree(path_tmp)
-    else:
-        printv(f'\nKeeping temporary files in {path_tmp}', param.verbose)
 
 
 def create_line(param, fname, coord, nz):
