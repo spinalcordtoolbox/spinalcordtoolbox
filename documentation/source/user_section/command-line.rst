@@ -427,17 +427,3 @@ sct_version
 ===========
 
 .. program-output:: sct_version
-
-
-
-
-Internal Commands
-*****************
-
-These scripts are tailored to the developers.
-
-
-isct_test_ants
-==============
-
-.. program-output:: isct_test_ants -h

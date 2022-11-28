@@ -21,8 +21,10 @@ import nibabel as nib
 
 from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
-                                     create_formatted_header_string, HEADER_FORMATS)
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
+                                     create_formatted_header_string, HEADER_FORMATS,
+                                     stitch_images, generate_stitched_qc_images)
+from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
@@ -39,7 +41,7 @@ def get_parser():
         nargs='+',
         metavar=Metavar.file,
         help='Input file(s). Example: "data.nii.gz"\n'
-             'Note: Only "-concat" or "-omc" support multiple input files. In those cases, separate filenames using '
+             'Note: Only "-concat", "-omc" or "-stitch" support multiple input files. In those cases, separate filenames using '
              'spaces. Example usage: "sct_image -i data1.nii.gz data2.nii.gz -concat"',
         required=True)
     optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
@@ -76,6 +78,19 @@ def get_parser():
         help='Concatenate data along the specified dimension',
         required=False,
         choices=('x', 'y', 'z', 't'))
+    image.add_argument(
+        '-stitch',
+        action='store_true',
+        help='Stitch multiple images acquired in the same orientation utilizing '
+             'the algorithm by Lavdas, Glocker et al. (https://doi.org/10.1016/j.crad.2019.01.012).',
+        required=False)
+    image.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="The path where the quality control generated content will be saved. "
+             "(Note: QC reporting is only available for 'sct_image -stitch')."
+    )
     image.add_argument(
         '-remove-vol',
         metavar=Metavar.list,
@@ -131,12 +146,19 @@ def get_parser():
         required=False)
     orientation.add_argument(
         '-setorient',
-        help='Set orientation of the input image (only modifies the header).',
+        help='Set orientation of the input image (modifies BOTH the header and data array, similar to `fslswapdim`).',
         choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
         required=False)
     orientation.add_argument(
         '-setorient-data',
-        help='Set orientation of the input image\'s data (does NOT modify the header, but the data). Use with care !',
+        help='Set orientation of the input image\'s data (modifies ONLY the data array, and leaves the header alone).\n'
+             'Example usage: If `-getorient` returns "RPI", then:\n'
+             '  - Calling `-setorient-data LPI` will flip the LR axis of the data array.\n'
+             '  - Calling `-setorient-data IPR` will rearrange the first and last axes of the data array.\n'
+             '  - In both cases, calling `-getorient` afterwards will still return "RPI", because the header is '
+             'not modified.\n'
+             'WARNING: Use with care, as improper usage may introduce a mismatch between orientation of the header, '
+             'and the orientation of the data array.\n',
         choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
         required=False)
 
@@ -204,8 +226,8 @@ def main(argv: Sequence[str]):
     fname_in = arguments.i
 
     im_in_list = [Image(fname) for fname in fname_in]
-    if len(im_in_list) > 1 and arguments.concat is None and arguments.omc is None:
-        parser.error("Multi-image input is only supported for the '-concat' and '-omc' arguments.")
+    if len(im_in_list) > 1 and not arguments.concat and not arguments.omc and not arguments.stitch:
+        parser.error("Multi-image input is only supported for the '-concat','-omc' and '-stitch' arguments.")
 
     # Apply initialization steps to all input images first
     if arguments.set_sform_to_qform:
@@ -220,7 +242,8 @@ def main(argv: Sequence[str]):
     if arguments.o is not None:
         fname_out = arguments.o
     else:
-        fname_out = None
+        # in case fname_out is not defined, use first element of input file name list
+        fname_out = fname_in[0]
 
     # Run command
     # Arguments are sorted alphabetically (not according to the usage order)
@@ -231,7 +254,7 @@ def main(argv: Sequence[str]):
         im_out = [concat_data(im_in_list, dim)]
 
     elif arguments.copy_header is not None:
-        if fname_out is None:
+        if arguments.o is None:
             raise ValueError("Need to specify output image with -o!")
         im_dest = Image(arguments.copy_header)
         im_dest_new = im_in.copy()
@@ -324,6 +347,9 @@ def main(argv: Sequence[str]):
         dim = dim_list.index(dim)
         im_out = split_data(im_in, dim)
 
+    elif arguments.stitch:
+        im_out = [stitch_images(im_in_list)]
+
     elif arguments.type is not None:
         output_type = arguments.type
         im_out = [im_in]
@@ -346,10 +372,6 @@ def main(argv: Sequence[str]):
         im_out = None
         printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
 
-    # in case fname_out is not defined, use first element of input file name list
-    if fname_out is None:
-        fname_out = fname_in[0]
-
     # Write output
     if im_out is not None:
         printv('Generate output files...', verbose)
@@ -371,6 +393,26 @@ def main(argv: Sequence[str]):
                 l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
                 im.save(l_fname_out[i])
             display_viewer_syntax(l_fname_out, verbose=verbose)
+
+    # Generate QC report (for `sct_image -stitch` only)
+    if arguments.qc is not None:
+        if arguments.stitch is not None:
+            printv("Generating QC Report...", verbose=verbose)
+            # specify filenames to use in QC report
+            path_tmp = tmp_create("stitching-QC")
+            fname_qc_concat = os.path.join(path_tmp, "concatenated_input_images.nii.gz")
+            fname_qc_out = os.path.join(path_tmp, os.path.basename(fname_out))
+            # generate 2 images to compare in QC report
+            # (1. naively concatenated input images, and 2. stitched image) padded so both have same dimensions
+            im_concat, im_out_padded = generate_stitched_qc_images(im_in_list, im_out[0])
+            im_concat.save(fname_qc_concat)
+            im_out_padded.save(fname_qc_out)
+            # generate the QC report itself
+            generate_qc(fname_in1=fname_qc_out, fname_in2=fname_qc_concat, args=sys.argv[1:],
+                        path_qc=os.path.abspath(arguments.qc), process='sct_image -stitch')
+        else:
+            printv("WARNING: '-qc' is only supported for 'sct_image -stitch'. QC report will not be generated.",
+                   type='warning')
 
     elif arguments.getorient:
         printv(orient)

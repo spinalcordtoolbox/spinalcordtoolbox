@@ -69,9 +69,9 @@ def get_parser():
                             jobs        : -1\n
                             Example JSON configuration:
                             {
-                            "path_data"   : "~/sct_data"
-                            "path_output" : "~/pipeline_results"
-                            "script"      : "nature_paper_analysis.sh"
+                            "path_data"   : "~/sct_data",
+                            "path_output" : "~/pipeline_results",
+                            "script"      : "nature_paper_analysis.sh",
                             "jobs"        : -1
                             }\n
                             """))
@@ -479,7 +479,7 @@ def main(argv: Sequence[str]):
     else:
         try:
             # Copy the script and record the new location
-            script_copy = os.path.abspath(shutil.copy(script, arguments.path_output))
+            script_copy = os.path.abspath(shutil.copy(script, path_output))
             print("{} -> {}".format(script, script_copy))
             script = script_copy
         except shutil.SameFileError:

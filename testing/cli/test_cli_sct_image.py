@@ -6,7 +6,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils import extract_fname, sct_test_path
-from spinalcordtoolbox.scripts import sct_image
+from spinalcordtoolbox.scripts import sct_image, sct_crop_image
 
 logger = logging.getLogger(__name__)
 
@@ -85,3 +85,20 @@ def test_sct_image_display_warp_check_output_exists():
     fname_out = 'grid_3_resample_' + fname_in
     sct_image.main(argv=['-i', sct_test_path('t2', fname_in), '-display-warp'])
     assert os.path.exists(sct_test_path('t2', fname_out))
+
+
+@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
+def test_sct_image_stitch(tmp_path):
+    """Run the CLI script and check that the stitched file was generated."""
+    # crop images for testing stitching function
+    path_in = os.path.join('t2', 't2.nii.gz')
+    fname_roi1 = os.path.join(tmp_path, 't2_roi1.nii.gz')
+    fname_roi2 = os.path.join(tmp_path, 't2_roi2.nii.gz')
+    sct_crop_image.main(argv=['-i', path_in, '-o', fname_roi1, '-xmin', '0', '-xmax', '59',
+                              '-ymin', '20', '-ymax', '40', '-zmin', '0', '-zmax', '51'])
+    sct_crop_image.main(argv=['-i', path_in, '-o', fname_roi2, '-xmin', '0', '-xmax', '59',
+                              '-ymin', '0', '-ymax', '20', '-zmin', '0', '-zmax', '51'])
+
+    fname_out = os.path.join(tmp_path, 'stitched.nii.gz')
+    sct_image.main(argv=['-i', fname_roi1, fname_roi2, '-o', fname_out, '-stitch', '-qc', str(tmp_path)])
+    assert os.path.exists(fname_out)

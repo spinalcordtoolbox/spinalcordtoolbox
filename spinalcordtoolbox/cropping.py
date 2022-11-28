@@ -50,10 +50,6 @@ class ImageCropper(object):
             logger.info("Cropping the image...")
             data_crop = self.img_in.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1]
             img_out = Image(param=data_crop, hdr=self.img_in.hdr)
-
-            # set a more permissive threshold for reading the qform
-            # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3703 for details)
-            img_out.hdr.quaternion_threshold = -1e-6
             # adapt the origin in the qform matrix
             new_origin = np.dot(img_out.hdr.get_qform(), [bbox.xmin, bbox.ymin, bbox.zmin, 1])
             img_out.hdr.structarr['qoffset_x'] = new_origin[0]

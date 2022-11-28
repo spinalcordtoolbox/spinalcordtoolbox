@@ -53,13 +53,13 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container: archlinux
     steps:
       - name: Dependencies
         run: |  # NB: glu is needed for PyQT testing (https://stackoverflow.com/a/66486957/7584115)
           pacman -Syu --noconfirm gcc git curl glu
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -76,13 +76,13 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container: debian:sid
     steps:
       - name: Dependencies
         run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -99,13 +99,13 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container: debian:testing
     steps:
       - name: Dependencies
         run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -122,13 +122,13 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     container: debian:10
     steps:
       - name: Dependencies
         run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl libgl1-mesa-dev
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -145,13 +145,13 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04  # use an older ubuntu's kernel to closer emulate the older Debian
+    runs-on: ubuntu-20.04
     container: debian:9
     steps:
       - name: Dependencies
         run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -164,7 +164,7 @@ jobs:
 
   centos-8:
     name: CentOS Stream 8
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     # Stream8 has a 2024 EOL, while CentOS 8 has a 2021 EOL
     # See: https://blog.centos.org/2020/12/future-is-centos-stream/
     container: quay.io/centos/centos:stream8
@@ -172,7 +172,7 @@ jobs:
       - name: Dependencies
         run: |  # NB: mesa-libGL is needed for PyQT testing (https://stackoverflow.com/a/65408967/7584115)
           yum install -y gcc git curl mesa-libGL
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -189,13 +189,13 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04  # use an older ubuntu's kernel to closer emulate the older Debian
+    runs-on: ubuntu-20.04
     container: centos:7
     steps:
       - name: Dependencies
         run: |  # NB: mesa-libGL is needed for PyQT testing (https://stackoverflow.com/a/65408967/7584115)
           yum install -y gcc git curl mesa-libGL
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -210,7 +210,7 @@ jobs:
     name: Ubuntu 20.04 (Focal Fossa)
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -221,18 +221,18 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  ubuntu-18_04:
-    name: Ubuntu 18.04 (Bionic Beaver)
+  ubuntu-22_04:
+    name: Ubuntu 22.04 (Jammy Jellyfish)
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Dependencies
         run: |
           # github runners come with dev-tools pre-installed
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -247,7 +247,7 @@ jobs:
    name: macOS 11.0 (Big Sur)
    runs-on: macos-11
    steps:
-     - uses: actions/checkout@v2
+     - uses: actions/checkout@v3
      - name: Install SCT
        run: |
          ./.ci.sh -i
@@ -269,7 +269,7 @@ jobs:
       - name: Dependencies
         run: |
           # github runners come with dev-tools pre-installed
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install SCT
         run: |
           ./.ci.sh -i
@@ -280,9 +280,9 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  windows-wsl-ubuntu-18_04:
+  windows-wsl-ubuntu-22_04:
     # with the help of https://github.com/marketplace/actions/setup-wsl
-    name: WSL [Ubuntu 18.04]
+    name: WSL [Ubuntu 22.04]
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
@@ -295,11 +295,11 @@ jobs:
     - uses: Vampire/setup-wsl@v1
       with:
         # other WSL container choices at: https://github.com/marketplace/actions/setup-wsl#distribution
-        distribution: Ubuntu-18.04
+        distribution: Ubuntu-22.04
     - name: Use unix line endings
       shell: bash
       run: |
-        # Github's actions/checkout@v2 when run on Windows mangles the line-endings to DOS-style
+        # Github's actions/checkout@v3 when run on Windows mangles the line-endings to DOS-style
         # but we're running Linux *on top* of Windows, so we need to not mangle them!
         # https://github.com/actions/checkout/issues/135#issuecomment-602171132
         # https://github.com/actions/virtual-environments/issues/50#issuecomment-663920265
@@ -310,7 +310,7 @@ jobs:
         # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
         # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Copy SCT from $GITHUB_WORKSPACE to ~
       run: |
         cd ..
@@ -347,7 +347,7 @@ jobs:
     - name: Use unix line endings
       shell: bash
       run: |
-        # Github's actions/checkout@v2 when run on Windows mangles the line-endings to DOS-style
+        # Github's actions/checkout@v3 when run on Windows mangles the line-endings to DOS-style
         # but we're running Linux *on top* of Windows, so we need to not mangle them!
         # https://github.com/actions/checkout/issues/135#issuecomment-602171132
         # https://github.com/actions/virtual-environments/issues/50#issuecomment-663920265
@@ -358,7 +358,7 @@ jobs:
         # NB: this one needs sudo, so the global DEBIAN_FRONTEND doesn't get through.
         # NB: mesa-utils is needed for PyQT testing (https://github.com/Microsoft/WSL/issues/1246#issuecomment-356425862)
         sudo apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y gcc git curl mesa-utils
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Copy SCT from $GITHUB_WORKSPACE to ~
       run: |
         cd ..
@@ -383,7 +383,12 @@ jobs:
       run:
         shell: cmd
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+    # NB: For Windows installations, users must install Python beforehand
+    - uses: actions/setup-python@v4
+      if: matrix.os == 'windows-2019'
+      with:
+        python-version: '3.8'
     - name: Install SCT
       # NB: In real-world usage, it's assumed that the user would download the
       # install_sct.bat file from the Downloads page, and _not_ the full repo.
