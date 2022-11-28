@@ -1,11 +1,12 @@
 # Core functions dealing with centerline extraction from 3D data.
 
-
+import os
 import logging
 import numpy as np
 
-from spinalcordtoolbox.image import Image, zeros_like
+from spinalcordtoolbox.image import Image, zeros_like, add_suffix
 from spinalcordtoolbox.centerline import curve_fitting
+from spinalcordtoolbox.utils.fs import tmp_create
 
 logger = logging.getLogger(__name__)
 
@@ -81,13 +82,14 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
+def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files=1):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
 
     :param im_seg: Image(): Input segmentation or series of points along the centerline.
     :param param: ParamCenterline() class:
     :param verbose: int: verbose level
+    :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
     :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
     :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
@@ -148,7 +150,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
         # and directly output results.
         from spinalcordtoolbox.centerline import optic
         assert param.contrast is not None
-        im_centerline = optic.detect_centerline(im_seg, param.contrast, verbose)
+        im_centerline = optic.detect_centerline(im_seg, param.contrast, remove_temp_files)
         x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
         # Compute derivatives using polynomial fit
         # TODO: Fix below with reorientation of axes
@@ -235,6 +237,11 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1):
 
         plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
         plt.close()
+
+    # Save centerline image to tmp_folder (but only if user hasn't opted to `remove_temp_files`)
+    if not remove_temp_files:
+        tmp_folder = tmp_create("centerline")
+        im_centerline.save(os.path.join(tmp_folder, add_suffix(im_seg.absolutepath, "_ctr")), mutable=True)
 
     return (im_centerline,
             np.array([x_centerline_fit, y_centerline_fit, z_ref]),

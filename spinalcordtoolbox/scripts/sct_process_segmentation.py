@@ -259,6 +259,14 @@ def get_parser():
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
     optional.add_argument(
+        '-r',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,
+        help="Whether to remove temporary files. 0 = no, 1 = yes"
+    )
+    optional.add_argument(
         '-v',
         metavar=Metavar.int,
         type=int,
@@ -396,7 +404,8 @@ def main(argv: Sequence[str]):
     metrics, fit_results = compute_shape(fname_segmentation,
                                          angle_correction=angle_correction,
                                          param_centerline=param_centerline,
-                                         verbose=verbose)
+                                         verbose=verbose,
+                                         remove_temp_files=arguments.r)
     if fname_pmj is not None:
         im_ctl, mask, slices, centerline, length_from_pmj = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
                                                                                         distance_pmj, extent_pmj,
