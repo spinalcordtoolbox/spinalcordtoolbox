@@ -284,6 +284,8 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
     if param.remove_temp_files:
         printv('\nRemove temporary files...', param.verbose)
         rmtree(path_tmp, verbose=param.verbose)
+    else:
+        printv(f'\nKeeping temporary files in {path_tmp}', param.verbose)
 
     return fname_src2dest, fname_dest2src, fname_output_warp, fname_output_warpinv
 

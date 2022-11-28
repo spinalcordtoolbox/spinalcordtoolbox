@@ -128,5 +128,7 @@ def detect_centerline(img, contrast, remove_temp_files=1):
     if remove_temp_files:
         logger.info("Remove temporary files...")
         temp_folder.cleanup()
+    else:
+        logger.info(f"Keeping temporary files in {temp_folder.get_path()}")
 
     return img_ctl

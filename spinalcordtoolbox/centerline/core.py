@@ -242,6 +242,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     if not remove_temp_files:
         tmp_folder = tmp_create("centerline")
         im_centerline.save(os.path.join(tmp_folder, add_suffix(im_seg.absolutepath, "_ctr")), mutable=True)
+        logger.info(f"Keeping temporary files in {tmp_folder}")
 
     return (im_centerline,
             np.array([x_centerline_fit, y_centerline_fit, z_ref]),

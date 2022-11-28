@@ -462,6 +462,8 @@ def moco_wrapper(param):
     if param.remove_temp_files == 1:
         printv('\nDelete temporary files...', param.verbose)
         rmtree(path_tmp, verbose=param.verbose)
+    else:
+        printv(f'\nKeeping temporary files in {path_tmp}', param.verbose)
 
     # come back to working directory
     os.chdir(curdir)

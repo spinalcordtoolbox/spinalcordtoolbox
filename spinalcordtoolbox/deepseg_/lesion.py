@@ -255,6 +255,8 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     if remove_temp_files:
         logger.info("\nRemove temporary files...")
         tmp_folder.cleanup()
+    else:
+        logger.info(f"Keeping temporary files in {tmp_folder.get_path()}")
 
     # reorient to initial orientation
     return seg_initres_nii.change_orientation(original_orientation), im_viewer, im_image_res_ctr_downsamp

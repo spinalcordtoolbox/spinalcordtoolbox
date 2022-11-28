@@ -606,6 +606,8 @@ class SpinalCordStraightener(object):
         if remove_temp_files:
             logger.info('Remove temporary files...')
             rmtree(path_tmp)
+        else:
+            logger.info(f"Keeping temporary files in {path_tmp}")
 
         if self.accuracy_results:
             logger.info('Maximum x-y error: {} mm'.format(self.max_distance_straightening))

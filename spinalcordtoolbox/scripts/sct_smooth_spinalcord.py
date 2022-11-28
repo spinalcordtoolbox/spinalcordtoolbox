@@ -258,8 +258,10 @@ def main(argv: Sequence[str]):
 
     # Remove temporary files
     if remove_temp_files == 1:
-        printv('\nRemove temporary files...')
+        printv('\nRemove temporary files...', verbose)
         rmtree(path_tmp)
+    else:
+        printv(f'\nKeeping temporary files in {path_tmp}', verbose)
 
     # Display elapsed time
     elapsed_time = time.time() - start_time

@@ -533,6 +533,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     if remove_temp_files:
         logger.info("Remove temporary files...")
         tmp_folder.cleanup()
+    else:
+        logger.info(f"Keeping temporary files in {tmp_folder.get_path()}")
 
     # reorient to initial orientation
     im_seg_r_postproc.change_orientation(original_orientation)
