@@ -1,6 +1,6 @@
 # Changelog
 
-## 5.8 (2022-11-29)
+## 5.8 (2022-12-02)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/5.7...5.8)
 
 **FEATURE**
