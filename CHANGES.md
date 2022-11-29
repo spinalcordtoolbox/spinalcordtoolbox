@@ -1,5 +1,89 @@
 # Changelog
 
+## 5.8 (2022-11-29)
+[View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/5.7...5.8)
+
+**FEATURE**
+
+ - **sct_image:** Add new `-stitch` option that wraps stitching functionality from Glocker et al..  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3865)
+ - **sct_run_batch:** Add `-ignore-ses` flag to process `sub-` directories even when `ses-` subdirectories are present.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3862)
+ - **sct_process_segmentation:** Add DistancePMJ when perslice flag in `sct_process_segmentation`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3856)
+
+**CI**
+
+ - Pin `flake8<6.0.0` in our linting workflow.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3962)
+ - Set `draft: true` in the release creation workflow.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3940)
+ - Upgrade Ubuntu 18.04 -> 20.04/22.04 in test suite.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3919)
+
+**BUG**
+
+ - **sct_run_batch:** Allow `path_output` parameter to start with `~`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3958)
+ - Set a more permissive `quaternion_threshold` inside `Image` constructor.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3936)
+ - Fix several bugs when loading headers in the `Image` constructor.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3931)
+ - **sct_get_centerline:** Exclude original file extension (e.g. `.nii.gz`) from the output `.csv` filename.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3917)
+ - **sct_check_dependencies:**  Re-add `print_line` call for PropSeg check.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3911)
+ - **sct_analyze_lesion:** Fix output filename spelling.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3909)
+ - **sct_register_multimodal:** Improve handling of case where `algo` is specified alongside `type='label'`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3894)
+ - `install_sct.bat`: Use delayed expansion (`!!`) for `git_ref`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3891)
+ - **sct_smooth_spinalcord,sct_merge_images:** Enforce `type=int` for arguments that use `choices=(0, 1)`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3887)
+ - Address `[Errno 24] Too many open files` during motion correction.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3882)
+ - Reduce logging from intermediate CLI scripts by setting `-v 0` in `main()` calls.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3881)
+ - Ensure that calling `printv(type='error')` actually exits the program.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3874)
+ - Properly escape `\` in the regex for removing `sct_env` from old RC files.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3872)
+ - **sct_run_batch:** Fix `include_list`/`exclude` argument ordering in call to `_filter_directories`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3870)
+ - **sct_extract_metric:** Ensure that `-list-labels` is the last argument that is parsed.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3864)
+ - **sct_straighten_spinalcord,sct_propseg:** Pass `argv` to `generate_qc` functions (instead of `arguments` or `sys.argv[1:]`).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3863)
+ - **sct_run_batch:** Modify `-include-list` and `-exclude-list` to check against parts of a directory, too.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3859)
+
+**INSTALLATION**
+
+ - Add more thorough check for `git` within the `PATH` for the Windows installer.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3945)
+ - Ensure bundled GLIBC is up-to-date in order to resolve `MESA-LOADER` errors.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3929)
+ - Limit `pyqt5` to >5.11 and <5.15 to avoid "Cannot load library libqxcb.so" error on Ubuntu.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3928)
+ - Upgrade SCT from Python 3.7 to Python 3.8.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3916)
+
+**DOCUMENTATION**
+
+ - Fix typo in "Registration" tutorial (`slice-by-slide` -> `slice-by-slice`).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3954)
+ - **sct_register_multimodal:** Add scaling to `sct_register_multimodal -dof` argument help.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3948)
+ - Clarify strengths of both `sct_propseg` and `sct_deepseg` in the documentation.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3941)
+ - **sct_image:** `sct_image`: Clarify descriptions for `-setorient` commands.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3938)
+ - **sct_process_segmentation:** Add references to Bédard and Cohen-Adad.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3934)
+ - **sct_deepseg_lesion:** Add missing spaces in multiline strings, and missing commas in lists.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3933)
+ - Update outdated links to `atlas` and `spinal_level` scripts in `pam50.rst`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3923)
+ - **sct_maths:** Fix small typo in `-uthr` help description (`below` -> `above`).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3922)
+ - Switch to higher-quality "Tools used" graph on the studies page.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3906)
+ - Add Google Sheets summary graphs to `studies.rst`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3896)
+ - Fix copy-paste typos in tutorial documentation.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3886)
+ - Remove API pages from the documentation.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3869)
+
+**ENHANCEMENT**
+
+ - **sct_get_centerline:** Ensure that the output of `get_centerline()` can be saved using `-r 0`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3960)
+ - **sct_register_multimodal:** Minimize memory usage for `algo=dl` (and add a warning for potential OOM killer issues).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3953)
+ - Update header `dtype` property on save/load to match the datatype of the data array.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3944)
+ - **sct_image:** Update `binaries_linux` to include a rebuilt version of `stitching` that targets `centos7`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3939)
+ - **sct_register_multimodal:** Add dimensions of data to registration logging.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3899)
+ - **sct_denoising_onlm,sct_analyze_lesion,sct_analyze_texture:** Enforce use of `display_viewer_syntax` in four scripts using hardcoded `fsleyes` commands.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3895)
+ - **sct_label_vertebrae,sct_qc:** Add readability fixes for QC reports (sagittal view scaling, label text, label colormaps).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3889)
+ - **sct_register_to_template:** Throw error when labels are lost during the straightening transform.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3880)
+
+**REFACTORING**
+
+ - **sct_check_dependencies:** Convert `isct_test_ants` script into a `pytest` test, then call via `sct_check_dependencies`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3932)
+ - **sct_merge_images:** Tidy up PEP8 warnings and other small style issues.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3930)
+ - Remove unused `isct_` scripts from SCT's CLI and test suite.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3908)
+ - **sct_download_data:** Refactor data downloading API to remove dependency on CLI script.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3907)
+ - `math.py`: Address `selem` deprecation by using `footprint`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3898)
+ - Move 5 unused scripts to `spinalcordtoolbox-dev`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3892)
+ - **sct_dmri_denoise_patch2self:** Deal with `nibabel` deprecation of `get_header` and `get_data`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3879)
+ - Simplify `add_suffix`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3878)
+ - `shell.py`: Let `Metavar` inherit from `str` to silence PyCharm type warning.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3876)
+ - Replace "argv=None" default by "argv: Sequence[str]" type hint.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3866)
+ - **sct_process_segmentation:** Improve handling of default arguments.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3860)
+ - **sct_process_segmentation,sct_dmri_moco,sct_fmri_moco,sct_maths,sct_compute_snr:** Call `parser.error` properly.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3858)
+ - Replace `run_proc` calls with `main` calls across SCT's scripts.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3724)
+
 ## 5.7 (2022-07-28)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/5.6...5.7)
 
