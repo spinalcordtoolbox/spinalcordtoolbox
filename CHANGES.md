@@ -9,12 +9,6 @@
  - **sct_run_batch:** Add `-ignore-ses` flag to process `sub-` directories even when `ses-` subdirectories are present.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3862)
  - **sct_process_segmentation:** Add DistancePMJ when perslice flag in `sct_process_segmentation`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3856)
 
-**CI**
-
- - Pin `flake8<6.0.0` in our linting workflow.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3962)
- - Set `draft: true` in the release creation workflow.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3940)
- - Upgrade Ubuntu 18.04 -> 20.04/22.04 in test suite.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3919)
-
 **BUG**
 
  - **sct_run_batch:** Allow `path_output` parameter to start with `~`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3958)
@@ -83,6 +77,12 @@
  - **sct_process_segmentation:** Improve handling of default arguments.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3860)
  - **sct_process_segmentation,sct_dmri_moco,sct_fmri_moco,sct_maths,sct_compute_snr:** Call `parser.error` properly.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3858)
  - Replace `run_proc` calls with `main` calls across SCT's scripts.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3724)
+
+**CI**
+
+ - Pin `flake8<6.0.0` in our linting workflow.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3962)
+ - Set `draft: true` in the release creation workflow.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3940)
+ - Upgrade Ubuntu 18.04 -> 20.04/22.04 in test suite.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3919)
 
 ## 5.7 (2022-07-28)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/5.6...5.7)
