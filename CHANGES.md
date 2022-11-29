@@ -9,6 +9,17 @@
  - **sct_run_batch:** Add `-ignore-ses` flag to process `sub-` directories even when `ses-` subdirectories are present.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3862)
  - **sct_process_segmentation:** Add DistancePMJ when perslice flag in `sct_process_segmentation`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3856)
 
+**ENHANCEMENT**
+
+ - **sct_get_centerline:** Ensure that the output of `get_centerline()` can be saved using `-r 0`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3960)
+ - **sct_register_multimodal:** Minimize memory usage for `algo=dl` (and add a warning for potential OOM killer issues).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3953)
+ - Update header `dtype` property on save/load to match the datatype of the data array.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3944)
+ - **sct_image:** Update `binaries_linux` to include a rebuilt version of `stitching` that targets `centos7`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3939)
+ - **sct_register_multimodal:** Add dimensions of data to registration logging.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3899)
+ - **sct_denoising_onlm,sct_analyze_lesion,sct_analyze_texture:** Enforce use of `display_viewer_syntax` in four scripts using hardcoded `fsleyes` commands.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3895)
+ - **sct_label_vertebrae,sct_qc:** Add readability fixes for QC reports (sagittal view scaling, label text, label colormaps).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3889)
+ - **sct_register_to_template:** Throw error when labels are lost during the straightening transform.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3880)
+
 **BUG**
 
  - **sct_run_batch:** Allow `path_output` parameter to start with `~`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3958)
@@ -50,17 +61,6 @@
  - Add Google Sheets summary graphs to `studies.rst`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3896)
  - Fix copy-paste typos in tutorial documentation.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3886)
  - Remove API pages from the documentation.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3869)
-
-**ENHANCEMENT**
-
- - **sct_get_centerline:** Ensure that the output of `get_centerline()` can be saved using `-r 0`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3960)
- - **sct_register_multimodal:** Minimize memory usage for `algo=dl` (and add a warning for potential OOM killer issues).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3953)
- - Update header `dtype` property on save/load to match the datatype of the data array.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3944)
- - **sct_image:** Update `binaries_linux` to include a rebuilt version of `stitching` that targets `centos7`.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3939)
- - **sct_register_multimodal:** Add dimensions of data to registration logging.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3899)
- - **sct_denoising_onlm,sct_analyze_lesion,sct_analyze_texture:** Enforce use of `display_viewer_syntax` in four scripts using hardcoded `fsleyes` commands.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3895)
- - **sct_label_vertebrae,sct_qc:** Add readability fixes for QC reports (sagittal view scaling, label text, label colormaps).  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3889)
- - **sct_register_to_template:** Throw error when labels are lost during the straightening transform.  [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3880)
 
 **REFACTORING**
 
