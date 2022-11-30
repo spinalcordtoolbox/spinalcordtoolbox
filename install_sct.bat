@@ -74,7 +74,7 @@ if exist requirements-freeze.txt (
 echo:
 echo ### Installing SCT and its dependencies from %requirements_file%...
 rem Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
-python -m pip install -U "pip!=21.2.*" || goto error
+python -m pip install -U "pip^!=21.2.*" || goto error
 pip install -r %requirements_file% || goto error
 pip install -e . || goto error
 
