@@ -149,7 +149,7 @@ class SpinalCordStraightener(object):
 
         # 2. extract bspline fitting of the centerline, and its derivatives
         img_ctl = Image('centerline_rpi.nii.gz')
-        centerline = _get_centerline(img_ctl, self.param_centerline, verbose)
+        centerline = _get_centerline(img_ctl, self.param_centerline, verbose, remove_temp_files)
         number_of_points = centerline.number_of_points
 
         # ==========================================================================================
@@ -215,7 +215,8 @@ class SpinalCordStraightener(object):
             image_centerline_straight = Image('centerline_ref.nii.gz') \
                 .change_orientation("RPI") \
                 .save(fname_ref, mutable=True)
-            centerline_straight = _get_centerline(image_centerline_straight, self.param_centerline, verbose)
+            centerline_straight = _get_centerline(image_centerline_straight, self.param_centerline, verbose,
+                                                  remove_temp_files)
             nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
 
             # Prepare warping fields headers
@@ -616,9 +617,10 @@ class SpinalCordStraightener(object):
         return fname_straight
 
 
-def _get_centerline(img, param_centerline, verbose):
+def _get_centerline(img, param_centerline, verbose, remove_temp_files=1):
     nx, ny, nz, nt, px, py, pz, pt = img.dim
-    _, arr_ctl, arr_ctl_der, _ = get_centerline(img, param_centerline, verbose=verbose)
+    _, arr_ctl, arr_ctl_der, _ = get_centerline(img, param_centerline, verbose=verbose,
+                                                remove_temp_files=remove_temp_files)
     # Transform centerline to physical coordinate system
     arr_ctl_phys = img.transfo_pix2phys(
         [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
