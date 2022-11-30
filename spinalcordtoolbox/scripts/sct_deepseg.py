@@ -18,10 +18,8 @@ from typing import Sequence
 from ivadomed import inference as imed_inference
 import nibabel as nib
 
-import spinalcordtoolbox as sct
-import spinalcordtoolbox.deepseg as deepseg
-import spinalcordtoolbox.deepseg.models
-
+from spinalcordtoolbox.deepseg import models
+from spinalcordtoolbox.image import splitext
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
@@ -74,7 +72,7 @@ def get_parser():
     seg.add_argument(
         "-install-task",
         help="Install models that are required for specified task.",
-        choices=list(deepseg.models.TASKS.keys()))
+        choices=list(models.TASKS.keys()))
 
     misc = parser.add_argument_group('\nPARAMETERS')
     misc.add_argument(
@@ -146,14 +144,14 @@ def main(argv: Sequence[str]):
 
     # Deal with task
     if arguments.list_tasks:
-        deepseg.models.display_list_tasks()
+        models.display_list_tasks()
     # Deal with task long description
     if arguments.list_tasks_long:
-        deepseg.models.display_list_tasks_long()
+        models.display_list_tasks_long()
 
     if arguments.install_task is not None:
-        for name_model in deepseg.models.TASKS[arguments.install_task]['models']:
-            deepseg.models.install_model(name_model)
+        for name_model in models.TASKS[arguments.install_task]['models']:
+            models.install_model(name_model)
         exit(0)
 
     # Deal with input/output
@@ -162,12 +160,12 @@ def main(argv: Sequence[str]):
             parser.error("This file does not exist: {}".format(file))
 
     # Verify if the task is part of the "official" tasks, or if it is pointing to paths containing custom models
-    if len(arguments.task) == 1 and arguments.task[0] in deepseg.models.TASKS:
+    if len(arguments.task) == 1 and arguments.task[0] in models.TASKS:
         # Check if all input images are provided
-        required_contrasts = deepseg.models.get_required_contrasts(arguments.task[0])
+        required_contrasts = models.get_required_contrasts(arguments.task[0])
         n_contrasts = len(required_contrasts)
         # Get pipeline model names
-        name_models = deepseg.models.TASKS[arguments.task[0]]['models']
+        name_models = models.TASKS[arguments.task[0]]['models']
     else:
         n_contrasts = len(arguments.i)
         name_models = arguments.task
@@ -188,22 +186,22 @@ def main(argv: Sequence[str]):
     output_filenames = None
     for name_model in name_models:
         # Check if this is an official model
-        if name_model in list(deepseg.models.MODELS.keys()):
+        if name_model in list(models.MODELS.keys()):
             # If it is, check if it is installed
-            path_model = deepseg.models.folder(name_model)
-            if not deepseg.models.is_valid(path_model):
+            path_model = models.folder(name_model)
+            if not models.is_valid(path_model):
                 printv("Model {} is not installed. Installing it now...".format(name_model))
-                deepseg.models.install_model(name_model)
+                models.install_model(name_model)
         # If it is not, check if this is a path to a valid model
         else:
             path_model = os.path.abspath(name_model)
-            if not deepseg.models.is_valid(path_model):
+            if not models.is_valid(path_model):
                 parser.error("The input model is invalid: {}".format(path_model))
 
         # Order input images
         if arguments.c is not None:
             input_filenames = []
-            for required_contrast in deepseg.models.MODELS[name_model]['contrasts']:
+            for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
                     if required_contrast == provided_contrast:
                         input_filenames.append(input_filename)
@@ -231,7 +229,7 @@ def main(argv: Sequence[str]):
                     fname_seg = options['o'].replace(extension, target + extension) if len(target_lst) > 1 \
                         else options['o']
             else:
-                fname_seg = ''.join([sct.image.splitext(input_filenames[0])[0], target + '.nii.gz'])
+                fname_seg = ''.join([splitext(input_filenames[0])[0], target + '.nii.gz'])
 
             # If output folder does not exist, create it
             path_out = os.path.dirname(fname_seg)
