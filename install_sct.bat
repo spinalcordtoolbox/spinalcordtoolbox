@@ -73,8 +73,8 @@ if exist requirements-freeze.txt (
 )
 echo:
 echo ### Installing SCT and its dependencies from %requirements_file%...
-rem Pip needs to be upgraded because default p3.7 pip won't resolve dependency conflicts correctly
-python -m pip install --upgrade pip || goto error
+rem Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
+python -m pip install -U "pip^!=21.2.*" || goto error
 pip install -r %requirements_file% || goto error
 pip install -e . || goto error
 
