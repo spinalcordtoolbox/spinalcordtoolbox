@@ -18,9 +18,8 @@ from typing import Sequence
 from ivadomed import inference as imed_inference
 import nibabel as nib
 
-import spinalcordtoolbox as sct
 from spinalcordtoolbox.deepseg import models
-
+from spinalcordtoolbox.image import splitext
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
@@ -230,7 +229,7 @@ def main(argv: Sequence[str]):
                     fname_seg = options['o'].replace(extension, target + extension) if len(target_lst) > 1 \
                         else options['o']
             else:
-                fname_seg = ''.join([sct.image.splitext(input_filenames[0])[0], target + '.nii.gz'])
+                fname_seg = ''.join([splitext(input_filenames[0])[0], target + '.nii.gz'])
 
             # If output folder does not exist, create it
             path_out = os.path.dirname(fname_seg)
