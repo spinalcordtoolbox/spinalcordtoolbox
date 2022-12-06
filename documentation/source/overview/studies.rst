@@ -26,6 +26,7 @@ The following studies have used SCT:
 2022
 ----
 
+-  Georgiou-Karistianis *et al.* `A natural history study to track brain and spinal cord changes in individuals with Friedreich’s ataxia: TRACK-FA study protocol <https://doi.org/10.1371/journal.pone.0269649>`_, **PLoS One**, 2022
 -  Seif *et al.* `Reliability of multi-parameter mapping (MPM) in the cervical cord: A multi-center multi-vendor quantitative MRI study <https://doi.org/10.1016/j.neuroimage.2022.119751>`_, **Neuroimage**, 2022
 -  Hoggarth *et al.* `Effects of variability in manually contoured spinal cord masks on fMRI co-registration and interpretation <https://doi.org/10.3389/fneur.2022.907581>`_, **Front. Neurol.**, 2022
 -  Rezende *et al.* `Progressive Spinal Cord Degeneration in Friedreich's Ataxia: Results from ENIGMA-Ataxia <https://doi.org/10.1002/mds.29261>`_, **Mov. Disord.**, 2022
