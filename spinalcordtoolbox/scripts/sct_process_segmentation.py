@@ -31,12 +31,14 @@ from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, 
 from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
+from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
+from spinalcordtoolbox import __data_dir__
 
 logger = logging.getLogger(__name__)
 
@@ -44,15 +46,18 @@ logger = logging.getLogger(__name__)
 class SeparateNormArgs(argparse.Action):
     """Separates predictors from their values and puts the results in a dict"""
     def __call__(self, parser, namespace, values, option_string=None):
-        pred = values[::2]
-        val = values[1::2]
-        if len(pred) != len(val):
-            parser.error("Values for normalization need to be specified for each predictor.")
-        try:
-            data_subject = {p: float(v) for p, v in zip(pred, val)}
-        except ValueError as e:
-            parser.error(f"Non-numeric value passed to '-normalize': {e}")
-        setattr(namespace, self.dest, data_subject)
+        if 'PAM50' not in values:
+            pred = values[::2]
+            val = values[1::2]
+            if len(pred) != len(val):
+                raise parser.error("Values for normalization need to be specified for each predictor.")
+            try:
+                data_subject = {p: float(v) for p, v in zip(pred, val)}
+            except ValueError as e:
+                raise parser.error(f"Non-numeric value passed to '-normalize': {e}")
+            setattr(namespace, self.dest, data_subject)
+        
+        setattr(namespace, self.dest, 'PAM50')
 
 
 def get_parser():
@@ -231,7 +236,9 @@ def get_parser():
              "For more details on the subjects and methods used to create the models, go to: "
              "https://github.com/sct-pipeline/ukbiobank-spinalcord-csa#readme \n"  # TODO add ref of the paper
              "Given the risks and lack of consensus surrounding CSA normalization, we recommend thoroughly reviewing "
-             "the literature on this topic before applying this feature to your data.\n"
+             "the literature on this topic before applying this feature to your data.\n\n"
+             "To normalize every metric with the PAM50 template perslice:"
+             "-normalize PAM50"
     )
     optional.add_argument(
         '-qc',
@@ -393,6 +400,9 @@ def main(argv: Sequence[str]):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
+    if arguments.normalize == "PAM50" and (fname_vert_level is None or not perslice):
+        parser.error("Option '-normalize PAM50' requires options '-vertfile' and -perslice 1.")
+
     if distance_pmj is not None and fname_pmj is None:
         parser.error("Option '-pmj-distance' requires option '-pmj'.")
     if fname_pmj is not None and distance_pmj is None and not perslice:
@@ -406,6 +416,12 @@ def main(argv: Sequence[str]):
                                          param_centerline=param_centerline,
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
+    
+    if arguments.normalize == 'PAM50':
+        fname_vert_levels_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
+        metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_level)
+        metrics_agg_PAM50_space = {}
+    
     if fname_pmj is not None:
         im_ctl, mask, slices, centerline, length_from_pmj = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
                                                                                         distance_pmj, extent_pmj,
@@ -426,6 +442,13 @@ def main(argv: Sequence[str]):
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, fname_vert_level=fname_vert_level,
                                                             group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
+            if arguments.normalize == 'PAM50':
+                metrics_agg_PAM50_space[key] = aggregate_per_slice_or_level(metrics_PAM50_space[key], slices=slices,
+                                                                levels=levels,
+                                                                distance_pmj=distance_pmj, perslice=perslice,
+                                                                perlevel=perlevel, fname_vert_level=fname_vert_levels_PAM50,
+                                                                group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
+
         else:
             # For other metrics, we compute the average and standard deviation across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
@@ -433,22 +456,37 @@ def main(argv: Sequence[str]):
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, fname_vert_level=fname_vert_level,
                                                             group_funcs=group_funcs, length_pmj=length_from_pmj)
+            if arguments.normalize == 'PAM50':
+                metrics_agg_PAM50_space[key] = aggregate_per_slice_or_level(metrics_PAM50_space[key], slices=slices,
+                                                                levels=levels,
+                                                                distance_pmj=distance_pmj, perslice=perslice,
+                                                                perlevel=perlevel, fname_vert_level=fname_vert_levels_PAM50,
+                                                                group_funcs=group_funcs, length_pmj=length_from_pmj)
+
     metrics_agg_merged = merge_dict(metrics_agg)
+    # Save metrics in PAM50 anatomical dimensions
+    if arguments.normalize == 'PAM50':
+        metrics_agg_merged_PAM50_space = merge_dict(metrics_agg_PAM50_space)
+        file_out_norm_PAM50 = file_out.split('.')[0] + '_PAM50_space.' + file_out.split('.')[1]
+        save_as_csv(metrics_agg_merged_PAM50_space, file_out_norm_PAM50, fname_in=fname_segmentation, append=append)
+        display_open(file_out_norm_PAM50)
+    
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
-        data_subject = pd.DataFrame([arguments.normalize])
-        path_model = os.path.join(__sct_dir__, 'data', 'csa_normalization_models',
-                                  '_'.join(sorted(data_subject.columns)) + '.csv')
-        if not os.path.isfile(path_model):
-            parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
-        # Get normalization model
-        # Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
-        # TODO update link with release tag.
-        data_predictors = pd.read_csv(path_model, index_col=0)
-        # Add interaction term
-        data_subject['inter-BV_sex'] = data_subject['brain-volume']*data_subject['sex']
-        for line in metrics_agg_merged.values():
-            line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
+        if arguments.normalize != 'PAM50':
+            data_subject = pd.DataFrame([arguments.normalize])
+            path_model = os.path.join(__sct_dir__, 'data', 'csa_normalization_models',
+                                    '_'.join(sorted(data_subject.columns)) + '.csv')
+            if not os.path.isfile(path_model):
+                parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
+            # Get normalization model
+            # Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
+            # TODO update link with release tag.
+            data_predictors = pd.read_csv(path_model, index_col=0)
+            # Add interaction term
+            data_subject['inter-BV_sex'] = data_subject['brain-volume']*data_subject['sex']
+            for line in metrics_agg_merged.values():
+                line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
 
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
     # QC report (only for PMJ-based CSA)
