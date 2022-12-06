@@ -124,6 +124,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     # All other 'non-optic' methods involve segmentation-based curve fitting, which involves a number of pre- and
     # post-processing steps that are separate from the 'optic' method.
     else:
+        # get pixdim (i.e. voxel sizes) along x/y/z axes (used in some centerline methods, and to estimate fit metrics)
         px, py, pz = im_seg.dim[4:7]
 
         # Take the center of mass at each slice to avoid: https://stackoverflow.com/q/2009379
