@@ -126,7 +126,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     else:
         px, py, pz = im_seg.dim[4:7]
 
-        # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
+        # Take the center of mass at each slice to avoid: https://stackoverflow.com/q/2009379
         x_mean, y_mean, z_mean = find_and_sort_coord(im_seg)
 
         # Crop output centerline to where the segmentation starts/end
