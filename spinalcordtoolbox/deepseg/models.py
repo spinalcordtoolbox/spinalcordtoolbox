@@ -11,7 +11,7 @@ import textwrap
 import shutil
 
 import spinalcordtoolbox as sct
-import spinalcordtoolbox.download
+from spinalcordtoolbox import download
 from spinalcordtoolbox.utils import stylize
 
 
@@ -256,7 +256,7 @@ def install_model(name_model):
     :return: None
     """
     logger.info("\nINSTALLING MODEL: {}".format(name_model))
-    sct.download.install_data(MODELS[name_model]['url'], folder(name_model))
+    download.install_data(MODELS[name_model]['url'], folder(name_model))
 
 
 def install_default_models():
@@ -292,21 +292,21 @@ def list_tasks():
 
 
 def display_list_tasks():
-    tasks = sct.deepseg.models.list_tasks()
+    tasks = list_tasks()
     # Display beautiful output
     color = {True: 'LightGreen', False: 'LightRed'}
     print("{:<30s}{:<50s}{:<15s}MODELS".format("TASK", "DESCRIPTION", "CONTRAST"))
     print("-" * 120)
     for name_task, value in tasks.items():
-        path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
-        are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
+        path_models = [folder(name_model) for name_model in value['models']]
+        are_models_valid = [is_valid(path_model) for path_model in path_models]
         task_status = stylize(name_task.ljust(30),
                               color[all(are_models_valid)])
         description_status = stylize(value['description'].ljust(50),
                                      color[all(are_models_valid)])
         models_status = ', '.join([stylize(model_name,
-                                           color[is_valid])
-                                   for model_name, is_valid in zip(value['models'], are_models_valid)])
+                                           color[validity])
+                                   for model_name, validity in zip(value['models'], are_models_valid)])
         input_contrasts = stylize(str(', '.join(model_name for model_name in
                                                 get_required_contrasts(name_task))).ljust(15),
                                   color[all(are_models_valid)])
@@ -326,7 +326,7 @@ def display_list_tasks():
 
 
 def display_list_tasks_long():
-    for name_task, value in sct.deepseg.models.list_tasks().items():
+    for name_task, value in list_tasks().items():
         indent_len = len("LONG_DESCRIPTION: ")
         print("{}{}".format("TASK:".ljust(indent_len), stylize(name_task, 'Bold')))
         print('\n'.join(textwrap.wrap(value['long_description'],
@@ -335,9 +335,9 @@ def display_list_tasks_long():
                         subsequent_indent=' '*indent_len)))
         print("{}{}".format("URL:".ljust(indent_len), stylize(value['url'], 'Cyan')))
 
-        path_models = [sct.deepseg.models.folder(name_model)
+        path_models = [folder(name_model)
                        for name_model in value['models']]
-        if all([sct.deepseg.models.is_valid(path_model) for path_model in path_models]):
+        if all([is_valid(path_model) for path_model in path_models]):
             installed = stylize("Yes", 'LightGreen')
         else:
             installed = stylize("No", 'LightRed')
