@@ -114,11 +114,17 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         # TODO: Fix below with reorientation of axes
         _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)
         _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
-        return \
-            im_centerline.change_orientation(native_orientation), \
-            np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
-            np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]), \
-            None
+        # reorient centerline to native orientation
+        im_centerline.change_orientation(native_orientation)
+        # rename 'z' variable to match the name used the 'non-optic' methods
+        z_ref = z_centerline
+        # Fit metrics aren't computed for 'optic`, so return 'None'
+        fit_results = None
+
+        return (im_centerline,
+                np.array([x_centerline_fit, y_centerline_fit, z_ref]),
+                np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)]),
+                fit_results)
 
     # All other 'non-optic' methods involve segmentation-based curve fitting, which involves a number of pre- and
     # post-processing steps that are separate from the 'optic' method.
