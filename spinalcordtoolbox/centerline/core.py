@@ -113,8 +113,25 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         z_ref = np.array(range(im_seg.dim[2]))
     index_mean = np.array([list(z_ref).index(i) for i in z_mean])
 
-    # Choose method
-    if param.algo_fitting == 'polyfit':
+    if param.algo_fitting == 'optic':
+        # This method is particular compared to the other methods, as here we estimate the centerline based on the
+        # image itself (not the segmentation). Hence, we can bypass the fitting procedure and centerline creation
+        # and directly output results.
+        from spinalcordtoolbox.centerline import optic
+        assert param.contrast is not None
+        im_centerline = optic.detect_centerline(im_seg, param.contrast, remove_temp_files)
+        x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
+        # Compute derivatives using polynomial fit
+        # TODO: Fix below with reorientation of axes
+        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)
+        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
+        return \
+            im_centerline.change_orientation(native_orientation), \
+            np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
+            np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]), \
+            None
+
+    elif param.algo_fitting == 'polyfit':
         x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
         y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
         fig_title = 'Algo={}, Deg={}'.format(param.algo_fitting, param.degree)
@@ -144,23 +161,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         y_centerline_deriv = y_centerline_deriv / z_centerline_deriv
         fig_title = 'Algo={}, NumberPoints={}'.format(param.algo_fitting, point_number)
 
-    elif param.algo_fitting == 'optic':
-        # This method is particular compared to the previous ones, as here we estimate the centerline based on the
-        # image itself (not the segmentation). Hence, we can bypass the fitting procedure and centerline creation
-        # and directly output results.
-        from spinalcordtoolbox.centerline import optic
-        assert param.contrast is not None
-        im_centerline = optic.detect_centerline(im_seg, param.contrast, remove_temp_files)
-        x_centerline_fit, y_centerline_fit, z_centerline = find_and_sort_coord(im_centerline)
-        # Compute derivatives using polynomial fit
-        # TODO: Fix below with reorientation of axes
-        _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)
-        _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
-        return \
-            im_centerline.change_orientation(native_orientation), \
-            np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
-            np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]), \
-            None
     else:
         logger.error('algo_fitting "' + param.algo_fitting + '" does not exist.')
         raise ValueError
