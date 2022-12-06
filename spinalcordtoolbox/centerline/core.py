@@ -95,9 +95,9 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
     :return: fit_results: FitResults class
     """
-
     if not isinstance(im_seg, Image):
         raise ValueError("Expecting an image")
+
     # Open image and change to RPI orientation
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')
@@ -126,10 +126,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     else:
         # get pixdim (i.e. voxel sizes) along x/y/z axes (used in some centerline methods, and to estimate fit metrics)
         px, py, pz = im_seg.dim[4:7]
-
         # Take the center of mass at each slice to avoid: https://stackoverflow.com/q/2009379
         x_mean, y_mean, z_mean = find_and_sort_coord(im_seg)
-
         # Crop output centerline to where the segmentation starts/end
         if param.minmax:
             z_ref = np.array(range(z_mean.min().astype(int), z_mean.max().astype(int) + 1))
