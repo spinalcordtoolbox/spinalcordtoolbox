@@ -101,17 +101,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     # Open image and change to RPI orientation
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')
-    px, py, pz = im_seg.dim[4:7]
-
-    # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
-    x_mean, y_mean, z_mean = find_and_sort_coord(im_seg)
-
-    # Crop output centerline to where the segmentation starts/end
-    if param.minmax:
-        z_ref = np.array(range(z_mean.min().astype(int), z_mean.max().astype(int) + 1))
-    else:
-        z_ref = np.array(range(im_seg.dim[2]))
-    index_mean = np.array([list(z_ref).index(i) for i in z_mean])
 
     # The 'optic' method is particular compared to the other methods, as here we estimate the centerline based on the
     # image itself (not the segmentation). This means we do not apply the same fitting procedure and centerline
@@ -134,6 +123,19 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     # All other 'non-optic' methods involve segmentation-based curve fitting, which involves a number of pre- and
     # post-processing steps that are separate from the 'optic' method.
     else:
+        px, py, pz = im_seg.dim[4:7]
+
+        # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
+        x_mean, y_mean, z_mean = find_and_sort_coord(im_seg)
+
+        # Crop output centerline to where the segmentation starts/end
+        if param.minmax:
+            z_ref = np.array(range(z_mean.min().astype(int), z_mean.max().astype(int) + 1))
+        else:
+            z_ref = np.array(range(im_seg.dim[2]))
+        index_mean = np.array([list(z_ref).index(i) for i in z_mean])
+
+        # Choose a non-optic method
         if param.algo_fitting == 'polyfit':
             x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
             y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
