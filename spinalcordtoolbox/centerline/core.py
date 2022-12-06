@@ -113,10 +113,10 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         z_ref = np.array(range(im_seg.dim[2]))
     index_mean = np.array([list(z_ref).index(i) for i in z_mean])
 
+    # The 'optic' method is particular compared to the other methods, as here we estimate the centerline based on the
+    # image itself (not the segmentation). This means we do not apply the same fitting procedure and centerline
+    # creation that is used for the other methods.
     if param.algo_fitting == 'optic':
-        # This method is particular compared to the other methods, as here we estimate the centerline based on the
-        # image itself (not the segmentation). Hence, we can bypass the fitting procedure and centerline creation
-        # and directly output results.
         from spinalcordtoolbox.centerline import optic
         assert param.contrast is not None
         im_centerline = optic.detect_centerline(im_seg, param.contrast, remove_temp_files)
@@ -131,6 +131,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]), \
             None
 
+    # All other 'non-optic' methods involve segmentation-based curve fitting, which involves a number of pre- and
+    # post-processing steps that are separate from the 'optic' method.
     else:
         if param.algo_fitting == 'polyfit':
             x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
