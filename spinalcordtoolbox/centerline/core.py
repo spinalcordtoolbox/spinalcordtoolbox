@@ -121,11 +121,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         # Fit metrics aren't computed for 'optic`, so return 'None'
         fit_results = None
 
-        return (im_centerline,
-                np.array([x_centerline_fit, y_centerline_fit, z_ref]),
-                np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)]),
-                fit_results)
-
     # All other 'non-optic' methods involve segmentation-based curve fitting, which involves a number of pre- and
     # post-processing steps that are separate from the 'optic' method.
     else:
