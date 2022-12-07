@@ -38,6 +38,7 @@ from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCrea
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
 from spinalcordtoolbox import __data_dir__
+from spinalcordtoolbox.utils import sct_progress_bar
 
 logger = logging.getLogger(__name__)
 
@@ -433,7 +434,8 @@ def main(argv: Sequence[str]):
             np.savetxt(fname_ctl_csv + '.csv', centerline, delimiter=",")
     else:
         length_from_pmj = None
-    for key in metrics:
+    # Aggregate metrics
+    for key in sct_progress_bar(metrics, unit='iter', unit_scale=False, desc="Aggregating metrics", ascii=True, ncols=80):
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
