@@ -382,7 +382,7 @@ def main(argv: Sequence[str]):
     append = bool(arguments.append)
     if arguments.vert is not None:
         levels = arguments.vert
-        fname_vert_level = arguments.vertfile
+        fname_vert_levels = get_absolute_path(arguments.vertfile)
     else:
         levels = []
         fname_vert_level = None
