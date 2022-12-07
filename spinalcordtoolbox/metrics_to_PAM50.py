@@ -94,9 +94,6 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
                 elif len(metrics_inter) < len(slices_PAM50):
                     diff = len(slices_PAM50) - len(metrics_inter)
                     slices_PAM50 = slices_PAM50[:-diff]
-                elif len(metrics_inter) == len(slices_PAM50):
-                    pass
-                    # TODO
             # If the last level, scale from level above
             else:
                 if len(metrics_inter) > len(slices_PAM50):
@@ -105,10 +102,6 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
                 elif len(metrics_inter) < len(slices_PAM50):
                     diff = len(slices_PAM50) - len(metrics_inter)
                     slices_PAM50 = slices_PAM50[diff:]
-                elif len(metrics_inter) == len(slices_PAM50):
-                    pass
-                    # TODO
-
             metrics_PAM50_space_dict[key][slices_PAM50] = metrics_inter
 
     # Create a dict of Metric() objects
