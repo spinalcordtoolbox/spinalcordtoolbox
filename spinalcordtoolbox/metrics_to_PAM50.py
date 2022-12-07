@@ -1,14 +1,10 @@
 # Functions to interpolate metrics (from sct_process_segmentation) into the PAM50 anatomical dimensions
 # Author: Sandrine Bédard & Jan Valosek
 
-import logging
 import numpy as np
-import pandas as pd
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels
-
-logger = logging.getLogger(__name__)
 
 
 def get_first_and_last_levels(levels):
