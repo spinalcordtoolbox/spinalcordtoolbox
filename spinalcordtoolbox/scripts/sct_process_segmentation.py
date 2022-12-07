@@ -8,8 +8,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Touati, Gabriel Mangeat
-# Modified: 2014-07-20 by jcohenadad
+# Author: Benjamin De Leener, Julien Touati, Gabriel Mangeat, Sandrine Bédard, Jan Valosek, Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
