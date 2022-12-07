@@ -119,6 +119,3 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
         metrics_PAM50_space[key] = Metric(data=np.array(value), label=key)
 
     return metrics_PAM50_space
-    # linear interpolation
-
-
