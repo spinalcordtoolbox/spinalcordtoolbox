@@ -151,7 +151,6 @@ def get_parser():
         '-vert',
         metavar=Metavar.str,
         type=parse_num_list,
-        default='1:20',
         help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2. If you also specify a range of "
              "slices with flag `-z`, the intersection between the specified slices and vertebral levels will be "
              "considered."
