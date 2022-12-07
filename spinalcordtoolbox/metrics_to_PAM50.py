@@ -43,12 +43,12 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     levels = np.unique(im_seg_labeled.data)
     # Remove zero and convert levels to int
     levels = list(map(int, (levels[levels > 0])))
-    
+
     # Get first and last level to only scale: if levels are not complete
     levels_2_skip = get_first_and_last_levels(levels)
 
     # Create empty list to keep the scaling between the image and PAM50
-    scales = []  
+    scales = []
     # Loop through levels
     for level in levels:
         if level not in levels_2_skip:
@@ -69,7 +69,7 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
                 # Interpolate in the same number of slices
                 metrics_PAM50_space_dict[key][slices_PAM50] = np.interp(x_PAM50, x, metric_values_level)
     scale_mean = np.mean(scales)
-    
+
     # Loop through the first and the last level to scale only.
     for level in levels_2_skip:
         # Get slices corresponding for the currently processed level
