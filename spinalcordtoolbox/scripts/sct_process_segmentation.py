@@ -467,7 +467,7 @@ def main(argv: Sequence[str]):
     # Save metrics in PAM50 anatomical dimensions
     if arguments.normalize == 'PAM50':
         metrics_agg_merged_PAM50_space = merge_dict(metrics_agg_PAM50_space)
-        file_out_norm_PAM50 = file_out.split('.')[0] + '_PAM50_space.' + file_out.split('.')[1]
+        file_out_norm_PAM50 = file_out.split('.')[0] + '_PAM50.' + file_out.split('.')[1]
         save_as_csv(metrics_agg_merged_PAM50_space, file_out_norm_PAM50, fname_in=fname_segmentation, append=append)
         display_open(file_out_norm_PAM50)
 
