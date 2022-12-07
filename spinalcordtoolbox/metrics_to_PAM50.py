@@ -23,7 +23,7 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     :param metrics: Dict of class Metric(). Output of spinalcordtoolbox.process_seg.compute_shape.
     :param fname_vert_levels_PAM50: Path to the PAM50_levels.nii.gz (PAM50 labeled segmentation).
     :param fname_vert_levels: Path to subject's vertebral labeling file.
-    :return metrics_PAM50_agg: Dict of class Metric() in PAM50 anatomical dimensions.
+    :return metrics_PAM50_space: Dict of class Metric() in PAM50 anatomical dimensions.
     """
     # Load PAM50 labeled segmentation
     im_seg_labeled_PAM50 = Image(fname_vert_levels_PAM50)
@@ -34,10 +34,10 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     z = im_seg_labeled_PAM50.dim[2]
 
     # Create an metrics instance filled by NaN with number of rows equal to number of slices in PAM50 template
-    metrics_PAM50_space = {}
+    metrics_PAM50_space_dict = {}
     for key in metrics.keys():
-        metrics_PAM50_space[key] = np.empty(z, dtype=float)
-        metrics_PAM50_space[key].fill(np.nan)
+        metrics_PAM50_space_dict[key] = np.empty(z, dtype=float)
+        metrics_PAM50_space_dict[key].fill(np.nan)
 
     # Get unique vertebral levels
     levels = np.unique(im_seg_labeled.data)
@@ -67,7 +67,7 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
             for key, value in metrics.items():
                 metric_values_level = value.data[slices_im]
                 # Interpolate in the same number of slices
-                metrics_PAM50_space[key][slices_PAM50] = np.interp(x_PAM50, x, metric_values_level)
+                metrics_PAM50_space_dict[key][slices_PAM50] = np.interp(x_PAM50, x, metric_values_level)
     scale_mean = np.mean(scales)
     
     # Loop through the first and the last level to scale only.
@@ -102,14 +102,16 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
                     diff = len(slices_PAM50) - len(metrics_inter)
                     slices_PAM50 = slices_PAM50[diff:] 
 
-            metrics_PAM50_space[key][slices_PAM50] = metrics_inter
+            metrics_PAM50_space_dict[key][slices_PAM50] = metrics_inter
 
     # Create a dict of Metric() objects
-    metrics_PAM50_agg = {}
-    for key in metrics.keys():
-        metrics_PAM50_agg[key] = Metric(data=np.array(metrics_PAM50_space[key]), label=key)
+    metrics_PAM50_space = {}
+    # Loop through metrics
+    for key, value in metrics_PAM50_space_dict.items():
+        # Convert ndarray to Metric() object
+        metrics_PAM50_space[key] = Metric(data=np.array(value), label=key)
 
-    return metrics_PAM50_agg
+    return metrics_PAM50_space
     # linear interpolation
 
 
