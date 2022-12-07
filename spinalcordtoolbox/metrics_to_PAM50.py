@@ -35,7 +35,7 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
 
     # Create an metrics instance filled by NaN with number of rows equal to number of slices in PAM50 template
     metrics_PAM50_space = {}
-    for key in metrics:
+    for key in metrics.keys():
         metrics_PAM50_space[key] = np.empty(z, dtype=float)
         metrics_PAM50_space[key].fill(np.nan)
 
@@ -60,8 +60,9 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
             x = np.linspace(0, nb_slices - 1, len(slices_im))
             scales.append(nb_slices/len(slices_im))
             # Loop through metrics
-            for key in metrics:
-                metric_values_level = metrics[key].data[slices_im]
+            for key, value in metrics.items():
+                metric_values_level = value.data[slices_im]
+                # Interpolate in the same number of slices
                 metrics_PAM50_space[key][slices_PAM50] = np.interp(x_PAM50, x, metric_values_level)
     scale_mean = np.mean(scales)
     
@@ -77,8 +78,8 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
         x_PAM50 = np.linspace(0, scale_mean*nb_slices_im, int(scale_mean*nb_slices_im))
         x = np.linspace(0, scale_mean*nb_slices_im, nb_slices_im)
         # Loop through metrics
-        for key in metrics:
-            metric_values_level = metrics[key].data[slices_im]
+        for key, value in metrics.items():
+            metric_values_level = value.data[slices_im]
             metrics_inter = np.interp(x_PAM50, x, metric_values_level)
             # If the first level, scale from level below
             if level == min(levels_2_skip):
@@ -101,7 +102,7 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
 
     # Create a dict of Metric() objects
     metrics_PAM50_agg = {}
-    for key in metrics:
+    for key in metrics.keys():
         metrics_PAM50_agg[key] = Metric(data=np.array(metrics_PAM50_space[key]), label=key)
 
     return metrics_PAM50_agg
