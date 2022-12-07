@@ -65,9 +65,10 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
             scales.append(nb_slices_PAM50/nb_slices_im)
             # Loop through metrics
             for key, value in metrics.items():
-                metric_values_level = value.data[slices_im]
-                # Interpolate in the same number of slices
-                metrics_PAM50_space_dict[key][slices_PAM50] = np.interp(x_PAM50, x, metric_values_level)
+                if key != 'length':
+                    metric_values_level = value.data[slices_im]
+                    # Interpolate in the same number of slices
+                    metrics_PAM50_space_dict[key][slices_PAM50] = np.interp(x_PAM50, x, metric_values_level)
     scale_mean = np.mean(scales)
 
     # Loop through the first and the last level to scale only.
@@ -83,26 +84,27 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
         x = np.linspace(0, scale_mean*nb_slices_im, nb_slices_im)
         # Loop through metrics
         for key, value in metrics.items():
-            metric_values_level = value.data[slices_im]
-            # Interpolate in the same number of slices
-            metrics_inter = np.interp(x_PAM50, x, metric_values_level)
-            # If the first level, scale from level below
-            if level == min(levels_2_skip):
-                if len(metrics_inter) > len(slices_PAM50):
-                    diff = len(metrics_inter) - len(slices_PAM50)
-                    metrics_inter = metrics_inter[:-diff]
-                elif len(metrics_inter) < len(slices_PAM50):
-                    diff = len(slices_PAM50) - len(metrics_inter)
-                    slices_PAM50 = slices_PAM50[:-diff]
-            # If the last level, scale from level above
-            else:
-                if len(metrics_inter) > len(slices_PAM50):
-                    diff = len(metrics_inter) - len(slices_PAM50)
-                    metrics_inter = metrics_inter[diff:]
-                elif len(metrics_inter) < len(slices_PAM50):
-                    diff = len(slices_PAM50) - len(metrics_inter)
-                    slices_PAM50 = slices_PAM50[diff:]
-            metrics_PAM50_space_dict[key][slices_PAM50] = metrics_inter
+            if key != 'length':
+                metric_values_level = value.data[slices_im]
+                # Interpolate in the same number of slices
+                metrics_inter = np.interp(x_PAM50, x, metric_values_level)
+                # If the first level, scale from level below
+                if level == min(levels_2_skip):
+                    if len(metrics_inter) > len(slices_PAM50):
+                        diff = len(metrics_inter) - len(slices_PAM50)
+                        metrics_inter = metrics_inter[:-diff]
+                    elif len(metrics_inter) < len(slices_PAM50):
+                        diff = len(slices_PAM50) - len(metrics_inter)
+                        slices_PAM50 = slices_PAM50[:-diff]
+                # If the last level, scale from level above
+                else:
+                    if len(metrics_inter) > len(slices_PAM50):
+                        diff = len(metrics_inter) - len(slices_PAM50)
+                        metrics_inter = metrics_inter[diff:]
+                    elif len(metrics_inter) < len(slices_PAM50):
+                        diff = len(slices_PAM50) - len(metrics_inter)
+                        slices_PAM50 = slices_PAM50[diff:]
+                metrics_PAM50_space_dict[key][slices_PAM50] = metrics_inter
 
     # Create a dict of Metric() objects
     metrics_PAM50_space = {}
