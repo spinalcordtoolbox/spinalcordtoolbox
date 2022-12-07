@@ -385,7 +385,7 @@ def main(argv: Sequence[str]):
         fname_vert_levels = get_absolute_path(arguments.vertfile)
     else:
         levels = []
-        fname_vert_level = None
+        fname_vert_levels = None
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
     perslice = bool(arguments.perslice)
@@ -401,9 +401,8 @@ def main(argv: Sequence[str]):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
-    if arguments.normalize == "PAM50" and (fname_vert_level is None or not perslice):
-        parser.error("Option '-normalize PAM50' requires options '-vertfile' and -perslice 1.")
-
+    if arguments.normalize == "PAM50" and (fname_vert_levels is None or not perslice):
+        parser.error("Option '-normalize PAM50' requires options '-vertfile' and '-perslice 1'.")
     if distance_pmj is not None and fname_pmj is None:
         parser.error("Option '-pmj-distance' requires option '-pmj'.")
     if fname_pmj is not None and distance_pmj is None and not perslice:
@@ -420,7 +419,7 @@ def main(argv: Sequence[str]):
     
     if arguments.normalize == 'PAM50':
         fname_vert_levels_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
-        metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_level)
+        metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels)
         metrics_agg_PAM50_space = {}
     
     if fname_pmj is not None:
@@ -441,7 +440,7 @@ def main(argv: Sequence[str]):
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
                                                             levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, fname_vert_level=fname_vert_level,
+                                                            perlevel=perlevel, fname_vert_level=fname_vert_levels,
                                                             group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
             if arguments.normalize == 'PAM50':
                 metrics_agg_PAM50_space[key] = aggregate_per_slice_or_level(metrics_PAM50_space[key], slices=slices,
@@ -455,7 +454,7 @@ def main(argv: Sequence[str]):
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
                                                             levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, fname_vert_level=fname_vert_level,
+                                                            perlevel=perlevel, fname_vert_level=fname_vert_levels,
                                                             group_funcs=group_funcs, length_pmj=length_from_pmj)
             if arguments.normalize == 'PAM50':
                 metrics_agg_PAM50_space[key] = aggregate_per_slice_or_level(metrics_PAM50_space[key], slices=slices,
