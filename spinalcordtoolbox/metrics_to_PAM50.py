@@ -13,47 +13,46 @@ def get_first_and_last_levels(levels):
     :param levels: list: list of all available levels.
     :return min(levels): int: first level.
     :return max(levels): int: last level.
-
     """
-    return (min(levels), max(levels))
+    return min(levels), max(levels)
 
 
-def interpolate_metrics(metrics, PAM50_seg_labeled, seg_labeled):
+def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     """
     Interpolates metrics perlevel into the PAM50 anatomical dimensions.
     :param metrics: Dict of class Metric(). Output of spinalcordtoolbox.process_seg.compute_shape.
-    :param PAM50_seg_labeled: PAM50_levels.nii.gz, labeld segmentation of PAM50. Could be either an Image or a file name.
-    :return metrics_PAM50_agg: Dict of class Metric() in PAM50 anatomical dimensions. 
-
+    :param fname_vert_levels_PAM50: Path to the PAM50_levels.nii.gz (PAM50 labeled segmentation).
+    :param fname_vert_levels: Path to subject's vertebral labeling file.
+    :return metrics_PAM50_agg: Dict of class Metric() in PAM50 anatomical dimensions.
     """
     # Load PAM50 labeled segmentation
-    im_seg_labeled_PAM50 = Image(PAM50_seg_labeled)
-    # Load PAM50 labeled segmentation
-    im_seg_labeled = Image(seg_labeled)
+    im_seg_labeled_PAM50 = Image(fname_vert_levels_PAM50)
+    # Load subject's labeled segmentation
+    im_seg_labeled = Image(fname_vert_levels)
 
     # Get number of slices in PAM50
     z = im_seg_labeled_PAM50.dim[2]
 
-    # Create a new epmty metrics instance
+    # Create an metrics instance filled by NaN with number of rows equal to number of slices in PAM50 template
     metrics_PAM50_space = {}
     for key in metrics:
         metrics_PAM50_space[key] = np.empty(z, dtype=float)
         metrics_PAM50_space[key].fill(np.nan)
 
-    # Get levels
+    # Get unique vertebral levels
     levels = np.unique(im_seg_labeled.data)
-    levels = list(map(int, (levels[levels>0])))
+    # Remove zero and convert levels to int
+    levels = list(map(int, (levels[levels > 0])))
     
     # Get first and last level to only scale: if levels are not complete
     levels_2_skip = get_first_and_last_levels(levels)
 
     # Create empty list to keep the scaling between the image and PAM50
     scales = []  
-    # loop through levels
+    # Loop through levels
     for level in levels:
         if level not in levels_2_skip:
-            # TODO skip first and last
-            # interpolate in the same number of slices
+            # Get slices corresponding for the currently processed level
             slices_PAM50 = get_slices_from_vertebral_levels(im_seg_labeled_PAM50, level)
             slices_im = get_slices_from_vertebral_levels(im_seg_labeled, level)
             nb_slices = len(slices_PAM50)
@@ -66,11 +65,15 @@ def interpolate_metrics(metrics, PAM50_seg_labeled, seg_labeled):
                 metrics_PAM50_space[key][slices_PAM50] = np.interp(x_PAM50, x, metric_values_level)
     scale_mean = np.mean(scales)
     
-    # Loop through first and last level to scale only.
+    # Loop through the first and the last level to scale only.
     for level in levels_2_skip:
+        # Get slices corresponding for the currently processed level
         slices_PAM50 = get_slices_from_vertebral_levels(im_seg_labeled_PAM50, level)
         slices_im = get_slices_from_vertebral_levels(im_seg_labeled, level)
+        # Get number of slices for the currently processed level
         nb_slices_im = len(slices_im)
+        # Prepare vectors for the interpolation
+        # Note: since the first and the last level can be incomplete, we use the mean scaling factor from all other levels
         x_PAM50 = np.linspace(0, scale_mean*nb_slices_im, int(scale_mean*nb_slices_im))
         x = np.linspace(0, scale_mean*nb_slices_im, nb_slices_im)
         # Loop through metrics
@@ -96,8 +99,7 @@ def interpolate_metrics(metrics, PAM50_seg_labeled, seg_labeled):
 
             metrics_PAM50_space[key][slices_PAM50] = metrics_inter
 
-
-    # Create a dict of Metric()
+    # Create a dict of Metric() objects
     metrics_PAM50_agg = {}
     for key in metrics:
         metrics_PAM50_agg[key] = Metric(data=np.array(metrics_PAM50_space[key]), label=key)
