@@ -27,8 +27,10 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     """
     # Load PAM50 labeled segmentation
     im_seg_labeled_PAM50 = Image(fname_vert_levels_PAM50)
+    im_seg_labeled_PAM50.change_orientation('RPI')
     # Load subject's labeled segmentation
     im_seg_labeled = Image(fname_vert_levels)
+    im_seg_labeled.change_orientation('RPI')
 
     # Get number of slices in PAM50
     z = im_seg_labeled_PAM50.dim[2]
