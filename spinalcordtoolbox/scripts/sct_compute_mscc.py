@@ -5,7 +5,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
+# Author: Sandrine Bédard, Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -78,6 +78,17 @@ def main(argv: Sequence[str]):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
+
+    # Input 
+        #.txt file with compression slice nb
+        # .csv file normalized and not normalize
+        # slice thickness
+        # path to .csv for norm
+    # steps:
+        # fetch vertebral level of compressed level 
+        # average compression on slice thickness eqc
+        # Average on entire 3 levels of HC
+        # Compute MSCC
 
     # Get parser info
     di = arguments.di
