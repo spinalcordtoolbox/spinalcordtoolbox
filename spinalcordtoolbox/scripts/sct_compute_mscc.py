@@ -46,9 +46,9 @@ def get_parser():
         '-compression_level',
         metavar=Metavar.file,
         required=True,
-        help='.txt file with slice (in RPI) of compressed level'
+        help='.txt file with slice(s) (in RPI) of compressed level'
     )
-    mandatoryArguments.add_argument(
+    mandatoryArguments.add_argument(  # TODO: to remove, fetch dataset, add age, sex, height ...
         '-ref',
         required=True,
         help='Folder with .csv files of HC control to use for normalization.',
@@ -117,72 +117,107 @@ def get_slice_thickness(fname_seg):
 
 
 def get_compressed_slice(fname_slice):
-    # TODO add option for multiple compressed levels/ slices
     with open(fname_slice) as f:
-        slice = f.read()
-    print('slice', slice)
-    return int(slice)
+        slices = f.readlines()
+    slices = [l.strip('\n\r') for l in slices]
+    return [int(i) for i in slices]
 
 
-def get_verterbral_level_from_slice(slice, df_metrics):
-    # TODO add if multiple levels or multiple slices
-    level_compression = df_metrics.loc[df_metrics['Slice (I->S)']==slice, 'VertLevel'].to_list()
-    print('Compressed level', level_compression[0])
-    return level_compression[0]
+def get_verterbral_level_from_slice(slices, df_metrics):
+    idx = df_metrics['Slice (I->S)'].isin(slices).tolist()
+    level_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
+    level_slice_dict =  {}
+    slices = np.array(slices)
+    for level in np.unique(level_compression['VertLevel']):
+        level_slice_dict[level] = level_compression.loc[level_compression['VertLevel']==level,'Slice (I->S)'].to_list()
+    return level_slice_dict
 
 
-def average_compression_PAM50(slice_thickness, df_metrics_PAM50, level, slice):
+def average_compression_PAM50(slice_thickness, df_metrics_PAM50, upper_level, lower_level, slice):
     # slice 759
     # TODO average on equ slice
-    upper_level = level - 1 # TODO change if more than one level
-    lower_level = level + 1
     nb_slice = slice_thickness//0.5
-    if nb_slice > 1:
-        slices_avg = np.arange(slice - nb_slice//2, slice + nb_slice//2,1)
-        print(slices_avg)
+    if nb_slice > 1 :
+        slices_avg = np.arange(min(slice) - nb_slice//2, max(slice) + nb_slice//2,1)
+    if len(slice)>1:
+        slices_avg = np.arange(min(slice), max(slice), 1)
     else:
-        slices_avg = [slice]
+        slices_avg = slice
     # find index of slices to average    
     idx = df_metrics_PAM50['Slice (I->S)'].isin(slices_avg).tolist()
     # TODO: function for 3 next rows
     upper_AP_mean = df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel']==upper_level, 'MEAN(diameter_AP)'].mean()
     lower_AP_mean = df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel']==lower_level, 'MEAN(diameter_AP)'].mean()
     compressed_AP_mean = df_metrics_PAM50.loc[idx, 'MEAN(diameter_AP)'].mean()
-    return upper_AP_mean, lower_AP_mean, compressed_AP_mean
+    return upper_AP_mean, lower_AP_mean, compressed_AP_mean, slices_avg
     # How to get equivalent in PAM50 space ??
 
 
-def average_hc(ref_folder, level, slices_avg):
-    upper_level = level - 1 # TODO change if more than one level
-    lower_level = level + 1
+def average_hc(ref_folder, upper_level, lower_level, slices_avg, slice_thickness):
     df = pd.DataFrame()
     d = {}
-    d = {}
     i = 0
+    # Loop through .csv files of healthy controls
     for file in os.listdir(ref_folder):
         if 'PAM50' in file:
             print(os.path.join(ref_folder,file))
             d[file] = csv2dataFrame(os.path.join(ref_folder,file))
             i = i+1
     first_key = next(iter(d))
+    # Create an empty dataframe with ame columns
     df = pd.DataFrame(columns=d[first_key].columns)
     df['VertLevel'] = d[first_key]['VertLevel']
     df['Slice (I->S)'] = d[first_key]['Slice (I->S)']
+    # Loop through all HC
     for key, values in d.items():
         for column in d[key].columns:
             if 'MEAN' in column:
                 if df[column].isnull().values.all():
                     df[column]  = d[key][column]
                 else:
+                    # Sum all columns that have MEAN key
                     df[column]= df[column] + d[key][column].tolist()
+    # Divide by number of HC
     for column in df.columns:
         if 'MEAN' in column:
             df[column] = df[column]/i
+
+    # find index of slices to average    
+    idx = df['Slice (I->S)'].isin(slices_avg).tolist()    
     upper_AP_mean = df.loc[df['VertLevel']==upper_level, 'MEAN(diameter_AP)'].mean()
     lower_AP_mean = df.loc[df['VertLevel']==lower_level, 'MEAN(diameter_AP)'].mean()
-    compressed_AP_mean = df.loc[df['Slice (I->S)']==slices_avg, 'MEAN(diameter_AP)'].mean()
+    compressed_AP_mean = df.loc[idx, 'MEAN(diameter_AP)'].mean()
     return upper_AP_mean, lower_AP_mean, compressed_AP_mean
 
+
+def get_up_lw_levels(levels):
+    """
+    Get must upper level from all compressed levels and lowest level from all compressed levels
+    :param: levels: list: Compressed levels.
+    :return: upper_level: int: Smallest level (closest to superior)
+    :return: lower_level: int: Highest level (closest to inferior)
+    """
+    upper_level = min(levels) - 1 
+    lower_level = max(levels) + 1
+    return upper_level, lower_level
+
+def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
+    # TODO maybe use function in metrics to PAM50?
+    compression_level_dict_PAM50 = {}
+    for level, slices in compressed_level_dict.items():
+        nb_slices_level = len(df_metrics.loc[df_metrics['VertLevel']==level, 'VertLevel'].to_list())
+        nb_slices_PAM50 = len(df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel']==level, 'VertLevel'].to_list())
+        x_PAM50 = np.arange(0, nb_slices_PAM50, 1)
+        x = np.linspace(0, nb_slices_PAM50 - 1, nb_slices_level)
+        new_slices_coord = np.interp(x_PAM50, x, df_metrics.loc[df_metrics['VertLevel']==level, 'Slice (I->S)'].to_list())
+        # find nearest index
+        slices_PAM50 = []
+        for slice in slices:
+            idx = np.abs(new_slices_coord - slice).argmin()
+            new_slice= df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel']==level, 'Slice (I->S)'].to_list()[idx]
+            slices_PAM50.append(new_slice)
+        compression_level_dict_PAM50[level] = slices_PAM50
+    return compression_level_dict_PAM50
 
 
 # MAIN
@@ -216,17 +251,20 @@ def main(argv: Sequence[str]):
     df_metrics = csv2dataFrame(fname_metrics)
     df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50)
 
-    compressed_level = get_verterbral_level_from_slice(slice_compressed, df_metrics)
-    ap = average_compression_PAM50(slice_thickness, df_metrics_PAM50, compressed_level, 759)
-    ap_HC = average_hc(path_ref, compressed_level, 759)
+    compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
+    up_level, lw_level = get_up_lw_levels(compressed_levels_dict.keys())
+    compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
 
+    for level in compressed_levels_dict_PAM50.keys():
+        ap = average_compression_PAM50(slice_thickness, df_metrics_PAM50, up_level, lw_level, compressed_levels_dict_PAM50[level])
+        slices_avg = ap[3]
+        ap_HC = average_hc(path_ref, up_level, lw_level, slices_avg, slice_thickness)
+        print('Upper HC', ap_HC[0], 'Lower HC', ap_HC[1], 'Compressed HC', ap_HC[2])
+        print('Upper', ap[0], 'Lower', ap[1], 'Compressed', ap[2])
 
-    print('Upper HC', ap_HC[0], 'Lower HC', ap_HC[1], 'Compressed HC', ap_HC[2])
-    print('Upper HC', ap[0], 'Lower HC', ap[1], 'Compressed HC', ap[2])
-
-    # Compute MSCC
-    mscc_result_norm= mscc_norm(ap, ap_HC)
-    mscc_result= mscc(ap[0], ap[1], ap[2])
+        # Compute MSCC
+        mscc_result_norm= mscc_norm(ap, ap_HC)
+        mscc_result= mscc(ap[0], ap[1], ap[2])
 
     # Input 
         #.txt file with compression slice nb
@@ -240,10 +278,11 @@ def main(argv: Sequence[str]):
         # Compute MSCC
 
 
-
     # Display results
-    printv('\nMSCC norm = ' + str(mscc_result_norm) + '\n', verbose, 'info')
-    printv('\nMSCC = ' + str(mscc_result) + '\n', verbose, 'info')
+    # TODO save in txt file
+        printv('Level: ' + str(level)+ '\n', verbose, 'info')
+        printv('\nMSCC norm = ' + str(mscc_result_norm) + '\n', verbose, 'info')
+        printv('\nMSCC = ' + str(mscc_result) + '\n', verbose, 'info')
 
 if __name__ == "__main__":
     init_sct()
