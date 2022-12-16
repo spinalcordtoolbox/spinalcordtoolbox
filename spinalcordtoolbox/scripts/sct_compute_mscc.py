@@ -52,7 +52,7 @@ def get_parser():
         '-compression_level',
         metavar=Metavar.file,
         required=True,
-        help='.txt file with slice(s) (in RPI) of compressed level'
+        help='.txt file with slice(s) (in RPI) spinal cord compression'
     )
     mandatoryArguments.add_argument(  # TODO: to remove, fetch dataset, add age, sex, height ...
         '-ref',
@@ -97,10 +97,10 @@ def get_parser():
 def mscc(da, db, di):
     """
     Compute MSCC (Maximum Spinal Cord Compression) using anterior-posterior diameter of compression and of levels above and bellow.
-    :param: float: da: diameter of level above compression level.
-    :param: float: db: diameter of level above compression level.
-    :param: float: di: diameter at compression level.
-    :return: float: MSCC
+    :param float: da: diameter of level above compression level.
+    :param float: db: diameter of level above compression level.
+    :param float: di: diameter at compression level.
+    :return float: MSCC
     """
     return (1 - float(di) / ((da + db) / float(2))) * 100
 
@@ -109,9 +109,9 @@ def mscc_norm(ap, ap_HC):
     """
     Compute normalized MSCC (Maximum Spinal Cord Compression) using anterior-posterior diameter of compression and of levels above and bellow
     An divides each AP diameter by the value of healthy controls.
-    :param: list: ap: list anterior posterior diameter value of level above, below and at compression of patient.
-    :param: list: ap_HC: list anterior posterior diameter value of level above, below and at compression of healthy controls.
-    :return: float: MSCC normalized
+    :param list: ap: list anterior posterior diameter value of level above, below and at compression of patient.
+    :param list: ap_HC: list anterior posterior diameter value of level above, below and at compression of healthy controls.
+    :return float: MSCC normalized
     """
     da = ap[0]/ap_HC[0]
     db = ap[1]/ap_HC[1]
@@ -122,8 +122,8 @@ def mscc_norm(ap, ap_HC):
 def csv2dataFrame(filename, verbose=None):
     """
     Loads a .csv file and builds a pandas dataFrame of the data
-    :param: filename: str: filename of the .csv file
-    :return: data :pd.DataFrame: pandas dataframe of the .csv file's data
+    :param filename: str: filename of the .csv file
+    :return data :pd.DataFrame: pandas dataframe of the .csv file's data
     """
     check_file_exist(filename, verbose=verbose)
     data = pd.read_csv(filename)
@@ -135,8 +135,8 @@ def csv2dataFrame(filename, verbose=None):
 def get_slice_thickness(fname_seg):
     """
     From segmentation image, gets slice thickness.
-    :param: fname_seg: input segmentation. Could be either an Image or a file name.
-    :return: pz: float: slice thickness in mm.
+    :param fname_seg: input segmentation. Could be either an Image or a file name.
+    :return pz: float: slice thickness in mm.
     """
     im_seg = Image(fname_seg)
     im_seg.change_orientation('RPI')
@@ -147,8 +147,8 @@ def get_slice_thickness(fname_seg):
 def get_compressed_slice(fname_slice):
     """
     From .txt file, gets all slices and retruns a list of slices of native image.
-    :param: fname_slice: str: filename of .txt file with slices where there teh spinal cord is compressed.
-    :retrun: list: list of slices number.
+    :param fname_slice: str: filename of .txt file with slices where there teh spinal cord is compressed.
+    :return list: list of slices number.
     """
     check_file_exist(fname_slice)
     # Read all lines of 
@@ -168,9 +168,9 @@ def get_compressed_slice(fname_slice):
 def get_verterbral_level_from_slice(slices, df_metrics):
     """
     From slices, gets the coresponding vertebral level and creates a dict fo level and corresponding slice(s).
-    :param: slices: list: list of slices number.
-    :param: df_metrics: pandas.DataFrame: dataframe of metrics (output of sct_process_segmentation).
-    :return: level_slice_dict: dict:
+    :param slices: list: list of slices number.
+    :param df_metrics: pandas.DataFrame: dataframe of metrics (output of sct_process_segmentation).
+    :return level_slice_dict: dict:
     """
     idx = df_metrics['Slice (I->S)'].isin(slices).tolist()
     level_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
@@ -190,10 +190,10 @@ def average_compression_PAM50(slice_thickness, df_metrics_PAM50, upper_level, lo
     :param upper_level: int: level above compression.
     :param lower_level: int: level below compression.
     :param slice: int: slice of spinal cord compression.
-    :return: upper_AP_mean
-    :retrun: lower_AP_mean
-    :retrun: compressed_AP_mean
-    :retrun: slices_avg: Slices in PAM50 space to average AP diameter.
+    :return upper_AP_mean:
+    :retrun lower_AP_mean:
+    :retrun compressed_AP_mean:
+    :retrun slices_avg: Slices in PAM50 space to average AP diameter.
 
     """
     nb_slice = slice_thickness//0.5
@@ -214,6 +214,9 @@ def average_hc(ref_folder, upper_level, lower_level, slices_avg):
     :param upper_level: int: level above compression.
     :param lower_level: int: level below compression.
     :param slices_avg: Slices in PAM50 space to average AP diameter.
+    :return: upper_AP_mean
+    :retrun: lower_AP_mean
+    :retrun: compressed_AP_mean
     """
     # Initialize empty dataframe
     df = pd.DataFrame()
@@ -249,7 +252,17 @@ def average_hc(ref_folder, upper_level, lower_level, slices_avg):
 
 
 def get_mean_AP_diameter(df, upper_level, lower_level, slices_avg):
-    # find index of slices to average    
+    """
+    Average AP diameter at compression level, at level above and below.
+    :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
+    :param upper_level: int: level above compression.
+    :param lower_level: int: level below compression.
+    :param slices_avg: Slices in PAM50 space to average AP diameter.
+    :return: upper_AP_mean
+    :retrun: lower_AP_mean
+    :retrun: compressed_AP_mean
+    """
+    # find index of slices to average
     idx = df['Slice (I->S)'].isin(slices_avg).tolist()
     upper_AP_mean = df.loc[df['VertLevel'] == upper_level, 'MEAN(diameter_AP)'].mean()
     lower_AP_mean = df.loc[df['VertLevel'] == lower_level, 'MEAN(diameter_AP)'].mean()
@@ -260,16 +273,23 @@ def get_mean_AP_diameter(df, upper_level, lower_level, slices_avg):
 def get_up_lw_levels(levels):
     """
     Get must upper level from all compressed levels and lowest level from all compressed levels
-    :param: levels: list: Compressed levels.
-    :return: upper_level: int: Smallest level (closest to superior)
-    :return: lower_level: int: Highest level (closest to inferior)
+    :param levels: list: Compressed levels.
+    :return upper_level: int: Smallest level (closest to superior)
+    :return lower_level: int: Highest level (closest to inferior)
     """
-    upper_level = min(levels) - 1 
+    upper_level = min(levels) - 1
     lower_level = max(levels) + 1
     return upper_level, lower_level
 
 
 def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
+    """
+    Get corresponding slice of compression in PAM50 space.
+    :param compressed_level_dict: dict: Dictionnary of levels and corresponding slice(s).
+    :param df_metrics: pandas.DataFrame: Metrics output of sct_process_segmentation.
+    :param df_metrics_PAM50: pandas.DataFrame: Metrics output of sct_process_segmentation in PAM50 anatomical dimensions.
+    :return compression_level_dict_PAM50: 
+    """
     # TODO maybe use function in metrics to PAM50?
     # won't be ok for most upper and lowest levels if they are not complete...
     compression_level_dict_PAM50 = {}
@@ -290,6 +310,15 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
 
 
 def save_csv(fname_out, level, mscc, mscc_norm, subject):
+    """
+    Save .csv file of MSCC results.
+    :param fname_out:
+    :param level: int: Level of compression.
+    :param mscc: float:
+    :param mscc_norm:
+    :param subject: str: subject id
+    :retrun:
+    """
     if not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
             header = ['Subject', 'Compression Level', 'MSCC', 'Normalized MSCC']
@@ -301,8 +330,6 @@ def save_csv(fname_out, level, mscc, mscc_norm, subject):
         spamwriter.writerow(line)
 
 
-# MAIN
-# ==========================================================================================
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
@@ -317,7 +344,6 @@ def main(argv: Sequence[str]):
     else:
         path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
         fname_out = file_name + '_mscc' + ext
-    # TODO: read slice
     fname_slice_compressed = arguments.compression_level
     fname_metrics = get_absolute_path(arguments.i)
     if arguments.i_PAM50 is None:
