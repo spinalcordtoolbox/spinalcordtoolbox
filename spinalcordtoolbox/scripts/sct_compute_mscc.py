@@ -17,7 +17,7 @@ import csv
 import logging
 from typing import Sequence
 import pandas as pd
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
 from spinalcordtoolbox.utils.fs import get_absolute_path, check_file_exist, extract_fname
 from spinalcordtoolbox.image import Image
 
@@ -151,11 +151,11 @@ def get_compressed_slice(fname_slice):
     :return list: list of slices number.
     """
     check_file_exist(fname_slice)
-    # Read all lines of 
+    # Read all lines of .txt file
     with open(fname_slice) as f:
         slices = f.readlines()
     # Check if the txt file is empty
-    if len(slices) < 1 :
+    if len(slices) < 1:
         raise ValueError('{} is empty. Please include a slice of corresponding compression.'.format(fname_slice))
     slices = [l.strip('\n\r') for l in slices]
     # Check if the txt file has int
@@ -183,7 +183,7 @@ def get_verterbral_level_from_slice(slices, df_metrics):
 
 def average_compression_PAM50(slice_thickness, df_metrics_PAM50, upper_level, lower_level, slice):
     """
-    Defines slices to average AP diameter at compression level following slice thickness and averages AP diameter at compression, 
+    Defines slices to average AP diameter at compression level following slice thickness and averages AP diameter at compression,
     across the entire level above and below compression.
     :param slice_thickness: float: slice thickness of native image space.
     :param df_metrics_PAM50: pandas.DataFrame: Metrics of sct_process_segmentation in PAM50 anatomical dimensions.
@@ -200,7 +200,7 @@ def average_compression_PAM50(slice_thickness, df_metrics_PAM50, upper_level, lo
     # If resolution of image is higher than PAM50 template, get slices equivalent to native slice thickness
     if nb_slice > 1:
         slices_avg = np.arange(min(slice) - nb_slice//2, max(slice) + nb_slice//2, 1)
-    # If more than one slice has compression, get all slices from that range 
+    # If more than one slice has compression, get all slices from that range
     if len(slice) > 1:
         slices_avg = np.arange(min(slice), max(slice), 1)
     else:
@@ -229,7 +229,7 @@ def average_hc(ref_folder, upper_level, lower_level, slices_avg):
     # Loop through .csv files of healthy controls
     for file in os.listdir(ref_folder):
         if 'PAM50' in file:
-            d[file] = csv2dataFrame(os.path.join(ref_folder, file), verbose=0) # TODO change verbose for arg
+            d[file] = csv2dataFrame(os.path.join(ref_folder, file), verbose=0)  # TODO change verbose for arg
             i = i+1
     first_key = next(iter(d))
     # Create an empty dataframe with ame columns
@@ -295,8 +295,8 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     # won't be ok for most upper and lowest levels if they are not complete...
     compression_level_dict_PAM50 = {}
     for level, slices in compressed_level_dict.items():
-        nb_slices_level = len(df_metrics.loc[df_metrics['VertLevel']==level, 'VertLevel'].to_list())
-        nb_slices_PAM50 = len(df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel']==level, 'VertLevel'].to_list())
+        nb_slices_level = len(df_metrics.loc[df_metrics['VertLevel'] == level, 'VertLevel'].to_list())
+        nb_slices_PAM50 = len(df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'VertLevel'].to_list())
         x_PAM50 = np.arange(0, nb_slices_PAM50, 1)
         x = np.linspace(0, nb_slices_PAM50 - 1, nb_slices_level)
         new_slices_coord = np.interp(x_PAM50, x, df_metrics.loc[df_metrics['VertLevel'] == level, 'Slice (I->S)'].to_list())
@@ -360,12 +360,15 @@ def main(argv: Sequence[str]):
     slice_thickness = get_slice_thickness(fname_segmentation)
     slice_compressed = get_compressed_slice(fname_slice_compressed)
 
+    # Fetch metrics of subject
     df_metrics = csv2dataFrame(fname_metrics, verbose=verbose)
     df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, verbose=verbose)
 
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     up_level, lw_level = get_up_lw_levels(compressed_levels_dict.keys())
+    # Get slices correspondance in PAM50 space
     compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
+
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict_PAM50.keys():
         # Get anterior-posterior of patient with compression
@@ -377,14 +380,15 @@ def main(argv: Sequence[str]):
         logger.debug('Upper', ap[0], 'Lower', ap[1], 'Compressed', ap[2])
 
         # Compute MSCC
-        mscc_result_norm= mscc_norm(ap, ap_HC)
-        mscc_result= mscc(ap[0], ap[1], ap[2])
+        mscc_result_norm = mscc_norm(ap, ap_HC)
+        mscc_result = mscc(ap[0], ap[1], ap[2])
         save_csv(fname_out, level, mscc_result, mscc_result_norm, subject)
-    # Display results
-    # TODO save in txt file
+
+        # Display results
         logger.info('Level: {}'.format(level))
         logger.info('\nMSCC norm = {}'.format(mscc_result_norm))
         logger.info('\nMSCC = {}'.format(mscc_result))
+
 
 if __name__ == "__main__":
     init_sct()
