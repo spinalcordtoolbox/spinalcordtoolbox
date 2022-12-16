@@ -196,9 +196,11 @@ def average_compression_PAM50(slice_thickness, df_metrics_PAM50, upper_level, lo
     :retrun slices_avg: Slices in PAM50 space to average AP diameter.
 
     """
-    nb_slice = slice_thickness//0.5
+    nb_slice = slice_thickness//0.5  # 0.5 is the resolution of PAM50 template. TODO: remove hard coding
+    # If resolution of image is higher than PAM50 template, get slices equivalent to native slice thickness
     if nb_slice > 1:
         slices_avg = np.arange(min(slice) - nb_slice//2, max(slice) + nb_slice//2, 1)
+    # If more than one slice has compression, get all slices from that range 
     if len(slice) > 1:
         slices_avg = np.arange(min(slice), max(slice), 1)
     else:
@@ -288,9 +290,8 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     :param compressed_level_dict: dict: Dictionnary of levels and corresponding slice(s).
     :param df_metrics: pandas.DataFrame: Metrics output of sct_process_segmentation.
     :param df_metrics_PAM50: pandas.DataFrame: Metrics output of sct_process_segmentation in PAM50 anatomical dimensions.
-    :return compression_level_dict_PAM50: 
+    :return compression_level_dict_PAM50:
     """
-    # TODO maybe use function in metrics to PAM50?
     # won't be ok for most upper and lowest levels if they are not complete...
     compression_level_dict_PAM50 = {}
     for level, slices in compressed_level_dict.items():
@@ -365,10 +366,12 @@ def main(argv: Sequence[str]):
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     up_level, lw_level = get_up_lw_levels(compressed_levels_dict.keys())
     compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
-
+    # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict_PAM50.keys():
+        # Get anterior-posterior of patient with compression
         ap = average_compression_PAM50(slice_thickness, df_metrics_PAM50, up_level, lw_level, compressed_levels_dict_PAM50[level])
         slices_avg = ap[3]
+        # Get AP diameter of healthy controls
         ap_HC = average_hc(path_ref, up_level, lw_level, slices_avg)
         logger.debug('Upper HC', ap_HC[0], 'Lower HC', ap_HC[1], 'Compressed HC', ap_HC[2])
         logger.debug('Upper', ap[0], 'Lower', ap[1], 'Compressed', ap[2])
@@ -379,9 +382,9 @@ def main(argv: Sequence[str]):
         save_csv(fname_out, level, mscc_result, mscc_result_norm, subject)
     # Display results
     # TODO save in txt file
-        printv('Level: ' + str(level)+ '\n', verbose, 'info')
-        printv('\nMSCC norm = ' + str(mscc_result_norm) + '\n', verbose, 'info')
-        printv('\nMSCC = ' + str(mscc_result) + '\n', verbose, 'info') # change for info when saved in csv file
+        logger.info('Level: {}'.format(level))
+        logger.info('\nMSCC norm = {}'.format(mscc_result_norm))
+        logger.info('\nMSCC = {}'.format(mscc_result))
 
 if __name__ == "__main__":
     init_sct()
