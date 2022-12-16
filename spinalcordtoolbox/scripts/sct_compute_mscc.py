@@ -274,7 +274,7 @@ def get_mean_AP_diameter(df, upper_level, lower_level, slices_avg):
 
 def get_up_lw_levels(levels):
     """
-    Get must upper level from all compressed levels and lowest level from all compressed levels
+    Get most upper level from all compressed levels and lowest level from all compressed levels
     :param levels: list: Compressed levels.
     :return upper_level: int: Smallest level (closest to superior)
     :return lower_level: int: Highest level (closest to inferior)
