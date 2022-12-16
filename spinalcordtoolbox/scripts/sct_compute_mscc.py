@@ -9,7 +9,8 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-
+# TODO: add option to normalize or not
+# TODO: maybe create an API or move some functions
 import sys
 import os
 import numpy as np
@@ -18,7 +19,7 @@ import logging
 from typing import Sequence
 import pandas as pd
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
-from spinalcordtoolbox.utils.fs import get_absolute_path, check_file_exist, extract_fname
+from spinalcordtoolbox.utils.fs import get_absolute_path, check_file_exist, extract_fname, printv
 from spinalcordtoolbox.image import Image
 
 
@@ -379,8 +380,8 @@ def main(argv: Sequence[str]):
         ap = ap[0]
         # Get AP diameter of healthy controls
         ap_HC = average_hc(path_ref, up_level, lw_level, slices_avg)
-        logger.debug('Upper HC', ap_HC[0], 'Lower HC', ap_HC[1], 'Compressed HC', ap_HC[2])
-        logger.debug('Upper', ap[0], 'Lower', ap[1], 'Compressed', ap[2])
+        logger.debug('\nda_HC =  {}, db_HC = {}, di_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
+        logger.debug('da =  {}, db = {}, di = {}'.format(ap[0], ap[1], ap[2]))
 
         # Compute MSCC
         mscc_result_norm = mscc_norm(ap, ap_HC)
@@ -388,9 +389,9 @@ def main(argv: Sequence[str]):
         save_csv(fname_out, level, mscc_result, mscc_result_norm, subject)
 
         # Display results
-        logger.info('Level: {}'.format(level))
-        logger.info('\nMSCC norm = {}'.format(mscc_result_norm))
-        logger.info('\nMSCC = {}'.format(mscc_result))
+        printv('\nLevel: {}'.format(level), verbose=verbose, type='info')
+        printv('\nMSCC norm = {}'.format(mscc_result_norm), verbose=verbose, type='info')
+        printv('\nMSCC = {}\n'.format(mscc_result), verbose=verbose, type='info')
 
 
 if __name__ == "__main__":
