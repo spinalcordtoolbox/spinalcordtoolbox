@@ -119,13 +119,13 @@ def mscc_norm(ap, ap_HC):
     return mscc(da, db, di)
 
 
-def csv2dataFrame(filename, verbose=None):
+def csv2dataFrame(filename):
     """
     Loads a .csv file and builds a pandas dataFrame of the data
     :param filename: str: filename of the .csv file
     :return data :pd.DataFrame: pandas dataframe of the .csv file's data
     """
-    check_file_exist(filename, verbose=verbose)
+    check_file_exist(filename, verbose=0)
     data = pd.read_csv(filename)
     # Ensure AP diameter is in float
     data.astype({"MEAN(diameter_AP)": float})
@@ -150,7 +150,7 @@ def get_compressed_slice(fname_slice):
     :param fname_slice: str: filename of .txt file with slices where there teh spinal cord is compressed.
     :return list: list of slices number.
     """
-    check_file_exist(fname_slice)
+    check_file_exist(fname_slice, verbose=0)
     # Read all lines of .txt file
     with open(fname_slice) as f:
         slices = f.readlines()
@@ -231,7 +231,7 @@ def average_hc(ref_folder, upper_level, lower_level, slices_avg):
     # Loop through .csv files of healthy controls
     for file in os.listdir(ref_folder):
         if 'PAM50' in file:
-            d[file] = csv2dataFrame(os.path.join(ref_folder, file), verbose=0)  # TODO change verbose for arg
+            d[file] = csv2dataFrame(os.path.join(ref_folder, file))  # TODO change verbose for arg
             i = i+1
     first_key = next(iter(d))
     # Create an empty dataframe with ame columns
@@ -363,8 +363,8 @@ def main(argv: Sequence[str]):
     slice_compressed = get_compressed_slice(fname_slice_compressed)
 
     # Fetch metrics of subject
-    df_metrics = csv2dataFrame(fname_metrics, verbose=verbose)
-    df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, verbose=verbose)
+    df_metrics = csv2dataFrame(fname_metrics)
+    df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50)
 
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     up_level, lw_level = get_up_lw_levels(compressed_levels_dict.keys())
@@ -375,7 +375,8 @@ def main(argv: Sequence[str]):
     for level in compressed_levels_dict_PAM50.keys():
         # Get anterior-posterior of patient with compression
         ap = average_compression_PAM50(slice_thickness, df_metrics_PAM50, up_level, lw_level, compressed_levels_dict_PAM50[level])
-        slices_avg = ap[3]
+        slices_avg = ap[1]
+        ap = ap[0]
         # Get AP diameter of healthy controls
         ap_HC = average_hc(path_ref, up_level, lw_level, slices_avg)
         logger.debug('Upper HC', ap_HC[0], 'Lower HC', ap_HC[1], 'Compressed HC', ap_HC[2])
