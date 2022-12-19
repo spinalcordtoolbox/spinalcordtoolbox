@@ -26,6 +26,7 @@ The following studies have used SCT:
 2022
 ----
 
+-  Wenzel et al. `Multiple sclerosis iron rim lesions are linked to impaired cervical spinal cord integrity using the T1/T2-weighted ratio <https://doi.org/10.1111/jon.13076>`_, **J. Neuroimaging**, 2022
 -  Toh *et al.* `Analysis of brain and spinal MRI measures in a common domain to investigate directional neurodegeneration in motor neuron disease <https://doi.org/10.1007/s00415-022-11520-1>`_, **J. Neurol.**, 2022
 -  Hussain *et al.* `Deep learning-based diagnosis of disc degenerative diseases using MRI: A comprehensive review <https://doi.org/10.1016/j.compeleceng.2022.108524>`_, **Comput. Electr. Eng.** 2022
 -  Georgiou-Karistianis *et al.* `A natural history study to track brain and spinal cord changes in individuals with Friedreich’s ataxia: TRACK-FA study protocol <https://doi.org/10.1371/journal.pone.0269649>`_, **PLoS One**, 2022
