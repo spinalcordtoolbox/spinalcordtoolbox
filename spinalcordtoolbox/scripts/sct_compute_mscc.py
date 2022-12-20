@@ -271,16 +271,16 @@ def get_mean_AP_diameter(df, upper_level, lower_level, slices_avg):
     :param upper_level: int: level above compression.
     :param lower_level: int: level below compression.
     :param slices_avg: Slices in PAM50 space to average AP diameter.
-    :return: upper_AP_mean
-    :retrun: lower_AP_mean
-    :retrun: compressed_AP_mean
+    :return: da: float64: AP diameter above the compression
+    :retrun: db: float64: AP diameter below the compression
+    :retrun: di: float64: AP diameter at the compression level
     """
     # find index of slices to average
     idx = df['Slice (I->S)'].isin(slices_avg).tolist()
-    upper_AP_mean = df.loc[df['VertLevel'] == upper_level, 'MEAN(diameter_AP)'].mean()
-    lower_AP_mean = df.loc[df['VertLevel'] == lower_level, 'MEAN(diameter_AP)'].mean()
-    compressed_AP_mean = df.loc[idx, 'MEAN(diameter_AP)'].mean()
-    return upper_AP_mean, lower_AP_mean, compressed_AP_mean
+    da = df.loc[df['VertLevel'] == upper_level, 'MEAN(diameter_AP)'].mean()
+    db = df.loc[df['VertLevel'] == lower_level, 'MEAN(diameter_AP)'].mean()
+    di = df.loc[idx, 'MEAN(diameter_AP)'].mean()
+    return da, db, di
 
 
 def get_up_lw_levels(levels):
