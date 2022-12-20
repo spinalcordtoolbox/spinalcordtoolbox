@@ -21,6 +21,7 @@ import pandas as pd
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
 from spinalcordtoolbox.utils.fs import get_absolute_path, check_file_exist, extract_fname, printv
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox import __data_dir__
 
 
 logger = logging.getLogger(__name__)
@@ -133,13 +134,13 @@ def csv2dataFrame(filename):
     return data
 
 
-def get_slice_thickness(fname_seg):
+def get_slice_thickness(fname):
     """
-    From segmentation image, gets slice thickness.
-    :param fname_seg: input segmentation. Could be either an Image or a file name.
+    Get slice thickness from the input image.
+    :param fname: input file or segmentation. Could be either an Image or a file name (i.e., .nii file).
     :return pz: float: slice thickness in mm.
     """
-    im_seg = Image(fname_seg)
+    im_seg = Image(fname)
     im_seg.change_orientation('RPI')
     pz = im_seg.dim[5]
     return pz
@@ -199,8 +200,11 @@ def average_compression_PAM50(slice_thickness, df_metrics_PAM50, upper_level, lo
     :retrun slices_avg: Slices in PAM50 space to average AP diameter.
 
     """
-    nb_slice = slice_thickness//0.5  # 0.5 is the resolution of PAM50 template. TODO: remove hard coding
+    # Get PAM50 slice thickness
+    fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
+    slice_thickness_PAM50 = get_slice_thickness(fname_PAM50)
     # If resolution of image is higher than PAM50 template, get slices equivalent to native slice thickness
+    nb_slice = slice_thickness//slice_thickness_PAM50
     if nb_slice > 1:
         slices_avg = np.arange(min(slice) - nb_slice//2, max(slice) + nb_slice//2, 1)
     # If more than one slice has compression, get all slices from that range
