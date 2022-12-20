@@ -102,22 +102,25 @@ def get_parser():
 
 def mscc(da, db, di):
     """
-    Compute MSCC (Maximum Spinal Cord Compression) using anterior-posterior diameter of compression and of levels above and bellow.
+    Compute MSCC (Maximum Spinal Cord Compression) using anterior-posterior (AP) diameter of compression and of levels
+    above and bellow.
     :param float: da: diameter of level above compression level.
     :param float: db: diameter of level above compression level.
     :param float: di: diameter at compression level.
-    :return float: MSCC
+    :return float: MSCC in %
     """
     return (1 - float(di) / ((da + db) / float(2))) * 100
 
 
 def mscc_norm(ap, ap_HC):
     """
-    Compute normalized MSCC (Maximum Spinal Cord Compression) using anterior-posterior diameter of compression and of levels above and bellow
-    An divides each AP diameter by the value of healthy controls.
+    Compute normalized MSCC (Maximum Spinal Cord Compression) using anterior-posterior (AP) diameter of compression and
+    of levels above and bellow.
+    Each AP diameter is divided by the value of healthy controls.
     :param list: ap: list anterior posterior diameter value of level above, below and at compression of patient.
-    :param list: ap_HC: list anterior posterior diameter value of level above, below and at compression of healthy controls.
-    :return float: MSCC normalized
+    :param list: ap_HC: list anterior posterior diameter value of level above, below and at compression of healthy
+    controls.
+    :return float: MSCC normalized in %
     """
     da = ap[0]/ap_HC[0]
     db = ap[1]/ap_HC[1]
@@ -191,8 +194,8 @@ def get_verterbral_level_from_slice(slices, df_metrics):
 
 def average_compression_PAM50(slice_thickness, df_metrics_PAM50, upper_level, lower_level, slice):
     """
-    Defines slices to average AP diameter at compression level following slice thickness and averages AP diameter at compression,
-    across the entire level above and below compression.
+    Defines slices to average AP diameter at compression level following slice thickness and averages AP diameter at
+    compression, across the entire level above and below compression.
     :param slice_thickness: float: slice thickness of native image space.
     :param df_metrics_PAM50: pandas.DataFrame: Metrics of sct_process_segmentation in PAM50 anatomical dimensions.
     :param upper_level: int: level above compression.
@@ -298,22 +301,27 @@ def get_up_lw_levels(levels):
 def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     """
     Get corresponding slice of compression in PAM50 space.
-    :param compressed_level_dict: dict: Dictionnary of levels and corresponding slice(s).
+    :param compressed_level_dict: dict: Dictionary of levels and corresponding slice(s).
     :param df_metrics: pandas.DataFrame: Metrics output of sct_process_segmentation.
     :param df_metrics_PAM50: pandas.DataFrame: Metrics output of sct_process_segmentation in PAM50 anatomical dimensions.
     :return compression_level_dict_PAM50:
     """
-    # won't be ok for most upper and lowest levels if they are not complete...
+    # TODO - won't be ok for most upper and lowest levels if they are not complete...
     compression_level_dict_PAM50 = {}
+    # Loop across slices and levels with compression
     for level, slices in compressed_level_dict.items():
+        # Number of slices in native image
         nb_slices_level = len(df_metrics.loc[df_metrics['VertLevel'] == level, 'VertLevel'].to_list())
+        # Number of slices in PAM50
         nb_slices_PAM50 = len(df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'VertLevel'].to_list())
+        # Do interpolation from native space to PAM50
         x_PAM50 = np.arange(0, nb_slices_PAM50, 1)
         x = np.linspace(0, nb_slices_PAM50 - 1, nb_slices_level)
         new_slices_coord = np.interp(x_PAM50, x, df_metrics.loc[df_metrics['VertLevel'] == level, 'Slice (I->S)'].to_list())
         # find nearest index
         slices_PAM50 = []
         for slice in slices:
+            # get index corresponding to the min value
             idx = np.abs(new_slices_coord - slice).argmin()
             new_slice = df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'Slice (I->S)'].to_list()[idx]
             slices_PAM50.append(new_slice)
@@ -346,7 +354,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
 
     # Get parser info
     fname_segmentation = get_absolute_path(arguments.s)
@@ -375,6 +383,7 @@ def main(argv: Sequence[str]):
     df_metrics = csv2dataFrame(fname_metrics)
     df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50)
 
+    # Get vertebral level corresponding to the slice with the compression
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     # Get vertebral level above and below the compression
     upper_level, lower_level = get_up_lw_levels(compressed_levels_dict.keys())
