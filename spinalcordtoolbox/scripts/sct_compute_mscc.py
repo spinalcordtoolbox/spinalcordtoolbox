@@ -42,24 +42,28 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help='Input file name (add extension). Example: csa.csv.'
+        help='Input csv file name in native space. Example: csa.csv.'
     )
     mandatoryArguments.add_argument(
         '-s',
         metavar=Metavar.file,
         required=True,
-        help='Spinal cord segmentation to fetch slice thickness.'
+        help='Spinal cord segmentation (to fetch slice thickness). Example: sub-001_T2w_seg.nii.gz'
     )
     mandatoryArguments.add_argument(
         '-compression_level',
         metavar=Metavar.file,
         required=True,
-        help='.txt file with slice(s) (in RPI) spinal cord compression'
+        help='.txt file with slice(s) corresponding to the spinal cord compression(s). Note: RPI (S-I direction in '
+             'z-axis) is required.'
+        # TODO: twh subjects are not RPI
+        # TODO: replace text file with nii file containing single point at the compression level (similar to
+        #  disc-labels). This would also allow to fetch the slice thickness (no need to provide the SC seg)
     )
     mandatoryArguments.add_argument(  # TODO: to remove, fetch dataset, add age, sex, height ...
         '-ref',
         required=True,
-        help='Folder with .csv files of HC control to use for normalization.',
+        help='Folder with .csv files (in PAM50 space) of HC control to use for normalization.',
         metavar=Metavar.folder,
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
