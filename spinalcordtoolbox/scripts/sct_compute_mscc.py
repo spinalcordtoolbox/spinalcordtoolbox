@@ -186,7 +186,6 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     if level_compression.empty:
         raise ValueError('Slice {} doesn\'t have a computed metric'.format(slices))
     level_slice_dict = {}
-    slices = np.array(slices)
     for level in np.unique(level_compression['VertLevel']):
         level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level, 'Slice (I->S)'].to_list()
     return level_slice_dict
