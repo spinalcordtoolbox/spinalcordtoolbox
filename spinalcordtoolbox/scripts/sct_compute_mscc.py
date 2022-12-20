@@ -376,18 +376,18 @@ def main(argv: Sequence[str]):
     df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50)
 
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
-    up_level, lw_level = get_up_lw_levels(compressed_levels_dict.keys())
-    # Get slices correspondance in PAM50 space
+    # Get vertebral level above and below the compression
+    upper_level, lower_level = get_up_lw_levels(compressed_levels_dict.keys())
+    # Get slices corresponding in PAM50 space
     compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
 
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict_PAM50.keys():
-        # Get anterior-posterior of patient with compression
-        ap = average_compression_PAM50(slice_thickness, df_metrics_PAM50, up_level, lw_level, compressed_levels_dict_PAM50[level])
-        slices_avg = ap[1]
-        ap = ap[0]
+        # Get anterior-posterior (AP) diameter of patient with compression
+        ap, slices_avg = average_compression_PAM50(slice_thickness, df_metrics_PAM50, upper_level, lower_level,
+                                                   compressed_levels_dict_PAM50[level])
         # Get AP diameter of healthy controls
-        ap_HC = average_hc(path_ref, up_level, lw_level, slices_avg)
+        ap_HC = average_hc(path_ref, upper_level, lower_level, slices_avg)
         logger.debug('\nda_HC =  {}, db_HC = {}, di_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
         logger.debug('da =  {}, db = {}, di = {}'.format(ap[0], ap[1], ap[2]))
 
