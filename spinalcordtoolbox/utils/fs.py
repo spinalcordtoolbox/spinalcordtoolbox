@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def tmp_create(basename):
     """Create temporary folder and return its path
     """
-    prefix = f"sct_{datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S.%f')}_{basename}_"
+    prefix = f"sct_{datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')}_{basename}_"
     tmpdir = tempfile.mkdtemp(prefix=prefix)
     logger.info(f"Creating temporary folder ({tmpdir})")
     return tmpdir
