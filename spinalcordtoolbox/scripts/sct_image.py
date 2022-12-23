@@ -399,7 +399,7 @@ def main(argv: Sequence[str]):
         if arguments.stitch is not None:
             printv("Generating QC Report...", verbose=verbose)
             # specify filenames to use in QC report
-            path_tmp = tmp_create("stitching-QC")
+            path_tmp = tmp_create(basename="stitching-qc")
             fname_qc_concat = os.path.join(path_tmp, "concatenated_input_images.nii.gz")
             fname_qc_out = os.path.join(path_tmp, os.path.basename(fname_out))
             # generate 2 images to compare in QC report

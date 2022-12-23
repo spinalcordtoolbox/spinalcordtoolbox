@@ -295,7 +295,7 @@ def main(argv: Sequence[str]):
     remove_temp_files = arguments.r
     clean_labels = arguments.clean_labels
 
-    path_tmp = tmp_create(basename="label_vertebrae")
+    path_tmp = tmp_create(basename="label-vertebrae")
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder...', verbose)

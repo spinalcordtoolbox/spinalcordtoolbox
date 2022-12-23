@@ -99,7 +99,7 @@ class SpinalCordStraightener(object):
         # Extract path/file/extension
         path_anat, file_anat, ext_anat = extract_fname(fname_anat)
 
-        path_tmp = tmp_create(basename="straighten_spinalcord")
+        path_tmp = tmp_create(basename="straighten-spinalcord")
 
         # Copying input data to tmp folder
         logger.info('Copy files to tmp folder...')

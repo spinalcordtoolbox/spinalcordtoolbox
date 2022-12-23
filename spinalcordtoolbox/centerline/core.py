@@ -240,7 +240,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
 
     # Save centerline image to tmp_folder (but only if user hasn't opted to `remove_temp_files`)
     if not remove_temp_files:
-        tmp_folder = tmp_create("centerline")
+        tmp_folder = tmp_create(basename="get-centerline")
         im_centerline.save(os.path.join(tmp_folder, add_suffix(im_seg.absolutepath, "_ctr")), mutable=True)
 
     return (im_centerline,
