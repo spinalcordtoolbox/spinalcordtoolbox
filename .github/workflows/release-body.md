@@ -2,7 +2,7 @@ Notable changes include:
   - **EDIT THIS LIST WITH A BRIEF SUMMARY OF THE MOST IMPORTANT CHANGES.**
 
 
-[Full release notes and Changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/release/CHANGES.md)
+[Full release notes and Changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/CHANGES.md)
 
 Results of `batch_processing.sh`:
 
