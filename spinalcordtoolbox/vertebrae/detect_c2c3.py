@@ -59,7 +59,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
 
     # create temporary folder with intermediate results
     logger.info("Creating temporary folder...")
-    tmp_folder = TempFolder()
+    tmp_folder = TempFolder(basename="detect-c2c3")
     tmp_folder.chdir()
 
     # Extract mid-slice

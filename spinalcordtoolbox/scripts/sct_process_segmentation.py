@@ -460,7 +460,7 @@ def main(argv: Sequence[str]):
                 fname_ctl_smooth = add_suffix(fname_ctl, '_smooth')
                 if verbose != 2:
                     from spinalcordtoolbox.utils.fs import tmp_create
-                    path_tmp = tmp_create()
+                    path_tmp = tmp_create(basename="pmj-qc")
                     fname_mask_out = os.path.join(path_tmp, fname_mask_out)
                     fname_ctl = os.path.join(path_tmp, fname_ctl)
                     fname_ctl_smooth = os.path.join(path_tmp, fname_ctl_smooth)

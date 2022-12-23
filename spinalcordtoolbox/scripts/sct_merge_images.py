@@ -136,7 +136,7 @@ def merge_images(list_fname_src, fname_dest, list_fname_warp, fname_out, interp,
 
     """
     # create temporary folder
-    path_tmp = tmp_create()
+    path_tmp = tmp_create(basename="merge-images")
 
     # get dimensions of destination file
     nii_dest = Image(fname_dest)

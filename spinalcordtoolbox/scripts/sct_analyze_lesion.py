@@ -117,7 +117,7 @@ class AnalyzeLeion:
                 printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
         # create tmp directory
-        self.tmp_dir = tmp_create()  # path to tmp directory
+        self.tmp_dir = tmp_create(basename="analyze-lesion")  # path to tmp directory
 
         # lesion file where each lesion has a different value
         self.fname_label = extract_fname(self.fname_mask)[1] + '_label' + extract_fname(self.fname_mask)[2]

@@ -576,7 +576,7 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
     if im_grid:
         fname_grid = im_grid.absolutepath
     else:
-        tmp_dir = tmp_create()
+        tmp_dir = tmp_create(basename="visualize-warp")
         nx, ny, nz = im_warp.data.shape[0:3]
         curdir = os.getcwd()
         os.chdir(tmp_dir)

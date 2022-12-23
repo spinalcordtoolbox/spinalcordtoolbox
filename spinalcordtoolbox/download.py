@@ -291,7 +291,7 @@ def install_data(url, dest_folder, keep=False):
 
     tmp_file = download_data(url)
 
-    extraction_folder = tmp_create()
+    extraction_folder = tmp_create(basename="install-data")
 
     unzip(tmp_file, extraction_folder)
 
