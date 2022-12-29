@@ -5,7 +5,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Sandrine Bédard, Julien Cohen-Adad
+# Author: Sandrine Bédard, Jan Valosek, Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -35,6 +35,7 @@ def get_parser():
                     'Fehlings MG. Acute cervical traumatic spinal cord injury: MR imaging findings correlated with '
                     'neurologic outcome--prospective study with 100 consecutive patients. Radiology 2007;243(3):820-'
                     '827.'
+        # TODO - update this description
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -45,20 +46,11 @@ def get_parser():
         help='Input csv file name in native space. Example: csa.csv.'
     )
     mandatoryArguments.add_argument(
-        '-s',
+        '-l',
         metavar=Metavar.file,
         required=True,
-        help='Spinal cord segmentation (to fetch slice thickness). Example: sub-001_T2w_seg.nii.gz'
-    )
-    mandatoryArguments.add_argument(
-        '-compression_level',
-        metavar=Metavar.file,
-        required=True,
-        help='.txt file with slice(s) corresponding to the spinal cord compression(s). Note: RPI (S-I direction in '
-             'z-axis) is required.'
-        # TODO: twh subjects are not RPI
-        # TODO: replace text file with nii file containing single point at the compression level (similar to
-        #  disc-labels). This would also allow to fetch the slice thickness (no need to provide the SC seg)
+        help='.nii file with compression labels. Each compression is denoted by a single voxel of value `1`. '
+             'Example: sub-001_T2w_compression_labels.nii.gz'
     )
     mandatoryArguments.add_argument(  # TODO: to remove, fetch dataset, add age, sex, height ...
         '-ref',
@@ -141,37 +133,30 @@ def csv2dataFrame(filename):
     return data
 
 
-def get_slice_thickness(fname):
+def get_slice_thickness(img):
     """
     Get slice thickness from the input image.
-    :param fname: input file or segmentation. Could be either an Image or a file name (i.e., .nii file).
-    :return pz: float: slice thickness in mm.
+    :param img: Image: source image
+    :return float: slice thickness in mm.
     """
-    im_seg = Image(fname)
-    im_seg.change_orientation('RPI')
-    pz = im_seg.dim[5]
-    return pz
+    return img.dim[5]
 
 
-def get_compressed_slice(fname_slice):
+def get_compressed_slice(img, verbose):
     """
-    From .txt file, gets all slices and retruns a list of slices of native image.
-    :param fname_slice: str: filename of .txt file with slices where there teh spinal cord is compressed.
-    :return list: list of slices number.
+    Get all the compression labels (voxels of value: '1') that are contained in the input image.
+    :param img: Image: source image
+    :return list: list of slices number
     """
-    check_file_exist(fname_slice, verbose=0)
-    # Read all lines of .txt file
-    with open(fname_slice) as f:
-        slices = f.readlines()
-    # Check if the txt file is empty
-    if len(slices) < 1:
-        raise ValueError('{} is empty. Please include a slice of corresponding compression.'.format(fname_slice))
-    slices = [l.strip('\n\r') for l in slices]
-    # Check if the txt file has int
-    for element in slices:
-        if not element.isnumeric():
-            raise ValueError('Only int numbers are valid values, "{}" is not ant int'.format(element))
-    return [int(i) for i in slices]
+    # Get all coordinates
+    coordinates = img.getNonZeroCoordinates(sorting='z')
+    if verbose == 2:
+        print('Compression labels coordinates: {}'.format(coordinates))
+    # Check it coordinates is empty
+    if not coordinates:
+        raise ValueError('No compression labels found.')
+    # Return only slices number
+    return [int(coordinate.z) for coordinate in coordinates]
 
 
 def get_verterbral_level_from_slice(slices, df_metrics):
@@ -191,11 +176,12 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     return level_slice_dict
 
 
-def average_compression_PAM50(slice_thickness, df_metrics_PAM50, upper_level, lower_level, slice):
+def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, df_metrics_PAM50, upper_level, lower_level, slice):
     """
     Defines slices to average AP diameter at compression level following slice thickness and averages AP diameter at
     compression, across the entire level above and below compression.
     :param slice_thickness: float: slice thickness of native image space.
+    :param slice_thickness_PAM50: float: slice thickness of the PAM50.
     :param df_metrics_PAM50: pandas.DataFrame: Metrics of sct_process_segmentation in PAM50 anatomical dimensions.
     :param upper_level: int: level above compression.
     :param lower_level: int: level below compression.
@@ -206,9 +192,6 @@ def average_compression_PAM50(slice_thickness, df_metrics_PAM50, upper_level, lo
     :retrun slices_avg: Slices in PAM50 space to average AP diameter.
 
     """
-    # Get PAM50 slice thickness
-    fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
-    slice_thickness_PAM50 = get_slice_thickness(fname_PAM50)
     # If resolution of image is higher than PAM50 template, get slices equivalent to native slice thickness
     nb_slice = slice_thickness//slice_thickness_PAM50
     if nb_slice > 1:
@@ -355,15 +338,17 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
 
-    # Get parser info
-    fname_segmentation = get_absolute_path(arguments.s)
+    fname_labels = arguments.l
+
+    img = Image(fname_labels)
+    img.change_orientation('RPI')
+
     path_ref = get_absolute_path(arguments.ref)
     if arguments.o is not None:
         fname_out = arguments.o
     else:
         path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
         fname_out = file_name + '_mscc' + ext
-    fname_slice_compressed = arguments.compression_level
     fname_metrics = get_absolute_path(arguments.i)
     if arguments.i_PAM50 is None:
         path, file_name, ext = extract_fname(fname_metrics)
@@ -375,8 +360,14 @@ def main(argv: Sequence[str]):
     else:
         subject = arguments.subject
 
-    slice_thickness = get_slice_thickness(fname_segmentation)
-    slice_compressed = get_compressed_slice(fname_slice_compressed)
+    slice_thickness = get_slice_thickness(img)
+    slice_compressed = get_compressed_slice(img, verbose)
+
+    # Get PAM50 slice thickness
+    fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
+    img_pam50 = Image(fname_PAM50)
+    img_pam50.change_orientation('RPI')
+    slice_thickness_PAM50 = get_slice_thickness(img_pam50)
 
     # Fetch metrics of subject
     df_metrics = csv2dataFrame(fname_metrics)
@@ -392,8 +383,8 @@ def main(argv: Sequence[str]):
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict_PAM50.keys():
         # Get anterior-posterior (AP) diameter of patient with compression
-        ap, slices_avg = average_compression_PAM50(slice_thickness, df_metrics_PAM50, upper_level, lower_level,
-                                                   compressed_levels_dict_PAM50[level])
+        ap, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50,  df_metrics_PAM50,
+                                                   upper_level, lower_level, compressed_levels_dict_PAM50[level])
         # Get AP diameter of healthy controls
         ap_HC = average_hc(path_ref, upper_level, lower_level, slices_avg)
         logger.debug('\nda_HC =  {}, db_HC = {}, di_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
