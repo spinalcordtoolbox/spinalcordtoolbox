@@ -348,7 +348,7 @@ def main(argv: Sequence[str]):
         fname_out = arguments.o
     else:
         path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
-        fname_out = file_name + '_mscc' + ext
+        fname_out = os.path.join(path, file_name + '_mscc' + ext)
     fname_metrics = get_absolute_path(arguments.i)
     if arguments.i_PAM50 is None:
         path, file_name, ext = extract_fname(fname_metrics)
@@ -399,6 +399,8 @@ def main(argv: Sequence[str]):
         printv('\nLevel: {}'.format(level), verbose=verbose, type='info')
         printv('\nMSCC norm = {}'.format(mscc_result_norm), verbose=verbose, type='info')
         printv('\nMSCC = {}\n'.format(mscc_result), verbose=verbose, type='info')
+
+    printv(f'Saved: {fname_out}')
 
 
 if __name__ == "__main__":
