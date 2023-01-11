@@ -68,7 +68,7 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help="Name of output file. Example: src_reg.nii.gz"
+        help="Output csv file name. If not provided, _mscc suffix is added to the file name provided by -i flag."
     )
     optional.add_argument(
         '-subject',
