@@ -50,7 +50,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     """
     printv('\nCheck consistency of segmentation...', verbose)
     # creating a temporary folder in which all temporary files will be placed and deleted afterwards
-    path_tmp = tmp_create(basename="propseg")
+    path_tmp = tmp_create(basename="propseg-check-segmentation")
     im_seg = convert(Image(fname_segmentation))
     im_seg.save(os.path.join(path_tmp, "tmp.segmentation.nii.gz"), mutable=True, verbose=0)
     im_centerline = convert(Image(fname_centerline))
@@ -421,7 +421,7 @@ def func_rescale_header(fname_data, rescale_factor, verbose=0):
     header_rescaled.set_qform(qform)
     # the data are the same-- only the header changes
     img_rescaled = nib.nifti1.Nifti1Image(img.get_data(), None, header=header_rescaled)
-    path_tmp = tmp_create(basename="propseg")
+    path_tmp = tmp_create(basename="propseg-rescale-header")
     fname_data_rescaled = os.path.join(path_tmp, os.path.basename(add_suffix(fname_data, "_rescaled")))
     nib.save(img_rescaled, fname_data_rescaled)
     return fname_data_rescaled
@@ -563,7 +563,6 @@ def propseg(img_input, options_dict):
         printv('ERROR: your input image needs to be 3D in order to be segmented.', 1, 'error')
 
     path_data, file_data, ext_data = extract_fname(fname_data)
-    path_tmp = tmp_create(basename="label_vertebrae")
 
     # rescale header (see issue #1406)
     if rescale_header != 1.0:
@@ -611,6 +610,7 @@ def propseg(img_input, options_dict):
     # If using OptiC
     elif use_optic:
         image_centerline = optic.detect_centerline(image_input, contrast_type, remove_temp_files)
+        path_tmp = tmp_create(basename="propseg-centerline-optic")
         fname_centerline_optic = os.path.join(path_tmp, 'centerline_optic.nii.gz')
         image_centerline.save(fname_centerline_optic)
         cmd += ["-init-centerline", fname_centerline_optic]

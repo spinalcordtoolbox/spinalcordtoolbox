@@ -167,7 +167,7 @@ def main(argv: Sequence[str]):
     path_anat, file_anat, ext_anat = extract_fname(fname_anat)
     path_centerline, file_centerline, ext_centerline = extract_fname(fname_centerline)
 
-    path_tmp = tmp_create(basename="smooth_spinalcord")
+    path_tmp = tmp_create(basename="smooth-spinalcord")
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder and convert to nii...', verbose)

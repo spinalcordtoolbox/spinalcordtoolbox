@@ -1751,7 +1751,7 @@ def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', 
     orig_ornt = im_list[0].orientation
 
     # reorient input files and save them to a temp directory
-    path_tmp = tmp_create(basename="image-stitching")
+    path_tmp = tmp_create(basename="stitch-images")
     fnames_in = []
     for im_in in im_list:
         temp_file_path = os.path.join(path_tmp, os.path.basename(im_in.absolutepath))

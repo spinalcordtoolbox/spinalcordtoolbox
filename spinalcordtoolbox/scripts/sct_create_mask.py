@@ -172,7 +172,7 @@ def create_mask(param):
     if param.fname_out == '':
         param.fname_out = os.path.abspath(param.file_prefix + file_data + ext_data)
 
-    path_tmp = tmp_create(basename="create_mask")
+    path_tmp = tmp_create(basename="create-mask")
 
     printv('\nOrientation:', param.verbose)
     orientation_input = Image(param.fname_data).orientation

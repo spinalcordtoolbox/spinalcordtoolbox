@@ -78,7 +78,7 @@ def detect_centerline(img, contrast, remove_temp_files=1):
     logger.debug('Detecting the spinal cord using OptiC')
     img_orientation = img.orientation
 
-    temp_folder = TempFolder()
+    temp_folder = TempFolder(basename="optic-detect-centerline")
     temp_folder.chdir()
 
     # convert image data type to int16, as required by opencv (backend in OptiC)
