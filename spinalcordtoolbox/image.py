@@ -797,9 +797,6 @@ class Image(object):
         """
         im_out = empty_like(self)
         im_out.data = np.mean(self.data, dim)
-        # TODO: the line below fails because .dim is immutable. We should find a solution to update dim accordingly
-        #  because as of now, this field contains wrong values (in this case, the dimension should be changed)
-        # im_out.dim = im_out.data.shape[:dim] + (1,) + im_out.data.shape[dim:]
         return im_out
 
 
