@@ -385,7 +385,7 @@ def main(argv: Sequence[str]):
             for i_dim in range(3):
                 l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].save(l_fname_out[i_dim], verbose=verbose)
-            display_viewer_syntax(fname_out, verbose=verbose)
+            display_viewer_syntax(l_fname_out, verbose=verbose)
         if arguments.split is not None:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []
