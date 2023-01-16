@@ -567,7 +567,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     """
 
     # create temporary folder
-    path_tmp = tmp_create(basename="register")
+    path_tmp = tmp_create(basename="register-slicewise")
 
     # copy data to temp folder
     logger.info("\nCopy input data to temp folder...")

@@ -416,7 +416,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     logger.info("  Threshold: {}".format(threshold_seg))
 
     # create temporary folder with intermediate results
-    tmp_folder = TempFolder(verbose=verbose)
+    tmp_folder = TempFolder(basename="deepseg-sc", verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
     if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)

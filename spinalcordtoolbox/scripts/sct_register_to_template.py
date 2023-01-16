@@ -401,7 +401,7 @@ def main(argv: Sequence[str]):
     if len(labels) > 2 and label_type in ['disc', 'spinal']:
         level_alignment = True
 
-    path_tmp = tmp_create(basename="register_to_template")
+    path_tmp = tmp_create(basename="register-to-template")
 
     # set temporary file names
     ftmp_data = 'data.nii'
