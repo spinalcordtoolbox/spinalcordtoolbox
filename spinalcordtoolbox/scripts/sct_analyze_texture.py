@@ -114,7 +114,7 @@ class ExtractGLCM:
         self.param_glcm = param_glcm if param_glcm is not None else ParamGLCM()
 
         # create tmp directory
-        self.tmp_dir = tmp_create()  # path to tmp directory
+        self.tmp_dir = tmp_create(basename="analyze-texture")  # path to tmp directory
 
         if self.param.dim == 'ax':
             self.orientation_extraction = 'RPI'

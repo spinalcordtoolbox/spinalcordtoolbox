@@ -148,7 +148,7 @@ def moco_wrapper(param):
     printv('  Input file ............ ' + param.fname_data, param.verbose)
     printv('  Group size ............ {}'.format(param.group_size), param.verbose)
 
-    path_tmp = tmp_create(basename="moco")
+    path_tmp = tmp_create(basename="moco-wrapper")
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)

@@ -797,9 +797,6 @@ class Image(object):
         """
         im_out = empty_like(self)
         im_out.data = np.mean(self.data, dim)
-        # TODO: the line below fails because .dim is immutable. We should find a solution to update dim accordingly
-        #  because as of now, this field contains wrong values (in this case, the dimension should be changed)
-        # im_out.dim = im_out.data.shape[:dim] + (1,) + im_out.data.shape[dim:]
         return im_out
 
 
@@ -1751,7 +1748,7 @@ def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', 
     orig_ornt = im_list[0].orientation
 
     # reorient input files and save them to a temp directory
-    path_tmp = tmp_create(basename="image-stitching")
+    path_tmp = tmp_create(basename="stitch-images")
     fnames_in = []
     for im_in in im_list:
         temp_file_path = os.path.join(path_tmp, os.path.basename(im_in.absolutepath))

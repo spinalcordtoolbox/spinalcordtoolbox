@@ -128,7 +128,7 @@ class DetectPMJ:
 
         self.verbose = verbose
 
-        self.tmp_dir = tmp_create()  # path to tmp directory
+        self.tmp_dir = tmp_create(basename="detect-pmj")  # path to tmp directory
 
         self.orientation_im = Image(self.fname_im).orientation  # to re-orient the data at the end
 

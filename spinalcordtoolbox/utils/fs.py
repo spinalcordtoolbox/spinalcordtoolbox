@@ -13,14 +13,12 @@ from .sys import printv
 logger = logging.getLogger(__name__)
 
 
-def tmp_create(basename=None):
+def tmp_create(basename):
     """Create temporary folder and return its path
     """
-    prefix = "sct-%s-" % datetime.datetime.now().strftime("%Y%m%d%H%M%S.%f")
-    if basename:
-        prefix += "%s-" % basename
+    prefix = f"sct_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{basename}_"
     tmpdir = tempfile.mkdtemp(prefix=prefix)
-    logger.info("Creating temporary folder (%s)" % tmpdir)
+    logger.info(f"Creating temporary folder ({tmpdir})")
     return tmpdir
 
 
@@ -120,8 +118,8 @@ def check_file_exist(fname, verbose=1):
 class TempFolder(object):
     """This class will create a temporary folder."""
 
-    def __init__(self, verbose=0):
-        self.path_tmp = tmp_create()
+    def __init__(self, basename, verbose=0):
+        self.path_tmp = tmp_create(basename)
         self.previous_path = None
 
     def chdir(self):
