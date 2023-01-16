@@ -126,7 +126,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     """
 
     # create temporary folder with intermediate results
-    tmp_folder = TempFolder(verbose=verbose)
+    tmp_folder = TempFolder(basename="deepseg-lesion", verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
     if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)
@@ -164,6 +164,10 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
     if ctr_algo == 'file':
         im_ctl = \
             resampling.resample_nib(im_ctl, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
+
+    # Save the centerline image file
+    fname_res_ctr = add_suffix(fname_orient, '_ctr')
+    im_ctl.save(fname_res_ctr)
 
     # crop image around the spinal cord centerline
     logger.info("\nCropping the image around the spinal cord...")
@@ -231,7 +235,6 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
         im_viewer = None
 
     if verbose == 2:
-        fname_res_ctr = add_suffix(fname_orient, '_ctr')
         resampling.resample_file(fname_res_ctr, fname_res_ctr, initial_resolution,
                                  'mm', 'linear', verbose=0)
         im_image_res_ctr_downsamp = Image(fname_res_ctr).change_orientation(original_orientation)

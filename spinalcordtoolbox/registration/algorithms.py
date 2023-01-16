@@ -522,22 +522,20 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
 
 
 def register_dl_inference(fname_model, input_moving, input_fixed, reg_args, device):
-    # Load the PyTorch model
+    # Load the PyTorch model architecture
     pt_model = vxm.networks.VxmDense(**reg_args)
-    path_model = sct_dir_local_path('data', 'deepreg_models', fname_model)
-    trained_state_dict = torch.load(path_model)
 
-    # Load the weights to the PyTorch model
-    weights_model = []
-    for k in trained_state_dict:
-        weights_model.append(trained_state_dict[k])
-    i = 0
-    i_max = len(list(pt_model.named_parameters()))
+    # Copy over named parameters from the trained model file
     torchparam = pt_model.state_dict()
-    for k, v in torchparam.items():
-        if i < i_max:
-            torchparam[k] = weights_model[i]
-            i += 1
+    trained_state_dict = torch.load(sct_dir_local_path('data', 'deepreg_models', fname_model))
+    for (name, parameter) in pt_model.named_parameters():
+        torchparam[name] = trained_state_dict[name]
+    # NB: The process above will *not* copy the two unnamed parameters from the trained `state_dict`:
+    #   1. 'integrate.transformer.grid'
+    #   2. 'transformer.grid'
+    # This is intentional; they should be preserved in their original state from `pt_model.state_dict()`.
+
+    # Load the parameters into the model
     pt_model.load_state_dict(torchparam)
     pt_model.to(device)
     pt_model.eval()
@@ -569,7 +567,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     """
 
     # create temporary folder
-    path_tmp = tmp_create(basename="register")
+    path_tmp = tmp_create(basename="register-slicewise")
 
     # copy data to temp folder
     logger.info("\nCopy input data to temp folder...")

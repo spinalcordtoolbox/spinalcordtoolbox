@@ -27,7 +27,7 @@ jobs:
     - name: Update '${{ github.event.inputs.fname_changelog }}' for '${{ github.event.repository.name }}'
       run: |
         cd ${{ github.event.repository.name }}
-        changelog spinalcordtoolbox/spinalcordtoolbox --update --name "${{ github.event.inputs.fname_changelog }}" --milestone ${{ github.event.inputs.milestone_title }}
+        changelog spinalcordtoolbox/spinalcordtoolbox --update --name "${{ github.event.inputs.fname_changelog }}" --milestone ${{ github.event.inputs.milestone_title }} --use-milestone-due-date
         rm -f "${{ github.event.inputs.fname_changelog }}.bak"
     - name: Create pull request for updated changelog
       uses: peter-evans/create-pull-request@v3

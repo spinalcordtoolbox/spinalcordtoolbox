@@ -51,12 +51,6 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "MNI-Poly-AMU"),
     },
-    "gm_model": {
-        "mirrors": [
-            "https://osf.io/ugscu/?action=download"
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "gm_model"),
-    },
     "optic_models": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/optic_models/releases/download/r20170413/20170413_optic_models.zip",
@@ -291,7 +285,7 @@ def install_data(url, dest_folder, keep=False):
 
     tmp_file = download_data(url)
 
-    extraction_folder = tmp_create()
+    extraction_folder = tmp_create(basename="install-data")
 
     unzip(tmp_file, extraction_folder)
 
