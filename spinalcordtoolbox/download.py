@@ -51,12 +51,6 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "MNI-Poly-AMU"),
     },
-    "gm_model": {
-        "mirrors": [
-            "https://osf.io/ugscu/?action=download"
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "gm_model"),
-    },
     "optic_models": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/optic_models/releases/download/r20170413/20170413_optic_models.zip",
