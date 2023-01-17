@@ -6,6 +6,9 @@ on:
       milestone_title:
         description: 'Milestone title'
         required: true
+      future_milestone_title:
+        description: 'Milestone title (future release)'
+        required: true
   push:
     branches:
       - master
@@ -139,6 +142,12 @@ jobs:
       with:
         ref: ${{ env.MAIN_BRANCH }}
         fetch-depth: 0
+
+    - name: Update version.txt (main branch)
+      run: | 
+          echo "${{ github.event.inputs.future_milestone_title }}.dev0" > spinalcordtoolbox/version.txt
+          git commit -m "Update version.txt for ${{ github.event.inputs.future_milestone_title }} development"
+          git push
 
     - name: Download requirements-freeze.txt
       uses: actions/download-artifact@v3
