@@ -128,6 +128,11 @@ jobs:
     # Only create the release if workflow is run manually. (This allows the other steps in the workflow to test PRs.)
     if: github.event_name == 'workflow_dispatch'
     steps:
+    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
+    - name: Set bot user data for commits
+      run: |
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "GitHub Actions Bot"
 
     - name: Checkout spinalcordtoolbox (main branch)
       uses: actions/checkout@v2
@@ -143,12 +148,6 @@ jobs:
     - name: Update version.txt (using milestone title)
       run: |
         echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
-
-    # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
-    - name: Set bot user data for commits
-      run: |
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "GitHub Actions Bot"
 
     - name: Commit and push
       run: |
