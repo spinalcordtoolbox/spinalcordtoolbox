@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       milestone_title:
-        description: 'Milestone title'
+        description: 'Milestone title (this release)'
         required: true
       future_milestone_title:
-        description: 'Milestone title (future release)'
+        description: 'Milestone title (next release)'
         required: true
   push:
     branches:
