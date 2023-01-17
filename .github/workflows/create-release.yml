@@ -149,16 +149,16 @@ jobs:
           git commit -m "Update version.txt for ${{ github.event.inputs.future_milestone_title }} development"
           git push
 
-    - name: Download requirements-freeze.txt
+    - name: Download requirements-freeze.txt (for release)
       uses: actions/download-artifact@v3
       with:
         name: requirements-freeze
 
-    - name: Update version.txt (using milestone title)
+    - name: Update version.txt (for release)
       run: |
         echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
 
-    - name: Commit and push
+    - name: Commit and push release changes
       run: |
         git checkout -b bot/${{ github.event.inputs.milestone_title }}
         git add requirements-freeze.txt
