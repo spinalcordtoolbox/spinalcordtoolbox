@@ -21,10 +21,6 @@ from scipy.signal import argrelmax, medfilt
 from sklearn.decomposition import PCA
 from scipy.io import loadmat
 import torch
-# import VoxelMorph and Neurite (used in VoxelMorph) with pytorch backend
-os.environ['VXM_BACKEND'] = 'pytorch'
-os.environ['NEURITE_BACKEND'] = 'pytorch'
-import voxelmorph as vxm
 
 import spinalcordtoolbox.image as image
 from spinalcordtoolbox.math import laplacian
@@ -34,6 +30,11 @@ from spinalcordtoolbox.scripts import sct_resample
 from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp_create, sct_dir_local_path
 
 from spinalcordtoolbox.scripts import sct_image
+
+# import VoxelMorph and Neurite (used in VoxelMorph) with pytorch backend
+os.environ['VXM_BACKEND'] = 'pytorch'
+os.environ['NEURITE_BACKEND'] = 'pytorch'
+import voxelmorph as vxm  # noqa: E402
 
 # TODO [AJ]
 # introduce potential cleanup functions in case exceptions occur and
