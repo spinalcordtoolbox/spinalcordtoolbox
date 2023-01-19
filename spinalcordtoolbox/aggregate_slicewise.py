@@ -258,6 +258,8 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
             raise ValueError(f"Shape mismatch between vertfile [{vert_level_slices}] and metric [{metric_slices}]). "
                              f"Please verify that your vertfile has the same number of slices as your input image, "
                              f"and that your metric is RPI/LPI oriented.")
+        # Fetch fname_vert_level
+        im_vert_level = Image(fname_vert_level).change_orientation('RPI')
 
     # If perslice is specified, put distance_pmj to None to prioritize perslice
     if perslice:
@@ -276,8 +278,8 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
 
     # aggregation based on levels
     vertgroups = None
+        
     if levels:
-        im_vert_level = Image(fname_vert_level).change_orientation('RPI')
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
         slicegroups = [tuple(get_slices_from_vertebral_levels(im_vert_level, level)) for level in levels]
         # Intersection between specified slices and each element of slicegroups
@@ -301,6 +303,9 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
         if perslice:
             # slicegroups = [(0,), (1,), (2,), (3,), (4,), (5,), (6,), (7,), (8,)]
             slicegroups = [tuple([slice]) for slice in slices]
+            # vertgroups = [(2,), (2,), (2,), (3,), (3,), (3,), (4,), (4,), (4,)]
+            if fname_vert_level is not None:
+                vertgroups = [tuple([get_vertebral_level_from_slice(im_vert_level, i[0])]) for i in slicegroups]
         else:
             # slicegroups = [(0, 1, 2, 3, 4, 5, 6, 7, 8)]
             slicegroups = [tuple(slices)]
@@ -324,6 +329,8 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
             agg_metric[slicegroup]['VertLevel'] = None
         else:
             agg_metric[slicegroup]['VertLevel'] = vertgroups[slicegroups.index(slicegroup)]
+            if agg_metric[slicegroup]['VertLevel'][0] is None:
+                agg_metric[slicegroup]['VertLevel'] = None
         # Loop across functions (e.g.: MEAN, STD)
         for (name, func) in group_funcs:
             try:
