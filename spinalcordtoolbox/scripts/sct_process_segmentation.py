@@ -372,7 +372,7 @@ def main(argv: Sequence[str]):
 
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
-    if arguments.vert is not None:
+    if arguments.vertfile is not None:
         levels = arguments.vert
         fname_vert_level = arguments.vertfile
     else:
