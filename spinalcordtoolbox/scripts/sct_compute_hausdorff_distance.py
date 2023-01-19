@@ -525,7 +525,7 @@ def main(argv: Sequence[str]):
             output_fname = arguments.o
         param.verbose = verbose
 
-        tmp_dir = tmp_create()
+        tmp_dir = tmp_create(basename="compute-hausdorff-distance")
         im1_name = "im1.nii.gz"
         copy(input_fname, os.path.join(tmp_dir, im1_name))
         if input_second_fname != '':

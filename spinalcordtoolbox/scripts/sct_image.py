@@ -385,7 +385,7 @@ def main(argv: Sequence[str]):
             for i_dim in range(3):
                 l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[i_dim].upper()))
                 im_out[i_dim].save(l_fname_out[i_dim], verbose=verbose)
-            display_viewer_syntax(fname_out, verbose=verbose)
+            display_viewer_syntax(l_fname_out, verbose=verbose)
         if arguments.split is not None:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []
@@ -399,7 +399,7 @@ def main(argv: Sequence[str]):
         if arguments.stitch is not None:
             printv("Generating QC Report...", verbose=verbose)
             # specify filenames to use in QC report
-            path_tmp = tmp_create("stitching-QC")
+            path_tmp = tmp_create(basename="stitching-qc")
             fname_qc_concat = os.path.join(path_tmp, "concatenated_input_images.nii.gz")
             fname_qc_out = os.path.join(path_tmp, os.path.basename(fname_out))
             # generate 2 images to compare in QC report
@@ -576,7 +576,7 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
     if im_grid:
         fname_grid = im_grid.absolutepath
     else:
-        tmp_dir = tmp_create()
+        tmp_dir = tmp_create(basename="visualize-warp")
         nx, ny, nz = im_warp.data.shape[0:3]
         curdir = os.getcwd()
         os.chdir(tmp_dir)

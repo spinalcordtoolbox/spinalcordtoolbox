@@ -95,59 +95,17 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
     :return: fit_results: FitResults class
     """
-
     if not isinstance(im_seg, Image):
         raise ValueError("Expecting an image")
+
     # Open image and change to RPI orientation
     native_orientation = im_seg.orientation
     im_seg.change_orientation('RPI')
-    px, py, pz = im_seg.dim[4:7]
 
-    # Take the center of mass at each slice to avoid: https://stackoverflow.com/questions/2009379/interpolate-question
-    x_mean, y_mean, z_mean = find_and_sort_coord(im_seg)
-
-    # Crop output centerline to where the segmentation starts/end
-    if param.minmax:
-        z_ref = np.array(range(z_mean.min().astype(int), z_mean.max().astype(int) + 1))
-    else:
-        z_ref = np.array(range(im_seg.dim[2]))
-    index_mean = np.array([list(z_ref).index(i) for i in z_mean])
-
-    # Choose method
-    if param.algo_fitting == 'polyfit':
-        x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
-        y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
-        fig_title = 'Algo={}, Deg={}'.format(param.algo_fitting, param.degree)
-
-    elif param.algo_fitting == 'bspline':
-        x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, param.smooth, pz=pz)
-        y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, param.smooth, pz=pz)
-        fig_title = 'Algo={}, Smooth={}'.format(param.algo_fitting, param.smooth)
-
-    elif param.algo_fitting == 'linear':
-        # Simple linear interpolation
-        x_centerline_fit, x_centerline_deriv = curve_fitting.linear(z_mean, x_mean, z_ref, param.smooth, pz=pz)
-        y_centerline_fit, y_centerline_deriv = curve_fitting.linear(z_mean, y_mean, z_ref, param.smooth, pz=pz)
-        fig_title = 'Algo={}, Smooth={}'.format(param.algo_fitting, param.smooth)
-
-    elif param.algo_fitting == 'nurbs':
-        from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
-        point_number = 3000
-        # Interpolate such that the output centerline has the same length as z_ref
-        x_mean_interp, _ = curve_fitting.linear(z_mean, x_mean, z_ref, 0)
-        y_mean_interp, _ = curve_fitting.linear(z_mean, y_mean, z_ref, 0)
-        x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
-            z_centerline_deriv, error = b_spline_nurbs(x_mean_interp, y_mean_interp, z_ref, nbControl=None,
-                                                       point_number=point_number, all_slices=True)
-        # Normalize derivatives to z_deriv
-        x_centerline_deriv = x_centerline_deriv / z_centerline_deriv
-        y_centerline_deriv = y_centerline_deriv / z_centerline_deriv
-        fig_title = 'Algo={}, NumberPoints={}'.format(param.algo_fitting, point_number)
-
-    elif param.algo_fitting == 'optic':
-        # This method is particular compared to the previous ones, as here we estimate the centerline based on the
-        # image itself (not the segmentation). Hence, we can bypass the fitting procedure and centerline creation
-        # and directly output results.
+    # The 'optic' method is particular compared to the other methods, as here we estimate the centerline based on the
+    # image itself (not the segmentation). This means we do not apply the same fitting procedure and centerline
+    # creation that is used for the other methods.
+    if param.algo_fitting == 'optic':
         from spinalcordtoolbox.centerline import optic
         assert param.contrast is not None
         im_centerline = optic.detect_centerline(im_seg, param.contrast, remove_temp_files)
@@ -156,92 +114,129 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         # TODO: Fix below with reorientation of axes
         _, x_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, x_centerline_fit, z_centerline, deg=param.degree)
         _, y_centerline_deriv = curve_fitting.polyfit_1d(z_centerline, y_centerline_fit, z_centerline, deg=param.degree)
-        return \
-            im_centerline.change_orientation(native_orientation), \
-            np.array([x_centerline_fit, y_centerline_fit, z_centerline]), \
-            np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_centerline)]), \
-            None
+        # reorient centerline to native orientation
+        im_centerline.change_orientation(native_orientation)
+        # rename 'z' variable to match the name used the 'non-optic' methods
+        z_ref = z_centerline
+        # Fit metrics aren't computed for 'optic`, so return 'None'
+        fit_results = None
+
+    # All other 'non-optic' methods involve segmentation-based curve fitting, which involves a number of pre- and
+    # post-processing steps that are separate from the 'optic' method.
     else:
-        logger.error('algo_fitting "' + param.algo_fitting + '" does not exist.')
-        raise ValueError
+        # get pixdim (i.e. voxel sizes) along x/y/z axes (used in some centerline methods, and to estimate fit metrics)
+        px, py, pz = im_seg.dim[4:7]
+        # Take the center of mass at each slice to avoid: https://stackoverflow.com/q/2009379
+        x_mean, y_mean, z_mean = find_and_sort_coord(im_seg)
+        # Crop output centerline to where the segmentation starts/end
+        if param.minmax:
+            z_ref = np.array(range(z_mean.min().astype(int), z_mean.max().astype(int) + 1))
+        else:
+            z_ref = np.array(range(im_seg.dim[2]))
+        index_mean = np.array([list(z_ref).index(i) for i in z_mean])
 
-    # Create an image with the centerline
-    im_centerline = im_seg.copy()
-    im_centerline.data = np.zeros(im_centerline.data.shape)
-    # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
-    # TODO: check this round and clip-- suspicious
-    im_centerline.data[round_and_clip(x_centerline_fit, clip=[0, im_centerline.data.shape[0]]),
-                       round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
-                       z_ref] = 1
-    # reorient centerline to native orientation
-    im_centerline.change_orientation(native_orientation)
-    im_seg.change_orientation(native_orientation)
-    # TODO: Reorient centerline in native orientation. For now, we output the array in RPI. Note that it is tricky to
-    #   reorient in native orientation, because the voxel center is not in the middle, but in the top corner, so this
-    #   needs to be taken into accound during reorientation. The code below does not work properly.
-    # # Get a permutation and inversion based on native orientation
-    # perm, inversion = _get_permutations(im_seg.orientation, native_orientation)
-    # # axes inversion (flip)
-    # # ctl = np.array([x_centerline_fit[::inversion[0]], y_centerline_fit[::inversion[1]], z_ref[::inversion[2]]])
-    # ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
-    # ctl_deriv = np.array([x_centerline_deriv[::inversion[0]], y_centerline_deriv[::inversion[1]], np.ones_like(z_ref)])
-    # return im_centerline, \
-    #        np.array([ctl[perm[0]], ctl[perm[1]], ctl[perm[2]]]), \
-    #        np.array([ctl_deriv[perm[0]], ctl_deriv[perm[1]], ctl_deriv[perm[2]]])
+        # Choose a non-optic method
+        if param.algo_fitting == 'polyfit':
+            x_centerline_fit, x_centerline_deriv = curve_fitting.polyfit_1d(z_mean, x_mean, z_ref, deg=param.degree)
+            y_centerline_fit, y_centerline_deriv = curve_fitting.polyfit_1d(z_mean, y_mean, z_ref, deg=param.degree)
+            fig_title = 'Algo={}, Deg={}'.format(param.algo_fitting, param.degree)
 
-    # Compute fitting metrics
-    fit_results = FitResults()
-    fit_results.rmse = np.sqrt(np.mean((x_mean - x_centerline_fit[index_mean]) ** 2) * px +
-                               np.mean((y_mean - y_centerline_fit[index_mean]) ** 2) * py)
-    fit_results.laplacian_max = np.max([
-        np.absolute(np.gradient(np.array(x_centerline_deriv * px))).max(),
-        np.absolute(np.gradient(np.array(y_centerline_deriv * py))).max()])
-    fit_results.data.zmean = z_mean
-    fit_results.data.zref = z_ref
-    fit_results.data.xmean = x_mean
-    fit_results.data.xfit = x_centerline_fit
-    fit_results.data.ymean = y_mean
-    fit_results.data.yfit = y_centerline_fit
-    fit_results.param = param
+        elif param.algo_fitting == 'bspline':
+            x_centerline_fit, x_centerline_deriv = curve_fitting.bspline(z_mean, x_mean, z_ref, param.smooth, pz=pz)
+            y_centerline_fit, y_centerline_deriv = curve_fitting.bspline(z_mean, y_mean, z_ref, param.smooth, pz=pz)
+            fig_title = 'Algo={}, Smooth={}'.format(param.algo_fitting, param.smooth)
 
-    # Display fig of fitted curves
-    if verbose == 2:
-        from datetime import datetime
-        import matplotlib.pyplot as plt
-        plt.figure(figsize=(16, 10))
-        plt.subplot(3, 1, 1)
-        plt.title(fig_title + '\nRMSE[mm]={:0.2f}, LaplacianMax={:0.2f}'.format(fit_results.rmse, fit_results.laplacian_max))
-        plt.plot(z_mean * pz, x_mean * px, 'ro')
-        plt.plot(z_ref * pz, x_centerline_fit * px, 'k')
-        plt.plot(z_ref * pz, x_centerline_fit * px, 'k.')
-        plt.ylabel("X [mm]")
-        plt.legend(['Reference', 'Fitting', 'Fitting points'])
+        elif param.algo_fitting == 'linear':
+            # Simple linear interpolation
+            x_centerline_fit, x_centerline_deriv = curve_fitting.linear(z_mean, x_mean, z_ref, param.smooth, pz=pz)
+            y_centerline_fit, y_centerline_deriv = curve_fitting.linear(z_mean, y_mean, z_ref, param.smooth, pz=pz)
+            fig_title = 'Algo={}, Smooth={}'.format(param.algo_fitting, param.smooth)
 
-        plt.subplot(3, 1, 2)
-        plt.plot(z_mean * pz, y_mean * py, 'ro')
-        plt.plot(z_ref * pz, y_centerline_fit * py, 'b')
-        plt.plot(z_ref * pz, y_centerline_fit * py, 'b.')
-        plt.xlabel("Z [mm]")
-        plt.ylabel("Y [mm]")
-        plt.legend(['Reference', 'Fitting', 'Fitting points'])
+        elif param.algo_fitting == 'nurbs':
+            from spinalcordtoolbox.centerline.nurbs import b_spline_nurbs
+            point_number = 3000
+            # Interpolate such that the output centerline has the same length as z_ref
+            x_mean_interp, _ = curve_fitting.linear(z_mean, x_mean, z_ref, 0)
+            y_mean_interp, _ = curve_fitting.linear(z_mean, y_mean, z_ref, 0)
+            x_centerline_fit, y_centerline_fit, z_centerline_fit, x_centerline_deriv, y_centerline_deriv, \
+                z_centerline_deriv, error = b_spline_nurbs(x_mean_interp, y_mean_interp, z_ref, nbControl=None,
+                                                           point_number=point_number, all_slices=True)
+            # Normalize derivatives to z_deriv
+            x_centerline_deriv = x_centerline_deriv / z_centerline_deriv
+            y_centerline_deriv = y_centerline_deriv / z_centerline_deriv
+            fig_title = 'Algo={}, NumberPoints={}'.format(param.algo_fitting, point_number)
 
-        plt.subplot(3, 1, 3)
-        plt.plot(z_ref * pz, x_centerline_deriv * px, 'k.')
-        plt.plot(z_ref * pz, y_centerline_deriv * py, 'b.')
-        plt.grid(axis='y', color='grey', linestyle=':', linewidth=1)
-        plt.axhline(color='grey', linestyle='-', linewidth=1)
-        # plt.plot(z_ref * pz, z_centerline_deriv * pz, 'r.')
-        plt.ylabel("dX/dZ, dY/dZ")
-        plt.xlabel("Z [mm]")
-        plt.legend(['X-deriv', 'Y-deriv'])
+        else:
+            logger.error('algo_fitting "' + param.algo_fitting + '" does not exist.')
+            raise ValueError
 
-        plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
-        plt.close()
+        # Create an image with the centerline
+        im_centerline = im_seg.copy()
+        im_centerline.data = np.zeros(im_centerline.data.shape)
+        # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
+        # TODO: check this round and clip-- suspicious
+        im_centerline.data[round_and_clip(x_centerline_fit, clip=[0, im_centerline.data.shape[0]]),
+                           round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
+                           z_ref] = 1
+        # reorient centerline to native orientation
+        im_centerline.change_orientation(native_orientation)
+        im_seg.change_orientation(native_orientation)
+
+        # Compute fitting metrics
+        fit_results = FitResults()
+        fit_results.rmse = np.sqrt(np.mean((x_mean - x_centerline_fit[index_mean]) ** 2) * px +
+                                   np.mean((y_mean - y_centerline_fit[index_mean]) ** 2) * py)
+        fit_results.laplacian_max = np.max([
+            np.absolute(np.gradient(np.array(x_centerline_deriv * px))).max(),
+            np.absolute(np.gradient(np.array(y_centerline_deriv * py))).max()])
+        fit_results.data.zmean = z_mean
+        fit_results.data.zref = z_ref
+        fit_results.data.xmean = x_mean
+        fit_results.data.xfit = x_centerline_fit
+        fit_results.data.ymean = y_mean
+        fit_results.data.yfit = y_centerline_fit
+        fit_results.param = param
+
+        # Display fig of fitted curves
+        if verbose == 2:
+            from datetime import datetime
+            import matplotlib.pyplot as plt
+            plt.figure(figsize=(16, 10))
+            plt.subplot(3, 1, 1)
+            plt.title(fig_title + '\nRMSE[mm]={:0.2f}, LaplacianMax={:0.2f}'.format(fit_results.rmse, fit_results.laplacian_max))
+            plt.plot(z_mean * pz, x_mean * px, 'ro')
+            plt.plot(z_ref * pz, x_centerline_fit * px, 'k')
+            plt.plot(z_ref * pz, x_centerline_fit * px, 'k.')
+            plt.ylabel("X [mm]")
+            plt.legend(['Reference', 'Fitting', 'Fitting points'])
+
+            plt.subplot(3, 1, 2)
+            plt.plot(z_mean * pz, y_mean * py, 'ro')
+            plt.plot(z_ref * pz, y_centerline_fit * py, 'b')
+            plt.plot(z_ref * pz, y_centerline_fit * py, 'b.')
+            plt.xlabel("Z [mm]")
+            plt.ylabel("Y [mm]")
+            plt.legend(['Reference', 'Fitting', 'Fitting points'])
+
+            plt.subplot(3, 1, 3)
+            plt.plot(z_ref * pz, x_centerline_deriv * px, 'k.')
+            plt.plot(z_ref * pz, y_centerline_deriv * py, 'b.')
+            plt.grid(axis='y', color='grey', linestyle=':', linewidth=1)
+            plt.axhline(color='grey', linestyle='-', linewidth=1)
+            # plt.plot(z_ref * pz, z_centerline_deriv * pz, 'r.')
+            plt.ylabel("dX/dZ, dY/dZ")
+            plt.xlabel("Z [mm]")
+            plt.legend(['X-deriv', 'Y-deriv'])
+
+            plt.savefig('fig_centerline_' + datetime.now().strftime("%y%m%d-%H%M%S%f") + '_' + param.algo_fitting + '.png')
+            plt.close()
 
     # Save centerline image to tmp_folder (but only if user hasn't opted to `remove_temp_files`)
     if not remove_temp_files:
-        tmp_folder = tmp_create("centerline")
-        im_centerline.save(os.path.join(tmp_folder, add_suffix(im_seg.absolutepath, "_ctr")), mutable=True)
+        tmp_folder = tmp_create(basename="get-centerline")
+        fname_ctr = (add_suffix(os.path.basename(im_seg.absolutepath), "_ctr") if im_seg.absolutepath
+                     else "centerline.nii.gz")
+        im_centerline.save(os.path.join(tmp_folder, fname_ctr), mutable=True)
 
     return (im_centerline,
             np.array([x_centerline_fit, y_centerline_fit, z_ref]),

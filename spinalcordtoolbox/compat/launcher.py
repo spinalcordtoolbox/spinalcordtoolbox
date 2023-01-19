@@ -5,7 +5,7 @@ import os
 import subprocess
 import multiprocessing
 
-import spinalcordtoolbox as sct
+from spinalcordtoolbox import __file__ as package_init_file
 
 
 def main():
@@ -26,7 +26,7 @@ def main():
     env['NEURITE_BACKEND'] = 'pytorch'
 
     command = os.path.basename(sys.argv[0])
-    pkg_dir = os.path.dirname(sct.__file__)
+    pkg_dir = os.path.dirname(package_init_file)
 
     script = os.path.join(pkg_dir, "scripts", "{}.py".format(command))
     assert os.path.exists(script)

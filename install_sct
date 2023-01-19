@@ -593,7 +593,8 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 
 # create conda environment
 print info "Creating conda environment..."
-python/bin/conda create -y -n venv_sct python=3.8
+# NB: We use an absolute path (-p) rather than a relative name (-n) to better isolate the conda environment
+python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" python=3.8
 
 # Reapply the touch fix to avoid `pip` connection issues on WSL
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
@@ -608,7 +609,7 @@ echo "include-system-site-packages = false" > "$SCT_DIR/$PYTHON_DIR/envs/venv_sc
 # shellcheck disable=SC1091
 source python/etc/profile.d/conda.sh
 set +u #disable safeties, for conda is not written to their standard.
-conda activate venv_sct
+conda activate "$SCT_DIR/$PYTHON_DIR/envs/venv_sct"
 set -u # reactivate safeties
 
 # double-check conda activated (it can be glitchy): https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3029
@@ -678,7 +679,7 @@ else
   # Download data
   print info "Installing data..."
   run mkdir -p "$SCT_DIR/$DATA_DIR"
-  for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models deepreg_models; do
+  for data in PAM50 optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models deepreg_models; do
     run sct_download_data -d "$data"
   done
 fi

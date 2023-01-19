@@ -26,7 +26,7 @@ def test_ants_registration():
     dice_acceptable = 0.39  # computed DICE should be 0.931034
     verbose = 1
 
-    path_tmp = tmp_create(basename="test_ants")
+    path_tmp = tmp_create(basename="test-ants")
 
     # go to tmp folder
     curdir = os.getcwd()
