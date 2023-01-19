@@ -93,6 +93,8 @@ sct_process_segmentation -i t2_seg.nii.gz -vert 2:3 -o csa_c2c3.csv
 sct_detect_pmj -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER" 
 # Compute cross-section area at 60 mm from PMJ averaged on a 30 mm extent
 sct_process_segmentation -i t2_seg.nii.gz -pmj t2_pmj.nii.gz -pmj-distance 60 -pmj-extent 30 -qc "$SCT_BP_QC_FOLDER" -qc-image t2.nii.gz -o csa_pmj.csv
+# Compute morphometrics in PAM50 anatomical dimensions
+sct_process_segmentation -i t2_seg.nii.gz -vertfile t2_seg_labeled.nii.gz -perslice 1 -vert 1:20 -normalize PAM50 -o csa_pam50.csv
 # Go back to root folder
 cd ..
 
