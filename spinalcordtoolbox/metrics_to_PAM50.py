@@ -46,6 +46,9 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     # Remove zero and convert levels to int
     levels = list(map(int, (levels[levels > 0])))
 
+    # Remove level 49 and 50 (not vertebral levels)
+    levels = [level for level in levels if level < 49]
+
     # Get first and last level to only scale: if levels are not complete
     levels_2_skip = get_first_and_last_levels(levels)
 
