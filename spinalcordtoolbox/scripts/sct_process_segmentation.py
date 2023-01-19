@@ -56,8 +56,8 @@ class SeparateNormArgs(argparse.Action):
             except ValueError as e:
                 raise parser.error(f"Non-numeric value passed to '-normalize': {e}")
             setattr(namespace, self.dest, data_subject)
-
-        setattr(namespace, self.dest, 'PAM50')
+        else:
+            setattr(namespace, self.dest, 'PAM50')
 
 
 def get_parser():
