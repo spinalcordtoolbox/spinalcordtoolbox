@@ -278,7 +278,6 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
 
     # aggregation based on levels
     vertgroups = None
-        
     if levels:
         # slicegroups = [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
         slicegroups = [tuple(get_slices_from_vertebral_levels(im_vert_level, level)) for level in levels]
