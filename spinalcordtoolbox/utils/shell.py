@@ -328,6 +328,8 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
                 rest = "\n".join(init_wrap[1:])
                 # Add an offset to the wrapped lines so that they're indented the same as the first line
                 o = offsets[i]
+                if re.match(r"^\s+[-*]\s\w.*$", li):  # List matching: " - Text" or " * Text"
+                    o += "  "  # If the line is a list item, add extra indentation to the wrapped lines (#2889)
                 ol = len(o)
                 rest_wrap = textwrap.fill(rest, width - ol).splitlines()
                 offset_lines = [o + wl for wl in rest_wrap]
