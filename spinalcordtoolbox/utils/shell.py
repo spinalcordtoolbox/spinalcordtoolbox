@@ -289,9 +289,8 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         This method is what gets called for the parser's `description` field.
         """
         import textwrap
-        # NB: text.splitlines() is what's used by argparse.RawTextHelpFormatter
-        #     to preserve newline characters (`\n`) in text.
-        paragraphs = text.splitlines()
+        # NB: We use our overridden split_lines method to apply indentation to the help description
+        paragraphs = self._split_lines(text, width)
         # NB: The remaining code is fully custom
         rebroken = [textwrap.wrap(tpar, width) for tpar in paragraphs]
         rebrokenstr = []
