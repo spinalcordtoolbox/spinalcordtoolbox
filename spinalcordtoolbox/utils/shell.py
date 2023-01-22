@@ -322,13 +322,16 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         wrapped = []
         for i, li in enumerate(lines):
             if len(li) > 0:
-                o = offsets[i]
-                ol = len(o)
+                # Split the line into two parts: the first line, and wrapped lines
                 init_wrap = textwrap.fill(li, width).splitlines()
                 first = init_wrap[0]
                 rest = "\n".join(init_wrap[1:])
+                # Add an offset to the wrapped lines so that they're indented the same as the first line
+                o = offsets[i]
+                ol = len(o)
                 rest_wrap = textwrap.fill(rest, width - ol).splitlines()
                 offset_lines = [o + wl for wl in rest_wrap]
+                # Merge the first line and the wrapped lines
                 wrapped = wrapped + [first] + offset_lines
             else:
                 wrapped = wrapped + [li]
