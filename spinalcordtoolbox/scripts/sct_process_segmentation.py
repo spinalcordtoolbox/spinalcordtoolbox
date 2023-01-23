@@ -373,12 +373,8 @@ def main(argv: Sequence[str]):
 
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
-    if arguments.vertfile is not None:
-        levels = arguments.vert
-        fname_vert_level = arguments.vertfile
-    else:
-        levels = []
-        fname_vert_level = None
+    levels = arguments.vert
+    fname_vert_level = arguments.vertfile
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
     perslice = bool(arguments.perslice)
