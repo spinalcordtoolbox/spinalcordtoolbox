@@ -151,6 +151,7 @@ def get_parser():
         '-vert',
         metavar=Metavar.str,
         type=parse_num_list,
+        default='',
         help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2. If you also specify a range of "
              "slices with flag `-z`, the intersection between the specified slices and vertebral levels will be "
              "considered."
@@ -379,12 +380,17 @@ def main(argv: Sequence[str]):
 
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
-    if arguments.vert is not None:
-        levels = arguments.vert
-        fname_vert_level = get_absolute_path(arguments.vertfile)
-    else:
-        levels = []
-        fname_vert_level = None
+
+    levels = arguments.vert
+    fname_vert_level = arguments.vertfile
+    if not os.path.isfile(fname_vert_level):
+        logger.warning(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
+                       f"not be displayed. To use vertebral level information, you may need to run "
+                       f"`sct_warp_template` to generate the appropriate level file in your working directory.")
+        fname_vert_level = None  # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
+        if levels:
+            raise FileNotFoundError("The vertebral level file must exist to use `-vert` to group by vertebral level.")
+
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
     perslice = bool(arguments.perslice)
