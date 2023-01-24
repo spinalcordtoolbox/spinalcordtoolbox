@@ -58,6 +58,13 @@ def get_parser():
         help='Folder with .csv files (in PAM50 space) of HC control to use for normalization.',
         metavar=Metavar.folder,
     )
+    mandatoryArguments.add_argument(
+        '-metric',
+        required=True,
+        help='Metric name to normalize in .csv file output from sct_process_segmentation. Default = MEAN(diameter_AP)',
+        default='MEAN(diameter_AP)',
+        metavar=Metavar.file,
+    )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-i-PAM50',
