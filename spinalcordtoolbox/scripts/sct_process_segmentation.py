@@ -234,7 +234,7 @@ def get_parser():
              "For more details on the subjects and methods used to create the models, go to: "
              "https://github.com/sct-pipeline/ukbiobank-spinalcord-csa#readme \n"  # TODO add ref of the paper
              "Given the risks and lack of consensus surrounding CSA normalization, we recommend thoroughly reviewing "
-             "the literature on this topic before applying this feature to your data.\n\n"
+             "the literature on this topic before applying this feature to your data.\n"
     )
     optional.add_argument(
         '-normalize-PAM50',
