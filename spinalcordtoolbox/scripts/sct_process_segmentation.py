@@ -242,6 +242,14 @@ def get_parser():
              "-normalize PAM50"
     )
     optional.add_argument(
+        '-normalize-PAM50',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Set to 1 to bring the metrics in the PAM50 anatomical dimensions perslice. -vertfile and -perslice need to be specified."
+    )        
+    optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
         type=os.path.abspath,
