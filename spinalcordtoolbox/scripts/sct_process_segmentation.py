@@ -464,20 +464,19 @@ def main(argv: Sequence[str]):
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
-        if arguments.normalize != 'PAM50':
-            data_subject = pd.DataFrame([arguments.normalize])
-            path_model = os.path.join(__sct_dir__, 'data', 'csa_normalization_models',
-                                      '_'.join(sorted(data_subject.columns)) + '.csv')
-            if not os.path.isfile(path_model):
-                parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
-            # Get normalization model
-            # Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
-            # TODO update link with release tag.
-            data_predictors = pd.read_csv(path_model, index_col=0)
-            # Add interaction term
-            data_subject['inter-BV_sex'] = data_subject['brain-volume']*data_subject['sex']
-            for line in metrics_agg_merged.values():
-                line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
+        data_subject = pd.DataFrame([arguments.normalize])
+        path_model = os.path.join(__sct_dir__, 'data', 'csa_normalization_models',
+                                    '_'.join(sorted(data_subject.columns)) + '.csv')
+        if not os.path.isfile(path_model):
+            parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
+        # Get normalization model
+        # Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
+        # TODO update link with release tag.
+        data_predictors = pd.read_csv(path_model, index_col=0)
+        # Add interaction term
+        data_subject['inter-BV_sex'] = data_subject['brain-volume']*data_subject['sex']
+        for line in metrics_agg_merged.values():
+            line['MEAN(area)'] = normalize_csa(line['MEAN(area)'], data_predictors, data_subject)
 
     save_as_csv(metrics_agg_merged, file_out, fname_in=fname_segmentation, append=append)
     # QC report (only for PMJ-based CSA)
