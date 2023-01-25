@@ -392,7 +392,6 @@ def main(argv: Sequence[str]):
         fname_vert_level = None  # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
         if levels:
             raise FileNotFoundError("The vertebral level file must exist to use `-vert` to group by vertebral level.")
-
     perlevel = bool(arguments.perlevel)
     slices = arguments.z
     perslice = bool(arguments.perslice)
@@ -452,7 +451,6 @@ def main(argv: Sequence[str]):
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, fname_vert_level=fname_vert_level,
                                                             group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
-
         else:
             # For other metrics, we compute the average and standard deviation across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
@@ -460,7 +458,6 @@ def main(argv: Sequence[str]):
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, fname_vert_level=fname_vert_level,
                                                             group_funcs=group_funcs, length_pmj=length_from_pmj)
-
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
