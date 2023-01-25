@@ -49,11 +49,11 @@ class SeparateNormArgs(argparse.Action):
         pred = values[::2]
         val = values[1::2]
         if len(pred) != len(val):
-            raise parser.error("Values for normalization need to be specified for each predictor.")
+            parser.error("Values for normalization need to be specified for each predictor.")
         try:
             data_subject = {p: float(v) for p, v in zip(pred, val)}
         except ValueError as e:
-            raise parser.error(f"Non-numeric value passed to '-normalize': {e}")
+            parser.error(f"Non-numeric value passed to '-normalize': {e}")
         setattr(namespace, self.dest, data_subject)
 
 
