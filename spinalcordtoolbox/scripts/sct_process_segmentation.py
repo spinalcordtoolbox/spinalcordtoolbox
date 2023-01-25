@@ -46,18 +46,15 @@ logger = logging.getLogger(__name__)
 class SeparateNormArgs(argparse.Action):
     """Separates predictors from their values and puts the results in a dict"""
     def __call__(self, parser, namespace, values, option_string=None):
-        if 'PAM50' not in values:
-            pred = values[::2]
-            val = values[1::2]
-            if len(pred) != len(val):
-                raise parser.error("Values for normalization need to be specified for each predictor.")
-            try:
-                data_subject = {p: float(v) for p, v in zip(pred, val)}
-            except ValueError as e:
-                raise parser.error(f"Non-numeric value passed to '-normalize': {e}")
-            setattr(namespace, self.dest, data_subject)
-        else:
-            setattr(namespace, self.dest, 'PAM50')
+        pred = values[::2]
+        val = values[1::2]
+        if len(pred) != len(val):
+            raise parser.error("Values for normalization need to be specified for each predictor.")
+        try:
+            data_subject = {p: float(v) for p, v in zip(pred, val)}
+        except ValueError as e:
+            raise parser.error(f"Non-numeric value passed to '-normalize': {e}")
+        setattr(namespace, self.dest, data_subject)
 
 
 def get_parser():
