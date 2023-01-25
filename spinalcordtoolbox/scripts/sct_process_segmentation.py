@@ -246,7 +246,7 @@ def get_parser():
         choices=[0, 1],
         default=0,
         help="Set to 1 to bring the metrics in the PAM50 anatomical dimensions perslice. -vertfile and -perslice need to be specified."
-    )        
+    )
     optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
