@@ -466,7 +466,7 @@ def main(argv: Sequence[str]):
     if arguments.normalize is not None:
         data_subject = pd.DataFrame([arguments.normalize])
         path_model = os.path.join(__sct_dir__, 'data', 'csa_normalization_models',
-                                    '_'.join(sorted(data_subject.columns)) + '.csv')
+                                  '_'.join(sorted(data_subject.columns)) + '.csv')
         if not os.path.isfile(path_model):
             parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
         # Get normalization model
