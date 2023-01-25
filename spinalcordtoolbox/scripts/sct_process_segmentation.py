@@ -426,10 +426,11 @@ def main(argv: Sequence[str]):
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
 
-    if arguments.normalize == 'PAM50':
+    if normalize_pam50:
         fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
         metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
-        metrics_agg_PAM50_space = {}
+        metrics = metrics_PAM50_space  # Set metrics to the metrics in PAM50 space to use instead
+        fname_vert_level = fname_vert_level_PAM50  # Set vertebral levels to PAM50
 
     if fname_pmj is not None:
         im_ctl, mask, slices, centerline, length_from_pmj = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
@@ -452,12 +453,6 @@ def main(argv: Sequence[str]):
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, fname_vert_level=fname_vert_level,
                                                             group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
-            if arguments.normalize == 'PAM50':
-                metrics_agg_PAM50_space[key] = aggregate_per_slice_or_level(metrics_PAM50_space[key], slices=slices,
-                                                                            levels=levels,
-                                                                            distance_pmj=distance_pmj, perslice=perslice,
-                                                                            perlevel=perlevel, fname_vert_level=fname_vert_level_PAM50,
-                                                                            group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
 
         else:
             # For other metrics, we compute the average and standard deviation across slices
@@ -466,21 +461,8 @@ def main(argv: Sequence[str]):
                                                             distance_pmj=distance_pmj, perslice=perslice,
                                                             perlevel=perlevel, fname_vert_level=fname_vert_level,
                                                             group_funcs=group_funcs, length_pmj=length_from_pmj)
-            if arguments.normalize == 'PAM50':
-                metrics_agg_PAM50_space[key] = aggregate_per_slice_or_level(metrics_PAM50_space[key], slices=slices,
-                                                                            levels=levels,
-                                                                            distance_pmj=distance_pmj, perslice=perslice,
-                                                                            perlevel=perlevel, fname_vert_level=fname_vert_level_PAM50,
-                                                                            group_funcs=group_funcs, length_pmj=length_from_pmj)
 
     metrics_agg_merged = merge_dict(metrics_agg)
-    # Save metrics in PAM50 anatomical dimensions
-    if arguments.normalize == 'PAM50':
-        metrics_agg_merged_PAM50_space = merge_dict(metrics_agg_PAM50_space)
-        file_out_norm_PAM50 = add_suffix(file_out, '_PAM50')
-        save_as_csv(metrics_agg_merged_PAM50_space, file_out_norm_PAM50, fname_in=fname_segmentation, append=append)
-        display_open(file_out_norm_PAM50)
-
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
         if arguments.normalize != 'PAM50':
