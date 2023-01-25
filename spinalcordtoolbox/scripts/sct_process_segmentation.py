@@ -383,7 +383,6 @@ def main(argv: Sequence[str]):
 
     file_out = os.path.abspath(arguments.o)
     append = bool(arguments.append)
-
     levels = arguments.vert
     fname_vert_level = arguments.vertfile
     if not os.path.isfile(fname_vert_level):
