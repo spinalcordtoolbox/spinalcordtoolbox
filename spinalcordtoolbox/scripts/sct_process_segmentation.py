@@ -405,11 +405,12 @@ def main(argv: Sequence[str]):
     fname_pmj = arguments.pmj
     distance_pmj = arguments.pmj_distance
     extent_pmj = arguments.pmj_extent
+    normalize_pam50 = arguments.normalize_PAM50
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
-    if arguments.normalize == "PAM50" and (fname_vert_level is None or not perslice):
+    if normalize_pam50 and (fname_vert_level is None or not perslice):
         parser.error("Option '-normalize PAM50' requires options '-vertfile' and '-perslice 1'.")
     if distance_pmj is not None and fname_pmj is None:
         parser.error("Option '-pmj-distance' requires option '-pmj'.")
