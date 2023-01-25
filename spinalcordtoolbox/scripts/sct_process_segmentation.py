@@ -238,8 +238,6 @@ def get_parser():
              "https://github.com/sct-pipeline/ukbiobank-spinalcord-csa#readme \n"  # TODO add ref of the paper
              "Given the risks and lack of consensus surrounding CSA normalization, we recommend thoroughly reviewing "
              "the literature on this topic before applying this feature to your data.\n\n"
-             "To normalize every metric with the PAM50 template perslice:"
-             "-normalize PAM50"
     )
     optional.add_argument(
         '-normalize-PAM50',
