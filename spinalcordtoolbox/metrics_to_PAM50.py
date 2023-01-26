@@ -61,7 +61,8 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
             if key != 'length':
                 metric_values_level = value.data[slices_im]
                 # Interpolate in the same number of slices
-                metrics_PAM50_space_dict[key][slices_PAM50] = np.interp(x_PAM50, x, metric_values_level)
+                metrics_inter = np.interp(x_PAM50, x, metric_values_level)
+                metrics_PAM50_space_dict[key][slices_PAM50] = metrics_inter
 
     # Loop through the slices in the first and last levels to scale only.
     for i, (slices_PAM50, slices_im) in enumerate(zip(level_slices_PAM50[::len(levels)-1],
