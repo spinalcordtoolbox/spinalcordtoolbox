@@ -42,13 +42,14 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     # Sort levels (so min == levels[0] and max == levels[-1])
     levels = sorted(levels)
 
+    # Get slices corresponding to each level
+    level_slices_PAM50 = [get_slices_from_vertebral_levels(im_seg_labeled_PAM50, level) for level in levels]
+    level_slices_im = [get_slices_from_vertebral_levels(im_seg_labeled, level) for level in levels]
+
     # Create empty list to keep the scaling between the image and PAM50
     scales = []
-    # Loop through levels (excluding first and last levels)
-    for level in levels[1:-1]:
-        # Get slices corresponding for the currently processed level
-        slices_PAM50 = get_slices_from_vertebral_levels(im_seg_labeled_PAM50, level)
-        slices_im = get_slices_from_vertebral_levels(im_seg_labeled, level)
+    # Loop through slices per-level (excluding first and last levels)
+    for slices_PAM50, slices_im in zip(level_slices_PAM50[1:-1], level_slices_im[1:-1]):
         # Get number of slices for the currently processed level
         nb_slices_PAM50 = len(slices_PAM50)
         nb_slices_im = len(slices_im)
@@ -65,11 +66,9 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
                 metrics_PAM50_space_dict[key][slices_PAM50] = np.interp(x_PAM50, x, metric_values_level)
     scale_mean = np.mean(scales)
 
-    # Loop through the first and the last level to scale only.
-    for level in [levels[0], levels[-1]]:
-        # Get slices corresponding for the currently processed level
-        slices_PAM50 = get_slices_from_vertebral_levels(im_seg_labeled_PAM50, level)
-        slices_im = get_slices_from_vertebral_levels(im_seg_labeled, level)
+    # Loop through the slices in the first and last levels to scale only.
+    for i, (slices_PAM50, slices_im) in enumerate(zip(level_slices_PAM50[::len(levels)-1],
+                                                      level_slices_im[::len(levels)-1])):
         # Get number of slices for the currently processed level
         nb_slices_im = len(slices_im)
         # Prepare vectors for the interpolation
@@ -83,7 +82,7 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
                 # Interpolate in the same number of slices
                 metrics_inter = np.interp(x_PAM50, x, metric_values_level)
                 # If the first level, scale from level below
-                if level == levels[0]:
+                if i == 0:
                     if len(metrics_inter) > len(slices_PAM50):
                         diff = len(metrics_inter) - len(slices_PAM50)
                         metrics_inter = metrics_inter[:-diff]
