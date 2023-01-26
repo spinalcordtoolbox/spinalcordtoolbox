@@ -50,14 +50,11 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     scales = []
     # Loop through slices per-level (excluding first and last levels)
     for slices_PAM50, slices_im in zip(level_slices_PAM50[1:-1], level_slices_im[1:-1]):
-        # Get number of slices for the currently processed level
-        nb_slices_PAM50 = len(slices_PAM50)
-        nb_slices_im = len(slices_im)
         # Prepare vectors for the interpolation
-        x_PAM50 = np.arange(0, nb_slices_PAM50, 1)
-        x = np.linspace(0, nb_slices_PAM50 - 1, nb_slices_im)
+        x_PAM50 = np.arange(0, len(slices_PAM50), 1)
+        x = np.linspace(0, len(slices_PAM50) - 1, len(slices_im))
         # Compute and keep the scaling factor for the currently processed level
-        scales.append(nb_slices_PAM50/nb_slices_im)
+        scales.append(len(slices_PAM50)/len(slices_im))
         # Loop through metrics
         for key, value in metrics.items():
             if key != 'length':
@@ -69,12 +66,10 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     # Loop through the slices in the first and last levels to scale only.
     for i, (slices_PAM50, slices_im) in enumerate(zip(level_slices_PAM50[::len(levels)-1],
                                                       level_slices_im[::len(levels)-1])):
-        # Get number of slices for the currently processed level
-        nb_slices_im = len(slices_im)
         # Prepare vectors for the interpolation
         # Note: since the first and the last level can be incomplete, we use the mean scaling factor from all other levels
-        x_PAM50 = np.linspace(0, scale_mean*nb_slices_im, int(scale_mean*nb_slices_im))
-        x = np.linspace(0, scale_mean*nb_slices_im, nb_slices_im)
+        x_PAM50 = np.linspace(0, scale_mean*len(slices_im), int(scale_mean*len(slices_im)))
+        x = np.linspace(0, scale_mean*len(slices_im), len(slices_im))
         # Loop through metrics
         for key, value in metrics.items():
             if key != 'length':
