@@ -46,22 +46,22 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     level_slices_PAM50 = [get_slices_from_vertebral_levels(im_seg_labeled_PAM50, level) for level in levels]
     level_slices_im = [get_slices_from_vertebral_levels(im_seg_labeled, level) for level in levels]
 
-    # Create empty list to keep the scaling between the image and PAM50
-    scales = []
+    # Find the mean scaling between the image and PAM50 (excluding first and last levels)
+    scales = [len(slices_PAM50)/len(slices_im) for slices_PAM50, slices_im
+              in zip(level_slices_PAM50[1:-1], level_slices_im[1:-1])]
+    scale_mean = np.mean(scales)
+
     # Loop through slices per-level (excluding first and last levels)
     for slices_PAM50, slices_im in zip(level_slices_PAM50[1:-1], level_slices_im[1:-1]):
         # Prepare vectors for the interpolation
         x_PAM50 = np.arange(0, len(slices_PAM50), 1)
         x = np.linspace(0, len(slices_PAM50) - 1, len(slices_im))
-        # Compute and keep the scaling factor for the currently processed level
-        scales.append(len(slices_PAM50)/len(slices_im))
         # Loop through metrics
         for key, value in metrics.items():
             if key != 'length':
                 metric_values_level = value.data[slices_im]
                 # Interpolate in the same number of slices
                 metrics_PAM50_space_dict[key][slices_PAM50] = np.interp(x_PAM50, x, metric_values_level)
-    scale_mean = np.mean(scales)
 
     # Loop through the slices in the first and last levels to scale only.
     for i, (slices_PAM50, slices_im) in enumerate(zip(level_slices_PAM50[::len(levels)-1],
