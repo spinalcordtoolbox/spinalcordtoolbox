@@ -46,7 +46,7 @@ if [[ -z "$SCT_BP_QC_FOLDER" ]]; then
 fi
 
 # Remove QC folder
-if [ -z "$SCT_BP_NO_REMOVE_QC" -a -d "$SCT_BP_QC_FOLDER" ]; then
+if [ -z "$SCT_BP_NO_REMOVE_QC" ] && [ -d "$SCT_BP_QC_FOLDER" ]; then
   echo "Removing $SCT_BP_QC_FOLDER folder."
   rm -rf "$SCT_BP_QC_FOLDER"
 fi
