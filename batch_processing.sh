@@ -261,7 +261,7 @@ runtime=$((end-start))
 echo "~~~"  # these are used to format as code when copy/pasting in github's markdown
 echo "Version:         $(sct_version)"
 echo "Ran on:          $(uname -nsr)"
-echo "Duration:        $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
+echo "Duration:        $((runtime / 3600))hrs $(((runtime / 60) % 60))min $((runtime % 60))sec"
 echo "---"
 # The file `test_batch_processing.py` will output tested values when run as a script
 ./python/envs/venv_sct/bin/python testing/batch_processing/test_batch_processing.py ||
