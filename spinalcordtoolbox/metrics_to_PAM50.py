@@ -52,41 +52,32 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     scale_mean = np.mean(scales)
 
     # Loop through slices per-level (excluding first and last levels)
-    for slices_PAM50, slices_im in zip(level_slices_PAM50[1:-1], level_slices_im[1:-1]):
+    for level, slices_PAM50, slices_im in zip(levels, level_slices_PAM50, level_slices_im):
         # Prepare vectors for the interpolation
-        x_PAM50 = np.arange(0, len(slices_PAM50), 1)
-        x = np.linspace(0, len(slices_PAM50) - 1, len(slices_im))
+        if level in [levels[0], levels[-1]]:
+            # Note: since the first/last levels can be incomplete, we use the mean scaling factor from all other levels
+            x_PAM50 = np.linspace(0, scale_mean * len(slices_im), int(scale_mean * len(slices_im)))
+            x = np.linspace(0, scale_mean * len(slices_im), len(slices_im))
+        else:
+            x_PAM50 = np.arange(0, len(slices_PAM50), 1)
+            x = np.linspace(0, len(slices_PAM50) - 1, len(slices_im))
         # Loop through metrics
         for key, value in metrics.items():
             if key != 'length':
                 metric_values_level = value.data[slices_im]
                 # Interpolate in the same number of slices
                 metrics_inter = np.interp(x_PAM50, x, metric_values_level)
-                metrics_PAM50_space_dict[key][slices_PAM50] = metrics_inter
-
-    # Loop through the slices in the first and last levels to scale only.
-    for i, (slices_PAM50, slices_im) in enumerate(zip(level_slices_PAM50[::len(levels)-1],
-                                                      level_slices_im[::len(levels)-1])):
-        # Prepare vectors for the interpolation
-        # Note: since the first and the last level can be incomplete, we use the mean scaling factor from all other levels
-        x_PAM50 = np.linspace(0, scale_mean*len(slices_im), int(scale_mean*len(slices_im)))
-        x = np.linspace(0, scale_mean*len(slices_im), len(slices_im))
-        # Loop through metrics
-        for key, value in metrics.items():
-            if key != 'length':
-                metric_values_level = value.data[slices_im]
-                # Interpolate in the same number of slices
-                metrics_inter = np.interp(x_PAM50, x, metric_values_level)
-                # If the first level, scale from level below
-                if i == 0:
+                # Scale interpolation of first and last levels
+                if level == levels[0]:
+                    # If the first level, scale from level below
                     if len(metrics_inter) > len(slices_PAM50):
                         diff = len(metrics_inter) - len(slices_PAM50)
                         metrics_inter = metrics_inter[:-diff]
                     elif len(metrics_inter) < len(slices_PAM50):
                         diff = len(slices_PAM50) - len(metrics_inter)
                         slices_PAM50 = slices_PAM50[:-diff]
-                # If the last level, scale from level above
-                else:
+                elif level == levels[-1]:
+                    # If the last level, scale from level above
                     if len(metrics_inter) > len(slices_PAM50):
                         diff = len(metrics_inter) - len(slices_PAM50)
                         metrics_inter = metrics_inter[diff:]
