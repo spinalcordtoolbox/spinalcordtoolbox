@@ -22,3 +22,5 @@ jobs:
       run: git diff origin/master... | flake8 --diff
     - name: Check shell scripts with shellcheck
       uses: ludeeus/action-shellcheck@master
+      with:
+        severity: style
