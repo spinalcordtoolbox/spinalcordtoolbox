@@ -22,12 +22,6 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     im_seg_labeled = Image(fname_vert_levels)
     im_seg_labeled.change_orientation('RPI')
 
-    # Get number of slices in PAM50
-    z = im_seg_labeled_PAM50.dim[2]
-
-    # Create an metrics instance filled by NaN with number of rows equal to number of slices in PAM50 template
-    metrics_PAM50_space_dict = {k: np.full([z], np.nan) for k in metrics.keys()}
-
     # Get unique integer vertebral levels (but exclude 0, 49, and 50, as these aren't vertebral levels)
     levels = sorted(int(level) for level in np.unique(im_seg_labeled.data) if 0 < int(level) < 49)
 
@@ -40,7 +34,10 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
               in zip(level_slices_PAM50[1:-1], level_slices_im[1:-1])]
     scale_mean = np.mean(scales)
 
-    # Loop through slices per-level (excluding first and last levels)
+    # Initialize a metrics dict filled by NaN with number of rows equal to number of slices in PAM50 template
+    z = im_seg_labeled_PAM50.dim[2]  # z == number of slices
+    metrics_PAM50_space_dict = {k: np.full([z], np.nan) for k in metrics.keys()}
+    # Loop through slices per-level (excluding first and last levels), populating the metrics dict
     for level, slices_PAM50, slices_im in zip(levels, level_slices_PAM50, level_slices_im):
         # Prepare vectors for the interpolation
         if level in [levels[0], levels[-1]]:
