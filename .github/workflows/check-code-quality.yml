@@ -1,9 +1,9 @@
-name: Python Linting
+name: Check code quality
 
 on: [pull_request]
 
 jobs:
-  lint_job:
+  run_flake8:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
