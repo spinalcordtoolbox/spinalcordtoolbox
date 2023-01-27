@@ -26,9 +26,7 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
     z = im_seg_labeled_PAM50.dim[2]
 
     # Create an metrics instance filled by NaN with number of rows equal to number of slices in PAM50 template
-    metrics_PAM50_space_dict = {}
-    for key in metrics.keys():
-        metrics_PAM50_space_dict[key] = np.full([z], np.nan)
+    metrics_PAM50_space_dict = {k: np.full([z], np.nan) for k in metrics.keys()}
 
     # Get unique vertebral levels
     levels = np.unique(im_seg_labeled.data)
@@ -85,11 +83,5 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
                         slices_PAM50 = slices_PAM50[diff:]
                 metrics_PAM50_space_dict[key][slices_PAM50] = metrics_inter
 
-    # Create a dict of Metric() objects
-    metrics_PAM50_space = {}
-    # Loop through metrics
-    for key, value in metrics_PAM50_space_dict.items():
-        # Convert ndarray to Metric() object
-        metrics_PAM50_space[key] = Metric(data=np.array(value), label=key)
-
-    return metrics_PAM50_space
+    # Convert dict of ndarrays to dict of Metric() objects
+    return {k: Metric(data=np.array(v), label=k) for k, v in metrics_PAM50_space_dict.items()}
