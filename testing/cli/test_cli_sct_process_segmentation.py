@@ -100,7 +100,7 @@ def test_sct_process_segmentation_check_normalize_missing_predictor(dummy_3d_mas
 def test_sct_process_segmentation_check_normalize_PAM50(tmp_path):
     """ Run sct_process_segmentation with -normalize PAM50"""
     filename = str(tmp_path / 'tmp_file_out.csv')
-    sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize', 'PAM50',
+    sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
                                         '-perslice', '1', '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'), '-o', filename])
     filename_PAM50 = str(tmp_path / 'tmp_file_out_PAM50.csv')
     with open(filename_PAM50, "r") as csvfile:
@@ -116,7 +116,7 @@ def test_sct_process_segmentation_check_normalize_PAM50_missing_perslice(tmp_pat
     """ Run sct_process_segmentation with -normalize PAM50 when missing perslice argument"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize', 'PAM50',
+        sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
                                             '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'), '-o', filename])
         assert e.value.code == 2
 
@@ -125,7 +125,7 @@ def test_sct_process_segmentation_check_normalize_PAM50_missing_vertfile(tmp_pat
     """ Run sct_process_segmentation with -normalize PAM50 when missing -vertfile"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize', 'PAM50',
+        sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
                                             '-perslice', '1', '-o', filename])
         assert e.value.code == 2
 
