@@ -42,7 +42,7 @@ fi
 
 # QC folder
 if [[ -z "$SCT_BP_QC_FOLDER" ]]; then
-	SCT_BP_QC_FOLDER=`pwd`/"qc_example_data"
+	SCT_BP_QC_FOLDER=$(pwd)/"qc_example_data"
 fi
 
 # Remove QC folder
@@ -52,7 +52,7 @@ if [ -z "$SCT_BP_NO_REMOVE_QC" ] && [ -d "$SCT_BP_QC_FOLDER" ]; then
 fi
 
 # get starting time:
-start=`date +%s`
+start=$(date +%s)
 
 # download example data
 if [[ "$SCT_BP_DOWNLOAD" == "1" ]]; then
@@ -256,11 +256,11 @@ cd ../../..
 # Display results (to easily compare integrity across SCT versions)
 # ===========================================================================================
 set +v
-end=`date +%s`
+end=$(date +%s)
 runtime=$((end-start))
 echo "~~~"  # these are used to format as code when copy/pasting in github's markdown
-echo "Version:         `sct_version`"
-echo "Ran on:          `uname -nsr`"
+echo "Version:         $(sct_version)"
+echo "Ran on:          $(uname -nsr)"
 echo "Duration:        $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
 echo "---"
 # The file `test_batch_processing.py` will output tested values when run as a script
