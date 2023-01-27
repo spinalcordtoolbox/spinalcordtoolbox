@@ -13,7 +13,7 @@ Spinal Cord Toolbox
 
 .. |badge-mailing-list| image:: https://img.shields.io/badge/mailing%20list-Spinalcordmri.org-green.svg?style=flat
     :alt: Community mailing list
-    :target: https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform
+    :target: https://goo.gl/forms/Q425YRKwZP5tsExF2
 
 .. |badge-downloads| image:: https://img.shields.io/github/downloads/spinalcordtoolbox/spinalcordtoolbox/total.svg
     :alt: Downloads
@@ -122,7 +122,7 @@ Contact
 
 If you have any questions or concerns, and would like to get in touch with the developers of Spinal Cord Toolbox, the best way to do so is via the `Spinalcordmri.org forum <https://forum.spinalcordmri.org/c/sct/8>`_.
 
-If you would like to stay up to date on spinal cord workshops and SCT announcements (new releases, hands-on courses, etc.), please subscribe to the `Spinalcordmri.org mailing list <https://docs.google.com/forms/d/e/1FAIpQLSdvsXwLRj07bx85O2wPM9ut1sC-20dFKdTVe-OckyvkfncV3Q/viewform>`_.
+If you would like to stay up to date on spinal cord workshops and SCT announcements (new releases, hands-on courses, etc.), please subscribe to the `Spinalcordmri.org mailing list <https://goo.gl/forms/Q425YRKwZP5tsExF2>`_.
 
 
 License
