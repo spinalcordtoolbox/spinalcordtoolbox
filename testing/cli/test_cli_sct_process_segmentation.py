@@ -102,8 +102,7 @@ def test_sct_process_segmentation_check_normalize_PAM50(tmp_path):
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
                                         '-perslice', '1', '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'), '-o', filename])
-    filename_PAM50 = str(tmp_path / 'tmp_file_out_PAM50.csv')
-    with open(filename_PAM50, "r") as csvfile:
+    with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         rows = list(reader)
         row = rows[747]
