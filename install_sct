@@ -110,6 +110,7 @@ function run() {
 }
 
 # Force a clean exit
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function, since it's invoked in a trap
 function finish() {
   # Catch the last return code
   value="$?"
@@ -130,6 +131,7 @@ then upload it as a .txt attachment in a new topic on SCT's forum:
 }
 
 # reenable tty echo when user presses keyboard interrupt and output non-zero status for finish() function
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function, since it's invoked in a trap
 detectKeyboardInterrupt() {
       # reenable tty echo
       print error "Installation aborted by the user."
