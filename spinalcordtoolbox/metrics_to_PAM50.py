@@ -53,23 +53,20 @@ def interpolate_metrics(metrics, fname_vert_levels_PAM50, fname_vert_levels):
                 metric_values_level = value.data[slices_im]
                 # Interpolate in the same number of slices
                 metrics_inter = np.interp(x_PAM50, x, metric_values_level)
-                # Scale interpolation of first and last levels
+                # Scale interpolation of first and last levels (to account for incomplete levels)
+                diff = len(metrics_inter) - len(slices_PAM50)
                 if level == levels[0]:
                     # If the first level, scale from level below
-                    if len(metrics_inter) > len(slices_PAM50):
-                        diff = len(metrics_inter) - len(slices_PAM50)
+                    if diff > 0:
                         metrics_inter = metrics_inter[:-diff]
-                    elif len(metrics_inter) < len(slices_PAM50):
-                        diff = len(slices_PAM50) - len(metrics_inter)
-                        slices_PAM50 = slices_PAM50[:-diff]
+                    elif diff < 0:
+                        slices_PAM50 = slices_PAM50[:-abs(diff)]
                 elif level == levels[-1]:
                     # If the last level, scale from level above
-                    if len(metrics_inter) > len(slices_PAM50):
-                        diff = len(metrics_inter) - len(slices_PAM50)
+                    if diff > 0:
                         metrics_inter = metrics_inter[diff:]
-                    elif len(metrics_inter) < len(slices_PAM50):
-                        diff = len(slices_PAM50) - len(metrics_inter)
-                        slices_PAM50 = slices_PAM50[diff:]
+                    elif diff < 0:
+                        slices_PAM50 = slices_PAM50[abs(diff):]
                 metrics_PAM50_space_dict[key][slices_PAM50] = metrics_inter
 
     # Convert dict of ndarrays to dict of Metric() objects
