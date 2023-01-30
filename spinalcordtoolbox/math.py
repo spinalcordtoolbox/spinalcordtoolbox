@@ -5,7 +5,7 @@ import logging
 
 import numpy as np
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
-from skimage.filters import threshold_local, threshold_otsu
+from skimage.filters import threshold_local, threshold_otsu, rank
 from scipy.ndimage.filters import gaussian_filter, gaussian_laplace
 from scipy.stats import pearsonr, spearmanr
 from dipy.denoise.noise_estimate import estimate_sigma
@@ -110,7 +110,11 @@ def dilate(data, size, shape, dim=None):
         im_out.data = dilate(data.data, size, shape, dim)
         return im_out
     else:
-        return dilation(data, footprint=_get_footprint(shape, size, dim), out=None)
+        footprint = _get_footprint(shape, size, dim)
+        if data.dtype in ['uint8', 'uint16']:
+            return rank.maximum(data, footprint=footprint)
+        else:
+            return dilation(data, footprint=footprint, out=None)
 
 
 def erode(data, size, shape, dim=None):
@@ -130,7 +134,11 @@ def erode(data, size, shape, dim=None):
         im_out.data = erode(data.data, size, shape, dim)
         return im_out
     else:
-        return erosion(data, footprint=_get_footprint(shape, size, dim), out=None)
+        footprint = _get_footprint(shape, size, dim)
+        if data.dtype in ['uint8', 'uint16']:
+            return rank.minimum(data, footprint=footprint)
+        else:
+            return erosion(data, footprint=footprint, out=None)
 
 
 def mutual_information(x, y, nbins=32, normalized=False):
