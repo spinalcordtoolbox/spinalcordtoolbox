@@ -385,6 +385,7 @@ def main(argv: Sequence[str]):
     append = bool(arguments.append)
     levels = arguments.vert
     fname_vert_level = arguments.vertfile
+    normalize_pam50 = arguments.normalize_PAM50
     if not os.path.isfile(fname_vert_level):
         logger.warning(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
                        f"not be displayed. To use vertebral level information, you may need to run "
@@ -405,7 +406,6 @@ def main(argv: Sequence[str]):
     fname_pmj = arguments.pmj
     distance_pmj = arguments.pmj_distance
     extent_pmj = arguments.pmj_extent
-    normalize_pam50 = arguments.normalize_PAM50
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
