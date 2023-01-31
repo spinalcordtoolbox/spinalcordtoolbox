@@ -33,7 +33,7 @@
 ( # | tee install_sct_log.txt
 
 # Change directory to where the script is, for the duration of the script.
-cd "$(dirname $0)" || exit 1
+cd "$(dirname "$0")" || exit 1
 
 # stricter shell mode
 # https://sipb.mit.edu/doc/safe-shell/
@@ -110,6 +110,7 @@ function run() {
 }
 
 # Force a clean exit
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function, since it's invoked in a trap
 function finish() {
   # Catch the last return code
   value="$?"
@@ -130,6 +131,7 @@ then upload it as a .txt attachment in a new topic on SCT's forum:
 }
 
 # reenable tty echo when user presses keyboard interrupt and output non-zero status for finish() function
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function, since it's invoked in a trap
 detectKeyboardInterrupt() {
       # reenable tty echo
       print error "Installation aborted by the user."
@@ -153,7 +155,7 @@ function fetch_os_type() {
     macOSmajor="$(echo "$OSver" | cut -f 1 -d '.')"
     macOSminor="$(echo "$OSver" | cut -f 2 -d '.')"
     # Make sure OSver is supported
-    if [[ "${macOSmajor}" = 10 ]] && [[ "${macOSminor}" < "${MACOSSUPPORTED}" ]]; then
+    if [[ "${macOSmajor}" = 10 ]] && [[ "${macOSminor}" -lt "${MACOSSUPPORTED}" ]]; then
       die "Sorry, this version of macOS (10.$macOSminor) is not supported. The minimum version is 10.$MACOSSUPPORTED."
     fi
     # Fix for non-English Unicode systems on MAC
