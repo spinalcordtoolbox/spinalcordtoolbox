@@ -161,6 +161,7 @@ jobs:
         name: requirements-freeze
 
     - name: Commit requirements-freeze.txt (for release)
+      run: |
         git checkout bot/${{ github.event.inputs.milestone_title }}
         git add requirements-freeze.txt
         git commit -m "Update requirements-freeze.txt for ${{ github.event.inputs.milestone_title }}"
