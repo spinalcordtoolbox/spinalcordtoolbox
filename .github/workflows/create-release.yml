@@ -143,6 +143,11 @@ jobs:
         ref: ${{ env.MAIN_BRANCH }}
         fetch-depth: 0
 
+    # Branch off before adding commits to the main branch
+    - name: Create release branch
+      run: |
+        git branch bot/${{ github.event.inputs.milestone_title }}
+
     - name: Update version.txt (main branch)
       run: |
         echo "${{ github.event.inputs.future_milestone_title }}.dev0" > spinalcordtoolbox/version.txt
@@ -161,7 +166,7 @@ jobs:
 
     - name: Commit and push release changes
       run: |
-        git checkout -b bot/${{ github.event.inputs.milestone_title }}
+        git checkout bot/${{ github.event.inputs.milestone_title }}
         git add requirements-freeze.txt
         git commit -m "Update requirements-freeze.txt for ${{ github.event.inputs.milestone_title }}"
         git add spinalcordtoolbox/version.txt
