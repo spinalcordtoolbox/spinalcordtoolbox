@@ -409,7 +409,7 @@ def main(argv: Sequence[str]):
     qc_subject = arguments.qc_subject
 
     if normalize_pam50 and (fname_vert_level is None or not perslice):
-        parser.error("Option '-normalize PAM50' requires options '-vertfile' and '-perslice 1'.")
+        parser.error("Option '-normalize-PAM50' requires options '-vertfile' and '-perslice 1'.")
     if distance_pmj is not None and fname_pmj is None:
         parser.error("Option '-pmj-distance' requires option '-pmj'.")
     if fname_pmj is not None and distance_pmj is None and not perslice:
