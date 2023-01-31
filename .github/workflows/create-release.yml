@@ -146,6 +146,7 @@ jobs:
     - name: Update version.txt (main branch)
       run: | 
           echo "${{ github.event.inputs.future_milestone_title }}.dev0" > spinalcordtoolbox/version.txt
+          git add spinalcordtoolbox/version.txt
           git commit -m "Update version.txt for ${{ github.event.inputs.future_milestone_title }} development"
           git push
 
