@@ -389,6 +389,8 @@ def main(argv: Sequence[str]):
         logger.warning(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
                        f"not be displayed. To use vertebral level information, you may need to run "
                        f"`sct_warp_template` to generate the appropriate level file in your working directory.")
+        if normalize_pam50:
+            raise FileNotFoundError("The vertebral level file must exist to use -normalize-PAM50.")
         fname_vert_level = None  # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
         if levels:
             raise FileNotFoundError("The vertebral level file must exist to use `-vert` to group by vertebral level.")
