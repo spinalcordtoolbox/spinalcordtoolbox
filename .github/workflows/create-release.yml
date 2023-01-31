@@ -160,17 +160,19 @@ jobs:
       with:
         name: requirements-freeze
 
-    - name: Update version.txt (for release)
-      run: |
-        echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
-
-    - name: Commit and push release changes
-      run: |
+    - name: Commit requirements-freeze.txt (for release)
         git checkout bot/${{ github.event.inputs.milestone_title }}
         git add requirements-freeze.txt
         git commit -m "Update requirements-freeze.txt for ${{ github.event.inputs.milestone_title }}"
+
+    - name: Update version.txt (for release)
+      run: |
+        echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
         git add spinalcordtoolbox/version.txt
         git commit -m "Update version.txt for ${{ github.event.inputs.milestone_title }}"
+
+    - name: Push release changes
+      run: |
         git tag ${{ github.event.inputs.milestone_title }}
         git push --tags
 
