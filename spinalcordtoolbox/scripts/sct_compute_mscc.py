@@ -58,7 +58,7 @@ def get_parser():
         help='Folder with .csv files (in PAM50 space) of HC control to use for normalization.',
         metavar=Metavar.folder,
     )
-    mandatoryArguments.add_argument(
+    optional.add_argument(
         '-metric',
         required=True,
         help='Metric name to normalize in .csv file output from sct_process_segmentation. Default = MEAN(diameter_AP)',
@@ -128,7 +128,7 @@ def mscc_norm(ap, ap_HC):
     return mscc(da, db, di)
 
 
-def csv2dataFrame(filename):
+def csv2dataFrame(filename, metric):
     """
     Loads a .csv file and builds a pandas dataFrame of the data
     :param filename: str: filename of the .csv file
@@ -136,8 +136,8 @@ def csv2dataFrame(filename):
     """
     check_file_exist(filename, verbose=0)
     data = pd.read_csv(filename)
-    # Ensure AP diameter is in float
-    data.astype({"MEAN(diameter_AP)": float})
+    # Ensure that the chosen metric is in float
+    data.astype({metric: float})
     return data
 
 
@@ -212,7 +212,7 @@ def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, df_metrics
     return get_mean_AP_diameter(df_metrics_PAM50, upper_level, lower_level, slices_avg), slices_avg
 
 
-def average_hc(ref_folder, upper_level, lower_level, slices_avg):
+def average_hc(ref_folder, metric, upper_level, lower_level, slices_avg):
     """
     Gets AP diameter of healthy controls in PAM50 anatomical dimensions and avrages across subjects.
     Averages AP diameter at compression, across the entire level above and below compression.
@@ -233,7 +233,7 @@ def average_hc(ref_folder, upper_level, lower_level, slices_avg):
     # Loop through .csv files of healthy controls
     for file in os.listdir(ref_folder):
         if 'PAM50' in file:
-            d[file] = csv2dataFrame(os.path.join(ref_folder, file))  # TODO change verbose for arg
+            d[file] = csv2dataFrame(os.path.join(ref_folder, file), metric)  # TODO change verbose for arg
             i = i+1
     first_key = next(iter(d))
     # Create an empty dataframe with ame columns
@@ -257,10 +257,11 @@ def average_hc(ref_folder, upper_level, lower_level, slices_avg):
     return get_mean_AP_diameter(df, upper_level, lower_level, slices_avg)
 
 
-def get_mean_AP_diameter(df, upper_level, lower_level, slices_avg):
+def get_mean_AP_diameter(df, metric, upper_level, lower_level, slices_avg):
     """
     Average AP diameter at compression level, at level above and below.
     :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
+    :param metric: str: metric to perform normalization
     :param upper_level: int: level above compression.
     :param lower_level: int: level below compression.
     :param slices_avg: Slices in PAM50 space to average AP diameter.
@@ -270,9 +271,9 @@ def get_mean_AP_diameter(df, upper_level, lower_level, slices_avg):
     """
     # find index of slices to average
     idx = df['Slice (I->S)'].isin(slices_avg).tolist()
-    da = df.loc[df['VertLevel'] == upper_level, 'MEAN(diameter_AP)'].mean()
-    db = df.loc[df['VertLevel'] == lower_level, 'MEAN(diameter_AP)'].mean()
-    di = df.loc[idx, 'MEAN(diameter_AP)'].mean()
+    da = df.loc[df['VertLevel'] == upper_level, metric].mean()
+    db = df.loc[df['VertLevel'] == lower_level, metric].mean()
+    di = df.loc[idx, metric].mean()
     return da, db, di
 
 
@@ -367,6 +368,7 @@ def main(argv: Sequence[str]):
         subject = arguments.i
     else:
         subject = arguments.subject
+    metric = arguments.metric
 
     slice_thickness = get_slice_thickness(img)
     slice_compressed = get_compressed_slice(img, verbose)
@@ -378,7 +380,7 @@ def main(argv: Sequence[str]):
     slice_thickness_PAM50 = get_slice_thickness(img_pam50)
 
     # Fetch metrics of subject
-    df_metrics = csv2dataFrame(fname_metrics)
+    df_metrics = csv2dataFrame(fname_metrics, metric)
     df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50)
 
     # Get vertebral level corresponding to the slice with the compression
@@ -394,7 +396,7 @@ def main(argv: Sequence[str]):
         ap, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50,  df_metrics_PAM50,
                                                    upper_level, lower_level, compressed_levels_dict_PAM50[level])
         # Get AP diameter of healthy controls
-        ap_HC = average_hc(path_ref, upper_level, lower_level, slices_avg)
+        ap_HC = average_hc(path_ref, metric, upper_level, lower_level, slices_avg)
         logger.debug('\nda_HC =  {}, db_HC = {}, di_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
         logger.debug('da =  {}, db = {}, di = {}'.format(ap[0], ap[1], ap[2]))
 
