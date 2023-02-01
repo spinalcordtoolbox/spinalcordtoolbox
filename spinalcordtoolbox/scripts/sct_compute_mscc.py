@@ -333,7 +333,7 @@ def save_csv(fname_out, level, metric, mscc, mscc_norm, subject):
     """
     if not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
-            header = ['Subject', 'Compression Level', metric + 'ratio', 'Normalized' + metric + + 'ratio']
+            header = ['Subject', 'Compression Level', metric + 'ratio', 'Normalized' + metric + 'ratio']
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
