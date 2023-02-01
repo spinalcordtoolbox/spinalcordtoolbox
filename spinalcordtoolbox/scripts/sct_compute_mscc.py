@@ -93,7 +93,7 @@ def get_parser():
         '-age',
         type=int,
         nargs=2,
-        choices=range(0, 100),
+        metavar="[0 100]",
         help='Select age range of healthy subjet to use for normalization. Requires participant.tsv'
         'E.g.:-age 60 80'
     )
@@ -131,8 +131,11 @@ def select_HC(fname_participants, sex, age):
     # select subject with same sex
     list_sub_sex = data.loc[data['sex'] == sex, 'participant_id'].to_list()
     # select subjects within age range
-    # TODO
-    return list_sub_sex
+    list_sub_age = data.loc[data['age'].between(age[0], age[1]), 'participant_id'].to_list()
+    list_to_include = set(list_sub_age).intersection(list_sub_sex)
+    printv(f'{len(list_to_include)} {sex} healthy controls are used for normalization ')
+    print(list_to_include)
+    return list(list_to_include)
 
 
 def metric_ratio(ma, mb, mi):
@@ -411,6 +414,12 @@ def main(argv: Sequence[str]):
     metric = arguments.metric
     sex = arguments.sex
     age = arguments.age
+    if age:
+        if any(n < 0 for n in age):
+            parser.error('Age range needs to be positive, {} was specified'.format(age))
+        # Put age range in order
+        else:
+            age.sort()
     if sex or age:
         fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
         list_HC = select_HC(fname_partcipants, sex, age)
