@@ -320,7 +320,7 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     return compression_level_dict_PAM50
 
 
-def save_csv(fname_out, level, mscc, mscc_norm, subject):
+def save_csv(fname_out, level, metric, mscc, mscc_norm, subject):
     """
     Save .csv file of MSCC results.
     :param fname_out:
@@ -332,7 +332,7 @@ def save_csv(fname_out, level, mscc, mscc_norm, subject):
     """
     if not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
-            header = ['Subject', 'Compression Level', 'MSCC', 'Normalized MSCC']
+            header = ['Subject', 'Compression Level', metric + 'ratio', 'Normalized' + metric + + 'ratio']
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
@@ -399,7 +399,7 @@ def main(argv: Sequence[str]):
         # Compute MSCC
         mscc_result_norm = mscc_norm(ap, ap_HC)
         mscc_result = mscc(ap[0], ap[1], ap[2])
-        save_csv(fname_out, level, mscc_result, mscc_result_norm, subject)
+        save_csv(fname_out, metric, level, mscc_result, mscc_result_norm, subject)
 
         # Display results
         printv('\nLevel: {}'.format(level), verbose=verbose, type='info')
