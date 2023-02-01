@@ -128,12 +128,22 @@ def get_parser():
 def select_HC(fname_participants, sex, age):
     # Load participants information
     data = pd.read_csv(fname_participants, sep="\t")
+    # Initialize lists
+    list_sub_sex = []
+    list_sub_age = []
     # select subject with same sex
-    list_sub_sex = data.loc[data['sex'] == sex, 'participant_id'].to_list()
+    if sex:
+        list_sub_sex = data.loc[data['sex'] == sex, 'participant_id'].to_list()
+        if not age:
+            list_to_include = list_sub_sex
     # select subjects within age range
-    list_sub_age = data.loc[data['age'].between(age[0], age[1]), 'participant_id'].to_list()
-    list_to_include = set(list_sub_age).intersection(list_sub_sex)
-    printv(f'{len(list_to_include)} {sex} healthy controls are used for normalization ')
+    if age:
+        list_sub_age = data.loc[data['age'].between(age[0], age[1]), 'participant_id'].to_list()
+        if not sex:
+            list_to_include = list_sub_age
+    if age and sex:
+        list_to_include = set(list_sub_age).intersection(list_sub_sex)
+    printv(f'{len(list_to_include)} healthy controls are used for normalization ')
     return list(list_to_include)
 
 
