@@ -357,7 +357,7 @@ def main(argv: Sequence[str]):
         fname_out = arguments.o
     else:
         path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
-        fname_out = os.path.join(path, file_name + '_mscc' + ext)
+        fname_out = os.path.join(path, file_name + '_compression_metrics' + ext)
     fname_metrics = get_absolute_path(arguments.i)
     if arguments.i_PAM50 is None:
         path, file_name, ext = extract_fname(fname_metrics)
