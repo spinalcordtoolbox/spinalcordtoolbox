@@ -162,8 +162,7 @@ def get_compressed_slice(img, verbose):
     """
     # Get all coordinates
     coordinates = img.getNonZeroCoordinates(sorting='z')
-    if verbose == 2:
-        print('Compression labels coordinates: {}'.format(coordinates))  # todo, add prinv
+    logger.debug('Compression labels coordinates: {}'.format(coordinates))
     # Check it coordinates is empty
     if not coordinates:
         raise ValueError('No compression labels found.')
@@ -303,7 +302,6 @@ def get_up_lw_levels(levels, df, metric):
 
     elif lower_empty and upper_empty:
         ValueError('No levels above nor below all compressions are available.')
-    
     return upper_level, lower_level
 
 
