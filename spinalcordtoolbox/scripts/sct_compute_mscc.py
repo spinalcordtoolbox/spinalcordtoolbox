@@ -333,7 +333,8 @@ def save_csv(fname_out, level, metric, mscc, mscc_norm, subject):
     """
     if not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
-            header = ['Subject', 'Compression Level', metric + 'ratio', 'Normalized' + metric + 'ratio']
+            header = ['Subject', 'Compression Level', metric + ' ratio', 'Normalized ' + metric + ' ratio']
+            printv(f'header: {header}', verbose=1)
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
@@ -400,7 +401,7 @@ def main(argv: Sequence[str]):
         # Compute MSCC
         mscc_result_norm = mscc_norm(ap, ap_HC)
         mscc_result = mscc(ap[0], ap[1], ap[2])
-        save_csv(fname_out, metric, level, mscc_result, mscc_result_norm, subject)
+        save_csv(fname_out, level, metric, mscc_result, mscc_result_norm, subject)
 
         # Display results
         printv('\nLevel: {}'.format(level), verbose=verbose, type='info')
