@@ -126,6 +126,13 @@ def get_parser():
 
 
 def select_HC(fname_participants, sex, age):
+    """
+    Selects healthy controls to use for normalization based on sex and age range specified by the user.
+    :param fname_participants: Filename of participants.tsv
+    :param sex: Either F for female or M for male.
+    :param age: list: List of age range to select subjects.
+    :return list_to_include: list: List of participant_id
+    """
     # Load participants information
     data = pd.read_csv(fname_participants, sep="\t")
     # Initialize lists
@@ -143,7 +150,7 @@ def select_HC(fname_participants, sex, age):
             list_to_include = list_sub_age
     if age and sex:
         list_to_include = set(list_sub_age).intersection(list_sub_sex)
-    printv(f'{len(list_to_include)} healthy controls are used for normalization ')
+    printv(f'{len(list_to_include)} healthy controls are used for normalization')
     return list(list_to_include)
 
 
