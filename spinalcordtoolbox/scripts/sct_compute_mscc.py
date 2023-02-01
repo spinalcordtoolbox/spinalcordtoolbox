@@ -407,8 +407,8 @@ def main(argv: Sequence[str]):
 
         # Display results
         printv('\nLevel: {}'.format(level), verbose=verbose, type='info')
-        printv('\nMSCC norm = {}'.format(mscc_result_norm), verbose=verbose, type='info')
-        printv('\nMSCC = {}\n'.format(mscc_result), verbose=verbose, type='info')
+        printv('\n{} ratio norm = {}'.format(metric, mscc_result_norm), verbose=verbose, type='info')
+        printv('\n{} ratio = {}\n'.format(metric, mscc_result), verbose=verbose, type='info')
 
     printv(f'Saved: {fname_out}')
 
