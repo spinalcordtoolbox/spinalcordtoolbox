@@ -104,32 +104,32 @@ def get_parser():
     return parser
 
 
-def mscc(da, db, di):
+def metric_ratio(ma, mb, mi):
     """
-    Compute MSCC (Maximum Spinal Cord Compression) using anterior-posterior (AP) diameter of compression and of levels
+    Compute MSCC (Maximum Spinal Cord Compression) using the chosen metric of compression and of levels
     above and bellow.
-    :param float: da: diameter of level above compression level.
-    :param float: db: diameter of level above compression level.
-    :param float: di: diameter at compression level.
-    :return float: MSCC in %
+    :param float: ma: metric of level above compression level.
+    :param float: mb: metric of level above compression level.
+    :param float: mi: metric at compression level.
+    :return float: metric ratio in %
     """
-    return (1 - float(di) / ((da + db) / float(2))) * 100
+    return (1 - float(mi) / ((ma + mb) / float(2))) * 100
 
 
-def mscc_norm(ap, ap_HC):
+def metric_ratio_norm(ap, ap_HC):
     """
-    Compute normalized MSCC (Maximum Spinal Cord Compression) using anterior-posterior (AP) diameter of compression and
-    of levels above and bellow.
-    Each AP diameter is divided by the value of healthy controls.
-    :param list: ap: list anterior posterior diameter value of level above, below and at compression of patient.
-    :param list: ap_HC: list anterior posterior diameter value of level above, below and at compression of healthy
+    Compute normalized MSCC (Maximum Spinal Cord Compression) using the chosen metric at the compression and
+    levels above and bellow.
+    Each metric is divided by the corresponding value in healthy controls.
+    :param list: ap: list metric value of level above, below and at compression of patient.
+    :param list: ap_HC: list metric value of level above, below and at compression of healthy
     controls.
     :return float: MSCC normalized in %
     """
-    da = ap[0]/ap_HC[0]
-    db = ap[1]/ap_HC[1]
-    di = ap[2]/ap_HC[2]
-    return mscc(da, db, di)
+    ma = ap[0]/ap_HC[0]
+    mb = ap[1]/ap_HC[1]
+    mi = ap[2]/ap_HC[2]
+    return metric_ratio(ma, mb, mi)
 
 
 def csv2dataFrame(filename, metric):
@@ -190,7 +190,7 @@ def get_verterbral_level_from_slice(slices, df_metrics):
 
 def average_compression_PAM50(slice_thickness, metric, slice_thickness_PAM50, df_metrics_PAM50, upper_level, lower_level, slice):
     """
-    Defines slices to average AP diameter at compression level following slice thickness and averages AP diameter at
+    Defines slices to average metric at compression level following slice thickness and averages metric at
     compression, across the entire level above and below compression.
     :param slice_thickness: float: slice thickness of native image space.
     :param slice_thickness_PAM50: float: slice thickness of the PAM50.
@@ -201,7 +201,7 @@ def average_compression_PAM50(slice_thickness, metric, slice_thickness_PAM50, df
     :return upper_AP_mean:
     :retrun lower_AP_mean:
     :retrun compressed_AP_mean:
-    :retrun slices_avg: Slices in PAM50 space to average AP diameter.
+    :retrun slices_avg: Slices in PAM50 space to average metric.
 
     """
     # If resolution of image is higher than PAM50 template, get slices equivalent to native slice thickness
@@ -213,17 +213,17 @@ def average_compression_PAM50(slice_thickness, metric, slice_thickness_PAM50, df
         slices_avg = np.arange(min(slice), max(slice), 1)
     else:
         slices_avg = slice
-    return get_mean_AP_diameter(df_metrics_PAM50, metric, upper_level, lower_level, slices_avg), slices_avg
+    return get_mean_metric(df_metrics_PAM50, metric, upper_level, lower_level, slices_avg), slices_avg
 
 
 def average_hc(ref_folder, metric, upper_level, lower_level, slices_avg):
     """
-    Gets AP diameter of healthy controls in PAM50 anatomical dimensions and avrages across subjects.
-    Averages AP diameter at compression, across the entire level above and below compression.
+    Gets metrics of healthy controls in PAM50 anatomical dimensions and avrages across subjects.
+    Averages metrics at compression, across the entire level above and below compression.
     :param ref_folder: path to folder where .csv fiels of healthy controls are.
     :param upper_level: int: level above compression.
     :param lower_level: int: level below compression.
-    :param slices_avg: Slices in PAM50 space to average AP diameter.
+    :param slices_avg: Slices in PAM50 space to average metrics.
     :return: upper_AP_mean
     :retrun: lower_AP_mean
     :retrun: compressed_AP_mean
@@ -258,27 +258,27 @@ def average_hc(ref_folder, metric, upper_level, lower_level, slices_avg):
         if 'MEAN' in column:
             df[column] = df[column]/i
 
-    return get_mean_AP_diameter(df, metric, upper_level, lower_level, slices_avg)
+    return get_mean_metric(df, metric, upper_level, lower_level, slices_avg)
 
 
-def get_mean_AP_diameter(df, metric, upper_level, lower_level, slices_avg):
+def get_mean_metric(df, metric, upper_level, lower_level, slices_avg):
     """
-    Average AP diameter at compression level, at level above and below.
+    Average metric at compression level, at level above and below.
     :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
     :param metric: str: metric to perform normalization
     :param upper_level: int: level above compression.
     :param lower_level: int: level below compression.
-    :param slices_avg: Slices in PAM50 space to average AP diameter.
-    :return: da: float64: AP diameter above the compression
-    :retrun: db: float64: AP diameter below the compression
-    :retrun: di: float64: AP diameter at the compression level
+    :param slices_avg: Slices in PAM50 space to average metrics.
+    :return: ma: float64: Metric above the compression
+    :retrun: mb: float64: Metric below the compression
+    :retrun: mi: float64: Metric at the compression level
     """
     # find index of slices to average
     idx = df['Slice (I->S)'].isin(slices_avg).tolist()
-    da = df.loc[df['VertLevel'] == upper_level, metric].mean()
-    db = df.loc[df['VertLevel'] == lower_level, metric].mean()
-    di = df.loc[idx, metric].mean()
-    return da, db, di
+    ma = df.loc[df['VertLevel'] == upper_level, metric].mean()
+    mb = df.loc[df['VertLevel'] == lower_level, metric].mean()
+    mi = df.loc[idx, metric].mean()
+    return ma, mb, mi
 
 
 def get_up_lw_levels(levels):
@@ -324,13 +324,13 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     return compression_level_dict_PAM50
 
 
-def save_csv(fname_out, level, metric, mscc, mscc_norm, subject):
+def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, subject):
     """
     Save .csv file of MSCC results.
     :param fname_out:
     :param level: int: Level of compression.
-    :param mscc: float:
-    :param mscc_norm:
+    :param metric_ratio: float:
+    :param metric_ratio_nrom:
     :param subject: str: subject id
     :retrun:
     """
@@ -342,7 +342,7 @@ def save_csv(fname_out, level, metric, mscc, mscc_norm, subject):
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=',')
-        line = [subject, level, mscc, mscc_norm]
+        line = [subject, level, metric_ratio, metric_ratio_nrom]
         spamwriter.writerow(line)
 
 
@@ -393,23 +393,23 @@ def main(argv: Sequence[str]):
 
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict_PAM50.keys():
-        # Get anterior-posterior (AP) diameter of patient with compression
+        # Get metric of patient with compression
         ap, slices_avg = average_compression_PAM50(slice_thickness, metric, slice_thickness_PAM50,  df_metrics_PAM50,
                                                    upper_level, lower_level, compressed_levels_dict_PAM50[level])
-        # Get AP diameter of healthy controls
+        # Get metrics of healthy controls
         ap_HC = average_hc(path_ref, metric, upper_level, lower_level, slices_avg)
-        logger.debug('\nda_HC =  {}, db_HC = {}, di_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
-        logger.debug('da =  {}, db = {}, di = {}'.format(ap[0], ap[1], ap[2]))
+        logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, betric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
+        logger.debug('metric_a =  {}, metric_b = {}, metric_i = {}'.format(ap[0], ap[1], ap[2]))
 
         # Compute MSCC
-        mscc_result_norm = mscc_norm(ap, ap_HC)
-        mscc_result = mscc(ap[0], ap[1], ap[2])
-        save_csv(fname_out, level, metric, mscc_result, mscc_result_norm, subject)
+        metric_ratio_norm_result = metric_ratio_norm(ap, ap_HC)
+        metric_ratio_result = metric_ratio(ap[0], ap[1], ap[2])
+        save_csv(fname_out, level, metric, metric_ratio_result, metric_ratio_norm_result, subject)
 
         # Display results
         printv('\nLevel: {}'.format(level), verbose=verbose, type='info')
-        printv('\n{} ratio norm = {}'.format(metric, mscc_result_norm), verbose=verbose, type='info')
-        printv('\n{} ratio = {}\n'.format(metric, mscc_result), verbose=verbose, type='info')
+        printv('\n{} ratio norm = {}'.format(metric, metric_ratio_norm_result), verbose=verbose, type='info')
+        printv('\n{} ratio = {}\n'.format(metric, metric_ratio_result), verbose=verbose, type='info')
 
     printv(f'Saved: {fname_out}')
 
