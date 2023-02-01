@@ -163,7 +163,7 @@ def get_compressed_slice(img, verbose):
     # Get all coordinates
     coordinates = img.getNonZeroCoordinates(sorting='z')
     if verbose == 2:
-        print('Compression labels coordinates: {}'.format(coordinates))
+        print('Compression labels coordinates: {}'.format(coordinates))  # todo, add prinv
     # Check it coordinates is empty
     if not coordinates:
         raise ValueError('No compression labels found.')
@@ -281,15 +281,29 @@ def get_mean_metric(df, metric, upper_level, lower_level, slices_avg):
     return ma, mb, mi
 
 
-def get_up_lw_levels(levels):
+def get_up_lw_levels(levels, df, metric):
     """
     Get most upper level from all compressed levels and lowest level from all compressed levels
     :param levels: list: Compressed levels.
+    :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
     :return upper_level: int: Smallest level (closest to superior)
     :return lower_level: int: Highest level (closest to inferior)
     """
     upper_level = min(levels) - 1
     lower_level = max(levels) + 1
+    # Check if lower and upper levels are available:
+    upper_empty = df.loc[df['VertLevel'] == upper_level, metric].empty
+    lower_empty = df.loc[df['VertLevel'] == lower_level, metric].empty
+    if not lower_empty and upper_empty:
+        # Set upper level to lower level. Only normalize using the lower level instead of an average of upper and lower level.
+        upper_level = lower_level
+    elif not upper_empty and lower_empty:
+        # Set lower level to upper level. Only normalize using the lower level instead of an average of upper and lower level.
+        lower_level = upper_level
+
+    elif lower_empty and upper_empty:
+        ValueError('No levels above nor below all compressions are available.')
+    
     return upper_level, lower_level
 
 
@@ -337,7 +351,6 @@ def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, subject)
     if not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
             header = ['Subject', 'Compression Level', metric + ' ratio', 'Normalized ' + metric + ' ratio']
-            printv(f'header: {header}', verbose=1)
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
@@ -387,7 +400,7 @@ def main(argv: Sequence[str]):
     # Get vertebral level corresponding to the slice with the compression
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     # Get vertebral level above and below the compression
-    upper_level, lower_level = get_up_lw_levels(compressed_levels_dict.keys())
+    upper_level, lower_level = get_up_lw_levels(compressed_levels_dict.keys(), df_metrics, metric)
     # Get slices corresponding in PAM50 space
     compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
 
