@@ -237,12 +237,13 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     return level_slice_dict
 
 
-def average_compression_PAM50(slice_thickness, metric, slice_thickness_PAM50, df_metrics_PAM50, upper_level, lower_level, slice):
+def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, upper_level, lower_level, slice):
     """
     Defines slices to average metric at compression level following slice thickness and averages metric at
     compression, across the entire level above and below compression.
     :param slice_thickness: float: slice thickness of native image space.
     :param slice_thickness_PAM50: float: slice thickness of the PAM50.
+    :param metric: str: metric to perform normalization
     :param df_metrics_PAM50: pandas.DataFrame: Metrics of sct_process_segmentation in PAM50 anatomical dimensions.
     :param upper_level: int: level above compression.
     :param lower_level: int: level below compression.
@@ -269,7 +270,7 @@ def average_hc(ref_folder, metric, list_HC):
     """
     Gets metrics of healthy controls in PAM50 anatomical dimensions and averages across subjects.
     :param ref_folder: path to folder where .csv fiels of healthy controls are.
-    :param metric: str:
+    :param metric: str: metric to perform normalization
     :param list_HC: list: List of healthy controls to include
     :return df:
     """
@@ -388,6 +389,7 @@ def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, subject)
     Save .csv file of MSCC results.
     :param fname_out:
     :param level: int: Level of compression.
+    :param metric: str: metric to perform normalization
     :param metric_ratio: float:
     :param metric_ratio_nrom:
     :param subject: str: subject id
@@ -470,7 +472,7 @@ def main(argv: Sequence[str]):
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict_PAM50.keys():
         # Get metric of patient with compression
-        ap, slices_avg = average_compression_PAM50(slice_thickness, metric, slice_thickness_PAM50,  df_metrics_PAM50,
+        ap, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
                                                    upper_level, lower_level, compressed_levels_dict_PAM50[level])
         # Get metrics of healthy controls
         ap_HC = get_mean_metric(df_avg_HC, metric, upper_level, lower_level, slices_avg)
