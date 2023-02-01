@@ -63,6 +63,7 @@ def get_parser():
         required=True,
         help='Metric name to normalize in .csv file output from sct_process_segmentation. Default = MEAN(diameter_AP)',
         default='MEAN(diameter_AP)',
+        choices=['MEAN(area)', 'MEAN(diameter_RL)', 'MEAN(eccentricity)', 'MEAN(solidity)'],
         metavar=Metavar.file,
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
