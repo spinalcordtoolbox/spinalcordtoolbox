@@ -78,6 +78,27 @@ def get_parser():
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
+        '-file-participants',
+        metavar=Metavar.file,
+        default='participants.tsv',
+        help='participants.tsv file of helathy controls.'
+    )
+    optional.add_argument(
+        '-sex',
+        type=str,
+        choices=['F', 'M'],
+        help='Select sex of healthy subjet to use for normalization. Requires participant.tsv'
+    )
+    optional.add_argument(
+        '-age',
+        type=int,
+        nargs=2,
+        choices=range(0, 100),
+        help='Select age range of healthy subjet to use for normalization. Requires participant.tsv'
+        'E.g.:-age 60 80'
+    )
+
+    optional.add_argument(
         '-o',
         metavar=Metavar.file,
         help="Output csv file name. If not provided, _compression_metrics suffix is added to the file name provided by -i flag."
