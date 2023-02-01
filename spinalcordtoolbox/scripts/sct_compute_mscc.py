@@ -184,7 +184,7 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     return level_slice_dict
 
 
-def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, df_metrics_PAM50, upper_level, lower_level, slice):
+def average_compression_PAM50(slice_thickness, metric, slice_thickness_PAM50, df_metrics_PAM50, upper_level, lower_level, slice):
     """
     Defines slices to average AP diameter at compression level following slice thickness and averages AP diameter at
     compression, across the entire level above and below compression.
@@ -209,7 +209,7 @@ def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, df_metrics
         slices_avg = np.arange(min(slice), max(slice), 1)
     else:
         slices_avg = slice
-    return get_mean_AP_diameter(df_metrics_PAM50, upper_level, lower_level, slices_avg), slices_avg
+    return get_mean_AP_diameter(df_metrics_PAM50, metric, upper_level, lower_level, slices_avg), slices_avg
 
 
 def average_hc(ref_folder, metric, upper_level, lower_level, slices_avg):
@@ -254,7 +254,7 @@ def average_hc(ref_folder, metric, upper_level, lower_level, slices_avg):
         if 'MEAN' in column:
             df[column] = df[column]/i
 
-    return get_mean_AP_diameter(df, upper_level, lower_level, slices_avg)
+    return get_mean_AP_diameter(df, metric, upper_level, lower_level, slices_avg)
 
 
 def get_mean_AP_diameter(df, metric, upper_level, lower_level, slices_avg):
@@ -381,7 +381,7 @@ def main(argv: Sequence[str]):
 
     # Fetch metrics of subject
     df_metrics = csv2dataFrame(fname_metrics, metric)
-    df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50)
+    df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, metric)
 
     # Get vertebral level corresponding to the slice with the compression
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
@@ -393,7 +393,7 @@ def main(argv: Sequence[str]):
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict_PAM50.keys():
         # Get anterior-posterior (AP) diameter of patient with compression
-        ap, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50,  df_metrics_PAM50,
+        ap, slices_avg = average_compression_PAM50(slice_thickness, metric, slice_thickness_PAM50,  df_metrics_PAM50,
                                                    upper_level, lower_level, compressed_levels_dict_PAM50[level])
         # Get AP diameter of healthy controls
         ap_HC = average_hc(path_ref, metric, upper_level, lower_level, slices_avg)
