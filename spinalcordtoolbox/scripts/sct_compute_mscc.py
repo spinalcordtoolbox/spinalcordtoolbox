@@ -134,7 +134,6 @@ def select_HC(fname_participants, sex, age):
     list_sub_age = data.loc[data['age'].between(age[0], age[1]), 'participant_id'].to_list()
     list_to_include = set(list_sub_age).intersection(list_sub_sex)
     printv(f'{len(list_to_include)} {sex} healthy controls are used for normalization ')
-    print(list_to_include)
     return list(list_to_include)
 
 
