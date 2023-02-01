@@ -61,18 +61,18 @@ def get_parser():
     mandatoryArguments.add_argument(
         '-i-PAM50',
         metavar=Metavar.file,
-        required=False,
+        required=True,
         help='Input file name (add extension). Example: csa_PAM50.csv.'
     )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
+    mandatoryArguments.add_argument(
         '-metric',
-        required=True,
+        required=False,
         help='Metric name to normalize in .csv file output from sct_process_segmentation. Default = MEAN(diameter_AP)',
         default='MEAN(diameter_AP)',
         choices=['MEAN(area)', 'MEAN(diameter_RL)', 'MEAN(eccentricity)', 'MEAN(solidity)'],
         metavar=Metavar.file,
     )
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
