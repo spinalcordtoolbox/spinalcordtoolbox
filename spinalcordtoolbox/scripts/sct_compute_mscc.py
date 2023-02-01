@@ -31,10 +31,10 @@ logger = logging.getLogger(__name__)
 # ==========================================================================================
 def get_parser():
     parser = SCTArgumentParser(
-        description='Compute Maximum Spinal Cord Compression (MSCC) as in: Miyanji F, Furlan JC, Aarabi B, Arnold PM, '
-                    'Fehlings MG. Acute cervical traumatic spinal cord injury: MR imaging findings correlated with '
-                    'neurologic outcome--prospective study with 100 consecutive patients. Radiology 2007;243(3):820-'
-                    '827.'
+        description='Compute spinal cord compression morpometrics such as Maximum Spinal Cord Compression as in'
+                    'Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord injury:'
+                    ' MR imaging findings correlated with neurologic outcome--prospective study with 100 consecutive patients.'
+                    ' Radiology 2007;243(3):820-827.'
                     'Can be computed using AP diameter or other morphometrics (CSA, RL diameter, eccentricity and solidity).'
                     'Morphometrics are normalized with a reference database where morphometrics from sct_process_segmentation '
                     'are brought to PAM50 anatomical space using -normalize-PAM50.'
@@ -64,7 +64,8 @@ def get_parser():
         '-i-PAM50',
         metavar=Metavar.file,
         required=True,
-        help='Input file name (add extension). Example: csa_PAM50.csv.'
+        help='Input csv file name in PAM50 space. Example: csa_PAM50.csv.'
+        'Use sct_process_segmentation with -normalize-PAM50 to generate the file.'
     )
     mandatoryArguments.add_argument(
         '-metric',
@@ -79,7 +80,7 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help="Output csv file name. If not provided, _mscc suffix is added to the file name provided by -i flag."
+        help="Output csv file name. If not provided, _compression_metrics suffix is added to the file name provided by -i flag."
     )
     optional.add_argument(
         '-subject',
