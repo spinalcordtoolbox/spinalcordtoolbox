@@ -125,6 +125,16 @@ def get_parser():
     return parser
 
 
+def select_HC(fname_participants, sex, age):
+    # Load participants information
+    data = pd.read_csv(fname_participants, sep="\t")
+    # select subject with same sex
+    list_sub_sex = data.loc[data['sex'] == sex, 'participant_id'].to_list()
+    # select subjects within age range
+    # TODO
+    return list_sub_sex
+
+
 def metric_ratio(ma, mb, mi):
     """
     Compute MSCC (Maximum Spinal Cord Compression) using the chosen metric of compression and of levels
@@ -236,17 +246,13 @@ def average_compression_PAM50(slice_thickness, metric, slice_thickness_PAM50, df
     return get_mean_metric(df_metrics_PAM50, metric, upper_level, lower_level, slices_avg), slices_avg
 
 
-def average_hc(ref_folder, metric, upper_level, lower_level, slices_avg):
+def average_hc(ref_folder, metric, list_HC):
     """
-    Gets metrics of healthy controls in PAM50 anatomical dimensions and avrages across subjects.
-    Averages metrics at compression, across the entire level above and below compression.
+    Gets metrics of healthy controls in PAM50 anatomical dimensions and averages across subjects.
     :param ref_folder: path to folder where .csv fiels of healthy controls are.
-    :param upper_level: int: level above compression.
-    :param lower_level: int: level below compression.
-    :param slices_avg: Slices in PAM50 space to average metrics.
-    :return: upper_AP_mean
-    :retrun: lower_AP_mean
-    :retrun: compressed_AP_mean
+    :param metric: str:
+    :param list_HC: list: List of healthy controls to include
+    :return df:
     """
     # Initialize empty dataframe
     df = pd.DataFrame()
@@ -257,10 +263,12 @@ def average_hc(ref_folder, metric, upper_level, lower_level, slices_avg):
     # Loop through .csv files of healthy controls
     for file in os.listdir(ref_folder):
         if 'PAM50' in file:
-            d[file] = csv2dataFrame(os.path.join(ref_folder, file), metric)  # TODO change verbose for arg
-            i = i+1
+            subject = os.path.basename(file).split('_')[0]
+            if subject in list_HC:
+                d[file] = csv2dataFrame(os.path.join(ref_folder, file), metric)  # TODO change verbose for arg
+                i = i+1
     first_key = next(iter(d))
-    # Create an empty dataframe with ame columns
+    # Create an empty dataframe with same columns
     df = pd.DataFrame(columns=d[first_key].columns)
     df['VertLevel'] = d[first_key]['VertLevel']
     df['Slice (I->S)'] = d[first_key]['Slice (I->S)']
@@ -277,8 +285,7 @@ def average_hc(ref_folder, metric, upper_level, lower_level, slices_avg):
     for column in df.columns:
         if 'MEAN' in column:
             df[column] = df[column]/i
-
-    return get_mean_metric(df, metric, upper_level, lower_level, slices_avg)
+    return df
 
 
 def get_mean_metric(df, metric, upper_level, lower_level, slices_avg):
@@ -402,7 +409,16 @@ def main(argv: Sequence[str]):
     else:
         subject = arguments.subject
     metric = arguments.metric
+    sex = arguments.sex
+    age = arguments.age
+    if sex or age:
+        fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
+        list_HC = select_HC(fname_partcipants, sex, age)
+    else:
+        fname_partcipants = None
+        list_HC = None
 
+    # Select healthy controls based on sex and/or age range
     slice_thickness = get_slice_thickness(img)
     slice_compressed = get_compressed_slice(img, verbose)
 
@@ -423,13 +439,16 @@ def main(argv: Sequence[str]):
     # Get slices corresponding in PAM50 space
     compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
 
+    # Get data from healthy control and average them
+    df_avg_HC = average_hc(path_ref, metric, list_HC)
+
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict_PAM50.keys():
         # Get metric of patient with compression
         ap, slices_avg = average_compression_PAM50(slice_thickness, metric, slice_thickness_PAM50,  df_metrics_PAM50,
                                                    upper_level, lower_level, compressed_levels_dict_PAM50[level])
         # Get metrics of healthy controls
-        ap_HC = average_hc(path_ref, metric, upper_level, lower_level, slices_avg)
+        ap_HC = get_mean_metric(df_avg_HC, metric, upper_level, lower_level, slices_avg)
         logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, betric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
         logger.debug('metric_a =  {}, metric_b = {}, metric_i = {}'.format(ap[0], ap[1], ap[2]))
 
