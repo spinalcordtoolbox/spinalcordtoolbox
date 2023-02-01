@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #########################################################################################
 #
-# Compute maximum spinal cord compression.
+# Compute maximum spinal cord compression using AP diameter or other morphometrics.
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
@@ -35,7 +35,9 @@ def get_parser():
                     'Fehlings MG. Acute cervical traumatic spinal cord injury: MR imaging findings correlated with '
                     'neurologic outcome--prospective study with 100 consecutive patients. Radiology 2007;243(3):820-'
                     '827.'
-        # TODO - update this description
+                    'Can be computed using AP diameter or other morphometrics (CSA, RL diameter, eccentricity and solidity).'
+                    'Morphometrics are normalized with a reference database where morphometrics from sct_process_segmentation '
+                    'are brought to PAM50 anatomical space using -normalize-PAM50.'
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
