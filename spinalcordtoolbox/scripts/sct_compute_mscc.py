@@ -58,6 +58,7 @@ def get_parser():
         help='Folder with .csv files (in PAM50 space) of HC control to use for normalization.',
         metavar=Metavar.folder,
     )
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-metric',
         required=True,
@@ -66,7 +67,6 @@ def get_parser():
         choices=['MEAN(area)', 'MEAN(diameter_RL)', 'MEAN(eccentricity)', 'MEAN(solidity)'],
         metavar=Metavar.file,
     )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-i-PAM50',
         metavar=Metavar.file,
