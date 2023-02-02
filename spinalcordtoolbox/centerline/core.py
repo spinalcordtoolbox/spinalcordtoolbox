@@ -245,8 +245,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     
     # If specified by user, adjust centerline coordinates (`Centerline.points`) and derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation
     if space != 'pix':
-        arr_ctl=np.array([x_centerline_fit, y_centerline_fit, z_ref])
-        arr_ctl_der=np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
+        arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
+        arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
         nx, ny, nz, nt, px, py, pz, pt = im_seg.change_orientation(native_orientation).dim
         # Transform centerline to physical coordinate system
         arr_ctl_phys = im_seg.transfo_pix2phys(
