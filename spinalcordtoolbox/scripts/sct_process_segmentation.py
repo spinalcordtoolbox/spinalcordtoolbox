@@ -432,10 +432,10 @@ def main(argv: Sequence[str]):
         if not levels:  # If no levels -vert were specified by user
             if verbose == 2:
                 # Get all available vertebral levels from PAM50 template to only include slices from available levels in .csv file
-                levels = get_all_vertebral_level(Image(fname_vert_level_PAM50))
+                levels = Image(fname_vert_level_PAM50).getNonZeroValues()
             else:
                 # Get all available vertebral levels to only include slices from available levels in .csv file
-                levels = get_all_vertebral_level(Image(fname_vert_level))
+                levels = Image(fname_vert_level).getNonZeroValues()
         metrics = metrics_PAM50_space  # Set metrics to the metrics in PAM50 space to use instead
         fname_vert_level = fname_vert_level_PAM50  # Set vertebral levels to PAM50
     if fname_pmj is not None:
