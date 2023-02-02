@@ -32,8 +32,9 @@ from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
 from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
 from spinalcordtoolbox.centerline.core import ParamCenterline
-from spinalcordtoolbox.image import add_suffix, splitext
+from spinalcordtoolbox.image import add_suffix, splitext, Image
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.template import get_all_vertebral_level
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
@@ -425,13 +426,17 @@ def main(argv: Sequence[str]):
                                          param_centerline=param_centerline,
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
-
     if normalize_pam50:
         fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
         metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
+        if verbose == 2:
+            # Get all available vertebral levels from PAM50 template to only include slices from available levels in .csv file
+            levels = get_all_vertebral_level(Image(fname_vert_level_PAM50))
+        else:
+            # Get all available vertebral levels to only include slices from available levels in .csv file
+            levels = get_all_vertebral_level(Image(fname_vert_level))
         metrics = metrics_PAM50_space  # Set metrics to the metrics in PAM50 space to use instead
         fname_vert_level = fname_vert_level_PAM50  # Set vertebral levels to PAM50
-
     if fname_pmj is not None:
         im_ctl, mask, slices, centerline, length_from_pmj = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
                                                                                         distance_pmj, extent_pmj,
