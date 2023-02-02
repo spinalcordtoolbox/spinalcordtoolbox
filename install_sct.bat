@@ -58,11 +58,19 @@ if exist .git\ (
   cd spinalcordtoolbox
 )
 
-rem Create and activate virtual environment to install SCT into
+rem Install portable miniconda instance. (Command source: https://github.com/conda/conda/issues/1977)
 echo:
-echo ### Using Python to create virtual environment...
-python -m venv venv_sct || goto error
-call venv_sct\Scripts\activate.bat || goto error
+echo ### Downloading Miniconda installer...
+curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
+echo:
+echo ### Installing portable copy of Miniconda...
+start /wait "" Miniconda3-latest-Windows-x86_64.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%cd%\python
+
+rem Create and activate miniconda environment to install SCT into
+echo:
+echo ### Using Conda to create virtual environment...
+python\Scripts\conda create -y -p python\envs\venv_sct python=3.8 || goto error
+CALL python\Scripts\activate.bat python\envs\venv_sct || goto error
 echo Virtual environment created and activated successfully!
 
 rem Install SCT and its requirements
