@@ -50,17 +50,3 @@ def get_vertebral_level_from_slice(im_vertlevel, idx_slice):
         logger.debug('Empty slice: z=%s (%s)', idx_slice, e)
         vert_level = None
     return vert_level
-
-
-def get_all_vertebral_level(im_vertlevel):
-    """
-    Find all available vertebral levels.
-    :return: list: List of all available vertebral levels.
-    """
-    data_vertlevel = im_vertlevel.data
-    vert_level = list(np.unique(data_vertlevel))
-    # Sort vertebral levels
-    vert_level.sort()
-    # Remove 0 value since not a level
-    vert_level.remove(0)
-    return vert_level
