@@ -72,6 +72,14 @@ def get_parser():
         help="Degree of smoothing for centerline fitting. Only for -centerline-algo {bspline, linear}."
     )
     optional.add_argument(
+        "-centerline-soft",
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Binary or soft centerline. 0 = binarized, 1 = soft"
+    )
+    optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help="File name for the centerline output file. If file extension is not provided, "
@@ -178,6 +186,10 @@ def main(argv: Sequence[str]):
     else:
         printv("ERROR: The selected method is not available: {}. Please look at the help.".format(method), type='error')
         return
+    if arguments.centerline_soft == 1:
+        param_centerline.soft = 1
+    else:
+        param_centerline.soft = 0
 
     # Extrapolate and regularize (or detect if optic) cord centerline
     im_centerline, arr_centerline, _, _ = get_centerline(im_labels,

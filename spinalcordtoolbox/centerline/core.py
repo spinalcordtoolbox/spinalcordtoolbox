@@ -175,9 +175,30 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         im_centerline.data = np.zeros(im_centerline.data.shape)
         # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
         # TODO: check this round and clip-- suspicious
-        im_centerline.data[round_and_clip(x_centerline_fit, clip=[0, im_centerline.data.shape[0]]),
-                           round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
-                           z_ref] = 1
+        # Binary
+        if param.soft == 0:
+            im_centerline.data[round_and_clip(x_centerline_fit, clip=[0, im_centerline.data.shape[0]]),
+                              round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
+                              z_ref] = 1
+        # Soft
+        else:
+            im_centerline.data[np.ceil(x_centerline_fit).astype(int),
+                               np.ceil(y_centerline_fit).astype(int),
+                               z_ref] = 0.5 * ((x_centerline_fit - x_centerline_fit.astype(int)) +
+                                               (y_centerline_fit - y_centerline_fit.astype(int)))
+            im_centerline.data[np.floor(x_centerline_fit).astype(int),
+                               np.floor(y_centerline_fit).astype(int),
+                               z_ref] = 0.5 * (1 - (x_centerline_fit - x_centerline_fit.astype(int)) +
+                                               (1 - (y_centerline_fit - y_centerline_fit.astype(int))))
+            im_centerline.data[np.floor(x_centerline_fit).astype(int),
+                               np.ceil(y_centerline_fit).astype(int),
+                               z_ref] = 0.5 * (1 - (x_centerline_fit - x_centerline_fit.astype(int)) +
+                                               (y_centerline_fit - y_centerline_fit.astype(int)))
+            im_centerline.data[np.ceil(x_centerline_fit).astype(int),
+                               np.floor(y_centerline_fit).astype(int),
+                               z_ref] = 0.5 * (x_centerline_fit - x_centerline_fit.astype(int) +
+                                               (1 - (y_centerline_fit - y_centerline_fit.astype(int))))
+
         # reorient centerline to native orientation
         im_centerline.change_orientation(native_orientation)
         im_seg.change_orientation(native_orientation)
