@@ -64,7 +64,7 @@ def get_parser():
         default="svm")
     optional.add_argument(
         "-file_centerline",
-        help='Input centerline file (to use with flag -centerline manual). Example: t2_centerline_manual.nii.gz',
+        help='Input centerline file (to use with flag -centerline file). Example: t2_centerline_manual.nii.gz',
         metavar=Metavar.str,
         required=False)
     optional.add_argument(

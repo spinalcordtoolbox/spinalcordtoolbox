@@ -22,6 +22,8 @@ install_sct () {
 }
 
 activate_venv_sct(){
+  # NB: `python/` won't be available unless `install_sct` is run, hence disabling the check:
+  # shellcheck disable=SC1091
   source python/etc/profile.d/conda.sh  # to be able to call conda
   set +u
   conda activate venv_sct
