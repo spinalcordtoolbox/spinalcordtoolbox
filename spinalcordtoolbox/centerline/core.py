@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class ParamCenterline:
     """Default parameters for centerline fitting"""
-    def __init__(self, algo_fitting='bspline', degree=5, smooth=20, contrast=None, minmax=True):
+    def __init__(self, algo_fitting='bspline', degree=5, smooth=20, soft=0, contrast=None, minmax=True):
         """
 
         :param algo_fitting: str:
@@ -32,6 +32,7 @@ class ParamCenterline:
         self.contrast = contrast
         self.degree = degree
         self.smooth = smooth
+        self.soft = soft
         self.minmax = minmax
 
 
@@ -178,8 +179,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         # Binary
         if param.soft == 0:
             im_centerline.data[round_and_clip(x_centerline_fit, clip=[0, im_centerline.data.shape[0]]),
-                              round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
-                              z_ref] = 1
+                               round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
+                               z_ref] = 1
         # Soft
         else:
             im_centerline.data[np.ceil(x_centerline_fit).astype(int),
