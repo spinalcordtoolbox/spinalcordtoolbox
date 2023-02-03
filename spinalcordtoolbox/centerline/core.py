@@ -183,19 +183,26 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
                                z_ref] = 1
         # Soft (accounting for partial volume effect)
         else:
-            # Compute integer pixel locations (all together, these form a 2x2 grid around centerline)
+            # Clip to avoid array overflow
+            # Note: '-1' here is necessary because python does matrix indexing from 0
+            x_max, y_max = im_centerline.data.shape[:2]
+            x_centerline_fit = x_centerline_fit.clip(0, x_max - 1)
+            y_centerline_fit = y_centerline_fit.clip(0, y_max - 1)
+
+            x_floor = np.floor(x_centerline_fit).astype(int)
+            y_floor = np.floor(y_centerline_fit).astype(int)
+
             x_ceil = np.ceil(x_centerline_fit).astype(int)
             y_ceil = np.ceil(y_centerline_fit).astype(int)
-            x_floor = np.floor(x_centerline_fit).astype(int)
-            y_floor = np.floor(y_centerline_fit).astype(int),
-            # Compute the difference between the centerline and its rounded values
-            x_diff = x_centerline_fit - x_centerline_fit.astype(int)
-            y_diff = y_centerline_fit - y_centerline_fit.astype(int)
-            # Assign soft segmentation values to the 2x2 grid based on the computed differences
-            im_centerline.data[x_ceil, y_ceil, z_ref] = 0.5 * (x_diff + y_diff)
-            im_centerline.data[x_ceil, y_floor, z_ref] = 0.5 * (x_diff + (1 - y_diff))
-            im_centerline.data[x_floor, y_ceil, z_ref] = 0.5 * ((1 - x_diff) + y_diff)
-            im_centerline.data[x_floor, y_floor, z_ref] = 0.5 * ((1 - x_diff) + (1 - y_diff))
+
+            x_frac = x_centerline_fit - x_floor
+            y_frac = y_centerline_fit - y_floor
+            # Note: we add ('+='), rather than assign ('=')
+            # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4026#discussion_r1096093021)
+            im_centerline.data[x_floor, y_floor, z_ref] += (1 - x_frac) * (1 - y_frac)
+            im_centerline.data[x_floor, y_ceil, z_ref] += (1 - x_frac) * y_frac
+            im_centerline.data[x_ceil, y_floor, z_ref] += x_frac * (1 - y_frac)
+            im_centerline.data[x_ceil, y_ceil, z_ref] += x_frac * y_frac
 
         # reorient centerline to native orientation
         im_centerline.change_orientation(native_orientation)
