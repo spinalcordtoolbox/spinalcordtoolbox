@@ -105,7 +105,7 @@ def test_sct_process_segmentation_check_normalize_PAM50(tmp_path):
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         rows = list(reader)
-        row = rows[827]
+        row = rows[26]
         assert row['Slice (I->S)'] == '827'
         assert float(row['MEAN(area)']) == pytest.approx(71.96880493869594)
         assert row['VertLevel'] == '5'
