@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class ParamCenterline:
     """Default parameters for centerline fitting"""
-    def __init__(self, algo_fitting='bspline', degree=5, smooth=20, soft=0, contrast=None, minmax=True):
+    def __init__(self, algo_fitting='bspline', degree=5, smooth=20, contrast=None, minmax=True, soft=0):
         """
 
         :param algo_fitting: str:
@@ -27,6 +27,7 @@ class ParamCenterline:
         :param contrast: Contrast type for algo_fitting=optic.
         :param minmax: Crop output centerline where the segmentation starts/end. If False, centerline will span all\
           slices to the size of a Hanning window (in mm).
+        :param soft: Binary or soft centerline. Only relevant with algo_fitting polyfit, bspline, linear, nurbs.
         """
         self.algo_fitting = algo_fitting
         self.contrast = contrast
