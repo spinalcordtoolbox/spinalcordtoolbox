@@ -161,7 +161,8 @@ def main(argv: Sequence[str]):
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
-        minmax=True)
+        minmax=True,
+        soft=arguments.centerline_soft)
 
     # Output folder
     if arguments.o is not None:
@@ -186,8 +187,6 @@ def main(argv: Sequence[str]):
     else:
         printv("ERROR: The selected method is not available: {}. Please look at the help.".format(method), type='error')
         return
-    # Binarized or soft centerline
-    param_centerline.soft = arguments.centerline_soft
 
     # Extrapolate and regularize (or detect if optic) cord centerline
     im_centerline, arr_centerline, _, _ = get_centerline(im_labels,
