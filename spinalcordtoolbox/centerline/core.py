@@ -183,22 +183,19 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
                                z_ref] = 1
         # Soft (accounting for partial volume effect)
         else:
-            im_centerline.data[np.ceil(x_centerline_fit).astype(int),
-                               np.ceil(y_centerline_fit).astype(int),
-                               z_ref] = 0.5 * ((x_centerline_fit - x_centerline_fit.astype(int)) +
-                                               (y_centerline_fit - y_centerline_fit.astype(int)))
-            im_centerline.data[np.floor(x_centerline_fit).astype(int),
-                               np.floor(y_centerline_fit).astype(int),
-                               z_ref] = 0.5 * (1 - (x_centerline_fit - x_centerline_fit.astype(int)) +
-                                               (1 - (y_centerline_fit - y_centerline_fit.astype(int))))
-            im_centerline.data[np.floor(x_centerline_fit).astype(int),
-                               np.ceil(y_centerline_fit).astype(int),
-                               z_ref] = 0.5 * (1 - (x_centerline_fit - x_centerline_fit.astype(int)) +
-                                               (y_centerline_fit - y_centerline_fit.astype(int)))
-            im_centerline.data[np.ceil(x_centerline_fit).astype(int),
-                               np.floor(y_centerline_fit).astype(int),
-                               z_ref] = 0.5 * (x_centerline_fit - x_centerline_fit.astype(int) +
-                                               (1 - (y_centerline_fit - y_centerline_fit.astype(int))))
+            # Compute integer pixel locations (all together, these form a 2x2 grid around centerline)
+            x_ceil = np.ceil(x_centerline_fit).astype(int)
+            y_ceil = np.ceil(y_centerline_fit).astype(int)
+            x_floor = np.floor(x_centerline_fit).astype(int)
+            y_floor = np.floor(y_centerline_fit).astype(int),
+            # Compute the difference between the centerline and its rounded values
+            x_diff = x_centerline_fit - x_centerline_fit.astype(int)
+            y_diff = y_centerline_fit - y_centerline_fit.astype(int)
+            # Assign soft segmentation values to the 2x2 grid based on the computed differences
+            im_centerline.data[x_ceil, y_ceil, z_ref] = 0.5 * (x_diff + y_diff)
+            im_centerline.data[x_ceil, y_floor, z_ref] = 0.5 * (x_diff + (1 - y_diff))
+            im_centerline.data[x_floor, y_ceil, z_ref] = 0.5 * ((1 - x_diff) + y_diff)
+            im_centerline.data[x_floor, y_floor, z_ref] = 0.5 * ((1 - x_diff) + (1 - y_diff))
 
         # reorient centerline to native orientation
         im_centerline.change_orientation(native_orientation)
