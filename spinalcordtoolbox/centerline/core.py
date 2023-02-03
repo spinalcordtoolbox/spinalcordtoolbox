@@ -239,25 +239,17 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
                      else "centerline.nii.gz")
         im_centerline.save(os.path.join(tmp_folder, fname_ctr), mutable=True)
 
-    # Obtain centerline coordinates (`Centerline.points`) and derivatives (`Centerline.derivatives`) in voxel ("pix") space and RPI orientation
-    arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
-    arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
-
-    # If specified, adjust centerline coordinates (`Centerline.points`) and derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation
+    # If specified by user, adjust centerline coordinates (`Centerline.points`) and derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation
     if space != 'pix':
+        # Transform centerline to physical coordinate system
+        arr_ctl = im_seg.transfo_pix2phys([[x_centerline_fit[i], y_centerline_fit[i], z_ref[i]]
+                                           for i in range(len(x_centerline_fit))]).T
+        # Adjust derivatives with pixel size
+        nx, ny, nz, nt, px, py, pz, pt = im_seg.change_orientation(native_orientation).dim
+        arr_ctl_der = np.array([x_centerline_deriv * px, y_centerline_deriv * py, np.ones_like(z_ref) * pz])
+    else:
         arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
         arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
-        nx, ny, nz, nt, px, py, pz, pt = im_seg.change_orientation(native_orientation).dim
-        # Transform centerline to physical coordinate system
-        arr_ctl_phys = im_seg.transfo_pix2phys(
-            [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
-        x_centerline, y_centerline, z_centerline = arr_ctl_phys[:, 0], arr_ctl_phys[:, 1], arr_ctl_phys[:, 2]
-        # Adjust derivatives with pixel size
-        x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der[0][:] * px, \
-            arr_ctl_der[1][:] * py, \
-            arr_ctl_der[2][:] * pz
-        arr_ctl = np.array([x_centerline, y_centerline, z_centerline])
-        arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, z_centerline_deriv])
 
     return (im_centerline,
             arr_ctl,
