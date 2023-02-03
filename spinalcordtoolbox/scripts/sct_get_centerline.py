@@ -77,7 +77,7 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Binary or soft centerline. 0 = binarized, 1 = soft"
+        help="Binary or soft centerline. 0 = binarized, 1 = soft. Only relevant with -method fitseg."
     )
     optional.add_argument(
         "-o",
