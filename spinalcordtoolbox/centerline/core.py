@@ -175,14 +175,13 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         # Create an image with the centerline
         im_centerline = im_seg.copy()
         im_centerline.data = np.zeros(im_centerline.data.shape)
-        # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
-        # TODO: check this round and clip-- suspicious
-        # Binary
+        # Binarized
         if param.soft == 0:
+            # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
             im_centerline.data[round_and_clip(x_centerline_fit, clip=[0, im_centerline.data.shape[0]]),
                                round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
                                z_ref] = 1
-        # Soft
+        # Soft (accounting for partial volume effect)
         else:
             im_centerline.data[np.ceil(x_centerline_fit).astype(int),
                                np.ceil(y_centerline_fit).astype(int),
