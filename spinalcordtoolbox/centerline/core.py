@@ -239,7 +239,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
                      else "centerline.nii.gz")
         im_centerline.save(os.path.join(tmp_folder, fname_ctr), mutable=True)
 
-    # If specified by user, adjust centerline coordinates (`Centerline.points`) and derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation
+    # If specified, adjust centerline coordinates (`Centerline.points`) and derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation
     if space != 'pix':
         # Transform centerline to physical coordinate system
         arr_ctl = im_seg.transfo_pix2phys([[x_centerline_fit[i], y_centerline_fit[i], z_ref[i]]
