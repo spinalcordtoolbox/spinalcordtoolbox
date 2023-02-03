@@ -62,7 +62,7 @@ def get_parser():
         "-centerline-algo",
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
-        help="Algorithm for centerline fitting. Only relevant with -method fitseg"
+        help="Algorithm for centerline fitting. Only relevant with -method fitseg."
     )
     optional.add_argument(
         "-centerline-smooth",
