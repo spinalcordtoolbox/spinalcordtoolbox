@@ -203,6 +203,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             im_centerline.data[x_floor, y_ceil, z_ref] += (1 - x_frac) * y_frac
             im_centerline.data[x_ceil, y_floor, z_ref] += x_frac * (1 - y_frac)
             im_centerline.data[x_ceil, y_ceil, z_ref] += x_frac * y_frac
+            # You can check if the sum of the voxels is equal to 1 with:
+            # np.apply_over_axes(np.sum, im_centerline.data, [0, 1]).flatten()
 
         # reorient centerline to native orientation
         im_centerline.change_orientation(native_orientation)
