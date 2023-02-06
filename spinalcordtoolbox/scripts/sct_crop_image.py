@@ -12,7 +12,7 @@ from typing import Sequence
 
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, list_type
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 
 
@@ -30,6 +30,9 @@ def get_parser():
                "- To crop an image by specifying min/max (you don't need to specify all dimensions). In the example "
                "below, cropping will occur between x=5 and x=60, and between z=5 and z=zmax-1\n"
                "sct_crop_image -i t2.nii.gz -xmin 5 -xmax 60 -zmin 5 -zmax -2\n\n"
+               "- To crop an image using a binary mask, and keep a margin of 5 voxels on each side in the x and y "
+               "directions only:\n"
+               "sct_crop_image -i t2.nii.gz -m mask.nii.gz -dilate 5x5x0\n\n"
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -51,6 +54,15 @@ def get_parser():
         help="Output image. By default, the suffix '_crop' will be added to the input image.",
         metavar=Metavar.str,
     )
+    optional.add_argument(
+        '-dilate',
+        type=list_type('x', int),
+        help="Number of extra voxels to keep around the bounding box on each side. Can be specified as a single "
+             "number (for example, '-dilate 5' to keep a margin of 5 voxels in each direction) or a list of 3 "
+             "numbers separated by 'x' (for example, '-dilate 2x3x0' to keep a margin of 2 voxels on each side in "
+             "the x-axis, 3 voxels on each side in the y-axis, and no extra margin in the z-axis).",
+        default="0",
+    ),
     optional.add_argument(
         '-g',
         type=int,
@@ -144,6 +156,15 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
+    dilate = arguments.dilate
+    if len(dilate) == 1:
+        dilate *= 3
+    if len(dilate) != 3:
+        parser.error(
+            f"Option '-dilate' expected either 1 or 3 numbers, but got "
+            f"{len(dilate)} numbers: {'x'.join(str(d) for d in dilate)}."
+        )
+
     # initialize ImageCropper
     cropper = ImageCropper(Image(arguments.i))
     cropper.verbose = verbose
@@ -162,7 +183,7 @@ def main(argv: Sequence[str]):
             arguments.zmin, arguments.zmax)
 
     # Crop image
-    img_crop = cropper.crop(background=arguments.b)
+    img_crop = cropper.crop(background=arguments.b, dilate=dilate)
 
     # Write cropped image to file
     if arguments.o is None:
