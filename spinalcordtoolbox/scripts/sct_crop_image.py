@@ -12,7 +12,8 @@ from typing import Sequence
 
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 
 
 def get_parser():
