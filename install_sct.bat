@@ -94,7 +94,7 @@ FOR %%D IN (PAM50 optic_models pmj_models deepseg_sc_models deepseg_gm_models de
 rem Copying SCT scripts to an isolated folder (so we can add scripts to the PATH without adding the entire venv_sct)
 echo:
 echo ### Copying SCT's CLI scripts to %CD%\bin\
-xcopy %CD%\venv_sct\Scripts\*sct*.* %CD%\bin\ /v /y /q /i || goto error
+xcopy %CD%\python\envs\venv_sct\Scripts\*sct*.* %CD%\bin\ /v /y /q /i || goto error
 
 rem Give further instructions that the user add the Scripts directory to their PATH
 echo:
