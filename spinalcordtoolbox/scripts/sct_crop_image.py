@@ -62,6 +62,7 @@ def get_parser():
              "numbers separated by 'x' (for example, '-dilate 2x3x0' to keep a margin of 2 voxels on each side in "
              "the x-axis, 3 voxels on each side in the y-axis, and no extra margin in the z-axis).",
         default="0",
+        metavar=Metavar.list,
     ),
     optional.add_argument(
         '-g',
