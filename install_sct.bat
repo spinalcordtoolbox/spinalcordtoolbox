@@ -121,6 +121,6 @@ echo Failed with error #%cached_errorlevel%.
 if "%cached_errorlevel%"=="" set cached_errorlevel=0
 popd
 where deactivate >nul 2>&1
-if %errorlevel% EQU 0 call deactivate
+if %errorlevel% EQU 0 call conda deactivate
 PAUSE
 exit /b %cached_errorlevel%
