@@ -1,9 +1,9 @@
-name: Python Linting
+name: Check code quality
 
 on: [pull_request]
 
 jobs:
-  lint_job:
+  run_flake8_and_shellcheck:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -16,7 +16,11 @@ jobs:
     - name: Install dependencies
       run: pip install 'flake8<6.0.0'
     # Note: flake8 picks up project-wide configuration options from 'setup.cfg' in SCT's root directory
-    - name: Lint with flake8
+    - name: Lint Python files with flake8
       # NB: 'master...branch' is syntactic sugar for 'git diff `git merge-base master branch`..branch'
       # NB: You can exclude the second ref ('branch') and git diff will take the currently checked-out ref
       run: git diff origin/master... | flake8 --diff
+    - name: Check shell scripts with shellcheck
+      uses: ludeeus/action-shellcheck@master
+      with:
+        severity: style
