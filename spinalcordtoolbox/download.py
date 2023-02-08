@@ -32,8 +32,8 @@ DATASET_DICT = {
     },
     "sct_testing_data": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20210330230310/sct_testing_data-r20210330230310.zip",
-            "https://osf.io/download/60629509229503022e6f107d/",
+            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20230207/sct_testing_data-r20230207.zip",
+            "https://osf.io/5twvs/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_testing_data"),
     },
