@@ -174,7 +174,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         im_centerline = im_seg.copy()
         im_centerline.data = np.zeros(im_centerline.data.shape)
         # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
-        # TODO: check this round and clip-- suspicious
         im_centerline.data[np.clip(x_centerline_fit.round().astype(int), 0, im_centerline.data.shape[0] - 1),
                            np.clip(y_centerline_fit.round().astype(int), 0, im_centerline.data.shape[1] - 1),
                            z_ref] = 1

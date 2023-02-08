@@ -165,8 +165,3 @@ def test_get_centerline_optic(params):
         im, ParamCenterline(algo_fitting='optic', contrast=params['contrast'], minmax=False), verbose=VERBOSE)
     # Compare with ground truth centerline
     assert np.all(im_centerline.data == Image(params['fname_centerline-optic']).data)
-
-
-def test_round_and_clip():
-    arr = np.clip(np.array([-0.2, 3.00001, 2.99999, 49]).round().astype(int), 0, 41 - 1)
-    assert np.all(arr == np.array([0,  3,  3, 40]))  # Check element-wise equality between the two arrays
