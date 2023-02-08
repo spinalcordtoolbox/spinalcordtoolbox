@@ -5,14 +5,14 @@ import os
 import sys
 import pytest
 import numpy as np
-import nibabel
+# import nibabel
 
-import spinalcordtoolbox as sct
+# import spinalcordtoolbox as sct
 from spinalcordtoolbox import __sct_dir__
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.testing.create_test_data import dummy_centerline
-import spinalcordtoolbox.math
+# import spinalcordtoolbox.math
 from spinalcordtoolbox.utils import sct_test_path, init_sct, set_loglevel
 
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
