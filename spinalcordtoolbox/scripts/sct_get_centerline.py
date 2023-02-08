@@ -212,6 +212,7 @@ def main(argv: Sequence[str]):
     cm_ctl = 'red-yellow' if arguments.centerline_soft else 'red'
     display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', cm_ctl], opacities=['', '0.7'], verbose=verbose)
 
+
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
