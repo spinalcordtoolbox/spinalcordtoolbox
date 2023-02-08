@@ -9,7 +9,7 @@ import nibabel
 
 import spinalcordtoolbox as sct
 from spinalcordtoolbox import __sct_dir__
-from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord, round_and_clip
+from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 import spinalcordtoolbox.math
@@ -168,5 +168,5 @@ def test_get_centerline_optic(params):
 
 
 def test_round_and_clip():
-    arr = round_and_clip(np.array([-0.2, 3.00001, 2.99999, 49]), clip=[0, 41])
+    arr = np.clip(np.array([-0.2, 3.00001, 2.99999, 49]).round().astype(int), 0, 41 - 1)
     assert np.all(arr == np.array([0,  3,  3, 40]))  # Check element-wise equality between the two arrays
