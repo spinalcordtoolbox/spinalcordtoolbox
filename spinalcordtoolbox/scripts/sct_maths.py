@@ -363,7 +363,7 @@ def main(argv: Sequence[str]):
 
     elif arguments.mul is not None:
         if data.ndim == 4 and len(arguments.mul) == 0:
-            data_to_mul = data  # Special case for summing 3D volumes within a single 4D image (i.e. "-add" by itself)
+            data_to_mul = data  # Special case for multiplying 3D volumes within a single 4D image (i.e. "-mul" by itself)
         else:
             data_to_mul = sct_math.concatenate_along_last_dimension([data] + arguments.mul)
         data_out = np.prod(data_to_mul, axis=-1)
