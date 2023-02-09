@@ -6,6 +6,7 @@ import nibabel
 import csv
 
 from spinalcordtoolbox.scripts import sct_process_segmentation
+from spinalcordtoolbox.utils import sct_test_path
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,38 @@ def test_sct_process_segmentation_check_normalize_missing_predictor(dummy_3d_mas
     with pytest.raises(SystemExit) as e:
         sct_process_segmentation.main(argv=['-i', dummy_3d_mask_nib, '-normalize',
                                             'sex', '0', 'thalamus-volume', '13942.0', '-o', filename])
+        assert e.value.code == 2
+
+
+def test_sct_process_segmentation_check_normalize_PAM50(tmp_path):
+    """ Run sct_process_segmentation with -normalize PAM50"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
+                                        '-perslice', '1', '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'), '-o', filename])
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        rows = list(reader)
+        row = rows[26]
+        assert row['Slice (I->S)'] == '827'
+        assert float(row['MEAN(area)']) == pytest.approx(71.96880493869594)
+        assert row['VertLevel'] == '5'
+
+
+def test_sct_process_segmentation_check_normalize_PAM50_missing_perslice(tmp_path):
+    """ Run sct_process_segmentation with -normalize PAM50 when missing perslice argument"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    with pytest.raises(SystemExit) as e:
+        sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
+                                            '-vertfile', sct_test_path('t2', 't2_seg-manual_labeled.nii.gz'), '-o', filename])
+        assert e.value.code == 2
+
+
+def test_sct_process_segmentation_check_normalize_PAM50_missing_vertfile(tmp_path):
+    """ Run sct_process_segmentation with -normalize PAM50 when missing -vertfile"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    with pytest.raises(FileNotFoundError) as e:
+        sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
+                                            '-perslice', '1', '-o', filename])
         assert e.value.code == 2
 
 
