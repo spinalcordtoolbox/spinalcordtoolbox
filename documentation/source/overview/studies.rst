@@ -26,6 +26,7 @@ The following studies have used SCT:
 2023
 ----
 
+-  Martín-Noguerol *et al.* `The role of Artificial intelligence in the assessment of the spine and spinal cord <https://doi.org/10.1016/j.ejrad.2023.110726>`_, **Eur. J. Radiol.**, 2023
 -  Chu *et al.* `Improving T2*-weighted human cortico-spinal acquisitions with a dedicated algorithm for region-wise shimming <https://doi.org/10.1016/j.neuroimage.2023.119868>`_, **Neuroimage**, 2023
 -  Schilling *et al.* `Denoising of diffusion MRI in the cervical spinal cord – effects of denoising strategy and acquisition on intra-cord contrast, signal modeling, and feature conspicuity <https://doi.org/10.1016/j.neuroimage.2022.119826>`_, **Neuroimage**, 2023
 
