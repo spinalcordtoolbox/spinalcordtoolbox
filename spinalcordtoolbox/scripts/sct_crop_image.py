@@ -62,7 +62,6 @@ def get_parser():
              "  - '-dilate 5' will add a margin of 5 voxels in each direction\n"
              "  - '-dilate 2x3x0' will add margin of 2 voxels on each side in the x-axis, 3 voxels on each side in the y-axis, "
              "and no extra margin in the z-axis.",
-        default="0",
         metavar=Metavar.list,
     ),
     optional.add_argument(
@@ -159,13 +158,16 @@ def main(argv: Sequence[str]):
     set_loglevel(verbose=verbose)
 
     dilate = arguments.dilate
-    if len(dilate) == 1:
-        dilate *= 3
-    if len(dilate) != 3:
-        parser.error(
-            f"Option '-dilate' expected either 1 or 3 numbers, but got "
-            f"{len(dilate)} numbers: {'x'.join(str(d) for d in dilate)}."
-        )
+    if dilate is not None:
+        if len(dilate) == 1:
+            dilate *= 3
+        elif len(dilate) == 3:
+            pass  # use dilate as-is
+        else:
+            parser.error(
+                f"Option '-dilate' expected either 1 or 3 numbers, but got "
+                f"{len(dilate)} numbers: {'x'.join(str(d) for d in dilate)}."
+            )
 
     # initialize ImageCropper
     cropper = ImageCropper(Image(arguments.i))
