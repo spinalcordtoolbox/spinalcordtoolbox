@@ -98,6 +98,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     """
     if not isinstance(im_seg, Image):
         raise ValueError("Expecting an image")
+    if space not in ['pix', 'phys']:
+        raise ValueError(f"'space' parameter must be either 'pix' or 'phys', but '{space}' was passed instead.")
 
     # Open image and change to RPI orientation
     native_orientation = im_seg.orientation
