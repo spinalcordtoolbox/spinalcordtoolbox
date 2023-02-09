@@ -58,9 +58,10 @@ def get_parser():
         '-dilate',
         type=list_type('x', int),
         help="Number of extra voxels to keep around the bounding box on each side. Can be specified as a single "
-             "number (for example, '-dilate 5' to keep a margin of 5 voxels in each direction) or a list of 3 "
-             "numbers separated by 'x' (for example, '-dilate 2x3x0' to keep a margin of 2 voxels on each side in "
-             "the x-axis, 3 voxels on each side in the y-axis, and no extra margin in the z-axis).",
+             "number, or a list of 3 numbers separated by 'x'. For example:\n"
+             "  - '-dilate 5' will add a margin of 5 voxels in each direction\n"
+             "  - '-dilate 2x3x0' will add margin of 2 voxels on each side in the x-axis, 3 voxels on each side in the y-axis, "
+             "and no extra margin in the z-axis.",
         default="0",
         metavar=Metavar.list,
     ),
