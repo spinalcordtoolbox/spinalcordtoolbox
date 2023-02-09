@@ -426,7 +426,8 @@ class AnalyzeLeion:
         data_seg = im_seg.data
 
         # fit centerline, smooth it and return the first derivative (in physical space)
-        _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
+        _, centerline, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
+        arr_ctl_der = centerline.arr_ctl_der
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
 
         self.angles = np.full_like(np.empty(nz), np.nan, dtype=np.double)

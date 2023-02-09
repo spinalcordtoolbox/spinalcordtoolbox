@@ -370,7 +370,8 @@ def continuous_vertebral_levels(img: Image) -> Image:
     #   a. extract centerline
     #   b. for each slice, extract corresponding level
     nx, ny, nz, nt, px, py, pz, pt = img.dim
-    _, arr_ctl, _, _ = get_centerline(img, param=ParamCenterline())
+    _, centerline, _ = get_centerline(img, param=ParamCenterline())
+    arr_ctl = centerline.arr_ctl
     x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
 
     value_centerline = np.array(
