@@ -47,9 +47,9 @@ class ImageCropper(object):
 
         if dilate is not None:
             bbox = BoundingBox(
-                max(bbox.xmin - dilate[0], 0), min(bbox.xmax + dilate[0], self.img_in.dim[0] - 1),
-                max(bbox.ymin - dilate[1], 0), min(bbox.ymax + dilate[1], self.img_in.dim[1] - 1),
-                max(bbox.zmin - dilate[2], 0), min(bbox.zmax + dilate[2], self.img_in.dim[2] - 1),
+                xmin=max(bbox.xmin-dilate[0], 0), xmax=min(bbox.xmax+dilate[0], self.img_in.dim[0]-1),
+                ymin=max(bbox.ymin-dilate[1], 0), ymax=min(bbox.ymax+dilate[1], self.img_in.dim[1]-1),
+                zmin=max(bbox.zmin-dilate[2], 0), zmax=min(bbox.zmax+dilate[2], self.img_in.dim[2]-1),
             )
 
         logger.info("Bounding box: x=[{}, {}], y=[{}, {}], z=[{}, {}]"
