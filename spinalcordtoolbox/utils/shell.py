@@ -40,13 +40,14 @@ def display_open(file, message="Done! To view results"):
 SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
 
 
-def display_viewer_syntax(files, verbose, colormaps=[], minmax=[], opacities=[], mode=''):
+def display_viewer_syntax(files, verbose, colormaps=[], im_types=[], minmax=[], opacities=[], mode=''):
     """
     Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
     Parameters
     ----------
     files [list:string]: list of NIFTI file names
     colormaps [list:string]: list of colormaps associated with each file. Available colour maps: see dict_fsleyes
+    im_types [list:string]: list of image type associated with each file. Available types: see IMTYPE_COLORMAPS
     minmax [list:string]: list of min,max brightness scale associated with each file. Separate with comma.
     opacities [list:string]: list of opacity associated with each file. Between 0 and 1.
 
@@ -58,6 +59,7 @@ def display_viewer_syntax(files, verbose, colormaps=[], minmax=[], opacities=[],
     -------
     display_viewer_syntax([file1, file2, file3])
     display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
+    display_viewer_syntax([file1, file2], im_types=['seg', 'softseg'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
     available_viewers = [viewer for viewer in SUPPORTED_VIEWERS if check_exe(viewer)]
 
@@ -72,11 +74,11 @@ def display_viewer_syntax(files, verbose, colormaps=[], minmax=[], opacities=[],
     cmd_strings = {}
     for viewer in available_viewers:
         if viewer in ['fslview', 'fslview_deprecated']:
-            cmd = _construct_fslview_syntax(viewer, files, colormaps, minmax, opacities, mode)
+            cmd = _construct_fslview_syntax(viewer, files, colormaps, im_types, minmax, opacities, mode)
         elif viewer in ['fsleyes']:
-            cmd = _construct_fsleyes_syntax(viewer, files, colormaps, minmax, opacities)
+            cmd = _construct_fsleyes_syntax(viewer, files, colormaps, im_types, minmax, opacities)
         elif viewer in ['itksnap', 'itk-snap']:
-            cmd = _construct_itksnap_syntax(viewer, files, colormaps)
+            cmd = _construct_itksnap_syntax(viewer, files, colormaps, im_types,)
         else:
             cmd = ""  # This should never be reached, because SUPPORTED_VIEWERS should match the 'if' cases exactly
         cmd_strings[viewer] = cmd
@@ -87,9 +89,15 @@ def display_viewer_syntax(files, verbose, colormaps=[], minmax=[], opacities=[],
     return cmd_strings
 
 
-def _construct_fslview_syntax(viewer, files, colormaps, minmax, opacities, mode):
+def _construct_fslview_syntax(viewer, files, colormaps, im_types, minmax, opacities, mode):
     dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
                     'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
+    imtypes_colormap = {
+    'anat':    {'fsleyes': 'greyscale' ,  'fslview': 'Greyscale'},
+    'seg':     {'fsleyes': 'red',         'fslview': 'Red'},
+    'softseg': {'fsleyes': 'red-yellow',  'fslview': 'Red-Yellow'},
+    'labels':  {'fsleyes': 'subcortical', 'fslview': 'MGH-Subcortical'},
+    }
 
     cmd = viewer
     # add mode (only supported by fslview for the moment)
@@ -100,6 +108,9 @@ def _construct_fslview_syntax(viewer, files, colormaps, minmax, opacities, mode)
         if colormaps:
             if colormaps[i]:
                 cmd += ' -l ' + dict_fslview[colormaps[i]]
+        elif im_types:
+            if im_types[i]:
+                cmd += ' -l ' + imtypes_colormap[im_types[i]]['fslview']
         if minmax:
             if minmax[i]:
                 cmd += ' -b ' + minmax[i]  # a,b
@@ -111,9 +122,15 @@ def _construct_fslview_syntax(viewer, files, colormaps, minmax, opacities, mode)
     return cmd
 
 
-def _construct_fsleyes_syntax(viewer, files, colormaps, minmax, opacities):
+def _construct_fsleyes_syntax(viewer, files, colormaps, im_types, minmax, opacities):
     dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
                     'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
+    imtypes_colormap = {
+    'anat':    {'fsleyes': 'greyscale' ,  'fslview': 'Greyscale'},
+    'seg':     {'fsleyes': 'red',         'fslview': 'Red'},
+    'softseg': {'fsleyes': 'red-yellow',  'fslview': 'Red-Yellow'},
+    'labels':  {'fsleyes': 'subcortical', 'fslview': 'MGH-Subcortical'},
+    }
 
     cmd = viewer
     for i in range(len(files)):
@@ -121,6 +138,9 @@ def _construct_fsleyes_syntax(viewer, files, colormaps, minmax, opacities):
         if colormaps:
             if colormaps[i]:
                 cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
+        elif im_types:
+            if im_types[i]:
+                cmd += ' -l ' + imtypes_colormap[im_types[i]]['fsleyes']
         if minmax:
             if minmax[i]:
                 cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
@@ -132,7 +152,7 @@ def _construct_fsleyes_syntax(viewer, files, colormaps, minmax, opacities):
     return cmd
 
 
-def _construct_itksnap_syntax(viewer, files, colormaps):
+def _construct_itksnap_syntax(viewer, files, colormaps, im_types):
     cmd = viewer
     overlay_files = []
     for i in range(len(files)):
@@ -151,7 +171,8 @@ def _construct_itksnap_syntax(viewer, files, colormaps):
             # - TODO: This assumption is somewhat brittle, and could break if a colormap is used for a
             #   non-segmentation segmentation file. But, the alternative would be a much bigger rewrite of the
             #   display_viewer_syntax function.
-            if colormaps and colormaps[i] != "gray":
+            # - Image types including the string:'seg' will be characterized as segmentations
+            if colormaps and colormaps[i] != "gray" or im_types and 'seg' in im_types[i]:
                 cmd += ' -s ' + files[i]
             # All extra non-segmentation files have to be passed together to the '-o' (overlay) option
             else:
