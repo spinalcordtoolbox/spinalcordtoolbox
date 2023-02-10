@@ -140,7 +140,7 @@ def _construct_fsleyes_syntax(viewer, files, colormaps, im_types, minmax, opacit
                 cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
         elif im_types:
             if im_types[i]:
-                cmd += ' -l ' + imtypes_colormap[im_types[i]]['fsleyes']
+                cmd += ' -cm ' + imtypes_colormap[im_types[i]]['fsleyes']
         if minmax:
             if minmax[i]:
                 cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
