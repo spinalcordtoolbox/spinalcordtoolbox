@@ -881,7 +881,11 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                         pca_eigenratio = pca_src[iz].explained_variance_ratio_
                         plt.title('src')
                     elif isub == 222:
-                        plt.scatter([coord_src_rot[i, 0] for i in range(len(coord_src_rot))], [coord_src_rot[i, 1] for i in range(len(coord_src_rot))], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
+                        plt.scatter(
+                            [coord_src_rot[i, 0] for i in range(len(coord_src_rot))],
+                            [coord_src_rot[i, 1] for i in range(len(coord_src_rot))],
+                            s=5, marker='o', zorder=10, color='steelblue', alpha=0.5,
+                        )
                         pcaaxis = pca_dest[iz].components_.T
                         pca_eigenratio = pca_dest[iz].explained_variance_ratio_
                         plt.title('src_rot')
@@ -892,7 +896,11 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                         pca_eigenratio = pca_dest[iz].explained_variance_ratio_
                         plt.title('dest')
                     elif isub == 224:
-                        plt.scatter([coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))], [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))], s=5, marker='o', zorder=10, color='red', alpha=0.5)
+                        plt.scatter(
+                            [coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))],
+                            [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))],
+                            s=5, marker='o', zorder=10, color='red', alpha=0.5,
+                        )
                         pcaaxis = pca_src[iz].components_.T
                         pca_eigenratio = pca_src[iz].explained_variance_ratio_
                         plt.title('dest_rot')
@@ -1273,8 +1281,9 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         cmd = [
             'isct_antsRegistration',
             '--dimensionality', '2',
-            '--transform', paramreg.algo + '[' + str(paramreg.gradStep) + ants_registration_params[paramreg.algo.lower()] + ']',
-            '--metric', paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + ']',  # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+            '--transform', f'{paramreg.algo}[{paramreg.gradStep}{ants_registration_params[paramreg.algo.lower()]}]',
+            # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+            '--metric', f'{paramreg.metric}[dest_Z{num}.nii,src_Z{num}.nii,1,{metricSize}]',
             '--convergence', str(paramreg.iter),
             '--shrink-factors', str(paramreg.shrink),
             '--smoothing-sigmas', str(paramreg.smooth) + 'mm',

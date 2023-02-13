@@ -115,7 +115,10 @@ def get_parser():
             "intervertebral disc between the subject and the template, as described in "
             "sct_straighten_spinalcord. This the most accurate method, however it has some serious caveats: \n"
             "  - This feature is not compatible with the parameter '-ref subject', where only a rigid registration is performed.\n"
-            "  - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the top label and below the bottom label. Applying this warping field will result in a strange-looking registered image that has the same value above the top label and below the bottom label. But if you are not interested in these regions, you do not need to worry about it.\n"
+            "  - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the "
+            "top label and below the bottom label. Applying this warping field will result in a strange-looking "
+            "registered image that has the same value above the top label and below the bottom label. But if you are "
+            "not interested in these regions, you do not need to worry about it.\n"
             "\n"
             "We recommend starting with 2 labels, then trying the other "
             "options on a case-by-case basis depending on your data.\n"
@@ -626,7 +629,14 @@ def main(argv: Sequence[str]):
             printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
 
             dimensionality = len(Image("template.nii").hdr.get_data_shape())
-            cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_curve2straightAffine.nii.gz', '-R', 'template.nii', 'straight2templateAffine.txt', 'warp_curve2straight.nii.gz']
+            cmd = [
+                'isct_ComposeMultiTransform',
+                str(dimensionality),
+                'warp_curve2straightAffine.nii.gz',
+                '-R', 'template.nii',
+                'straight2templateAffine.txt',
+                'warp_curve2straight.nii.gz',
+            ]
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
@@ -731,7 +741,15 @@ def main(argv: Sequence[str]):
 
         else:
             dimensionality = len(Image("data.nii").hdr.get_data_shape())
-            cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_template2anat.nii.gz', '-R', 'data.nii', 'warp_straight2curve.nii.gz', '-i', 'straight2templateAffine.txt', warp_inverse]
+            cmd = [
+                'isct_ComposeMultiTransform',
+                str(dimensionality),
+                'warp_template2anat.nii.gz',
+                '-R', 'data.nii',
+                'warp_straight2curve.nii.gz',
+                '-i', 'straight2templateAffine.txt',
+                warp_inverse,
+            ]
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")

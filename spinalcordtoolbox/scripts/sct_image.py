@@ -147,7 +147,14 @@ def get_parser():
     orientation.add_argument(
         '-setorient',
         help='Set orientation of the input image (modifies BOTH the header and data array, similar to `fslswapdim`).',
-        choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
+        choices=[
+            'RIP', 'LIP', 'RSP', 'LSP', 'RIA', 'LIA', 'RSA', 'LSA',
+            'IRP', 'ILP', 'SRP', 'SLP', 'IRA', 'ILA', 'SRA', 'SLA',
+            'RPI', 'LPI', 'RAI', 'LAI', 'RPS', 'LPS', 'RAS', 'LAS',
+            'PRI', 'PLI', 'ARI', 'ALI', 'PRS', 'PLS', 'ARS', 'ALS',
+            'IPR', 'SPR', 'IAR', 'SAR', 'IPL', 'SPL', 'IAL', 'SAL',
+            'PIR', 'PSR', 'AIR', 'ASR', 'PIL', 'PSL', 'AIL', 'ASL',
+        ],
         required=False)
     orientation.add_argument(
         '-setorient-data',
@@ -159,7 +166,14 @@ def get_parser():
              'not modified.\n'
              'WARNING: Use with care, as improper usage may introduce a mismatch between orientation of the header, '
              'and the orientation of the data array.\n',
-        choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
+        choices=[
+            'RIP', 'LIP', 'RSP', 'LSP', 'RIA', 'LIA', 'RSA', 'LSA',
+            'IRP', 'ILP', 'SRP', 'SLP', 'IRA', 'ILA', 'SRA', 'SLA',
+            'RPI', 'LPI', 'RAI', 'LAI', 'RPS', 'LPS', 'RAS', 'LAS',
+            'PRI', 'PLI', 'ARI', 'ALI', 'PRS', 'PLS', 'ARS', 'ALS',
+            'IPR', 'SPR', 'IAR', 'SAR', 'IPL', 'SPL', 'IAL', 'SAL',
+            'PIR', 'PSR', 'AIR', 'ASR', 'PIL', 'PSL', 'AIL', 'ASL',
+        ],
         required=False)
 
     multi = parser.add_argument_group('MULTI-COMPONENT OPERATIONS ON ITK COMPOSITE WARPING FIELDS')

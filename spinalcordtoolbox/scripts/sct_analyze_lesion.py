@@ -238,7 +238,11 @@ class AnalyzeLeion:
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
             self.measure_pd.loc[label_idx, 'mean_' + extract_fname(self.fname_ref)[1]] = mean_cur
             self.measure_pd.loc[label_idx, 'std_' + extract_fname(self.fname_ref)[1]] = std_cur
-            printv('Mean+/-std of lesion #' + str(lesion_label) + ' in ' + extract_fname(self.fname_ref)[1] + ' file: ' + str(np.round(mean_cur, 2)) + '+/-' + str(np.round(std_cur, 2)), self.verbose, type='info')
+            printv(
+                f'Mean+/-std of lesion #{lesion_label} in {extract_fname(self.fname_ref)[1]} file: '
+                f'{np.round(mean_cur, 2)}+/-{np.round(std_cur, 2)}',
+                self.verbose,
+                type='info')
 
     def _measure_volume(self, im_data, p_lst, idx):
         for zz in range(im_data.shape[2]):
@@ -374,7 +378,12 @@ class AnalyzeLeion:
 
             else:
                 im_vert_data = None
-                printv('ERROR: the file ' + self.path_levels + ' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='error')
+                printv(
+                    f"ERROR: the file {self.path_levels} does not exist. "
+                    f"Please make sure the template was correctly registered and warped "
+                    f"(sct_register_to_template or sct_register_multimodal and sct_warp_template)",
+                    type='error',
+                )
 
             # In order to open atlas images only one time
             atlas_data_dct = {}  # dict containing the np.array of the registrated atlas
