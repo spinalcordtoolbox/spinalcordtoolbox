@@ -39,6 +39,12 @@ def display_open(file, message="Done! To view results"):
 
 SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
 
+IMTYPES_COLORMAP = {'anat': {'fsleyes': 'greyscale', 'fslview': 'Greyscale'},
+                    'seg': {'fsleyes': 'red', 'fslview': 'Red'},
+                    'softseg': {'fsleyes': 'red-yellow', 'fslview': 'Red-Yellow'},
+                    'labels': {'fsleyes': 'subcortical', 'fslview': 'MGH-Subcortical'},
+                    }
+
 
 def display_viewer_syntax(files, verbose, colormaps=[], im_types=[], minmax=[], opacities=[], mode=''):
     """
@@ -104,7 +110,7 @@ def _construct_fslview_syntax(viewer, files, colormaps, im_types, minmax, opacit
                 cmd += ' -l ' + dict_fslview[colormaps[i]]
         elif im_types:
             if im_types[i]:
-                cmd += ' -l ' + imtypes_colormap[im_types[i]]['fslview']
+                cmd += ' -l ' + IMTYPES_COLORMAP[im_types[i]]['fslview']
         if minmax:
             if minmax[i]:
                 cmd += ' -b ' + minmax[i]  # a,b
@@ -128,7 +134,7 @@ def _construct_fsleyes_syntax(viewer, files, colormaps, im_types, minmax, opacit
                 cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
         elif im_types:
             if im_types[i]:
-                cmd += ' -cm ' + imtypes_colormap[im_types[i]]['fsleyes']
+                cmd += ' -cm ' + IMTYPES_COLORMAP[im_types[i]]['fsleyes']
         if minmax:
             if minmax[i]:
                 cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
