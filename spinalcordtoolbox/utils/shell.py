@@ -1,4 +1,4 @@
-# Convenience/shell related utilites
+# Convenience/shell related utilities
 
 import os
 import sys
@@ -59,7 +59,7 @@ def display_viewer_syntax(files, verbose, colormaps=[], im_types=[], minmax=[], 
     -------
     display_viewer_syntax([file1, file2, file3])
     display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
-    display_viewer_syntax([file1, file2], im_types=['seg', 'softseg'], minmax=['', '0,1'], opacities=['', '0.7'])
+    display_viewer_syntax([file1, file2], im_types=['anat', 'softseg'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
     available_viewers = [viewer for viewer in SUPPORTED_VIEWERS if check_exe(viewer)]
 
@@ -92,12 +92,6 @@ def display_viewer_syntax(files, verbose, colormaps=[], im_types=[], minmax=[], 
 def _construct_fslview_syntax(viewer, files, colormaps, im_types, minmax, opacities, mode):
     dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
                     'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
-    imtypes_colormap = {
-    'anat':    {'fsleyes': 'greyscale' ,  'fslview': 'Greyscale'},
-    'seg':     {'fsleyes': 'red',         'fslview': 'Red'},
-    'softseg': {'fsleyes': 'red-yellow',  'fslview': 'Red-Yellow'},
-    'labels':  {'fsleyes': 'subcortical', 'fslview': 'MGH-Subcortical'},
-    }
 
     cmd = viewer
     # add mode (only supported by fslview for the moment)
@@ -125,12 +119,6 @@ def _construct_fslview_syntax(viewer, files, colormaps, im_types, minmax, opacit
 def _construct_fsleyes_syntax(viewer, files, colormaps, im_types, minmax, opacities):
     dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
                     'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
-    imtypes_colormap = {
-    'anat':    {'fsleyes': 'greyscale' ,  'fslview': 'Greyscale'},
-    'seg':     {'fsleyes': 'red',         'fslview': 'Red'},
-    'softseg': {'fsleyes': 'red-yellow',  'fslview': 'Red-Yellow'},
-    'labels':  {'fsleyes': 'subcortical', 'fslview': 'MGH-Subcortical'},
-    }
 
     cmd = viewer
     for i in range(len(files)):
