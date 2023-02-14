@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 
 # List of models. The convention for model names is: (species)_(university)_(contrast)_region
 # Regions could be: sc, gm, lesion, tumor
+# NB: The 'url' field should either be:
+#     1) A <mirror URL list> containing different mirror URLs for the model
+#     2) A dict of <mirror URL lists>, where each list corresponds to a different seed (for model ensembling)
 MODELS = {
     "t2star_sc": {
         "url": [
@@ -256,7 +259,16 @@ def install_model(name_model):
     :return: None
     """
     logger.info("\nINSTALLING MODEL: {}".format(name_model))
-    download.install_data(MODELS[name_model]['url'], folder(name_model))
+    url_field = MODELS[name_model]['url']
+    # List of mirror URLs corresponding to a single model
+    if isinstance(url_field, list):
+        model_urls = url_field
+        download.install_data(model_urls, folder(name_model))
+    # Dict of lists, with each list corresponding to a different model seed for ensembling
+    elif isinstance(url_field, dict):
+        for seed_name, model_urls in url_field.items():
+            logger.info(f"\nInstalling '{seed_name}'...")
+            download.install_data(model_urls, folder(os.path.join(name_model, seed_name)), keep=True)
 
 
 def install_default_models():
