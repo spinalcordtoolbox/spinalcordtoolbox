@@ -90,7 +90,7 @@ MODELS = {
         "contrasts": ["mp2rage"],
         "default": False,
     },
-    "model_seg_ms_lesion_mp2rage": {
+    "model_seg_lesion_mp2rage": {
         "url": {
             "seed7": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210//model_seg_lesion_mp2rage_seed7.zip"],
             "seed8": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210//model_seg_lesion_mp2rage_seed8.zip"],
@@ -183,7 +183,7 @@ TASKS = {
                              'cord and MS lesions. The dataset was preprocessed to crop around the spinal cord prior '
                              'to training. This dataset was provided by the University of Basel.',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
-         'models': ['model_seg_ms_lesion_mp2rage']},
+         'models': ['model_seg_lesion_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor/edema/cavity segmentation',
          'long_description': 'This segmentation model for T1w and T2w spinal tumor, edema, and cavity segmentation '
