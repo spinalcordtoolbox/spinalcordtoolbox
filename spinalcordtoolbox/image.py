@@ -1260,11 +1260,8 @@ def to_dtype(dtype):
     if dtype is None:
         return None
     if isinstance(dtype, type):
-        try:
-            if isinstance(dtype(0).dtype, np.dtype):
-                return dtype(0).dtype
-        except:  # TODO
-            raise
+        if isinstance(dtype(0).dtype, np.dtype):
+            return dtype(0).dtype
     if isinstance(dtype, np.dtype):
         return dtype
     if isinstance(dtype, str):
