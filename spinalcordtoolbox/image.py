@@ -87,7 +87,7 @@ class Slicer(object):
 
         if not isinstance(im, Image):
             raise ValueError("Expecting an image")
-        if not orientation in all_refspace_strings():
+        if orientation not in all_refspace_strings():
             raise ValueError("Invalid orientation spec")
 
         # Get a different view on data, as if we were doing a reorientation
