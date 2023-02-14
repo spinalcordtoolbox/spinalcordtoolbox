@@ -240,7 +240,7 @@ def check_affines_match(im):
                          "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
                          "or on the SCT forums https://forum.spinalcordmri.org/.")
 
-        return(True)
+        return True
 
     return np.allclose(hdr.get_qform(), hdr2.get_qform(), atol=1e-3)
 
