@@ -1053,7 +1053,7 @@ def change_shape(im_src, shape, im_dst=None):
         im_dst.data = im_src.data.reshape(shape, order="C")
     else:
         # image data may be a view
-        im_dst_data = im_src.data.copy().reshape(shape, order="F")
+        im_dst.data = im_src.data.copy().reshape(shape, order="F")
 
     pair = nib.nifti1.Nifti1Pair(im_dst.data, im_dst.hdr.get_best_affine(), im_dst.hdr)
     im_dst.hdr = pair.header
