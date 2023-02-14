@@ -622,8 +622,12 @@ def main(argv: Sequence[str]):
                 register_landmarks(ftmp_label, ftmp_template_label, paramregmulti.steps['0'].dof,
                                    fname_affine='straight2templateAffine.txt', verbose=verbose)
             except RuntimeError:
-                raise('Input labels do not seem to be at the right place. Please check the position of the labels. '
-                      'See documentation for more details: https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html')
+                printv(
+                    "Input labels do not seem to be at the right place. "
+                    "Please check the position of the labels. "
+                    "See documentation for more details: "
+                    "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html",
+                    1, 'error')
 
             # Concatenate transformations: curve --> straight --> affine
             printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
