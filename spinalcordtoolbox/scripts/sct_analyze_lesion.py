@@ -368,7 +368,7 @@ class AnalyzeLeion:
         im_lesion_data = im_lesion.data
         p_lst = im_lesion.dim[4:7]  # voxel size
 
-        label_lst = [l for l in np.unique(im_lesion_data) if l]  # lesion label IDs list
+        label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
 
         if self.path_template is not None:
             if os.path.isfile(self.path_levels):
@@ -455,7 +455,7 @@ class AnalyzeLeion:
         im_2save.data = label(im.data, connectivity=2)
         im_2save.save(self.fname_label)
 
-        self.measure_pd['label'] = [l for l in np.unique(im_2save.data) if l]
+        self.measure_pd['label'] = [label for label in np.unique(im_2save.data) if label]
         printv('Lesion count = ' + str(len(self.measure_pd['label'])), self.verbose, 'info')
 
     def _orient(self, fname, orientation):
