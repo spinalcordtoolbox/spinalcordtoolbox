@@ -91,7 +91,6 @@ class SpinalCordStraightener(object):
         fname_output = self.output_filename
         remove_temp_files = self.remove_temp_files
         verbose = self.verbose
-        interpolation_warp = self.interpolation_warp  # TODO: remove this
 
         # start timer
         start_time = time.time()

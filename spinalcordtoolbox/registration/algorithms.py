@@ -1016,10 +1016,8 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         dest2d[dest2d < th_nonzero] = 0
         # get non-zero coordinates, and transpose to obtain nx2 dimensions
         coord_src2d = np.array(np.where(src2d > 0)).T
-        coord_dest2d = np.array(np.where(dest2d > 0)).T
         # here we use 0.5 as threshold for non-zero value
         # coord_src2d = np.array(np.where(src2d > th_nonzero)).T
-        # coord_dest2d = np.array(np.where(dest2d > th_nonzero)).T
         # >>>
 
         # SCALING R-L (X dimension)

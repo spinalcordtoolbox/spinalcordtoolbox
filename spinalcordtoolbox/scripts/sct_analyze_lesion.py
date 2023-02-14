@@ -432,7 +432,6 @@ class AnalyzeLeion:
     def angle_correction(self):
         im_seg = Image(self.fname_sc)
         nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-        data_seg = im_seg.data
 
         # fit centerline, smooth it and return the first derivative (in physical space)
         _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
