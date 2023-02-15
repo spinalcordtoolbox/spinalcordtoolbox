@@ -320,6 +320,7 @@ def display_list_tasks():
     print("-" * 120)
     for name_task, value in tasks.items():
         path_models = [folder(name_model) for name_model in value['models']]
+        path_models = [find_ensemble_subfolders(path) for path in path_models]
         are_models_valid = [is_valid(path_model) for path_model in path_models]
         task_status = stylize(name_task.ljust(30),
                               color[all(are_models_valid)])
@@ -358,6 +359,7 @@ def display_list_tasks_long():
 
         path_models = [folder(name_model)
                        for name_model in value['models']]
+        path_models = [find_ensemble_subfolders(path) for path in path_models]
         if all([is_valid(path_model) for path_model in path_models]):
             installed = stylize("Yes", 'LightGreen')
         else:
