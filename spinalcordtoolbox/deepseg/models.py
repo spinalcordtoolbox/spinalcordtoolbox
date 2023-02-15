@@ -377,3 +377,19 @@ def get_metadata(folder_model):
     with open(fname_metadata, "r") as fhandle:
         metadata = json.load(fhandle)
     return metadata
+
+
+def find_ensemble_subfolders(path_model):
+    """
+    Search for the presence of model subfolders within the main model folder. If they exist,
+    then the model folder is actually an ensemble of models, so return a list of folders.
+
+    :param path_model: Absolute path to folder that encloses the model files.
+    :return: list or str: Either a list of ensemble subfolders, or the original model folder path.
+    """
+    name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
+    # Check to see if model folder contains subfolders with the model name (i.e. ensembling)
+    model_subfolders = [folder[0] for folder in os.walk(path_model)  # NB: `[0]` == folder name for os.walk
+                        if folder[0].endswith(name_model) and folder[0] != path_model]
+    # If it does, then these are the "true" model subfolders. Otherwise, return the original path.
+    return model_subfolders if model_subfolders else path_model
