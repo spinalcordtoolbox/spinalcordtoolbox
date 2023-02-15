@@ -286,17 +286,22 @@ def install_default_models():
             install_model(name_model)
 
 
-def is_valid(path_model):
+def is_valid(path_models):
     """
-    Check if model has the necessary files and follow naming conventions:
+    Check if model paths have the necessary files and follow naming conventions:
     - Folder should have the same name as the enclosed files.
 
-    :param path_model: str: Absolute path to folder that encloses the model files.
+    :param path_models: str or list: Absolute path(s) to folder(s) that enclose the model files.
     """
-    name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
-    return (os.path.exists(os.path.join(path_model, name_model + '.pt')) or
-            os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and os.path.exists(
-        os.path.join(path_model, name_model + '.json'))
+    def _is_valid(path_model):
+        name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
+        return (os.path.exists(os.path.join(path_model, name_model + '.pt')) or
+                os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and os.path.exists(
+            os.path.join(path_model, name_model + '.json'))
+    # Adapt the function so that it can be used on single paths (str) or lists of paths
+    if not isinstance(path_models, list):
+        path_models = [path_models]
+    return all(_is_valid(path) for path in path_models)
 
 
 def list_tasks():
