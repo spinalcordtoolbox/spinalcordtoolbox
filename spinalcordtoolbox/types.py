@@ -274,18 +274,6 @@ class Centerline:
         if self.compute_init_distribution:
             self.compute_vertebral_distribution(disks_levels=self.disks_levels, label_reference=self.label_reference)
 
-    # NB: Prior to https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4010, the get_centerline() function
-    #     would return two 3xN arrays: `arr_ctl` and `arr_ctl_der`. These arrays are almost identical to
-    #     `Centerline.points` and `Centerline.derivatives`, except transposed. So, to preserve backwards-compatibility,
-    #     we provide some properties that mimic the old behavior.
-    @property
-    def arr_ctl(self):
-        return self.points.T
-
-    @property
-    def arr_ctl_der(self):
-        return self.derivatives.T
-
     def compute_length(self):
         for i in range(0, self.number_of_points - 1):
             distance = np.sqrt((self.points[i][0] - self.points[i + 1][0]) ** 2 +
