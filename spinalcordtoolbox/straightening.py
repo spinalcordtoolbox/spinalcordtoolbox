@@ -619,10 +619,8 @@ class SpinalCordStraightener(object):
 
 def _get_centerline(img, param_centerline, verbose, remove_temp_files=1):
     nx, ny, nz, nt, px, py, pz, pt = img.dim
-    _, centerline, _ = get_centerline(img, param_centerline, verbose=verbose,
-                                      remove_temp_files=remove_temp_files)
-    arr_ctl = centerline.arr_ctl
-    arr_ctl_der = centerline.arr_ctl_der
+    _, arr_ctl, arr_ctl_der, _ = get_centerline(img, param_centerline, verbose=verbose,
+                                                remove_temp_files=remove_temp_files)
     # Transform centerline to physical coordinate system
     arr_ctl_phys = img.transfo_pix2phys(
         [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])

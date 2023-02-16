@@ -6,7 +6,6 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image, zeros_like, add_suffix
 from spinalcordtoolbox.centerline import curve_fitting
-from spinalcordtoolbox.types import Centerline
 from spinalcordtoolbox.utils.fs import tmp_create
 
 logger = logging.getLogger(__name__)
@@ -93,8 +92,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
     :param space: string: Defining space and orientation in which to output Centerline information. 'pix' = pixel space / RPI, 'phys' = physical space /native.
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
-    :return: centerline: Centerline: An object built from the continuous centerline coordinates that provides additional
-             centerline-specific properties beyond what NIfTI images can store (e.g. disks_levels, label_reference)
+    :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
+    :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
     :return: fit_results: FitResults class
     """
     if not isinstance(im_seg, Image):
@@ -255,17 +254,9 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
         arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
 
-    centerline = Centerline(
-        points_x=arr_ctl[0].tolist(),
-        points_y=arr_ctl[1].tolist(),
-        points_z=arr_ctl[2].tolist(),
-        deriv_x=arr_ctl_der[0].tolist(),
-        deriv_y=arr_ctl_der[1].tolist(),
-        deriv_z=arr_ctl_der[2].tolist()
-    )
-
     return (im_centerline,
-            centerline,
+            arr_ctl,
+            arr_ctl_der,
             fit_results)
 
 

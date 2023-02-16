@@ -180,11 +180,10 @@ def main(argv: Sequence[str]):
         return
 
     # Extrapolate and regularize (or detect if optic) cord centerline
-    im_centerline, centerline, _ = get_centerline(im_labels,
-                                                  param=param_centerline,
-                                                  verbose=verbose,
-                                                  remove_temp_files=arguments.r)
-    arr_centerline = centerline.arr_ctl
+    im_centerline, arr_centerline, _, _ = get_centerline(im_labels,
+                                                         param=param_centerline,
+                                                         verbose=verbose,
+                                                         remove_temp_files=arguments.r)
 
     # save centerline as nifti (discrete) and csv (continuous) files
     im_centerline.save(file_output)

@@ -432,7 +432,7 @@ class Sagittal(Slice):
             # Get coordinate of centerline
             # Here we use smooth=0 because we want the centerline to pass through the labels, and minmax=True extends
             # the centerline below zmin and above zmax to avoid discontinuities
-            data_ctl_RPI, _, _ = get_centerline(
+            data_ctl_RPI, _, _, _ = get_centerline(
                 image, param=ParamCenterline(algo_fitting='linear', smooth=0, minmax=False))
             data_ctl_RPI.change_orientation('SAL')
             index_RL = np.argwhere(data_ctl_RPI.data)

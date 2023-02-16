@@ -506,7 +506,7 @@ def label_discs(fname_seg, discs):
                 logger.warning("During disc labeling, center of mass calculation failed due to discontinuities in "
                                "segmented spinal cord; please check the quality of your segmentation. Using "
                                "interpolated centerline as a fallback.")
-                interpolated_centerline, _, _ = get_centerline(seg)
+                interpolated_centerline, _, _, _ = get_centerline(seg)
                 slices = interpolated_centerline.data[:, :, disc_z]
             cx, cy = [int(x) for x in np.round(center_of_mass(slices)).tolist()]
 

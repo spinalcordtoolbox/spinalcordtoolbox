@@ -35,8 +35,7 @@ def flatten_sagittal(im_anat, im_centerline, verbose):
     nx, ny, nz, nt, px, py, pz, pt = im_anat.dim
 
     # smooth centerline and return fitted coordinates in voxel space
-    _, centerline, _ = get_centerline(im_centerline, param=ParamCenterline(), verbose=verbose)
-    arr_ctl = centerline.arr_ctl
+    _, arr_ctl, _, _ = get_centerline(im_centerline, param=ParamCenterline(), verbose=verbose)
     x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
 
     # Extend the centerline by copying values below zmin and above zmax to avoid discontinuities

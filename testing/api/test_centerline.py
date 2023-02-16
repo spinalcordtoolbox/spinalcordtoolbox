@@ -98,9 +98,8 @@ def test_find_and_sort_coord(img_ctl, expected):
 def test_get_centerline_polyfit_minmax(img_ctl, expected):
     """Test centerline fitting with minmax=True"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, centerline, _ = get_centerline(
+    img_out, arr_out, _, _ = get_centerline(
         img_sub, ParamCenterline(algo_fitting='polyfit', degree=3, minmax=True), verbose=VERBOSE)
-    arr_out = centerline.arr_ctl
     # Assess output size
     assert arr_out.shape == expected
 
@@ -111,10 +110,8 @@ def test_get_centerline_polyfit(img_ctl, expected, params):
     if 'exclude_polyfit':
         return
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, centerline, fit_results = get_centerline(
+    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
         img_sub, ParamCenterline(algo_fitting='polyfit', minmax=False), verbose=VERBOSE)
-    arr_out = centerline.arr_ctl
-    arr_deriv_out = centerline.arr_ctl_der
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert np.max(np.absolute(np.diff(arr_deriv_out))) < expected['laplacian']
     # check arr_out only if input orientation is RPI (because the output array is always in RPI)
@@ -126,10 +123,8 @@ def test_get_centerline_polyfit(img_ctl, expected, params):
 def test_get_centerline_bspline(img_ctl, expected, params):
     """Test centerline fitting using bspline"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, centerline, fit_results = get_centerline(
+    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
         img_sub, ParamCenterline(algo_fitting='bspline', minmax=False), verbose=VERBOSE)
-    arr_out = centerline.arr_ctl
-    arr_deriv_out = centerline.arr_ctl_der
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert fit_results.rmse < expected['rmse']
     assert fit_results.laplacian_max < expected['laplacian']
@@ -139,10 +134,8 @@ def test_get_centerline_bspline(img_ctl, expected, params):
 def test_get_centerline_linear(img_ctl, expected, params):
     """Test centerline fitting using linear interpolation"""
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, centerline, fit_results = get_centerline(
+    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
         img_sub, ParamCenterline(algo_fitting='linear', minmax=False), verbose=VERBOSE)
-    arr_out = centerline.arr_ctl
-    arr_deriv_out = centerline.arr_ctl_der
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert fit_results.laplacian_max < expected['laplacian']
 
@@ -153,10 +146,8 @@ def test_get_centerline_nurbs(img_ctl, expected, params):
     if 'exclude_nurbs':
         return
     img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
-    img_out, centerline, fit_results = get_centerline(
+    img_out, arr_out, arr_deriv_out, fit_results = get_centerline(
         img_sub, ParamCenterline(algo_fitting='nurbs', minmax=False), verbose=VERBOSE)
-    arr_out = centerline.arr_ctl
-    arr_deriv_out = centerline.arr_ctl_der
     assert np.median(find_and_sort_coord(img) - find_and_sort_coord(img_out)) == expected['median']
     assert fit_results.laplacian_max < expected['laplacian']
 
@@ -170,10 +161,8 @@ def test_get_centerline_optic(params):
     im.change_type('float32')
     im.data[0, 0, 0] = np.nan
     im.data[1, 0, 0] = np.inf
-    im_centerline, centerline, _ = get_centerline(
+    im_centerline, arr_out, _, _ = get_centerline(
         im, ParamCenterline(algo_fitting='optic', contrast=params['contrast'], minmax=False), verbose=VERBOSE)
-    arr_out = centerline.arr_ctl
-    arr_deriv_out = centerline.arr_ctl_der
     # Compare with ground truth centerline
     assert np.all(im_centerline.data == Image(params['fname_centerline-optic']).data)
 

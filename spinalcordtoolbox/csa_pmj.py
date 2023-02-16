@@ -54,8 +54,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     ctl_seg_with_pmj = _get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
     # Also get the image centerline (because it is a required output)
     # TODO: merge _get_centerline into get_centerline
-    im_ctl_seg_with_pmj, centerline, _ = get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
-    arr_ctl = centerline.arr_ctl_der
+    im_ctl_seg_with_pmj, arr_ctl, _, _ = get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
     # Compute the incremental distance from the PMJ along each point in the centerline
     length_from_pmj = ctl_seg_with_pmj.incremental_length_inverse[::-1]
     # From this incremental distance, find the indices corresponding to the requested distance +/- extent/2 from the PMJ

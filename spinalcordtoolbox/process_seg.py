@@ -65,9 +65,8 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     if angle_correction:
         # compute the spinal cord centerline based on the spinal cord segmentation
         # here, param_centerline.minmax needs to be False because we need to retrieve the total number of input slices
-        _, centerline, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose,
-                                                    remove_temp_files=remove_temp_files)
-        arr_ctl_der = centerline.arr_ctl_der
+        _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose,
+                                                              remove_temp_files=remove_temp_files)
 
     # Loop across z and compute shape analysis
     for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
