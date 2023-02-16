@@ -5,6 +5,7 @@ import logging
 import numpy as np
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.types import Centerline
 
 logger = logging.getLogger(__name__)
 
@@ -44,16 +45,18 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     _, _, Z = (im_seg_with_pmj.data > NEAR_ZERO_THRESHOLD).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
-    from spinalcordtoolbox.straightening import _get_centerline
     # Linear interpolation (vs. bspline) ensures strong robustness towards defective segmentations at the top slices.
     param_centerline.algo_fitting = 'linear'
     # On top of the linear interpolation we add some smoothing to remove discontinuities.
     param_centerline.smooth = 50
     param_centerline.minmax = True
-    # Compute spinalcordtoolbox.types.Centerline class
-    ctl_seg_with_pmj = _get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
+    # Compute spinalcordtoolbox.types.Centerline class from get_centerline wit physical coordinates
+    _, arr_ctl_phys, arr_ctl_der_phys, _ = get_centerline(im_seg_with_pmj, param_centerline,
+                                                          verbose=verbose, space="phys")
+    ctl_seg_with_pmj = Centerline(points_x=arr_ctl_phys[0].tolist(), deriv_x=arr_ctl_der_phys[0].tolist(),
+                                  points_y=arr_ctl_phys[1].tolist(), deriv_y=arr_ctl_der_phys[1].tolist(),
+                                  points_z=arr_ctl_phys[2].tolist(), deriv_z=arr_ctl_der_phys[2].tolist())
     # Also get the image centerline (because it is a required output)
-    # TODO: merge _get_centerline into get_centerline
     im_ctl_seg_with_pmj, arr_ctl, _, _ = get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
     # Compute the incremental distance from the PMJ along each point in the centerline
     length_from_pmj = ctl_seg_with_pmj.incremental_length_inverse[::-1]
