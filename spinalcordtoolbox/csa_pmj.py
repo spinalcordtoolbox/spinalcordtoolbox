@@ -44,14 +44,16 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     _, _, Z = (im_seg_with_pmj.data > NEAR_ZERO_THRESHOLD).nonzero()
     min_z_index, max_z_index = min(Z), max(Z)
 
+    from spinalcordtoolbox.straightening import _get_centerline
     # Linear interpolation (vs. bspline) ensures strong robustness towards defective segmentations at the top slices.
     param_centerline.algo_fitting = 'linear'
     # On top of the linear interpolation we add some smoothing to remove discontinuities.
     param_centerline.smooth = 50
     param_centerline.minmax = True
     # Compute spinalcordtoolbox.types.Centerline class
-    _, ctl_seg_with_pmj, _ = get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose, space="phys")
+    ctl_seg_with_pmj = _get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
     # Also get the image centerline (because it is a required output)
+    # TODO: merge _get_centerline into get_centerline
     im_ctl_seg_with_pmj, centerline, _ = get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
     arr_ctl = centerline.arr_ctl_der
     # Compute the incremental distance from the PMJ along each point in the centerline
