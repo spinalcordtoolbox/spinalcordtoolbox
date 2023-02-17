@@ -74,13 +74,6 @@ jobs:
       run:
         shell: bash
     steps:
-
-    # NB: For Windows installations, users must install Python beforehand
-    - uses: actions/setup-python@v4
-      if: matrix.os == 'windows-2019'
-      with:
-        python-version: '3.8'
-
     - name: Checkout spinalcordtoolbox
       uses: actions/checkout@v2
 
