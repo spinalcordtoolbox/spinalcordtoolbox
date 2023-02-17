@@ -26,6 +26,7 @@ The following studies have used SCT:
 2023
 ----
 
+-  Ruiter *et al.* `Association of volumetric MRI measures and disability in MS patients of the same age: Descriptions from a birth year cohort <https://doi.org/10.1016/j.msard.2023.104568>`_, **Mult. Scler. Relat. Disord.**, 2023
 -  Schading *et al.* `Dynamics of progressive degeneration of major spinal pathways following spinal cord injury: A longitudinal study <https://doi.org/10.1016/j.nicl.2023.103339>`_, **Neuroimage Clin.**, 2023
 -  Blanc *et al.* `Combining PropSeg and a convolutional neural network for automatic spinal cord segmentation in pediatric populations and patients with spinal cord injury <https://doi.org/10.1002/ima.22859>`_, **IMA**, 2023
 -  Martín-Noguerol *et al.* `The role of Artificial intelligence in the assessment of the spine and spinal cord <https://doi.org/10.1016/j.ejrad.2023.110726>`_, **Eur. J. Radiol.**, 2023
