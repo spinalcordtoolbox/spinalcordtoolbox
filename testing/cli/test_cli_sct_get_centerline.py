@@ -50,7 +50,7 @@ def test_sct_get_centerline_soft_output_file_exists(tmp_path):
 @pytest.mark.sct_testing
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_get_centerline_soft_output_is_equal_to_one(tmp_path):
-    """This test checks that the output soft centerline is equal to 1 on all slices. using default usage of the CLI
+    """This test checks that the sum of the output intensities of the soft centerline is equal to 1 on all slices. using default usage of the CLI
     script."""
     # TODO - check if it is necessary to run this command again. Maybe, we can reuse the output of the previous test.
     sct_get_centerline.main(argv=['-i', 't2/t2_seg-manual.nii.gz', '-method', 'fitseg', '-centerline-soft', '1', '-o',
