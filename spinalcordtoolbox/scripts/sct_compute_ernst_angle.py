@@ -150,12 +150,9 @@ def main(argv: Sequence[str]):
         elif input_tr < input_tr_min:
             input_tr_min = input_tr - 500
         # save text file
-        try:
-            f = open(fname_output_file, 'w')
-            f.write(str(graph.getErnstAngle(input_tr)))
-            f.close()
-        except OSError:
-            printv(f"\nERROR: Cannot open file {fname_output_file}", '1', 'error')
+        f = open(fname_output_file, 'w')
+        f.write(str(graph.getErnstAngle(input_tr)))
+        f.close()
 
     if verbose == 2:
         graph.draw(input_tr_min, input_tr_max)
