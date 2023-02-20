@@ -238,9 +238,9 @@ class AnalyzeLeion:
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
             self.measure_pd.loc[label_idx, 'mean_' + extract_fname(self.fname_ref)[1]] = mean_cur
             self.measure_pd.loc[label_idx, 'std_' + extract_fname(self.fname_ref)[1]] = std_cur
+            file_ref = extract_fname(self.fname_ref)[1]
             printv(
-                f'Mean+/-std of lesion #{lesion_label} in {extract_fname(self.fname_ref)[1]} file: '
-                f'{np.round(mean_cur, 2)}+/-{np.round(std_cur, 2)}',
+                f'Mean+/-std of lesion #{lesion_label} in {file_ref} file: {mean_cur:.2f}+/-{std_cur:.2f}',
                 self.verbose,
                 type='info')
 

@@ -83,29 +83,21 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
 
     # estimate transformation
     # N.B. points_src and points_dest are inverted below, because ITK uses inverted transformation matrices, i.e., src->dest is defined in dest instead of src.
-    # (
-    #     rotation_matrix,
-    #     translation_array,
-    #     points_moving_reg,
-    #     points_moving_barycenter,
-    # ) = getRigidTransformFromLandmarks(
-    #     points_dest,
-    #     points_src,
-    #     constraints=dof,
-    #     verbose=verbose,
-    #     path_qc=path_qc,
-    # )
-    (
-        rotation_matrix,
-        translation_array,
-        points_moving_reg,
-        points_moving_barycenter,
-    ) = getRigidTransformFromLandmarks(
-        points_src,
-        points_dest,
-        constraints=dof,
-        verbose=verbose,
-    )
+    # (rotation_matrix,
+    #  translation_array,
+    #  points_moving_reg,
+    #  points_moving_barycenter) = getRigidTransformFromLandmarks(points_dest,
+    #                                                             points_src,
+    #                                                             constraints=dof,
+    #                                                             verbose=verbose,
+    #                                                             path_qc=path_qc)
+    (rotation_matrix,
+     translation_array,
+     points_moving_reg,
+     points_moving_barycenter) = getRigidTransformFromLandmarks(points_src,
+                                                                points_dest,
+                                                                constraints=dof,
+                                                                verbose=verbose)
     # writing rigid transformation file
     # N.B. x and y dimensions have a negative sign to ensure compatibility between Python and ITK transfo
     text_file = open(fname_affine, 'w')
@@ -205,19 +197,21 @@ def minimize_transform(params, points_dest, points_src, constraints):
     # convert dof to more intuitive variables
     tx, ty, tz, alpha, beta, gamma, scx, scy, scz = dof[0], dof[1], dof[2], dof[3], dof[4], dof[5], dof[6], dof[7], dof[8]
     # build rotation matrix
-    rotation_matrix = np.matrix([[
-        np.cos(alpha) * np.cos(beta),
-        np.cos(alpha) * np.sin(beta) * np.sin(gamma) - np.sin(alpha) * np.cos(gamma),
-        np.cos(alpha) * np.sin(beta) * np.cos(gamma) + np.sin(alpha) * np.sin(gamma),
-    ], [
-        np.sin(alpha) * np.cos(beta),
-        np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma),
-        np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma),
-    ], [
-        -np.sin(beta),
-        np.cos(beta) * np.sin(gamma),
-        np.cos(beta) * np.cos(gamma),
-    ]])
+    rotation_matrix = np.matrix([
+        [
+            np.cos(alpha)*np.cos(beta),
+            np.cos(alpha)*np.sin(beta)*np.sin(gamma) - np.sin(alpha)*np.cos(gamma),
+            np.cos(alpha)*np.sin(beta)*np.cos(gamma) + np.sin(alpha)*np.sin(gamma),
+        ], [
+            np.sin(alpha)*np.cos(beta),
+            np.sin(alpha)*np.sin(beta)*np.sin(gamma) + np.cos(alpha)*np.cos(gamma),
+            np.sin(alpha)*np.sin(beta)*np.cos(gamma) - np.cos(alpha)*np.sin(gamma),
+        ], [
+            np.sin(beta)*-1,
+            np.cos(beta)*np.sin(gamma),
+            np.cos(beta)*np.cos(gamma),
+        ]
+    ])
     # build scaling matrix
     scaling_matrix = np.matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
     # compute rotation+scaling matrix
@@ -283,19 +277,21 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     # build translation matrix
     translation_array = np.matrix([tx, ty, tz])
     # build rotation matrix
-    rotation_matrix = np.matrix([[
-        np.cos(alpha) * np.cos(beta),
-        np.cos(alpha) * np.sin(beta) * np.sin(gamma) - np.sin(alpha) * np.cos(gamma),
-        np.cos(alpha) * np.sin(beta) * np.cos(gamma) + np.sin(alpha) * np.sin(gamma),
-    ], [
-        np.sin(alpha) * np.cos(beta),
-        np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma),
-        np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma),
-    ], [
-        -np.sin(beta),
-        np.cos(beta) * np.sin(gamma),
-        np.cos(beta) * np.cos(gamma),
-    ]])
+    rotation_matrix = np.matrix([
+        [
+            np.cos(alpha)*np.cos(beta),
+            np.cos(alpha)*np.sin(beta)*np.sin(gamma) - np.sin(alpha)*np.cos(gamma),
+            np.cos(alpha)*np.sin(beta)*np.cos(gamma) + np.sin(alpha)*np.sin(gamma),
+        ], [
+            np.sin(alpha)*np.cos(beta),
+            np.sin(alpha)*np.sin(beta)*np.sin(gamma) + np.cos(alpha)*np.cos(gamma),
+            np.sin(alpha)*np.sin(beta)*np.cos(gamma) - np.cos(alpha)*np.sin(gamma),
+        ], [
+            np.sin(beta)*-1,
+            np.cos(beta)*np.sin(gamma),
+            np.cos(beta)*np.cos(gamma),
+        ]
+    ])
     # build scaling matrix
     scaling_matrix = np.matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
     # compute rotation+scaling matrix
