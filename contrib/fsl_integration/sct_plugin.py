@@ -808,11 +808,35 @@ def run_main():
     panel_vlb = TabPanelVertLB(parent=notebook)
     panel_reg = TabPanelRegisterToTemplate(parent=notebook)
 
-    notebook.AddPage(page=panel_propseg, caption="sct_propseg", select=True)
-    notebook.AddPage(page=panel_sc, caption="sct_deepseg_sc", select=False)
-    notebook.AddPage(page=panel_gm, caption="sct_deepseg_gm", select=False)
-    notebook.AddPage(page=panel_vlb, caption="sct_label_vertebrae", select=False)
-    notebook.AddPage(page=panel_reg, caption="sct_register_to_template", select=False)
+    try:
+        notebook.AddPage(page=panel_propseg, caption="sct_propseg", select=True)
+        notebook.AddPage(page=panel_sc, caption="sct_deepseg_sc", select=False)
+        notebook.AddPage(page=panel_gm, caption="sct_deepseg_gm", select=False)
+        notebook.AddPage(page=panel_vlb, caption="sct_label_vertebrae", select=False)
+        notebook.AddPage(page=panel_reg, caption="sct_register_to_template", select=False)
+    except TypeError as e:
+        # Partially addresses https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3988
+        if "unexpected type 'float'" in str(e):
+            sct_view_panel.removeFromFrame()
+            raise EnvironmentError(
+                "The FSL installation contains an out of date package: 'wxpython' (4.1.1). "
+                "\n"
+                "\nPlease update 'wxpython' by running one of the following commands in your terminal (depending on "
+                "your FSL version):"
+                "\n"
+                "\nFSL 6.0.6 or newer:"
+                "\n"
+                "\n    $FSLDIR/bin/conda update -n base wxpython"
+                "\n"
+                "\nFSL 6.0.2 to 6.0.5.2:"
+                "\n"
+                "\n    $FSLDIR/fslpython/bin/conda update -n fslpython -c conda-forge --update-all wxpython"
+                "\n"
+                "\nMore information here: "
+                "https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3988#issuecomment-1373918661"
+            )
+        else:
+            raise e
 
     aui_manager.AddPane(notebook, aui.AuiPaneInfo().Name("notebook_content").CenterPane().PaneBorder(False))
     aui_manager.Update()
