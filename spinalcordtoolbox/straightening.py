@@ -151,9 +151,7 @@ class SpinalCordStraightener(object):
         img_ctl = Image('centerline_rpi.nii.gz')
         _, arr_ctl_phys, arr_ctl_der_phys, _ = get_centerline(img_ctl, self.param_centerline,
                                                               verbose=verbose, space="phys")
-        centerline = Centerline(points_x=arr_ctl_phys[0].tolist(), deriv_x=arr_ctl_der_phys[0].tolist(),
-                                points_y=arr_ctl_phys[1].tolist(), deriv_y=arr_ctl_der_phys[1].tolist(),
-                                points_z=arr_ctl_phys[2].tolist(), deriv_z=arr_ctl_der_phys[2].tolist())
+        centerline = Centerline(*arr_ctl_phys, *arr_ctl_der_phys)
         number_of_points = centerline.number_of_points
 
         # ==========================================================================================
@@ -221,9 +219,7 @@ class SpinalCordStraightener(object):
                 .save(fname_ref, mutable=True)
             _, arr_ctl_phys, arr_ctl_der_phys, _ = get_centerline(image_centerline_straight, self.param_centerline,
                                                                   verbose=verbose, space="phys")
-            centerline_straight = Centerline(points_x=arr_ctl_phys[0].tolist(), deriv_x=arr_ctl_der_phys[0].tolist(),
-                                             points_y=arr_ctl_phys[1].tolist(), deriv_y=arr_ctl_der_phys[1].tolist(),
-                                             points_z=arr_ctl_phys[2].tolist(), deriv_z=arr_ctl_der_phys[2].tolist())
+            centerline_straight = Centerline(*arr_ctl_phys, *arr_ctl_der_phys)
             nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
 
             # Prepare warping fields headers

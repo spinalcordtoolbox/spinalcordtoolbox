@@ -53,9 +53,7 @@ def get_slices_for_pmj_distance(segmentation, pmj, distance, extent, param_cente
     # Compute spinalcordtoolbox.types.Centerline class from get_centerline wit physical coordinates
     _, arr_ctl_phys, arr_ctl_der_phys, _ = get_centerline(im_seg_with_pmj, param_centerline,
                                                           verbose=verbose, space="phys")
-    ctl_seg_with_pmj = Centerline(points_x=arr_ctl_phys[0].tolist(), deriv_x=arr_ctl_der_phys[0].tolist(),
-                                  points_y=arr_ctl_phys[1].tolist(), deriv_y=arr_ctl_der_phys[1].tolist(),
-                                  points_z=arr_ctl_phys[2].tolist(), deriv_z=arr_ctl_der_phys[2].tolist())
+    ctl_seg_with_pmj = Centerline(*arr_ctl_phys, *arr_ctl_der_phys)
     # Also get the image centerline (because it is a required output)
     im_ctl_seg_with_pmj, arr_ctl, _, _ = get_centerline(im_seg_with_pmj, param_centerline, verbose=verbose)
     # Compute the incremental distance from the PMJ along each point in the centerline
