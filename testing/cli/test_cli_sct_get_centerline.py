@@ -42,7 +42,7 @@ def test_sct_get_centerline_output_file_exists_with_o_arg(tmp_path, ext):
 def test_sct_get_centerline_soft_output_file_exists(tmp_path):
     """This test checks the output soft centerline using default usage of the CLI script."""
     sct_get_centerline.main(argv=['-i', 't2/t2_seg-manual.nii.gz', '-method', 'fitseg', '-centerline-soft', '1', '-o',
-                                  't2_seg_centerline_soft.nii.gz', '-qc', str(tmp_path)])
+                                  't2/t2_seg_centerline_soft.nii.gz', '-qc', str(tmp_path)])
     for file in [os.path.join('t2', 't2_seg_centerline_soft.nii.gz'), os.path.join('t2', 't2_seg_centerline_soft.csv')]:
         assert os.path.exists(file)
 
