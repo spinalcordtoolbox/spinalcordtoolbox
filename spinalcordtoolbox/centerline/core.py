@@ -248,7 +248,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         arr_ctl = im_seg.transfo_pix2phys([[x_centerline_fit[i], y_centerline_fit[i], z_ref[i]]
                                            for i in range(len(x_centerline_fit))]).T
         # Adjust derivatives with pixel size
-        nx, ny, nz, nt, px, py, pz, pt = im_seg.change_orientation(native_orientation).dim
+        _, _, _, _, px, py, pz, _ = im_seg.change_orientation(native_orientation).dim
         arr_ctl_der = np.array([x_centerline_deriv * px, y_centerline_deriv * py, np.ones_like(z_ref) * pz])
     else:
         arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
