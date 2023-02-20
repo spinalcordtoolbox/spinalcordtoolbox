@@ -177,9 +177,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         im_centerline = im_seg.copy()
         im_centerline.data = np.zeros(im_centerline.data.shape)
         # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
-        # TODO: check this round and clip-- suspicious
-        im_centerline.data[round_and_clip(x_centerline_fit, clip=[0, im_centerline.data.shape[0]]),
-                           round_and_clip(y_centerline_fit, clip=[0, im_centerline.data.shape[1]]),
+        im_centerline.data[np.clip(x_centerline_fit.round().astype(int), 0, im_centerline.data.shape[0] - 1),
+                           np.clip(y_centerline_fit.round().astype(int), 0, im_centerline.data.shape[1] - 1),
                            z_ref] = 1
         # reorient centerline to native orientation
         im_centerline.change_orientation(native_orientation)
@@ -258,21 +257,6 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
             arr_ctl,
             arr_ctl_der,
             fit_results)
-
-
-def round_and_clip(arr, clip=None):
-    """
-    FIXME doc
-    Round to closest int, convert to dtype=int and clip to min/max values allowed by the list length
-
-    :param arr:
-    :param clip: [min, max]: Clip values in arr to min and max
-    :return:
-    """
-    if clip:
-        return np.clip(arr.round().astype(int), clip[0], clip[1]-1)
-    else:
-        return arr.round().astype(int)
 
 
 def _call_viewer_centerline(im_data, interslice_gap=20.0):

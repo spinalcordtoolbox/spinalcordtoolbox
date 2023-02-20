@@ -11,7 +11,7 @@ import os
 import sys
 from typing import Sequence
 
-from spinalcordtoolbox.utils import init_sct, set_loglevel, SCTArgumentParser
+from spinalcordtoolbox.utils import init_sct, set_loglevel, SCTArgumentParser, list2cmdline
 
 
 def get_parser():
@@ -81,16 +81,10 @@ def main(argv: Sequence[str]):
     set_loglevel(verbose=verbose)
 
     from spinalcordtoolbox.reports.qc import generate_qc
-    # Build args list (for display)
-    args_disp = '-i ' + arguments.i
-    if arguments.d:
-        args_disp += ' -d ' + arguments.d
-    if arguments.s:
-        args_disp += ' -s ' + arguments.s
     generate_qc(fname_in1=arguments.i,
                 fname_in2=arguments.d,
                 fname_seg=arguments.s,
-                args=args_disp,
+                args=f'("sct_qc {list2cmdline(argv)}")',
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,

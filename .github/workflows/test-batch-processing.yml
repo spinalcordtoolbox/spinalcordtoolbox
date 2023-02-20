@@ -39,12 +39,6 @@ jobs:
       - name: Checkout SCT
         uses: actions/checkout@v2
 
-      # NB: For Windows installations, users must install Python beforehand
-      - uses: actions/setup-python@v4
-        if: matrix.os == 'windows-2019'
-        with:
-          python-version: '3.8'
-
       - name: Install SCT (Unix)
         if: matrix.os != 'windows-2019'
         run: ./install_sct -y

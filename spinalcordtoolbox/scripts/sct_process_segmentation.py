@@ -8,8 +8,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Touati, Gabriel Mangeat
-# Modified: 2014-07-20 by jcohenadad
+# Author: Benjamin De Leener, Julien Touati, Gabriel Mangeat, Sandrine Bédard, Jan Valosek, Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -31,12 +30,15 @@ from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, 
 from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
+from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
 from spinalcordtoolbox.centerline.core import ParamCenterline
-from spinalcordtoolbox.image import add_suffix, splitext
+from spinalcordtoolbox.image import add_suffix, splitext, Image
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
+from spinalcordtoolbox import __data_dir__
+from spinalcordtoolbox.utils import sct_progress_bar
 
 logger = logging.getLogger(__name__)
 
@@ -235,6 +237,14 @@ def get_parser():
              "the literature on this topic before applying this feature to your data.\n"
     )
     optional.add_argument(
+        '-normalize-PAM50',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Set to 1 to bring the metrics in the PAM50 anatomical dimensions perslice. -vertfile and -perslice need to be specified."
+    )
+    optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
         type=os.path.abspath,
@@ -375,10 +385,13 @@ def main(argv: Sequence[str]):
     append = bool(arguments.append)
     levels = arguments.vert
     fname_vert_level = arguments.vertfile
+    normalize_pam50 = arguments.normalize_PAM50
     if not os.path.isfile(fname_vert_level):
         logger.warning(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
                        f"not be displayed. To use vertebral level information, you may need to run "
                        f"`sct_warp_template` to generate the appropriate level file in your working directory.")
+        if normalize_pam50:
+            raise FileNotFoundError("The vertebral level file must exist to use -normalize-PAM50.")
         fname_vert_level = None  # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
         if levels:
             raise FileNotFoundError("The vertebral level file must exist to use `-vert` to group by vertebral level.")
@@ -397,6 +410,8 @@ def main(argv: Sequence[str]):
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
+    if normalize_pam50 and not perslice:
+        parser.error("Option '-normalize-PAM50' requires option '-perslice 1'.")
     if distance_pmj is not None and fname_pmj is None:
         parser.error("Option '-pmj-distance' requires option '-pmj'.")
     if fname_pmj is not None and distance_pmj is None and not perslice:
@@ -410,6 +425,18 @@ def main(argv: Sequence[str]):
                                          param_centerline=param_centerline,
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
+    if normalize_pam50:
+        fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
+        metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
+        if not levels:  # If no levels -vert were specified by user
+            if verbose == 2:
+                # Get all available vertebral levels from PAM50 template to only include slices from available levels in .csv file
+                levels = Image(fname_vert_level_PAM50).getNonZeroValues()
+            else:
+                # Get all available vertebral levels to only include slices from available levels in .csv file
+                levels = Image(fname_vert_level).getNonZeroValues()
+        metrics = metrics_PAM50_space  # Set metrics to the metrics in PAM50 space to use instead
+        fname_vert_level = fname_vert_level_PAM50  # Set vertebral levels to PAM50
     if fname_pmj is not None:
         im_ctl, mask, slices, centerline, length_from_pmj = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
                                                                                         distance_pmj, extent_pmj,
@@ -422,7 +449,8 @@ def main(argv: Sequence[str]):
             np.savetxt(fname_ctl_csv + '.csv', centerline, delimiter=",")
     else:
         length_from_pmj = None
-    for key in metrics:
+    # Aggregate metrics
+    for key in sct_progress_bar(metrics, unit='iter', unit_scale=False, desc="Aggregating metrics", ascii=True, ncols=80):
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,

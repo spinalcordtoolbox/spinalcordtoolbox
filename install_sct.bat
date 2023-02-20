@@ -58,11 +58,19 @@ if exist .git\ (
   cd spinalcordtoolbox
 )
 
-rem Create and activate virtual environment to install SCT into
+rem Install portable miniconda instance. (Command source: https://github.com/conda/conda/issues/1977)
 echo:
-echo ### Using Python to create virtual environment...
-python -m venv venv_sct || goto error
-call venv_sct\Scripts\activate.bat || goto error
+echo ### Downloading Miniconda installer...
+curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
+echo:
+echo ### Installing portable copy of Miniconda...
+start /wait "" Miniconda3-latest-Windows-x86_64.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%cd%\python
+
+rem Create and activate miniconda environment to install SCT into
+echo:
+echo ### Using Conda to create virtual environment...
+python\Scripts\conda create -y -p python\envs\venv_sct python=3.8 || goto error
+CALL python\Scripts\activate.bat python\envs\venv_sct || goto error
 echo Virtual environment created and activated successfully!
 
 rem Install SCT and its requirements
@@ -86,7 +94,7 @@ FOR %%D IN (PAM50 optic_models pmj_models deepseg_sc_models deepseg_gm_models de
 rem Copying SCT scripts to an isolated folder (so we can add scripts to the PATH without adding the entire venv_sct)
 echo:
 echo ### Copying SCT's CLI scripts to %CD%\bin\
-xcopy %CD%\venv_sct\Scripts\*sct*.* %CD%\bin\ /v /y /q /i || goto error
+xcopy %CD%\python\envs\venv_sct\Scripts\*sct*.* %CD%\bin\ /v /y /q /i || goto error
 
 rem Give further instructions that the user add the Scripts directory to their PATH
 echo:
@@ -113,6 +121,6 @@ echo Failed with error #%cached_errorlevel%.
 if "%cached_errorlevel%"=="" set cached_errorlevel=0
 popd
 where deactivate >nul 2>&1
-if %errorlevel% EQU 0 call deactivate
+if %errorlevel% EQU 0 call conda deactivate
 PAUSE
 exit /b %cached_errorlevel%

@@ -599,6 +599,16 @@ class Image(object):
 
         return list_coordinates
 
+    def getNonZeroValues(self, sorting=True):
+        """
+        This function return all the non-zero unique values that the image contains.
+        If sorting is set to True, the list will be sorted.
+        """
+        list_values = list(np.unique(self.data[self.data > 0]))
+        if sorting:
+            list_values.sort()
+        return list_values
+
     def getCoordinatesAveragedByValue(self):
         """
         This function computes the mean coordinate of group of labels in the image. This is especially useful for label's images.

@@ -29,12 +29,14 @@ class ImageCropper(object):
         # Call one of the `get_bbox_from_*` methods to set the bounding box.
         self.bbox = None
 
-    def crop(self, background=None):
+    def crop(self, background=None, dilate=None):
         """
         Crop image (change dimension)
 
         :param background: int: If set, the output image will not be cropped. Instead, voxels outside the bounding
         box will be set to the value specified by this parameter.
+        :param dilate: If set, a list of 3 integers specifying an extra margin to keep around the bounding box,
+        in each of the x-, y-, and z-directions.
         :return Image: img_out
         """
         bbox = self.bbox
@@ -42,6 +44,14 @@ class ImageCropper(object):
             raise ValueError(
                 'Use one of the `get_bbox_from_*` methods to set the bounding '
                 'box before calling `ImageCropper.crop()`.')
+
+        if dilate is not None:
+            bbox = BoundingBox(
+                xmin=max(bbox.xmin-dilate[0], 0), xmax=min(bbox.xmax+dilate[0], self.img_in.dim[0]-1),
+                ymin=max(bbox.ymin-dilate[1], 0), ymax=min(bbox.ymax+dilate[1], self.img_in.dim[1]-1),
+                zmin=max(bbox.zmin-dilate[2], 0), zmax=min(bbox.zmax+dilate[2], self.img_in.dim[2]-1),
+            )
+
         logger.info("Bounding box: x=[{}, {}], y=[{}, {}], z=[{}, {}]"
                     .format(bbox.xmin, bbox.xmax+1, bbox.ymin, bbox.ymax+1, bbox.zmin, bbox.zmax+1))
 

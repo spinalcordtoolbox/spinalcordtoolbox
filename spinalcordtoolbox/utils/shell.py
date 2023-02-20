@@ -233,7 +233,6 @@ class ActionCreateFolder(argparse.Action):
         setattr(namespace, self.dest, folders)
 
 
-# TODO: Use for argparse wherever type_value=[['delim'], 'type'] was used
 def list_type(delimiter, subtype):
     """
         Factory function that returns a list parsing function, which can be

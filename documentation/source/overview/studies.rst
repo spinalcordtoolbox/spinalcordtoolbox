@@ -26,12 +26,16 @@ The following studies have used SCT:
 2023
 ----
 
+-  Ruiter *et al.* `Association of volumetric MRI measures and disability in MS patients of the same age: Descriptions from a birth year cohort <https://doi.org/10.1016/j.msard.2023.104568>`_, **Mult. Scler. Relat. Disord.**, 2023
+-  Schading *et al.* `Dynamics of progressive degeneration of major spinal pathways following spinal cord injury: A longitudinal study <https://doi.org/10.1016/j.nicl.2023.103339>`_, **Neuroimage Clin.**, 2023
+-  Blanc *et al.* `Combining PropSeg and a convolutional neural network for automatic spinal cord segmentation in pediatric populations and patients with spinal cord injury <https://doi.org/10.1002/ima.22859>`_, **IMA**, 2023
+-  Martín-Noguerol *et al.* `The role of Artificial intelligence in the assessment of the spine and spinal cord <https://doi.org/10.1016/j.ejrad.2023.110726>`_, **Eur. J. Radiol.**, 2023
 -  Chu *et al.* `Improving T2*-weighted human cortico-spinal acquisitions with a dedicated algorithm for region-wise shimming <https://doi.org/10.1016/j.neuroimage.2023.119868>`_, **Neuroimage**, 2023
 -  Schilling *et al.* `Denoising of diffusion MRI in the cervical spinal cord – effects of denoising strategy and acquisition on intra-cord contrast, signal modeling, and feature conspicuity <https://doi.org/10.1016/j.neuroimage.2022.119826>`_, **Neuroimage**, 2023
 
 2022
 ----
-
+ 
 -  Wenzel *et al.* `Multiple sclerosis iron rim lesions are linked to impaired cervical spinal cord integrity using the T1/T2-weighted ratio <https://doi.org/10.1111/jon.13076>`_, **J. Neuroimaging**, 2022
 -  Toh *et al.* `Analysis of brain and spinal MRI measures in a common domain to investigate directional neurodegeneration in motor neuron disease <https://doi.org/10.1007/s00415-022-11520-1>`_, **J. Neurol.**, 2022
 -  Hussain *et al.* `Deep learning-based diagnosis of disc degenerative diseases using MRI: A comprehensive review <https://doi.org/10.1016/j.compeleceng.2022.108524>`_, **Comput. Electr. Eng.** 2022

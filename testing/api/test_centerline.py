@@ -5,14 +5,11 @@ import os
 import sys
 import pytest
 import numpy as np
-import nibabel
 
-import spinalcordtoolbox as sct
 from spinalcordtoolbox import __sct_dir__
-from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord, round_and_clip
+from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.testing.create_test_data import dummy_centerline
-import spinalcordtoolbox.math
 from spinalcordtoolbox.utils import sct_test_path, init_sct, set_loglevel
 
 sys.path.append(os.path.join(__sct_dir__, 'scripts'))
@@ -97,7 +94,7 @@ def test_find_and_sort_coord(img_ctl, expected):
 @pytest.mark.parametrize('img_ctl,expected', im_ctl_zeroslice)
 def test_get_centerline_polyfit_minmax(img_ctl, expected):
     """Test centerline fitting with minmax=True"""
-    img, img_sub = [img_ctl[0].copy(), img_ctl[1].copy()]
+    img_sub = img_ctl[1].copy()
     img_out, arr_out, _, _ = get_centerline(
         img_sub, ParamCenterline(algo_fitting='polyfit', degree=3, minmax=True), verbose=VERBOSE)
     # Assess output size
@@ -165,8 +162,3 @@ def test_get_centerline_optic(params):
         im, ParamCenterline(algo_fitting='optic', contrast=params['contrast'], minmax=False), verbose=VERBOSE)
     # Compare with ground truth centerline
     assert np.all(im_centerline.data == Image(params['fname_centerline-optic']).data)
-
-
-def test_round_and_clip():
-    arr = round_and_clip(np.array([-0.2, 3.00001, 2.99999, 49]), clip=[0, 41])
-    assert np.all(arr == np.array([0,  3,  3, 40]))  # Check element-wise equality between the two arrays

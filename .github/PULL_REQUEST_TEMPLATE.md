@@ -20,8 +20,8 @@
 #### PR contents
 
 - [ ] I've consulted [SCT's internal developer documentation](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki) to ensure my contribution is in line with any relevant design decisions
-- [ ] I've added [relevant tests](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Programming%3A-Tests) for my contribution
-- [ ] I've updated the [relevant documentation](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Programming%3A-Documentation) for my changes, including argparse descriptions, docstrings, and ReadTheDocs tutorial pages
+- [ ] I've added [relevant tests](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Testing) for my contribution
+- [ ] I've updated the [relevant documentation](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Documentation) for my changes, including argparse descriptions, docstrings, and ReadTheDocs tutorial pages
 
 ## Description
 <!-- describe what the PR is about. Explain the approach and possible drawbacks.It's ok to repeat some text from the related issue. -->
