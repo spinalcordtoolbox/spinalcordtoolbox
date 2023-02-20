@@ -411,11 +411,15 @@ print info "
 fetch_os_type
 check_requirements
 
-# Catch SCT version
+# Check to see if the PWD contains the project source files (using `version.txt` as a proxy for the entire source dir)
 if [[ -e "spinalcordtoolbox/version.txt" ]]; then
   SCT_VERSION="$(cat spinalcordtoolbox/version.txt)"
+# If version.txt isn't present, then the installation script is being run without source files, so clone SCT
 else
-  die "ERROR: version.txt not found."
+  SCT_SOURCE="$TMP_DIR/spinalcordtoolbox"
+  echo "Source files not present. Cloning source files to $SCT_SOURCE."
+  git clone -b "$SCT_GIT_REF" --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git "$SCT_SOURCE"
+  SCT_VERSION=$(cat "$SCT_SOURCE/spinalcordtoolbox/version.txt")
 fi
 
 # Get installation type (from git or from package) if not already specified
