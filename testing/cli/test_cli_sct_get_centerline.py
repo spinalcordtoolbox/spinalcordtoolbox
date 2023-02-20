@@ -78,7 +78,7 @@ def test_sct_get_centerline_soft_overlaps_with_binary(tmp_path):
     im_bin = Image(os.path.join(tmp_path, 't2_seg_centerline_bin.nii.gz'))  # Read binary centerline file
     # Find the maximum intensity voxel across all slices in soft centerline and binary centerline
     max_over_slices_soft = np.apply_over_axes(np.max, im_soft.data, [0, 2])
-    max_over_slices_bin = np.apply_over_axes(np.max,im_bin.data, [0, 2])
+    max_over_slices_bin = np.apply_over_axes(np.max, im_bin.data, [0, 2])
     # Find the coordinates of the maximum in each slice in both soft and binary centerline
     max_coords_over_slices_soft = np.transpose(np.where(im_soft.data == max_over_slices_soft))
     max_coords_over_slices_bin = np.transpose(np.where(im_bin.data == max_over_slices_bin))
