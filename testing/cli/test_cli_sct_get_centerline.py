@@ -54,7 +54,7 @@ def test_sct_get_centerline_soft_output_is_equal_to_one(tmp_path):
     script."""
     # TODO - check if it is necessary to run this command again. Maybe, we can reuse the output of the previous test.
     sct_get_centerline.main(argv=['-i', 't2/t2_seg-manual.nii.gz', '-method', 'fitseg', '-centerline-soft', '1', '-o',
-                                  't2_seg_centerline_soft.nii.gz', '-qc', str(tmp_path)])
+                                  't2/t2_seg_centerline_soft.nii.gz', '-qc', str(tmp_path)])
 
     # Read nii file
     im = Image(os.path.join('t2', 't2_seg_centerline_soft.nii.gz'))
