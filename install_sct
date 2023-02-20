@@ -412,25 +412,28 @@ fetch_os_type
 check_requirements
 
 # Check to see if the PWD contains the project source files (using `version.txt` as a proxy for the entire source dir)
+# If it exists, then we can reliably access source files (`version.txt`, `requirements-freeze.txt) from the PWD.
 if [[ -e "spinalcordtoolbox/version.txt" ]]; then
   SCT_VERSION="$(cat spinalcordtoolbox/version.txt)"
-# If version.txt isn't present, then the installation script is being run without source files, so clone SCT
+  # Get installation type if not already specified
+  if [[ -z "$SCT_INSTALL_TYPE" ]]; then
+    # The file 'requirements-freeze.txt` only exists for stable releases
+    if [[ -e "requirements-freeze.txt" ]]; then
+      SCT_INSTALL_TYPE="package"
+    # If it doesn't exist, then we can assume that a dev is performing an in-place installation from master
+    else
+      SCT_INSTALL_TYPE="in-place"
+    fi
+  fi
+# If version.txt isn't present, then the installation script is being run by itself (i.e. without source files).
+# So, we need to clone SCT to a TMPDIR to access the source files, and update SCT_SOURCE accordingly.
 else
   SCT_SOURCE="$TMP_DIR/spinalcordtoolbox"
   echo "Source files not present. Cloning source files to $SCT_SOURCE."
   git clone -b "$SCT_GIT_REF" --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git "$SCT_SOURCE"
   SCT_VERSION=$(cat "$SCT_SOURCE/spinalcordtoolbox/version.txt")
-fi
-
-# Get installation type (from git or from package) if not already specified
-if [[ -z "$SCT_INSTALL_TYPE" ]]; then
-  # The file 'requirements-freeze.txt` only exists on the `release` branch
-  # or in stable release "Source Code" .zips (which point at tags `release`)
-  if [[ -e "requirements-freeze.txt" ]]; then
-    SCT_INSTALL_TYPE="package"   # i.e. release installations
-  else
-    SCT_INSTALL_TYPE="in-place"  # i.e. dev installations
-  fi
+  # Since we're git cloning into a TMPDIR, this can never be an "in-place" installation, so we force "package" instead.
+  SCT_INSTALL_TYPE="package"
 fi
 
 # Define sh files
