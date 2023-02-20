@@ -58,7 +58,7 @@ def test_sct_get_centerline_soft_output_is_equal_to_one(tmp_path):
 
     # Read nii file
     im = Image(os.path.join('t2', 't2_seg_centerline_soft.nii.gz'))
-    # Sum soft centerline intensities across all slices
-    sum_over_slices = np.apply_over_axes(np.sum, im.data, [0, 1]).flatten()
-    # Test if ndarray contains only 1
+    # Sum soft centerline intensities in the (x,y) plane, across all slices
+    sum_over_slices = np.apply_over_axes(np.sum, im.data, [0, 2]).flatten()
+    # Test if the summation for each slice is equal to 1
     assert (sum_over_slices == 1).all()
