@@ -22,7 +22,9 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 logger = logging.getLogger(__name__)
 
-# TODO: for vert-disc: make it faster! currently the module display-voxel is very long (esp. when ran on PAM50). We can find an alternative approach by sweeping through centerline voxels.
+# TODO: for vert-disc: make it faster!
+#       currently the module display-voxel is very long (esp. when ran on PAM50).
+#       We can find an alternative approach by sweeping through centerline voxels.
 # TODO: label_disc: for top vertebrae, make label at the center of the cord (currently it's at the tip)
 
 

@@ -238,7 +238,11 @@ class AnalyzeLeion:
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
             self.measure_pd.loc[label_idx, 'mean_' + extract_fname(self.fname_ref)[1]] = mean_cur
             self.measure_pd.loc[label_idx, 'std_' + extract_fname(self.fname_ref)[1]] = std_cur
-            printv('Mean+/-std of lesion #' + str(lesion_label) + ' in ' + extract_fname(self.fname_ref)[1] + ' file: ' + str(np.round(mean_cur, 2)) + '+/-' + str(np.round(std_cur, 2)), self.verbose, type='info')
+            file_ref = extract_fname(self.fname_ref)[1]
+            printv(
+                f'Mean+/-std of lesion #{lesion_label} in {file_ref} file: {mean_cur:.2f}+/-{std_cur:.2f}',
+                self.verbose,
+                type='info')
 
     def _measure_volume(self, im_data, p_lst, idx):
         for zz in range(im_data.shape[2]):
@@ -364,7 +368,7 @@ class AnalyzeLeion:
         im_lesion_data = im_lesion.data
         p_lst = im_lesion.dim[4:7]  # voxel size
 
-        label_lst = [l for l in np.unique(im_lesion_data) if l]  # lesion label IDs list
+        label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
 
         if self.path_template is not None:
             if os.path.isfile(self.path_levels):
@@ -374,7 +378,12 @@ class AnalyzeLeion:
 
             else:
                 im_vert_data = None
-                printv('ERROR: the file ' + self.path_levels + ' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='error')
+                printv(
+                    f"ERROR: the file {self.path_levels} does not exist. "
+                    f"Please make sure the template was correctly registered and warped "
+                    f"(sct_register_to_template or sct_register_multimodal and sct_warp_template)",
+                    type='error',
+                )
 
             # In order to open atlas images only one time
             atlas_data_dct = {}  # dict containing the np.array of the registrated atlas
@@ -423,7 +432,6 @@ class AnalyzeLeion:
     def angle_correction(self):
         im_seg = Image(self.fname_sc)
         nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-        data_seg = im_seg.data
 
         # fit centerline, smooth it and return the first derivative (in physical space)
         _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
@@ -447,7 +455,7 @@ class AnalyzeLeion:
         im_2save.data = label(im.data, connectivity=2)
         im_2save.save(self.fname_label)
 
-        self.measure_pd['label'] = [l for l in np.unique(im_2save.data) if l]
+        self.measure_pd['label'] = [label for label in np.unique(im_2save.data) if label]
         printv('Lesion count = ' + str(len(self.measure_pd['label'])), self.verbose, 'info')
 
     def _orient(self, fname, orientation):

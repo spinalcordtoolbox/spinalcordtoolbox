@@ -293,8 +293,12 @@ class Param:
 class ParamGLCM(object):
     def __init__(self, symmetric=True, normed=True, feature='contrast,dissimilarity,homogeneity,energy,correlation,ASM', distance=1, angle='0,45,90,135'):
         self.symmetric = True  # If True, the output matrix P[:, :, d, theta] is symmetric.
-        self.normed = True  # If True, normalize each matrix P[:, :, d, theta] by dividing by the total number of accumulated co-occurrences for the given offset. The elements of the resulting matrix sum to 1.
-        self.feature = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM'  # The property formulae are detailed here: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops
+        # If self.normed is True, normalize each matrix P[:, :, d, theta] by dividing by the total number of
+        # accumulated co-occurrences for the given offset. The elements of the resulting matrix sum to 1.
+        self.normed = True
+        # The property formulae for self.feature are detailed here:
+        # http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops
+        self.feature = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM'
         self.distance = 1  # Size of the window: distance = 1 --> a reference pixel and its immediate neighbor
         self.angle = '0,45,90,135'  # Rotation angles for co-occurrence matrix
 

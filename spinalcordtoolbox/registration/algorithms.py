@@ -873,39 +873,44 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                 # plt.figure
                 plt.subplot(isub)
                 # ax = matplotlib.pyplot.axis()
-                try:
-                    if isub == 221:
-                        plt.scatter(coord_src[iz][:, 0], coord_src[iz][:, 1], s=5, marker='o', zorder=10, color='steelblue',
-                                    alpha=0.5)
-                        pcaaxis = pca_src[iz].components_.T
-                        pca_eigenratio = pca_src[iz].explained_variance_ratio_
-                        plt.title('src')
-                    elif isub == 222:
-                        plt.scatter([coord_src_rot[i, 0] for i in range(len(coord_src_rot))], [coord_src_rot[i, 1] for i in range(len(coord_src_rot))], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
-                        pcaaxis = pca_dest[iz].components_.T
-                        pca_eigenratio = pca_dest[iz].explained_variance_ratio_
-                        plt.title('src_rot')
-                    elif isub == 223:
-                        plt.scatter(coord_dest[iz][:, 0], coord_dest[iz][:, 1], s=5, marker='o', zorder=10, color='red',
-                                    alpha=0.5)
-                        pcaaxis = pca_dest[iz].components_.T
-                        pca_eigenratio = pca_dest[iz].explained_variance_ratio_
-                        plt.title('dest')
-                    elif isub == 224:
-                        plt.scatter([coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))], [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))], s=5, marker='o', zorder=10, color='red', alpha=0.5)
-                        pcaaxis = pca_src[iz].components_.T
-                        pca_eigenratio = pca_src[iz].explained_variance_ratio_
-                        plt.title('dest_rot')
-                    plt.text(-2.5, -2, 'eigenvectors:', horizontalalignment='left', verticalalignment='bottom')
-                    plt.text(-2.5, -2.8, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
-                    plt.text(-2.5, 2.5, 'eigenval_ratio:', horizontalalignment='left', verticalalignment='bottom')
-                    plt.text(-2.5, 2, str(pca_eigenratio), horizontalalignment='left', verticalalignment='bottom')
-                    plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
-                    plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
-                    plt.axis([-3, 3, -3, 3])
-                    plt.gca().set_aspect('equal', adjustable='box')
-                except Exception as e:
-                    raise Exception
+                if isub == 221:
+                    plt.scatter(coord_src[iz][:, 0], coord_src[iz][:, 1], s=5, marker='o', zorder=10, color='steelblue',
+                                alpha=0.5)
+                    pcaaxis = pca_src[iz].components_.T
+                    pca_eigenratio = pca_src[iz].explained_variance_ratio_
+                    plt.title('src')
+                elif isub == 222:
+                    plt.scatter(
+                        [coord_src_rot[i, 0] for i in range(len(coord_src_rot))],
+                        [coord_src_rot[i, 1] for i in range(len(coord_src_rot))],
+                        s=5, marker='o', zorder=10, color='steelblue', alpha=0.5,
+                    )
+                    pcaaxis = pca_dest[iz].components_.T
+                    pca_eigenratio = pca_dest[iz].explained_variance_ratio_
+                    plt.title('src_rot')
+                elif isub == 223:
+                    plt.scatter(coord_dest[iz][:, 0], coord_dest[iz][:, 1], s=5, marker='o', zorder=10, color='red',
+                                alpha=0.5)
+                    pcaaxis = pca_dest[iz].components_.T
+                    pca_eigenratio = pca_dest[iz].explained_variance_ratio_
+                    plt.title('dest')
+                elif isub == 224:
+                    plt.scatter(
+                        [coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))],
+                        [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))],
+                        s=5, marker='o', zorder=10, color='red', alpha=0.5,
+                    )
+                    pcaaxis = pca_src[iz].components_.T
+                    pca_eigenratio = pca_src[iz].explained_variance_ratio_
+                    plt.title('dest_rot')
+                plt.text(-2.5, -2, 'eigenvectors:', horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, -2.8, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, 2.5, 'eigenval_ratio:', horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, 2, str(pca_eigenratio), horizontalalignment='left', verticalalignment='bottom')
+                plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
+                plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
+                plt.axis([-3, 3, -3, 3])
+                plt.gca().set_aspect('equal', adjustable='box')
 
             plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_pca_z' + str(iz) + '.png'))
             plt.close()
@@ -1011,10 +1016,8 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         dest2d[dest2d < th_nonzero] = 0
         # get non-zero coordinates, and transpose to obtain nx2 dimensions
         coord_src2d = np.array(np.where(src2d > 0)).T
-        coord_dest2d = np.array(np.where(dest2d > 0)).T
         # here we use 0.5 as threshold for non-zero value
         # coord_src2d = np.array(np.where(src2d > th_nonzero)).T
-        # coord_dest2d = np.array(np.where(dest2d > th_nonzero)).T
         # >>>
 
         # SCALING R-L (X dimension)
@@ -1273,8 +1276,9 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         cmd = [
             'isct_antsRegistration',
             '--dimensionality', '2',
-            '--transform', paramreg.algo + '[' + str(paramreg.gradStep) + ants_registration_params[paramreg.algo.lower()] + ']',
-            '--metric', paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + ']',  # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+            '--transform', f'{paramreg.algo}[{paramreg.gradStep}{ants_registration_params[paramreg.algo.lower()]}]',
+            # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+            '--metric', f'{paramreg.metric}[dest_Z{num}.nii,src_Z{num}.nii,1,{metricSize}]',
             '--convergence', str(paramreg.iter),
             '--shrink-factors', str(paramreg.shrink),
             '--smoothing-sigmas', str(paramreg.smooth) + 'mm',
