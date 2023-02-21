@@ -70,9 +70,6 @@ class Coordinate:
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def hasEqualValue(self, other):
-        return self.value == other.value
-
     def permute(self, img, orient_dest, orient_src=None):
         """
         Permute coordinate based on source and destination orientation.
