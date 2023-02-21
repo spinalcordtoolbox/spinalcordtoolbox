@@ -125,7 +125,7 @@ def get_parser():
     return parser
 
 
-def select_HC(fname_participants, sex, age):
+def select_HC(fname_participants, sex=None, age=None):
     """
     Selects healthy controls to use for normalization based on sex and age range specified by the user.
     :param fname_participants: Filename of participants.tsv
@@ -150,6 +150,8 @@ def select_HC(fname_participants, sex, age):
             list_to_include = list_sub_age
     if age and sex:
         list_to_include = set(list_sub_age).intersection(list_sub_sex)
+    else:
+        list_to_include = data['participant_id'].to_list()
     printv(f'{len(list_to_include)} healthy controls are used for normalization')
     return list(list_to_include)
 
@@ -282,7 +284,7 @@ def average_hc(ref_folder, metric, list_HC):
     i = 0
     # Loop through .csv files of healthy controls
     for file in os.listdir(ref_folder):
-        if 'PAM50' in file:
+        if 'PAM50.csv' in file:
             subject = os.path.basename(file).split('_')[0]
             if subject in list_HC:
                 d[file] = csv2dataFrame(os.path.join(ref_folder, file), metric)  # TODO change verbose for arg
@@ -437,12 +439,11 @@ def main(argv: Sequence[str]):
         # Put age range in order
         else:
             age.sort()
+    fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
     if sex or age:
-        fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
         list_HC = select_HC(fname_partcipants, sex, age)
     else:
-        fname_partcipants = None
-        list_HC = None
+        list_HC = select_HC(fname_partcipants)
 
     # Select healthy controls based on sex and/or age range
     slice_thickness = get_slice_thickness(img)
