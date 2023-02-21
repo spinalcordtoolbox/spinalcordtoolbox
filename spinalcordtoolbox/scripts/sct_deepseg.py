@@ -262,7 +262,7 @@ def main(argv: Sequence[str]):
         elif isinstance(path_model, list):
             nii_lst, target_lst = segment_volume_with_ensemble(path_model, input_filenames, options=options)
         else:
-            raise ValueError(f"Invalid type for 'path_model': {type(path_model)}. Must be string or list of strings.")
+            raise TypeError(f"Invalid type for 'path_model': {type(path_model)}. Must be string or list of strings.")
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
