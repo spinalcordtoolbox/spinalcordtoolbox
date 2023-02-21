@@ -7,7 +7,6 @@
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Benjamin De Leener
 # Created: 2015-02-10
-# Last modified: 2015-02-10
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
