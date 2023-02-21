@@ -30,39 +30,26 @@ class Coordinate:
         coord = Coordinate([x, y, z, value])
     """
     def __init__(self, coord=None):
-        self.x = 0
-        self.y = 0
-        self.z = 0
         if coord is None:
-            self.value = 0
-            return
+            coord = [0, 0, 0, 0]
+        elif isinstance(coord, str):
+            coord = [float(c) for c in coord.split(',')]
 
-        if not isinstance(coord, list) and not isinstance(coord, str):
-            raise TypeError("Coordinates parameter must be a list with coordinates [x, y, z] or [x, y, z, value] or a "
-                            "string with coordinates delimited by commas.")
+        if not isinstance(coord, list):
+            raise ValueError("Parameter must be a list with coordinates [x, y, z] or [x, y, z, value] or a "
+                             "string with coordinates delimited by commas.")
 
-        if isinstance(coord, str):
-            # coordinate as a string. Values delimited by a comma.
-            coord = coord.split(',')
+        if len(coord) == 3:
+            coord.append(0)
+        elif len(coord) != 4:
+            raise ValueError("Parameter must be a list with coordinates [x, y, z] or [x, y, z, value].")
 
-        if len(coord) not in [3, 4]:
-            raise TypeError("Parameter must be a list with coordinates [x, y, z] or [x, y, z, value].")
-
-        self.x = coord[0]
-        self.y = coord[1]
-        self.z = coord[2]
-        if len(coord) == 4:
-            self.value = coord[3]
-        else:
-            self.value = 0
-        # coordinates and value must be digits:
         try:
-            float(self.x), float(self.y), float(self.z), float(self.value)
+            [float(c) for c in coord]
         except ValueError:
-            raise TypeError(
-                "All coordinates and the value must be float or int. "
-                f"x={self.x}, y={self.y}, z={self.z}, value={self.value}"
-            )
+            raise TypeError(f"All coordinates and the value must be float or int: {coord}") from None
+
+        self.x, self.y, self.z, self.value = coord
 
     def euclideanDistance(self, other):
         return np.sqrt(np.pow((self.x - other.x), 2) + np.pow((self.y - other.y), 2) + np.pow((self.z - other.z), 2))
