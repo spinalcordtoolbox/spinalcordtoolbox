@@ -144,7 +144,7 @@ def select_HC(fname_participants, sex=None, age=None):
             list_to_include = list_sub_age
     if age and sex:
         list_to_include = set(list_sub_age).intersection(list_sub_sex)
-    else:
+    if not age and not sex:
         list_to_include = data['participant_id'].to_list()
     printv(f'{len(list_to_include)} healthy controls are used for normalization')
     return list(list_to_include)
