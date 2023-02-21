@@ -107,7 +107,7 @@ def test_sct_compute_compression_check_wrong_sex(tmp_path, dummy_3d_label_label,
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
         sct_compute_compression.main(argv=['-i', dummy_metrics_csv, '-i-PAM50', dummy_metrics_csv_pam50, '-l', dummy_3d_label_label,
-                                           'sex', 'J', '-o', filename])
+                                           '-sex', 'J', '-o', filename])
         assert e.value.code == 2
 
 
@@ -116,7 +116,16 @@ def test_sct_compute_compression_check_wrong_age(tmp_path, dummy_3d_label_label,
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
         sct_compute_compression.main(argv=['-i', dummy_metrics_csv, '-i-PAM50', dummy_metrics_csv_pam50, '-l', dummy_3d_label_label,
-                                           'age', '20', '-o', filename])
+                                           '-age', '20', '-o', filename])
+        assert e.value.code == 2
+
+
+def test_sct_compute_compression_check_wrong_metric(tmp_path, dummy_3d_label_label, dummy_metrics_csv, dummy_metrics_csv_pam50):
+    """ Run sct_compute_compression when missing -l"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    with pytest.raises(SystemExit) as e:
+        sct_compute_compression.main(argv=['-i', dummy_metrics_csv, '-i-PAM50', dummy_metrics_csv_pam50, '-l', dummy_3d_label_label,
+                                           '-metric', 'MEAN', '20', '-o', filename])
         assert e.value.code == 2
 
 
