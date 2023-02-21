@@ -385,8 +385,8 @@ class Centerline:
         :return:
         """
         if 0 <= index < self.number_of_points:
-            origin = self.points[index]
-            z_prime_axis = self.derivatives[index]
+            origin = self.points[index].copy()
+            z_prime_axis = self.derivatives[index].copy()
             z_prime_axis /= norm(z_prime_axis)
             y_axis = array([0, 1, 0])
             y_prime_axis = (y_axis - dot(y_axis, z_prime_axis) * z_prime_axis)
