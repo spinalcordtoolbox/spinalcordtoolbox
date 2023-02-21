@@ -18,33 +18,11 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 
-class Point(object):
-    """
-    """
-    def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.z = 0
-
-    # Euclidean distance
-    def euclideanDistance(self, other_point):
-        return np.sqrt(np.pow((self.x - other_point.x), 2) + np.pow((self.y - other_point.y), 2) + np.pow((self.z - other_point.z), 2))
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.x == other.x and self.y == other.y and self.z == other.z
-        else:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-
-class Coordinate(Point):
+class Coordinate:
     """
     Class to represent 3D coordinates.
 
-    :param Point: See class definition above
+    :param coord: a list with coordinates [x, y, z] or [x, y, z, value] or a string with coordinates delimited by commas.
     :param mode: 'index', 'continuous'  # TODO: document
 
     Example:
@@ -54,7 +32,9 @@ class Coordinate(Point):
         coord = Coordinate([x, y, z, value])
     """
     def __init__(self, coord=None, mode='continuous'):
-        super(Coordinate, self).__init__()
+        self.x = 0
+        self.y = 0
+        self.z = 0
         if coord is None:
             self.value = 0
             return
@@ -88,6 +68,9 @@ class Coordinate(Point):
                 "All coordinates must be int and the value can be a float or a int. "
                 f"x={self.x}, y={self.y}, z={self.z}, value={self.value}"
             )
+
+    def euclideanDistance(self, other):
+        return np.sqrt(np.pow((self.x - other.x), 2) + np.pow((self.y - other.y), 2) + np.pow((self.z - other.z), 2))
 
     def __iter__(self):
         # Allows for this usage: "for x, y, z, v in [list of Coordinate]"
