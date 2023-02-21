@@ -54,12 +54,6 @@ def get_parser():
         help='.nii file with compression labels. Each compression is denoted by a single voxel of value `1`. '
              'Example: sub-001_T2w_compression_labels.nii.gz'
     )
-    mandatoryArguments.add_argument(  # TODO: to remove, fetch dataset, add age, sex, height ...
-        '-ref',
-        required=True,
-        help='Folder with .csv files (in PAM50 space) of HC control to use for normalization.',
-        metavar=Metavar.folder,
-    )
     mandatoryArguments.add_argument(
         '-i-PAM50',
         metavar=Metavar.file,
