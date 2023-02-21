@@ -130,9 +130,6 @@ class Coordinate:
     def __radd__(self, other):
         return self + other
 
-    def __div__(self, scalar):
-        return Coordinate([self.x / float(scalar), self.y / float(scalar), self.z / float(scalar), self.value])
-
     def __truediv__(self, scalar):
         return Coordinate([self.x / float(scalar), self.y / float(scalar), self.z / float(scalar), self.value])
 
