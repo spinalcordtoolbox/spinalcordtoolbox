@@ -269,7 +269,8 @@ def install_model(name_model):
         model_urls = url_field
         download.install_data(model_urls, folder(name_model))
     # Dict of lists, with each list corresponding to a different model seed for ensembling
-    elif isinstance(url_field, dict):
+    else:
+        assert isinstance(url_field, dict), "Invalid url field in MODELS"
         for seed_name, model_urls in url_field.items():
             logger.info(f"\nInstalling '{seed_name}'...")
             download.install_data(model_urls, folder(os.path.join(name_model, seed_name)), keep=True)
