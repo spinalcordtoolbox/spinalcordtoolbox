@@ -180,8 +180,8 @@ def test_remove_missing_labels(test_image):
 
     res = sct_labels.remove_missing_labels(src, ref)
 
-    res_labels = res.getNonZeroCoordinates(coordValue=True)
-    ref_labels = ref.getNonZeroCoordinates(coordValue=True)
+    res_labels = {c.value for c in res.getNonZeroCoordinates()}
+    ref_labels = {c.value for c in ref.getNonZeroCoordinates()}
 
     for c in res_labels:
         assert c in ref_labels

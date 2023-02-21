@@ -22,7 +22,6 @@ class Coordinate:
     Class to represent 3D coordinates.
 
     :param coord: a list with coordinates [x, y, z] or [x, y, z, value] or a string with coordinates delimited by commas.
-    :param mode: 'index', 'continuous'  # TODO: document
 
     Example:
     .. code:: python
@@ -30,7 +29,7 @@ class Coordinate:
         coord = Coordinate([x, y, z])
         coord = Coordinate([x, y, z, value])
     """
-    def __init__(self, coord=None, mode='continuous'):
+    def __init__(self, coord=None):
         self.x = 0
         self.y = 0
         self.z = 0
@@ -58,13 +57,10 @@ class Coordinate:
             self.value = 0
         # coordinates and value must be digits:
         try:
-            if mode == 'index':
-                int(self.x), int(self.y), int(self.z), float(self.value)
-            else:
-                float(self.x), float(self.y), float(self.z), float(self.value)
+            float(self.x), float(self.y), float(self.z), float(self.value)
         except ValueError:
             raise TypeError(
-                "All coordinates must be int and the value can be a float or a int. "
+                "All coordinates and the value must be float or int. "
                 f"x={self.x}, y={self.y}, z={self.z}, value={self.value}"
             )
 
@@ -132,23 +128,6 @@ class Coordinate:
 
     def __truediv__(self, scalar):
         return Coordinate([self.x / float(scalar), self.y / float(scalar), self.z / float(scalar), self.value])
-
-
-class CoordinateValue(Coordinate):
-    def __init__(self, coord=None, mode='index'):
-        super(CoordinateValue, self).__init__(coord, mode)
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return float(self.value) == float(other.value)
-        else:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return hash(self.value)
 
 
 class Centerline:
