@@ -51,9 +51,6 @@ class Coordinate:
 
         self.x, self.y, self.z, self.value = coord
 
-    def euclideanDistance(self, other):
-        return np.sqrt(np.pow((self.x - other.x), 2) + np.pow((self.y - other.y), 2) + np.pow((self.z - other.z), 2))
-
     def __iter__(self):
         # Allows for this usage: "for x, y, z, v in [list of Coordinate]"
         return iter((self.x, self.y, self.z, self.value))
