@@ -33,7 +33,7 @@ def test_sct_get_centerline_output_file_exists_with_o_arg(tmp_path, ext):
     ensure that the correct output file is created either way."""
     sct_get_centerline.main(argv=['-i', 't2s/t2s.nii.gz', '-c', 't2s', '-qc', str(tmp_path),
                                   '-o', os.path.join(tmp_path, 't2s_centerline'+ext)])
-    for file in [os.path.join(tmp_path, 't2s_centerline.nii.gz'), os.path.join(tmp_path, 't2s_centerline.csv')]:
+    for file in [os.path.join('t2s', 't2s_centerline.nii.gz'), os.path.join('t2s', 't2s_centerline.csv')]:
         assert os.path.exists(file)
 
 
