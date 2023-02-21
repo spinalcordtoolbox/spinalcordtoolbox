@@ -161,12 +161,18 @@ def segment_volume_with_ensemble(model_paths, input_filenames, options):
     # The 'niis' are images, so average the image data across the ensemble
     logger.info(f"\nAveraging outputs across the ensemble for '{name_model}'...")
     nii_lst = []
-    n_outputs_per_model = len(nii_lsts[0])
-    for i in range(n_outputs_per_model):
+    # NB: `nii_lsts` is a list of lists, with each sublist being the *per-model* predictions. Example:
+    #         [
+    #             [m1_prediction_1.nii.gz, m1_prediction_2.nii.gz, ...],  # model 1 predictions
+    #             [m2_prediction_1.nii.gz, m2_prediction_2.nii.gz, ...]   # model 2 predictions
+    #         ]
+    # So, we want to take: the average of "prediction_1", the average of "prediction_2", etc.
+    # To do this, we unpack + zip `nii_lists`, so that each set of "prediction_N" files are grouped as "predictions".
+    for predictions in zip(*nii_lsts):
         # Average the data for each output in the ensemble
-        data_mean = np.mean([im_lst[i].get_fdata() for im_lst in nii_lsts])
+        data_mean = np.mean([pred.get_fdata() for pred in predictions])
         # Take the first image's header to reuse for the averaged image
-        nii_header = nii_lsts[0][i].header
+        nii_header = predictions[0].header
         # Create a new Nifti1Image containing the averaged output
         nii_lst.append(nib.Nifti1Image(data_mean, header=nii_header, affine=nii_header.get_best_affine()))
     # The 'targets' should be identical for each model in the ensemble, so just take the first
