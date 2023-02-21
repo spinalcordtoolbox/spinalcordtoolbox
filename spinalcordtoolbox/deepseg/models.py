@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 # Regions could be: sc, gm, lesion, tumor
 # NB: The 'url' field should either be:
 #     1) A <mirror URL list> containing different mirror URLs for the model
-#     2) A dict of <mirror URL lists>, where each list corresponds to a different seed (for model ensembling)
+#     2) A dict of <mirror URL lists>, where each list corresponds to a different seed (for model ensembling), and
+#        each dictionary key corresponds to the seed's name (seed names are used to create subfolders per-seed)
 MODELS = {
     "t2star_sc": {
         "url": [
