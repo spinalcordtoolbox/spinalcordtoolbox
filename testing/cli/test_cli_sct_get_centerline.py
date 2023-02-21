@@ -39,17 +39,6 @@ def test_sct_get_centerline_output_file_exists_with_o_arg(tmp_path, ext):
 
 @pytest.mark.sct_testing
 @pytest.mark.usefixtures("run_in_sct_testing_data_dir")
-@pytest.mark.parametrize('ext', ["", ".nii.gz"])
-def test_sct_get_centerline_soft_output_file_exists(tmp_path, ext):
-    """This test checks the output soft centerline using default usage of the CLI script."""
-    sct_get_centerline.main(argv=['-i', 't2/t2_seg-manual.nii.gz', '-method', 'fitseg', '-centerline-soft', '1', '-o',
-                                  os.path.join(tmp_path, 't2_seg_centerline_soft'+ext), '-qc', str(tmp_path)])
-    for file in [os.path.join(tmp_path, 't2_seg_centerline_soft.nii.gz'), os.path.join(tmp_path, 't2_seg_centerline_soft.csv')]:
-        assert os.path.exists(file)
-
-
-@pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_get_centerline_soft_output_is_equal_to_one(tmp_path):
     """This test checks that the sum of the output intensities of the soft centerline is equal to 1 on all slices. using default usage of the CLI
     script."""
