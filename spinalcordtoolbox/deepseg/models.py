@@ -322,7 +322,7 @@ def display_list_tasks():
     print("-" * 120)
     for name_task, value in tasks.items():
         path_models = [folder(name_model) for name_model in value['models']]
-        path_models = [find_ensemble_subfolders(path) for path in path_models]
+        path_models = [find_model_folder_paths(path) for path in path_models]
         are_models_valid = [is_valid(path_model) for path_model in path_models]
         task_status = stylize(name_task.ljust(30),
                               color[all(are_models_valid)])
@@ -361,7 +361,7 @@ def display_list_tasks_long():
 
         path_models = [folder(name_model)
                        for name_model in value['models']]
-        path_models = [find_ensemble_subfolders(path) for path in path_models]
+        path_models = [find_model_folder_paths(path) for path in path_models]
         if all([is_valid(path_model) for path_model in path_models]):
             installed = stylize("Yes", 'LightGreen')
         else:
@@ -383,17 +383,18 @@ def get_metadata(folder_model):
     return metadata
 
 
-def find_ensemble_subfolders(path_model):
+def find_model_folder_paths(path_model):
     """
     Search for the presence of model subfolders within the main model folder. If they exist,
     then the model folder is actually an ensemble of models, so return a list of folders.
+    If they don't exist, then return the original `path_model` (but as a list, to ensure code compatibility).
 
     :param path_model: Absolute path to folder that encloses the model files.
-    :return: list or str: Either a list of ensemble subfolders, or the original model folder path.
+    :return: list: Either a list of ensemble subfolders, or a list containing the original model folder path.
     """
     name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
     # Check to see if model folder contains subfolders with the model name (i.e. ensembling)
     model_subfolders = [folder[0] for folder in os.walk(path_model)  # NB: `[0]` == folder name for os.walk
                         if folder[0].endswith(name_model) and folder[0] != path_model]
-    # If it does, then these are the "true" model subfolders. Otherwise, return the original path.
-    return model_subfolders if model_subfolders else path_model
+    # If it does, then these are the "true" model subfolders. Otherwise, return the original path as a list.
+    return model_subfolders if model_subfolders else [path_model]

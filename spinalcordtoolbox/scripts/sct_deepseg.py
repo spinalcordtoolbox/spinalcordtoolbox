@@ -132,7 +132,7 @@ def get_parser():
     return parser
 
 
-def segment_volume_with_ensemble(model_paths, input_filenames, options):
+def segment_and_average_volumes(model_paths, input_filenames, options):
     """
         Run `ivadomed.inference.segment_volume()` once per model, then average the outputs.
 
@@ -150,33 +150,43 @@ def segment_volume_with_ensemble(model_paths, input_filenames, options):
     """
     # Fetch the name of the model (to be used in logging)
     name_model = Path(model_paths[0]).parts[-1]
-    # Perform inference once per model in the ensemble
+    logger.info(f"\nRunning inference for model '{name_model}'...")
+
+    # Perform inference once per model
     nii_lsts, target_lsts = [], []
     for path_model in model_paths:
-        name_seed = Path(path_model).parts[-2]
-        logger.info(f"\nRunning inference using model '{name_model}' ({name_seed})...")
+        if len(model_paths) > 1:  # We have an ensemble, so output messages to distinguish between seeds
+            name_seed = Path(path_model).parts[-2]
+            logger.info(f"\nUsing '{name_seed}'...")
         nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, options=options)
         nii_lsts.append(nii_lst)
         target_lsts.append(target_lst)
-    # The 'niis' are images, so average the image data across the ensemble
-    logger.info(f"\nAveraging outputs across the ensemble for '{name_model}'...")
-    nii_lst = []
-    # NB: `nii_lsts` is a list of lists, with each sublist being the *per-model* predictions. Example:
-    #         [
-    #             [m1_prediction_1.nii.gz, m1_prediction_2.nii.gz, ...],  # model 1 predictions
-    #             [m2_prediction_1.nii.gz, m2_prediction_2.nii.gz, ...]   # model 2 predictions
-    #         ]
-    # So, we want to take: the average of "prediction_1", the average of "prediction_2", etc.
-    # To do this, we unpack + zip `nii_lists`, so that each set of "prediction_N" files are grouped as "predictions".
-    for predictions in zip(*nii_lsts):
-        # Average the data for each output in the ensemble
-        data_mean = np.mean([pred.get_fdata() for pred in predictions])
-        # Take the first image's header to reuse for the averaged image
-        nii_header = predictions[0].header
-        # Create a new Nifti1Image containing the averaged output
-        nii_lst.append(nib.Nifti1Image(data_mean, header=nii_header, affine=nii_header.get_best_affine()))
-    # The 'targets' should be identical for each model in the ensemble, so just take the first
+
+    # If we have a single model, skip averaging
+    if len(model_paths) == 1:
+        nii_lst = nii_lsts[0]
+    # Otherwise, we have a model ensemble, so average the image data
+    else:
+        logger.info(f"\nAveraging outputs across the ensemble for '{name_model}'...")
+        nii_lst = []
+        # NB: `nii_lsts` is a list of lists, with each sublist being the *per-model* predictions. Example:
+        #         [
+        #             [m1_prediction_1.nii.gz, m1_prediction_2.nii.gz, ...],  # model 1 predictions
+        #             [m2_prediction_1.nii.gz, m2_prediction_2.nii.gz, ...]   # model 2 predictions
+        #         ]
+        # So, we want to take: the average of "prediction_1", the average of "prediction_2", etc.
+        # To do this, we unpack + zip `nii_lists`, so that "prediction_N" files are grouped as "predictions".
+        for predictions in zip(*nii_lsts):
+            # Average the data for each output in the ensemble
+            data_mean = np.mean([pred.get_fdata() for pred in predictions])
+            # Take the first image's header to reuse for the averaged image
+            nii_header = predictions[0].header
+            # Create a new Nifti1Image containing the averaged output
+            nii_lst.append(nib.Nifti1Image(data_mean, header=nii_header, affine=nii_header.get_best_affine()))
+
+    # The 'targets' should be identical for each model, so just take the first
     target_lst = target_lsts[0]
+
     return nii_lst, target_lst
 
 
@@ -239,16 +249,16 @@ def main(argv: Sequence[str]):
         if name_model in list(models.MODELS.keys()):
             # If it is, check if it is installed
             path_model = models.folder(name_model)
-            path_model = models.find_ensemble_subfolders(path_model)
-            if not models.is_valid(path_model):
+            path_models = models.find_model_folder_paths(path_model)
+            if not models.is_valid(path_models):
                 printv("Model {} is not installed. Installing it now...".format(name_model))
                 models.install_model(name_model)
         # If it is not, check if this is a path to a valid model
         else:
             path_model = os.path.abspath(name_model)
-            path_model = models.find_ensemble_subfolders(path_model)
-            if not models.is_valid(path_model):
-                parser.error("The input model is invalid: {}".format(path_model))
+            path_models = models.find_model_folder_paths(path_model)
+            if not models.is_valid(path_models):
+                parser.error("The input model is invalid: {}".format(path_models))
 
         # Order input images
         if arguments.c is not None:
@@ -262,13 +272,9 @@ def main(argv: Sequence[str]):
 
         # Call segment_nifti
         options = {**vars(arguments), "fname_prior": fname_prior}
-        if isinstance(path_model, str):
-            logger.info(f"\nRunning inference using model '{name_model}'...")
-            nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, options=options)
-        elif isinstance(path_model, list):
-            nii_lst, target_lst = segment_volume_with_ensemble(path_model, input_filenames, options=options)
-        else:
-            raise TypeError(f"Invalid type for 'path_model': {type(path_model)}. Must be string or list of strings.")
+        # NB: For single models, the averaging will have no effect.
+        #     For model ensembles, this will average the output of the ensemble into a single set of outputs.
+        nii_lst, target_lst = segment_and_average_volumes(path_models, input_filenames, options=options)
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
