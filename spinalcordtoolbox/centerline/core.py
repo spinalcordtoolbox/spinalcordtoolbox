@@ -84,7 +84,7 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files=1):
+def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files=1, space='pix'):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
 
@@ -92,6 +92,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     :param param: ParamCenterline() class:
     :param verbose: int: verbose level
     :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
+    :param space: string: Defining space and orientation in which to output Centerline information. 'pix' = pixel space / RPI, 'phys' = physical space /native.
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
     :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
     :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
@@ -99,6 +100,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     """
     if not isinstance(im_seg, Image):
         raise ValueError("Expecting an image")
+    if space not in ['pix', 'phys']:
+        raise ValueError(f"'space' parameter must be either 'pix' or 'phys', but '{space}' was passed instead.")
 
     # Open image and change to RPI orientation
     native_orientation = im_seg.orientation
@@ -266,9 +269,22 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
                      else "centerline.nii.gz")
         im_centerline.save(os.path.join(tmp_folder, fname_ctr), mutable=True)
 
+    # If 'phys' is specified, adjust centerline coordinates (`Centerline.points`) and
+    # derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation.
+    if space == 'phys':
+        # Transform centerline to physical coordinate system
+        arr_ctl = im_seg.transfo_pix2phys([[x_centerline_fit[i], y_centerline_fit[i], z_ref[i]]
+                                           for i in range(len(x_centerline_fit))]).T
+        # Adjust derivatives with pixel size
+        _, _, _, _, px, py, pz, _ = im_seg.change_orientation(native_orientation).dim
+        arr_ctl_der = np.array([x_centerline_deriv * px, y_centerline_deriv * py, np.ones_like(z_ref) * pz])
+    else:
+        arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
+        arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
+
     return (im_centerline,
-            np.array([x_centerline_fit, y_centerline_fit, z_ref]),
-            np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)]),
+            arr_ctl,
+            arr_ctl_der,
             fit_results)
 
 
