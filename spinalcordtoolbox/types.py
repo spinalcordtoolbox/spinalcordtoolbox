@@ -127,7 +127,7 @@ class Centerline:
                       'S1': 25, 'S2': 26, 'S3': 27, 'S4': 28, 'S5': 29,
                       'Co': 30}
 
-    convert_vertlabel2disklabel = {'PMJ': 'PMJ', 'PMG': 'PMG',
+    convert_vertlabel2disclabel = {'PMJ': 'PMJ', 'PMG': 'PMG',
                                    'C1': 'PMG-C1', 'C2': 'C1-C2', 'C3': 'C2-C3', 'C4': 'C3-C4', 'C5': 'C4-C5',
                                    'C6': 'C5-C6', 'C7': 'C6-C7',
                                    'T1': 'C7-T1', 'T2': 'T1-T2', 'T3': 'T2-T3', 'T4': 'T3-T4', 'T5': 'T4-T5',
@@ -196,7 +196,7 @@ class Centerline:
 
         # variables used for vertebral distribution
         self.first_label, self.last_label = None, None
-        self.disks_levels = None
+        self.discs_levels = None
         self.label_reference = None
 
         self.compute_init_distribution = False
@@ -209,10 +209,10 @@ class Centerline:
             self.derivatives = centerline_file['derivatives']
 
             if 'disks_levels' in centerline_file:
-                self.disks_levels = centerline_file['disks_levels'].tolist()
+                self.discs_levels = centerline_file['disks_levels'].tolist()
                 # convertion of levels to int for future use
-                for i in range(len(self.disks_levels)):
-                    self.disks_levels[i][3] = int(self.disks_levels[i][3])
+                for i in range(len(self.discs_levels)):
+                    self.discs_levels[i][3] = int(self.discs_levels[i][3])
                 self.label_reference = str(centerline_file['label_reference'])
                 self.compute_init_distribution = True
         else:
@@ -237,7 +237,7 @@ class Centerline:
         self.tree_points = cKDTree(self.points)
 
         if self.compute_init_distribution:
-            self.compute_vertebral_distribution(disks_levels=self.disks_levels, label_reference=self.label_reference)
+            self.compute_vertebral_distribution(discs_levels=self.discs_levels, label_reference=self.label_reference)
 
     def compute_length(self):
         for i in range(0, self.number_of_points - 1):
@@ -412,24 +412,24 @@ class Centerline:
     def get_inverse_plans_coordinates(self, coordinates, indexes):
         return einsum('mnr,nr->mr', rollaxis(self.matrices[indexes], 0, 3), coordinates.transpose()).transpose() + self.points[indexes]
 
-    def compute_vertebral_distribution(self, disks_levels, label_reference='C1'):
+    def compute_vertebral_distribution(self, discs_levels, label_reference='C1'):
         """
         This function computes the vertebral distribution along the centerline, based on the position of
-        intervertebral disks in space. A reference label can be provided (default is top of C1) so that relative
+        intervertebral discs in space. A reference label can be provided (default is top of C1) so that relative
         distances are computed from this reference.
 
-        :param disks_levels: list: list of coordinates with value [[x, y, z, value], [x, y, z, value], ...]\
-                        the value correspond to the intervertebral disk label
+        :param discs_levels: list: list of coordinates with value [[x, y, z, value], [x, y, z, value], ...]\
+                        the value correspond to the intervertebral disc label
         :param label_reference: reference label from which relative position will be computed.\
                         Must be on of self.labels_regions
         """
-        self.disks_levels = disks_levels
+        self.discs_levels = discs_levels
         self.label_reference = label_reference
 
         # special case for C2, which might not be present because it is difficult to identify
         is_C2_here = False
         C1, C3 = None, None
-        for level in disks_levels:
+        for level in discs_levels:
             if level[3] == 2:
                 is_C2_here = True
             elif level[3] == 1:
@@ -437,24 +437,24 @@ class Centerline:
             elif level[3] == 3:
                 C3 = level
         if not is_C2_here and C1 is not None and C3 is not None:
-            disks_levels.append([(C1[0] + C3[0]) / 2.0, (C1[1] + C3[1]) / 2.0, (C1[2] + C3[2]) / 2.0, 2])
+            discs_levels.append([(C1[0] + C3[0]) / 2.0, (C1[1] + C3[1]) / 2.0, (C1[2] + C3[2]) / 2.0, 2])
 
         labels_points = [0] * self.number_of_points
         self.l_points = [0] * self.number_of_points
         self.dist_points = [0] * self.number_of_points
         self.dist_points_rel = [0] * self.number_of_points
-        self.index_disk, index_disk_inv = {}, []
+        self.index_disc, index_disc_inv = {}, []
 
         # extracting each level based on position and computing its nearest point along the centerline
         first_label, last_label = None, None
-        for level in disks_levels:
+        for level in discs_levels:
             if level[3] in self.list_labels:
                 coord_level = [level[0], level[1], level[2]]
-                disk = self.regions_labels[str(int(level[3]))]
+                disc = self.regions_labels[str(int(level[3]))]
                 nearest_index = self.find_nearest_index(coord_level)
-                labels_points[nearest_index] = disk + '-0.0'
-                self.index_disk[disk] = nearest_index
-                index_disk_inv.append([nearest_index, disk])
+                labels_points[nearest_index] = disc + '-0.0'
+                self.index_disc[disc] = nearest_index
+                index_disc_inv.append([nearest_index, disc])
 
                 # Finding minimum and maximum label, based on list_labels, which is ordered from top to bottom.
                 index_label = self.list_labels.index(int(level[3]))
@@ -475,50 +475,50 @@ class Centerline:
             self.last_label = self.list_labels[last_label]
 
         from operator import itemgetter
-        index_disk_inv.append([0, 'bottom'])
-        index_disk_inv = sorted(index_disk_inv, key=itemgetter(0))
+        index_disc_inv.append([0, 'bottom'])
+        index_disc_inv = sorted(index_disc_inv, key=itemgetter(0))
 
         progress_length = zeros(self.number_of_points)
         for i in range(self.number_of_points - 1):
             progress_length[i + 1] = progress_length[i] + self.progressive_length[i]
 
         self.label_reference = label_reference
-        if self.label_reference not in self.index_disk:
+        if self.label_reference not in self.index_disc:
             upper = 31
             label_reference = ''
-            for label in self.index_disk:
+            for label in self.index_disc:
                 if self.labels_regions[label] < upper:
                     label_reference = label
                     upper = self.labels_regions[label]
             self.label_reference = label_reference
 
         self.distance_from_C1label = {}
-        for disk in self.index_disk:
-            self.distance_from_C1label[disk] = progress_length[self.index_disk[self.label_reference]] - progress_length[self.index_disk[disk]]
+        for disc in self.index_disc:
+            self.distance_from_C1label[disc] = progress_length[self.index_disc[self.label_reference]] - progress_length[self.index_disc[disc]]
 
-        for i in range(1, len(index_disk_inv)):
-            for j in range(index_disk_inv[i - 1][0], index_disk_inv[i][0]):
-                self.l_points[j] = index_disk_inv[i][1]
+        for i in range(1, len(index_disc_inv)):
+            for j in range(index_disc_inv[i - 1][0], index_disc_inv[i][0]):
+                self.l_points[j] = index_disc_inv[i][1]
 
         for i in range(self.number_of_points):
-            self.dist_points[i] = progress_length[self.index_disk[self.label_reference]] - progress_length[i]
+            self.dist_points[i] = progress_length[self.index_disc[self.label_reference]] - progress_length[i]
 
         for i in range(self.number_of_points):
             current_label = self.l_points[i]
 
             if current_label == 0:
-                if 'PMG' in self.index_disk:
-                    self.dist_points_rel[i] = self.dist_points[i] - self.dist_points[self.index_disk['PMG']]
+                if 'PMG' in self.index_disc:
+                    self.dist_points_rel[i] = self.dist_points[i] - self.dist_points[self.index_disc['PMG']]
                     continue
                 else:
                     current_label = 'PMG'
 
             if self.list_labels.index(self.labels_regions[current_label]) < self.list_labels.index(self.first_label):
-                reference_level_position = self.dist_points[self.index_disk[self.regions_labels[str(self.first_label)]]]
+                reference_level_position = self.dist_points[self.index_disc[self.regions_labels[str(self.first_label)]]]
                 self.dist_points_rel[i] = self.dist_points[i] - reference_level_position
 
             elif self.list_labels.index(self.labels_regions[current_label]) >= self.list_labels.index(self.last_label):
-                reference_level_position = self.dist_points[self.index_disk[self.regions_labels[str(self.last_label)]]]
+                reference_level_position = self.dist_points[self.index_disc[self.regions_labels[str(self.last_label)]]]
                 self.dist_points_rel[i] = self.dist_points[i] - reference_level_position
 
             else:
@@ -528,25 +528,25 @@ class Centerline:
                     next_label = self.regions_labels[str(self.list_labels[index_current_label + 1])]
 
                     if current_label in ['PMJ', 'PMG']:
-                        if next_label in self.index_disk:
+                        if next_label in self.index_disc:
                             self.dist_points_rel[i] = -(
-                                self.dist_points[i] - self.dist_points[self.index_disk[next_label]]
+                                self.dist_points[i] - self.dist_points[self.index_disc[next_label]]
                             ) / abs(
-                                self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]]
+                                self.dist_points[self.index_disc[next_label]] - self.dist_points[self.index_disc[current_label]]
                             )
                         else:
                             self.dist_points_rel[i] = (
-                                self.average_vert_length[current_label] - self.dist_points[i] + self.dist_points[self.index_disk[current_label]]
+                                self.average_vert_length[current_label] - self.dist_points[i] + self.dist_points[self.index_disc[current_label]]
                             ) / self.average_vert_length[current_label]
                     else:
                         next_label = self.regions_labels[str(self.list_labels[self.list_labels.index(self.labels_regions[self.l_points[i]]) + 1])]
-                        if next_label in self.index_disk:
+                        if next_label in self.index_disc:
                             self.dist_points_rel[i] = (
-                                self.dist_points[i] - self.dist_points[self.index_disk[current_label]]
-                            ) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
+                                self.dist_points[i] - self.dist_points[self.index_disc[current_label]]
+                            ) / abs(self.dist_points[self.index_disc[next_label]] - self.dist_points[self.index_disc[current_label]])
                         else:
                             self.dist_points_rel[i] = (
-                                self.dist_points[i] - self.dist_points[self.index_disk[current_label]]
+                                self.dist_points[i] - self.dist_points[self.index_disc[current_label]]
                             ) / self.average_vert_length[current_label]
 
     def get_closest_to_relative_position(self, vertebral_level, relative_position, mode='levels'):
@@ -554,7 +554,7 @@ class Centerline:
 
         :param vertebral_level:
         :param relative_position:\
-            if mode is 'levels', it is the relative position [0, 1] from upper disk\
+            if mode is 'levels', it is the relative position [0, 1] from upper disc\
             if mode is 'length', it is the relative position [mm] from C1 top
         :param mode: {'levels', 'length'}
         """
@@ -580,8 +580,8 @@ class Centerline:
         if mode == 'levels':
             if vertebral_level == 0:  # above the C1 vertebral level, the method used is length
                 if backup_centerline is not None:
-                    position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disk[backup_centerline.regions_labels[str(self.first_label)]]]
-                    position_reference_self = self.dist_points[self.index_disk[self.regions_labels[str(self.first_label)]]]
+                    position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disc[backup_centerline.regions_labels[str(self.first_label)]]]
+                    position_reference_self = self.dist_points[self.index_disc[self.regions_labels[str(self.first_label)]]]
                     relative_position_from_reference_backup = backup_centerline.dist_points[backup_index] - position_reference_backup
                     result = np.argmin(np.abs(np.array(self.dist_points) - position_reference_self - relative_position_from_reference_backup))
                 else:
@@ -590,21 +590,21 @@ class Centerline:
                 vertebral_number = self.labels_regions[vertebral_level]
                 if self.potential_list_labels.index(vertebral_number) < self.list_labels.index(self.first_label):
                     if backup_centerline is not None:
-                        position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disk[backup_centerline.regions_labels[str(self.first_label)]]]
-                        position_reference_self = self.dist_points[self.index_disk[self.regions_labels[str(self.first_label)]]]
+                        position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disc[backup_centerline.regions_labels[str(self.first_label)]]]
+                        position_reference_self = self.dist_points[self.index_disc[self.regions_labels[str(self.first_label)]]]
                         relative_position_from_reference_backup = backup_centerline.dist_points[backup_index] - position_reference_backup
                         result = np.argmin(np.abs(np.array(self.dist_points) - position_reference_self - relative_position_from_reference_backup))
                     else:
-                        reference_level_position = self.dist_points[self.index_disk[self.regions_labels[str(self.first_label)]]]
+                        reference_level_position = self.dist_points[self.index_disc[self.regions_labels[str(self.first_label)]]]
                         result = np.argmin(np.abs(np.array(self.dist_points) - reference_level_position - relative_position))
                 elif self.potential_list_labels.index(vertebral_number) >= self.list_labels.index(self.last_label):
                     if backup_centerline is not None:
-                        position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disk[backup_centerline.regions_labels[str(self.last_label)]]]
-                        position_reference_self = self.dist_points[self.index_disk[self.regions_labels[str(self.last_label)]]]
+                        position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disc[backup_centerline.regions_labels[str(self.last_label)]]]
+                        position_reference_self = self.dist_points[self.index_disc[self.regions_labels[str(self.last_label)]]]
                         relative_position_from_reference_backup = backup_centerline.dist_points[backup_index] - position_reference_backup
                         result = np.argmin(np.abs(np.array(self.dist_points) - position_reference_self - relative_position_from_reference_backup))
                     else:
-                        reference_level_position = self.dist_points[self.index_disk[self.regions_labels[str(self.last_label)]]]
+                        reference_level_position = self.dist_points[self.index_disc[self.regions_labels[str(self.last_label)]]]
                         result = np.argmin(np.abs(np.array(self.dist_points) - reference_level_position - relative_position))
                 else:
                     result = self.get_closest_to_relative_position(vertebral_level=vertebral_level, relative_position=relative_position)
@@ -668,11 +668,11 @@ class Centerline:
             image_output.save(fname_output, dtype='float32')
         else:
             # save a .centerline file containing the centerline
-            if self.disks_levels is None:
+            if self.discs_levels is None:
                 np.savez(fname_output, points=self.points, derivatives=self.derivatives)
             else:
                 np.savez(fname_output, points=self.points, derivatives=self.derivatives,
-                         disks_levels=self.disks_levels, label_reference=self.label_reference)
+                         disks_levels=self.discs_levels, label_reference=self.label_reference)
 
     def average_coordinates_over_slices(self, image):
         # extracting points information for each coordinates
@@ -733,12 +733,12 @@ class Centerline:
         if mode == 'absolute':
             plt.plot([coord[2] for coord in self.points], [coord[0] for coord in self.points])
         else:
-            position_reference = self.points[self.index_disk[self.label_reference]]
+            position_reference = self.points[self.index_disc[self.label_reference]]
             plt.plot([coord[2] - position_reference[2] for coord in self.points],
                      [coord[0] - position_reference[0] for coord in self.points])
-            for label_disk in self.labels_regions:
-                if label_disk in self.index_disk:
-                    point = self.points[self.index_disk[label_disk]]
+            for label_disc in self.labels_regions:
+                if label_disc in self.index_disc:
+                    point = self.points[self.index_disc[label_disc]]
                     plt.scatter(point[2] - position_reference[2], point[0] - position_reference[0], s=5)
 
         plt.grid()
@@ -751,12 +751,12 @@ class Centerline:
         if mode == 'absolute':
             plt.plot([coord[2] for coord in self.points], [coord[1] for coord in self.points])
         else:
-            position_reference = self.points[self.index_disk[self.label_reference]]
+            position_reference = self.points[self.index_disc[self.label_reference]]
             plt.plot([coord[2] - position_reference[2] for coord in self.points],
                      [coord[1] - position_reference[1] for coord in self.points])
-            for label_disk in self.labels_regions:
-                if label_disk in self.index_disk:
-                    point = self.points[self.index_disk[label_disk]]
+            for label_disc in self.labels_regions:
+                if label_disc in self.index_disc:
+                    point = self.points[self.index_disc[label_disc]]
                     plt.scatter(point[2] - position_reference[2], point[1] - position_reference[1], s=5)
 
         plt.grid()
@@ -773,14 +773,14 @@ class Centerline:
         z_cov, coordinates = [], []
         for i in range(len(z)):
             nearest_index = self.find_nearest_indexes([[x[i], y[i], z[i]]])[0]
-            disk_label = self.l_points[nearest_index]
+            disc_label = self.l_points[nearest_index]
             relative_position = self.dist_points_rel[nearest_index]
-            if disk_label != 0:
+            if disc_label != 0:
                 z_cov.append(int(reference_image.transfo_phys2pix([[x[i], y[i], z[i]]])[0][2]))
-                if self.labels_regions[disk_label] > self.last_label and self.labels_regions[disk_label] not in [49, 50]:
-                    coordinates.append(float(self.labels_regions[disk_label]) + relative_position / self.average_vert_length[disk_label])
+                if self.labels_regions[disc_label] > self.last_label and self.labels_regions[disc_label] not in [49, 50]:
+                    coordinates.append(float(self.labels_regions[disc_label]) + relative_position / self.average_vert_length[disc_label])
                 else:
-                    coordinates.append(float(self.labels_regions[disk_label]) + relative_position)
+                    coordinates.append(float(self.labels_regions[disc_label]) + relative_position)
 
         # concatenate results
         lookuptable_coordinates = []
