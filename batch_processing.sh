@@ -70,8 +70,6 @@ sct_deepseg_sc -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Fit binarized centerline from SC seg (default settings)
 sct_get_centerline -i t2_seg.nii.gz -method fitseg -qc "$SCT_BP_QC_FOLDER"
-# Fit binarized centerline from SC seg (trying `-centerline-soft` and `o` flags)
-sct_get_centerline -i t2_seg.nii.gz -method fitseg -centerline-soft 0 -o t2_seg_centerline_bin.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Fit soft centerline from SC seg
 sct_get_centerline -i t2_seg.nii.gz -method fitseg -centerline-soft 1 -o t2_seg_centerline_soft.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Vertebral labeling
