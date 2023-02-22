@@ -100,11 +100,6 @@ def get_parser():
         help='Output CSV file name. If not provided, the suffix "_compression_metrics" is added to the file name provided by the flag "-i"'
     )
     optional.add_argument(
-        '-subject',
-        metavar=Metavar.file,
-        help="Name of subject. Default: filename of -i"
-    )
-    optional.add_argument(
         "-h",
         "--help",
         action="help",
@@ -382,7 +377,7 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     return compression_level_dict_PAM50
 
 
-def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, subject):
+def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename):
     """
     Save .csv file of MSCC results.
     :param fname_out:
@@ -390,17 +385,17 @@ def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, subject)
     :param metric: str: metric to perform normalization
     :param metric_ratio: float:
     :param metric_ratio_nrom:
-    :param subject: str: subject id
+    :param filename: str: input filename
     :retrun:
     """
     if not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
-            header = ['Subject', 'Compression Level', metric + ' ratio', 'Normalized ' + metric + ' ratio']
+            header = ['filename', 'Compression Level', metric + ' ratio', 'Normalized ' + metric + ' ratio']
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=',')
-        line = [subject, level, metric_ratio, metric_ratio_nrom]
+        line = [filename, level, metric_ratio, metric_ratio_nrom]
         spamwriter.writerow(line)
 
 
@@ -422,10 +417,6 @@ def main(argv: Sequence[str]):
         fname_out = os.path.join(path, file_name + '_compression_metrics' + ext)
     fname_metrics = get_absolute_path(arguments.i)
     fname_metrics_PAM50 = get_absolute_path(arguments.i_PAM50)
-    if arguments.subject is None:
-        subject = arguments.i
-    else:
-        subject = arguments.subject
     metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
     sex = arguments.sex
     age = arguments.age
@@ -478,7 +469,7 @@ def main(argv: Sequence[str]):
         # Compute MSCC
         metric_ratio_norm_result = metric_ratio_norm(ap, ap_HC)
         metric_ratio_result = metric_ratio(ap[0], ap[1], ap[2])
-        save_csv(fname_out, level, metric, metric_ratio_result, metric_ratio_norm_result, subject)
+        save_csv(fname_out, level, metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
 
         # Display results
         printv('\nLevel: {}'.format(level), verbose=verbose, type='info')
