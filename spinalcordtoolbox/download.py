@@ -162,7 +162,7 @@ DATASET_DICT = {
     },
     "data_normalize_metric_pam50": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/data_normalize_metric_pam50/archive/refs/tags/r20230221.zip"
+            "https://github.com/spinalcordtoolbox/data_normalize_metric_pam50/archive/refs/tags/r20230222.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "data_normalize_metric_pam50"),
     },
