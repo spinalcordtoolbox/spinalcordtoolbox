@@ -469,7 +469,7 @@ def main(argv: Sequence[str]):
         # Compute MSCC
         metric_ratio_norm_result = metric_ratio_norm(ap, ap_HC)
         metric_ratio_result = metric_ratio(ap[0], ap[1], ap[2])
-        save_csv(fname_out, level, metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
+        save_csv(fname_out, level, arguments.metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
 
         # Display results
         printv('\nLevel: {}'.format(level), verbose=verbose, type='info')
