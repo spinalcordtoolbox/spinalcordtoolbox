@@ -254,6 +254,7 @@ def main(argv: Sequence[str]):
             if not models.is_valid(path_models):
                 printv("Model {} is not installed. Installing it now...".format(name_model))
                 models.install_model(name_model)
+                path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
         # If it is not, check if this is a path to a valid model
         else:
             path_model = os.path.abspath(name_model)
