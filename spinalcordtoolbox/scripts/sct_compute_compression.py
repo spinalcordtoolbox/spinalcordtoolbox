@@ -65,9 +65,9 @@ def get_parser():
         '-metric',
         required=False,
         help='Metric name to normalize in .csv file output from sct_process_segmentation.'
-        '\nChoices: MEAN(area), MEAN(diameter_RL), MEAN(eccentricity), MEAN(solidity)\n',
-        default='MEAN(diameter_AP)',
-        choices=['MEAN(diameter_AP)', 'MEAN(area)', 'MEAN(diameter_RL)', 'MEAN(eccentricity)', 'MEAN(solidity)'],
+        '\nChoices: diameter_AP, area, diameter_RL, eccentricity, solidity\n',
+        default='diameter_AP',
+        choices=['diameter_AP', 'area', 'diameter_RL', 'eccentricity', 'solidity'],
         metavar=Metavar.file,
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -423,7 +423,7 @@ def main(argv: Sequence[str]):
         subject = arguments.i
     else:
         subject = arguments.subject
-    metric = arguments.metric
+    metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
     sex = arguments.sex
     age = arguments.age
     if age:
