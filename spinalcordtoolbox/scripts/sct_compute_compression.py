@@ -75,7 +75,7 @@ def get_parser():
         '-file-participants',
         metavar=Metavar.file,
         default='participants.tsv',
-        help='participants.tsv file of helathy controls.'
+        help='participants.tsv file of healthy controls.'
     )
     optional.add_argument(
         '-sex',
