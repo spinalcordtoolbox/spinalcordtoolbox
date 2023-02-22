@@ -45,7 +45,7 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help='Input csv file name in native space. Example: csa.csv.'
+        help='CSV morphometric file obtained with sct_process_segmentation. Example: csa.csv.'
     )
     mandatoryArguments.add_argument(
         '-l',
