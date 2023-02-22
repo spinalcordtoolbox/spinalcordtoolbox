@@ -97,7 +97,7 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help="Output csv file name. If not provided, _compression_metrics suffix is added to the file name provided by -i flag."
+        help='Output CSV file name. If not provided, the suffix "_compression_metrics" is added to the file name provided by the flag "-i"'
     )
     optional.add_argument(
         '-subject',
