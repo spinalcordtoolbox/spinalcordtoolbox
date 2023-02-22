@@ -160,11 +160,11 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepreg_models"),
     },
-    "data_normalize_metric_pam50": {
+    "PAM50_normalized_metrics": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/data_normalize_metric_pam50/archive/refs/tags/r20230222.zip"
+            "https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20230222.1.zip"
         ],
-        "default_location": os.path.join(__sct_dir__, "data", "data_normalize_metric_pam50"),
+        "default_location": os.path.join(__sct_dir__, "data", "PAM50_normalized_metrics"),
     },
 }
 

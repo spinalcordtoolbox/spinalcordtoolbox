@@ -409,7 +409,7 @@ def main(argv: Sequence[str]):
 
     img = Image(fname_labels)
     img.change_orientation('RPI')
-    path_ref = os.path.join(__data_dir__, 'data_normalize_metric_pam50')
+    path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
     if arguments.o is not None:
         fname_out = arguments.o
     else:
