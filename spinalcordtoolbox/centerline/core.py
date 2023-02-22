@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class ParamCenterline:
     """Default parameters for centerline fitting"""
-    def __init__(self, algo_fitting='bspline', degree=5, smooth=20, contrast=None, minmax=True):
+    def __init__(self, algo_fitting='bspline', degree=5, smooth=20, contrast=None, minmax=True, soft=0):
         """
 
         :param algo_fitting: str:
@@ -27,11 +27,13 @@ class ParamCenterline:
         :param contrast: Contrast type for algo_fitting=optic.
         :param minmax: Crop output centerline where the segmentation starts/end. If False, centerline will span all\
           slices to the size of a Hanning window (in mm).
+        :param soft: Binary or soft centerline. Only relevant with algo_fitting polyfit, bspline, linear, nurbs.
         """
         self.algo_fitting = algo_fitting
         self.contrast = contrast
         self.degree = degree
         self.smooth = smooth
+        self.soft = soft
         self.minmax = minmax
 
 
@@ -176,10 +178,37 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         # Create an image with the centerline
         im_centerline = im_seg.copy()
         im_centerline.data = np.zeros(im_centerline.data.shape)
-        # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
-        im_centerline.data[np.clip(x_centerline_fit.round().astype(int), 0, im_centerline.data.shape[0] - 1),
-                           np.clip(y_centerline_fit.round().astype(int), 0, im_centerline.data.shape[1] - 1),
-                           z_ref] = 1
+        # Binarized
+        if param.soft == 0:
+            # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
+            im_centerline.data[np.clip(x_centerline_fit.round().astype(int), 0, im_centerline.data.shape[0] - 1),
+                               np.clip(y_centerline_fit.round().astype(int), 0, im_centerline.data.shape[1] - 1),
+                               z_ref] = 1
+        # Soft (accounting for partial volume effect)
+        else:
+            # Clip to avoid array overflow
+            # Note: '-1' here is necessary because python does matrix indexing from 0
+            x_max, y_max = im_centerline.data.shape[:2]
+            x_centerline_fit = x_centerline_fit.clip(0, x_max - 1)
+            y_centerline_fit = y_centerline_fit.clip(0, y_max - 1)
+
+            x_floor = np.floor(x_centerline_fit).astype(int)
+            y_floor = np.floor(y_centerline_fit).astype(int)
+
+            x_ceil = np.ceil(x_centerline_fit).astype(int)
+            y_ceil = np.ceil(y_centerline_fit).astype(int)
+
+            x_frac = x_centerline_fit - x_floor
+            y_frac = y_centerline_fit - y_floor
+            # Note: we add ('+='), rather than assign ('=')
+            # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4026#discussion_r1096093021)
+            im_centerline.data[x_floor, y_floor, z_ref] += (1 - x_frac) * (1 - y_frac)
+            im_centerline.data[x_floor, y_ceil, z_ref] += (1 - x_frac) * y_frac
+            im_centerline.data[x_ceil, y_floor, z_ref] += x_frac * (1 - y_frac)
+            im_centerline.data[x_ceil, y_ceil, z_ref] += x_frac * y_frac
+            # You can check if the sum of the voxels is equal to 1 with:
+            # np.apply_over_axes(np.sum, im_centerline.data, [0, 1]).flatten()
+
         # reorient centerline to native orientation
         im_centerline.change_orientation(native_orientation)
         im_seg.change_orientation(native_orientation)
