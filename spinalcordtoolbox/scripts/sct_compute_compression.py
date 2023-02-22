@@ -91,8 +91,8 @@ def get_parser():
         type=int,
         nargs=2,
         metavar="[0 100]",
-        help='Select age range of healthy subjects to use for normalization. Requires participant.tsv'
-        'E.g.:-age 60 80'
+        help='Age range of healthy subjects to use for the normalization. Requires the flag "-file-participants".'
+        'Example: "-age 60 80". By default, all ages are considered.'
     )
     optional.add_argument(
         '-o',
