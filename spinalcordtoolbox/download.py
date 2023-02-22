@@ -159,7 +159,13 @@ DATASET_DICT = {
             "https://github.com/ivadomed/multimodal-registration/releases/download/r20220512/models.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepreg_models"),
-    }
+    },
+    "data_normalize_metric_pam50": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/data_normalize_metric_pam50/archive/refs/tags/r20230221.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "data_normalize_metric_pam50"),
+    },
 }
 
 
