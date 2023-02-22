@@ -83,7 +83,8 @@ def get_parser():
         '-sex',
         type=str,
         choices=['F', 'M'],
-        help='Select sex of healthy subjet to use for normalization. Requires participant.tsv'
+        help='Sex of healthy subject to use for the normalization. Requires the flag "-file-participants".'
+        ' By default, both sexes are used.'
     )
     optional.add_argument(
         '-age',
