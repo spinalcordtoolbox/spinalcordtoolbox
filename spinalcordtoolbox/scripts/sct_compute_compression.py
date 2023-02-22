@@ -31,13 +31,15 @@ logger = logging.getLogger(__name__)
 # ==========================================================================================
 def get_parser():
     parser = SCTArgumentParser(
-        description='Compute spinal cord compression morpometrics such as Maximum Spinal Cord Compression as in'
-                    'Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord injury:'
-                    ' MR imaging findings correlated with neurologic outcome--prospective study with 100 consecutive patients.'
-                    ' Radiology 2007;243(3):820-827.'
-                    'Can be computed using AP diameter or other morphometrics (CSA, RL diameter, eccentricity and solidity).'
-                    'Morphometrics are normalized with a reference database where morphometrics from sct_process_segmentation '
-                    'are brought to PAM50 anatomical space using -normalize-PAM50.'
+        description='Compute spinal cord compression morphometrics such as the Maximum Spinal Cord Compression [1], '
+                    'the antero-posterior (AP) diameter, or other relevant spinal cord morphometrics that are output'
+                    ' by the function sct_process_segmentation (CSA, RL diameter, eccentricity, solidity, etc.).'
+                    ' Metrics are normalized using a database of spinal cord morphometrics built from healthy control'
+                    ' subjects. This database uses the PAM50 template as an anatomical reference system.'
+                    
+                    '[1]: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord injury:'
+                    ' MR imaging findings correlated with neurologic outcome--prospective study with 100 consecutive' 
+                    ' patients. Radiology 2007;243(3):820-827.'
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
