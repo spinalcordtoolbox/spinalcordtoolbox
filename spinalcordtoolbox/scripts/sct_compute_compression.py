@@ -60,8 +60,8 @@ def get_parser():
         '-i-PAM50',
         metavar=Metavar.file,
         required=True,
-        help='Input csv file name in PAM50 space. Example: csa_PAM50.csv.'
-        'Use sct_process_segmentation with -normalize-PAM50 to generate the file.'
+        help='CSV morphometric file in the PAM50 space, obtained by running: '
+        'sct_process_segmentation -normalize-PAM50.'
     )
     mandatoryArguments.add_argument(
         '-metric',
