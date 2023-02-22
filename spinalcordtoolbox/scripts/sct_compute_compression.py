@@ -88,7 +88,7 @@ def get_parser():
         type=int,
         nargs=2,
         metavar="[0 100]",
-        help='Select age range of healthy subjet to use for normalization. Requires participant.tsv'
+        help='Select age range of healthy subjects to use for normalization. Requires participant.tsv'
         'E.g.:-age 60 80'
     )
     optional.add_argument(
