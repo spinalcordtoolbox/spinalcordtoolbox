@@ -62,7 +62,7 @@ def get_parser():
         "-centerline-algo",
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
-        help="Algorithm for centerline fitting. Only relevant with -method fitseg"
+        help="Algorithm for centerline fitting. Only relevant with -method fitseg."
     )
     optional.add_argument(
         "-centerline-smooth",
@@ -70,6 +70,14 @@ def get_parser():
         type=int,
         default=30,
         help="Degree of smoothing for centerline fitting. Only for -centerline-algo {bspline, linear}."
+    )
+    optional.add_argument(
+        "-centerline-soft",
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Binary or soft centerline. 0 = binarized, 1 = soft. Only relevant with -method fitseg."
     )
     optional.add_argument(
         "-o",
@@ -153,7 +161,8 @@ def main(argv: Sequence[str]):
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
-        minmax=True)
+        minmax=True,
+        soft=arguments.centerline_soft)
 
     # Output folder
     if arguments.o is not None:
@@ -200,7 +209,8 @@ def main(argv: Sequence[str]):
         generate_qc(fname_input_data, fname_seg=file_output, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_get_centerline')
 
-    display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', 'red'], opacities=['', '0.7'], verbose=verbose)
+    cm_ctl = 'red-yellow' if arguments.centerline_soft else 'red'
+    display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', cm_ctl], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":
