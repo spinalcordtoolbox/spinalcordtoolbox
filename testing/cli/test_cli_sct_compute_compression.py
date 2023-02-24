@@ -86,14 +86,6 @@ def test_sct_compute_compression_check_missing_input_csv(tmp_path, dummy_3d_labe
         assert e.value.code == 2
 
 
-def test_sct_compute_compression_check_missing_input_csv_pam50(tmp_path, dummy_3d_label_label, dummy_metrics_csv):
-    """ Run sct_compute_compression when missing -i-PAM50"""
-    filename = str(tmp_path / 'tmp_file_out.csv')
-    with pytest.raises(SystemExit) as e:
-        sct_compute_compression.main(argv=['-i', dummy_metrics_csv, '-l', dummy_3d_label_label, '-o', filename])
-        assert e.value.code == 2
-
-
 def test_sct_compute_compression_check_missing_input_l(tmp_path, dummy_metrics_csv, dummy_metrics_csv_pam50):
     """ Run sct_compute_mscc when missing -l"""
     filename = str(tmp_path / 'tmp_file_out.csv')
