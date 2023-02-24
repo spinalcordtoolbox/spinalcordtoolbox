@@ -819,7 +819,7 @@ def run_main():
         if "unexpected type 'float'" in str(e):
             sct_view_panel.removeFromFrame()
             raise EnvironmentError(
-                "The FSL installation contains an out of date package: 'wxpython' (4.1.1). "
+                "The FSL installation contains an out of date package: 'wxpython'. "
                 "\n"
                 "\nPlease update 'wxpython' by running one of the following commands in your terminal (depending on "
                 "your FSL version):"
