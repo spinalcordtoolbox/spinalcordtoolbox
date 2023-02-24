@@ -130,7 +130,7 @@ def test_sct_compute_compression_check_wrong_metric(tmp_path, dummy_3d_label_lab
 
 
 def test_sct_compute_compression(tmp_path, dummy_3d_label_label, dummy_metrics_csv, dummy_metrics_csv_pam50):
-    """ Run sct_compute_compression and chexk mscc and normalized mscc"""
+    """ Run sct_compute_compression and check mscc and normalized mscc"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_compute_compression.main(argv=['-i', dummy_metrics_csv, '-i-PAM50', dummy_metrics_csv_pam50, '-l', dummy_3d_label_label,
                                        '-o', filename])
