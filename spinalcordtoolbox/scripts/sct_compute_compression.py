@@ -415,6 +415,17 @@ def main(argv: Sequence[str]):
         path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
         fname_out = os.path.join(path, file_name + '_compression_metrics' + ext)
     fname_metrics = get_absolute_path(arguments.i)
+    metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
+    # Fetch metrics of subject
+    df_metrics = csv2dataFrame(fname_metrics, metric)
+    # Get vertebral level corresponding to the slice with the compression
+    slice_thickness = get_slice_thickness(img)
+    slice_compressed = get_compressed_slice(img, verbose)
+
+    compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
+    # Get vertebral level above and below the compression
+    upper_level, lower_level = get_up_lw_levels(compressed_levels_dict.keys(), df_metrics, metric)
+    # Initialize variables if normalization with PAM50
     if arguments.i_PAM50:
         fname_metrics_PAM50 = get_absolute_path(arguments.i_PAM50)
         sex = arguments.sex
@@ -431,44 +442,39 @@ def main(argv: Sequence[str]):
             list_HC = select_HC(fname_partcipants, sex, age)
         else:
             list_HC = select_HC(fname_partcipants)
-    metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
+        # Select healthy controls based on sex and/or age range
 
-    # Select healthy controls based on sex and/or age range
-    slice_thickness = get_slice_thickness(img)
-    slice_compressed = get_compressed_slice(img, verbose)
+        # Get PAM50 slice thickness
+        fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
+        img_pam50 = Image(fname_PAM50)
+        img_pam50.change_orientation('RPI')
+        slice_thickness_PAM50 = get_slice_thickness(img_pam50)
+        # Fetch metrics of PAM50 template
+        df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, metric)
 
-    # Get PAM50 slice thickness
-    fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
-    img_pam50 = Image(fname_PAM50)
-    img_pam50.change_orientation('RPI')
-    slice_thickness_PAM50 = get_slice_thickness(img_pam50)
+        # Get slices corresponding in PAM50 space
+        compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
 
-    # Fetch metrics of subject
-    df_metrics = csv2dataFrame(fname_metrics, metric)
-    df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, metric)
-
-    # Get vertebral level corresponding to the slice with the compression
-    compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
-    # Get vertebral level above and below the compression
-    upper_level, lower_level = get_up_lw_levels(compressed_levels_dict.keys(), df_metrics, metric)
-    # Get slices corresponding in PAM50 space
-    compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
-
-    # Get data from healthy control and average them
-    df_avg_HC = average_hc(path_ref, metric, list_HC)
+        # Get data from healthy control and average them
+        df_avg_HC = average_hc(path_ref, metric, list_HC)
 
     # Loop through all compressed levels (compute one MSCC per compressed level)
-    for level in compressed_levels_dict_PAM50.keys():
+    for level in compressed_levels_dict.keys():
         # Get metric of patient with compression
-        ap, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
-                                                   upper_level, lower_level, compressed_levels_dict_PAM50[level])
-        # Get metrics of healthy controls
-        ap_HC = get_mean_metric(df_avg_HC, metric, upper_level, lower_level, slices_avg)
-        logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, betric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
+        if arguments.i_PAM50:
+            ap, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
+                                                       upper_level, lower_level, compressed_levels_dict[level])
+            # Get metrics of healthy controls
+            ap_HC = get_mean_metric(df_avg_HC, metric, upper_level, lower_level, slices_avg)
+            logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, betric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
+            # Compute Normalized Ratio
+            metric_ratio_norm_result = metric_ratio_norm(ap, ap_HC)
+        else:
+            slices_avg = compressed_levels_dict[level]
+            ap = get_mean_metric(df_metrics, metric, upper_level, lower_level, slices_avg)
+            metric_ratio_norm_result = None
         logger.debug('metric_a =  {}, metric_b = {}, metric_i = {}'.format(ap[0], ap[1], ap[2]))
-
-        # Compute MSCC
-        metric_ratio_norm_result = metric_ratio_norm(ap, ap_HC)
+        # Compute Ratio
         metric_ratio_result = metric_ratio(ap[0], ap[1], ap[2])
         save_csv(fname_out, level, arguments.metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
 
