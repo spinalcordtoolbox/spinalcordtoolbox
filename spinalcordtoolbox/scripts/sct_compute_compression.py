@@ -140,8 +140,6 @@ def select_HC(fname_participants, sex=None, age=None):
             list_to_include = list_sub_age
     if age and sex:
         list_to_include = set(list_sub_age).intersection(list_sub_sex)
-    if not age and not sex:
-        list_to_include = data['participant_id'].to_list()
     printv(f'{len(list_to_include)} healthy controls are used for normalization')
     return list(list_to_include)
 
@@ -448,7 +446,7 @@ def main(argv: Sequence[str]):
                 fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
                 list_HC = select_HC(fname_partcipants, sex, age)
         else:
-            list_HC = None#select_HC(fname_partcipants)
+            list_HC = None
         # Select healthy controls based on sex and/or age range
 
         # Get PAM50 slice thickness
