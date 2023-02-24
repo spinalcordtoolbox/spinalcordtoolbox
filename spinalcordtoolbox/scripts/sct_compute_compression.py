@@ -57,13 +57,6 @@ def get_parser():
              'Example: sub-001_T2w_compression_labels.nii.gz'
     )
     mandatoryArguments.add_argument(
-        '-i-PAM50',
-        metavar=Metavar.file,
-        required=True,
-        help='CSV morphometric file in the PAM50 space, obtained by running: '
-        'sct_process_segmentation -normalize-PAM50.'
-    )
-    mandatoryArguments.add_argument(
         '-metric',
         required=False,
         help='Metric to normalize.'
@@ -73,6 +66,12 @@ def get_parser():
         metavar=Metavar.file,
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
+    optional.add_argument(
+        '-i-PAM50',
+        metavar=Metavar.file,
+        help='CSV morphometric file in the PAM50 space, obtained by running: '
+        'sct_process_segmentation -normalize-PAM50.'
+    )
     optional.add_argument(
         '-file-participants',
         metavar=Metavar.file,
@@ -416,21 +415,23 @@ def main(argv: Sequence[str]):
         path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
         fname_out = os.path.join(path, file_name + '_compression_metrics' + ext)
     fname_metrics = get_absolute_path(arguments.i)
-    fname_metrics_PAM50 = get_absolute_path(arguments.i_PAM50)
-    metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
-    sex = arguments.sex
-    age = arguments.age
-    if age:
-        if any(n < 0 for n in age):
-            parser.error('Age range needs to be positive, {} was specified'.format(age))
-        # Put age range in order
+    if arguments.i_PAM50:
+        fname_metrics_PAM50 = get_absolute_path(arguments.i_PAM50)
+        sex = arguments.sex
+        age = arguments.age
+        if age:
+            if any(n < 0 for n in age):
+                parser.error('Age range needs to be positive, {} was specified'.format(age))
+            # Put age range in order
+            else:
+                age.sort()
+        if arguments.file_participants:
+            fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
+        if sex or age:
+            list_HC = select_HC(fname_partcipants, sex, age)
         else:
-            age.sort()
-    fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
-    if sex or age:
-        list_HC = select_HC(fname_partcipants, sex, age)
-    else:
-        list_HC = select_HC(fname_partcipants)
+            list_HC = select_HC(fname_partcipants)
+    metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
 
     # Select healthy controls based on sex and/or age range
     slice_thickness = get_slice_thickness(img)
