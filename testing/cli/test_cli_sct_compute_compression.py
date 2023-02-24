@@ -103,7 +103,7 @@ def test_sct_compute_compression_check_missing_input_l(tmp_path, dummy_metrics_c
 
 
 def test_sct_compute_compression_check_wrong_sex(tmp_path, dummy_3d_label_label, dummy_metrics_csv, dummy_metrics_csv_pam50):
-    """ Run sct_compute_compression when missing -l"""
+    """ Run sct_compute_compression with wrong value for sex"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
         sct_compute_compression.main(argv=['-i', dummy_metrics_csv, '-i-PAM50', dummy_metrics_csv_pam50, '-l', dummy_3d_label_label,
