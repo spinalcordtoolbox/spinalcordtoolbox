@@ -36,7 +36,8 @@ def get_parser():
                     ' by the function sct_process_segmentation (CSA, RL diameter, eccentricity, solidity, etc.).'
                     ' Metrics are normalized using a database of spinal cord morphometrics built from healthy control'
                     ' subjects. This database uses the PAM50 template as an anatomical reference system.'
-
+                    ' \nEquation:    ratio = (1 - mi/((ma+mb)/2))\n'
+                    'mi: metric at compression level. ma: metric of level above compression level. mb: metric of level below compression level.'
                     '[1]: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord injury:'
                     ' MR imaging findings correlated with neurologic outcome--prospective study with 100 consecutive'
                     ' patients. Radiology 2007;243(3):820-827.'
