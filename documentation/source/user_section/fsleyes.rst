@@ -13,7 +13,7 @@ Previously, SCT provided instructions on how to install FSLeyes into the SCT env
 
 .. warning::
 
-   If you choose to install FSLeyes via a complete FSL installation, you will need to update 'wxpython' (an internal packaged used by FSLeyes). This is because the version of 'wxpython' that comes with FSL is out of date (`more info here <https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3988#issuecomment-1373918661>`_).
+   If you choose to install FSLeyes via a complete FSL installation, you will need to update 'wxpython' (an internal package used by FSLeyes). This is because the version of 'wxpython' that comes with FSL is out of date (`more info here <https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3988#issuecomment-1373918661>`_).
 
    To update, please run one of the the following commands (`depending on your FSL version <https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes>`_):
 
