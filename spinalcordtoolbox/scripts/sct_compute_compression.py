@@ -276,7 +276,12 @@ def average_hc(ref_folder, metric, list_HC):
     for file in os.listdir(ref_folder):
         if 'PAM50.csv' in file:
             subject = os.path.basename(file).split('_')[0]
-            if subject in list_HC:
+            if list_HC:
+                # Check if subject is in list to include
+                if subject in list_HC:
+                    d[file] = csv2dataFrame(os.path.join(ref_folder, file), metric)  # TODO change verbose for arg
+                    i = i+1
+            else:
                 d[file] = csv2dataFrame(os.path.join(ref_folder, file), metric)  # TODO change verbose for arg
                 i = i+1
     first_key = next(iter(d))
@@ -425,7 +430,7 @@ def main(argv: Sequence[str]):
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     # Get vertebral level above and below the compression
     upper_level, lower_level = get_up_lw_levels(compressed_levels_dict.keys(), df_metrics, metric)
-    # Initialize variables if normalization with PAM50
+    # Initialize variables if normalization with
     if arguments.i_PAM50:
         fname_metrics_PAM50 = get_absolute_path(arguments.i_PAM50)
         sex = arguments.sex
@@ -436,12 +441,14 @@ def main(argv: Sequence[str]):
             # Put age range in order
             else:
                 age.sort()
-        if arguments.file_participants:
-            fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
         if sex or age:
-            list_HC = select_HC(fname_partcipants, sex, age)
+            if not os.path.isfile(arguments.file_participants):
+                raise FileNotFoundError('Participants.tsv file must exists to select sex or age.')
+            else:
+                fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
+                list_HC = select_HC(fname_partcipants, sex, age)
         else:
-            list_HC = select_HC(fname_partcipants)
+            list_HC = None#select_HC(fname_partcipants)
         # Select healthy controls based on sex and/or age range
 
         # Get PAM50 slice thickness
