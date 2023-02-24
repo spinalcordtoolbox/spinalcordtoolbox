@@ -440,8 +440,8 @@ def main(argv: Sequence[str]):
             else:
                 age.sort()
         if sex or age:
-            if not os.path.isfile(arguments.file_participants):
-                raise FileNotFoundError('Participants.tsv file must exists to select sex or age.')
+            if not os.path.isfile(get_absolute_path(os.path.join(path_ref, arguments.file_participants))):
+                raise FileNotFoundError('participants.tsv file must exists to select sex or age.')
             else:
                 fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
                 list_HC = select_HC(fname_partcipants, sex, age)
