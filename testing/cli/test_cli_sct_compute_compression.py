@@ -121,7 +121,7 @@ def test_sct_compute_compression_check_wrong_age(tmp_path, dummy_3d_label_label,
 
 
 def test_sct_compute_compression_check_wrong_metric(tmp_path, dummy_3d_label_label, dummy_metrics_csv, dummy_metrics_csv_pam50):
-    """ Run sct_compute_compression when missing -l"""
+    """ Run sct_compute_compression when specifying a wrong metric"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
         sct_compute_compression.main(argv=['-i', dummy_metrics_csv, '-i-PAM50', dummy_metrics_csv_pam50, '-l', dummy_3d_label_label,
