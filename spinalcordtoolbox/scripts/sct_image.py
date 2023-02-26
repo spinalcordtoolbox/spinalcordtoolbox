@@ -92,6 +92,18 @@ def get_parser():
              "(Note: QC reporting is only available for 'sct_image -stitch')."
     )
     image.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on. "
+             "(Note: QC reporting is only available for 'sct_image -stitch')."
+    )
+    image.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help='If provided, this string will be mentioned in the QC report as the subject the process was run on. '
+             "(Note: QC reporting is only available for 'sct_image -stitch')."
+    )
+    image.add_argument(
         '-remove-vol',
         metavar=Metavar.list,
         help='Remove specific volumes from a 4d volume. Separate with ",". Example: "0,5,10"',
@@ -423,7 +435,8 @@ def main(argv: Sequence[str]):
             im_out_padded.save(fname_qc_out)
             # generate the QC report itself
             generate_qc(fname_in1=fname_qc_out, fname_in2=fname_qc_concat, args=sys.argv[1:],
-                        path_qc=os.path.abspath(arguments.qc), process='sct_image -stitch')
+                        path_qc=os.path.abspath(arguments.qc), dataset=arguments.qc_dataset,
+                        subject=arguments.qc_subject, process='sct_image -stitch')
         else:
             printv("WARNING: '-qc' is only supported for 'sct_image -stitch'. QC report will not be generated.",
                    type='warning')
