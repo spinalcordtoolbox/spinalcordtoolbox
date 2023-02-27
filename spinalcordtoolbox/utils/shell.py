@@ -42,6 +42,7 @@ SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'it
 IMTYPES_COLORMAP = {'anat': {'fsleyes': 'greyscale', 'fslview': 'Greyscale'},
                     'seg': {'fsleyes': 'red', 'fslview': 'Red'},
                     'softseg': {'fsleyes': 'red-yellow', 'fslview': 'Red-Yellow'},
+                    'softseg-alt': {'fsleyes': 'blue-lightblue', 'fslview': 'Blue-Lightblue'},
                     'labels': {'fsleyes': 'subcortical', 'fslview': 'MGH-Subcortical'},
                     }
 
