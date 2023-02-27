@@ -178,8 +178,8 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
         # To do this, we unpack + zip `nii_lists`, so that "prediction_N" files are grouped as "predictions".
         for predictions in zip(*nii_lsts):
             # Average the data for each output in the ensemble
-            data_stack = np.stack([pred.get_fdata() for pred in predictions], axis=-1)
-            data_mean = np.mean(data_stack, axis=-1)
+            data_stack = np.stack([pred.get_fdata() for pred in predictions], axis=0)
+            data_mean = np.mean(data_stack, axis=0)
             # Take the first image's header to reuse for the averaged image
             nii_header = predictions[0].header
             # Create a new Nifti1Image containing the averaged output
