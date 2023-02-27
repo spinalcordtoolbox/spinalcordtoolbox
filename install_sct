@@ -352,7 +352,7 @@ for arg in "$@"; do
   esac
 done
 
-while getopts ":iydbcgvh" opt; do
+while getopts ":iydbcg:vh" opt; do
   case $opt in
   i)
     SCT_INSTALL_TYPE="in-place"
@@ -373,7 +373,7 @@ while getopts ":iydbcgvh" opt; do
     echo " no checks will be run (installation will not be validated)"
     NO_INSTALL_VALIDATION="yes"
     ;;
-    g)
+  g)
     echo " if script has been run by itself, git clone will use ref ${OPTARG}"
     SCT_GIT_REF=${OPTARG}
     ;;
