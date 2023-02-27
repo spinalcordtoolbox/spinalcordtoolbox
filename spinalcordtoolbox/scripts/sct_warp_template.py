@@ -37,7 +37,8 @@ class Param:
         # self.warp_template = 1
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
-        self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
+        # list of files for which nn interpolation should be used. Default = linear.
+        self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']
         self.verbose = 1  # verbose
         self.path_qc = None
 

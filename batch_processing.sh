@@ -68,6 +68,10 @@ cd t2
 sct_deepseg_sc -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Tips: If you are not satisfied with the results you can try with another algorithm:
 # sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+# Fit binarized centerline from SC seg (default settings)
+sct_get_centerline -i t2_seg.nii.gz -method fitseg -qc "$SCT_BP_QC_FOLDER"
+# Fit soft centerline from SC seg
+sct_get_centerline -i t2_seg.nii.gz -method fitseg -centerline-soft 1 -o t2_seg_centerline_soft.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Vertebral labeling
 # Tips: for manual initialization of labeling by clicking at disc C2-C3, use flag -initc2
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"

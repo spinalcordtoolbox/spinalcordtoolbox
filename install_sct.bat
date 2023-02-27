@@ -27,6 +27,14 @@ if exist .git\ (
   echo ### Current working directory is a git repository. Installing SCT from current state of the repository:
   echo:
   git status
+  if exist python\ (
+    echo ### Removing existing 'python' folder inside the SCT directory...
+    rmdir /s python\ || goto error
+  )
+  if exist spinalcordtoolbox.egg-info\ (
+    echo ### Removing existing '.egg-info' folder inside the SCT directory...
+    rmdir /s spinalcordtoolbox.egg-info\ || goto error
+  )
 ) else (
   rem Not an in-place install, so go to user's home directory
   pushd %HOMEPATH%

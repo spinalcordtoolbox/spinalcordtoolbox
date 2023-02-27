@@ -18,15 +18,6 @@ from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 
-# DEFAULT PARAMETERS
-class Param:
-    # The constructor
-    def __init__(self):
-        self.debug = 0
-        self.verbose = 1
-        self.t1 = 0
-
-
 class ErnstAngle:
     # The constructor
     def __init__(self, t1, tr=None, fname_output=None):
@@ -136,7 +127,6 @@ def main(argv: Sequence[str]):
     set_loglevel(verbose=verbose)
 
     # Initialization
-    param = Param()
     input_t1 = arguments.t1
     input_fname_output = None
     input_tr_min = 500
@@ -160,12 +150,9 @@ def main(argv: Sequence[str]):
         elif input_tr < input_tr_min:
             input_tr_min = input_tr - 500
         # save text file
-        try:
-            f = open(fname_output_file, 'w')
-            f.write(str(graph.getErnstAngle(input_tr)))
-            f.close()
-        except:
-            printv('\nERROR: Cannot open file'+fname_output_file, '1', 'error')
+        f = open(fname_output_file, 'w')
+        f.write(str(graph.getErnstAngle(input_tr)))
+        f.close()
 
     if verbose == 2:
         graph.draw(input_tr_min, input_tr_max)

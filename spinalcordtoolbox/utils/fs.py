@@ -151,12 +151,11 @@ class TempFolder(object):
         rmtree(self.path_tmp)
 
 
-def cache_signature(input_files=[], input_data=[], input_params={}):
+def cache_signature(input_files=[], input_params={}):
     """
     Create a signature to be used for caching purposes
 
     :param input_files: paths of input files (that can influence output)
-    :param input_data: input data (that can influence output)
     :param input_params: input parameters (that can influence output)
 
     Notes:
@@ -180,12 +179,6 @@ def cache_signature(input_files=[], input_data=[], input_params={}):
         with io.open(path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 h.update(chunk)
-    for data in input_data:
-        h.update(str(type(data)))
-        try:
-            h.update(data)
-        except:
-            h.update(str(data))
     for k, v in sorted(input_params.items()):
         h.update(str(type(k)).encode('utf-8'))
         h.update(str(k).encode('utf-8'))

@@ -573,6 +573,9 @@ fi
 run rm -rf "$SCT_DIR/$PYTHON_DIR"
 run mkdir -p "$SCT_DIR/$PYTHON_DIR"
 
+# Remove old '.egg-info` folder created by editable installs
+run rm -rf "$SCT_DIR"/spinalcordtoolbox.egg-info
+
 # Download miniconda
 print info "Downloading Miniconda..."
 case $OS in

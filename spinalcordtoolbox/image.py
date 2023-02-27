@@ -87,7 +87,7 @@ class Slicer(object):
 
         if not isinstance(im, Image):
             raise ValueError("Expecting an image")
-        if not orientation in all_refspace_strings():
+        if orientation not in all_refspace_strings():
             raise ValueError("Invalid orientation spec")
 
         # Get a different view on data, as if we were doing a reorientation
@@ -240,7 +240,7 @@ def check_affines_match(im):
                          "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
                          "or on the SCT forums https://forum.spinalcordmri.org/.")
 
-        return(True)
+        return True
 
     return np.allclose(hdr.get_qform(), hdr2.get_qform(), atol=1e-3)
 
@@ -831,7 +831,11 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     dice = 0.0  # default value of dice is 0
 
     # check if images are in the same coordinate system
-    assert image1.data.shape == image2.data.shape, "\n\nERROR: the data (" + image1.absolutepath + " and " + image2.absolutepath + ") don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
+    assert image1.data.shape == image2.data.shape, (
+        f"\n\nERROR: the data ({image1.absolutepath} and {image2.absolutepath}) don't have the same size."
+        f"\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  "
+        f"to put the input images in the same space"
+    )
 
     # if necessary, change orientation of images to RPI and compute segmentation boundaries
     if mode == '2d-slices' or (mode == '3d' and zboundaries):
@@ -959,7 +963,6 @@ def find_zmin_zmax(im, threshold=0.1):
 
     # Conversely from top to bottom
     for zmax in range(len(slicer) - 1, zmin, -1):
-        dataz = slicer[zmax]
         if np.any(slicer[zmax] > threshold):
             break
 
@@ -1049,7 +1052,7 @@ def change_shape(im_src, shape, im_dst=None):
         im_dst.data = im_src.data.reshape(shape, order="C")
     else:
         # image data may be a view
-        im_dst_data = im_src.data.copy().reshape(shape, order="F")
+        im_dst.data = im_src.data.copy().reshape(shape, order="F")
 
     pair = nib.nifti1.Nifti1Pair(im_dst.data, im_dst.hdr.get_best_affine(), im_dst.hdr)
     im_dst.hdr = pair.header
@@ -1256,11 +1259,8 @@ def to_dtype(dtype):
     if dtype is None:
         return None
     if isinstance(dtype, type):
-        try:
-            if isinstance(dtype(0).dtype, np.dtype):
-                return dtype(0).dtype
-        except:  # TODO
-            raise
+        if isinstance(dtype(0).dtype, np.dtype):
+            return dtype(0).dtype
     if isinstance(dtype, np.dtype):
         return dtype
     if isinstance(dtype, str):

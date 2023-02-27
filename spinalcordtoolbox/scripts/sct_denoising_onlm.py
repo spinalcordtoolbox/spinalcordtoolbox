@@ -118,7 +118,6 @@ def main(argv: Sequence[str]):
     hdr_0 = img.get_header()
 
     data = img.get_data()
-    aff = img.get_affine()
 
     if min(data.shape) <= 5:
         printv('One of the image dimensions is <= 5 : reducing the size of the block radius.')

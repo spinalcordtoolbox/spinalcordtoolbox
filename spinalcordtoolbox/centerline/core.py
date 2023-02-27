@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class ParamCenterline:
     """Default parameters for centerline fitting"""
-    def __init__(self, algo_fitting='bspline', degree=5, smooth=20, contrast=None, minmax=True):
+    def __init__(self, algo_fitting='bspline', degree=5, smooth=20, contrast=None, minmax=True, soft=0):
         """
 
         :param algo_fitting: str:
@@ -27,11 +27,13 @@ class ParamCenterline:
         :param contrast: Contrast type for algo_fitting=optic.
         :param minmax: Crop output centerline where the segmentation starts/end. If False, centerline will span all\
           slices to the size of a Hanning window (in mm).
+        :param soft: Binary or soft centerline. Only relevant with algo_fitting polyfit, bspline, linear, nurbs.
         """
         self.algo_fitting = algo_fitting
         self.contrast = contrast
         self.degree = degree
         self.smooth = smooth
+        self.soft = soft
         self.minmax = minmax
 
 
@@ -82,7 +84,7 @@ def find_and_sort_coord(img):
     return np.array(arr_sorted_avg)
 
 
-def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files=1):
+def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files=1, space='pix'):
     """
     Extract centerline from an image (using optic) or from a binary or weighted segmentation (using the center of mass).
 
@@ -90,6 +92,7 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     :param param: ParamCenterline() class:
     :param verbose: int: verbose level
     :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
+    :param space: string: Defining space and orientation in which to output Centerline information. 'pix' = pixel space / RPI, 'phys' = physical space /native.
     :return: im_centerline: Image: Centerline in discrete coordinate (int)
     :return: arr_centerline: 3x1 array: Centerline in continuous coordinate (float) for each slice in RPI orientation.
     :return: arr_centerline_deriv: 3x1 array: Derivatives of x and y centerline wrt. z for each slice in RPI orient.
@@ -97,6 +100,8 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
     """
     if not isinstance(im_seg, Image):
         raise ValueError("Expecting an image")
+    if space not in ['pix', 'phys']:
+        raise ValueError(f"'space' parameter must be either 'pix' or 'phys', but '{space}' was passed instead.")
 
     # Open image and change to RPI orientation
     native_orientation = im_seg.orientation
@@ -173,10 +178,37 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
         # Create an image with the centerline
         im_centerline = im_seg.copy()
         im_centerline.data = np.zeros(im_centerline.data.shape)
-        # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
-        im_centerline.data[np.clip(x_centerline_fit.round().astype(int), 0, im_centerline.data.shape[0] - 1),
-                           np.clip(y_centerline_fit.round().astype(int), 0, im_centerline.data.shape[1] - 1),
-                           z_ref] = 1
+        # Binarized
+        if param.soft == 0:
+            # Assign value=1 to centerline. Make sure to clip to avoid array overflow.
+            im_centerline.data[np.clip(x_centerline_fit.round().astype(int), 0, im_centerline.data.shape[0] - 1),
+                               np.clip(y_centerline_fit.round().astype(int), 0, im_centerline.data.shape[1] - 1),
+                               z_ref] = 1
+        # Soft (accounting for partial volume effect)
+        else:
+            # Clip to avoid array overflow
+            # Note: '-1' here is necessary because python does matrix indexing from 0
+            x_max, y_max = im_centerline.data.shape[:2]
+            x_centerline_fit = x_centerline_fit.clip(0, x_max - 1)
+            y_centerline_fit = y_centerline_fit.clip(0, y_max - 1)
+
+            x_floor = np.floor(x_centerline_fit).astype(int)
+            y_floor = np.floor(y_centerline_fit).astype(int)
+
+            x_ceil = np.ceil(x_centerline_fit).astype(int)
+            y_ceil = np.ceil(y_centerline_fit).astype(int)
+
+            x_frac = x_centerline_fit - x_floor
+            y_frac = y_centerline_fit - y_floor
+            # Note: we add ('+='), rather than assign ('=')
+            # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4026#discussion_r1096093021)
+            im_centerline.data[x_floor, y_floor, z_ref] += (1 - x_frac) * (1 - y_frac)
+            im_centerline.data[x_floor, y_ceil, z_ref] += (1 - x_frac) * y_frac
+            im_centerline.data[x_ceil, y_floor, z_ref] += x_frac * (1 - y_frac)
+            im_centerline.data[x_ceil, y_ceil, z_ref] += x_frac * y_frac
+            # You can check if the sum of the voxels is equal to 1 with:
+            # np.apply_over_axes(np.sum, im_centerline.data, [0, 1]).flatten()
+
         # reorient centerline to native orientation
         im_centerline.change_orientation(native_orientation)
         im_seg.change_orientation(native_orientation)
@@ -237,9 +269,22 @@ def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files
                      else "centerline.nii.gz")
         im_centerline.save(os.path.join(tmp_folder, fname_ctr), mutable=True)
 
+    # If 'phys' is specified, adjust centerline coordinates (`Centerline.points`) and
+    # derivatives (`Centerline.derivatives`) to physical ("phys") space and native (`im_seg`) orientation.
+    if space == 'phys':
+        # Transform centerline to physical coordinate system
+        arr_ctl = im_seg.transfo_pix2phys([[x_centerline_fit[i], y_centerline_fit[i], z_ref[i]]
+                                           for i in range(len(x_centerline_fit))]).T
+        # Adjust derivatives with pixel size
+        _, _, _, _, px, py, pz, _ = im_seg.change_orientation(native_orientation).dim
+        arr_ctl_der = np.array([x_centerline_deriv * px, y_centerline_deriv * py, np.ones_like(z_ref) * pz])
+    else:
+        arr_ctl = np.array([x_centerline_fit, y_centerline_fit, z_ref])
+        arr_ctl_der = np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)])
+
     return (im_centerline,
-            np.array([x_centerline_fit, y_centerline_fit, z_ref]),
-            np.array([x_centerline_deriv, y_centerline_deriv, np.ones_like(z_ref)]),
+            arr_ctl,
+            arr_ctl_der,
             fit_results)
 
 
