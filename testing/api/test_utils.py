@@ -63,7 +63,7 @@ def test_display_viewer_syntax(temporary_viewers):
     """Test that sample input produces the required syntax string output."""
     syntax_strings = utils.display_viewer_syntax(
         files=["test_img.nii.gz", "test_img_2.nii.gz", "test_seg.nii.gz", "test_img_3.nii.gz"],
-        colormaps=['gray', 'gray', 'red', 'gray'],
+        im_types=['anat', 'anat', 'seg', 'anat'],
         minmax=['', '0,1', '0.25,0.75', ''],
         opacities=['', '0.7', '1.0', ''],
         mode="test",

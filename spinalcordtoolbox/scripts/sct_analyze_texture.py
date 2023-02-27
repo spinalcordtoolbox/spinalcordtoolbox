@@ -349,7 +349,7 @@ def main(argv: Sequence[str]):
 
     display_viewer_syntax(
         files=[arguments.i] + fname_out_lst,
-        colormaps=['gray'] + ['red-yellow'] * len(fname_out_lst),
+        im_types=['anat'] + ['softseg'] * len(fname_out_lst),
         opacities=['1.0'] + ['0.7'] * len(fname_out_lst),
         verbose=verbose
     )

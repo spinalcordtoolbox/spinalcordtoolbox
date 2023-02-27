@@ -243,7 +243,7 @@ def main(argv: Sequence[str]):
         fname_prior = fname_seg
 
     for output_filename in output_filenames:
-        display_viewer_syntax([arguments.i[0], output_filename], colormaps=['gray', 'red'], opacities=['', '0.7'], verbose=verbose)
+        display_viewer_syntax([arguments.i[0], output_filename], im_types=['anat', 'seg'], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":

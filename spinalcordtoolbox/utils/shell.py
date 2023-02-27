@@ -47,13 +47,12 @@ IMTYPES_COLORMAP = {'anat': {'fsleyes': 'greyscale', 'fslview': 'Greyscale'},
                     }
 
 
-def display_viewer_syntax(files, verbose, colormaps=[], im_types=[], minmax=[], opacities=[], mode=''):
+def display_viewer_syntax(files, verbose, im_types=[], minmax=[], opacities=[], mode=''):
     """
     Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
     Parameters
     ----------
     files [list:string]: list of NIFTI file names
-    colormaps [list:string]: list of colormaps associated with each file. Available colour maps: see dict_fsleyes
     im_types [list:string]: list of image type associated with each file. Available types: see IMTYPE_COLORMAPS
     minmax [list:string]: list of min,max brightness scale associated with each file. Separate with comma.
     opacities [list:string]: list of opacity associated with each file. Between 0 and 1.
@@ -65,7 +64,6 @@ def display_viewer_syntax(files, verbose, colormaps=[], im_types=[], minmax=[], 
     Example
     -------
     display_viewer_syntax([file1, file2, file3])
-    display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
     display_viewer_syntax([file1, file2], im_types=['anat', 'softseg'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
     available_viewers = [viewer for viewer in SUPPORTED_VIEWERS if check_exe(viewer)]
@@ -81,11 +79,11 @@ def display_viewer_syntax(files, verbose, colormaps=[], im_types=[], minmax=[], 
     cmd_strings = {}
     for viewer in available_viewers:
         if viewer in ['fslview', 'fslview_deprecated']:
-            cmd = _construct_fslview_syntax(viewer, files, colormaps, im_types, minmax, opacities, mode)
+            cmd = _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode)
         elif viewer in ['fsleyes']:
-            cmd = _construct_fsleyes_syntax(viewer, files, colormaps, im_types, minmax, opacities)
+            cmd = _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities)
         elif viewer in ['itksnap', 'itk-snap']:
-            cmd = _construct_itksnap_syntax(viewer, files, colormaps, im_types,)
+            cmd = _construct_itksnap_syntax(viewer, files, im_types)
         else:
             cmd = ""  # This should never be reached, because SUPPORTED_VIEWERS should match the 'if' cases exactly
         cmd_strings[viewer] = cmd
@@ -96,20 +94,14 @@ def display_viewer_syntax(files, verbose, colormaps=[], im_types=[], minmax=[], 
     return cmd_strings
 
 
-def _construct_fslview_syntax(viewer, files, colormaps, im_types, minmax, opacities, mode):
-    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
-                    'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
-
+def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
     cmd = viewer
     # add mode (only supported by fslview for the moment)
     if mode:
         cmd += ' -m ' + mode
     for i in range(len(files)):
         cmd += ' ' + files[i]
-        if colormaps:
-            if colormaps[i]:
-                cmd += ' -l ' + dict_fslview[colormaps[i]]
-        elif im_types:
+        if im_types:
             if im_types[i]:
                 cmd += ' -l ' + IMTYPES_COLORMAP[im_types[i]]['fslview']
         if minmax:
@@ -123,17 +115,11 @@ def _construct_fslview_syntax(viewer, files, colormaps, im_types, minmax, opacit
     return cmd
 
 
-def _construct_fsleyes_syntax(viewer, files, colormaps, im_types, minmax, opacities):
-    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
-                    'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
-
+def _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities):
     cmd = viewer
     for i in range(len(files)):
         cmd += ' ' + files[i]
-        if colormaps:
-            if colormaps[i]:
-                cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
-        elif im_types:
+        if im_types:
             if im_types[i]:
                 cmd += ' -cm ' + IMTYPES_COLORMAP[im_types[i]]['fsleyes']
         if minmax:
@@ -147,7 +133,7 @@ def _construct_fsleyes_syntax(viewer, files, colormaps, im_types, minmax, opacit
     return cmd
 
 
-def _construct_itksnap_syntax(viewer, files, colormaps, im_types):
+def _construct_itksnap_syntax(viewer, files, im_types):
     cmd = viewer
     overlay_files = []
     for i in range(len(files)):
@@ -156,18 +142,11 @@ def _construct_itksnap_syntax(viewer, files, colormaps, im_types):
         if i == 0:
             cmd += ' -g ' + files[i]
         else:
-            # - SCT uses colormaps to color overlaid segmentations for FSLeyes, because FSLeyes doesn't have
-            #   any "segmentation" options, and so files must be distinguished by choosing colors manually.
-            # - But, itk-snap requires that you explicitly specify which files are segmentation files (which
+            # - itk-snap requires that you explicitly specify which files are segmentation files (which
             #   results in a red overlay for binary segmentations, and a rainbow overlay for multi-labeled
             #   segmentations).
-            # - So, here we make the assumption that any files that would have been coloured (via fsleyes) should
-            #   instead be passed as segmentations to itk-snap.
-            # - TODO: This assumption is somewhat brittle, and could break if a colormap is used for a
-            #   non-segmentation segmentation file. But, the alternative would be a much bigger rewrite of the
-            #   display_viewer_syntax function.
-            # - Image types including the string:'seg' will be characterized as segmentations
-            if colormaps and colormaps[i] != "gray" or im_types and 'seg' in im_types[i]:
+            # - So, image types including the string 'seg' will be characterized as segmentations
+            if im_types and 'seg' in im_types[i]:
                 cmd += ' -s ' + files[i]
             # All extra non-segmentation files have to be passed together to the '-o' (overlay) option
             else:
