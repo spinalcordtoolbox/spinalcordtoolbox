@@ -148,6 +148,11 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
         :return: list, list: List of nibabel objects containing the soft segmentation(s), one per prediction class, \
             List of target suffix associated with each prediction
     """
+    if not isinstance(model_paths, list):
+        raise TypeError("'model_paths' must be a list of model path strings.")
+    if not len(model_paths) > 0:
+        raise ValueError("'model_paths' must contain one or more model path strings.")
+
     # Fetch the name of the model (to be used in logging)
     name_model = Path(model_paths[0]).parts[-1]
     logger.info(f"\nRunning inference for model '{name_model}'...")
