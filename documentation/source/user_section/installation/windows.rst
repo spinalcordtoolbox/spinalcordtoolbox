@@ -30,21 +30,7 @@ This set of instructions will show you how to install SCT directly on Windows.
 1. Installing Prerequisites
 ***************************
 
-SCT depends on two pieces of software that must be set up prior to the installation of SCT.
-
-Python 3.8
-^^^^^^^^^^
-
-Since SCT is a Python package, Python must be installed on your system before SCT can be installed.
-
-1. Download a "Windows x86-64" installer from `the Python 3.8.10 download page <https://www.python.org/downloads/release/python-3810/>`_.
-
-2. Run the installer file. (**Important:** Before clicking "Install Now", make sure to first check the "Add Python 3.8 to PATH" checkbox at the bottom of the window.)
-
-3. After the installation has finished, open your Start Menu and type Command Prompt, then run it. In the Command Prompt window, type ``python --version`` and press enter.
-
-   (Make sure that you see the text ``Python 3.8.10`` before continuing.)
-
+SCT depends on one main piece of software that must be set up prior to the installation of SCT.
 
 Git for Windows
 ^^^^^^^^^^^^^^^
@@ -67,11 +53,9 @@ The easiest way to try out different versions of SCT is using Git.
 2. Installing SCT
 *****************
 
-We recommend that you install SCT into a Python virtual environment. To help with this process, SCT provides an installer script that will automate the process of creating a Python virtual environment for you.
+1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`_ , then download the ``install_sct.bat`` script from the "Assets" section of the latest release.
 
-1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`_ , then download the ``install_sct.bat`` script from the "Assets" section of the latest release. 
-
-2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Python virtual environment for you.
+2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Miniconda environment for you.
 
 3. Once the installer finishes, follow the instructions given at the end of the Command Prompt window, which will instruct you to add SCT to your PATH.
 
