@@ -175,6 +175,14 @@ jobs:
         cp install_sct.bat install_sct-${{ github.event.inputs.milestone_title }}_win.bat
         perl -pi -e 's/set git_ref=master/set git_ref=${{ github.event.inputs.milestone_title }}/' install_sct-${{ github.event.inputs.milestone_title }}_win.bat
 
+    - name: Create ${{ github.event.inputs.milestone_title }} Linux/macOS install scripts
+      # NB: `install_sct` works for both Linux and macOS platforms. So, here, we simply duplicate the script for both
+      # platforms (which will allow us to collect some rudimentary statistics + make our installation steps clearer).
+      run: |
+        cp install_sct install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
+        perl -pi -e 's/SCT_GIT_REF="master"/SCT_GIT_REF="${{ github.event.inputs.milestone_title }}"/' install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
+        cp install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_sct-${{ github.event.inputs.milestone_title }}_macos.sh
+
     - uses: ncipollo/release-action@v1
       name: Create release
       id: create_release
@@ -182,5 +190,7 @@ jobs:
         tag: ${{ github.event.inputs.milestone_title }}
         token: ${{ secrets.GITHUB_TOKEN }}
         bodyFile: ".github/workflows/release-body.md"
-        artifacts: "install_sct-${{ github.event.inputs.milestone_title }}_win.bat"
+        artifacts: "install_sct-${{ github.event.inputs.milestone_title }}_win.bat,\
+                    install_sct-${{ github.event.inputs.milestone_title }}_linux.sh,\
+                    install_sct-${{ github.event.inputs.milestone_title }}_macos.sh"
         draft: true
