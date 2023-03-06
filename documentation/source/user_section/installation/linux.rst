@@ -46,13 +46,14 @@ Installation Options
 Option 1: Install from Package (recommended)
 --------------------------------------------
 
-The simplest way to install SCT is to do it via a stable release. First, download the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_. Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
+The simplest way to install SCT is to do it via a stable release. First, navigate to the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, then download the install script for SCT (``install_sct-<version>_linux.sh``). Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
 
-Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal, go into the created folder and launch the installer:
+Once you have downloaded SCT, open a new Terminal in the location of the downloaded script, then launch the installer. For example, if the script was downloaded to `Downloads/`, then you would run:
 
 .. code:: sh
 
-  ./install_sct
+  cd ~/Downloads
+  ./install_sct-<version.sh
 
 
 Option 2: Install from GitHub (development)
