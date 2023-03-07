@@ -46,7 +46,6 @@ shopt -s failglob # error if a glob doesn't find any files, instead of remaining
 
 # Where tmp file are stored
 TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR')"
-SCT_SOURCE="$PWD"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
@@ -414,6 +413,7 @@ check_requirements
 # Check to see if the PWD contains the project source files (using `version.txt` as a proxy for the entire source dir)
 # If it exists, then we can reliably access source files (`version.txt`, `requirements-freeze.txt) from the PWD.
 if [[ -e "spinalcordtoolbox/version.txt" ]]; then
+  SCT_SOURCE="$PWD"
   SCT_VERSION="$(cat spinalcordtoolbox/version.txt)"
   # Get installation type if not already specified
   if [[ -z "$SCT_INSTALL_TYPE" ]]; then
