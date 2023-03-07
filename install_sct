@@ -418,7 +418,7 @@ if [[ -e "spinalcordtoolbox/version.txt" ]]; then
 # So, we need to clone SCT to a TMPDIR to access the source files, and update SCT_SOURCE accordingly.
 else
   SCT_SOURCE="$TMP_DIR/spinalcordtoolbox"
-  echo "Source files not present. Cloning source files to $SCT_SOURCE."
+  echo "Source files not present. Downloading source files (@ $SCT_GIT_REF) to $SCT_SOURCE."
   git clone -b "$SCT_GIT_REF" --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git "$SCT_SOURCE"
   # Since we're git cloning into a TMPDIR, this can never be an "in-place" installation, so we force "package" instead.
   SCT_INSTALL_TYPE="package"
