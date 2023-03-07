@@ -414,7 +414,6 @@ check_requirements
 # If it exists, then we can reliably access source files (`version.txt`, `requirements-freeze.txt) from the PWD.
 if [[ -e "spinalcordtoolbox/version.txt" ]]; then
   SCT_SOURCE="$PWD"
-  SCT_VERSION="$(cat spinalcordtoolbox/version.txt)"
   # Get installation type if not already specified
   if [[ -z "$SCT_INSTALL_TYPE" ]]; then
     # The file 'requirements-freeze.txt` only exists for stable releases
@@ -431,10 +430,12 @@ else
   SCT_SOURCE="$TMP_DIR/spinalcordtoolbox"
   echo "Source files not present. Cloning source files to $SCT_SOURCE."
   git clone -b "$SCT_GIT_REF" --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git "$SCT_SOURCE"
-  SCT_VERSION=$(cat "$SCT_SOURCE/spinalcordtoolbox/version.txt")
   # Since we're git cloning into a TMPDIR, this can never be an "in-place" installation, so we force "package" instead.
   SCT_INSTALL_TYPE="package"
 fi
+
+# Fetch the version of SCT from the source file
+SCT_VERSION=$(cat "$SCT_SOURCE/spinalcordtoolbox/version.txt")
 
 # Define sh files
 get_shell_rc_path
