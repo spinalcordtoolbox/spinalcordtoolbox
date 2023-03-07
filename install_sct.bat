@@ -13,6 +13,9 @@ rem This option is needed for expanding !git_ref!, which is set (*and expanded*!
 rem See also https://stackoverflow.com/q/9102422 for a further description of this behavior.
 setLocal EnableDelayedExpansion
 
+set TMP_DIR=%temp%\tmp-%RANDOM%%RANDOM%
+mkdir %TMP_DIR%
+
 rem Try to ensure that Git is available on the PATH prior to invoking `git clone` to avoid 'command not found' errors
 rem   - See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3912
 rem NB: This *should* be handled by the git installer, and we even have reports of people running git --version
@@ -74,10 +77,10 @@ if exist .git\ (
 rem Install portable miniconda instance. (Command source: https://github.com/conda/conda/issues/1977)
 echo:
 echo ### Downloading Miniconda installer...
-curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
+curl -o %TMP_DIR%\miniconda.exe https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
 echo:
 echo ### Installing portable copy of Miniconda...
-start /wait "" Miniconda3-latest-Windows-x86_64.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%cd%\python
+start /wait "" %TMP_DIR%\miniconda.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%cd%\python
 
 rem Create and activate miniconda environment to install SCT into
 echo:
