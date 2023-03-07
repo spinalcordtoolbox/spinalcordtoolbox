@@ -508,16 +508,6 @@ if [[ $SCT_DIR =~ $space_regex ]]; then
        More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
 fi
 
-# update PATH environment?
-add_to_path=""
-while [[ ! "$add_to_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-  add_to_path="yes"
-  if [ -z "$NONINTERACTIVE" ]; then
-    print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
-    read -r add_to_path
-  fi
-done
-
 # Create directory
 mkdir -p "$SCT_DIR"
 # check if directory was created
@@ -528,15 +518,6 @@ if [[ -d "$SCT_DIR" ]]; then
   fi
 else
   die "ERROR: $SCT_DIR cannot be created. Make sure you have write permission."
-fi
-
-# Update PATH variables based on Shell type
-if [[ $THE_RC == "bash" ]]; then
-  DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
-elif [[ $THE_RC == "csh" ]]; then
-  DISPLAY_UPDATE_PATH="setenv PATH \"$SCT_DIR/$BIN_DIR:\$PATH\""
-else
-  die "This variable is not recognized: THE_RC=$THE_RC"
 fi
 
 # Copy files to destination directory
@@ -583,6 +564,30 @@ if [[ "$REPORT_STATS" =~ [Yy](es)? ]]; then
   print info "--> Crash reports will be sent to the SCT development team. Thank you!"
 else
   print info "--> Crash reports will not be sent."
+fi
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Handle RC files / $PATH setting
+# ----------------------------------------------------------------------------------------------------------------------
+
+# update PATH environment?
+add_to_path=""
+while [[ ! "$add_to_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+  add_to_path="yes"
+  if [ -z "$NONINTERACTIVE" ]; then
+    print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
+    read -r add_to_path
+  fi
+done
+
+# Update PATH variables based on Shell type
+if [[ $THE_RC == "bash" ]]; then
+  DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
+elif [[ $THE_RC == "csh" ]]; then
+  DISPLAY_UPDATE_PATH="setenv PATH \"$SCT_DIR/$BIN_DIR:\$PATH\""
+else
+  die "This variable is not recognized: THE_RC=$THE_RC"
 fi
 
 
