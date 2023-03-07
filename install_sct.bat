@@ -4,6 +4,11 @@ rem Usage: install_sct.bat <version>
 rem e.g.
 rem        install_sct.bat 5.5
 
+echo:
+echo *******************************
+echo * Welcome to SCT installation *
+echo *******************************
+
 rem This option is needed for expanding !git_ref!, which is set (*and expanded*!) inside the 'if' statement below.
 rem See also https://stackoverflow.com/q/9102422 for a further description of this behavior.
 setLocal EnableDelayedExpansion
