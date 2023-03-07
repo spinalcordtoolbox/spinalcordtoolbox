@@ -414,16 +414,6 @@ check_requirements
 # If it exists, then we can reliably access source files (`version.txt`, `requirements-freeze.txt) from the PWD.
 if [[ -e "spinalcordtoolbox/version.txt" ]]; then
   SCT_SOURCE="$PWD"
-  # Get installation type if not already specified
-  if [[ -z "$SCT_INSTALL_TYPE" ]]; then
-    # The file 'requirements-freeze.txt` only exists for stable releases
-    if [[ -e "requirements-freeze.txt" ]]; then
-      SCT_INSTALL_TYPE="package"
-    # If it doesn't exist, then we can assume that a dev is performing an in-place installation from master
-    else
-      SCT_INSTALL_TYPE="in-place"
-    fi
-  fi
 # If version.txt isn't present, then the installation script is being run by itself (i.e. without source files).
 # So, we need to clone SCT to a TMPDIR to access the source files, and update SCT_SOURCE accordingly.
 else
@@ -432,6 +422,17 @@ else
   git clone -b "$SCT_GIT_REF" --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git "$SCT_SOURCE"
   # Since we're git cloning into a TMPDIR, this can never be an "in-place" installation, so we force "package" instead.
   SCT_INSTALL_TYPE="package"
+fi
+
+# Get installation type if not already specified
+if [[ -z "$SCT_INSTALL_TYPE" ]]; then
+  # The file 'requirements-freeze.txt` only exists for stable releases
+  if [[ -e "$SCT_SOURCE/requirements-freeze.txt" ]]; then
+    SCT_INSTALL_TYPE="package"
+  # If it doesn't exist, then we can assume that a dev is performing an in-place installation from master
+  else
+    SCT_INSTALL_TYPE="in-place"
+  fi
 fi
 
 # Fetch the version of SCT from the source file
