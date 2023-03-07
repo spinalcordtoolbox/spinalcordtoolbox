@@ -125,7 +125,7 @@ function finish() {
     echo ""
   else
     print error "Installation failed!\n
-Please find the file \"$SCT_SOURCE/install_sct_log.txt\",
+Please find the file \"$PWD/install_sct_log.txt\",
 then upload it as a .txt attachment in a new topic on SCT's forum:
 --> http://forum.spinalcordmri.org/c/sct"
   fi
