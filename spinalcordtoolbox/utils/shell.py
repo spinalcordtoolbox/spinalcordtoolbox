@@ -40,11 +40,11 @@ def display_open(file, message="Done! To view results"):
 SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
 
 IMTYPES_COLORMAP = {
-    'anat':        {'fsleyes': 'greyscale',      'fslview': 'Greyscale'},
-    'seg':         {'fsleyes': 'red',            'fslview': 'Red'},
-    'softseg':     {'fsleyes': 'red-yellow',     'fslview': 'Red-Yellow'},
-    'softseg-alt': {'fsleyes': 'blue-lightblue', 'fslview': 'Blue-Lightblue'},
-    'labels':      {'fsleyes': 'subcortical',    'fslview': 'MGH-Subcortical'},
+    'anat':        {'fsleyes': 'greyscale',      'fslview': 'Greyscale',       'itksnap': 'gray'},
+    'seg':         {'fsleyes': 'red',            'fslview': 'Red',             'itksnap': 'seg'},
+    'softseg':     {'fsleyes': 'red-yellow',     'fslview': 'Red-Yellow',      'itksnap': 'gray'},
+    'softseg-alt': {'fsleyes': 'blue-lightblue', 'fslview': 'Blue-Lightblue',  'itksnap': 'gray'},
+    'labels':      {'fsleyes': 'subcortical',    'fslview': 'MGH-Subcortical', 'itksnap': 'seg'},
 }
 
 
