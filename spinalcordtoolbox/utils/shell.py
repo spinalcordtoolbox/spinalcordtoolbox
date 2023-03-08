@@ -139,25 +139,39 @@ def _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities):
 
 
 def _construct_itksnap_syntax(viewer, files, im_types):
-    cmd = viewer
-    overlay_files = []
+    # Split the image files into two categories: grayscale images (used for `-g`/`-o`) and seg images (used for `-s`)
+    gray_images = []
+    seg_images = []
     for i in range(len(files)):
-        # -g is the "main image" option, and we assume that this is the first image
-        # TODO: This assumption is brittle, and could easily break if images are passed in the wrong order.
-        if i == 0:
-            cmd += ' -g ' + files[i]
+        if not im_types:
+            gray_images.append(files[i])
         else:
-            # - itk-snap requires that you explicitly specify which files are segmentation files (which
-            #   results in a red overlay for binary segmentations, and a rainbow overlay for multi-labeled
-            #   segmentations).
-            # - So, image types including the string 'seg' will be characterized as segmentations
-            if im_types and 'seg' in im_types[i]:
-                cmd += ' -s ' + files[i]
-            # All extra non-segmentation files have to be passed together to the '-o' (overlay) option
+            colormap = IMTYPES_COLORMAP[im_types[i]]['itksnap']
+            if colormap == 'gray':
+                gray_images.append(files[i])
+            elif colormap == 'seg':
+                seg_images.append(files[i])
             else:
-                overlay_files.append(files[i])
-    if overlay_files:
-        cmd += ' -o ' + " ".join(overlay_files)
+                raise ValueError(f"ITKSnap does not support colormap '{colormap}'")
+
+    # Construct ITKSnap command based on image types
+    # 1. '-g' is the "main image" and it's mandatory: i.e. You can't just display a single seg image ('-s') by itself,
+    #    or else itksnap will throw this error:
+    #        "Error: Option -s must be used together with option -g"
+    # NB: `-g` really should be a grayscale image, but if there are no gray images, we fall back to using a seg image.
+    cmd = f"{viewer} -g "
+    if len(gray_images) > 0:
+        cmd += f"{gray_images.pop(0)}"
+    else:
+        cmd += f"{seg_images.pop(0)}"
+    # 2. '-o' is used for any remaining grayscale images not used as the main image (`-g`)
+    if gray_images:
+        cmd += f" -o {' '.join(gray_images)}"
+    # 3. '-s' is used for any images with 1 value (binary segmentations) or >1 values (labeled segmentations).
+    #    NB: There can only be one segmentation per ITKSnap command. (ITKSnap can't toggle segmentations like FSLeyes.)
+    #        To get around this, we duplicate the command so that there is one command per segmentation.
+    if seg_images:
+        cmd = "\n".join([f"{cmd} -s {seg_image}" for seg_image in seg_images])
 
     return cmd
 
