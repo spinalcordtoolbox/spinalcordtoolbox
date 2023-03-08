@@ -39,12 +39,13 @@ def display_open(file, message="Done! To view results"):
 
 SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
 
-IMTYPES_COLORMAP = {'anat': {'fsleyes': 'greyscale', 'fslview': 'Greyscale'},
-                    'seg': {'fsleyes': 'red', 'fslview': 'Red'},
-                    'softseg': {'fsleyes': 'red-yellow', 'fslview': 'Red-Yellow'},
-                    'softseg-alt': {'fsleyes': 'blue-lightblue', 'fslview': 'Blue-Lightblue'},
-                    'labels': {'fsleyes': 'subcortical', 'fslview': 'MGH-Subcortical'},
-                    }
+IMTYPES_COLORMAP = {
+    'anat':        {'fsleyes': 'greyscale',      'fslview': 'Greyscale'},
+    'seg':         {'fsleyes': 'red',            'fslview': 'Red'},
+    'softseg':     {'fsleyes': 'red-yellow',     'fslview': 'Red-Yellow'},
+    'softseg-alt': {'fsleyes': 'blue-lightblue', 'fslview': 'Blue-Lightblue'},
+    'labels':      {'fsleyes': 'subcortical',    'fslview': 'MGH-Subcortical'},
+}
 
 
 def display_viewer_syntax(files, verbose, im_types=[], minmax=[], opacities=[], mode=''):
