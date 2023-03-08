@@ -86,5 +86,5 @@ def test_display_viewer_syntax(temporary_viewers):
                                 "test_img_3.nii.gz -l Greyscale &")
         elif viewer.startswith("itk"):
             assert cmd_opts == ("-g test_img.nii.gz "
-                                "-s test_seg.nii.gz "
-                                "-o test_img_2.nii.gz test_img_3.nii.gz")
+                                "-o test_img_2.nii.gz test_img_3.nii.gz "
+                                "-s test_seg.nii.gz")
