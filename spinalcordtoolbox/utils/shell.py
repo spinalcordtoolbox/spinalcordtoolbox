@@ -38,7 +38,11 @@ def display_open(file, message="Done! To view results"):
 
 
 SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
-
+# - The 'fsleyes' colormaps are used for 'fsleyes'.
+# - The 'fslview' colormaps are used for 'fslview' and 'fslview_deprecated'.
+# - For 'itksnap', there are no colormaps. Instead, color behavior is dictated using CLI options '-g', '-o', and '-s'.
+#   How imtypes are mapped to CLI options is a bit convoluted, but tl;dr: only 2 image types (gray, seg) are supported.
+#   Surprisingly, softseg images can only be properly displayed as grayscale images, hence the use of 'gray' for them.
 IMTYPES_COLORMAP = {
     'anat':        {'fsleyes': 'greyscale',      'fslview': 'Greyscale',       'itksnap': 'gray'},
     'seg':         {'fsleyes': 'red',            'fslview': 'Red',             'itksnap': 'seg'},
