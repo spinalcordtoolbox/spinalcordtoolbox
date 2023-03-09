@@ -159,11 +159,8 @@ def _construct_itksnap_syntax(viewer, files, im_types):
     #    or else itksnap will throw this error:
     #        "Error: Option -s must be used together with option -g"
     # NB: `-g` really should be a grayscale image, but if there are no gray images, we fall back to using a seg image.
-    cmd = f"{viewer} -g "
-    if len(gray_images) > 0:
-        cmd += f"{gray_images.pop(0)}"
-    else:
-        cmd += f"{seg_images.pop(0)}"
+    main_image = (gray_images or seg_images).pop(0)
+    cmd = f"{viewer} -g {main_image}"
     # 2. '-o' is used for any remaining grayscale images not used as the main image (`-g`)
     if gray_images:
         cmd += f" -o {' '.join(gray_images)}"
