@@ -151,7 +151,7 @@ def main(argv: Sequence[str]):
     contrast_type = arguments.c
     if method == 'optic' and not contrast_type:
         # Contrast must be
-        error = "ERROR: -c is a mandatory argument when using 'optic' method."
+        error = "ERROR: -c is a mandatory argument when using '-method optic'."
         printv(error, type='error')
         return
 
