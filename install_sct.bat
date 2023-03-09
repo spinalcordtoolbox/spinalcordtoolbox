@@ -75,6 +75,45 @@ if %SCT_INSTALL_TYPE%==in-place (
   set SCT_DIR=%HOMEPATH%\sct_%SCT_VERSION%
 )
 
+rem Allow user to set a custom installation directory
+:while_loop_sct_dir
+  echo:
+  echo ### SCT will be installed here: [%SCT_DIR%]
+  set new_install=%SCT_DIR%
+  set keep_default_path=yes
+  :while_loop_path_agreement
+    set /p "keep_default_path=### Do you agree? [y]es/[n]o: "
+    echo %keep_default_path% | findstr /b [YyNn]>nul 2>&1 || goto :while_loop_path_agreement
+  :done_while_loop_path_agreement
+
+  echo %keep_default_path% | findstr /b [Yy]>nul 2>&1
+  if %errorlevel% EQU 0 (
+    rem user accepts default path, so exit loop
+    goto :done_while_loop_sct_dir
+  )
+
+  rem user enters new path
+  echo:
+  echo ### Choose install directory.
+  set /p "new_install=### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
+
+  rem Validate the user's choice of path
+  if exist %new_install% (
+    rem directory exists, so update SCT_DIR and exit loop
+    echo ### WARNING: '%new_install%' already exists. Files will be overwritten.
+    set SCT_DIR=%new_install%
+    goto :done_while_loop_sct_dir
+  ) else (
+    if [%new_install%]==[]  (
+      rem If no input, asking again, and again, and again
+      goto :while_loop_sct_dir
+    ) else (
+      set SCT_DIR=%new_install%
+      goto :done_while_loop_sct_dir
+    )
+  )
+:done_while_loop_sct_dir
+
 rem Create directory
 if not exist %SCT_DIR% (
   mkdir %SCT_DIR% || goto error
