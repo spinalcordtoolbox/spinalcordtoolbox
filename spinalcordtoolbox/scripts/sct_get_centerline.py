@@ -152,12 +152,10 @@ def main(argv: Sequence[str]):
     if method == 'optic' and not contrast_type:
         # Contrast must be specified if method is optic
         printv("ERROR: -c is a mandatory argument when using '-method optic'.", type='error')
-        return
 
     # Soft centerline option can only be used with fitseg method
     if arguments.centerline_soft == 1 and method != 'fitseg':
         printv("ERROR: -centerline-soft can only be used with '-method fitseg'.", type='error')
-        return
 
     # Gap between slices
     interslice_gap = arguments.gap
