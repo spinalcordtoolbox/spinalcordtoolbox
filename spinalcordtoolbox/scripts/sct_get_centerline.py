@@ -150,9 +150,8 @@ def main(argv: Sequence[str]):
     # Contrast type
     contrast_type = arguments.c
     if method == 'optic' and not contrast_type:
-        # Contrast must be
-        error = "ERROR: -c is a mandatory argument when using '-method optic'."
-        printv(error, type='error')
+        # Contrast must be specified if method is optic
+        printv("ERROR: -c is a mandatory argument when using '-method optic'.", type='error')
         return
 
     # Soft centerline option can only be used with fitseg method
