@@ -157,8 +157,7 @@ def main(argv: Sequence[str]):
 
     # Soft centerline option can only be used with fitseg method
     if arguments.centerline_soft == 1 and method != 'fitseg':
-        error = "ERROR: -centerline-soft can only be used with '-method fitseg'."
-        printv(error, type='error')
+        printv("ERROR: -centerline-soft can only be used with '-method fitseg'.", type='error')
         return
 
     # Gap between slices
