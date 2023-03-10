@@ -101,7 +101,10 @@ MODELS = {
         },
         "description": "Segmentation of multiple sclerosis lesions on cropped MP2RAGE spinal cord data. To crop the "
                        "data you can first segment the spinal cord using the model 'model_seg_ms_sc_mp2rage' and "
-                       "then crop the MP2RAGE image using 'sct_crop_image -i IMAGE -m IMAGE_seg'",
+                       "then crop the MP2RAGE image using 'sct_crop_image -i IMAGE -m IMAGE_seg -dilate 32x0x32'."
+                       "Note: For the MS lesion segmentation model to perform well, it is important to respect "
+                       "the value 32. Also, the syntax assumes the image is sagittal. For another orientation, "
+                       "change the axes in '32x0x32'.",
         "contrasts": ["mp2rage"],
         "default": False,
     },
