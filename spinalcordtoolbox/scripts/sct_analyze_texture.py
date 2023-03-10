@@ -14,7 +14,7 @@ import itertools
 from typing import Sequence
 
 import numpy as np
-from skimage.feature import greycomatrix, greycoprops
+from skimage.feature import graycomatrix, graycoprops
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, concat_data
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
@@ -24,9 +24,9 @@ from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given '
+        description='Extraction of gray level co-occurence matrix (GLCM) texture features from an image within a given '
                     'mask. The textures features are those defined in the sckit-image implementation: '
-                    'http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs '
+                    'http://scikit-image.org/docs/dev/api/skimage.feature.html#graycoprops. This function outputs '
                     'one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called '
                     'fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, '
                     'called fnameInput_feature_distance_mean.nii.gz, is output.'
@@ -259,13 +259,13 @@ class ExtractGLCM:
 
                         dct_glcm = {}
                         for a in self.param_glcm.angle.split(','):  # compute the GLCM for self.param_glcm.distance and for each self.param_glcm.angle
-                            dct_glcm[a] = greycomatrix(glcm_window,
+                            dct_glcm[a] = graycomatrix(glcm_window,
                                                        [self.param_glcm.distance], [np.radians(int(a))],
                                                        symmetric=self.param_glcm.symmetric,
                                                        normed=self.param_glcm.normed)
 
                         for m in self.metric_lst:  # compute the GLCM property (m.split('_')[0]) of the voxel xx,yy,zz
-                            dct_metric[m].data[xx, yy, zz] = greycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
+                            dct_metric[m].data[xx, yy, zz] = graycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
 
                         pbar.set_postfix(pos="{}/{}".format(zz, len(self.dct_im_seg["im"])))
                         pbar.update(1)
@@ -293,8 +293,12 @@ class Param:
 class ParamGLCM(object):
     def __init__(self, symmetric=True, normed=True, feature='contrast,dissimilarity,homogeneity,energy,correlation,ASM', distance=1, angle='0,45,90,135'):
         self.symmetric = True  # If True, the output matrix P[:, :, d, theta] is symmetric.
-        self.normed = True  # If True, normalize each matrix P[:, :, d, theta] by dividing by the total number of accumulated co-occurrences for the given offset. The elements of the resulting matrix sum to 1.
-        self.feature = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM'  # The property formulae are detailed here: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops
+        # If self.normed is True, normalize each matrix P[:, :, d, theta] by dividing by the total number of
+        # accumulated co-occurrences for the given offset. The elements of the resulting matrix sum to 1.
+        self.normed = True
+        # The property formulae for self.feature are detailed here:
+        # http://scikit-image.org/docs/dev/api/skimage.feature.html#graycoprops
+        self.feature = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM'
         self.distance = 1  # Size of the window: distance = 1 --> a reference pixel and its immediate neighbor
         self.angle = '0,45,90,135'  # Rotation angles for co-occurrence matrix
 

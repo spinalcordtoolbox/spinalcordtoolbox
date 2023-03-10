@@ -581,7 +581,6 @@ def moco(param):
 
         # Motion correction: initialization
         index = np.arange(nt)
-        file_data_splitT_num = []
         file_data_splitZ_splitT_moco = []
         failed_transfo = [0 for i in range(nt)]
 

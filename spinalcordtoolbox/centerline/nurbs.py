@@ -369,7 +369,7 @@ class NURBS:
             sum_num_x, sum_num_y, sum_num_z, sum_den = 0, 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_num_z_der, sum_den_der = 0, 0, 0, 0
 
-            for l in range(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls  # noqa: E741
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l
             fin = debut + k - 1
@@ -479,7 +479,7 @@ class NURBS:
             sum_num_x, sum_num_y, sum_den = 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_den_der = 0, 0, 0
 
-            for l in range(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls  # noqa: E741
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l
             fin = debut + k - 1
@@ -861,7 +861,7 @@ class NURBS:
             sum_num_x, sum_num_y, sum_num_z, sum_den = 0, 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_num_z_der, sum_den_der = 0, 0, 0, 0
 
-            for l in range(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls  # noqa: E741
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l  # TODO: can yield UnboundLocalError: local variable 'debut' referenced before assignment
             fin = debut + k - 1

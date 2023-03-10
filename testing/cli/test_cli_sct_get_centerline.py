@@ -1,8 +1,10 @@
 import logging
 import os
 
+import numpy as np
 import pytest
 
+from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.scripts import sct_get_centerline
 
 logger = logging.getLogger(__name__)
@@ -33,3 +35,35 @@ def test_sct_get_centerline_output_file_exists_with_o_arg(tmp_path, ext):
                                   '-o', os.path.join(tmp_path, 't2s_centerline'+ext)])
     for file in [os.path.join('t2s', 't2s_centerline.nii.gz'), os.path.join('t2s', 't2s_centerline.csv')]:
         assert os.path.exists(file)
+
+
+@pytest.mark.sct_testing
+@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
+def test_sct_get_centerline_soft_sums_to_one_and_overlaps_with_bin(tmp_path):
+    """
+    This test checks two necessary conditions of the soft centerline:
+
+    1) The sum of the output intensities of the soft centerline is equal to 1 on all slices
+    2) The output maximum of the soft centerline overlaps with the binary segmentation on all slices.
+    """
+    # Condition 1: All slices of the soft centerline sum to 1
+    sct_get_centerline.main(argv=['-i', 't2/t2_seg-manual.nii.gz', '-method', 'fitseg', '-centerline-soft', '1', '-o',
+                                  os.path.join(tmp_path, 't2_seg_centerline_soft.nii.gz')])
+    im_soft = Image(os.path.join(tmp_path, 't2_seg_centerline_soft.nii.gz'))
+    # Sum soft centerline intensities in the (x,y) plane, across all slices
+    sum_over_slices = np.apply_over_axes(np.sum, im_soft.data, [0, 2]).flatten()
+    # Test if the summation for each slice is equal to 1
+    assert (sum_over_slices == 1).all()
+
+    # Condition 2: The max voxels of the soft centerline overlap with the binary centerline
+    sct_get_centerline.main(argv=['-i', 't2/t2_seg-manual.nii.gz', '-method', 'fitseg', '-centerline-soft', '0', '-o',
+                                  os.path.join(tmp_path, 't2_seg_centerline_bin.nii.gz')])
+    im_bin = Image(os.path.join(tmp_path, 't2_seg_centerline_bin.nii.gz'))
+    # Find the maximum intensity voxel across all slices in soft centerline and binary centerline
+    max_over_slices_soft = np.apply_over_axes(np.max, im_soft.data, [0, 2])
+    max_over_slices_bin = np.apply_over_axes(np.max, im_bin.data, [0, 2])
+    # Find the coordinates of the maximum in each slice in both soft and binary centerline
+    max_coords_over_slices_soft = np.transpose(np.where(im_soft.data == max_over_slices_soft))
+    max_coords_over_slices_bin = np.transpose(np.where(im_bin.data == max_over_slices_bin))
+    # Test if the maximum are the same between soft and binary centerline for each slices
+    assert (max_coords_over_slices_soft == max_coords_over_slices_bin).all()
