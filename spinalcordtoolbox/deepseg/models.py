@@ -91,13 +91,13 @@ MODELS = {
         "contrasts": ["mp2rage"],
         "default": False,
     },
-    "model_seg_lesion_mp2rage": {
+    "model_seg_ms_lesion_mp2rage": {
         "url": {
-            "seed7": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210//model_seg_lesion_mp2rage_seed7.zip"],
-            "seed8": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210//model_seg_lesion_mp2rage_seed8.zip"],
-            "seed9": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210//model_seg_lesion_mp2rage_seed9.zip"],
-            "seed10": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210//model_seg_lesion_mp2rage_seed10.zip"],
-            "seed11": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210//model_seg_lesion_mp2rage_seed11.zip"],
+            "seed1": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed01.zip"],
+            "seed2": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed02.zip"],
+            "seed3": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed03.zip"],
+            "seed4": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed04.zip"],
+            "seed5": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed05.zip"],
         },
         "description": "Segmentation of multiple sclerosis lesions on cropped MP2RAGE spinal cord data. To crop the "
                        "data you can first segment the spinal cord using the model 'model_seg_ms_sc_mp2rage' and "
