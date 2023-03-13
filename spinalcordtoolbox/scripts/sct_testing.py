@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 A wrapper for pytest to provide backwards compatability for `sct_testing`.
 

@@ -4,40 +4,81 @@ rem Usage: install_sct.bat <version>
 rem e.g.
 rem        install_sct.bat 5.5
 
-rem Set git ref. If no git ref is specified when calling `install_sct.bat`, use a default instead.
-if [%1]==[] (
-  set git_ref=master
-) else (
-  set git_ref=%1
+rem This option is needed for expanding !git_ref!, which is set (*and expanded*!) inside the 'if' statement below.
+rem See also https://stackoverflow.com/q/9102422 for a further description of this behavior.
+setLocal EnableDelayedExpansion
+
+rem Try to ensure that Git is available on the PATH prior to invoking `git clone` to avoid 'command not found' errors
+rem   - See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3912
+rem NB: This *should* be handled by the git installer, and we even have reports of people running git --version
+rem successfully and still getting an error. However, there are perhaps situations where someone has installed git but
+rem hasn't refreshed their terminal. Manually modifying the PATH is a bit of a hacky workaround, especially if Git has
+rem been installed somewhere else, but if this mitigates a user post on the forum, this will save us some dev time.
+PATH=%PATH%;C:\Program Files\Git
+git --version >nul 2>&1 || (
+    echo ### git not found. Make sure that git is installed ^(and a fresh Command Prompt window has been opened^) before running the SCT installer.
+    goto error
 )
 
-rem Go to user's home directory
-pushd %HOMEPATH%
-
-rem Check to see if we're going to git clone into an existing installation of SCT
-if exist spinalcordtoolbox\ (
-  echo ### Previous spinalcordtoolbox installation found at %HOMEPATH%\spinalcordtoolbox.
-  rem NB: The rmdir command will output 'spinalcordtoolbox\, Are you sure (Y/N)?', so we don't need our own Y/N prompt
-  rem     We also use "echo set /p=" here in order to make sure that Y/N text is output on the same line.
-  echo|set /p="### Continuing will overwrite the existing installation directory "
-  rmdir /s spinalcordtoolbox\ || goto error
-  if exist spinalcordtoolbox\ (
-    echo ### spinalcordtoolbox\ not removed. Quitting installation...
-    goto exit
+if exist .git\ (
+  rem If install_sct.bat is being run from a git repository, we assume that this is a git clone of SCT
+  rem So, stay in this folder, skip git clone, and assume that we want to install SCT from the current state of the repository
+  pushd .
+  echo ### Current working directory is a git repository. Installing SCT from current state of the repository:
+  echo:
+  git status
+  if exist python\ (
+    echo ### Removing existing 'python' folder inside the SCT directory...
+    rmdir /s python\ || goto error
   )
+  if exist spinalcordtoolbox.egg-info\ (
+    echo ### Removing existing '.egg-info' folder inside the SCT directory...
+    rmdir /s spinalcordtoolbox.egg-info\ || goto error
+  )
+) else (
+  rem Not an in-place install, so go to user's home directory
+  pushd %HOMEPATH%
+
+  rem Check to see if we're going to git clone into an existing installation of SCT
+  if exist spinalcordtoolbox\ (
+    echo ### Previous spinalcordtoolbox installation found at %HOMEPATH%\spinalcordtoolbox.
+    rem NB: The rmdir command will output 'spinalcordtoolbox\, Are you sure (Y/N)?', so we don't need our own Y/N prompt
+    rem     We also use "echo set /p=" here in order to make sure that Y/N text is output on the same line.
+    echo|set /p="### Continuing will overwrite the existing installation directory "
+    rmdir /s spinalcordtoolbox\ || goto error
+    if exist spinalcordtoolbox\ (
+      echo ### spinalcordtoolbox\ not removed. Quitting installation...
+      goto exit
+    )
+  )
+
+  rem Set git ref. If no git ref is specified when calling `install_sct.bat`, use a default instead.
+  if [%1]==[] (
+    set git_ref=master
+  ) else (
+    set git_ref=%1
+  )
+
+  rem Download SCT and check out the branch requested by the user
+  echo:
+  echo ### Downloading SCT source code ^(@ !git_ref!^) to %HOMEPATH%\spinalcordtoolbox...
+  git clone -b !git_ref! --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git || goto error
+  cd spinalcordtoolbox
 )
 
-rem Download SCT and check out the branch requested by the user
+rem Install portable miniconda instance. (Command source: https://github.com/conda/conda/issues/1977)
 echo:
-echo ### Downloading SCT source code (@ %git_ref%) to %HOMEPATH%\spinalcordtoolbox...
-git clone -b %git_ref% --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git || goto error
+echo ### Downloading Miniconda installer...
+curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe
+echo:
+echo ### Installing portable copy of Miniconda...
+start /wait "" Miniconda3-latest-Windows-x86_64.exe /InstallationType=JustMe /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%cd%\python
 
-rem Create and activate virtual environment to install SCT into
+rem Create and activate miniconda environment to install SCT into
 echo:
-echo ### Using Python to create virtual environment...
-cd spinalcordtoolbox
-python -m venv venv_sct || goto error
-call venv_sct\Scripts\activate.bat || goto error
+echo ### Using Conda to create virtual environment...
+python\Scripts\conda create -y -p python\envs\venv_sct python=3.8 || goto error
+CALL python\Scripts\activate.bat python\envs\venv_sct || goto error
 echo Virtual environment created and activated successfully!
 
 rem Install SCT and its requirements
@@ -48,20 +89,20 @@ if exist requirements-freeze.txt (
 )
 echo:
 echo ### Installing SCT and its dependencies from %requirements_file%...
-rem Pip needs to be upgraded because default p3.7 pip won't resolve dependency conflicts correctly
-python -m pip install --upgrade pip || goto error
+rem Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
+python -m pip install -U "pip^!=21.2.*" || goto error
 pip install -r %requirements_file% || goto error
 pip install -e . || goto error
 
 rem Install external dependencies
 echo:
 echo ### Downloading model files and binaries...
-FOR %%D IN (PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models binaries_win) DO sct_download_data -d %%D -k || goto error
+FOR %%D IN (PAM50 optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models binaries_win deepreg_models) DO sct_download_data -d %%D -k || goto error
 
 rem Copying SCT scripts to an isolated folder (so we can add scripts to the PATH without adding the entire venv_sct)
 echo:
 echo ### Copying SCT's CLI scripts to %CD%\bin\
-xcopy %CD%\venv_sct\Scripts\*sct*.* %CD%\bin\ /v /y /q /i || goto error
+xcopy %CD%\python\envs\venv_sct\Scripts\*sct*.* %CD%\bin\ /v /y /q /i || goto error
 
 rem Give further instructions that the user add the Scripts directory to their PATH
 echo:
@@ -88,6 +129,6 @@ echo Failed with error #%cached_errorlevel%.
 if "%cached_errorlevel%"=="" set cached_errorlevel=0
 popd
 where deactivate >nul 2>&1
-if %errorlevel% EQU 0 call deactivate
+if %errorlevel% EQU 0 call conda deactivate
 PAUSE
 exit /b %cached_errorlevel%

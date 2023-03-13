@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # @package nurbs
 # Approximate a 3D curve with a B-Spline curve from either a set of data points or a set of control points
 #
@@ -371,7 +369,7 @@ class NURBS:
             sum_num_x, sum_num_y, sum_num_z, sum_den = 0, 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_num_z_der, sum_den_der = 0, 0, 0, 0
 
-            for l in range(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls  # noqa: E741
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l
             fin = debut + k - 1
@@ -481,7 +479,7 @@ class NURBS:
             sum_num_x, sum_num_y, sum_den = 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_den_der = 0, 0, 0
 
-            for l in range(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls  # noqa: E741
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l
             fin = debut + k - 1
@@ -800,10 +798,10 @@ class NURBS:
     def reconstructGlobalInterpolation(self, P_x, P_y, P_z, p):  # now in 3D
         global Nik_temp
         n = 13
-        l = len(P_x)
-        newPx = P_x[::int(np.round(l / (n - 1)))]
-        newPy = P_y[::int(np.round(l / (n - 1)))]
-        newPz = P_y[::int(np.round(l / (n - 1)))]
+        length = len(P_x)
+        newPx = P_x[::int(np.round(length / (n - 1)))]
+        newPy = P_y[::int(np.round(length / (n - 1)))]
+        newPz = P_y[::int(np.round(length / (n - 1)))]
         newPx.append(P_x[-1])
         newPy.append(P_y[-1])
         newPz.append(P_z[-1])
@@ -863,7 +861,7 @@ class NURBS:
             sum_num_x, sum_num_y, sum_num_z, sum_den = 0, 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_num_z_der, sum_den_der = 0, 0, 0, 0
 
-            for l in range(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls  # noqa: E741
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l  # TODO: can yield UnboundLocalError: local variable 'debut' referenced before assignment
             fin = debut + k - 1
@@ -1085,7 +1083,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
         import matplotlib.pyplot as plt
         if not twodim:
             plt.figure(1)
-            #ax = plt.subplot(211)
+            # ax = plt.subplot(211)
             plt.subplot(211)
             plt.plot(z, x, 'r.')
             plt.plot(z_fit, x_fit)
@@ -1094,7 +1092,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
             plt.xlabel('z')
             plt.ylabel('x')
             plt.legend(["centerline", "NURBS", "control points"])
-            #ay = plt.subplot(212)
+            # ay = plt.subplot(212)
             plt.subplot(212)
             plt.plot(z, y, 'r.')
             plt.plot(z_fit, y_fit)
@@ -1102,7 +1100,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
             # ay.set_aspect('equal')
             plt.xlabel('z')
             plt.ylabel('y')
-            plt.legend(["centerline", "NURBS", "control points"],loc=4)
+            plt.legend(["centerline", "NURBS", "control points"], loc=4)
             # plt.show()
         else:
             plt.figure(1)

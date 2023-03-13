@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Convenience/shell related utilites
 
 import os
@@ -12,7 +10,7 @@ import inspect
 
 from enum import Enum
 
-from .sys import check_exe, printv, removesuffix
+from .sys import check_exe, printv, removesuffix, ANSIColors16
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +40,7 @@ def display_open(file, message="Done! To view results"):
 SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
 
 
-def display_viewer_syntax(files, colormaps=[], minmax=[], opacities=[], mode='', verbose=1):
+def display_viewer_syntax(files, verbose, colormaps=[], minmax=[], opacities=[], mode=''):
     """
     Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
     Parameters
@@ -201,8 +199,10 @@ class SCTArgumentParser(argparse.ArgumentParser):
         """
         # Source: https://stackoverflow.com/a/4042861
         self.print_help(sys.stderr)
-        printv(f'\n{self.prog}: error: {message}\n', verbose=1, type='error', file=sys.stderr)
-        sys.exit(2)
+        message_formatted = (ANSIColors16.Bold + ANSIColors16.LightRed
+                             + f'\n{self.prog}: error: {message}\n\n'
+                             + ANSIColors16.ResetAll)
+        self.exit(2, message_formatted)
 
 
 class ActionCreateFolder(argparse.Action):
@@ -233,7 +233,6 @@ class ActionCreateFolder(argparse.Action):
         setattr(namespace, self.dest, folders)
 
 
-# TODO: Use for argparse wherever type_value=[['delim'], 'type'] was used
 def list_type(delimiter, subtype):
     """
         Factory function that returns a list parsing function, which can be
@@ -246,7 +245,7 @@ def list_type(delimiter, subtype):
     return list_typecast_func
 
 
-class Metavar(Enum):
+class Metavar(str, Enum):
     """
     This class is used to display intuitive input types via the metavar field of argparse
     """
@@ -289,9 +288,8 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         This method is what gets called for the parser's `description` field.
         """
         import textwrap
-        # NB: text.splitlines() is what's used by argparse.RawTextHelpFormatter
-        #     to preserve newline characters (`\n`) in text.
-        paragraphs = text.splitlines()
+        # NB: We use our overridden split_lines method to apply indentation to the help description
+        paragraphs = self._split_lines(text, width)
         # NB: The remaining code is fully custom
         rebroken = [textwrap.wrap(tpar, width) for tpar in paragraphs]
         rebrokenstr = []
@@ -322,13 +320,18 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         wrapped = []
         for i, li in enumerate(lines):
             if len(li) > 0:
-                o = offsets[i]
-                ol = len(o)
+                # Split the line into two parts: the first line, and wrapped lines
                 init_wrap = textwrap.fill(li, width).splitlines()
                 first = init_wrap[0]
                 rest = "\n".join(init_wrap[1:])
+                # Add an offset to the wrapped lines so that they're indented the same as the first line
+                o = offsets[i]
+                if re.match(r"^\s+[-*]\s\w.*$", li):  # List matching: " - Text" or " * Text"
+                    o += "  "  # If the line is a list item, add extra indentation to the wrapped lines (#2889)
+                ol = len(o)
                 rest_wrap = textwrap.fill(rest, width - ol).splitlines()
                 offset_lines = [o + wl for wl in rest_wrap]
+                # Merge the first line and the wrapped lines
                 wrapped = wrapped + [first] + offset_lines
             else:
                 wrapped = wrapped + [li]

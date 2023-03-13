@@ -12,19 +12,10 @@
 #########################################################################################
 
 import sys
-import os
+from typing import Sequence
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
-
-
-# DEFAULT PARAMETERS
-class Param:
-    # The constructor
-    def __init__(self):
-        self.debug = 0
-        self.verbose = 1
-        self.t1 = 0
 
 
 class ErnstAngle:
@@ -54,14 +45,14 @@ class ErnstAngle:
         printv("\nDrawing", type='info')
         plt.plot(tr_range, theta_E, linewidth=1.0)
         plt.xlabel("TR (in $ms$)")
-        plt.ylabel("$\Theta_E$ (in degree)")
+        plt.ylabel("$\\Theta_E$ (in degree)")
         plt.ylim(min(theta_E), max(theta_E) + 2)
         plt.title("Ernst Angle with T1=" + str(self.t1) + "ms")
         plt.grid(True)
 
         if self.tr is not None:
             plt.plot(self.tr, self.getErnstAngle(self.tr), 'ro')
-        if self.fname_output is not None :
+        if self.fname_output is not None:
             printv("\nSaving figure", type='info')
             plt.savefig(self.fname_output, format='png')
         plt.show()
@@ -128,15 +119,14 @@ def get_parser():
 
 
 # main
-#=======================================================================================================================
-def main(argv=None):
+# =======================================================================================================================
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
     # Initialization
-    param = Param()
     input_t1 = arguments.t1
     input_fname_output = None
     input_tr_min = 500
@@ -160,21 +150,17 @@ def main(argv=None):
         elif input_tr < input_tr_min:
             input_tr_min = input_tr - 500
         # save text file
-        try:
-            f = open(fname_output_file, 'w')
-            f.write(str(graph.getErnstAngle(input_tr)))
-            f.close()
-        except:
-            printv('\nERROR: Cannot open file'+fname_output_file, '1', 'error')
+        f = open(fname_output_file, 'w')
+        f.write(str(graph.getErnstAngle(input_tr)))
+        f.close()
 
     if verbose == 2:
         graph.draw(input_tr_min, input_tr_max)
 
 
-#=======================================================================================================================
+# =======================================================================================================================
 # Start program
-#=======================================================================================================================
+# =======================================================================================================================
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

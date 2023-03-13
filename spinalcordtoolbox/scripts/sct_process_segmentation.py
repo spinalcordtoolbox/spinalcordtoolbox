@@ -8,8 +8,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Touati, Gabriel Mangeat
-# Modified: 2014-07-20 by jcohenadad
+# Author: Benjamin De Leener, Julien Touati, Gabriel Mangeat, Sandrine Bédard, Jan Valosek, Julien Cohen-Adad
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
@@ -19,8 +18,10 @@
 import sys
 import os
 import logging
-import pandas as pd
 import argparse
+from typing import Sequence
+
+import pandas as pd
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
@@ -29,12 +30,15 @@ from spinalcordtoolbox.aggregate_slicewise import aggregate_per_slice_or_level, 
 from spinalcordtoolbox.process_seg import compute_shape
 from spinalcordtoolbox.scripts import sct_maths
 from spinalcordtoolbox.csa_pmj import get_slices_for_pmj_distance
+from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
 from spinalcordtoolbox.centerline.core import ParamCenterline
-from spinalcordtoolbox.image import add_suffix, splitext
+from spinalcordtoolbox.image import add_suffix, splitext, Image
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
+from spinalcordtoolbox import __data_dir__
+from spinalcordtoolbox.utils import sct_progress_bar
 
 logger = logging.getLogger(__name__)
 
@@ -45,11 +49,11 @@ class SeparateNormArgs(argparse.Action):
         pred = values[::2]
         val = values[1::2]
         if len(pred) != len(val):
-            raise parser.error("Values for normalization need to be specified for each predictor.")
+            parser.error("Values for normalization need to be specified for each predictor.")
         try:
             data_subject = {p: float(v) for p, v in zip(pred, val)}
         except ValueError as e:
-            raise parser.error(f"Non-numeric value passed to '-normalize': {e}")
+            parser.error(f"Non-numeric value passed to '-normalize': {e}")
         setattr(namespace, self.dest, data_subject)
 
 
@@ -84,7 +88,12 @@ def get_parser():
             "than averaging.)\n"
             "   3. '-vert' + '-vertfile': Select a region based on vertebral labels instead of individual slices.\n"
             "      (For option 3, you can also add '-perlevel' to compute metrics for each vertebral level, rather "
-            "than averaging.)"
+            "than averaging.)\n"
+            "\n"
+            "Reference for '-pmj' and for '-normalize':\n"
+            "Bédard S, Cohen-Adad J. Automatic measure and normalization of spinal cord cross-sectional area using "
+            "the pontomedullary junction. Frontiers in Neuroimaging 2022.\n"
+            "doi.org/10.3389/fnimg.2022.1031253"
         )
     )
 
@@ -107,7 +116,8 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help="Output file name (add extension). Default: csa.csv."
+        default='csa.csv',
+        help="Output file name (add extension)."
     )
     optional.add_argument(
         '-append',
@@ -120,7 +130,8 @@ def get_parser():
     optional.add_argument(
         '-z',
         metavar=Metavar.str,
-        type=str,
+        type=parse_num_list,
+        default='',
         help="Slice range to compute the metrics across. Example: 5:23"
     )
     optional.add_argument(
@@ -136,7 +147,11 @@ def get_parser():
     optional.add_argument(
         '-vert',
         metavar=Metavar.str,
-        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2."
+        type=parse_num_list,
+        default='',
+        help="Vertebral levels to compute the metrics across. Example: 2:9 for C2 to T2. If you also specify a range of "
+             "slices with flag `-z`, the intersection between the specified slices and vertebral levels will be "
+             "considered."
     )
     optional.add_argument(
         '-vertfile',
@@ -154,14 +169,6 @@ def get_parser():
         default=0,
         help="Set to 1 to output one metric per vertebral level instead of a single output metric. This flag needs "
              "to be used with flag -vert."
-    )
-    optional.add_argument(
-        '-r',
-        metavar=Metavar.int,
-        type=int,
-        choices=[0, 1],
-        default=1,
-        help="Removes temporary folder used for the algorithm at the end of execution."
     )
     optional.add_argument(
         '-angle-corr',
@@ -190,6 +197,7 @@ def get_parser():
     optional.add_argument(
         '-pmj',
         metavar=Metavar.file,
+        type=get_absolute_path,
         help="Ponto-Medullary Junction (PMJ) label file. "
              "Example: pmj.nii.gz"
     )
@@ -204,7 +212,7 @@ def get_parser():
         '-pmj-extent',
         type=float,
         metavar=Metavar.float,
-        default=20,
+        default=20.0,
         help="Extent (in mm) for the mask used to compute morphometric measures. Each slice covered by the mask is "
              "included in the calculation. (To be used with flag '-pmj' and '-pmj-distance'.)"
     )
@@ -229,8 +237,17 @@ def get_parser():
              "the literature on this topic before applying this feature to your data.\n"
     )
     optional.add_argument(
+        '-normalize-PAM50',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Set to 1 to bring the metrics in the PAM50 anatomical dimensions perslice. -vertfile and -perslice need to be specified."
+    )
+    optional.add_argument(
         '-qc',
         metavar=Metavar.folder,
+        type=os.path.abspath,
         action=ActionCreateFolder,
         help="The path where the quality control generated content will be saved."
              " The QC report is only available for PMJ-based CSA (with flag '-pmj')."
@@ -251,6 +268,14 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
+    optional.add_argument(
+        '-r',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,
+        help="Whether to remove temporary files. 0 = no, 1 = yes"
     )
     optional.add_argument(
         '-v',
@@ -345,109 +370,109 @@ def _make_figure(metric, fit_results):
     return fname_img
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
     # Initialization
-    slices = ''
     group_funcs = (('MEAN', func_wa), ('STD', func_std))  # functions to perform when aggregating metrics along S-I
 
     fname_segmentation = get_absolute_path(arguments.i)
 
-    if arguments.o is not None:
-        file_out = os.path.abspath(arguments.o)
-    else:
-        file_out = ''
-    if arguments.append is not None:
-        append = arguments.append
-    else:
-        append = 0
-    if arguments.vert is not None:
-        vert_levels = arguments.vert
-        fname_vert_levels = arguments.vertfile
-    else:
-        vert_levels = ''
-        fname_vert_levels = ''
-    remove_temp_files = arguments.r
-    if arguments.perlevel is not None:
-        perlevel = arguments.perlevel
-    else:
-        perlevel = None
-    if arguments.z is not None:
-        slices = arguments.z
-    if arguments.perslice is not None:
-        perslice = arguments.perslice
-    else:
-        perslice = None
-    angle_correction = arguments.angle_corr
+    file_out = os.path.abspath(arguments.o)
+    append = bool(arguments.append)
+    levels = arguments.vert
+    fname_vert_level = arguments.vertfile
+    normalize_pam50 = arguments.normalize_PAM50
+    if not os.path.isfile(fname_vert_level):
+        logger.warning(f"Vertebral level file {fname_vert_level} does not exist. Vert level information will "
+                       f"not be displayed. To use vertebral level information, you may need to run "
+                       f"`sct_warp_template` to generate the appropriate level file in your working directory.")
+        if normalize_pam50:
+            raise FileNotFoundError("The vertebral level file must exist to use -normalize-PAM50.")
+        fname_vert_level = None  # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
+        if levels:
+            raise FileNotFoundError("The vertebral level file must exist to use `-vert` to group by vertebral level.")
+    perlevel = bool(arguments.perlevel)
+    slices = arguments.z
+    perslice = bool(arguments.perslice)
+    angle_correction = bool(arguments.angle_corr)
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
         minmax=True)
-    if arguments.pmj is not None:
-        fname_pmj = get_absolute_path(arguments.pmj)
-    else:
-        fname_pmj = None
-    if arguments.pmj_distance is not None:
-        distance_pmj = arguments.pmj_distance
-    else:
-        distance_pmj = None
-    extent_mask = arguments.pmj_extent
+    fname_pmj = arguments.pmj
+    distance_pmj = arguments.pmj_distance
+    extent_pmj = arguments.pmj_extent
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
 
-    mutually_inclusive_args = (fname_pmj, distance_pmj)
-    is_pmj_none, is_distance_none = [arg is None for arg in mutually_inclusive_args]
-    if not (is_pmj_none == is_distance_none):
-        raise parser.error("Both '-pmj' and '-pmj-distance' are required in order to process segmentation from PMJ.")
+    if normalize_pam50 and not perslice:
+        parser.error("Option '-normalize-PAM50' requires option '-perslice 1'.")
+    if distance_pmj is not None and fname_pmj is None:
+        parser.error("Option '-pmj-distance' requires option '-pmj'.")
+    if fname_pmj is not None and distance_pmj is None and not perslice:
+        parser.error("Option '-pmj' requires option '-pmj-distance' or '-perslice 1'.")
 
     # update fields
     metrics_agg = {}
-    if not file_out:
-        file_out = 'csa.csv'
 
     metrics, fit_results = compute_shape(fname_segmentation,
                                          angle_correction=angle_correction,
                                          param_centerline=param_centerline,
-                                         verbose=verbose)
+                                         verbose=verbose,
+                                         remove_temp_files=arguments.r)
+    if normalize_pam50:
+        fname_vert_level_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_levels.nii.gz')
+        metrics_PAM50_space = interpolate_metrics(metrics, fname_vert_level_PAM50, fname_vert_level)
+        if not levels:  # If no levels -vert were specified by user
+            if verbose == 2:
+                # Get all available vertebral levels from PAM50 template to only include slices from available levels in .csv file
+                levels = Image(fname_vert_level_PAM50).getNonZeroValues()
+            else:
+                # Get all available vertebral levels to only include slices from available levels in .csv file
+                levels = Image(fname_vert_level).getNonZeroValues()
+        metrics = metrics_PAM50_space  # Set metrics to the metrics in PAM50 space to use instead
+        fname_vert_level = fname_vert_level_PAM50  # Set vertebral levels to PAM50
     if fname_pmj is not None:
-        im_ctl, mask, slices, centerline = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
-                                                                       distance_pmj, extent_mask,
-                                                                       param_centerline=param_centerline,
-                                                                       verbose=verbose)
+        im_ctl, mask, slices, centerline, length_from_pmj = get_slices_for_pmj_distance(fname_segmentation, fname_pmj,
+                                                                                        distance_pmj, extent_pmj,
+                                                                                        param_centerline=param_centerline, perslice=perslice,
+                                                                                        verbose=verbose)
 
         # Save array of the centerline in a .csv file if verbose == 2
         if verbose == 2:
             fname_ctl_csv, _ = splitext(add_suffix(arguments.i, '_centerline_extrapolated'))
             np.savetxt(fname_ctl_csv + '.csv', centerline, delimiter=",")
-
-    for key in metrics:
+    else:
+        length_from_pmj = None
+    # Aggregate metrics
+    for key in sct_progress_bar(metrics, unit='iter', unit_scale=False, desc="Aggregating metrics", ascii=True, ncols=80):
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
-            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                            levels=parse_num_list(vert_levels),
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
+                                                            levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, vert_level=fname_vert_levels,
-                                                            group_funcs=(('SUM', func_sum),))
+                                                            perlevel=perlevel, fname_vert_level=fname_vert_level,
+                                                            group_funcs=(('SUM', func_sum),), length_pmj=length_from_pmj)
         else:
             # For other metrics, we compute the average and standard deviation across slices
-            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=parse_num_list(slices),
-                                                            levels=parse_num_list(vert_levels),
+            metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
+                                                            levels=levels,
                                                             distance_pmj=distance_pmj, perslice=perslice,
-                                                            perlevel=perlevel, vert_level=fname_vert_levels,
-                                                            group_funcs=group_funcs)
+                                                            perlevel=perlevel, fname_vert_level=fname_vert_level,
+                                                            group_funcs=group_funcs, length_pmj=length_from_pmj)
     metrics_agg_merged = merge_dict(metrics_agg)
     # Normalize CSA values (MEAN(area))
     if arguments.normalize is not None:
         data_subject = pd.DataFrame([arguments.normalize])
-        path_model = os.path.join(__sct_dir__, 'spinalcordtoolbox', 'data', 'csa_normalization_models',
+        path_model = os.path.join(__sct_dir__, 'data', 'csa_normalization_models',
                                   '_'.join(sorted(data_subject.columns)) + '.csv')
         if not os.path.isfile(path_model):
-            raise parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
+            parser.error('Invalid choice of predictors in -normalize. Please specify sex and brain-volume or sex, brain-volume and thalamus-volume.')
         # Get normalization model
         # Models are generated with https://github.com/sct-pipeline/ukbiobank-spinalcord-csa/blob/master/pipeline_ukbiobank/cli/compute_stats.py
         # TODO update link with release tag.
@@ -467,7 +492,7 @@ def main(argv=None):
                 fname_ctl_smooth = add_suffix(fname_ctl, '_smooth')
                 if verbose != 2:
                     from spinalcordtoolbox.utils.fs import tmp_create
-                    path_tmp = tmp_create()
+                    path_tmp = tmp_create(basename="pmj-qc")
                     fname_mask_out = os.path.join(path_tmp, fname_mask_out)
                     fname_ctl = os.path.join(path_tmp, fname_ctl)
                     fname_ctl_smooth = os.path.join(path_tmp, fname_ctl_smooth)
@@ -476,7 +501,7 @@ def main(argv=None):
                 # Save extrapolated centerline
                 im_ctl.save(fname_ctl)
                 # Generated centerline smoothed in RL direction for visualization (and QC report)
-                sct_maths.main(['-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth])
+                sct_maths.main(['-i', fname_ctl, '-smooth', '10,1,1', '-o', fname_ctl_smooth, '-v', '0'])
 
                 generate_qc(fname_in1=get_absolute_path(arguments.qc_image),
                             # NB: For this QC figure, the centerline has to be first in the list in order for the centerline
@@ -484,13 +509,13 @@ def main(argv=None):
                             # is called during QC, and it uses `fname_seg[-1]` to center the slices. `fname_mask_out`
                             # doesn't work for this, so we have to repeat `fname_ctl_smooth` at the end of the list.
                             fname_seg=[fname_ctl_smooth, fname_pmj, fname_mask_out, fname_ctl_smooth],
-                            args=sys.argv[1:],
-                            path_qc=os.path.abspath(path_qc),
+                            args=argv,
+                            path_qc=path_qc,
                             dataset=qc_dataset,
                             subject=qc_subject,
                             process='sct_process_segmentation')
             else:
-                raise parser.error('-qc-image is required to display QC report.')
+                parser.error('-qc-image is required to display QC report.')
         else:
             logger.warning('QC report only available for PMJ-based CSA. QC report not generated.')
 

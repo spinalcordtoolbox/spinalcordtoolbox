@@ -16,6 +16,7 @@ import sys
 import math
 import time
 import os
+from typing import Sequence
 
 import numpy as np
 
@@ -109,7 +110,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -148,7 +149,7 @@ def main(argv=None):
     path_data, file_data, ext_data = extract_fname(fname_data)
 
     # create temporary folder
-    path_tmp = tmp_create(basename="dmri_separate")
+    path_tmp = tmp_create(basename="dmri-separate-b0-and-dwi")
 
     # copy files into tmp folder and convert to nifti
     printv('\nCopy files into temporary folder...', verbose)
@@ -317,4 +318,3 @@ def identify_b0(fname_bvecs, fname_bvals, bval_min, verbose):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

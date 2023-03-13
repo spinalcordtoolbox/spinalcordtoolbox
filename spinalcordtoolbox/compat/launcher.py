@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Compatibility layer to launch old scripts
 
 import sys
@@ -6,7 +5,7 @@ import os
 import subprocess
 import multiprocessing
 
-import spinalcordtoolbox as sct
+from spinalcordtoolbox import __file__ as package_init_file
 
 
 def main():
@@ -21,8 +20,13 @@ def main():
     if "ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS" not in os.environ:
         env["ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS"] = str(multiprocessing.cpu_count())
 
+    # Needed to allow `sct_check_dependencies` to import voxelmorph/neurite without
+    # failing due to a missing `tensorflow` dependency (since the backend defaults to TF)
+    env['VXM_BACKEND'] = 'pytorch'
+    env['NEURITE_BACKEND'] = 'pytorch'
+
     command = os.path.basename(sys.argv[0])
-    pkg_dir = os.path.dirname(sct.__file__)
+    pkg_dir = os.path.dirname(package_init_file)
 
     script = os.path.join(pkg_dir, "scripts", "{}.py".format(command))
     assert os.path.exists(script)

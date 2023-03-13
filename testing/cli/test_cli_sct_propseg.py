@@ -43,8 +43,26 @@ def test_isct_propseg_compatibility():
 
 @pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
 def test_sct_propseg_o_flag(tmp_path):
-    argv = ['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path), '-o', 'test_seg.nii.gz']
-    sct_propseg.main(argv)
-    output_files = sorted([f for f in os.listdir(tmp_path)
-                          if os.path.isfile(os.path.join(tmp_path, f))])
-    assert output_files == ['t2_centerline.nii.gz', 'test_seg.nii.gz']
+    sct_propseg.main(['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path),
+                      '-o', 'test_seg.nii.gz'])
+    output_files = {f for f in os.listdir(tmp_path)}
+    assert output_files == {'t2_centerline.nii.gz', 'test_seg.nii.gz'}
+
+
+@pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
+def test_sct_propseg_optional_output_files(tmp_path):
+    sct_propseg.main(['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path),
+                      '-mesh', '-CSF', '-centerline-coord', '-cross', '-init-tube', '-low-resolution-mesh'])
+    output_files = {f for f in os.listdir(tmp_path)}
+    assert output_files == {
+        't2_seg.nii.gz', 't2_centerline.nii.gz',     # default output files
+        't2_mesh.vtk',                               # '-mesh'
+        't2_CSF_mesh.vtk', 't2_CSF_seg.nii.gz',      # '-CSF'
+        't2_centerline.txt',                         # '-centerline-coord'
+        't2_cross_sectional_areas.txt',              # '-cross'
+        't2_cross_sectional_areas_CSF.txt',
+        'InitialTube1.vtk', 'InitialTube2.vtk',      # '-init-tube'
+        'InitialTubeCSF1.vtk', 'InitialTubeCSF2.vtk',
+        'segmentation_CSF_mesh_low_resolution.vtk',  # '-low-resolution-mesh'
+        'segmentation_mesh_low_resolution.vtk',
+    }

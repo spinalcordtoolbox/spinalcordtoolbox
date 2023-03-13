@@ -15,7 +15,6 @@ VERBOSE = int(os.getenv('SCT_VERBOSE', 0))
 DUMP_IMAGES = bool(os.getenv('SCT_DEBUG_IMAGES', False))
 
 
-# noinspection 801,PyShadowingNames
 def test_dilate():
 
     # Create dummy image with single pixel in the middle
@@ -52,7 +51,6 @@ def test_dilate():
     assert np.array_equal(im_dil.data[4, 2:7, 4], np.array([0, 0, 1, 0, 0]))
 
 
-# noinspection 801,PyShadowingNames
 def test_erode():
     # Create dummy image with single pixel
     im = dummy_blob(size_arr=(9, 9, 9), coordvox=(4, 4, 4))

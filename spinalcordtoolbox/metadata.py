@@ -1,8 +1,8 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Deal with SCT dataset metadata
 
-import io, os, re
+import io
+import os
+import re
 from operator import itemgetter
 
 from spinalcordtoolbox.utils import parse_num_list
@@ -113,7 +113,6 @@ class InfoLabel(object):
             else:
                 raise ValueError("Unexpected at line {}, unparsed data: {}".format(idx_line+1, line))
 
-
     def save(self, file, header=None):
         """
         Save contents to file
@@ -144,7 +143,7 @@ class InfoLabel(object):
             w("# Keyword=CombinedLabels (Please DO NOT change this line)")
             w("# ID, name, IDgroup")
             for _id, _name, _group in self._combined_labels:
-                group_str = ",".join([str(x) for x in _group]) # could be shortened
+                group_str = ",".join([str(x) for x in _group])  # could be shortened
                 w("{}, {}, {}".format(_id, _name, group_str))
 
         if self._clusters_apriori:
@@ -153,7 +152,7 @@ class InfoLabel(object):
             w("# Keyword=MAPLabels (Please DO NOT change this line)")
             w("# Name, IDgroup")
             for _name, _group in self._clusters_apriori:
-                group_str = ",".join([str(x) for x in _group]) # could be shortened
+                group_str = ",".join([str(x) for x in _group])  # could be shortened
                 w("{}, {}".format(_name, group_str))
 
 
@@ -172,7 +171,7 @@ def read_label_file(path_info_label, file_info_label):
         combined_labels_ids, combined_labels_names, combined_labels_id_groups = [], [], []
 
     if il._clusters_apriori:
-        clusters_apriori = [ x[1] for x in il._clusters_apriori ]
+        clusters_apriori = [x[1] for x in il._clusters_apriori]
     else:
         clusters_apriori = []
 
@@ -232,4 +231,3 @@ def get_indiv_label_info(directory):
             'name': tuple(name_lst),
             'file': tuple(filename_lst)
             }
-

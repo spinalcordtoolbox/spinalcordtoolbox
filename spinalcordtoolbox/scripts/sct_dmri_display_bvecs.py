@@ -11,6 +11,7 @@
 #########################################################################################
 
 import sys
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
@@ -65,7 +66,7 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
     ax = fig_handle.add_subplot(subplot, aspect='equal')
     for i in range(0, len(x)):
         # if b=0, do not plot
-        if not(abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH):
+        if not (abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH):
             ax.scatter(x[i], y[i], color=colors[bvals[i]], alpha=0.7)
     # plt.axis('equal')
     plt.xlabel(xlabel)
@@ -109,7 +110,7 @@ def create_custom_legend(fig, shell_colors, bvals):
 # MAIN
 # ==========================================================================================
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -176,7 +177,7 @@ def main(argv=None):
     for i in range(0, n_dir):
         # x, y, z = bvecs[0], bvecs[1], bvecs[2]
         # if b=0, do not plot
-        if not(abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH):
+        if not (abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH):
             ax.scatter(x[i], y[i], z[i], color=shell_colors[bvals[i]], alpha=0.7)
     ax.set_xlim3d(-max(bvals), max(bvals))
     ax.set_ylim3d(-max(bvals), max(bvals))

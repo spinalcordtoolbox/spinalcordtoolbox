@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # Tools for motion correction (moco)
 # Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
 
@@ -25,7 +23,7 @@ import numpy as np
 import scipy.interpolate
 
 from spinalcordtoolbox.image import Image, add_suffix, generate_output_file, convert, apply_mask_if_soft
-from spinalcordtoolbox.utils.shell import display_viewer_syntax, get_interpolation
+from spinalcordtoolbox.utils.shell import get_interpolation
 from spinalcordtoolbox.utils.sys import sct_progress_bar, run_proc, printv
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree, copy
 
@@ -150,7 +148,7 @@ def moco_wrapper(param):
     printv('  Input file ............ ' + param.fname_data, param.verbose)
     printv('  Group size ............ {}'.format(param.group_size), param.verbose)
 
-    path_tmp = tmp_create(basename="moco")
+    path_tmp = tmp_create(basename="moco-wrapper")
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
@@ -405,7 +403,7 @@ def moco_wrapper(param):
                 im_warp.data = np.expand_dims(np.expand_dims(im_warp.data[0, 0, :, :, :], axis=0), axis=0)
 
                 # These three lines allow to generate one file instead of two, containing X, Y and Z moco parameters
-                #fname_warp_crop = fname_warp + '_crop_' + ext_mat
+                # fname_warp_crop = fname_warp + '_crop_' + ext_mat
                 # files_warp.append(fname_warp_crop)
                 # im_warp.save(fname_warp_crop)
 
@@ -583,7 +581,6 @@ def moco(param):
 
         # Motion correction: initialization
         index = np.arange(nt)
-        file_data_splitT_num = []
         file_data_splitZ_splitT_moco = []
         failed_transfo = [0 for i in range(nt)]
 
@@ -630,7 +627,8 @@ def moco(param):
                                              '-d', file_target,
                                              '-w', file_mat[iz][fT[it]] + 'Warp.nii.gz',
                                              '-o', file_data_splitZ_splitT_moco[fT[it]],
-                                             '-x', param.interp])
+                                             '-x', param.interp,
+                                             '-v', '0'])
             else:
                 # exit program if no transformation exists.
                 printv('\nERROR in ' + os.path.basename(__file__) + ': No good transformation exist. Exit program.\n', verbose, 'error')
@@ -639,7 +637,7 @@ def moco(param):
         # Merge data along T
         file_data_splitZ_moco.append(add_suffix(file, suffix))
         if todo != 'estimate':
-            im_data_splitZ_splitT_moco = [Image(fname) for fname in file_data_splitZ_splitT_moco]
+            im_data_splitZ_splitT_moco = [Image(fname, mmap=False) for fname in file_data_splitZ_splitT_moco]
             im_out = concat_data(im_data_splitZ_splitT_moco, 3)
             im_out.absolutepath = file_data_splitZ_moco[iz]
             im_out.save(verbose=0)
@@ -765,7 +763,7 @@ def register(param, file_src, file_dest, file_mat, file_out, im_mask=None):
                'mutual information. Either the mask you provided is '
                'too small, or the subject moved a lot. If you see too '
                'many messages like this try with a bigger mask. '
-               'Using previous transformation for this volume (if it'
+               'Using previous transformation for this volume (if it '
                'exists).', param.verbose, 'warning')
         failed_transfo = 1
 

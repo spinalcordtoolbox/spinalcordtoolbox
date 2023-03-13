@@ -10,8 +10,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-import os
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
 
@@ -84,7 +84,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -186,4 +186,3 @@ def compute_dti(fname_in, fname_bvals, fname_bvecs, prefix, method, evecs, file_
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

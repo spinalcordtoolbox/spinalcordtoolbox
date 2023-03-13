@@ -12,14 +12,17 @@
 
 import sys
 import os
+from typing import Sequence
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, add_suffix, empty_like, change_orientation
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
-from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, copy, extract_fname
 from spinalcordtoolbox.math import binarize
+
+from spinalcordtoolbox.scripts import sct_image, sct_resample
 
 # TODO: display results ==> not only max : with a violin plot of h1 and h2 distribution ? see dev/straightening --> seaborn.violinplot
 # TODO: add the option Hyberbolic Hausdorff's distance : see  choi and seidel paper
@@ -220,7 +223,6 @@ class ComputeDistances:
                     self.im2.change_orientation('IRP')
                     self.im2.save(path=add_suffix(self.im2.absolutepath, "_irp"), mutable=True)
 
-
         if self.param.thinning:
             self.thinning1 = Thinning(self.im1, self.param.verbose)
             self.thinning1.thinned_image.save()
@@ -260,12 +262,12 @@ class ComputeDistances:
                 med1 = np.median(self.dist1_distribution[i])
                 med2 = np.median(self.dist2_distribution[i])
                 if self.im2 is None:
-                    self.res += 'Slice ' + str(i) + ' - slice ' + str(i + 1) + ': ' + str(d.H * self.dim_pix) + '  -  ' + str(med1 * self.dim_pix) + '  -  ' + str(med2 * self.dim_pix) + ' \n'
+                    self.res += f'Slice {i} - slice {i+1}: {d.H * self.dim_pix}  -  {med1 * self.dim_pix}  -  {med2 * self.dim_pix}\n'
                 else:
-                    self.res += 'Slice ' + str(i) + ': ' + str(d.H * self.dim_pix) + '  -  ' + str(med1 * self.dim_pix) + '  -  ' + str(med2 * self.dim_pix) + ' \n'
+                    self.res += f'Slice {i}: {d.H * self.dim_pix}  -  {med1 * self.dim_pix}  -  {med2 * self.dim_pix}\n'
 
         printv('-----------------------------------------------------------------------------\n' +
-                   self.res, self.param.verbose, 'normal')
+               self.res, self.param.verbose, 'normal')
 
         if self.param.verbose == 2:
             self.show_results()
@@ -396,12 +398,13 @@ def resample_image(fname, suffix='_resampled.nii.gz', binary=False, npx=0.3, npy
         if nz == 1:
             # when data is 2d: we convert it to a 3d image in order to avoid conversion problem with 2d data
             # TODO: check if this above problem is still present (now that we are using nibabel instead of nipy)
-            run_proc(['sct_image', '-i', ','.join([fname, fname]), '-concat', 'z', '-o', fname])
+            sct_image.main(['-i', ','.join([fname, fname]), '-concat', 'z', '-o', fname, '-v', '0'])
 
-        run_proc(['sct_resample', '-i', fname, '-mm', str(npx) + 'x' + str(npy) + 'x' + str(pz), '-o', name_resample, '-x', interpolation])
+        sct_resample.main(['-i', fname, '-mm', str(npx) + 'x' + str(npy) + 'x' + str(pz), '-o', name_resample,
+                           '-x', interpolation, '-v', '0'])
 
         if nz == 1:  # when input data was 2d: re-convert data 3d-->2d
-            run_proc(['sct_image', '-i', name_resample, '-split', 'z'])
+            sct_image.main(['-i', name_resample, '-split', 'z', '-v', '0'])
             im_split = Image(name_resample.split('.nii.gz')[0] + '_Z0000.nii.gz')
             im_split.save(name_resample)
 
@@ -497,7 +500,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -522,7 +525,7 @@ def main(argv=None):
             output_fname = arguments.o
         param.verbose = verbose
 
-        tmp_dir = tmp_create()
+        tmp_dir = tmp_create(basename="compute-hausdorff-distance")
         im1_name = "im1.nii.gz"
         copy(input_fname, os.path.join(tmp_dir, im1_name))
         if input_second_fname != '':

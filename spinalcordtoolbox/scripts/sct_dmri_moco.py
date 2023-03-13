@@ -23,11 +23,16 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: if -f, we only need two plots. Plot 1: X params with fitted spline, plot 2: Y param with fitted splines. Each plot will have all Z slices (with legend Z=0, Z=1, ...) and labels: y; translation (mm), xlabel: volume #. Plus add grid.
+# TODO: if -f, we only need two plots.
+#       Plot 1: X params with fitted spline,
+#       plot 2: Y param with fitted splines.
+#       Each plot will have all Z slices (with legend Z=0, Z=1, ...)
+#       and labels: y; translation (mm), xlabel: volume #. Plus add grid.
 
 
 import sys
 import os
+from typing import Sequence
 
 from spinalcordtoolbox.moco import ParamMoco, moco_wrapper
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
@@ -173,7 +178,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -204,7 +209,7 @@ def main(argv=None):
     mutually_inclusive_args = (path_qc, qc_seg)
     is_qc_none, is_seg_none = [arg is None for arg in mutually_inclusive_args]
     if not (is_qc_none == is_seg_none):
-        raise parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
+        parser.error("Both '-qc' and '-qc-seg' are required in order to generate a QC report.")
 
     # run moco
     fname_output_image = moco_wrapper(param)
@@ -214,13 +219,12 @@ def main(argv=None):
     # QC report
     if path_qc is not None:
         generate_qc(fname_in1=fname_output_image, fname_in2=param.fname_data, fname_seg=qc_seg,
-                    args=sys.argv[1:], path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset,
+                    args=argv, path_qc=os.path.abspath(path_qc), fps=qc_fps, dataset=qc_dataset,
                     subject=qc_subject, process='sct_dmri_moco')
 
-    display_viewer_syntax([fname_output_image, param.fname_data], mode='ortho,ortho')
+    display_viewer_syntax([fname_output_image, param.fname_data], mode='ortho,ortho', verbose=verbose)
 
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

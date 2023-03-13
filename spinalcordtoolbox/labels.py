@@ -17,12 +17,14 @@ import numpy as np
 from scipy import ndimage
 
 from spinalcordtoolbox.image import Image, zeros_like
-from spinalcordtoolbox.types import Coordinate, CoordinateValue
+from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 logger = logging.getLogger(__name__)
 
-# TODO: for vert-disc: make it faster! currently the module display-voxel is very long (esp. when ran on PAM50). We can find an alternative approach by sweeping through centerline voxels.
+# TODO: for vert-disc: make it faster!
+#       currently the module display-voxel is very long (esp. when ran on PAM50).
+#       We can find an alternative approach by sweeping through centerline voxels.
 # TODO: label_disc: for top vertebrae, make label at the center of the cord (currently it's at the tip)
 
 
@@ -432,13 +434,13 @@ def remove_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     """
     out = img.copy()
 
-    for l in labels:
+    for label in labels:
         for x, y, z, v in img.getNonZeroCoordinates():
-            if l == v:
+            if label == v:
                 out.data[int(x), int(y), int(z)] = 0.0
                 break
         else:
-            logger.warning(f"Label {l} not found in input image!")
+            logger.warning(f"Label {label} not found in input image!")
 
     return out
 
@@ -453,12 +455,12 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     """
     out = zeros_like(img)
 
-    for l in labels:
+    for label in labels:
         for x, y, z, v in img.getNonZeroCoordinates():
-            if l == v:
+            if label == v:
                 out.data[int(x), int(y), int(z)] = v
                 break
         else:
-            logger.warning(f"Label {l} not found in input image!")
+            logger.warning(f"Label {label} not found in input image!")
 
     return out

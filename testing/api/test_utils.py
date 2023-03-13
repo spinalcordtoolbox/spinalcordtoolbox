@@ -66,7 +66,8 @@ def test_display_viewer_syntax(temporary_viewers):
         colormaps=['gray', 'gray', 'red', 'gray'],
         minmax=['', '0,1', '0.25,0.75', ''],
         opacities=['', '0.7', '1.0', ''],
-        mode="test"
+        mode="test",
+        verbose=1,
     )
     for viewer in temporary_viewers:
         assert viewer in syntax_strings.keys()

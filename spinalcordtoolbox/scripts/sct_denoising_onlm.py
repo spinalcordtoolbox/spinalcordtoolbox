@@ -2,12 +2,14 @@
 
 import sys
 from time import time
+from typing import Sequence
 
 import numpy as np
 import nibabel as nib
 from dipy.denoise.nlmeans import nlmeans
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel
+from spinalcordtoolbox.utils import (SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel,
+                                     display_viewer_syntax)
 
 
 # DEFAULT PARAMETERS
@@ -25,7 +27,7 @@ class Param:
 def get_parser():
     parser = SCTArgumentParser(
         description='Utility function to denoise images. Return the denoised image and also the difference '
-                    'between the input and the output. The denoising algorithm is based on the Non-local means'
+                    'between the input and the output. The denoising algorithm is based on the Non-local means '
                     'methods (Pierrick Coupe, Jose Manjon, Montserrat Robles, Louis Collins. “Adaptive Multiresolution '
                     'Non-Local Means Filter for 3D MR Image Denoising” IET Image Processing, Institution of '
                     'Engineering and Technology, 2011). The implementation is based on Dipy (https://dipy.org/).'
@@ -91,7 +93,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -116,7 +118,6 @@ def main(argv=None):
     hdr_0 = img.get_header()
 
     data = img.get_data()
-    aff = img.get_affine()
 
     if min(data.shape) <= 5:
         printv('One of the image dimensions is <= 5 : reducing the size of the block radius.')
@@ -185,8 +186,7 @@ def main(argv=None):
     nib.save(img_denoise, output_file_name)
     nib.save(img_diff, file + '_difference' + ext)
 
-    printv('\nDone! To view results, type:', param.verbose)
-    printv('fsleyes ' + file_to_denoise + ' ' + output_file_name + ' & \n', param.verbose, 'info')
+    display_viewer_syntax(files=[file_to_denoise, output_file_name], verbose=verbose)
 
 
 # =======================================================================================================================
@@ -195,4 +195,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

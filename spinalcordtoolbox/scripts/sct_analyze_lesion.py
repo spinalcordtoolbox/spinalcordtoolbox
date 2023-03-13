@@ -11,6 +11,7 @@
 import os
 import sys
 import pickle
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
@@ -18,7 +19,7 @@ from skimage.measure import label
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
@@ -66,7 +67,7 @@ def get_parser():
     optional.add_argument(
         "-f",
         help="Path to folder containing the atlas/template registered to the anatomical image. If provided, the "
-             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each"
+             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each "
              "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
              "GM, WM) occupied by lesion.",
         metavar=Metavar.str,
@@ -116,7 +117,7 @@ class AnalyzeLeion:
                 printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
         # create tmp directory
-        self.tmp_dir = tmp_create()  # path to tmp directory
+        self.tmp_dir = tmp_create(basename="analyze-lesion")  # path to tmp directory
 
         # lesion file where each lesion has a different value
         self.fname_label = extract_fname(self.fname_mask)[1] + '_label' + extract_fname(self.fname_mask)[2]
@@ -148,8 +149,8 @@ class AnalyzeLeion:
         self.distrib_matrix_dct = {}
 
         # output names
-        self.pickle_name = extract_fname(self.fname_mask)[1] + '_analyzis.pkl'
-        self.excel_name = extract_fname(self.fname_mask)[1] + '_analyzis.xls'
+        self.pickle_name = extract_fname(self.fname_mask)[1] + '_analysis.pkl'
+        self.excel_name = extract_fname(self.fname_mask)[1] + '_analysis.xls'
 
     def analyze(self):
         self.ifolder2tmp()
@@ -237,7 +238,11 @@ class AnalyzeLeion:
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
             self.measure_pd.loc[label_idx, 'mean_' + extract_fname(self.fname_ref)[1]] = mean_cur
             self.measure_pd.loc[label_idx, 'std_' + extract_fname(self.fname_ref)[1]] = std_cur
-            printv('Mean+/-std of lesion #' + str(lesion_label) + ' in ' + extract_fname(self.fname_ref)[1] + ' file: ' + str(np.round(mean_cur, 2)) + '+/-' + str(np.round(std_cur, 2)), self.verbose, type='info')
+            file_ref = extract_fname(self.fname_ref)[1]
+            printv(
+                f'Mean+/-std of lesion #{lesion_label} in {file_ref} file: {mean_cur:.2f}+/-{std_cur:.2f}',
+                self.verbose,
+                type='info')
 
     def _measure_volume(self, im_data, p_lst, idx):
         for zz in range(im_data.shape[2]):
@@ -363,7 +368,7 @@ class AnalyzeLeion:
         im_lesion_data = im_lesion.data
         p_lst = im_lesion.dim[4:7]  # voxel size
 
-        label_lst = [l for l in np.unique(im_lesion_data) if l]  # lesion label IDs list
+        label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
 
         if self.path_template is not None:
             if os.path.isfile(self.path_levels):
@@ -373,7 +378,12 @@ class AnalyzeLeion:
 
             else:
                 im_vert_data = None
-                printv('ERROR: the file ' + self.path_levels + ' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='error')
+                printv(
+                    f"ERROR: the file {self.path_levels} does not exist. "
+                    f"Please make sure the template was correctly registered and warped "
+                    f"(sct_register_to_template or sct_register_multimodal and sct_warp_template)",
+                    type='error',
+                )
 
             # In order to open atlas images only one time
             atlas_data_dct = {}  # dict containing the np.array of the registrated atlas
@@ -422,7 +432,6 @@ class AnalyzeLeion:
     def angle_correction(self):
         im_seg = Image(self.fname_sc)
         nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-        data_seg = im_seg.data
 
         # fit centerline, smooth it and return the first derivative (in physical space)
         _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
@@ -446,7 +455,7 @@ class AnalyzeLeion:
         im_2save.data = label(im.data, connectivity=2)
         im_2save.save(self.fname_label)
 
-        self.measure_pd['label'] = [l for l in np.unique(im_2save.data) if l]
+        self.measure_pd['label'] = [label for label in np.unique(im_2save.data) if label]
         printv('Lesion count = ' + str(len(self.measure_pd['label'])), self.verbose, 'info')
 
     def _orient(self, fname, orientation):
@@ -503,7 +512,7 @@ class AnalyzeLeion:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -553,11 +562,20 @@ def main(argv=None):
     if rm_tmp:
         rmtree(lesion_obj.tmp_dir)
 
-    printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
     if fname_ref is not None:
-        printv('fsleyes ' + fname_mask + ' ' + os.path.join(path_results, lesion_obj.fname_label) + ' -cm red-yellow -a 70.0 & \n', verbose, 'info')
+        display_viewer_syntax(
+            files=[fname_mask, os.path.join(path_results, lesion_obj.fname_label)],
+            colormaps=['gray', 'red-yellow'],
+            opacities=['1.0', '0.7'],
+            verbose=verbose
+        )
     else:
-        printv('fsleyes ' + os.path.join(path_results, lesion_obj.fname_label) + ' -cm red-yellow -a 70.0 & \n', verbose, 'info')
+        display_viewer_syntax(
+            files=[os.path.join(path_results, lesion_obj.fname_label)],
+            colormaps=['red-yellow'],
+            opacities=['0.7'],
+            verbose=verbose
+        )
 
 
 if __name__ == "__main__":

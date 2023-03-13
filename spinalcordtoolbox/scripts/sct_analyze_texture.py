@@ -11,21 +11,22 @@
 import os
 import sys
 import itertools
+from typing import Sequence
 
 import numpy as np
-from skimage.feature import greycomatrix, greycoprops
+from skimage.feature import graycomatrix, graycoprops
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, concat_data
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, sct_progress_bar, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='Extraction of grey level co-occurence matrix (GLCM) texture features from an image within a given '
+        description='Extraction of gray level co-occurence matrix (GLCM) texture features from an image within a given '
                     'mask. The textures features are those defined in the sckit-image implementation: '
-                    'http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops. This function outputs '
+                    'http://scikit-image.org/docs/dev/api/skimage.feature.html#graycoprops. This function outputs '
                     'one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called '
                     'fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, '
                     'called fnameInput_feature_distance_mean.nii.gz, is output.'
@@ -113,7 +114,7 @@ class ExtractGLCM:
         self.param_glcm = param_glcm if param_glcm is not None else ParamGLCM()
 
         # create tmp directory
-        self.tmp_dir = tmp_create()  # path to tmp directory
+        self.tmp_dir = tmp_create(basename="analyze-texture")  # path to tmp directory
 
         if self.param.dim == 'ax':
             self.orientation_extraction = 'RPI'
@@ -167,7 +168,7 @@ class ExtractGLCM:
         printv('\nSave resulting files...', self.param.verbose, 'normal')
         for f in self.fname_metric_lst:  # Copy from tmp folder to ofolder
             copy(os.path.join(self.tmp_dir, self.fname_metric_lst[f]),
-                     os.path.join(self.param.path_results, self.fname_metric_lst[f]))
+                 os.path.join(self.param.path_results, self.fname_metric_lst[f]))
 
     def ifolder2tmp(self):
         self.curdir = os.getcwd()
@@ -203,11 +204,11 @@ class ExtractGLCM:
             # Average across angles and save it as wrk_folder/fnameIn_feature_distance_mean.extension
             fname_out = im_m + str(self.param_glcm.distance) + '_mean' + extension
 
-            dim_idx = 3 # img is [x, y, z, angle] so specify 4th dimension (angle)
+            dim_idx = 3  # img is [x, y, z, angle] so specify 4th dimension (angle)
 
             img = concat_data(im_mean_list, dim_idx).save(fname_out, mutable=True)
 
-            if len(np.shape(img.data)) < 4: # in case input volume is 3d and dim=t
+            if len(np.shape(img.data)) < 4:  # in case input volume is 3d and dim=t
                 img.data = img.data[..., np.newaxis]
             img.data = np.mean(img.data, dim_idx)
             img.save()
@@ -223,7 +224,6 @@ class ExtractGLCM:
 
         # extract axial slices in self.dct_im_seg
         self.dct_im_seg['im'], self.dct_im_seg['seg'] = [im.data[:, :, z] for z in range(im.dim[2])], [seg.data[:, :, z] for z in range(im.dim[2])]
-
 
     def compute_texture(self):
 
@@ -259,13 +259,13 @@ class ExtractGLCM:
 
                         dct_glcm = {}
                         for a in self.param_glcm.angle.split(','):  # compute the GLCM for self.param_glcm.distance and for each self.param_glcm.angle
-                            dct_glcm[a] = greycomatrix(glcm_window,
+                            dct_glcm[a] = graycomatrix(glcm_window,
                                                        [self.param_glcm.distance], [np.radians(int(a))],
                                                        symmetric=self.param_glcm.symmetric,
                                                        normed=self.param_glcm.normed)
 
                         for m in self.metric_lst:  # compute the GLCM property (m.split('_')[0]) of the voxel xx,yy,zz
-                            dct_metric[m].data[xx, yy, zz] = greycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
+                            dct_metric[m].data[xx, yy, zz] = graycoprops(dct_glcm[m.split('_')[2]], m.split('_')[0])[0][0]
 
                         pbar.set_postfix(pos="{}/{}".format(zz, len(self.dct_im_seg["im"])))
                         pbar.update(1)
@@ -293,13 +293,17 @@ class Param:
 class ParamGLCM(object):
     def __init__(self, symmetric=True, normed=True, feature='contrast,dissimilarity,homogeneity,energy,correlation,ASM', distance=1, angle='0,45,90,135'):
         self.symmetric = True  # If True, the output matrix P[:, :, d, theta] is symmetric.
-        self.normed = True  # If True, normalize each matrix P[:, :, d, theta] by dividing by the total number of accumulated co-occurrences for the given offset. The elements of the resulting matrix sum to 1.
-        self.feature = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM'  # The property formulae are detailed here: http://scikit-image.org/docs/dev/api/skimage.feature.html#greycoprops
+        # If self.normed is True, normalize each matrix P[:, :, d, theta] by dividing by the total number of
+        # accumulated co-occurrences for the given offset. The elements of the resulting matrix sum to 1.
+        self.normed = True
+        # The property formulae for self.feature are detailed here:
+        # http://scikit-image.org/docs/dev/api/skimage.feature.html#graycoprops
+        self.feature = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM'
         self.distance = 1  # Size of the window: distance = 1 --> a reference pixel and its immediate neighbor
         self.angle = '0,45,90,135'  # Rotation angles for co-occurrence matrix
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -347,8 +351,12 @@ def main(argv=None):
     if param.rm_tmp:
         rmtree(glcm.tmp_dir)
 
-    printv('\nDone! To view results, type:', param.verbose)
-    printv('fsleyes ' + arguments.i + ' ' + ' -cm red-yellow -a 70.0 '.join(fname_out_lst) + ' -cm Red-Yellow -a 70.0 & \n', param.verbose, 'info')
+    display_viewer_syntax(
+        files=[arguments.i] + fname_out_lst,
+        colormaps=['gray'] + ['red-yellow'] * len(fname_out_lst),
+        opacities=['1.0'] + ['0.7'] * len(fname_out_lst),
+        verbose=verbose
+    )
 
 
 if __name__ == "__main__":

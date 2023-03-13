@@ -68,6 +68,10 @@ The table below provides individual references for novel methods used in SCT's :
      - `Gros et al. Automatic spinal cord localization, robust to MRI contrasts using global curve optimization. Med Image Anal 2018 <https://www.sciencedirect.com/science/article/pii/S136184151730186X>`__
    * - ``sct_label_vertebrae``
      - `Ullmann et al. Automatic labeling of vertebral levels using a robust template-based approach. Int J Biomed Imaging 2014 <http://downloads.hindawi.com/journals/ijbi/2014/719520.pdf>`__
+   * - ``sct_process_segmentation -pmj``
+     - `Bédard S, Cohen-Adad J. Automatic measure and normalization of spinal cord cross-sectional area using the pontomedullary junction. Frontiers in Neuroimaging 2022 <https://doi.org/10.3389/fnimg.2022.1031253>`__
+   * - ``sct_process_segmentation -normalize``
+     - `Bédard S, Cohen-Adad J. Automatic measure and normalization of spinal cord cross-sectional area using the pontomedullary junction. Frontiers in Neuroimaging 2022 <https://doi.org/10.3389/fnimg.2022.1031253>`__
    * - ``sct_propseg``
      - `De Leener et al. Robust, accurate and fast automatic segmentation of the spinal cord. Neuroimage 2014 <https://www.ncbi.nlm.nih.gov/pubmed/24780696>`__
    * - ``sct_propseg -CSF``
@@ -95,7 +99,7 @@ The table below provides references relevant to the :ref:`pam50` used by SCT, in
    * - Template/atlas
      - References
    * - PAM50 template
-     - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2017. <http://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
+     - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2018. <http://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
    * - MNI-Poly-AMU template
      - `Fonov et al. Framework for integrated MRI average of the spinal cord white and gray matter: The MNI-Poly-AMU template. Neuroimage 2014. <https://www.ncbi.nlm.nih.gov/pubmed/25204864>`__
    * - White matter atlas

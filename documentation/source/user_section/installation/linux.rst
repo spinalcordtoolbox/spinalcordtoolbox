@@ -70,7 +70,7 @@ If you wish to benefit from the cutting-edge version of SCT, or if you wish to c
 
       cd spinalcordtoolbox
 
-#. Checkout the revision of interest, if different from `master`:
+#. (Optional) Checkout the revision of interest, if different from `master`:
 
    .. code:: sh
 
@@ -274,7 +274,7 @@ Procedure:
       PATH+=":$PWD/bins"
 
       # Download models & cie
-      mkdir data; pushd data; for x in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models ; do sct_download_data -d $x; done; popd
+      mkdir data; pushd data; for x in PAM50 optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models deepreg_models ; do sct_download_data -d $x; done; popd
 
       # Add path to spinalcordtoolbox to PYTHONPATH
       export PYTHONPATH="$PWD:$PWD/scripts"

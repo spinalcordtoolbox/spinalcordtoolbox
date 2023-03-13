@@ -22,6 +22,8 @@ install_sct () {
 }
 
 activate_venv_sct(){
+  # NB: `python/` won't be available unless `install_sct` is run, hence disabling the check:
+  # shellcheck disable=SC1091
   source python/etc/profile.d/conda.sh  # to be able to call conda
   set +u
   conda activate venv_sct
@@ -39,16 +41,7 @@ run_tests() {
   # NB: 'testing/batch_processing' is run by a separate CI workflow
 }
 
-run_tests_with_coverage(){
-  # NB: Testing using example from https://github.com/codecov/example-python
-  activate_venv_sct
-  pytest --cov=spinalcordtoolbox --cov-config setup.cfg --cov-branch --cov-report=xml:cov-api.xml testing/api
-  pytest --cov=spinalcordtoolbox --cov-config setup.cfg --cov-branch --cov-report=xml:cov-cli.xml testing/cli
-  # NB: 'testing/batch_processing' can't easily be coverage by codecov, as
-  # the actual processing is invoked via a shell script, rather than pytest
-}
-
-while getopts ":ictv" opt; do
+while getopts ":ict" opt; do
   case $opt in
   i)
     install_sct
@@ -58,9 +51,6 @@ while getopts ":ictv" opt; do
     ;;
   t)
     run_tests
-    ;;
-  v)
-    run_tests_with_coverage
     ;;
   *)
     exit 99

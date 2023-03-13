@@ -59,7 +59,6 @@ def fake_4dimage_nib():
     return nii
 
 
-# noinspection 801,PyShadowingNames
 def test_nib_resample_image_3d(fake_3dimage_nib):
     """Test resampling with 3D nibabel image"""
     img_r = resampling.resample_nib(fake_3dimage_nib, new_size=[2, 2, 1], new_size_type='factor', interpolation='nn')
@@ -70,7 +69,6 @@ def test_nib_resample_image_3d(fake_3dimage_nib):
     # nib.save(img_r, 'test_4.nii.gz')
 
 
-# noinspection 801,PyShadowingNames
 def test_nib_resample_image_3d_to_dest(fake_3dimage_nib, fake_3dimage_nib_big):
     """Test resampling with 3D nibabel image"""
     img_r = resampling.resample_nib(fake_3dimage_nib, image_dest=fake_3dimage_nib_big, interpolation='linear')
@@ -78,7 +76,6 @@ def test_nib_resample_image_3d_to_dest(fake_3dimage_nib, fake_3dimage_nib_big):
     assert img_r.get_data()[4, 4, 4] == 1.0
 
 
-# noinspection 801,PyShadowingNames
 def test_nib_resample_image_4d(fake_4dimage_nib):
     """Test resampling with 4D nibabel image"""
     img_r = resampling.resample_nib(fake_4dimage_nib, new_size=[2, 2, 1, 1], new_size_type='factor', interpolation='nn')

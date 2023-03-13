@@ -16,12 +16,12 @@
 import sys
 import os
 import functools
-import argparse
+from typing import Sequence
 
 from spinalcordtoolbox.image import Image, check_dim, generate_output_file
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, SmartFormatter
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar
 from spinalcordtoolbox.utils.sys import init_sct, printv, run_proc, set_loglevel
-from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, check_file_exist
+from spinalcordtoolbox.utils.fs import extract_fname, check_file_exist
 
 
 class Param:
@@ -30,7 +30,7 @@ class Param:
         self.fname_warp_final = 'warp_final.nii.gz'
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -137,7 +137,7 @@ def get_parser():
     optional.add_argument(
         "-winv",
         help='Affine transformation(s) listed in flag -w which should be inverted before being used. Note that this '
-             'only concerns affine transformation (not warping fields). If you would like to use an inverse warping'
+             'only concerns affine transformation (not warping fields). If you would like to use an inverse warping '
              'field, then directly input the inverse warping field in flag -w.',
         nargs='*',
         metavar=Metavar.file,

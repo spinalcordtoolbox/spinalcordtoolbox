@@ -2,6 +2,7 @@
 
 import os
 import sys
+from typing import Sequence
 
 import numpy as np
 
@@ -61,7 +62,7 @@ def get_parser():
         "-centerline-algo",
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
-        help="Algorithm for centerline fitting. Only relevant with -method fitseg"
+        help="Algorithm for centerline fitting. Only relevant with -method fitseg."
     )
     optional.add_argument(
         "-centerline-smooth",
@@ -69,6 +70,14 @@ def get_parser():
         type=int,
         default=30,
         help="Degree of smoothing for centerline fitting. Only for -centerline-algo {bspline, linear}."
+    )
+    optional.add_argument(
+        "-centerline-soft",
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Binary or soft centerline. 0 = binarized, 1 = soft. Only relevant with -method fitseg."
     )
     optional.add_argument(
         "-o",
@@ -99,6 +108,14 @@ def get_parser():
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
     optional.add_argument(
+        '-r',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,
+        help="Whether to remove temporary files. 0 = no, 1 = yes"
+    )
+    optional.add_argument(
         "-qc",
         metavar=Metavar.folder,
         action=ActionCreateFolder,
@@ -117,7 +134,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -132,11 +149,14 @@ def main(argv=None):
 
     # Contrast type
     contrast_type = arguments.c
+
+    # Contrast must be specified if method is optic
     if method == 'optic' and not contrast_type:
-        # Contrast must be
-        error = "ERROR: -c is a mandatory argument when using 'optic' method."
-        printv(error, type='error')
-        return
+        printv("ERROR: -c is a mandatory argument when using '-method optic'.", type='error')
+
+    # Soft centerline option can only be used with fitseg method
+    if arguments.centerline_soft == 1 and method != 'fitseg':
+        printv("ERROR: -centerline-soft can only be used with '-method fitseg'.", type='error')
 
     # Gap between slices
     interslice_gap = arguments.gap
@@ -144,7 +164,8 @@ def main(argv=None):
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
-        minmax=True)
+        minmax=True,
+        soft=arguments.centerline_soft)
 
     # Output folder
     if arguments.o is not None:
@@ -173,11 +194,14 @@ def main(argv=None):
     # Extrapolate and regularize (or detect if optic) cord centerline
     im_centerline, arr_centerline, _, _ = get_centerline(im_labels,
                                                          param=param_centerline,
-                                                         verbose=verbose)
+                                                         verbose=verbose,
+                                                         remove_temp_files=arguments.r)
 
     # save centerline as nifti (discrete) and csv (continuous) files
     im_centerline.save(file_output)
-    np.savetxt(file_output + '.csv', arr_centerline.transpose(), delimiter=",")
+    # Replace `.nii.gz` extension with `.csv` extension
+    path_output, filename_output, _ = extract_fname(file_output)
+    np.savetxt(os.path.join(path_output, f"{filename_output}.csv"), arr_centerline.transpose(), delimiter=",")
 
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
@@ -185,13 +209,13 @@ def main(argv=None):
 
     # Generate QC report
     if path_qc is not None:
-        generate_qc(fname_input_data, fname_seg=file_output, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_input_data, fname_seg=file_output, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_get_centerline')
 
-    display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    cm_ctl = 'red-yellow' if arguments.centerline_soft else 'red'
+    display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', cm_ctl], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

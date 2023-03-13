@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #########################################################################################
 #
 # This file contains an implementation of the iterative closest point algorithm.
@@ -22,7 +21,7 @@
 # TODO: add full affine transfo
 # TODO: normalize SSE: currently, it depends on the number of landmarks
 
-import sys, io, os
+import os
 import logging
 
 from operator import itemgetter
@@ -84,8 +83,21 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
 
     # estimate transformation
     # N.B. points_src and points_dest are inverted below, because ITK uses inverted transformation matrices, i.e., src->dest is defined in dest instead of src.
-    # (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_dest, points_src, constraints=dof, verbose=verbose, path_qc=path_qc)
-    (rotation_matrix, translation_array, points_moving_reg, points_moving_barycenter) = getRigidTransformFromLandmarks(points_src, points_dest, constraints=dof, verbose=verbose)
+    # (rotation_matrix,
+    #  translation_array,
+    #  points_moving_reg,
+    #  points_moving_barycenter) = getRigidTransformFromLandmarks(points_dest,
+    #                                                             points_src,
+    #                                                             constraints=dof,
+    #                                                             verbose=verbose,
+    #                                                             path_qc=path_qc)
+    (rotation_matrix,
+     translation_array,
+     points_moving_reg,
+     points_moving_barycenter) = getRigidTransformFromLandmarks(points_src,
+                                                                points_dest,
+                                                                constraints=dof,
+                                                                verbose=verbose)
     # writing rigid transformation file
     # N.B. x and y dimensions have a negative sign to ensure compatibility between Python and ITK transfo
     text_file = open(fname_affine, 'w')
@@ -102,7 +114,7 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
                                                            points_moving_barycenter[2]))
     text_file.close()
 
-    
+
 def getNeighbors(point, set_points, k=1):
     '''
     Locate most similar neighbours
@@ -129,7 +141,7 @@ def SSE(pointsA, pointsB):
     return np.sum(np.array(pointsA[:, 0:3] - pointsB[:, 0:3])**2.0)
 
 
-def real_optimization_parameters(param_from_optimizer, initial_param = 0, initial_step = 10):
+def real_optimization_parameters(param_from_optimizer, initial_param=0, initial_step=10):
     # The initial step for the Nelder-Mead algorithm is of (initial_param * 5e-2) which is too small when we want initial_param = 30 pix and step = 5 or 10.
     # This function allows to choose the scale of the steps after the first movement
     step_factor = float(initial_step) / float(initial_param * 5e-2)
@@ -151,13 +163,13 @@ def Metric_Images(imageA, imageB, type=''):
     # Calculate metric depending on the type
     if type == 'MeanSquares':
         result_metric = 1.0 / (len(list_A)) * np.sum(np.array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])**2)
-        #result_metric = 1/(len(list_A)) * np.sum(np.array(list_A - list_B)**2)
+        # result_metric = 1/(len(list_A)) * np.sum(np.array(list_A - list_B)**2)
 
     if type == 'Correlation':
         result_metric = 1.0 / (len(list_A)) * np.sum(np.absolute(np.array([list_A[i][0] - list_B[i][0] for i in range(len(list_A))])))
 
     if type == 'MI':
-        logger.info(f"\nto do: MI")
+        logger.info("\nto do: MI")
 
     # Return results
     logger.info(f"\nResult of metric is: {str(result_metric)}")
@@ -185,9 +197,21 @@ def minimize_transform(params, points_dest, points_src, constraints):
     # convert dof to more intuitive variables
     tx, ty, tz, alpha, beta, gamma, scx, scy, scz = dof[0], dof[1], dof[2], dof[3], dof[4], dof[5], dof[6], dof[7], dof[8]
     # build rotation matrix
-    rotation_matrix = np.matrix([[np.cos(alpha) * np.cos(beta), np.cos(alpha) * np.sin(beta) * np.sin(gamma) - np.sin(alpha) * np.cos(gamma), np.cos(alpha) * np.sin(beta) * np.cos(gamma) + np.sin(alpha) * np.sin(gamma)],
-                              [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma), np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma)],
-                              [-np.sin(beta), np.cos(beta) * np.sin(gamma), np.cos(beta) * np.cos(gamma)]])
+    rotation_matrix = np.matrix([
+        [
+            np.cos(alpha)*np.cos(beta),
+            np.cos(alpha)*np.sin(beta)*np.sin(gamma) - np.sin(alpha)*np.cos(gamma),
+            np.cos(alpha)*np.sin(beta)*np.cos(gamma) + np.sin(alpha)*np.sin(gamma),
+        ], [
+            np.sin(alpha)*np.cos(beta),
+            np.sin(alpha)*np.sin(beta)*np.sin(gamma) + np.cos(alpha)*np.cos(gamma),
+            np.sin(alpha)*np.sin(beta)*np.cos(gamma) - np.cos(alpha)*np.sin(gamma),
+        ], [
+            np.sin(beta)*-1,
+            np.cos(beta)*np.sin(gamma),
+            np.cos(beta)*np.cos(gamma),
+        ]
+    ])
     # build scaling matrix
     scaling_matrix = np.matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
     # compute rotation+scaling matrix
@@ -226,9 +250,22 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
         init_param_optimizer.append(init_param[dict_dof[list_constraints[i]]])
 
     # launch optimizer
-    # res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_src, points_dest, constraints), method='Nelder-Mead', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show})
-    res = minimize(minimize_transform, x0=init_param_optimizer, args=(points_dest, points_src, constraints), method='Powell', tol=1e-8, options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': verbose})
-    # res = minimize(minAffineTransform, x0=initial_parameters, args=points, method='COBYLA', tol=1e-8, options={'tol': 1e-8, 'rhobeg': 0.1, 'maxiter': 100000, 'catol': 0, 'disp': show})
+    # res = minimize(
+    #     minimize_transform, x0=init_param_optimizer,
+    #     args=(points_src, points_dest, constraints),
+    #     method='Nelder-Mead', tol=1e-8,
+    #     options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 10000, 'maxfev': 10000, 'disp': show},
+    # )
+    res = minimize(
+        minimize_transform, x0=init_param_optimizer,
+        args=(points_dest, points_src, constraints),
+        method='Powell', tol=1e-8,
+        options={'xtol': 1e-8, 'ftol': 1e-8, 'maxiter': 100000, 'maxfev': 100000, 'disp': verbose},
+    )
+    # res = minimize(
+    #     minAffineTransform, x0=initial_parameters, args=points, method='COBYLA', tol=1e-8,
+    #     options={'tol': 1e-8, 'rhobeg': 0.1, 'maxiter': 100000, 'catol': 0, 'disp': show},
+    # )
     # loop across constraints and update dof
     dof = init_param
     for i in range(len(list_constraints)):
@@ -240,9 +277,21 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
     # build translation matrix
     translation_array = np.matrix([tx, ty, tz])
     # build rotation matrix
-    rotation_matrix = np.matrix([[np.cos(alpha) * np.cos(beta), np.cos(alpha) * np.sin(beta) * np.sin(gamma) - np.sin(alpha) * np.cos(gamma), np.cos(alpha) * np.sin(beta) * np.cos(gamma) + np.sin(alpha) * np.sin(gamma)],
-                              [np.sin(alpha) * np.cos(beta), np.sin(alpha) * np.sin(beta) * np.sin(gamma) + np.cos(alpha) * np.cos(gamma), np.sin(alpha) * np.sin(beta) * np.cos(gamma) - np.cos(alpha) * np.sin(gamma)],
-                              [-np.sin(beta), np.cos(beta) * np.sin(gamma), np.cos(beta) * np.cos(gamma)]])
+    rotation_matrix = np.matrix([
+        [
+            np.cos(alpha)*np.cos(beta),
+            np.cos(alpha)*np.sin(beta)*np.sin(gamma) - np.sin(alpha)*np.cos(gamma),
+            np.cos(alpha)*np.sin(beta)*np.cos(gamma) + np.sin(alpha)*np.sin(gamma),
+        ], [
+            np.sin(alpha)*np.cos(beta),
+            np.sin(alpha)*np.sin(beta)*np.sin(gamma) + np.cos(alpha)*np.cos(gamma),
+            np.sin(alpha)*np.sin(beta)*np.cos(gamma) - np.cos(alpha)*np.sin(gamma),
+        ], [
+            np.sin(beta)*-1,
+            np.cos(beta)*np.sin(gamma),
+            np.cos(beta)*np.cos(gamma),
+        ]
+    ])
     # build scaling matrix
     scaling_matrix = np.matrix([[scx, 0.0, 0.0], [0.0, scy, 0.0], [0.0, 0.0, scz]])
     # compute rotation+scaling matrix
@@ -258,10 +307,9 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
 
     if verbose == 2:
         import matplotlib.pyplot as plt
-        from mpl_toolkits.mplot3d import Axes3D
 
         fig = plt.figure()
-        ax = fig.gca(projection='3d')
+        ax = fig.add_subplot(projection='3d')
         points_src_matrix = np.matrix(points_src)
         points_dest_matrix = np.matrix(points_dest)
 
@@ -284,7 +332,7 @@ def getRigidTransformFromLandmarks(points_dest, points_src, constraints='Tx_Ty_T
         # plt.show()
         plt.savefig('getRigidTransformFromLandmarks_plot.png')
 
-        fig2 = plt.figure()
+        plt.figure()  # fig2
         plt.plot(sse_results)
         plt.grid()
         plt.title('#Iterations: ' + str(res.nit) + ', #FuncEval: ' + str(res.nfev) + ', Error: ' + str(res.fun))

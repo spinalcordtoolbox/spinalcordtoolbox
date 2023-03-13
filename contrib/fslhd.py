@@ -119,6 +119,7 @@ INTENT_STRINGS = {
 }
 
 ORIENTATION_STRINGS = {
+    None: "Unknown",
     'R': "Left-to-Right",
     'L': "Right-to-Left",
     'A': "Posterior-to-Anterior",

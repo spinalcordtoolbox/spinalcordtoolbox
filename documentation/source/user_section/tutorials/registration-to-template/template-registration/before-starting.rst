@@ -8,7 +8,7 @@ Before starting this tutorial
 
 #. Make sure that you have the following files in your working directory:
 
-   * ``single_subject/data/t2/t2.nii.gz``: An anatomical spinal cord scan in the T1 contrast.
+   * ``single_subject/data/t2/t2.nii.gz``: An anatomical spinal cord scan in the T2 contrast.
    * ``single_subject/data/t2/t2_seg.nii.gz``: A 3D binary mask for the spinal cord.
    * ``single_subject/data/t2/t2_labels_vert.nii.gz`` : Image containing the 2 single-voxel vertebral labels
 

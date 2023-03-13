@@ -19,7 +19,11 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    * :doc:`tutorials/registration-to-template/template-registration`
    * :doc:`tutorials/registration-to-template/shape-metric-computation`
    * :doc:`tutorials/registration-to-template/registering-additional-contrasts`
-   * :doc:`tutorials/registration-to-template/mtr-computation`
+
+#. :doc:`Multimodal registration <tutorials/multimodal-registration>`
+
+   * :doc:`tutorials/multimodal-registration/mtr-computation`
+   * :doc:`tutorials/multimodal-registration/contrast-agnostic-registration`
 
 #. :doc:`Gray matter segmentation <tutorials/gray-matter-segmentation>`
 
@@ -59,6 +63,7 @@ If you would prefer to learn how to use SCT in a guided workshop setting, we pro
 
    Segmentation <tutorials/segmentation>
    tutorials/registration-to-template
+   tutorials/multimodal-registration
    tutorials/gray-matter-segmentation
    tutorials/atlas-based-analysis
    tutorials/diffusion-weighted-mri

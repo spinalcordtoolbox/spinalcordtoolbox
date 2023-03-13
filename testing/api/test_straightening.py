@@ -8,7 +8,6 @@ from spinalcordtoolbox.utils import sct_test_path
 VERBOSE = 0  # Set to 2 to save images, 0 otherwise
 
 
-# noinspection 801,PyShadowingNames
 def test_straighten(tmp_path):
     """Test straightening with default params"""
     fname_t2 = sct_test_path('t2', 't2.nii.gz')  # sct_download_data -d sct_testing_data
