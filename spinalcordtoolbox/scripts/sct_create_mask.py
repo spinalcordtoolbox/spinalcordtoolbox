@@ -151,7 +151,7 @@ def main(argv: Sequence[str]):
     # run main program
     create_mask(param)
 
-    display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'], verbose=verbose)
+    display_viewer_syntax([param.fname_data, param.fname_out], im_types=['anat', 'seg'], opacities=['', '0.5'], verbose=verbose)
 
 
 def create_mask(param):

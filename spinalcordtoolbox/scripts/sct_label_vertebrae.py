@@ -490,7 +490,8 @@ def main(argv: Sequence[str]):
         generate_qc(fname_in, fname_seg=labeled_seg_file, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_label_vertebrae')
 
-    display_viewer_syntax([fname_in, fname_seg_labeled], colormaps=['', 'subcortical'], opacities=['1', '0.5'], verbose=verbose)
+    display_viewer_syntax([fname_in, fname_seg_labeled], im_types=['anat', 'seg-labeled'], opacities=['1', '0.5'],
+                          verbose=verbose)
 
 
 if __name__ == "__main__":
