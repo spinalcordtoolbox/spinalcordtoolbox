@@ -131,15 +131,6 @@ def csv2dataFrame(filename, metric):
     return data
 
 
-def get_slice_thickness(img):
-    """
-    Get slice thickness from the input image.
-    :param img: Image: source image
-    :return float: slice thickness in mm.
-    """
-    return img.dim[5]
-
-
 def get_compressed_slice(img, verbose):
     """
     Get all the compression labels (voxels of value: '1') that are contained in the input image.
@@ -439,7 +430,7 @@ def main(argv: Sequence[str]):
     # -----------------------------------------------------------
     img = Image(fname_labels)
     img.change_orientation('RPI')
-    slice_thickness = get_slice_thickness(img)
+    slice_thickness = img.dim[5]
     slice_compressed = get_compressed_slice(img, verbose)
     df_metrics = csv2dataFrame(fname_metrics, metric)
     df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, metric)
@@ -448,7 +439,7 @@ def main(argv: Sequence[str]):
     # ------------------------------------------------------------
     # Get PAM50 slice thickness
     fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2s.nii.gz')
-    slice_thickness_PAM50 = get_slice_thickness(Image(fname_PAM50).change_orientation('RPI'))
+    slice_thickness_PAM50 = Image(fname_PAM50).change_orientation('RPI').dim[5]
     # Get data from healthy control and average them
     path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
     fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
