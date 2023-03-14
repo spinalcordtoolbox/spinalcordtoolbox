@@ -131,22 +131,6 @@ def csv2dataFrame(filename, metric):
     return data
 
 
-def get_compressed_slice(img, verbose):
-    """
-    Get all the compression labels (voxels of value: '1') that are contained in the input image.
-    :param img: Image: source image
-    :return list: list of slices number
-    """
-    # Get all coordinates
-    coordinates = img.getNonZeroCoordinates(sorting='z')
-    logger.debug('Compression labels coordinates: {}'.format(coordinates))
-    # Check it coordinates is empty
-    if not coordinates:
-        raise ValueError('No compression labels found.')
-    # Return only slices number
-    return [int(coordinate.z) for coordinate in coordinates]
-
-
 # Functions for Step 2 (Processing healthy controls from `PAM50_normalized_metrics` dataset)
 # ==========================================================================================
 def select_HC(fname_participants, sex=None, age=None):
@@ -431,7 +415,9 @@ def main(argv: Sequence[str]):
     img = Image(fname_labels)
     img.change_orientation('RPI')
     slice_thickness = img.dim[5]
-    slice_compressed = get_compressed_slice(img, verbose)
+    slice_compressed = [int(coord.z) for coord in img.getNonZeroCoordinates(sorting='z')]
+    if not slice_compressed:
+        raise ValueError('No compression labels found.')
     df_metrics = csv2dataFrame(fname_metrics, metric)
     df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, metric)
 
