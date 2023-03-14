@@ -411,10 +411,7 @@ def main(argv: Sequence[str]):
     # Get data from healthy control and average them
     path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
     fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
-    if sex or age:
-        list_HC = select_HC(fname_partcipants, sex, age)
-    else:
-        list_HC = select_HC(fname_partcipants)
+    list_HC = select_HC(fname_partcipants, sex, age)
     df_avg_HC = average_HC(path_ref, metric, list_HC)
 
     # Step 3. Determine compressed levels for both subject and PAM50 space
