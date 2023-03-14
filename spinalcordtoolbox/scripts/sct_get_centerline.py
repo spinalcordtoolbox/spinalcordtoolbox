@@ -149,11 +149,14 @@ def main(argv: Sequence[str]):
 
     # Contrast type
     contrast_type = arguments.c
+
+    # Contrast must be specified if method is optic
     if method == 'optic' and not contrast_type:
-        # Contrast must be
-        error = "ERROR: -c is a mandatory argument when using 'optic' method."
-        printv(error, type='error')
-        return
+        printv("ERROR: -c is a mandatory argument when using '-method optic'.", type='error')
+
+    # Soft centerline option can only be used with fitseg method
+    if arguments.centerline_soft == 1 and method != 'fitseg':
+        printv("ERROR: -centerline-soft can only be used with '-method fitseg'.", type='error')
 
     # Gap between slices
     interslice_gap = arguments.gap
@@ -209,8 +212,8 @@ def main(argv: Sequence[str]):
         generate_qc(fname_input_data, fname_seg=file_output, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_get_centerline')
 
-    cm_ctl = 'red-yellow' if arguments.centerline_soft else 'red'
-    display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', cm_ctl], opacities=['', '0.7'], verbose=verbose)
+    im_type_ctl = 'softseg' if arguments.centerline_soft else 'seg'
+    display_viewer_syntax([fname_input_data, file_output], im_types=['anat', im_type_ctl], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":

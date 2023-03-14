@@ -354,7 +354,7 @@ def main(argv: Sequence[str]):
             generate_qc(fname_in, fname_seg=fname_out, args=argv, path_qc=os.path.abspath(path_qc),
                         dataset=arguments.qc_dataset, subject=arguments.qc_subject, process='sct_detect_pmj')
 
-        display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'], verbose=verbose)
+        display_viewer_syntax([fname_in, fname_out], im_types=['anat', 'seg'], verbose=verbose)
 
 
 if __name__ == "__main__":

@@ -201,7 +201,6 @@ def main(argv: Sequence[str]):
 
     display_viewer_syntax(
         [arguments.omtsat, arguments.ot1map],
-        colormaps=['gray', 'gray'],
         minmax=['-10,10', '0, 3'],
         opacities=['1', '1'],
         verbose=verbose,
