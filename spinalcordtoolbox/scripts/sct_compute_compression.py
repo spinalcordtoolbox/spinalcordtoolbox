@@ -395,10 +395,9 @@ def main(argv: Sequence[str]):
 
     # Step 1. Load subject input files (label image, metric CSVs)
     # -----------------------------------------------------------
-    img = Image(fname_labels)
-    img.change_orientation('RPI')
-    slice_thickness = img.dim[5]
-    slice_compressed = [int(coord.z) for coord in img.getNonZeroCoordinates(sorting='z')]
+    im_levels = Image(fname_labels).change_orientation('RPI')
+    slice_thickness = im_levels.dim[5]
+    slice_compressed = [int(coord.z) for coord in im_levels.getNonZeroCoordinates(sorting='z')]
     if not slice_compressed:
         raise ValueError('No compression labels found.')
     df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
