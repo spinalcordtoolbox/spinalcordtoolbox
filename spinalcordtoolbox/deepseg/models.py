@@ -189,7 +189,7 @@ TASKS = {
                              'around the spinal cord, using a dilation value of 32. This could be done using: '
                              '"sct_crop_image -i IMAGE -m IMAGE_seg -dilate 32x0x32". '
                              'Note that the syntax above assumes the image is sagittal. For another orientation, '
-                             'axes need to be swapped (eg: 32x32x0 for an axial orientation).',         
+                             'axes need to be swapped (eg: 32x32x0 for an axial orientation).',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
