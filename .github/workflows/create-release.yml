@@ -102,7 +102,7 @@ jobs:
         if [ "$RUNNER_OS" == "Windows" ]; then
           # NB: Because `requirements-freeze.txt` is present, SCT gets installed to `~/sct_0.0`, 
           # rather than an in-place install. So, we specify this path directly, rather than using $GITHUB_WORKSPACE.
-          echo "/d$HOMEPATH/sct_0.0/bin" >> $GITHUB_PATH
+          echo "${USERPROFILE}\sct_0.0\bin" >> $GITHUB_PATH
           # NB: We specify "/d" because of https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4061#discussion_r1128599263
         else
           # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.

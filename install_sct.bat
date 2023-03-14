@@ -72,7 +72,7 @@ rem if installing from git folder, then becomes default installation folder
 if %SCT_INSTALL_TYPE%==in-place (
   set SCT_DIR=%SCT_SOURCE%
 ) else (
-  set SCT_DIR=%HOMEPATH%\sct_%SCT_VERSION%
+  set SCT_DIR=%USERPROFILE%\sct_%SCT_VERSION%
 )
 
 rem Allow user to set a custom installation directory
