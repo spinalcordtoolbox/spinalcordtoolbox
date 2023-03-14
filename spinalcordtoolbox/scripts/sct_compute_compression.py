@@ -19,7 +19,7 @@ import logging
 from typing import Sequence
 import pandas as pd
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
-from spinalcordtoolbox.utils.fs import get_absolute_path, check_file_exist, extract_fname, printv
+from spinalcordtoolbox.utils.fs import get_absolute_path, extract_fname, printv
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox import __data_dir__
 
@@ -116,21 +116,6 @@ def get_parser():
     return parser
 
 
-# Functions for Step 1 (Processing input data files)
-# ==========================================================================================
-def csv2dataFrame(filename, metric):
-    """
-    Loads a .csv file and builds a pandas dataFrame of the data
-    :param filename: str: filename of the .csv file
-    :return data :pd.DataFrame: pandas dataframe of the .csv file's data
-    """
-    check_file_exist(filename, verbose=0)
-    data = pd.read_csv(filename)
-    # Ensure that the chosen metric is in float
-    data.astype({metric: float})
-    return data
-
-
 # Functions for Step 2 (Processing healthy controls from `PAM50_normalized_metrics` dataset)
 # ==========================================================================================
 def select_HC(fname_participants, sex=None, age=None):
@@ -183,7 +168,7 @@ def average_hc(ref_folder, metric, list_HC):
         if 'PAM50.csv' in file:
             subject = os.path.basename(file).split('_')[0]
             if subject in list_HC:
-                d[file] = csv2dataFrame(os.path.join(ref_folder, file), metric)  # TODO change verbose for arg
+                d[file] = pd.read_csv(os.path.join(ref_folder, file)).astype({metric: float})
                 i = i+1
     first_key = next(iter(d))
     # Create an empty dataframe with same columns
@@ -418,8 +403,8 @@ def main(argv: Sequence[str]):
     slice_compressed = [int(coord.z) for coord in img.getNonZeroCoordinates(sorting='z')]
     if not slice_compressed:
         raise ValueError('No compression labels found.')
-    df_metrics = csv2dataFrame(fname_metrics, metric)
-    df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, metric)
+    df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
+    df_metrics_PAM50 = pd.read_csv(fname_metrics_PAM50).astype({metric: float})
 
     # Step 2. Load reference input files (PAM50, healthy controls)
     # ------------------------------------------------------------
