@@ -82,11 +82,11 @@ rem Allow user to set a custom installation directory
   set new_install=%SCT_DIR%
   set keep_default_path=yes
   :while_loop_path_agreement
-    set /p "keep_default_path=### Do you agree? [y]es/[n]o: "
-    echo %keep_default_path% | findstr /b [YyNn]>nul 2>&1 || goto :while_loop_path_agreement
+    set /p keep_default_path="### Do you agree? [y]es/[n]o: "
+    echo %keep_default_path% | findstr /b [YyNn] >nul 2>&1 || goto :while_loop_path_agreement
   :done_while_loop_path_agreement
 
-  echo %keep_default_path% | findstr /b [Yy]>nul 2>&1
+  echo %keep_default_path% | findstr /b [Yy] >nul 2>&1
   if %errorlevel% EQU 0 (
     rem user accepts default path, so exit loop
     goto :done_while_loop_sct_dir
@@ -95,7 +95,7 @@ rem Allow user to set a custom installation directory
   rem user enters new path
   echo:
   echo ### Choose install directory.
-  set /p "new_install=### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
+  set /p new_install="### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
 
   rem Validate the user's choice of path
   if exist %new_install% (
@@ -123,7 +123,7 @@ rem Copy files to destination directory
 echo:
 if not %SCT_DIR%==%SCT_SOURCE% (
   echo ### Copying source files from %SCT_SOURCE% to %SCT_DIR%
-  xcopy /s/e/q/y %SCT_SOURCE% %SCT_DIR% || goto error
+  xcopy /s /e /q /y %SCT_SOURCE% %SCT_DIR% || goto error
 ) else (
   echo ### Skipping copy of source files ^(source and destination folders are the same^)
 )
@@ -134,17 +134,17 @@ pushd %SCT_DIR%
 rem Clean old install setup if existing
 if exist bin\ (
   echo ### Removing sct and isct softlink inside the SCT directory...
-  rmdir /s/q bin\ || goto error
+  rmdir /s /q bin\ || goto error
 )
 rem Remove old python folder
 if exist python\ (
   echo ### Removing existing 'python' folder inside the SCT directory...
-  rmdir /s/q python\ || goto error
+  rmdir /s /q python\ || goto error
 )
 rem Remove old '.egg-info` folder created by editable installs
 if exist spinalcordtoolbox.egg-info\ (
   echo ### Removing existing '.egg-info' folder inside the SCT directory...
-  rmdir /s/q spinalcordtoolbox.egg-info\ || goto error
+  rmdir /s /q spinalcordtoolbox.egg-info\ || goto error
 )
 
 rem Install portable miniconda instance. (Command source: https://github.com/conda/conda/issues/1977)
