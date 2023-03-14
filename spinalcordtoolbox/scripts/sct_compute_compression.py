@@ -389,11 +389,9 @@ def main(argv: Sequence[str]):
     sex = arguments.sex
     age = arguments.age
     if age:
+        age.sort()
         if any(n < 0 for n in age):
             parser.error('Age range needs to be positive, {} was specified'.format(age))
-        # Put age range in order
-        else:
-            age.sort()
 
     # Step 1. Load subject input files (label image, metric CSVs)
     # -----------------------------------------------------------
