@@ -149,7 +149,7 @@ def select_HC(fname_participants, sex=None, age=None):
     return list(list_to_include)
 
 
-def average_hc(ref_folder, metric, list_HC):
+def average_HC(ref_folder, metric, list_HC):
     """
     Gets metrics of healthy controls in PAM50 anatomical dimensions and averages across subjects.
     :param ref_folder: path to folder where .csv fiels of healthy controls are.
@@ -418,7 +418,7 @@ def main(argv: Sequence[str]):
         list_HC = select_HC(fname_partcipants, sex, age)
     else:
         list_HC = select_HC(fname_partcipants)
-    df_avg_HC = average_hc(path_ref, metric, list_HC)
+    df_avg_HC = average_HC(path_ref, metric, list_HC)
 
     # Step 3. Determine compressed levels for both subject and PAM50 space
     # --------------------------------------------------------------------
