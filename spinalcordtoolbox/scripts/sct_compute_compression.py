@@ -152,7 +152,7 @@ def select_HC(fname_participants, sex=None, age=None):
 def average_HC(ref_folder, metric, list_HC):
     """
     Gets metrics of healthy controls in PAM50 anatomical dimensions and averages across subjects.
-    :param ref_folder: path to folder where .csv fiels of healthy controls are.
+    :param ref_folder: path to folder where .csv fields of healthy controls are.
     :param metric: str: metric to perform normalization
     :param list_HC: list: List of healthy controls to include
     :return df:
@@ -193,9 +193,9 @@ def average_HC(ref_folder, metric, list_HC):
 
 # Functions for Step 3 (Fetching the compressed levels from the subject and PAM50 space)
 # ==========================================================================================
-def get_verterbral_level_from_slice(slices, df_metrics):
+def get_vertebral_level_from_slice(slices, df_metrics):
     """
-    From slices, gets the coresponding vertebral level and creates a dict fo level and corresponding slice(s).
+    From slices, gets the corresponding vertebral level and creates a dict fo level and corresponding slice(s).
     :param slices: list: list of slices number.
     :param df_metrics: pandas.DataFrame: dataframe of metrics (output of sct_process_segmentation).
     :return level_slice_dict: dict:
@@ -280,9 +280,9 @@ def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df
     :param lower_level: int: level below compression.
     :param slice: int: slice of spinal cord compression.
     :return upper_AP_mean:
-    :retrun lower_AP_mean:
-    :retrun compressed_AP_mean:
-    :retrun slices_avg: Slices in PAM50 space to average metric.
+    :return lower_AP_mean:
+    :return compressed_AP_mean:
+    :return slices_avg: Slices in PAM50 space to average metric.
 
     """
     # If resolution of image is higher than PAM50 template, get slices equivalent to native slice thickness
@@ -306,8 +306,8 @@ def average_metric(df, metric, upper_level, lower_level, slices_avg):
     :param lower_level: int: level below compression.
     :param slices_avg: Slices in PAM50 space to average metrics.
     :return: ma: float64: Metric above the compression
-    :retrun: mb: float64: Metric below the compression
-    :retrun: mi: float64: Metric at the compression level
+    :return: mb: float64: Metric below the compression
+    :return: mi: float64: Metric at the compression level
     """
     # find index of slices to average
     idx = df['Slice (I->S)'].isin(slices_avg).tolist()
@@ -345,16 +345,16 @@ def metric_ratio_norm(ap, ap_HC):
     return metric_ratio(ma, mb, mi)
 
 
-def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename):
+def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_norm, filename):
     """
     Save .csv file of MSCC results.
     :param fname_out:
     :param level: int: Level of compression.
     :param metric: str: metric to perform normalization
     :param metric_ratio: float:
-    :param metric_ratio_nrom:
+    :param metric_ratio_norm:
     :param filename: str: input filename
-    :retrun:
+    :return:
     """
     if not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
@@ -363,7 +363,7 @@ def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',')
-        line = [filename, level, metric_ratio, metric_ratio_nrom]
+        line = [filename, level, metric_ratio, metric_ratio_norm]
         csv_writer.writerow(line)
 
 
@@ -410,14 +410,14 @@ def main(argv: Sequence[str]):
     slice_thickness_PAM50 = Image(fname_PAM50).change_orientation('RPI').dim[5]
     # Get data from healthy control and average them
     path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
-    fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
-    list_HC = select_HC(fname_partcipants, sex, age)
+    fname_participants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
+    list_HC = select_HC(fname_participants, sex, age)
     df_avg_HC = average_HC(path_ref, metric, list_HC)
 
     # Step 3. Determine compressed levels for both subject and PAM50 space
     # --------------------------------------------------------------------
     # Get vertebral level corresponding to the slice with the compression
-    compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
+    compressed_levels_dict = get_vertebral_level_from_slice(slice_compressed, df_metrics)
     # Get vertebral level above and below the compression
     upper_level, lower_level = get_up_lw_levels(compressed_levels_dict.keys(), df_metrics, metric)
     # Get slices corresponding in PAM50 space
@@ -431,7 +431,7 @@ def main(argv: Sequence[str]):
                                                    upper_level, lower_level, compressed_levels_dict_PAM50[level])
         # Get metrics of healthy controls
         ap_HC = average_metric(df_avg_HC, metric, upper_level, lower_level, slices_avg)
-        logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, betric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
+        logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, metric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
         logger.debug('metric_a =  {}, metric_b = {}, metric_i = {}'.format(ap[0], ap[1], ap[2]))
 
         # Compute MSCC
