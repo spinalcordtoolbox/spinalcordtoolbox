@@ -294,10 +294,10 @@ def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df
         slices_avg = np.arange(min(slice), max(slice), 1)
     else:
         slices_avg = slice
-    return get_mean_metric(df_metrics_PAM50, metric, upper_level, lower_level, slices_avg), slices_avg
+    return average_metric(df_metrics_PAM50, metric, upper_level, lower_level, slices_avg), slices_avg
 
 
-def get_mean_metric(df, metric, upper_level, lower_level, slices_avg):
+def average_metric(df, metric, upper_level, lower_level, slices_avg):
     """
     Average metric at compression level, at level above and below.
     :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
@@ -436,7 +436,7 @@ def main(argv: Sequence[str]):
         ap, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
                                                    upper_level, lower_level, compressed_levels_dict_PAM50[level])
         # Get metrics of healthy controls
-        ap_HC = get_mean_metric(df_avg_HC, metric, upper_level, lower_level, slices_avg)
+        ap_HC = average_metric(df_avg_HC, metric, upper_level, lower_level, slices_avg)
         logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, betric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
         logger.debug('metric_a =  {}, metric_b = {}, metric_i = {}'.format(ap[0], ap[1], ap[2]))
 
