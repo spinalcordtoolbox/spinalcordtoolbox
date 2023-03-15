@@ -362,9 +362,9 @@ def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
-        spamwriter = csv.writer(csvfile, delimiter=',')
+        csv_writer = csv.writer(csvfile, delimiter=',')
         line = [filename, level, metric_ratio, metric_ratio_nrom]
-        spamwriter.writerow(line)
+        csv_writer.writerow(line)
 
 
 def main(argv: Sequence[str]):
