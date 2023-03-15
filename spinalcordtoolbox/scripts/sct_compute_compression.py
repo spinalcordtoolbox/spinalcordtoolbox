@@ -37,9 +37,9 @@ def get_parser():
                     ' Metrics are normalized using a database of spinal cord morphometrics built from healthy control'
                     ' subjects. This database uses the PAM50 template as an anatomical reference system.'
 
-                    '[1]: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord injury:'
-                    ' MR imaging findings correlated with neurologic outcome--prospective study with 100 consecutive'
-                    ' patients. Radiology 2007;243(3):820-827.'
+                    '[1]: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord '
+                    'injury: MR imaging findings correlated with neurologic outcome--prospective study with 100 '
+                    'consecutive patients. Radiology 2007;243(3):820-827.'
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -53,8 +53,8 @@ def get_parser():
         '-l',
         metavar=Metavar.file,
         required=True,
-        help='NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single voxel of value `1`. '
-             'Example: sub-001_T2w_compression_labels.nii.gz'
+        help='NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single '
+             'voxel of value `1`. Example: sub-001_T2w_compression_labels.nii.gz'
     )
     mandatoryArguments.add_argument(
         '-i-PAM50',
@@ -97,7 +97,8 @@ def get_parser():
     optional.add_argument(
         '-o',
         metavar=Metavar.file,
-        help='Output CSV file name. If not provided, the suffix "_compression_metrics" is added to the file name provided by the flag "-i"'
+        help='Output CSV file name. If not provided, the suffix "_compression_metrics" is added to the file name '
+             'provided by the flag "-i"'
     )
     optional.add_argument(
         "-h",
@@ -206,7 +207,8 @@ def get_vertebral_level_from_slice(slices, df_metrics):
         raise ValueError(f"Slice {slices} doesn't have a computed metric")
     level_slice_dict = {}
     for level in np.unique(level_compression['VertLevel']):
-        level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level, 'Slice (I->S)'].to_list()
+        level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level,
+                                                        'Slice (I->S)'].to_list()
     return level_slice_dict
 
 
@@ -224,10 +226,12 @@ def get_up_lw_levels(levels, df, metric):
     upper_empty = df.loc[df['VertLevel'] == upper_level, metric].empty
     lower_empty = df.loc[df['VertLevel'] == lower_level, metric].empty
     if not lower_empty and upper_empty:
-        # Set upper level to lower level. Only normalize using the lower level instead of an average of upper and lower level.
+        # Set upper level to lower level.
+        # Only normalize using the lower level instead of an average of upper and lower level.
         upper_level = lower_level
     elif not upper_empty and lower_empty:
-        # Set lower level to upper level. Only normalize using the lower level instead of an average of upper and lower level.
+        # Set lower level to upper level.
+        # Only normalize using the lower level instead of an average of upper and lower level.
         lower_level = upper_level
 
     elif lower_empty and upper_empty:
@@ -240,7 +244,8 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     Get corresponding slice of compression in PAM50 space.
     :param compressed_level_dict: dict: Dictionary of levels and corresponding slice(s).
     :param df_metrics: pandas.DataFrame: Metrics output of sct_process_segmentation.
-    :param df_metrics_PAM50: pandas.DataFrame: Metrics output of sct_process_segmentation in PAM50 anatomical dimensions.
+    :param df_metrics_PAM50: pandas.DataFrame: Metrics output of sct_process_segmentation in PAM50 anatomical
+                                               dimensions.
     :return compression_level_dict_PAM50:
     """
     # TODO - won't be ok for most upper and lowest levels if they are not complete...
@@ -254,7 +259,8 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
         # Do interpolation from native space to PAM50
         x_PAM50 = np.arange(0, nb_slices_PAM50, 1)
         x = np.linspace(0, nb_slices_PAM50 - 1, nb_slices_level)
-        new_slices_coord = np.interp(x_PAM50, x, df_metrics.loc[df_metrics['VertLevel'] == level, 'Slice (I->S)'].to_list())
+        new_slices_coord = np.interp(x_PAM50, x,
+                                     df_metrics.loc[df_metrics['VertLevel'] == level, 'Slice (I->S)'].to_list())
         # find nearest index
         slices_PAM50 = []
         for slice in slices:
@@ -268,7 +274,8 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
 
 # Functions for Step 4 (Computing MSCC using spinal cord morphometrics.)
 # ==========================================================================================
-def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, upper_level, lower_level, slice):
+def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, upper_level,
+                              lower_level, slice):
     """
     Defines slices to average metric at compression level following slice thickness and averages metric at
     compression, across the entire level above and below compression.
