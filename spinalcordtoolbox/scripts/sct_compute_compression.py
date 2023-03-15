@@ -116,65 +116,8 @@ def get_parser():
     return parser
 
 
-def select_HC(fname_participants, sex=None, age=None):
-    """
-    Selects healthy controls to use for normalization based on sex and age range specified by the user.
-    :param fname_participants: Filename of participants.tsv
-    :param sex: Either F for female or M for male.
-    :param age: list: List of age range to select subjects.
-    :return list_to_include: list: List of participant_id
-    """
-    # Load participants information
-    data = pd.read_csv(fname_participants, sep="\t")
-    # Initialize lists
-    list_sub_sex = []
-    list_sub_age = []
-    # select subject with same sex
-    if sex:
-        list_sub_sex = data.loc[data['sex'] == sex, 'participant_id'].to_list()
-        if not age:
-            list_to_include = list_sub_sex
-    # select subjects within age range
-    if age:
-        list_sub_age = data.loc[data['age'].between(age[0], age[1]), 'participant_id'].to_list()
-        if not sex:
-            list_to_include = list_sub_age
-    if age and sex:
-        list_to_include = set(list_sub_age).intersection(list_sub_sex)
-    if not age and not sex:
-        list_to_include = data['participant_id'].to_list()
-    printv(f'{len(list_to_include)} healthy controls are used for normalization')
-    return list(list_to_include)
-
-
-def metric_ratio(ma, mb, mi):
-    """
-    Compute MSCC (Maximum Spinal Cord Compression) using the chosen metric of compression and of levels
-    above and bellow.
-    :param float: ma: metric of level above compression level.
-    :param float: mb: metric of level above compression level.
-    :param float: mi: metric at compression level.
-    :return float: metric ratio in %
-    """
-    return (1 - float(mi) / ((ma + mb) / float(2))) * 100
-
-
-def metric_ratio_norm(ap, ap_HC):
-    """
-    Compute normalized MSCC (Maximum Spinal Cord Compression) using the chosen metric at the compression and
-    levels above and bellow.
-    Each metric is divided by the corresponding value in healthy controls.
-    :param list: ap: list metric value of level above, below and at compression of patient.
-    :param list: ap_HC: list metric value of level above, below and at compression of healthy
-    controls.
-    :return float: MSCC normalized in %
-    """
-    ma = ap[0]/ap_HC[0]
-    mb = ap[1]/ap_HC[1]
-    mi = ap[2]/ap_HC[2]
-    return metric_ratio(ma, mb, mi)
-
-
+# Functions for Step 1 (Processing input data files)
+# ==========================================================================================
 def csv2dataFrame(filename, metric):
     """
     Loads a .csv file and builds a pandas dataFrame of the data
@@ -213,50 +156,37 @@ def get_compressed_slice(img, verbose):
     return [int(coordinate.z) for coordinate in coordinates]
 
 
-def get_verterbral_level_from_slice(slices, df_metrics):
+# Functions for Step 2 (Processing healthy controls from `PAM50_normalized_metrics` dataset)
+# ==========================================================================================
+def select_HC(fname_participants, sex=None, age=None):
     """
-    From slices, gets the coresponding vertebral level and creates a dict fo level and corresponding slice(s).
-    :param slices: list: list of slices number.
-    :param df_metrics: pandas.DataFrame: dataframe of metrics (output of sct_process_segmentation).
-    :return level_slice_dict: dict:
+    Selects healthy controls to use for normalization based on sex and age range specified by the user.
+    :param fname_participants: Filename of participants.tsv
+    :param sex: Either F for female or M for male.
+    :param age: list: List of age range to select subjects.
+    :return list_to_include: list: List of participant_id
     """
-    idx = df_metrics['Slice (I->S)'].isin(slices).tolist()
-    level_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
-    if level_compression.empty:
-        raise ValueError('Slice {} doesn\'t have a computed metric'.format(slices))
-    level_slice_dict = {}
-    for level in np.unique(level_compression['VertLevel']):
-        level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level, 'Slice (I->S)'].to_list()
-    return level_slice_dict
-
-
-def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, upper_level, lower_level, slice):
-    """
-    Defines slices to average metric at compression level following slice thickness and averages metric at
-    compression, across the entire level above and below compression.
-    :param slice_thickness: float: slice thickness of native image space.
-    :param slice_thickness_PAM50: float: slice thickness of the PAM50.
-    :param metric: str: metric to perform normalization
-    :param df_metrics_PAM50: pandas.DataFrame: Metrics of sct_process_segmentation in PAM50 anatomical dimensions.
-    :param upper_level: int: level above compression.
-    :param lower_level: int: level below compression.
-    :param slice: int: slice of spinal cord compression.
-    :return upper_AP_mean:
-    :retrun lower_AP_mean:
-    :retrun compressed_AP_mean:
-    :retrun slices_avg: Slices in PAM50 space to average metric.
-
-    """
-    # If resolution of image is higher than PAM50 template, get slices equivalent to native slice thickness
-    nb_slice = slice_thickness//slice_thickness_PAM50
-    if nb_slice > 1:
-        slices_avg = np.arange(min(slice) - nb_slice//2, max(slice) + nb_slice//2, 1)
-    # If more than one slice has compression, get all slices from that range
-    if len(slice) > 1:
-        slices_avg = np.arange(min(slice), max(slice), 1)
-    else:
-        slices_avg = slice
-    return get_mean_metric(df_metrics_PAM50, metric, upper_level, lower_level, slices_avg), slices_avg
+    # Load participants information
+    data = pd.read_csv(fname_participants, sep="\t")
+    # Initialize lists
+    list_sub_sex = []
+    list_sub_age = []
+    # select subject with same sex
+    if sex:
+        list_sub_sex = data.loc[data['sex'] == sex, 'participant_id'].to_list()
+        if not age:
+            list_to_include = list_sub_sex
+    # select subjects within age range
+    if age:
+        list_sub_age = data.loc[data['age'].between(age[0], age[1]), 'participant_id'].to_list()
+        if not sex:
+            list_to_include = list_sub_age
+    if age and sex:
+        list_to_include = set(list_sub_age).intersection(list_sub_sex)
+    if not age and not sex:
+        list_to_include = data['participant_id'].to_list()
+    printv(f'{len(list_to_include)} healthy controls are used for normalization')
+    return list(list_to_include)
 
 
 def average_hc(ref_folder, metric, list_HC):
@@ -301,24 +231,23 @@ def average_hc(ref_folder, metric, list_HC):
     return df
 
 
-def get_mean_metric(df, metric, upper_level, lower_level, slices_avg):
+# Functions for Step 3 (Fetching the compressed levels from the subject and PAM50 space)
+# ==========================================================================================
+def get_verterbral_level_from_slice(slices, df_metrics):
     """
-    Average metric at compression level, at level above and below.
-    :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
-    :param metric: str: metric to perform normalization
-    :param upper_level: int: level above compression.
-    :param lower_level: int: level below compression.
-    :param slices_avg: Slices in PAM50 space to average metrics.
-    :return: ma: float64: Metric above the compression
-    :retrun: mb: float64: Metric below the compression
-    :retrun: mi: float64: Metric at the compression level
+    From slices, gets the coresponding vertebral level and creates a dict fo level and corresponding slice(s).
+    :param slices: list: list of slices number.
+    :param df_metrics: pandas.DataFrame: dataframe of metrics (output of sct_process_segmentation).
+    :return level_slice_dict: dict:
     """
-    # find index of slices to average
-    idx = df['Slice (I->S)'].isin(slices_avg).tolist()
-    ma = df.loc[df['VertLevel'] == upper_level, metric].mean()
-    mb = df.loc[df['VertLevel'] == lower_level, metric].mean()
-    mi = df.loc[idx, metric].mean()
-    return ma, mb, mi
+    idx = df_metrics['Slice (I->S)'].isin(slices).tolist()
+    level_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
+    if level_compression.empty:
+        raise ValueError('Slice {} doesn\'t have a computed metric'.format(slices))
+    level_slice_dict = {}
+    for level in np.unique(level_compression['VertLevel']):
+        level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level, 'Slice (I->S)'].to_list()
+    return level_slice_dict
 
 
 def get_up_lw_levels(levels, df, metric):
@@ -375,6 +304,85 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
             slices_PAM50.append(new_slice)
         compression_level_dict_PAM50[level] = slices_PAM50
     return compression_level_dict_PAM50
+
+
+# Functions for Step 4 (Computing MSCC using spinal cord morphometrics.)
+# ==========================================================================================
+def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, upper_level, lower_level, slice):
+    """
+    Defines slices to average metric at compression level following slice thickness and averages metric at
+    compression, across the entire level above and below compression.
+    :param slice_thickness: float: slice thickness of native image space.
+    :param slice_thickness_PAM50: float: slice thickness of the PAM50.
+    :param metric: str: metric to perform normalization
+    :param df_metrics_PAM50: pandas.DataFrame: Metrics of sct_process_segmentation in PAM50 anatomical dimensions.
+    :param upper_level: int: level above compression.
+    :param lower_level: int: level below compression.
+    :param slice: int: slice of spinal cord compression.
+    :return upper_AP_mean:
+    :retrun lower_AP_mean:
+    :retrun compressed_AP_mean:
+    :retrun slices_avg: Slices in PAM50 space to average metric.
+
+    """
+    # If resolution of image is higher than PAM50 template, get slices equivalent to native slice thickness
+    nb_slice = slice_thickness//slice_thickness_PAM50
+    if nb_slice > 1:
+        slices_avg = np.arange(min(slice) - nb_slice//2, max(slice) + nb_slice//2, 1)
+    # If more than one slice has compression, get all slices from that range
+    if len(slice) > 1:
+        slices_avg = np.arange(min(slice), max(slice), 1)
+    else:
+        slices_avg = slice
+    return get_mean_metric(df_metrics_PAM50, metric, upper_level, lower_level, slices_avg), slices_avg
+
+
+def get_mean_metric(df, metric, upper_level, lower_level, slices_avg):
+    """
+    Average metric at compression level, at level above and below.
+    :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
+    :param metric: str: metric to perform normalization
+    :param upper_level: int: level above compression.
+    :param lower_level: int: level below compression.
+    :param slices_avg: Slices in PAM50 space to average metrics.
+    :return: ma: float64: Metric above the compression
+    :retrun: mb: float64: Metric below the compression
+    :retrun: mi: float64: Metric at the compression level
+    """
+    # find index of slices to average
+    idx = df['Slice (I->S)'].isin(slices_avg).tolist()
+    ma = df.loc[df['VertLevel'] == upper_level, metric].mean()
+    mb = df.loc[df['VertLevel'] == lower_level, metric].mean()
+    mi = df.loc[idx, metric].mean()
+    return ma, mb, mi
+
+
+def metric_ratio(ma, mb, mi):
+    """
+    Compute MSCC (Maximum Spinal Cord Compression) using the chosen metric of compression and of levels
+    above and bellow.
+    :param float: ma: metric of level above compression level.
+    :param float: mb: metric of level above compression level.
+    :param float: mi: metric at compression level.
+    :return float: metric ratio in %
+    """
+    return (1 - float(mi) / ((ma + mb) / float(2))) * 100
+
+
+def metric_ratio_norm(ap, ap_HC):
+    """
+    Compute normalized MSCC (Maximum Spinal Cord Compression) using the chosen metric at the compression and
+    levels above and bellow.
+    Each metric is divided by the corresponding value in healthy controls.
+    :param list: ap: list metric value of level above, below and at compression of patient.
+    :param list: ap_HC: list metric value of level above, below and at compression of healthy
+    controls.
+    :return float: MSCC normalized in %
+    """
+    ma = ap[0]/ap_HC[0]
+    mb = ap[1]/ap_HC[1]
+    mi = ap[2]/ap_HC[2]
+    return metric_ratio(ma, mb, mi)
 
 
 def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename):
