@@ -154,7 +154,7 @@ if exist %SCT_DIR%\spinalcordtoolbox.egg-info\ (
 )
 
 rem Move into the SCT installation directory
-pushd %SCT_DIR%
+pushd %SCT_DIR% || goto error
 
 rem Install portable miniconda instance. (Command source: https://github.com/conda/conda/issues/1977)
 echo:
