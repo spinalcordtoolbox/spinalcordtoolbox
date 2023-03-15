@@ -534,6 +534,15 @@ if [[ -x "$SCT_DIR/$BIN_DIR" ]]; then
   find "$SCT_DIR/$BIN_DIR" -type l -name 'sct_*' -exec rm {} \;
   find "$SCT_DIR/$BIN_DIR" -type l -name 'isct_*' -exec rm {} \;
 fi
+# Remove old python folder
+if [[ -x "$SCT_DIR/$BIN_DIR" ]]; then
+  run rm -rf "$SCT_DIR/$PYTHON_DIR"
+  run mkdir -p "$SCT_DIR/$PYTHON_DIR"
+fi
+# Remove old '.egg-info` folder created by editable installs
+if [[ -x "$SCT_DIR"/spinalcordtoolbox.egg-info ]]; then
+  run rm -rf "$SCT_DIR"/spinalcordtoolbox.egg-info
+fi
 
 # Go to installation folder
 cd "$SCT_DIR"
@@ -594,14 +603,6 @@ fi
 # ----------------------------------------------------------------------------------------------------------------------
 # Install Python
 # ----------------------------------------------------------------------------------------------------------------------
-
-
-# Remove old python folder
-run rm -rf "$SCT_DIR/$PYTHON_DIR"
-run mkdir -p "$SCT_DIR/$PYTHON_DIR"
-
-# Remove old '.egg-info` folder created by editable installs
-run rm -rf "$SCT_DIR"/spinalcordtoolbox.egg-info
 
 # Download miniconda
 print info "Downloading Miniconda..."

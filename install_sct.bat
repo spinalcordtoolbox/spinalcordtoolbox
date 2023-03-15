@@ -136,24 +136,25 @@ if not %SCT_DIR%==%SCT_SOURCE% (
   echo ### Skipping copy of source files ^(source and destination folders are the same^)
 )
 
-rem Move into the SCT installation directory
-pushd %SCT_DIR%
-
-rem Clean old install setup if existing
-if exist bin\ (
+rem Clean old install setup in bin/ if existing
+if exist %SCT_DIR%\bin\ (
   echo ### Removing sct and isct softlink inside the SCT directory...
-  rmdir /s /q bin\ || goto error
+  del %SCT_DIR%\bin\sct_* || goto error
+  del %SCT_DIR%\bin\isct_* || goto error
 )
 rem Remove old python folder
-if exist python\ (
+if exist %SCT_DIR%\python\ (
   echo ### Removing existing 'python' folder inside the SCT directory...
-  rmdir /s /q python\ || goto error
+  rmdir /s /q %SCT_DIR%\python\ || goto error
 )
 rem Remove old '.egg-info` folder created by editable installs
-if exist spinalcordtoolbox.egg-info\ (
+if exist %SCT_DIR%\spinalcordtoolbox.egg-info\ (
   echo ### Removing existing '.egg-info' folder inside the SCT directory...
-  rmdir /s /q spinalcordtoolbox.egg-info\ || goto error
+  rmdir /s /q %SCT_DIR%\spinalcordtoolbox.egg-info\ || goto error
 )
+
+rem Move into the SCT installation directory
+pushd %SCT_DIR%
 
 rem Install portable miniconda instance. (Command source: https://github.com/conda/conda/issues/1977)
 echo:
