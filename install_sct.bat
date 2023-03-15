@@ -79,7 +79,6 @@ rem Allow user to set a custom installation directory
 :while_loop_sct_dir
   echo:
   echo ### SCT will be installed here: [%SCT_DIR%]
-  set new_install=%SCT_DIR%
   set keep_default_path=yes
   :while_loop_path_agreement
     set /p keep_default_path="### Do you agree? [y]es/[n]o: "
@@ -96,6 +95,15 @@ rem Allow user to set a custom installation directory
   echo:
   echo ### Choose install directory.
   set /p new_install="### Warning^! Give full path ^(e.g. C:\Users\username\sct_v3.0^): "
+
+  rem Check user-selected path for spaces
+  if not "%new_install%"=="%new_install: =%" (
+       echo ### WARNING: Install directory %new_install% contains spaces.
+       echo ### SCT uses conda, which does not permit spaces in installation paths.
+       echo ### More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716
+       echo:
+       goto :while_loop_sct_dir
+  )
 
   rem Validate the user's choice of path
   if exist %new_install% (

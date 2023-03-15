@@ -482,8 +482,15 @@ Do you agree? [y]es/[n]o: "
   # Remove trailing /
   new_install="${new_install%/}"
 
+  # Check user-selected path for spaces
+  space_regex="[[:space:]]+"
+  if [[ $SCT_DIR =~ $space_regex ]]; then
+    print info "ERROR: Install directory $SCT_DIR contains spaces.\n\
+                SCT uses conda, which does not permit spaces in installation paths.\n\
+                More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
+    continue
   # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
-  if [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]]; then
+  elif [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]]; then
     print info "Cannot be installed directly in $new_install"
     print info "Please pick a full path"
     continue
@@ -500,13 +507,6 @@ Do you agree? [y]es/[n]o: "
     break
   fi
 done
-
-space_regex="[[:space:]]+"
-if [[ $SCT_DIR =~ $space_regex ]]; then
-  die "ERROR: Install directory $SCT_DIR contains spaces.\n\
-       SCT uses conda, which does not permit spaces in installation paths.\n\
-       More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
-fi
 
 # Create directory
 mkdir -p "$SCT_DIR"
