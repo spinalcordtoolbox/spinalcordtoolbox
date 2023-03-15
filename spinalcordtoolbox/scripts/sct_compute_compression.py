@@ -203,7 +203,7 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     idx = df_metrics['Slice (I->S)'].isin(slices).tolist()
     level_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
     if level_compression.empty:
-        raise ValueError('Slice {} doesn\'t have a computed metric'.format(slices))
+        raise ValueError(f"Slice {slices} doesn't have a computed metric")
     level_slice_dict = {}
     for level in np.unique(level_compression['VertLevel']):
         level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level, 'Slice (I->S)'].to_list()
