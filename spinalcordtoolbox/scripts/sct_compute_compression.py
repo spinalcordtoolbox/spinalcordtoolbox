@@ -29,6 +29,9 @@ from spinalcordtoolbox import __data_dir__
 logger = logging.getLogger(__name__)
 
 
+NEAR_ZERO_THRESHOLD = 1e-6
+
+
 # PARSER
 # ==========================================================================================
 def get_parser():
@@ -241,7 +244,7 @@ def get_centerline_object(im_seg, verbose):
     param_centerline = ParamCenterline(
                        algo_fitting='bspline',  # TODO add as default arg
                        smooth=30,  # TODO add as default arg
-                       minmax=False)  # Check if we want min max or not
+                       minmax=True)  # Check if we want min max or not
 
     _, arr_ctl_phys, arr_ctl_der_phys, _ = get_centerline(im_seg, param_centerline,
                                                           verbose=verbose, space="phys")
@@ -249,7 +252,24 @@ def get_centerline_object(im_seg, verbose):
     return ctl_seg
 
 
-#def get_slices_level():
+def get_slices_level(centerline, distance, extent, z_compressions, z_ref):
+    length = centerline.incremental_length_inverse
+    # Get z index of lowest (min) and highest (max) compression
+    z_compression_low = min(z_compressions)
+    z_compression_high = max(z_compressions)
+    # Get slices range for level below lowest compression
+    idx = z_ref[z_compression_low]
+    length_0 = length[idx]
+    zmax_low = z_ref[np.argmin(np.array([np.abs(i - length_0 + distance) for i in length]))]
+    zmin_low = z_ref[np.argmin(np.array([np.abs(i - length_0 + distance + extent) for i in length]))]
+
+    # Get slices range for level above highest compression
+    idx = z_ref[z_compression_high]
+    length_0 = length[idx]
+    zmin_high = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance) for i in length]))]
+    zmax_high = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance - extent) for i in length]))]
+    # TODO: check if z ranges is included in segmentation
+    return np.arange(zmin_low, zmax_low, 1), np.arange(zmin_high, zmax_high, 1)
 
 
 def get_verterbral_level_from_slice(slices, df_metrics):
@@ -470,11 +490,17 @@ def main(argv: Sequence[str]):
     # Get vertebral level corresponding to the slice with the compression
     slice_thickness = get_slice_thickness(img)
     slice_compressed = get_compressed_slice(img, verbose)
-    # Get spinale cord centerline object
+    # Get spinal cord centerline object
     im_seg = Image(fname_segmentation).change_orientation('RPI')
+    # Get max and min index of the segmentation with pmj
+    _, _, Z = (im_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
+    min_z_index, max_z_index = min(Z), max(Z)
+    # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
+    z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
+
     centerline = get_centerline_object(im_seg, verbose=verbose)
-    length_from_pmj = centerline.incremental_length_inverse[::-1]
-    print(length_from_pmj)
+    z_above, z_below = get_slices_level(centerline, distance, extent, slice_compressed, z_ref)
+
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     # Get vertebral level above and below the compression
     upper_level, lower_level = get_up_lw_levels(compressed_levels_dict.keys(), df_metrics, metric)
@@ -508,7 +534,7 @@ def main(argv: Sequence[str]):
         df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, metric)
 
         # Get slices corresponding in PAM50 space
-        compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
+        compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50) # TODO change to use slices
 
         # Get data from healthy control and average them
         df_avg_HC = average_hc(path_ref, metric, list_HC)
