@@ -440,6 +440,10 @@ def main(argv: Sequence[str]):
         fname_out = os.path.join(path, file_name + '_compression_metrics' + ext)
     fname_metrics = get_absolute_path(arguments.i)
     metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
+    # Fetch distance and extent and segmentation
+    fname_segmentation = get_absolute_path(arguments.s)
+    distance = arguments.distance
+    extent = arguments.extent
     # Fetch metrics of subject
     df_metrics = csv2dataFrame(fname_metrics, metric)
     # Get vertebral level corresponding to the slice with the compression
