@@ -58,6 +58,12 @@ def get_parser():
              'Example: sub-001_T2w_compression_labels.nii.gz'
     )
     mandatoryArguments.add_argument(
+        '-s',
+        metavar=Metavar.file,
+        required=True,
+        help='NIfTI file of spinal cord segmentation.'
+    )
+    mandatoryArguments.add_argument(
         '-metric',
         required=False,
         help='Metric to normalize.'
