@@ -80,6 +80,12 @@ def get_parser():
         'sct_process_segmentation -normalize-PAM50.'
     )
     optional.add_argument(
+        '-extent',
+        metavar=Metavar.file,
+        default=20.0,
+        help='Extent (in mm) to average metrics of healthy levels in superior-inferior direction.'
+    )
+    optional.add_argument(
         '-file-participants',
         metavar=Metavar.file,
         default='participants.tsv',
