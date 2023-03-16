@@ -21,6 +21,8 @@ import pandas as pd
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
 from spinalcordtoolbox.utils.fs import get_absolute_path, check_file_exist, extract_fname, printv
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
+from spinalcordtoolbox.types import Centerline
 from spinalcordtoolbox import __data_dir__
 
 
@@ -229,6 +231,25 @@ def get_compressed_slice(img, verbose):
         raise ValueError('No compression labels found.')
     # Return only slices number
     return [int(coordinate.z) for coordinate in coordinates]
+
+
+def get_centerline_object(im_seg, verbose):
+    """
+    Get centerline object in physical dimensions
+    """
+    # Compute spinalcordtoolbox.types.Centerline class from get_centerline wit physical coordinates
+    param_centerline = ParamCenterline(
+                       algo_fitting='bspline',  # TODO add as default arg
+                       smooth=30,  # TODO add as default arg
+                       minmax=False)  # Check if we want min max or not
+
+    _, arr_ctl_phys, arr_ctl_der_phys, _ = get_centerline(im_seg, param_centerline,
+                                                          verbose=verbose, space="phys")
+    ctl_seg = Centerline(*arr_ctl_phys, *arr_ctl_der_phys)
+    return ctl_seg
+
+
+#def get_slices_level():
 
 
 def get_verterbral_level_from_slice(slices, df_metrics):
@@ -449,7 +470,11 @@ def main(argv: Sequence[str]):
     # Get vertebral level corresponding to the slice with the compression
     slice_thickness = get_slice_thickness(img)
     slice_compressed = get_compressed_slice(img, verbose)
-
+    # Get spinale cord centerline object
+    im_seg = Image(fname_segmentation).change_orientation('RPI')
+    centerline = get_centerline_object(im_seg, verbose=verbose)
+    length_from_pmj = centerline.incremental_length_inverse[::-1]
+    print(length_from_pmj)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     # Get vertebral level above and below the compression
     upper_level, lower_level = get_up_lw_levels(compressed_levels_dict.keys(), df_metrics, metric)
