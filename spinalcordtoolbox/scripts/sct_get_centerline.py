@@ -94,11 +94,6 @@ def get_parser():
         help="Gap in mm between manually selected points. Only with method=viewer."
     )
     optional.add_argument(
-        "-igt",
-        metavar=Metavar.file,
-        help="File name of ground-truth centerline or segmentation (binary nifti)."
-    )
-    optional.add_argument(
         '-v',
         metavar=Metavar.int,
         type=int,
