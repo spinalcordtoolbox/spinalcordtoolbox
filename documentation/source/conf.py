@@ -148,6 +148,12 @@ html_context = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# A list of paths that contain extra files not directly related to the
+# documentation, such as robots.txt or .htaccess. Relative paths are taken as
+# relative to the configuration directory. They are copied to the output directory.
+# They will overwrite any existing file of the same name.
+html_extra_path = ['_extra']
+
 html_css_files = ['css/custom.css', 'css/pygments_dark.css']
 
 # Custom sidebar templates, must be a dictionary that maps document names
