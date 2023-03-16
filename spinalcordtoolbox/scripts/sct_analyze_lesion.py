@@ -565,14 +565,14 @@ def main(argv: Sequence[str]):
     if fname_ref is not None:
         display_viewer_syntax(
             files=[fname_mask, os.path.join(path_results, lesion_obj.fname_label)],
-            colormaps=['gray', 'red-yellow'],
+            im_types=['anat', 'softseg'],
             opacities=['1.0', '0.7'],
             verbose=verbose
         )
     else:
         display_viewer_syntax(
             files=[os.path.join(path_results, lesion_obj.fname_label)],
-            colormaps=['red-yellow'],
+            im_types=['softseg'],
             opacities=['0.7'],
             verbose=verbose
         )

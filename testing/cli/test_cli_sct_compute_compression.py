@@ -131,7 +131,7 @@ def test_sct_compute_compression(tmp_path, dummy_3d_label_label, dummy_metrics_c
         row = next(reader)
         assert row['Compression Level'] == '7.0'
         assert float(row['diameter_AP ratio']) == pytest.approx(11.471813876181447)
-        assert float(row['Normalized diameter_AP ratio']) == pytest.approx(11.58918916499989)
+        assert float(row['Normalized diameter_AP ratio']) == pytest.approx(11.589189164999869)
 
 
 def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_label_label, dummy_metrics_csv, dummy_metrics_csv_pam50):
@@ -144,4 +144,4 @@ def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_label_label, dummy_met
         row = next(reader)
         assert row['Compression Level'] == '7.0'
         assert float(row['diameter_AP ratio']) == pytest.approx(11.471813876181447)
-        assert float(row['Normalized diameter_AP ratio']) == pytest.approx(11.67288795060969)
+        assert float(row['Normalized diameter_AP ratio']) == pytest.approx(11.672887950609612)
