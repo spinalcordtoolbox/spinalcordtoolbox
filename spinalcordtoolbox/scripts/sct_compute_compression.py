@@ -81,7 +81,8 @@ def get_parser():
     )
     optional.add_argument(
         '-extent',
-        metavar=Metavar.file,
+        type=float,
+        metavar=Metavar.float,
         default=20.0,
         help='Extent (in mm) to average metrics of healthy levels in superior-inferior direction.'
     )
