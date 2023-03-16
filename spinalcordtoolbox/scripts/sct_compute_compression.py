@@ -472,7 +472,7 @@ def main(argv: Sequence[str]):
                                                        upper_level, lower_level, compressed_levels_dict[level])
             # Get metrics of healthy controls
             ap_HC = get_mean_metric(df_avg_HC, metric, upper_level, lower_level, slices_avg)
-            logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, betric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
+            logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, metric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
             # Compute Normalized Ratio
             metric_ratio_norm_result = metric_ratio_norm(ap, ap_HC)
         else:
