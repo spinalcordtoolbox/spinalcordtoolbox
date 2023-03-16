@@ -87,6 +87,13 @@ def get_parser():
         help='Extent (in mm) to average metrics of healthy levels in superior-inferior direction.'
     )
     optional.add_argument(
+        '-distance',
+        type=float,
+        metavar=Metavar.float,
+        default=10.0,
+        help='Distance (in mm) in the superior-inferior direction from the compression to average healthy slices.'
+    )
+    optional.add_argument(
         '-file-participants',
         metavar=Metavar.file,
         default='participants.tsv',
