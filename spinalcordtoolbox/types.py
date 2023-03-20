@@ -439,7 +439,6 @@ class Centerline:
         if not is_C2_here and C1 is not None and C3 is not None:
             discs_levels.append([(C1[0] + C3[0]) / 2.0, (C1[1] + C3[1]) / 2.0, (C1[2] + C3[2]) / 2.0, 2])
 
-        labels_points = [0] * self.number_of_points
         self.l_points = [0] * self.number_of_points
         self.dist_points = [0] * self.number_of_points
         self.dist_points_rel = [0] * self.number_of_points
@@ -452,7 +451,6 @@ class Centerline:
                 coord_level = [level[0], level[1], level[2]]
                 disc = self.regions_labels[int(level[3])]
                 nearest_index = self.find_nearest_index(coord_level)
-                labels_points[nearest_index] = disc + '-0.0'
                 self.index_disc[disc] = nearest_index
                 index_disc_inv.append([nearest_index, disc])
 
