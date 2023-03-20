@@ -11,6 +11,8 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
+from operator import itemgetter
+
 from numpy import dot, cross, array, einsum, tile, multiply, stack, rollaxis, zeros
 from numpy.linalg import norm, inv
 import numpy as np
@@ -466,7 +468,6 @@ class Centerline:
         if last_label is not None:
             self.last_label = self.list_labels[last_label]
 
-        from operator import itemgetter
         index_disc_inv.append([0, 'bottom'])
         index_disc_inv = sorted(index_disc_inv, key=itemgetter(0))
 
