@@ -469,7 +469,7 @@ class Centerline:
             self.last_label = self.list_labels[last_label]
 
         index_disc_inv.append([0, 'bottom'])
-        index_disc_inv = sorted(index_disc_inv, key=itemgetter(0))
+        index_disc_inv.sort(key=itemgetter(0))
 
         progress_length = zeros(self.number_of_points)
         for i in range(self.number_of_points - 1):
