@@ -464,8 +464,6 @@ class Centerline:
         if first_label is not None:
             self.first_label = self.list_labels[first_label]
         if last_label is not None:
-            if last_label == len(self.list_labels):
-                last_label -= 1
             self.last_label = self.list_labels[last_label]
 
         from operator import itemgetter
