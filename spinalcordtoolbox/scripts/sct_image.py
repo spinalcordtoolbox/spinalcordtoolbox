@@ -24,7 +24,8 @@ from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orie
                                      create_formatted_header_string, HEADER_FORMATS,
                                      stitch_images, generate_stitched_qc_images)
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
+from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder,
+                                           list_type)
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
 
@@ -167,6 +168,25 @@ def get_parser():
             'SLA', 'SLP', 'SRA', 'SRP', 'SAL', 'SAR', 'SPL', 'SPR',
             'ILA', 'ILP', 'IRA', 'IRP', 'IAL', 'IAR', 'IPL', 'IPR',
         ],
+        required=False)
+    orientation.add_argument(
+        '-flip',
+        help="Flip an axis of the image's data array. (This will not change the header orientation string.)\n"
+             "(WARNING: This option should only be used to fix the data array when it does not match the orientation "
+             "string in the header. We recommend that you investigate and understand where the mismatch originated "
+             "from in the first place before using this option.)\n"
+             "Example: For an image with 'RPI' in its header, `-flip x` will flip the LR axis of the data array.",
+        choices=['x', 'y', 'z', 't'],
+        required=False)
+    orientation.add_argument(
+        '-transpose',
+        help="Transpose the axes of the image's data array. (This will not change the header orientation string.)\n "
+             "(WARNING: This option should only be used to fix the data array when it does not match the orientation "
+             "string in the header. We recommend that you investigate and understand where the mismatch originated "
+             "from in the first place before using this option.)\n"
+             "Example: For a 3D image with 'RPI' in its header, `-transpose z,y,x` will swap the LR and SI axes of "
+             "the data array.'",
+        type=list_type(',', str),
         required=False)
 
     multi = parser.add_argument_group('MULTI-COMPONENT OPERATIONS ON ITK COMPOSITE WARPING FIELDS')
@@ -335,6 +355,23 @@ def main(argv: Sequence[str]):
     elif arguments.setorient is not None:
         printv(im_in.absolutepath)
         im_out = [change_orientation(im_in, arguments.setorient)]
+
+    elif arguments.flip is not None:
+        if dim_list.index(arguments.flip) >= len(im_in.data.shape):
+            parser.error(f"Cannot flip axis '{arguments.flip}' on an image with n_dim = {len(im_in.data.shape)}.")
+        im_out = im_in.copy()
+        im_out.data = np.flip(im_out.data, axis=dim_list.index(arguments.flip))
+        im_out = [im_out]
+
+    elif arguments.transpose is not None:
+        if len(arguments.transpose) != len(im_in.data.shape):
+            parser.error(f"Transpose argument '{','.join(arguments.transpose)}' must match number of image dimensions "
+                         f"in the input image ({len(im_in.data.shape)}).")
+        im_out = im_in.copy()
+        transpose_numerical = [dim_list.index(axis)  # Convert [x, y, z, t] to [0, 1, 2, 3]
+                               for axis in arguments.transpose]
+        im_out.data = np.transpose(im_out.data, axes=transpose_numerical)
+        im_out = [im_out]
 
     elif arguments.header is not None:
         header = im_in.header
