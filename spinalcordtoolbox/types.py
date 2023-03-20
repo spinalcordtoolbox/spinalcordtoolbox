@@ -486,15 +486,17 @@ class Centerline:
             self.label_reference = label_reference
 
         self.distance_from_C1label = {}
-        for disc in self.index_disc:
-            self.distance_from_C1label[disc] = progress_length[self.index_disc[self.label_reference]] - progress_length[self.index_disc[disc]]
+        progress_length_reference = progress_length[self.index_disc[self.label_reference]]
+        for disc, i in self.index_disc.items():
+            self.distance_from_C1label[disc] = progress_length_reference - progress_length[i]
 
         for i in range(1, len(index_disc_inv)):
+            disc = index_disc_inv[i][1]
             for j in range(index_disc_inv[i - 1][0], index_disc_inv[i][0]):
-                self.l_points[j] = index_disc_inv[i][1]
+                self.l_points[j] = disc
 
         for i in range(self.number_of_points):
-            self.dist_points[i] = progress_length[self.index_disc[self.label_reference]] - progress_length[i]
+            self.dist_points[i] = progress_length_reference - progress_length[i]
 
         for i in range(self.number_of_points):
             current_label = self.l_points[i]
