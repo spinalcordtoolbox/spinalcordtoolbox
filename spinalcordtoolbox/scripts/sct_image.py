@@ -168,25 +168,6 @@ def get_parser():
             'ILA', 'ILP', 'IRA', 'IRP', 'IAL', 'IAR', 'IPL', 'IPR',
         ],
         required=False)
-    orientation.add_argument(
-        '-setorient-data',
-        help='Set orientation of the input image\'s data (modifies ONLY the data array, and leaves the header alone).\n'
-             'Example usage: If `-getorient` returns "RPI", then:\n'
-             '  - Calling `-setorient-data LPI` will flip the LR axis of the data array.\n'
-             '  - Calling `-setorient-data IPR` will rearrange the first and last axes of the data array.\n'
-             '  - In both cases, calling `-getorient` afterwards will still return "RPI", because the header is '
-             'not modified.\n'
-             'WARNING: Use with care, as improper usage may introduce a mismatch between orientation of the header, '
-             'and the orientation of the data array.\n',
-        choices=[
-            'LAS', 'LAI', 'LPS', 'LPI', 'LSA', 'LSP', 'LIA', 'LIP',
-            'RAS', 'RAI', 'RPS', 'RPI', 'RSA', 'RSP', 'RIA', 'RIP',
-            'ALS', 'ALI', 'ARS', 'ARI', 'ASL', 'ASR', 'AIL', 'AIR',
-            'PLS', 'PLI', 'PRS', 'PRI', 'PSL', 'PSR', 'PIL', 'PIR',
-            'SLA', 'SLP', 'SRA', 'SRP', 'SAL', 'SAR', 'SPL', 'SPR',
-            'ILA', 'ILP', 'IRA', 'IRP', 'IAL', 'IAR', 'IPL', 'IPR',
-        ],
-        required=False)
 
     multi = parser.add_argument_group('MULTI-COMPONENT OPERATIONS ON ITK COMPOSITE WARPING FIELDS')
     multi.add_argument(
@@ -354,9 +335,6 @@ def main(argv: Sequence[str]):
     elif arguments.setorient is not None:
         printv(im_in.absolutepath)
         im_out = [change_orientation(im_in, arguments.setorient)]
-
-    elif arguments.setorient_data is not None:
-        im_out = [change_orientation(im_in, arguments.setorient_data, data_only=True)]
 
     elif arguments.header is not None:
         header = im_in.header
