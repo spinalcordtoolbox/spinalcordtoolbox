@@ -456,13 +456,9 @@ class Centerline:
 
                 # Finding minimum and maximum label, based on list_labels, which is ordered from top to bottom.
                 index_label = self.list_labels.index(int(level[3]))
-                if first_label is None:
+                if first_label is None or index_label < first_label:
                     first_label = index_label
-                if index_label < first_label:
-                    first_label = index_label
-                if last_label is None:
-                    last_label = index_label
-                if index_label > last_label:
+                if last_label is None or index_label > last_label:
                     last_label = index_label
 
         if first_label is not None:
