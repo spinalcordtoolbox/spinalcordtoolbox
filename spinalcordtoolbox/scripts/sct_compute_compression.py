@@ -473,7 +473,7 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
         zmin_above = zmin_below
         not_above = True
     if not_above and not_below:
-        raise ValueError("No slices of level above of below with a distance of "
+        raise ValueError("No metrics of level above and below all compressions are available with a distance of "
                          + str(distance) + " mm and extent of " + str(extent)
                          + " mm. Please provide another distance and extent.")
     # Take last available slice if extent is out of range
