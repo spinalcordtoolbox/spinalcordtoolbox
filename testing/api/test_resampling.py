@@ -5,7 +5,8 @@
 # TODO: add test for 2d image
 
 
-import sys, os
+import sys
+import os
 import pytest
 
 import numpy as np
