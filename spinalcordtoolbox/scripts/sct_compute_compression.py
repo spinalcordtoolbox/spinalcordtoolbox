@@ -435,7 +435,7 @@ def get_slices_upper_lower_level(compression_level_dict_PAM50, df_metrics_PAM50,
     zmax_above = int(max(compression_level_dict_PAM50[level_above]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
     # Get slices to average at distance across the chosen extent for the lowest level
     zmin_below = int(min(compression_level_dict_PAM50[level_below]) - distance/slice_thickness_PAM50 - extent/slice_thickness_PAM50)
-    zmaxbelow = int(min(compression_level_dict_PAM50[level_below]) - distance/slice_thickness_PAM50)
+    zmax_below = int(min(compression_level_dict_PAM50[level_below]) - distance/slice_thickness_PAM50)
     # Check if slices have available metrics
     df_metrics_PAM50_short = df_metrics_PAM50.drop(columns=['DistancePMJ', 'SUM(length)'])
     df_metrics_PAM50_short.dropna(inplace=True)
