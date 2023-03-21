@@ -534,19 +534,18 @@ class Centerline:
 
     def get_closest_to_relative_position(self, vertebral_level, relative_position):
         """
-        :param vertebral_level:
+        :param vertebral_level: the name of a vertebral level, as a string
         :param relative_position: the relative position [0, 1] from upper disc
         """
-        indexes_vert = np.argwhere(np.array(self.l_points) == vertebral_level)
-        if len(indexes_vert) == 0:
+        dist_indices = [
+            (abs(self.dist_points_rel[i] - relative_position), i)
+            for i in range(self.number_of_points)
+            if self.l_points[i] == vertebral_level
+        ]
+        if dist_indices:
+            return min(dist_indices)[1]
+        else:
             return None
-        # find closest
-        arr_dist_rel = np.array(self.dist_points_rel)
-        idx = np.argmin(np.abs(arr_dist_rel[indexes_vert] - relative_position))
-        result = indexes_vert[idx]
-        if isinstance(result, list) or isinstance(result, np.ndarray):
-            result = result[0]
-        return result
 
     def get_closest_to_absolute_position(self, vertebral_level, relative_position, backup_index=None, backup_centerline=None, mode='levels'):
         if mode == 'levels':
