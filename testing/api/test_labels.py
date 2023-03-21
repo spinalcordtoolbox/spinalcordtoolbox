@@ -96,6 +96,7 @@ def test_cubic_to_point(test_image):
     sct_labels.cubic_to_point(a)
     # TODO [AJ] implement test
 
+
 @pytest.mark.parametrize("test_image", test_images)
 def test_increment_z_inverse(test_image):
     a = zeros_like(test_image.copy())

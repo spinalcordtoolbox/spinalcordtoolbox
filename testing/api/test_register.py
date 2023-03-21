@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 # FIXME [AJ] fetch/compute input data from sct_testing_data/ instead of the manually copied hardcoded files below
 
+
 @pytest.fixture
 def step0_data():
     """
@@ -52,6 +53,7 @@ def step0_data():
     cli_params.debug = 2
 
     return src, dest, step, cli_params
+
 
 @pytest.fixture
 def step1_data():
@@ -88,6 +90,7 @@ def step1_data():
 
     return src, dest, step, cli_params
 
+
 @pytest.fixture
 def step2_data():
     """
@@ -123,6 +126,7 @@ def step2_data():
 
     return src, dest, step, cli_params
 
+
 @pytest.fixture
 def step_axial_data_in_same_space():
     """
@@ -143,6 +147,7 @@ def step_axial_data_in_same_space():
 
     return src, dest, step, cli_params
 
+
 @pytest.mark.skip(reason="Need to fix input test data")
 def test_register_step_label(step0_data):
     """
@@ -154,17 +159,20 @@ def test_register_step_label(step0_data):
 
     warp_forward_out, warp_inverse_out = register_step_label(src=src, dest=dest, step=step, verbose=cli_params.verbose)
 
+
 @pytest.mark.skip(reason="TODO")
 def test_register_step_slicewise():
     """
     """
     raise NotImplementedError()
 
+
 @pytest.mark.skip(reason="TODO")
 def test_register_step_slicewise_ants():
     """
     """
     raise NotImplementedError()
+
 
 @pytest.mark.skip(reason="Need to fix input test data")
 def test_register_step_ants_registration(step2_data):
@@ -218,12 +226,14 @@ def test_register_step0(step0_data):
     src, dest, step, cli_params = step0_data
     warp_forward_out, warp_inverse_out = register(src=src, dest=dest, step=step, param=cli_params)
 
+
 @pytest.mark.skip(reason="Need to fix input test data")
 def test_register_step1(step1_data):
     """
     """
     src, dest, step, cli_params = step1_data
     warp_forward_out, warp_inverse_out = register(src=src, dest=dest, step=step, param=cli_params)
+
 
 @pytest.mark.skip(reason="Need to fix input test data")
 def test_register_step2(step2_data):
@@ -232,11 +242,13 @@ def test_register_step2(step2_data):
     src, dest, step, cli_params = step2_data
     warp_forward_out, warp_inverse_out = register(src=src, dest=dest, step=step, param=cli_params)
 
+
 @pytest.mark.skip(reason="TODO")
 def test_register2d_centermassrot():
     """
     """
     raise NotImplementedError()
+
 
 @pytest.mark.skip(reason="TODO")
 def test_register2d_columnwise():
@@ -244,11 +256,13 @@ def test_register2d_columnwise():
     """
     raise NotImplementedError()
 
+
 @pytest.mark.skip(reason="TODO")
 def test_register2d():
     """
     """
     raise NotImplementedError()
+
 
 @pytest.mark.skip(reason="TODO")
 def test_register_slicewise():
