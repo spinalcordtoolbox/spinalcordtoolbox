@@ -447,7 +447,7 @@ class Centerline:
         self.index_disc, index_disc_inv = {}, []
 
         # extracting each level based on position and computing its nearest point along the centerline
-        first_label, last_label = None, None
+        index_first_label, index_last_label = None, None
         for level in discs_levels:
             if level[3] in self.list_labels:
                 coord_level = [level[0], level[1], level[2]]
@@ -458,15 +458,15 @@ class Centerline:
 
                 # Finding minimum and maximum label, based on list_labels, which is ordered from top to bottom.
                 index_label = self.list_labels.index(int(level[3]))
-                if first_label is None or index_label < first_label:
-                    first_label = index_label
-                if last_label is None or index_label > last_label:
-                    last_label = index_label
+                if index_first_label is None or index_label < index_first_label:
+                    index_first_label = index_label
+                if index_last_label is None or index_label > index_last_label:
+                    index_last_label = index_label
 
-        if first_label is not None:
-            self.first_label = self.list_labels[first_label]
-        if last_label is not None:
-            self.last_label = self.list_labels[last_label]
+        if index_first_label is not None:
+            self.first_label = self.list_labels[index_first_label]
+        if index_last_label is not None:
+            self.last_label = self.list_labels[index_last_label]
 
         index_disc_inv.append([0, 'bottom'])
         index_disc_inv.sort(key=itemgetter(0))
@@ -509,16 +509,16 @@ class Centerline:
                     current_label = 'PMG'
 
             index_current_label = self.list_labels.index(self.labels_regions[current_label])
-            if index_current_label < self.list_labels.index(self.first_label):
+            if index_current_label < index_first_label:
                 reference_level_position = self.dist_points[self.index_disc[self.regions_labels[self.first_label]]]
                 self.dist_points_rel[i] = self.dist_points[i] - reference_level_position
 
-            elif index_current_label >= self.list_labels.index(self.last_label):
+            elif index_current_label >= index_last_label:
                 reference_level_position = self.dist_points[self.index_disc[self.regions_labels[self.last_label]]]
                 self.dist_points_rel[i] = self.dist_points[i] - reference_level_position
 
             else:
-                if self.list_labels.index(self.first_label) <= index_current_label < self.list_labels.index(self.last_label):
+                if index_first_label <= index_current_label < index_last_label:
                     next_label = self.regions_labels[self.list_labels[index_current_label + 1]]
 
                     if current_label in ['PMJ', 'PMG']:
