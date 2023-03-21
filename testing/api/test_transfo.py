@@ -252,7 +252,7 @@ def test_transfo_exhaustive_wrt_orientations(tmp_path):
         try:
             pt_dst = np.argwhere(dat_dst == value)[0]
             1 / 0
-        except:
+        except Exception:
             min_ = np.round(np.min(np.abs(dat_dst - value)), 2)
             pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))  # , order="F"))
 
@@ -340,7 +340,7 @@ def notest_transfo_more_exhaustive_wrt_orientations():
             try:
                 pt_dst = np.argwhere(dat_dst == value)[0]
                 1 / 0
-            except:
+            except Exception:
                 # Work around numerical inaccuracy, that is somehow introduced by ANTs
                 min_ = np.round(np.min(np.abs(dat_dst - value)), 1)
                 pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))  # , order="F"))
