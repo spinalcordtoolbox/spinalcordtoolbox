@@ -289,7 +289,7 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     return level_slice_dict
 
 
-def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, upper_level, lower_level, slice):
+def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, z_range_high, z_range_low, slice):
     """
     Defines slices to average metric at compression level following slice thickness and averages metric at
     compression, across the entire level above and below compression.
@@ -315,7 +315,7 @@ def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df
         slices_avg = np.arange(min(slice), max(slice), 1)
     else:
         slices_avg = slice
-    return get_mean_metric(df_metrics_PAM50, metric, upper_level, lower_level, slices_avg), slices_avg
+    return get_mean_metric(df_metrics_PAM50, metric, z_range_high, z_range_low, slices_avg), slices_avg
 
 
 def average_hc(ref_folder, metric, list_HC):
@@ -365,7 +365,7 @@ def average_hc(ref_folder, metric, list_HC):
     return df
 
 
-def get_mean_metric(df, metric, upper_level, lower_level, slices_avg):
+def get_mean_metric(df, metric, z_range_high, z_range_low, slices_avg):
     """
     Average metric at compression level, at level above and below.
     :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
@@ -378,10 +378,12 @@ def get_mean_metric(df, metric, upper_level, lower_level, slices_avg):
     :retrun: mi: float64: Metric at the compression level
     """
     # find index of slices to average
-    idx = df['Slice (I->S)'].isin(slices_avg).tolist()
-    ma = df.loc[df['VertLevel'] == upper_level, metric].mean()
-    mb = df.loc[df['VertLevel'] == lower_level, metric].mean()
-    mi = df.loc[idx, metric].mean()
+    idx_compression = df['Slice (I->S)'].isin(slices_avg).tolist()
+    idx_high = df['Slice (I->S)'].isin(z_range_high).tolist()
+    idx_low = df['Slice (I->S)'].isin(z_range_low).tolist()
+    ma = df.loc[idx_high, metric].mean()
+    mb = df.loc[idx_low, metric].mean()
+    mi = df.loc[idx_compression, metric].mean()
     return ma, mb, mi
 
 
@@ -573,15 +575,15 @@ def main(argv: Sequence[str]):
         # Get metric of patient with compression
         if arguments.i_PAM50:
             ap, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
-                                                       upper_level, lower_level, compressed_levels_dict[level])
+                                                       z_range_high, z_range_low, compressed_levels_dict[level])
             # Get metrics of healthy controls
-            ap_HC = get_mean_metric(df_avg_HC, metric, upper_level, lower_level, slices_avg)
+            ap_HC = get_mean_metric(df_avg_HC, metric, z_range_high, z_range_low, slices_avg)
             logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, metric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
             # Compute Normalized Ratio
             metric_ratio_norm_result = metric_ratio_norm(ap, ap_HC)
         else:
             slices_avg = compressed_levels_dict[level]
-            ap = get_mean_metric(df_metrics, metric, upper_level, lower_level, slices_avg)
+            ap = get_mean_metric(df_metrics, metric, z_range_high, z_range_low, slices_avg)
             metric_ratio_norm_result = None
         logger.debug('metric_a =  {}, metric_b = {}, metric_i = {}'.format(ap[0], ap[1], ap[2]))
         # Compute Ratio
