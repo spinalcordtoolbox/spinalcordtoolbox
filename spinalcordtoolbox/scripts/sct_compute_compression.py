@@ -418,7 +418,16 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
 
 
 def get_slices_upper_lower_level(compression_level_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50):
-    # TODO: to comment
+    """
+    Get slices to average for the level above the highest compression and below the lowest compression
+    : param compression_level_dict_PAM50: dict: Dictionary of levels and corresponding slice(s) in the PAM50 space.
+    : param df_metrics_PAM50: pandas.DataFrame: Metrics output of sct_process_segmentation in PAM50 anatomical dimensions.
+    : param distance: float: distance (mm) from the compression from where to average healthy slices.
+    : param extent: float: extent (mm) to average healthy slices.
+    : param slice_thickness_PAM50: float: Slice thickness of the PAM50.
+    : return slices_below:
+    : return slices_above:
+    """
     high_level = min([level for level, slices in compression_level_dict_PAM50.items()])
     low_level = max([level for level, slices in compression_level_dict_PAM50.items()])
     # Get slices to average at distance across the chosen extent for the highest level
@@ -442,8 +451,9 @@ def get_slices_upper_lower_level(compression_level_dict_PAM50, df_metrics_PAM50,
         zmin_low = min(df_metrics_PAM50_short['Slice (I->S)'].to_list())
     if zmax_high not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
         zmin_low = min(df_metrics_PAM50_short['Slice (I->S)'].to_list())
-
-    return np.arange(zmin_low, zmax_low, 1), np.arange(zmin_high, zmax_high, 1)
+    slices_above = np.arange(zmin_high, zmax_high, 1)
+    slices_below = np.arange(zmin_low, zmax_low, 1)
+    return slices_below, slices_above
 
 
 def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename):
@@ -473,9 +483,7 @@ def main(argv: Sequence[str]):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
-
     fname_labels = arguments.l
-
     img = Image(fname_labels)
     img.change_orientation('RPI')
     path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
