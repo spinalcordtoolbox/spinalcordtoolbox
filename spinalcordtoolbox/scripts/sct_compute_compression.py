@@ -432,8 +432,8 @@ def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z
         zmin_below = zmin_above
         zmax_below = zmax_above
     if zmin_above == zmax_above and zmin_below == zmax_below:
-        raise ValueError("No slices of level above of below with"
-                         "distance" + str(distance) + " mm and extent of" + str(extent)
+        raise ValueError("No slices of level above of below with "
+                         "distance " + str(distance) + " mm and extent of" + str(extent)
                          + " . Please provide other distance and extent.")
     slices_above = np.arange(zmin_above, zmax_above, 1)
     slices_below = np.arange(zmin_below, zmax_below, 1)
@@ -473,8 +473,8 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
         zmin_above = zmin_below
         not_above = True
     if not_above and not_below:
-        raise ValueError("No slices of level above of below with"
-                         "distance" + str(distance) + " mm and extent of" + str(extent)
+        raise ValueError("No slices of level above of below with "
+                         "distance " + str(distance) + " mm and extent of" + str(extent)
                          + " . Please provide other distance and extent.")
     # Take last available slice if extent is out of range
     if zmin_below not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
