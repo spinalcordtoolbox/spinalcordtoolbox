@@ -386,31 +386,6 @@ def get_mean_metric(df, metric, z_range_high, z_range_low, slices_avg):
     return ma, mb, mi
 
 
-def get_up_lw_levels(levels, df, metric):
-    """
-    Get most upper level from all compressed levels and lowest level from all compressed levels
-    :param levels: list: Compressed levels.
-    :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
-    :return upper_level: int: Smallest level (closest to superior)
-    :return lower_level: int: Highest level (closest to inferior)
-    """
-    upper_level = min(levels) - 1
-    lower_level = max(levels) + 1
-    # Check if lower and upper levels are available:
-    upper_empty = df.loc[df['VertLevel'] == upper_level, metric].empty
-    lower_empty = df.loc[df['VertLevel'] == lower_level, metric].empty
-    if not lower_empty and upper_empty:
-        # Set upper level to lower level. Only normalize using the lower level instead of an average of upper and lower level.
-        upper_level = lower_level
-    elif not upper_empty and lower_empty:
-        # Set lower level to upper level. Only normalize using the lower level instead of an average of upper and lower level.
-        lower_level = upper_level
-
-    elif lower_empty and upper_empty:
-        ValueError('No levels above nor below all compressions are available.')
-    return upper_level, lower_level
-
-
 def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     """
     Get corresponding slice of compression in PAM50 space.
@@ -520,10 +495,7 @@ def main(argv: Sequence[str]):
     # Get vertebral level corresponding to the slice with the compression
     slice_thickness = get_slice_thickness(img)
     slice_compressed = get_compressed_slice(img, verbose)
-
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
-    # Get vertebral level above and below the compression
-    upper_level, lower_level = get_up_lw_levels(compressed_levels_dict.keys(), df_metrics, metric)
     # Initialize variables if normalization with
     if arguments.i_PAM50:
         fname_metrics_PAM50 = get_absolute_path(arguments.i_PAM50)
