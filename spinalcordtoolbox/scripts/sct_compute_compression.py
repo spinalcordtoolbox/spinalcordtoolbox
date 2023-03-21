@@ -251,24 +251,24 @@ def get_centerline_object(im_seg, verbose):
     return ctl_seg
 
 
-def get_slices_level(centerline, distance, extent, z_compressions, z_ref):
+def get_slices_level_from_centerline(centerline, distance, extent, z_compressions, z_ref):
     length = centerline.incremental_length_inverse
     # Get z index of lowest (min) and highest (max) compression
-    z_compression_low = min(z_compressions)
-    z_compression_high = max(z_compressions)
+    z_compression_below = min(z_compressions)
+    z_compression_above = max(z_compressions)
     # Get slices range for level below lowest compression
-    idx = z_ref[z_compression_low]
+    idx = z_ref[z_compression_below]
     length_0 = length[idx]
-    zmax_low = z_ref[np.argmin(np.array([np.abs(i - length_0 + distance) for i in length]))]
-    zmin_low = z_ref[np.argmin(np.array([np.abs(i - length_0 + distance + extent) for i in length]))]
+    zmax_below = z_ref[np.argmin(np.array([np.abs(i - length_0 + distance) for i in length]))]
+    zmin_below = z_ref[np.argmin(np.array([np.abs(i - length_0 + distance + extent) for i in length]))]
 
-    # Get slices range for level above highest compression
-    idx = z_ref[z_compression_high]
+    # Get slices range for level above aboveest compression
+    idx = z_ref[z_compression_above]
     length_0 = length[idx]
-    zmin_high = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance) for i in length]))]
-    zmax_high = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance - extent) for i in length]))]
+    zmin_above = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance) for i in length]))]
+    zmax_above = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance - extent) for i in length]))]
     # TODO: check if z ranges is included in segmentation
-    return np.arange(zmin_low, zmax_low, 1), np.arange(zmin_high, zmax_high, 1)
+    return np.arange(zmin_below, zmax_below, 1), np.arange(zmin_above, zmax_above, 1)
 
 
 def get_verterbral_level_from_slice(slices, df_metrics):
@@ -288,7 +288,7 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     return level_slice_dict
 
 
-def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, z_range_high, z_range_low, slice):
+def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, z_range_above, z_range_below, slice):
     """
     Defines slices to average metric at compression level following slice thickness and averages metric at
     compression, across the entire level above and below compression.
@@ -314,7 +314,7 @@ def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df
         slices_avg = np.arange(min(slice), max(slice), 1)
     else:
         slices_avg = slice
-    return get_mean_metric(df_metrics_PAM50, metric, z_range_high, z_range_low, slices_avg), slices_avg
+    return get_mean_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, slices_avg), slices_avg
 
 
 def average_hc(ref_folder, metric, list_HC):
@@ -364,7 +364,7 @@ def average_hc(ref_folder, metric, list_HC):
     return df
 
 
-def get_mean_metric(df, metric, z_range_high, z_range_low, slices_avg):
+def get_mean_metric(df, metric, z_range_above, z_range_below, slices_avg):
     """
     Average metric at compression level, at level above and below.
     :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
@@ -378,10 +378,10 @@ def get_mean_metric(df, metric, z_range_high, z_range_low, slices_avg):
     """
     # find index of slices to average
     idx_compression = df['Slice (I->S)'].isin(slices_avg).tolist()
-    idx_high = df['Slice (I->S)'].isin(z_range_high).tolist()
-    idx_low = df['Slice (I->S)'].isin(z_range_low).tolist()
-    ma = df.loc[idx_high, metric].mean()
-    mb = df.loc[idx_low, metric].mean()
+    idx_above = df['Slice (I->S)'].isin(z_range_above).tolist()
+    idx_below = df['Slice (I->S)'].isin(z_range_below).tolist()
+    ma = df.loc[idx_above, metric].mean()
+    mb = df.loc[idx_below, metric].mean()
     mi = df.loc[idx_compression, metric].mean()
     return ma, mb, mi
 
@@ -428,31 +428,31 @@ def get_slices_upper_lower_level(compression_level_dict_PAM50, df_metrics_PAM50,
     : return slices_below:
     : return slices_above:
     """
-    high_level = min([level for level, slices in compression_level_dict_PAM50.items()])
-    low_level = max([level for level, slices in compression_level_dict_PAM50.items()])
-    # Get slices to average at distance across the chosen extent for the highest level
-    zmin_high = int(max(compression_level_dict_PAM50[high_level]) + distance/slice_thickness_PAM50)
-    zmax_high = int(max(compression_level_dict_PAM50[high_level]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
+    level_above = min([level for level, slices in compression_level_dict_PAM50.items()])
+    level_below = max([level for level, slices in compression_level_dict_PAM50.items()])
+    # Get slices to average at distance across the chosen extent for the aboveest level
+    zmin_above = int(max(compression_level_dict_PAM50[level_above]) + distance/slice_thickness_PAM50)
+    zmax_above = int(max(compression_level_dict_PAM50[level_above]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
     # Get slices to average at distance across the chosen extent for the lowest level
-    zmin_low = int(min(compression_level_dict_PAM50[low_level]) - distance/slice_thickness_PAM50 - extent/slice_thickness_PAM50)
-    zmax_low = int(min(compression_level_dict_PAM50[low_level]) - distance/slice_thickness_PAM50)
+    zmin_below = int(min(compression_level_dict_PAM50[level_below]) - distance/slice_thickness_PAM50 - extent/slice_thickness_PAM50)
+    zmaxbelow = int(min(compression_level_dict_PAM50[level_below]) - distance/slice_thickness_PAM50)
     # Check if slices have available metrics
     df_metrics_PAM50_short = df_metrics_PAM50.drop(columns=['DistancePMJ', 'SUM(length)'])
     df_metrics_PAM50_short.dropna(inplace=True)
     # If above/below not available, only take the level below/above
-    if zmax_low not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
-        zmax_low = zmax_high
-        zmin_low = zmin_high
-    if zmin_low not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
-        zmax_high = zmax_low
-        zmin_high = zmin_low
+    if zmax_below not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
+        zmax_below = zmax_above
+        zmin_below = zmin_above
+    if zmin_below not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
+        zmax_above = zmax_below
+        zmin_above = zmin_below
     # Take last available slice if extent is out of range
-    if zmin_low not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
-        zmin_low = min(df_metrics_PAM50_short['Slice (I->S)'].to_list())
-    if zmax_high not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
-        zmin_low = min(df_metrics_PAM50_short['Slice (I->S)'].to_list())
-    slices_above = np.arange(zmin_high, zmax_high, 1)
-    slices_below = np.arange(zmin_low, zmax_low, 1)
+    if zmin_below not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
+        zmin_below = min(df_metrics_PAM50_short['Slice (I->S)'].to_list())
+    if zmax_above not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
+        zmin_below = min(df_metrics_PAM50_short['Slice (I->S)'].to_list())
+    slices_above = np.arange(zmin_above, zmax_above, 1)
+    slices_below = np.arange(zmin_below, zmax_below, 1)
     return slices_below, slices_above
 
 
@@ -535,7 +535,7 @@ def main(argv: Sequence[str]):
 
         # Get slices corresponding in PAM50 space
         compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
-        z_range_low, z_range_high = get_slices_upper_lower_level(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
+        z_range_below, z_range_above = get_slices_upper_lower_level(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
         # Get data from healthy control and average them
         df_avg_HC = average_hc(path_ref, metric, list_HC)
     else:
@@ -548,22 +548,22 @@ def main(argv: Sequence[str]):
         z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
 
         centerline = get_centerline_object(im_seg, verbose=verbose)
-        z_range_high, z_range_low = get_slices_level(centerline, distance, extent, slice_compressed, z_ref)
+        z_range_above, z_range_below = get_slices_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
 
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict.keys():
         # Get metric of patient with compression
         if arguments.i_PAM50:
             ap, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
-                                                       z_range_high, z_range_low, compressed_levels_dict[level])
+                                                       z_range_above, z_range_below, compressed_levels_dict[level])
             # Get metrics of healthy controls
-            ap_HC = get_mean_metric(df_avg_HC, metric, z_range_high, z_range_low, slices_avg)
+            ap_HC = get_mean_metric(df_avg_HC, metric, z_range_above, z_range_below, slices_avg)
             logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, metric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
             # Compute Normalized Ratio
             metric_ratio_norm_result = metric_ratio_norm(ap, ap_HC)
         else:
             slices_avg = compressed_levels_dict[level]
-            ap = get_mean_metric(df_metrics, metric, z_range_high, z_range_low, slices_avg)
+            ap = get_mean_metric(df_metrics, metric, z_range_above, z_range_below, slices_avg)
             metric_ratio_norm_result = None
         logger.debug('metric_a =  {}, metric_b = {}, metric_i = {}'.format(ap[0], ap[1], ap[2]))
         # Compute Ratio
