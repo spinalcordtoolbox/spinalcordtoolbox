@@ -58,7 +58,7 @@ def test_create_labels_empty(test_image):
     a = test_image.copy()
     expected = zeros_like(a)
 
-    labels = [Coordinate(l) for l in [[0, 0, 0, 7], [0, 1, 2, 5]]]
+    labels = [Coordinate(label) for label in [[0, 0, 0, 7], [0, 1, 2, 5]]]
     expected.data[0, 0, 0] = 7
     expected.data[0, 1, 2] = 5
 
@@ -71,7 +71,7 @@ def test_create_labels_empty(test_image):
 @pytest.mark.parametrize("test_image", test_images)
 def test_create_labels(test_image):
     a = test_image.copy()
-    labels = [Coordinate(l) for l in [[0, 1, 0, 99], [0, 1, 2, 5]]]
+    labels = [Coordinate(label) for label in [[0, 1, 0, 99], [0, 1, 2, 5]]]
 
     b = sct_labels.create_labels(a, labels)
 
