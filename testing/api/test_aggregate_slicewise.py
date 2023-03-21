@@ -12,11 +12,11 @@ import nibabel as nib
 import pandas as pd
 
 from spinalcordtoolbox import __sct_dir__, __version__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
-
 from spinalcordtoolbox import aggregate_slicewise
 from spinalcordtoolbox.process_seg import Metric
 from spinalcordtoolbox.image import Image
+
+sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
 
 @pytest.fixture(scope="session")
