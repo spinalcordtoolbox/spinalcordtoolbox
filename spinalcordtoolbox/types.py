@@ -532,7 +532,6 @@ class Centerline:
                             self.average_vert_length[current_label] - self.dist_points[i] + self.dist_points[self.index_disc[current_label]]
                         ) / self.average_vert_length[current_label]
                 else:
-                    next_label = self.regions_labels[self.list_labels[self.list_labels.index(self.labels_regions[self.l_points[i]]) + 1]]
                     if next_label in self.index_disc:
                         self.dist_points_rel[i] = (
                             self.dist_points[i] - self.dist_points[self.index_disc[current_label]]
