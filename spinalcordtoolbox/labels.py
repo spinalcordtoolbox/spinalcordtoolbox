@@ -221,12 +221,20 @@ def labelize_from_discs(img: Image, ref: Image) -> Image:
     Create an image with regions labelized depending on values from reference.
     Typically, user inputs a segmentation image, and labels with disks position, and this function produces
     a segmentation image with vertebral levels labelized.
-    Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
+    Input images do **not** need to be RPI (re-orientation is done within this function).
 
     :param img: segmentation
     :param ref: reference labels
     :returns: segmentation image with vertebral levels labelized
     """
+
+    img_orientation = img.orientation
+    if img_orientation != "RPI":
+        img.change_orientation("RPI")
+
+    if ref.orientation != "RPI":
+        ref.change_orientation("RPI")
+
     out = zeros_like(img)
 
     coordinates_input = img.getNonZeroCoordinates()
@@ -247,6 +255,9 @@ def labelize_from_discs(img: Image, ref: Image) -> Image:
             # level above the top disc
             if coordinates_ref[-1].z < z and out.data[int(x), int(y), int(z)] == 0:
                 out.data[int(x), int(y), int(z)] = coordinates_ref[0].value - 1
+
+    # Set back the original orientation
+    out.change_orientation(img_orientation)
 
     return out
 
