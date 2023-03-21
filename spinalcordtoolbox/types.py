@@ -532,29 +532,18 @@ class Centerline:
                 else:
                     self.dist_points_rel[i] = numer/denom
 
-    def get_closest_to_relative_position(self, vertebral_level, relative_position, mode='levels'):
+    def get_closest_to_relative_position(self, vertebral_level, relative_position):
         """
-
         :param vertebral_level:
-        :param relative_position:\
-            if mode is 'levels', it is the relative position [0, 1] from upper disc\
-            if mode is 'length', it is the relative position [mm] from C1 top
-        :param mode: {'levels', 'length'}
+        :param relative_position: the relative position [0, 1] from upper disc
         """
-        if mode == 'levels':
-            indexes_vert = np.argwhere(np.array(self.l_points) == vertebral_level)
-            if len(indexes_vert) == 0:
-                return None
-            # find closest
-            arr_dist_rel = np.array(self.dist_points_rel)
-            idx = np.argmin(np.abs(arr_dist_rel[indexes_vert] - relative_position))
-            result = indexes_vert[idx]
-
-        elif mode == 'length':
-            result = np.argmin(np.abs(np.array(self.dist_points) - relative_position))
-        else:
-            raise ValueError("Mode must be either 'levels' or 'length'.")
-
+        indexes_vert = np.argwhere(np.array(self.l_points) == vertebral_level)
+        if len(indexes_vert) == 0:
+            return None
+        # find closest
+        arr_dist_rel = np.array(self.dist_points_rel)
+        idx = np.argmin(np.abs(arr_dist_rel[indexes_vert] - relative_position))
+        result = indexes_vert[idx]
         if isinstance(result, list) or isinstance(result, np.ndarray):
             result = result[0]
         return result
