@@ -63,12 +63,6 @@ def get_parser():
              'Example: sub-001_T2w_compression_labels.nii.gz'
     )
     mandatoryArguments.add_argument(
-        '-s',
-        metavar=Metavar.file,
-        required=True,
-        help='NIfTI file of spinal cord segmentation.'
-    )
-    mandatoryArguments.add_argument(
         '-metric',
         required=False,
         help='Metric to normalize.'
@@ -83,6 +77,11 @@ def get_parser():
         metavar=Metavar.file,
         help='CSV morphometric file in the PAM50 space, obtained by running: '
         'sct_process_segmentation -normalize-PAM50.'
+    )
+    optional.add_argument(
+        '-s',
+        metavar=Metavar.file,
+        help='NIfTI file of spinal cord segmentation.'
     )
     optional.add_argument(
         '-extent',
@@ -513,7 +512,7 @@ def main(argv: Sequence[str]):
     fname_metrics = get_absolute_path(arguments.i)
     metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
     # Fetch distance and extent and segmentation
-    fname_segmentation = get_absolute_path(arguments.s)
+    fname_segmentation = arguments.s
     distance = arguments.distance
     extent = arguments.extent
     # Fetch metrics of subject
@@ -561,7 +560,7 @@ def main(argv: Sequence[str]):
         df_avg_HC = average_hc(path_ref, metric, list_HC)
     else:
         # Get spinal cord centerline object
-        im_seg = Image(fname_segmentation).change_orientation('RPI')
+        im_seg = Image(get_absolute_path(fname_segmentation)).change_orientation('RPI')
         # Get max and min index of the segmentation with pmj
         _, _, Z = (im_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
         min_z_index, max_z_index = min(Z), max(Z)
