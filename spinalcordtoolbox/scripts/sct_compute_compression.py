@@ -251,26 +251,6 @@ def get_centerline_object(im_seg, verbose):
     return ctl_seg
 
 
-def get_slices_level_from_centerline(centerline, distance, extent, z_compressions, z_ref):
-    length = centerline.incremental_length_inverse
-    # Get z index of lowest (min) and highest (max) compression
-    z_compression_below = min(z_compressions)
-    z_compression_above = max(z_compressions)
-    # Get slices range for level below lowest compression
-    idx = z_ref[z_compression_below]
-    length_0 = length[idx]
-    zmax_below = z_ref[np.argmin(np.array([np.abs(i - length_0 + distance) for i in length]))]
-    zmin_below = z_ref[np.argmin(np.array([np.abs(i - length_0 + distance + extent) for i in length]))]
-
-    # Get slices range for level above aboveest compression
-    idx = z_ref[z_compression_above]
-    length_0 = length[idx]
-    zmin_above = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance) for i in length]))]
-    zmax_above = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance - extent) for i in length]))]
-    # TODO: check if z ranges is included in segmentation
-    return np.arange(zmin_below, zmax_below, 1), np.arange(zmin_above, zmax_above, 1)
-
-
 def get_verterbral_level_from_slice(slices, df_metrics):
     """
     From slices, gets the coresponding vertebral level and creates a dict fo level and corresponding slice(s).
@@ -417,9 +397,53 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     return compression_level_dict_PAM50
 
 
-def get_slices_upper_lower_level(compression_level_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50):
+def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z_compressions, z_ref):
     """
-    Get slices to average for the level above the highest compression and below the lowest compression
+    Get slices to average for the level above the highest compression and below the lowest compression from the centerline.
+    (If arg i-PAM50 is not used; meaning no normalization)
+    : param centerline: Centerline(): Spinal cord centerline object
+    : param distance: float: distance (mm) from the compression from where to average healthy slices.
+    : param extent: float: extent (mm) to average healthy slices.
+    : param z_compressions: list: list of slice that have a compression.
+    : param z_ref: list: z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
+    : return
+    """
+    length = centerline.incremental_length_inverse
+    # Get z index of lowest (min) and highest (max) compression
+    z_compression_below = min(z_compressions)
+    z_compression_above = max(z_compressions)
+    # Get slices range for level below lowest compression
+    idx = np.argwhere(z_ref == z_compression_below)[0][0]
+    length_0 = length[idx]
+    zmax_below = z_ref[np.argmin(np.array([np.abs(i - length_0 + distance) for i in length]))]
+    zmin_below = z_ref[np.argmin(np.array([np.abs(i - length_0 + distance + extent) for i in length]))]
+
+    # Get slices range for level above aboveest compression
+    idx = np.argwhere(z_ref == z_compression_above)[0][0]
+    length_0 = length[idx]
+    zmin_above = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance) for i in length]))]
+    zmax_above = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance - extent) for i in length]))]
+    print(zmin_below, zmax_below)
+    # If zmin is equal to zmax, the range is not available, use the other level above/below
+    if zmin_above == zmax_above:
+        zmin_above = zmin_below
+        zmax_above = zmax_below
+    if zmin_below == zmax_below:
+        zmin_below = zmin_above
+        zmax_below = zmax_above
+    if zmin_above == zmax_above and zmin_below == zmax_below:
+       raise ValueError("No slices of level above of below with"
+                        "distance" + str(distance) + " mm and extent of" + str(extent)
+                        + " . Please provide other distance and extent.")
+    slices_above = np.arange(zmin_above, zmax_above, 1)
+    slices_below = np.arange(zmin_below, zmax_below, 1)
+    print(slices_above, slices_below)
+    return slices_below, slices_above
+
+
+def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50):
+    """
+    Get slices to average for the level above the highest compression and below the lowest compression from the PAM50.
     : param compression_level_dict_PAM50: dict: Dictionary of levels and corresponding slice(s) in the PAM50 space.
     : param df_metrics_PAM50: pandas.DataFrame: Metrics output of sct_process_segmentation in PAM50 anatomical dimensions.
     : param distance: float: distance (mm) from the compression from where to average healthy slices.
@@ -535,7 +559,7 @@ def main(argv: Sequence[str]):
 
         # Get slices corresponding in PAM50 space
         compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
-        z_range_below, z_range_above = get_slices_upper_lower_level(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
+        z_range_below, z_range_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
         # Get data from healthy control and average them
         df_avg_HC = average_hc(path_ref, metric, list_HC)
     else:
@@ -548,7 +572,7 @@ def main(argv: Sequence[str]):
         z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
 
         centerline = get_centerline_object(im_seg, verbose=verbose)
-        z_range_above, z_range_below = get_slices_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
+        z_range_above, z_range_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
 
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict.keys():
