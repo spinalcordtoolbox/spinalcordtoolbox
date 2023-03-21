@@ -219,8 +219,9 @@ def increment_z_inverse(img: Image) -> Image:
 def labelize_from_discs(img: Image, ref: Image) -> Image:
     """
     Create an image with regions labelized depending on values from reference.
-    Typically, user inputs a segmentation image, and labels with disks position, and this function produces
+    Typically, user inputs a segmentation image, and labels with discs position, and this function produces
     a segmentation image with vertebral levels labelized.
+    Note that no straightening is done. The labelization is only done based on the z coordinates.
     Input images do **not** need to be RPI (re-orientation is done within this function).
 
     :param img: segmentation
