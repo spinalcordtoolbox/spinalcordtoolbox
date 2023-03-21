@@ -156,15 +156,15 @@ def test_register_step_label(step0_data):
 
 @pytest.mark.skip(reason="TODO")
 def test_register_step_slicewise():
-     """
-     """
-     raise NotImplementedError()
+    """
+    """
+    raise NotImplementedError()
 
 @pytest.mark.skip(reason="TODO")
 def test_register_step_slicewise_ants():
-     """
-     """
-     raise NotImplementedError()
+    """
+    """
+    raise NotImplementedError()
 
 @pytest.mark.skip(reason="Need to fix input test data")
 def test_register_step_ants_registration(step2_data):
