@@ -441,7 +441,7 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     return compression_level_dict_PAM50
 
 
-def get_slices_upper_lower_level(compression_level_dict_PAM50, df_metrics_PAM50, metric, distance, extent, slice_thickness_PAM50):
+def get_slices_upper_lower_level(compression_level_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50):
     # TODO: to comment
     high_level = min([level for level, slices in compression_level_dict_PAM50.items()])
     low_level = max([level for level, slices in compression_level_dict_PAM50.items()])
