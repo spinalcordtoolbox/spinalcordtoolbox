@@ -564,7 +564,7 @@ def main(argv: Sequence[str]):
 
         # Get slices corresponding in PAM50 space
         compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50) # TODO change to use slices
-        get_slices_upper_lower_level(compressed_levels_dict, df_metrics_PAM50, metric, distance, extent, slice_thickness_PAM50)
+        z_range_low, z_range_high = get_slices_upper_lower_level(compressed_levels_dict, df_metrics_PAM50, metric, distance, extent, slice_thickness_PAM50)
         # Get data from healthy control and average them
         df_avg_HC = average_hc(path_ref, metric, list_HC)
 
