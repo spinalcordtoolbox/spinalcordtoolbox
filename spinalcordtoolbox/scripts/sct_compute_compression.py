@@ -464,6 +464,8 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
     df_metrics_PAM50_short = df_metrics_PAM50.drop(columns=['DistancePMJ', 'SUM(length)'])
     df_metrics_PAM50_short.dropna(inplace=True)
     # If above/below not available, only take the level below/above
+    not_above = False
+    not_below = False
     if zmax_below not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
         zmax_below = zmax_above
         zmin_below = zmin_above
