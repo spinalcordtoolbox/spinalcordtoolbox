@@ -508,17 +508,16 @@ class Centerline:
                 else:
                     current_label = 'PMG'
 
-            if self.list_labels.index(self.labels_regions[current_label]) < self.list_labels.index(self.first_label):
+            index_current_label = self.list_labels.index(self.labels_regions[current_label])
+            if index_current_label < self.list_labels.index(self.first_label):
                 reference_level_position = self.dist_points[self.index_disc[self.regions_labels[self.first_label]]]
                 self.dist_points_rel[i] = self.dist_points[i] - reference_level_position
 
-            elif self.list_labels.index(self.labels_regions[current_label]) >= self.list_labels.index(self.last_label):
+            elif index_current_label >= self.list_labels.index(self.last_label):
                 reference_level_position = self.dist_points[self.index_disc[self.regions_labels[self.last_label]]]
                 self.dist_points_rel[i] = self.dist_points[i] - reference_level_position
 
             else:
-                index_current_label = self.list_labels.index(self.labels_regions[self.l_points[i]])
-
                 if self.list_labels.index(self.first_label) <= index_current_label < self.list_labels.index(self.last_label):
                     next_label = self.regions_labels[self.list_labels[index_current_label + 1]]
 
