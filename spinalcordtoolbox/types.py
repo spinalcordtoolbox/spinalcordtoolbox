@@ -517,31 +517,30 @@ class Centerline:
                 reference_level_position = self.dist_points[self.index_disc[self.regions_labels[self.last_label]]]
                 self.dist_points_rel[i] = self.dist_points[i] - reference_level_position
 
-            else:
-                if index_first_label <= index_current_label < index_last_label:
-                    next_label = self.regions_labels[self.list_labels[index_current_label + 1]]
+            else:  # index_first_label <= index_current_label < index_last_label
+                next_label = self.regions_labels[self.list_labels[index_current_label + 1]]
 
-                    if current_label in ['PMJ', 'PMG']:
-                        if next_label in self.index_disc:
-                            self.dist_points_rel[i] = -(
-                                self.dist_points[i] - self.dist_points[self.index_disc[next_label]]
-                            ) / abs(
-                                self.dist_points[self.index_disc[next_label]] - self.dist_points[self.index_disc[current_label]]
-                            )
-                        else:
-                            self.dist_points_rel[i] = (
-                                self.average_vert_length[current_label] - self.dist_points[i] + self.dist_points[self.index_disc[current_label]]
-                            ) / self.average_vert_length[current_label]
+                if current_label in ['PMJ', 'PMG']:
+                    if next_label in self.index_disc:
+                        self.dist_points_rel[i] = -(
+                            self.dist_points[i] - self.dist_points[self.index_disc[next_label]]
+                        ) / abs(
+                            self.dist_points[self.index_disc[next_label]] - self.dist_points[self.index_disc[current_label]]
+                        )
                     else:
-                        next_label = self.regions_labels[self.list_labels[self.list_labels.index(self.labels_regions[self.l_points[i]]) + 1]]
-                        if next_label in self.index_disc:
-                            self.dist_points_rel[i] = (
-                                self.dist_points[i] - self.dist_points[self.index_disc[current_label]]
-                            ) / abs(self.dist_points[self.index_disc[next_label]] - self.dist_points[self.index_disc[current_label]])
-                        else:
-                            self.dist_points_rel[i] = (
-                                self.dist_points[i] - self.dist_points[self.index_disc[current_label]]
-                            ) / self.average_vert_length[current_label]
+                        self.dist_points_rel[i] = (
+                            self.average_vert_length[current_label] - self.dist_points[i] + self.dist_points[self.index_disc[current_label]]
+                        ) / self.average_vert_length[current_label]
+                else:
+                    next_label = self.regions_labels[self.list_labels[self.list_labels.index(self.labels_regions[self.l_points[i]]) + 1]]
+                    if next_label in self.index_disc:
+                        self.dist_points_rel[i] = (
+                            self.dist_points[i] - self.dist_points[self.index_disc[current_label]]
+                        ) / abs(self.dist_points[self.index_disc[next_label]] - self.dist_points[self.index_disc[current_label]])
+                    else:
+                        self.dist_points_rel[i] = (
+                            self.dist_points[i] - self.dist_points[self.index_disc[current_label]]
+                        ) / self.average_vert_length[current_label]
 
     def get_closest_to_relative_position(self, vertebral_level, relative_position, mode='levels'):
         """
