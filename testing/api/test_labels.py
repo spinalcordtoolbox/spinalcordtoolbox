@@ -3,7 +3,6 @@
 # pytest unit tests for spinalcordtoolbox.labels
 
 import logging
-from time import time
 
 import numpy as np
 import pytest

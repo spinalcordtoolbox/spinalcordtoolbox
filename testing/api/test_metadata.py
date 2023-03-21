@@ -3,7 +3,6 @@
 # pytest unit tests for spinalcordtoolbox.metadata
 
 
-import sys
 import io
 import os
 
