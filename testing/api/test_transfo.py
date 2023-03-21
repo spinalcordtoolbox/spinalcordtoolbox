@@ -119,7 +119,7 @@ def test_transfo_null(tmp_path):
 
 def test_transfo_figure_out_ants_frame_exhaustive(tmp_path):
     all_orientations = msct_image.all_refspace_strings()
-    #all_orientations = ("LPS", "LPI")
+    # all_orientations = ("LPS", "LPI")
 
     print("Wondering which orientation is native to ANTs")
 
@@ -228,7 +228,7 @@ def test_transfo_exhaustive_wrt_orientations(tmp_path):
         img_warp = fake_image_sct_custom(data)
         img_warp.header.set_intent('vector', (), '')
         img_warp.change_orientation(orientation).save(path_warp)
-        #print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
+        # print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
 
         path_dst = str(tmp_path / "warp-{}-dst.nii".format(orientation))
         xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
@@ -266,7 +266,7 @@ def test_transfo_exhaustive_wrt_orientations(tmp_path):
 
         displacement = (pos_dst - pos_src).reshape((-1))[:3]
         displacement_log = pt_dst - pt_src
-        #print(" Displacement (logical): %s" % (displacement_log))
+        # print(" Displacement (logical): %s" % (displacement_log))
         if not np.allclose(displacement, shift_wanted):
             orientations_ng.append(orientation)
             print(" \x1B[31;1mDisplacement (physical): %s\x1B[0m" % (displacement))
@@ -316,7 +316,7 @@ def notest_transfo_more_exhaustive_wrt_orientations():
             img_warp = fake_image_sct_custom(data)
             img_warp.header.set_intent('vector', (), '')
             img_warp.change_orientation(orientation_ref).save(path_warp)
-            #print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
+            # print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
 
             path_dst = "warp-{}-{}-dst.nii".format(orientation_src, orientation_ref)
             xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
@@ -355,7 +355,7 @@ def notest_transfo_more_exhaustive_wrt_orientations():
 
             displacement = (pos_dst - pos_src).reshape((-1))[:3]
             displacement_log = pt_dst - pt_src
-            #print(" Displacement (logical): %s" % (displacement_log))
+            # print(" Displacement (logical): %s" % (displacement_log))
             if not np.allclose(displacement, shift_wanted):
                 orientations_ng.append((orientation_src, orientation_ref))
                 print(" \x1B[31;1mDisplacement (physical): %s\x1B[0m" % (displacement))

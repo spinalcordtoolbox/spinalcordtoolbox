@@ -486,7 +486,7 @@ def test_more_change_orientation(tmp_path, fake_3dimage_sct, fake_3dimage_sct_vi
     assert (im_dst2.data == im_src.data).all()
     assert np.allclose(im_src.header.get_best_affine(), im_dst2.header.get_best_affine())
 
-    #fn = os.path.join(path_tmp, "pouet.nii")
+    # fn = os.path.join(path_tmp, "pouet.nii")
     im_ref = fake_3dimage_sct.copy()
     im_src = fake_3dimage_sct.copy()
     orientation = im_src.orientation
@@ -563,7 +563,7 @@ def test_more_change_orientation(tmp_path, fake_3dimage_sct, fake_3dimage_sct_vi
         # dst.save("pouet-{}.nii".format(dst.orientation))
         print(orientation, dst.orientation, dst.data.shape, dst.dim)
         assert orientation == dst.orientation
-        #assert dst.data.shape[:] == np.array(dst.dim)[:3]
+        # assert dst.data.shape[:] == np.array(dst.dim)[:3]
         # print(dst.header)
 
 
