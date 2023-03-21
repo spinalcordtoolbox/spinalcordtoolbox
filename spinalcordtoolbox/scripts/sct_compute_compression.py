@@ -448,11 +448,11 @@ def get_slices_upper_lower_level(compression_level_dict_PAM50, df_metrics_PAM50,
     high_level = min([level for level, slices in compression_level_dict_PAM50.items()])
     low_level = max([level for level, slices in compression_level_dict_PAM50.items()])
     # Get slices to average at distance across the chosen extent for the highest level
-    zmin_high = int(max(compression_level_dict_PAM50[low_level]) + distance/slice_thickness_PAM50)
-    zmax_high = int(max(compression_level_dict_PAM50[low_level]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
+    zmin_high = int(max(compression_level_dict_PAM50[high_level]) + distance/slice_thickness_PAM50)
+    zmax_high = int(max(compression_level_dict_PAM50[high_level]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
     # Get slices to average at distance across the chosen extent for the lowest level
-    zmin_low = int(min(compression_level_dict_PAM50[high_level]) - distance/slice_thickness_PAM50 - extent/slice_thickness_PAM50)
-    zmax_low = int(min(compression_level_dict_PAM50[high_level]) - distance/slice_thickness_PAM50)
+    zmin_low = int(min(compression_level_dict_PAM50[low_level]) - distance/slice_thickness_PAM50 - extent/slice_thickness_PAM50)
+    zmax_low = int(min(compression_level_dict_PAM50[low_level]) - distance/slice_thickness_PAM50)
     # Check if slices have available metrics
     df_metrics_PAM50_short = df_metrics_PAM50.drop(columns=['DistancePMJ', 'SUM(length)'])
     df_metrics_PAM50_short.dropna(inplace=True)
@@ -521,16 +521,6 @@ def main(argv: Sequence[str]):
     # Get vertebral level corresponding to the slice with the compression
     slice_thickness = get_slice_thickness(img)
     slice_compressed = get_compressed_slice(img, verbose)
-    # Get spinal cord centerline object
-    im_seg = Image(fname_segmentation).change_orientation('RPI')
-    # Get max and min index of the segmentation with pmj
-    _, _, Z = (im_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
-    min_z_index, max_z_index = min(Z), max(Z)
-    # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
-    z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
-
-    centerline = get_centerline_object(im_seg, verbose=verbose)
-    z_above, z_below = get_slices_level(centerline, distance, extent, slice_compressed, z_ref)
 
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     # Get vertebral level above and below the compression
@@ -565,10 +555,21 @@ def main(argv: Sequence[str]):
         df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, metric)
 
         # Get slices corresponding in PAM50 space
-        compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50) # TODO change to use slices
-        z_range_low, z_range_high = get_slices_upper_lower_level(compressed_levels_dict, df_metrics_PAM50, metric, distance, extent, slice_thickness_PAM50)
+        compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
+        z_range_low, z_range_high = get_slices_upper_lower_level(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
         # Get data from healthy control and average them
         df_avg_HC = average_hc(path_ref, metric, list_HC)
+    else:
+        # Get spinal cord centerline object
+        im_seg = Image(fname_segmentation).change_orientation('RPI')
+        # Get max and min index of the segmentation with pmj
+        _, _, Z = (im_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
+        min_z_index, max_z_index = min(Z), max(Z)
+        # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
+        z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
+
+        centerline = get_centerline_object(im_seg, verbose=verbose)
+        z_range_high, z_range_low = get_slices_level(centerline, distance, extent, slice_compressed, z_ref)
 
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict.keys():
