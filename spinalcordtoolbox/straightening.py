@@ -1,6 +1,5 @@
 # Functions dealing with spinal cord straightening
 
-# TODO: move _get_centerline inside Class
 # TODO: only input Image instead of file names
 
 import os
