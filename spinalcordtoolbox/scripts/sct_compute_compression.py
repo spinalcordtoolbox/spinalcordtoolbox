@@ -441,6 +441,35 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     return compression_level_dict_PAM50
 
 
+def get_slices_upper_lower_level(compression_level_dict_PAM50, df_metrics_PAM50, metric, distance, extent, slice_thickness_PAM50):
+    # TODO: to comment
+    high_level = min([level for level, slices in compression_level_dict_PAM50.items()])
+    low_level = max([level for level, slices in compression_level_dict_PAM50.items()])
+    # Get slices to average at distance across the chosen extent for the highest level
+    zmin_high = int(max(compression_level_dict_PAM50[low_level]) + distance/slice_thickness_PAM50)
+    zmax_high = int(max(compression_level_dict_PAM50[low_level]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
+    # Get slices to average at distance across the chosen extent for the lowest level
+    zmin_low = int(min(compression_level_dict_PAM50[high_level]) - distance/slice_thickness_PAM50 - extent/slice_thickness_PAM50)
+    zmax_low = int(min(compression_level_dict_PAM50[high_level]) - distance/slice_thickness_PAM50)
+    # Check if slices have available metrics
+    df_metrics_PAM50_short = df_metrics_PAM50.drop(columns=['DistancePMJ', 'SUM(length)'])
+    df_metrics_PAM50_short.dropna(inplace=True)
+    # If above/below not available, only take the level below/above
+    if zmax_low not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
+        zmax_low = zmax_high
+        zmin_low = zmin_high
+    if zmin_low not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
+        zmax_high = zmax_low
+        zmin_high = zmin_low
+    # Take last available slice if extent is out of range
+    if zmin_low not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
+        zmin_low = min(df_metrics_PAM50_short['Slice (I->S)'].to_list())
+    if zmax_high not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
+        zmin_low = min(df_metrics_PAM50_short['Slice (I->S)'].to_list())
+
+    return np.arange(zmin_low, zmax_low, 1), np.arange(zmin_high, zmax_high, 1)
+
+
 def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename):
     """
     Save .csv file of MSCC results.
@@ -535,7 +564,7 @@ def main(argv: Sequence[str]):
 
         # Get slices corresponding in PAM50 space
         compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50) # TODO change to use slices
-
+        get_slices_upper_lower_level(compressed_levels_dict, df_metrics_PAM50, metric, distance, extent, slice_thickness_PAM50)
         # Get data from healthy control and average them
         df_avg_HC = average_hc(path_ref, metric, list_HC)
 
