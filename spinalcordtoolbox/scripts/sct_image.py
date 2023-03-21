@@ -182,7 +182,9 @@ def get_parser():
         required=False)
     orientation.add_argument(
         '-transpose',
-        help="Transpose the axes of the image's data array. (This will not change the header orientation string.)\n "
+        metavar="ax1,ax2,ax3",
+        help="Transpose the axes (x,y,z) of the image's data array. (This will not change the header orientation "
+             "string.)\n "
              "(WARNING: This option should only be used to fix the data array when it does not match the orientation "
              "string in the header. We recommend that you investigate and understand where the mismatch originated "
              "from in the first place before using this option.)\n"
