@@ -30,7 +30,17 @@ This set of instructions will show you how to install SCT directly on Windows.
 1. Installing Prerequisites
 ***************************
 
-SCT depends on one main piece of software that must be set up prior to the installation of SCT.
+SCT depends on two pieces of software that must be set up prior to the installation of SCT.
+
+Visual C++ 2019 runtime
+^^^^^^^^^^^^^^^^^^^^^^^
+
+SCT depends on `onnxruntime <https://onnxruntime.ai/docs/install/#requirements>`_, which in turn depends on the `Visual C++ 2019 runtime <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170>`_.
+
+1. It is likely that you already have this software installed, as many Windows applications rely on this software. You can check for "Microsoft Visual C++ 2015-2022 Redistributable" under the "Apps & Features" section of Windows Settings.
+
+2. If you do not have this software installed, you will typically want to install the "X64" version (``https://aka.ms/vs/17/release/vc_redist.x64.exe``) from `this page <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022>`_.
+
 
 Git for Windows
 ^^^^^^^^^^^^^^^
