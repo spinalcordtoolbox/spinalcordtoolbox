@@ -299,8 +299,6 @@ def test_slicer(fake_3dimage_sct, fake_3dimage_sct2):
 
     im3d = fake_3dimage_sct.copy()
 
-    d = im3d.data.copy()
-
     slicer = msct_image.Slicer(im3d, "RPI")
     if 0:
         for im2d in slicer:
