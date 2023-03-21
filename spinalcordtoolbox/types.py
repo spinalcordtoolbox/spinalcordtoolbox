@@ -518,6 +518,8 @@ class Centerline:
                 self.dist_points_rel[i] = self.dist_points[i] - reference_level_position
 
             else:  # index_first_label <= index_current_label < index_last_label
+                numer = self.dist_points[i] - self.dist_points[self.index_disc[current_label]]
+
                 next_label = self.regions_labels[self.list_labels[index_current_label + 1]]
                 if next_label in self.index_disc:
                     denom = abs(self.dist_points[self.index_disc[next_label]] -
@@ -526,18 +528,9 @@ class Centerline:
                     denom = self.average_vert_length[current_label]
 
                 if current_label in ['PMJ', 'PMG']:
-                    if next_label in self.index_disc:
-                        self.dist_points_rel[i] = -(
-                            self.dist_points[i] - self.dist_points[self.index_disc[next_label]]
-                        ) / denom
-                    else:
-                        self.dist_points_rel[i] = (
-                            self.average_vert_length[current_label] - self.dist_points[i] + self.dist_points[self.index_disc[current_label]]
-                        ) / denom
+                    self.dist_points_rel[i] = 1 - numer/denom
                 else:
-                    self.dist_points_rel[i] = (
-                        self.dist_points[i] - self.dist_points[self.index_disc[current_label]]
-                    ) / denom
+                    self.dist_points_rel[i] = numer/denom
 
     def get_closest_to_relative_position(self, vertebral_level, relative_position, mode='levels'):
         """
