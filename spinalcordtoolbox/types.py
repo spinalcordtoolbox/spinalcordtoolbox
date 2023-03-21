@@ -119,7 +119,7 @@ class Centerline:
     A centerline is defined by its points and the derivatives of each point.
     When initialized, the lenght of the centerline is computed as well as the coordinate reference system of each plane.
     # TODO: Check if the description above is correct. I've tried to input voxel space coordinates, and it broke the
-    #  code. For example, the method extract_perpendicular_square() is (i think) expecting physical coordinates.
+    #  code. For example, the (removed) method extract_perpendicular_square() is (i think) expecting physical coordinates.
     """
     labels_regions = {'PMJ': 50, 'PMG': 49,
                       'C1': 1, 'C2': 2, 'C3': 3, 'C4': 4, 'C5': 5, 'C6': 6, 'C7': 7,
@@ -276,16 +276,6 @@ class Centerline:
         dist, result_indexes = self.tree_points.query(array_coordinates)
         return result_indexes
 
-    def get_point_from_index(self, index):
-        """
-        Returns the coordinate of centerline at specified index.
-        Raise an index error if the index is not in the list.
-
-        :param index: int
-        :return:
-        """
-        return self.points[index]
-
     def get_plan_parameters(self, index):
         """
         This function returns the parameters of the parametric equation of the plane at index.
@@ -304,45 +294,8 @@ class Centerline:
 
         return [a, b, c, d]
 
-    def get_distance_from_plane(self, coord, index, plane_params=None):
-        """
-        This function returns the distance between a coordinate and the plan at index position.
-        If the derivative at index is nul (a, b, c = 0, 0, 0), a ValueError exception is raised.
-
-        :param coord: must be a numpy array [x, y, z]
-        :param index: int
-        :param plane_params: list [a, b, c, d] with plane parameters. If not provided, these parameters are computed\
-        from index.
-        :return:
-        """
-        if plane_params:
-            [a, b, c, d] = plane_params
-        else:
-            [a, b, c, d] = self.plans_parameters[index]
-
-        if a == 0 and b == 0 and c == 0:
-            raise ValueError('ERROR in types.Centerline.get_distance_from_plane: derivative at this location is '
-                             'nul. Impossible to compute plane distance.')
-
-        return (a * coord[0] + b * coord[1] + c * coord[2] + d) / np.sqrt(a * a + b * b + c * c)
-
     def get_distances_from_planes(self, coordinates, indexes):
         return (einsum('ij,ij->i', self.derivatives[indexes], coordinates) + self.offset_plans[indexes]) / norm(self.derivatives[indexes], axis=1)
-
-    def get_nearest_plane(self, coord, index=None):
-        """
-        This function computes the nearest plane from the point and returns the parameters of its parametric equation
-        [a, b, c, d] and the distance between the point and the plane.
-
-        :param coord: must be a numpy array [x, y, z]
-        :return: index, plane_parameters [a, b, c, d|, distance_from_plane
-        """
-        if index is None:
-            index = self.find_nearest_index(coord)
-        plane_params = self.plans_parameters[index]
-        distance = self.get_distance_from_plane(coord, index, plane_params=plane_params)
-
-        return index, plane_params, distance
 
     def compute_coordinate_system(self, index):
         """
@@ -372,41 +325,8 @@ class Centerline:
 
         return origin, x_prime_axis, y_prime_axis, z_prime_axis, matrix_base, inverse_matrix
 
-    def get_projected_coordinates_on_plane(self, coord, index, plane_params=None):
-        """
-        This function returns the coordinates of
-
-        :param coord: must be a numpy array [x, y, z]
-        :param index: int
-        :param plane_params:
-        :return:
-        """
-        if plane_params:
-            [a, b, c, d] = plane_params
-        else:
-            [a, b, c, d] = self.plans_parameters[index]
-
-        n = array([a, b, c])
-        return coord - dot(coord - self.points[index], n) * n
-
     def get_projected_coordinates_on_planes(self, coordinates, indexes):
         return coordinates - multiply(tile(einsum('ij,ij->i', coordinates - self.points[indexes], self.derivatives[indexes]), (3, 1)).transpose(), self.derivatives[indexes])
-
-    def get_in_plane_coordinates(self, coord, index):
-        """
-        This function returns the coordinate of the point from coord in the coordinate system of the plane.
-        The point must be in the plane (you can use the function get_projected_coordinate_on_plane() to get it.
-
-        :param coord: must be a numpy array [x, y, z]
-        :param index: int
-        :return:
-        """
-        if 0 <= index < self.number_of_points:
-            origin, x_prime_axis, y_prime_axis, z_prime_axis, matrix_base, inverse_matrix = self.coordinate_system[index]
-            return inverse_matrix.dot(coord - origin)
-        else:
-            raise IndexError('ERROR in types.Centerline.compute_coordinate_system: index (' + str(index) + ') '
-                             'should be within [' + str(0) + ', ' + str(self.number_of_points) + '[.')
 
     def get_in_plans_coordinates(self, coordinates, indexes):
         return einsum('mnr,nr->mr', rollaxis(self.inverse_matrices[indexes], 0, 3), (coordinates - self.points[indexes]).transpose()).transpose()
@@ -589,39 +509,6 @@ class Centerline:
             result = result[0]
         return result
 
-    def get_coordinate_interpolated(self, vertebral_level, relative_position, backup_index=None, backup_centerline=None, mode='levels'):
-        index_closest = self.get_closest_to_absolute_position(vertebral_level, relative_position, backup_index=backup_index, backup_centerline=backup_centerline, mode=mode)
-        if index_closest is None:
-            return [np.nan, np.nan, np.nan]
-
-        relative_position_closest = self.dist_points_rel[index_closest]
-        coordinate_closest = self.get_point_from_index(index_closest)
-
-        if relative_position < relative_position_closest:
-            index_next = index_closest + 1
-        else:
-            index_next = index_closest - 1
-        relative_position_next = self.dist_points_rel[index_next]
-        coordinate_next = self.get_point_from_index(index_next)
-
-        weight_closest = abs(relative_position - relative_position_closest) / abs(relative_position_next - relative_position_closest)
-        weight_next = abs(relative_position - relative_position_next) / abs(relative_position_next - relative_position_closest)
-        coordinate_result = [weight_closest * coordinate_closest[0] + weight_next * coordinate_next[0],
-                             weight_closest * coordinate_closest[1] + weight_next * coordinate_next[1],
-                             weight_closest * coordinate_closest[2] + weight_next * coordinate_next[2]]
-
-        return coordinate_result
-
-    def extract_perpendicular_square(self, image, index, size=20, resolution=0.5, interpolation_mode=0, border='constant', cval=0.0):
-        # TODO: use native resolution instead of forcing to 0.5. In case native is much higher res, we loose precision!!!
-        # TODO: replace with existing function (if exists). There is a lot of arbitrary params in there
-        x_grid, y_grid, z_grid = np.mgrid[-size:size:resolution, -size:size:resolution, 0:1]
-        coordinates_grid = np.array(list(zip(x_grid.ravel(), y_grid.ravel(), z_grid.ravel())))
-        coordinates_phys = self.get_inverse_plans_coordinates(coordinates_grid, np.array([index] * len(coordinates_grid)))
-        coordinates_im = image.transfo_phys2pix(coordinates_phys, real=False)
-        square = image.get_values(coordinates_im.transpose(), interpolation_mode=interpolation_mode, border=border, cval=cval)
-        return square.reshape((len(x_grid), len(x_grid)))
-
     def save_centerline(self, image=None, fname_output='centerline.sct'):
         if image is not None:
             image_output = image.copy()
@@ -644,47 +531,6 @@ class Centerline:
             else:
                 np.savez(fname_output, points=self.points, derivatives=self.derivatives,
                          disks_levels=self.discs_levels, label_reference=self.label_reference)
-
-    def average_coordinates_over_slices(self, image):
-        # extracting points information for each coordinates
-        P_x = np.array([point[0] for point in self.points])
-        P_y = np.array([point[1] for point in self.points])
-        P_z = np.array([point[2] for point in self.points])
-        P_z_vox = np.array([coord[2] for coord in image.transfo_phys2pix(self.points)])
-        P_x_d = np.array([deriv[0] for deriv in self.derivatives])
-        P_y_d = np.array([deriv[1] for deriv in self.derivatives])
-        P_z_d = np.array([deriv[2] for deriv in self.derivatives])
-
-        P_z_vox = np.array([int(np.round(P_z_vox[i])) for i in range(0, len(P_z_vox))])
-        # not perfect but works (if "enough" points), in order to deal with missing z slices
-        for i in range(min(P_z_vox), max(P_z_vox) + 1, 1):
-            if i not in P_z_vox:
-                from bisect import bisect_right
-                idx_closest = bisect_right(P_z_vox, i)
-                z_min, z_max = P_z_vox[idx_closest - 1], P_z_vox[idx_closest]
-                if z_min == z_max:
-                    weight_min = weight_max = 0.5
-                else:
-                    weight_min, weight_max = abs((z_min - i) / (z_max - z_min)), abs((z_max - i) / (z_max - z_min))
-                P_x_temp = np.insert(P_x, idx_closest, weight_min * P_x[idx_closest - 1] + weight_max * P_x[idx_closest])
-                P_y_temp = np.insert(P_y, idx_closest, weight_min * P_y[idx_closest - 1] + weight_max * P_y[idx_closest])
-                P_z_temp = np.insert(P_z, idx_closest, weight_min * P_z[idx_closest - 1] + weight_max * P_z[idx_closest])
-                P_x_d_temp = np.insert(P_x_d, idx_closest, weight_min * P_x_d[idx_closest - 1] + weight_max * P_x_d[idx_closest])
-                P_y_d_temp = np.insert(P_y_d, idx_closest, weight_min * P_y_d[idx_closest - 1] + weight_max * P_y_d[idx_closest])
-                P_z_d_temp = np.insert(P_z_d, idx_closest, weight_min * P_z_d[idx_closest - 1] + weight_max * P_z_d[idx_closest])
-                P_z_vox_temp = np.insert(P_z_vox, idx_closest, i)
-                P_x, P_y, P_z, P_x_d, P_y_d, P_z_d, P_z_vox = P_x_temp, P_y_temp, P_z_temp, P_x_d_temp, P_y_d_temp, P_z_d_temp, P_z_vox_temp
-
-        coord_mean = np.array([[np.mean(P_x[P_z_vox == i]), np.mean(P_y[P_z_vox == i]), np.mean(P_z[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
-        x_centerline_fit = coord_mean[:, :][:, 0]
-        y_centerline_fit = coord_mean[:, :][:, 1]
-        coord_mean_d = np.array([[np.mean(P_x_d[P_z_vox == i]), np.mean(P_y_d[P_z_vox == i]), np.mean(P_z_d[P_z_vox == i])] for i in range(min(P_z_vox), max(P_z_vox) + 1, 1)])
-        z_centerline = coord_mean[:, :][:, 2]
-        x_centerline_deriv = coord_mean_d[:, :][:, 0]
-        y_centerline_deriv = coord_mean_d[:, :][:, 1]
-        z_centerline_deriv = coord_mean_d[:, :][:, 2]
-
-        return x_centerline_fit, y_centerline_fit, z_centerline, x_centerline_deriv, y_centerline_deriv, z_centerline_deriv
 
     def display(self, mode='absolute'):
         """
@@ -736,73 +582,3 @@ class Centerline:
         plt.xlabel('z')
         plt.ylabel('y')
         plt.show()
-
-    def get_lookup_coordinates(self, reference_image):
-        nx, ny, nz, nt, px, py, pz, pt = reference_image.dim
-
-        x, y, z, xd, yd, zd = self.average_coordinates_over_slices(reference_image)
-        z_cov, coordinates = [], []
-        for i in range(len(z)):
-            nearest_index = self.find_nearest_indexes([[x[i], y[i], z[i]]])[0]
-            disc_label = self.l_points[nearest_index]
-            relative_position = self.dist_points_rel[nearest_index]
-            if disc_label != 0:
-                z_cov.append(int(reference_image.transfo_phys2pix([[x[i], y[i], z[i]]])[0][2]))
-                if self.labels_regions[disc_label] > self.last_label and self.labels_regions[disc_label] not in [49, 50]:
-                    coordinates.append(float(self.labels_regions[disc_label]) + relative_position / self.average_vert_length[disc_label])
-                else:
-                    coordinates.append(float(self.labels_regions[disc_label]) + relative_position)
-
-        # concatenate results
-        lookuptable_coordinates = []
-        for zi in range(nz):
-            if zi in z_cov:
-                corresponding_values = z_cov.index(zi)
-                lookuptable_coordinates.append(coordinates[corresponding_values])
-            else:
-                lookuptable_coordinates.append(None)
-
-        return lookuptable_coordinates
-
-    def compare_centerline(self, other, reference_image=None):
-        """
-        This function compute the mean square error and the maximum distance between two centerlines.
-        If a reference image is provided, the distance metrics are computed on each slices where the both centerlines
-        are present.
-        :param other: Centerline object
-        :params reference_image: Image object
-
-        :return: mse, mean, std, max
-        """
-        distances = []
-        mse = 0.0
-        count_mean = 0
-
-        if reference_image is not None:
-            x, y, z, xd, yd, zd = self.average_coordinates_over_slices(reference_image)
-            xo, yo, zo, xdo, ydo, zdo = other.average_coordinates_over_slices(reference_image)
-
-            z_self = [reference_image.transfo_phys2pix([[x[i], y[i], z[i]]])[0][2] for i in range(len(z))]
-            z_other = [reference_image.transfo_phys2pix([[xo[i], yo[i], zo[i]]])[0][2] for i in range(len(zo))]
-            min_other, max_other = np.min(z_other), np.max(z_other)
-
-            for index in range(len(z)):
-                slice = z_self[index]
-
-                if min_other <= slice <= max_other:
-                    index_other = other.find_nearest_index([x[index], y[index], z[index]])
-                    coord_other = other.points[index_other]
-                    distance = (x[index] - coord_other[0])**2 + (y[index] - coord_other[1])**2 + (z[index] - coord_other[2])**2
-                    distances.append(np.sqrt(distance))
-                    mse += distance
-                    count_mean += 1
-
-        else:
-            raise ValueError('Computation of centerline validation metrics without reference images is not yet '
-                             'available. Please provide a reference image.')
-
-        mse = np.sqrt(mse / float(count_mean))
-        mean = np.mean(distances)
-        std = np.std(distances)
-        max = np.max(distances)
-        return mse, mean, std, max, distances
