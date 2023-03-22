@@ -487,9 +487,6 @@ class Centerline:
                 result = np.argmin(np.abs(np.array(self.dist_points) - position_reference_self - relative_position_from_reference_backup))
             else:
                 result = self.get_closest_to_relative_position(vertebral_level=vertebral_level, relative_position=relative_position)
-
-        if isinstance(result, list) or isinstance(result, np.ndarray):
-            result = result[0]
         return result
 
     def save_centerline(self, image=None, fname_output='centerline.sct'):
