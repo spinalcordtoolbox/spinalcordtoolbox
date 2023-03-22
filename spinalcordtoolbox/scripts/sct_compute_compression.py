@@ -239,7 +239,7 @@ def get_compressed_slice(img, verbose):
     return [int(coordinate.z) for coordinate in coordinates]
 
 
-def get_centerline_object(im_seg, verbose):
+def get_centerline_object(img_seg, verbose):
     """
     Get centerline object in physical dimensions
     """
@@ -249,7 +249,7 @@ def get_centerline_object(im_seg, verbose):
                        smooth=30,  # TODO add as default arg
                        minmax=True)  # Check if we want min max or not
 
-    _, arr_ctl_phys, arr_ctl_der_phys, _ = get_centerline(im_seg, param_centerline,
+    _, arr_ctl_phys, arr_ctl_der_phys, _ = get_centerline(img_seg, param_centerline,
                                                           verbose=verbose, space="phys")
     ctl_seg = Centerline(*arr_ctl_phys, *arr_ctl_der_phys)
     return ctl_seg
@@ -488,6 +488,16 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
     return slices_below, slices_above
 
 
+def check_if_shape_mismatch(img1, img_ref):
+    shape_img1 = img1.data.shape
+    shape_img_ref = img_ref.data.shape
+    print(shape_img1, shape_img_ref)
+    if shape_img1 != shape_img_ref:
+        return True
+    else:
+        False
+
+
 def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename):
     """
     Save .csv file of MSCC results.
@@ -516,31 +526,39 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
     fname_labels = arguments.l
-    img = Image(fname_labels)
-    img.change_orientation('RPI')
+    img_labels = Image(fname_labels).change_orientation('RPI')
+    fname_segmentation = arguments.i
+    img_seg = Image(fname_segmentation).change_orientation('RPI')
+    distance = arguments.distance
+    extent = arguments.extent
     path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
     if arguments.o is not None:
         fname_out = arguments.o
     else:
         path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
         fname_out = os.path.join(path, file_name + '_compression_metrics' + ext)
+    # Check if compression labels ar in the same dimensions than spinal cord segmentation
+    if check_if_shape_mismatch(img_labels, img_seg):
+        raise ValueError(f"Shape mismatch between compression labels [{img_labels.data.shape}] and segmentation [{img_seg.data.shape}]). "
+                         f"Please verify that your compression labels wwere done in the same space as your input segmentation.")
     # Call sct_process_segmentation to get morphometrics perslice in native space
-    sct_process_segmentation.main('-i', fname_in, '-type',)
-    fname_metrics = get_absolute_path(arguments.i)
+    fname_metrics = 'metrics.csv'  # TODO maybe add option for path-out names?
+    sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', arguments.vertfile, '-perslice', '1', '-o', fname_metrics])
     metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
     # Fetch distance and extent and segmentation
-    fname_segmentation = arguments.s
-    distance = arguments.distance
-    extent = arguments.extent
+
     # Fetch metrics of subject
     df_metrics = csv2dataFrame(fname_metrics, metric)
     # Get vertebral level corresponding to the slice with the compression
-    slice_thickness = get_slice_thickness(img)
-    slice_compressed = get_compressed_slice(img, verbose)
+    slice_thickness = get_slice_thickness(img_labels)
+    slice_compressed = get_compressed_slice(img_labels, verbose)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     # Initialize variables if normalization with
     if arguments.i_PAM50:
-        fname_metrics_PAM50 = get_absolute_path(arguments.i_PAM50)
+        fname_metrics_PAM50 = 'metrics_PAM50.csv'  # TODO maybe add option for path-out names?
+        # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
+        sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', arguments.vertfile, '-normalize-PAM50',
+                                      '-perslice', '1', '-o', fname_metrics_PAM50])
         sex = arguments.sex
         age = arguments.age
         if age:
@@ -575,14 +593,13 @@ def main(argv: Sequence[str]):
     else:
         # Get spinal cord centerline object
         if fname_segmentation:
-            im_seg = Image(get_absolute_path(fname_segmentation)).change_orientation('RPI')
             # Get max and min index of the segmentation with pmj
-            _, _, Z = (im_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
+            _, _, Z = (img_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
             min_z_index, max_z_index = min(Z), max(Z)
             # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
             z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
 
-            centerline = get_centerline_object(im_seg, verbose=verbose)
+            centerline = get_centerline_object(img_seg, verbose=verbose)
             z_range_above, z_range_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
         else:
             parser.error('Spinal cord segmentation -s is needed to compute compression metrics without normalization.')
