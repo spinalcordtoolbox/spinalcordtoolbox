@@ -599,7 +599,7 @@ def main(argv: Sequence[str]):
         z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
         # Get centerline object
         centerline = get_centerline_object(img_seg, verbose=verbose)
-        # Get healthy slices to average for level above and below 
+        # Get healthy slices to average for level above and below
         z_range_above, z_range_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
 
     # Loop through all compressed levels (compute one MSCC per compressed level)
