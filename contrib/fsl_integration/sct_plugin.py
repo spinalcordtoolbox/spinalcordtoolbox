@@ -72,13 +72,13 @@ class ErrorDialog(wx.Dialog):
         vbox = wx.BoxSizer(wx.VERTICAL)
 
         error_msg_box = wx.TextCtrl(self, wx.ID_ANY, size=(500,150),
-                                    style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
+                                    style = wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 
         error_msg_box.AppendText(msg)
-        vbox.Add(error_msg_box, 0, wx.TOP|wx.EXPAND, 20)
+        vbox.Add(error_msg_box, 0, wx.TOP | wx.EXPAND, 20)
 
         btns = self.CreateSeparatedButtonSizer(wx.OK)
-        vbox.Add(btns, 0, wx.CENTER|wx.ALL, 10)
+        vbox.Add(btns, 0, wx.CENTER | wx.ALL, 10)
 
         hbox = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -104,10 +104,10 @@ class ProgressDialog(wx.Dialog):
 
         vbox = wx.BoxSizer(wx.VERTICAL)
         lbldesc = wx.StaticText(self, id=wx.ID_ANY, label="Processing, please wait...")
-        vbox.Add(lbldesc, 0, wx.ALIGN_CENTER|wx.ALL, 10)
+        vbox.Add(lbldesc, 0, wx.ALIGN_CENTER | wx.ALL, 10)
 
         stop_button = wx.Button(self, wx.ID_CANCEL, 'Stop')
-        vbox.Add(stop_button, 0, wx.CENTER|wx.ALL, 10)
+        vbox.Add(stop_button, 0, wx.CENTER | wx.ALL, 10)
         hbox = wx.BoxSizer(wx.HORIZONTAL)
 
         # TODO: use a nicer image, showing two gears (similar to ID_EXECUTE)
@@ -212,8 +212,8 @@ class TextBox:
         button_fetch_file = wx.Button(sctpanel, -1, label=label)
         button_fetch_file.Bind(wx.EVT_BUTTON, self.get_highlighted_file_name)
 
-        self.hbox.Add(button_fetch_file, 0, wx.ALIGN_LEFT| wx.RIGHT, 10)
-        self.hbox.Add(self.textctrl, 1, wx.ALIGN_LEFT|wx.LEFT, 10)
+        self.hbox.Add(button_fetch_file, 0, wx.ALIGN_LEFT | wx.RIGHT, 10)
+        self.hbox.Add(self.textctrl, 1, wx.ALIGN_LEFT | wx.LEFT, 10)
 
     def get_highlighted_file_name(self, event):
         """
@@ -245,8 +245,8 @@ class OutputFolderWidget():
         button_select_ofolder = wx.Button(self.sct_panel, -1, label="Set Output Folder")
         button_select_ofolder.Bind(wx.EVT_BUTTON, self.on_button_select_ofolder)
 
-        self.hbox.Add(button_select_ofolder, 0, wx.ALIGN_LEFT| wx.RIGHT, 10)
-        self.hbox.Add(self.textctrl, 1, wx.ALIGN_LEFT|wx.LEFT, 10)
+        self.hbox.Add(button_select_ofolder, 0, wx.ALIGN_LEFT | wx.RIGHT, 10)
+        self.hbox.Add(self.textctrl, 1, wx.ALIGN_LEFT | wx.LEFT, 10)
         ofolder_txt_ctrls.append(self)
 
     def on_button_select_ofolder(self, event):
@@ -308,7 +308,7 @@ class SCTPanel(wx.Panel):
 
         button_help = wx.Button(self, id=id_, label="Help")
         button_help.Bind(wx.EVT_BUTTON, self.help_url)
-        logo_help_hbox.Add(button_help, 0, wx.ALIGN_BOTTOM|wx.LEFT, 90)
+        logo_help_hbox.Add(button_help, 0, wx.ALIGN_BOTTOM | wx.LEFT, 90)
 
         self.column_left.Add(logo_help_hbox, proportion=0, flag=wx.ALL, border=5)
 
@@ -316,9 +316,9 @@ class SCTPanel(wx.Panel):
         self.column_left.Add(html_desc_window, 0, wx.ALL, 5)
 
         self.log_window = wx.TextCtrl(self, wx.ID_ANY, size=(100, 300),
-                                      style = wx.TE_MULTILINE|wx.TE_READONLY|wx.HSCROLL)
+                                      style = wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 
-        self.column_right.Add(self.log_window, 1, wx.EXPAND|wx.ALL, 5)
+        self.column_right.Add(self.log_window, 1, wx.EXPAND | wx.ALL, 5)
 
         self.main_row.Add(self.column_left, 0, wx.ALL, 10)
         self.main_row.Add(self.column_center, 1, wx.ALL, 10)
@@ -433,9 +433,9 @@ class TabPanelPropSeg(SCTPanel):
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
         button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
 
-        self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND | wx.ALL, 5)
         self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
-        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND | wx.ALL, 5)
         self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
@@ -500,9 +500,9 @@ class TabPanelSCSeg(SCTPanel):
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
         button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
 
-        self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND | wx.ALL, 5)
         self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
-        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND | wx.ALL, 5)
         self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
@@ -561,8 +561,8 @@ class TabPanelGMSeg(SCTPanel):
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
         button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
 
-        self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND|wx.ALL, 5)
-        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_filein.hbox, 0, wx.EXPAND | wx.ALL, 5)
+        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND | wx.ALL, 5)
         self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
@@ -629,10 +629,10 @@ class TabPanelVertLB(SCTPanel):
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
         button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
 
-        self.column_center.Add(self.hbox_im.hbox, 0, wx.EXPAND|wx.ALL, 5)
-        self.column_center.Add(self.hbox_seg.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_im.hbox, 0, wx.EXPAND | wx.ALL, 5)
+        self.column_center.Add(self.hbox_seg.hbox, 0, wx.EXPAND | wx.ALL, 5)
         self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
-        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND | wx.ALL, 5)
         self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
@@ -714,11 +714,11 @@ class TabPanelRegisterToTemplate(SCTPanel):
         button_run = wx.Button(self, id=wx.ID_ANY, label="Run")
         button_run.Bind(wx.EVT_BUTTON, self.on_button_run)
 
-        self.column_center.Add(self.hbox_im.hbox, 0, wx.EXPAND|wx.ALL, 5)
-        self.column_center.Add(self.hbox_seg.hbox, 0, wx.EXPAND|wx.ALL, 5)
-        self.column_center.Add(self.hbox_label.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_im.hbox, 0, wx.EXPAND | wx.ALL, 5)
+        self.column_center.Add(self.hbox_seg.hbox, 0, wx.EXPAND | wx.ALL, 5)
+        self.column_center.Add(self.hbox_label.hbox, 0, wx.EXPAND | wx.ALL, 5)
         self.column_center.Add(self.rbox_contrast, 0, wx.ALL, 5)
-        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND|wx.ALL, 5)
+        self.column_center.Add(self.hbox_ofolder.hbox, 0, wx.EXPAND | wx.ALL, 5)
         self.column_center.Add(button_run, 0, wx.ALL, 5)
 
     def on_button_run(self, event):
