@@ -487,8 +487,7 @@ class Centerline:
     def save_centerline(self, image=None, fname_output='centerline.sct'):
         if image is not None:
             image_output = image.copy()
-            image_output.data = image_output.data.astype(np.float32)
-            image_output.data *= 0.0
+            image_output.data = np.zeros_like(image_output.data, dtype=np.float32)
 
             for i in range(self.number_of_points):
                 current_label = self.l_points[i]
