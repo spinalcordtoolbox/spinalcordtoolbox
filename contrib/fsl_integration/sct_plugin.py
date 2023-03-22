@@ -72,7 +72,7 @@ class ErrorDialog(wx.Dialog):
         vbox = wx.BoxSizer(wx.VERTICAL)
 
         error_msg_box = wx.TextCtrl(self, wx.ID_ANY, size=(500, 150),
-                                    style = wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
+                                    style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 
         error_msg_box.AppendText(msg)
         vbox.Add(error_msg_box, 0, wx.TOP | wx.EXPAND, 20)
@@ -316,7 +316,7 @@ class SCTPanel(wx.Panel):
         self.column_left.Add(html_desc_window, 0, wx.ALL, 5)
 
         self.log_window = wx.TextCtrl(self, wx.ID_ANY, size=(100, 300),
-                                      style = wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
+                                      style=wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 
         self.column_right.Add(self.log_window, 1, wx.EXPAND | wx.ALL, 5)
 
