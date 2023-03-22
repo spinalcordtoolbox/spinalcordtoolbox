@@ -9,7 +9,6 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-# TODO: remove AP name for m metrics!
 # TODO: maybe create an API or move some functions
 import sys
 import os
