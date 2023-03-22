@@ -159,7 +159,7 @@ class SCTCallThread(Thread):
 
         while proc.poll() is None:
             timeout = 1
-            rs = [ proc.stdout, proc.stderr ]
+            rs = [proc.stdout, proc.stderr ]
             ws = []
             xs = []
 
