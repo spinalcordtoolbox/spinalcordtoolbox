@@ -74,7 +74,7 @@ def get_parser():
         '-i-PAM50',
         metavar=Metavar.file,
         help='CSV morphometric file in the PAM50 space, obtained by running: '
-        'sct_process_segmentation -normalize-PAM50.'
+        'sct_process_segmentation -normalize-PAM50. Use this flag if you want to normalize the metrics using a database of healthy controls.'
     )
     optional.add_argument(
         '-s',
