@@ -23,9 +23,9 @@ def test_segment():
     xx, yy = np.mgrid[:48, :48]
     circle = (xx - 24) ** 2 + (yy - 24) ** 2
     for zz in range(data.shape[2]):
-        data[:,:,zz] += np.logical_and(circle < 400, circle >= 200) * 2400 # CSF
-        data[:,:,zz] += (circle < 200) * 500 # SC
-    data[16:22, 16:22, 64:90] = 1000 # fake lesion
+        data[:, :, zz] += np.logical_and(circle < 400, circle >= 200) * 2400  # CSF
+        data[:, :, zz] += (circle < 200) * 500  # SC
+    data[16:22, 16:22, 64:90] = 1000  # fake lesion
 
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data, affine)
@@ -33,8 +33,8 @@ def test_segment():
 
     seg = deepseg_lesion.segment_3d(model_path, contrast_test, img.copy())
 
-    assert np.any(seg.data[16:22, 16:22, 64:90]) == True  # check if lesion detected
-    assert np.any(seg.data[img.data != 1000]) == False  # check if no FP
+    assert np.any(seg.data[16:22, 16:22, 64:90])  # check if lesion detected
+    assert not np.any(seg.data[img.data != 1000])  # check if no FP
 
 
 def test_intensity_normalization():

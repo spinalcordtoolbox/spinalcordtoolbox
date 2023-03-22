@@ -1,14 +1,10 @@
 import glob
 import os
-import sys
 import json
 
 import pytest
 from stat import S_IEXEC
 from textwrap import dedent
-
-from spinalcordtoolbox import __sct_dir__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
 from spinalcordtoolbox.scripts import sct_run_batch
 
