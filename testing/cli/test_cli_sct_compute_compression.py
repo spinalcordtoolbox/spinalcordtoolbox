@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture(scope="session")
 def dummy_3d_compression_label():
     data = np.zeros([32, 32, 81], dtype=np.uint8)
-    data[15, 15, 72] = 1
+    data[15, 15, 48] = 1
     nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
     filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
     nibabel.save(nii, filename)
@@ -23,12 +23,12 @@ def dummy_3d_compression_label():
 @pytest.fixture(scope="session")
 def dummy_3d_vert_label():
     data = np.zeros([32, 32, 81], dtype=np.uint8)
-    data[15, 15, 0:10] = 2
-    data[15, 15, 10:25] = 3
-    data[15, 15, 25:50] = 4
-    data[15, 15, 25:50] = 4
-    data[15, 15, 50:70] = 5
-    data[15, 15, 70:81] = 6
+    data[15, 15, 0:10] = 2.0
+    data[15, 15, 10:25] = 3.0
+    data[15, 15, 25:50] = 4.0
+    data[15, 15, 25:50] = 5.0
+    data[15, 15, 50:70] = 6.0
+    data[15, 15, 70:81] = 7.0
     nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
     filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
     nibabel.save(nii, filename)
@@ -39,6 +39,8 @@ def dummy_3d_vert_label():
 def dummy_3d_mask_nib():
     data = np.zeros([32, 32, 81], dtype=np.uint8)
     data[9:24, 9:24, :] = 1
+    data[9:24, 9:24, 48] = 0
+    data[9:24, 10:22, 48] = 1
     nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
     filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
     nibabel.save(nii, filename)
@@ -58,83 +60,83 @@ def test_sct_compute_compression_value_against_groundtruth():
     assert mscc == pytest.approx(6.612133606, abs=1e-4)
 
 
-def test_sct_compute_compression_check_missing_input_segmentation(tmp_path, dummy_3d_compression_label):
+def test_sct_compute_compression_check_missing_input_segmentation(tmp_path, dummy_3d_compression_label, dummy_3d_vert_label):
     """ Run sct_compute_compression when missing -i"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_compute_compression.main(argv=['-l', dummy_3d_compression_label, '-o', filename])
+        sct_compute_compression.main(argv=['-l', dummy_3d_compression_label, '-vertfile', dummy_3d_vert_label, '-o', filename])
         assert e.value.code == 2
 
 
-def test_sct_compute_compression_check_missing_input_l(tmp_path):
+def test_sct_compute_compression_check_missing_input_l(tmp_path, dummy_3d_mask_nib, dummy_3d_vert_label):
     """ Run sct_compute_mscc when missing -l"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_compute_compression.main(argv=['-i',  '-o', filename])
+        sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-vertfile', dummy_3d_vert_label, '-o', filename])
         assert e.value.code == 2
 
 
-def test_sct_compute_compression_check_wrong_sex(tmp_path, dummy_3d_compression_label):
+def test_sct_compute_compression_check_wrong_sex(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
     """ Run sct_compute_compression with wrong value for sex"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_compute_compression.main(argv=['-i', '-l', dummy_3d_compression_label,
+        sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label, '-vertfile', dummy_3d_vert_label,
                                            '-sex', 'J', '-o', filename])
         assert e.value.code == 2
 
 
-def test_sct_compute_compression_check_wrong_age(tmp_path, dummy_3d_compression_label):
+def test_sct_compute_compression_check_wrong_age(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
     """ Run sct_compute_compression with wrong age"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_compute_compression.main(argv=['-i', '-l', dummy_3d_compression_label,
+        sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label, '-vertfile', dummy_3d_vert_label,
                                            '-age', '20', '-o', filename])
         assert e.value.code == 2
 
 
-def test_sct_compute_compression_check_wrong_metric(tmp_path, dummy_3d_compression_label):
+def test_sct_compute_compression_check_wrong_metric(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
     """ Run sct_compute_compression when specifying a wrong metric"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_compute_compression.main(argv=['-i', '-l', dummy_3d_compression_label,
+        sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label, '-vertfile', dummy_3d_vert_label,
                                            '-metric', 'MEAN', '20', '-o', filename])
         assert e.value.code == 2
 
 
-def test_sct_compute_compression_no_normalization(tmp_path, dummy_3d_compression_label, dummy_3d_mask_nib, dummy_3d_vert_label):
+def test_sct_compute_compression_no_normalization(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
     """ Run sct_compute_compression without normalization (-i-PAM50)"""
     filename = str(tmp_path / 'tmp_file_out.csv')
-    sct_compute_compression.main(argv=['-i', '-l', dummy_3d_compression_label, '-s', dummy_3d_mask_nib,
-                                       '-vertfile', dummy_3d_vert_label, '-o', filename])
+    sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label, '-vertfile', dummy_3d_vert_label,
+                                       '-normalize',  '0', '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
-        assert row['Compression Level'] == '7.0'
-        assert float(row['diameter_AP ratio']) == pytest.approx(-1.8398481708261416)
+        assert float(row['Compression Level']) == 5.0
+        assert float(row['diameter_AP ratio']) == pytest.approx(20.040803711692355)
         assert row['Normalized diameter_AP ratio'] == ''
 
 
-def test_sct_compute_compression(tmp_path, dummy_3d_compression_label, dummy_3d_vert_label):
+def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
     """ Run sct_compute_compression and check mscc and normalized mscc"""
     filename = str(tmp_path / 'tmp_file_out.csv')
-    sct_compute_compression.main(argv=['-i', '-l', dummy_3d_compression_label,
+    sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label,
                                        '-vertfile', dummy_3d_vert_label, '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
-        assert row['Compression Level'] == '7.0'
-        assert float(row['diameter_AP ratio']) == pytest.approx(9.90859753389537)
-        assert float(row['Normalized diameter_AP ratio']) == pytest.approx(14.030016763655384)
+        assert float(row['Compression Level']) == 5.0
+        assert float(row['diameter_AP ratio']) == pytest.approx(15.030602783769243)
+        assert float(row['Normalized diameter_AP ratio']) == pytest.approx(19.207924588266067)
 
 
-def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_compression_label, dummy_3d_vert_label):
+def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
     """ Run sct_compute_compression and chexk mscc and normalized mscc"""
     filename = str(tmp_path / 'tmp_file_out.csv')
-    sct_compute_compression.main(argv=['-i', '-l', dummy_3d_compression_label,
+    sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label,
                                        '-vertfile', dummy_3d_vert_label, '-sex', 'F', '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
-        assert row['Compression Level'] == '7.0'
-        assert float(row['diameter_AP ratio']) == pytest.approx(9.90859753389537)
-        assert float(row['Normalized diameter_AP ratio']) == pytest.approx(14.069850586784538)
+        assert float(row['Compression Level']) == 5.0
+        assert float(row['diameter_AP ratio']) == pytest.approx(15.030602783769243)
+        assert float(row['Normalized diameter_AP ratio']) == pytest.approx(18.787912535642036)
