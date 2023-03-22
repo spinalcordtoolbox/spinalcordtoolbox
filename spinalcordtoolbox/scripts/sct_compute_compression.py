@@ -547,15 +547,13 @@ def main(argv: Sequence[str]):
     fname_metrics = 'metrics.csv'  # TODO maybe add option for path-out names?
     sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', arguments.vertfile, '-perslice', '1', '-o', fname_metrics])
     metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
-    # Fetch distance and extent and segmentation
-
     # Fetch metrics of subject
     df_metrics = csv2dataFrame(fname_metrics, metric)
     # Get vertebral level corresponding to the slice with the compression
     slice_thickness = get_slice_thickness(img_labels)
     slice_compressed = get_compressed_slice(img_labels, verbose)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
-    # Initialize variables if normalization with
+    # Initialize variables if normalization
     if arguments.normalize:
         fname_metrics_PAM50 = 'metrics_PAM50.csv'  # TODO maybe add option for path-out names?
         # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
@@ -563,6 +561,7 @@ def main(argv: Sequence[str]):
                                       '-perslice', '1', '-o', fname_metrics_PAM50])
         sex = arguments.sex
         age = arguments.age
+        # Select healthy controls based on sex and/or age range
         if age:
             if any(n < 0 for n in age):
                 parser.error('Age range needs to be positive, {} was specified'.format(age))
@@ -577,7 +576,6 @@ def main(argv: Sequence[str]):
                 list_HC = select_HC(fname_partcipants, sex, age)
         else:
             list_HC = None
-        # Select healthy controls based on sex and/or age range
 
         # Get PAM50 slice thickness
         fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
@@ -587,24 +585,23 @@ def main(argv: Sequence[str]):
         # Fetch metrics of PAM50 template
         df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, metric)
 
-        # Get slices corresponding in PAM50 space
+        # Get slices correspondance in PAM50 space
         compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
         z_range_below, z_range_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
         # Get data from healthy control and average them
         df_avg_HC = average_hc(path_ref, metric, list_HC)
     else:
-        # Get spinal cord centerline object
-        if fname_segmentation:
-            # Get max and min index of the segmentation with pmj
-            _, _, Z = (img_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
-            min_z_index, max_z_index = min(Z), max(Z)
-            # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
-            z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
+        # Get spinal cord centerline object to compute the distance
+        # Get max and min index of the segmentation with pmj
+        _, _, Z = (img_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
+        min_z_index, max_z_index = min(Z), max(Z)
+        # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
+        z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
+        # Get centerline object
+        centerline = get_centerline_object(img_seg, verbose=verbose)
+        # Get healthy slices to average for level above and below 
+        z_range_above, z_range_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
 
-            centerline = get_centerline_object(img_seg, verbose=verbose)
-            z_range_above, z_range_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
-        else:
-            parser.error('Spinal cord segmentation -s is needed to compute compression metrics without normalization.')
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict.keys():
         # Get metric of patient with compression
