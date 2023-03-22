@@ -23,6 +23,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.types import Centerline
 from spinalcordtoolbox import __data_dir__
+from spinalcordtoolbox.scripts import sct_process_segmentation
 
 
 logger = logging.getLogger(__name__)
@@ -518,6 +519,8 @@ def main(argv: Sequence[str]):
     else:
         path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
         fname_out = os.path.join(path, file_name + '_compression_metrics' + ext)
+    # Call sct_process_segmentation to get morphometrics perslice in native space
+    sct_process_segmentation.main('-i', fname_in, '-type',)
     fname_metrics = get_absolute_path(arguments.i)
     metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
     # Fetch distance and extent and segmentation
