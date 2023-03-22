@@ -77,9 +77,10 @@ def get_parser():
         'sct_process_segmentation -normalize-PAM50. Use this flag if you want to normalize the metrics using a database of healthy controls.'
     )
     optional.add_argument(
-        '-s',
+        '-s',  # TODO: maybe output the centerline from sct_process_segmentation instead
         metavar=Metavar.file,
-        help='NIfTI file of spinal cord segmentation.'
+        help='NIfTI file of spinal cord segmentation. Mandatory if no normalization is wanted (if -i-PAM50 is not specified).'
+             'Metric ratio will take average along the centerline.'
     )
     optional.add_argument(
         '-extent',
