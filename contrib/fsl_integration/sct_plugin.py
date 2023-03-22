@@ -44,11 +44,11 @@ from threading import Thread
 import logging
 import webbrowser
 
-import wx
-import wx.lib.agw.aui as aui
-import wx.html as html
+import wx                     # noqa: F821 (wx is provided by the FSLeyes context)
+import wx.lib.agw.aui as aui  # noqa: F821 (wx is provided by the FSLeyes context)
+import wx.html as html        # noqa: F821 (wx is provided by the FSLeyes context)
 
-from fsleyes.views import viewpanel
+from fsleyes.views import viewpanel  # noqa: F821 (fsleyes is provided by the FSLeyes context)
 
 logger = logging.getLogger(__name__)
 
