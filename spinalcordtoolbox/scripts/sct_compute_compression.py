@@ -82,10 +82,9 @@ def get_parser():
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
-        '-i-PAM50',
+        '-normalize',
         metavar=Metavar.file,
-        help='CSV morphometric file in the PAM50 space, obtained by running: '
-        'sct_process_segmentation -normalize-PAM50. Use this flag if you want to normalize the metrics using a database of healthy controls.'
+        help='Use this flag if you want to normalize the metrics using a database of healthy controls. '
     )
     optional.add_argument(
         '-extent',
