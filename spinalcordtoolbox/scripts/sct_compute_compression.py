@@ -99,7 +99,7 @@ def get_parser():
         '-file-participants',
         metavar=Metavar.file,
         default='participants.tsv',
-        help='participants.tsv file of healthy controls.'
+        help='participants.tsv file of healthy controls. Use this flag in combination with the "-sex" and "-age" flags.'
     )
     optional.add_argument(
         '-sex',
