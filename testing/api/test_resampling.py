@@ -5,17 +5,12 @@
 # TODO: add test for 2d image
 
 
-import sys
-import os
 import pytest
 
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils import __sct_dir__
 from spinalcordtoolbox import resampling
-
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
 
 @pytest.fixture(scope="session")

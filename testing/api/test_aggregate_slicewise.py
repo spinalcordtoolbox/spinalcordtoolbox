@@ -2,8 +2,6 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.aggregate_slicewise
 
-import sys
-import os
 import pytest
 import csv
 
@@ -11,12 +9,10 @@ import numpy as np
 import nibabel as nib
 import pandas as pd
 
-from spinalcordtoolbox import __sct_dir__, __version__
+from spinalcordtoolbox import __version__
 from spinalcordtoolbox import aggregate_slicewise
 from spinalcordtoolbox.process_seg import Metric
 from spinalcordtoolbox.image import Image
-
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 
 
 @pytest.fixture(scope="session")
