@@ -22,6 +22,16 @@ def dummy_3d_label_label():
 
 
 @pytest.fixture(scope="session")
+def dummy_3d_mask_nib():
+    data = np.zeros([32, 32, 81], dtype=np.uint8)
+    data[9:24, 9:24, :] = 1
+    nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
+    filename = tempfile.NamedTemporaryFile(suffix='.nii.gz', delete=False).name
+    nibabel.save(nii, filename)
+    return filename
+
+
+@pytest.fixture(scope="session")
 def dummy_metrics_csv():
     vertlevel = np.empty(38)
     vertlevel.fill(7)
@@ -119,6 +129,28 @@ def test_sct_compute_compression_check_wrong_metric(tmp_path, dummy_3d_label_lab
         sct_compute_compression.main(argv=['-i', dummy_metrics_csv, '-i-PAM50', dummy_metrics_csv_pam50, '-l', dummy_3d_label_label,
                                            '-metric', 'MEAN', '20', '-o', filename])
         assert e.value.code == 2
+
+
+def test_sct_compute_compression_no_normalization_missing_segmentation(tmp_path, dummy_3d_label_label, dummy_metrics_csv):
+    """ Run sct_compute_compression without normalization (-i-PAM50) and missing segmentation (-s)"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    with pytest.raises(SystemExit) as e:
+        sct_compute_compression.main(argv=['-i', dummy_metrics_csv, '-l', dummy_3d_label_label,
+                                           '-o', filename])
+        assert e.value.code == 2
+
+
+def test_sct_compute_compression_no_normalization(tmp_path, dummy_3d_label_label, dummy_metrics_csv, dummy_3d_mask_nib):
+    """ Run sct_compute_compression without normalization (-i-PAM50)"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    sct_compute_compression.main(argv=['-i', dummy_metrics_csv, '-l', dummy_3d_label_label, '-s', dummy_3d_mask_nib,
+                                       '-o', filename])
+    with open(filename, "r") as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=',')
+        row = next(reader)
+        assert row['Compression Level'] == '7.0'
+        assert float(row['diameter_AP ratio']) == pytest.approx(-1.8398481708261416)
+        assert row['Normalized diameter_AP ratio'] == ''
 
 
 def test_sct_compute_compression(tmp_path, dummy_3d_label_label, dummy_metrics_csv, dummy_metrics_csv_pam50):
