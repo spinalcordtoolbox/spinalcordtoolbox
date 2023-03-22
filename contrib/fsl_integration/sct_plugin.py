@@ -366,7 +366,7 @@ class SCTPanel(wx.Panel):
 
     def call_sct_command(self, command):
         self.log_to_window("Running: {}".format(command), level="INFO")
-        progress_dialog = ProgressDialog(frame)
+        progress_dialog = ProgressDialog(frame)  # noqa: F821 (frame is provided by FSLeyes context)
         progress_dialog.Show()
 
         thr = SCTCallThread(command, self.log_window)
@@ -394,7 +394,7 @@ class SCTPanel(wx.Panel):
         else:
             # show stderr output if an error occurred
             self.log_to_window("An error occurred", level="ERROR")
-            error_dialog = ErrorDialog(frame, msg=thr.stderr)
+            error_dialog = ErrorDialog(frame, msg=thr.stderr)  # noqa: F821 (frame is provided by FSLeyes context)
             error_dialog.Show()
 
 
@@ -445,7 +445,7 @@ class TabPanelPropSeg(SCTPanel):
         if not fname_input:
             msg = "No input file selected! Select a file from the overlay list and then press Input file."
             self.log_to_window(msg, level="ERROR")
-            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog = ErrorDialog(frame, msg=msg)  # noqa: F821 (frame is provided by FSLeyes context)
             error_dialog.Show()
             return
 
@@ -512,7 +512,7 @@ class TabPanelSCSeg(SCTPanel):
         if not fname_input:
             msg = "No input file selected! Select a file from the overlay list and then press Input file."
             self.log_to_window(msg, level="ERROR")
-            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog = ErrorDialog(frame, msg=msg)  # noqa: F821 (frame is provided by FSLeyes context)
             error_dialog.Show()
             return
 
@@ -572,7 +572,7 @@ class TabPanelGMSeg(SCTPanel):
         if not fname_input:
             msg = "No input file selected! Select a file from the overlay list and then press Input file."
             self.log_to_window(msg, level="ERROR")
-            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog = ErrorDialog(frame, msg=msg)  # noqa: F821 (frame is provided by FSLeyes context)
             error_dialog.Show()
             return
 
@@ -645,7 +645,7 @@ class TabPanelVertLB(SCTPanel):
         if not fname_im:
             msg = "No input image selected! Select an image from the overlay list and then press Input image."
             self.log_to_window(msg, level="ERROR")
-            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog = ErrorDialog(frame, msg=msg)  # noqa: F821 (frame is provided by FSLeyes context)
             error_dialog.Show()
             return
 
@@ -653,7 +653,7 @@ class TabPanelVertLB(SCTPanel):
         if not fname_seg:
             msg = "No input segmentation selected! Select a segmentation file from the overlay list and then press Input segmentation."
             self.log_to_window(msg, level="ERROR")
-            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog = ErrorDialog(frame, msg=msg)  # noqa: F821 (frame is provided by FSLeyes context)
             error_dialog.Show()
             return
 
@@ -735,7 +735,7 @@ class TabPanelRegisterToTemplate(SCTPanel):
         if not fname_im:
             msg = "No input image selected! Select an image from the overlay list and then press Input image."
             self.log_to_window(msg, level="ERROR")
-            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog = ErrorDialog(frame, msg=msg)  # noqa: F821 (frame is provided by FSLeyes context)
             error_dialog.Show()
             return
 
@@ -743,7 +743,7 @@ class TabPanelRegisterToTemplate(SCTPanel):
         if not fname_seg:
             msg = "No input segmentation selected! Select a segmentation file from the overlay list and then press Input segmentation."
             self.log_to_window(msg, level="ERROR")
-            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog = ErrorDialog(frame, msg=msg)  # noqa: F821 (frame is provided by FSLeyes context)
             error_dialog.Show()
             return
 
@@ -751,7 +751,7 @@ class TabPanelRegisterToTemplate(SCTPanel):
         if not fname_label:
             msg = "No input labels selected! Select input labels from the overlay list and then press Input labels."
             self.log_to_window(msg, level="ERROR")
-            error_dialog = ErrorDialog(frame, msg=msg)
+            error_dialog = ErrorDialog(frame, msg=msg)  # noqa: F821 (frame is provided by FSLeyes context)
             error_dialog.Show()
             return
 
@@ -795,27 +795,29 @@ class SCTViewPanel(viewpanel.ViewPanel):
 
 def run_main():
     if 'SCT_DIR' not in os.environ:
-        dlg = wx.MessageDialog(frame.auiManager.GetManagedWindow(), 'Spinal Cord Toolbox (SCT) was not '
-                                       'found in your system. Make sure you open fsleyes '
-                                       'from the Terminal (not by clicking on the App). '
-                                       'If you are indeed running from the Terminal, please '
-                                       'check the installation procedure at: '
-                                       'https://github.com/spinalcordtoolbox/spinalcordtoolbox',
-                               'SCT not found!', wx.OK | wx.ICON_INFORMATION)
+        dlg = wx.MessageDialog(
+            frame.auiManager.GetManagedWindow(),  # noqa: F821 (frame is provided by FSLeyes context)
+            'Spinal Cord Toolbox (SCT) was not found in your system. Make sure you open fsleyes from the Terminal '
+            '(not by clicking on the App). If you are indeed running from the Terminal, please check the installation '
+            'procedure at: https://github.com/spinalcordtoolbox/spinalcordtoolbox',
+            'SCT not found!', wx.OK | wx.ICON_INFORMATION
+        )
         dlg.ShowModal()
         dlg.Destroy()
         return
 
     # Create a new view panel which will contain the SCT notebook pages
-    sct_view_panel = frame.addViewPanel(SCTViewPanel, default=False,
+    sct_view_panel = frame.addViewPanel(SCTViewPanel,  # noqa: F821 (frame is provided by FSLeyes context)
+                                        default=False,
                                         title="Spinal Cord Toolbox")
     aui_manager = sct_view_panel.auiManager
 
     # Move panel to bottom (by default, FSLeyes puts ViewPanels to the right)
-    width, height = frame.GetClientSize().Get()
-    frame.auiManager.GetPane(sct_view_panel).Bottom()\
-                    .BestSize(width, height // 3)  # Resize, horizontal viewing
-    frame.auiManager.Update()
+    width, height = frame.GetClientSize().Get()      # noqa: F821 (frame is provided by FSLeyes context)
+    (frame.auiManager.GetPane(sct_view_panel)        # noqa: F821 (frame is provided by FSLeyes context)
+                     .Bottom()
+                     .BestSize(width, height // 3))  # Resize, horizontal viewing
+    frame.auiManager.Update()                        # noqa: F821 (frame is provided by FSLeyes context)
 
     # Adding panels
     notebook = aui.AuiNotebook(parent=aui_manager.GetManagedWindow())
