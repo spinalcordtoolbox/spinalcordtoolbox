@@ -559,7 +559,7 @@ def main(argv: Sequence[str]):
     if arguments.normalize:
         fname_metrics_PAM50 = 'metrics_PAM50.csv'  # TODO maybe add option for path-out names?
         # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
-        sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', arguments.vertfile, '-normalize-PAM50',
+        sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', arguments.vertfile, '-normalize-PAM50', '1',
                                       '-perslice', '1', '-o', fname_metrics_PAM50])
         sex = arguments.sex
         age = arguments.age
