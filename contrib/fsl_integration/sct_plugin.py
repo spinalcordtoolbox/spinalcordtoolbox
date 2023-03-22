@@ -253,8 +253,8 @@ class OutputFolderWidget():
         """
         Select a dir dialog
         """
-        dlg = wx.DirDialog (None, "Choose output directory", "",
-                            wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
+        dlg = wx.DirDialog(None, "Choose output directory", "",
+                           wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
 
         if dlg.ShowModal() == wx.ID_OK:
             ofolder = dlg.GetPath()
