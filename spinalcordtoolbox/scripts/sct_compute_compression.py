@@ -9,7 +9,7 @@
 #
 # About the license: see the file LICENSE.TXT
 #########################################################################################
-# TODO: add option to normalize or not
+# TODO: remove AP name for m metrics!
 # TODO: maybe create an API or move some functions
 import sys
 import os
@@ -181,19 +181,19 @@ def metric_ratio(ma, mb, mi):
     return (1 - float(mi) / ((ma + mb) / float(2))) * 100
 
 
-def metric_ratio_norm(ap, ap_HC):
+def metric_ratio_norm(metrics_patients, metrics_HC):
     """
     Compute normalized MSCC (Maximum Spinal Cord Compression) using the chosen metric at the compression and
     levels above and bellow.
     Each metric is divided by the corresponding value in healthy controls.
-    :param list: ap: list metric value of level above, below and at compression of patient.
-    :param list: ap_HC: list metric value of level above, below and at compression of healthy
+    :param list: metrics_patients: list metric value of level above, below and at compression of patient.
+    :param list: metrics_HC: list metric value of level above, below and at compression of healthy
     controls.
     :return float: MSCC normalized in %
     """
-    ma = ap[0]/ap_HC[0]
-    mb = ap[1]/ap_HC[1]
-    mi = ap[2]/ap_HC[2]
+    ma = metrics_patients[0]/metrics_HC[0]
+    mb = metrics_patients[1]/metrics_HC[1]
+    mi = metrics_patients[2]/metrics_HC[2]
     return metric_ratio(ma, mb, mi)
 
 
@@ -279,9 +279,9 @@ def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df
     :param upper_level: int: level above compression.
     :param lower_level: int: level below compression.
     :param slice: int: slice of spinal cord compression.
-    :return upper_AP_mean:
-    :retrun lower_AP_mean:
-    :retrun compressed_AP_mean:
+    :return: ma: float64: Metric above the compression
+    :retrun: mb: float64: Metric below the compression
+    :retrun: mi: float64: Metric at the compression level
     :retrun slices_avg: Slices in PAM50 space to average metric.
 
     """
@@ -461,9 +461,7 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
     zmin_below = int(min(compression_level_dict_PAM50[level_below]) - distance/slice_thickness_PAM50 - extent/slice_thickness_PAM50)
     zmax_below = int(min(compression_level_dict_PAM50[level_below]) - distance/slice_thickness_PAM50)
     # Check if slices have available metrics
-    df_metrics_PAM50_short = df_metrics_PAM50.drop(columns=['DistancePMJ', 'SUM(length)'])
-    df_metrics_PAM50_short.dropna(inplace=True)
-    # If above/below not available, only take the level below/above
+    df_metrics_PAM50_short = (df_metrics_PAM50.dropna(how='all', axis=1)).dropna()
     not_above = False
     not_below = False
     if zmax_below not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
@@ -586,20 +584,20 @@ def main(argv: Sequence[str]):
     for level in compressed_levels_dict.keys():
         # Get metric of patient with compression
         if arguments.i_PAM50:
-            ap, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
+            metrics_patient, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
                                                        z_range_above, z_range_below, compressed_levels_dict[level])
             # Get metrics of healthy controls
-            ap_HC = get_mean_metric(df_avg_HC, metric, z_range_above, z_range_below, slices_avg)
-            logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, metric_i_HC = {}'.format(ap_HC[0], ap_HC[1], ap_HC[2]))
+            metrics_HC = get_mean_metric(df_avg_HC, metric, z_range_above, z_range_below, slices_avg)
+            logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, metric_i_HC = {}'.format(metrics_HC[0], metrics_HC[1], metrics_HC[2]))
             # Compute Normalized Ratio
-            metric_ratio_norm_result = metric_ratio_norm(ap, ap_HC)
+            metric_ratio_norm_result = metric_ratio_norm(metrics_patient, metrics_HC)
         else:
             slices_avg = compressed_levels_dict[level]
-            ap = get_mean_metric(df_metrics, metric, z_range_above, z_range_below, slices_avg)
+            metrics_patient = get_mean_metric(df_metrics, metric, z_range_above, z_range_below, slices_avg)
             metric_ratio_norm_result = None
-        logger.debug('metric_a =  {}, metric_b = {}, metric_i = {}'.format(ap[0], ap[1], ap[2]))
+        logger.debug('metric_a =  {}, metric_b = {}, metric_i = {}'.format(metrics_patient[0], metrics_patient[1], metrics_patient[2]))
         # Compute Ratio
-        metric_ratio_result = metric_ratio(ap[0], ap[1], ap[2])
+        metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
         save_csv(fname_out, level, arguments.metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
 
         # Display results
