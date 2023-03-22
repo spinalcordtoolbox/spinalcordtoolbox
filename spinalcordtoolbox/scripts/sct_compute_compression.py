@@ -585,7 +585,7 @@ def main(argv: Sequence[str]):
         # Get metric of patient with compression
         if arguments.i_PAM50:
             metrics_patient, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
-                                                       z_range_above, z_range_below, compressed_levels_dict[level])
+                                                                    z_range_above, z_range_below, compressed_levels_dict[level])
             # Get metrics of healthy controls
             metrics_HC = get_mean_metric(df_avg_HC, metric, z_range_above, z_range_below, slices_avg)
             logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, metric_i_HC = {}'.format(metrics_HC[0], metrics_HC[1], metrics_HC[2]))
