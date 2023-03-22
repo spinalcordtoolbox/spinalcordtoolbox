@@ -51,7 +51,16 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help='CSV morphometric file obtained with sct_process_segmentation. Example: csa.csv.'
+        help='NIfTI file of spinal cord segmentation to compute morphometrics. If no normalization is wanted (if -i-PAM50 is not specified),'
+             ' metric ratio will take average along the centerline.'
+    )
+    mandatoryArguments.add_argument(
+        '-vertfile',
+        metavar=Metavar.file,
+        required=True,
+        help='Vertebral labeling file.'
+             'The input and the vertebral labelling file must be in the same voxel coordinate system than the segmentation and compression labels'
+             'and must match the dimensions between each other.'
     )
     mandatoryArguments.add_argument(
         '-l',
@@ -75,12 +84,6 @@ def get_parser():
         metavar=Metavar.file,
         help='CSV morphometric file in the PAM50 space, obtained by running: '
         'sct_process_segmentation -normalize-PAM50. Use this flag if you want to normalize the metrics using a database of healthy controls.'
-    )
-    optional.add_argument(
-        '-s',  # TODO: maybe output the centerline from sct_process_segmentation instead
-        metavar=Metavar.file,
-        help='NIfTI file of spinal cord segmentation. Mandatory if no normalization is wanted (if -i-PAM50 is not specified).'
-             'Metric ratio will take average along the centerline.'
     )
     optional.add_argument(
         '-extent',
