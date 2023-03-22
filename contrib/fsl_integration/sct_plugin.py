@@ -219,7 +219,7 @@ class TextBox:
         """
         Fetch path to file highlighted in the Overlay list.
         """
-        selected_overlay = displayCtx.getSelectedOverlay()  # displayCtx is a class from FSLeyes
+        selected_overlay = displayCtx.getSelectedOverlay()  # noqa: F821 (displayCtx is provided by FSLeyes context)
         if selected_overlay is None:
             self.textctrl.GetParent().log_to_window("No files to input because the overlay list is empty. Please open "
                                                     "an image in FSLeyes first, then try again.", level="WARNING")
@@ -460,7 +460,7 @@ class TabPanelPropSeg(SCTPanel):
         fname_out = f"{ofolder}/{fname}_seg.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
-        opts = displayCtx.getOpts(image)
+        opts = displayCtx.getOpts(image)  # noqa: F821 (displayCtx is provided by FSLeyes context)
         opts.cmap = 'red'
 
 
@@ -527,7 +527,7 @@ class TabPanelSCSeg(SCTPanel):
         fname_out = f"{ofolder}/{fname}_seg.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
-        opts = displayCtx.getOpts(image)
+        opts = displayCtx.getOpts(image)  # noqa: F821 (displayCtx is provided by FSLeyes context)
         opts.cmap = 'red'
 
 
@@ -586,7 +586,7 @@ class TabPanelGMSeg(SCTPanel):
         # Add output to the list of overlay
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
-        opts = displayCtx.getOpts(image)
+        opts = displayCtx.getOpts(image)  # noqa: F821 (displayCtx is provided by FSLeyes context)
         opts.cmap = 'yellow'
 
 
@@ -669,7 +669,7 @@ class TabPanelVertLB(SCTPanel):
         fname_out = f"{ofolder}/{fname}_labeled.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
-        opts = displayCtx.getOpts(image)
+        opts = displayCtx.getOpts(image)  # noqa: F821 (displayCtx is provided by FSLeyes context)
         opts.cmap = 'subcortical'
 
 
@@ -768,7 +768,7 @@ class TabPanelRegisterToTemplate(SCTPanel):
         fname_out = f'{ofolder}/template2anat.nii.gz'
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
         overlayList.append(image)
-        opts = displayCtx.getOpts(image)
+        opts = displayCtx.getOpts(image)  # noqa: F821 (displayCtx is provided by FSLeyes context)
         opts.cmap = 'gray'
 
 
