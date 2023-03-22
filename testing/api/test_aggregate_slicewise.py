@@ -104,9 +104,9 @@ def test_aggregate_across_selected_slices(dummy_metrics):
     # check that even if there is an error in metric estimation, the function outputs a dict for specific slicegroup
     assert agg_metrics['with nan'][(1, 2)]['WA()'] == 101.0
     assert agg_metrics['inconsistent length'][(1, 2)]['WA()'] == 'index 2 is out of bounds for axis 0 with size 2'
-    assert agg_metrics['with string'][(1, 2)]['WA()'] == "ufunc 'isfinite' not supported for the input types, and " \
-                                                         "the inputs could not be safely coerced to any supported " \
-                                                         "types according to the casting rule ''safe''"
+    assert agg_metrics['with string'][(1, 2)]['WA()'] == ("ufunc 'isfinite' not supported for the input types, and "
+                                                          "the inputs could not be safely coerced to any supported "
+                                                          "types according to the casting rule ''safe''")
 
 
 def test_aggregate_across_all_slices(dummy_metrics):
