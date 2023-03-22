@@ -71,7 +71,7 @@ class ErrorDialog(wx.Dialog):
 
         vbox = wx.BoxSizer(wx.VERTICAL)
 
-        error_msg_box = wx.TextCtrl(self, wx.ID_ANY, size=(500,150),
+        error_msg_box = wx.TextCtrl(self, wx.ID_ANY, size=(500, 150),
                                     style = wx.TE_MULTILINE | wx.TE_READONLY | wx.HSCROLL)
 
         error_msg_box.AppendText(msg)
@@ -332,8 +332,8 @@ class SCTPanel(wx.Panel):
         else:
             self.log_window.AppendText("{}: {}\n".format(level, msg))
 
-    def tutorial(self,event):
-        pdfpath = os.path.join(os.environ[self.SCT_DIR_ENV],self.SCT_TUTORIAL_PATH)
+    def tutorial(self, event):
+        pdfpath = os.path.join(os.environ[self.SCT_DIR_ENV], self.SCT_TUTORIAL_PATH)
         print('PDF path:', pdfpath)
         cmd_line = "open {}".format(pdfpath)
         print('Command line:', cmd_line)
