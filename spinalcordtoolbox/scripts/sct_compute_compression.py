@@ -556,7 +556,7 @@ def main(argv: Sequence[str]):
     slice_compressed = get_compressed_slice(img_labels, verbose)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     # Initialize variables if normalization with
-    if arguments.i_PAM50:
+    if arguments.normalize:
         fname_metrics_PAM50 = 'metrics_PAM50.csv'  # TODO maybe add option for path-out names?
         # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
         sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', arguments.vertfile, '-normalize-PAM50',
@@ -608,7 +608,7 @@ def main(argv: Sequence[str]):
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict.keys():
         # Get metric of patient with compression
-        if arguments.i_PAM50:
+        if arguments.normalize:
             metrics_patient, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
                                                                     z_range_above, z_range_below, compressed_levels_dict[level])
             # Get metrics of healthy controls
