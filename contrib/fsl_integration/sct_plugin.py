@@ -56,6 +56,7 @@ logger = logging.getLogger(__name__)
 # all of them if one changes
 ofolder_txt_ctrls = []
 
+
 class ErrorDialog(wx.Dialog):
     """
     Panel to display if there is an error, instructing user what to do.
