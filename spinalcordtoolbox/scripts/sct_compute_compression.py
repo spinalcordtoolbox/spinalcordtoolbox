@@ -83,8 +83,11 @@ def get_parser():
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-normalize',
-        metavar=Metavar.file,
-        help='Use this flag if you want to normalize the metrics using a database of healthy controls. '
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=1,  # DO we want 1 as default?
+        help='Set to 1 to normalize the metrics using a database of healthy controls. '
     )
     optional.add_argument(
         '-extent',
