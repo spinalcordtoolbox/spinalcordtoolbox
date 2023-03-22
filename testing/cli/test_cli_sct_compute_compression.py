@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="session")
-def dummy_3d_label_label():
+def dummy_3d_compression_label():
     data = np.zeros([32, 32, 81], dtype=np.uint8)
     data[15, 15, 72] = 1
     nii = nibabel.nifti1.Nifti1Image(data, np.eye(4))
