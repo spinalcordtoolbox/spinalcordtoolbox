@@ -459,7 +459,7 @@ class TabPanelPropSeg(SCTPanel):
         # Add output to the list of overlay
         fname_out = f"{ofolder}/{fname}_seg.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
-        overlayList.append(image)
+        overlayList.append(image)         # noqa: F821 (overlayList is provided by FSLeyes context)
         opts = displayCtx.getOpts(image)  # noqa: F821 (displayCtx is provided by FSLeyes context)
         opts.cmap = 'red'
 
@@ -526,7 +526,7 @@ class TabPanelSCSeg(SCTPanel):
         # Add output to the list of overlay
         fname_out = f"{ofolder}/{fname}_seg.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
-        overlayList.append(image)
+        overlayList.append(image)         # noqa: F821 (overlayList is provided by FSLeyes context)
         opts = displayCtx.getOpts(image)  # noqa: F821 (displayCtx is provided by FSLeyes context)
         opts.cmap = 'red'
 
@@ -585,7 +585,7 @@ class TabPanelGMSeg(SCTPanel):
 
         # Add output to the list of overlay
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
-        overlayList.append(image)
+        overlayList.append(image)         # noqa: F821 (overlayList is provided by FSLeyes context)
         opts = displayCtx.getOpts(image)  # noqa: F821 (displayCtx is provided by FSLeyes context)
         opts.cmap = 'yellow'
 
@@ -668,7 +668,7 @@ class TabPanelVertLB(SCTPanel):
         # Add output to the list of overlay
         fname_out = f"{ofolder}/{fname}_labeled.{fext}"
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
-        overlayList.append(image)
+        overlayList.append(image)         # noqa: F821 (overlayList is provided by FSLeyes context)
         opts = displayCtx.getOpts(image)  # noqa: F821 (displayCtx is provided by FSLeyes context)
         opts.cmap = 'subcortical'
 
@@ -767,7 +767,7 @@ class TabPanelRegisterToTemplate(SCTPanel):
         # fname_out = "PAM50_{}_reg.{}".format(contrast, fext)
         fname_out = f'{ofolder}/template2anat.nii.gz'
         image = Image(fname_out)  # <class 'fsl.data.image.Image'>
-        overlayList.append(image)
+        overlayList.append(image)         # noqa: F821 (overlayList is provided by FSLeyes context)
         opts = displayCtx.getOpts(image)  # noqa: F821 (displayCtx is provided by FSLeyes context)
         opts.cmap = 'gray'
 
