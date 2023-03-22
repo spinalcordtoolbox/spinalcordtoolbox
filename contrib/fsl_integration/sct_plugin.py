@@ -465,7 +465,6 @@ class TabPanelPropSeg(SCTPanel):
         opts.cmap = 'red'
 
 
-
 class TabPanelSCSeg(SCTPanel):
     """
     sct_deepseg_sc
