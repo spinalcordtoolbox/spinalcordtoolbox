@@ -423,7 +423,6 @@ def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z
     length_0 = length[idx]
     zmin_above = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance) for i in length]))]
     zmax_above = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance - extent) for i in length]))]
-    print(zmin_below, zmax_below)
     # If zmin is equal to zmax, the range is not available, use the other level above/below
     if zmin_above == zmax_above:
         zmin_above = zmin_below
@@ -437,7 +436,6 @@ def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z
                          + " mm. Please provide another distance and extent.")
     slices_above = np.arange(zmin_above, zmax_above, 1)
     slices_below = np.arange(zmin_below, zmax_below, 1)
-    print(slices_above, slices_below)
     return slices_below, slices_above
 
 
