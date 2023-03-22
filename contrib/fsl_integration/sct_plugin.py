@@ -860,4 +860,5 @@ def run_main():
     aui_manager.AddPane(notebook, aui.AuiPaneInfo().Name("notebook_content").CenterPane().PaneBorder(False))
     aui_manager.Update()
 
+
 run_main()
