@@ -568,16 +568,18 @@ def main(argv: Sequence[str]):
         df_avg_HC = average_hc(path_ref, metric, list_HC)
     else:
         # Get spinal cord centerline object
-        im_seg = Image(get_absolute_path(fname_segmentation)).change_orientation('RPI')
-        # Get max and min index of the segmentation with pmj
-        _, _, Z = (im_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
-        min_z_index, max_z_index = min(Z), max(Z)
-        # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
-        z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
+        if fname_segmentation:
+            im_seg = Image(get_absolute_path(fname_segmentation)).change_orientation('RPI')
+            # Get max and min index of the segmentation with pmj
+            _, _, Z = (im_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
+            min_z_index, max_z_index = min(Z), max(Z)
+            # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
+            z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
 
-        centerline = get_centerline_object(im_seg, verbose=verbose)
-        z_range_above, z_range_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
-
+            centerline = get_centerline_object(im_seg, verbose=verbose)
+            z_range_above, z_range_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
+        else:
+            parser.error('Spinal cord segmentation -s is needed to compute compression metrics without normalization.')
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict.keys():
         # Get metric of patient with compression
