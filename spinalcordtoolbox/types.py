@@ -469,25 +469,20 @@ class Centerline:
 
     def get_closest_to_absolute_position(self, vertebral_level, relative_position, backup_index, backup_centerline):
         if vertebral_level == 0:  # above the C1 vertebral level, the method used is length
-            position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disc[backup_centerline.regions_labels[self.first_label]]]
-            position_reference_self = self.dist_points[self.index_disc[self.regions_labels[self.first_label]]]
-            relative_position_from_reference_backup = backup_centerline.dist_points[backup_index] - position_reference_backup
-            result = np.argmin(np.abs(np.array(self.dist_points) - position_reference_self - relative_position_from_reference_backup))
+            label = self.first_label
         else:
             vertebral_number = self.labels_regions[vertebral_level]
             if self.potential_list_labels.index(vertebral_number) < self.list_labels.index(self.first_label):
-                position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disc[backup_centerline.regions_labels[self.first_label]]]
-                position_reference_self = self.dist_points[self.index_disc[self.regions_labels[self.first_label]]]
-                relative_position_from_reference_backup = backup_centerline.dist_points[backup_index] - position_reference_backup
-                result = np.argmin(np.abs(np.array(self.dist_points) - position_reference_self - relative_position_from_reference_backup))
+                label = self.first_label
             elif self.potential_list_labels.index(vertebral_number) >= self.list_labels.index(self.last_label):
-                position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disc[backup_centerline.regions_labels[self.last_label]]]
-                position_reference_self = self.dist_points[self.index_disc[self.regions_labels[self.last_label]]]
-                relative_position_from_reference_backup = backup_centerline.dist_points[backup_index] - position_reference_backup
-                result = np.argmin(np.abs(np.array(self.dist_points) - position_reference_self - relative_position_from_reference_backup))
+                label = self.last_label
             else:
-                result = self.get_closest_to_relative_position(vertebral_level=vertebral_level, relative_position=relative_position)
-        return result
+                return self.get_closest_to_relative_position(vertebral_level=vertebral_level, relative_position=relative_position)
+
+        position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disc[backup_centerline.regions_labels[label]]]
+        position_reference_self = self.dist_points[self.index_disc[self.regions_labels[label]]]
+        relative_position_from_reference_backup = backup_centerline.dist_points[backup_index] - position_reference_backup
+        return np.argmin(np.abs(np.array(self.dist_points) - position_reference_self - relative_position_from_reference_backup))
 
     def save_centerline(self, image=None, fname_output='centerline.sct'):
         if image is not None:
