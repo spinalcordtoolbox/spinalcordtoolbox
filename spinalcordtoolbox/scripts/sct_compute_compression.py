@@ -36,14 +36,23 @@ NEAR_ZERO_THRESHOLD = 1e-6
 # ==========================================================================================
 def get_parser():
     parser = SCTArgumentParser(
-        description='Metrics are normalized using the non-compressed levels above and below the compression site:'
-                    '\nEquation:    ratio = (1 - mi/((ma+mb)/2))\n'
-                    'mi: metric at compression level. ma: metric of level above compression level. mb: metric of level below compression level.\n'
-                    'Additionally, if the "-i-PAM50" flag is used, metrics are normalized using a database of spinal cord morphometrics built from healthy control'
-                    ' subjects. This database uses the PAM50 template as an anatomical reference system.'
-                    '[1]: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic spinal cord injury:'
-                    ' MR imaging findings correlated with neurologic outcome--prospective study with 100 consecutive'
-                    ' patients. Radiology 2007;243(3):820-827.'
+        description='Compute normalized morphometric measures to assess spinal cord compression.\n'
+                    '\n'
+                    'Metrics are normalized using the non-compressed levels above and below the compression site using '
+                    'the following equation:\n'
+                    '\n'
+                    '    ratio = (1 - mi/((ma+mb)/2))\n'
+                    '\n'
+                    'Where mi: metric at the compression level, ma: metric above the compression level, mb: metric '
+                    'below the compression level.\n'
+                    '\n'
+                    'Additionally, if the "-normalize" flag is used, metrics are normalized using a database built '
+                    'from healthy control subjects. This database uses the PAM50 template as an anatomical reference '
+                    'system.\n'
+                    '\n'
+                    'Reference: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic '
+                    'spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective study '
+                    'with 100 consecutive patients. Radiology 2007;243(3):820-827.'
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
