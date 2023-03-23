@@ -415,7 +415,7 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
 def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z_compressions, z_ref):
     """
     Get slices to average for the level above the highest compression and below the lowest compression from the centerline.
-    (If arg i-PAM50 is not used; meaning no normalization)
+    (If arg -normalize is not used; meaning no normalization)
     : param centerline: Centerline(): Spinal cord centerline object
     : param distance: float: distance (mm) from the compression from where to average healthy slices.
     : param extent: float: extent (mm) to average healthy slices.
