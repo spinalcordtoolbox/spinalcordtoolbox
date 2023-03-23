@@ -97,7 +97,7 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         choices=[0, 1],
-        default=1,  # DO we want 1 as default?
+        default=1,  # Do we want 1 as default?
         help='Set to 1 to normalize the metrics using a database of healthy controls. '
     )
     optional.add_argument(
