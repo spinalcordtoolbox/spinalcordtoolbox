@@ -234,6 +234,25 @@ def average_hc(ref_folder, metric, list_HC):
     return df
 
 
+# Functions for Step 3 (Fetching the compressed levels from the subject and PAM50 space)
+# ==========================================================================================
+def get_verterbral_level_from_slice(slices, df_metrics):
+    """
+    From slices, gets the coresponding vertebral level and creates a dict fo level and corresponding slice(s).
+    :param slices: list: list of slices number.
+    :param df_metrics: pandas.DataFrame: dataframe of metrics (output of sct_process_segmentation).
+    :return level_slice_dict: dict:
+    """
+    idx = df_metrics['Slice (I->S)'].isin(slices).tolist()
+    level_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
+    if level_compression.empty:
+        raise ValueError(f"Slice {slices} doesn't have a computed metric")
+    level_slice_dict = {}
+    for level in np.unique(level_compression['VertLevel']):
+        level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level, 'Slice (I->S)'].to_list()
+    return level_slice_dict
+
+
 def metric_ratio(ma, mb, mi):
     """
     Compute MSCC (Maximum Spinal Cord Compression) using the chosen metric of compression and of levels
@@ -316,21 +335,7 @@ def get_centerline_object(img_seg, verbose):
     return ctl_seg
 
 
-def get_verterbral_level_from_slice(slices, df_metrics):
-    """
-    From slices, gets the coresponding vertebral level and creates a dict fo level and corresponding slice(s).
-    :param slices: list: list of slices number.
-    :param df_metrics: pandas.DataFrame: dataframe of metrics (output of sct_process_segmentation).
-    :return level_slice_dict: dict:
-    """
-    idx = df_metrics['Slice (I->S)'].isin(slices).tolist()
-    level_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
-    if level_compression.empty:
-        raise ValueError('Slice {} doesn\'t have a computed metric'.format(slices))
-    level_slice_dict = {}
-    for level in np.unique(level_compression['VertLevel']):
-        level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level, 'Slice (I->S)'].to_list()
-    return level_slice_dict
+
 
 
 def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, z_range_above, z_range_below, slice):
@@ -506,6 +511,7 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
 
 
 def check_if_shape_mismatch(img1, img_ref):
+    # TODO comment
     shape_img1 = img1.data.shape
     shape_img_ref = img_ref.data.shape
     if shape_img1 != shape_img_ref:
