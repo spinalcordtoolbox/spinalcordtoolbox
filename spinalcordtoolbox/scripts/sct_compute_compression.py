@@ -511,7 +511,7 @@ def metric_ratio_norm(metrics_patients, metrics_HC):
     return metric_ratio(ma, mb, mi)
 
 
-def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename):
+def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_norm, filename):
     """
     Save .csv file of MSCC results.
     :param fname_out:
