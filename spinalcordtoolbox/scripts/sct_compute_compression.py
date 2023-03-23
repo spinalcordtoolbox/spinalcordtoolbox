@@ -156,6 +156,8 @@ def get_parser():
     return parser
 
 
+# Functions for Step 2 (Processing healthy controls from `PAM50_normalized_metrics` dataset)
+# ==========================================================================================
 def select_HC(fname_participants, sex=None, age=None):
     """
     Selects healthy controls to use for normalization based on sex and age range specified by the user.
@@ -183,6 +185,53 @@ def select_HC(fname_participants, sex=None, age=None):
         list_to_include = set(list_sub_age).intersection(list_sub_sex)
     printv(f'{len(list_to_include)} healthy controls are used for normalization')
     return list(list_to_include)
+
+
+def average_hc(ref_folder, metric, list_HC):
+    """
+    Gets metrics of healthy controls in PAM50 anatomical dimensions and averages across subjects.
+    :param ref_folder: path to folder where .csv fields of healthy controls are.
+    :param metric: str: metric to perform normalization
+    :param list_HC: list: List of healthy controls to include
+    :return df:
+    """
+    # Initialize empty dataframe
+    df = pd.DataFrame()
+    # Create empty dict to put dataframe of each healthy control
+    d = {}
+    # Iterator to count number of healthy subjects
+    i = 0
+    # Loop through .csv files of healthy controls
+    for file in os.listdir(ref_folder):
+        if 'PAM50.csv' in file:
+            subject = os.path.basename(file).split('_')[0]
+            if list_HC:
+                # Check if subject is in list to include
+                if subject in list_HC:
+                    d[file] = pd.read_csv(os.path.join(ref_folder, file)).astype({metric: float})
+                    i = i+1
+            else:
+                d[file] = pd.read_csv(os.path.join(ref_folder, file)).astype({metric: float})
+                i = i+1
+    first_key = next(iter(d))
+    # Create an empty dataframe with same columns
+    df = pd.DataFrame(columns=d[first_key].columns)
+    df['VertLevel'] = d[first_key]['VertLevel']
+    df['Slice (I->S)'] = d[first_key]['Slice (I->S)']
+    # Loop through all HC
+    for key, values in d.items():
+        for column in d[key].columns:
+            if 'MEAN' in column:
+                if df[column].isnull().values.all():
+                    df[column] = d[key][column]
+                else:
+                    # Sum all columns that have MEAN key
+                    df[column] = df[column] + d[key][column].tolist()
+    # Divide by number of HC
+    for column in df.columns:
+        if 'MEAN' in column:
+            df[column] = df[column]/i
+    return df
 
 
 def metric_ratio(ma, mb, mi):
@@ -313,51 +362,7 @@ def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df
     return get_mean_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, slices_avg), slices_avg
 
 
-def average_hc(ref_folder, metric, list_HC):
-    """
-    Gets metrics of healthy controls in PAM50 anatomical dimensions and averages across subjects.
-    :param ref_folder: path to folder where .csv fiels of healthy controls are.
-    :param metric: str: metric to perform normalization
-    :param list_HC: list: List of healthy controls to include
-    :return df:
-    """
-    # Initialize empty dataframe
-    df = pd.DataFrame()
-    # Create empty dict to put dataframe of each healthy control
-    d = {}
-    # Iterator to count number of healthy subjects
-    i = 0
-    # Loop through .csv files of healthy controls
-    for file in os.listdir(ref_folder):
-        if 'PAM50.csv' in file:
-            subject = os.path.basename(file).split('_')[0]
-            if list_HC:
-                # Check if subject is in list to include
-                if subject in list_HC:
-                    d[file] = csv2dataFrame(os.path.join(ref_folder, file), metric)  # TODO change verbose for arg
-                    i = i+1
-            else:
-                d[file] = csv2dataFrame(os.path.join(ref_folder, file), metric)  # TODO change verbose for arg
-                i = i+1
-    first_key = next(iter(d))
-    # Create an empty dataframe with same columns
-    df = pd.DataFrame(columns=d[first_key].columns)
-    df['VertLevel'] = d[first_key]['VertLevel']
-    df['Slice (I->S)'] = d[first_key]['Slice (I->S)']
-    # Loop through all HC
-    for key, values in d.items():
-        for column in d[key].columns:
-            if 'MEAN' in column:
-                if df[column].isnull().values.all():
-                    df[column] = d[key][column]
-                else:
-                    # Sum all columns that have MEAN key
-                    df[column] = df[column] + d[key][column].tolist()
-    # Divide by number of HC
-    for column in df.columns:
-        if 'MEAN' in column:
-            df[column] = df[column]/i
-    return df
+
 
 
 def get_mean_metric(df, metric, z_range_above, z_range_below, slices_avg):
