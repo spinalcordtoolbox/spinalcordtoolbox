@@ -61,7 +61,7 @@ def get_parser():
         metavar=Metavar.file,
         required=True,
         help='Spinal cord segmentation mask to compute morphometrics. Example: sub-001_T2w_seg.nii.gz'
-             'Note: If no normalization is wanted (i.e., if the "-normalize" flag is not specified),'
+             '\nNote: If no normalization is wanted (i.e., if the "-normalize" flag is not specified),'
              ' metric ratio will take the average along the segmentation centerline.'
     )
     mandatoryArguments.add_argument(
@@ -76,15 +76,16 @@ def get_parser():
         '-l',
         metavar=Metavar.file,
         required=True,
-        help='NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single voxel of value `1`.  Example: sub-001_T2w_compression_labels.nii.gz'
-             'Note: The input and the compression label file must be in the same voxel coordinate system'
+        help='NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single voxel of value `1`.'
+             ' Example: sub-001_T2w_compression_labels.nii.gz '
+             'Note: The input and the compression label file must be in the same voxel coordinate system '
              'and must match the dimensions between each other.'
     )
     mandatoryArguments.add_argument(
         '-metric',
         required=False,
-        help='Metric to normalize.'
-        'Choices: area, diameter_AP, diameter_RL, eccentricity, solidity\n',
+        help='Metric to normalize. '
+             'Choices: area, diameter_AP, diameter_RL, eccentricity, solidity\n',
         default='diameter_AP',
         choices=['diameter_AP', 'area', 'diameter_RL', 'eccentricity', 'solidity'],
         metavar=Metavar.str,
@@ -130,7 +131,7 @@ def get_parser():
         type=int,
         nargs=2,
         metavar="[0 100]",
-        help='Age range of healthy subjects to use for the normalization. Requires the flag "-file-participants".'
+        help='Age range of healthy subjects to use for the normalization. Requires the flag "-file-participants". '
         'Example: "-age 60 80". By default, all ages are considered.'
     )
     optional.add_argument(
