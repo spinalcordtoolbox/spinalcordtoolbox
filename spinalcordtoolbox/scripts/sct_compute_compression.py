@@ -75,10 +75,9 @@ def get_parser():
         '-l',
         metavar=Metavar.file,
         required=True,
-        help='NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single voxel of value `1`. '
-             'The input and the compression label file must be in the same voxel coordinate system'
+        help='NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single voxel of value `1`.  Example: sub-001_T2w_compression_labels.nii.gz'
+             'Note: The input and the compression label file must be in the same voxel coordinate system'
              'and must match the dimensions between each other.'
-             'Example: sub-001_T2w_compression_labels.nii.gz'
     )
     mandatoryArguments.add_argument(
         '-metric',
