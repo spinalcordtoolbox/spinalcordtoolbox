@@ -370,16 +370,20 @@ def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z
     zmin_above = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance) for i in length]))]
     zmax_above = z_ref[np.argmin(np.array([np.abs(i - length_0 - distance - extent) for i in length]))]
     # If zmin is equal to zmax, the range is not available, use the other level above/below
-    if zmin_above == zmax_above:
-        zmin_above = zmin_below
-        zmax_above = zmax_below
-    if zmin_below == zmax_below:
-        zmin_below = zmin_above
-        zmax_below = zmax_above
     if zmin_above == zmax_above and zmin_below == zmax_below:
         raise ValueError("No slices of level above of below with a distance of "
                          + str(distance) + " mm and extent of " + str(extent)
                          + " mm. Please provide another distance and extent.")
+    if zmin_above == zmax_above:
+        logger.warning(f"Level above all compressions is not available. Only level above will be used for normalization instead. "
+                       f"If you want to use the level above, please change distance and extent. ")
+        zmin_above = zmin_below
+        zmax_above = zmax_below
+    if zmin_below == zmax_below:
+        logger.warning(f"Level below all compressions is not available. Only level above will be used for normalization instead. "
+                       f"If you want to use the level below, please change distance and extent. ")
+        zmin_below = zmin_above
+        zmax_below = zmax_above
     slices_above = np.arange(zmin_above, zmax_above, 1)
     slices_below = np.arange(zmin_below, zmax_below, 1)
     return slices_below, slices_above
@@ -409,10 +413,14 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
     not_above = False
     not_below = False
     if zmax_below not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
+        logger.warning(f"Level below all compressions is not available. Only the level above will be used for normalization instead. "
+                       f"If you want to use the level below, please change distance and extent. ")
         zmax_below = zmax_above
         zmin_below = zmin_above
         not_below = True
     if zmin_above not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
+        logger.warning(f"Level above all compressions is not available. Only the level above will be used for normalization instead. "
+                       f"If you want to use the level above, please change distance and extent. ")
         zmax_above = zmax_below
         zmin_above = zmin_below
         not_above = True
