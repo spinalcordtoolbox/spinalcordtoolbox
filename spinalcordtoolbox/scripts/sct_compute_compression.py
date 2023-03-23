@@ -60,8 +60,9 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help='NIfTI file of spinal cord segmentation to compute morphometrics. If no normalization is wanted (if -i-PAM50 is not specified),'
-             ' metric ratio will take average along the centerline.'
+        help='Spinal cord segmentation mask to compute morphometrics. Example: sub-001_T2w_seg.nii.gz'
+             'Note: If no normalization is wanted (i.e., if the "-normalize" flag is not specified),'
+             ' metric ratio will take the average along the segmentation centerline.'
     )
     mandatoryArguments.add_argument(
         '-vertfile',
