@@ -508,7 +508,6 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
 def check_if_shape_mismatch(img1, img_ref):
     shape_img1 = img1.data.shape
     shape_img_ref = img_ref.data.shape
-    print(shape_img1, shape_img_ref)
     if shape_img1 != shape_img_ref:
         return True
     else:
