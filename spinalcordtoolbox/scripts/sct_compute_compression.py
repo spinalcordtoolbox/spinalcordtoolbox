@@ -375,13 +375,13 @@ def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z
                          + str(distance) + " mm and extent of " + str(extent)
                          + " mm. Please provide another distance and extent.")
     if zmin_above == zmax_above:
-        logger.warning(f"Level above all compressions is not available. Only level above will be used for normalization instead. "
-                       f"If you want to use the level above, please change distance and extent. ")
+        logger.warning("Level above all compressions is not available. Only level above will be used for normalization instead. "
+                       "If you want to use the level above, please change distance and extent. ")
         zmin_above = zmin_below
         zmax_above = zmax_below
     if zmin_below == zmax_below:
-        logger.warning(f"Level below all compressions is not available. Only level above will be used for normalization instead. "
-                       f"If you want to use the level below, please change distance and extent. ")
+        logger.warning("Level below all compressions is not available. Only level above will be used for normalization instead. "
+                       "If you want to use the level below, please change distance and extent. ")
         zmin_below = zmin_above
         zmax_below = zmax_above
     slices_above = np.arange(zmin_above, zmax_above, 1)
@@ -391,7 +391,7 @@ def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z
 
 def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50):
     """
-    Get slices to average for the level above the highest compression and below the lowest compression from the PAM50.
+    Get slices to average the level above the highest compression and below the lowest compression from the PAM50.
     : param compression_level_dict_PAM50: dict: Dictionary of levels and corresponding slice(s) in the PAM50 space.
     : param df_metrics_PAM50: pandas.DataFrame: Metrics output of sct_process_segmentation in PAM50 anatomical dimensions.
     : param distance: float: distance (mm) from the compression from where to average healthy slices.
@@ -413,14 +413,14 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
     not_above = False
     not_below = False
     if zmax_below not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
-        logger.warning(f"Level below all compressions is not available. Only the level above will be used for normalization instead. "
-                       f"If you want to use the level below, please change distance and extent. ")
+        logger.warning("Level below all compressions is not available. Only the level above will be used for normalization instead. "
+                       "If you want to use the level below, please change distance and extent. ")
         zmax_below = zmax_above
         zmin_below = zmin_above
         not_below = True
     if zmin_above not in df_metrics_PAM50_short['Slice (I->S)'].to_list():
-        logger.warning(f"Level above all compressions is not available. Only the level above will be used for normalization instead. "
-                       f"If you want to use the level above, please change distance and extent. ")
+        logger.warning("Level above all compressions is not available. Only the level above will be used for normalization instead. "
+                       "If you want to use the level above, please change distance and extent. ")
         zmax_above = zmax_below
         zmin_above = zmin_below
         not_above = True
