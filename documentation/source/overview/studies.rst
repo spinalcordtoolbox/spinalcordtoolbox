@@ -26,6 +26,9 @@ The following studies have used SCT:
 2023
 ----
 
+-  Wu *et al.* `Remodeling of the brain correlates with gait instability in cervical spondylotic myelopathy <https://doi.org/10.3389/fnins.2023.1087945>`_, **Front. Neurosci.** 2023  
+-  Landelle *et al.* `Altered Spinal Cord Functional Connectivity Associated with Parkinson’s Disease Progression <https://doi.org/10.1002/mds.29354>`_, **Mov. Disord.** 2023
+-  Trolle *et al.* `Spinal cord atrophy after spinal cord injury – A systematic review and meta-analysis <https://doi.org/10.1016/j.nicl.2023.103372>`_, **Neuroimage Clin.** 2023
 -  Ruiter *et al.* `Association of volumetric MRI measures and disability in MS patients of the same age: Descriptions from a birth year cohort <https://doi.org/10.1016/j.msard.2023.104568>`_, **Mult. Scler. Relat. Disord.**, 2023
 -  Schading *et al.* `Dynamics of progressive degeneration of major spinal pathways following spinal cord injury: A longitudinal study <https://doi.org/10.1016/j.nicl.2023.103339>`_, **Neuroimage Clin.**, 2023
 -  Blanc *et al.* `Combining PropSeg and a convolutional neural network for automatic spinal cord segmentation in pediatric populations and patients with spinal cord injury <https://doi.org/10.1002/ima.22859>`_, **IMA**, 2023
