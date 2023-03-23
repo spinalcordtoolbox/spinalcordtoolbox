@@ -638,6 +638,7 @@ def main(argv: Sequence[str]):
     # ------------------------------------------------------
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict.keys():
+        printv('\nLevel: {}'.format(level), verbose=verbose, type='info')
         # Get metric of patient with compression
         if arguments.normalize:
             metrics_patient, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
@@ -651,17 +652,16 @@ def main(argv: Sequence[str]):
             slices_avg = compressed_levels_dict[level]
             metrics_patient = average_metric(df_metrics, metric, z_range_above, z_range_below, slices_avg)
             metric_ratio_norm_result = None
-        logger.debug('metric_a =  {}, metric_b = {}, metric_i = {}'.format(metrics_patient[0], metrics_patient[1], metrics_patient[2]))
+        logger.debug('\nmetric_a =  {}, metric_b = {}, metric_i = {}'.format(metrics_patient[0], metrics_patient[1], metrics_patient[2]))
         # Compute Ratio
         metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
         save_csv(fname_out, level, arguments.metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
 
         # Display results
-        printv('\nLevel: {}'.format(level), verbose=verbose, type='info')
         printv('\n{} ratio norm = {}'.format(metric, metric_ratio_norm_result), verbose=verbose, type='info')
-        printv('\n{} ratio = {}\n'.format(metric, metric_ratio_result), verbose=verbose, type='info')
+        printv('\n{} ratio = {}'.format(metric, metric_ratio_result), verbose=verbose, type='info')
 
-    printv(f'Saved: {fname_out}')
+    printv(f'\nSaved: {fname_out}')
 
 
 if __name__ == "__main__":
