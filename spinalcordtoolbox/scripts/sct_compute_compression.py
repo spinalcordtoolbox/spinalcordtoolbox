@@ -67,8 +67,8 @@ def get_parser():
         '-vertfile',
         metavar=Metavar.file,
         required=True,
-        help='Vertebral labeling file.'
-             'The input and the vertebral labelling file must be in the same voxel coordinate system'
+        help='Vertebral labeling file. Example: sub-001_T2w_seg_labeled.nii.gz'
+             'Note: The input and the vertebral labelling file must be in the same voxel coordinate system'
              'and must match the dimensions between each other.'
     )
     mandatoryArguments.add_argument(
