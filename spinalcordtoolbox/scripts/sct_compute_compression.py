@@ -18,7 +18,7 @@ import logging
 from typing import Sequence
 import pandas as pd
 from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
-from spinalcordtoolbox.utils.fs import get_absolute_path, check_file_exist, extract_fname, printv
+from spinalcordtoolbox.utils.fs import get_absolute_path, extract_fname, printv
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.types import Centerline
@@ -76,7 +76,8 @@ def get_parser():
         '-l',
         metavar=Metavar.file,
         required=True,
-        help='NIfTI file that includes labels at the compression sites. Each compression site is denoted by a single voxel of value `1`.'
+        help='NIfTI file that includes labels at the compression sites. '
+             'Each compression site is denoted by a single voxel of value `1`.'
              ' Example: sub-001_T2w_compression_labels.nii.gz '
              'Note: The input and the compression label file must be in the same voxel coordinate system '
              'and must match the dimensions between each other.'
@@ -154,6 +155,47 @@ def get_parser():
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
 
     return parser
+
+
+# Functions for Step 1 (Load subject input files and get csv files)
+# ==========================================================================================
+def check_if_shape_mismatch(img1, img_ref):
+    """Check if image has the same shape as the reference image.
+    :param img1: Image(): image to validate shape.
+    :param img_ref: Image():reference image to compare shape with.
+    :return bool: True if the shape mismatch. False if shapes are the same.
+    """
+    shape_img1 = img1.data.shape
+    shape_img_ref = img_ref.data.shape
+    if shape_img1 != shape_img_ref:
+        return True
+    else:
+        False
+
+
+def get_slice_thickness(img):
+    """
+    Get slice thickness from the input image.
+    :param img: Image: source image
+    :return float: slice thickness in mm.
+    """
+    return img.dim[5]
+
+
+def get_compressed_slice(img, verbose):
+    """
+    Get all the compression labels (voxels of value: '1') that are contained in the input image.
+    :param img: Image: source image
+    :return list: list of slices number
+    """
+    # Get all coordinates
+    coordinates = img.getNonZeroCoordinates(sorting='z')
+    logger.debug('Compression labels coordinates: {}'.format(coordinates))
+    # Check it coordinates is empty
+    if not coordinates:
+        raise ValueError('No compression labels found.')
+    # Return only slices number
+    return [int(coordinate.z) for coordinate in coordinates]
 
 
 # Functions for Step 2 (Processing healthy controls from `PAM50_normalized_metrics` dataset)
@@ -253,75 +295,41 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     return level_slice_dict
 
 
-def metric_ratio(ma, mb, mi):
+def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     """
-    Compute MSCC (Maximum Spinal Cord Compression) using the chosen metric of compression and of levels
-    above and bellow.
-    :param float: ma: metric of level above compression level.
-    :param float: mb: metric of level above compression level.
-    :param float: mi: metric at compression level.
-    :return float: metric ratio in %
+    Get corresponding slice of compression in PAM50 space.
+    :param compressed_level_dict: dict: Dictionary of levels and corresponding slice(s).
+    :param df_metrics: pandas.DataFrame: Metrics output of sct_process_segmentation.
+    :param df_metrics_PAM50: pandas.DataFrame: Metrics output of sct_process_segmentation in PAM50 anatomical dimensions.
+    :return compression_level_dict_PAM50:
     """
-    return (1 - float(mi) / ((ma + mb) / float(2))) * 100
-
-
-def metric_ratio_norm(metrics_patients, metrics_HC):
-    """
-    Compute normalized MSCC (Maximum Spinal Cord Compression) using the chosen metric at the compression and
-    levels above and bellow.
-    Each metric is divided by the corresponding value in healthy controls.
-    :param list: metrics_patients: list metric value of level above, below and at compression of patient.
-    :param list: metrics_HC: list metric value of level above, below and at compression of healthy
-    controls.
-    :return float: MSCC normalized in %
-    """
-    ma = metrics_patients[0]/metrics_HC[0]
-    mb = metrics_patients[1]/metrics_HC[1]
-    mi = metrics_patients[2]/metrics_HC[2]
-    return metric_ratio(ma, mb, mi)
-
-
-def csv2dataFrame(filename, metric):
-    """
-    Loads a .csv file and builds a pandas dataFrame of the data
-    :param filename: str: filename of the .csv file
-    :return data :pd.DataFrame: pandas dataframe of the .csv file's data
-    """
-    check_file_exist(filename, verbose=0)
-    data = pd.read_csv(filename)
-    # Ensure that the chosen metric is in float
-    data.astype({metric: float})
-    return data
-
-
-def get_slice_thickness(img):
-    """
-    Get slice thickness from the input image.
-    :param img: Image: source image
-    :return float: slice thickness in mm.
-    """
-    return img.dim[5]
-
-
-def get_compressed_slice(img, verbose):
-    """
-    Get all the compression labels (voxels of value: '1') that are contained in the input image.
-    :param img: Image: source image
-    :return list: list of slices number
-    """
-    # Get all coordinates
-    coordinates = img.getNonZeroCoordinates(sorting='z')
-    logger.debug('Compression labels coordinates: {}'.format(coordinates))
-    # Check it coordinates is empty
-    if not coordinates:
-        raise ValueError('No compression labels found.')
-    # Return only slices number
-    return [int(coordinate.z) for coordinate in coordinates]
+    compression_level_dict_PAM50 = {}
+    # Loop across slices and levels with compression
+    for level, slices in compressed_level_dict.items():
+        # Number of slices in native image
+        nb_slices_level = len(df_metrics.loc[df_metrics['VertLevel'] == level, 'VertLevel'].to_list())
+        # Number of slices in PAM50
+        nb_slices_PAM50 = len(df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'VertLevel'].to_list())
+        # Do interpolation from native space to PAM50
+        x_PAM50 = np.arange(0, nb_slices_PAM50, 1)
+        x = np.linspace(0, nb_slices_PAM50 - 1, nb_slices_level)
+        new_slices_coord = np.interp(x_PAM50, x,
+                                     df_metrics.loc[df_metrics['VertLevel'] == level, 'Slice (I->S)'].to_list())
+        # find nearest index
+        slices_PAM50 = []
+        for slice in slices:
+            # get index corresponding to the min value
+            idx = np.abs(new_slices_coord - slice).argmin()
+            new_slice = df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'Slice (I->S)'].to_list()[idx]
+            slices_PAM50.append(new_slice)
+        compression_level_dict_PAM50[level] = slices_PAM50
+    return compression_level_dict_PAM50
 
 
 def get_centerline_object(img_seg, verbose):
     """
     Get centerline object in physical dimensions
+    :param img_seg: Image(): spinal cord segmentation
     """
     # Compute spinalcordtoolbox.types.Centerline class from get_centerline wit physical coordinates
     param_centerline = ParamCenterline(
@@ -333,94 +341,6 @@ def get_centerline_object(img_seg, verbose):
                                                           verbose=verbose, space="phys")
     ctl_seg = Centerline(*arr_ctl_phys, *arr_ctl_der_phys)
     return ctl_seg
-
-
-
-
-
-def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, z_range_above, z_range_below, slice):
-    """
-    Defines slices to average metric at compression level following slice thickness and averages metric at
-    compression, across the entire level above and below compression.
-    :param slice_thickness: float: slice thickness of native image space.
-    :param slice_thickness_PAM50: float: slice thickness of the PAM50.
-    :param metric: str: metric to perform normalization
-    :param df_metrics_PAM50: pandas.DataFrame: Metrics of sct_process_segmentation in PAM50 anatomical dimensions.
-    :param upper_level: int: level above compression.
-    :param lower_level: int: level below compression.
-    :param slice: int: slice of spinal cord compression.
-    :return: ma: float64: Metric above the compression
-    :retrun: mb: float64: Metric below the compression
-    :retrun: mi: float64: Metric at the compression level
-    :retrun slices_avg: Slices in PAM50 space to average metric.
-
-    """
-    # If resolution of image is higher than PAM50 template, get slices equivalent to native slice thickness
-    nb_slice = slice_thickness//slice_thickness_PAM50
-    if nb_slice > 1:
-        slices_avg = np.arange(min(slice) - nb_slice//2, max(slice) + nb_slice//2, 1)
-    # If more than one slice has compression, get all slices from that range
-    if len(slice) > 1:
-        slices_avg = np.arange(min(slice), max(slice), 1)
-    else:
-        slices_avg = slice
-    return get_mean_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, slices_avg), slices_avg
-
-
-
-
-
-def get_mean_metric(df, metric, z_range_above, z_range_below, slices_avg):
-    """
-    Average metric at compression level, at level above and below.
-    :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
-    :param metric: str: metric to perform normalization
-    :param upper_level: int: level above compression.
-    :param lower_level: int: level below compression.
-    :param slices_avg: Slices in PAM50 space to average metrics.
-    :return: ma: float64: Metric above the compression
-    :retrun: mb: float64: Metric below the compression
-    :retrun: mi: float64: Metric at the compression level
-    """
-    # find index of slices to average
-    idx_compression = df['Slice (I->S)'].isin(slices_avg).tolist()
-    idx_above = df['Slice (I->S)'].isin(z_range_above).tolist()
-    idx_below = df['Slice (I->S)'].isin(z_range_below).tolist()
-    ma = df.loc[idx_above, metric].mean()
-    mb = df.loc[idx_below, metric].mean()
-    mi = df.loc[idx_compression, metric].mean()
-    return ma, mb, mi
-
-
-def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
-    """
-    Get corresponding slice of compression in PAM50 space.
-    :param compressed_level_dict: dict: Dictionary of levels and corresponding slice(s).
-    :param df_metrics: pandas.DataFrame: Metrics output of sct_process_segmentation.
-    :param df_metrics_PAM50: pandas.DataFrame: Metrics output of sct_process_segmentation in PAM50 anatomical dimensions.
-    :return compression_level_dict_PAM50:
-    """
-    # TODO - won't be ok for most upper and lowest levels if they are not complete...
-    compression_level_dict_PAM50 = {}
-    # Loop across slices and levels with compression
-    for level, slices in compressed_level_dict.items():
-        # Number of slices in native image
-        nb_slices_level = len(df_metrics.loc[df_metrics['VertLevel'] == level, 'VertLevel'].to_list())
-        # Number of slices in PAM50
-        nb_slices_PAM50 = len(df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'VertLevel'].to_list())
-        # Do interpolation from native space to PAM50
-        x_PAM50 = np.arange(0, nb_slices_PAM50, 1)
-        x = np.linspace(0, nb_slices_PAM50 - 1, nb_slices_level)
-        new_slices_coord = np.interp(x_PAM50, x, df_metrics.loc[df_metrics['VertLevel'] == level, 'Slice (I->S)'].to_list())
-        # find nearest index
-        slices_PAM50 = []
-        for slice in slices:
-            # get index corresponding to the min value
-            idx = np.abs(new_slices_coord - slice).argmin()
-            new_slice = df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'Slice (I->S)'].to_list()[idx]
-            slices_PAM50.append(new_slice)
-        compression_level_dict_PAM50[level] = slices_PAM50
-    return compression_level_dict_PAM50
 
 
 def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z_compressions, z_ref):
@@ -478,10 +398,10 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
     """
     level_above = min([level for level, slices in compression_level_dict_PAM50.items()])
     level_below = max([level for level, slices in compression_level_dict_PAM50.items()])
-    # Get slices to average at distance across the chosen extent for the aboveest level
+    # Get slices to average at distance across the chosen extent for the level above all compressions
     zmin_above = int(max(compression_level_dict_PAM50[level_above]) + distance/slice_thickness_PAM50)
     zmax_above = int(max(compression_level_dict_PAM50[level_above]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
-    # Get slices to average at distance across the chosen extent for the lowest level
+    # Get slices to average at distance across the chosen extent for level below all compressions
     zmin_below = int(min(compression_level_dict_PAM50[level_below]) - distance/slice_thickness_PAM50 - extent/slice_thickness_PAM50)
     zmax_below = int(min(compression_level_dict_PAM50[level_below]) - distance/slice_thickness_PAM50)
     # Check if slices have available metrics
@@ -510,14 +430,85 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
     return slices_below, slices_above
 
 
-def check_if_shape_mismatch(img1, img_ref):
-    # TODO comment
-    shape_img1 = img1.data.shape
-    shape_img_ref = img_ref.data.shape
-    if shape_img1 != shape_img_ref:
-        return True
+# Functions for Step 4 (Computing MSCC using spinal cord morphometrics.)
+# ==========================================================================================
+def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, z_range_above, z_range_below, slice):
+    """
+    Defines slices to average metric at compression level following slice thickness and averages metric at
+    compression, across the level above and below compression.
+    :param slice_thickness: float: slice thickness of native image space.
+    :param slice_thickness_PAM50: float: slice thickness of the PAM50.
+    :param metric: str: metric to perform normalization
+    :param df_metrics_PAM50: pandas.DataFrame: Metrics of sct_process_segmentation in PAM50 anatomical dimensions.
+    :param z_range_above: list: list of slices of level above compression.
+    :param z_range_below: list: list of slices of level below compression.
+    :param slice: int: slice of spinal cord compression.
+    :return: ma: float64: Metric above the compression
+    :retrun: mb: float64: Metric below the compression
+    :retrun: mi: float64: Metric at the compression level
+    :retrun slices_avg: Slices in PAM50 space to average metric.
+
+    """
+    # If resolution of image is higher than PAM50 template, get slices equivalent to native slice thickness
+    nb_slice = slice_thickness//slice_thickness_PAM50
+    if nb_slice > 1:
+        slices_avg = np.arange(min(slice) - nb_slice//2, max(slice) + nb_slice//2, 1)
+    # If more than one slice has compression, get all slices from that range
+    if len(slice) > 1:
+        slices_avg = np.arange(min(slice), max(slice), 1)
     else:
-        False
+        slices_avg = slice
+    return average_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, slices_avg), slices_avg
+
+
+def average_metric(df, metric, z_range_above, z_range_below, slices_avg):
+    """
+    Average metric at compression level, at level above and below.
+    :param df: pandas.DataFrame: Metrics output of sct_process_segmentation.
+    :param metric: str: metric to perform normalization
+    :param z_range_above: list: list of slices of level above compression.
+    :param z_range_below: list: list of slices of level below compression.
+    :param slices_avg: Slices in PAM50 space to average metrics.
+    :return: ma: float64: Metric above the compression
+    :retrun: mb: float64: Metric below the compression
+    :retrun: mi: float64: Metric at the compression level
+    """
+    # find index of slices to average
+    idx_compression = df['Slice (I->S)'].isin(slices_avg).tolist()
+    idx_above = df['Slice (I->S)'].isin(z_range_above).tolist()
+    idx_below = df['Slice (I->S)'].isin(z_range_below).tolist()
+    ma = df.loc[idx_above, metric].mean()
+    mb = df.loc[idx_below, metric].mean()
+    mi = df.loc[idx_compression, metric].mean()
+    return ma, mb, mi
+
+
+def metric_ratio(ma, mb, mi):
+    """
+    Compute MSCC (Maximum Spinal Cord Compression) using the chosen metric of compression and of levels
+    above and bellow.
+    :param float: ma: metric of level above compression level.
+    :param float: mb: metric of level above compression level.
+    :param float: mi: metric at compression level.
+    :return float: metric ratio in %
+    """
+    return (1 - float(mi) / ((ma + mb) / float(2))) * 100
+
+
+def metric_ratio_norm(metrics_patients, metrics_HC):
+    """
+    Compute normalized MSCC (Maximum Spinal Cord Compression) using the chosen metric at the compression and
+    levels above and bellow.
+    Each metric is divided by the corresponding value in healthy controls.
+    :param list: metrics_patients: list metric value of level above, below and at compression of patient.
+    :param list: metrics_HC: list metric value of level above, below and at compression of healthy
+    controls.
+    :return float: MSCC normalized in %
+    """
+    ma = metrics_patients[0]/metrics_HC[0]
+    mb = metrics_patients[1]/metrics_HC[1]
+    mi = metrics_patients[2]/metrics_HC[2]
+    return metric_ratio(ma, mb, mi)
 
 
 def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename):
@@ -527,9 +518,9 @@ def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename
     :param level: int: Level of compression.
     :param metric: str: metric to perform normalization
     :param metric_ratio: float:
-    :param metric_ratio_nrom:
+    :param metric_ratio_norm:
     :param filename: str: input filename
-    :retrun:
+    :return:
     """
     if not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
@@ -537,9 +528,9 @@ def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_nrom, filename
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
-        spamwriter = csv.writer(csvfile, delimiter=',')
-        line = [filename, level, metric_ratio, metric_ratio_nrom]
-        spamwriter.writerow(line)
+        csv_writer = csv.writer(csvfile, delimiter=',')
+        line = [filename, level, metric_ratio, metric_ratio_norm]
+        csv_writer.writerow(line)
 
 
 def main(argv: Sequence[str]):
@@ -547,47 +538,52 @@ def main(argv: Sequence[str]):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
+
+    # Step 0: Argument validation
+    # ---------------------------
+    # Load input and output filenames
     fname_labels = arguments.l
-    img_labels = Image(fname_labels).change_orientation('RPI')
     fname_segmentation = arguments.i
-    img_seg = Image(fname_segmentation).change_orientation('RPI')
     distance = arguments.distance
     extent = arguments.extent
-    path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
     if arguments.o is not None:
         fname_out = arguments.o
     else:
         path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
-        fname_out = os.path.join(path, file_name + '_compression_metrics' + ext)
-    # Check if compression labels ar in the same dimensions than spinal cord segmentation
+        fname_out = os.path.join(path, file_name + '_compression_metrics' + '.csv')
+
+    # Step 1. Load subject input files and get csv files (label image, segmentation)
+    # -----------------------------------------------------------
+    img_seg = Image(fname_segmentation).change_orientation('RPI')
+    img_labels = Image(fname_labels).change_orientation('RPI')
+    # Check if compression labels are in the same dimensions than spinal cord segmentation
     if check_if_shape_mismatch(img_labels, img_seg):
         raise ValueError(f"Shape mismatch between compression labels [{img_labels.data.shape}] and segmentation [{img_seg.data.shape}]). "
                          f"Please verify that your compression labels wwere done in the same space as your input segmentation.")
     # Call sct_process_segmentation to get morphometrics perslice in native space
-    fname_metrics = 'metrics.csv'  # TODO maybe add option for path-out names?
+    path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
+    fname_metrics = os.path.join(path, file_name + '_metrics' + '.csv')
     sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', arguments.vertfile, '-perslice', '1', '-o', fname_metrics])
     metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
     # Fetch metrics of subject
-    df_metrics = csv2dataFrame(fname_metrics, metric)
+    df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
     # Get vertebral level corresponding to the slice with the compression
     slice_thickness = get_slice_thickness(img_labels)
     slice_compressed = get_compressed_slice(img_labels, verbose)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
     # Initialize variables if normalization
     if arguments.normalize:
-        fname_metrics_PAM50 = 'metrics_PAM50.csv'  # TODO maybe add option for path-out names?
+        fname_metrics_PAM50 = os.path.join(path, file_name + '_metrics_PAM50' + '.csv')
         # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
         sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', arguments.vertfile, '-normalize-PAM50', '1',
                                       '-perslice', '1', '-o', fname_metrics_PAM50])
         sex = arguments.sex
         age = arguments.age
+
+        # Step 2. Load reference input files (PAM50, healthy controls)
+        # ------------------------------------------------------------
         # Select healthy controls based on sex and/or age range
-        if age:
-            if any(n < 0 for n in age):
-                parser.error('Age range needs to be positive, {} was specified'.format(age))
-            # Put age range in order
-            else:
-                age.sort()
+        path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
         if sex or age:
             if not os.path.isfile(get_absolute_path(os.path.join(path_ref, arguments.file_participants))):
                 raise FileNotFoundError('participants.tsv file must exists to select sex or age.')
@@ -596,20 +592,28 @@ def main(argv: Sequence[str]):
                 list_HC = select_HC(fname_partcipants, sex, age)
         else:
             list_HC = None
-
+        if age:
+            age.sort()
+            if any(n < 0 for n in age):
+                parser.error('Age range needs to be positive, {} was specified'.format(age))
+            # Put age range in order
+            else:
+                age.sort()
         # Get PAM50 slice thickness
         fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
-        img_pam50 = Image(fname_PAM50)
-        img_pam50.change_orientation('RPI')
+        img_pam50 = Image(fname_PAM50).change_orientation('RPI')
         slice_thickness_PAM50 = get_slice_thickness(img_pam50)
         # Fetch metrics of PAM50 template
-        df_metrics_PAM50 = csv2dataFrame(fname_metrics_PAM50, metric)
+        df_metrics_PAM50 = pd.read_csv(fname_metrics_PAM50).astype({metric: float})
+        # Average metrics of healthy controls
+        df_avg_HC = average_hc(path_ref, metric, list_HC)
 
+        # Step 3. Determine compressed levels for both subject and PAM50 space
+        # --------------------------------------------------------------------
         # Get slices correspondance in PAM50 space
         compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
         z_range_below, z_range_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
         # Get data from healthy control and average them
-        df_avg_HC = average_hc(path_ref, metric, list_HC)
     else:
         # Get spinal cord centerline object to compute the distance
         # Get max and min index of the segmentation with pmj
@@ -622,6 +626,8 @@ def main(argv: Sequence[str]):
         # Get healthy slices to average for level above and below
         z_range_above, z_range_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
 
+    # Step 4. Compute MSCC metrics for each compressed level
+    # ------------------------------------------------------
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict.keys():
         # Get metric of patient with compression
@@ -629,13 +635,13 @@ def main(argv: Sequence[str]):
             metrics_patient, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
                                                                     z_range_above, z_range_below, compressed_levels_dict[level])
             # Get metrics of healthy controls
-            metrics_HC = get_mean_metric(df_avg_HC, metric, z_range_above, z_range_below, slices_avg)
+            metrics_HC = average_metric(df_avg_HC, metric, z_range_above, z_range_below, slices_avg)
             logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, metric_i_HC = {}'.format(metrics_HC[0], metrics_HC[1], metrics_HC[2]))
             # Compute Normalized Ratio
             metric_ratio_norm_result = metric_ratio_norm(metrics_patient, metrics_HC)
         else:
             slices_avg = compressed_levels_dict[level]
-            metrics_patient = get_mean_metric(df_metrics, metric, z_range_above, z_range_below, slices_avg)
+            metrics_patient = average_metric(df_metrics, metric, z_range_above, z_range_below, slices_avg)
             metric_ratio_norm_result = None
         logger.debug('metric_a =  {}, metric_b = {}, metric_i = {}'.format(metrics_patient[0], metrics_patient[1], metrics_patient[2]))
         # Compute Ratio
