@@ -169,7 +169,11 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
         fname_out = fname_out
 
     # save data
+    print(f'pixdim after resampling: {nii_r.header["pixdim"][4:]}')
+    nii_r.header["pixdim"][4:] = 0
+    print(f'pixdim before nib.save: {nii_r.header["pixdim"][4:]}')
     nib.save(nii_r, fname_out)
+    print(f'pixdim after nib.save: {nii_r.header["pixdim"][4:]}')
 
     # to view results
     display_viewer_syntax([fname_out], verbose=verbose)
