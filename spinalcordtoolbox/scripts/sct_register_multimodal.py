@@ -367,9 +367,13 @@ def main(argv: Sequence[str]):
         # update registration parameters
         for paramStep in paramregmulti_user:
             paramregmulti.addStep(paramStep)
-    path_qc = arguments.qc
-    qc_dataset = arguments.qc_dataset
-    qc_subject = arguments.qc_subject
+    # Raise error if arguments.qc is provided without arguments.dseg
+    if arguments.qc is not None and fname_dest_seg == '':
+        printv("ERROR: The argument '-qc' requires the argument '-dseg'.", type='error')
+    else:
+        path_qc = arguments.qc
+        qc_dataset = arguments.qc_dataset
+        qc_subject = arguments.qc_subject
 
     identity = arguments.identity
     interp = arguments.x
