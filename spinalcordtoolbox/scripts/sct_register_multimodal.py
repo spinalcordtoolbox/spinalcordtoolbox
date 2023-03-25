@@ -261,7 +261,8 @@ def get_parser():
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="The path where the quality control generated content will be saved."
+        help="The path where the quality control generated content will be saved. Note: This flag requires the '-dseg' "
+             "flag."
     )
     optional.add_argument(
         '-qc-dataset',
