@@ -130,6 +130,12 @@ def get_parser():
         metavar=Metavar.file,
         help="Create an image with regions labelized depending on values from reference"
     )
+    
+    func_group.add_argument(
+        '-project-discs',
+        metavar=Metavar.file,
+        help="Create an image where referenced vertebral discs are projected onto the spinal cord centerline"
+    )
 
     func_group.add_argument(
         '-display',
@@ -275,6 +281,8 @@ def main(argv: Sequence[str]):
     elif arguments.disc is not None:
         ref = Image(arguments.disc)
         out = sct_labels.labelize_from_discs(img, ref)
+    elif arguments.project_discs is not None:
+        out = sct_labels.project_discs(img, ref)
     elif arguments.vert_body is not None:
         levels = arguments.vert_body
         if len(levels) == 1 and levels[0] == 0:
