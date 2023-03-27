@@ -525,4 +525,3 @@ def project_discs(img: Image, ref: Image) -> Image:
     out.data[projections_t[0], projections_t[1], projections_t[2]] = projections_t[3]
 
     return out
-    
