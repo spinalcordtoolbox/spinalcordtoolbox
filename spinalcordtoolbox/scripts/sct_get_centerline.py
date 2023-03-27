@@ -161,6 +161,10 @@ def main(argv: Sequence[str]):
     if arguments.centerline_soft == 1 and method != 'fitseg':
         printv("ERROR: -centerline-soft can only be used with '-method fitseg'.", type='error')
 
+    # Extrapolation option can only be used with fitseg method
+    if arguments.extrapolation == 1 and method != 'fitseg':
+        printv("ERROR: -extrapolation can only be used with '-method fitseg'.", type='error')
+
     # Gap between slices
     interslice_gap = arguments.gap
 
