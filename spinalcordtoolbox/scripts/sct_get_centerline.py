@@ -86,6 +86,7 @@ def get_parser():
         choices=[0, 1],
         default=0,
         help="Extrapolate beyond the segmentation boundaries. 0 = no extrapolation, 1 = extrapolation. Only relevant with -method fitseg."
+             "Note: '-extrapolation 1' works best with lower-order centerline fitting algorithms"
     )
     optional.add_argument(
         "-o",
