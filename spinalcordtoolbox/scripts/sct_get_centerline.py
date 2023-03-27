@@ -167,7 +167,7 @@ def main(argv: Sequence[str]):
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
-        minmax=True,
+        minmax=arguments.extrapolation,
         soft=arguments.centerline_soft)
 
     # Output folder
