@@ -80,6 +80,14 @@ def get_parser():
         help="Binary or soft centerline. 0 = binarized, 1 = soft. Only relevant with -method fitseg."
     )
     optional.add_argument(
+        "-extrapolation",
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Extrapolate beyond the segmentation boundaries. 0 = no extrapolation, 1 = extrapolation. Only relevant with -method fitseg."
+    )
+    optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help="File name for the centerline output file. If file extension is not provided, "
