@@ -159,4 +159,4 @@ def test_sct_register_multimodal_with_qc_without_dseg(capsys, tmp_path):
                                       '-d', sct_test_path('t2', 't2.nii.gz'),
                                       '-ofolder', str(tmp_path),
                                       '-qc', str(tmp_path)])
-    assert pytest_wrapped_e.type == SystemExit
+    assert pytest_wrapped_e.value.code == 2
