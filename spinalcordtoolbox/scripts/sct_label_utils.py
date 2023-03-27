@@ -130,7 +130,7 @@ def get_parser():
         metavar=Metavar.file,
         help="Create an image with regions labelized depending on values from reference"
     )
-    
+
     func_group.add_argument(
         '-project-discs',
         metavar=Metavar.file,

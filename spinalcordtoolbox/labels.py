@@ -482,17 +482,17 @@ def project_discs(img: Image, ref: Image) -> Image:
     # Checking orientation
     if img.orientation != "RPI":
         img.change_orientation("RPI")
-    
+
     if ref.orientation != "RPI":
         ref.change_orientation("RPI")
-    
+
     # Extract centerline from segmentation
     _, arr_ctl, _, _ = get_centerline(img, param=ParamCenterline())
     centerline = arr_ctl.T
-    
+
     # Extract referenced coordinates
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
-    
+
     # Create function to compute the projection on the centerline
     def projection(point, num_disc=False):
         """
@@ -502,15 +502,15 @@ def project_discs(img: Image, ref: Image) -> Image:
         if num_disc:
             disc = point[-1]
             point = point[:3]
-             
+
         # Define distance function between the point and the centerline
         def distance(t):
             return np.linalg.norm(np.array(point) - np.array(centerline[int(t)]))
-        
+
         # Minimize distance function to find the parameter t of the projection
         result = minimize_scalar(distance, bounds=(0, centerline.shape[0]-1), method='bounded')
         new_point = centerline[int(result.x)].tolist()
-        
+
         # Add back disc num to output
         if num_disc:
             new_point.append(disc)
@@ -519,10 +519,10 @@ def project_discs(img: Image, ref: Image) -> Image:
     # Compute the shortest distance for each referenced points on the centerline
     projections = np.array([projection(np.array(list(point)), num_disc=True) for point in coordinates_ref])
     projections_t = np.rint(projections.T).astype(int)
-    
+
     # Create the output image
     out = zeros_like(img)
     out.data[projections_t[0], projections_t[1], projections_t[2]] = projections_t[3]
-    
+
     return out
     
