@@ -370,7 +370,7 @@ def main(argv: Sequence[str]):
             paramregmulti.addStep(paramStep)
     # Raise error if arguments.qc is provided without arguments.dseg
     if arguments.qc is not None and fname_dest_seg == '':
-        printv("ERROR: The argument '-qc' requires the argument '-dseg'.", type='error')
+        parser.error("The argument '-qc' requires the argument '-dseg'.")
     else:
         path_qc = arguments.qc
         qc_dataset = arguments.qc_dataset
