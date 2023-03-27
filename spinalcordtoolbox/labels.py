@@ -14,7 +14,9 @@ import logging
 from typing import Sequence, Tuple
 
 import numpy as np
+import nibabel as nib
 from scipy import ndimage
+from scipy.optimize import minimize_scalar
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
@@ -464,3 +466,61 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
             logger.warning(f"Label {label} not found in input image!")
 
     return out
+
+
+def project_discs(img: Image, ref: Image):
+    """
+    Project discs coordinates on the spinal cord centerline. This projection is obtained by iterating along
+    the centerline to identify the shortest distance with the each referenced coordinates.
+    Typically, user inputs a segmentation image, and labels with disks position, and this function computes
+    the identification to the closest coordinates of the labels on the centerline.
+    Labels are assumed to be non-zero and incremented from top to bottom
+
+    :param img: segmentation
+    :param ref: reference labels
+    :returns: image with the new projected discs labels
+    """
+    # Checking orientation
+    if img.orientation != "RPI":
+        img.change_orientation("RPI")
+    
+    if ref.orientation != "RPI":
+        ref.change_orientation("RPI")
+    
+    # Extract centerline from segmentation
+    _, arr_ctl, _, _ = get_centerline(img, param=ParamCenterline())
+    centerline = arr_ctl.T
+    
+    # Extract referenced coordinates
+    coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
+    
+    # Create function to compute the projection on the centerline
+    def projection(point, num_disc=False):
+        # Separate disc number from coordinates
+        if num_disc:
+            disc = point[-1]
+            point = point[:3]
+             
+        # Define distance function between the point and the centerline
+        def distance(t):
+            return np.linalg.norm(np.array(point) - np.array(centerline[int(t)]))
+        
+        # Minimize distance function to find the parameter t of the projection
+        result = minimize_scalar(distance, bounds=(0, centerline.shape[0]-1), method='bounded')
+        out = centerline[int(result.x)].tolist()
+        
+        # Add back disc num to output
+        if num_disc:
+            out.append(disc)
+        return out
+
+    # Compute the shortest distance for each referenced points on the centerline
+    projections = np.array([projection(np.array(list(point)), num_disc=True) for point in coordinates_ref])
+    projections_T = np.rint(projections.T).astype(int)
+    
+    # Create the output image
+    out = zeros_like(img)
+    out.data[projections_T[0], projections_T[1], projections_T[2]] = projections_T[3]
+    
+    return out
+    
