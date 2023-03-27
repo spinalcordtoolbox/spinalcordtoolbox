@@ -14,7 +14,6 @@ import logging
 from typing import Sequence, Tuple
 
 import numpy as np
-import nibabel as nib
 from scipy import ndimage
 from scipy.optimize import minimize_scalar
 
