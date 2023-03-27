@@ -282,7 +282,7 @@ def main(argv: Sequence[str]):
         ref = Image(arguments.disc)
         out = sct_labels.labelize_from_discs(img, ref)
     elif arguments.project_discs is not None:
-        ref = Image(arguments.disc)
+        ref = Image(arguments.project_discs)
         out = sct_labels.project_discs(img, ref)
     elif arguments.vert_body is not None:
         levels = arguments.vert_body
