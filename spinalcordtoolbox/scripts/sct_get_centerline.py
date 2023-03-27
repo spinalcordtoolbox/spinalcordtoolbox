@@ -54,9 +54,9 @@ def get_parser():
         help="Method used for extracting the centerline.\n"
              "  - optic: automatic spinal cord detection method\n"
              "  - viewer: manual selection a few points followed by interpolation\n"
-             "  - fitseg: fit a regularized centerline on an already-existing cord segmentation. It will "
-             "interpolate if slices are missing and extrapolate beyond the segmentation boundaries (i.e., every "
-             "axial slice will exhibit a centerline pixel) if -extrapolation 1 is specified."
+             "  - fitseg: fit a regularized centerline on an already-existing cord segmentation. This method "
+             "will interpolate if any slices are missing. Also, if  '-extrapolation 1' is specified, this method will "
+             "extrapolate beyond the segmentation boundaries (i.e., every axial slice will exhibit a centerline pixel)."
     )
     optional.add_argument(
         "-centerline-algo",
