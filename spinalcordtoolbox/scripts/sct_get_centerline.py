@@ -56,7 +56,7 @@ def get_parser():
              "  - viewer: manual selection a few points followed by interpolation\n"
              "  - fitseg: fit a regularized centerline on an already-existing cord segmentation. It will "
              "interpolate if slices are missing and extrapolate beyond the segmentation boundaries (i.e., every "
-             "axial slice will exhibit a centerline pixel)."
+             "axial slice will exhibit a centerline pixel) if -extrapolation 1 is specified."
     )
     optional.add_argument(
         "-centerline-algo",
