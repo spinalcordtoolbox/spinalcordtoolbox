@@ -210,6 +210,7 @@ class Centerline:
             self.points = centerline_file['points']
             self.derivatives = centerline_file['derivatives']
 
+            # This uses the old spelling 'disks_levels' to maintain backwards compatibility
             if 'disks_levels' in centerline_file:
                 self.discs_levels = centerline_file['disks_levels'].tolist()
                 # convertion of levels to int for future use
@@ -503,6 +504,7 @@ class Centerline:
             if self.discs_levels is None:
                 np.savez(fname_output, points=self.points, derivatives=self.derivatives)
             else:
+                # This uses the old spelling 'disks_levels' to maintain backwards compatibility
                 np.savez(fname_output, points=self.points, derivatives=self.derivatives,
                          disks_levels=self.discs_levels, label_reference=self.label_reference)
 
