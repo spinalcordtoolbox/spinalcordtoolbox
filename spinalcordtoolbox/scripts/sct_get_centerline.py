@@ -171,7 +171,7 @@ def main(argv: Sequence[str]):
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
-        minmax=arguments.extrapolation,
+        minmax=(not arguments.extrapolation),  # NB: 'extrapolation=0' --> 'minmax=True' and vice versa
         soft=arguments.centerline_soft)
 
     # Output folder
