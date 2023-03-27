@@ -468,12 +468,12 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     return out
 
 
-def project_discs(img: Image, ref: Image):
+def project_discs(img: Image, ref: Image) -> Image:
     """
     Project discs coordinates on the spinal cord centerline. This projection is obtained by iterating along
-    the centerline to identify the shortest distance with the each referenced coordinates.
+    the centerline to identify the shortest distance with each referenced coordinates.
     Typically, user inputs a segmentation image, and labels with disks position, and this function computes
-    the identification to the closest coordinates of the labels on the centerline.
+    the identification to the closest coordinates of each labels on the centerline.
     Labels are assumed to be non-zero and incremented from top to bottom
 
     :param img: segmentation
@@ -496,6 +496,9 @@ def project_discs(img: Image, ref: Image):
     
     # Create function to compute the projection on the centerline
     def projection(point, num_disc=False):
+        """
+        Project the input point by minimizing its distance with the centerline
+        """
         # Separate disc number from coordinates
         if num_disc:
             disc = point[-1]
@@ -507,20 +510,20 @@ def project_discs(img: Image, ref: Image):
         
         # Minimize distance function to find the parameter t of the projection
         result = minimize_scalar(distance, bounds=(0, centerline.shape[0]-1), method='bounded')
-        out = centerline[int(result.x)].tolist()
+        new_point = centerline[int(result.x)].tolist()
         
         # Add back disc num to output
         if num_disc:
-            out.append(disc)
-        return out
+            new_point.append(disc)
+        return new_point
 
     # Compute the shortest distance for each referenced points on the centerline
     projections = np.array([projection(np.array(list(point)), num_disc=True) for point in coordinates_ref])
-    projections_T = np.rint(projections.T).astype(int)
+    projections_t = np.rint(projections.T).astype(int)
     
     # Create the output image
     out = zeros_like(img)
-    out.data[projections_T[0], projections_T[1], projections_T[2]] = projections_T[3]
+    out.data[projections_t[0], projections_t[1], projections_t[2]] = projections_t[3]
     
     return out
     
