@@ -26,11 +26,11 @@ from threading import Thread
 import logging
 import webbrowser
 
-import wx                     # noqa: F821 (wx is provided by the FSLeyes context)
-import wx.lib.agw.aui as aui  # noqa: F821 (wx is provided by the FSLeyes context)
-import wx.html as html        # noqa: F821 (wx is provided by the FSLeyes context)
+import wx
+import wx.lib.agw.aui as aui
+import wx.html as html
 
-from fsleyes.views import viewpanel  # noqa: F821 (fsleyes is provided by the FSLeyes context)
+from fsleyes.views import viewpanel
 
 # ---------------------------------------------------------------------------------------
 # Note: This script depends on several objects provided by the outer FSLeyes context:
