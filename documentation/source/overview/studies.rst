@@ -26,6 +26,7 @@ The following studies have used SCT:
 2023
 ----
 
+-  Schading *et al.* `Reliability of spinal cord measures based on synthetic T1-weighted MRI derived from multiparametric mapping (MPM) <https://doi.org/10.1016/j.neuroimage.2023.120046>`_, **Neuroimage** 2023
 -  Wu *et al.* `Remodeling of the brain correlates with gait instability in cervical spondylotic myelopathy <https://doi.org/10.3389/fnins.2023.1087945>`_, **Front. Neurosci.** 2023  
 -  Landelle *et al.* `Altered Spinal Cord Functional Connectivity Associated with Parkinson’s Disease Progression <https://doi.org/10.1002/mds.29354>`_, **Mov. Disord.** 2023
 -  Trolle *et al.* `Spinal cord atrophy after spinal cord injury – A systematic review and meta-analysis <https://doi.org/10.1016/j.nicl.2023.103372>`_, **Neuroimage Clin.** 2023
