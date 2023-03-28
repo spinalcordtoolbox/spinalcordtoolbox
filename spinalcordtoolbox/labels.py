@@ -467,7 +467,7 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     return out
 
 
-def project_discs(img: Image, ref: Image) -> Image:
+def project_discs(img: Image, ref: Image, num_disc=True) -> Image:
     """
     Project discs coordinates on the spinal cord centerline. This projection is obtained by iterating along
     the centerline to identify the shortest distance with each referenced coordinates.
@@ -477,6 +477,7 @@ def project_discs(img: Image, ref: Image) -> Image:
 
     :param img: segmentation
     :param ref: reference labels
+    :param num_disc: option to only project coordinates without needing discs numbers
     :returns: image with the new projected discs labels
     """
     # Checking orientation
@@ -517,11 +518,16 @@ def project_discs(img: Image, ref: Image) -> Image:
         return new_point
 
     # Compute the shortest distance for each referenced points on the centerline
-    projections = np.array([projection(np.array(list(point)), num_disc=True) for point in coordinates_ref])
+    projections = np.array([projection(np.array(list(point)), num_disc=num_disc) for point in coordinates_ref])
     projections_t = np.rint(projections.T).astype(int)
 
     # Create the output image
     out = zeros_like(img)
-    out.data[projections_t[0], projections_t[1], projections_t[2]] = projections_t[3]
+
+    # Output discs values if provided
+    if num_disc:
+        out.data[projections_t[0], projections_t[1], projections_t[2]] = projections_t[3]
+    else:
+        out.data[projections_t[0], projections_t[1], projections_t[2]] = 1
 
     return out
