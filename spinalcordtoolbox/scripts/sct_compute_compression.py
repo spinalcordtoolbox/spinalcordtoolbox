@@ -593,9 +593,6 @@ def main(argv: Sequence[str]):
             age.sort()
             if any(n < 0 for n in age):
                 parser.error('Age range needs to be positive, {} was specified'.format(age))
-            # Put age range in order
-            else:
-                age.sort()
         # Get PAM50 slice thickness
         fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
         img_pam50 = Image(fname_PAM50).change_orientation('RPI')
