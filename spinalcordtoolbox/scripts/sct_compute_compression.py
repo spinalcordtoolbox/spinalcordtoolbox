@@ -638,12 +638,12 @@ def main(argv: Sequence[str]):
             slices_avg = compressed_levels_dict[level]
             metrics_patient = average_metric(df_metrics, metric, z_range_above, z_range_below, slices_avg)
             metric_ratio_norm_result = None
-        logger.debug('\nmetric_a =  {}, metric_b = {}, metric_i = {}'.format(metrics_patient[0], metrics_patient[1], metrics_patient[2]))
         # Compute Ratio
         metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
         save_csv(fname_out, level, arguments.metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
 
         # Display results
+        logger.debug('\nmetric_a =  {}, metric_b = {}, metric_i = {}'.format(metrics_patient[0], metrics_patient[1], metrics_patient[2]))
         printv('\n{} ratio norm = {}'.format(metric, metric_ratio_norm_result), verbose=verbose, type='info')
         printv('\n{} ratio = {}'.format(metric, metric_ratio_result), verbose=verbose, type='info')
 
