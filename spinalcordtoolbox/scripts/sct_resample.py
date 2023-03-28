@@ -65,7 +65,10 @@ def get_parser():
     resample_types.add_argument(
         '-mm',
         metavar=Metavar.str,
-        help="New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5"
+        help="New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5\n"
+             "Note: Resampling can only approximate a desired `mm` resolution, given the limitations of discrete voxel "
+             "data arrays."
+        # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4077
     )
     resample_types.add_argument(
         '-vox',
