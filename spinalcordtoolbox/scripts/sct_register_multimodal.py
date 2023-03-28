@@ -408,7 +408,7 @@ def main(argv: Sequence[str]):
     if 'paramregmulti_user' in locals():
         if True in ['type=seg' in paramregmulti_user[i] for i in range(len(paramregmulti_user))]:
             if fname_src_seg == '' or fname_dest_seg == '':
-                parser.error('\nIf you select type=seg you must specify -iseg and -dseg flags.\n')
+                parser.error("If you select 'type=seg' you must specify '-iseg' and '-dseg' arguments.")
 
     # Put source into destination space using header (no estimation -- purely based on header)
     # TODO: Check if necessary to do that
