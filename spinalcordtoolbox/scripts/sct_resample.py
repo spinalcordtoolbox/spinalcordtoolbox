@@ -125,22 +125,22 @@ def main(argv: Sequence[str]):
         param.new_size = arguments.f
         param.new_size_type = 'factor'
         arg += 1
-    elif arguments.mm is not None:
+    if arguments.mm is not None:
         param.new_size = arguments.mm
         param.new_size_type = 'mm'
         arg += 1
-    elif arguments.vox is not None:
+    if arguments.vox is not None:
         param.new_size = arguments.vox
         param.new_size_type = 'vox'
         arg += 1
-    elif arguments.ref is not None:
+    if arguments.ref is not None:
         param.ref = arguments.ref
         arg += 1
-    else:
-        printv(parser.error('ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
 
-    if arg > 1:
-        printv(parser.error('ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
+    if arg == 0:
+        parser.error("You need to specify one of those three arguments: '-f', '-mm' or '-vox'.")
+    elif arg > 1:
+        parser.error("You need to specify ONLY one of those three arguments: '-f', '-mm' or '-vox'.")
 
     if arguments.o is not None:
         param.fname_out = arguments.o
