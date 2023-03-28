@@ -31,3 +31,34 @@ def test_sct_resample_output_has_expected_dimensions(path_in, type_arg, dim, exp
 
     for actual_val, expected_val in zip(actual_dim, expected_dim):
         assert actual_val == pytest.approx(expected_val, abs=abs_tol)
+
+
+def test_sct_resample_with_f_and_mm_arguments(tmp_path, capfd):
+    """
+    Test if an error is raised if none of '-f', '-mm' or '-vox' arguments are passed.
+    """
+    path_in = str(tmp_path / 't2/t2.nii.gz')
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        sct_resample.main(argv=['-i', path_in])
+    assert pytest_wrapped_e.value.code == 2
+
+    # Capture stdout and stderr
+    out, err = capfd.readouterr()
+    # Assert that the error message is printed to stderr
+    assert "You need to specify one of those three arguments" in err
+
+
+def test_sct_resample_with_f_and_mm_arguments(tmp_path, capfd):
+    """
+    Test if an error is raised if both -f and -mm arguments are passed.
+    """
+    path_in = str(tmp_path / 't2/t2.nii.gz')
+    path_out = str(tmp_path / 'resampled.nii.gz')
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        sct_resample.main(argv=['-i', path_in, '-o', path_out, '-f', '0.5x0.5x1', '-mm', '1x1x3'])
+    assert pytest_wrapped_e.value.code == 2
+
+    # Capture stdout and stderr
+    out, err = capfd.readouterr()
+    # Assert that the error message is printed to stderr
+    assert "You need to specify ONLY one of those three arguments" in err
