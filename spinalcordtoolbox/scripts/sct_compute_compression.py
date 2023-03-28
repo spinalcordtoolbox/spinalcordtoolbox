@@ -564,8 +564,9 @@ def main(argv: Sequence[str]):
     # -----------------------------------------------------------
     img_seg = Image(fname_segmentation).change_orientation('RPI')
     img_labels = Image(fname_labels).change_orientation('RPI')
-    # Check if compression labels are in the same dimensions than spinal cord segmentation
-    if check_if_shape_mismatch(img_labels, img_seg):
+    img_vertfile = Image(fname_vertfile).change_orientation('RPI')
+    # Check if segmentation, compression labels, and vertebral label files have same dimensions
+    if not img_seg.data.shape == img_labels.data.shape == img_vertfile.data.shape:
         raise ValueError(f"Shape mismatch between compression labels [{img_labels.data.shape}] and segmentation [{img_seg.data.shape}]). "
                          f"Please verify that your compression labels wwere done in the same space as your input segmentation.")
     # Call sct_process_segmentation to get morphometrics perslice in native space
