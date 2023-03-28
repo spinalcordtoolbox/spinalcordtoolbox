@@ -176,7 +176,7 @@ def get_compressed_slice(img, verbose):
     """
     # Get all coordinates
     coordinates = img.getNonZeroCoordinates(sorting='z')
-    logger.debug('Compression labels coordinates: {}'.format(coordinates))
+    logger.debug(f'Compression labels coordinates: {coordinates}')
     # Check it coordinates is empty
     if not coordinates:
         raise ValueError('No compression labels found.')
@@ -592,7 +592,7 @@ def main(argv: Sequence[str]):
         if age:
             age.sort()
             if any(n < 0 for n in age):
-                parser.error('Age range needs to be positive, {} was specified'.format(age))
+                parser.error(f'Age range needs to be positive, {age} was specified')
         # Get PAM50 slice thickness
         fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
         img_pam50 = Image(fname_PAM50).change_orientation('RPI')
@@ -624,14 +624,14 @@ def main(argv: Sequence[str]):
     # ------------------------------------------------------
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict.keys():
-        printv('\nLevel: {}'.format(level), verbose=verbose, type='info')
+        printv(f'\nLevel: {level}', verbose=verbose, type='info')
         # Get metric of patient with compression
         if arguments.normalize:
             metrics_patient, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
                                                                     z_range_above, z_range_below, compressed_levels_dict[level])
             # Get metrics of healthy controls
             metrics_HC = average_metric(df_avg_HC, metric, z_range_above, z_range_below, slices_avg)
-            logger.debug('\nmetric_a_HC =  {}, metric_b_HC = {}, metric_i_HC = {}'.format(metrics_HC[0], metrics_HC[1], metrics_HC[2]))
+            logger.debug(f'\nmetric_a_HC = {metrics_HC[0]}, metric_b_HC = {metrics_HC[1]}, metric_i_HC = {metrics_HC[2]}')
             # Compute Normalized Ratio
             metric_ratio_norm_result = metric_ratio_norm(metrics_patient, metrics_HC)
         else:
@@ -643,9 +643,9 @@ def main(argv: Sequence[str]):
         save_csv(fname_out, level, arguments.metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
 
         # Display results
-        logger.debug('\nmetric_a =  {}, metric_b = {}, metric_i = {}'.format(metrics_patient[0], metrics_patient[1], metrics_patient[2]))
-        printv('\n{} ratio norm = {}'.format(metric, metric_ratio_norm_result), verbose=verbose, type='info')
-        printv('\n{} ratio = {}'.format(metric, metric_ratio_result), verbose=verbose, type='info')
+        logger.debug(f'\nmetric_a = {metrics_patient[0]}, metric_b = {metrics_patient[1]}, metric_i = {metrics_patient[2]}')
+        printv(f'\n{metric} ratio norm = {metric_ratio_norm_result}', verbose=verbose, type='info')
+        printv(f'\n{metric} ratio = {metric_ratio_result}', verbose=verbose, type='info')
 
     printv(f'\nSaved: {fname_out}')
 
