@@ -55,8 +55,8 @@ def get_parser():
                     'with 100 consecutive patients. Radiology 2007;243(3):820-827.'
     )
 
-    mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
-    mandatoryArguments.add_argument(
+    mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
+    mandatory.add_argument(
         '-i',
         metavar=Metavar.file,
         required=True,
@@ -64,7 +64,7 @@ def get_parser():
              '\nNote: If no normalization is wanted (i.e., if the "-normalize" flag is not specified),'
              ' metric ratio will take the average along the segmentation centerline.'
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         '-vertfile',
         metavar=Metavar.file,
         required=True,
@@ -72,7 +72,7 @@ def get_parser():
              'Note: The input and the vertebral labelling file must be in the same voxel coordinate system'
              'and must match the dimensions between each other.'
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         '-l',
         metavar=Metavar.file,
         required=True,
@@ -82,7 +82,7 @@ def get_parser():
              'Note: The input and the compression label file must be in the same voxel coordinate system '
              'and must match the dimensions between each other.'
     )
-    mandatoryArguments.add_argument(
+    mandatory.add_argument(
         '-metric',
         required=False,
         help='Metric to normalize. '
