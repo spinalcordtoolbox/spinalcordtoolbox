@@ -26,11 +26,13 @@ from threading import Thread
 import logging
 import webbrowser
 
-import wx
-import wx.lib.agw.aui as aui
-import wx.html as html
-
-from fsleyes.views import viewpanel
+# Note: These "# noqa: F821" comments are to silence some PyCharm warnings;
+# the wx and fsleyes modules are *not* installed inside venv_sct, but they
+# *are* installed inside the FSLeyes environment in which this code is run.
+import wx                            # noqa: F821 (module installed in the FSLeyes context)
+import wx.lib.agw.aui as aui         # noqa: F821 (module installed in the FSLeyes context)
+import wx.html as html               # noqa: F821 (module installed in the FSLeyes context)
+from fsleyes.views import viewpanel  # noqa: F821 (module installed in the FSLeyes context)
 
 # ---------------------------------------------------------------------------------------
 # Note: This script depends on several objects provided by the outer FSLeyes context:
