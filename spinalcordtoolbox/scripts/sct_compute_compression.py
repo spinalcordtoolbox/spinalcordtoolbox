@@ -159,20 +159,6 @@ def get_parser():
 
 # Functions for Step 1 (Load subject input files and get csv files)
 # ==========================================================================================
-def check_if_shape_mismatch(img1, img_ref):
-    """Check if image has the same shape as the reference image.
-    :param img1: Image(): image to validate shape.
-    :param img_ref: Image():reference image to compare shape with.
-    :return bool: True if the shape mismatch. False if shapes are the same.
-    """
-    shape_img1 = img1.data.shape
-    shape_img_ref = img_ref.data.shape
-    if shape_img1 != shape_img_ref:
-        return True
-    else:
-        False
-
-
 def get_slice_thickness(img):
     """
     Get slice thickness from the input image.
