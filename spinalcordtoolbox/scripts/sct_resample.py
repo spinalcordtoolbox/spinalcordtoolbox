@@ -49,7 +49,7 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Image to segment. Can be 3D or 4D. (Cannot be 2D) Example: dwi.nii.gz"
+        help="Image to resample. Can be 3D or 4D. (Cannot be 2D) Example: dwi.nii.gz"
     )
 
     resample_types = parser.add_argument_group(
