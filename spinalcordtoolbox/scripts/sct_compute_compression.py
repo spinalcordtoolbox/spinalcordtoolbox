@@ -85,11 +85,9 @@ def get_parser():
     mandatory.add_argument(
         '-metric',
         required=False,
-        help='Metric to normalize. '
-             'Choices: area, diameter_AP, diameter_RL, eccentricity, solidity\n',
+        help='Metric to normalize. ',
         default='diameter_AP',
         choices=['diameter_AP', 'area', 'diameter_RL', 'eccentricity', 'solidity'],
-        metavar=Metavar.str,
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
