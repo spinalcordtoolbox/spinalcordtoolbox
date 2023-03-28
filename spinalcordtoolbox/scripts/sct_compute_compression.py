@@ -552,6 +552,7 @@ def main(argv: Sequence[str]):
     # Load input and output filenames
     fname_labels = arguments.l
     fname_segmentation = arguments.i
+    fname_vertfile = arguments.vertfile
     distance = arguments.distance
     extent = arguments.extent
     if arguments.o is not None:
@@ -573,7 +574,7 @@ def main(argv: Sequence[str]):
     # Call sct_process_segmentation to get morphometrics perslice in native space
     path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
     fname_metrics = os.path.join(path, file_name + '_metrics' + '.csv')
-    sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', arguments.vertfile, '-perslice', '1', '-o', fname_metrics])
+    sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-perslice', '1', '-o', fname_metrics])
     metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
     # Fetch metrics of subject
     df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
@@ -585,7 +586,7 @@ def main(argv: Sequence[str]):
     if arguments.normalize:
         fname_metrics_PAM50 = os.path.join(path, file_name + '_metrics_PAM50' + '.csv')
         # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
-        sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', arguments.vertfile, '-normalize-PAM50', '1',
+        sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-normalize-PAM50', '1',
                                       '-perslice', '1', '-o', fname_metrics_PAM50])
         sex = arguments.sex
         age = arguments.age
