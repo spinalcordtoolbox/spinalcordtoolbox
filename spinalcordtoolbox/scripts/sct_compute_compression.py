@@ -531,7 +531,7 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose)    # values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG]
 
-    # Step 0: Argument validation
+    # Step 0: Argument loading and validation
     # ---------------------------
     # Load input and output filenames
     fname_labels = arguments.l
