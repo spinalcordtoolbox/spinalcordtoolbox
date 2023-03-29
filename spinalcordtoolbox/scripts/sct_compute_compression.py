@@ -541,6 +541,7 @@ def main(argv: Sequence[str]):
     extent = arguments.extent
     sex = arguments.sex
     age = arguments.age
+    metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
     if arguments.o is not None:
         fname_out = arguments.o
     else:
@@ -554,21 +555,12 @@ def main(argv: Sequence[str]):
         raise ValueError(f"Shape mismatch between compression labels [{img_labels.data.shape}], vertebral labels [{img_vertfile.data.shape}]"
                          f" and segmentation [{img_seg.data.shape}]). "
                          f"Please verify that your compression labels and vertebral labels were done in the same space as your input segmentation.")
-    path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
-    fname_metrics = os.path.join(path, file_name + '_metrics' + '.csv')
-    # Call sct_process_segmentation to get morphometrics perslice in native space
-    sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-perslice', '1', '-o', fname_metrics])
-    metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
-    # Select healthy controls based on sex and/or age range
     path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
     if sex or age:
         if not os.path.isfile(get_absolute_path(os.path.join(path_ref, arguments.file_participants))):
             raise FileNotFoundError('participants.tsv file must exists to select sex or age.')
         else:
             fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
-            list_HC = select_HC(fname_partcipants, sex, age)
-    else:
-        list_HC = None
     if age:
         age.sort()
         if any(n < 0 for n in age):
@@ -576,6 +568,10 @@ def main(argv: Sequence[str]):
 
     # Step 1. Get subject metrics and compressed slices
     # -----------------------------------------------------------
+    # Call sct_process_segmentation to get morphometrics perslice in native space
+    path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
+    fname_metrics = os.path.join(path, file_name + '_metrics' + '.csv')
+    sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-perslice', '1', '-o', fname_metrics])
     # Fetch metrics of subject
     df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
     # Get vertebral level corresponding to the slice with the compression
@@ -586,8 +582,13 @@ def main(argv: Sequence[str]):
     # Step 2: Get normalization metrics and slices (using PAM50 and reference dataset)
     # -----------------------------------------------------------
     if arguments.normalize:
-        fname_metrics_PAM50 = os.path.join(path, file_name + '_metrics_PAM50' + '.csv')
+        # Select healthy controls based on sex and/or age range
+        if sex or age:
+            list_HC = select_HC(fname_partcipants, sex, age)
+        else:
+            list_HC = None
         # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
+        fname_metrics_PAM50 = os.path.join(path, file_name + '_metrics_PAM50' + '.csv')
         sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-normalize-PAM50', '1',
                                       '-perslice', '1', '-o', fname_metrics_PAM50])
         # Get PAM50 slice thickness
