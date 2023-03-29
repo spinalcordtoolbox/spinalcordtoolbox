@@ -155,34 +155,7 @@ def get_parser():
     return parser
 
 
-# Functions for Step 1 (Load subject input files and get csv files)
-# ==========================================================================================
-def get_slice_thickness(img):
-    """
-    Get slice thickness from the input image.
-    :param img: Image: source image
-    :return float: slice thickness in mm.
-    """
-    return img.dim[5]
-
-
-def get_compressed_slice(img, verbose):
-    """
-    Get all the compression labels (voxels of value: '1') that are contained in the input image.
-    :param img: Image: source image
-    :return list: list of slices number
-    """
-    # Get all coordinates
-    coordinates = img.getNonZeroCoordinates(sorting='z')
-    logger.debug(f'Compression labels coordinates: {coordinates}')
-    # Check it coordinates is empty
-    if not coordinates:
-        raise ValueError('No compression labels found.')
-    # Return only slices number
-    return [int(coordinate.z) for coordinate in coordinates]
-
-
-# Functions for Step 2 (Processing healthy controls from `PAM50_normalized_metrics` dataset)
+# Functions for Step 0 (Argument loading and validation)
 # ==========================================================================================
 def select_HC(fname_participants, sex=None, age=None):
     """
@@ -213,6 +186,52 @@ def select_HC(fname_participants, sex=None, age=None):
     return list(list_to_include)
 
 
+# Functions for Step 1 (Load subject input files and get csv files)
+# ==========================================================================================
+def get_slice_thickness(img):
+    """
+    Get slice thickness from the input image.
+    :param img: Image: source image
+    :return float: slice thickness in mm.
+    """
+    return img.dim[5]
+
+
+def get_compressed_slice(img, verbose):
+    """
+    Get all the compression labels (voxels of value: '1') that are contained in the input image.
+    :param img: Image: source image
+    :return list: list of slices number
+    """
+    # Get all coordinates
+    coordinates = img.getNonZeroCoordinates(sorting='z')
+    logger.debug(f'Compression labels coordinates: {coordinates}')
+    # Check it coordinates is empty
+    if not coordinates:
+        raise ValueError('No compression labels found.')
+    # Return only slices number
+    return [int(coordinate.z) for coordinate in coordinates]
+
+
+def get_verterbral_level_from_slice(slices, df_metrics):
+    """
+    From slices, gets the coresponding vertebral level and creates a dict fo level and corresponding slice(s).
+    :param slices: list: list of slices number.
+    :param df_metrics: pandas.DataFrame: dataframe of metrics (output of sct_process_segmentation).
+    :return level_slice_dict: dict:
+    """
+    idx = df_metrics['Slice (I->S)'].isin(slices).tolist()
+    level_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
+    if level_compression.empty:
+        raise ValueError(f"Slice {slices} doesn't have a computed metric")
+    level_slice_dict = {}
+    for level in np.unique(level_compression['VertLevel']):
+        level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level, 'Slice (I->S)'].to_list()
+    return level_slice_dict
+
+
+# Functions for Step 2 (Get normalization metrics and slices)
+# ==========================================================================================
 def average_hc(ref_folder, metric, list_HC):
     """
     Gets metrics of healthy controls in PAM50 anatomical dimensions and averages across subjects.
@@ -258,25 +277,6 @@ def average_hc(ref_folder, metric, list_HC):
         if 'MEAN' in column:
             df[column] = df[column]/i
     return df
-
-
-# Functions for Step 3 (Fetching the compressed levels from the subject and PAM50 space)
-# ==========================================================================================
-def get_verterbral_level_from_slice(slices, df_metrics):
-    """
-    From slices, gets the coresponding vertebral level and creates a dict fo level and corresponding slice(s).
-    :param slices: list: list of slices number.
-    :param df_metrics: pandas.DataFrame: dataframe of metrics (output of sct_process_segmentation).
-    :return level_slice_dict: dict:
-    """
-    idx = df_metrics['Slice (I->S)'].isin(slices).tolist()
-    level_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
-    if level_compression.empty:
-        raise ValueError(f"Slice {slices} doesn't have a computed metric")
-    level_slice_dict = {}
-    for level in np.unique(level_compression['VertLevel']):
-        level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level, 'Slice (I->S)'].to_list()
-    return level_slice_dict
 
 
 def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
@@ -422,7 +422,7 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
     return slices_below, slices_above
 
 
-# Functions for Step 4 (Computing MSCC using spinal cord morphometrics.)
+# Functions for Step 3 (Computing MSCC using spinal cord morphometrics.)
 # ==========================================================================================
 def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, z_range_above, z_range_below, slice):
     """
@@ -559,6 +559,8 @@ def main(argv: Sequence[str]):
     # Call sct_process_segmentation to get morphometrics perslice in native space
     sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-perslice', '1', '-o', fname_metrics])
     metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
+    # Select healthy controls based on sex and/or age range
+    path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
     if sex or age:
         if not os.path.isfile(get_absolute_path(os.path.join(path_ref, arguments.file_participants))):
             raise FileNotFoundError('participants.tsv file must exists to select sex or age.')
@@ -587,8 +589,6 @@ def main(argv: Sequence[str]):
         # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
         sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-normalize-PAM50', '1',
                                       '-perslice', '1', '-o', fname_metrics_PAM50])
-        # Select healthy controls based on sex and/or age range
-        path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
         # Get PAM50 slice thickness
         fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
         img_pam50 = Image(fname_PAM50).change_orientation('RPI')
@@ -597,9 +597,6 @@ def main(argv: Sequence[str]):
         df_metrics_PAM50 = pd.read_csv(fname_metrics_PAM50).astype({metric: float})
         # Average metrics of healthy controls
         df_avg_HC = average_hc(path_ref, metric, list_HC)
-
-        # Step 3. Determine compressed levels for both subject and PAM50 space
-        # --------------------------------------------------------------------
         # Get slices correspondance in PAM50 space
         compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
         z_range_below, z_range_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
