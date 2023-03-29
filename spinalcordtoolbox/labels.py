@@ -477,7 +477,7 @@ def project_discs(img: Image, ref: Image, num_disc=True) -> Image:
 
     :param img: segmentation
     :param ref: reference labels
-    :param num_disc: option to only project coordinates without needing discs numbers
+    :param num_disc: If True, projected disc labels have the value of the label, otherwise the value is set to 1. 
     :returns: image with the new projected discs labels
     """
     # Checking orientation
