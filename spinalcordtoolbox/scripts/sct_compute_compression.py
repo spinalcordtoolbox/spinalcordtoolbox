@@ -546,10 +546,10 @@ def main(argv: Sequence[str]):
     else:
         path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
         fname_out = os.path.join(path, file_name + '_compression_metrics' + '.csv')
+    # Check if segmentation, compression labels, and vertebral label files have same dimensions
     img_seg = Image(fname_segmentation).change_orientation('RPI')
     img_labels = Image(fname_labels).change_orientation('RPI')
     img_vertfile = Image(fname_vertfile).change_orientation('RPI')
-    # Check if segmentation, compression labels, and vertebral label files have same dimensions
     if not img_seg.data.shape == img_labels.data.shape == img_vertfile.data.shape:
         raise ValueError(f"Shape mismatch between compression labels [{img_labels.data.shape}], vertebral labels [{img_vertfile.data.shape}]"
                          f" and segmentation [{img_seg.data.shape}]). "
