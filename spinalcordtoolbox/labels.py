@@ -501,18 +501,14 @@ def project_centerline(img: Image, ref: Image) -> Image:
         disc = point[-1]
         point = point[:3]
 
-        # Define distance function between the point and the centerline
-        def distance(t):
-            return np.linalg.norm(np.array(point) - np.array(centerline[int(t)]))
-
-        # Minimize distance function to find the parameter t of the projection
-        result = minimize_scalar(distance, bounds=(0, centerline.shape[0]-1), method='bounded')
-        new_point = centerline[int(result.x)].tolist()
+        # Calculate distances between the referenced point and the centerline then keep the minimal distance
+        dist = np.sum((centerline - point) ** 2, axis=1)
+        new_point = centerline[np.argmin(dist)]
 
         # Add back disc num to output
-        new_point.append(disc)
+        new_point = np.append(new_point, disc)
 
-        return new_point
+        return new_point.tolist()
 
     # Compute the shortest distance for each referenced points on the centerline
     projections = np.array([projection(np.array(list(point))) for point in coordinates_ref])
