@@ -262,9 +262,9 @@ class ComputeDistances:
                 med1 = np.median(self.dist1_distribution[i])
                 med2 = np.median(self.dist2_distribution[i])
                 if self.im2 is None:
-                    self.res += 'Slice ' + str(i) + ' - slice ' + str(i + 1) + ': ' + str(d.H * self.dim_pix) + '  -  ' + str(med1 * self.dim_pix) + '  -  ' + str(med2 * self.dim_pix) + ' \n'
+                    self.res += f'Slice {i} - slice {i+1}: {d.H * self.dim_pix}  -  {med1 * self.dim_pix}  -  {med2 * self.dim_pix}\n'
                 else:
-                    self.res += 'Slice ' + str(i) + ': ' + str(d.H * self.dim_pix) + '  -  ' + str(med1 * self.dim_pix) + '  -  ' + str(med2 * self.dim_pix) + ' \n'
+                    self.res += f'Slice {i}: {d.H * self.dim_pix}  -  {med1 * self.dim_pix}  -  {med2 * self.dim_pix}\n'
 
         printv('-----------------------------------------------------------------------------\n' +
                self.res, self.param.verbose, 'normal')
@@ -525,7 +525,7 @@ def main(argv: Sequence[str]):
             output_fname = arguments.o
         param.verbose = verbose
 
-        tmp_dir = tmp_create()
+        tmp_dir = tmp_create(basename="compute-hausdorff-distance")
         im1_name = "im1.nii.gz"
         copy(input_fname, os.path.join(tmp_dir, im1_name))
         if input_second_fname != '':

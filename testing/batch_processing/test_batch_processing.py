@@ -16,6 +16,7 @@ OUTPUT_DIR = SCT_DIR / "data" / "sct_example_data"
 # TODO: We can and should be verifying more results produced by this pipeline, but which values?
 TESTED_VALUES = [("t2/csa_c2c3.csv", 0, "MEAN(area)"),
                  ("t2/csa_pmj.csv", 0, "MEAN(area)"),
+                 ("t2/csa_pam50.csv", 38, "MEAN(area)"),
                  ("t2s/csa_gm.csv", 3, "MEAN(area)"),
                  ("t2s/csa_wm.csv", 3, "MEAN(area)"),
                  ("mt/mtr_in_wm.csv", 0, "MAP()"),

@@ -17,7 +17,10 @@ matplotlib
 msvc-runtime==14.29.30133; sys.platform == 'win32' # append_to_freeze
 nibabel
 nilearn
-numpy
+# This pin is due to an incompatibility with pystrum==0.2, which is installed via voxelmorph -> neurite -> pystrum
+# See also: https://github.com/adalca/pystrum/issues/9
+# If pystrum is updated to 0.3, then we should replace this version pinning with `pystrum>=0.3`
+numpy<1.24
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 onnxruntime>=1.7.0

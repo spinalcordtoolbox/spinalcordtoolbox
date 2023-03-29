@@ -23,9 +23,28 @@ Citation list
 
 The following studies have used SCT:
 
-2022
+2023
 ----
 
+-  Schading *et al.* `Reliability of spinal cord measures based on synthetic T1-weighted MRI derived from multiparametric mapping (MPM) <https://doi.org/10.1016/j.neuroimage.2023.120046>`_, **Neuroimage** 2023
+-  Wu *et al.* `Remodeling of the brain correlates with gait instability in cervical spondylotic myelopathy <https://doi.org/10.3389/fnins.2023.1087945>`_, **Front. Neurosci.** 2023  
+-  Landelle *et al.* `Altered Spinal Cord Functional Connectivity Associated with Parkinson’s Disease Progression <https://doi.org/10.1002/mds.29354>`_, **Mov. Disord.** 2023
+-  Trolle *et al.* `Spinal cord atrophy after spinal cord injury – A systematic review and meta-analysis <https://doi.org/10.1016/j.nicl.2023.103372>`_, **Neuroimage Clin.** 2023
+-  Ruiter *et al.* `Association of volumetric MRI measures and disability in MS patients of the same age: Descriptions from a birth year cohort <https://doi.org/10.1016/j.msard.2023.104568>`_, **Mult. Scler. Relat. Disord.**, 2023
+-  Schading *et al.* `Dynamics of progressive degeneration of major spinal pathways following spinal cord injury: A longitudinal study <https://doi.org/10.1016/j.nicl.2023.103339>`_, **Neuroimage Clin.**, 2023
+-  Blanc *et al.* `Combining PropSeg and a convolutional neural network for automatic spinal cord segmentation in pediatric populations and patients with spinal cord injury <https://doi.org/10.1002/ima.22859>`_, **IMA**, 2023
+-  Martín-Noguerol *et al.* `The role of Artificial intelligence in the assessment of the spine and spinal cord <https://doi.org/10.1016/j.ejrad.2023.110726>`_, **Eur. J. Radiol.**, 2023
+-  Chu *et al.* `Improving T2*-weighted human cortico-spinal acquisitions with a dedicated algorithm for region-wise shimming <https://doi.org/10.1016/j.neuroimage.2023.119868>`_, **Neuroimage**, 2023
+-  Schilling *et al.* `Denoising of diffusion MRI in the cervical spinal cord – effects of denoising strategy and acquisition on intra-cord contrast, signal modeling, and feature conspicuity <https://doi.org/10.1016/j.neuroimage.2022.119826>`_, **Neuroimage**, 2023
+
+2022
+----
+ 
+-  Wenzel *et al.* `Multiple sclerosis iron rim lesions are linked to impaired cervical spinal cord integrity using the T1/T2-weighted ratio <https://doi.org/10.1111/jon.13076>`_, **J. Neuroimaging**, 2022
+-  Toh *et al.* `Analysis of brain and spinal MRI measures in a common domain to investigate directional neurodegeneration in motor neuron disease <https://doi.org/10.1007/s00415-022-11520-1>`_, **J. Neurol.**, 2022
+-  Hussain *et al.* `Deep learning-based diagnosis of disc degenerative diseases using MRI: A comprehensive review <https://doi.org/10.1016/j.compeleceng.2022.108524>`_, **Comput. Electr. Eng.** 2022
+-  Georgiou-Karistianis *et al.* `A natural history study to track brain and spinal cord changes in individuals with Friedreich’s ataxia: TRACK-FA study protocol <https://doi.org/10.1371/journal.pone.0269649>`_, **PLoS One**, 2022
+-  Seif *et al.* `Reliability of multi-parameter mapping (MPM) in the cervical cord: A multi-center multi-vendor quantitative MRI study <https://doi.org/10.1016/j.neuroimage.2022.119751>`_, **Neuroimage**, 2022
 -  Hoggarth *et al.* `Effects of variability in manually contoured spinal cord masks on fMRI co-registration and interpretation <https://doi.org/10.3389/fneur.2022.907581>`_, **Front. Neurol.**, 2022
 -  Rezende *et al.* `Progressive Spinal Cord Degeneration in Friedreich's Ataxia: Results from ENIGMA-Ataxia <https://doi.org/10.1002/mds.29261>`_, **Mov. Disord.**, 2022
 -  Taso *et al.* `Fast-spin-echo versus rapid gradient-echo for 3D magnetization-prepared acquisitions: Application to inhomogeneous magnetization transfer <https://doi.org/10.1002/mrm.29461>`_, **Magn. Reson. Med.** 2022

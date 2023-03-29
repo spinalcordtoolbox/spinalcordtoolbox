@@ -42,17 +42,17 @@ fi
 
 # QC folder
 if [[ -z "$SCT_BP_QC_FOLDER" ]]; then
-	SCT_BP_QC_FOLDER=`pwd`/"qc_example_data"
+	SCT_BP_QC_FOLDER=$(pwd)/"qc_example_data"
 fi
 
 # Remove QC folder
-if [ -z "$SCT_BP_NO_REMOVE_QC" -a -d "$SCT_BP_QC_FOLDER" ]; then
+if [ -z "$SCT_BP_NO_REMOVE_QC" ] && [ -d "$SCT_BP_QC_FOLDER" ]; then
   echo "Removing $SCT_BP_QC_FOLDER folder."
   rm -rf "$SCT_BP_QC_FOLDER"
 fi
 
 # get starting time:
-start=`date +%s`
+start=$(date +%s)
 
 # download example data
 if [[ "$SCT_BP_DOWNLOAD" == "1" ]]; then
@@ -68,6 +68,10 @@ cd t2
 sct_deepseg_sc -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Tips: If you are not satisfied with the results you can try with another algorithm:
 # sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+# Fit binarized centerline from SC seg (default settings)
+sct_get_centerline -i t2_seg.nii.gz -method fitseg -qc "$SCT_BP_QC_FOLDER"
+# Fit soft centerline from SC seg
+sct_get_centerline -i t2_seg.nii.gz -method fitseg -centerline-soft 1 -o t2_seg_centerline_soft.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Vertebral labeling
 # Tips: for manual initialization of labeling by clicking at disc C2-C3, use flag -initc2
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
@@ -93,6 +97,8 @@ sct_process_segmentation -i t2_seg.nii.gz -vert 2:3 -o csa_c2c3.csv
 sct_detect_pmj -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER" 
 # Compute cross-section area at 60 mm from PMJ averaged on a 30 mm extent
 sct_process_segmentation -i t2_seg.nii.gz -pmj t2_pmj.nii.gz -pmj-distance 60 -pmj-extent 30 -qc "$SCT_BP_QC_FOLDER" -qc-image t2.nii.gz -o csa_pmj.csv
+# Compute morphometrics in PAM50 anatomical dimensions
+sct_process_segmentation -i t2_seg.nii.gz -vertfile t2_seg_labeled.nii.gz -perslice 1 -normalize-PAM50 1 -o csa_pam50.csv
 # Go back to root folder
 cd ..
 
@@ -256,16 +262,16 @@ cd ../../..
 # Display results (to easily compare integrity across SCT versions)
 # ===========================================================================================
 set +v
-end=`date +%s`
+end=$(date +%s)
 runtime=$((end-start))
 echo "~~~"  # these are used to format as code when copy/pasting in github's markdown
-echo "Version:         `sct_version`"
-echo "Ran on:          `uname -nsr`"
-echo "Duration:        $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
+echo "Version:         $(sct_version)"
+echo "Ran on:          $(uname -nsr)"
+echo "Duration:        $((runtime / 3600))hrs $(((runtime / 60) % 60))min $((runtime % 60))sec"
 echo "---"
 # The file `test_batch_processing.py` will output tested values when run as a script
 ./python/envs/venv_sct/bin/python testing/batch_processing/test_batch_processing.py ||
-./venv_sct/Scripts/python.exe testing/batch_processing/test_batch_processing.py
+./python/envs/venv_sct/python.exe testing/batch_processing/test_batch_processing.py
 echo "~~~"
 
 # Display syntax to open QC report on web browser

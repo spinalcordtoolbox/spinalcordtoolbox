@@ -167,7 +167,7 @@ def main(argv: Sequence[str]):
     path_anat, file_anat, ext_anat = extract_fname(fname_anat)
     path_centerline, file_centerline, ext_centerline = extract_fname(fname_centerline)
 
-    path_tmp = tmp_create(basename="smooth_spinalcord")
+    path_tmp = tmp_create(basename="smooth-spinalcord")
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder and convert to nii...', verbose)
@@ -204,7 +204,12 @@ def main(argv: Sequence[str]):
     cache_sig = cache_signature(input_files=[fname_anat_rpi, fname_centerline_rpi],
                                 input_params={"x": "spline"})
     cachefile = os.path.join(curdir, "straightening.cache")
-    if cache_valid(cachefile, cache_sig) and os.path.isfile(os.path.join(curdir, 'warp_curve2straight.nii.gz')) and os.path.isfile(os.path.join(curdir, 'warp_straight2curve.nii.gz')) and os.path.isfile(os.path.join(curdir, 'straight_ref.nii.gz')):
+    if (
+        cache_valid(cachefile, cache_sig)
+        and os.path.isfile(os.path.join(curdir, 'warp_curve2straight.nii.gz'))
+        and os.path.isfile(os.path.join(curdir, 'warp_straight2curve.nii.gz'))
+        and os.path.isfile(os.path.join(curdir, 'straight_ref.nii.gz'))
+    ):
         # if they exist, copy them into current folder
         printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
         copy(os.path.join(curdir, 'warp_curve2straight.nii.gz'), 'warp_curve2straight.nii.gz')
@@ -213,7 +218,14 @@ def main(argv: Sequence[str]):
         # apply straightening
         sct_apply_transfo.main(['-i', fname_anat_rpi, '-w', 'warp_curve2straight.nii.gz', '-d', 'straight_ref.nii.gz', '-o', 'anat_rpi_straight.nii', '-x', 'spline', '-v', '0'])
     else:
-        sct_straighten_spinalcord.main(['-i', fname_anat_rpi, '-o', 'anat_rpi_straight.nii', '-s', fname_centerline_rpi, '-x', 'spline', '-param', 'algo_fitting=' + param.algo_fitting, '-v', '0'])
+        sct_straighten_spinalcord.main([
+            '-i', fname_anat_rpi,
+            '-o', 'anat_rpi_straight.nii',
+            '-s', fname_centerline_rpi,
+            '-x', 'spline',
+            '-param', 'algo_fitting=' + param.algo_fitting,
+            '-v', '0',
+        ])
         cache_save(cachefile, cache_sig)
         # move warping fields and straight reference file from the tmpdir to the localdir (to use caching next time)
         copy('straight_ref.nii.gz', os.path.join(curdir, 'straight_ref.nii.gz'))
@@ -237,7 +249,14 @@ def main(argv: Sequence[str]):
 
     # Apply the reversed warping field to get back the curved spinal cord
     printv('\nApply the reversed warping field to get back the curved spinal cord...')
-    sct_apply_transfo.main(['-i', 'anat_rpi_straight_smooth.nii', '-o', 'anat_rpi_straight_smooth_curved.nii', '-d', 'anat.nii', '-w', 'warp_straight2curve.nii.gz', '-x', 'spline', '-v', '0'])
+    sct_apply_transfo.main([
+        '-i', 'anat_rpi_straight_smooth.nii',
+        '-o', 'anat_rpi_straight_smooth_curved.nii',
+        '-d', 'anat.nii',
+        '-w', 'warp_straight2curve.nii.gz',
+        '-x', 'spline',
+        '-v', '0',
+    ])
 
     # replace zeroed voxels by original image (issue #937)
     printv('\nReplace zeroed voxels by original image...', verbose)

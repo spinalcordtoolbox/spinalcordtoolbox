@@ -32,8 +32,8 @@ DATASET_DICT = {
     },
     "sct_testing_data": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20210330230310/sct_testing_data-r20210330230310.zip",
-            "https://osf.io/download/60629509229503022e6f107d/",
+            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20230207/sct_testing_data-r20230207.zip",
+            "https://osf.io/5twvs/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_testing_data"),
     },
@@ -50,12 +50,6 @@ DATASET_DICT = {
             "https://osf.io/sh6h4/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "MNI-Poly-AMU"),
-    },
-    "gm_model": {
-        "mirrors": [
-            "https://osf.io/ugscu/?action=download"
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "gm_model"),
     },
     "optic_models": {
         "mirrors": [
@@ -245,7 +239,7 @@ def unzip(compressed, dest_folder):
 
     try:
         open(compressed).extractall(dest_folder)
-    except:
+    except Exception:
         logger.error('ERROR: ZIP package corrupted. Please try downloading again.')
         raise
 
@@ -291,7 +285,7 @@ def install_data(url, dest_folder, keep=False):
 
     tmp_file = download_data(url)
 
-    extraction_folder = tmp_create()
+    extraction_folder = tmp_create(basename="install-data")
 
     unzip(tmp_file, extraction_folder)
 

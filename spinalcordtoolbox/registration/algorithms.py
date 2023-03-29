@@ -10,6 +10,7 @@
 import logging
 import os  # FIXME
 import shutil
+import psutil
 from math import asin, cos, sin, acos
 
 import numpy as np
@@ -20,10 +21,6 @@ from scipy.signal import argrelmax, medfilt
 from sklearn.decomposition import PCA
 from scipy.io import loadmat
 import torch
-# import VoxelMorph and Neurite (used in VoxelMorph) with pytorch backend
-os.environ['VXM_BACKEND'] = 'pytorch'
-os.environ['NEURITE_BACKEND'] = 'pytorch'
-import voxelmorph as vxm
 
 import spinalcordtoolbox.image as image
 from spinalcordtoolbox.math import laplacian
@@ -33,6 +30,11 @@ from spinalcordtoolbox.scripts import sct_resample
 from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp_create, sct_dir_local_path
 
 from spinalcordtoolbox.scripts import sct_image
+
+# import VoxelMorph and Neurite (used in VoxelMorph) with pytorch backend
+os.environ['VXM_BACKEND'] = 'pytorch'
+os.environ['NEURITE_BACKEND'] = 'pytorch'
+import voxelmorph as vxm  # noqa: E402
 
 # TODO [AJ]
 # introduce potential cleanup functions in case exceptions occur and
@@ -447,56 +449,22 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
         nb_unet_features=([256, 256, 256, 256], [256, 256, 256, 256, 256, 256])
     )
     logger.info("\n Creating VxmDense models with arguments:")
-    logger.info(f"\n{reg_args}")
+    logger.info(f"{reg_args}")
 
-    # ---- First Model ---- #
-    logger.info("\n Loading first VxmDense model...")
-    pt_first_model = vxm.networks.VxmDense(**reg_args)
-    model1_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_first_model.pt')
-    trained_state_dict_first_model = torch.load(model1_path)
-    # Load the weights to the PyTorch model
-    weights_first_model = []
-    for k in trained_state_dict_first_model:
-        weights_first_model.append(trained_state_dict_first_model[k])
-    i = 0
-    i_max = len(list(pt_first_model.named_parameters()))
-    torchparam = pt_first_model.state_dict()
-    for k, v in torchparam.items():
-        if i < i_max:
-            torchparam[k] = weights_first_model[i]
-            i += 1
-    pt_first_model.load_state_dict(torchparam)
-    pt_first_model.to(device)
-    pt_first_model.eval()
+    volume_m = (new_img_shape[0] * new_img_shape[1] * new_img_shape[2] / 1e6)
+    ram_estimated = round((volume_m * 3.52) + 0.0538, 2)
+    ram_free = round(psutil.virtual_memory().free / 1024 ** 3, 2)
+    if ram_estimated + 1 > ram_free:
+        logger.warning(f"\nWARNING: System has {ram_free}GB of free memory, but inference may require as much as "
+                       f"{ram_estimated}GB to register images of size {new_img_shape}. As a result, the script may "
+                       f"quit unexpectedly due to lack of memory. To reduce memory requirements, please consider "
+                       f"cropping your images around the spinal cord prior to registration.")
 
-    # ---- Second Model ---- #
-    logger.info("\n Loading second VxmDense model...")
-    pt_second_model = vxm.networks.VxmDense(**reg_args)
-    model2_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_second_model.pt')
-    trained_state_dict_second_model = torch.load(model2_path)
-    # Load the weights to the PyTorch model
-    weights_second_model = []
-    for k in trained_state_dict_second_model:
-        weights_second_model.append(trained_state_dict_second_model[k])
-    i = 0
-    i_max = len(list(pt_second_model.named_parameters()))
-    torchparam = pt_second_model.state_dict()
-    for k, v in torchparam.items():
-        if i < i_max:
-            torchparam[k] = weights_second_model[i]
-            i += 1
-    pt_second_model.load_state_dict(torchparam)
-    pt_second_model.to(device)
-    pt_second_model.eval()
-
-    # ---- Registration ---- #
     logger.info("\n Predicting using first VxmDense model...")
-    moved, warp_tensor_first = pt_first_model(input_moving, input_fixed, registration=True)
-    warp_data_first = warp_tensor_first[0].permute(1, 2, 3, 0).detach().numpy()
+    moved, warp_data_first = register_dl_inference('pt_cascaded_first_model.pt', input_moving, input_fixed, reg_args, device)
 
     logger.info("\n Predicting using second VxmDense model...")
-    moved_final, warp_tensor_second = pt_second_model(moved, input_fixed, registration=True)
-    warp_data_second = warp_tensor_second[0].permute(1, 2, 3, 0).detach().numpy()
+    moved_final, warp_data_second = register_dl_inference('pt_cascaded_second_model.pt', moved, input_fixed, reg_args, device)
 
     # ---- Warping fields ---- #
     # Modify the warp data so it can be used with sct_apply_transfo()
@@ -554,6 +522,32 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     save(warp_rev, fname_warp_reverse)
 
 
+def register_dl_inference(fname_model, input_moving, input_fixed, reg_args, device):
+    # Load the PyTorch model architecture
+    pt_model = vxm.networks.VxmDense(**reg_args)
+
+    # Copy over named parameters from the trained model file
+    torchparam = pt_model.state_dict()
+    trained_state_dict = torch.load(sct_dir_local_path('data', 'deepreg_models', fname_model))
+    for (name, parameter) in pt_model.named_parameters():
+        torchparam[name] = trained_state_dict[name]
+    # NB: The process above will *not* copy the two unnamed parameters from the trained `state_dict`:
+    #   1. 'integrate.transformer.grid'
+    #   2. 'transformer.grid'
+    # This is intentional; they should be preserved in their original state from `pt_model.state_dict()`.
+
+    # Load the parameters into the model
+    pt_model.load_state_dict(torchparam)
+    pt_model.to(device)
+    pt_model.eval()
+
+    # Perform inference
+    im_warped, warp_tensor = pt_model(input_moving, input_fixed, registration=True)
+    warp_data = warp_tensor[0].permute(1, 2, 3, 0).detach().numpy()
+
+    return im_warped, warp_data
+
+
 def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp_forward_out='step0Warp.nii.gz',
                        warp_inverse_out='step0InverseWarp.nii.gz', ants_registration_params=None,
                        path_qc='.', remove_temp_files=0, verbose=0):
@@ -574,7 +568,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     """
 
     # create temporary folder
-    path_tmp = tmp_create(basename="register")
+    path_tmp = tmp_create(basename="register-slicewise")
 
     # copy data to temp folder
     logger.info("\nCopy input data to temp folder...")
@@ -879,39 +873,44 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                 # plt.figure
                 plt.subplot(isub)
                 # ax = matplotlib.pyplot.axis()
-                try:
-                    if isub == 221:
-                        plt.scatter(coord_src[iz][:, 0], coord_src[iz][:, 1], s=5, marker='o', zorder=10, color='steelblue',
-                                    alpha=0.5)
-                        pcaaxis = pca_src[iz].components_.T
-                        pca_eigenratio = pca_src[iz].explained_variance_ratio_
-                        plt.title('src')
-                    elif isub == 222:
-                        plt.scatter([coord_src_rot[i, 0] for i in range(len(coord_src_rot))], [coord_src_rot[i, 1] for i in range(len(coord_src_rot))], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
-                        pcaaxis = pca_dest[iz].components_.T
-                        pca_eigenratio = pca_dest[iz].explained_variance_ratio_
-                        plt.title('src_rot')
-                    elif isub == 223:
-                        plt.scatter(coord_dest[iz][:, 0], coord_dest[iz][:, 1], s=5, marker='o', zorder=10, color='red',
-                                    alpha=0.5)
-                        pcaaxis = pca_dest[iz].components_.T
-                        pca_eigenratio = pca_dest[iz].explained_variance_ratio_
-                        plt.title('dest')
-                    elif isub == 224:
-                        plt.scatter([coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))], [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))], s=5, marker='o', zorder=10, color='red', alpha=0.5)
-                        pcaaxis = pca_src[iz].components_.T
-                        pca_eigenratio = pca_src[iz].explained_variance_ratio_
-                        plt.title('dest_rot')
-                    plt.text(-2.5, -2, 'eigenvectors:', horizontalalignment='left', verticalalignment='bottom')
-                    plt.text(-2.5, -2.8, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
-                    plt.text(-2.5, 2.5, 'eigenval_ratio:', horizontalalignment='left', verticalalignment='bottom')
-                    plt.text(-2.5, 2, str(pca_eigenratio), horizontalalignment='left', verticalalignment='bottom')
-                    plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
-                    plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
-                    plt.axis([-3, 3, -3, 3])
-                    plt.gca().set_aspect('equal', adjustable='box')
-                except Exception as e:
-                    raise Exception
+                if isub == 221:
+                    plt.scatter(coord_src[iz][:, 0], coord_src[iz][:, 1], s=5, marker='o', zorder=10, color='steelblue',
+                                alpha=0.5)
+                    pcaaxis = pca_src[iz].components_.T
+                    pca_eigenratio = pca_src[iz].explained_variance_ratio_
+                    plt.title('src')
+                elif isub == 222:
+                    plt.scatter(
+                        [coord_src_rot[i, 0] for i in range(len(coord_src_rot))],
+                        [coord_src_rot[i, 1] for i in range(len(coord_src_rot))],
+                        s=5, marker='o', zorder=10, color='steelblue', alpha=0.5,
+                    )
+                    pcaaxis = pca_dest[iz].components_.T
+                    pca_eigenratio = pca_dest[iz].explained_variance_ratio_
+                    plt.title('src_rot')
+                elif isub == 223:
+                    plt.scatter(coord_dest[iz][:, 0], coord_dest[iz][:, 1], s=5, marker='o', zorder=10, color='red',
+                                alpha=0.5)
+                    pcaaxis = pca_dest[iz].components_.T
+                    pca_eigenratio = pca_dest[iz].explained_variance_ratio_
+                    plt.title('dest')
+                elif isub == 224:
+                    plt.scatter(
+                        [coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))],
+                        [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))],
+                        s=5, marker='o', zorder=10, color='red', alpha=0.5,
+                    )
+                    pcaaxis = pca_src[iz].components_.T
+                    pca_eigenratio = pca_src[iz].explained_variance_ratio_
+                    plt.title('dest_rot')
+                plt.text(-2.5, -2, 'eigenvectors:', horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, -2.8, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, 2.5, 'eigenval_ratio:', horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, 2, str(pca_eigenratio), horizontalalignment='left', verticalalignment='bottom')
+                plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
+                plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
+                plt.axis([-3, 3, -3, 3])
+                plt.gca().set_aspect('equal', adjustable='box')
 
             plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_pca_z' + str(iz) + '.png'))
             plt.close()
@@ -1017,10 +1016,8 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         dest2d[dest2d < th_nonzero] = 0
         # get non-zero coordinates, and transpose to obtain nx2 dimensions
         coord_src2d = np.array(np.where(src2d > 0)).T
-        coord_dest2d = np.array(np.where(dest2d > 0)).T
         # here we use 0.5 as threshold for non-zero value
         # coord_src2d = np.array(np.where(src2d > th_nonzero)).T
-        # coord_dest2d = np.array(np.where(dest2d > th_nonzero)).T
         # >>>
 
         # SCALING R-L (X dimension)
@@ -1279,8 +1276,9 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         cmd = [
             'isct_antsRegistration',
             '--dimensionality', '2',
-            '--transform', paramreg.algo + '[' + str(paramreg.gradStep) + ants_registration_params[paramreg.algo.lower()] + ']',
-            '--metric', paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + ']',  # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+            '--transform', f'{paramreg.algo}[{paramreg.gradStep}{ants_registration_params[paramreg.algo.lower()]}]',
+            # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+            '--metric', f'{paramreg.metric}[dest_Z{num}.nii,src_Z{num}.nii,1,{metricSize}]',
             '--convergence', str(paramreg.iter),
             '--shrink-factors', str(paramreg.shrink),
             '--smoothing-sigmas', str(paramreg.smooth) + 'mm',

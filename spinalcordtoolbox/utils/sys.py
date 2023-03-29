@@ -249,7 +249,7 @@ def init_error_client():
                     for handler, args, kw in atexit._exithandlers:
                         if handler.__module__.startswith("raven."):
                             sent_something = True
-                except:
+                except:  # noqa: E722
                     pass
                 old_exitfunc()
                 if sent_something:

@@ -84,7 +84,10 @@ class Coordinate(Point):
             else:
                 float(self.x), float(self.y), float(self.z), float(self.value)
         except ValueError:
-            raise TypeError("All coordinates must be int and the value can be a float or a int. x=" + str(self.x) + ", y=" + str(self.y) + ", z=" + str(self.z) + ", value=" + str(self.value))
+            raise TypeError(
+                "All coordinates must be int and the value can be a float or a int. "
+                f"x={self.x}, y={self.y}, z={self.z}, value={self.value}"
+            )
 
     def __iter__(self):
         # Allows for this usage: "for x, y, z, v in [list of Coordinate]"
@@ -212,9 +215,32 @@ class Centerline:
                            'T10': 25.501856729317133, 'T11': 27.619238824308123, 'T12': 29.465119270009946,
                            'L1': 31.89272719870084, 'L2': 33.511890474486449, 'L3': 35.721413718617441}
 
-    """
-    {'T10': ['T10', 25.543101799896391, 2.0015883550878457], 'T11': ['T11', 27.192970855618441, 1.9996136135271434], 'T12': ['T12', 29.559890137292335, 2.0204112073304121], 'PMG': ['PMG', 12.429867526011929, 2.9899172582983007], 'C3': ['C3', 18.229087873095388, 1.3299710200291315], 'C2': ['C2', 18.859365127066937, 1.5764843286826156], 'C1': ['C1', 0.0, 0.0], 'C7': ['C7', 15.543004729447034, 1.5597730786882851], 'C6': ['C6', 15.967482996580138, 1.4698898678270345], 'PMJ': ['PMJ', 11.38265467206886, 1.5641456310519117], 'C4': ['C4', 17.486130819790912, 1.5888243108648978], 'T8': ['T8', 25.649136105105754, 4.6835454011234718], 'T9': ['T9', 25.581999112288241, 1.9565018840832449], 'T6': ['T6', 23.539740893750668, 1.9073272889977211], 'T7': ['T7', 24.388589291326571, 1.828160893366733], 'T4': ['T4', 22.076131620822075, 1.726133989579701], 'T5': ['T5', 22.402770293433733, 2.0157113843189087], 'T2': ['T2', 19.800131846755267, 1.7600195442391204], 'T3': ['T3', 21.287064228802027, 1.8123109081532691], 'T1': ['T1', 16.525065003339993, 1.6130238001641826], 'L2': ['L2', 34.382300279977912, 2.378543023223767], 'L3': ['L3', 34.804841812064133, 2.7878124182683481], 'L1': ['L1', 32.02934490161379, 2.7697447948338381], 'C5': ['C5', 16.878263370935201, 1.6952832966782569]}
-    """
+    # {
+    #     "T10": ["T10", 25.543101799896391, 2.0015883550878457],
+    #     "T11": ["T11", 27.192970855618441, 1.9996136135271434],
+    #     "T12": ["T12", 29.559890137292335, 2.0204112073304121],
+    #     "PMG": ["PMG", 12.429867526011929, 2.9899172582983007],
+    #     "C3": ["C3", 18.229087873095388, 1.3299710200291315],
+    #     "C2": ["C2", 18.859365127066937, 1.5764843286826156],
+    #     "C1": ["C1", 0.0, 0.0],
+    #     "C7": ["C7", 15.543004729447034, 1.5597730786882851],
+    #     "C6": ["C6", 15.967482996580138, 1.4698898678270345],
+    #     "PMJ": ["PMJ", 11.38265467206886, 1.5641456310519117],
+    #     "C4": ["C4", 17.486130819790912, 1.5888243108648978],
+    #     "T8": ["T8", 25.649136105105754, 4.6835454011234718],
+    #     "T9": ["T9", 25.581999112288241, 1.9565018840832449],
+    #     "T6": ["T6", 23.539740893750668, 1.9073272889977211],
+    #     "T7": ["T7", 24.388589291326571, 1.828160893366733],
+    #     "T4": ["T4", 22.076131620822075, 1.726133989579701],
+    #     "T5": ["T5", 22.402770293433733, 2.0157113843189087],
+    #     "T2": ["T2", 19.800131846755267, 1.7600195442391204],
+    #     "T3": ["T3", 21.287064228802027, 1.8123109081532691],
+    #     "T1": ["T1", 16.525065003339993, 1.6130238001641826],
+    #     "L2": ["L2", 34.382300279977912, 2.378543023223767],
+    #     "L3": ["L3", 34.804841812064133, 2.7878124182683481],
+    #     "L1": ["L1", 32.02934490161379, 2.7697447948338381],
+    #     "C5": ["C5", 16.878263370935201, 1.6952832966782569],
+    # }
 
     list_labels = [50, 49, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
     potential_list_labels = [50, 49, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
@@ -385,8 +411,8 @@ class Centerline:
         :return:
         """
         if 0 <= index < self.number_of_points:
-            origin = self.points[index]
-            z_prime_axis = self.derivatives[index]
+            origin = self.points[index].copy()
+            z_prime_axis = self.derivatives[index].copy()
             z_prime_axis /= norm(z_prime_axis)
             y_axis = array([0, 1, 0])
             y_prime_axis = (y_axis - dot(y_axis, z_prime_axis) * z_prime_axis)
@@ -564,15 +590,25 @@ class Centerline:
 
                     if current_label in ['PMJ', 'PMG']:
                         if next_label in self.index_disk:
-                            self.dist_points_rel[i] = - (self.dist_points[i] - self.dist_points[self.index_disk[next_label]]) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
+                            self.dist_points_rel[i] = -(
+                                self.dist_points[i] - self.dist_points[self.index_disk[next_label]]
+                            ) / abs(
+                                self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]]
+                            )
                         else:
-                            self.dist_points_rel[i] = (self.average_vert_length[current_label] - self.dist_points[i] + self.dist_points[self.index_disk[current_label]]) / self.average_vert_length[current_label]
+                            self.dist_points_rel[i] = (
+                                self.average_vert_length[current_label] - self.dist_points[i] + self.dist_points[self.index_disk[current_label]]
+                            ) / self.average_vert_length[current_label]
                     else:
                         next_label = self.regions_labels[str(self.list_labels[self.list_labels.index(self.labels_regions[self.l_points[i]]) + 1])]
                         if next_label in self.index_disk:
-                            self.dist_points_rel[i] = (self.dist_points[i] - self.dist_points[self.index_disk[current_label]]) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
+                            self.dist_points_rel[i] = (
+                                self.dist_points[i] - self.dist_points[self.index_disk[current_label]]
+                            ) / abs(self.dist_points[self.index_disk[next_label]] - self.dist_points[self.index_disk[current_label]])
                         else:
-                            self.dist_points_rel[i] = (self.dist_points[i] - self.dist_points[self.index_disk[current_label]]) / self.average_vert_length[current_label]
+                            self.dist_points_rel[i] = (
+                                self.dist_points[i] - self.dist_points[self.index_disk[current_label]]
+                            ) / self.average_vert_length[current_label]
 
     def get_closest_to_relative_position(self, vertebral_level, relative_position, mode='levels'):
         """

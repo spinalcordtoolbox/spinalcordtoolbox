@@ -55,7 +55,8 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         # optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         # # TODO: replace with get_centerline(method=optic)
         im_ctl, _, _, _ = get_centerline(im,
-                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type))
+                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type),
+                                         remove_temp_files=remove_temp_files)
 
     elif algo == 'cnn':
         # CNN parameters
@@ -74,7 +75,8 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                                     std_train=dct_patch_ctr[contrast_type]['std'],
                                     brain_bool=brain_bool)
         im_ctl, _, _, _ = get_centerline(im_heatmap,
-                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type))
+                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type),
+                                         remove_temp_files=remove_temp_files)
 
         if z_max is not None:
             logger.info('Cropping brain section.')
@@ -82,7 +84,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
 
     elif algo == 'viewer':
         im_labels = _call_viewer_centerline(im)
-        im_ctl, _, _, _ = get_centerline(im_labels, param=ParamCenterline())
+        im_ctl, _, _, _ = get_centerline(im_labels, param=ParamCenterline(), remove_temp_files=remove_temp_files)
 
     elif algo == 'file':
         im_ctl = Image(centerline_fname)
@@ -414,7 +416,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     logger.info("  Threshold: {}".format(threshold_seg))
 
     # create temporary folder with intermediate results
-    tmp_folder = TempFolder(verbose=verbose)
+    tmp_folder = TempFolder(basename="deepseg-sc", verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
     if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)

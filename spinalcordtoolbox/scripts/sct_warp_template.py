@@ -37,7 +37,8 @@ class Param:
         # self.warp_template = 1
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
-        self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']  # list of files for which nn interpolation should be used. Default = linear.
+        # list of files for which nn interpolation should be used. Default = linear.
+        self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']
         self.verbose = 1  # verbose
         self.path_qc = None
 
@@ -278,7 +279,7 @@ def main(argv: Sequence[str]):
              spinalcordtoolbox.metadata.get_file_label(path_template, id_label=1, output="filewithpath"),  # label = 'T2-weighted template'
              spinalcordtoolbox.metadata.get_file_label(path_template, id_label=5, output="filewithpath"),  # label = 'gray matter mask (probabilistic)'
              spinalcordtoolbox.metadata.get_file_label(path_template, id_label=4, output="filewithpath")],  # label = 'white matter mask (probabilistic)'
-            colormaps=['gray', 'gray', 'red-yellow', 'blue-lightblue'],
+            im_types=['anat', 'anat', 'softseg', 'softseg-alt'],
             opacities=['1', '1', '0.5', '0.5'],
             minmax=['', '0,4000', '0.4,1', '0.4,1'],
             verbose=verbose)
