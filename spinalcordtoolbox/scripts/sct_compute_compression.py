@@ -546,9 +546,6 @@ def main(argv: Sequence[str]):
     else:
         path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
         fname_out = os.path.join(path, file_name + '_compression_metrics' + '.csv')
-
-    # Step 1. Load subject input files and get csv files (label image, segmentation)
-    # -----------------------------------------------------------
     img_seg = Image(fname_segmentation).change_orientation('RPI')
     img_labels = Image(fname_labels).change_orientation('RPI')
     img_vertfile = Image(fname_vertfile).change_orientation('RPI')
@@ -557,40 +554,41 @@ def main(argv: Sequence[str]):
         raise ValueError(f"Shape mismatch between compression labels [{img_labels.data.shape}], vertebral labels [{img_vertfile.data.shape}]"
                          f" and segmentation [{img_seg.data.shape}]). "
                          f"Please verify that your compression labels and vertebral labels were done in the same space as your input segmentation.")
-    # Call sct_process_segmentation to get morphometrics perslice in native space
     path, file_name, ext = extract_fname(get_absolute_path(arguments.i))
     fname_metrics = os.path.join(path, file_name + '_metrics' + '.csv')
+    # Call sct_process_segmentation to get morphometrics perslice in native space
     sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-perslice', '1', '-o', fname_metrics])
     metric = 'MEAN(' + arguments.metric + ')'  # Adjust for csv file columns name
+    if sex or age:
+        if not os.path.isfile(get_absolute_path(os.path.join(path_ref, arguments.file_participants))):
+            raise FileNotFoundError('participants.tsv file must exists to select sex or age.')
+        else:
+            fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
+            list_HC = select_HC(fname_partcipants, sex, age)
+    else:
+        list_HC = None
+    if age:
+        age.sort()
+        if any(n < 0 for n in age):
+            parser.error(f'Age range needs to be positive, {age} was specified')
+
+    # Step 1. Get subject metrics and compressed slices
+    # -----------------------------------------------------------
     # Fetch metrics of subject
     df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
     # Get vertebral level corresponding to the slice with the compression
     slice_thickness = get_slice_thickness(img_labels)
     slice_compressed = get_compressed_slice(img_labels, verbose)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
-    # Initialize variables if normalization
+    # Step 2: Get normalization metrics and slices (using PAM50 and reference dataset)
+    # -----------------------------------------------------------
     if arguments.normalize:
         fname_metrics_PAM50 = os.path.join(path, file_name + '_metrics_PAM50' + '.csv')
         # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
         sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-normalize-PAM50', '1',
                                       '-perslice', '1', '-o', fname_metrics_PAM50])
-
-        # Step 2. Load reference input files (PAM50, healthy controls)
-        # ------------------------------------------------------------
         # Select healthy controls based on sex and/or age range
         path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
-        if sex or age:
-            if not os.path.isfile(get_absolute_path(os.path.join(path_ref, arguments.file_participants))):
-                raise FileNotFoundError('participants.tsv file must exists to select sex or age.')
-            else:
-                fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
-                list_HC = select_HC(fname_partcipants, sex, age)
-        else:
-            list_HC = None
-        if age:
-            age.sort()
-            if any(n < 0 for n in age):
-                parser.error(f'Age range needs to be positive, {age} was specified')
         # Get PAM50 slice thickness
         fname_PAM50 = os.path.join(__data_dir__, 'PAM50', 'template', 'PAM50_t2.nii.gz')
         img_pam50 = Image(fname_PAM50).change_orientation('RPI')
@@ -606,6 +604,8 @@ def main(argv: Sequence[str]):
         compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
         z_range_below, z_range_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
         # Get data from healthy control and average them
+    # Step 2: Get normalization metrics and slices (using non-compressed subject slices)
+    # -----------------------------------------------------------
     else:
         # Get spinal cord centerline object to compute the distance
         # Get max and min index of the segmentation with pmj
@@ -618,7 +618,7 @@ def main(argv: Sequence[str]):
         # Get healthy slices to average for level above and below
         z_range_above, z_range_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
 
-    # Step 4. Compute MSCC metrics for each compressed level
+    # Step 3. Compute MSCC metrics for each compressed level
     # ------------------------------------------------------
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for level in compressed_levels_dict.keys():
