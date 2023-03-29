@@ -467,9 +467,9 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     return out
 
 
-def project_discs(img: Image, ref: Image) -> Image:
+def project_centerline(img: Image, ref: Image) -> Image:
     """
-    Project discs coordinates on the spinal cord centerline. This projection is obtained by iterating along
+    Project an input image on the spinal cord centerline. This projection is obtained by iterating along
     the centerline to identify the shortest distance with each referenced coordinates.
     Typically, user inputs a segmentation image, and labels with disks position, and this function computes
     the identification to the closest coordinates of each labels on the centerline.

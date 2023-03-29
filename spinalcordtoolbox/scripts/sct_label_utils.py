@@ -132,7 +132,7 @@ def get_parser():
     )
 
     func_group.add_argument(
-        '-project-discs',
+        '-project-centerline',
         metavar=Metavar.file,
         help="Create an image where referenced vertebral discs are projected onto the spinal cord centerline"
     )
@@ -281,9 +281,9 @@ def main(argv: Sequence[str]):
     elif arguments.disc is not None:
         ref = Image(arguments.disc)
         out = sct_labels.labelize_from_discs(img, ref)
-    elif arguments.project_discs is not None:
-        ref = Image(arguments.project_discs)
-        out = sct_labels.project_discs(img, ref)
+    elif arguments.project_centerline is not None:
+        ref = Image(arguments.project_centerline)
+        out = sct_labels.project_centerline(img, ref)
     elif arguments.vert_body is not None:
         levels = arguments.vert_body
         if len(levels) == 1 and levels[0] == 0:
