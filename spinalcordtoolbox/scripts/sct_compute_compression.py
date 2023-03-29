@@ -582,6 +582,7 @@ def main(argv: Sequence[str]):
     slice_thickness = get_slice_thickness(img_labels)
     slice_compressed = get_compressed_slice(img_labels, verbose)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
+
     # Step 2: Get normalization metrics and slices (using PAM50 and reference dataset)
     # -----------------------------------------------------------
     if arguments.normalize:
@@ -600,7 +601,7 @@ def main(argv: Sequence[str]):
         # Get slices correspondance in PAM50 space
         compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
         z_range_below, z_range_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
-        # Get data from healthy control and average them
+
     # Step 2: Get normalization metrics and slices (using non-compressed subject slices)
     # -----------------------------------------------------------
     else:
