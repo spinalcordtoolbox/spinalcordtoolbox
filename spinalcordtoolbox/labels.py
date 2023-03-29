@@ -473,7 +473,6 @@ def project_centerline(img: Image, ref: Image) -> Image:
     the centerline to identify the shortest distance with each referenced coordinates.
     Typically, user inputs a segmentation image, and labels with disks position, and this function computes
     the identification to the closest coordinates of each labels on the centerline.
-    Labels are assumed to be non-zero and incremented from top to bottom
 
     :param img: segmentation
     :param ref: reference labels
