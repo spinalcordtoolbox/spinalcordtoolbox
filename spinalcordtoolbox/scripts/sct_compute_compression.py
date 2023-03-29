@@ -155,37 +155,6 @@ def get_parser():
     return parser
 
 
-# Functions for Step 0 (Argument loading and validation)
-# ==========================================================================================
-def select_HC(fname_participants, sex=None, age=None):
-    """
-    Selects healthy controls to use for normalization based on sex and age range specified by the user.
-    :param fname_participants: Filename of participants.tsv
-    :param sex: Either F for female or M for male.
-    :param age: list: List of age range to select subjects.
-    :return list_to_include: list: List of participant_id
-    """
-    # Load participants information
-    data = pd.read_csv(fname_participants, sep="\t")
-    # Initialize lists
-    list_sub_sex = []
-    list_sub_age = []
-    # select subject with same sex
-    if sex:
-        list_sub_sex = data.loc[data['sex'] == sex, 'participant_id'].to_list()
-        if not age:
-            list_to_include = list_sub_sex
-    # select subjects within age range
-    if age:
-        list_sub_age = data.loc[data['age'].between(age[0], age[1]), 'participant_id'].to_list()
-        if not sex:
-            list_to_include = list_sub_age
-    if age and sex:
-        list_to_include = set(list_sub_age).intersection(list_sub_sex)
-    printv(f'{len(list_to_include)} healthy controls are used for normalization')
-    return list(list_to_include)
-
-
 # Functions for Step 1 (Load subject input files and get csv files)
 # ==========================================================================================
 def get_slice_thickness(img):
@@ -232,6 +201,35 @@ def get_verterbral_level_from_slice(slices, df_metrics):
 
 # Functions for Step 2 (Get normalization metrics and slices)
 # ==========================================================================================
+def select_HC(fname_participants, sex=None, age=None):
+    """
+    Selects healthy controls to use for normalization based on sex and age range specified by the user.
+    :param fname_participants: Filename of participants.tsv
+    :param sex: Either F for female or M for male.
+    :param age: list: List of age range to select subjects.
+    :return list_to_include: list: List of participant_id
+    """
+    # Load participants information
+    data = pd.read_csv(fname_participants, sep="\t")
+    # Initialize lists
+    list_sub_sex = []
+    list_sub_age = []
+    # select subject with same sex
+    if sex:
+        list_sub_sex = data.loc[data['sex'] == sex, 'participant_id'].to_list()
+        if not age:
+            list_to_include = list_sub_sex
+    # select subjects within age range
+    if age:
+        list_sub_age = data.loc[data['age'].between(age[0], age[1]), 'participant_id'].to_list()
+        if not sex:
+            list_to_include = list_sub_age
+    if age and sex:
+        list_to_include = set(list_sub_age).intersection(list_sub_sex)
+    printv(f'{len(list_to_include)} healthy controls are used for normalization')
+    return list(list_to_include)
+
+
 def average_hc(ref_folder, metric, list_HC):
     """
     Gets metrics of healthy controls in PAM50 anatomical dimensions and averages across subjects.
