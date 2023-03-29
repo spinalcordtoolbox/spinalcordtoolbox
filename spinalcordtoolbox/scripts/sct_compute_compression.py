@@ -539,6 +539,8 @@ def main(argv: Sequence[str]):
     fname_vertfile = arguments.vertfile
     distance = arguments.distance
     extent = arguments.extent
+    sex = arguments.sex
+    age = arguments.age
     if arguments.o is not None:
         fname_out = arguments.o
     else:
@@ -572,8 +574,6 @@ def main(argv: Sequence[str]):
         # Call sct_process_segmentation to get morphometrics perslice in PAM50 space
         sct_process_segmentation.main(argv=['-i', fname_segmentation, '-vertfile', fname_vertfile, '-normalize-PAM50', '1',
                                       '-perslice', '1', '-o', fname_metrics_PAM50])
-        sex = arguments.sex
-        age = arguments.age
 
         # Step 2. Load reference input files (PAM50, healthy controls)
         # ------------------------------------------------------------
