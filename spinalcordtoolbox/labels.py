@@ -467,7 +467,7 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
     return out
 
 
-def project_discs(img: Image, ref: Image, num_disc=True) -> Image:
+def project_discs(img: Image, ref: Image) -> Image:
     """
     Project discs coordinates on the spinal cord centerline. This projection is obtained by iterating along
     the centerline to identify the shortest distance with each referenced coordinates.
@@ -477,7 +477,6 @@ def project_discs(img: Image, ref: Image, num_disc=True) -> Image:
 
     :param img: segmentation
     :param ref: reference labels
-    :param num_disc: If True, projected disc labels have the value of the label, otherwise the value is set to 1.
     :returns: image with the new projected discs labels
     """
     # Checking orientation
@@ -495,14 +494,13 @@ def project_discs(img: Image, ref: Image, num_disc=True) -> Image:
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
     # Create function to compute the projection on the centerline
-    def projection(point, num_disc=False):
+    def projection(point):
         """
         Project the input point by minimizing its distance with the centerline
         """
         # Separate disc number from coordinates
-        if num_disc:
-            disc = point[-1]
-            point = point[:3]
+        disc = point[-1]
+        point = point[:3]
 
         # Define distance function between the point and the centerline
         def distance(t):
@@ -513,21 +511,16 @@ def project_discs(img: Image, ref: Image, num_disc=True) -> Image:
         new_point = centerline[int(result.x)].tolist()
 
         # Add back disc num to output
-        if num_disc:
-            new_point.append(disc)
+        new_point.append(disc)
+
         return new_point
 
     # Compute the shortest distance for each referenced points on the centerline
-    projections = np.array([projection(np.array(list(point)), num_disc=num_disc) for point in coordinates_ref])
+    projections = np.array([projection(np.array(list(point))) for point in coordinates_ref])
     projections_t = np.rint(projections.T).astype(int)
 
     # Create the output image
     out = zeros_like(img)
-
-    # Output discs values if provided
-    if num_disc:
-        out.data[projections_t[0], projections_t[1], projections_t[2]] = projections_t[3]
-    else:
-        out.data[projections_t[0], projections_t[1], projections_t[2]] = 1
+    out.data[projections_t[0], projections_t[1], projections_t[2]] = projections_t[3]
 
     return out
