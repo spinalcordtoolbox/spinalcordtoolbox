@@ -491,26 +491,8 @@ def project_centerline(img: Image, ref: Image) -> Image:
     # Extract referenced coordinates
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
-    # Create function to compute the projection on the centerline
-    def projection(point):
-        """
-        Project the input point by minimizing its distance with the centerline
-        """
-        # Separate disc number from coordinates
-        disc = point[-1]
-        point = point[:3]
-
-        # Calculate distances between the referenced point and the centerline then keep the minimal distance
-        dist = np.sum((centerline - point) ** 2, axis=1)
-        new_point = centerline[np.argmin(dist)]
-
-        # Add back disc num to output
-        new_point = np.append(new_point, disc)
-
-        return new_point.tolist()
-
     # Compute the shortest distance for each referenced points on the centerline
-    projections = np.array([projection(np.array(list(point))) for point in coordinates_ref])
+    projections = np.array([project_point_on_line(point=np.array(list(point)), centerline=centerline).tolist() for point in coordinates_ref])
     projections_t = np.rint(projections.T).astype(int)
 
     # Create the output image
@@ -518,3 +500,24 @@ def project_centerline(img: Image, ref: Image) -> Image:
     out.data[projections_t[0], projections_t[1], projections_t[2]] = projections_t[3]
 
     return out
+
+def project_point_on_line(point, line):
+    """
+    Project the input point on the referenced line by finding the minimal distance
+
+    :param point: coordinates of a point and its value: point = numpy.array([x y z value])
+    :param line: list of points coordinates which compose the line
+    :returns: closest coordinate to the referenced point on the line: projected_point = numpy.array([X Y Z value])
+    """
+    # Separate point value from coordinates
+    value = point[-1]
+    point = point[:3]
+
+    # Calculate distances between the referenced point and the line then keep the closest point
+    dist = np.sum((line - point) ** 2, axis=1)
+    new_point = line[np.argmin(dist)]
+
+    # Add back point value to output
+    new_point = np.append(new_point, value)
+
+    return new_point
