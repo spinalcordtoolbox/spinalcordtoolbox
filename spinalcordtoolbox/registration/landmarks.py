@@ -115,22 +115,6 @@ def register_landmarks(fname_src, fname_dest, dof, fname_affine='affine.txt', ve
     text_file.close()
 
 
-def getNeighbors(point, set_points, k=1):
-    '''
-    Locate most similar neighbours
-    :param point: the point for which we want to compute the neighbors
-    :param trainingSet: list of other Points
-    :param k: number of neighbors wanted
-    :return: k nearest neighbors of input point
-    '''
-    distances = []
-    for other_point in set_points:
-        dist = point.euclideanDistance(other_point)
-        distances.append((other_point, dist))
-    distances.sort(key=itemgetter(1))
-    return [distances[x][0] for x in range(k)]
-
-
 def SSE(pointsA, pointsB):
     """
     Compute sum of squared error between pair-wise landmarks
