@@ -34,9 +34,9 @@ def test_model_dict():
     :return:
     """
     for key, value in sct.deepseg.models.MODELS.items():
-        assert('url' in value)
-        assert('description' in value)
-        assert('default' in value)
+        assert 'url' in value
+        assert 'description' in value
+        assert 'default' in value
 
 
 @pytest.mark.parametrize('fname_image, fname_seg_manual, fname_out, task', [
