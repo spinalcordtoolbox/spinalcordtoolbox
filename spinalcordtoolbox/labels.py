@@ -475,7 +475,7 @@ def project_centerline(img: Image, ref: Image) -> Image:
 
     :param img: segmentation
     :param ref: reference labels
-    :returns: image with the new projected discs labels
+    :returns: image with the new projected labels on the centerline
     """
     # Checking orientation
     if img.orientation != "RPI":
