@@ -15,7 +15,6 @@ from typing import Sequence, Tuple
 
 import numpy as np
 from scipy import ndimage
-from scipy.optimize import minimize_scalar
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
