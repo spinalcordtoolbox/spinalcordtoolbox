@@ -478,9 +478,11 @@ def project_centerline(img: Image, ref: Image) -> Image:
     :returns: image with the new projected labels on the centerline
     """
     # Checking orientation
+    og_img_orientation = img.orientation
     if img.orientation != "RPI":
         img.change_orientation("RPI")
 
+    og_ref_orientation = ref.orientation
     if ref.orientation != "RPI":
         ref.change_orientation("RPI")
 
@@ -496,8 +498,15 @@ def project_centerline(img: Image, ref: Image) -> Image:
     projections_t = np.rint(projections.T).astype(int)
 
     # Create the output image
-    out = zeros_like(img)
+    out = zeros_like(ref)
     out.data[projections_t[0], projections_t[1], projections_t[2]] = projections_t[3]
+
+    if out.orientation != og_img_orientation:
+        out.change_orientation(og_img_orientation)
+        img.change_orientation(og_img_orientation)
+
+    if ref.orientation != og_ref_orientation:
+        ref.change_orientation(og_ref_orientation)
 
     return out
 
