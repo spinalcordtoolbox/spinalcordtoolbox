@@ -493,13 +493,22 @@ def project_centerline(img: Image, ref: Image) -> Image:
     # Extract referenced coordinates
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
-    # Compute the shortest distance for each referenced points on the centerline
-    projections = np.array([project_point_on_line(point=np.array(list(point)), centerline=centerline).tolist() for point in coordinates_ref])
-    projections_t = np.rint(projections.T).astype(int)
-
     # Create the output image
     out = zeros_like(ref)
-    out.data[projections_t[0], projections_t[1], projections_t[2]] = projections_t[3]
+
+    # Compute the shortest distance for each referenced points on the centerline
+    for point in coordinates_ref:
+        projection = project_point_on_line(point=np.array(list(point)), line=centerline)
+        value = projection[-1]
+        projection = np.rint(projection[:3]).astype(int)
+        if out.data[projection[0], projection[1], projection[2]] == 0:
+            out.data[projection[0], projection[1], projection[2]] = value
+        elif out.data[projection[0], projection[1], projection[2]] == value:
+            logger.warning("Two labels with the same value were projected on the same coordinate")
+        else:
+            # overwrite with the highest value because referenced points are sorted
+            logger.warning("Two labels were projected on the same coordinate, the highest value was kept")
+            out.data[projection[0], projection[1], projection[2]] = value
 
     if out.orientation != og_img_orientation:
         out.change_orientation(og_img_orientation)
@@ -509,6 +518,7 @@ def project_centerline(img: Image, ref: Image) -> Image:
         ref.change_orientation(og_ref_orientation)
 
     return out
+
 
 def project_point_on_line(point, line):
     """
