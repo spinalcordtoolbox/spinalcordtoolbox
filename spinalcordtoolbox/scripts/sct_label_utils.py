@@ -134,7 +134,7 @@ def get_parser():
     func_group.add_argument(
         '-project-centerline',
         metavar=Metavar.file,
-        help="Project an image onto the spinal cord centerline"
+        help="Project labels onto the spinal cord centerline"
     )
 
     func_group.add_argument(
