@@ -39,7 +39,7 @@ DATASET_DICT = {
     },
     "PAM50": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50/archive/refs/tags/r20220527.zip",
+            "https://github.com/spinalcordtoolbox/PAM50/archive/refs/heads/master.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
     },
