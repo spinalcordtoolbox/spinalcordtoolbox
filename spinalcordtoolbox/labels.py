@@ -465,6 +465,11 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
 
     return out
 
+class ShapeMismatchError(ValueError):
+    """Custom exception to distinguish between general ValueErrors. Stands for a shape mismatch."""
+    def __init__(self, message, **dims):
+        self.dims = dims
+        super().__init__(f"{message}: {dims}")
 
 def project_centerline(img: Image, ref: Image) -> Image:
     """
@@ -477,6 +482,7 @@ def project_centerline(img: Image, ref: Image) -> Image:
     :param ref: reference labels
     :returns: image with the new projected labels on the centerline
     """
+
     # Checking orientation
     og_img_orientation = img.orientation
     if img.orientation != "RPI":
@@ -485,6 +491,13 @@ def project_centerline(img: Image, ref: Image) -> Image:
     og_ref_orientation = ref.orientation
     if ref.orientation != "RPI":
         ref.change_orientation("RPI")
+
+    # Checking input dimensions
+    if img.data.shape != ref.data.shape:
+        raise ShapeMismatchError(
+            f"Input image and referenced labels should have the same dimension",
+            img=img.data.shape,
+            ref=ref.data.shape)
 
     # Extract centerline from segmentation
     _, arr_ctl, _, _ = get_centerline(img)
@@ -497,26 +510,24 @@ def project_centerline(img: Image, ref: Image) -> Image:
     out = zeros_like(ref)
 
     # Compute the shortest distance for each referenced points on the centerline
-    for point in coordinates_ref:
-        projection = project_point_on_line(point=np.array(list(point)), line=centerline)
-        value = projection[-1]
-        projection = np.rint(projection[:3]).astype(int)
-        if out.data[projection[0], projection[1], projection[2]] == 0:
-            out.data[projection[0], projection[1], projection[2]] = value
-        elif out.data[projection[0], projection[1], projection[2]] == value:
-            logger.warning("Two labels with the same value were projected on the same coordinate")
-        else:
-            # overwrite with the highest value because referenced points are sorted
-            logger.warning("Two labels were projected on the same coordinate, the highest value was kept")
-            out.data[projection[0], projection[1], projection[2]] = value
+    for x, y, z, value in coordinates_ref:
+        projection = project_point_on_line(point=np.array([x, y, z]), line=centerline)
+        x, y, z = np.rint(projection).astype(int)
+        if out.data[x, y, z] != 0:
+            if out.data[x, y, z] == value:
+                logger.warning("Two labels with the same value were projected on the same coordinate")
+            else:
+                # overwrite with the highest value because referenced points are sorted
+                logger.warning("Two labels were projected on the same coordinate, the highest value was kept")
+        out.data[x, y, z] = value
 
     if out.orientation != og_img_orientation:
-        out.change_orientation(og_img_orientation)
         img.change_orientation(og_img_orientation)
 
     if ref.orientation != og_ref_orientation:
         ref.change_orientation(og_ref_orientation)
-
+        out.change_orientation(og_ref_orientation)
+    
     return out
 
 
@@ -524,19 +535,11 @@ def project_point_on_line(point, line):
     """
     Project the input point on the referenced line by finding the minimal distance
 
-    :param point: coordinates of a point and its value: point = numpy.array([x y z value])
-    :param line: list of points coordinates which compose the line
-    :returns: closest coordinate to the referenced point on the line: projected_point = numpy.array([X Y Z value])
+    :param point: coordinates of a point and its value: point = numpy.array([x y z])
+    :param line: list of points coordinates which composes the line
+    :returns: closest coordinate to the referenced point on the line: projected_point = numpy.array([X Y Z])
     """
-    # Separate point value from coordinates
-    value = point[-1]
-    point = point[:3]
-
     # Calculate distances between the referenced point and the line then keep the closest point
     dist = np.sum((line - point) ** 2, axis=1)
-    new_point = line[np.argmin(dist)]
 
-    # Add back point value to output
-    new_point = np.append(new_point, value)
-
-    return new_point
+    return line[np.argmin(dist)]

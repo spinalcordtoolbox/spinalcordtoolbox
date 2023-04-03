@@ -283,7 +283,15 @@ def main(argv: Sequence[str]):
         out = sct_labels.labelize_from_discs(img, ref)
     elif arguments.project_centerline is not None:
         ref = Image(arguments.project_centerline)
-        out = sct_labels.project_centerline(img, ref)
+        try:
+            out = sct_labels.project_centerline(img, ref)
+        except sct_labels.ShapeMismatchError as e:
+            printv(
+                f"Input image: {input_filename} and referenced labels: {arguments.project_centerline} "
+                f"should have the same shape according to the RPI orientation.\n"
+                f"Referenced labels with shape {e.dims['ref']} cannot be projected on "
+                f"input image with shape {e.dims['img']}",
+                type='error')
     elif arguments.vert_body is not None:
         levels = arguments.vert_body
         if len(levels) == 1 and levels[0] == 0:
