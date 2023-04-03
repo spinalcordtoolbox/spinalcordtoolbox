@@ -487,7 +487,7 @@ def project_centerline(img: Image, ref: Image) -> Image:
         ref.change_orientation("RPI")
 
     # Extract centerline from segmentation
-    _, arr_ctl, _, _ = get_centerline(img, param=ParamCenterline())
+    _, arr_ctl, _, _ = get_centerline(img)
     centerline = arr_ctl.T
 
     # Extract referenced coordinates
