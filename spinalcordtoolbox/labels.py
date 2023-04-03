@@ -465,11 +465,13 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
 
     return out
 
+
 class ShapeMismatchError(ValueError):
     """Custom exception to distinguish between general ValueErrors. Stands for a shape mismatch."""
     def __init__(self, message, **dims):
         self.dims = dims
         super().__init__(f"{message}: {dims}")
+
 
 def project_centerline(img: Image, ref: Image) -> Image:
     """
@@ -495,7 +497,7 @@ def project_centerline(img: Image, ref: Image) -> Image:
     # Checking input dimensions
     if img.data.shape != ref.data.shape:
         raise ShapeMismatchError(
-            f"Input image and referenced labels should have the same dimension",
+            "Input image and referenced labels should have the same dimension",
             img=img.data.shape,
             ref=ref.data.shape)
 
@@ -527,7 +529,7 @@ def project_centerline(img: Image, ref: Image) -> Image:
     if ref.orientation != og_ref_orientation:
         ref.change_orientation(og_ref_orientation)
         out.change_orientation(og_ref_orientation)
-    
+
     return out
 
 
