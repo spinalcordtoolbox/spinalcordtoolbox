@@ -551,7 +551,7 @@ class Image(object):
             self.copy().save(path, dtype, verbose, mutable=True)
         return self
 
-    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
+    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
         """
         This function return all the non-zero coordinates that the image contains.
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
@@ -576,12 +576,6 @@ class Image(object):
                 X, Y, Z = (self.data > 0).nonzero()
                 list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
 
-        if coordValue:
-            from spinalcordtoolbox.types import CoordinateValue
-            if n_dim == 3:
-                list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-            else:
-                list_coordinates = [CoordinateValue([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')

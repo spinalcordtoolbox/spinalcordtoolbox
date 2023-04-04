@@ -261,7 +261,8 @@ def get_parser():
         '-qc',
         metavar=Metavar.folder,
         action=ActionCreateFolder,
-        help="The path where the quality control generated content will be saved."
+        help="The path where the quality control generated content will be saved. Note: This flag requires the '-dseg' "
+             "flag."
     )
     optional.add_argument(
         '-qc-dataset',
@@ -367,9 +368,13 @@ def main(argv: Sequence[str]):
         # update registration parameters
         for paramStep in paramregmulti_user:
             paramregmulti.addStep(paramStep)
-    path_qc = arguments.qc
-    qc_dataset = arguments.qc_dataset
-    qc_subject = arguments.qc_subject
+    # Raise error if arguments.qc is provided without arguments.dseg
+    if arguments.qc is not None and fname_dest_seg == '':
+        parser.error("The argument '-qc' requires the argument '-dseg'.")
+    else:
+        path_qc = arguments.qc
+        qc_dataset = arguments.qc_dataset
+        qc_subject = arguments.qc_subject
 
     identity = arguments.identity
     interp = arguments.x
@@ -403,7 +408,7 @@ def main(argv: Sequence[str]):
     if 'paramregmulti_user' in locals():
         if True in ['type=seg' in paramregmulti_user[i] for i in range(len(paramregmulti_user))]:
             if fname_src_seg == '' or fname_dest_seg == '':
-                printv('\nERROR: if you select type=seg you must specify -iseg and -dseg flags.\n', 1, 'error')
+                parser.error("If you select 'type=seg' you must specify '-iseg' and '-dseg' arguments.")
 
     # Put source into destination space using header (no estimation -- purely based on header)
     # TODO: Check if necessary to do that
