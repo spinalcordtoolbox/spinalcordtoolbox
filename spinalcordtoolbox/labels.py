@@ -367,9 +367,9 @@ def remove_missing_labels(img: Image, ref: Image):
     """
     out = zeros_like(img)
 
-    for src_coord in img.getNonZeroCoordinates(coordValue=True):
-        for ref_coord in ref.getNonZeroCoordinates(coordValue=True):
-            if src_coord == ref_coord:
+    for src_coord in img.getNonZeroCoordinates():
+        for ref_coord in ref.getNonZeroCoordinates():
+            if src_coord.value == ref_coord.value:
                 out.data[src_coord.x, src_coord.y, src_coord.z] = src_coord.value
     return out
 
