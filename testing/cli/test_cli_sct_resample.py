@@ -33,9 +33,9 @@ def test_sct_resample_output_has_expected_dimensions(path_in, type_arg, dim, exp
         assert actual_val == pytest.approx(expected_val, abs=abs_tol)
 
 
-def test_sct_resample_no_f_mm_or_vox_arguments(tmp_path, capfd):
+def test_sct_resample_no_f_mm_vox_ref_arguments(tmp_path, capfd):
     """
-    Test if an error is raised if none of '-f', '-mm' or '-vox' arguments are passed.
+    Test if an error is raised if none of '-f', '-mm', '-vox' or '-reg' arguments are passed.
     """
     path_in = str(tmp_path / 't2/t2.nii.gz')
     with pytest.raises(SystemExit) as pytest_wrapped_e:
