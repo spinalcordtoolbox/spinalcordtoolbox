@@ -60,7 +60,7 @@ def test_project_centerline(tmp_path):
     sct_create_mask.main([
          '-i', img,
          '-o', mask,
-         '-size', 1,
+         '-size', '1',
          '-p', 'coord20x15',
          '-f', 'box'
          ])
