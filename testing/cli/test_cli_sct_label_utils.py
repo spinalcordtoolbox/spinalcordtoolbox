@@ -61,7 +61,7 @@ def test_project_centerline(tmp_path):
          '-i', img,
          '-o', mask,
          '-size', '1',
-         '-p', 'coord20x15',
+         '-p', 'coord,20x15',
          '-f', 'box'
          ])
 
