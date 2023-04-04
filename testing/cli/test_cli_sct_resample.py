@@ -45,7 +45,7 @@ def test_sct_resample_no_f_mm_or_vox_arguments(tmp_path, capfd):
     # Capture stdout and stderr
     out, err = capfd.readouterr()
     # Assert that the error message is printed to stderr
-    assert "You need to specify one of those three arguments" in err
+    assert "You need to specify one of those four arguments" in err
 
 
 def test_sct_resample_both_f_and_mm_arguments(tmp_path, capfd):
@@ -61,4 +61,4 @@ def test_sct_resample_both_f_and_mm_arguments(tmp_path, capfd):
     # Capture stdout and stderr
     out, err = capfd.readouterr()
     # Assert that the error message is printed to stderr
-    assert "You need to specify ONLY one of those three arguments" in err
+    assert "You need to specify ONLY one of those four arguments" in err
