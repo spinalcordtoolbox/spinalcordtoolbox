@@ -53,7 +53,8 @@ def test_create_seg_mid(tmp_path):
 def test_project_centerline(tmp_path):
     """Test the '-project-centerline' option in sct_label_utils"""
     # Use an image as a shape reference
-    img = sct_test_path('t2', 't2_seg-manual.nii.gz')
+    img = str(tmp_path/'t2.nii.gz')
+    Image(sct_test_path('t2', 't2.nii.gz')).change_orientation('RPI').save(img)
 
     # Create a mask with a vertical line following the z axis with the coordinates x=20 and y=15
     mask = str(tmp_path/'t2_seg.nii.gz')
