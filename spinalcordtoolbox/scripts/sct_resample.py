@@ -53,8 +53,8 @@ def get_parser():
     )
 
     resample_types = parser.add_argument_group(
-        "\nTYPE OF THE NEW SIZE INPUT: with a factor of resampling, in mm or in number of voxels\n"
-        "Please choose only one of the 3 options"
+        "\nMETHOD TO SPECIFY NEW SIZE:\n"
+        "Please choose only one of the 4 options"
     )
     resample_types.add_argument(
         '-f',
@@ -75,6 +75,12 @@ def get_parser():
         metavar=Metavar.str,
         help="Resampling size in number of voxels in each dimensions (x,y,z). Separate with 'x'."
     )
+    resample_types.add_argument(
+        '-ref',
+        metavar=Metavar.file,
+        help="Reference image to resample input image to. The voxel dimensions and affine of the reference image will "
+             "be used."
+    )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -82,11 +88,6 @@ def get_parser():
         "--help",
         action="help",
         help="Show this help message and exit."
-    )
-    optional.add_argument(
-        '-ref',
-        metavar=Metavar.file,
-        help="Reference image to resample input image to. Uses world coordinates."
     )
     optional.add_argument(
         '-x',
@@ -138,9 +139,9 @@ def main(argv: Sequence[str]):
         arg += 1
 
     if arg == 0:
-        parser.error("You need to specify one of those three arguments: '-f', '-mm' or '-vox'.")
+        parser.error("You need to specify one of those four arguments: '-f', '-mm', '-vox' or '-ref'.")
     elif arg > 1:
-        parser.error("You need to specify ONLY one of those three arguments: '-f', '-mm' or '-vox'.")
+        parser.error("You need to specify ONLY one of those four arguments: '-f', '-mm', '-vox' or '-ref'.")
 
     if arguments.o is not None:
         param.fname_out = arguments.o
