@@ -66,12 +66,12 @@ def test_project_centerline(tmp_path):
          '-f', 'box'
          ])
 
-    # Create an image with a point at the coordinates x=1, y=1, and z=1 with the value=1
+    # Create an image with 3 points
     ref = str(tmp_path/'t2_seg_labeled.nii.gz')
     sct_label_utils.main([
         '-i', img,
         '-o', ref,
-        '-create', '1,1,1,1'
+        '-create', '1,1,1,1:1,2,3,4:10,11,25,25'
         ])
 
     # Project the ref point on the previous line
@@ -83,4 +83,4 @@ def test_project_centerline(tmp_path):
         ])
 
     # The coordinates of this projection should be equal to x=20, y=15, z=1
-    assert Image(out).getNonZeroCoordinates() == [Coordinate([20, 15, 1, 1])]
+    assert Image(out).getNonZeroCoordinates() == [Coordinate([20, 15, 1, 1]), Coordinate([20, 15, 3, 4]), Coordinate([20, 15, 25, 25])]
