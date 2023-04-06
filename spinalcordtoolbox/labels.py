@@ -219,24 +219,44 @@ def increment_z_inverse(img: Image) -> Image:
 def labelize_from_discs(img: Image, ref: Image) -> Image:
     """
     Create an image with regions labelized depending on values from reference.
-    Typically, user inputs a segmentation image, and labels with disks position, and this function produces
+    Typically, user inputs a segmentation image, and labels with discs position, and this function produces
     a segmentation image with vertebral levels labelized.
-    Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
+    Note that no straightening is done. The labelization is only done based on the z coordinates.
+    Input images do **not** need to be RPI (re-orientation is done within this function).
 
     :param img: segmentation
     :param ref: reference labels
     :returns: segmentation image with vertebral levels labelized
     """
+
+    img_orientation = img.orientation
+    if img_orientation != "RPI":
+        img.change_orientation("RPI")
+
+    if ref.orientation != "RPI":
+        ref.change_orientation("RPI")
+
     out = zeros_like(img)
 
     coordinates_input = img.getNonZeroCoordinates()
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
-    # for all points in input, find the value that has to be set up, depending on the vertebral level
+    # for all points in input, match the `z` coordinate to the appropriate vertebral level
     for x, y, z, _ in coordinates_input:
-        for j in range(len(coordinates_ref) - 1):
-            if coordinates_ref[j + 1].z < z <= coordinates_ref[j].z:
-                out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
+        # case 1: `z` is above the top-most disc label
+        if z > coordinates_ref[0].z:
+            out.data[int(x), int(y), int(z)] = coordinates_ref[0].value - 1
+        # case 2: `z` is at or below the bottom-most disc label
+        elif z <= coordinates_ref[-1].z:
+            out.data[int(x), int(y), int(z)] = coordinates_ref[-1].value
+        # case 3: `z` is between two disc labels, so find the correct vertebral level
+        else:
+            for j in range(len(coordinates_ref) - 1):
+                if coordinates_ref[j + 1].z < z <= coordinates_ref[j].z:
+                    out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
+
+    # Set back the original orientation
+    out.change_orientation(img_orientation)
 
     return out
 
