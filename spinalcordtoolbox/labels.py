@@ -484,3 +484,84 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
             logger.warning(f"Label {label} not found in input image!")
 
     return out
+
+
+class ShapeMismatchError(ValueError):
+    """Custom exception to distinguish between general ValueErrors. Stands for a shape mismatch."""
+    def __init__(self, message, **dims):
+        self.dims = dims
+        super().__init__(f"{message}: {dims}")
+
+
+def project_centerline(img: Image, ref: Image) -> Image:
+    """
+    Project an input image on the spinal cord centerline. This projection is obtained by iterating along
+    the centerline to identify the shortest distance with each referenced coordinates.
+    Typically, user inputs a segmentation image, and labels with disks position, and this function computes
+    the identification to the closest coordinates of each labels on the centerline.
+
+    :param img: segmentation
+    :param ref: reference labels
+    :returns: image with the new projected labels on the centerline
+    """
+
+    # Checking orientation
+    og_img_orientation = img.orientation
+    if img.orientation != "RPI":
+        img.change_orientation("RPI")
+
+    og_ref_orientation = ref.orientation
+    if ref.orientation != "RPI":
+        ref.change_orientation("RPI")
+
+    # Checking input dimensions
+    if img.data.shape != ref.data.shape:
+        raise ShapeMismatchError(
+            "Input image and referenced labels should have the same dimension",
+            img=img.data.shape,
+            ref=ref.data.shape)
+
+    # Extract centerline from segmentation
+    _, arr_ctl, _, _ = get_centerline(img)
+    centerline = arr_ctl.T
+
+    # Extract referenced coordinates
+    coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
+
+    # Create the output image
+    out = zeros_like(ref)
+
+    # Compute the shortest distance for each referenced points on the centerline
+    for x, y, z, value in coordinates_ref:
+        projection = project_point_on_line(point=np.array([x, y, z]), line=centerline)
+        x, y, z = np.rint(projection).astype(int)
+        if out.data[x, y, z] != 0:
+            if out.data[x, y, z] == value:
+                logger.warning("Two labels with the same value were projected on the same coordinate")
+            else:
+                # overwrite with the highest value because referenced points are sorted
+                logger.warning("Two labels were projected on the same coordinate, the highest value was kept")
+        out.data[x, y, z] = value
+
+    if out.orientation != og_img_orientation:
+        img.change_orientation(og_img_orientation)
+
+    if ref.orientation != og_ref_orientation:
+        ref.change_orientation(og_ref_orientation)
+        out.change_orientation(og_ref_orientation)
+
+    return out
+
+
+def project_point_on_line(point, line):
+    """
+    Project the input point on the referenced line by finding the minimal distance
+
+    :param point: coordinates of a point and its value: point = numpy.array([x y z])
+    :param line: list of points coordinates which composes the line
+    :returns: closest coordinate to the referenced point on the line: projected_point = numpy.array([X Y Z])
+    """
+    # Calculate distances between the referenced point and the line then keep the closest point
+    dist = np.sum((line - point) ** 2, axis=1)
+
+    return line[np.argmin(dist)]
