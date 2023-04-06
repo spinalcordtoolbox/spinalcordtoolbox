@@ -241,21 +241,19 @@ def labelize_from_discs(img: Image, ref: Image) -> Image:
     coordinates_input = img.getNonZeroCoordinates()
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
-    # for all points in input, find the value that has to be set up, depending on the vertebral level
+    # for all points in input, match the `z` coordinate to the appropriate vertebral level
     for x, y, z, _ in coordinates_input:
-        for j in range(len(coordinates_ref) - 1):
-            if coordinates_ref[j + 1].z < z <= coordinates_ref[j].z:
-                out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
-
-    # deal with the level above the top disc and the level below the bottom disc
-    for x, y, z, _ in coordinates_input:
-        for j in range(len(coordinates_ref) - 1):
-            # level below the bottom disc
-            if coordinates_ref[0].z > z and out.data[int(x), int(y), int(z)] == 0:
-                out.data[int(x), int(y), int(z)] = coordinates_ref[-1].value
-            # level above the top disc
-            if coordinates_ref[-1].z < z and out.data[int(x), int(y), int(z)] == 0:
-                out.data[int(x), int(y), int(z)] = coordinates_ref[0].value - 1
+        # case 1: `z` is above the top-most disc label
+        if z > coordinates_ref[0].z:
+            out.data[int(x), int(y), int(z)] = coordinates_ref[0].value - 1
+        # case 2: `z` is at or below the bottom-most disc label
+        elif z <= coordinates_ref[-1].z:
+            out.data[int(x), int(y), int(z)] = coordinates_ref[-1].value
+        # case 3: `z` is between two disc labels, so find the correct vertebral level
+        else:
+            for j in range(len(coordinates_ref) - 1):
+                if coordinates_ref[j + 1].z < z <= coordinates_ref[j].z:
+                    out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
 
     # Set back the original orientation
     out.change_orientation(img_orientation)
