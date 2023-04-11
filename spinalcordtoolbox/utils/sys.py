@@ -141,6 +141,9 @@ def set_loglevel(verbose):
     # Set the logging level globally, but only when scripts are directly invoked (e.g. from the command line)
     if caller_module_name == "__main__":
         logging.root.setLevel(getattr(logging, log_level))
+        # matplotlib is particularly chatty, so keep it at the default level
+        # see: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4086
+        logging.getLogger('matplotlib').setLevel(logging.INFO)
     else:
         # NB: Nothing will be set if we're calling a CLI script in-code, i.e. <sct_cli_script>.main(). This keeps
         # the loglevel changes from leaking: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3341
