@@ -143,7 +143,7 @@ def set_loglevel(verbose):
         logging.root.setLevel(getattr(logging, log_level))
         # matplotlib is particularly chatty, so keep it at the default level
         # see: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4086
-        logging.getLogger('matplotlib').setLevel(logging.INFO)
+        logging.getLogger('matplotlib').setLevel(logging.WARNING)
     else:
         # NB: Nothing will be set if we're calling a CLI script in-code, i.e. <sct_cli_script>.main(). This keeps
         # the loglevel changes from leaking: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3341
