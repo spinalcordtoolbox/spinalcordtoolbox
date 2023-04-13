@@ -26,6 +26,9 @@ The following studies have used SCT:
 2023
 ----
 
+-  Branco *et al.* `Advanced structural magnetic resonance imaging of the spinal cord: Technical aspects and clinical use <https://doi.org/10.1053/j.sult.2023.03.016>`_, **Semin. Ultrasound CT MR** 2023
+-  Camera *et al.* `Shared imaging markers of fatigue across multiple sclerosis, aquaporin-4 antibody neuromyelitis optica spectrum disorder and MOG antibody disease <https://doi.org/10.1093/braincomms/fcad107>`_, **Brain commun.** 2023
+-  Scheuren *et al.* `Combined Neurophysiologic and Neuroimaging Approach to Reveal the Structure-Function Paradox in Cervical Myelopathy <https://doi.org/10.1212/WNL.0000000000012643>`_, **Neurology** 2023
 -  Schading *et al.* `Reliability of spinal cord measures based on synthetic T1-weighted MRI derived from multiparametric mapping (MPM) <https://doi.org/10.1016/j.neuroimage.2023.120046>`_, **Neuroimage** 2023
 -  Wu *et al.* `Remodeling of the brain correlates with gait instability in cervical spondylotic myelopathy <https://doi.org/10.3389/fnins.2023.1087945>`_, **Front. Neurosci.** 2023  
 -  Landelle *et al.* `Altered Spinal Cord Functional Connectivity Associated with Parkinson’s Disease Progression <https://doi.org/10.1002/mds.29354>`_, **Mov. Disord.** 2023
