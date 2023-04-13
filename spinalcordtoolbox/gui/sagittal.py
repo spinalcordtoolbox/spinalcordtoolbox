@@ -35,7 +35,8 @@ class SagittalController(base.BaseController):
         else:
             if self.params.num_points and len(self.points) >= self.params.num_points:
                 raise TooManyPointsWarning()
-            self.points.append((x, y, z, label))
+            else:
+                self.points.append((x, y, z, label))
 
         self.position = (x, y, z)
 
