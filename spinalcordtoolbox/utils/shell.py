@@ -349,7 +349,7 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         return wrapped
 
 
-def parse_num_list(str_num):
+def parse_num_list(str_num, allow_duplicates=False):
     """
     Parse numbers in string based on delimiter ',' or ':'
 
@@ -373,16 +373,18 @@ def parse_num_list(str_num):
         m = re.match(r"^\d+$", element)
         if m is not None:
             val = int(element)
-            if val not in list_num:
-                list_num.append(val)
+            list_num.append(val)
             continue
         m = re.match(r"^(?P<first>\d+):(?P<last>\d+)$", element)
         if m is not None:
             a = int(m.group("first"))
             b = int(m.group("last"))
-            list_num += [x for x in range(a, b + 1) if x not in list_num]
+            list_num += [x for x in range(a, b + 1)]
             continue
         raise ValueError("unexpected group element {} group spec {}".format(element, str_num))
+
+    if not allow_duplicates:
+        list_num = list(set(list_num))
 
     return list_num
 
