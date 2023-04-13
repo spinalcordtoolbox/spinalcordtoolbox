@@ -326,9 +326,10 @@ def main(argv: Sequence[str]):
         msg = "" if arguments.msg is None else f"{arguments.msg}\n"
         if arguments.ilabel is not None:
             input_labels_img = Image(arguments.ilabel)
-            out = launch_manual_label_gui(img, input_labels_img, parse_num_list(arguments.create_viewer), msg)
+            out = launch_manual_label_gui(img, input_labels_img,
+                                          parse_num_list(arguments.create_viewer, allow_duplicates=True), msg)
         else:
-            out = launch_sagittal_viewer(img, parse_num_list(arguments.create_viewer), msg)
+            out = launch_sagittal_viewer(img, parse_num_list(arguments.create_viewer, allow_duplicates=True), msg)
 
     printv("Generating output files...")
     out.save(path=output_fname, dtype=dtype)
