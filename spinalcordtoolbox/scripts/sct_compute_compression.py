@@ -193,6 +193,11 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     level_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
     if level_compression.empty:
         raise ValueError(f"Slice {slices} doesn't have a computed metric")
+    # Check if level_compression['VertLevel'] is nan
+    for _, row in level_compression.iterrows():
+        if np.isnan(row['VertLevel']):
+            raise ValueError(f"Slice {int(row['Slice (I->S)'])} doesn't have computed vertebral level. "
+                             f"Check vertebral labeling file.")
     level_slice_dict = {}
     for level in np.unique(level_compression['VertLevel']):
         level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level, 'Slice (I->S)'].to_list()
