@@ -101,11 +101,6 @@ def get_parser():
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the process was run on.')
     optional.add_argument(
-        "-igt",
-        metavar=Metavar.str,
-        help="File name of ground-truth PMJ (single voxel).",
-        required=False)
-    optional.add_argument(
         "-r",
         type=int,
         help="Remove temporary files.",

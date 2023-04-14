@@ -96,11 +96,13 @@ jobs:
       run: install_sct.bat
 
     - name: Update environment variables
+      # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
+      # In a user install, the user would perform this step using the Windows PATH-changing GUI.
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
-          # In a user install, the user would perform this step using the Windows PATH-changing GUI.
-          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          # NB: Because `requirements-freeze.txt` is present, SCT gets installed to `~/sct_0.0`, 
+          # rather than an in-place install. So, we specify this path directly, rather than using $GITHUB_WORKSPACE.
+          echo "${USERPROFILE}\sct_0.0\bin" >> $GITHUB_PATH
         else
           # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
           # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.

@@ -551,7 +551,7 @@ class Image(object):
             self.copy().save(path, dtype, verbose, mutable=True)
         return self
 
-    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
+    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
         """
         This function return all the non-zero coordinates that the image contains.
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
@@ -576,12 +576,6 @@ class Image(object):
                 X, Y, Z = (self.data > 0).nonzero()
                 list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
 
-        if coordValue:
-            from spinalcordtoolbox.types import CoordinateValue
-            if n_dim == 3:
-                list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-            else:
-                list_coordinates = [CoordinateValue([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')
@@ -1059,7 +1053,7 @@ def change_shape(im_src, shape, im_dst=None):
     return im_dst
 
 
-def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_only=False):
+def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     """
 
     :param im_src: source image
@@ -1068,8 +1062,6 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
                    operation, can be unset to generate one)
     :param inverse: if you think backwards, use this to specify that you actually
                     want to transform *from* the specified orientation, not *to* it.
-    :param data_only: If you want to only permute the data, not the header. Only use if you know there is a problem
-                      with the native orientation of the input data.
     :return: an image with changed orientation
 
     .. note::
@@ -1077,7 +1069,6 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
         - if the source image is < 3D, it is reshaped to 3D and the destination is 3D
     """
 
-    # TODO: make sure to cover all cases for setorient-data
     if len(im_src.data.shape) < 3:
         pass  # Will reshape to 3D
     elif len(im_src.data.shape) == 3:
@@ -1136,10 +1127,9 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
         im_src_data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
 
-    if not data_only:
-        im_dst.header.set_qform(im_dst_aff)
-        im_dst.header.set_sform(im_dst_aff)
-        im_dst.header.set_data_shape(data.shape)
+    im_dst.header.set_qform(im_dst_aff)
+    im_dst.header.set_sform(im_dst_aff)
+    im_dst.header.set_data_shape(data.shape)
     im_dst.data = data
 
     return im_dst

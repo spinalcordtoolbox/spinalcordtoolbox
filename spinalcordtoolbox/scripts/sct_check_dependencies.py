@@ -323,7 +323,7 @@ def main(argv: Sequence[str]):
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
     cmd = ["sct_testing", os.path.join(__sct_dir__, "testing", "dependencies", "test_ants.py")]
-    status, output = run_proc(cmd, verbose=0, raise_exception=False)
+    status, output = run_proc(cmd, verbose=0, raise_exception=False, is_sct_binary=True)
     if status == 0:
         print_ok()
     else:

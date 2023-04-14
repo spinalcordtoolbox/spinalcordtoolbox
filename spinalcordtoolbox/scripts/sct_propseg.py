@@ -394,11 +394,6 @@ def get_parser():
              "specifically, the algorithm checks if the segmentation is consistent with the centerline provided by "
              "isct_propseg."
     )
-    optional.add_argument(
-        '-igt',
-        metavar=Metavar.file,
-        help="File name of ground-truth segmentation."
-    )
 
     return parser
 

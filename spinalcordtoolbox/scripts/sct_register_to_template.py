@@ -275,11 +275,6 @@ def get_parser():
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
     optional.add_argument(
-        '-igt',
-        metavar=Metavar.file,
-        help="File name of ground-truth template cord segmentation (binary nifti)."
-    )
-    optional.add_argument(
         '-r',
         metavar=Metavar.int,
         type=int,

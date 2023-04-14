@@ -85,11 +85,6 @@ def get_parser():
         required=False,
         default=Param().path_results)
     optional.add_argument(
-        "-igt",
-        metavar=Metavar.str,
-        help="File name of ground-truth texture metrics.",
-        required=False)
-    optional.add_argument(
         "-r",
         help="Remove temporary files.",
         required=False,

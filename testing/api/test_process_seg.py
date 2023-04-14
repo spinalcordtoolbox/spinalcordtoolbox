@@ -6,17 +6,12 @@
 # TODO: test empty slices and slices with two objects
 
 
-import sys
-import os
 import pytest
 import math
 import numpy as np
 
-from spinalcordtoolbox.utils import __sct_dir__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 from spinalcordtoolbox import process_seg
 from spinalcordtoolbox.centerline.core import ParamCenterline
-
 from spinalcordtoolbox.testing.create_test_data import dummy_segmentation
 
 
