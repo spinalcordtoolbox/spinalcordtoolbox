@@ -554,6 +554,10 @@ def main(argv: Sequence[str]):
                          f" and segmentation [{img_seg.data.shape}]). "
                          f"Please verify that your compression labels and vertebral labels were done in the same space as your input segmentation.")
     path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
+    # Check if path_ref with normalized metrics exists
+    if not os.path.isdir(path_ref):
+        raise FileNotFoundError(f"Directory with normalized PAM50 metrics {path_ref} does not exist.\n"
+                                f"You can download it using 'sct_download_data -d PAM50_normalized_metrics'.")
     if sex or age:
         if not os.path.isfile(get_absolute_path(os.path.join(path_ref, arguments.file_participants))):
             raise FileNotFoundError('participants.tsv file must exists to select sex or age.')
