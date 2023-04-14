@@ -163,7 +163,7 @@ def get_slice_thickness(img):
     :param img: Image: source image
     :return float: slice thickness in mm.
     """
-    return img.dim[5]
+    return img.dim[6]
 
 
 def get_compressed_slice(img, verbose):
