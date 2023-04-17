@@ -1410,7 +1410,7 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
 
     # save new image
     im_dest = nib.load(fname_dest)
-    affine_dest = im_dest.get_affine()
+    affine_dest = im_dest.affine
     im_warp3d = nib.nifti1.Nifti1Image(warp3d, affine_dest)
 
     # set "intent" code to vector, to be interpreted as warping field
