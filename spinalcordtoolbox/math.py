@@ -6,7 +6,7 @@ import logging
 import numpy as np
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
 from skimage.filters import threshold_local, threshold_otsu, rank
-from scipy.ndimage.filters import gaussian_filter, gaussian_laplace
+from scipy.ndimage import gaussian_filter, gaussian_laplace
 from scipy.stats import pearsonr, spearmanr
 from dipy.denoise.noise_estimate import estimate_sigma
 from dipy.segment.mask import median_otsu

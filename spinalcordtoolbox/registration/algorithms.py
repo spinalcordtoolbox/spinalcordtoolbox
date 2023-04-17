@@ -14,10 +14,10 @@ import psutil
 from math import asin, cos, sin, acos
 
 import numpy as np
-from scipy import ndimage
 from nibabel import load, Nifti1Image, save, aff2axcodes
 from nilearn.image import resample_img
 from scipy.signal import argrelmax, medfilt
+from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
 from sklearn.decomposition import PCA
 from scipy.io import loadmat
 import torch
@@ -822,7 +822,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # regularize rotation
     if not filter_size == 0 and (rot_method in ['pca', 'hog', 'pcahog']):
         # Filtering the angles by gaussian filter
-        angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest[z_nonzero], filter_size)
+        angle_src_dest_regularized = gaussian_filter1d(angle_src_dest[z_nonzero], filter_size)
         if verbose == 2:
             plt.plot(180 * angle_src_dest[z_nonzero] / np.pi, 'ob')
             plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
@@ -1567,8 +1567,8 @@ def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
         image = image / median
 
     # x and y gradients of the image
-    gradx = ndimage.convolve(image, v_kernel)
-    grady = ndimage.convolve(image, h_kernel)
+    gradx = convolve(image, v_kernel)
+    grady = convolve(image, h_kernel)
 
     # orientation gradient
     orient = np.arctan2(grady, gradx)  # results are in the range -pi pi
@@ -1621,7 +1621,7 @@ def circular_filter_1d(signal, window_size, kernel='gaussian'):
 
     signal_extended = np.concatenate((signal, signal, signal))  # replicate signal at both ends
     if kernel == 'gaussian':
-        signal_extended_smooth = ndimage.gaussian_filter(signal_extended, window_size)  # gaussian
+        signal_extended_smooth = gaussian_filter(signal_extended, window_size)  # gaussian
     elif kernel == 'median':
         signal_extended_smooth = medfilt(signal_extended, window_size)  # median filtering
     else:

@@ -6,8 +6,7 @@ import os
 import logging
 
 import numpy as np
-from scipy.ndimage import distance_transform_edt, center_of_mass
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import distance_transform_edt, center_of_mass, gaussian_filter
 
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.metadata import get_file_label
