@@ -452,11 +452,11 @@ def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df
     nb_slice = slice_thickness//slice_thickness_PAM50
     if nb_slice > 1:
         slices_avg = np.arange(min(slice) - nb_slice//2, max(slice) + nb_slice//2, 1)
+    else:
+        slices_avg = slice
     # If more than one slice has compression, get all slices from that range
     if len(slice) > 1:
         slices_avg = np.arange(min(slice), max(slice), 1)
-    else:
-        slices_avg = slice
     return average_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, slices_avg), slices_avg
 
 
