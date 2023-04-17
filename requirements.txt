@@ -42,7 +42,7 @@ scikit-learn
 xlwt
 tqdm
 transforms3d
-urllib3[secure]
+urllib3
 pytest_console_scripts
 pyyaml
 voxelmorph
