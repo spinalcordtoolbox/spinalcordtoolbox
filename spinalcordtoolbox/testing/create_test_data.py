@@ -1,7 +1,6 @@
 # Collection of functions to create data for testing
 
 import numpy as np
-import numpy.matlib
 from datetime import datetime
 import itertools
 from skimage.transform import rotate

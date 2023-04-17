@@ -853,7 +853,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         centermass_src_phy = im_src.transfo_pix2phys([[centermass_src[iz, :].T[0], centermass_src[iz, :].T[1], iz]])[0]
         centermass_dest_phy = im_src.transfo_pix2phys([[centermass_dest[iz, :].T[0], centermass_dest[iz, :].T[1], iz]])[0]
         # build rotation matrix
-        R = np.matrix(((cos(angle_src_dest[iz]), sin(angle_src_dest[iz])), (-sin(angle_src_dest[iz]), cos(angle_src_dest[iz]))))
+        R = np.array(((cos(angle_src_dest[iz]), sin(angle_src_dest[iz])), (-sin(angle_src_dest[iz]), cos(angle_src_dest[iz]))))
         # build 3D rotation matrix
         R3d = np.eye(3)
         R3d[0:2, 0:2] = R
