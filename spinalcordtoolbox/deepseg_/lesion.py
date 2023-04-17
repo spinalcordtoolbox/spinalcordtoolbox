@@ -4,7 +4,7 @@ import os
 import logging
 import numpy as np
 
-from scipy.interpolate.interpolate import interp1d
+from scipy.interpolate import interp1d
 import nibabel as nib
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, empty_like
