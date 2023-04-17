@@ -81,8 +81,8 @@ def dice(im1, im2):
 
     Source: https://gist.github.com/JDWarner/6730747
     """
-    im1 = np.asarray(im1).astype(np.bool)
-    im2 = np.asarray(im2).astype(np.bool)
+    im1 = np.asarray(im1).astype(bool)
+    im2 = np.asarray(im2).astype(bool)
 
     if im1.shape != im2.shape:
         raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
