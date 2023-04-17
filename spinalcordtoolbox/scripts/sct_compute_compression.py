@@ -293,6 +293,10 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     compression_level_dict_PAM50 = {}
     # Loop across slices and levels with compression
     for level, slices in compressed_level_dict.items():
+        # Drop empty columns
+        df_metrics_PAM50 = df_metrics_PAM50.drop(columns=['SUM(length)', 'DistancePMJ'])
+        # Drop empty rows so they are not included for interpolation
+        df_metrics_PAM50 = df_metrics_PAM50.dropna(axis=0)
         # Number of slices in native image
         nb_slices_level = len(df_metrics.loc[df_metrics['VertLevel'] == level, 'VertLevel'].to_list())
         # Number of slices in PAM50
@@ -634,6 +638,7 @@ def main(argv: Sequence[str]):
             metrics_patient, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
                                                                     z_range_above, z_range_below, compressed_levels_dict[level])
             # Get metrics of healthy controls
+            print(slices_avg)
             metrics_HC = average_metric(df_avg_HC, metric, z_range_above, z_range_below, slices_avg)
             logger.debug(f'\nmetric_a_HC = {metrics_HC[0]}, metric_b_HC = {metrics_HC[1]}, metric_i_HC = {metrics_HC[2]}')
             # Compute Normalized Ratio
