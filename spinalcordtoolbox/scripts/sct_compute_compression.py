@@ -291,12 +291,12 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     :return compression_level_dict_PAM50:
     """
     compression_level_dict_PAM50 = {}
+    # Drop empty columns
+    df_metrics_PAM50 = df_metrics_PAM50.drop(columns=['SUM(length)', 'DistancePMJ'])
+    # Drop empty rows so they are not included for interpolation
+    df_metrics_PAM50 = df_metrics_PAM50.dropna(axis=0)
     # Loop across slices and levels with compression
     for level, slices in compressed_level_dict.items():
-        # Drop empty columns
-        df_metrics_PAM50 = df_metrics_PAM50.drop(columns=['SUM(length)', 'DistancePMJ'])
-        # Drop empty rows so they are not included for interpolation
-        df_metrics_PAM50 = df_metrics_PAM50.dropna(axis=0)
         # Number of slices in native image
         nb_slices_level = len(df_metrics.loc[df_metrics['VertLevel'] == level, 'VertLevel'].to_list())
         # Number of slices in PAM50
@@ -310,10 +310,11 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
         slices_PAM50 = []
         for slice in slices:
             # get index corresponding to the min value
-            idx = np.abs(new_slices_coord - slice).argmin()
+            idx = np.abs(new_slices_coord - slice + 1/2).argmin()  # Add + 1/2 to get the mid-slice
             new_slice = df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'Slice (I->S)'].to_list()[idx]
             slices_PAM50.append(new_slice)
         compression_level_dict_PAM50[level] = slices_PAM50
+        print(compression_level_dict_PAM50)
     return compression_level_dict_PAM50
 
 
