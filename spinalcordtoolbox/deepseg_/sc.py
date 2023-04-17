@@ -213,7 +213,7 @@ def heatmap(im, model, patch_shape, mean_train, std_train, brain_bool=True):
     data = np.zeros(im_out.data.shape)
 
     x_shape, y_shape = data_im.shape[:2]
-    x_shape_block, y_shape_block = np.ceil(x_shape * 1.0 / patch_shape[0]).astype(np.int), np.int(
+    x_shape_block, y_shape_block = np.ceil(x_shape * 1.0 / patch_shape[0]).astype(int), int(
         y_shape * 1.0 / patch_shape[1])
     x_pad = int(x_shape_block * patch_shape[0] - x_shape)
     if y_shape > patch_shape[1]:
