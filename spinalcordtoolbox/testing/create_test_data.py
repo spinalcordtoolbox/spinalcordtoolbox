@@ -225,7 +225,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     nii_r = resample_nib(nii, new_size=pixdim, new_size_type='mm', interpolation='linear')
     # Create Image object. Default orientation is LPI.
     # For debugging add .save() at the end of the command below
-    img = Image(nii_r.get_data(), hdr=nii_r.header, dim=nii_r.header.get_data_shape())
+    img = Image(np.asanyarray(nii_r.dataobj), hdr=nii_r.header, dim=nii_r.header.get_data_shape())
     # Update orientation
     img.change_orientation(orientation)
     if debug:

@@ -352,14 +352,14 @@ class Slice(object):
         # Apply threshold at 0.5 for non-binary segmentation
         if type_img == 'seg':
             # Check if input image is binary
-            is_binary = np.isin(nii.get_data(), [0, 1]).all()
-            img_r_data = nii_r.get_data()
+            is_binary = np.isin(np.asanyarray(nii.dataobj), [0, 1]).all()
+            img_r_data = np.asanyarray(nii_r.dataobj)
             if is_binary:
                 img_r_data = (img_r_data > 0.5) * 1
             else:
                 img_r_data[img_r_data < 0.5] = 0
         else:
-            img_r_data = nii_r.get_data()
+            img_r_data = np.asanyarray(nii_r.dataobj)
         # Create Image objects
         image_r = Image(img_r_data, hdr=nii_r.header, dim=nii_r.header.get_data_shape()). \
             change_orientation(image.orientation)

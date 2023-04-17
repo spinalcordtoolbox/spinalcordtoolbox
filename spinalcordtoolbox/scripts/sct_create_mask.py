@@ -230,7 +230,7 @@ def create_mask(param):
     hdr = centerline.get_header()  # get header
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
     # spacing = hdr.structarr['pixdim']
-    data_centerline = centerline.get_data()  # get centerline
+    data_centerline = np.asanyarray(centerline.dataobj)  # get centerline
     # if data is 2D, reshape with empty third dimension
     if len(data_centerline.shape) == 2:
         data_centerline_shape = list(data_centerline.shape)

@@ -135,8 +135,8 @@ def real_optimization_parameters(param_from_optimizer, initial_param=0, initial_
 
 def Metric_Images(imageA, imageB, type=''):
 
-    data_A_list = load(imageA).get_data().tolist()
-    data_B_list = load(imageB).get_data().tolist()
+    data_A_list = np.asanyarray(load(imageA).dataobj).tolist()
+    data_B_list = np.asanyarray(load(imageA).dataobj).tolist()
 
     # Define both list of intensity
     list_A = []

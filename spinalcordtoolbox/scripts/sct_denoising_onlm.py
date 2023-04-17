@@ -117,7 +117,7 @@ def main(argv: Sequence[str]):
     img = nib.load(file_to_denoise)
     hdr_0 = img.get_header()
 
-    data = img.get_data()
+    data = np.asanyarray(img.dataobj)
 
     if min(data.shape) <= 5:
         printv('One of the image dimensions is <= 5 : reducing the size of the block radius.')

@@ -228,7 +228,7 @@ def deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo='svm', ctr_file
         im_labels_viewer_nib = nib.nifti1.Nifti1Image(im_labels_viewer.data, im_labels_viewer.hdr.get_best_affine())
         im_viewer_r_nib = resampling.resample_nib(im_labels_viewer_nib, new_size=input_resolution, new_size_type='mm',
                                                   interpolation='linear')
-        im_viewer = Image(im_viewer_r_nib.get_data(), hdr=im_viewer_r_nib.header, orientation='RPI',
+        im_viewer = Image(np.asanyarray(im_viewer_r_nib.dataobj), hdr=im_viewer_r_nib.header, orientation='RPI',
                           dim=im_viewer_r_nib.header.get_data_shape()).change_orientation(original_orientation)
 
     else:

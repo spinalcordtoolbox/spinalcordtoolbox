@@ -431,7 +431,7 @@ class Image(object):
         self.absolutepath = os.path.abspath(path)
         im_file = nib.load(self.absolutepath, mmap=mmap)
         self.affine = im_file.affine.copy()
-        self.data = im_file.get_data()
+        self.data = np.asanyarray(im_file.dataobj)
         self.hdr = im_file.header.copy()
         if path != self.absolutepath:
             logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
@@ -1402,7 +1402,8 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     warp3d = np.zeros([nx, ny, nz, 1, 3])
 
     for iz, fname in enumerate(fname_list):
-        warp2d = nib.load(fname).get_data()
+        img = nib.load(fname)
+        warp2d = np.asanyarray(img.dataobj)
         warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
         warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
         del warp2d
