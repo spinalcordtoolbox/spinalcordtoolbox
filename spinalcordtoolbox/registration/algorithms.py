@@ -1398,7 +1398,7 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
 
     # save warping field
     im_dest = load(fname_dest)
-    hdr_dest = im_dest.get_header()
+    hdr_dest = im_dest.header
     hdr_warp = hdr_dest.copy()
     hdr_warp.set_intent('vector', (), '')
     hdr_warp.set_data_dtype('float32')

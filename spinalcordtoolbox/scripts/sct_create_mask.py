@@ -227,7 +227,7 @@ def create_mask(param):
     # create mask
     printv('\nCreate mask...', param.verbose)
     centerline = nibabel.load(fname_centerline)  # open centerline
-    hdr = centerline.get_header()  # get header
+    hdr = centerline.header  # get header
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
     # spacing = hdr.structarr['pixdim']
     data_centerline = np.asanyarray(centerline.dataobj)  # get centerline

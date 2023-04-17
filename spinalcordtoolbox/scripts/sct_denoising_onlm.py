@@ -115,7 +115,7 @@ def main(argv: Sequence[str]):
     path, file, ext = extract_fname(file_to_denoise)
 
     img = nib.load(file_to_denoise)
-    hdr_0 = img.get_header()
+    hdr_0 = img.header
 
     data = np.asanyarray(img.dataobj)
 
