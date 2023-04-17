@@ -20,7 +20,7 @@ import logging
 from typing import Sequence
 
 import numpy as np
-from scipy import ndimage as ndi
+from scipy.ndimage import label, center_of_mass
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, convert
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
@@ -80,7 +80,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     for i in range(nz):
         slice = im_centerline.data[:, :, i]
         if np.any(slice):
-            x_centerline, y_centerline = ndi.measurements.center_of_mass(slice)
+            x_centerline, y_centerline = center_of_mass(slice)
             centerline[str(i)] = [x_centerline, y_centerline]
             key_centerline.append(i)
 
@@ -95,11 +95,11 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
         # extraction of slice
         slice = im_seg.data[:, :, i]
         distance = -1
-        label_objects, nb_labels = ndi.label(slice)  # count binary objects in the slice
+        label_objects, nb_labels = label(slice)  # count binary objects in the slice
         if nb_labels > 1:  # if there is more that one object in the slice, the slice is removed from the segmentation
             slices_to_remove[i] = True
         elif nb_labels == 1:  # check if the centerline is coherent with the one from isct_propseg
-            x_centerline, y_centerline = ndi.measurements.center_of_mass(slice)
+            x_centerline, y_centerline = center_of_mass(slice)
             slice_nearest_coord = min(key_centerline, key=lambda x: abs(x - i))
             coord_nearest_coord = centerline[str(slice_nearest_coord)]
             distance = np.sqrt(((x_centerline - coord_nearest_coord[0]) * px) ** 2 +

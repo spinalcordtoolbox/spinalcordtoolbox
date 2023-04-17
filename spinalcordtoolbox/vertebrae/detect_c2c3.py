@@ -24,7 +24,7 @@ import logging
 
 import numpy as np
 import nibabel as nib
-from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.utils import run_proc, TempFolder, __data_dir__

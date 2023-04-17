@@ -21,7 +21,7 @@ from typing import Sequence
 import numpy as np
 
 import nibabel
-from scipy import ndimage
+from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, empty_like
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
@@ -242,7 +242,7 @@ def create_mask(param):
     cy = [0] * nz
     for iz in range(0, nz, 1):
         if iz in z_centerline_not_null:
-            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(np.array(data_centerline[:, :, iz]))
+            cx[iz], cy[iz] = center_of_mass(np.array(data_centerline[:, :, iz]))
     # create 2d masks
     im_list = []
     for iz in range(nz):

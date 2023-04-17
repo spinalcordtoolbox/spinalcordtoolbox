@@ -6,8 +6,7 @@ import logging
 
 import numpy as np
 from skimage.exposure import rescale_intensity
-from scipy.ndimage.measurements import center_of_mass, label
-from scipy.ndimage import distance_transform_edt
+from scipy.ndimage import distance_transform_edt, center_of_mass, label
 
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.deepseg_.onnx import onnx_inference
