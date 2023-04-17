@@ -3,8 +3,7 @@
 
 import logging
 import numpy as np
-from scipy.ndimage import label
-from scipy.ndimage.morphology import binary_fill_holes
+from scipy.ndimage import label, binary_fill_holes
 
 from spinalcordtoolbox.process_seg import compute_shape
 
