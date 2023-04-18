@@ -557,7 +557,6 @@ def main(argv: Sequence[str]):
     # Fetch metrics of subject
     df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
     # Get vertebral level corresponding to the slice with the compression
-    slice_thickness = get_slice_thickness(img_labels)
     slice_compressed = get_compressed_slice(img_labels, verbose)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
 
