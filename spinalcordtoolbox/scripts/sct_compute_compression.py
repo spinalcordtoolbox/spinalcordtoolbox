@@ -307,14 +307,13 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
         new_slices_coord = np.interp(x_PAM50, x,
                                      df_metrics.loc[df_metrics['VertLevel'] == level, 'Slice (I->S)'].to_list())
         # find nearest index
-        slices_PAM50 = []
+        slices_PAM50 = np.array([])
         for slice in slices:
             # get index corresponding to the min value
-            idx = np.abs(new_slices_coord - slice + 1/2).argmin()  # Add + 1/2 to get the mid-slice
-            new_slice = df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'Slice (I->S)'].to_list()[idx]
-            slices_PAM50.append(new_slice)
+            idx = np.argwhere((np.round(new_slices_coord) - slice) == 0).T[0]  # Round to get all slices within ±1 arround the slice
+            new_slice = [df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'Slice (I->S)'].to_list()[id] for id in idx]
+            slices_PAM50 = np.append(slices_PAM50, new_slice, axis=0)
         compression_level_dict_PAM50[level] = slices_PAM50
-        print(compression_level_dict_PAM50)
     return compression_level_dict_PAM50
 
 
@@ -457,7 +456,7 @@ def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df
         slices_avg = slice
     # If more than one slice has compression, get all slices from that range
     if len(slice) > 1:
-        slices_avg = np.arange(min(slice), max(slice), 1)
+        slices_avg = np.arange(min(slice), max(slice) + 1, 1)  # Add +1 to include max slice
     return average_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, slices_avg), slices_avg
 
 
