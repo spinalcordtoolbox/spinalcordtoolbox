@@ -130,7 +130,7 @@ def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compressi
 
 
 def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
-    """ Run sct_compute_compression and chexk mscc and normalized mscc"""
+    """ Run sct_compute_compression and check mscc and normalized mscc"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label,
                                        '-vertfile', dummy_3d_vert_label, '-sex', 'F', '-o', filename])
