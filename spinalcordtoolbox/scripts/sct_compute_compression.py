@@ -431,35 +431,6 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
 
 # Functions for Step 3 (Computing MSCC using spinal cord morphometrics.)
 # ==========================================================================================
-def average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50, z_range_above, z_range_below, slice):
-    """
-    Defines slices to average metric at compression level following slice thickness and averages metric at
-    compression, across the level above and below compression.
-    :param slice_thickness: float: slice thickness of native image space.
-    :param slice_thickness_PAM50: float: slice thickness of the PAM50.
-    :param metric: str: metric to perform normalization
-    :param df_metrics_PAM50: pandas.DataFrame: Metrics of sct_process_segmentation in PAM50 anatomical dimensions.
-    :param z_range_above: list: list of slices of level above compression.
-    :param z_range_below: list: list of slices of level below compression.
-    :param slice: int: slice of spinal cord compression.
-    :return: ma: float64: Metric above the compression
-    :retrun: mb: float64: Metric below the compression
-    :retrun: mi: float64: Metric at the compression level
-    :retrun slices_avg: Slices in PAM50 space to average metric.
-
-    """
-    # If resolution of image is higher than PAM50 template, get slices equivalent to native slice thickness
-    nb_slice = slice_thickness//slice_thickness_PAM50
-    if nb_slice > 1:
-        slices_avg = np.arange(min(slice) - nb_slice//2, max(slice) + nb_slice//2, 1)
-    else:
-        slices_avg = slice
-    # If more than one slice has compression, get all slices from that range
-    if len(slice) > 1:
-        slices_avg = np.arange(min(slice), max(slice) + 1, 1)  # Add +1 to include max slice
-    return average_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, slices_avg), slices_avg
-
-
 def average_metric(df, metric, z_range_above, z_range_below, slices_avg):
     """
     Average metric at compression level, at level above and below.
@@ -635,17 +606,14 @@ def main(argv: Sequence[str]):
         printv(f'\nLevel: {level}', verbose=verbose, type='info')
         # Get metric of patient with compression
         if arguments.normalize:
-            metrics_patient, slices_avg = average_compression_PAM50(slice_thickness, slice_thickness_PAM50, metric, df_metrics_PAM50,
-                                                                    z_range_above, z_range_below, compressed_levels_dict[level])
+            metrics_patient = average_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, compressed_levels_dict[level])
             # Get metrics of healthy controls
-            print(slices_avg)
-            metrics_HC = average_metric(df_avg_HC, metric, z_range_above, z_range_below, slices_avg)
+            metrics_HC = average_metric(df_avg_HC, metric, z_range_above, z_range_below, compressed_levels_dict[level])
             logger.debug(f'\nmetric_a_HC = {metrics_HC[0]}, metric_b_HC = {metrics_HC[1]}, metric_i_HC = {metrics_HC[2]}')
             # Compute Normalized Ratio
             metric_ratio_norm_result = metric_ratio_norm(metrics_patient, metrics_HC)
         else:
-            slices_avg = compressed_levels_dict[level]
-            metrics_patient = average_metric(df_metrics, metric, z_range_above, z_range_below, slices_avg)
+            metrics_patient = average_metric(df_metrics, metric, z_range_above, z_range_below, compressed_levels_dict[level])
             metric_ratio_norm_result = None
         # Compute Ratio
         metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
