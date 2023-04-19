@@ -190,17 +190,30 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     :return level_slice_dict: dict:
     """
     idx = df_metrics['Slice (I->S)'].isin(slices).tolist()
-    level_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
-    if level_compression.empty:
+    df_level_slice_compression = df_metrics.loc[idx, ['VertLevel', 'Slice (I->S)']]
+    if df_level_slice_compression.empty:
         raise ValueError(f"Slice {slices} doesn't have a computed metric")
     # Check if level_compression['VertLevel'] is nan
-    for _, row in level_compression.iterrows():
+    for _, row in df_level_slice_compression.iterrows():
         if np.isnan(row['VertLevel']):
             raise ValueError(f"Slice {int(row['Slice (I->S)'])} doesn't have computed vertebral level. "
                              f"Check vertebral labeling file.")
     level_slice_dict = {}
-    for level in np.unique(level_compression['VertLevel']):
-        level_slice_dict[level] = level_compression.loc[level_compression['VertLevel'] == level, 'Slice (I->S)'].to_list()
+    # TODO adjust for multiple slices for one compresssion (that can have multiple levels too)
+    #slices_combined = []
+    #for slice in slices:
+    #    slices_same_compression = [slice_1 for slice_1 in slices if np.abs((slice - slice_1)) == 1]
+    #    if slices_same_compression:
+    #        if slices_same_compression[0] < slices_same_compression[1]:
+    #            slices_same_compression.append(slice)
+    #            slices_combined.append(slices_same_compression)
+    #    else:
+    #        slices_combined.append(slice)
+    for idx, _ in enumerate(slices):
+        level_slice_dict[idx] = {}
+    for idx, slice in enumerate(slices):
+        level = df_level_slice_compression.loc[df_level_slice_compression['Slice (I->S)'] == slice, 'VertLevel'].to_list()[0]
+        level_slice_dict[idx][level] = slice
     return level_slice_dict
 
 
