@@ -363,12 +363,12 @@ def register_step_dl_multimodal_cascaded_reg(src, dest, step, verbose=1):
     warp_forward_out = 'step' + str(step.step) + 'DLWarp.nii.gz'
     warp_inverse_out = 'step' + str(step.step) + 'DLInverseWarp.nii.gz'
 
-    register_dl_multimodal_cascaded_reg(src, dest, warp_forward_out, warp_inverse_out, verbose=verbose)
+    register_dl_multimodal_cascaded_reg(src, dest, warp_forward_out, warp_inverse_out)
 
     return warp_forward_out, warp_inverse_out
 
 
-def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forward, fname_warp_reverse, verbose=1):
+def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forward, fname_warp_reverse):
     """
     Deep learning based multimodal registration using cascaded networks based on the work done
     in the project https://github.com/ivadomed/multimodal-registration
@@ -388,7 +388,6 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     :param fname_dest: Name of fixed image (iso 1mm resolution and same space as moving image)
     :param fname_warp_forward: Name of the composed warping field resulting from the cascaded registration for the forward registration
     :param fname_warp_reverse: Name of the composed warping field resulting from the cascaded registration for the reverse registration
-    :param verbose: 0, 1, 2
     :return:
     """
 
@@ -923,8 +922,8 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
-    generate_warping_field(fname_dest[0], warp_x, warp_y, fname_warp, verbose)
-    generate_warping_field(fname_src[0], warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
+    generate_warping_field(fname_dest[0], warp_x, warp_y, fname_warp)
+    generate_warping_field(fname_src[0], warp_inv_x, warp_inv_y, fname_warp_inv)
 
 
 def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0, path_qc='.', smoothWarpXY=1):
@@ -1178,9 +1177,9 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
-    generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
+    generate_warping_field(fname_dest, warp_x, warp_y, fname_warp)
     # Generate inverse warping field (defined in source space)
-    generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
+    generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv)
 
 
 def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz',
@@ -1374,14 +1373,13 @@ def numerotation(nb):
     return nb_output
 
 
-def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field.nii.gz', verbose=1):
+def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field.nii.gz'):
     """
     Generate an ITK warping field
     :param fname_dest:
     :param warp_x:
     :param warp_y:
     :param fname_warp:
-    :param verbose:
     :return:
     """
     logger.info("\nGenerate warping field...")
