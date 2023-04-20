@@ -8,6 +8,8 @@ import os
 import pytest
 import numpy as np
 import nibabel
+import warnings
+from torch.serialization import SourceChangeWarning
 
 import spinalcordtoolbox as sct
 from spinalcordtoolbox.utils import sct_test_path
@@ -50,6 +52,8 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task,
     """
     Uses the locally-installed sct_testing_data
     """
+    # Ignore warnings from ivadomed model source code changing
+    warnings.filterwarnings("ignore", category=SourceChangeWarning)
     fname_out = str(tmp_path/fname_out)  # tmp_path for automatic cleanup
     sct_deepseg.main(['-i', fname_image, '-task', task, '-o', fname_out, '-thr', str(0.9)])
     # TODO: implement integrity test (for now, just checking if output segmentation file exists)

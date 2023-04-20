@@ -6,9 +6,7 @@ import os
 import logging
 
 import numpy as np
-from scipy.ndimage import distance_transform_edt
-import scipy.ndimage.measurements
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import distance_transform_edt, gaussian_filter, center_of_mass as ndimage_center_of_mass
 
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.metadata import get_file_label
@@ -258,7 +256,7 @@ def center_of_mass(x):
     """
     if (x == 0).all():
         raise EmptyArrayError("Center of mass can't be calculated on empty arrays.")
-    return scipy.ndimage.measurements.center_of_mass(x)
+    return ndimage_center_of_mass(x)
 
 
 def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):

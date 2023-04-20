@@ -14,7 +14,7 @@ import logging
 from typing import Sequence, Tuple
 
 import numpy as np
-from scipy import ndimage
+from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
@@ -126,7 +126,7 @@ def create_labels_along_segmentation(img: Image, labels: Sequence[Tuple[int, int
             z_rpi = int(np.round(out.dim[2] / 2.0))
 
         # get center of mass of segmentation at given z
-        x, y = ndimage.measurements.center_of_mass(np.array(img.data[:, :, z_rpi]))
+        x, y = center_of_mass(np.array(img.data[:, :, z_rpi]))
 
         # round values to make indices
         x, y = int(np.round(x)), int(np.round(y))

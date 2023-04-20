@@ -70,7 +70,7 @@ def dummy_vert_level():
     data[4, 4, :] = [2, 2, 3, 3, 4, 4, 5, 5, 6]
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data, affine)
-    img = Image(nii.get_data(), hdr=nii.header, orientation='RPI', dim=nii.header.get_data_shape())
+    img = Image(np.asanyarray(nii.dataobj), hdr=nii.header, orientation='RPI', dim=nii.header.get_data_shape())
     return img
 
 
