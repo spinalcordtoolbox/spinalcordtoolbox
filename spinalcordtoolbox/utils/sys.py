@@ -347,6 +347,15 @@ def sct_progress_bar(*args, **kwargs):
     do_pb = os.environ.get('SCT_PROGRESS_BAR', 'yes')
     if do_pb.lower() in ['off', 'no', 'false']:
         kwargs['disable'] = True
+    # If not specified, then override the default 'ascii' value to account for Windows issues. For background, see:
+    # https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2770#issuecomment-1399313735
+    if 'ascii' not in kwargs:
+        # On Windows, terminals often have limited unicode support, so it's recommended to set ascii=True
+        if sys.platform.startswith('win32'):
+            kwargs['ascii'] = True
+        # On Linux/macOS, tqdm has built-in fallback login when ascii=None to account for various terminal capabilities
+        else:
+            kwargs['ascii'] = None
 
     return tqdm.tqdm(*args, **kwargs)
 
