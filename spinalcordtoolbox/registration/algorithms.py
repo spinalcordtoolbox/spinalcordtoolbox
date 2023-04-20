@@ -188,7 +188,7 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
            '-i', step.iter,
            '-f', step.shrink,
            '-s', step.smooth,
-           '-v', '1',  # verbose (verbose=2 does not exist, so we force it to 1)
+           '-v', ('1' if verbose >= 1 else '0'),  # verbose (verbose=2 does not exist, so we force it to 1)
            '-o', '[step' + str(step.step) + ',' + scr_regStep + ']',  # here the warp name is stage10 because
            # antsSliceReg add "Warp"
            ] + mask_options
@@ -252,7 +252,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
            '--restrict-deformation', step.deformation,
            '--output', '[step' + str(step.step) + ',' + scr_regStep + ']',
            '--interpolation', 'BSpline[3]',
-           '--verbose', '1',
+           '--verbose', ('1' if verbose >= 1 else '0'),
            ] + masking
 
     # add init translation
@@ -1284,7 +1284,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             '--smoothing-sigmas', str(paramreg.smooth) + 'mm',
             '--output', '[' + prefix_warp2d + ',src_Z' + num + '_reg.nii]',    # --> file.mat (contains Tx,Ty, theta)
             '--interpolation', 'BSpline[3]',
-            '--verbose', '1',
+            '--verbose', ('1' if verbose >= 2 else '0'),
         ] + masking
         # add init translation
         if not paramreg.init == '':
