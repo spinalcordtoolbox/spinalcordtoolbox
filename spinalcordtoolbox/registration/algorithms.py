@@ -754,6 +754,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     th_max_angle *= np.pi / 180
 
     # Loop across slices
+    print()  # Add newline between last log message and the progress bar logging
     for iz in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Estimate cord angle for each slice",
                                ascii=False, ncols=100):
         try:
@@ -991,6 +992,7 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     warp_inv_y = np.zeros(data_src.shape)
 
     # Loop across slices
+    print()  # Add newline between last log message and the progress bar logging
     for iz in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Estimate columnwise transformation",
                                ncols=100):
         # PREPARE COORDINATES
@@ -1259,6 +1261,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         list_warp_inv = []
 
     # loop across slices
+    print()  # Add newline between last log message and the progress bar logging
     for i in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Registering slice", ncols=100):
         # set masking
         num = numerotation(i)
