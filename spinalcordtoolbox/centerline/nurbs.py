@@ -624,7 +624,7 @@ class NURBS:
             for i in range(n - 1):
                 Rtemp.append(self.evaluateN(Nik[i], ubar[k], u) / den)
             R.append(Rtemp)
-        R = np.matrix(R)
+        R = np.array(R)
 
         # create W diagonal matrix
         W = np.diag(w[0:-1])
@@ -642,7 +642,7 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_x, Nik, ubar[k], u) / denU[k]
             Tx.append(somme)
-        Tx = np.matrix(Tx)
+        Tx = np.expand_dims(np.array(Tx), 0)
 
         Ty = []
         for i in range(n - 1):
@@ -650,7 +650,7 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_y, Nik, ubar[k], u) / denU[k]
             Ty.append(somme)
-        Ty = np.matrix(Ty)
+        Ty = np.expand_dims(np.array(Ty), 0)
 
         Tz = []
         for i in range(n - 1):
@@ -658,11 +658,11 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_z, Nik, ubar[k], u) / denU[k]
             Tz.append(somme)
-        Tz = np.matrix(Tz)
+        Tz = np.expand_dims(np.array(Tz), 0)
 
-        P_xb = np.linalg.pinv(R.T * W * R) * Tx.T
-        P_yb = np.linalg.pinv(R.T * W * R) * Ty.T
-        P_zb = np.linalg.pinv(R.T * W * R) * Tz.T
+        P_xb = np.linalg.pinv(R.T @ W @ R) @ Tx.T
+        P_yb = np.linalg.pinv(R.T @ W @ R) @ Ty.T
+        P_zb = np.linalg.pinv(R.T @ W @ R) @ Tz.T
 
         # Modification of first and last control points
         P_xb[0], P_yb[0], P_zb[0] = P_x[0], P_y[0], P_z[0]
@@ -748,7 +748,7 @@ class NURBS:
             for i in range(n - 1):
                 Rtemp.append(self.evaluateN(Nik[i], ubar[k], u) / den)
             R.append(Rtemp)
-        R = np.matrix(R)
+        R = np.array(R)
 
         # create W diagonal matrix
         W = np.diag(w[0:-1])
@@ -766,7 +766,7 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_x, Nik, ubar[k], u) / denU[k]
             Tx.append(somme)
-        Tx = np.matrix(Tx)
+        Tx = np.expand_dims(np.array(Tx), 0)
 
         Ty = []
         for i in range(n - 1):
@@ -774,10 +774,10 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_y, Nik, ubar[k], u) / denU[k]
             Ty.append(somme)
-        Ty = np.matrix(Ty)
+        Ty = np.expand_dims(np.array(Ty), 0)
 
-        P_xb = (R.T * W * R).I * Tx.T
-        P_yb = (R.T * W * R).I * Ty.T
+        P_xb = (R.T @ W @ R).I @ Tx.T
+        P_yb = (R.T @ W @ R).I @ Ty.T
 
         # Modification of first and last control points
         P_xb[0], P_yb[0] = P_x[0], P_y[0]
@@ -839,12 +839,12 @@ class NURBS:
             for j in range(n):
                 ligneM.append(self.evaluateN(Nik[j], ubar[i], u))
             M.append(ligneM)
-        M = np.matrix(M)
+        M = np.array(M)
 
         # Matrice des points interpoles
-        Qx = np.matrix(newPx).T
-        Qy = np.matrix(newPy).T
-        Qz = np.matrix(newPz).T
+        Qx = np.array(newPx).T
+        Qy = np.array(newPy).T
+        Qz = np.array(newPz).T
 
         # Calcul des points de controle
         P_xb = M.I * Qx

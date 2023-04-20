@@ -40,7 +40,7 @@ def fake_3dimage_sct_custom(data):
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     """
     i = fake_3dimage_custom(data)
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )
@@ -126,7 +126,7 @@ def fake_3dimage_sct_vis():
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     """
     i = fake_3dimage_vis()
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )
@@ -220,7 +220,7 @@ def fake_4dimage_sct():
     :return: an Image (4D) in RAS+ (aka SCT LPI) space
     """
     i = fake_4dimage()
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )
@@ -233,7 +233,7 @@ def fake_3dimage_sct():
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     """
     i = fake_3dimage()
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )
@@ -246,7 +246,7 @@ def fake_3dimage_sct2():
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     """
     i = fake_3dimage2()
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )

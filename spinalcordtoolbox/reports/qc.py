@@ -11,6 +11,7 @@ import numpy as np
 import skimage
 import skimage.io
 import skimage.exposure
+from scipy.ndimage import center_of_mass
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation, PillowWriter
@@ -179,7 +180,6 @@ class QcImage(object):
     def label_vertebrae(self, mask, ax):
         """Draw vertebrae areas, then add text showing the vertebrae names"""
         from matplotlib import colors
-        import scipy.ndimage
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
         ax.imshow(img,
@@ -197,7 +197,7 @@ class QcImage(object):
                 index = int(val)
                 if index in self._labels_regions.values():
                     color = self._labels_color[index]
-                    y, x = scipy.ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
+                    y, x = center_of_mass(np.where(data == val, data, 0))
                     # Draw text with a shadow
                     x += data.shape[1] / 25
                     label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]

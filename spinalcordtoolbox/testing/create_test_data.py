@@ -1,7 +1,6 @@
 # Collection of functions to create data for testing
 
 import numpy as np
-import numpy.matlib
 from datetime import datetime
 import itertools
 from skimage.transform import rotate
@@ -76,7 +75,7 @@ def dummy_centerline(size_arr=(9, 9, 9), pixdim=(1, 1, 1), subsampling=1, dilate
     # p = P.fit(z, x, 3)
     # p = np.poly1d(np.polyfit(z, x, deg=3))
     data = np.zeros((nx, ny, nz))
-    arr_ctl = np.array([xfit.astype(np.int),
+    arr_ctl = np.array([xfit.astype(int),
                         [round(ny / 4.)] * len(range(nz)),
                         range(nz)], dtype=np.uint16)
     # Loop across dilation of centerline. E.g., if dilate_ctl=1, result will be a square of 3x3 per slice.
@@ -175,7 +174,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     else:
         yfit = np.round(p(range(nz)))   # has to be rounded for correct float -> int conversion in next step
 
-    yfit = yfit.astype(np.int)
+    yfit = yfit.astype(int)
     # loop across slices and add object
     for iz in range(nz):
         if shape == 'rectangle':  # theoretical CSA: (a*2+1)(b*2+1)
@@ -225,7 +224,7 @@ def dummy_segmentation(size_arr=(256, 256, 256), pixdim=(1, 1, 1), dtype=np.floa
     nii_r = resample_nib(nii, new_size=pixdim, new_size_type='mm', interpolation='linear')
     # Create Image object. Default orientation is LPI.
     # For debugging add .save() at the end of the command below
-    img = Image(nii_r.get_data(), hdr=nii_r.header, dim=nii_r.header.get_data_shape())
+    img = Image(np.asanyarray(nii_r.dataobj), hdr=nii_r.header, dim=nii_r.header.get_data_shape())
     # Update orientation
     img.change_orientation(orientation)
     if debug:
