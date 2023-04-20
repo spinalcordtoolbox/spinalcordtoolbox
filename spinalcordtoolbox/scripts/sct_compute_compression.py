@@ -213,7 +213,7 @@ def get_verterbral_level_from_slice(slices, df_metrics):
         level_slice_dict[idx] = {}
     for idx, slice in enumerate(slices):
         level = df_level_slice_compression.loc[df_level_slice_compression['Slice (I->S)'] == slice, 'VertLevel'].to_list()[0]
-        level_slice_dict[idx][level] = slice
+        level_slice_dict[idx][level] = [slice]
     return level_slice_dict
 
 
@@ -309,24 +309,27 @@ def get_slices_in_PAM50(compressed_level_dict, df_metrics, df_metrics_PAM50):
     # Drop empty rows so they are not included for interpolation
     df_metrics_PAM50 = df_metrics_PAM50.dropna(axis=0)
     # Loop across slices and levels with compression
-    for level, slices in compressed_level_dict.items():
-        # Number of slices in native image
-        nb_slices_level = len(df_metrics.loc[df_metrics['VertLevel'] == level, 'VertLevel'].to_list())
-        # Number of slices in PAM50
-        nb_slices_PAM50 = len(df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'VertLevel'].to_list())
-        # Do interpolation from native space to PAM50
-        x_PAM50 = np.arange(0, nb_slices_PAM50, 1)
-        x = np.linspace(0, nb_slices_PAM50 - 1, nb_slices_level)
-        new_slices_coord = np.interp(x_PAM50, x,
-                                     df_metrics.loc[df_metrics['VertLevel'] == level, 'Slice (I->S)'].to_list())
-        # find nearest index
-        slices_PAM50 = np.array([])
-        for slice in slices:
-            # get index corresponding to the min value
-            idx = np.argwhere((np.round(new_slices_coord) - slice) == 0).T[0]  # Round to get all slices within ±1 arround the slice
-            new_slice = [df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'Slice (I->S)'].to_list()[id] for id in idx]
-            slices_PAM50 = np.append(slices_PAM50, new_slice, axis=0)
-        compression_level_dict_PAM50[level] = slices_PAM50
+    for i, info in compressed_level_dict.items():
+        compression_level_dict_PAM50[i] = {}
+        for level, slices in info.items():
+            # Number of slices in native image
+            nb_slices_level = len(df_metrics.loc[df_metrics['VertLevel'] == level, 'VertLevel'].to_list())
+            # Number of slices in PAM50
+            nb_slices_PAM50 = len(df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'VertLevel'].to_list())
+            # Do interpolation from native space to PAM50
+            x_PAM50 = np.arange(0, nb_slices_PAM50, 1)
+            x = np.linspace(0, nb_slices_PAM50 - 1, nb_slices_level)
+            new_slices_coord = np.interp(x_PAM50, x,
+                                         df_metrics.loc[df_metrics['VertLevel'] == level, 'Slice (I->S)'].to_list())
+            # find nearest index
+            slices_PAM50 = np.array([])
+            for slice in slices:
+                # get index corresponding to the min value
+                idx = np.argwhere((np.round(new_slices_coord) - slice) == 0).T[0]  # Round to get all slices within ±1 arround the slice
+                new_slice = [df_metrics_PAM50.loc[df_metrics_PAM50['VertLevel'] == level, 'Slice (I->S)'].to_list()[id] for id in idx]
+                slices_PAM50 = np.append(slices_PAM50, new_slice, axis=0)
+            slices_PAM50 = slices_PAM50.tolist()
+            compression_level_dict_PAM50[i][level] = slices_PAM50
     return compression_level_dict_PAM50
 
 
@@ -404,14 +407,24 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
     : return slices_below:
     : return slices_above:
     """
-    level_above = min([level for level, slices in compression_level_dict_PAM50.items()])
-    level_below = max([level for level, slices in compression_level_dict_PAM50.items()])
+    min_slice_PAM50 = min(df_metrics_PAM50['Slice (I->S)'].to_list())
+    max_slice_PAM50 = max(df_metrics_PAM50['Slice (I->S)'].to_list())
+    slices_above = [max_slice_PAM50]
+    slice_below = [min_slice_PAM50]
+    for i, info in compression_level_dict_PAM50.items():
+        if max(*(info.values())) >= max(slices_above):
+            slices_above = list((info.values()))[0]
+            level_above = i
+        if min(*(info.values())) <= min(slice_below):
+            level_below = i
+            slices_above = list((info.values()))[0]
+
     # Get slices to average at distance across the chosen extent for the level above all compressions
-    zmin_above = int(max(compression_level_dict_PAM50[level_above]) + distance/slice_thickness_PAM50)
-    zmax_above = int(max(compression_level_dict_PAM50[level_above]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
+    zmin_above = int(max(list(compression_level_dict_PAM50[level_above].values())[0]) + distance/slice_thickness_PAM50)
+    zmax_above = int(max(list(compression_level_dict_PAM50[level_above].values())[0]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
     # Get slices to average at distance across the chosen extent for level below all compressions
-    zmin_below = int(min(compression_level_dict_PAM50[level_below]) - distance/slice_thickness_PAM50 - extent/slice_thickness_PAM50)
-    zmax_below = int(min(compression_level_dict_PAM50[level_below]) - distance/slice_thickness_PAM50)
+    zmin_below = int(min(list(compression_level_dict_PAM50[level_below].values())[0]) - distance/slice_thickness_PAM50 - extent/slice_thickness_PAM50)
+    zmax_below = int(min(list(compression_level_dict_PAM50[level_below].values())[0]) - distance/slice_thickness_PAM50)
     # Check if slices have available metrics
     df_metrics_PAM50_short = (df_metrics_PAM50.dropna(how='all', axis=1)).dropna()
     not_above = False
@@ -614,18 +627,20 @@ def main(argv: Sequence[str]):
     # Step 3. Compute MSCC metrics for each compressed level
     # ------------------------------------------------------
     # Loop through all compressed levels (compute one MSCC per compressed level)
-    for level in compressed_levels_dict.keys():
-        printv(f'\nLevel: {level}', verbose=verbose, type='info')
+    for idx in compressed_levels_dict.keys():
+        level = list(compressed_levels_dict[idx].keys())
+        printv(f'\nCompression #{idx} at level {level}', verbose=verbose, type='info')
         # Get metric of patient with compression
+        slice_avg = list(compressed_levels_dict[idx].values())[0]
         if arguments.normalize:
-            metrics_patient = average_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, compressed_levels_dict[level])
+            metrics_patient = average_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, slice_avg)
             # Get metrics of healthy controls
-            metrics_HC = average_metric(df_avg_HC, metric, z_range_above, z_range_below, compressed_levels_dict[level])
+            metrics_HC = average_metric(df_avg_HC, metric, z_range_above, z_range_below, slice_avg)
             logger.debug(f'\nmetric_a_HC = {metrics_HC[0]}, metric_b_HC = {metrics_HC[1]}, metric_i_HC = {metrics_HC[2]}')
             # Compute Normalized Ratio
             metric_ratio_norm_result = metric_ratio_norm(metrics_patient, metrics_HC)
         else:
-            metrics_patient = average_metric(df_metrics, metric, z_range_above, z_range_below, compressed_levels_dict[level])
+            metrics_patient = average_metric(df_metrics, metric, z_range_above, z_range_below, slice_avg)
             metric_ratio_norm_result = None
         # Compute Ratio
         metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
