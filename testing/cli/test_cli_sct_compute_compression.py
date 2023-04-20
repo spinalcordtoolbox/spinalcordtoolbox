@@ -111,9 +111,9 @@ def test_sct_compute_compression_no_normalization(tmp_path, dummy_3d_mask_nib, d
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
-        assert float(row['Compression Level']) == 5.0
-        assert float(row['diameter_AP ratio']) == pytest.approx(20.040803711692355)
-        assert row['Normalized diameter_AP ratio'] == ''
+        assert float(row['compression_level']) == 5.0
+        assert float(row['diameter_AP_ratio']) == pytest.approx(20.040803711692355)
+        assert row['normalized_diameter_AP_ratio'] == ''
 
 
 def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
@@ -124,9 +124,9 @@ def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compressi
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
-        assert float(row['Compression Level']) == 5.0
-        assert float(row['diameter_AP ratio']) == pytest.approx(12.525502319807725)
-        assert float(row['Normalized diameter_AP ratio']) == pytest.approx(16.985020560800656)
+        assert float(row['compression_level']) == 5.0
+        assert float(row['diameter_AP_ratio']) == pytest.approx(12.525502319807725)
+        assert float(row['normalized_diameter_AP_ratio']) == pytest.approx(16.985020560800656)
 
 
 def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
@@ -137,6 +137,6 @@ def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_mask_nib, dummy_3d_com
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
-        assert float(row['Compression Level']) == 5.0
-        assert float(row['diameter_AP ratio']) == pytest.approx(12.525502319807725)
-        assert float(row['Normalized diameter_AP ratio']) == pytest.approx(16.500154219790886)
+        assert float(row['compression_level']) == 5.0
+        assert float(row['diameter_AP_ratio']) == pytest.approx(12.525502319807725)
+        assert float(row['normalized_diameter_AP_ratio']) == pytest.approx(16.500154219790886)
