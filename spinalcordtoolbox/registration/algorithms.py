@@ -991,10 +991,8 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     warp_inv_y = np.zeros(data_src.shape)
 
     # Loop across slices
-    logger.info("\nEstimate columnwise transformation...")
-    for iz in range(0, nz):
-        logger.info(f"{str(iz)}/{str(nz)}..")
-
+    for iz in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Estimate columnwise transformation",
+                               ncols=100):
         # PREPARE COORDINATES
         # ============================================================
         # get indices of x and y coordinates
@@ -1261,9 +1259,8 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         list_warp_inv = []
 
     # loop across slices
-    for i in range(nz):
+    for i in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Registering slice", ncols=100):
         # set masking
-        logger.info(f"Registering slice {str(i)}/{str(nz-1)}...")
         num = numerotation(i)
         prefix_warp2d = 'warp2d_' + num
         # if mask is used, prepare command for ANTs
