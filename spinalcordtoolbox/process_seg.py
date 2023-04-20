@@ -129,8 +129,9 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     metrics = {}
     for key, value in shape_properties.items():
         # Making sure all entries added to metrics have results
-        if (isinstance(value, list) and len(value) > 0) or (isinstance(value, np.ndarray) and value.size > 0):
-            metrics[key] = Metric(data=np.array(value), label=key)
+        value = np.array(value)
+        if value.size > 0:
+            metrics[key] = Metric(data=value, label=key)
 
     return metrics, fit_results
 
