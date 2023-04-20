@@ -507,7 +507,7 @@ def metric_ratio_norm(metrics_patients, metrics_HC):
     return metric_ratio(ma, mb, mi)
 
 
-def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_norm, filename):
+def save_csv(fname_out, level, slices, metric, metric_ratio, metric_ratio_norm, filename):
     """
     Save .csv file of MSCC results.
     :param fname_out:
@@ -520,12 +520,12 @@ def save_csv(fname_out, level, metric, metric_ratio, metric_ratio_norm, filename
     """
     if not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
-            header = ['filename', 'Compression Level', metric + ' ratio', 'Normalized ' + metric + ' ratio']
+            header = ['filename', 'compression_level', 'slice(I->S)', metric + '_ratio', 'normalized_' + metric + '_ratio']
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',')
-        line = [filename, level, metric_ratio, metric_ratio_norm]
+        line = [filename, level, slices, metric_ratio, metric_ratio_norm]
         csv_writer.writerow(line)
 
 
@@ -585,6 +585,7 @@ def main(argv: Sequence[str]):
     # Get vertebral level corresponding to the slice with the compression
     slice_compressed = get_compressed_slice(img_labels, verbose)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
+    print(compressed_levels_dict)
 
     # Step 2: Get normalization metrics and slices (using PAM50 and reference dataset)
     # -----------------------------------------------------------
@@ -628,7 +629,7 @@ def main(argv: Sequence[str]):
     # ------------------------------------------------------
     # Loop through all compressed levels (compute one MSCC per compressed level)
     for idx in compressed_levels_dict.keys():
-        level = list(compressed_levels_dict[idx].keys())
+        level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
         printv(f'\nCompression #{idx} at level {level}', verbose=verbose, type='info')
         # Get metric of patient with compression
         slice_avg = list(compressed_levels_dict[idx].values())[0]
@@ -644,7 +645,8 @@ def main(argv: Sequence[str]):
             metric_ratio_norm_result = None
         # Compute Ratio
         metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
-        save_csv(fname_out, level, arguments.metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
+        print(slice_compressed)
+        save_csv(fname_out, level, slice_compressed[idx], arguments.metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
 
         # Display results
         logger.debug(f'\nmetric_a = {metrics_patient[0]}, metric_b = {metrics_patient[1]}, metric_i = {metrics_patient[2]}')
