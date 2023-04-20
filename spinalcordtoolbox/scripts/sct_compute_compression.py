@@ -585,7 +585,6 @@ def main(argv: Sequence[str]):
     # Get vertebral level corresponding to the slice with the compression
     slice_compressed = get_compressed_slice(img_labels, verbose)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
-    print(compressed_levels_dict)
 
     # Step 2: Get normalization metrics and slices (using PAM50 and reference dataset)
     # -----------------------------------------------------------
@@ -645,7 +644,6 @@ def main(argv: Sequence[str]):
             metric_ratio_norm_result = None
         # Compute Ratio
         metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
-        print(slice_compressed)
         save_csv(fname_out, level, slice_compressed[idx], arguments.metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
 
         # Display results
