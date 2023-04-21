@@ -970,26 +970,15 @@ def get_dimension(im_file, verbose=1):
     :param: im_file: Image or nibabel object
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-    # initialization
-    nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
-    if type(im_file) is nib.nifti1.Nifti1Image:
+    if isinstance(im_file, (nib.nifti1.Nifti1Image, Image)):
         header = im_file.header
-    elif type(im_file) is Image:
-        header = im_file.hdr
     else:
         header = None
         logger.warning("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
-
-    nb_dims = len(header.get_data_shape())
-    if nb_dims == 2:
-        nx, ny = header.get_data_shape()
-        px, py = header.get_zooms()
-    if nb_dims == 3:
-        nx, ny, nz = header.get_data_shape()
-        px, py, pz = header.get_zooms()
-    if nb_dims == 4:
-        nx, ny, nz, nt = header.get_data_shape()
-        px, py, pz, pt = header.get_zooms()
+    # initialization
+    default_value = [1, 1, 1, 1]
+    nx, ny, nz, nt = (list(header.get_data_shape())+default_value)[:4]
+    px, py, pz, pt = (list(header.get_zooms())+default_value)[:4]
 
     return nx, ny, nz, nt, px, py, pz, pt
 
