@@ -26,7 +26,7 @@ import sys
 import logging
 from typing import Sequence
 
-from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage import center_of_mass
 import nibabel as nib
 import numpy as np
 

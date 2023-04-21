@@ -14,10 +14,10 @@ import psutil
 from math import asin, cos, sin, acos
 
 import numpy as np
-from scipy import ndimage
 from nibabel import load, Nifti1Image, save, aff2axcodes
 from nilearn.image import resample_img
 from scipy.signal import argrelmax, medfilt
+from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
 from sklearn.decomposition import PCA
 from scipy.io import loadmat
 import torch
@@ -755,7 +755,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
 
     # Loop across slices
     for iz in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Estimate cord angle for each slice",
-                               ascii=False, ncols=100):
+                               ncols=100):
         try:
             # compute PCA and get center or mass based on segmentation
             coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src[:, :, iz])
@@ -822,7 +822,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # regularize rotation
     if not filter_size == 0 and (rot_method in ['pca', 'hog', 'pcahog']):
         # Filtering the angles by gaussian filter
-        angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest[z_nonzero], filter_size)
+        angle_src_dest_regularized = gaussian_filter1d(angle_src_dest[z_nonzero], filter_size)
         if verbose == 2:
             plt.plot(180 * angle_src_dest[z_nonzero] / np.pi, 'ob')
             plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
@@ -842,7 +842,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
 
     # construct 3D warping matrix
     for iz in sct_progress_bar(z_nonzero, unit='iter', unit_scale=False, desc="Build 3D deformation field",
-                               ascii=False, ncols=100):
+                               ncols=100):
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -853,7 +853,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         centermass_src_phy = im_src.transfo_pix2phys([[centermass_src[iz, :].T[0], centermass_src[iz, :].T[1], iz]])[0]
         centermass_dest_phy = im_src.transfo_pix2phys([[centermass_dest[iz, :].T[0], centermass_dest[iz, :].T[1], iz]])[0]
         # build rotation matrix
-        R = np.matrix(((cos(angle_src_dest[iz]), sin(angle_src_dest[iz])), (-sin(angle_src_dest[iz]), cos(angle_src_dest[iz]))))
+        R = np.array(((cos(angle_src_dest[iz]), sin(angle_src_dest[iz])), (-sin(angle_src_dest[iz]), cos(angle_src_dest[iz]))))
         # build 3D rotation matrix
         R3d = np.eye(3)
         R3d[0:2, 0:2] = R
@@ -1398,7 +1398,7 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
 
     # save warping field
     im_dest = load(fname_dest)
-    hdr_dest = im_dest.get_header()
+    hdr_dest = im_dest.header
     hdr_warp = hdr_dest.copy()
     hdr_warp.set_intent('vector', (), '')
     hdr_warp.set_data_dtype('float32')
@@ -1567,8 +1567,8 @@ def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
         image = image / median
 
     # x and y gradients of the image
-    gradx = ndimage.convolve(image, v_kernel)
-    grady = ndimage.convolve(image, h_kernel)
+    gradx = convolve(image, v_kernel)
+    grady = convolve(image, h_kernel)
 
     # orientation gradient
     orient = np.arctan2(grady, gradx)  # results are in the range -pi pi
@@ -1621,7 +1621,7 @@ def circular_filter_1d(signal, window_size, kernel='gaussian'):
 
     signal_extended = np.concatenate((signal, signal, signal))  # replicate signal at both ends
     if kernel == 'gaussian':
-        signal_extended_smooth = ndimage.gaussian_filter(signal_extended, window_size)  # gaussian
+        signal_extended_smooth = gaussian_filter(signal_extended, window_size)  # gaussian
     elif kernel == 'median':
         signal_extended_smooth = medfilt(signal_extended, window_size)  # median filtering
     else:

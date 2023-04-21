@@ -70,7 +70,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
 
     # Loop across z and compute shape analysis
     for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
-                               ascii=True, ncols=80):
+                               ncols=80):
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
         if angle_correction:
@@ -129,8 +129,9 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     metrics = {}
     for key, value in shape_properties.items():
         # Making sure all entries added to metrics have results
-        if not value == []:
-            metrics[key] = Metric(data=np.array(value), label=key)
+        value = np.array(value)
+        if value.size > 0:
+            metrics[key] = Metric(data=value, label=key)
 
     return metrics, fit_results
 
