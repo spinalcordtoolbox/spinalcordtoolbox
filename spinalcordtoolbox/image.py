@@ -970,17 +970,17 @@ def get_dimension(im_file, verbose=1):
     :param: im_file: Image or nibabel object
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-    if isinstance(im_file, (nib.nifti1.Nifti1Image, Image)):
-        header = im_file.header
-    else:
-        header = None
-        logger.warning("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
-    # initialization
-    default_value = [1, 1, 1, 1]
-    nx, ny, nz, nt = (list(header.get_data_shape())+default_value)[:4]
-    px, py, pz, pt = (list(header.get_zooms())+default_value)[:4]
-
-    return nx, ny, nz, nt, px, py, pz, pt
+    if not isinstance(im_file, (nib.nifti1.Nifti1Image, Image)):
+        raise TypeError("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
+    # initializating ndims [nx, ny, nz, nt] and pdims [px, py, pz, pt]
+    ndims = [1, 1, 1, 1]
+    pdims = [1, 1, 1, 1]
+    data_shape = im_file.header.get_data_shape()
+    zooms = im_file.header.get_zooms()
+    for i in range(min(len(data_shape), 4)):
+        ndims[i] = data_shape[i]
+        pdims[i] = zooms[i]
+    return *ndims, *pdims
 
 
 def all_refspace_strings():
