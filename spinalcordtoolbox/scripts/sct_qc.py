@@ -29,10 +29,10 @@ def get_parser():
                         required=True)
     parser.add_argument('-p',
                         help='SCT function associated with the QC report to generate',
-                        choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_register_multimodal',
-                                 'sct_register_to_template', 'sct_warp_template', 'sct_label_vertebrae',
-                                 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline', 'sct_fmri_moco',
-                                 'sct_dmri_moco'),
+                        choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_deepseg_lesion',
+                                 'sct_register_multimodal', 'sct_register_to_template', 'sct_warp_template',
+                                 'sct_label_vertebrae', 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline',
+                                 'sct_fmri_moco', 'sct_dmri_moco'),
                         required=True)
     parser.add_argument('-s',
                         metavar='SEG',
@@ -42,6 +42,11 @@ def get_parser():
                         metavar='DEST',
                         help='Input image #2 to overlay on image #1 (requires a segmentation), or output of another '
                              'process (e.g., sct_straighten_spinalcord)',
+                        required=False)
+    parser.add_argument('-plane',
+                        metavar='PLANE',
+                        help='Plane of the output QC. Only relevant for -p sct_deepseg_lesion.',
+                        choices=('Axial', 'Sagittal'),
                         required=False)
     parser.add_argument('-qc',
                         metavar='QC',
@@ -81,9 +86,13 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
+    if arguments.p == 'sct_deepseg_lesion' and arguments.plane is None:
+        parser.error('Please provide the plane of the output QC with -plane')
+
     generate_qc(fname_in1=arguments.i,
                 fname_in2=arguments.d,
                 fname_seg=arguments.s,
+                plane=arguments.plane,
                 args=f'("sct_qc {list2cmdline(argv)}")',
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
