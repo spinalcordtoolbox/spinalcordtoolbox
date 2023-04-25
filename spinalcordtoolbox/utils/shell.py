@@ -384,7 +384,7 @@ def parse_num_list(str_num, allow_duplicates=False):
         raise ValueError("unexpected group element {} group spec {}".format(element, str_num))
 
     if not allow_duplicates:
-        list_num = list(set(list_num))
+        list_num = list(dict.fromkeys(list_num))  # dict --> remove duplicates and preserve order
 
     return list_num
 
