@@ -36,11 +36,10 @@ class SagittalController(base.BaseController):
 
         if existing_point and not self.selecting_duplicates:
             self.points[existing_point[0]] = (x, y, z, label)
+        elif self.params.num_points and len(self.points) >= self.params.num_points:
+            raise TooManyPointsWarning()
         else:
-            if self.params.num_points and len(self.points) >= self.params.num_points:
-                raise TooManyPointsWarning()
-            else:
-                self.points.append((x, y, z, label))
+            self.points.append((x, y, z, label))
 
         self.position = (x, y, z)
 
