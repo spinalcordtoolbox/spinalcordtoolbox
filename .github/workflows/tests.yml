@@ -151,9 +151,6 @@ jobs:
       - name: Dependencies
         # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
         # NB: We echo "archive.debian.org" to address https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4105
-        # TODO: I'm following https://www.howtoforge.com/using-old-debian-versions-in-your-sources.list
-        #       just to test, but I'm not 100% confident in my understanding of `sources.list`.
-        #       Q: Do I simply append these new links? Or do I need to remove the old source links instead?
         run: |  
           echo "deb http://archive.debian.org/debian/ stretch main non-free contrib" > /etc/apt/sources.list
           echo "deb-src http://archive.debian.org/debian/ stretch main non-free contrib" >> /etc/apt/sources.list
