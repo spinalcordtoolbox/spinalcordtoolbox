@@ -375,18 +375,11 @@ def launch_sagittal_viewer(img: Image, labels: Sequence[int], msg: str, previous
 
     params.subtitle = msg
 
-    # NB: `num_points` is used as the limit for how many points *should* be in the image.
-    # If this number is exceeded, `SagittalController` will throw a `TooManyPoints` warning.
-    # To determine what `num_points should be, we consider two cases:
-    # - Case 1: `previous_points` is set: This means we're adding OR correcting existing labels.
-    #            Presumably, we're dealing with all unique labels. So, we just take the length
-    #            of the union of both the specified labels and the existing (previous) labels.
     if previous_points is not None:
         params.message_warn = 'Please select the label you want to add \nor correct in the list below before clicking \non the image'
-        previous_point_values = [coord.value for coord in previous_points]
-        params.num_points = len(set(labels).union(set(previous_point_values)))
-    # - Case 2: `previous_points` is not set: We just take the length of the specified labels.
     else:
+        # NB: `num_points` is used as the limit for how many points *should* be in the image.
+        # If this number is exceeded, `SagittalController` will throw a `TooManyPoints` warning.
         params.num_points = len(labels)
 
     out = zeros_like(img, dtype='uint8')
