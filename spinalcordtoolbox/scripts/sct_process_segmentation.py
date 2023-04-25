@@ -450,7 +450,7 @@ def main(argv: Sequence[str]):
     else:
         length_from_pmj = None
     # Aggregate metrics
-    for key in sct_progress_bar(metrics, unit='iter', unit_scale=False, desc="Aggregating metrics", ascii=True, ncols=80):
+    for key in sct_progress_bar(metrics, unit='iter', unit_scale=False, desc="Aggregating metrics", ncols=80):
         if key == 'length':
             # For computing cord length, slice-wise length needs to be summed across slices
             metrics_agg[key] = aggregate_per_slice_or_level(metrics[key], slices=slices,
