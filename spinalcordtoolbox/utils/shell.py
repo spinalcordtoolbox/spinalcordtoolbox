@@ -379,7 +379,7 @@ def parse_num_list(str_num, allow_duplicates=False):
         if m is not None:
             a = int(m.group("first"))
             b = int(m.group("last"))
-            list_num += [x for x in range(a, b + 1)]
+            list_num.extend(range(a, b + 1))
             continue
         raise ValueError("unexpected group element {} group spec {}".format(element, str_num))
 
