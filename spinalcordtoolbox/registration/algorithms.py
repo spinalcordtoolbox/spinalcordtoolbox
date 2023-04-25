@@ -1292,7 +1292,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
         try:
             # run registration
-            run_proc(cmd, is_sct_binary=True)
+            run_proc(cmd, is_sct_binary=True, verbose=(1 if verbose >= 2 else 0))
 
             if paramreg.algo in ['Translation']:
                 file_mat = prefix_warp2d + '0GenericAffine.mat'
