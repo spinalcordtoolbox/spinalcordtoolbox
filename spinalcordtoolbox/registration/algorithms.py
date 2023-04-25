@@ -755,7 +755,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
 
     # Loop across slices
     for iz in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Estimate cord angle for each slice",
-                               ascii=False, ncols=100):
+                               ncols=100):
         try:
             # compute PCA and get center or mass based on segmentation
             coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src[:, :, iz])
@@ -842,7 +842,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
 
     # construct 3D warping matrix
     for iz in sct_progress_bar(z_nonzero, unit='iter', unit_scale=False, desc="Build 3D deformation field",
-                               ascii=False, ncols=100):
+                               ncols=100):
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
