@@ -155,7 +155,7 @@ jobs:
         #       just to test, but I'm not 100% confident in my understanding of `sources.list`.
         #       Q: Do I simply append these new links? Or do I need to remove the old source links instead?
         run: |  
-          echo "deb http://archive.debian.org/debian/ stretch main non-free contrib" >> /etc/apt/sources.list
+          echo "deb http://archive.debian.org/debian/ stretch main non-free contrib" > /etc/apt/sources.list
           echo "deb-src http://archive.debian.org/debian/ stretch main non-free contrib" >> /etc/apt/sources.list
           echo "deb http://archive.debian.org/debian-security/ stretch-updates main non-free contrib" >> /etc/apt/sources.list
           echo "deb-src http://archive.debian.org/debian-security/ stretch-updates main non-free contrib" >> /etc/apt/sources.list
