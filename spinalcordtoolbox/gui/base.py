@@ -388,8 +388,8 @@ class BaseController(object):
         self._overlay_image.save()
 
 
-class TooManyPointsWarning(StopIteration):
-    message = 'Reached the maximum number of points'
+class TooManyPointsWarning(ValueError):
+    pass
 
 
 class InvalidActionWarning(ValueError):
