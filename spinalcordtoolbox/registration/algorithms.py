@@ -188,7 +188,7 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
            '-i', step.iter,
            '-f', step.shrink,
            '-s', step.smooth,
-           '-v', '1',  # verbose (verbose=2 does not exist, so we force it to 1)
+           '-v', ('1' if verbose >= 1 else '0'),  # verbose (verbose=2 does not exist, so we force it to 1)
            '-o', '[step' + str(step.step) + ',' + scr_regStep + ']',  # here the warp name is stage10 because
            # antsSliceReg add "Warp"
            ] + mask_options
@@ -252,7 +252,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
            '--restrict-deformation', step.deformation,
            '--output', '[step' + str(step.step) + ',' + scr_regStep + ']',
            '--interpolation', 'BSpline[3]',
-           '--verbose', '1',
+           '--verbose', ('1' if verbose >= 1 else '0'),
            ] + masking
 
     # add init translation
@@ -363,12 +363,12 @@ def register_step_dl_multimodal_cascaded_reg(src, dest, step, verbose=1):
     warp_forward_out = 'step' + str(step.step) + 'DLWarp.nii.gz'
     warp_inverse_out = 'step' + str(step.step) + 'DLInverseWarp.nii.gz'
 
-    register_dl_multimodal_cascaded_reg(src, dest, warp_forward_out, warp_inverse_out, verbose=verbose)
+    register_dl_multimodal_cascaded_reg(src, dest, warp_forward_out, warp_inverse_out)
 
     return warp_forward_out, warp_inverse_out
 
 
-def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forward, fname_warp_reverse, verbose=1):
+def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forward, fname_warp_reverse):
     """
     Deep learning based multimodal registration using cascaded networks based on the work done
     in the project https://github.com/ivadomed/multimodal-registration
@@ -388,7 +388,6 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     :param fname_dest: Name of fixed image (iso 1mm resolution and same space as moving image)
     :param fname_warp_forward: Name of the composed warping field resulting from the cascaded registration for the forward registration
     :param fname_warp_reverse: Name of the composed warping field resulting from the cascaded registration for the reverse registration
-    :param verbose: 0, 1, 2
     :return:
     """
 
@@ -550,7 +549,7 @@ def register_dl_inference(fname_model, input_moving, input_fixed, reg_args, devi
 
 def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp_forward_out='step0Warp.nii.gz',
                        warp_inverse_out='step0InverseWarp.nii.gz', ants_registration_params=None,
-                       path_qc='.', remove_temp_files=0, verbose=0):
+                       path_qc='.', remove_temp_files=0, verbose=1):
     """
     Main function that calls various methods for slicewise registration.
 
@@ -659,7 +658,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
 
 def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='warp_forward.nii.gz',
                              fname_warp_inv='warp_inverse.nii.gz', rot_method='pca', filter_size=0, path_qc='.',
-                             verbose=0, pca_eigenratio_th=1.6, th_max_angle=40):
+                             verbose=1, pca_eigenratio_th=1.6, th_max_angle=40):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -754,6 +753,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     th_max_angle *= np.pi / 180
 
     # Loop across slices
+    print()  # Add newline between last log message and the progress bar logging
     for iz in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Estimate cord angle for each slice",
                                ncols=100):
         try:
@@ -922,11 +922,11 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
-    generate_warping_field(fname_dest[0], warp_x, warp_y, fname_warp, verbose)
-    generate_warping_field(fname_src[0], warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
+    generate_warping_field(fname_dest[0], warp_x, warp_y, fname_warp)
+    generate_warping_field(fname_src[0], warp_inv_x, warp_inv_y, fname_warp_inv)
 
 
-def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0, path_qc='.', smoothWarpXY=1):
+def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=1, path_qc='.', smoothWarpXY=1):
     """
     Column-wise non-linear registration of segmentations. Based on an idea from Allan Martin.
     - Assumes src/dest are segmentations (not necessarily binary), and already registered by center of mass
@@ -991,10 +991,9 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     warp_inv_y = np.zeros(data_src.shape)
 
     # Loop across slices
-    logger.info("\nEstimate columnwise transformation...")
-    for iz in range(0, nz):
-        logger.info(f"{str(iz)}/{str(nz)}..")
-
+    print()  # Add newline between last log message and the progress bar logging
+    for iz in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Estimate columnwise transformation",
+                               ncols=100):
         # PREPARE COORDINATES
         # ============================================================
         # get indices of x and y coordinates
@@ -1178,9 +1177,9 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
-    generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
+    generate_warping_field(fname_dest, warp_x, warp_y, fname_warp)
     # Generate inverse warping field (defined in source space)
-    generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
+    generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv)
 
 
 def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz',
@@ -1190,7 +1189,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '',
                                          'translation': '', 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                          'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'},
-               verbose=0):
+               verbose=1):
     """
     Slice-by-slice registration of two images.
 
@@ -1261,9 +1260,9 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         list_warp_inv = []
 
     # loop across slices
-    for i in range(nz):
+    print()  # Add newline between last log message and the progress bar logging
+    for i in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Registering slice", ncols=100):
         # set masking
-        logger.info(f"Registering slice {str(i)}/{str(nz-1)}...")
         num = numerotation(i)
         prefix_warp2d = 'warp2d_' + num
         # if mask is used, prepare command for ANTs
@@ -1284,7 +1283,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
             '--smoothing-sigmas', str(paramreg.smooth) + 'mm',
             '--output', '[' + prefix_warp2d + ',src_Z' + num + '_reg.nii]',    # --> file.mat (contains Tx,Ty, theta)
             '--interpolation', 'BSpline[3]',
-            '--verbose', '1',
+            '--verbose', ('1' if verbose >= 2 else '0'),
         ] + masking
         # add init translation
         if not paramreg.init == '':
@@ -1293,7 +1292,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
         try:
             # run registration
-            run_proc(cmd, is_sct_binary=True)
+            run_proc(cmd, is_sct_binary=True, verbose=(1 if verbose >= 2 else 0))
 
             if paramreg.algo in ['Translation']:
                 file_mat = prefix_warp2d + '0GenericAffine.mat'
@@ -1374,14 +1373,13 @@ def numerotation(nb):
     return nb_output
 
 
-def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field.nii.gz', verbose=1):
+def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field.nii.gz'):
     """
     Generate an ITK warping field
     :param fname_dest:
     :param warp_x:
     :param warp_y:
     :param fname_warp:
-    :param verbose:
     :return:
     """
     logger.info("\nGenerate warping field...")
