@@ -37,7 +37,7 @@ jobs:
     steps:
 
     - name: Checkout spinalcordtoolbox
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Install spinalcordtoolbox
       run: |
@@ -75,7 +75,7 @@ jobs:
         shell: bash
     steps:
     - name: Checkout spinalcordtoolbox
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download requirements-freeze.txt
       uses: actions/download-artifact@v3
@@ -133,7 +133,7 @@ jobs:
         git config --global user.name "GitHub Actions Bot"
 
     - name: Checkout spinalcordtoolbox (main branch)
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         ref: ${{ env.MAIN_BRANCH }}
         fetch-depth: 0

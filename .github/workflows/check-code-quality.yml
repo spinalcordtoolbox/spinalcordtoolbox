@@ -6,7 +6,7 @@ jobs:
   run_flake8_and_shellcheck:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0  # Fetches all references, which is needed to `git diff` with origin/master
     - name: Set up Python
