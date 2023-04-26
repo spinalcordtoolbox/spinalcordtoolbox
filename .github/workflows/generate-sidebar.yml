@@ -13,7 +13,7 @@ jobs:
           # Each repo with at least 1 wiki page has a corresponding <repo>.wiki repo
           repository: "${{ github.repository }}.wiki"  
 
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
       - run: npm install github-wiki-sidebar -g
       
       # Dummy credentials to be listed in _Sidebar.md update commit for Wiki 
