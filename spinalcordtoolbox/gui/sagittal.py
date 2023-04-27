@@ -78,7 +78,9 @@ class SagittalDialog(base.BaseDialog):
         super(SagittalDialog, self).on_undo()
         self.sagittal.refresh()
         self.labels.refresh()
-        self.labels.label = self._controller.label
+        # If a label hasn't been selected yet, the controller won't have the `label` attribute
+        if hasattr(self._controller, 'label'):
+            self.labels.label = self._controller.label
 
     def increment_vertical_nav(self):
         x, y, z = self._controller.position
