@@ -54,7 +54,6 @@ class SagittalDialog(base.BaseDialog):
         self.sagittal.title(self.params.subtitle)
         self.sagittal.point_selected_signal.connect(self.on_select_point)
         layout.addWidget(self.sagittal)
-        self.labels.refresh()
         self.sagittal.refresh()
 
     def _init_controls(self, parent):
