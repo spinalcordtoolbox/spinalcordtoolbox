@@ -47,7 +47,7 @@ class SagittalDialog(base.BaseDialog):
         parent.addLayout(layout)
 
         self.labels = widgets.VertebraeWidget(self, self.params.vertebraes)
-        self.labels.label = self.params.start_vertebrae
+        self.labels.label = self._controller.label = self.params.start_vertebrae
         layout.addWidget(self.labels)
 
         self.sagittal = widgets.SagittalCanvas(self, plot_points=True, annotate=True)
@@ -78,9 +78,7 @@ class SagittalDialog(base.BaseDialog):
         super(SagittalDialog, self).on_undo()
         self.sagittal.refresh()
         self.labels.refresh()
-        # If a label hasn't been selected yet, the controller won't have the `label` attribute
-        if hasattr(self._controller, 'label'):
-            self.labels.label = self._controller.label
+        self.labels.label = self._controller.label
 
     def increment_vertical_nav(self):
         x, y, z = self._controller.position
