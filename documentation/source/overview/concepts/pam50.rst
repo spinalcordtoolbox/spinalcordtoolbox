@@ -16,7 +16,7 @@ To perform template-based analysis, a template is needed. Templates act as a com
 
 * It is available for T1-, T2-and T2*-weighted MRI contrast.
 * It is compatible with the ICBM152 brain template (a.k.a. the MNI coordinate system), allowing researchers to conduct simultaneous brain/spine studies within the same coordinate system.
-* It includes a probabilistic atlas for white matter, gray metter, and CSF regions.
+* It includes a probabilistic atlas for white matter, gray matter, and CSF regions.
 * It is a straightened template rather than a curved one.
 
 The template is stored in the ``data/PAM50/`` directory in your SCT installation directory. ``PAM50/`` contains several subfolders, each corresponding to different aspects of PAM50.
@@ -26,7 +26,7 @@ The template is stored in the ``data/PAM50/`` directory in your SCT installation
 Template (``PAM50/template``)
 =============================
 
-The template folder contains the PAM50 template for various MRI contrast types. It also contains binary and probablistic masks for different spinal features, as well as point-wise labels for vertebral levels and intervertebral discs.
+The template folder contains the PAM50 template for various MRI contrast types. It also contains binary and probabilistic masks for different spinal features, as well as point-wise labels for vertebral levels and intervertebral discs.
 
 The template folder also contains an ``info_label.txt`` file to explain what each file represents:
 
@@ -46,7 +46,7 @@ White and Grey Matter Atlas (``PAM50/atlas``)
 
 The White Matter atlas will be a useful tool for your studies of specific spinal cord tracts. It consists of 36 NIfTI volumes named ``PAM50_atlas_<tract_number>.nii.gz`` where ``<tract_number>`` is the number identifying the tract. Fifteen WM tracts and three GM regions are available for each side. The values of each voxel of the files ``PAM50_atlas_<tract_number>.nii.gz`` are the voxel volume proportions occupied by the corresponding tract.
 
-Notably, each volume is a probablistic mask, or "soft mask". The voxel values in these volumes range from 0 to 1; voxels in the center of each tract will equal 1, while voxels near the edges of each tract will be weighted closer to 0. This is to account for `partial volume effects <http://mriquestions.com/partial-volume-effects.html>`_.
+Notably, each volume is a probabilistic mask, or "soft mask". The voxel values in these volumes range from 0 to 1; voxels in the center of each tract will equal 1, while voxels near the edges of each tract will be weighted closer to 0. This is to account for `partial volume effects <http://mriquestions.com/partial-volume-effects.html>`_.
 
 The atlas folder also contains an ``info_label.txt`` file to explain what each file represents:
 

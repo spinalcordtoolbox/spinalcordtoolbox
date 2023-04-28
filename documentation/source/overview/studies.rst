@@ -26,6 +26,7 @@ The following studies have used SCT:
 2023
 ----
 
+-  Schaefer *et al.* `Could spinal cord oscillation contribute to spinal cord injury in degenerative cervical myelopathy? <https://doi.org/10.1016/j.bas.2023.101743>`_, **Brain and Spine** 2023
 -  Branco *et al.* `Advanced structural magnetic resonance imaging of the spinal cord: Technical aspects and clinical use <https://doi.org/10.1053/j.sult.2023.03.016>`_, **Semin. Ultrasound CT MR** 2023
 -  Camera *et al.* `Shared imaging markers of fatigue across multiple sclerosis, aquaporin-4 antibody neuromyelitis optica spectrum disorder and MOG antibody disease <https://doi.org/10.1093/braincomms/fcad107>`_, **Brain commun.** 2023
 -  Scheuren *et al.* `Combined Neurophysiologic and Neuroimaging Approach to Reveal the Structure-Function Paradox in Cervical Myelopathy <https://doi.org/10.1212/WNL.0000000000012643>`_, **Neurology** 2023

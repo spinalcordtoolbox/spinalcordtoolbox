@@ -122,11 +122,11 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         # Loop across 4th dimension and resample each 3d volume
         for it in range(img.shape[3]):
             # Create dummy 3d nibabel image
-            nii_tmp = nib.nifti1.Nifti1Image(img.get_data()[..., it], affine)
+            nii_tmp = nib.nifti1.Nifti1Image(np.asanyarray(img.dataobj)[..., it], affine)
             img3d_r = resample_from_to(
                 nii_tmp, to_vox_map=(shape_r[:-1], affine_r), order=dict_interp[interpolation], mode=mode,
                 cval=0.0, out_class=None)
-            data4d[..., it] = img3d_r.get_data()
+            data4d[..., it] = np.asanyarray(img3d_r.dataobj)
         # Create 4d nibabel Image
         img_r = nib.nifti1.Nifti1Image(data4d, affine_r)
         # Copy over the TR parameter from original 4D image (otherwise it will be incorrectly set to 1)
@@ -136,7 +136,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
     if type(image) == nib.nifti1.Nifti1Image:
         return img_r
     elif type(image) == Image:
-        return Image(img_r.get_data(), hdr=img_r.header, orientation=image.orientation, dim=img_r.header.get_data_shape())
+        return Image(np.asanyarray(img_r.dataobj), hdr=img_r.header, orientation=image.orientation, dim=img_r.header.get_data_shape())
 
 
 def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation, verbose, fname_ref=None):

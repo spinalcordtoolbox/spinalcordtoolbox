@@ -191,8 +191,8 @@ class AnalyzeLeion:
             copy(os.path.join(self.tmp_dir, file_), os.path.join(self.path_ofolder, file_))
 
     def pack_measures(self):
-        writer = pd.ExcelWriter(self.excel_name, engine='xlwt')
-        self.measure_pd.to_excel(writer, sheet_name='measures', index=False, engine='xlwt')
+        writer = pd.ExcelWriter(self.excel_name, engine='xlsxwriter')
+        self.measure_pd.to_excel(writer, sheet_name='measures', index=False, engine='xlsxwriter')
 
         # Add the total column and row
         if self.path_template is not None:
@@ -202,9 +202,9 @@ class AnalyzeLeion:
                     df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
                     df['total'] = df.sum(numeric_only=True, axis=1)
                     df.iloc[-1, df.columns.get_loc('vert')] = 'total'
-                    df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlwt')
+                    df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
                 else:
-                    self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlwt')
+                    self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
 
         # Save pickle
         self.distrib_matrix_dct['measures'] = self.measure_pd

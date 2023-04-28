@@ -6,7 +6,7 @@ import logging
 import numpy as np
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
 from skimage.filters import threshold_local, threshold_otsu, rank
-from scipy.ndimage.filters import gaussian_filter, gaussian_laplace
+from scipy.ndimage import gaussian_filter, gaussian_laplace
 from scipy.stats import pearsonr, spearmanr
 from dipy.denoise.noise_estimate import estimate_sigma
 from dipy.segment.mask import median_otsu
@@ -81,8 +81,8 @@ def dice(im1, im2):
 
     Source: https://gist.github.com/JDWarner/6730747
     """
-    im1 = np.asarray(im1).astype(np.bool)
-    im2 = np.asarray(im2).astype(np.bool)
+    im1 = np.asarray(im1).astype(bool)
+    im2 = np.asarray(im2).astype(bool)
 
     if im1.shape != im2.shape:
         raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
