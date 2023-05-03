@@ -71,6 +71,10 @@ def display_viewer_syntax(files, verbose, im_types=[], minmax=[], opacities=[], 
     display_viewer_syntax([file1, file2, file3])
     display_viewer_syntax([file1, file2], im_types=['anat', 'softseg'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
+    # If the files exist in the working directory, then display just their filenames (for conciseness/readability).
+    # Otherwise, the user likely ran the script in a different directory than the data, so use the absolute paths.
+    files = [os.path.basename(f) if os.path.exists(os.path.basename(f)) else os.path.abspath(f) for f in files]
+
     available_viewers = [viewer for viewer in SUPPORTED_VIEWERS if check_exe(viewer)]
 
     if verbose:
