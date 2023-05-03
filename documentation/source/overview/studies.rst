@@ -26,6 +26,7 @@ The following studies have used SCT:
 2023
 ----
 
+-  Khamaysa *et al.* `Comparison of spinal magnetic resonance imaging and classical clinical factors in predicting motor capacity in amyotrophic lateral sclerosis <https://doi.org/10.1007/s00415-023-11727-w>`_, **J. Neurol.** 2023
 -  Schaefer *et al.* `Could spinal cord oscillation contribute to spinal cord injury in degenerative cervical myelopathy? <https://doi.org/10.1016/j.bas.2023.101743>`_, **Brain and Spine** 2023
 -  Branco *et al.* `Advanced structural magnetic resonance imaging of the spinal cord: Technical aspects and clinical use <https://doi.org/10.1053/j.sult.2023.03.016>`_, **Semin. Ultrasound CT MR** 2023
 -  Camera *et al.* `Shared imaging markers of fatigue across multiple sclerosis, aquaporin-4 antibody neuromyelitis optica spectrum disorder and MOG antibody disease <https://doi.org/10.1093/braincomms/fcad107>`_, **Brain commun.** 2023
