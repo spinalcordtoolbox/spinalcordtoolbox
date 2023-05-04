@@ -7,6 +7,7 @@ import shutil
 import logging
 import argparse
 import inspect
+from pathlib import Path
 
 from enum import Enum
 
@@ -71,10 +72,10 @@ def display_viewer_syntax(files, verbose, im_types=[], minmax=[], opacities=[], 
     display_viewer_syntax([file1, file2, file3])
     display_viewer_syntax([file1, file2], im_types=['anat', 'softseg'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
-    # If the parent directory of the file matches the current working directory, then use just the filename (basename).
-    files = [os.path.basename(abspath) if os.path.dirname(abspath) == os.getcwd()
+    # If the file's absolute path is relative to the CWD, then use just the relative path to that file.
+    files = [str(abspath.relative_to(Path.cwd())) if abspath.is_relative_to(Path.cwd())
              # Otherwise, the file must be outside the working directory, so use the absolute path.
-             else abspath for abspath in [os.path.abspath(f) for f in files]]
+             else str(abspath) for abspath in [Path(f).absolute() for f in files]]
 
     available_viewers = [viewer for viewer in SUPPORTED_VIEWERS if check_exe(viewer)]
 
