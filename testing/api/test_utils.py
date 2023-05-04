@@ -61,34 +61,30 @@ def temporary_viewers(supported_viewers=utils.SUPPORTED_VIEWERS):
 
 def test_display_viewer_syntax(temporary_viewers):
     """Test that sample input produces the required syntax string output."""
-    filepaths_relative = ["test_img.nii.gz", "test_img_2.nii.gz", "test_seg.nii.gz", "test_img_3.nii.gz"]
     syntax_strings = utils.display_viewer_syntax(
-        files=filepaths_relative,
+        files=["test_img.nii.gz", "test_img_2.nii.gz", "test_seg.nii.gz", "test_img_3.nii.gz"],
         im_types=['anat', 'anat', 'seg', 'anat'],
         minmax=['', '0,1', '0.25,0.75', ''],
         opacities=['', '0.7', '1.0', ''],
         mode="test",
         verbose=1,
     )
-    # Because these files don't actually exist in the PWD, display_viewer_syntax will use absolute paths instead
-    filepaths_absolute = [os.path.join(os.getcwd(), filename) for filename in filepaths_relative]
-
     for viewer in temporary_viewers:
         assert viewer in syntax_strings.keys()
         cmd_string = syntax_strings[viewer]
         cmd_opts = cmd_string.replace(f"{viewer} ", "")
         if viewer.startswith("fsleyes"):
-            assert cmd_opts == (f"{filepaths_absolute[0]} -cm greyscale "
-                                f"{filepaths_absolute[1]} -cm greyscale -dr 0 1 -a 70.0 "
-                                f"{filepaths_absolute[2]} -cm red -dr 0.25 0.75 -a 100.0 "
-                                f"{filepaths_absolute[3]} -cm greyscale &")
+            assert cmd_opts == ("test_img.nii.gz -cm greyscale "
+                                "test_img_2.nii.gz -cm greyscale -dr 0 1 -a 70.0 "
+                                "test_seg.nii.gz -cm red -dr 0.25 0.75 -a 100.0 "
+                                "test_img_3.nii.gz -cm greyscale &")
         elif viewer.startswith("fslview"):
-            assert cmd_opts == (f"-m test "
-                                f"{filepaths_absolute[0]} -l Greyscale "
-                                f"{filepaths_absolute[1]} -l Greyscale -b 0,1 -t 0.7 "
-                                f"{filepaths_absolute[2]} -l Red -b 0.25,0.75 -t 1.0 "
-                                f"{filepaths_absolute[3]} -l Greyscale &")
+            assert cmd_opts == ("-m test "
+                                "test_img.nii.gz -l Greyscale "
+                                "test_img_2.nii.gz -l Greyscale -b 0,1 -t 0.7 "
+                                "test_seg.nii.gz -l Red -b 0.25,0.75 -t 1.0 "
+                                "test_img_3.nii.gz -l Greyscale &")
         elif viewer.startswith("itk"):
-            assert cmd_opts == (f"-g {filepaths_absolute[0]} "
-                                f"-o {filepaths_absolute[1]} {filepaths_absolute[3]} "
-                                f"-s {filepaths_absolute[2]}")
+            assert cmd_opts == ("-g test_img.nii.gz "
+                                "-o test_img_2.nii.gz test_img_3.nii.gz "
+                                "-s test_seg.nii.gz")
