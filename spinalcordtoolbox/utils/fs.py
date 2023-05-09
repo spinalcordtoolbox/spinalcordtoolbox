@@ -7,6 +7,7 @@ import shutil
 import tempfile
 import datetime
 import logging
+from pathlib import Path
 
 from .sys import printv
 
@@ -240,3 +241,15 @@ def copy(src, dst, verbose=1):
             if isinstance(e, shutil.SameFileError):
                 return
         raise  # Must be another error
+
+
+def relpath_or_abspath(child_path, parent_path):
+    """
+    Try to find a relative path between a child path and its parent path. If it doesn't exist,
+    then the child path is not within the parent path, so return its abspath instead.
+    """
+    abspath = Path(child_path).absolute()
+    try:
+        return abspath.relative_to(parent_path)
+    except ValueError:
+        return abspath
