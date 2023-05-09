@@ -146,7 +146,7 @@ class Slice(object):
         return matrix[start_row:end_row, start_col:end_col]
 
     @staticmethod
-    def add_slice(matrix, i, column, size, patch):
+    def add_slice(matrix, i, column, patch):
         """Adds a slice to the canvas containing all the slices
 
         TODO : Move this to the Axial class
@@ -158,10 +158,10 @@ class Slice(object):
         :param patch: patch to insert
         :return: matrix
         """
-        start_col = (i % column) * size * 2
+        start_col = (i % column) * patch.shape[1]
         end_col = start_col + patch.shape[1]
 
-        start_row = int(i / column) * size * 2
+        start_row = int(i / column) * patch.shape[0]
         end_row = start_row + patch.shape[0]
 
         matrix[start_row:end_row, start_col:end_col] = patch
@@ -393,7 +393,7 @@ class Axial(Slice):
                 y = int(centers_y[i])
                 # crop slice around center of mass and add slice to the matrix layout
                 # TODO: resample there after cropping based on physical dimensions
-                self.add_slice(matrix, i, nb_column, size, self.crop(self.get_slice(image.data, i), x, y, size, size))
+                self.add_slice(matrix, i, nb_column, self.crop(self.get_slice(image.data, i), x, y, size, size))
 
             matrices.append(matrix)
         if return_center is True:
@@ -493,7 +493,7 @@ class Sagittal(Slice):
                                            x=int(centers_x[i]), y=int(centers_y[i]),
                                            width=size_w, height=size_h)
                 # Add the cropped slice to the matrix layout
-                self.add_slice(matrix, i, nb_column, size, zslice_cropped)
+                self.add_slice(matrix, i, nb_column, zslice_cropped)
 
         # 3. If requested, fetch the coordinates of the centers of each mosaic slice
         if return_center is True:
