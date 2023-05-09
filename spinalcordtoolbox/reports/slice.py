@@ -464,5 +464,43 @@ class Sagittal(Slice):
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
         :return: list of tuples, each tuple representing the center of each square of the mosaic. Only with param return_center is True
         """
+        # 1. Compute the sizes of the patches, as well as the overall image
+        # 1a. Compute width and height of mosaic squares. (This is assumed to be a square for Axial slices.)
+        size_w = size_h = (size * 2)
+        # 1b. Calculate number of columns to display on the report. (By default, size=15 -> 30x30 squares -> 20 columns)
+        if nb_column == 0:
+            nb_column = 600 // size_w
+        # 1c. Calculate number of rows to display.
+        nb_slices = self.get_dim(self._images[0])
+        nb_row = math.ceil(nb_slices // nb_column) + 1
+        # 1d. Compute the matrix size of the overall mosaic image
+        matrix_sz = (int(size_h * nb_row), int(size_w * nb_column))
 
-        raise NotImplementedError
+        # 2. Use centers of mass to crop the images to the necessary size
+        # 2a. Get center of mass for each slice of the image.
+        #     NB: If the input is the cord segmentation, the coordinates are used to center the image on each panel
+        #         of the mosaic.
+        centers_x, centers_y = self.get_center()
+        # 2b. Crop slices around center of mass and add slices to the matrix layout
+        matrices = list()
+        for image in self._images:
+            matrix = np.zeros(matrix_sz)
+            for i in range(nb_slices):
+                # Fetch the original, uncropped axial slice
+                zslice = self.get_slice(image.data, i)
+                # Crop a patch from the slice, centered around the center of mass
+                zslice_cropped = self.crop(zslice,
+                                           x=int(centers_x[i]), y=int(centers_y[i]),
+                                           width=size_w, height=size_h)
+                # Add the cropped slice to the matrix layout
+                self.add_slice(matrix, i, nb_column, size, zslice_cropped)
+
+        # 3. If requested, fetch the coordinates of the centers of each mosaic slice
+        if return_center is True:
+            centers_mosaic = []
+            for irow in range(nb_row):
+                for icol in range(nb_column):
+                    centers_mosaic.append(((icol * size_w) + (size_w // 2), (irow * size_h) + (size_h // 2)))
+            return matrices, centers_mosaic
+        else:
+            return matrices
