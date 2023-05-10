@@ -10,6 +10,7 @@ from nibabel.nifti1 import Nifti1Image
 
 from spinalcordtoolbox.image import Image, split_img_data
 from spinalcordtoolbox.resampling import resample_nib
+from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 logger = logging.getLogger(__name__)
@@ -456,7 +457,7 @@ class Sagittal(Slice):
         size_x = self.coronal_dim(image)
         return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
 
-    def mosaic(self, nb_column=0, size=15, return_center=False):
+    def mosaic(self, nb_column=0, dilation=(0, 0, 0)):
         """Obtain matrices of the mosaics
 
         :param nb_column: number of mosaic columns
@@ -464,43 +465,34 @@ class Sagittal(Slice):
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
         :return: list of tuples, each tuple representing the center of each square of the mosaic. Only with param return_center is True
         """
+        # 0. Use the segmentation image to initialize the image cropper
+        self._image_seg = self._images[-1]
+        cropper = ImageCropper()
+        cropper.get_bbox_from_mask(self._image_seg)
+
         # 1. Compute the sizes of the patches, as well as the overall image
         # 1a. Compute width and height of mosaic squares. (This is assumed to be a square for Axial slices.)
-        size_w = size_h = (size * 2)
+        size_h = cropper.bbox.xmax - cropper.bbox.xmin + 1 + (2 * dilation[0])  # SAL -> SI axis provides height
+        size_w = cropper.bbox.ymax - cropper.bbox.ymin + 1 + (2 * dilation[1])  # SAL -> AP axis provides width
         # 1b. Calculate number of columns to display on the report. (By default, size=15 -> 30x30 squares -> 20 columns)
         if nb_column == 0:
             nb_column = 600 // size_w
         # 1c. Calculate number of rows to display.
-        nb_slices = self.get_dim(self._images[0])
+        nb_slices = cropper.bbox.zmax - cropper.bbox.zmin + 1 + (2 * dilation[2])  # SAL -> LR axis provides nb_slices
         nb_row = math.ceil(nb_slices // nb_column) + 1
         # 1d. Compute the matrix size of the overall mosaic image
         matrix_sz = (int(size_h * nb_row), int(size_w * nb_column))
 
-        # 2. Use centers of mass to crop the images to the necessary size
-        # 2a. Get center of mass for each slice of the image.
-        #     NB: If the input is the cord segmentation, the coordinates are used to center the image on each panel
-        #         of the mosaic.
-        centers_x, centers_y = self.get_center()
-        # 2b. Crop slices around center of mass and add slices to the matrix layout
+        # 2. Use the previously-defined segmentation-based cropper to crop the images to the necessary size
         matrices = list()
         for image in self._images:
+            image_cropped = cropper.crop(img_in=image, dilate=dilation)
             matrix = np.zeros(matrix_sz)
             for i in range(nb_slices):
-                # Fetch the original, uncropped axial slice
-                zslice = self.get_slice(image.data, i)
-                # Crop a patch from the slice, centered around the center of mass
-                zslice_cropped = self.crop(zslice,
-                                           x=int(centers_x[i]), y=int(centers_y[i]),
-                                           width=size_w, height=size_h)
+                # Fetch the sagittal slice (which has already been cropped)
+                lrslice_cropped = self.get_slice(image_cropped.data, i)
                 # Add the cropped slice to the matrix layout
-                self.add_slice(matrix, i, nb_column, zslice_cropped)
+                self.add_slice(matrix, i, nb_column, lrslice_cropped)
+            matrices.append(matrix)
 
-        # 3. If requested, fetch the coordinates of the centers of each mosaic slice
-        if return_center is True:
-            centers_mosaic = []
-            for irow in range(nb_row):
-                for icol in range(nb_column):
-                    centers_mosaic.append(((icol * size_w) + (size_w // 2), (irow * size_h) + (size_h // 2)))
-            return matrices, centers_mosaic
-        else:
-            return matrices
+        return matrices
