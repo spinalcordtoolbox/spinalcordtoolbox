@@ -853,6 +853,12 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, angle_lin
             qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
             qcslice_operations = [QcImage.listed_seg]
             def qcslice_layout(x): return x.mosaic()[:2]
+        elif plane == 'Sagittal':
+            # Note, spinal cord segmentation (fname_seg) is used to crop the input image.
+            # Then, the input image (fname_in1) is overlaid by the lesion (fname_in2).
+            qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+            qcslice_operations = [QcImage.listed_seg]
+            def qcslice_layout(x): return x.mosaic()[:2]
     else:
         raise ValueError("Unrecognized process: {}".format(process))
 
