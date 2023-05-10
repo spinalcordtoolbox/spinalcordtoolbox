@@ -460,10 +460,11 @@ class Sagittal(Slice):
     def mosaic(self, nb_column=0, dilation=(0, 0, 0)):
         """Obtain matrices of the mosaics
 
+        Mosaic images are cropped based on the bounding box of the spinal cord segmentation.
+
         :param nb_column: number of mosaic columns
-        :param size: each column size
+        :param dilation: a tuple containing (x,y,z) integers for dilating the bounding box used for cropping.
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
-        :return: list of tuples, each tuple representing the center of each square of the mosaic. Only with param return_center is True
         """
         # 0. Use the segmentation image to initialize the image cropper
         self._image_seg = self._images[-1]
