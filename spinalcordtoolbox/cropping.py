@@ -40,7 +40,7 @@ class ImageCropper(object):
         in each of the x-, y-, and z-directions.
         :return Image: img_out
         """
-        if not img_in:
+        if img_in is None:
             if self.img_in:
                 img_in = self.img_in
             else:
