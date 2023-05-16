@@ -659,7 +659,7 @@ def propseg(img_input, options_dict):
     for fname in list_fname:
         im = Image(fname)
         im.header = image_input.header
-        im.save(dtype='int8')  # they are all binary masks hence fine to save as int8
+        im.save(dtype='int8', verbose=0)  # they are all binary masks hence fine to save as int8
 
     return Image(fname_seg)
 

@@ -11,6 +11,7 @@ import inspect
 from enum import Enum
 
 from .sys import check_exe, printv, removesuffix, ANSIColors16
+from .fs import relpath_or_abspath
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,9 @@ def display_viewer_syntax(files, verbose, im_types=[], minmax=[], opacities=[], 
     display_viewer_syntax([file1, file2, file3])
     display_viewer_syntax([file1, file2], im_types=['anat', 'softseg'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
+    # Try to convert the path to one that is relative to the CWD; if not possible, use the abspath instead.
+    files = [str(relpath_or_abspath(filepath, parent_path=os.getcwd())) for filepath in files]
+
     available_viewers = [viewer for viewer in SUPPORTED_VIEWERS if check_exe(viewer)]
 
     if verbose:
