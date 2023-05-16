@@ -372,7 +372,7 @@ class Axial(Slice):
         if nb_column == 0:
             nb_column = 600 // (size * 2)
 
-        nb_row = math.ceil(dim // nb_column) + 1
+        nb_row = math.ceil(dim / nb_column)
 
         # Compute the matrix size of the final mosaic image
         matrix_sz = (int(size * 2 * nb_row), int(size * 2 * nb_column))
@@ -480,7 +480,7 @@ class Sagittal(Slice):
             nb_column = 600 // size_w
         # 1c. Calculate number of rows to display.
         nb_slices = cropper.bbox.zmax - cropper.bbox.zmin + 1 + (2 * dilation[2])  # SAL -> LR axis provides nb_slices
-        nb_row = math.ceil(nb_slices // nb_column) + 1
+        nb_row = math.ceil(nb_slices / nb_column)
         # 1d. Compute the matrix size of the overall mosaic image
         matrix_sz = (int(size_h * nb_row), int(size_w * nb_column))
 
