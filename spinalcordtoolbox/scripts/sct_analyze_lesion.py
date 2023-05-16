@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
 # Author: Charley
-# Modified: 2017-08-19
+# Modified: 2023-05-16 by Jan Valosek
 #
 # About the license: see the file LICENSE.TXT
 
