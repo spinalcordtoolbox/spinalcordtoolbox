@@ -846,19 +846,17 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, angle_lin
         qcslice_operations = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.single()
     elif process in ['sct_deepseg_lesion']:
-        # Axial QC
         if plane == 'Axial':
-            # Note, spinal cord segmentation (fname_seg) is used to crop the input image.
-            # Then, the input image (fname_in1) is overlaid by the lesion (fname_in2).
-            qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
-            qcslice_operations = [QcImage.listed_seg]
-            def qcslice_layout(x): return x.mosaic()[:2]
+            SliceSubtype = qcslice.Axial
         elif plane == 'Sagittal':
-            # Note, spinal cord segmentation (fname_seg) is used to crop the input image.
-            # Then, the input image (fname_in1) is overlaid by the lesion (fname_in2).
-            qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
-            qcslice_operations = [QcImage.listed_seg]
-            def qcslice_layout(x): return x.mosaic()[:2]
+            SliceSubtype = qcslice.Sagittal
+        else:
+            raise ValueError(f"Invalid plane '{plane}'. Valid choices are 'Axial' and 'Sagittal'.")
+        # Note, spinal cord segmentation (fname_seg) is used to crop the input image.
+        # Then, the input image (fname_in1) is overlaid by the lesion (fname_in2).
+        qcslice_type = SliceSubtype([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        qcslice_operations = [QcImage.listed_seg]
+        def qcslice_layout(x): return x.mosaic()[:2]
     else:
         raise ValueError("Unrecognized process: {}".format(process))
 
