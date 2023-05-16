@@ -1,6 +1,7 @@
 import pytest
 import logging
 
+import math
 import pickle
 import numpy as np
 
@@ -89,3 +90,37 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
                 assert measurements.at[0, key] < expected_value
             elif key == 'length [mm]':
                 assert measurements.at[0, key] > expected_value
+
+
+@pytest.mark.sct_testing
+@pytest.mark.parametrize("dummy_lesion, rtol", [
+    # Straight region of `t2.nii.gz` -> little curvature -> smaller tolerance
+    ([(29, 45, 25), (3, 10, 2)], 0.001),
+    ([(29, 27, 25), (1, 4, 1)], 0.001),  # NB: Example from #3633
+    # Curved region of `t2.nii.gz` -> lots of curvature -> larger tolerance
+    ([(29, 0, 25), (4, 15, 3)], 0.01)
+], indirect=["dummy_lesion"])
+def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_segmentation(dummy_lesion, rtol,
+                                                                                            tmp_path):
+    """Run the CLI script without providing SC segmentation -- only volume is computed. Max_equivalent_diameter and
+    length are nan."""
+    # Run the analysis on the dummy lesion file
+    path_lesion, expected_measurements = dummy_lesion
+    sct_analyze_lesion.main(argv=['-m', path_lesion,
+                                  '-ofolder', str(tmp_path)])
+
+    # Load analysis results from pickled pandas.Dataframe
+    _, fname, _ = extract_fname(path_lesion)
+    with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
+        measurements = pickle.load(f)['measures']
+
+    # Validate analysis results
+    for key, expected_value in expected_measurements.items():
+        if key == 'volume [mm3]':
+            np.testing.assert_equal(measurements.at[0, key], expected_value)
+        else:
+            # The max_equivalent_diameter and length are nan because no segmentation is provided
+            if key == 'max_equivalent_diameter [mm]':
+                assert math.isnan(measurements.at[0, key]) is True
+            elif key == 'length [mm]':
+                assert math.isnan(measurements.at[0, key]) is True
