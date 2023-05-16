@@ -162,7 +162,7 @@ class Slice(object):
         start_col = (i % column) * patch.shape[1]
         end_col = start_col + patch.shape[1]
 
-        start_row = int(i / column) * patch.shape[0]
+        start_row = (i // column) * patch.shape[0]
         end_row = start_row + patch.shape[0]
 
         matrix[start_row:end_row, start_col:end_col] = patch
