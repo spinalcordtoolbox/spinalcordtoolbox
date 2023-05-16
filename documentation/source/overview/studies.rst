@@ -26,6 +26,7 @@ The following studies have used SCT:
 2023
 ----
 
+-  Pareto *et al.* `Assessing the Equivalence of Brain-Derived Measures from Two 3D T1-Weighted Acquisitions: One Covering the Brain and One Covering the Brain and Spinal Cord <https://doi.org/10.3174/ajnr.a7843>`_, **AJNR Am. J. Neuroradiol.** 2023
 -  Koning *et al.* `A Comparison of Functional Connectivity in the Human Brainstem and Spinal Cord Associated with Noxious and Innocuous Thermal Stimulation Identified by Means of Functional MRI <https://doi.org/10.3390/brainsci13050777>`_, **Brain Sci.**, 2023
 -  Althobity *et al.* `Multi-parametric MR for detection of pathological changes in CNS of mouse model of multiple sclerosis in vivo <https://doi.org/10.1002/nbm.4964>`_, **NMR Biomed** 2023
 -  Khamaysa *et al.* `Comparison of spinal magnetic resonance imaging and classical clinical factors in predicting motor capacity in amyotrophic lateral sclerosis <https://doi.org/10.1007/s00415-023-11727-w>`_, **J. Neurol.** 2023
