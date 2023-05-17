@@ -22,7 +22,7 @@ def get_parser():
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc\n'
                'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae\n'
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc -qc-dataset mydata -qc-subject sub-45\n'
-               'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -d t2_lesion.nii.gz -p sct_deepseg_lesion -plane Axial'
+               'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -d t2_lesion.nii.gz -p sct_deepseg_lesion -plane axial'
     )
     parser.add_argument('-i',
                         metavar='IMAGE',
@@ -47,7 +47,7 @@ def get_parser():
     parser.add_argument('-plane',
                         metavar='PLANE',
                         help='Plane of the output QC. Only relevant for -p sct_deepseg_lesion.',
-                        choices=('Axial', 'Sagittal'),
+                        choices=('axial', 'sagittal'),
                         required=False)
     parser.add_argument('-qc',
                         metavar='QC',
@@ -93,7 +93,8 @@ def main(argv: Sequence[str]):
     generate_qc(fname_in1=arguments.i,
                 fname_in2=arguments.d,
                 fname_seg=arguments.s,
-                plane=arguments.plane,
+                # Internal functions use capitalized strings ('Axial'/'Sagittal')
+                plane=arguments.plane.capitalize() if isinstance(arguments.plane, str) else arguments.plane,
                 args=f'("sct_qc {list2cmdline(argv)}")',
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
