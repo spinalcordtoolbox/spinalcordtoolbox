@@ -26,7 +26,7 @@ import sys
 import logging
 from typing import Sequence
 
-from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage import center_of_mass
 import nibabel as nib
 import numpy as np
 
@@ -93,10 +93,13 @@ def get_parser():
         help='The path where the quality control generated content will be saved.',
         default=None)
     optional.add_argument(
-        "-igt",
+        '-qc-dataset',
         metavar=Metavar.str,
-        help="File name of ground-truth PMJ (single voxel).",
-        required=False)
+        help='If provided, this string will be mentioned in the QC report as the dataset the process was run on.')
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help='If provided, this string will be mentioned in the QC report as the subject the process was run on.')
     optional.add_argument(
         "-r",
         type=int,
@@ -128,7 +131,7 @@ class DetectPMJ:
 
         self.verbose = verbose
 
-        self.tmp_dir = tmp_create()  # path to tmp directory
+        self.tmp_dir = tmp_create(basename="detect-pmj")  # path to tmp directory
 
         self.orientation_im = Image(self.fname_im).orientation  # to re-orient the data at the end
 
@@ -344,9 +347,9 @@ def main(argv: Sequence[str]):
         if path_qc is not None:
             from spinalcordtoolbox.reports.qc import generate_qc
             generate_qc(fname_in, fname_seg=fname_out, args=argv, path_qc=os.path.abspath(path_qc),
-                        process='sct_detect_pmj')
+                        dataset=arguments.qc_dataset, subject=arguments.qc_subject, process='sct_detect_pmj')
 
-        display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'], verbose=verbose)
+        display_viewer_syntax([fname_in, fname_out], im_types=['anat', 'seg'], verbose=verbose)
 
 
 if __name__ == "__main__":

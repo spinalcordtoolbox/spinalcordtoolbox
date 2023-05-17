@@ -115,7 +115,10 @@ def get_parser():
             "intervertebral disc between the subject and the template, as described in "
             "sct_straighten_spinalcord. This the most accurate method, however it has some serious caveats: \n"
             "  - This feature is not compatible with the parameter '-ref subject', where only a rigid registration is performed.\n"
-            "  - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the top label and below the bottom label. Applying this warping field will result in a strange-looking registered image that has the same value above the top label and below the bottom label. But if you are not interested in these regions, you do not need to worry about it.\n"
+            "  - Due to the non-linear registration in the S-I direction, the warping field will be cropped above the "
+            "top label and below the bottom label. Applying this warping field will result in a strange-looking "
+            "registered image that has the same value above the top label and below the bottom label. But if you are "
+            "not interested in these regions, you do not need to worry about it.\n"
             "\n"
             "We recommend starting with 2 labels, then trying the other "
             "options on a case-by-case basis depending on your data.\n"
@@ -272,11 +275,6 @@ def get_parser():
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
     )
     optional.add_argument(
-        '-igt',
-        metavar=Metavar.file,
-        help="File name of ground-truth template cord segmentation (binary nifti)."
-    )
-    optional.add_argument(
         '-r',
         metavar=Metavar.int,
         type=int,
@@ -401,7 +399,7 @@ def main(argv: Sequence[str]):
     if len(labels) > 2 and label_type in ['disc', 'spinal']:
         level_alignment = True
 
-    path_tmp = tmp_create(basename="register_to_template")
+    path_tmp = tmp_create(basename="register-to-template")
 
     # set temporary file names
     ftmp_data = 'data.nii'
@@ -449,7 +447,7 @@ def main(argv: Sequence[str]):
     # Project labels onto the spinal cord centerline because later, an affine transformation is estimated between the
     # template's labels (centered in the cord) and the subject's labels (assumed to be centered in the cord).
     # If labels are not centered, mis-registration errors are observed (see issue #1826)
-    ftmp_label = project_labels_on_spinalcord(ftmp_label, ftmp_seg, param_centerline)
+    ftmp_label = project_labels_on_spinalcord(ftmp_label, ftmp_seg, param_centerline, param.remove_temp_files)
 
     # binarize segmentation (in case it has values below 0 caused by manual editing)
     printv('\nBinarize segmentation', verbose)
@@ -619,14 +617,25 @@ def main(argv: Sequence[str]):
                 register_landmarks(ftmp_label, ftmp_template_label, paramregmulti.steps['0'].dof,
                                    fname_affine='straight2templateAffine.txt', verbose=verbose)
             except RuntimeError:
-                raise('Input labels do not seem to be at the right place. Please check the position of the labels. '
-                      'See documentation for more details: https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html')
+                printv(
+                    "Input labels do not seem to be at the right place. "
+                    "Please check the position of the labels. "
+                    "See documentation for more details: "
+                    "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html",
+                    1, 'error')
 
             # Concatenate transformations: curve --> straight --> affine
             printv('\nConcatenate transformations: curve --> straight --> affine...', verbose)
 
             dimensionality = len(Image("template.nii").hdr.get_data_shape())
-            cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_curve2straightAffine.nii.gz', '-R', 'template.nii', 'straight2templateAffine.txt', 'warp_curve2straight.nii.gz']
+            cmd = [
+                'isct_ComposeMultiTransform',
+                str(dimensionality),
+                'warp_curve2straightAffine.nii.gz',
+                '-R', 'template.nii',
+                'straight2templateAffine.txt',
+                'warp_curve2straight.nii.gz',
+            ]
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
@@ -731,7 +740,15 @@ def main(argv: Sequence[str]):
 
         else:
             dimensionality = len(Image("data.nii").hdr.get_data_shape())
-            cmd = ['isct_ComposeMultiTransform', f"{dimensionality}", 'warp_template2anat.nii.gz', '-R', 'data.nii', 'warp_straight2curve.nii.gz', '-i', 'straight2templateAffine.txt', warp_inverse]
+            cmd = [
+                'isct_ComposeMultiTransform',
+                str(dimensionality),
+                'warp_template2anat.nii.gz',
+                '-R', 'data.nii',
+                'warp_straight2curve.nii.gz',
+                '-i', 'straight2templateAffine.txt',
+                warp_inverse,
+            ]
             status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
             if status != 0:
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")

@@ -10,20 +10,17 @@
 import logging
 import os  # FIXME
 import shutil
+import psutil
 from math import asin, cos, sin, acos
 
 import numpy as np
-from scipy import ndimage
 from nibabel import load, Nifti1Image, save, aff2axcodes
 from nilearn.image import resample_img
 from scipy.signal import argrelmax, medfilt
+from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
 from sklearn.decomposition import PCA
 from scipy.io import loadmat
 import torch
-# import VoxelMorph and Neurite (used in VoxelMorph) with pytorch backend
-os.environ['VXM_BACKEND'] = 'pytorch'
-os.environ['NEURITE_BACKEND'] = 'pytorch'
-import voxelmorph as vxm
 
 import spinalcordtoolbox.image as image
 from spinalcordtoolbox.math import laplacian
@@ -33,6 +30,11 @@ from spinalcordtoolbox.scripts import sct_resample
 from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp_create, sct_dir_local_path
 
 from spinalcordtoolbox.scripts import sct_image
+
+# import VoxelMorph and Neurite (used in VoxelMorph) with pytorch backend
+os.environ['VXM_BACKEND'] = 'pytorch'
+os.environ['NEURITE_BACKEND'] = 'pytorch'
+import voxelmorph as vxm  # noqa: E402
 
 # TODO [AJ]
 # introduce potential cleanup functions in case exceptions occur and
@@ -186,7 +188,7 @@ def register_step_ants_slice_regularized_registration(src, dest, step, metricSiz
            '-i', step.iter,
            '-f', step.shrink,
            '-s', step.smooth,
-           '-v', '1',  # verbose (verbose=2 does not exist, so we force it to 1)
+           '-v', ('1' if verbose >= 1 else '0'),  # verbose (verbose=2 does not exist, so we force it to 1)
            '-o', '[step' + str(step.step) + ',' + scr_regStep + ']',  # here the warp name is stage10 because
            # antsSliceReg add "Warp"
            ] + mask_options
@@ -250,7 +252,7 @@ def register_step_ants_registration(src, dest, step, masking, ants_registration_
            '--restrict-deformation', step.deformation,
            '--output', '[step' + str(step.step) + ',' + scr_regStep + ']',
            '--interpolation', 'BSpline[3]',
-           '--verbose', '1',
+           '--verbose', ('1' if verbose >= 1 else '0'),
            ] + masking
 
     # add init translation
@@ -361,12 +363,12 @@ def register_step_dl_multimodal_cascaded_reg(src, dest, step, verbose=1):
     warp_forward_out = 'step' + str(step.step) + 'DLWarp.nii.gz'
     warp_inverse_out = 'step' + str(step.step) + 'DLInverseWarp.nii.gz'
 
-    register_dl_multimodal_cascaded_reg(src, dest, warp_forward_out, warp_inverse_out, verbose=verbose)
+    register_dl_multimodal_cascaded_reg(src, dest, warp_forward_out, warp_inverse_out)
 
     return warp_forward_out, warp_inverse_out
 
 
-def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forward, fname_warp_reverse, verbose=1):
+def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forward, fname_warp_reverse):
     """
     Deep learning based multimodal registration using cascaded networks based on the work done
     in the project https://github.com/ivadomed/multimodal-registration
@@ -386,7 +388,6 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     :param fname_dest: Name of fixed image (iso 1mm resolution and same space as moving image)
     :param fname_warp_forward: Name of the composed warping field resulting from the cascaded registration for the forward registration
     :param fname_warp_reverse: Name of the composed warping field resulting from the cascaded registration for the reverse registration
-    :param verbose: 0, 1, 2
     :return:
     """
 
@@ -447,56 +448,22 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
         nb_unet_features=([256, 256, 256, 256], [256, 256, 256, 256, 256, 256])
     )
     logger.info("\n Creating VxmDense models with arguments:")
-    logger.info(f"\n{reg_args}")
+    logger.info(f"{reg_args}")
 
-    # ---- First Model ---- #
-    logger.info("\n Loading first VxmDense model...")
-    pt_first_model = vxm.networks.VxmDense(**reg_args)
-    model1_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_first_model.pt')
-    trained_state_dict_first_model = torch.load(model1_path)
-    # Load the weights to the PyTorch model
-    weights_first_model = []
-    for k in trained_state_dict_first_model:
-        weights_first_model.append(trained_state_dict_first_model[k])
-    i = 0
-    i_max = len(list(pt_first_model.named_parameters()))
-    torchparam = pt_first_model.state_dict()
-    for k, v in torchparam.items():
-        if i < i_max:
-            torchparam[k] = weights_first_model[i]
-            i += 1
-    pt_first_model.load_state_dict(torchparam)
-    pt_first_model.to(device)
-    pt_first_model.eval()
+    volume_m = (new_img_shape[0] * new_img_shape[1] * new_img_shape[2] / 1e6)
+    ram_estimated = round((volume_m * 3.52) + 0.0538, 2)
+    ram_free = round(psutil.virtual_memory().free / 1024 ** 3, 2)
+    if ram_estimated + 1 > ram_free:
+        logger.warning(f"\nWARNING: System has {ram_free}GB of free memory, but inference may require as much as "
+                       f"{ram_estimated}GB to register images of size {new_img_shape}. As a result, the script may "
+                       f"quit unexpectedly due to lack of memory. To reduce memory requirements, please consider "
+                       f"cropping your images around the spinal cord prior to registration.")
 
-    # ---- Second Model ---- #
-    logger.info("\n Loading second VxmDense model...")
-    pt_second_model = vxm.networks.VxmDense(**reg_args)
-    model2_path = sct_dir_local_path('data', 'deepreg_models', 'pt_cascaded_second_model.pt')
-    trained_state_dict_second_model = torch.load(model2_path)
-    # Load the weights to the PyTorch model
-    weights_second_model = []
-    for k in trained_state_dict_second_model:
-        weights_second_model.append(trained_state_dict_second_model[k])
-    i = 0
-    i_max = len(list(pt_second_model.named_parameters()))
-    torchparam = pt_second_model.state_dict()
-    for k, v in torchparam.items():
-        if i < i_max:
-            torchparam[k] = weights_second_model[i]
-            i += 1
-    pt_second_model.load_state_dict(torchparam)
-    pt_second_model.to(device)
-    pt_second_model.eval()
-
-    # ---- Registration ---- #
     logger.info("\n Predicting using first VxmDense model...")
-    moved, warp_tensor_first = pt_first_model(input_moving, input_fixed, registration=True)
-    warp_data_first = warp_tensor_first[0].permute(1, 2, 3, 0).detach().numpy()
+    moved, warp_data_first = register_dl_inference('pt_cascaded_first_model.pt', input_moving, input_fixed, reg_args, device)
 
     logger.info("\n Predicting using second VxmDense model...")
-    moved_final, warp_tensor_second = pt_second_model(moved, input_fixed, registration=True)
-    warp_data_second = warp_tensor_second[0].permute(1, 2, 3, 0).detach().numpy()
+    moved_final, warp_data_second = register_dl_inference('pt_cascaded_second_model.pt', moved, input_fixed, reg_args, device)
 
     # ---- Warping fields ---- #
     # Modify the warp data so it can be used with sct_apply_transfo()
@@ -554,9 +521,35 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     save(warp_rev, fname_warp_reverse)
 
 
+def register_dl_inference(fname_model, input_moving, input_fixed, reg_args, device):
+    # Load the PyTorch model architecture
+    pt_model = vxm.networks.VxmDense(**reg_args)
+
+    # Copy over named parameters from the trained model file
+    torchparam = pt_model.state_dict()
+    trained_state_dict = torch.load(sct_dir_local_path('data', 'deepreg_models', fname_model))
+    for (name, parameter) in pt_model.named_parameters():
+        torchparam[name] = trained_state_dict[name]
+    # NB: The process above will *not* copy the two unnamed parameters from the trained `state_dict`:
+    #   1. 'integrate.transformer.grid'
+    #   2. 'transformer.grid'
+    # This is intentional; they should be preserved in their original state from `pt_model.state_dict()`.
+
+    # Load the parameters into the model
+    pt_model.load_state_dict(torchparam)
+    pt_model.to(device)
+    pt_model.eval()
+
+    # Perform inference
+    im_warped, warp_tensor = pt_model(input_moving, input_fixed, registration=True)
+    warp_data = warp_tensor[0].permute(1, 2, 3, 0).detach().numpy()
+
+    return im_warped, warp_data
+
+
 def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp_forward_out='step0Warp.nii.gz',
                        warp_inverse_out='step0InverseWarp.nii.gz', ants_registration_params=None,
-                       path_qc='.', remove_temp_files=0, verbose=0):
+                       path_qc='.', remove_temp_files=0, verbose=1):
     """
     Main function that calls various methods for slicewise registration.
 
@@ -574,7 +567,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
     """
 
     # create temporary folder
-    path_tmp = tmp_create(basename="register")
+    path_tmp = tmp_create(basename="register-slicewise")
 
     # copy data to temp folder
     logger.info("\nCopy input data to temp folder...")
@@ -665,7 +658,7 @@ def register_slicewise(fname_src, fname_dest, paramreg=None, fname_mask='', warp
 
 def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='warp_forward.nii.gz',
                              fname_warp_inv='warp_inverse.nii.gz', rot_method='pca', filter_size=0, path_qc='.',
-                             verbose=0, pca_eigenratio_th=1.6, th_max_angle=40):
+                             verbose=1, pca_eigenratio_th=1.6, th_max_angle=40):
     """
     Rotate the source image to match the orientation of the destination image, using the first and second eigenvector
     of the PCA. This function should be used on segmentations (not images).
@@ -760,8 +753,9 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     th_max_angle *= np.pi / 180
 
     # Loop across slices
+    print()  # Add newline between last log message and the progress bar logging
     for iz in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Estimate cord angle for each slice",
-                               ascii=False, ncols=100):
+                               ncols=100):
         try:
             # compute PCA and get center or mass based on segmentation
             coord_src[iz], pca_src[iz], centermass_src[iz, :] = compute_pca(data_src[:, :, iz])
@@ -828,7 +822,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
     # regularize rotation
     if not filter_size == 0 and (rot_method in ['pca', 'hog', 'pcahog']):
         # Filtering the angles by gaussian filter
-        angle_src_dest_regularized = ndimage.filters.gaussian_filter1d(angle_src_dest[z_nonzero], filter_size)
+        angle_src_dest_regularized = gaussian_filter1d(angle_src_dest[z_nonzero], filter_size)
         if verbose == 2:
             plt.plot(180 * angle_src_dest[z_nonzero] / np.pi, 'ob')
             plt.plot(180 * angle_src_dest_regularized / np.pi, 'r', linewidth=2)
@@ -848,7 +842,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
 
     # construct 3D warping matrix
     for iz in sct_progress_bar(z_nonzero, unit='iter', unit_scale=False, desc="Build 3D deformation field",
-                               ascii=False, ncols=100):
+                               ncols=100):
         # get indices of x and y coordinates
         row, col = np.indices((nx, ny))
         # build 2xn array of coordinates in pixel space
@@ -859,7 +853,7 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         centermass_src_phy = im_src.transfo_pix2phys([[centermass_src[iz, :].T[0], centermass_src[iz, :].T[1], iz]])[0]
         centermass_dest_phy = im_src.transfo_pix2phys([[centermass_dest[iz, :].T[0], centermass_dest[iz, :].T[1], iz]])[0]
         # build rotation matrix
-        R = np.matrix(((cos(angle_src_dest[iz]), sin(angle_src_dest[iz])), (-sin(angle_src_dest[iz]), cos(angle_src_dest[iz]))))
+        R = np.array(((cos(angle_src_dest[iz]), sin(angle_src_dest[iz])), (-sin(angle_src_dest[iz]), cos(angle_src_dest[iz]))))
         # build 3D rotation matrix
         R3d = np.eye(3)
         R3d[0:2, 0:2] = R
@@ -879,39 +873,44 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
                 # plt.figure
                 plt.subplot(isub)
                 # ax = matplotlib.pyplot.axis()
-                try:
-                    if isub == 221:
-                        plt.scatter(coord_src[iz][:, 0], coord_src[iz][:, 1], s=5, marker='o', zorder=10, color='steelblue',
-                                    alpha=0.5)
-                        pcaaxis = pca_src[iz].components_.T
-                        pca_eigenratio = pca_src[iz].explained_variance_ratio_
-                        plt.title('src')
-                    elif isub == 222:
-                        plt.scatter([coord_src_rot[i, 0] for i in range(len(coord_src_rot))], [coord_src_rot[i, 1] for i in range(len(coord_src_rot))], s=5, marker='o', zorder=10, color='steelblue', alpha=0.5)
-                        pcaaxis = pca_dest[iz].components_.T
-                        pca_eigenratio = pca_dest[iz].explained_variance_ratio_
-                        plt.title('src_rot')
-                    elif isub == 223:
-                        plt.scatter(coord_dest[iz][:, 0], coord_dest[iz][:, 1], s=5, marker='o', zorder=10, color='red',
-                                    alpha=0.5)
-                        pcaaxis = pca_dest[iz].components_.T
-                        pca_eigenratio = pca_dest[iz].explained_variance_ratio_
-                        plt.title('dest')
-                    elif isub == 224:
-                        plt.scatter([coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))], [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))], s=5, marker='o', zorder=10, color='red', alpha=0.5)
-                        pcaaxis = pca_src[iz].components_.T
-                        pca_eigenratio = pca_src[iz].explained_variance_ratio_
-                        plt.title('dest_rot')
-                    plt.text(-2.5, -2, 'eigenvectors:', horizontalalignment='left', verticalalignment='bottom')
-                    plt.text(-2.5, -2.8, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
-                    plt.text(-2.5, 2.5, 'eigenval_ratio:', horizontalalignment='left', verticalalignment='bottom')
-                    plt.text(-2.5, 2, str(pca_eigenratio), horizontalalignment='left', verticalalignment='bottom')
-                    plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
-                    plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
-                    plt.axis([-3, 3, -3, 3])
-                    plt.gca().set_aspect('equal', adjustable='box')
-                except Exception as e:
-                    raise Exception
+                if isub == 221:
+                    plt.scatter(coord_src[iz][:, 0], coord_src[iz][:, 1], s=5, marker='o', zorder=10, color='steelblue',
+                                alpha=0.5)
+                    pcaaxis = pca_src[iz].components_.T
+                    pca_eigenratio = pca_src[iz].explained_variance_ratio_
+                    plt.title('src')
+                elif isub == 222:
+                    plt.scatter(
+                        [coord_src_rot[i, 0] for i in range(len(coord_src_rot))],
+                        [coord_src_rot[i, 1] for i in range(len(coord_src_rot))],
+                        s=5, marker='o', zorder=10, color='steelblue', alpha=0.5,
+                    )
+                    pcaaxis = pca_dest[iz].components_.T
+                    pca_eigenratio = pca_dest[iz].explained_variance_ratio_
+                    plt.title('src_rot')
+                elif isub == 223:
+                    plt.scatter(coord_dest[iz][:, 0], coord_dest[iz][:, 1], s=5, marker='o', zorder=10, color='red',
+                                alpha=0.5)
+                    pcaaxis = pca_dest[iz].components_.T
+                    pca_eigenratio = pca_dest[iz].explained_variance_ratio_
+                    plt.title('dest')
+                elif isub == 224:
+                    plt.scatter(
+                        [coord_dest_rot[i, 0] for i in range(len(coord_dest_rot))],
+                        [coord_dest_rot[i, 1] for i in range(len(coord_dest_rot))],
+                        s=5, marker='o', zorder=10, color='red', alpha=0.5,
+                    )
+                    pcaaxis = pca_src[iz].components_.T
+                    pca_eigenratio = pca_src[iz].explained_variance_ratio_
+                    plt.title('dest_rot')
+                plt.text(-2.5, -2, 'eigenvectors:', horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, -2.8, str(pcaaxis), horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, 2.5, 'eigenval_ratio:', horizontalalignment='left', verticalalignment='bottom')
+                plt.text(-2.5, 2, str(pca_eigenratio), horizontalalignment='left', verticalalignment='bottom')
+                plt.plot([0, pcaaxis[0, 0]], [0, pcaaxis[1, 0]], linewidth=2, color='red')
+                plt.plot([0, pcaaxis[0, 1]], [0, pcaaxis[1, 1]], linewidth=2, color='orange')
+                plt.axis([-3, 3, -3, 3])
+                plt.gca().set_aspect('equal', adjustable='box')
 
             plt.savefig(os.path.join(path_qc, 'register2d_centermassrot_pca_z' + str(iz) + '.png'))
             plt.close()
@@ -923,11 +922,11 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         warp_inv_y[:, :, iz] = np.array([coord_inverse_phy[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
-    generate_warping_field(fname_dest[0], warp_x, warp_y, fname_warp, verbose)
-    generate_warping_field(fname_src[0], warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
+    generate_warping_field(fname_dest[0], warp_x, warp_y, fname_warp)
+    generate_warping_field(fname_src[0], warp_inv_x, warp_inv_y, fname_warp_inv)
 
 
-def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=0, path_qc='.', smoothWarpXY=1):
+def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz', fname_warp_inv='warp_inverse.nii.gz', verbose=1, path_qc='.', smoothWarpXY=1):
     """
     Column-wise non-linear registration of segmentations. Based on an idea from Allan Martin.
     - Assumes src/dest are segmentations (not necessarily binary), and already registered by center of mass
@@ -992,10 +991,9 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
     warp_inv_y = np.zeros(data_src.shape)
 
     # Loop across slices
-    logger.info("\nEstimate columnwise transformation...")
-    for iz in range(0, nz):
-        logger.info(f"{str(iz)}/{str(nz)}..")
-
+    print()  # Add newline between last log message and the progress bar logging
+    for iz in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Estimate columnwise transformation",
+                               ncols=100):
         # PREPARE COORDINATES
         # ============================================================
         # get indices of x and y coordinates
@@ -1017,10 +1015,8 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
         dest2d[dest2d < th_nonzero] = 0
         # get non-zero coordinates, and transpose to obtain nx2 dimensions
         coord_src2d = np.array(np.where(src2d > 0)).T
-        coord_dest2d = np.array(np.where(dest2d > 0)).T
         # here we use 0.5 as threshold for non-zero value
         # coord_src2d = np.array(np.where(src2d > th_nonzero)).T
-        # coord_dest2d = np.array(np.where(dest2d > th_nonzero)).T
         # >>>
 
         # SCALING R-L (X dimension)
@@ -1181,9 +1177,9 @@ def register2d_columnwise(fname_src, fname_dest, fname_warp='warp_forward.nii.gz
             warp_inv_y[:, :, iz] = np.array([coord_init_phy_scaleY[i, 1] - coord_init_phy[i, 1] for i in range(nx * ny)]).reshape((nx, ny))
 
     # Generate forward warping field (defined in destination space)
-    generate_warping_field(fname_dest, warp_x, warp_y, fname_warp, verbose)
+    generate_warping_field(fname_dest, warp_x, warp_y, fname_warp)
     # Generate inverse warping field (defined in source space)
-    generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv, verbose)
+    generate_warping_field(fname_src, warp_inv_x, warp_inv_y, fname_warp_inv)
 
 
 def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.nii.gz',
@@ -1193,7 +1189,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
                ants_registration_params={'rigid': '', 'affine': '', 'compositeaffine': '', 'similarity': '',
                                          'translation': '', 'bspline': ',10', 'gaussiandisplacementfield': ',3,0',
                                          'bsplinedisplacementfield': ',5,10', 'syn': ',3,0', 'bsplinesyn': ',1,3'},
-               verbose=0):
+               verbose=1):
     """
     Slice-by-slice registration of two images.
 
@@ -1264,9 +1260,9 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         list_warp_inv = []
 
     # loop across slices
-    for i in range(nz):
+    print()  # Add newline between last log message and the progress bar logging
+    for i in sct_progress_bar(range(0, nz), unit='iter', unit_scale=False, desc="Registering slice", ncols=100):
         # set masking
-        logger.info(f"Registering slice {str(i)}/{str(nz-1)}...")
         num = numerotation(i)
         prefix_warp2d = 'warp2d_' + num
         # if mask is used, prepare command for ANTs
@@ -1279,14 +1275,15 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
         cmd = [
             'isct_antsRegistration',
             '--dimensionality', '2',
-            '--transform', paramreg.algo + '[' + str(paramreg.gradStep) + ants_registration_params[paramreg.algo.lower()] + ']',
-            '--metric', paramreg.metric + '[dest_Z' + num + '.nii' + ',src_Z' + num + '.nii' + ',1,' + metricSize + ']',  # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+            '--transform', f'{paramreg.algo}[{paramreg.gradStep}{ants_registration_params[paramreg.algo.lower()]}]',
+            # [fixedImage,movingImage,metricWeight +nb_of_bins (MI) or radius (other)
+            '--metric', f'{paramreg.metric}[dest_Z{num}.nii,src_Z{num}.nii,1,{metricSize}]',
             '--convergence', str(paramreg.iter),
             '--shrink-factors', str(paramreg.shrink),
             '--smoothing-sigmas', str(paramreg.smooth) + 'mm',
             '--output', '[' + prefix_warp2d + ',src_Z' + num + '_reg.nii]',    # --> file.mat (contains Tx,Ty, theta)
             '--interpolation', 'BSpline[3]',
-            '--verbose', '1',
+            '--verbose', ('1' if verbose >= 2 else '0'),
         ] + masking
         # add init translation
         if not paramreg.init == '':
@@ -1295,7 +1292,7 @@ def register2d(fname_src, fname_dest, fname_mask='', fname_warp='warp_forward.ni
 
         try:
             # run registration
-            run_proc(cmd, is_sct_binary=True)
+            run_proc(cmd, is_sct_binary=True, verbose=(1 if verbose >= 2 else 0))
 
             if paramreg.algo in ['Translation']:
                 file_mat = prefix_warp2d + '0GenericAffine.mat'
@@ -1376,14 +1373,13 @@ def numerotation(nb):
     return nb_output
 
 
-def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field.nii.gz', verbose=1):
+def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field.nii.gz'):
     """
     Generate an ITK warping field
     :param fname_dest:
     :param warp_x:
     :param warp_y:
     :param fname_warp:
-    :param verbose:
     :return:
     """
     logger.info("\nGenerate warping field...")
@@ -1400,7 +1396,7 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
 
     # save warping field
     im_dest = load(fname_dest)
-    hdr_dest = im_dest.get_header()
+    hdr_dest = im_dest.header
     hdr_warp = hdr_dest.copy()
     hdr_warp.set_intent('vector', (), '')
     hdr_warp.set_data_dtype('float32')
@@ -1569,8 +1565,8 @@ def gradient_orientation_histogram(image, nb_bin, seg_weighted_mask=None):
         image = image / median
 
     # x and y gradients of the image
-    gradx = ndimage.convolve(image, v_kernel)
-    grady = ndimage.convolve(image, h_kernel)
+    gradx = convolve(image, v_kernel)
+    grady = convolve(image, h_kernel)
 
     # orientation gradient
     orient = np.arctan2(grady, gradx)  # results are in the range -pi pi
@@ -1623,7 +1619,7 @@ def circular_filter_1d(signal, window_size, kernel='gaussian'):
 
     signal_extended = np.concatenate((signal, signal, signal))  # replicate signal at both ends
     if kernel == 'gaussian':
-        signal_extended_smooth = ndimage.gaussian_filter(signal_extended, window_size)  # gaussian
+        signal_extended_smooth = gaussian_filter(signal_extended, window_size)  # gaussian
     elif kernel == 'median':
         signal_extended_smooth = medfilt(signal_extended, window_size)  # median filtering
     else:

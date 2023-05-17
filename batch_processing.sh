@@ -42,17 +42,17 @@ fi
 
 # QC folder
 if [[ -z "$SCT_BP_QC_FOLDER" ]]; then
-	SCT_BP_QC_FOLDER=`pwd`/"qc_example_data"
+	SCT_BP_QC_FOLDER=$(pwd)/"qc_example_data"
 fi
 
 # Remove QC folder
-if [ -z "$SCT_BP_NO_REMOVE_QC" -a -d "$SCT_BP_QC_FOLDER" ]; then
+if [ -z "$SCT_BP_NO_REMOVE_QC" ] && [ -d "$SCT_BP_QC_FOLDER" ]; then
   echo "Removing $SCT_BP_QC_FOLDER folder."
   rm -rf "$SCT_BP_QC_FOLDER"
 fi
 
 # get starting time:
-start=`date +%s`
+start=$(date +%s)
 
 # download example data
 if [[ "$SCT_BP_DOWNLOAD" == "1" ]]; then
@@ -68,6 +68,10 @@ cd t2
 sct_deepseg_sc -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Tips: If you are not satisfied with the results you can try with another algorithm:
 # sct_propseg -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
+# Fit binarized centerline from SC seg (default settings)
+sct_get_centerline -i t2_seg.nii.gz -method fitseg -qc "$SCT_BP_QC_FOLDER"
+# Fit soft centerline from SC seg
+sct_get_centerline -i t2_seg.nii.gz -method fitseg -centerline-soft 1 -o t2_seg_centerline_soft.nii.gz -qc "$SCT_BP_QC_FOLDER"
 # Vertebral labeling
 # Tips: for manual initialization of labeling by clicking at disc C2-C3, use flag -initc2
 sct_label_vertebrae -i t2.nii.gz -s t2_seg.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
@@ -93,6 +97,8 @@ sct_process_segmentation -i t2_seg.nii.gz -vert 2:3 -o csa_c2c3.csv
 sct_detect_pmj -i t2.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER" 
 # Compute cross-section area at 60 mm from PMJ averaged on a 30 mm extent
 sct_process_segmentation -i t2_seg.nii.gz -pmj t2_pmj.nii.gz -pmj-distance 60 -pmj-extent 30 -qc "$SCT_BP_QC_FOLDER" -qc-image t2.nii.gz -o csa_pmj.csv
+# Compute morphometrics in PAM50 anatomical dimensions
+sct_process_segmentation -i t2_seg.nii.gz -vertfile t2_seg_labeled.nii.gz -perslice 1 -normalize-PAM50 1 -o csa_pam50.csv
 # Go back to root folder
 cd ..
 
@@ -163,7 +169,7 @@ sct_deepseg_sc -i mt1_crop.nii.gz -c t2 -qc "$SCT_BP_QC_FOLDER"
 # Register mt0->mt1
 # Tips: here we only use rigid transformation because both images have very similar sequence parameters. We don't want to use SyN/BSplineSyN to avoid introducing spurious deformations.
 # Tips: here we input -dseg because it is needed by the QC report
-sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -dseg mt1_crop_seg.nii.gz -param step=1,type=im,algo=rigid,slicewise=1,metric=CC -x spline -qc "$SCT_BP_QC_FOLDER"
+sct_register_multimodal -i mt0.nii.gz -d mt1_crop.nii.gz -dseg mt1_crop_seg.nii.gz -param step=1,type=im,algo=slicereg,metric=CC -x spline -qc "$SCT_BP_QC_FOLDER"
 # Register template->mt1
 # Tips: here we only use the segmentations due to poor SC/CSF contrast at the bottom slice.
 # Tips: First step: slicereg based on images, with large smoothing to capture potential motion between anat and mt, then at second step: bpslinesyn in order to adapt the shape of the cord to the mt modality (in case there are distortions between anat and mt).
@@ -174,7 +180,7 @@ sct_warp_template -d mt1_crop.nii.gz -w warp_template2mt.nii.gz -qc "$SCT_BP_QC_
 sct_compute_mtr -mt0 mt0_reg.nii.gz -mt1 mt1_crop.nii.gz
 # Register t1w->mt1
 # Tips: We do not need to crop the t1w image before registration because step=0 of the registration is to put the source image in the space of the destination image (equivalent to cropping the t1w)
-sct_register_multimodal -i t1w.nii.gz -d mt1_crop.nii.gz -dseg mt1_crop_seg.nii.gz -param step=1,type=im,algo=rigid,slicewise=1,metric=CC -x spline -qc "$SCT_BP_QC_FOLDER"
+sct_register_multimodal -i t1w.nii.gz -d mt1_crop.nii.gz -dseg mt1_crop_seg.nii.gz -param step=1,type=im,algo=slicereg,metric=CC -x spline -qc "$SCT_BP_QC_FOLDER"
 # Compute MTsat
 # Tips: Check your TR and Flip Angle from the Dicom data
 sct_compute_mtsat -mt mt1_crop.nii.gz -pd mt0_reg.nii.gz -t1 t1w_reg.nii.gz -trmt 0.030 -trpd 0.030 -trt1 0.015 -famt 9 -fapd 9 -fat1 15
@@ -256,16 +262,16 @@ cd ../../..
 # Display results (to easily compare integrity across SCT versions)
 # ===========================================================================================
 set +v
-end=`date +%s`
+end=$(date +%s)
 runtime=$((end-start))
 echo "~~~"  # these are used to format as code when copy/pasting in github's markdown
-echo "Version:         `sct_version`"
-echo "Ran on:          `uname -nsr`"
-echo "Duration:        $(($runtime / 3600))hrs $((($runtime / 60) % 60))min $(($runtime % 60))sec"
+echo "Version:         $(sct_version)"
+echo "Ran on:          $(uname -nsr)"
+echo "Duration:        $((runtime / 3600))hrs $(((runtime / 60) % 60))min $((runtime % 60))sec"
 echo "---"
 # The file `test_batch_processing.py` will output tested values when run as a script
 ./python/envs/venv_sct/bin/python testing/batch_processing/test_batch_processing.py ||
-./venv_sct/Scripts/python.exe testing/batch_processing/test_batch_processing.py
+./python/envs/venv_sct/python.exe testing/batch_processing/test_batch_processing.py
 echo "~~~"
 
 # Display syntax to open QC report on web browser

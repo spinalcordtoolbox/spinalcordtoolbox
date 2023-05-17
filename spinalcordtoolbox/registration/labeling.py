@@ -47,12 +47,13 @@ def add_orthogonal_label(fname_label):
     im_label.save(path_label)
 
 
-def project_labels_on_spinalcord(fname_label, fname_seg, param_centerline):
+def project_labels_on_spinalcord(fname_label, fname_seg, param_centerline, remove_temp_files):
     """
     Project labels orthogonally on the spinal cord centerline. The algorithm works by finding the smallest distance
     between each label and the spinal cord center of mass.
     :param fname_label: file name of labels
     :param fname_seg: file name of cord segmentation (could also be of centerline)
+    :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
     :return: file name of projected labels
     """
     # build output name
@@ -64,7 +65,7 @@ def project_labels_on_spinalcord(fname_label, fname_seg, param_centerline):
     im_seg.change_orientation("RPI")
 
     # smooth centerline and return fitted coordinates in voxel space
-    _, arr_ctl, _, _ = get_centerline(im_seg, param_centerline)
+    _, arr_ctl, _, _ = get_centerline(im_seg, param_centerline, remove_temp_files=remove_temp_files)
     x_centerline_fit, y_centerline_fit, z_centerline = arr_ctl
     # convert pixel into physical coordinates
     centerline_xyz_transposed = \
@@ -116,7 +117,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     nxd, nyd, nzd, _, _, _, _, _ = Image(fname_dest).dim
     sampling_factor = [float(nx) / nxd, float(ny) / nyd, float(nz) / nzd]
 
-    og_labels = Image(fname_labels).getNonZeroCoordinates()
+    og_labels = Image(fname_labels).getNonZeroCoordinates(sorting='value')
     new_labels = [Coordinate([int(np.round(int(x) / sampling_factor[0])),
                               int(np.round(int(y) / sampling_factor[1])),
                               int(np.round(int(z) / sampling_factor[2])),

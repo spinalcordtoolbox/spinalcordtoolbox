@@ -210,7 +210,7 @@ class Transform:
             # if labels, dilate before resampling
             if islabel:
                 printv("\nDilate labels before warping...")
-                path_tmp = tmp_create(basename="apply_transfo")
+                path_tmp = tmp_create(basename="apply-transfo-3d-label")
                 fname_dilated_labels = os.path.join(path_tmp, "dilated_data.nii")
                 # dilate points
                 dilate(Image(fname_src), 4, 'ball').save(fname_dilated_labels)
@@ -230,7 +230,7 @@ class Transform:
                 raise NotImplementedError
 
             dim = '4'
-            path_tmp = tmp_create(basename="apply_transfo")
+            path_tmp = tmp_create(basename="apply-transfo-4d")
 
             # convert to nifti into temp folder
             printv('\nCopying input data to tmp folder and convert to nii...', verbose)

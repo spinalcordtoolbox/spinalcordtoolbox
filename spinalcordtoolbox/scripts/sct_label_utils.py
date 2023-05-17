@@ -11,7 +11,9 @@
 # About the license: see the file LICENSE.TXT
 #########################################################################################
 
-# TODO: for vert-disc: make it faster! currently the module display-voxel is very long (esp. when ran on PAM50). We can find an alternative approach by sweeping through centerline voxels.
+# TODO: for vert-disc: make it faster! currently the module display-voxel is very long
+#       (esp. when ran on PAM50). We can find an alternative approach by sweeping through
+#       centerline voxels.
 # TODO: label_disc: for top vertebrae, make label at the center of the cord (currently it's at the tip)
 # TODO: check if use specified several processes.
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
@@ -127,6 +129,12 @@ def get_parser():
         '-disc',
         metavar=Metavar.file,
         help="Create an image with regions labelized depending on values from reference"
+    )
+
+    func_group.add_argument(
+        '-project-centerline',
+        metavar=Metavar.file,
+        help="Project labels onto the spinal cord centerline"
     )
 
     func_group.add_argument(
@@ -273,6 +281,17 @@ def main(argv: Sequence[str]):
     elif arguments.disc is not None:
         ref = Image(arguments.disc)
         out = sct_labels.labelize_from_discs(img, ref)
+    elif arguments.project_centerline is not None:
+        ref = Image(arguments.project_centerline)
+        try:
+            out = sct_labels.project_centerline(img, ref)
+        except sct_labels.ShapeMismatchError as e:
+            printv(
+                f"Input image: {input_filename} and referenced labels: {arguments.project_centerline} "
+                f"should have the same shape according to the RPI orientation.\n"
+                f"Referenced labels with shape {e.dims['ref']} cannot be projected on "
+                f"input image with shape {e.dims['img']}",
+                type='error')
     elif arguments.vert_body is not None:
         levels = arguments.vert_body
         if len(levels) == 1 and levels[0] == 0:

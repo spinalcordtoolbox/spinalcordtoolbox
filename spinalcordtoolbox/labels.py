@@ -14,7 +14,7 @@ import logging
 from typing import Sequence, Tuple
 
 import numpy as np
-from scipy import ndimage
+from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
@@ -22,7 +22,9 @@ from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 logger = logging.getLogger(__name__)
 
-# TODO: for vert-disc: make it faster! currently the module display-voxel is very long (esp. when ran on PAM50). We can find an alternative approach by sweeping through centerline voxels.
+# TODO: for vert-disc: make it faster!
+#       currently the module display-voxel is very long (esp. when ran on PAM50).
+#       We can find an alternative approach by sweeping through centerline voxels.
 # TODO: label_disc: for top vertebrae, make label at the center of the cord (currently it's at the tip)
 
 
@@ -124,7 +126,7 @@ def create_labels_along_segmentation(img: Image, labels: Sequence[Tuple[int, int
             z_rpi = int(np.round(out.dim[2] / 2.0))
 
         # get center of mass of segmentation at given z
-        x, y = ndimage.measurements.center_of_mass(np.array(img.data[:, :, z_rpi]))
+        x, y = center_of_mass(np.array(img.data[:, :, z_rpi]))
 
         # round values to make indices
         x, y = int(np.round(x)), int(np.round(y))
@@ -217,24 +219,44 @@ def increment_z_inverse(img: Image) -> Image:
 def labelize_from_discs(img: Image, ref: Image) -> Image:
     """
     Create an image with regions labelized depending on values from reference.
-    Typically, user inputs a segmentation image, and labels with disks position, and this function produces
+    Typically, user inputs a segmentation image, and labels with discs position, and this function produces
     a segmentation image with vertebral levels labelized.
-    Labels are assumed to be non-zero and incremented from top to bottom, assuming a RPI orientation
+    Note that no straightening is done. The labelization is only done based on the z coordinates.
+    Input images do **not** need to be RPI (re-orientation is done within this function).
 
     :param img: segmentation
     :param ref: reference labels
     :returns: segmentation image with vertebral levels labelized
     """
+
+    img_orientation = img.orientation
+    if img_orientation != "RPI":
+        img.change_orientation("RPI")
+
+    if ref.orientation != "RPI":
+        ref.change_orientation("RPI")
+
     out = zeros_like(img)
 
     coordinates_input = img.getNonZeroCoordinates()
     coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
 
-    # for all points in input, find the value that has to be set up, depending on the vertebral level
+    # for all points in input, match the `z` coordinate to the appropriate vertebral level
     for x, y, z, _ in coordinates_input:
-        for j in range(len(coordinates_ref) - 1):
-            if coordinates_ref[j + 1].z < z <= coordinates_ref[j].z:
-                out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
+        # case 1: `z` is above the top-most disc label
+        if z > coordinates_ref[0].z:
+            out.data[int(x), int(y), int(z)] = coordinates_ref[0].value - 1
+        # case 2: `z` is at or below the bottom-most disc label
+        elif z <= coordinates_ref[-1].z:
+            out.data[int(x), int(y), int(z)] = coordinates_ref[-1].value
+        # case 3: `z` is between two disc labels, so find the correct vertebral level
+        else:
+            for j in range(len(coordinates_ref) - 1):
+                if coordinates_ref[j + 1].z < z <= coordinates_ref[j].z:
+                    out.data[int(x), int(y), int(z)] = coordinates_ref[j].value
+
+    # Set back the original orientation
+    out.change_orientation(img_orientation)
 
     return out
 
@@ -343,9 +365,9 @@ def remove_missing_labels(img: Image, ref: Image):
     """
     out = zeros_like(img)
 
-    for src_coord in img.getNonZeroCoordinates(coordValue=True):
-        for ref_coord in ref.getNonZeroCoordinates(coordValue=True):
-            if src_coord == ref_coord:
+    for src_coord in img.getNonZeroCoordinates():
+        for ref_coord in ref.getNonZeroCoordinates():
+            if src_coord.value == ref_coord.value:
                 out.data[src_coord.x, src_coord.y, src_coord.z] = src_coord.value
     return out
 
@@ -462,3 +484,84 @@ def remove_other_labels_from_image(img: Image, labels: Sequence[int]) -> Image:
             logger.warning(f"Label {label} not found in input image!")
 
     return out
+
+
+class ShapeMismatchError(ValueError):
+    """Custom exception to distinguish between general ValueErrors. Stands for a shape mismatch."""
+    def __init__(self, message, **dims):
+        self.dims = dims
+        super().__init__(f"{message}: {dims}")
+
+
+def project_centerline(img: Image, ref: Image) -> Image:
+    """
+    Project an input image on the spinal cord centerline. This projection is obtained by iterating along
+    the centerline to identify the shortest distance with each referenced coordinates.
+    Typically, user inputs a segmentation image, and labels with disks position, and this function computes
+    the identification to the closest coordinates of each labels on the centerline.
+
+    :param img: segmentation
+    :param ref: reference labels
+    :returns: image with the new projected labels on the centerline
+    """
+
+    # Checking orientation
+    og_img_orientation = img.orientation
+    if img.orientation != "RPI":
+        img.change_orientation("RPI")
+
+    og_ref_orientation = ref.orientation
+    if ref.orientation != "RPI":
+        ref.change_orientation("RPI")
+
+    # Checking input dimensions
+    if img.data.shape != ref.data.shape:
+        raise ShapeMismatchError(
+            "Input image and referenced labels should have the same dimension",
+            img=img.data.shape,
+            ref=ref.data.shape)
+
+    # Extract centerline from segmentation
+    _, arr_ctl, _, _ = get_centerline(img)
+    centerline = arr_ctl.T
+
+    # Extract referenced coordinates
+    coordinates_ref = ref.getNonZeroCoordinates(sorting='value')
+
+    # Create the output image
+    out = zeros_like(ref)
+
+    # Compute the shortest distance for each referenced points on the centerline
+    for x, y, z, value in coordinates_ref:
+        projection = project_point_on_line(point=np.array([x, y, z]), line=centerline)
+        x, y, z = np.rint(projection).astype(int)
+        if out.data[x, y, z] != 0:
+            if out.data[x, y, z] == value:
+                logger.warning("Two labels with the same value were projected on the same coordinate")
+            else:
+                # overwrite with the highest value because referenced points are sorted
+                logger.warning("Two labels were projected on the same coordinate, the highest value was kept")
+        out.data[x, y, z] = value
+
+    if out.orientation != og_img_orientation:
+        img.change_orientation(og_img_orientation)
+
+    if ref.orientation != og_ref_orientation:
+        ref.change_orientation(og_ref_orientation)
+        out.change_orientation(og_ref_orientation)
+
+    return out
+
+
+def project_point_on_line(point, line):
+    """
+    Project the input point on the referenced line by finding the minimal distance
+
+    :param point: coordinates of a point and its value: point = numpy.array([x y z])
+    :param line: list of points coordinates which composes the line
+    :returns: closest coordinate to the referenced point on the line: projected_point = numpy.array([X Y Z])
+    """
+    # Calculate distances between the referenced point and the line then keep the closest point
+    dist = np.sum((line - point) ** 2, axis=1)
+
+    return line[np.argmin(dist)]

@@ -111,7 +111,7 @@ def main(argv: Sequence[str]):
     fname_input1 = arguments.i
     fname_input2 = arguments.d
 
-    tmp_dir = tmp_create()  # create tmp directory
+    tmp_dir = tmp_create(basename="dice-coefficient")  # create tmp directory
     tmp_dir = os.path.abspath(tmp_dir)
 
     # copy input files to tmp directory

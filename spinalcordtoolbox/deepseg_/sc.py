@@ -6,8 +6,7 @@ import logging
 
 import numpy as np
 from skimage.exposure import rescale_intensity
-from scipy.ndimage.measurements import center_of_mass, label
-from scipy.ndimage import distance_transform_edt
+from scipy.ndimage import distance_transform_edt, center_of_mass, label
 
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.deepseg_.onnx import onnx_inference
@@ -55,7 +54,8 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
         # optic_models_fname = os.path.join(path_sct, 'data', 'optic_models', '{}_model'.format(contrast_type))
         # # TODO: replace with get_centerline(method=optic)
         im_ctl, _, _, _ = get_centerline(im,
-                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type))
+                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type),
+                                         remove_temp_files=remove_temp_files)
 
     elif algo == 'cnn':
         # CNN parameters
@@ -74,7 +74,8 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
                                     std_train=dct_patch_ctr[contrast_type]['std'],
                                     brain_bool=brain_bool)
         im_ctl, _, _, _ = get_centerline(im_heatmap,
-                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type))
+                                         ParamCenterline(algo_fitting='optic', contrast=contrast_type),
+                                         remove_temp_files=remove_temp_files)
 
         if z_max is not None:
             logger.info('Cropping brain section.')
@@ -82,7 +83,7 @@ def find_centerline(algo, image_fname, contrast_type, brain_bool, folder_output,
 
     elif algo == 'viewer':
         im_labels = _call_viewer_centerline(im)
-        im_ctl, _, _, _ = get_centerline(im_labels, param=ParamCenterline())
+        im_ctl, _, _, _ = get_centerline(im_labels, param=ParamCenterline(), remove_temp_files=remove_temp_files)
 
     elif algo == 'file':
         im_ctl = Image(centerline_fname)
@@ -211,7 +212,7 @@ def heatmap(im, model, patch_shape, mean_train, std_train, brain_bool=True):
     data = np.zeros(im_out.data.shape)
 
     x_shape, y_shape = data_im.shape[:2]
-    x_shape_block, y_shape_block = np.ceil(x_shape * 1.0 / patch_shape[0]).astype(np.int), np.int(
+    x_shape_block, y_shape_block = np.ceil(x_shape * 1.0 / patch_shape[0]).astype(int), int(
         y_shape * 1.0 / patch_shape[1])
     x_pad = int(x_shape_block * patch_shape[0] - x_shape)
     if y_shape > patch_shape[1]:
@@ -414,7 +415,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     logger.info("  Threshold: {}".format(threshold_seg))
 
     # create temporary folder with intermediate results
-    tmp_folder = TempFolder(verbose=verbose)
+    tmp_folder = TempFolder(basename="deepseg-sc", verbose=verbose)
     tmp_folder_path = tmp_folder.get_path()
     if ctr_algo == 'file':  # if the ctr_file is provided
         tmp_folder.copy_from(ctr_file)

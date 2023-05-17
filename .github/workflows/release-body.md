@@ -2,30 +2,73 @@ Notable changes include:
   - **EDIT THIS LIST WITH A BRIEF SUMMARY OF THE MOST IMPORTANT CHANGES.**
 
 
-[Full release notes and Changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/release/CHANGES.md)
+[Full release notes and Changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/blob/master/CHANGES.md)
 
-Results of `batch_processing.sh`:
+> **EDIT EACH OF THE FOLLOWING SECTIONS WITH RESULTS FROM THE LATEST CI RUN.**
+> 
+> 1. Go to [this GitHub Actions page](https://github.com/spinalcordtoolbox/spinalcordtoolbox/actions/workflows/test-batch-processing.yml?query=branch%3Amaster+event%3Apush).
+> 2. Click through to the run corresponding to the recently-merged changelog PR.
+> 3. For each OS, click on "Run batch_processing.sh" step
+> 4. Scroll all the way to the bottom. (Use the "End" keyboard shortcut to make this easy!)
+> 5. Copy and paste the text in between the ~~~ characters.
+> 6. Once the results from all OSs have been pasted, remove this block of text.
+
+<details>
+<summary>Results of <code>batch_processing.sh</code> on Ubuntu 20.04</summary>
 
 ```
-REPLACE THIS TEXT WITH THE RESULTS FROM THE LATEST CI RUN.
-
-1. Go to https://github.com/spinalcordtoolbox/spinalcordtoolbox/actions/workflows/test-batch-processing.yml
-2. Click through to a recent run.
-3. Click on "Run batch_processing.sh" step
-4. Scroll all the way to the bottom. (Use "End" keyboard shortcut)
-5. Copy and paste the text in between the ~~~ characters.
-
-e.g. 
 ~~~
-Version:         git-master-49d7303a09ceef93abd2cdd70d78d9191b454506
-Ran on:          Linux fv-az37-223 5.4.0-1046-azure
-Duration:        0hrs 22min 28sec
+Version:
+Ran on:
+Duration:
 ---
-t2/CSA:          73.87711295363036
-mt/MTR(WM):      54.379739375142336
-t2s/CSA_GM:      12.487834828856176
-t2s/CSA_WM:      64.93830702088249
-dmri/FA(CST_r):  0.7755359385435815
-dmri/FA(CST_l):  0.7793999143910345
+t2/csa_c2c3.csv:
+t2/csa_pmj.csv:
+t2s/csa_gm.csv:
+t2s/csa_wm.csv:
+mt/mtr_in_wm.csv: 
+dmri/fa_in_cst.csv:
+dmri/fa_in_cst.csv:
 ~~~
 ```
+</details>
+
+<details>
+<summary>Results of <code>batch_processing.sh</code> on macOS 11 (Big Sur)</summary>
+
+```
+~~~
+Version:
+Ran on:
+Duration:
+---
+t2/csa_c2c3.csv:
+t2/csa_pmj.csv:
+t2s/csa_gm.csv:
+t2s/csa_wm.csv:
+mt/mtr_in_wm.csv: 
+dmri/fa_in_cst.csv:
+dmri/fa_in_cst.csv:
+~~~
+```
+</details>
+
+<details>
+<summary>Results of <code>batch_processing.sh</code> on Windows 2019</summary>
+
+```
+~~~
+Version:
+Ran on:
+Duration:
+---
+t2/csa_c2c3.csv:
+t2/csa_pmj.csv:
+t2s/csa_gm.csv:
+t2s/csa_wm.csv:
+mt/mtr_in_wm.csv: 
+dmri/fa_in_cst.csv:
+dmri/fa_in_cst.csv:
+~~~
+```
+</details>

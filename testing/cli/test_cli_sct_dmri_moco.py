@@ -16,8 +16,8 @@ def test_sct_dmri_moco_check_params(tmp_path):
                              '-ofolder', str(tmp_path)])
 
     lresults = genfromtxt(tmp_path / "moco_params.tsv", skip_header=1, delimiter='\t')[:, 0]
-    lgroundtruth = [0.00047529041677414337, -1.1970542445283172e-05, -1.1970542445283172e-05, -1.1970542445283172e-05,
-                    -0.1296642741802682, -0.1296642741802682, -0.1296642741802682]
+    lgroundtruth = [4.75290417e-04, -1.19489128e-05, -1.19489128e-05, -1.19489128e-05,
+                    -1.29636934e-01, -1.29636934e-01, -1.29636934e-01]
     assert allclose(lresults, lgroundtruth)
 
 
@@ -39,8 +39,8 @@ def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask):
                              '-m', dmri_mask, '-ofolder', str(tmp_path)])
 
     lresults = genfromtxt(tmp_path / "moco_params.tsv", skip_header=1, delimiter='\t')[:, 0]
-    lgroundtruth = [0.008032332623754357, 0.0037734940916436697, 0.0037734940916436697, 0.0037734940916436697,
-                    -0.01502861167728611, -0.01502861167728611, -0.01502861167728611]
+    lgroundtruth = [0.00804089, 0.00395558, 0.00395558, 0.00395558,
+                    -0.01534442, -0.01534442, -0.01534442]
     assert allclose(lresults, lgroundtruth)
 
 

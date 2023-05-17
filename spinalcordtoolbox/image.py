@@ -87,7 +87,7 @@ class Slicer(object):
 
         if not isinstance(im, Image):
             raise ValueError("Expecting an image")
-        if not orientation in all_refspace_strings():
+        if orientation not in all_refspace_strings():
             raise ValueError("Invalid orientation spec")
 
         # Get a different view on data, as if we were doing a reorientation
@@ -240,7 +240,7 @@ def check_affines_match(im):
                          "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
                          "or on the SCT forums https://forum.spinalcordmri.org/.")
 
-        return(True)
+        return True
 
     return np.allclose(hdr.get_qform(), hdr2.get_qform(), atol=1e-3)
 
@@ -302,6 +302,9 @@ class Image(object):
             self.hdr.set_data_shape(self.data.shape)
         else:
             raise TypeError('Image constructor takes at least one argument.')
+
+        # Fix any mismatch between the array's datatype and the header datatype
+        self.fix_header_dtype()
 
         # set a more permissive threshold for reading the qform
         # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3703 for details)
@@ -401,6 +404,22 @@ class Image(object):
         self.hdr.set_qform(self.hdr.get_sform())
         self.hdr._structarr['qform_code'] = self.hdr._structarr['sform_code']
 
+    def fix_header_dtype(self):
+        """
+        Change the header dtype to the match the datatype of the array.
+        """
+        # Using bool for nibabel headers is unsupported, so use uint8 instead:
+        # `nibabel.spatialimages.HeaderDataError: data dtype "bool" not supported`
+        dtype_data = self.data.dtype
+        if dtype_data == bool:
+            dtype_data = np.uint8
+
+        dtype_header = self.hdr.get_data_dtype()
+        if dtype_header != dtype_data:
+            logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type "
+                           f"'{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
+            self.hdr.set_data_dtype(dtype_data)
+
     def loadFromPath(self, path, mmap, verbose):
         """
         This function load an image from an absolute path using nibabel library
@@ -412,7 +431,7 @@ class Image(object):
         self.absolutepath = os.path.abspath(path)
         im_file = nib.load(self.absolutepath, mmap=mmap)
         self.affine = im_file.affine.copy()
-        self.data = im_file.get_data()
+        self.data = np.asanyarray(im_file.dataobj)
         self.hdr = im_file.header.copy()
         if path != self.absolutepath:
             logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
@@ -481,57 +500,58 @@ class Image(object):
 
         :param mutable: whether to update members with newly created path or dtype
         """
+        if mutable:  # do all modifications in-place
+            # Case 1: `path` not specified
+            if path is None:
+                if self.absolutepath:  # Fallback to the original filepath
+                    path = self.absolutepath
+                else:
+                    raise ValueError("Don't know where to save the image (no absolutepath or path parameter)")
+            # Case 2: `path` points to an existing directory
+            elif os.path.isdir(path):
+                if self.absolutepath:  # Use the original filename, but save to the directory specified by `path`
+                    path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
+                else:
+                    raise ValueError("Don't know where to save the image (path parameter is dir, but absolutepath is "
+                                     "missing)")
+            # Case 3: `path` points to a file (or a *nonexistent* directory) so use its value as-is
+            #    (We're okay with letting nonexistent directories slip through, because it's difficult to distinguish
+            #     between nonexistent directories and nonexistent files. Plus, `nibabel` will catch any further errors.)
+            else:
+                pass
 
-        if path is None and self.absolutepath is None:
-            raise RuntimeError("Don't know where to save the image (no absolutepath or path parameter)")
-        elif path is not None and os.path.isdir(path) and self.absolutepath is not None:
-            # Save to destination directory with original basename
-            path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
+            if os.path.isfile(path) and verbose:
+                logger.warning("File %s already exists. Will overwrite it.", path)
+            if os.path.isabs(path):
+                logger.debug("Saving image to %s orientation %s shape %s",
+                             path, self.orientation, self.data.shape)
+            else:
+                logger.debug("Saving image to %s (%s) orientation %s shape %s",
+                             path, os.path.abspath(path), self.orientation, self.data.shape)
 
-        path = path or self.absolutepath
+            # Now that `path` has been set and log messages have been written, we can assign it to the image itself
+            self.absolutepath = os.path.abspath(path)
 
-        if dtype is not None:
-            dst = self.copy()
-            dst.change_type(dtype)
-            data = dst.data
+            if dtype is not None:
+                self.change_type(dtype)
+
+            if self.hdr is not None:
+                self.hdr.set_data_shape(self.data.shape)
+                self.fix_header_dtype()
+
+            # nb. that copy() is important because if it were a memory map, save() would corrupt it
+            dataobj = self.data.copy()
+            affine = None
+            header = self.hdr.copy() if self.hdr is not None else None
+            nib.save(nib.nifti1.Nifti1Image(dataobj, affine, header), self.absolutepath)
+            if not os.path.isfile(self.absolutepath):
+                raise RuntimeError(f"Couldn't save image to {self.absolutepath}")
         else:
-            data = self.data
-
-        # update header
-        hdr = self.hdr.copy() if self.hdr else None
-        if hdr:
-            hdr.set_data_shape(data.shape)
-            # Update dtype if provided (but not if based on SCT-specific values: 'minimize')
-            if (dtype is not None) and (dtype not in ['minimize', 'minimize_int']):
-                hdr.set_data_dtype(dtype)
-
-        # nb. that copy() is important because if it were a memory map, save()
-        # would corrupt it
-        img = nib.nifti1.Nifti1Image(data.copy(), None, hdr)
-        if os.path.isfile(path):
-            if verbose:
-                logger.warning('File ' + path + ' already exists. Will overwrite it.')
-
-        # save file
-        if os.path.isabs(path):
-            logger.debug("Saving image to %s orientation %s shape %s",
-                         path, self.orientation, data.shape)
-        else:
-            logger.debug("Saving image to %s (%s) orientation %s shape %s",
-                         path, os.path.abspath(path), self.orientation, data.shape)
-
-        nib.save(img, path)
-
-        if mutable:
-            self.absolutepath = path
-            self.data = data
-
-        if not os.path.isfile(path):
-            raise RuntimeError("Couldn't save {}".format(path))
-
+            # if we're not operating in-place, then make any required modifications on a throw-away copy
+            self.copy().save(path, dtype, verbose, mutable=True)
         return self
 
-    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
+    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
         """
         This function return all the non-zero coordinates that the image contains.
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
@@ -556,12 +576,6 @@ class Image(object):
                 X, Y, Z = (self.data > 0).nonzero()
                 list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
 
-        if coordValue:
-            from spinalcordtoolbox.types import CoordinateValue
-            if n_dim == 3:
-                list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-            else:
-                list_coordinates = [CoordinateValue([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')
@@ -578,6 +592,16 @@ class Image(object):
                 raise ValueError("sorting parameter must be either 'x', 'y', 'z' or 'value'")
 
         return list_coordinates
+
+    def getNonZeroValues(self, sorting=True):
+        """
+        This function return all the non-zero unique values that the image contains.
+        If sorting is set to True, the list will be sorted.
+        """
+        list_values = list(np.unique(self.data[self.data > 0]))
+        if sorting:
+            list_values.sort()
+        return list_values
 
     def getCoordinatesAveragedByValue(self):
         """
@@ -777,9 +801,6 @@ class Image(object):
         """
         im_out = empty_like(self)
         im_out.data = np.mean(self.data, dim)
-        # TODO: the line below fails because .dim is immutable. We should find a solution to update dim accordingly
-        #  because as of now, this field contains wrong values (in this case, the dimension should be changed)
-        # im_out.dim = im_out.data.shape[:dim] + (1,) + im_out.data.shape[dim:]
         return im_out
 
 
@@ -804,7 +825,11 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     dice = 0.0  # default value of dice is 0
 
     # check if images are in the same coordinate system
-    assert image1.data.shape == image2.data.shape, "\n\nERROR: the data (" + image1.absolutepath + " and " + image2.absolutepath + ") don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
+    assert image1.data.shape == image2.data.shape, (
+        f"\n\nERROR: the data ({image1.absolutepath} and {image2.absolutepath}) don't have the same size."
+        f"\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  "
+        f"to put the input images in the same space"
+    )
 
     # if necessary, change orientation of images to RPI and compute segmentation boundaries
     if mode == '2d-slices' or (mode == '3d' and zboundaries):
@@ -932,7 +957,6 @@ def find_zmin_zmax(im, threshold=0.1):
 
     # Conversely from top to bottom
     for zmax in range(len(slicer) - 1, zmin, -1):
-        dataz = slicer[zmax]
         if np.any(slicer[zmax] > threshold):
             break
 
@@ -946,28 +970,17 @@ def get_dimension(im_file, verbose=1):
     :param: im_file: Image or nibabel object
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-    # initialization
-    nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
-    if type(im_file) is nib.nifti1.Nifti1Image:
-        header = im_file.header
-    elif type(im_file) is Image:
-        header = im_file.hdr
-    else:
-        header = None
-        logger.warning("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
-
-    nb_dims = len(header.get_data_shape())
-    if nb_dims == 2:
-        nx, ny = header.get_data_shape()
-        px, py = header.get_zooms()
-    if nb_dims == 3:
-        nx, ny, nz = header.get_data_shape()
-        px, py, pz = header.get_zooms()
-    if nb_dims == 4:
-        nx, ny, nz, nt = header.get_data_shape()
-        px, py, pz, pt = header.get_zooms()
-
-    return nx, ny, nz, nt, px, py, pz, pt
+    if not isinstance(im_file, (nib.nifti1.Nifti1Image, Image)):
+        raise TypeError("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
+    # initializating ndims [nx, ny, nz, nt] and pdims [px, py, pz, pt]
+    ndims = [1, 1, 1, 1]
+    pdims = [1, 1, 1, 1]
+    data_shape = im_file.header.get_data_shape()
+    zooms = im_file.header.get_zooms()
+    for i in range(min(len(data_shape), 4)):
+        ndims[i] = data_shape[i]
+        pdims[i] = zooms[i]
+    return *ndims, *pdims
 
 
 def all_refspace_strings():
@@ -1022,14 +1035,14 @@ def change_shape(im_src, shape, im_dst=None):
         im_dst.data = im_src.data.reshape(shape, order="C")
     else:
         # image data may be a view
-        im_dst_data = im_src.data.copy().reshape(shape, order="F")
+        im_dst.data = im_src.data.copy().reshape(shape, order="F")
 
     pair = nib.nifti1.Nifti1Pair(im_dst.data, im_dst.hdr.get_best_affine(), im_dst.hdr)
     im_dst.hdr = pair.header
     return im_dst
 
 
-def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_only=False):
+def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     """
 
     :param im_src: source image
@@ -1038,8 +1051,6 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
                    operation, can be unset to generate one)
     :param inverse: if you think backwards, use this to specify that you actually
                     want to transform *from* the specified orientation, not *to* it.
-    :param data_only: If you want to only permute the data, not the header. Only use if you know there is a problem
-                      with the native orientation of the input data.
     :return: an image with changed orientation
 
     .. note::
@@ -1047,7 +1058,6 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
         - if the source image is < 3D, it is reshaped to 3D and the destination is 3D
     """
 
-    # TODO: make sure to cover all cases for setorient-data
     if len(im_src.data.shape) < 3:
         pass  # Will reshape to 3D
     elif len(im_src.data.shape) == 3:
@@ -1106,10 +1116,9 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
         im_src_data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
 
-    if not data_only:
-        im_dst.header.set_qform(im_dst_aff)
-        im_dst.header.set_sform(im_dst_aff)
-        im_dst.header.set_data_shape(data.shape)
+    im_dst.header.set_qform(im_dst_aff)
+    im_dst.header.set_sform(im_dst_aff)
+    im_dst.header.set_data_shape(data.shape)
     im_dst.data = data
 
     return im_dst
@@ -1229,11 +1238,8 @@ def to_dtype(dtype):
     if dtype is None:
         return None
     if isinstance(dtype, type):
-        try:
-            if isinstance(dtype(0).dtype, np.dtype):
-                return dtype(0).dtype
-        except:  # TODO
-            raise
+        if isinstance(dtype(0).dtype, np.dtype):
+            return dtype(0).dtype
     if isinstance(dtype, np.dtype):
         return dtype
     if isinstance(dtype, str):
@@ -1385,14 +1391,15 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     warp3d = np.zeros([nx, ny, nz, 1, 3])
 
     for iz, fname in enumerate(fname_list):
-        warp2d = nib.load(fname).get_data()
+        img = nib.load(fname)
+        warp2d = np.asanyarray(img.dataobj)
         warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
         warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
         del warp2d
 
     # save new image
     im_dest = nib.load(fname_dest)
-    affine_dest = im_dest.get_affine()
+    affine_dest = im_dest.affine
     im_warp3d = nib.nifti1.Nifti1Image(warp3d, affine_dest)
 
     # set "intent" code to vector, to be interpreted as warping field
@@ -1731,7 +1738,7 @@ def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', 
     orig_ornt = im_list[0].orientation
 
     # reorient input files and save them to a temp directory
-    path_tmp = tmp_create(basename="image-stitching")
+    path_tmp = tmp_create(basename="stitch-images")
     fnames_in = []
     for im_in in im_list:
         temp_file_path = os.path.join(path_tmp, os.path.basename(im_in.absolutepath))

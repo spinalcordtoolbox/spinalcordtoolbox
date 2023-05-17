@@ -149,7 +149,7 @@ def main(argv: Sequence[str]):
     path_data, file_data, ext_data = extract_fname(fname_data)
 
     # create temporary folder
-    path_tmp = tmp_create(basename="dmri_separate")
+    path_tmp = tmp_create(basename="dmri-separate-b0-and-dwi")
 
     # copy files into tmp folder and convert to nifti
     printv('\nCopy files into temporary folder...', verbose)

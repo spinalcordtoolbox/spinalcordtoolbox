@@ -17,7 +17,7 @@ from spinalcordtoolbox.utils import sct_progress_bar
 NEAR_ZERO_THRESHOLD = 1e-6
 
 
-def compute_shape(segmentation, angle_correction=True, param_centerline=None, verbose=1):
+def compute_shape(segmentation, angle_correction=True, param_centerline=None, verbose=1, remove_temp_files=1):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane from the segmentation.
     The segmentation could be binary or weighted for partial volume [0,1].
@@ -26,6 +26,7 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     :param angle_correction:
     :param param_centerline: see centerline.core.ParamCenterline()
     :param verbose:
+    :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
     :return metrics: Dict of class Metric(). If a metric cannot be calculated, its value will be nan.
     :return fit_results: class centerline.core.FitResults()
     """
@@ -64,11 +65,12 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     if angle_correction:
         # compute the spinal cord centerline based on the spinal cord segmentation
         # here, param_centerline.minmax needs to be False because we need to retrieve the total number of input slices
-        _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose)
+        _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose,
+                                                              remove_temp_files=remove_temp_files)
 
     # Loop across z and compute shape analysis
     for iz in sct_progress_bar(range(min_z_index, max_z_index + 1), unit='iter', unit_scale=False, desc="Compute shape analysis",
-                               ascii=True, ncols=80):
+                               ncols=80):
         # Extract 2D patch
         current_patch = im_segr.data[:, :, iz]
         if angle_correction:
@@ -127,8 +129,9 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     metrics = {}
     for key, value in shape_properties.items():
         # Making sure all entries added to metrics have results
-        if not value == []:
-            metrics[key] = Metric(data=np.array(value), label=key)
+        value = np.array(value)
+        if value.size > 0:
+            metrics[key] = Metric(data=value, label=key)
 
     return metrics, fit_results
 

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
-import spinalcordtoolbox as sct
+from spinalcordtoolbox import __version__
 
 
 def main():
-    print(sct.__version__)
+    print(__version__)
 
 
 if __name__ == "__main__":

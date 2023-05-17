@@ -117,7 +117,7 @@ class AnalyzeLeion:
                 printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
         # create tmp directory
-        self.tmp_dir = tmp_create()  # path to tmp directory
+        self.tmp_dir = tmp_create(basename="analyze-lesion")  # path to tmp directory
 
         # lesion file where each lesion has a different value
         self.fname_label = extract_fname(self.fname_mask)[1] + '_label' + extract_fname(self.fname_mask)[2]
@@ -191,8 +191,8 @@ class AnalyzeLeion:
             copy(os.path.join(self.tmp_dir, file_), os.path.join(self.path_ofolder, file_))
 
     def pack_measures(self):
-        writer = pd.ExcelWriter(self.excel_name, engine='xlwt')
-        self.measure_pd.to_excel(writer, sheet_name='measures', index=False, engine='xlwt')
+        writer = pd.ExcelWriter(self.excel_name, engine='xlsxwriter')
+        self.measure_pd.to_excel(writer, sheet_name='measures', index=False, engine='xlsxwriter')
 
         # Add the total column and row
         if self.path_template is not None:
@@ -202,9 +202,9 @@ class AnalyzeLeion:
                     df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
                     df['total'] = df.sum(numeric_only=True, axis=1)
                     df.iloc[-1, df.columns.get_loc('vert')] = 'total'
-                    df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlwt')
+                    df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
                 else:
-                    self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlwt')
+                    self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
 
         # Save pickle
         self.distrib_matrix_dct['measures'] = self.measure_pd
@@ -238,7 +238,11 @@ class AnalyzeLeion:
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
             self.measure_pd.loc[label_idx, 'mean_' + extract_fname(self.fname_ref)[1]] = mean_cur
             self.measure_pd.loc[label_idx, 'std_' + extract_fname(self.fname_ref)[1]] = std_cur
-            printv('Mean+/-std of lesion #' + str(lesion_label) + ' in ' + extract_fname(self.fname_ref)[1] + ' file: ' + str(np.round(mean_cur, 2)) + '+/-' + str(np.round(std_cur, 2)), self.verbose, type='info')
+            file_ref = extract_fname(self.fname_ref)[1]
+            printv(
+                f'Mean+/-std of lesion #{lesion_label} in {file_ref} file: {mean_cur:.2f}+/-{std_cur:.2f}',
+                self.verbose,
+                type='info')
 
     def _measure_volume(self, im_data, p_lst, idx):
         for zz in range(im_data.shape[2]):
@@ -364,7 +368,7 @@ class AnalyzeLeion:
         im_lesion_data = im_lesion.data
         p_lst = im_lesion.dim[4:7]  # voxel size
 
-        label_lst = [l for l in np.unique(im_lesion_data) if l]  # lesion label IDs list
+        label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
 
         if self.path_template is not None:
             if os.path.isfile(self.path_levels):
@@ -374,7 +378,12 @@ class AnalyzeLeion:
 
             else:
                 im_vert_data = None
-                printv('ERROR: the file ' + self.path_levels + ' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='error')
+                printv(
+                    f"ERROR: the file {self.path_levels} does not exist. "
+                    f"Please make sure the template was correctly registered and warped "
+                    f"(sct_register_to_template or sct_register_multimodal and sct_warp_template)",
+                    type='error',
+                )
 
             # In order to open atlas images only one time
             atlas_data_dct = {}  # dict containing the np.array of the registrated atlas
@@ -423,7 +432,6 @@ class AnalyzeLeion:
     def angle_correction(self):
         im_seg = Image(self.fname_sc)
         nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-        data_seg = im_seg.data
 
         # fit centerline, smooth it and return the first derivative (in physical space)
         _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
@@ -447,7 +455,7 @@ class AnalyzeLeion:
         im_2save.data = label(im.data, connectivity=2)
         im_2save.save(self.fname_label)
 
-        self.measure_pd['label'] = [l for l in np.unique(im_2save.data) if l]
+        self.measure_pd['label'] = [label for label in np.unique(im_2save.data) if label]
         printv('Lesion count = ' + str(len(self.measure_pd['label'])), self.verbose, 'info')
 
     def _orient(self, fname, orientation):
@@ -557,14 +565,14 @@ def main(argv: Sequence[str]):
     if fname_ref is not None:
         display_viewer_syntax(
             files=[fname_mask, os.path.join(path_results, lesion_obj.fname_label)],
-            colormaps=['gray', 'red-yellow'],
+            im_types=['anat', 'softseg'],
             opacities=['1.0', '0.7'],
             verbose=verbose
         )
     else:
         display_viewer_syntax(
             files=[os.path.join(path_results, lesion_obj.fname_label)],
-            colormaps=['red-yellow'],
+            im_types=['softseg'],
             opacities=['0.7'],
             verbose=verbose
         )

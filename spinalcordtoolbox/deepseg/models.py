@@ -11,7 +11,7 @@ import textwrap
 import shutil
 
 import spinalcordtoolbox as sct
-import spinalcordtoolbox.download
+from spinalcordtoolbox import download
 from spinalcordtoolbox.utils import stylize
 
 
@@ -19,6 +19,10 @@ logger = logging.getLogger(__name__)
 
 # List of models. The convention for model names is: (species)_(university)_(contrast)_region
 # Regions could be: sc, gm, lesion, tumor
+# NB: The 'url' field should either be:
+#     1) A <mirror URL list> containing different mirror URLs for the model
+#     2) A dict of <mirror URL lists>, where each list corresponds to a different seed (for model ensembling), and
+#        each dictionary key corresponds to the seed's name (seed names are used to create subfolders per-seed)
 MODELS = {
     "t2star_sc": {
         "url": [
@@ -88,12 +92,19 @@ MODELS = {
         "default": False,
     },
     "model_seg_ms_lesion_mp2rage": {
-        "url": [
-            "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20211223/model_seg_ms_lesion_mp2rage.zip"
-        ],
+        "url": {
+            "seed1": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed01.zip"],
+            "seed2": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed02.zip"],
+            "seed3": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed03.zip"],
+            "seed4": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed04.zip"],
+            "seed5": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed05.zip"],
+        },
         "description": "Segmentation of multiple sclerosis lesions on cropped MP2RAGE spinal cord data. To crop the "
                        "data you can first segment the spinal cord using the model 'model_seg_ms_sc_mp2rage' and "
-                       "then crop the MP2RAGE image using 'sct_crop_image -i IMAGE -m IMAGE_seg'",
+                       "then crop the MP2RAGE image using 'sct_crop_image -i IMAGE -m IMAGE_seg -dilate 32x0x32'."
+                       "Note: For the MS lesion segmentation model to perform well, it is important to respect "
+                       "the value 32. Also, the syntax assumes the image is sagittal. For another orientation, "
+                       "change the axes in '32x0x32'.",
         "contrasts": ["mp2rage"],
         "default": False,
     },
@@ -101,7 +112,8 @@ MODELS = {
         "url": [
             "https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass/archive/refs/tags/r20211012.zip"
         ],
-        "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University, France",
+        "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, "
+                       "V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University, France",
         "contrasts": ["t2star"],
         "default": False,
     },
@@ -171,10 +183,13 @@ TASKS = {
     'seg_ms_lesion_mp2rage':
         {'description': 'MS lesion segmentation on cropped MP2RAGE data',
          'long_description': 'This segmentation model for MP2RAGE MS lesion segmentation uses a Modified3DUNet '
-                             'architecture, and was created with the `ivadomed` package. Training data consisted of '
-                             '30 multiple sclerosis (MS) patients that included manual segmentations of the spinal '
-                             'cord and MS lesions. The dataset was preprocessed to crop around the spinal cord prior '
-                             'to training. This dataset was provided by the University of Basel.',
+                             'architecture, and was created with the `ivadomed` package. Training/Evaluation data included '
+                             '180 multiple sclerosis (MS) patients from the University of Basel. '
+                             'Important: For the MS lesion segmentation model to perform well, it is important to crop it '
+                             'around the spinal cord, using a dilation value of 32. This could be done using: '
+                             '"sct_crop_image -i IMAGE -m IMAGE_seg -dilate 32x0x32". '
+                             'Note that the syntax above assumes the image is sagittal. For another orientation, '
+                             'axes need to be swapped (eg: 32x32x0 for an axial orientation).',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
@@ -256,7 +271,17 @@ def install_model(name_model):
     :return: None
     """
     logger.info("\nINSTALLING MODEL: {}".format(name_model))
-    sct.download.install_data(MODELS[name_model]['url'], folder(name_model))
+    url_field = MODELS[name_model]['url']
+    # List of mirror URLs corresponding to a single model
+    if isinstance(url_field, list):
+        model_urls = url_field
+        download.install_data(model_urls, folder(name_model))
+    # Dict of lists, with each list corresponding to a different model seed for ensembling
+    else:
+        assert isinstance(url_field, dict), "Invalid url field in MODELS"
+        for seed_name, model_urls in url_field.items():
+            logger.info(f"\nInstalling '{seed_name}'...")
+            download.install_data(model_urls, folder(os.path.join(name_model, seed_name)), keep=True)
 
 
 def install_default_models():
@@ -270,17 +295,22 @@ def install_default_models():
             install_model(name_model)
 
 
-def is_valid(path_model):
+def is_valid(path_models):
     """
-    Check if model has the necessary files and follow naming conventions:
+    Check if model paths have the necessary files and follow naming conventions:
     - Folder should have the same name as the enclosed files.
 
-    :param path_model: str: Absolute path to folder that encloses the model files.
+    :param path_models: str or list: Absolute path(s) to folder(s) that enclose the model files.
     """
-    name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
-    return (os.path.exists(os.path.join(path_model, name_model + '.pt')) or
-            os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and os.path.exists(
-        os.path.join(path_model, name_model + '.json'))
+    def _is_valid(path_model):
+        name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
+        return (os.path.exists(os.path.join(path_model, name_model + '.pt')) or
+                os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and os.path.exists(
+            os.path.join(path_model, name_model + '.json'))
+    # Adapt the function so that it can be used on single paths (str) or lists of paths
+    if not isinstance(path_models, list):
+        path_models = [path_models]
+    return all(_is_valid(path) for path in path_models)
 
 
 def list_tasks():
@@ -292,21 +322,22 @@ def list_tasks():
 
 
 def display_list_tasks():
-    tasks = sct.deepseg.models.list_tasks()
+    tasks = list_tasks()
     # Display beautiful output
     color = {True: 'LightGreen', False: 'LightRed'}
     print("{:<30s}{:<50s}{:<15s}MODELS".format("TASK", "DESCRIPTION", "CONTRAST"))
     print("-" * 120)
     for name_task, value in tasks.items():
-        path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
-        are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
+        path_models = [folder(name_model) for name_model in value['models']]
+        path_models = [find_model_folder_paths(path) for path in path_models]
+        are_models_valid = [is_valid(path_model) for path_model in path_models]
         task_status = stylize(name_task.ljust(30),
                               color[all(are_models_valid)])
         description_status = stylize(value['description'].ljust(50),
                                      color[all(are_models_valid)])
         models_status = ', '.join([stylize(model_name,
-                                           color[is_valid])
-                                   for model_name, is_valid in zip(value['models'], are_models_valid)])
+                                           color[validity])
+                                   for model_name, validity in zip(value['models'], are_models_valid)])
         input_contrasts = stylize(str(', '.join(model_name for model_name in
                                                 get_required_contrasts(name_task))).ljust(15),
                                   color[all(are_models_valid)])
@@ -326,7 +357,7 @@ def display_list_tasks():
 
 
 def display_list_tasks_long():
-    for name_task, value in sct.deepseg.models.list_tasks().items():
+    for name_task, value in list_tasks().items():
         indent_len = len("LONG_DESCRIPTION: ")
         print("{}{}".format("TASK:".ljust(indent_len), stylize(name_task, 'Bold')))
         print('\n'.join(textwrap.wrap(value['long_description'],
@@ -335,9 +366,10 @@ def display_list_tasks_long():
                         subsequent_indent=' '*indent_len)))
         print("{}{}".format("URL:".ljust(indent_len), stylize(value['url'], 'Cyan')))
 
-        path_models = [sct.deepseg.models.folder(name_model)
+        path_models = [folder(name_model)
                        for name_model in value['models']]
-        if all([sct.deepseg.models.is_valid(path_model) for path_model in path_models]):
+        path_models = [find_model_folder_paths(path) for path in path_models]
+        if all([is_valid(path_model) for path_model in path_models]):
             installed = stylize("Yes", 'LightGreen')
         else:
             installed = stylize("No", 'LightRed')
@@ -356,3 +388,20 @@ def get_metadata(folder_model):
     with open(fname_metadata, "r") as fhandle:
         metadata = json.load(fhandle)
     return metadata
+
+
+def find_model_folder_paths(path_model):
+    """
+    Search for the presence of model subfolders within the main model folder. If they exist,
+    then the model folder is actually an ensemble of models, so return a list of folders.
+    If they don't exist, then return the original `path_model` (but as a list, to ensure code compatibility).
+
+    :param path_model: Absolute path to folder that encloses the model files.
+    :return: list: Either a list of ensemble subfolders, or a list containing the original model folder path.
+    """
+    name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
+    # Check to see if model folder contains subfolders with the model name (i.e. ensembling)
+    model_subfolders = [folder[0] for folder in os.walk(path_model)  # NB: `[0]` == folder name for os.walk
+                        if folder[0].endswith(name_model) and folder[0] != path_model]
+    # If it does, then these are the "true" model subfolders. Otherwise, return the original path as a list.
+    return model_subfolders if model_subfolders else [path_model]

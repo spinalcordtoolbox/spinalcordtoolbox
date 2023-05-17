@@ -7,20 +7,19 @@ import shutil
 import tempfile
 import datetime
 import logging
+from pathlib import Path
 
 from .sys import printv
 
 logger = logging.getLogger(__name__)
 
 
-def tmp_create(basename=None):
+def tmp_create(basename):
     """Create temporary folder and return its path
     """
-    prefix = "sct-%s-" % datetime.datetime.now().strftime("%Y%m%d%H%M%S.%f")
-    if basename:
-        prefix += "%s-" % basename
+    prefix = f"sct_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{basename}_"
     tmpdir = tempfile.mkdtemp(prefix=prefix)
-    logger.info("Creating temporary folder (%s)" % tmpdir)
+    logger.info(f"Creating temporary folder ({tmpdir})")
     return tmpdir
 
 
@@ -120,8 +119,8 @@ def check_file_exist(fname, verbose=1):
 class TempFolder(object):
     """This class will create a temporary folder."""
 
-    def __init__(self, verbose=0):
-        self.path_tmp = tmp_create()
+    def __init__(self, basename, verbose=0):
+        self.path_tmp = tmp_create(basename)
         self.previous_path = None
 
     def chdir(self):
@@ -153,12 +152,11 @@ class TempFolder(object):
         rmtree(self.path_tmp)
 
 
-def cache_signature(input_files=[], input_data=[], input_params={}):
+def cache_signature(input_files=[], input_params={}):
     """
     Create a signature to be used for caching purposes
 
     :param input_files: paths of input files (that can influence output)
-    :param input_data: input data (that can influence output)
     :param input_params: input parameters (that can influence output)
 
     Notes:
@@ -182,12 +180,6 @@ def cache_signature(input_files=[], input_data=[], input_params={}):
         with io.open(path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 h.update(chunk)
-    for data in input_data:
-        h.update(str(type(data)))
-        try:
-            h.update(data)
-        except:
-            h.update(str(data))
     for k, v in sorted(input_params.items()):
         h.update(str(type(k)).encode('utf-8'))
         h.update(str(k).encode('utf-8'))
@@ -249,3 +241,15 @@ def copy(src, dst, verbose=1):
             if isinstance(e, shutil.SameFileError):
                 return
         raise  # Must be another error
+
+
+def relpath_or_abspath(child_path, parent_path):
+    """
+    Try to find a relative path between a child path and its parent path. If it doesn't exist,
+    then the child path is not within the parent path, so return its abspath instead.
+    """
+    abspath = Path(child_path).absolute()
+    try:
+        return abspath.relative_to(parent_path)
+    except ValueError:
+        return abspath

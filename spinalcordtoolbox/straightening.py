@@ -1,6 +1,5 @@
 # Functions dealing with spinal cord straightening
 
-# TODO: move _get_centerline inside Class
 # TODO: only input Image instead of file names
 
 import os
@@ -91,7 +90,6 @@ class SpinalCordStraightener(object):
         fname_output = self.output_filename
         remove_temp_files = self.remove_temp_files
         verbose = self.verbose
-        interpolation_warp = self.interpolation_warp  # TODO: remove this
 
         # start timer
         start_time = time.time()
@@ -99,7 +97,7 @@ class SpinalCordStraightener(object):
         # Extract path/file/extension
         path_anat, file_anat, ext_anat = extract_fname(fname_anat)
 
-        path_tmp = tmp_create(basename="straighten_spinalcord")
+        path_tmp = tmp_create(basename="straighten-spinalcord")
 
         # Copying input data to tmp folder
         logger.info('Copy files to tmp folder...')
@@ -149,7 +147,9 @@ class SpinalCordStraightener(object):
 
         # 2. extract bspline fitting of the centerline, and its derivatives
         img_ctl = Image('centerline_rpi.nii.gz')
-        centerline = _get_centerline(img_ctl, self.param_centerline, verbose)
+        _, arr_ctl_phys, arr_ctl_der_phys, _ = get_centerline(img_ctl, self.param_centerline,
+                                                              verbose=verbose, space="phys")
+        centerline = Centerline(*arr_ctl_phys, *arr_ctl_der_phys)
         number_of_points = centerline.number_of_points
 
         # ==========================================================================================
@@ -215,7 +215,9 @@ class SpinalCordStraightener(object):
             image_centerline_straight = Image('centerline_ref.nii.gz') \
                 .change_orientation("RPI") \
                 .save(fname_ref, mutable=True)
-            centerline_straight = _get_centerline(image_centerline_straight, self.param_centerline, verbose)
+            _, arr_ctl_phys, arr_ctl_der_phys, _ = get_centerline(image_centerline_straight, self.param_centerline,
+                                                                  verbose=verbose, space="phys")
+            centerline_straight = Centerline(*arr_ctl_phys, *arr_ctl_der_phys)
             nx_s, ny_s, nz_s, nt_s, px_s, py_s, pz_s, pt_s = image_centerline_straight.dim
 
             # Prepare warping fields headers
@@ -371,22 +373,15 @@ class SpinalCordStraightener(object):
             plt.savefig('fig_straighten_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '.png')
             plt.close()
 
-        # alignment_mode = 'length'
-        alignment_mode = 'levels'
-
         lookup_curved2straight = list(range(centerline.number_of_points))
         if self.discs_input_filename != "":
             # create look-up table curved to straight
             for index in range(centerline.number_of_points):
                 disc_label = centerline.l_points[index]
-                if alignment_mode == 'length':
-                    relative_position = centerline.dist_points[index]
-                else:
-                    relative_position = centerline.dist_points_rel[index]
+                relative_position = centerline.dist_points_rel[index]
                 idx_closest = centerline_straight.get_closest_to_absolute_position(disc_label, relative_position,
                                                                                    backup_index=index,
-                                                                                   backup_centerline=centerline_straight,
-                                                                                   mode=alignment_mode)
+                                                                                   backup_centerline=centerline_straight)
                 if idx_closest is not None:
                     lookup_curved2straight[index] = idx_closest
                 else:
@@ -407,14 +402,10 @@ class SpinalCordStraightener(object):
         if self.discs_input_filename != "":
             for index in range(centerline_straight.number_of_points):
                 disc_label = centerline_straight.l_points[index]
-                if alignment_mode == 'length':
-                    relative_position = centerline_straight.dist_points[index]
-                else:
-                    relative_position = centerline_straight.dist_points_rel[index]
+                relative_position = centerline_straight.dist_points_rel[index]
                 idx_closest = centerline.get_closest_to_absolute_position(disc_label, relative_position,
                                                                           backup_index=index,
-                                                                          backup_centerline=centerline_straight,
-                                                                          mode=alignment_mode)
+                                                                          backup_centerline=centerline_straight)
                 if idx_closest is not None:
                     lookup_straight2curved[index] = idx_closest
         for p in range(0, len(lookup_straight2curved) // 2):
@@ -614,19 +605,3 @@ class SpinalCordStraightener(object):
         self.elapsed_time = int(np.round(time.time() - start_time))
 
         return fname_straight
-
-
-def _get_centerline(img, param_centerline, verbose):
-    nx, ny, nz, nt, px, py, pz, pt = img.dim
-    _, arr_ctl, arr_ctl_der, _ = get_centerline(img, param_centerline, verbose=verbose)
-    # Transform centerline to physical coordinate system
-    arr_ctl_phys = img.transfo_pix2phys(
-        [[arr_ctl[0][i], arr_ctl[1][i], arr_ctl[2][i]] for i in range(len(arr_ctl[0]))])
-    x_centerline, y_centerline, z_centerline = arr_ctl_phys[:, 0], arr_ctl_phys[:, 1], arr_ctl_phys[:, 2]
-    # Adjust derivatives with pixel size
-    x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der[0][:] * px, \
-        arr_ctl_der[1][:] * py, \
-        arr_ctl_der[2][:] * pz
-    # Construct centerline object
-    return Centerline(x_centerline.tolist(), y_centerline.tolist(), z_centerline.tolist(),
-                      x_centerline_deriv.tolist(), y_centerline_deriv.tolist(), z_centerline_deriv.tolist())

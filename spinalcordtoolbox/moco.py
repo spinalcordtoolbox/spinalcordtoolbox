@@ -148,7 +148,7 @@ def moco_wrapper(param):
     printv('  Input file ............ ' + param.fname_data, param.verbose)
     printv('  Group size ............ {}'.format(param.group_size), param.verbose)
 
-    path_tmp = tmp_create(basename="moco")
+    path_tmp = tmp_create(basename="moco-wrapper")
 
     # Copying input data to tmp folder
     printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
@@ -267,7 +267,7 @@ def moco_wrapper(param):
     _, file_dwi_basename, file_dwi_ext = extract_fname(file_datasub)
     # Group data
     list_file_group = []
-    for iGroup in sct_progress_bar(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False,
+    for iGroup in sct_progress_bar(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups",
                                    ncols=80):
         # get index
         index_moco_i = group_indexes[iGroup]
@@ -581,13 +581,12 @@ def moco(param):
 
         # Motion correction: initialization
         index = np.arange(nt)
-        file_data_splitT_num = []
         file_data_splitZ_splitT_moco = []
         failed_transfo = [0 for i in range(nt)]
 
         # Motion correction: Loop across T
         for indice_index in sct_progress_bar(range(nt), unit='iter', unit_scale=False,
-                                             desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ) - 1), ascii=False, ncols=80):
+                                             desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ) - 1), ncols=80):
 
             # create indices and display stuff
             it = index[indice_index]

@@ -80,7 +80,7 @@ def register_wrapper(fname_src, fname_dest, param, paramregmulti, fname_src_seg=
         file_out_inv = file_out + '_inv'
 
     # create temporary folder
-    path_tmp = tmp_create(basename="register")
+    path_tmp = tmp_create(basename="register-wrapper")
 
     printv('\nCopying input data to tmp folder and convert to nii...', param.verbose)
     Image(fname_src).save(os.path.join(path_tmp, "src.nii"))

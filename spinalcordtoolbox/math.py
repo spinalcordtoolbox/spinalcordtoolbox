@@ -5,8 +5,8 @@ import logging
 
 import numpy as np
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
-from skimage.filters import threshold_local, threshold_otsu
-from scipy.ndimage.filters import gaussian_filter, gaussian_laplace
+from skimage.filters import threshold_local, threshold_otsu, rank
+from scipy.ndimage import gaussian_filter, gaussian_laplace
 from scipy.stats import pearsonr, spearmanr
 from dipy.denoise.noise_estimate import estimate_sigma
 from dipy.segment.mask import median_otsu
@@ -81,8 +81,8 @@ def dice(im1, im2):
 
     Source: https://gist.github.com/JDWarner/6730747
     """
-    im1 = np.asarray(im1).astype(np.bool)
-    im2 = np.asarray(im2).astype(np.bool)
+    im1 = np.asarray(im1).astype(bool)
+    im2 = np.asarray(im2).astype(bool)
 
     if im1.shape != im2.shape:
         raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
@@ -110,7 +110,11 @@ def dilate(data, size, shape, dim=None):
         im_out.data = dilate(data.data, size, shape, dim)
         return im_out
     else:
-        return dilation(data, footprint=_get_footprint(shape, size, dim), out=None)
+        footprint = _get_footprint(shape, size, dim)
+        if data.dtype in ['uint8', 'uint16']:
+            return rank.maximum(data, footprint=footprint)
+        else:
+            return dilation(data, footprint=footprint, out=None)
 
 
 def erode(data, size, shape, dim=None):
@@ -130,7 +134,11 @@ def erode(data, size, shape, dim=None):
         im_out.data = erode(data.data, size, shape, dim)
         return im_out
     else:
-        return erosion(data, footprint=_get_footprint(shape, size, dim), out=None)
+        footprint = _get_footprint(shape, size, dim)
+        if data.dtype in ['uint8', 'uint16']:
+            return rank.minimum(data, footprint=footprint)
+        else:
+            return erosion(data, footprint=footprint, out=None)
 
 
 def mutual_information(x, y, nbins=32, normalized=False):
@@ -326,7 +334,8 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
     :param model: regression model required to learn the mapping within Patch2Self
 
     .. note::
-        for more info about patch_radius and model, please refer to the dipy website: https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self
+        for more info about patch_radius and model, please refer to the dipy website:
+        https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self
     """
     denoised = patch2self(data_in, bvals_in, patch_radius=patch_radius,
                           model=model)

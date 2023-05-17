@@ -4,7 +4,10 @@ on:
   workflow_dispatch:
     inputs:
       milestone_title:
-        description: 'Milestone title'
+        description: 'Milestone title (this release)'
+        required: true
+      future_milestone_title:
+        description: 'Milestone title (next release)'
         required: true
   push:
     branches:
@@ -34,7 +37,7 @@ jobs:
     steps:
 
     - name: Checkout spinalcordtoolbox
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Install spinalcordtoolbox
       run: |
@@ -71,15 +74,8 @@ jobs:
       run:
         shell: bash
     steps:
-
-    # NB: For Windows installations, users must install Python beforehand
-    - uses: actions/setup-python@v4
-      if: matrix.os == 'windows-2019'
-      with:
-        python-version: '3.8'
-
     - name: Checkout spinalcordtoolbox
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Download requirements-freeze.txt
       uses: actions/download-artifact@v3
@@ -100,11 +96,13 @@ jobs:
       run: install_sct.bat
 
     - name: Update environment variables
+      # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
+      # In a user install, the user would perform this step using the Windows PATH-changing GUI.
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
-          # In a user install, the user would perform this step using the Windows PATH-changing GUI.
-          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+          # NB: Because `requirements-freeze.txt` is present, SCT gets installed to `~/sct_0.0`, 
+          # rather than an in-place install. So, we specify this path directly, rather than using $GITHUB_WORKSPACE.
+          echo "${USERPROFILE}\sct_0.0\bin" >> $GITHUB_PATH
         else
           # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
           # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
@@ -128,35 +126,49 @@ jobs:
     # Only create the release if workflow is run manually. (This allows the other steps in the workflow to test PRs.)
     if: github.event_name == 'workflow_dispatch'
     steps:
-
-    - name: Checkout spinalcordtoolbox (main branch)
-      uses: actions/checkout@v2
-      with:
-        ref: ${{ env.MAIN_BRANCH }}
-        fetch-depth: 0
-
-    - name: Download requirements-freeze.txt
-      uses: actions/download-artifact@v3
-      with:
-        name: requirements-freeze
-
-    - name: Update version.txt (using milestone title)
-      run: |
-        echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
-
     # The GitHub Actions bot email was taken from: https://github.community/t/github-actions-bot-email-address/17204/6
     - name: Set bot user data for commits
       run: |
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --global user.name "GitHub Actions Bot"
 
-    - name: Commit and push
+    - name: Checkout spinalcordtoolbox (main branch)
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ env.MAIN_BRANCH }}
+        fetch-depth: 0
+
+    # Branch off before adding commits to the main branch
+    - name: Create release branch
       run: |
-        git checkout -b bot/${{ github.event.inputs.milestone_title }}
+        git branch bot/${{ github.event.inputs.milestone_title }}
+
+    - name: Update version.txt (main branch)
+      run: |
+        echo "${{ github.event.inputs.future_milestone_title }}.dev0" > spinalcordtoolbox/version.txt
+        git add spinalcordtoolbox/version.txt
+        git commit -m "Update version.txt for ${{ github.event.inputs.future_milestone_title }} development"
+        git push
+
+    - name: Download requirements-freeze.txt (for release)
+      uses: actions/download-artifact@v3
+      with:
+        name: requirements-freeze
+
+    - name: Commit requirements-freeze.txt (for release)
+      run: |
+        git checkout bot/${{ github.event.inputs.milestone_title }}
         git add requirements-freeze.txt
         git commit -m "Update requirements-freeze.txt for ${{ github.event.inputs.milestone_title }}"
+
+    - name: Update version.txt (for release)
+      run: |
+        echo "${{ github.event.inputs.milestone_title }}" > spinalcordtoolbox/version.txt
         git add spinalcordtoolbox/version.txt
         git commit -m "Update version.txt for ${{ github.event.inputs.milestone_title }}"
+
+    - name: Push release changes
+      run: |
         git tag ${{ github.event.inputs.milestone_title }}
         git push --tags
 
@@ -165,6 +177,14 @@ jobs:
         cp install_sct.bat install_sct-${{ github.event.inputs.milestone_title }}_win.bat
         perl -pi -e 's/set git_ref=master/set git_ref=${{ github.event.inputs.milestone_title }}/' install_sct-${{ github.event.inputs.milestone_title }}_win.bat
 
+    - name: Create ${{ github.event.inputs.milestone_title }} Linux/macOS install scripts
+      # NB: `install_sct` works for both Linux and macOS platforms. So, here, we simply duplicate the script for both
+      # platforms (which will allow us to collect some rudimentary statistics + make our installation steps clearer).
+      run: |
+        cp install_sct install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
+        perl -pi -e 's/SCT_GIT_REF="master"/SCT_GIT_REF="${{ github.event.inputs.milestone_title }}"/' install_sct-${{ github.event.inputs.milestone_title }}_linux.sh
+        cp install_sct-${{ github.event.inputs.milestone_title }}_linux.sh install_sct-${{ github.event.inputs.milestone_title }}_macos.sh
+
     - uses: ncipollo/release-action@v1
       name: Create release
       id: create_release
@@ -172,5 +192,7 @@ jobs:
         tag: ${{ github.event.inputs.milestone_title }}
         token: ${{ secrets.GITHUB_TOKEN }}
         bodyFile: ".github/workflows/release-body.md"
-        artifacts: "install_sct-${{ github.event.inputs.milestone_title }}_win.bat"
+        artifacts: "install_sct-${{ github.event.inputs.milestone_title }}_win.bat,\
+                    install_sct-${{ github.event.inputs.milestone_title }}_linux.sh,\
+                    install_sct-${{ github.event.inputs.milestone_title }}_macos.sh"
         draft: true

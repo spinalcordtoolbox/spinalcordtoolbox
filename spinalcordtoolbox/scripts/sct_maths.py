@@ -363,7 +363,7 @@ def main(argv: Sequence[str]):
 
     elif arguments.mul is not None:
         if data.ndim == 4 and len(arguments.mul) == 0:
-            data_to_mul = data  # Special case for summing 3D volumes within a single 4D image (i.e. "-add" by itself)
+            data_to_mul = data  # Special case for multiplying 3D volumes within a single 4D image (i.e. "-mul" by itself)
         else:
             data_to_mul = sct_math.concatenate_along_last_dimension([data] + arguments.mul)
         data_out = np.prod(data_to_mul, axis=-1)
@@ -492,7 +492,11 @@ def compute_similarity(img1: Image, img2: Image, fname_out: str, metric: str, me
     Sanitize input and compute similarity metric between two images data.
     """
     if img1.data.size != img2.data.size:
-        raise ValueError("Input images don't have the same size! \nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space")
+        raise ValueError(
+            "Input images don't have the same size!\n"
+            "Please use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  "
+            "to put the input images in the same space"
+        )
 
     res, data1_1d, data2_1d = sct_math.compute_similarity(img1.data, img2.data, metric=metric)
 

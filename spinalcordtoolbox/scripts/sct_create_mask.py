@@ -21,7 +21,7 @@ from typing import Sequence
 import numpy as np
 
 import nibabel
-from scipy import ndimage
+from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, empty_like
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
@@ -151,7 +151,7 @@ def main(argv: Sequence[str]):
     # run main program
     create_mask(param)
 
-    display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'], verbose=verbose)
+    display_viewer_syntax([param.fname_data, param.fname_out], im_types=['anat', 'seg'], opacities=['', '0.5'], verbose=verbose)
 
 
 def create_mask(param):
@@ -172,7 +172,7 @@ def create_mask(param):
     if param.fname_out == '':
         param.fname_out = os.path.abspath(param.file_prefix + file_data + ext_data)
 
-    path_tmp = tmp_create(basename="create_mask")
+    path_tmp = tmp_create(basename="create-mask")
 
     printv('\nOrientation:', param.verbose)
     orientation_input = Image(param.fname_data).orientation
@@ -227,10 +227,10 @@ def create_mask(param):
     # create mask
     printv('\nCreate mask...', param.verbose)
     centerline = nibabel.load(fname_centerline)  # open centerline
-    hdr = centerline.get_header()  # get header
+    hdr = centerline.header  # get header
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
     # spacing = hdr.structarr['pixdim']
-    data_centerline = centerline.get_data()  # get centerline
+    data_centerline = np.asanyarray(centerline.dataobj)  # get centerline
     # if data is 2D, reshape with empty third dimension
     if len(data_centerline.shape) == 2:
         data_centerline_shape = list(data_centerline.shape)
@@ -242,7 +242,7 @@ def create_mask(param):
     cy = [0] * nz
     for iz in range(0, nz, 1):
         if iz in z_centerline_not_null:
-            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(np.array(data_centerline[:, :, iz]))
+            cx[iz], cy[iz] = center_of_mass(np.array(data_centerline[:, :, iz]))
     # create 2d masks
     im_list = []
     for iz in range(nz):
