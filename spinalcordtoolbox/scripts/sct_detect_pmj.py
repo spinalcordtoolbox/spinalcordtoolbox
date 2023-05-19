@@ -26,7 +26,7 @@ import sys
 import logging
 from typing import Sequence
 
-from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage import center_of_mass
 import nibabel as nib
 import numpy as np
 
@@ -100,11 +100,6 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the process was run on.')
-    optional.add_argument(
-        "-igt",
-        metavar=Metavar.str,
-        help="File name of ground-truth PMJ (single voxel).",
-        required=False)
     optional.add_argument(
         "-r",
         type=int,
@@ -354,7 +349,7 @@ def main(argv: Sequence[str]):
             generate_qc(fname_in, fname_seg=fname_out, args=argv, path_qc=os.path.abspath(path_qc),
                         dataset=arguments.qc_dataset, subject=arguments.qc_subject, process='sct_detect_pmj')
 
-        display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'], verbose=verbose)
+        display_viewer_syntax([fname_in, fname_out], im_types=['anat', 'seg'], verbose=verbose)
 
 
 if __name__ == "__main__":

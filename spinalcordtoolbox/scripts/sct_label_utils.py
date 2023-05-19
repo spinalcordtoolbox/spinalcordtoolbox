@@ -132,6 +132,12 @@ def get_parser():
     )
 
     func_group.add_argument(
+        '-project-centerline',
+        metavar=Metavar.file,
+        help="Project labels onto the spinal cord centerline"
+    )
+
+    func_group.add_argument(
         '-display',
         action="store_true",
         help="Display all labels (i.e. non-zero values)."
@@ -275,6 +281,17 @@ def main(argv: Sequence[str]):
     elif arguments.disc is not None:
         ref = Image(arguments.disc)
         out = sct_labels.labelize_from_discs(img, ref)
+    elif arguments.project_centerline is not None:
+        ref = Image(arguments.project_centerline)
+        try:
+            out = sct_labels.project_centerline(img, ref)
+        except sct_labels.ShapeMismatchError as e:
+            printv(
+                f"Input image: {input_filename} and referenced labels: {arguments.project_centerline} "
+                f"should have the same shape according to the RPI orientation.\n"
+                f"Referenced labels with shape {e.dims['ref']} cannot be projected on "
+                f"input image with shape {e.dims['img']}",
+                type='error')
     elif arguments.vert_body is not None:
         levels = arguments.vert_body
         if len(levels) == 1 and levels[0] == 0:

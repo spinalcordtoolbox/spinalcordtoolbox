@@ -2,8 +2,6 @@
 # -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.aggregate_slicewise
 
-import sys
-import os
 import pytest
 import csv
 
@@ -11,9 +9,7 @@ import numpy as np
 import nibabel as nib
 import pandas as pd
 
-from spinalcordtoolbox import __sct_dir__, __version__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
-
+from spinalcordtoolbox import __version__
 from spinalcordtoolbox import aggregate_slicewise
 from spinalcordtoolbox.process_seg import Metric
 from spinalcordtoolbox.image import Image
@@ -74,7 +70,7 @@ def dummy_vert_level():
     data[4, 4, :] = [2, 2, 3, 3, 4, 4, 5, 5, 6]
     affine = np.eye(4)
     nii = nib.nifti1.Nifti1Image(data, affine)
-    img = Image(nii.get_data(), hdr=nii.header, orientation='RPI', dim=nii.header.get_data_shape())
+    img = Image(np.asanyarray(nii.dataobj), hdr=nii.header, orientation='RPI', dim=nii.header.get_data_shape())
     return img
 
 
@@ -108,9 +104,9 @@ def test_aggregate_across_selected_slices(dummy_metrics):
     # check that even if there is an error in metric estimation, the function outputs a dict for specific slicegroup
     assert agg_metrics['with nan'][(1, 2)]['WA()'] == 101.0
     assert agg_metrics['inconsistent length'][(1, 2)]['WA()'] == 'index 2 is out of bounds for axis 0 with size 2'
-    assert agg_metrics['with string'][(1, 2)]['WA()'] == "ufunc 'isfinite' not supported for the input types, and " \
-                                                           "the inputs could not be safely coerced to any supported " \
-                                                           "types according to the casting rule ''safe''"
+    assert agg_metrics['with string'][(1, 2)]['WA()'] == ("ufunc 'isfinite' not supported for the input types, and "
+                                                          "the inputs could not be safely coerced to any supported "
+                                                          "types according to the casting rule ''safe''")
 
 
 def test_aggregate_across_all_slices(dummy_metrics):

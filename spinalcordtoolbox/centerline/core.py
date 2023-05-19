@@ -68,20 +68,15 @@ def find_and_sort_coord(img):
     :return: nx3 numpy array with X, Y, Z coordinates of center of mass
     """
     # TODO: deal with nan, etc.
-    # Get indices of non-null values
+    # Get indices of non-zero values
     arr = np.array(np.where(img.data))
     # Sort indices according to SI axis
     dim_si = [img.orientation.find(x) for x in ['I', 'S'] if img.orientation.find(x) != -1][0]
     # Loop across SI axis and average coordinates within duplicate SI values
-    arr_sorted_avg = [np.array([])] * 3
-    for i_si in sorted(set(arr[dim_si])):
-        # Get indices corresponding to i_si
-        ind_si_all = np.where(arr[dim_si] == i_si)
-        if len(ind_si_all[0]):
-            # loop across dimensions and average all existing coordinates (equivalent to center of mass)
-            for i_dim in range(3):
-                arr_sorted_avg[i_dim] = np.append(arr_sorted_avg[i_dim], arr[i_dim][ind_si_all].mean())
-    return np.array(arr_sorted_avg)
+    sorted_avg = []
+    for i_si in np.unique(arr[dim_si]):
+        sorted_avg.append(arr[:, arr[dim_si] == i_si].mean(axis=1))
+    return np.array(sorted_avg).T
 
 
 def get_centerline(im_seg, param=ParamCenterline(), verbose=1, remove_temp_files=1, space='pix'):

@@ -127,7 +127,7 @@ def main(argv: Sequence[str]):
 
     display_viewer_syntax(
         [input_filename, format(out_fname)],
-        colormaps=['gray', 'red'],
+        im_types=['anat', 'seg'],
         opacities=['1', '0.7'],
         verbose=verbose,
     )

@@ -24,7 +24,7 @@ import logging
 
 import numpy as np
 import nibabel as nib
-from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.utils import run_proc, TempFolder, __data_dir__
@@ -81,7 +81,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     # The command below will fail, but we don't care because it will output an image (prediction), which we
     # will use later on.
     s, o = run_proc(cmd_detection, verbose=0, is_sct_binary=True, raise_exception=False)
-    pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
+    pred = np.asanyarray(nib.load('data_midSlice_pred_svm.hdr').dataobj)
     if verbose >= 2:
         # copy the "prediction data before post-processing" in an Image object
         nii_pred_before_postPro = nii_midSlice.copy()

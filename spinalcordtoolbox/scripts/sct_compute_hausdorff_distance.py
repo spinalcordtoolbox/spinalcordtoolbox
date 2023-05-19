@@ -91,7 +91,7 @@ class Thinning:
         """
         # now = time.time()
         n = neighbours + neighbours[0:1]      # P2, P3, ... , P8, P9, P2
-        s = np.sum((n1, n2) == (0, 1) for n1, n2 in zip(n, n[1:]))  # (P2,P3), (P3,P4), ... , (P8,P9), (P9,P2)
+        s = sum((n1, n2) == (0, 1) for n1, n2 in zip(n, n[1:]))  # (P2,P3), (P3,P4), ... , (P8,P9), (P9,P2)
         # t = time.time() - now
         # printv('t transitions sum: ', t)
         return s

@@ -204,7 +204,7 @@ def download_data(urls):
 
             with open(tmp_path, 'wb') as tmp_file:
                 total = int(response.headers.get('content-length', 1))
-                sct_bar = sct_progress_bar(total=total, unit='B', unit_scale=True, desc="Status", ascii=False, position=0)
+                sct_bar = sct_progress_bar(total=total, unit='B', unit_scale=True, desc="Status", position=0)
 
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:

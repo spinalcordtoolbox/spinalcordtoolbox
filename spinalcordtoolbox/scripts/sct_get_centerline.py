@@ -54,9 +54,9 @@ def get_parser():
         help="Method used for extracting the centerline.\n"
              "  - optic: automatic spinal cord detection method\n"
              "  - viewer: manual selection a few points followed by interpolation\n"
-             "  - fitseg: fit a regularized centerline on an already-existing cord segmentation. It will "
-             "interpolate if slices are missing and extrapolate beyond the segmentation boundaries (i.e., every "
-             "axial slice will exhibit a centerline pixel)."
+             "  - fitseg: fit a regularized centerline on an already-existing cord segmentation. This method "
+             "will interpolate if any slices are missing. Also, if  '-extrapolation 1' is specified, this method will "
+             "extrapolate beyond the segmentation boundaries (i.e., every axial slice will exhibit a centerline pixel)."
     )
     optional.add_argument(
         "-centerline-algo",
@@ -80,6 +80,15 @@ def get_parser():
         help="Binary or soft centerline. 0 = binarized, 1 = soft. Only relevant with -method fitseg."
     )
     optional.add_argument(
+        "-extrapolation",
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=0,
+        help="Extrapolate beyond the segmentation boundaries. 0 = no extrapolation, 1 = extrapolation. Only relevant with -method fitseg."
+             "Note: '-extrapolation 1' works best with lower-order (linear, nurbs) centerline fitting algorithms"
+    )
+    optional.add_argument(
         "-o",
         metavar=Metavar.file,
         help="File name for the centerline output file. If file extension is not provided, "
@@ -92,11 +101,6 @@ def get_parser():
         type=float,
         default=20.0,
         help="Gap in mm between manually selected points. Only with method=viewer."
-    )
-    optional.add_argument(
-        "-igt",
-        metavar=Metavar.file,
-        help="File name of ground-truth centerline or segmentation (binary nifti)."
     )
     optional.add_argument(
         '-v',
@@ -158,13 +162,17 @@ def main(argv: Sequence[str]):
     if arguments.centerline_soft == 1 and method != 'fitseg':
         printv("ERROR: -centerline-soft can only be used with '-method fitseg'.", type='error')
 
+    # Extrapolation option can only be used with fitseg method
+    if arguments.extrapolation == 1 and method != 'fitseg':
+        printv("ERROR: -extrapolation can only be used with '-method fitseg'.", type='error')
+
     # Gap between slices
     interslice_gap = arguments.gap
 
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
-        minmax=True,
+        minmax=(not arguments.extrapolation),  # NB: 'extrapolation=0' --> 'minmax=True' and vice versa
         soft=arguments.centerline_soft)
 
     # Output folder
@@ -212,8 +220,8 @@ def main(argv: Sequence[str]):
         generate_qc(fname_input_data, fname_seg=file_output, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_get_centerline')
 
-    cm_ctl = 'red-yellow' if arguments.centerline_soft else 'red'
-    display_viewer_syntax([fname_input_data, file_output], colormaps=['gray', cm_ctl], opacities=['', '0.7'], verbose=verbose)
+    im_type_ctl = 'softseg' if arguments.centerline_soft else 'seg'
+    display_viewer_syntax([fname_input_data, file_output], im_types=['anat', im_type_ctl], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":

@@ -182,7 +182,7 @@ def segment_volume(ninput_volume, model_name,
     model_abs_path = gmseg_model_challenge.get_file_path(model_path)
 
     # Padding/cropping data to match the input dimensions of the model
-    volume_data = ninput_volume.get_data()
+    volume_data = np.asanyarray(ninput_volume.dataobj)
     axial_slices = []
     transforms = []
     for slice_num in range(volume_data.shape[2]):
@@ -264,7 +264,7 @@ def segment_file(input_filename, output_filename,
                                        volume_header)
     nii_resampled_original = resampling.resample_nib(
         nii_segmentation, new_size=original_res, new_size_type='mm', interpolation='linear')
-    res_data = nii_resampled_original.get_data()
+    res_data = np.asanyarray(nii_resampled_original.dataobj)
 
     # Threshold after resampling, only if specified
     if threshold is not None:

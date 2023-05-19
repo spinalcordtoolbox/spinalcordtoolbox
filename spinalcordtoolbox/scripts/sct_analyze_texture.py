@@ -85,11 +85,6 @@ def get_parser():
         required=False,
         default=Param().path_results)
     optional.add_argument(
-        "-igt",
-        metavar=Metavar.str,
-        help="File name of ground-truth texture metrics.",
-        required=False)
-    optional.add_argument(
         "-r",
         help="Remove temporary files.",
         required=False,
@@ -353,7 +348,7 @@ def main(argv: Sequence[str]):
 
     display_viewer_syntax(
         files=[arguments.i] + fname_out_lst,
-        colormaps=['gray'] + ['red-yellow'] * len(fname_out_lst),
+        im_types=['anat'] + ['softseg'] * len(fname_out_lst),
         opacities=['1.0'] + ['0.7'] * len(fname_out_lst),
         verbose=verbose
     )
