@@ -84,7 +84,7 @@ jobs:
 
     - name: Update version.txt (using test value for CI)
       run: |
-        echo "SCT_VERSION=$(cat spinalcordtoolbox/version.txt)" >> $GITHUB_ENV
+        echo "0.0" > spinalcordtoolbox/version.txt
 
     - name: Install SCT from release branch (Unix)
       if: matrix.os != 'windows-2019'
@@ -100,9 +100,9 @@ jobs:
       # In a user install, the user would perform this step using the Windows PATH-changing GUI.
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          # NB: Because `requirements-freeze.txt` is present, SCT gets installed to `~/sct_$SCT_VERSION`, 
+          # NB: Because `requirements-freeze.txt` is present, SCT gets installed to `~/sct_0.0`, 
           # rather than an in-place install. So, we specify this path directly, rather than using $GITHUB_WORKSPACE.
-          echo "${USERPROFILE}\sct_${SCT_VERSION}\bin" >> $GITHUB_PATH
+          echo "${USERPROFILE}\sct_0.0\bin" >> $GITHUB_PATH
         else
           # NB: install_sct edits ~/.bashrc, but those environment changes don't get passed to subsequent steps in GH Actions.
           # So, we filter through the .bashrc and pass the values to $GITHUB_ENV and $GITHUB_PATH.
