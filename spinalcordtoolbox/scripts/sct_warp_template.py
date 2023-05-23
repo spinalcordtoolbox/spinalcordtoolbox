@@ -33,10 +33,12 @@ class Param:
         self.folder_template = 'template'
         self.folder_atlas = 'atlas'
         self.folder_spinal_levels = 'spinal_levels'
+        self.folder_histo = 'histology'
         self.file_info_label = 'info_label.txt'
         # self.warp_template = 1
         self.warp_atlas = 1
         self.warp_spinal_levels = 0
+        self.warp_histo = 0
         # list of files for which nn interpolation should be used. Default = linear.
         self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']
         self.verbose = 1  # verbose
@@ -45,22 +47,26 @@ class Param:
 
 class WarpTemplate:
     def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
-                 folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn, verbose):
+                 folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn,
+                 verbose, warp_histo, folder_histo):
 
         # Initialization
         self.fname_src = fname_src
         self.fname_transfo = fname_transfo
         self.warp_atlas = warp_atlas
         self.warp_spinal_levels = warp_spinal_levels
+        self.warp_histo = warp_histo
         self.folder_out = folder_out
         self.path_template = path_template
         self.folder_template = folder_template
         self.folder_atlas = folder_atlas
         self.folder_spinal_levels = folder_spinal_levels
+        self.folder_histo = folder_histo
         self.file_info_label = file_info_label
         self.list_labels_nn = list_labels_nn
         self.verbose = verbose
 
+        # printv(arguments)
         # printv(arguments)
         printv('\nCheck parameters:')
         printv('  Working directory ........ ' + os.getcwd())
@@ -88,6 +94,12 @@ class WarpTemplate:
         if self.warp_spinal_levels == 1:
             printv('\nWARP SPINAL LEVELS:', self.verbose)
             warp_label(self.path_template, self.folder_spinal_levels, self.file_info_label, self.fname_src,
+                       self.fname_transfo, self.folder_out, self.list_labels_nn, self.verbose)
+
+        # Warp histology atlas
+        if self.warp_histo == 1:
+            printv('\nWARP HISTOLOGY ATLAS:', self.verbose)
+            warp_label(self.path_template, self.folder_histo, self.file_info_label, self.fname_src,
                        self.fname_transfo, self.folder_out, self.list_labels_nn, self.verbose)
 
 
@@ -227,6 +239,14 @@ def get_parser():
         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode"
     )
+    optional.add_argument(
+        '-histo',
+        metavar=Metavar.int,
+        type=int,
+        choices=[0, 1],
+        default=param_default.warp_histo,
+        help="Warp histology atlas from Duval et al. Neuroimage 2019 (https://pubmed.ncbi.nlm.nih.gov/30326296/)."
+    )
 
     return parser
 
@@ -243,6 +263,7 @@ def main(argv: Sequence[str]):
     fname_transfo = arguments.w
     warp_atlas = arguments.a
     warp_spinal_levels = arguments.s
+    warp_histo = arguments.histo
     folder_out = arguments.ofolder
     path_template = arguments.t
     path_qc = arguments.qc
@@ -251,12 +272,14 @@ def main(argv: Sequence[str]):
     folder_template = param.folder_template
     folder_atlas = param.folder_atlas
     folder_spinal_levels = param.folder_spinal_levels
+    folder_histo = param.folder_histo
     file_info_label = param.file_info_label
     list_labels_nn = param.list_labels_nn
 
     # call main function
     w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
-                     folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn, verbose)
+                     folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn,
+                     verbose, warp_histo, folder_histo)
 
     path_template = os.path.join(w.folder_out, w.folder_template)
 
