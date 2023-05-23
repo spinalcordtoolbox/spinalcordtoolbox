@@ -13,6 +13,10 @@ export PIP_PROGRESS_BAR=off # disable pip's progress bar for the duration of CI
 export PY_COLORS=1 # Colored pytest output (https://github.com/pytest-dev/pytest/issues/7443#issuecomment-656642591)
 
 install_sct () {
+  # NB: We want to test the "standalone install" when on master, so copy the install script outside the srcdir
+  mkdir -p "$HOME/Downloads"
+  cp install_sct "$HOME/Downloads"
+  cd "$HOME/Downloads"
   # NB: we only force in-place (-i) installs to avoid pytest running from the source
   #     instead of the installed folder, where the extra detection models are.
   #     Further explanation at https://blog.ionelmc.ro/2014/05/25/python-packaging/#the-structure
@@ -22,6 +26,9 @@ install_sct () {
 }
 
 activate_venv_sct(){
+  # NB: If "standalone install" is tested when on master, then `python/` won't exist in the PWD
+  SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
+  cd "$HOME/sct_$SCT_VERSION"
   # NB: `python/` won't be available unless `install_sct` is run, hence disabling the check:
   # shellcheck disable=SC1091
   source python/etc/profile.d/conda.sh  # to be able to call conda
