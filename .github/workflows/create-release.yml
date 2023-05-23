@@ -88,18 +88,12 @@ jobs:
 
     - name: Install SCT from release branch (Unix)
       if: matrix.os != 'windows-2019'
-      run: |
-        cp install_sct $HOME
-        cd $HOME
-        ./install_sct -yc
+      run: ./install_sct -yc
 
     - name: Install SCT from release branch (Windows)
       if: matrix.os == 'windows-2019'
       shell: cmd
-      run: |
-        cp install_sct.bat %USERPROFILE%
-        cd %USERPROFILE%
-        install_sct.bat
+      run: install_sct.bat
 
     - name: Update environment variables
       # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
