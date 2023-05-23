@@ -398,17 +398,23 @@ jobs:
       # that the PR is coming from a fork. And, in that case, we won't be able to clone
       # the proper branch, as it exists only on the fork.
       run: |
-        if not exist %HOME%\Downloads mkdir %HOME%\Downloads
-        cp install_sct.bat %HOME%\Downloads
-        cd %HOME%\Downloads
+        if %GITHUB_REF_NAME%=="master" (
+          if not exist %HOME%\Downloads mkdir %HOME%\Downloads
+          cp install_sct.bat %HOME%\Downloads
+          cd %HOME%\Downloads
+        )
         install_sct.bat
     - name: Add SCT to path
       # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
       # In a user install, the user would perform this step using the Windows PATH-changing GUI.
       shell: bash
       run: |
-        export SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
-        echo "$USERPROFILE/sct_$SCT_VERSION/bin" >> $GITHUB_PATH
+        if [ "$GITHUB_REF_NAME" == "master" ]; then
+          export SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
+          echo "$USERPROFILE/sct_$SCT_VERSION/bin" >> $GITHUB_PATH
+        else
+          echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+        fi
     - name: Check dependencies
       run: sct_check_dependencies
     - name: Run pytest test suite
