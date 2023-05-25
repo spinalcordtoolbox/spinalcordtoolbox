@@ -45,7 +45,6 @@ def get_parser():
                              'process (e.g., sct_straighten_spinalcord)',
                         required=False)
     parser.add_argument('-plane',
-                        metavar='PLANE',
                         help='Plane of the output QC. Only relevant for -p sct_deepseg_lesion.',
                         choices=('axial', 'sagittal'),
                         required=False)
