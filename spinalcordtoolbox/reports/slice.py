@@ -241,26 +241,6 @@ class Slice(object):
         """
         return
 
-    def mosaics_through_time(self):
-        """Obtain mosaics for each volume
-
-        :return: list of tuples of numpy.ndarray containing the mosaics of each volumes
-        """
-
-        mosaics = list()
-        self._image_seg = self._images[0].copy()  # segmentation used for cropping
-
-        for i, img in enumerate(self._4d_images):
-            # The absolutepath is changed to None after change_orientation see issue #3304
-            img.absolutepath = self._absolute_paths[i]
-
-            im_t_list = (split_img_data(img, dim=3, squeeze_data=True))  # Split along T dimension
-            self._images.clear()
-            self._images = im_t_list
-            matrices, centers_mosaic = self.mosaic(return_center=True)
-            mosaics.append(matrices)
-        return mosaics, centers_mosaic
-
     def single(self):
         """Obtain the matrices of the single slices. Flatten
 
@@ -401,6 +381,25 @@ class Axial(Slice):
             return matrices, centers_mosaic
         else:
             return matrices
+
+    def mosaics_through_time(self):
+        """Obtain mosaics for each volume
+
+        :return: list of tuples of numpy.ndarray containing the mosaics of each volumes
+        """
+        mosaics = list()
+        self._image_seg = self._images[0].copy()  # segmentation used for cropping
+
+        for i, img in enumerate(self._4d_images):
+            # The absolutepath is changed to None after change_orientation see issue #3304
+            img.absolutepath = self._absolute_paths[i]
+
+            im_t_list = (split_img_data(img, dim=3, squeeze_data=True))  # Split along T dimension
+            self._images.clear()
+            self._images = im_t_list
+            matrices, centers_mosaic = self.mosaic(return_center=True)
+            mosaics.append(matrices)
+        return mosaics, centers_mosaic
 
 
 class Sagittal(Slice):
