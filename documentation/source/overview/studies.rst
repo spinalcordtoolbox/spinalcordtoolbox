@@ -26,6 +26,7 @@ The following studies have used SCT:
 2023
 ----
 
+-  Kinany *et al.* `Decoding cerebro-spinal signatures of human behavior: Application to motor sequence learning <https://doi.org/10.1016/j.neuroimage.2023.120174>`_, **Neuroimage** 2023
 -  Oliveira *et al.* `The longitudinal progression of MRI changes in pre-ataxic carriers of SCA3/MJD <https://doi.org/10.1007/s00415-023-11763-6>`_, **J. Neurol.** 2023
 -  Pareto *et al.* `Assessing the Equivalence of Brain-Derived Measures from Two 3D T1-Weighted Acquisitions: One Covering the Brain and One Covering the Brain and Spinal Cord <https://doi.org/10.3174/ajnr.a7843>`_, **AJNR Am. J. Neuroradiol.** 2023
 -  Koning *et al.* `A Comparison of Functional Connectivity in the Human Brainstem and Spinal Cord Associated with Noxious and Innocuous Thermal Stimulation Identified by Means of Functional MRI <https://doi.org/10.3390/brainsci13050777>`_, **Brain Sci.**, 2023
