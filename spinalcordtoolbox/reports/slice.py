@@ -231,14 +231,8 @@ class Slice(object):
         return centers_x, centers_y
 
     @abc.abstractmethod
-    def mosaic(self, nb_column, size, return_center):
-        """Obtain matrices of the mosaics
-
-        :param nb_column: number of mosaic columns
-        :param size: each column size
-        :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
-        :return: list of tuples, each tuple representing the center of each square of the mosaic. Only with param return_center is True
-        """
+    def mosaic(self):
+        """Obtain matrices of the mosaics"""
         return
 
     def single(self):
@@ -335,22 +329,21 @@ class Axial(Slice):
             image = self._image_seg
         return self._axial_center(image)
 
-    def mosaic(self, nb_column=0, size=15, return_center=False):
+    def mosaic(self, return_center=False):
         """Obtain matrices of the mosaics
 
         Calculates how many squares will fit in a row based on the column and the size
         Multiply by 2 because the sides are of size*2. Central point is size +/-.
 
-        :param nb_column: number of mosaic columns
-        :param size: each column size
+        :param return_center: bool, whether to return the center of each square of the mosaic.
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
-        :return: list of tuples, each tuple representing the center of each square of the mosaic. Only with param return_center is True
+        :return: list of tuples, each tuple representing the center of each square of the mosaic.
         """
 
         # Calculate number of columns to display on the report
         dim = self.get_dim(self._images[0])  # dim represents the 3rd dimension of the 3D matrix
-        if nb_column == 0:
-            nb_column = 600 // (size * 2)
+        size = 15  # (By default, size=15 -> 30x30 squares -> 20 columns)
+        nb_column = 600 // (size * 2)
 
         nb_row = math.ceil(dim / nb_column)
 
@@ -456,13 +449,11 @@ class Sagittal(Slice):
         size_x = self.coronal_dim(image)
         return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
 
-    def mosaic(self, nb_column=0):
+    def mosaic(self):
         """Obtain matrices of the mosaics
 
         Mosaic images are cropped based on the bounding box of the spinal cord segmentation.
 
-        :param nb_column: number of mosaic columns
-        :param dilation: a tuple containing (x,y,z) integers for dilating the bounding box used for cropping.
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
         """
         # 0. Use the segmentation image to initialize the image cropper
@@ -474,9 +465,8 @@ class Sagittal(Slice):
         # 1a. Compute width and height of mosaic squares. (This is assumed to be a square for Axial slices.)
         size_h = cropper.bbox.xmax - cropper.bbox.xmin + 1  # SAL -> SI axis provides height
         size_w = cropper.bbox.ymax - cropper.bbox.ymin + 1  # SAL -> AP axis provides width
-        # 1b. Calculate number of columns to display on the report. (By default, size=15 -> 30x30 squares -> 20 columns)
-        if nb_column == 0:
-            nb_column = 600 // size_w
+        # 1b. Calculate number of columns to display on the report.
+        nb_column = 600 // size_w
         # 1c. Calculate number of rows to display.
         nb_slices = cropper.bbox.zmax - cropper.bbox.zmin + 1  # SAL -> LR axis provides nb_slices
         nb_row = math.ceil(nb_slices / nb_column)
