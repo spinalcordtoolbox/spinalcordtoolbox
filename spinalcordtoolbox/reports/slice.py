@@ -456,7 +456,7 @@ class Sagittal(Slice):
         size_x = self.coronal_dim(image)
         return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
 
-    def mosaic(self, nb_column=0, dilation=(0, 0, 0)):
+    def mosaic(self, nb_column=0):
         """Obtain matrices of the mosaics
 
         Mosaic images are cropped based on the bounding box of the spinal cord segmentation.
@@ -472,13 +472,13 @@ class Sagittal(Slice):
 
         # 1. Compute the sizes of the patches, as well as the overall image
         # 1a. Compute width and height of mosaic squares. (This is assumed to be a square for Axial slices.)
-        size_h = cropper.bbox.xmax - cropper.bbox.xmin + 1 + (2 * dilation[0])  # SAL -> SI axis provides height
-        size_w = cropper.bbox.ymax - cropper.bbox.ymin + 1 + (2 * dilation[1])  # SAL -> AP axis provides width
+        size_h = cropper.bbox.xmax - cropper.bbox.xmin + 1  # SAL -> SI axis provides height
+        size_w = cropper.bbox.ymax - cropper.bbox.ymin + 1  # SAL -> AP axis provides width
         # 1b. Calculate number of columns to display on the report. (By default, size=15 -> 30x30 squares -> 20 columns)
         if nb_column == 0:
             nb_column = 600 // size_w
         # 1c. Calculate number of rows to display.
-        nb_slices = cropper.bbox.zmax - cropper.bbox.zmin + 1 + (2 * dilation[2])  # SAL -> LR axis provides nb_slices
+        nb_slices = cropper.bbox.zmax - cropper.bbox.zmin + 1  # SAL -> LR axis provides nb_slices
         nb_row = math.ceil(nb_slices / nb_column)
         # 1d. Compute the matrix size of the overall mosaic image
         matrix_sz = (int(size_h * nb_row), int(size_w * nb_column))
@@ -486,7 +486,7 @@ class Sagittal(Slice):
         # 2. Use the previously-defined segmentation-based cropper to crop the images to the necessary size
         matrices = list()
         for image in self._images:
-            image_cropped = cropper.crop(img_in=image, dilate=dilation)
+            image_cropped = cropper.crop(img_in=image)
             matrix = np.zeros(matrix_sz)
             for i in range(nb_slices):
                 # Fetch the sagittal slice (which has already been cropped)
