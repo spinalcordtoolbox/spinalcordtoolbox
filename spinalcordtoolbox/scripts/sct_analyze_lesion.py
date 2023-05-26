@@ -404,13 +404,11 @@ class AnalyzeLeion:
             printv('\nMeasures on lesion #' + str(lesion_label) + '...', self.verbose, 'normal')
 
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
-            # No angle correction is needed for the volume measurement
-            if self.fname_sc is None:
-                self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
-            else:
-                self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
+            # The SC segmentation is necessary to be able to compute the length and diameter
+            if self.fname_sc is not None:
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
+            self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
 
             # compute lesion distribution for each lesion
             if self.path_template is not None:
