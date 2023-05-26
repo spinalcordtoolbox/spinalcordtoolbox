@@ -163,6 +163,8 @@ class AnalyzeLeion:
         self.label_lesion()
 
         # Compute angle for CSA correction if spinal cord segmentation provided
+        # NB: If segmentation is not provided, then we will only compute volume, so 
+        #     no angle correction is needed
         if self.fname_sc is not None:
             self.angle_correction()
 
