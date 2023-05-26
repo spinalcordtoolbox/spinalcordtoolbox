@@ -14,7 +14,7 @@ export PY_COLORS=1 # Colored pytest output (https://github.com/pytest-dev/pytest
 
 install_sct () {
   # NB: We want to test the "standalone install" when on master, so copy the install script outside the srcdir
-  if [ "$GITHUB_REF_NAME" == "master" ]; then
+  if [ "$GITHUB_REF_NAME" = "master" ]; then
     mkdir -p "$HOME/Downloads"
     cp install_sct "$HOME/Downloads"
     cd "$HOME/Downloads"
@@ -29,7 +29,7 @@ install_sct () {
 
 activate_venv_sct(){
   # NB: If "standalone install" is tested when on master, then `python/` won't exist in the PWD
-  if [ "$GITHUB_REF_NAME" == "master" ]; then
+  if [ "$GITHUB_REF_NAME" = "master" ]; then
     SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
     cd "$HOME/sct_$SCT_VERSION"
   fi
