@@ -398,11 +398,11 @@ jobs:
       # that the PR is coming from a fork. And, in that case, we won't be able to clone
       # the proper branch, as it exists only on the fork.
       run: |
-        # if %GITHUB_REF_NAME%=="master" (
-        if not exist %USERPROFILE%\Downloads mkdir %USERPROFILE%\Downloads
-        cp install_sct.bat %USERPROFILE%\Downloads
-        cd /d %USERPROFILE%\Downloads
-        # )
+        if %GITHUB_REF_NAME%=="master" (
+          if not exist %USERPROFILE%\Downloads mkdir %USERPROFILE%\Downloads
+          cp install_sct.bat %USERPROFILE%\Downloads
+          cd /d %USERPROFILE%\Downloads
+        )
         install_sct.bat
     - name: Add SCT to path
       # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
