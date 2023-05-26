@@ -55,8 +55,9 @@ def get_parser():
         "-s",
         required=False,
         help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
-             "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')\nIf not provided, only lesion volume will be "
-             "computed.",
+             "cord angle with respect to slice. (e.g. 't2_seg.nii.gz')\n"
+             "If provided, then the lesion volume, length, and diameter will be computed. Otherwise, if not provided, "
+             "then only the lesion volume will be computed.",
         metavar=Metavar.file)
     optional.add_argument(
         "-i",
