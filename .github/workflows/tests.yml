@@ -409,7 +409,7 @@ jobs:
       # In a user install, the user would perform this step using the Windows PATH-changing GUI.
       shell: bash
       run: |
-        if [ "$GITHUB_REF_NAME" == "master" ]; then
+        if [ "$GITHUB_REF_NAME" = "master" ]; then
           export SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
           echo "$USERPROFILE\sct_$SCT_VERSION\bin" >> $GITHUB_PATH
         else
