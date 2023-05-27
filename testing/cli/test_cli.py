@@ -2,7 +2,7 @@ import pytest
 import importlib
 from importlib.metadata import entry_points
 
-scripts = [cs.name for cs in entry_points()['console_scripts'] if cs.name.startswith("sct_")]
+scripts = [cs.name for cs in entry_points()['console_scripts'] if cs.value.startswith("spinalcordtoolbox")]
 
 scripts_where_no_args_is_valid = [
     'isct_test_ants',          # No args -> tests ants binaries
