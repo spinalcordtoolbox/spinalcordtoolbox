@@ -1,8 +1,8 @@
 import pytest
-import pkg_resources
 import importlib
+from importlib.metadata import entry_points
 
-scripts = pkg_resources.get_entry_map('spinalcordtoolbox')['console_scripts'].keys()
+scripts = [cs.name for cs in entry_points()['console_scripts'] if cs.name.startswith("sct_")]
 
 scripts_where_no_args_is_valid = [
     'isct_test_ants',          # No args -> tests ants binaries
