@@ -22,7 +22,7 @@ import portalocker
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports.slice as qcslice
-from spinalcordtoolbox.utils import sct_dir_local_path, list2cmdline, __version__, copy, extract_fname, display_open
+from spinalcordtoolbox.utils import list2cmdline, __version__, copy, extract_fname, display_open
 
 logger = logging.getLogger(__name__)
 
@@ -535,20 +535,14 @@ class QcReport(object):
     It will also setup the folder structure so the report generator only needs to fetch the appropriate files.
     """
 
-    def __init__(self, qc_params, usage):
+    def __init__(self, qc_params):
         """
         Parameters
 
         :param qc_params: arguments of the "-param-qc" option in Terminal
-        :param usage: str: description of the process
         """
-        self.tool_name = qc_params.command
         self.slice_name = qc_params.orientation
         self.qc_params = qc_params
-        self.usage = usage
-        self.assets_folder = sct_dir_local_path('assets')
-        self.img_base_name = 'bkg_img'
-        self.description_base_name = "qc_results"
 
     def make_content_path(self):
         """Creates the whole directory to contain the QC report
@@ -762,7 +756,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         raise ValueError("Unrecognized process: {}".format(process))
 
     qc_param = Params(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
-    report = QcReport(qc_param, '')
+    report = QcReport(qc_param)
 
     @QcImage(report, 'none', qcslice_operations, stretch_contrast_method='equalized',
              process=process, fps=fps)

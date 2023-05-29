@@ -90,7 +90,7 @@ def assert_qc_assets(path):
 
 def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
     param = qc.Params(t2_image.absolutepath, 'sct_label_vertebrae', ['-a', '-b'], 'Sagittal', str(tmp_path))
-    report = qc.QcReport(param, 'Test label vertebrae')
+    report = qc.QcReport(param)
 
     @qc.QcImage(report, 'spline36', [qc.QcImage.label_vertebrae, ], process=param.command)
     def test(qcslice_type):
@@ -103,7 +103,7 @@ def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
 
 def test_propseg(t2_image, t2_seg_image, tmp_path):
     param = qc.Params(t2_image.absolutepath, 'sct_propseg', ['-a'], 'Axial', str(tmp_path))
-    report = qc.QcReport(param, 'Test usage')
+    report = qc.QcReport(param)
 
     @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ], process=param.command)
     def test(qcslice_type):
