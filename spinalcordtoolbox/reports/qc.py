@@ -755,9 +755,9 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         raise ValueError("Unrecognized process: {}".format(process))
 
     qc_param = Params(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
-    report = QcReport(qc_param)
+    qc_report = QcReport(qc_param)
 
-    @QcImage(report, 'none', qcslice_operations, stretch_contrast_method='equalized',
+    @QcImage(qc_report, 'none', qcslice_operations, stretch_contrast_method='equalized',
              process=process, fps=fps)
     def layout(qcslice_type):
         # This will call qc.__call__(self, func):
