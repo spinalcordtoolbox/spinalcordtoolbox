@@ -247,7 +247,7 @@ class QcImage(object):
             :param sct_slice: spinalcordtoolbox.report.slice:Slice
             :param args: list: list of args
             """
-            self.qc_report.slice_name = sct_slice.get_name()
+            self.qc_report.qc_params.orientation = sct_slice.get_name()
 
             # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
             self.aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
@@ -541,7 +541,6 @@ class QcReport(object):
 
         :param qc_params: arguments of the "-param-qc" option in Terminal
         """
-        self.slice_name = qc_params.orientation
         self.qc_params = qc_params
 
     def make_content_path(self):
