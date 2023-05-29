@@ -44,7 +44,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     :return: None
     """
     logger.info('\n*** Generate Quality Control (QC) html report ***')
-    dpi = 300
+    dpi = 300  # Output resolution of the image
     qcslice_type = None
     qcslice_operations = None
     qcslice_layout = None
@@ -143,21 +143,20 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     else:
         raise ValueError("Unrecognized process: {}".format(process))
 
-    add_entry(
-        src=fname_in1,
-        process=process,
-        args=args,
-        path_qc=path_qc,
-        dataset=dataset,
-        subject=subject,
-        plane=plane,
-        dpi=dpi,
-        qcslice_type=qcslice_type,
-        qcslice_operations=qcslice_operations,
-        qcslice_layout=qcslice_layout,
-        stretch_contrast_method='equalized',
-        fps=fps
-    )
+    qc_param = Params(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
+    report = QcReport(qc_param, '')
+
+    if qcslice_type is not None:
+        @QcImage(report, 'none', qcslice_operations, stretch_contrast_method='equalized',
+                 process=process, fps=fps)
+        def layout(qcslice_type):
+            # This will call qc.__call__(self, func):
+            return qcslice_layout(qcslice_type)
+
+        layout(qcslice_type)
+
+    logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
+    display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
 
 
 class QcImage(object):
@@ -764,50 +763,6 @@ class QcReport(object):
         dest_file.flush()
         portalocker.unlock(dest_file)
         dest_file.close()
-
-
-def add_entry(src, process, args, path_qc, plane,
-              qcslice_type=None,
-              qcslice_operations=[],
-              qcslice_layout=None,
-              dpi=300,
-              stretch_contrast_method='contrast_stretching',
-              fps=None,
-              dataset=None,
-              subject=None):
-    """
-    Create QC report.
-
-    :param src: Path to input file (only used to populate report metadata)
-    :param process:
-    :param args:
-    :param path_qc:
-    :param plane:
-    :param qcslice_type: spinalcordtoolbox.reports.slice:Axial or spinalcordtoolbox.reports.slice:Sagittal
-    :param qcslice_operations:
-    :param qcslice_layout:
-    :param dpi: int: Output resolution of the image
-    :param stretch_contrast_method: Method for stretching contrast. See QcImage
-    :param fps: float: Number of frames per second for output gif images
-    :param dataset: str: Dataset name
-    :param subject: str: Subject name
-    :return:
-    """
-
-    qc_param = Params(src, process, args, plane, path_qc, dpi, dataset, subject)
-    report = QcReport(qc_param, '')
-
-    if qcslice_type is not None:
-        @QcImage(report, 'none', qcslice_operations, stretch_contrast_method=stretch_contrast_method,
-                 process=process, fps=fps)
-        def layout(qcslice_type):
-            # This will call qc.__call__(self, func):
-            return qcslice_layout(qcslice_type)
-
-        layout(qcslice_type)
-
-    logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
-    display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
 
 
 def get_json_data_from_path(path_json):
