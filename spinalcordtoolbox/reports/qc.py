@@ -5,6 +5,7 @@ import json
 import logging
 import datetime
 from string import Template
+from typing import Callable, List, Tuple
 
 import numpy as np
 import skimage
@@ -13,6 +14,7 @@ import skimage.exposure
 from scipy.ndimage import center_of_mass
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.colors as color
 import matplotlib.patheffects as path_effects
@@ -661,9 +663,9 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     """
     logger.info('\n*** Generate Quality Control (QC) html report ***')
     dpi = 300  # Output resolution of the image
-    qcslice_type = None
-    qcslice_operations = None
-    qcslice_layout = None
+    qcslice_type: qcslice.Slice
+    qcslice_operations: List[Callable[[QcImage, np.ndarray, Axes], None]]
+    qcslice_layout: Callable[[qcslice.Slice], (List[np.ndarray] | Tuple[List[List[np.ndarray]], List[Tuple[int, int]]])]
 
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
