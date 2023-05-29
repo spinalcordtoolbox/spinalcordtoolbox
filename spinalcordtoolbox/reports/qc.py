@@ -27,7 +27,7 @@ from spinalcordtoolbox.utils import list2cmdline, __version__, copy, extract_fna
 logger = logging.getLogger(__name__)
 
 
-class QcImage(object):
+class QcImage:
     """
     Class used to create a .png file from a 2d image produced by the class "Slice"
     """
@@ -474,7 +474,7 @@ class QcImage(object):
                     dpi=dpi)
 
 
-class Params(object):
+class Params:
     """Parses and stores the variables that will be included into the QC details
     """
 
@@ -529,7 +529,7 @@ class Params(object):
         return os.path.join(self.root_folder, self.overlay_img_path)
 
 
-class QcReport(object):
+class QcReport:
     """This class generates the quality control report.
 
     It will also setup the folder structure so the report generator only needs to fetch the appropriate files.
