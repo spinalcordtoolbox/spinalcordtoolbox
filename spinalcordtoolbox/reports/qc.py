@@ -668,7 +668,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     elif process in ['sct_dmri_moco', 'sct_fmri_moco']:
         plane = 'Axial'
         if fname_seg is None:
-            raise Exception("Segmentation is needed to ensure proper cropping around spinal cord.")
+            raise ValueError("Segmentation is needed to ensure proper cropping around spinal cord.")
         qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         action_list = [QcImage.grid]
         def qcslice_layout(x): return x.mosaics_through_time()
