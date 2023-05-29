@@ -152,7 +152,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         subject=subject,
         plane=plane,
         dpi=dpi,
-        qcslice=qcslice_type,
+        qcslice_type=qcslice_type,
         qcslice_operations=qcslice_operations,
         qcslice_layout=qcslice_layout,
         stretch_contrast_method='equalized',
@@ -767,7 +767,7 @@ class QcReport(object):
 
 
 def add_entry(src, process, args, path_qc, plane,
-              qcslice=None,
+              qcslice_type=None,
               qcslice_operations=[],
               qcslice_layout=None,
               dpi=300,
@@ -783,7 +783,7 @@ def add_entry(src, process, args, path_qc, plane,
     :param args:
     :param path_qc:
     :param plane:
-    :param qcslice: spinalcordtoolbox.reports.slice:Axial or spinalcordtoolbox.reports.slice:Sagittal
+    :param qcslice_type: spinalcordtoolbox.reports.slice:Axial or spinalcordtoolbox.reports.slice:Sagittal
     :param qcslice_operations:
     :param qcslice_layout:
     :param dpi: int: Output resolution of the image
@@ -797,14 +797,14 @@ def add_entry(src, process, args, path_qc, plane,
     qc_param = Params(src, process, args, plane, path_qc, dpi, dataset, subject)
     report = QcReport(qc_param, '')
 
-    if qcslice is not None:
+    if qcslice_type is not None:
         @QcImage(report, 'none', qcslice_operations, stretch_contrast_method=stretch_contrast_method,
                  process=process, fps=fps)
-        def layout(qslice):
+        def layout(qcslice_type):
             # This will call qc.__call__(self, func):
-            return qcslice_layout(qslice)
+            return qcslice_layout(qcslice_type)
 
-        layout(qcslice)
+        layout(qcslice_type)
 
     logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
     display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")

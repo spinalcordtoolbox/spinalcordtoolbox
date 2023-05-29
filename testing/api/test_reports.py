@@ -93,8 +93,8 @@ def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
     report = qc.QcReport(param, 'Test label vertebrae')
 
     @qc.QcImage(report, 'spline36', [qc.QcImage.label_vertebrae, ], process=param.command)
-    def test(qslice):
-        return qslice.single()
+    def test(qcslice_type):
+        return qcslice_type.single()
 
     test(qcslice.Sagittal([t2_image, t2_seg_image]))
     assert os.path.isfile(param.abs_bkg_img_path())
@@ -106,8 +106,8 @@ def test_propseg(t2_image, t2_seg_image, tmp_path):
     report = qc.QcReport(param, 'Test usage')
 
     @qc.QcImage(report, 'none', [qc.QcImage.listed_seg, ], process=param.command)
-    def test(qslice):
-        return qslice.mosaic()
+    def test(qcslice_type):
+        return qcslice_type.mosaic()
 
     test(qcslice.Axial([t2_image, t2_seg_image]))
     assert os.path.isfile(param.abs_bkg_img_path())
