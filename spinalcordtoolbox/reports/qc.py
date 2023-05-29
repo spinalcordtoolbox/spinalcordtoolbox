@@ -116,15 +116,6 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def sequential_seg(self, mask, ax):
-        values = np.ma.masked_equal(np.rint(mask), 0)
-        ax.imshow(values,
-                  cmap=self._seg_colormap,
-                  interpolation=self.interpolation,
-                  aspect=self.aspect_mask)
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
     def label_utils(self, mask, ax):
         """Create figure with red label. Common scenario."""
         img = np.full_like(mask, np.nan)
