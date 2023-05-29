@@ -5,7 +5,6 @@ import json
 import logging
 import datetime
 from string import Template
-from shutil import copyfile
 
 import numpy as np
 import skimage
@@ -27,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None, path_qc=None, dataset=None,
-                subject=None, path_img=None, process=None, fps=None):
+                subject=None, process=None, fps=None):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
     scripts (e.g. sct_propseg).
@@ -40,7 +39,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     :param path_qc: str: Path to save QC report
     :param dataset: str: Dataset name
     :param subject: str: Subject name
-    :param path_img: dict: Path to image to display (e.g., a graph), instead of computing the image from MRI.
     :param process: str: Name of SCT function. e.g., sct_propseg
     :param fps: float: Number of frames per second for output gif images. Used only for sct_frmi_moco and sct_dmri_moco.
     :return: None
@@ -153,7 +151,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         dataset=dataset,
         subject=subject,
         plane=plane,
-        path_img=path_img,
         dpi=dpi,
         qcslice=qcslice_type,
         qcslice_operations=qcslice_operations,
@@ -769,7 +766,7 @@ class QcReport(object):
         dest_file.close()
 
 
-def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overlay=None,
+def add_entry(src, process, args, path_qc, plane,
               qcslice=None,
               qcslice_operations=[],
               qcslice_layout=None,
@@ -786,8 +783,6 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
     :param args:
     :param path_qc:
     :param plane:
-    :param path_img: Path to image to display
-    :param path_img_overlay: Path to image to display on top of path_img (will flip between the two)
     :param qcslice: spinalcordtoolbox.reports.slice:Axial or spinalcordtoolbox.reports.slice:Sagittal
     :param qcslice_operations:
     :param qcslice_layout:
@@ -810,18 +805,6 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
             return qcslice_layout(qslice)
 
         layout(qcslice)
-    elif path_img is not None:
-        report.make_content_path()
-        report.update_description_file(skimage.io.imread(path_img).shape[:2])
-        copyfile(path_img, qc_param.abs_bkg_img_path())
-        if path_img_overlay is not None:
-            # User specified a second image to overlay
-            copyfile(path_img_overlay, qc_param.abs_overlay_img_path())
-        else:
-            # Copy the image both as "overlay" and "path_img_overlay", so it appears static.
-            # TODO: Leave the possibility in the reports/assets/js files to have static images (instead of having to
-            #  flip between two images).
-            copyfile(path_img, qc_param.abs_overlay_img_path())
 
     logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
     display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
