@@ -185,10 +185,10 @@ class Slice(object):
         A[nans] = np.interp(x, xp, fp)
         return A
 
-    @abc.abstractmethod
-    def get_name(self):
+    @classmethod
+    def get_name(cls):
         """Get the class name"""
-        return
+        return cls.__name__
 
     @abc.abstractmethod
     def get_slice(self, data, i):
@@ -307,8 +307,6 @@ class Slice(object):
 
 class Axial(Slice):
     """The axial representation of a slice"""
-    def get_name(self):
-        return Axial.__name__
 
     def get_aspect(self, image):
         return Slice.axial_aspect(image)
@@ -397,9 +395,6 @@ class Axial(Slice):
 
 class Sagittal(Slice):
     """The sagittal representation of a slice"""
-
-    def get_name(self):
-        return Sagittal.__name__
 
     def get_aspect(self, image):
         return Slice.sagittal_aspect(image)
