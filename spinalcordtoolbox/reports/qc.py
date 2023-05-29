@@ -217,35 +217,23 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def __call__(self, func):
-        """wrapped function (f).
+    def layout(self, qcslice_layout, qcslice_type):
+        """The main entry point for actually *using* a QcImage instance."""
+        self.qc_report.qc_params.orientation = qcslice_type.get_name()
 
-        In this case, it is the "mosaic" or "single" methods of the class "Slice"
-        """
+        # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
+        self.aspect_img, self.aspect_mask = qcslice_type.aspect()[:2]
 
-        def wrapped_f(sct_slice, *args):
-            """
+        self.qc_report.make_content_path()
+        logger.info('QcImage: layout with %s slice', qcslice_type.get_name())
 
-            :param sct_slice: spinalcordtoolbox.report.slice:Slice
-            :param args: list: list of args
-            """
-            self.qc_report.qc_params.orientation = sct_slice.get_name()
-
-            # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
-            self.aspect_img, self.aspect_mask = sct_slice.aspect()[:2]
-
-            self.qc_report.make_content_path()
-            logger.info('QcImage: %s with %s slice', func.__name__, sct_slice.get_name())
-
-            if self.process in ['sct_fmri_moco', 'sct_dmri_moco']:
-                [images_after_moco, images_before_moco], centermass = func(sct_slice, *args)
-                self._centermass = centermass
-                self._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
-            else:
-                img, *mask = func(sct_slice, *args)
-                self._make_QC_image_for_3d_volumes(img, mask, slice_orientation=sct_slice.get_name())
-
-        return wrapped_f
+        if self.process in ['sct_fmri_moco', 'sct_dmri_moco']:
+            [images_after_moco, images_before_moco], centermass = qcslice_layout(qcslice_type)
+            self._centermass = centermass
+            self._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
+        else:
+            img, *mask = qcslice_layout(qcslice_type)
+            self._make_QC_image_for_3d_volumes(img, mask, slice_orientation=qcslice_type.get_name())
 
     def _make_QC_image_for_3d_volumes(self, img, mask, slice_orientation):
         """
@@ -735,13 +723,17 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     qc_param = Params(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
     qc_report = QcReport(qc_param)
 
-    @QcImage(qc_report, 'none', action_list, stretch_contrast_method='equalized',
-             process=process, fps=fps)
-    def layout(qcslice_type):
-        # This will call qc.__call__(self, func):
-        return qcslice_layout(qcslice_type)
-
-    layout(qcslice_type)
+    QcImage(
+        qc_report=qc_report,
+        interpolation='none',
+        action_list=action_list,
+        process=process,
+        stretch_contrast_method='equalized',
+        fps=fps,
+    ).layout(
+        qcslice_layout=qcslice_layout,
+        qcslice_type=qcslice_type,
+    )
 
     logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
     display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")

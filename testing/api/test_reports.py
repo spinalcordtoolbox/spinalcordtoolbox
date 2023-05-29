@@ -92,11 +92,16 @@ def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
     param = qc.Params(t2_image.absolutepath, 'sct_label_vertebrae', ['-a', '-b'], 'Sagittal', str(tmp_path))
     qc_report = qc.QcReport(param)
 
-    @qc.QcImage(qc_report, 'spline36', [qc.QcImage.label_vertebrae], process=param.command)
-    def test(qcslice_type):
-        return qcslice_type.single()
+    qc.QcImage(
+        qc_report=qc_report,
+        interpolation='spline36',
+        action_list=[qc.QcImage.label_vertebrae],
+        process=param.command,
+    ).layout(
+        qcslice_layout=lambda qcslice_type: qcslice_type.single(),
+        qcslice_type=qcslice.Sagittal([t2_image, t2_seg_image]),
+    )
 
-    test(qcslice.Sagittal([t2_image, t2_seg_image]))
     assert os.path.isfile(param.abs_bkg_img_path())
     assert os.path.isfile(param.abs_overlay_img_path())
 
@@ -105,11 +110,16 @@ def test_propseg(t2_image, t2_seg_image, tmp_path):
     param = qc.Params(t2_image.absolutepath, 'sct_propseg', ['-a'], 'Axial', str(tmp_path))
     qc_report = qc.QcReport(param)
 
-    @qc.QcImage(qc_report, 'none', [qc.QcImage.listed_seg], process=param.command)
-    def test(qcslice_type):
-        return qcslice_type.mosaic()
+    qc.QcImage(
+        qc_report=qc_report,
+        interpolation='none',
+        action_list=[qc.QcImage.listed_seg],
+        process=param.command,
+    ).layout(
+        qcslice_layout=lambda qcslice_type: qcslice_type.mosaic(),
+        qcslice_type=qcslice.Axial([t2_image, t2_seg_image]),
+    )
 
-    test(qcslice.Axial([t2_image, t2_seg_image]))
     assert os.path.isfile(param.abs_bkg_img_path())
     assert os.path.isfile(param.abs_overlay_img_path())
     assert os.path.isfile(param.qc_results)
