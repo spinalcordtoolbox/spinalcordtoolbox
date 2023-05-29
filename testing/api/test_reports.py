@@ -92,7 +92,7 @@ def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
     param = qc.Params(t2_image.absolutepath, 'sct_label_vertebrae', ['-a', '-b'], 'Sagittal', str(tmp_path))
     qc_report = qc.QcReport(param)
 
-    @qc.QcImage(qc_report, 'spline36', [qc.QcImage.label_vertebrae, ], process=param.command)
+    @qc.QcImage(qc_report, 'spline36', [qc.QcImage.label_vertebrae], process=param.command)
     def test(qcslice_type):
         return qcslice_type.single()
 
@@ -105,7 +105,7 @@ def test_propseg(t2_image, t2_seg_image, tmp_path):
     param = qc.Params(t2_image.absolutepath, 'sct_propseg', ['-a'], 'Axial', str(tmp_path))
     qc_report = qc.QcReport(param)
 
-    @qc.QcImage(qc_report, 'none', [qc.QcImage.listed_seg, ], process=param.command)
+    @qc.QcImage(qc_report, 'none', [qc.QcImage.listed_seg], process=param.command)
     def test(qcslice_type):
         return qcslice_type.mosaic()
 
