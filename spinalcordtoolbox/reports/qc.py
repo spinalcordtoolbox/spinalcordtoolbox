@@ -146,14 +146,13 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     qc_param = Params(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
     report = QcReport(qc_param, '')
 
-    if qcslice_type is not None:
-        @QcImage(report, 'none', qcslice_operations, stretch_contrast_method='equalized',
-                 process=process, fps=fps)
-        def layout(qcslice_type):
-            # This will call qc.__call__(self, func):
-            return qcslice_layout(qcslice_type)
+    @QcImage(report, 'none', qcslice_operations, stretch_contrast_method='equalized',
+             process=process, fps=fps)
+    def layout(qcslice_type):
+        # This will call qc.__call__(self, func):
+        return qcslice_layout(qcslice_type)
 
-        layout(qcslice_type)
+    layout(qcslice_type)
 
     logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
     display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
