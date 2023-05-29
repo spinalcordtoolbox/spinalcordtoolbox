@@ -532,11 +532,7 @@ class QcReport:
         """
         # make a new or update Qc directory
         target_img_folder = os.path.dirname(self.qc_params.abs_bkg_img_path())
-        try:
-            os.makedirs(target_img_folder, exist_ok=True)
-        except OSError as err:
-            if not os.path.isdir(target_img_folder):
-                raise err
+        os.makedirs(target_img_folder, exist_ok=True)
 
     def update_description_file(self, dimension):
         """Create the description file with a JSON structure
