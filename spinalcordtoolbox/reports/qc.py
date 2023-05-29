@@ -79,7 +79,7 @@ class QcImage:
     """
     action_list contain the list of images that has to be generated.
     It can be seen as "figures" of matplotlib to be shown
-    Ex: if 'colorbar' is in the list, the process will generate a color bar in the "img" folder
+    Ex: if 'listed_seg' is in the list, the process will generate a figure with red segmentation.
     """
 
     def listed_seg(self, mask, ax):
@@ -219,12 +219,6 @@ class QcImage:
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-
-    # def colorbar(self):
-    #     fig = plt.figure(figsize=(9, 1.5))
-    #     ax = fig.add_axes([0.05, 0.80, 0.9, 0.15])
-    #     colorbar.ColorbarBase(ax, cmap=self._seg_colormap, orientation='horizontal')
-    #     return '{}_colorbar'.format(self.qc_report.img_base_name)
 
     def __call__(self, func):
         """wrapped function (f).
