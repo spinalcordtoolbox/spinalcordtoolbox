@@ -118,9 +118,8 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_s
     for key, expected_value in expected_measurements.items():
         if key == 'volume [mm3]':
             np.testing.assert_equal(measurements.at[0, key], expected_value)
-        else:
-            # The max_equivalent_diameter and length are nan because no segmentation is provided
-            if key == 'max_equivalent_diameter [mm]':
-                assert math.isnan(measurements.at[0, key]) is True
-            elif key == 'length [mm]':
-                assert math.isnan(measurements.at[0, key]) is True
+        # The max_equivalent_diameter and length are nan because no segmentation is provided
+        elif key == 'max_equivalent_diameter [mm]':
+            assert math.isnan(measurements.at[0, key])
+        elif key == 'length [mm]':
+            assert math.isnan(measurements.at[0, key])
