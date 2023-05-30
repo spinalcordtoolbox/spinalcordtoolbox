@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-#########################################################################################
+#
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad
-#########################################################################################
+# License: see the file LICENSE
 
 import os
 

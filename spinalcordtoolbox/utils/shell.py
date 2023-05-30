@@ -1,4 +1,9 @@
-# Convenience/shell related utilities
+"""
+Convenience/shell related utilities
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import sys

@@ -1,13 +1,9 @@
-#########################################################################################
-#
-# Module containing labeling functions used during registration.
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+Labeling functions used during registration
+
+Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import numpy as np
 

@@ -1,19 +1,13 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Compute MT saturation map and T1 map from a PD-weigthed, a T1-weighted and MT-weighted FLASH images
 #
 # Reference paper:
 #    Helms G, Dathe H, Kallenberg K, Dechent P. High-resolution maps of magnetization transfer with inherent correction
 #    for RF inhomogeneity and T1 relaxation obtained from 3D FLASH MRI. Magn Reson Med 2008;60(6):1396-1407.
-
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
 #
-# About the license: see the file LICENSE.TXT
-#########################################################################################
-
+# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import sys
 import os

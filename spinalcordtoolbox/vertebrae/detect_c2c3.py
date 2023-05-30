@@ -1,23 +1,24 @@
-# This is the interface API to detect the posterior edge of C2-C3 disc.
-#
-# The models have been trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
-# in section 2.1.2, except that the cords are not straightened for the C2-C3 disc detection task.
-#
-# To train a new model:
-# - Install SCT v3.2.7 (https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/v3.2.7)
-# - Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
-# - Run "source sct_launcher" in a terminal
-# - Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
-#
-# - NB: The files in the `dev/` folder are not actively maintained, so these training steps are not guaranteed to
-#       work with more recent versions of SCT.
-#
-# To use this model when running the module "detect_c2c3" (herebelow) and "sct_label_vertebrae":
-# - Save the trained model in "$SCT_DIR/data/c2c3_disc_models/"
-#
-# Author: charley
-# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
-# About the license: see the file LICENSE.TXT
+"""
+Detection of the posterior edge of C2-C3 disc
+
+The models have been trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
+in section 2.1.2, except that the cords are not straightened for the C2-C3 disc detection task.
+
+To train a new model:
+- Install SCT v3.2.7 (https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/v3.2.7)
+- Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
+- Run "source sct_launcher" in a terminal
+- Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
+
+NB: The files in the `dev/` folder are not actively maintained, so these training steps are not guaranteed to
+    work with more recent versions of SCT.
+
+To use this model when running the module "detect_c2c3" (herebelow) and "sct_label_vertebrae":
+- Save the trained model in "$SCT_DIR/data/c2c3_disc_models/"
+
+Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import logging

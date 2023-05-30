@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Check the installation and environment variables of the toolbox and its dependencies.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-# Modified: 2014-07-30
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: if fail, run with log and display message to send to sourceforge.
 # TODO: check chmod of binaries

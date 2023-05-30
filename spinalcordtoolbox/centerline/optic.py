@@ -1,4 +1,9 @@
-# Functions dealing with centerline detection and manipulation
+"""
+Functions dealing with centerline detection and manipulation
+
+Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import datetime

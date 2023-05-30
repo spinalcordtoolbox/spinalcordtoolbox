@@ -1,4 +1,9 @@
-# Functions dealing with deepseg_lesion
+"""
+Functions dealing with deepseg_lesion
+
+Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import logging

@@ -24,10 +24,8 @@
 #  -c   Prevent checks from being run to validate the installation
 #  -v   Full verbose
 #
-#
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: PO Quirion, J Cohen-Adad, J Carretero
-# License: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 
 ( # | tee install_sct_log.txt

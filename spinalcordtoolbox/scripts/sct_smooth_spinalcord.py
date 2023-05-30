@@ -3,15 +3,11 @@
 # This program straightens the spinal cord of an anatomic image, apply a smoothing in the z dimension and apply
 # the inverse warping field to get back the curved spinal cord but smoothed.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Simon Levy
-# Modified: 2014-09-01
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: maybe no need to convert RPI at the beginning because strainghten spinal cord already does it!
+
 import sys
 import os
 import time

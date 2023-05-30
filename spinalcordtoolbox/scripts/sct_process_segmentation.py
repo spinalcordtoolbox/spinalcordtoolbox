@@ -1,17 +1,11 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Perform various types of processing from the spinal cord segmentation (e.g. extract centerline, compute CSA, etc.).
 # (extract_centerline) extract the spinal cord centerline from the segmentation. Output file is an image in the same
 # space as the segmentation.
 #
-#
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Touati, Gabriel Mangeat, Sandrine Bédard, Jan Valosek, Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: the import of scipy.misc imsave was moved to the specific cases (orth and ellipse) in order to avoid issue #62. This has to be cleaned in the future.
 

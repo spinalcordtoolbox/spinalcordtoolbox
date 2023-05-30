@@ -1,4 +1,9 @@
-# Functions dealing with onnxruntime (used by sct_deepseg_sc, sct_deepseg_gm, and sct_deepseg_lesion)
+"""
+Functions dealing with onnxruntime (used by sct_deepseg_sc, sct_deepseg_gm, and sct_deepseg_lesion)
+
+Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import onnxruntime as ort
 

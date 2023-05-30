@@ -3,9 +3,7 @@
 # Generate QC report
 #
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 import os
 import sys

@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 #
-# CLI script to crop an image.
+# CLI script to crop an image
 #
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 import sys
 from typing import Sequence

@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# Compute magnetization transfer ratio (MTR).
+# Compute magnetization transfer ratio (MTR)
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad
-# Modified: 2014-09-21
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
 import os

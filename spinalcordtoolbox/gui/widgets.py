@@ -1,8 +1,9 @@
-#  Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-#
-# About the license: see the file LICENSE.TXT
+"""
+Qt widgets for manual labeling of images
 
-""" Qt widgets for manual labeling of images """
+Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 from time import time
