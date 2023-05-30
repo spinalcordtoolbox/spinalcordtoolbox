@@ -321,16 +321,22 @@ jobs:
       run: |
         cd ..
         cp -r spinalcordtoolbox ~/spinalcordtoolbox
+    # The GITHUB_REF_NAME workaround is necessary because GitHub's "context" environment variables
+    # don't seem to propagate to the internal WSL context when using Vampire/setup-wsl.
+    # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4054#issuecomment-1565115134
     - name: Install SCT
       run: |
+        export GITHUB_REF_NAME="${{ github.ref_name }}"
         cd ~/spinalcordtoolbox
         ./.ci.sh -i
     - name: Check dependencies
       run: |
+        export GITHUB_REF_NAME="${{ github.ref_name }}"
         cd ~/spinalcordtoolbox
         ./.ci.sh -c
     - name: Run pytest test suite
       run: |
+        export GITHUB_REF_NAME="${{ github.ref_name }}"
         cd ~/spinalcordtoolbox
         ./.ci.sh -t
 
@@ -369,16 +375,22 @@ jobs:
       run: |
         cd ..
         cp -rp spinalcordtoolbox ~/spinalcordtoolbox
+    # The GITHUB_REF_NAME workaround is necessary because GitHub's "context" environment variables
+    # don't seem to propagate to the internal WSL context when using Vampire/setup-wsl.
+    # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4054#issuecomment-1565115134
     - name: Install SCT
       run: |
+        export GITHUB_REF_NAME="${{ github.ref_name }}"
         cd ~/spinalcordtoolbox
         ./.ci.sh -i
     - name: Check dependencies
       run: |
+        export GITHUB_REF_NAME="${{ github.ref_name }}"
         cd ~/spinalcordtoolbox
         ./.ci.sh -c
     - name: Run pytest test suite
       run: |
+        export GITHUB_REF_NAME="${{ github.ref_name }}"
         cd ~/spinalcordtoolbox
         ./.ci.sh -t
 
@@ -393,15 +405,28 @@ jobs:
     - name: Install SCT
       # NB: In real-world usage, it's assumed that the user would download the
       # install_sct.bat file from the Downloads page, and _not_ the full repo.
-      # Then, the repo would be cloned to the working directory.
-      # However, this installation method doesn't allow us to test changes
-      # from forks. So, we use an in-place install instead.
-      run: install_sct.bat
+      # Then, the repo would be cloned to a tmpdir, then copied to the destination folder.
+      # However, this only really works on `master`, since for PRs, there is a chance
+      # that the PR is coming from a fork. And, in that case, we won't be able to clone
+      # the proper branch, as it exists only on the fork.
+      run: |
+        if "%GITHUB_REF_NAME%"=="master" (
+          if not exist %USERPROFILE%\Downloads mkdir %USERPROFILE%\Downloads
+          cp install_sct.bat %USERPROFILE%\Downloads
+          cd /d %USERPROFILE%\Downloads
+        )
+        install_sct.bat
     - name: Add SCT to path
       # NB: I'm not sure what GHA's syntax is for cmd.exe, so we use bash just for this one change
       # In a user install, the user would perform this step using the Windows PATH-changing GUI.
       shell: bash
-      run: echo "$GITHUB_WORKSPACE/bin" >> $GITHUB_PATH
+      run: |
+        if [ "$GITHUB_REF_NAME" = "master" ]; then
+          export SCT_VERSION=$(cat spinalcordtoolbox/version.txt)
+          echo "$USERPROFILE\sct_$SCT_VERSION\bin" >> $GITHUB_PATH
+        else
+          echo "$GITHUB_WORKSPACE\bin" >> $GITHUB_PATH
+        fi
     - name: Check dependencies
       run: sct_check_dependencies
     - name: Run pytest test suite

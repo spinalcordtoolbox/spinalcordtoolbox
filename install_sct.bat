@@ -28,12 +28,8 @@ git --version >nul 2>&1 || (
     goto error
 )
 
-rem Set git ref. If no git ref is specified when calling `install_sct.bat`, use a default instead.
-if [%1]==[] (
-  set git_ref=master
-) else (
-  set git_ref=%1
-)
+rem Default value: 'master', however this value is updated on stable release branches.
+set git_ref=master
 
 rem Check to see if the PWD contains the project source files (using `version.txt` as a proxy for the entire source dir)
 rem If it exists, then we can reliably access source files (`version.txt`, `requirements-freeze.txt`) from the PWD.
