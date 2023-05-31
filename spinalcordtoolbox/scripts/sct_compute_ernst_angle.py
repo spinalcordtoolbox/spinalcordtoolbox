@@ -90,7 +90,7 @@ def get_parser():
     optional.add_argument(
         "-b",
         type=float,
-        nargs='*',
+        nargs=2,
         metavar=Metavar.float,
         help='Min/Max range of TR (in ms) separated with space. Only use with -v 2. Example: 500 3500',
         default=[500, 3500],
