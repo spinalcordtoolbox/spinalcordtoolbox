@@ -21,7 +21,7 @@ import matplotlib.patheffects as path_effects
 import portalocker
 
 from spinalcordtoolbox.image import Image
-import spinalcordtoolbox.reports.slice as qcslice
+from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
 from spinalcordtoolbox.utils import list2cmdline, __version__, copy, extract_fname, display_open
 
 logger = logging.getLogger(__name__)
@@ -622,34 +622,33 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     """
     logger.info('\n*** Generate Quality Control (QC) html report ***')
     dpi = 300  # Output resolution of the image
-    qcslice_type: qcslice.Slice
+    qcslice_type: Slice
     action_list: List[Callable[[QcImage, np.ndarray, Axes], None]]
-    qcslice_layout: Callable[[qcslice.Slice], (List[np.ndarray] | Tuple[List[List[np.ndarray]], List[Tuple[int, int]]])]
+    qcslice_layout: Callable[[Slice], (List[np.ndarray] | Tuple[List[List[np.ndarray]], List[Tuple[int, int]]])]
 
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
         plane = 'Axial'
-        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        qcslice_type = Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         action_list = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.mosaic()[:2]
     # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
         plane = 'Axial'
-        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice_type = Axial([Image(fname_in1), Image(fname_seg)])
         action_list = [QcImage.listed_seg]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between the image and the centerline
     elif process in ['sct_get_centerline']:
         plane = 'Axial'
-        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)],
-                                     p_resample=None)
+        qcslice_type = Axial([Image(fname_in1), Image(fname_seg)], p_resample=None)
         action_list = [QcImage.label_centerline]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)
     elif process in ['sct_warp_template']:
         plane = 'Axial'
-        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice_type = Axial([Image(fname_in1), Image(fname_seg)])
         action_list = [QcImage.template]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between gif image (before and after motion correction) and grid overlay
@@ -657,14 +656,14 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         plane = 'Axial'
         if fname_seg is None:
             raise ValueError("Segmentation is needed to ensure proper cropping around spinal cord.")
-        qcslice_type = qcslice.Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        qcslice_type = Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         action_list = [QcImage.grid]
         def qcslice_layout(x): return x.mosaics_through_time()
     # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
-        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        qcslice_type = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         action_list = [QcImage.label_vertebrae]
         def qcslice_layout(x): return x.single()
     #  Sagittal orientation, display posterior labels
@@ -672,20 +671,20 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         # projected_image = projected(Image(fname_seg))
-        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        qcslice_type = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         action_list = [QcImage.label_utils]
         def qcslice_layout(x): return x.single()
     # Sagittal orientation, display PMJ box
     elif process in ['sct_detect_pmj']:
         plane = 'Sagittal'
-        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        qcslice_type = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         action_list = [QcImage.highlight_pmj]
         def qcslice_layout(x): return x.single()
     # Sagittal orientation, static image
     elif process in ['sct_straighten_spinalcord']:
         plane = 'Sagittal'
         dpi = 100
-        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_in1)], p_resample=None)
+        qcslice_type = Sagittal([Image(fname_in1), Image(fname_in1)], p_resample=None)
         action_list = [QcImage.vertical_line]
         def qcslice_layout(x): return x.single()
     # Metric outputs (only graphs)
@@ -696,20 +695,20 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         # fname_seg should be a list of 4 images: 3 for each operation in `action_list`, plus an extra
         # centerline image, which is needed to make `Sagittal.get_center_spit` work correctly
         fname_list.extend(fname_seg)
-        qcslice_type = qcslice.Sagittal([Image(fname) for fname in fname_list], p_resample=None)
+        qcslice_type = Sagittal([Image(fname) for fname in fname_list], p_resample=None)
         action_list = [QcImage.smooth_centerline, QcImage.highlight_pmj, QcImage.listed_seg]
         def qcslice_layout(x): return x.single()
     elif process in ['sct_image -stitch']:
         plane = 'Sagittal'
         dpi = 150
-        qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_in2)], p_resample=None)
+        qcslice_type = Sagittal([Image(fname_in1), Image(fname_in2)], p_resample=None)
         action_list = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.single()
     elif process in ['sct_deepseg_lesion']:
         if plane == 'Axial':
-            SliceSubtype = qcslice.Axial
+            SliceSubtype = Axial
         elif plane == 'Sagittal':
-            SliceSubtype = qcslice.Sagittal
+            SliceSubtype = Sagittal
         else:
             raise ValueError(f"Invalid plane '{plane}'. Valid choices are 'Axial' and 'Sagittal'.")
         # Note, spinal cord segmentation (fname_seg) is used to crop the input image.
