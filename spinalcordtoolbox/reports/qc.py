@@ -223,7 +223,7 @@ class QcImage:
         self.aspect_img, self.aspect_mask = qcslice.aspect()[:2]
 
         self.qc_report.make_content_path()
-        logger.info('QcImage: layout with %s slice', self.qc_report.qc_params.orientation)
+        logger.info('QcImage: layout with %s slice', self.qc_report.qc_params.plane)
 
         if self.process in ['sct_fmri_moco', 'sct_dmri_moco']:
             [images_after_moco, images_before_moco], centermass = qcslice_layout(qcslice)
@@ -231,9 +231,9 @@ class QcImage:
             self._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
         else:
             img, *mask = qcslice_layout(qcslice)
-            self._make_QC_image_for_3d_volumes(img, mask, slice_orientation=self.qc_report.qc_params.orientation)
+            self._make_QC_image_for_3d_volumes(img, mask, plane=self.qc_report.qc_params.plane)
 
-    def _make_QC_image_for_3d_volumes(self, img, mask, slice_orientation):
+    def _make_QC_image_for_3d_volumes(self, img, mask, plane):
         """
         Create overlay and background images for all processes that deal with 3d volumes
         (all except sct_fmri_moco and sct_dmri_moco)
@@ -248,12 +248,12 @@ class QcImage:
 
         # Axial views into images == A mosaic of axial slices. For QC reports, axial mosaics will often have smaller
         # height than width (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
-        if slice_orientation == 'Axial':
+        if plane == 'Axial':
             # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
             size_fig = [5, 5 * img.shape[0] / img.shape[1]]
         # Sagittal views into images, on the other hand, use a single image instead of a mosaic of slices.
         # This sagittal view will typically have H ~= W, so there is no need to adjust the dimensions of the figure.
-        elif slice_orientation == 'Sagittal':
+        elif plane == 'Sagittal':
             size_fig = [5, 5]
 
         fig = Figure()
@@ -346,7 +346,7 @@ class QcImage:
         :param fig: MPL figure handler
         :return:
         """
-        if self.qc_report.qc_params.orientation == 'Axial':
+        if self.qc_report.qc_params.plane == 'Axial':
             # If mosaic of axial slices, display orientation labels
             text_a = ax.text(12, 6, 'A', color='yellow', size=4)
             text_p = ax.text(12, 28, 'P', color='yellow', size=4)
@@ -446,13 +446,13 @@ class Params:
     """Parses and stores the variables that will be included into the QC details
     """
 
-    def __init__(self, input_file, command, args, orientation, dest_folder, dpi=300, dataset=None, subject=None):
+    def __init__(self, input_file, command, args, plane, dest_folder, dpi=300, dataset=None, subject=None):
         """
 
         :param input_file: str: the input nifti file name
         :param command: str: command name
         :param args: str: the command's arguments
-        :param orientation: str: The anatomical orientation
+        :param plane: str: The anatomical orientation
         :param dest_folder: str: The absolute path of the QC root
         :param dpi: int: Output resolution of the image
         :param dataset: str: Dataset name
@@ -478,7 +478,7 @@ class Params:
         self.command = command
         self.sct_version = __version__
         self.args = args
-        self.orientation = orientation
+        self.plane = plane
         self.dpi = dpi
         self.root_folder = dest_folder
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
@@ -548,7 +548,7 @@ class QcReport:
             'subject': self.qc_params.subject,
             'contrast': self.qc_params.contrast,
             'fname_in': self.qc_params.fname_in,
-            'orientation': self.qc_params.orientation,
+            'orientation': self.qc_params.plane,
             'background_img': self.qc_params.bkg_img_path,
             'overlay_img': self.qc_params.overlay_img_path,
             'dimension': '%dx%d' % dimension,
