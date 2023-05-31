@@ -5,7 +5,7 @@ import json
 import logging
 import datetime
 from string import Template
-from typing import Callable, List, Tuple
+from typing import Callable, List, Tuple, Union
 
 import numpy as np
 import skimage
@@ -622,9 +622,14 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     """
     logger.info('\n*** Generate Quality Control (QC) html report ***')
     dpi = 300  # Output resolution of the image
+
+    # The following are the expected types for some variables that get values
+    # assigned in all branches of the big `if...elif...elif...` construct below
     qcslice: Slice
     action_list: List[Callable[[QcImage, np.ndarray, Axes], None]]
-    qcslice_layout: Callable[[Slice], (List[np.ndarray] | Tuple[List[List[np.ndarray]], List[Tuple[int, int]]])]
+    qcslice_layout: Callable[[Slice],
+                             Union[List[np.ndarray],
+                                   Tuple[List[List[np.ndarray]], List[Tuple[int, int]]]]]
 
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
