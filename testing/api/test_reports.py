@@ -98,8 +98,8 @@ def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
         action_list=[qc.QcImage.label_vertebrae],
         process=qc_params.command,
     ).layout(
-        qcslice_layout=lambda qcslice_type: qcslice_type.single(),
-        qcslice_type=qcslice.Sagittal([t2_image, t2_seg_image]),
+        qcslice_layout=lambda qcslice: qcslice.single(),
+        qcslice=qcslice.Sagittal([t2_image, t2_seg_image]),
     )
 
     assert os.path.isfile(qc_params.abs_bkg_img_path())
@@ -116,8 +116,8 @@ def test_propseg(t2_image, t2_seg_image, tmp_path):
         action_list=[qc.QcImage.listed_seg],
         process=qc_params.command,
     ).layout(
-        qcslice_layout=lambda qcslice_type: qcslice_type.mosaic(),
-        qcslice_type=qcslice.Axial([t2_image, t2_seg_image]),
+        qcslice_layout=lambda qcslice: qcslice.mosaic(),
+        qcslice=qcslice.Axial([t2_image, t2_seg_image]),
     )
 
     assert os.path.isfile(qc_params.abs_bkg_img_path())
