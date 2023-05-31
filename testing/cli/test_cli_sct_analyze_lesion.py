@@ -1,3 +1,5 @@
+# pytest unit tests for sct_analyze_lesion
+
 import pytest
 import logging
 

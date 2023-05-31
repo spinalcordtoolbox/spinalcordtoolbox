@@ -1,3 +1,5 @@
+# pytest unit tests for sct_register_to_template
+
 import os
 import shutil
 import glob

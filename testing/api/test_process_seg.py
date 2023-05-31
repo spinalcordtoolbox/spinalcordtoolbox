@@ -1,10 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.process_seg
 
 # TODO: add test with known angle (i.e. not found with fitting)
 # TODO: test empty slices and slices with two objects
-
 
 import pytest
 import math

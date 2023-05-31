@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+#
+# Extraction of the spinal cord centerline
+#
+# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import os
 import sys

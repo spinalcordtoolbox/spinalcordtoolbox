@@ -4,13 +4,8 @@
 # using sct_get_centerline.py or sct_segmentation_propagation) and returns the anatomic image where the spinal
 # cord was straightened.
 #
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad, Geoffrey Leveque, Julien Touati
-# Modified: 2014-09-01
-#
-# License: see the LICENSE.TXT
-# ======================================================================================================================
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import sys
 import os

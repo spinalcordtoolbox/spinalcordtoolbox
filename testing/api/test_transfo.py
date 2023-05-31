@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# pytest unit tests for transform stuff
+# pytest unit tests for sct_apply_transfo
 
 import sys
 

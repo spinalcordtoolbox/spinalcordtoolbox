@@ -1,13 +1,9 @@
-#########################################################################################
-#
-# Resample data using nibabel.
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad, Sara Dupont
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+Resample data using nibabel
+
+Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: remove resample_file (not needed)
 

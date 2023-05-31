@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Module converting image files
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: add output check in convert
 

@@ -1,3 +1,5 @@
+# pytest unit tests for sct_concat_transfo
+
 import pytest
 import logging
 

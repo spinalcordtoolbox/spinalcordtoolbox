@@ -1,17 +1,10 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# Extract metrics within spinal labels as defined by the white matter atlas and the
-# template
+# Extract metrics within spinal labels as defined by the white matter atlas and the template
 # The folder atlas should have a .txt file that lists all tract files with labels.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Eddie Magnide, Simon Levy, Charles Naaman, Julien Cohen-Adad
-# Created: 2014-07-30
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: fetch vert level in atlas by default-- would be nice to output in csv
 # TODO (not urgent): vertebral levels selection should only consider voxels of the selected levels in slices where

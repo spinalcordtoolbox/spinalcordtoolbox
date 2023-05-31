@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Function to segment the spinal cord using convolutional neural networks
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener & Charley Gros
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import os
 import sys

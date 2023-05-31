@@ -1,4 +1,9 @@
-# Functions dealing with deepseg_lesion
+"""
+API for functions used in the sct_deepseg_lesion CLI script
+
+Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import logging

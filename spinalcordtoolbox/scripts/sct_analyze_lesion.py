@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-
+#
 # Analyze lesions
 #
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Charley
-# Modified: 2017-08-19
-#
-# About the license: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 import os
 import sys
@@ -164,7 +161,7 @@ class AnalyzeLeion:
         self.label_lesion()
 
         # Compute angle for CSA correction if spinal cord segmentation provided
-        # NB: If segmentation is not provided, then we will only compute volume, so 
+        # NB: If segmentation is not provided, then we will only compute volume, so
         #     no angle correction is needed
         if self.fname_sc is not None:
             self.angle_correction()

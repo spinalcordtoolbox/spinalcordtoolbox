@@ -1,3 +1,5 @@
+# pytest unit tests for all cli scripts
+
 import pytest
 import importlib
 from importlib.metadata import entry_points

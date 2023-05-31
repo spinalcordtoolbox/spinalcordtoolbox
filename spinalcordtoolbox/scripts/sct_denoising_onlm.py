@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+#
+# Utility function to denoise images
+#
+# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import sys
 from time import time

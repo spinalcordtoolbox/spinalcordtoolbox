@@ -1,21 +1,18 @@
-#########################################################################################
-#
-# This file contains an implementation of the iterative closest point algorithm.
-# This algo registers two sets of points (3D coordinates) together.
-#
-# Adapted from:
-# http://stackoverflow.com/questions/20120384/iterative-closest-point-icp-implementation-on-python
-#
-# NOTES ON ITK Transform Files:
-# https://intranet.neuro.polymtl.ca/geek-tips/image-processing-software/advanced-normalization-tools-ants.html#itk-transform-file
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Cohen-Adad
-# Created: 2015-06-10
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+Iterative closest point algorithm
+
+This file contains an implementation of the iterative closest point algorithm.
+This algo registers two sets of points (3D coordinates) together.
+
+Adapted from:
+http://stackoverflow.com/questions/20120384/iterative-closest-point-icp-implementation-on-python
+
+NOTES ON ITK Transform Files:
+https://intranet.neuro.polymtl.ca/geek-tips/image-processing-software/advanced-normalization-tools-ants.html#itk-transform-file
+
+Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: homogeneize input parameters: (src=src, dest=dest), instead of (dest, src).
 # TODO: add full affine transfo
@@ -23,8 +20,6 @@
 
 import os
 import logging
-
-from operator import itemgetter
 
 from nibabel import load
 import numpy as np

@@ -1,3 +1,5 @@
+# pytest unit tests for sct_compute_snr
+
 import numpy as np
 import pytest
 import logging

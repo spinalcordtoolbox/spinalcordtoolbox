@@ -1,3 +1,5 @@
+# pytest unit tests for sct_denoising_onlm
+
 import pytest
 import logging
 

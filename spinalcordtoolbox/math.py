@@ -1,5 +1,9 @@
-# Functions that perform mathematical operations on an image.
+"""
+Mathematical operations on an image
 
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 

@@ -1,3 +1,5 @@
+# pytest unit tests for sct_apply_transfo
+
 import pytest
 import logging
 

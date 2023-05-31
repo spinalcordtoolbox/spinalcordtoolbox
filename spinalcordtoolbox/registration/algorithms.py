@@ -1,11 +1,9 @@
-#########################################################################################
-# Spinal Cord Registration module
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2020 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
-#
-# License: see the LICENSE.TXT
-#########################################################################################
+"""
+Spinal Cord Registration module
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 import os  # FIXME

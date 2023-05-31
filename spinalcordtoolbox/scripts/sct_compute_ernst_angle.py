@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# All sort of utilities for labels.
+# Function to compute the Ernst Angle
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Sara Dupont
-# Modified: 2015-02-17
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
 from typing import Sequence
