@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-#
-# Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# License: see the file LICENSE
+# pytest unit tests for isct_antsRegistration
 
 import os
 
