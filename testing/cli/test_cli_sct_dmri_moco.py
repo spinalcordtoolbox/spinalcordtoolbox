@@ -1,3 +1,5 @@
+# pytest unit tests for sct_dmri_moco
+
 import pytest
 import logging
 

@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# pytest unit tests for spinalcordtoolbox.deepseg_sc
+# pytest unit tests for spinalcordtoolbox.deepseg._sc
 
 import pytest
 import numpy as np

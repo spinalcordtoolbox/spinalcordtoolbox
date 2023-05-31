@@ -1,3 +1,5 @@
+# pytest unit tests for sct_merge_images
+
 import pytest
 import logging
 

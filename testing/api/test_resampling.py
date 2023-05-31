@@ -1,9 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.resampling
 
 # TODO: add test for 2d image
-
 
 import pytest
 

@@ -1,3 +1,5 @@
+# pytest unit tests for sct_analyze_texture
+
 import pytest
 import logging
 

@@ -1,7 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.deepseg
-
 
 import os
 

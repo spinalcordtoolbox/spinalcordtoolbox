@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# pytest unit tests for Image stuff
+# pytest unit tests for spinalcordtoolbox.image
 
 import sys
 import os
