@@ -1,6 +1,5 @@
 """
-API for the deepseg_gm model that implements the model for the
-Spinal Cord Gray Matter Segmentation
+API for functions used in the sct_deepseg_gm CLI script
 
 Reference paper:
     Perone, C. S., Calabrese, E., & Cohen-Adad, J. (2017).
