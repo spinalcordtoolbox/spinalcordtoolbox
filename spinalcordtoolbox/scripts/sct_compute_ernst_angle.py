@@ -148,7 +148,7 @@ def main(argv: Sequence[str]):
         if input_tr > input_tr_max:
             input_tr_max = input_tr + 500
         elif input_tr < input_tr_min:
-            input_tr_min = input_tr - 500
+            input_tr_min = 0
         # save text file
         f = open(fname_output_file, 'w')
         f.write(str(graph.getErnstAngle(input_tr)))
