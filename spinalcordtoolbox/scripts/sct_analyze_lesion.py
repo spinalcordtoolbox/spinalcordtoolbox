@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-
+#
 # Analyze lesions
 #
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Charley
-# Modified: 2017-08-19
-#
-# About the license: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 import os
 import sys
@@ -44,12 +41,6 @@ def get_parser():
         help='Binary mask of lesions (lesions are labeled as "1").',
         metavar=Metavar.file,
     )
-    mandatory_arguments.add_argument(
-        "-s",
-        required=True,
-        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
-             "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
-        metavar=Metavar.file)
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -57,6 +48,14 @@ def get_parser():
         "--help",
         action="help",
         help="show this help message and exit")
+    optional.add_argument(
+        "-s",
+        required=False,
+        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
+             "cord angle with respect to slice. (e.g. 't2_seg.nii.gz')\n"
+             "If provided, then the lesion volume, length, and diameter will be computed. Otherwise, if not provided, "
+             "then only the lesion volume will be computed.",
+        metavar=Metavar.file)
     optional.add_argument(
         "-i",
         help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
@@ -161,8 +160,11 @@ class AnalyzeLeion:
         # Label connected regions of the masked image
         self.label_lesion()
 
-        # Compute angle for CSA correction
-        self.angle_correction()
+        # Compute angle for CSA correction if spinal cord segmentation provided
+        # NB: If segmentation is not provided, then we will only compute volume, so
+        #     no angle correction is needed
+        if self.fname_sc is not None:
+            self.angle_correction()
 
         # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter
         # if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
@@ -191,8 +193,8 @@ class AnalyzeLeion:
             copy(os.path.join(self.tmp_dir, file_), os.path.join(self.path_ofolder, file_))
 
     def pack_measures(self):
-        writer = pd.ExcelWriter(self.excel_name, engine='xlwt')
-        self.measure_pd.to_excel(writer, sheet_name='measures', index=False, engine='xlwt')
+        writer = pd.ExcelWriter(self.excel_name, engine='xlsxwriter')
+        self.measure_pd.to_excel(writer, sheet_name='measures', index=False, engine='xlsxwriter')
 
         # Add the total column and row
         if self.path_template is not None:
@@ -202,9 +204,9 @@ class AnalyzeLeion:
                     df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
                     df['total'] = df.sum(numeric_only=True, axis=1)
                     df.iloc[-1, df.columns.get_loc('vert')] = 'total'
-                    df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlwt')
+                    df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
                 else:
-                    self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlwt')
+                    self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
 
         # Save pickle
         self.distrib_matrix_dct['measures'] = self.measure_pd
@@ -402,9 +404,11 @@ class AnalyzeLeion:
             printv('\nMeasures on lesion #' + str(lesion_label) + '...', self.verbose, 'normal')
 
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
+            # The SC segmentation is necessary to be able to compute the length and diameter
+            if self.fname_sc is not None:
+                self._measure_length(im_lesion_data_cur, p_lst, label_idx)
+                self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
             self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
-            self._measure_length(im_lesion_data_cur, p_lst, label_idx)
-            self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
 
             # compute lesion distribution for each lesion
             if self.path_template is not None:

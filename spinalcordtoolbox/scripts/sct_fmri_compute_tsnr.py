@@ -1,16 +1,9 @@
 #!/usr/bin/env python
-# ######################################################################################################################
-#
 #
 # Compute TSNR using inputed anat.nii.gz and fmri.nii.gz files.
 #
-# ----------------------------------------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad, Sara Dupont
-# Created: 2015-03-12
-#
-# About the license: see the file LICENSE.TXT
-# ######################################################################################################################
+# License: see the file LICENSE
 
 import sys
 from typing import Sequence

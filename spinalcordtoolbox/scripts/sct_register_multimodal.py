@@ -1,16 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
+#
 # Register a volume (e.g., EPI from fMRI or DTI scan) to an anatomical image.
 #
-# See Usage() below for more information.
-#
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-# Modified: 2014-06-03
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: if user specified -param, then ignore the default paramreg
 # TODO: check syn with shrink=4
@@ -174,7 +167,8 @@ def get_parser():
               f"    * centermassrot: slicewise center of mass and rotation alignment using method specified in "
               f"'rot_method'\n"
               f"    * columnwise: R-L scaling followed by A-P columnwise alignment (seg only).\n"
-              f"    * dl: Contrast-agnostic, deep learning-based registration based on the SynthMorph architecture. \n"
+              f"    * dl: Contrast-agnostic, deep learning-based registration based on the SynthMorph architecture. "
+              f"Can be run using: -param step=1,type=im,algo=dl\n"
               f"  - slicewise: <int> Slice-by-slice 2d transformation. "
               f"Default={DEFAULT_PARAMREGMULTI.steps['1'].slicewise}.\n"
               f"  - metric: {{CC, MI, MeanSquares}}. Default={DEFAULT_PARAMREGMULTI.steps['1'].metric}.\n"

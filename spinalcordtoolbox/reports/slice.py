@@ -1,3 +1,10 @@
+"""
+Image slice extractors for generating QC reports
+
+Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
+
 # TODO: Replace slice by spinalcordtoolbox.image.Slicer
 
 import abc
@@ -5,11 +12,12 @@ import logging
 import math
 
 import numpy as np
-from scipy import ndimage
+from scipy.ndimage import center_of_mass
 from nibabel.nifti1 import Nifti1Image
 
 from spinalcordtoolbox.image import Image, split_img_data
 from spinalcordtoolbox.resampling import resample_nib
+from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 
 logger = logging.getLogger(__name__)
@@ -146,7 +154,7 @@ class Slice(object):
         return matrix[start_row:end_row, start_col:end_col]
 
     @staticmethod
-    def add_slice(matrix, i, column, size, patch):
+    def add_slice(matrix, i, column, patch):
         """Adds a slice to the canvas containing all the slices
 
         TODO : Move this to the Axial class
@@ -158,10 +166,10 @@ class Slice(object):
         :param patch: patch to insert
         :return: matrix
         """
-        start_col = (i % column) * size * 2
+        start_col = (i % column) * patch.shape[1]
         end_col = start_col + patch.shape[1]
 
-        start_row = int(i / column) * size * 2
+        start_row = (i // column) * patch.shape[0]
         end_row = start_row + patch.shape[0]
 
         matrix[start_row:end_row, start_col:end_col] = patch
@@ -220,7 +228,7 @@ class Slice(object):
         centers_x = np.zeros(nz)
         centers_y = np.zeros(nz)
         for i in range(nz):
-            centers_x[i], centers_y[i] = ndimage.measurements.center_of_mass(data[i, :, :])
+            centers_x[i], centers_y[i] = center_of_mass(data[i, :, :])
         try:
             Slice.nan_fill(centers_x)
             Slice.nan_fill(centers_y)
@@ -229,72 +237,10 @@ class Slice(object):
             raise
         return centers_x, centers_y
 
-    def mosaic(self, nb_column=0, size=15, return_center=False):
-        """Obtain matrices of the mosaics
-
-        Calculates how many squares will fit in a row based on the column and the size
-        Multiply by 2 because the sides are of size*2. Central point is size +/-.
-
-        :param nb_column: number of mosaic columns
-        :param size: each column size
-        :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
-        :return: list of tuples, each tuple representing the center of each square of the mosaic. Only with param return_center is True
-        """
-
-        # Calculate number of columns to display on the report
-        dim = self.get_dim(self._images[0])  # dim represents the 3rd dimension of the 3D matrix
-        if nb_column == 0:
-            nb_column = 600 // (size * 2)
-
-        nb_row = math.ceil(dim // nb_column) + 1
-
-        # Compute the matrix size of the final mosaic image
-        matrix_sz = (int(size * 2 * nb_row), int(size * 2 * nb_column))
-
-        centers_mosaic = []
-        for irow in range(nb_row):
-            for icol in range(nb_column):
-                centers_mosaic.append((icol * size * 2 + size, irow * size * 2 + size))
-
-        # Get center of mass for each slice of the image. If the input is the cord segmentation, these coordinates are
-        # used to center the image on each panel of the mosaic.
-        centers_x, centers_y = self.get_center()
-
-        matrices = list()
-        for image in self._images:
-            matrix = np.zeros(matrix_sz)
-            for i in range(dim):
-                x = int(centers_x[i])
-                y = int(centers_y[i])
-                # crop slice around center of mass and add slice to the matrix layout
-                # TODO: resample there after cropping based on physical dimensions
-                self.add_slice(matrix, i, nb_column, size, self.crop(self.get_slice(image.data, i), x, y, size, size))
-
-            matrices.append(matrix)
-        if return_center is True:
-            return matrices, centers_mosaic
-        else:
-            return matrices
-
-    def mosaics_through_time(self):
-        """Obtain mosaics for each volume
-
-        :return: list of tuples of numpy.ndarray containing the mosaics of each volumes
-        """
-
-        mosaics = list()
-        self._image_seg = self._images[0].copy()  # segmentation used for cropping
-
-        for i, img in enumerate(self._4d_images):
-            # The absolutepath is changed to None after change_orientation see issue #3304
-            img.absolutepath = self._absolute_paths[i]
-
-            im_t_list = (split_img_data(img, dim=3, squeeze_data=True))  # Split along T dimension
-            self._images.clear()
-            self._images = im_t_list
-            matrices, centers_mosaic = self.mosaic(return_center=True)
-            mosaics.append(matrices)
-        return mosaics, centers_mosaic
+    @abc.abstractmethod
+    def mosaic(self):
+        """Obtain matrices of the mosaics"""
+        return
 
     def single(self):
         """Obtain the matrices of the single slices. Flatten
@@ -352,14 +298,14 @@ class Slice(object):
         # Apply threshold at 0.5 for non-binary segmentation
         if type_img == 'seg':
             # Check if input image is binary
-            is_binary = np.isin(nii.get_data(), [0, 1]).all()
-            img_r_data = nii_r.get_data()
+            is_binary = np.isin(np.asanyarray(nii.dataobj), [0, 1]).all()
+            img_r_data = np.asanyarray(nii_r.dataobj)
             if is_binary:
                 img_r_data = (img_r_data > 0.5) * 1
             else:
                 img_r_data[img_r_data < 0.5] = 0
         else:
-            img_r_data = nii_r.get_data()
+            img_r_data = np.asanyarray(nii_r.dataobj)
         # Create Image objects
         image_r = Image(img_r_data, hdr=nii_r.header, dim=nii_r.header.get_data_shape()). \
             change_orientation(image.orientation)
@@ -389,6 +335,71 @@ class Axial(Slice):
         else:  # For 4D images
             image = self._image_seg
         return self._axial_center(image)
+
+    def mosaic(self, return_center=False):
+        """Obtain matrices of the mosaics
+
+        Calculates how many squares will fit in a row based on the column and the size
+        Multiply by 2 because the sides are of size*2. Central point is size +/-.
+
+        :param return_center: bool, whether to return the center of each square of the mosaic.
+        :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
+        :return: list of tuples, each tuple representing the center of each square of the mosaic.
+        """
+
+        # Calculate number of columns to display on the report
+        dim = self.get_dim(self._images[0])  # dim represents the 3rd dimension of the 3D matrix
+        size = 15  # (By default, size=15 -> 30x30 squares -> 20 columns)
+        nb_column = 600 // (size * 2)
+
+        nb_row = math.ceil(dim / nb_column)
+
+        # Compute the matrix size of the final mosaic image
+        matrix_sz = (int(size * 2 * nb_row), int(size * 2 * nb_column))
+
+        centers_mosaic = []
+        for irow in range(nb_row):
+            for icol in range(nb_column):
+                centers_mosaic.append((icol * size * 2 + size, irow * size * 2 + size))
+
+        # Get center of mass for each slice of the image. If the input is the cord segmentation, these coordinates are
+        # used to center the image on each panel of the mosaic.
+        centers_x, centers_y = self.get_center()
+
+        matrices = list()
+        for image in self._images:
+            matrix = np.zeros(matrix_sz)
+            for i in range(dim):
+                x = int(centers_x[i])
+                y = int(centers_y[i])
+                # crop slice around center of mass and add slice to the matrix layout
+                # TODO: resample there after cropping based on physical dimensions
+                self.add_slice(matrix, i, nb_column, self.crop(self.get_slice(image.data, i), x, y, size, size))
+
+            matrices.append(matrix)
+        if return_center is True:
+            return matrices, centers_mosaic
+        else:
+            return matrices
+
+    def mosaics_through_time(self):
+        """Obtain mosaics for each volume
+
+        :return: list of tuples of numpy.ndarray containing the mosaics of each volumes
+        """
+        mosaics = list()
+        self._image_seg = self._images[0].copy()  # segmentation used for cropping
+
+        for i, img in enumerate(self._4d_images):
+            # The absolutepath is changed to None after change_orientation see issue #3304
+            img.absolutepath = self._absolute_paths[i]
+
+            im_t_list = (split_img_data(img, dim=3, squeeze_data=True))  # Split along T dimension
+            self._images.clear()
+            self._images = im_t_list
+            matrices, centers_mosaic = self.mosaic(return_center=True)
+            mosaics.append(matrices)
+        return mosaics, centers_mosaic
 
 
 class Sagittal(Slice):
@@ -444,3 +455,41 @@ class Sagittal(Slice):
         size_y = self.axial_dim(image)
         size_x = self.coronal_dim(image)
         return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
+
+    def mosaic(self):
+        """Obtain matrices of the mosaics
+
+        Mosaic images are cropped based on the bounding box of the spinal cord segmentation.
+
+        :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
+        """
+        # 0. Use the segmentation image to initialize the image cropper
+        self._image_seg = self._images[-1]
+        cropper = ImageCropper()
+        cropper.get_bbox_from_mask(self._image_seg)
+
+        # 1. Compute the sizes of the patches, as well as the overall image
+        # 1a. Compute width and height of mosaic squares. (This is assumed to be a square for Axial slices.)
+        size_h = cropper.bbox.xmax - cropper.bbox.xmin + 1  # SAL -> SI axis provides height
+        size_w = cropper.bbox.ymax - cropper.bbox.ymin + 1  # SAL -> AP axis provides width
+        # 1b. Calculate number of columns to display on the report.
+        nb_column = 600 // size_w
+        # 1c. Calculate number of rows to display.
+        nb_slices = cropper.bbox.zmax - cropper.bbox.zmin + 1  # SAL -> LR axis provides nb_slices
+        nb_row = math.ceil(nb_slices / nb_column)
+        # 1d. Compute the matrix size of the overall mosaic image
+        matrix_sz = (int(size_h * nb_row), int(size_w * nb_column))
+
+        # 2. Use the previously-defined segmentation-based cropper to crop the images to the necessary size
+        matrices = list()
+        for image in self._images:
+            image_cropped = cropper.crop(img_in=image)
+            matrix = np.zeros(matrix_sz)
+            for i in range(nb_slices):
+                # Fetch the sagittal slice (which has already been cropped)
+                lrslice_cropped = self.get_slice(image_cropped.data, i)
+                # Add the cropped slice to the matrix layout
+                self.add_slice(matrix, i, nb_column, lrslice_cropped)
+            matrices.append(matrix)
+
+        return matrices

@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 #
-# Thinning with the Zhang-Suen algorithm (1984) --> code taken from  https://github.com/linbojin/Skeletonization-by-Zhang-Suen-Thinning-Algorithm
+# Thinning with the Zhang-Suen algorithm (1984) --> code taken from:
+# https://github.com/linbojin/Skeletonization-by-Zhang-Suen-Thinning-Algorithm
 # Computation of the distances between two skeleton
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Sara Dupont
-# CREATED: 2015-07-15
 #
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import sys
 import os
@@ -91,7 +88,7 @@ class Thinning:
         """
         # now = time.time()
         n = neighbours + neighbours[0:1]      # P2, P3, ... , P8, P9, P2
-        s = np.sum((n1, n2) == (0, 1) for n1, n2 in zip(n, n[1:]))  # (P2,P3), (P3,P4), ... , (P8,P9), (P9,P2)
+        s = sum((n1, n2) == (0, 1) for n1, n2 in zip(n, n[1:]))  # (P2,P3), (P3,P4), ... , (P8,P9), (P9,P2)
         # t = time.time() - now
         # printv('t transitions sum: ', t)
         return s

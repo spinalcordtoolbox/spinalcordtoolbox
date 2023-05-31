@@ -1,3 +1,5 @@
+# pytest unit tests for sct_propseg
+
 import os
 import sys
 import pytest

@@ -1,3 +1,5 @@
+# pytest unit tests for sct_run_batch
+
 import glob
 import os
 import json

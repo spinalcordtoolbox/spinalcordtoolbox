@@ -1,16 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# Separate b=0 and DW images from diffusion dataset.
+# Separate b=0 and DW images from diffusion dataset
 #
-#
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-# Modified: 2014-08-14
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
 import math

@@ -1,3 +1,10 @@
+"""
+Ensemble inference
+
+Copyright (c) 2023 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
+
 import logging
 from pathlib import Path
 

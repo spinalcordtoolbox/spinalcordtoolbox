@@ -1,3 +1,5 @@
+# pytest unit tests for sct_compute_compression
+
 import pytest
 import logging
 import numpy as np

@@ -1,3 +1,5 @@
+# pytest unit tests for spinalcordtoolbox.gui
+
 import logging
 import unittest
 

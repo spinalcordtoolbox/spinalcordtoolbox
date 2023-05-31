@@ -1,15 +1,9 @@
-#########################################################################################
-#
-# This file contains many useful (and tiny) classes corresponding to data types.
-# Large data types with many options have their own file (e.g., spinalcordtoolbox.image)
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener
-# Created: 2015-02-10
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+Coordinates and Centerline
+
+Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 from operator import itemgetter
 

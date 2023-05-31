@@ -1,3 +1,10 @@
+"""
+Quality Control report generator
+
+Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
+
 import glob
 import sys
 import os
@@ -11,6 +18,7 @@ import numpy as np
 import skimage
 import skimage.io
 import skimage.exposure
+from scipy.ndimage import center_of_mass
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation, PillowWriter
@@ -179,7 +187,6 @@ class QcImage(object):
     def label_vertebrae(self, mask, ax):
         """Draw vertebrae areas, then add text showing the vertebrae names"""
         from matplotlib import colors
-        import scipy.ndimage
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
         ax.imshow(img,
@@ -197,7 +204,7 @@ class QcImage(object):
                 index = int(val)
                 if index in self._labels_regions.values():
                     color = self._labels_color[index]
-                    y, x = scipy.ndimage.measurements.center_of_mass(np.where(data == val, data, 0))
+                    y, x = center_of_mass(np.where(data == val, data, 0))
                     # Draw text with a shadow
                     x += data.shape[1] / 25
                     label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
@@ -733,7 +740,7 @@ def add_entry(src, process, args, path_qc, plane, path_img=None, path_img_overla
     display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
 
 
-def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args=None, path_qc=None,
+def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, angle_line=None, args=None, path_qc=None,
                 dataset=None, subject=None, path_img=None, process=None, fps=None):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
@@ -742,6 +749,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     :param fname_in1: str: File name of input image #1 (mandatory)
     :param fname_in2: str: File name of input image #2
     :param fname_seg: str: File name of input segmentation
+    :param plane: str: Orientation of the QC. Can be: Axial, Sagittal.
     :param angle_line: list: Angle [in rad, wrt. vertical line, must be between -pi and pi] to apply to the line overlaid on the image, for\
     each slice, for slice that don't have an angle to display, a nan is expected. To be used for assessing cord orientation.
     :param args: args from parent function
@@ -755,7 +763,6 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
     """
     logger.info('\n*** Generate Quality Control (QC) html report ***')
     dpi = 300
-    plane = None
     qcslice_type = None
     qcslice_operations = None
     qcslice_layout = None
@@ -845,6 +852,18 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, angle_line=None, args
         qcslice_type = qcslice.Sagittal([Image(fname_in1), Image(fname_in2)], p_resample=None)
         qcslice_operations = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.single()
+    elif process in ['sct_deepseg_lesion']:
+        if plane == 'Axial':
+            SliceSubtype = qcslice.Axial
+        elif plane == 'Sagittal':
+            SliceSubtype = qcslice.Sagittal
+        else:
+            raise ValueError(f"Invalid plane '{plane}'. Valid choices are 'Axial' and 'Sagittal'.")
+        # Note, spinal cord segmentation (fname_seg) is used to crop the input image.
+        # Then, the input image (fname_in1) is overlaid by the lesion (fname_in2).
+        qcslice_type = SliceSubtype([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        qcslice_operations = [QcImage.listed_seg]
+        def qcslice_layout(x): return x.mosaic()[:2]
     else:
         raise ValueError("Unrecognized process: {}".format(process))
 

@@ -1,3 +1,10 @@
+"""
+Utilities for downloading
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
+
 import os
 import shutil
 import logging
@@ -39,8 +46,8 @@ DATASET_DICT = {
     },
     "PAM50": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20201104/PAM50-r20201104.zip",
-            "https://osf.io/download/5fa21326a5bb9d00610a5a21/",
+            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20230519/PAM50-r20230519.zip",
+            "https://osf.io/8cgme/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
     },
@@ -210,7 +217,7 @@ def download_data(urls):
 
             with open(tmp_path, 'wb') as tmp_file:
                 total = int(response.headers.get('content-length', 1))
-                sct_bar = sct_progress_bar(total=total, unit='B', unit_scale=True, desc="Status", ascii=False, position=0)
+                sct_bar = sct_progress_bar(total=total, unit='B', unit_scale=True, desc="Status", position=0)
 
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:

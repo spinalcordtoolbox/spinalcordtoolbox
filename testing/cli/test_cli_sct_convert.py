@@ -1,3 +1,5 @@
+# pytest unit tests for sct_convert
+
 import os
 
 import pytest

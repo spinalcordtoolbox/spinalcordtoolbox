@@ -1,5 +1,9 @@
-# Functions to interpolate metrics (from sct_process_segmentation) into the PAM50 anatomical dimensions
-# Author: Sandrine Bédard & Jan Valosek
+"""
+Functions to interpolate metrics (from sct_process_segmentation) into the PAM50 anatomical dimensions
+
+Copyright (c) 2023 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import numpy as np
 from spinalcordtoolbox.image import Image
