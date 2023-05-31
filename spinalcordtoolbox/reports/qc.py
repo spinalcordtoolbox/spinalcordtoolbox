@@ -217,23 +217,23 @@ class QcImage:
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
 
-    def layout(self, qcslice_layout, qcslice_type):
+    def layout(self, qcslice_layout, qcslice):
         """The main entry point for actually *using* a QcImage instance."""
-        self.qc_report.qc_params.orientation = qcslice_type.get_name()
+        self.qc_report.qc_params.orientation = qcslice.get_name()
 
         # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
-        self.aspect_img, self.aspect_mask = qcslice_type.aspect()[:2]
+        self.aspect_img, self.aspect_mask = qcslice.aspect()[:2]
 
         self.qc_report.make_content_path()
-        logger.info('QcImage: layout with %s slice', qcslice_type.get_name())
+        logger.info('QcImage: layout with %s slice', qcslice.get_name())
 
         if self.process in ['sct_fmri_moco', 'sct_dmri_moco']:
-            [images_after_moco, images_before_moco], centermass = qcslice_layout(qcslice_type)
+            [images_after_moco, images_before_moco], centermass = qcslice_layout(qcslice)
             self._centermass = centermass
             self._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
         else:
-            img, *mask = qcslice_layout(qcslice_type)
-            self._make_QC_image_for_3d_volumes(img, mask, slice_orientation=qcslice_type.get_name())
+            img, *mask = qcslice_layout(qcslice)
+            self._make_QC_image_for_3d_volumes(img, mask, slice_orientation=qcslice.get_name())
 
     def _make_QC_image_for_3d_volumes(self, img, mask, slice_orientation):
         """
@@ -622,7 +622,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     """
     logger.info('\n*** Generate Quality Control (QC) html report ***')
     dpi = 300  # Output resolution of the image
-    qcslice_type: Slice
+    qcslice: Slice
     action_list: List[Callable[[QcImage, np.ndarray, Axes], None]]
     qcslice_layout: Callable[[Slice], (List[np.ndarray] | Tuple[List[List[np.ndarray]], List[Tuple[int, int]]])]
 
@@ -630,25 +630,25 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Axial orientation, switch between two input images
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
         plane = 'Axial'
-        qcslice_type = Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        qcslice = Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         action_list = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.mosaic()[:2]
     # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
         plane = 'Axial'
-        qcslice_type = Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice = Axial([Image(fname_in1), Image(fname_seg)])
         action_list = [QcImage.listed_seg]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between the image and the centerline
     elif process in ['sct_get_centerline']:
         plane = 'Axial'
-        qcslice_type = Axial([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        qcslice = Axial([Image(fname_in1), Image(fname_seg)], p_resample=None)
         action_list = [QcImage.label_centerline]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)
     elif process in ['sct_warp_template']:
         plane = 'Axial'
-        qcslice_type = Axial([Image(fname_in1), Image(fname_seg)])
+        qcslice = Axial([Image(fname_in1), Image(fname_seg)])
         action_list = [QcImage.template]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between gif image (before and after motion correction) and grid overlay
@@ -656,14 +656,14 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         plane = 'Axial'
         if fname_seg is None:
             raise ValueError("Segmentation is needed to ensure proper cropping around spinal cord.")
-        qcslice_type = Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        qcslice = Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         action_list = [QcImage.grid]
         def qcslice_layout(x): return x.mosaics_through_time()
     # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
-        qcslice_type = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        qcslice = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         action_list = [QcImage.label_vertebrae]
         def qcslice_layout(x): return x.single()
     #  Sagittal orientation, display posterior labels
@@ -671,20 +671,20 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         plane = 'Sagittal'
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         # projected_image = projected(Image(fname_seg))
-        qcslice_type = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        qcslice = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         action_list = [QcImage.label_utils]
         def qcslice_layout(x): return x.single()
     # Sagittal orientation, display PMJ box
     elif process in ['sct_detect_pmj']:
         plane = 'Sagittal'
-        qcslice_type = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        qcslice = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
         action_list = [QcImage.highlight_pmj]
         def qcslice_layout(x): return x.single()
     # Sagittal orientation, static image
     elif process in ['sct_straighten_spinalcord']:
         plane = 'Sagittal'
         dpi = 100
-        qcslice_type = Sagittal([Image(fname_in1), Image(fname_in1)], p_resample=None)
+        qcslice = Sagittal([Image(fname_in1), Image(fname_in1)], p_resample=None)
         action_list = [QcImage.vertical_line]
         def qcslice_layout(x): return x.single()
     # Metric outputs (only graphs)
@@ -695,13 +695,13 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         # fname_seg should be a list of 4 images: 3 for each operation in `action_list`, plus an extra
         # centerline image, which is needed to make `Sagittal.get_center_spit` work correctly
         fname_list.extend(fname_seg)
-        qcslice_type = Sagittal([Image(fname) for fname in fname_list], p_resample=None)
+        qcslice = Sagittal([Image(fname) for fname in fname_list], p_resample=None)
         action_list = [QcImage.smooth_centerline, QcImage.highlight_pmj, QcImage.listed_seg]
         def qcslice_layout(x): return x.single()
     elif process in ['sct_image -stitch']:
         plane = 'Sagittal'
         dpi = 150
-        qcslice_type = Sagittal([Image(fname_in1), Image(fname_in2)], p_resample=None)
+        qcslice = Sagittal([Image(fname_in1), Image(fname_in2)], p_resample=None)
         action_list = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.single()
     elif process in ['sct_deepseg_lesion']:
@@ -713,7 +713,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
             raise ValueError(f"Invalid plane '{plane}'. Valid choices are 'Axial' and 'Sagittal'.")
         # Note, spinal cord segmentation (fname_seg) is used to crop the input image.
         # Then, the input image (fname_in1) is overlaid by the lesion (fname_in2).
-        qcslice_type = SliceSubtype([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        qcslice = SliceSubtype([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         action_list = [QcImage.listed_seg]
         def qcslice_layout(x): return x.mosaic()[:2]
     else:
@@ -731,7 +731,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         fps=fps,
     ).layout(
         qcslice_layout=qcslice_layout,
-        qcslice_type=qcslice_type,
+        qcslice=qcslice,
     )
 
     logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
