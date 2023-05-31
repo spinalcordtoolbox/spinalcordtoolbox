@@ -722,8 +722,8 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     else:
         raise ValueError("Unrecognized process: {}".format(process))
 
-    qc_param = Params(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
-    qc_report = QcReport(qc_param)
+    qc_params = Params(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
+    qc_report = QcReport(qc_params)
 
     QcImage(
         qc_report=qc_report,
@@ -737,5 +737,5 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         qcslice=qcslice,
     )
 
-    logger.info('Successfully generated the QC results in %s', qc_param.qc_results)
+    logger.info('Successfully generated the QC results in %s', qc_params.qc_results)
     display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
