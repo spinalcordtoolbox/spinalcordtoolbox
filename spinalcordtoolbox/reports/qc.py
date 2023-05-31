@@ -446,14 +446,14 @@ class Params:
     """Parses and stores the variables that will be included into the QC details
     """
 
-    def __init__(self, input_file, command, args, plane, dest_folder, dpi=300, dataset=None, subject=None):
+    def __init__(self, input_file, command, args, plane, path_qc, dpi=300, dataset=None, subject=None):
         """
 
         :param input_file: str: the input nifti file name
         :param command: str: command name
         :param args: str: the command's arguments
         :param plane: str: The anatomical orientation
-        :param dest_folder: str: The absolute path of the QC root
+        :param path_qc: str: The absolute path of the QC root
         :param dpi: int: Output resolution of the image
         :param dataset: str: Dataset name
         :param subject: str: Subject name
@@ -480,9 +480,9 @@ class Params:
         self.args = args
         self.plane = plane
         self.dpi = dpi
-        self.root_folder = dest_folder
+        self.root_folder = path_qc
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
-        self.qc_results = os.path.join(dest_folder, '_json', f'qc_{self.mod_date}.json')
+        self.qc_results = os.path.join(path_qc, '_json', f'qc_{self.mod_date}.json')
         if command in ['sct_fmri_moco', 'sct_dmri_moco']:
             ext = "gif"
         else:
