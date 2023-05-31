@@ -93,6 +93,7 @@ def get_parser():
         nargs='*',
         metavar=Metavar.float,
         help='Min/Max range of TR (in ms) separated with space. Only use with -v 2. Example: 500 3500',
+        default=[500, 3500],
         required=False)
     optional.add_argument(
         "-o",
@@ -147,11 +148,8 @@ def main(argv: Sequence[str]):
 
     if verbose == 2:
         # The upper and lower bounds of the TR values to use for plotting the Ernst angle curve
-        input_tr_min = 500
-        input_tr_max = 3500
-        if arguments.b is not None:
-            input_tr_min = arguments.b[0]
-            input_tr_max = arguments.b[1]
+        input_tr_min = arguments.b[0]
+        input_tr_max = arguments.b[1]
         # If the input TR value is outside the default plotting range, then widen the range
         if input_tr > input_tr_max:
             input_tr_max = input_tr + 500
