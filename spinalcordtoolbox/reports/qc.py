@@ -219,13 +219,11 @@ class QcImage:
 
     def layout(self, qcslice_layout, qcslice):
         """The main entry point for actually *using* a QcImage instance."""
-        self.qc_report.qc_params.orientation = qcslice.get_name()
-
         # Get the aspect ratio (height/width) based on pixel size. Consider only the first 2 slices.
         self.aspect_img, self.aspect_mask = qcslice.aspect()[:2]
 
         self.qc_report.make_content_path()
-        logger.info('QcImage: layout with %s slice', qcslice.get_name())
+        logger.info('QcImage: layout with %s slice', self.qc_report.qc_params.orientation)
 
         if self.process in ['sct_fmri_moco', 'sct_dmri_moco']:
             [images_after_moco, images_before_moco], centermass = qcslice_layout(qcslice)
@@ -233,7 +231,7 @@ class QcImage:
             self._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
         else:
             img, *mask = qcslice_layout(qcslice)
-            self._make_QC_image_for_3d_volumes(img, mask, slice_orientation=qcslice.get_name())
+            self._make_QC_image_for_3d_volumes(img, mask, slice_orientation=self.qc_report.qc_params.orientation)
 
     def _make_QC_image_for_3d_volumes(self, img, mask, slice_orientation):
         """

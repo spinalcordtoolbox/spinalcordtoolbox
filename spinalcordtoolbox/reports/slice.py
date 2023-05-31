@@ -185,11 +185,6 @@ class Slice(object):
         A[nans] = np.interp(x, xp, fp)
         return A
 
-    @classmethod
-    def get_name(cls):
-        """Get the class name"""
-        return cls.__name__
-
     @abc.abstractmethod
     def get_slice(self, data, i):
         """Abstract method to obtain a slice of a 3d matrix
