@@ -1,3 +1,10 @@
+"""
+Utilities for downloading
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
+
 import os
 import shutil
 import logging

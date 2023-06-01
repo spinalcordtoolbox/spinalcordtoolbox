@@ -1,3 +1,5 @@
+# pytest unit tests for spinalcordtoolbox.deepseg_.gm
+
 import os
 
 import nibabel as nib

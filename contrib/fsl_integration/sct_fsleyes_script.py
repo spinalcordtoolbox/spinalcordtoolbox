@@ -13,7 +13,7 @@
 #
 # ---------------------------------------------------------------------------------------
 # Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Christian S. Perone, Thiago JR Rezende, Julien Cohen-Adad
+# License: see the file LICENSE
 ##########################################################################################
 
 # TODO: add keyboard shortcuts to Run (ctrl+R)

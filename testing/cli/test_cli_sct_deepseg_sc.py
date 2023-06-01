@@ -1,3 +1,5 @@
+# pytest unit tests for sct_deepseg_sc
+
 import logging
 import os
 

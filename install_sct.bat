@@ -1,5 +1,9 @@
 @echo off
 rem Installation script for SCT on native Windows platforms
+rem
+rem Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
+rem License: see the file LICENSE
+rem
 rem Usage: install_sct.bat <version>
 rem e.g.
 rem        install_sct.bat 5.5

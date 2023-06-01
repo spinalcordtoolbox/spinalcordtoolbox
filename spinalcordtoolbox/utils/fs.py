@@ -1,4 +1,9 @@
-# Filesystem related helpers and utilities
+"""
+Filesystem related helpers and utilities
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import sys
 import io

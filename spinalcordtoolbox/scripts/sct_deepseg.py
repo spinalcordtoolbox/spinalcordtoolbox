@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-"""
-This command-line tool is the interface for the deepseg API that performs segmentation using deep learning from the
-ivadomed package.
-"""
+#
+# This command-line tool is the interface for the deepseg API that performs
+# segmentation using deep learning from the ivadomed package.
+#
+# Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 # TODO: Add link to example image so users can decide wether their images look "close enough" to some of the proposed
 #  models (e.g., mice, etc.).

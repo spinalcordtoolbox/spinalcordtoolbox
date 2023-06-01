@@ -1,3 +1,5 @@
+# pytest unit tests for spinalcordtoolbox.deepseg_.lesion
+
 import os
 
 import numpy as np

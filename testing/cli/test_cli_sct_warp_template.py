@@ -1,3 +1,5 @@
+# pytest unit tests for sct_warp_template
+
 import pytest
 import logging
 

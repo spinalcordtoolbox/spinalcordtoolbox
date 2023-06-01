@@ -1,4 +1,9 @@
-# Functions dealing with spinal cord straightening
+"""
+Functions dealing with spinal cord straightening
+
+Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: only input Image instead of file names
 

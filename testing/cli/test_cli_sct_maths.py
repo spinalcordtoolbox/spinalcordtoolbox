@@ -1,3 +1,5 @@
+# pytest unit tests for sct_maths
+
 import pytest
 import traceback as tb
 import logging

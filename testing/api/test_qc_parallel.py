@@ -1,3 +1,5 @@
+# pytest unit tests for spinalcordtoolbox.reports.qc in parallel
+
 from tempfile import TemporaryDirectory
 import pytest
 

@@ -1,8 +1,11 @@
-# This is the interface API to compute MT-related metrics
-# Code is based on QMRLab: https://github.com/neuropoly/qMRLab
-# Author: Julien Cohen-Adad
-# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
-# About the license: see the file LICENSE.TXT
+"""
+This is the interface API to compute MT-related metrics
+
+Code is based on QMRLab: https://github.com/neuropoly/qMRLab
+
+Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 import numpy as np

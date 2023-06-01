@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Detect vertebral levels using cord centerline (or segmentation).
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Eugenie Ullmann, Karun Raju, Tanguy Duval, Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
 import os

@@ -1,4 +1,9 @@
-# Core functions dealing with centerline extraction from 3D data.
+"""
+Core functions dealing with centerline extraction from 3D data
+
+Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import logging

@@ -1,3 +1,4 @@
+# pytest unit tests for sct_resample
 
 import pytest
 import logging

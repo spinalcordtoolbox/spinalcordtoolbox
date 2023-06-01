@@ -1,13 +1,9 @@
-#########################################################################################
-#
-# Module containing core entry points for registration functionality.
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+Core entry points for registration
+
+Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: for -ref subject, crop data, otherwise registration is too long
 # TODO: testing script for all cases

@@ -1,4 +1,9 @@
-# Functions that utilize the template (e.g., PAM50)
+"""
+Functions that use the template (e.g., PAM50)
+
+Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 import numpy as np

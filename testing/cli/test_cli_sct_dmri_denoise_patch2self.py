@@ -1,3 +1,5 @@
+# pytest unit tests for sct_dmri_denoise_patch2self
+
 import pytest
 from dipy.data.fetcher import read_bvals_bvecs
 

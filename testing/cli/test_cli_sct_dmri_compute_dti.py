@@ -1,3 +1,5 @@
+# pytest unit tests for sct_dmri_compute_dti
+
 import pytest
 import logging
 

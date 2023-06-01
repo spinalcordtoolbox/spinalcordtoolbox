@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Motion correction of dMRI data.
 #
@@ -13,22 +12,16 @@
 # - moco on DWI groups
 # - moco on b=0, using target volume: last b=0
 # - moco on all dMRI data
-# _ generating b=0 mean and DWI mean after motion correction
+# - generating b=0 mean and DWI mean after motion correction
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
-# Modified: 2014-08-15
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: if -f, we only need two plots.
 #       Plot 1: X params with fitted spline,
 #       plot 2: Y param with fitted splines.
 #       Each plot will have all Z slices (with legend Z=0, Z=1, ...)
 #       and labels: y; translation (mm), xlabel: volume #. Plus add grid.
-
 
 import sys
 import os

@@ -1,13 +1,15 @@
 #!/usr/bin/env python
-"""
-A wrapper for pytest to provide backwards compatability for `sct_testing`.
-
-Context: SCT previously provided its own custom testing framework using a
-         script called `sct_testing`. This was replaced with `pytest`, however
-         sct_testing is likely still remembered by users, and may still be in
-         use in scripts. So, this script provides a way to use `sct_testing`
-         to run the pytest test suite.
-"""
+#
+# A wrapper for pytest to provide backwards compatability for `sct_testing`
+#
+# Context: SCT previously provided its own custom testing framework using a
+#          script called `sct_testing`. This was replaced with `pytest`, however
+#          sct_testing is likely still remembered by users, and may still be in
+#          use in scripts. So, this script provides a way to use `sct_testing`
+#          to run the pytest test suite.
+#
+# Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import pytest
 import sys

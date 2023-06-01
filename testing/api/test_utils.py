@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# pytest unit tests for utils
+# pytest unit tests for spinalcordtoolbox.utils
 
 import os
 import pytest
