@@ -1,12 +1,9 @@
-#########################################################################################
-#
-# SCT Image API
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+SCT Image API
+
+Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: Sort out the use of Image.hdr and Image.header --> they seem to carry duplicated information.
 
@@ -431,7 +428,7 @@ class Image(object):
         self.absolutepath = os.path.abspath(path)
         im_file = nib.load(self.absolutepath, mmap=mmap)
         self.affine = im_file.affine.copy()
-        self.data = im_file.get_data()
+        self.data = np.asanyarray(im_file.dataobj)
         self.hdr = im_file.header.copy()
         if path != self.absolutepath:
             logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
@@ -551,7 +548,7 @@ class Image(object):
             self.copy().save(path, dtype, verbose, mutable=True)
         return self
 
-    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
+    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
         """
         This function return all the non-zero coordinates that the image contains.
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
@@ -576,12 +573,6 @@ class Image(object):
                 X, Y, Z = (self.data > 0).nonzero()
                 list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
 
-        if coordValue:
-            from spinalcordtoolbox.types import CoordinateValue
-            if n_dim == 3:
-                list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-            else:
-                list_coordinates = [CoordinateValue([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')
@@ -976,28 +967,17 @@ def get_dimension(im_file, verbose=1):
     :param: im_file: Image or nibabel object
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-    # initialization
-    nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
-    if type(im_file) is nib.nifti1.Nifti1Image:
-        header = im_file.header
-    elif type(im_file) is Image:
-        header = im_file.hdr
-    else:
-        header = None
-        logger.warning("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
-
-    nb_dims = len(header.get_data_shape())
-    if nb_dims == 2:
-        nx, ny = header.get_data_shape()
-        px, py = header.get_zooms()
-    if nb_dims == 3:
-        nx, ny, nz = header.get_data_shape()
-        px, py, pz = header.get_zooms()
-    if nb_dims == 4:
-        nx, ny, nz, nt = header.get_data_shape()
-        px, py, pz, pt = header.get_zooms()
-
-    return nx, ny, nz, nt, px, py, pz, pt
+    if not isinstance(im_file, (nib.nifti1.Nifti1Image, Image)):
+        raise TypeError("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
+    # initializating ndims [nx, ny, nz, nt] and pdims [px, py, pz, pt]
+    ndims = [1, 1, 1, 1]
+    pdims = [1, 1, 1, 1]
+    data_shape = im_file.header.get_data_shape()
+    zooms = im_file.header.get_zooms()
+    for i in range(min(len(data_shape), 4)):
+        ndims[i] = data_shape[i]
+        pdims[i] = zooms[i]
+    return *ndims, *pdims
 
 
 def all_refspace_strings():
@@ -1059,7 +1039,7 @@ def change_shape(im_src, shape, im_dst=None):
     return im_dst
 
 
-def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_only=False):
+def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     """
 
     :param im_src: source image
@@ -1068,8 +1048,6 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
                    operation, can be unset to generate one)
     :param inverse: if you think backwards, use this to specify that you actually
                     want to transform *from* the specified orientation, not *to* it.
-    :param data_only: If you want to only permute the data, not the header. Only use if you know there is a problem
-                      with the native orientation of the input data.
     :return: an image with changed orientation
 
     .. note::
@@ -1077,7 +1055,6 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
         - if the source image is < 3D, it is reshaped to 3D and the destination is 3D
     """
 
-    # TODO: make sure to cover all cases for setorient-data
     if len(im_src.data.shape) < 3:
         pass  # Will reshape to 3D
     elif len(im_src.data.shape) == 3:
@@ -1136,10 +1113,9 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
         im_src_data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
 
-    if not data_only:
-        im_dst.header.set_qform(im_dst_aff)
-        im_dst.header.set_sform(im_dst_aff)
-        im_dst.header.set_data_shape(data.shape)
+    im_dst.header.set_qform(im_dst_aff)
+    im_dst.header.set_sform(im_dst_aff)
+    im_dst.header.set_data_shape(data.shape)
     im_dst.data = data
 
     return im_dst
@@ -1412,14 +1388,15 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     warp3d = np.zeros([nx, ny, nz, 1, 3])
 
     for iz, fname in enumerate(fname_list):
-        warp2d = nib.load(fname).get_data()
+        img = nib.load(fname)
+        warp2d = np.asanyarray(img.dataobj)
         warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
         warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
         del warp2d
 
     # save new image
     im_dest = nib.load(fname_dest)
-    affine_dest = im_dest.get_affine()
+    affine_dest = im_dest.affine
     im_warp3d = nib.nifti1.Nifti1Image(warp3d, affine_dest)
 
     # set "intent" code to vector, to be interpreted as warping field

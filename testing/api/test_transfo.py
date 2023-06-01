@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# pytest unit tests for transform stuff
+# pytest unit tests for sct_apply_transfo
 
 import sys
 
@@ -26,7 +24,7 @@ def fake_image_sct_custom(data):
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     """
     i = fake_image_custom(data)
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )
@@ -68,7 +66,7 @@ def fake_3dimage_sct():
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     """
     i = fake_3dimage()
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )
@@ -119,7 +117,7 @@ def test_transfo_null(tmp_path):
 
 def test_transfo_figure_out_ants_frame_exhaustive(tmp_path):
     all_orientations = msct_image.all_refspace_strings()
-    #all_orientations = ("LPS", "LPI")
+    # all_orientations = ("LPS", "LPI")
 
     print("Wondering which orientation is native to ANTs")
 
@@ -145,7 +143,7 @@ def test_transfo_figure_out_ants_frame_exhaustive(tmp_path):
                                             output_filename=path_dst)
         xform.apply()
 
-        img_src2 = msct_image.Image(path_src)
+        # img_src2 = msct_image.Image(path_src)
         img_dst = msct_image.Image(path_dst)
 
         assert img_src.orientation == img_dst.orientation
@@ -184,7 +182,7 @@ def test_transfo_figure_out_ants_frame_exhaustive(tmp_path):
             assert np.allclose(dat_dst[:, :, 0], 0)
             assert np.allclose(dat_src[:-1, :-1, :-1], dat_dst[1:, 1:, 1:])
             working_orientations.append(orientation)
-        except AssertionError as e:
+        except AssertionError:
             continue
             print("\x1B[31;1m Failed in {}\x1B[0m".format(orientation))
             for idx_slice in range(shape[2]):
@@ -216,9 +214,6 @@ def test_transfo_exhaustive_wrt_orientations(tmp_path):
         path_src = str(tmp_path / "warp-{}-src.nii".format(orientation))
         img_src = fake_3dimage_sct().change_orientation(orientation).save(path_src)
 
-        path_ref = path_src
-        img_ref = img_src
-
         # Create warping field
         shape = tuple(list(img_src.data.shape) + [1, 3])
         data = np.zeros(shape, order="F")
@@ -228,14 +223,14 @@ def test_transfo_exhaustive_wrt_orientations(tmp_path):
         img_warp = fake_image_sct_custom(data)
         img_warp.header.set_intent('vector', (), '')
         img_warp.change_orientation(orientation).save(path_warp)
-        #print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
+        # print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
 
         path_dst = str(tmp_path / "warp-{}-dst.nii".format(orientation))
         xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
                                             output_filename=path_dst)
         xform.apply()
 
-        img_src2 = msct_image.Image(path_src)
+        # img_src2 = msct_image.Image(path_src)
         img_dst = msct_image.Image(path_dst)
 
         assert img_src.orientation == img_dst.orientation
@@ -252,7 +247,7 @@ def test_transfo_exhaustive_wrt_orientations(tmp_path):
         try:
             pt_dst = np.argwhere(dat_dst == value)[0]
             1 / 0
-        except:
+        except Exception:
             min_ = np.round(np.min(np.abs(dat_dst - value)), 2)
             pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))  # , order="F"))
 
@@ -265,8 +260,8 @@ def test_transfo_exhaustive_wrt_orientations(tmp_path):
         pos_dst = np.matmul(aff_dst, np.hstack((pt_dst, [1])).reshape((4, 1)))
 
         displacement = (pos_dst - pos_src).reshape((-1))[:3]
-        displacement_log = pt_dst - pt_src
-        #print(" Displacement (logical): %s" % (displacement_log))
+        # displacement_log = pt_dst - pt_src
+        # print(" Displacement (logical): %s" % (displacement_log))
         if not np.allclose(displacement, shift_wanted):
             orientations_ng.append(orientation)
             print(" \x1B[31;1mDisplacement (physical): %s\x1B[0m" % (displacement))
@@ -281,8 +276,6 @@ def test_transfo_exhaustive_wrt_orientations(tmp_path):
 
 
 def notest_transfo_more_exhaustive_wrt_orientations():
-
-    dir_tmp = "."
 
     print("Figuring out which orientations work without workaround")
 
@@ -316,14 +309,14 @@ def notest_transfo_more_exhaustive_wrt_orientations():
             img_warp = fake_image_sct_custom(data)
             img_warp.header.set_intent('vector', (), '')
             img_warp.change_orientation(orientation_ref).save(path_warp)
-            #print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
+            # print(" Affine:\n{}".format(img_warp.header.get_best_affine()))
 
             path_dst = "warp-{}-{}-dst.nii".format(orientation_src, orientation_ref)
             xform = sct_apply_transfo.Transform(input_filename=path_src, fname_dest=path_src, list_warp=[path_warp],
                                                 output_filename=path_dst)
             xform.apply()
 
-            img_src2 = msct_image.Image(path_src)
+            # img_src2 = msct_image.Image(path_src)
             img_dst = msct_image.Image(path_dst)
 
             assert img_ref.orientation == img_dst.orientation
@@ -340,7 +333,7 @@ def notest_transfo_more_exhaustive_wrt_orientations():
             try:
                 pt_dst = np.argwhere(dat_dst == value)[0]
                 1 / 0
-            except:
+            except Exception:
                 # Work around numerical inaccuracy, that is somehow introduced by ANTs
                 min_ = np.round(np.min(np.abs(dat_dst - value)), 1)
                 pt_dst = np.array(np.unravel_index(np.argmin(np.abs(dat_dst - value)), dat_dst.shape))  # , order="F"))
@@ -354,8 +347,8 @@ def notest_transfo_more_exhaustive_wrt_orientations():
             pos_dst = np.matmul(aff_dst, np.hstack((pt_dst, [1])).reshape((4, 1)))
 
             displacement = (pos_dst - pos_src).reshape((-1))[:3]
-            displacement_log = pt_dst - pt_src
-            #print(" Displacement (logical): %s" % (displacement_log))
+            # displacement_log = pt_dst - pt_src
+            # print(" Displacement (logical): %s" % (displacement_log))
             if not np.allclose(displacement, shift_wanted):
                 orientations_ng.append((orientation_src, orientation_ref))
                 print(" \x1B[31;1mDisplacement (physical): %s\x1B[0m" % (displacement))

@@ -1,3 +1,5 @@
+# pytest unit tests for sct_crop_image
+
 import pytest
 import logging
 

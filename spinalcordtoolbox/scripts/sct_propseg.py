@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Parser for PropSeg binary.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener
-# Modified: 2015-03-03
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: remove temp files in case rescaled is not "1"
 
@@ -20,7 +14,7 @@ import logging
 from typing import Sequence
 
 import numpy as np
-from scipy import ndimage as ndi
+from scipy.ndimage import label, center_of_mass
 
 from spinalcordtoolbox.image import Image, add_suffix, zeros_like, convert
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
@@ -80,7 +74,7 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
     for i in range(nz):
         slice = im_centerline.data[:, :, i]
         if np.any(slice):
-            x_centerline, y_centerline = ndi.measurements.center_of_mass(slice)
+            x_centerline, y_centerline = center_of_mass(slice)
             centerline[str(i)] = [x_centerline, y_centerline]
             key_centerline.append(i)
 
@@ -95,11 +89,11 @@ def check_and_correct_segmentation(fname_segmentation, fname_centerline, folder_
         # extraction of slice
         slice = im_seg.data[:, :, i]
         distance = -1
-        label_objects, nb_labels = ndi.label(slice)  # count binary objects in the slice
+        label_objects, nb_labels = label(slice)  # count binary objects in the slice
         if nb_labels > 1:  # if there is more that one object in the slice, the slice is removed from the segmentation
             slices_to_remove[i] = True
         elif nb_labels == 1:  # check if the centerline is coherent with the one from isct_propseg
-            x_centerline, y_centerline = ndi.measurements.center_of_mass(slice)
+            x_centerline, y_centerline = center_of_mass(slice)
             slice_nearest_coord = min(key_centerline, key=lambda x: abs(x - i))
             coord_nearest_coord = centerline[str(slice_nearest_coord)]
             distance = np.sqrt(((x_centerline - coord_nearest_coord[0]) * px) ** 2 +
@@ -394,11 +388,6 @@ def get_parser():
              "specifically, the algorithm checks if the segmentation is consistent with the centerline provided by "
              "isct_propseg."
     )
-    optional.add_argument(
-        '-igt',
-        metavar=Metavar.file,
-        help="File name of ground-truth segmentation."
-    )
 
     return parser
 
@@ -420,7 +409,7 @@ def func_rescale_header(fname_data, rescale_factor, verbose=0):
     header_rescaled = img.header.copy()
     header_rescaled.set_qform(qform)
     # the data are the same-- only the header changes
-    img_rescaled = nib.nifti1.Nifti1Image(img.get_data(), None, header=header_rescaled)
+    img_rescaled = nib.nifti1.Nifti1Image(np.asanyarray(img.dataobj), None, header=header_rescaled)
     path_tmp = tmp_create(basename="propseg-rescale-header")
     fname_data_rescaled = os.path.join(path_tmp, os.path.basename(add_suffix(fname_data, "_rescaled")))
     nib.save(img_rescaled, fname_data_rescaled)
@@ -664,7 +653,7 @@ def propseg(img_input, options_dict):
     for fname in list_fname:
         im = Image(fname)
         im.header = image_input.header
-        im.save(dtype='int8')  # they are all binary masks hence fine to save as int8
+        im.save(dtype='int8', verbose=0)  # they are all binary masks hence fine to save as int8
 
     return Image(fname_seg)
 
@@ -692,7 +681,7 @@ def main(argv: Sequence[str]):
     if path_qc is not None:
         generate_qc(fname_in1=fname_input_data, fname_seg=fname_seg, args=argv,
                     path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject, process='sct_propseg')
-    display_viewer_syntax([fname_input_data, fname_seg], colormaps=['gray', 'red'], opacities=['', '1'], verbose=verbose)
+    display_viewer_syntax([fname_input_data, fname_seg], im_types=['anat', 'seg'], opacities=['', '1'], verbose=verbose)
 
 
 if __name__ == "__main__":

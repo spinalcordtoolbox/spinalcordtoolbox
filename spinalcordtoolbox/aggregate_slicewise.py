@@ -1,4 +1,9 @@
-# Functions dealing with metrics aggregation (mean, std, etc.) across slices and/or vertebral levels
+"""
+Functions dealing with metrics aggregation (mean, std, etc.) across slices and/or vertebral levels
+
+Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: when mask is empty, raise specific message instead of throwing "Weight sum to zero..."
 

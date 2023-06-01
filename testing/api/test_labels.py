@@ -1,9 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.labels
 
 import logging
-from time import time
 
 import numpy as np
 import pytest
@@ -29,7 +26,7 @@ def fake_3dimage_sct2():
     shape = (1,2,3)
     """
     i = fake_3dimage2()
-    img = Image(i.get_data(), hdr=i.header,
+    img = Image(np.asanyarray(i.dataobj), hdr=i.header,
                 orientation="RPI",
                 dim=i.header.get_data_shape(),
                 )
@@ -42,7 +39,7 @@ def fake_3dimage_sct():
     shape = (7,8,9)
     """
     i = fake_3dimage()
-    img = Image(i.get_data(), hdr=i.header,
+    img = Image(np.asanyarray(i.dataobj), hdr=i.header,
                 orientation="LPI",
                 dim=i.header.get_data_shape(),
                 )
@@ -58,7 +55,7 @@ def test_create_labels_empty(test_image):
     a = test_image.copy()
     expected = zeros_like(a)
 
-    labels = [Coordinate(l) for l in [[0, 0, 0, 7], [0, 1, 2, 5]]]
+    labels = [Coordinate(label) for label in [[0, 0, 0, 7], [0, 1, 2, 5]]]
     expected.data[0, 0, 0] = 7
     expected.data[0, 1, 2] = 5
 
@@ -71,7 +68,7 @@ def test_create_labels_empty(test_image):
 @pytest.mark.parametrize("test_image", test_images)
 def test_create_labels(test_image):
     a = test_image.copy()
-    labels = [Coordinate(l) for l in [[0, 1, 0, 99], [0, 1, 2, 5]]]
+    labels = [Coordinate(label) for label in [[0, 1, 0, 99], [0, 1, 2, 5]]]
 
     b = sct_labels.create_labels(a, labels)
 
@@ -95,6 +92,7 @@ def test_cubic_to_point(test_image):
     a = test_image.copy()
     sct_labels.cubic_to_point(a)
     # TODO [AJ] implement test
+
 
 @pytest.mark.parametrize("test_image", test_images)
 def test_increment_z_inverse(test_image):
@@ -180,8 +178,8 @@ def test_remove_missing_labels(test_image):
 
     res = sct_labels.remove_missing_labels(src, ref)
 
-    res_labels = res.getNonZeroCoordinates(coordValue=True)
-    ref_labels = ref.getNonZeroCoordinates(coordValue=True)
+    res_labels = {c.value for c in res.getNonZeroCoordinates()}
+    ref_labels = {c.value for c in ref.getNonZeroCoordinates()}
 
     for c in res_labels:
         assert c in ref_labels

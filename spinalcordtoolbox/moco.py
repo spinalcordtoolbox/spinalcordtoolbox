@@ -1,5 +1,9 @@
-# Tools for motion correction (moco)
-# Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
+"""
+Tools for motion correction (moco)
+
+Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: Inform user if soft mask is used
 # TODO: no need to pass absolute image path-- makes it difficult to read
@@ -267,7 +271,7 @@ def moco_wrapper(param):
     _, file_dwi_basename, file_dwi_ext = extract_fname(file_datasub)
     # Group data
     list_file_group = []
-    for iGroup in sct_progress_bar(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups", ascii=False,
+    for iGroup in sct_progress_bar(range(nb_groups), unit='iter', unit_scale=False, desc="Merge within groups",
                                    ncols=80):
         # get index
         index_moco_i = group_indexes[iGroup]
@@ -586,7 +590,7 @@ def moco(param):
 
         # Motion correction: Loop across T
         for indice_index in sct_progress_bar(range(nt), unit='iter', unit_scale=False,
-                                             desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ) - 1), ascii=False, ncols=80):
+                                             desc="Z=" + str(iz) + "/" + str(len(file_data_splitZ) - 1), ncols=80):
 
             # create indices and display stuff
             it = index[indice_index]

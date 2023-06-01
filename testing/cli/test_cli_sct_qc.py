@@ -1,3 +1,5 @@
+# pytest unit tests for sct_qc
+
 import pytest
 import logging
 

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-"""
-This command-line tool is the interface for the deepseg API that performs segmentation using deep learning from the
-ivadomed package.
-"""
+#
+# This command-line tool is the interface for the deepseg API that performs
+# segmentation using deep learning from the ivadomed package.
+#
+# Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 # TODO: Add link to example image so users can decide wether their images look "close enough" to some of the proposed
 #  models (e.g., mice, etc.).
@@ -15,10 +17,9 @@ import sys
 import logging
 from typing import Sequence
 
-from ivadomed import inference as imed_inference
 import nibabel as nib
 
-from spinalcordtoolbox.deepseg import models
+from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -189,14 +190,17 @@ def main(argv: Sequence[str]):
         if name_model in list(models.MODELS.keys()):
             # If it is, check if it is installed
             path_model = models.folder(name_model)
-            if not models.is_valid(path_model):
+            path_models = models.find_model_folder_paths(path_model)
+            if not models.is_valid(path_models):
                 printv("Model {} is not installed. Installing it now...".format(name_model))
                 models.install_model(name_model)
+                path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
         # If it is not, check if this is a path to a valid model
         else:
             path_model = os.path.abspath(name_model)
-            if not models.is_valid(path_model):
-                parser.error("The input model is invalid: {}".format(path_model))
+            path_models = models.find_model_folder_paths(path_model)
+            if not models.is_valid(path_models):
+                parser.error("The input model is invalid: {}".format(path_models))
 
         # Order input images
         if arguments.c is not None:
@@ -210,7 +214,9 @@ def main(argv: Sequence[str]):
 
         # Call segment_nifti
         options = {**vars(arguments), "fname_prior": fname_prior}
-        nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, options=options)
+        # NB: For single models, the averaging will have no effect.
+        #     For model ensembles, this will average the output of the ensemble into a single set of outputs.
+        nii_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames, options=options)
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
@@ -243,7 +249,7 @@ def main(argv: Sequence[str]):
         fname_prior = fname_seg
 
     for output_filename in output_filenames:
-        display_viewer_syntax([arguments.i[0], output_filename], colormaps=['gray', 'red'], opacities=['', '0.7'], verbose=verbose)
+        display_viewer_syntax([arguments.i[0], output_filename], im_types=['anat', 'seg'], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":

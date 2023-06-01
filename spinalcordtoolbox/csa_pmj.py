@@ -1,5 +1,10 @@
-# Functions to get distance from PMJ for processing segmentation data
-# Author: Sandrine Bédard
+"""
+Functions to get distance from PMJ for processing segmentation data
+
+Copyright (c) 2021 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
+
 import logging
 
 import numpy as np

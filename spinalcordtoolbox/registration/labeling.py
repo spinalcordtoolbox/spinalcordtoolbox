@@ -1,13 +1,9 @@
-#########################################################################################
-#
-# Module containing labeling functions used during registration.
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+Labeling functions used during registration
+
+Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import numpy as np
 
@@ -117,7 +113,7 @@ def resample_labels(fname_labels, fname_dest, fname_output):
     nxd, nyd, nzd, _, _, _, _, _ = Image(fname_dest).dim
     sampling_factor = [float(nx) / nxd, float(ny) / nyd, float(nz) / nzd]
 
-    og_labels = Image(fname_labels).getNonZeroCoordinates()
+    og_labels = Image(fname_labels).getNonZeroCoordinates(sorting='value')
     new_labels = [Coordinate([int(np.round(int(x) / sampling_factor[0])),
                               int(np.round(int(y) / sampling_factor[1])),
                               int(np.round(int(z) / sampling_factor[2])),

@@ -1,6 +1,10 @@
-# Functions dealing with spinal cord straightening
+"""
+Functions dealing with spinal cord straightening
 
-# TODO: move _get_centerline inside Class
+Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
+
 # TODO: only input Image instead of file names
 
 import os
@@ -374,22 +378,15 @@ class SpinalCordStraightener(object):
             plt.savefig('fig_straighten_' + datetime.now().strftime("%y%m%d%H%M%S%f") + '.png')
             plt.close()
 
-        # alignment_mode = 'length'
-        alignment_mode = 'levels'
-
         lookup_curved2straight = list(range(centerline.number_of_points))
         if self.discs_input_filename != "":
             # create look-up table curved to straight
             for index in range(centerline.number_of_points):
                 disc_label = centerline.l_points[index]
-                if alignment_mode == 'length':
-                    relative_position = centerline.dist_points[index]
-                else:
-                    relative_position = centerline.dist_points_rel[index]
+                relative_position = centerline.dist_points_rel[index]
                 idx_closest = centerline_straight.get_closest_to_absolute_position(disc_label, relative_position,
                                                                                    backup_index=index,
-                                                                                   backup_centerline=centerline_straight,
-                                                                                   mode=alignment_mode)
+                                                                                   backup_centerline=centerline_straight)
                 if idx_closest is not None:
                     lookup_curved2straight[index] = idx_closest
                 else:
@@ -410,14 +407,10 @@ class SpinalCordStraightener(object):
         if self.discs_input_filename != "":
             for index in range(centerline_straight.number_of_points):
                 disc_label = centerline_straight.l_points[index]
-                if alignment_mode == 'length':
-                    relative_position = centerline_straight.dist_points[index]
-                else:
-                    relative_position = centerline_straight.dist_points_rel[index]
+                relative_position = centerline_straight.dist_points_rel[index]
                 idx_closest = centerline.get_closest_to_absolute_position(disc_label, relative_position,
                                                                           backup_index=index,
-                                                                          backup_centerline=centerline_straight,
-                                                                          mode=alignment_mode)
+                                                                          backup_centerline=centerline_straight)
                 if idx_closest is not None:
                     lookup_straight2curved[index] = idx_closest
         for p in range(0, len(lookup_straight2curved) // 2):

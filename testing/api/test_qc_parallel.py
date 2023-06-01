@@ -1,11 +1,11 @@
-import sys
+# pytest unit tests for spinalcordtoolbox.reports.qc in parallel
+
 from tempfile import TemporaryDirectory
 import pytest
 
 import multiprocessing
 
-from spinalcordtoolbox.utils import sct_test_path, sct_dir_local_path
-sys.path.append(sct_dir_local_path('scripts'))
+from spinalcordtoolbox.utils import sct_test_path
 import spinalcordtoolbox.reports.qc as qc
 
 

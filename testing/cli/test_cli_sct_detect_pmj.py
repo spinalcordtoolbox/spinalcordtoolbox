@@ -1,3 +1,5 @@
+# pytest unit tests for sct_detect_pmj
+
 import pytest
 import logging
 

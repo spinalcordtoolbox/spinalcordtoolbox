@@ -1,3 +1,5 @@
+# pytest unit tests for sct_register_multimodal
+
 import os
 
 import pytest
@@ -148,3 +150,15 @@ def test_sct_register_multimodal_with_labels(capsys, tmp_path, algo):
     # NB: Right now, a warning will be thrown regardless of whether `algo` is explicitly
     #     specified by the user, because `algo` has a default, non-empty setting.
     assert "has no effect for 'type=label' registration." in capsys.readouterr().out
+
+
+def test_sct_register_multimodal_with_qc_without_dseg(capsys, tmp_path):
+    """
+    Test if an error is raised when using QC ('-qc') without providing a destination segmentation ('-dseg').
+    """
+    with pytest.raises(SystemExit) as pytest_wrapped_e:
+        sct_register_multimodal.main(['-i', sct_test_path('t2', 't2.nii.gz'),
+                                      '-d', sct_test_path('t2', 't2.nii.gz'),
+                                      '-ofolder', str(tmp_path),
+                                      '-qc', str(tmp_path)])
+    assert pytest_wrapped_e.value.code == 2

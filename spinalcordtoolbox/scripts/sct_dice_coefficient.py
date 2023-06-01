@@ -2,13 +2,8 @@
 #
 # This program is a wrapper for the isct_dice_coefficient binary
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Sara Dupont
-# Modified: 2017-07-05 (charley)
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
 import os

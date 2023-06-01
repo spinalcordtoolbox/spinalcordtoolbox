@@ -1,4 +1,9 @@
-# Compatibility layer to launch old scripts
+"""
+Compatibility layer to launch old scripts
+
+Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import sys
 import os

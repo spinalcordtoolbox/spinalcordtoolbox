@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+# pytest unit tests for sct_compute_mtsat
 
 import os
 import pytest

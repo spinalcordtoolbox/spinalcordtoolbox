@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# pytest unit tests for spinalcordtoolbox.deepseg_sc
+# pytest unit tests for spinalcordtoolbox.deepseg._sc
 
 import pytest
 import numpy as np
@@ -8,8 +6,9 @@ import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.deepseg_.sc as deepseg_sc
-from spinalcordtoolbox.testing.create_test_data import dummy_centerline
 from spinalcordtoolbox.utils import sct_test_path
+
+from .test_centerline import dummy_centerline
 
 
 param_deepseg = [

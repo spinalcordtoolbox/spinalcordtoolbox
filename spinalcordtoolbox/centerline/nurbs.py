@@ -1,38 +1,38 @@
-# @package nurbs
-# Approximate a 3D curve with a B-Spline curve from either a set of data points or a set of control points
-#
-# If a set of data points is given, it generates a B-spline that either approximates the curve in the least square
-# sense or interpolates the curve. It also computes the derivative of the 3D curve.
-# getCourbe3D() returns the 3D fitted curve. The fitted z coordonate corresponds to the initial z, and the x and y are
-# averaged for a given z getCourbe3D_deriv() returns the derivative of the 3D fitted curve also averaged along z-axis.
-#
-# USAGE
-# ---------------------------------------------------------------------------------------
-# from spinalcordtoolbox.centerline.nurbs import *
-# nurbs=NURBS(degree,precision,data)
-#
-# MANDATORY ARGUMENTS
-# ---------------------------------------------------------------------------------------
-#   degree          the degree of the fitting B-spline curve
-#   precision       number of points before averaging data
-#   data            3D list [x,y,z] of the data requiring fitting
-#
-# EXAMPLES
-# ---------------------------------------------------------------------------------------
-#   from spinalcordtoolbox.centerline.nurbs import *
-#   nurbs = NURBS(3,1000,[[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))])
-#   P = nurbs.getCourbe3D()
-#   x_centerline_fit = P[0]
-#   y_centerline_fit = P[1]
-#   z_centerline_fit = P[2]
-#   D = nurbs.getCourbe3D_deriv()
-#   x_centerline_fit_der = D[0]
-#   y_centerline_fit_der = D[1]
-#   z_centerline_fit_der = D[2]
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener, Julien Touati
+"""
+Approximate a 3D curve with a B-Spline curve from either a set of data points or a set of control points
+
+If a set of data points is given, it generates a B-spline that either approximates the curve in the least square
+sense or interpolates the curve. It also computes the derivative of the 3D curve.
+getCourbe3D() returns the 3D fitted curve. The fitted z coordonate corresponds to the initial z, and the x and y are
+averaged for a given z getCourbe3D_deriv() returns the derivative of the 3D fitted curve also averaged along z-axis.
+
+USAGE
+---------------------------------------------------------------------------------------
+from spinalcordtoolbox.centerline.nurbs import *
+nurbs=NURBS(degree,precision,data)
+
+MANDATORY ARGUMENTS
+---------------------------------------------------------------------------------------
+  degree          the degree of the fitting B-spline curve
+  precision       number of points before averaging data
+  data            3D list [x,y,z] of the data requiring fitting
+
+EXAMPLES
+---------------------------------------------------------------------------------------
+  from spinalcordtoolbox.centerline.nurbs import *
+  nurbs = NURBS(3,1000,[[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))])
+  P = nurbs.getCourbe3D()
+  x_centerline_fit = P[0]
+  y_centerline_fit = P[1]
+  z_centerline_fit = P[2]
+  D = nurbs.getCourbe3D_deriv()
+  x_centerline_fit_der = D[0]
+  y_centerline_fit_der = D[1]
+  z_centerline_fit_der = D[2]
+
+Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import numpy as np
@@ -624,7 +624,7 @@ class NURBS:
             for i in range(n - 1):
                 Rtemp.append(self.evaluateN(Nik[i], ubar[k], u) / den)
             R.append(Rtemp)
-        R = np.matrix(R)
+        R = np.array(R)
 
         # create W diagonal matrix
         W = np.diag(w[0:-1])
@@ -642,7 +642,7 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_x, Nik, ubar[k], u) / denU[k]
             Tx.append(somme)
-        Tx = np.matrix(Tx)
+        Tx = np.expand_dims(np.array(Tx), 0)
 
         Ty = []
         for i in range(n - 1):
@@ -650,7 +650,7 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_y, Nik, ubar[k], u) / denU[k]
             Ty.append(somme)
-        Ty = np.matrix(Ty)
+        Ty = np.expand_dims(np.array(Ty), 0)
 
         Tz = []
         for i in range(n - 1):
@@ -658,11 +658,11 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_z, Nik, ubar[k], u) / denU[k]
             Tz.append(somme)
-        Tz = np.matrix(Tz)
+        Tz = np.expand_dims(np.array(Tz), 0)
 
-        P_xb = np.linalg.pinv(R.T * W * R) * Tx.T
-        P_yb = np.linalg.pinv(R.T * W * R) * Ty.T
-        P_zb = np.linalg.pinv(R.T * W * R) * Tz.T
+        P_xb = np.linalg.pinv(R.T @ W @ R) @ Tx.T
+        P_yb = np.linalg.pinv(R.T @ W @ R) @ Ty.T
+        P_zb = np.linalg.pinv(R.T @ W @ R) @ Tz.T
 
         # Modification of first and last control points
         P_xb[0], P_yb[0], P_zb[0] = P_x[0], P_y[0], P_z[0]
@@ -748,7 +748,7 @@ class NURBS:
             for i in range(n - 1):
                 Rtemp.append(self.evaluateN(Nik[i], ubar[k], u) / den)
             R.append(Rtemp)
-        R = np.matrix(R)
+        R = np.array(R)
 
         # create W diagonal matrix
         W = np.diag(w[0:-1])
@@ -766,7 +766,7 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_x, Nik, ubar[k], u) / denU[k]
             Tx.append(somme)
-        Tx = np.matrix(Tx)
+        Tx = np.expand_dims(np.array(Tx), 0)
 
         Ty = []
         for i in range(n - 1):
@@ -774,10 +774,10 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_y, Nik, ubar[k], u) / denU[k]
             Ty.append(somme)
-        Ty = np.matrix(Ty)
+        Ty = np.expand_dims(np.array(Ty), 0)
 
-        P_xb = (R.T * W * R).I * Tx.T
-        P_yb = (R.T * W * R).I * Ty.T
+        P_xb = (R.T @ W @ R).I @ Tx.T
+        P_yb = (R.T @ W @ R).I @ Ty.T
 
         # Modification of first and last control points
         P_xb[0], P_yb[0] = P_x[0], P_y[0]
@@ -839,12 +839,12 @@ class NURBS:
             for j in range(n):
                 ligneM.append(self.evaluateN(Nik[j], ubar[i], u))
             M.append(ligneM)
-        M = np.matrix(M)
+        M = np.array(M)
 
         # Matrice des points interpoles
-        Qx = np.matrix(newPx).T
-        Qy = np.matrix(newPy).T
-        Qz = np.matrix(newPz).T
+        Qx = np.array(newPx).T
+        Qy = np.array(newPy).T
+        Qz = np.array(newPz).T
 
         # Calcul des points de controle
         P_xb = M.I * Qx

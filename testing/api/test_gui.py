@@ -1,5 +1,6 @@
+# pytest unit tests for spinalcordtoolbox.gui
+
 import logging
-import os
 import unittest
 
 import spinalcordtoolbox.image as msct_image

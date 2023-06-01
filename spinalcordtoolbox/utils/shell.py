@@ -1,4 +1,9 @@
-# Convenience/shell related utilites
+"""
+Convenience/shell related utilities
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import sys
@@ -11,6 +16,7 @@ import inspect
 from enum import Enum
 
 from .sys import check_exe, printv, removesuffix, ANSIColors16
+from .fs import relpath_or_abspath
 
 logger = logging.getLogger(__name__)
 
@@ -38,15 +44,27 @@ def display_open(file, message="Done! To view results"):
 
 
 SUPPORTED_VIEWERS = ['fsleyes', 'fslview_deprecated', 'fslview', 'itk-snap', 'itksnap']
+# - The 'fsleyes' colormaps are used for 'fsleyes'.
+# - The 'fslview' colormaps are used for 'fslview' and 'fslview_deprecated'.
+# - For 'itksnap', there are no colormaps. Instead, color behavior is dictated using CLI options '-g', '-o', and '-s'.
+#   How imtypes are mapped to CLI options is a bit convoluted, but tl;dr: only 2 image types (gray, seg) are supported.
+#   Surprisingly, softseg images can only be properly displayed as grayscale images, hence the use of 'gray' for them.
+IMTYPES_COLORMAP = {
+    'anat':        {'fsleyes': 'greyscale',      'fslview': 'Greyscale',       'itksnap': 'gray'},
+    'seg':         {'fsleyes': 'red',            'fslview': 'Red',             'itksnap': 'seg'},
+    'seg-labeled': {'fsleyes': 'subcortical',    'fslview': 'MGH-Subcortical', 'itksnap': 'seg'},
+    'softseg':     {'fsleyes': 'red-yellow',     'fslview': 'Red-Yellow',      'itksnap': 'gray'},
+    'softseg-alt': {'fsleyes': 'blue-lightblue', 'fslview': 'Blue-Lightblue',  'itksnap': 'gray'},
+}
 
 
-def display_viewer_syntax(files, verbose, colormaps=[], minmax=[], opacities=[], mode=''):
+def display_viewer_syntax(files, verbose, im_types=[], minmax=[], opacities=[], mode=''):
     """
     Print the syntax to open a viewer and display images for QC. To use default values, enter empty string: ''
     Parameters
     ----------
     files [list:string]: list of NIFTI file names
-    colormaps [list:string]: list of colormaps associated with each file. Available colour maps: see dict_fsleyes
+    im_types [list:string]: list of image type associated with each file. Available types: see IMTYPE_COLORMAPS
     minmax [list:string]: list of min,max brightness scale associated with each file. Separate with comma.
     opacities [list:string]: list of opacity associated with each file. Between 0 and 1.
 
@@ -57,8 +75,11 @@ def display_viewer_syntax(files, verbose, colormaps=[], minmax=[], opacities=[],
     Example
     -------
     display_viewer_syntax([file1, file2, file3])
-    display_viewer_syntax([file1, file2], colormaps=['gray', 'red'], minmax=['', '0,1'], opacities=['', '0.7'])
+    display_viewer_syntax([file1, file2], im_types=['anat', 'softseg'], minmax=['', '0,1'], opacities=['', '0.7'])
     """
+    # Try to convert the path to one that is relative to the CWD; if not possible, use the abspath instead.
+    files = [str(relpath_or_abspath(filepath, parent_path=os.getcwd())) for filepath in files]
+
     available_viewers = [viewer for viewer in SUPPORTED_VIEWERS if check_exe(viewer)]
 
     if verbose:
@@ -72,11 +93,11 @@ def display_viewer_syntax(files, verbose, colormaps=[], minmax=[], opacities=[],
     cmd_strings = {}
     for viewer in available_viewers:
         if viewer in ['fslview', 'fslview_deprecated']:
-            cmd = _construct_fslview_syntax(viewer, files, colormaps, minmax, opacities, mode)
+            cmd = _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode)
         elif viewer in ['fsleyes']:
-            cmd = _construct_fsleyes_syntax(viewer, files, colormaps, minmax, opacities)
+            cmd = _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities)
         elif viewer in ['itksnap', 'itk-snap']:
-            cmd = _construct_itksnap_syntax(viewer, files, colormaps)
+            cmd = _construct_itksnap_syntax(viewer, files, im_types)
         else:
             cmd = ""  # This should never be reached, because SUPPORTED_VIEWERS should match the 'if' cases exactly
         cmd_strings[viewer] = cmd
@@ -87,19 +108,16 @@ def display_viewer_syntax(files, verbose, colormaps=[], minmax=[], opacities=[],
     return cmd_strings
 
 
-def _construct_fslview_syntax(viewer, files, colormaps, minmax, opacities, mode):
-    dict_fslview = {'gray': 'Greyscale', 'red-yellow': 'Red-Yellow', 'blue-lightblue': 'Blue-Lightblue', 'red': 'Red',
-                    'green': 'Green', 'random': 'Random-Rainbow', 'hsv': 'hsv', 'subcortical': 'MGH-Subcortical'}
-
+def _construct_fslview_syntax(viewer, files, im_types, minmax, opacities, mode):
     cmd = viewer
     # add mode (only supported by fslview for the moment)
     if mode:
         cmd += ' -m ' + mode
     for i in range(len(files)):
         cmd += ' ' + files[i]
-        if colormaps:
-            if colormaps[i]:
-                cmd += ' -l ' + dict_fslview[colormaps[i]]
+        if im_types:
+            if im_types[i]:
+                cmd += ' -l ' + IMTYPES_COLORMAP[im_types[i]]['fslview']
         if minmax:
             if minmax[i]:
                 cmd += ' -b ' + minmax[i]  # a,b
@@ -111,16 +129,13 @@ def _construct_fslview_syntax(viewer, files, colormaps, minmax, opacities, mode)
     return cmd
 
 
-def _construct_fsleyes_syntax(viewer, files, colormaps, minmax, opacities):
-    dict_fsleyes = {'gray': 'greyscale', 'red-yellow': 'red-yellow', 'blue-lightblue': 'blue-lightblue', 'red': 'red',
-                    'green': 'green', 'random': 'random', 'hsv': 'hsv', 'subcortical': 'subcortical'}
-
+def _construct_fsleyes_syntax(viewer, files, im_types, minmax, opacities):
     cmd = viewer
     for i in range(len(files)):
         cmd += ' ' + files[i]
-        if colormaps:
-            if colormaps[i]:
-                cmd += ' -cm ' + dict_fsleyes[colormaps[i]]
+        if im_types:
+            if im_types[i]:
+                cmd += ' -cm ' + IMTYPES_COLORMAP[im_types[i]]['fsleyes']
         if minmax:
             if minmax[i]:
                 cmd += ' -dr ' + ' '.join(minmax[i].split(','))  # a b
@@ -132,32 +147,37 @@ def _construct_fsleyes_syntax(viewer, files, colormaps, minmax, opacities):
     return cmd
 
 
-def _construct_itksnap_syntax(viewer, files, colormaps):
-    cmd = viewer
-    overlay_files = []
+def _construct_itksnap_syntax(viewer, files, im_types):
+    # Split the image files into two categories: grayscale images (used for `-g`/`-o`) and seg images (used for `-s`)
+    gray_images = []
+    seg_images = []
     for i in range(len(files)):
-        # -g is the "main image" option, and we assume that this is the first image
-        # TODO: This assumption is brittle, and could easily break if images are passed in the wrong order.
-        if i == 0:
-            cmd += ' -g ' + files[i]
+        if not im_types:
+            gray_images.append(files[i])
         else:
-            # - SCT uses colormaps to color overlaid segmentations for FSLeyes, because FSLeyes doesn't have
-            #   any "segmentation" options, and so files must be distinguished by choosing colors manually.
-            # - But, itk-snap requires that you explicitly specify which files are segmentation files (which
-            #   results in a red overlay for binary segmentations, and a rainbow overlay for multi-labeled
-            #   segmentations).
-            # - So, here we make the assumption that any files that would have been coloured (via fsleyes) should
-            #   instead be passed as segmentations to itk-snap.
-            # - TODO: This assumption is somewhat brittle, and could break if a colormap is used for a
-            #   non-segmentation segmentation file. But, the alternative would be a much bigger rewrite of the
-            #   display_viewer_syntax function.
-            if colormaps and colormaps[i] != "gray":
-                cmd += ' -s ' + files[i]
-            # All extra non-segmentation files have to be passed together to the '-o' (overlay) option
+            colormap = IMTYPES_COLORMAP[im_types[i]]['itksnap']
+            if colormap == 'gray':
+                gray_images.append(files[i])
+            elif colormap == 'seg':
+                seg_images.append(files[i])
             else:
-                overlay_files.append(files[i])
-    if overlay_files:
-        cmd += ' -o ' + " ".join(overlay_files)
+                raise ValueError(f"ITKSnap does not support colormap '{colormap}'")
+
+    # Construct ITKSnap command based on image types
+    # 1. '-g' is the "main image" and it's mandatory: i.e. You can't just display a single seg image ('-s') by itself,
+    #    or else itksnap will throw this error:
+    #        "Error: Option -s must be used together with option -g"
+    # NB: `-g` really should be a grayscale image, but if there are no gray images, we fall back to using a seg image.
+    main_image = (gray_images or seg_images).pop(0)
+    cmd = f"{viewer} -g {main_image}"
+    # 2. '-o' is used for any remaining grayscale images not used as the main image (`-g`)
+    if gray_images:
+        cmd += f" -o {' '.join(gray_images)}"
+    # 3. '-s' is used for any images with 1 value (binary segmentations) or >1 values (labeled segmentations).
+    #    NB: There can only be one segmentation per ITKSnap command. (ITKSnap can't toggle segmentations like FSLeyes.)
+    #        To get around this, we duplicate the command so that there is one command per segmentation.
+    if seg_images:
+        cmd = "\n".join([f"{cmd} -s {seg_image}" for seg_image in seg_images])
 
     return cmd
 

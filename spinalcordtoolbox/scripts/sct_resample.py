@@ -1,21 +1,16 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# Resample data using nibabel.
+# Resample data using nibabel
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad, Sara Dupont
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: add possiblity to resample to destination image
 
 import sys
 from typing import Sequence
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
 import spinalcordtoolbox.resampling
 
 
@@ -49,12 +44,12 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help="Image to segment. Can be 3D or 4D. (Cannot be 2D) Example: dwi.nii.gz"
+        help="Image to resample. Can be 3D or 4D. (Cannot be 2D) Example: dwi.nii.gz"
     )
 
     resample_types = parser.add_argument_group(
-        "\nTYPE OF THE NEW SIZE INPUT: with a factor of resampling, in mm or in number of voxels\n"
-        "Please choose only one of the 3 options"
+        "\nMETHOD TO SPECIFY NEW SIZE:\n"
+        "Please choose only one of the 4 options"
     )
     resample_types.add_argument(
         '-f',
@@ -65,12 +60,21 @@ def get_parser():
     resample_types.add_argument(
         '-mm',
         metavar=Metavar.str,
-        help="New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5"
+        help="New resolution in mm. Separate dimension with 'x'. Example: 0.1x0.1x5\n"
+             "Note: Resampling can only approximate a desired `mm` resolution, given the limitations of discrete voxel "
+             "data arrays."
+        # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4077
     )
     resample_types.add_argument(
         '-vox',
         metavar=Metavar.str,
         help="Resampling size in number of voxels in each dimensions (x,y,z). Separate with 'x'."
+    )
+    resample_types.add_argument(
+        '-ref',
+        metavar=Metavar.file,
+        help="Reference image to resample input image to. The voxel dimensions and affine of the reference image will "
+             "be used."
     )
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
@@ -79,11 +83,6 @@ def get_parser():
         "--help",
         action="help",
         help="Show this help message and exit."
-    )
-    optional.add_argument(
-        '-ref',
-        metavar=Metavar.file,
-        help="Reference image to resample input image to. Uses world coordinates."
     )
     optional.add_argument(
         '-x',
@@ -122,22 +121,22 @@ def main(argv: Sequence[str]):
         param.new_size = arguments.f
         param.new_size_type = 'factor'
         arg += 1
-    elif arguments.mm is not None:
+    if arguments.mm is not None:
         param.new_size = arguments.mm
         param.new_size_type = 'mm'
         arg += 1
-    elif arguments.vox is not None:
+    if arguments.vox is not None:
         param.new_size = arguments.vox
         param.new_size_type = 'vox'
         arg += 1
-    elif arguments.ref is not None:
+    if arguments.ref is not None:
         param.ref = arguments.ref
         arg += 1
-    else:
-        printv(parser.error('ERROR: you need to specify one of those three arguments : -f, -mm or -vox'))
 
-    if arg > 1:
-        printv(parser.error('ERROR: you need to specify ONLY one of those three arguments : -f, -mm or -vox'))
+    if arg == 0:
+        parser.error("You need to specify one of those four arguments: '-f', '-mm', '-vox' or '-ref'.")
+    elif arg > 1:
+        parser.error("You need to specify ONLY one of those four arguments: '-f', '-mm', '-vox' or '-ref'.")
 
     if arguments.o is not None:
         param.fname_out = arguments.o

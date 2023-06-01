@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# Register anatomical image to the template using the spinal cord centerline/segmentation.
+# Register anatomical image to the template using the spinal cord centerline/segmentation
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener, Julien Cohen-Adad, Augustin Roux
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: for -ref subject, crop data, otherwise registration is too long
 # TODO: testing script for all cases
@@ -273,11 +268,6 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
-    )
-    optional.add_argument(
-        '-igt',
-        metavar=Metavar.file,
-        help="File name of ground-truth template cord segmentation (binary nifti)."
     )
     optional.add_argument(
         '-r',

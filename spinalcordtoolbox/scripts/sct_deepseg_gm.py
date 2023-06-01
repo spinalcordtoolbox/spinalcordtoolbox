@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+#
 # This command-line tool is the interface for the deepseg_gm API
 # that implements the model for the Spinal Cord Gray Matter Segmentation.
 #
@@ -6,6 +7,10 @@
 #     Perone, C. S., Calabrese, E., & Cohen-Adad, J. (2017).
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
+#
+# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
+
 
 import sys
 import os
@@ -127,7 +132,7 @@ def main(argv: Sequence[str]):
 
     display_viewer_syntax(
         [input_filename, format(out_fname)],
-        colormaps=['gray', 'red'],
+        im_types=['anat', 'seg'],
         opacities=['1', '0.7'],
         verbose=verbose,
     )

@@ -1,4 +1,9 @@
-# System related utilities
+"""
+System related utilities
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import io
 import sys
@@ -93,11 +98,6 @@ class ANSIColors16(object):
     BackgroundWhite = "\033[107m"
 
 
-if os.getenv('SENTRY_DSN', None):
-    # do no import if Sentry is not set (i.e., if variable SENTRY_DSN is not defined)
-    import raven
-
-
 def get_caller_module():
     """Return the first non-`utils.sys` module in the stack (to see where `utils.sys` is being called from)."""
     for frame in inspect.stack():
@@ -141,6 +141,9 @@ def set_loglevel(verbose):
     # Set the logging level globally, but only when scripts are directly invoked (e.g. from the command line)
     if caller_module_name == "__main__":
         logging.root.setLevel(getattr(logging, log_level))
+        # matplotlib is particularly chatty, so keep it at the default level
+        # see: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4086
+        logging.getLogger('matplotlib').setLevel(logging.WARNING)
     else:
         # NB: Nothing will be set if we're calling a CLI script in-code, i.e. <sct_cli_script>.main(). This keeps
         # the loglevel changes from leaking: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3341
@@ -163,8 +166,8 @@ def removesuffix(self: str, suffix: str) -> str:
 # TODO: add test
 def init_sct():
     """
-    Initialize SCT for typical terminal usage, including logging initialization, Sentry
-    configuration, as well as a status message with the SCT version and the command run.
+    Initialize SCT for typical terminal usage, including logging initialization,
+    as well as a status message with the SCT version and the command run.
     """
 
     def _format_wrap(old_format):
@@ -187,8 +190,7 @@ def init_sct():
     hdlr.setFormatter(fmt)
     logging.root.addHandler(hdlr)
 
-    # Sentry config
-    init_error_client()
+    # Enable timer, if requested
     if os.environ.get("SCT_TIMER", None) is not None:
         add_elapsed_time_counter()
 
@@ -213,79 +215,6 @@ def add_elapsed_time_counter():
             print("Elapsed time: %.3f seconds" % (time.time() - self._t0))
     t = Timer()
     atexit.register(t.atexit)
-
-
-def traceback_to_server(client):
-    """
-    Send all traceback children of Exception to sentry
-    """
-
-    def excepthook(exctype, value, traceback):
-        if issubclass(exctype, Exception):
-            client.captureException(exc_info=(exctype, value, traceback))
-        sys.__excepthook__(exctype, value, traceback)
-
-    sys.excepthook = excepthook
-
-
-def init_error_client():
-    if os.getenv('SENTRY_DSN'):
-        logger.debug('Configuring sentry report')
-        try:
-            client = raven.Client(
-                release=__version__,
-                processors=(
-                    'raven.processors.RemoveStackLocalsProcessor',
-                    'raven.processors.SanitizePasswordsProcessor'),
-            )
-            server_log_handler(client)
-            traceback_to_server(client)
-            old_exitfunc = sys.exitfunc
-
-            def exitfunc():
-                sent_something = False
-                try:
-                    # implementation-specific
-                    for handler, args, kw in atexit._exithandlers:
-                        if handler.__module__.startswith("raven."):
-                            sent_something = True
-                except:  # noqa: E722
-                    pass
-                old_exitfunc()
-                if sent_something:
-                    print("Note: you can opt out of Sentry reporting by editing the file ${SCT_DIR}/bin/sct_launcher and delete the line starting with \"export SENTRY_DSN\"")
-            sys.exitfunc = exitfunc
-        except raven.exceptions.InvalidDsn:
-            # This could happen if sct staff change the dsn
-            logger.debug('Sentry DSN not valid anymore, not reporting errors')
-
-
-def server_log_handler(client):
-    """ Adds sentry log handler to the logger
-
-    :return: the sentry handler
-    """
-    from raven.handlers.logging import SentryHandler
-
-    sh = SentryHandler(client=client, level=logging.ERROR)
-
-    # Don't send Sentry events for command-line usage errors
-    old_emit = sh.emit
-
-    def emit(self, record):
-        if not record.message.startswith("Command-line usage error:"):
-            return old_emit(record)
-
-    sh.emit = lambda x: emit(sh, x)
-
-    fmt = ("[%(asctime)s][%(levelname)s] %(filename)s: %(lineno)d | "
-           "%(message)s")
-    formatter = logging.Formatter(fmt=fmt, datefmt="%H:%M:%S")
-    formatter.converter = time.gmtime
-    sh.setFormatter(formatter)
-
-    logger.addHandler(sh)
-    return sh
 
 
 def send_email(addr_to, addr_from, subject, message='', passwd=None, filename=None, html=False, smtp_host=None, smtp_port=None, login=None):
@@ -344,6 +273,15 @@ def sct_progress_bar(*args, **kwargs):
     do_pb = os.environ.get('SCT_PROGRESS_BAR', 'yes')
     if do_pb.lower() in ['off', 'no', 'false']:
         kwargs['disable'] = True
+    # If not specified, then override the default 'ascii' value to account for Windows issues. For background, see:
+    # https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2770#issuecomment-1399313735
+    if 'ascii' not in kwargs:
+        # On Windows, terminals often have limited unicode support, so it's recommended to set ascii=True
+        if sys.platform.startswith('win32'):
+            kwargs['ascii'] = True
+        # On Linux/macOS, tqdm has built-in fallback login when ascii=None to account for various terminal capabilities
+        else:
+            kwargs['ascii'] = None
 
     return tqdm.tqdm(*args, **kwargs)
 

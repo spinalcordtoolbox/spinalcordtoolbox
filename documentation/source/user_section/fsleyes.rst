@@ -43,7 +43,7 @@ To enable the ``SCT`` plugin:
 
 1. Open ``FSLeyes`` application.
 2. ``File`` -> ``Run script``
-3. Select the script ``spinalcordtoolbox/contrib/fsl_integration/sct_plugin.py``
+3. Select the script ``spinalcordtoolbox/contrib/fsl_integration/sct_fsleyes_script.py``
 
 You should see something like this appear in the ``FSLeyes`` interface:
 

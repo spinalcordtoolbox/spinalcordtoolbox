@@ -1,32 +1,29 @@
 #!/usr/bin/env python
-
-"""Detect Ponto-Medullary Junction.
-
-The models were trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
-in section 2.1.2, except that the cords are not straightened for the PMJ disc detection task.
-
-To train a new model:
-- Install SCT v3.2.7 (https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/v3.2.7)
-- Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
-- Run "source sct_launcher" in a terminal
-- Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
-- Save the trained model in https://github.com/spinalcordtoolbox/pmj_models
-
-NB: The files in the `dev/` folder are not actively maintained, so these training steps are not guaranteed to
-    work with more recent versions of SCT.
-
-Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-Author: Charley
-
-About the license: see the file LICENSE.TXT
-"""
+#
+# Detect Ponto-Medullary Junction
+#
+# The models were trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
+# in section 2.1.2, except that the cords are not straightened for the PMJ disc detection task.
+#
+# To train a new model:
+# - Install SCT v3.2.7 (https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/v3.2.7)
+# - Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
+# - Run "source sct_launcher" in a terminal
+# - Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
+# - Save the trained model in https://github.com/spinalcordtoolbox/pmj_models
+#
+# NB: The files in the `dev/` folder are not actively maintained, so these training steps are not guaranteed to
+#     work with more recent versions of SCT.
+#
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import os
 import sys
 import logging
 from typing import Sequence
 
-from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage import center_of_mass
 import nibabel as nib
 import numpy as np
 
@@ -100,11 +97,6 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the process was run on.')
-    optional.add_argument(
-        "-igt",
-        metavar=Metavar.str,
-        help="File name of ground-truth PMJ (single voxel).",
-        required=False)
     optional.add_argument(
         "-r",
         type=int,
@@ -354,7 +346,7 @@ def main(argv: Sequence[str]):
             generate_qc(fname_in, fname_seg=fname_out, args=argv, path_qc=os.path.abspath(path_qc),
                         dataset=arguments.qc_dataset, subject=arguments.qc_subject, process='sct_detect_pmj')
 
-        display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'], verbose=verbose)
+        display_viewer_syntax([fname_in, fname_out], im_types=['anat', 'seg'], verbose=verbose)
 
 
 if __name__ == "__main__":

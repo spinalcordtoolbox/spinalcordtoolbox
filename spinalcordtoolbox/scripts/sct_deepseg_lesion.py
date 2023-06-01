@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Function to segment the multiple sclerosis lesions using convolutional neural networks
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Charley Gros
-# Modified: 2018-06-11
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import os
 import sys
@@ -97,11 +91,6 @@ def get_parser():
         default=1,
         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
-    optional.add_argument(
-        '-igt',
-        metavar=Metavar.str,
-        help='File name of ground-truth segmentation.',
-        required=False)
 
     return parser
 
@@ -165,7 +154,7 @@ def main(argv: Sequence[str]):
                                                  extract_fname(fname_image)[2]))
         im_ctr.save(fname_ctr)
 
-    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'], verbose=verbose)
+    display_viewer_syntax([fname_image, fname_seg], im_types=['anat', 'seg'], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":

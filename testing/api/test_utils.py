@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# pytest unit tests for utils
+# pytest unit tests for spinalcordtoolbox.utils
 
 import os
 import pytest
@@ -63,7 +61,7 @@ def test_display_viewer_syntax(temporary_viewers):
     """Test that sample input produces the required syntax string output."""
     syntax_strings = utils.display_viewer_syntax(
         files=["test_img.nii.gz", "test_img_2.nii.gz", "test_seg.nii.gz", "test_img_3.nii.gz"],
-        colormaps=['gray', 'gray', 'red', 'gray'],
+        im_types=['anat', 'anat', 'seg', 'anat'],
         minmax=['', '0,1', '0.25,0.75', ''],
         opacities=['', '0.7', '1.0', ''],
         mode="test",
@@ -86,5 +84,5 @@ def test_display_viewer_syntax(temporary_viewers):
                                 "test_img_3.nii.gz -l Greyscale &")
         elif viewer.startswith("itk"):
             assert cmd_opts == ("-g test_img.nii.gz "
-                                "-s test_seg.nii.gz "
-                                "-o test_img_2.nii.gz test_img_3.nii.gz")
+                                "-o test_img_2.nii.gz test_img_3.nii.gz "
+                                "-s test_seg.nii.gz")

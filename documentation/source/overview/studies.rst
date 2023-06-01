@@ -26,6 +26,21 @@ The following studies have used SCT:
 2023
 ----
 
+-  Destruel *et al.* `Optimized interferometric encoding of presaturated TurboFLASH B1 mapping for parallel transmission MRI at 7 T: Preliminary application for quantitative T1 mapping in the spinal cord <https://doi.org/10.1002/mrm.29708>`_, **Magn Reson Med.** 2023
+-  Kinany *et al.* `Decoding cerebro-spinal signatures of human behavior: Application to motor sequence learning <https://doi.org/10.1016/j.neuroimage.2023.120174>`_, **Neuroimage** 2023
+-  Oliveira *et al.* `The longitudinal progression of MRI changes in pre-ataxic carriers of SCA3/MJD <https://doi.org/10.1007/s00415-023-11763-6>`_, **J. Neurol.** 2023
+-  Pareto *et al.* `Assessing the Equivalence of Brain-Derived Measures from Two 3D T1-Weighted Acquisitions: One Covering the Brain and One Covering the Brain and Spinal Cord <https://doi.org/10.3174/ajnr.a7843>`_, **AJNR Am. J. Neuroradiol.** 2023
+-  Koning *et al.* `A Comparison of Functional Connectivity in the Human Brainstem and Spinal Cord Associated with Noxious and Innocuous Thermal Stimulation Identified by Means of Functional MRI <https://doi.org/10.3390/brainsci13050777>`_, **Brain Sci.**, 2023
+-  Althobity *et al.* `Multi-parametric MR for detection of pathological changes in CNS of mouse model of multiple sclerosis in vivo <https://doi.org/10.1002/nbm.4964>`_, **NMR Biomed** 2023
+-  Khamaysa *et al.* `Comparison of spinal magnetic resonance imaging and classical clinical factors in predicting motor capacity in amyotrophic lateral sclerosis <https://doi.org/10.1007/s00415-023-11727-w>`_, **J. Neurol.** 2023
+-  Schaefer *et al.* `Could spinal cord oscillation contribute to spinal cord injury in degenerative cervical myelopathy? <https://doi.org/10.1016/j.bas.2023.101743>`_, **Brain and Spine** 2023
+-  Branco *et al.* `Advanced structural magnetic resonance imaging of the spinal cord: Technical aspects and clinical use <https://doi.org/10.1053/j.sult.2023.03.016>`_, **Semin. Ultrasound CT MR** 2023
+-  Camera *et al.* `Shared imaging markers of fatigue across multiple sclerosis, aquaporin-4 antibody neuromyelitis optica spectrum disorder and MOG antibody disease <https://doi.org/10.1093/braincomms/fcad107>`_, **Brain commun.** 2023
+-  Scheuren *et al.* `Combined Neurophysiologic and Neuroimaging Approach to Reveal the Structure-Function Paradox in Cervical Myelopathy <https://doi.org/10.1212/WNL.0000000000012643>`_, **Neurology** 2023
+-  Schading *et al.* `Reliability of spinal cord measures based on synthetic T1-weighted MRI derived from multiparametric mapping (MPM) <https://doi.org/10.1016/j.neuroimage.2023.120046>`_, **Neuroimage** 2023
+-  Wu *et al.* `Remodeling of the brain correlates with gait instability in cervical spondylotic myelopathy <https://doi.org/10.3389/fnins.2023.1087945>`_, **Front. Neurosci.** 2023  
+-  Landelle *et al.* `Altered Spinal Cord Functional Connectivity Associated with Parkinson’s Disease Progression <https://doi.org/10.1002/mds.29354>`_, **Mov. Disord.** 2023
+-  Trolle *et al.* `Spinal cord atrophy after spinal cord injury – A systematic review and meta-analysis <https://doi.org/10.1016/j.nicl.2023.103372>`_, **Neuroimage Clin.** 2023
 -  Ruiter *et al.* `Association of volumetric MRI measures and disability in MS patients of the same age: Descriptions from a birth year cohort <https://doi.org/10.1016/j.msard.2023.104568>`_, **Mult. Scler. Relat. Disord.**, 2023
 -  Schading *et al.* `Dynamics of progressive degeneration of major spinal pathways following spinal cord injury: A longitudinal study <https://doi.org/10.1016/j.nicl.2023.103339>`_, **Neuroimage Clin.**, 2023
 -  Blanc *et al.* `Combining PropSeg and a convolutional neural network for automatic spinal cord segmentation in pediatric populations and patients with spinal cord injury <https://doi.org/10.1002/ima.22859>`_, **IMA**, 2023

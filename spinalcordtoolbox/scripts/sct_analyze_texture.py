@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-
+#
 # Analyse texture
 #
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Charley
-# Modified: 2017-06-22
-#
-# About the license: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 import os
 import sys
@@ -84,11 +81,6 @@ def get_parser():
         action=ActionCreateFolder,
         required=False,
         default=Param().path_results)
-    optional.add_argument(
-        "-igt",
-        metavar=Metavar.str,
-        help="File name of ground-truth texture metrics.",
-        required=False)
     optional.add_argument(
         "-r",
         help="Remove temporary files.",
@@ -353,7 +345,7 @@ def main(argv: Sequence[str]):
 
     display_viewer_syntax(
         files=[arguments.i] + fname_out_lst,
-        colormaps=['gray'] + ['red-yellow'] * len(fname_out_lst),
+        im_types=['anat'] + ['softseg'] * len(fname_out_lst),
         opacities=['1.0'] + ['0.7'] * len(fname_out_lst),
         verbose=verbose
     )

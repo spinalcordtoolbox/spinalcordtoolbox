@@ -22,13 +22,10 @@
 #  -d   Prevent the (re)-installation of the data/ directory
 #  -b   Prevent the (re)-installation of the SCT binaries files
 #  -c   Prevent checks from being run to validate the installation
-#  -g   Specify git ref (branch, tag, commit SHA) to clone when 'install_sct' is run by itself
 #  -v   Full verbose
 #
-#
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: PO Quirion, J Cohen-Adad, J Carretero
-# License: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 
 ( # | tee install_sct_log.txt
@@ -46,7 +43,6 @@ shopt -s failglob # error if a glob doesn't find any files, instead of remaining
 
 # Where tmp file are stored
 TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR')"
-SCT_SOURCE="$PWD"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
@@ -58,8 +54,7 @@ NONINTERACTIVE=""
 NO_DATA_INSTALL=""
 NO_SCT_BIN_INSTALL=""
 NO_INSTALL_VALIDATION=""
-# CLI option -g: The git ref to use during the git clone (if `install_sct` is run by itself without source files)
-# (Default value: 'master', however this value is updated on stable release branches.)
+# Default value: 'master', however this value is updated on stable release branches.
 SCT_GIT_REF="master"
 
 # ======================================================================================================================
@@ -125,7 +120,7 @@ function finish() {
     echo ""
   else
     print error "Installation failed!\n
-Please find the file \"$SCT_SOURCE/install_sct_log.txt\",
+Please find the file \"$PWD/install_sct_log.txt\",
 then upload it as a .txt attachment in a new topic on SCT's forum:
 --> http://forum.spinalcordmri.org/c/sct"
   fi
@@ -352,7 +347,7 @@ for arg in "$@"; do
   esac
 done
 
-while getopts ":iydbcg:vh" opt; do
+while getopts ":iydbcvh" opt; do
   case $opt in
   i)
     SCT_INSTALL_TYPE="in-place"
@@ -372,10 +367,6 @@ while getopts ":iydbcg:vh" opt; do
   c)
     echo " no checks will be run (installation will not be validated)"
     NO_INSTALL_VALIDATION="yes"
-    ;;
-  g)
-    echo " if script has been run by itself, git clone will use ref ${OPTARG}"
-    SCT_GIT_REF=${OPTARG}
     ;;
   v)
     echo " Full verbose!"
@@ -414,27 +405,30 @@ check_requirements
 # Check to see if the PWD contains the project source files (using `version.txt` as a proxy for the entire source dir)
 # If it exists, then we can reliably access source files (`version.txt`, `requirements-freeze.txt) from the PWD.
 if [[ -e "spinalcordtoolbox/version.txt" ]]; then
-  SCT_VERSION="$(cat spinalcordtoolbox/version.txt)"
-  # Get installation type if not already specified
-  if [[ -z "$SCT_INSTALL_TYPE" ]]; then
-    # The file 'requirements-freeze.txt` only exists for stable releases
-    if [[ -e "requirements-freeze.txt" ]]; then
-      SCT_INSTALL_TYPE="package"
-    # If it doesn't exist, then we can assume that a dev is performing an in-place installation from master
-    else
-      SCT_INSTALL_TYPE="in-place"
-    fi
-  fi
+  SCT_SOURCE="$PWD"
 # If version.txt isn't present, then the installation script is being run by itself (i.e. without source files).
 # So, we need to clone SCT to a TMPDIR to access the source files, and update SCT_SOURCE accordingly.
 else
   SCT_SOURCE="$TMP_DIR/spinalcordtoolbox"
-  echo "Source files not present. Cloning source files to $SCT_SOURCE."
+  echo "Source files not present. Downloading source files (@ $SCT_GIT_REF) to $SCT_SOURCE."
   git clone -b "$SCT_GIT_REF" --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git "$SCT_SOURCE"
-  SCT_VERSION=$(cat "$SCT_SOURCE/spinalcordtoolbox/version.txt")
   # Since we're git cloning into a TMPDIR, this can never be an "in-place" installation, so we force "package" instead.
   SCT_INSTALL_TYPE="package"
 fi
+
+# Get installation type if not already specified
+if [[ -z "$SCT_INSTALL_TYPE" ]]; then
+  # The file 'requirements-freeze.txt` only exists for stable releases
+  if [[ -e "$SCT_SOURCE/requirements-freeze.txt" ]]; then
+    SCT_INSTALL_TYPE="package"
+  # If it doesn't exist, then we can assume that a dev is performing an in-place installation from master
+  else
+    SCT_INSTALL_TYPE="in-place"
+  fi
+fi
+
+# Fetch the version of SCT from the source file
+SCT_VERSION=$(cat "$SCT_SOURCE/spinalcordtoolbox/version.txt")
 
 # Define sh files
 get_shell_rc_path
@@ -444,24 +438,6 @@ echo -e "\nSCT version ......... $SCT_VERSION"
 echo -e "Installation type ... $SCT_INSTALL_TYPE"
 echo -e "Operating system .... $OS ($OSver)"
 echo -e "Shell config ........ $RC_FILE_PATH"
-
-REPORT_STATS="no"
-if [ -z "$NONINTERACTIVE" ]; then
-  # Send crash statistic and error logs to developers, that is the question:
-  print question "To improve user experience and fix bugs, the SCT development team is using a
-report system to automatically receive crash reports and errors from users.
-These reports are anonymous.
-
-Do you agree to help us improve SCT? [y]es/[n]o: "
-  read -r REPORT_STATS
-fi
-
-if [[ "$REPORT_STATS" =~ [Yy](es)? ]]; then
-  echo -ne '# Auto-generated by install_sct\nimport os\nSENTRY_DSN=os.environ.get("SCT_SENTRY_DSN", "https://5202d7c96ad84f17a24bd2653f1c4f9e:c1394bb176cc426caf0ff6a9095fb955@sentry.io/415369")\n' >spinalcordtoolbox/sentry_dsn.py
-  print info "--> Crash reports will be sent to the SCT development team. Thank you!"
-else
-  print info "--> Crash reports will not be sent."
-fi
 
 # if installing from git folder, then becomes default installation folder
 if [[ "$SCT_INSTALL_TYPE" == "in-place" ]]; then
@@ -498,8 +474,15 @@ Do you agree? [y]es/[n]o: "
   # Remove trailing /
   new_install="${new_install%/}"
 
+  # Check user-selected path for spaces
+  space_regex="[[:space:]]+"
+  if [[ $SCT_DIR =~ $space_regex ]]; then
+    print info "ERROR: Install directory $SCT_DIR contains spaces.\n\
+                SCT uses conda, which does not permit spaces in installation paths.\n\
+                More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
+    continue
   # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
-  if [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]]; then
+  elif [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]]; then
     print info "Cannot be installed directly in $new_install"
     print info "Please pick a full path"
     continue
@@ -517,23 +500,6 @@ Do you agree? [y]es/[n]o: "
   fi
 done
 
-space_regex="[[:space:]]+"
-if [[ $SCT_DIR =~ $space_regex ]]; then
-  die "ERROR: Install directory $SCT_DIR contains spaces.\n\
-       SCT uses conda, which does not permit spaces in installation paths.\n\
-       More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
-fi
-
-# update PATH environment?
-add_to_path=""
-while [[ ! "$add_to_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-  add_to_path="yes"
-  if [ -z "$NONINTERACTIVE" ]; then
-    print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
-    read -r add_to_path
-  fi
-done
-
 # Create directory
 mkdir -p "$SCT_DIR"
 # check if directory was created
@@ -544,15 +510,6 @@ if [[ -d "$SCT_DIR" ]]; then
   fi
 else
   die "ERROR: $SCT_DIR cannot be created. Make sure you have write permission."
-fi
-
-# Update PATH variables based on Shell type
-if [[ $THE_RC == "bash" ]]; then
-  DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
-elif [[ $THE_RC == "csh" ]]; then
-  DISPLAY_UPDATE_PATH="setenv PATH \"$SCT_DIR/$BIN_DIR:\$PATH\""
-else
-  die "This variable is not recognized: THE_RC=$THE_RC"
 fi
 
 # Copy files to destination directory
@@ -569,6 +526,15 @@ if [[ -x "$SCT_DIR/$BIN_DIR" ]]; then
   find "$SCT_DIR/$BIN_DIR" -type l -name 'sct_*' -exec rm {} \;
   find "$SCT_DIR/$BIN_DIR" -type l -name 'isct_*' -exec rm {} \;
 fi
+# Remove old python folder
+if [[ -x "$SCT_DIR/$BIN_DIR" ]]; then
+  run rm -rf "$SCT_DIR/$PYTHON_DIR"
+  run mkdir -p "$SCT_DIR/$PYTHON_DIR"
+fi
+# Remove old '.egg-info` folder created by editable installs
+if [[ -x "$SCT_DIR"/spinalcordtoolbox.egg-info ]]; then
+  run rm -rf "$SCT_DIR"/spinalcordtoolbox.egg-info
+fi
 
 # Go to installation folder
 cd "$SCT_DIR"
@@ -580,16 +546,32 @@ fi
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# Install Python
+# Handle RC files / $PATH setting
 # ----------------------------------------------------------------------------------------------------------------------
 
+# update PATH environment?
+add_to_path=""
+while [[ ! "$add_to_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+  add_to_path="yes"
+  if [ -z "$NONINTERACTIVE" ]; then
+    print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
+    read -r add_to_path
+  fi
+done
 
-# Remove old python folder
-run rm -rf "$SCT_DIR/$PYTHON_DIR"
-run mkdir -p "$SCT_DIR/$PYTHON_DIR"
+# Update PATH variables based on Shell type
+if [[ $THE_RC == "bash" ]]; then
+  DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
+elif [[ $THE_RC == "csh" ]]; then
+  DISPLAY_UPDATE_PATH="setenv PATH \"$SCT_DIR/$BIN_DIR:\$PATH\""
+else
+  die "This variable is not recognized: THE_RC=$THE_RC"
+fi
 
-# Remove old '.egg-info` folder created by editable installs
-run rm -rf "$SCT_DIR"/spinalcordtoolbox.egg-info
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Install Python
+# ----------------------------------------------------------------------------------------------------------------------
 
 # Download miniconda
 print info "Downloading Miniconda..."

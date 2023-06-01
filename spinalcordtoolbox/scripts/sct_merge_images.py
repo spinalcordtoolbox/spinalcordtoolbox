@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#######################################################################################################################
 #
 # Merge images. See details in function "merge_images".
 #
-# ----------------------------------------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Dominique Eden, Sara Dupont
-# Modified: 2017-03-17
-#
-# About the license: see the file LICENSE.TXT
-########################################################################################################################
+# License: see the file LICENSE
 
 # TODO: parameter "almost_zero" might case problem if merging data with very low values (e.g. MD from diffusion)
 

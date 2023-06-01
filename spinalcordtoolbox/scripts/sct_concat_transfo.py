@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Concatenate transformations. This function is a wrapper for isct_ComposeMultiTransform
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad
-# Modified: 2014-07-20
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: also enable to concatenate reversed transfo
 

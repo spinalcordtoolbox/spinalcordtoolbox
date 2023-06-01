@@ -1,14 +1,10 @@
-#############################################################################
-#
-# Configure tests so that pytest downloads testing data every time
-# pytest is run from the sct directory
-#
-# ----------------------------------------------------------------------------
-# Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad, Chris Hammill
-#
-# About the license: see the file LICENSE.TXT
-###############################################################################
+"""
+Configure tests so that pytest downloads testing data every time pytest is run
+from the sct directory
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import logging

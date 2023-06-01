@@ -1,3 +1,5 @@
+# pytest unit tests for sct_label_utils
+
 import pytest
 import logging
 
@@ -6,7 +8,7 @@ import numpy as np
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils import sct_test_path
-from spinalcordtoolbox.scripts import sct_label_utils
+from spinalcordtoolbox.scripts import sct_label_utils, sct_create_mask
 
 logger = logging.getLogger(__name__)
 
@@ -48,3 +50,39 @@ def test_create_seg_mid(tmp_path):
     # Old syntax for this behavior should not be allowed
     with pytest.raises(DeprecationWarning):
         sct_label_utils.main(['-i', input, '-create-seg', '-1,3', '-o', output])
+
+
+def test_project_centerline(tmp_path):
+    """Test the '-project-centerline' option in sct_label_utils"""
+    # Use an image as a shape reference
+    img = str(tmp_path/'t2.nii.gz')
+    Image(sct_test_path('t2', 't2.nii.gz')).change_orientation('RPI').save(img)
+
+    # Create a mask with a vertical line following the z axis with the coordinates x=20 and y=15
+    mask = str(tmp_path/'t2_seg.nii.gz')
+    sct_create_mask.main([
+         '-i', img,
+         '-o', mask,
+         '-size', '1',
+         '-p', 'coord,20x15',
+         '-f', 'box'
+         ])
+
+    # Create an image with 3 points
+    ref = str(tmp_path/'t2_seg_labeled.nii.gz')
+    sct_label_utils.main([
+        '-i', img,
+        '-o', ref,
+        '-create', '1,1,1,1:1,2,3,4:10,11,25,25'
+        ])
+
+    # Project the ref point on the previous line
+    out = str(tmp_path/'t2_seg_labeled_projected.nii.gz')
+    sct_label_utils.main([
+        '-i', mask,
+        '-o', out,
+        '-project-centerline', ref
+        ])
+
+    # The coordinates of this projection should be equal to x=20, y=15, z=1
+    assert Image(out).getNonZeroCoordinates() == [Coordinate([20, 15, 1, 1]), Coordinate([20, 15, 3, 4]), Coordinate([20, 15, 25, 25])]

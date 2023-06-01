@@ -1,19 +1,12 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.resampling
 
 # TODO: add test for 2d image
 
-
-
-import sys, os
 import pytest
 
 import numpy as np
 import nibabel as nib
 
-from spinalcordtoolbox.utils import __sct_dir__
-sys.path.append(os.path.join(__sct_dir__, 'scripts'))
 from spinalcordtoolbox import resampling
 
 
@@ -62,8 +55,8 @@ def fake_4dimage_nib():
 def test_nib_resample_image_3d(fake_3dimage_nib):
     """Test resampling with 3D nibabel image"""
     img_r = resampling.resample_nib(fake_3dimage_nib, new_size=[2, 2, 1], new_size_type='factor', interpolation='nn')
-    assert img_r.get_data().shape == (18, 18, 9)
-    assert img_r.get_data()[8, 8, 4] == 1.0  # make sure there is no displacement in world coordinate system
+    assert np.asanyarray(img_r.dataobj).shape == (18, 18, 9)
+    assert np.asanyarray(img_r.dataobj)[8, 8, 4] == 1.0  # make sure there is no displacement in world coordinate system
     assert img_r.header.get_zooms() == (0.5, 0.5, 1.0)
     # debug
     # nib.save(img_r, 'test_4.nii.gz')
@@ -72,14 +65,14 @@ def test_nib_resample_image_3d(fake_3dimage_nib):
 def test_nib_resample_image_3d_to_dest(fake_3dimage_nib, fake_3dimage_nib_big):
     """Test resampling with 3D nibabel image"""
     img_r = resampling.resample_nib(fake_3dimage_nib, image_dest=fake_3dimage_nib_big, interpolation='linear')
-    assert img_r.get_data().shape == (29, 39, 19)
-    assert img_r.get_data()[4, 4, 4] == 1.0
+    assert np.asanyarray(img_r.dataobj).shape == (29, 39, 19)
+    assert np.asanyarray(img_r.dataobj)[4, 4, 4] == 1.0
 
 
 def test_nib_resample_image_4d(fake_4dimage_nib):
     """Test resampling with 4D nibabel image"""
     img_r = resampling.resample_nib(fake_4dimage_nib, new_size=[2, 2, 1, 1], new_size_type='factor', interpolation='nn')
-    assert img_r.get_data().shape == (18, 18, 9, 3)
-    assert img_r.get_data()[8, 8, 4, 0] == 1.0  # make sure there is no displacement in world coordinate system
-    assert img_r.get_data()[8, 8, 4, 1] == 0.0
+    assert np.asanyarray(img_r.dataobj).shape == (18, 18, 9, 3)
+    assert np.asanyarray(img_r.dataobj)[8, 8, 4, 0] == 1.0  # make sure there is no displacement in world coordinate system
+    assert np.asanyarray(img_r.dataobj)[8, 8, 4, 1] == 0.0
     assert img_r.header.get_zooms() == (0.5, 0.5, 1.0, 1.0)

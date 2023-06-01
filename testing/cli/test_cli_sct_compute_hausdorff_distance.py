@@ -1,3 +1,5 @@
+# pytest unit tests for sct_compute_hausdorff_distance
+
 import pytest
 import logging
 

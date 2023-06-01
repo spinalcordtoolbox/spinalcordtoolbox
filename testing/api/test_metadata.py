@@ -1,10 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.metadata
 
-
-
-import sys, io, os
+import io
+import os
 
 import pytest
 

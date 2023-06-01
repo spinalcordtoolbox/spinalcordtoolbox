@@ -1,3 +1,5 @@
+# pytest unit tests for sct_process_segmentation
+
 import pytest
 import logging
 import numpy as np

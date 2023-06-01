@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Compute SNR in a given ROI according to different methods presented in Dietrich et al.,
 # Measurement of signal-to-noise ratios in MR images: Influence of multichannel coils,
@@ -7,12 +6,8 @@
 #
 # Also see this discussion: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3481
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Simon Levy, Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
-########################################################################################
+# License: see the file LICENSE
 
 import sys
 from typing import Sequence
