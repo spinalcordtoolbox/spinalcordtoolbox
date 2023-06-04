@@ -6,7 +6,6 @@ License: see the file LICENSE
 """
 
 import glob
-import sys
 import os
 import json
 import logging
@@ -286,7 +285,7 @@ class QcImage:
             action(self, mask[i], ax)
         self._save(fig, self.qc_report.abs_overlay_img_path(), dpi=self.qc_report.dpi)
 
-        self.qc_report.update_description_file(img.shape)
+        self.qc_report.update_description_file()
 
     def _make_QC_image_for_4d_volumes(self, images_after_moco, images_before_moco):
         """
@@ -306,8 +305,7 @@ class QcImage:
         self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig)
         self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig, is_mask=True)
 
-        w, h = (self.qc_report.dpi * size_fig[0], self.qc_report.dpi * size_fig[1])
-        self.qc_report.update_description_file((w, h))
+        self.qc_report.update_description_file()
 
     def _func_stretch_contrast(self, img):
         if self._stretch_contrast_method == "equalized":
@@ -513,11 +511,8 @@ class QcReport:
         target_img_folder = os.path.dirname(self.abs_bkg_img_path())
         os.makedirs(target_img_folder, exist_ok=True)
 
-    def update_description_file(self, dimension):
-        """Create the description file with a JSON structure
-
-        :param: dimension 2-tuple, the dimension of the image frame (w, h)
-        """
+    def update_description_file(self):
+        """Create the description file with a JSON structure"""
         path_qc = self.path_qc
         html_path = os.path.join(path_qc, 'index.html')
         # Make sure the file exists before trying to open it in 'r+' mode
@@ -532,7 +527,6 @@ class QcReport:
         portalocker.lock(dest_file, portalocker.LOCK_EX)
 
         output = {
-            'python': sys.executable,
             'cwd': self.cwd,
             'cmdline': "{} {}".format(self.command, self.args),
             'command': self.command,
@@ -544,7 +538,6 @@ class QcReport:
             'orientation': self.plane,
             'background_img': self.bkg_img_path,
             'overlay_img': self.overlay_img_path,
-            'dimension': '%dx%d' % dimension,
             'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'qc': ""
         }
