@@ -87,37 +87,35 @@ def assert_qc_assets(path):
 
 
 def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
-    qc_params = qc.Params(t2_image.absolutepath, 'sct_label_vertebrae', ['-a', '-b'], 'Sagittal', str(tmp_path))
-    qc_report = qc.QcReport(qc_params)
+    qc_report = qc.QcReport(t2_image.absolutepath, 'sct_label_vertebrae', ['-a', '-b'], 'Sagittal', str(tmp_path))
 
     qc.QcImage(
         qc_report=qc_report,
         interpolation='spline36',
         action_list=[qc.QcImage.label_vertebrae],
-        process=qc_params.command,
+        process=qc_report.command,
     ).layout(
         qcslice_layout=lambda qcslice: qcslice.single(),
         qcslice=qcslice.Sagittal([t2_image, t2_seg_image]),
     )
 
-    assert os.path.isfile(qc_params.abs_bkg_img_path())
-    assert os.path.isfile(qc_params.abs_overlay_img_path())
+    assert os.path.isfile(qc_report.abs_bkg_img_path())
+    assert os.path.isfile(qc_report.abs_overlay_img_path())
 
 
 def test_propseg(t2_image, t2_seg_image, tmp_path):
-    qc_params = qc.Params(t2_image.absolutepath, 'sct_propseg', ['-a'], 'Axial', str(tmp_path))
-    qc_report = qc.QcReport(qc_params)
+    qc_report = qc.QcReport(t2_image.absolutepath, 'sct_propseg', ['-a'], 'Axial', str(tmp_path))
 
     qc.QcImage(
         qc_report=qc_report,
         interpolation='none',
         action_list=[qc.QcImage.listed_seg],
-        process=qc_params.command,
+        process=qc_report.command,
     ).layout(
         qcslice_layout=lambda qcslice: qcslice.mosaic(),
         qcslice=qcslice.Axial([t2_image, t2_seg_image]),
     )
 
-    assert os.path.isfile(qc_params.abs_bkg_img_path())
-    assert os.path.isfile(qc_params.abs_overlay_img_path())
-    assert os.path.isfile(qc_params.qc_results)
+    assert os.path.isfile(qc_report.abs_bkg_img_path())
+    assert os.path.isfile(qc_report.abs_overlay_img_path())
+    assert os.path.isfile(qc_report.qc_results)

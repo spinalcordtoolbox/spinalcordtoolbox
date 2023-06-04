@@ -230,7 +230,7 @@ class QcImage:
         self.aspect_img, self.aspect_mask = qcslice.aspect()[:2]
 
         self.qc_report.make_content_path()
-        logger.info('QcImage: layout with %s slice', self.qc_report.qc_params.plane)
+        logger.info('QcImage: layout with %s slice', self.qc_report.plane)
 
         if self.process in ['sct_fmri_moco', 'sct_dmri_moco']:
             [images_after_moco, images_before_moco], centermass = qcslice_layout(qcslice)
@@ -238,7 +238,7 @@ class QcImage:
             self._make_QC_image_for_4d_volumes(images_after_moco, images_before_moco)
         else:
             img, *mask = qcslice_layout(qcslice)
-            self._make_QC_image_for_3d_volumes(img, mask, plane=self.qc_report.qc_params.plane)
+            self._make_QC_image_for_3d_volumes(img, mask, plane=self.qc_report.plane)
 
     def _make_QC_image_for_3d_volumes(self, img, mask, plane):
         """
@@ -271,8 +271,8 @@ class QcImage:
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-        logger.info(self.qc_report.qc_params.abs_bkg_img_path())
-        self._save(fig, self.qc_report.qc_params.abs_bkg_img_path(), dpi=self.qc_report.qc_params.dpi)
+        logger.info(self.qc_report.abs_bkg_img_path())
+        self._save(fig, self.qc_report.abs_bkg_img_path(), dpi=self.qc_report.dpi)
 
         fig = Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
@@ -284,7 +284,7 @@ class QcImage:
                 mask[i] = self._func_stretch_contrast(mask[i])
             ax = fig.add_axes((0, 0, 1, 1), label=str(i))
             action(self, mask[i], ax)
-        self._save(fig, self.qc_report.qc_params.abs_overlay_img_path(), dpi=self.qc_report.qc_params.dpi)
+        self._save(fig, self.qc_report.abs_overlay_img_path(), dpi=self.qc_report.dpi)
 
         self.qc_report.update_description_file(img.shape)
 
@@ -306,7 +306,7 @@ class QcImage:
         self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig)
         self._generate_and_save_gif(images_before_moco, images_after_moco, size_fig, is_mask=True)
 
-        w, h = (self.qc_report.qc_params.dpi * size_fig[0], self.qc_report.qc_params.dpi * size_fig[1])
+        w, h = (self.qc_report.dpi * size_fig[0], self.qc_report.dpi * size_fig[1])
         self.qc_report.update_description_file((w, h))
 
     def _func_stretch_contrast(self, img):
@@ -353,7 +353,7 @@ class QcImage:
         :param fig: MPL figure handler
         :return:
         """
-        if self.qc_report.qc_params.plane == 'Axial':
+        if self.qc_report.plane == 'Axial':
             # If mosaic of axial slices, display orientation labels
             text_a = ax.text(12, 6, 'A', color='yellow', size=4)
             text_p = ax.text(12, 28, 'P', color='yellow', size=4)
@@ -419,15 +419,15 @@ class QcImage:
         ani = FuncAnimation(fig, update_figure, frames=len(top_images))
 
         if is_mask:
-            gif_out_path = self.qc_report.qc_params.abs_overlay_img_path()
+            gif_out_path = self.qc_report.abs_overlay_img_path()
         else:
-            gif_out_path = self.qc_report.qc_params.abs_bkg_img_path()
+            gif_out_path = self.qc_report.abs_bkg_img_path()
 
         if self._fps is None:
             self._fps = 3
         writer = PillowWriter(self._fps)
         logger.info('Saving gif %s', gif_out_path)
-        ani.save(gif_out_path, writer=writer, dpi=self.qc_report.qc_params.dpi)
+        ani.save(gif_out_path, writer=writer, dpi=self.qc_report.dpi)
 
     def _save(self, fig, img_path, format='png', bbox_inches='tight', pad_inches=0.00, dpi=300):
         """
@@ -449,13 +449,14 @@ class QcImage:
                     dpi=dpi)
 
 
-class Params:
-    """Parses and stores the variables that will be included into the QC details
+class QcReport:
+    """This class generates the quality control report.
+
+    It will also setup the folder structure so the report generator only needs to fetch the appropriate files.
     """
 
     def __init__(self, input_file, command, args, plane, path_qc, dpi=300, dataset=None, subject=None):
         """
-
         :param input_file: str: the input nifti file name
         :param command: str: command name
         :param args: str: the command's arguments
@@ -503,28 +504,13 @@ class Params:
     def abs_overlay_img_path(self):
         return os.path.join(self.root_folder, self.overlay_img_path)
 
-
-class QcReport:
-    """This class generates the quality control report.
-
-    It will also setup the folder structure so the report generator only needs to fetch the appropriate files.
-    """
-
-    def __init__(self, qc_params):
-        """
-        Parameters
-
-        :param qc_params: arguments of the "-param-qc" option in Terminal
-        """
-        self.qc_params = qc_params
-
     def make_content_path(self):
         """Creates the whole directory to contain the QC report
 
         :return: return "root folder of the report" and the "furthest folder path" containing the images
         """
         # make a new or update Qc directory
-        target_img_folder = os.path.dirname(self.qc_params.abs_bkg_img_path())
+        target_img_folder = os.path.dirname(self.abs_bkg_img_path())
         os.makedirs(target_img_folder, exist_ok=True)
 
     def update_description_file(self, dimension):
@@ -532,7 +518,7 @@ class QcReport:
 
         :param: dimension 2-tuple, the dimension of the image frame (w, h)
         """
-        dest_path = self.qc_params.root_folder
+        dest_path = self.root_folder
         html_path = os.path.join(dest_path, 'index.html')
         # Make sure the file exists before trying to open it in 'r+' mode
         open(html_path, 'a').close()
@@ -547,30 +533,30 @@ class QcReport:
 
         output = {
             'python': sys.executable,
-            'cwd': self.qc_params.cwd,
-            'cmdline': "{} {}".format(self.qc_params.command, self.qc_params.args),
-            'command': self.qc_params.command,
-            'sct_version': self.qc_params.sct_version,
-            'dataset': self.qc_params.dataset,
-            'subject': self.qc_params.subject,
-            'contrast': self.qc_params.contrast,
-            'fname_in': self.qc_params.fname_in,
-            'orientation': self.qc_params.plane,
-            'background_img': self.qc_params.bkg_img_path,
-            'overlay_img': self.qc_params.overlay_img_path,
+            'cwd': self.cwd,
+            'cmdline': "{} {}".format(self.command, self.args),
+            'command': self.command,
+            'sct_version': self.sct_version,
+            'dataset': self.dataset,
+            'subject': self.subject,
+            'contrast': self.contrast,
+            'fname_in': self.fname_in,
+            'orientation': self.plane,
+            'background_img': self.bkg_img_path,
+            'overlay_img': self.overlay_img_path,
             'dimension': '%dx%d' % dimension,
             'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'qc': ""
         }
-        logger.debug('Description file: %s', self.qc_params.qc_results)
+        logger.debug('Description file: %s', self.qc_results)
         # results = []
         # Create path to store json files
-        path_json, _ = os.path.split(self.qc_params.qc_results)
+        path_json, _ = os.path.split(self.qc_results)
         if not os.path.exists(path_json):
             os.makedirs(path_json, exist_ok=True)
 
         # Create json file for specific QC entry
-        with open(self.qc_params.qc_results, 'w+') as qc_file:
+        with open(self.qc_results, 'w+') as qc_file:
             json.dump(output, qc_file, indent=1)
 
         # Append entry to existing HTML file
@@ -729,8 +715,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     else:
         raise ValueError("Unrecognized process: {}".format(process))
 
-    qc_params = Params(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
-    qc_report = QcReport(qc_params)
+    qc_report = QcReport(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
 
     QcImage(
         qc_report=qc_report,
@@ -744,5 +729,5 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         qcslice=qcslice,
     )
 
-    logger.info('Successfully generated the QC results in %s', qc_params.qc_results)
+    logger.info('Successfully generated the QC results in %s', qc_report.qc_results)
     display_open(file=os.path.join(path_qc, "index.html"), message="To see the results in a browser")
