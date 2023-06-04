@@ -488,7 +488,7 @@ class QcReport:
         self.args = args
         self.plane = plane
         self.dpi = dpi
-        self.root_folder = path_qc
+        self.path_qc = path_qc
         self.mod_date = datetime.datetime.strftime(datetime.datetime.now(), '%Y_%m_%d_%H%M%S.%f')
         self.qc_results = os.path.join(path_qc, '_json', f'qc_{self.mod_date}.json')
         if command in ['sct_fmri_moco', 'sct_dmri_moco']:
@@ -499,10 +499,10 @@ class QcReport:
         self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, f"overlay_img.{ext}")
 
     def abs_bkg_img_path(self):
-        return os.path.join(self.root_folder, self.bkg_img_path)
+        return os.path.join(self.path_qc, self.bkg_img_path)
 
     def abs_overlay_img_path(self):
-        return os.path.join(self.root_folder, self.overlay_img_path)
+        return os.path.join(self.path_qc, self.overlay_img_path)
 
     def make_content_path(self):
         """Creates the whole directory to contain the QC report
@@ -518,8 +518,8 @@ class QcReport:
 
         :param: dimension 2-tuple, the dimension of the image frame (w, h)
         """
-        dest_path = self.root_folder
-        html_path = os.path.join(dest_path, 'index.html')
+        path_qc = self.path_qc
+        html_path = os.path.join(path_qc, 'index.html')
         # Make sure the file exists before trying to open it in 'r+' mode
         open(html_path, 'a').close()
         # NB: We use 'r+' because it allows us to open an existing file for locking *without* immediately truncating the
@@ -571,12 +571,12 @@ class QcReport:
 
         for path in ['css', 'js', 'imgs', 'fonts']:
             src_path = os.path.join(assets_path, '_assets', path)
-            dest_full_path = os.path.join(dest_path, '_assets', path)
-            if not os.path.exists(dest_full_path):
-                os.makedirs(dest_full_path, exist_ok=True)
+            dest_path = os.path.join(path_qc, '_assets', path)
+            if not os.path.exists(dest_path):
+                os.makedirs(dest_path, exist_ok=True)
             for file_ in os.listdir(src_path):
-                if not os.path.isfile(os.path.join(dest_full_path, file_)):
-                    copy(os.path.join(src_path, file_), dest_full_path)
+                if not os.path.isfile(os.path.join(dest_path, file_)):
+                    copy(os.path.join(src_path, file_), dest_path)
 
         dest_file.flush()
         portalocker.unlock(dest_file)
