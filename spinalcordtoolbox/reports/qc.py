@@ -535,7 +535,7 @@ class QcReport:
             'subject': self.subject,
             'contrast': self.contrast,
             'fname_in': self.fname_in,
-            'orientation': self.plane,
+            'plane': self.plane,
             'background_img': self.bkg_img_path,
             'overlay_img': self.overlay_img_path,
             'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
