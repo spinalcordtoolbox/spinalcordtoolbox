@@ -1,3 +1,5 @@
+# pytest unit tests for sct_flatten_sagittal
+
 import pytest
 import logging
 

@@ -1,16 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Create mask along z direction.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad
-# Modified: 2014-10-11
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
-
+# License: see the file LICENSE
 
 # TODO: scale size in mm.
 

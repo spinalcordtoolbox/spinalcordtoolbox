@@ -1,5 +1,9 @@
-# Tools for motion correction (moco)
-# Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
+"""
+Tools for motion correction (moco)
+
+Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: Inform user if soft mask is used
 # TODO: no need to pass absolute image path-- makes it difficult to read

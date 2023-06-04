@@ -1,6 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.centerline
+
 import itertools
 from datetime import datetime
 

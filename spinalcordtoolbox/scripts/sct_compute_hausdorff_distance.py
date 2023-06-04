@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 #
-# Thinning with the Zhang-Suen algorithm (1984) --> code taken from  https://github.com/linbojin/Skeletonization-by-Zhang-Suen-Thinning-Algorithm
+# Thinning with the Zhang-Suen algorithm (1984) --> code taken from:
+# https://github.com/linbojin/Skeletonization-by-Zhang-Suen-Thinning-Algorithm
 # Computation of the distances between two skeleton
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Sara Dupont
-# CREATED: 2015-07-15
 #
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import sys
 import os

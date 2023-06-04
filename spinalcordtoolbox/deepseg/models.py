@@ -1,6 +1,9 @@
 """
 Deals with models for deepseg module. Available models are listed under MODELS.
 Important: model names (onnx or pt files) should have the same name as the enclosing folder.
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
 """
 
 

@@ -1,17 +1,11 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# Calculate b-value.
+# Calculate b-value
 #
 # N.B. SI unit for gyromagnetic ratio is radian per second per tesla, therefore need to multiply by 2pi.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad
-# Modified: 2014-07-10
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
 import math

@@ -1,3 +1,5 @@
+# pytest unit tests for sct_register_multimodal
+
 import os
 
 import pytest

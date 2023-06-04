@@ -1,3 +1,5 @@
+# pytest unit tests for sct_get_centerline
+
 import logging
 import os
 

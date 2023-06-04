@@ -1,4 +1,9 @@
-# Core functions dealing with vertebral labeling
+"""
+Core functions dealing with vertebral labeling
+
+Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: remove i/o as much as possible
 

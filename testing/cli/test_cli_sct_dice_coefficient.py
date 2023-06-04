@@ -1,3 +1,5 @@
+# pytest unit tests for sct_dice_coefficient
+
 import pytest
 import logging
 

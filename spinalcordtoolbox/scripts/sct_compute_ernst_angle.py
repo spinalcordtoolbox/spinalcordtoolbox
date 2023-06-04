@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# All sort of utilities for labels.
+# Function to compute the Ernst Angle
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Sara Dupont
-# Modified: 2015-02-17
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
 from typing import Sequence
@@ -90,9 +84,10 @@ def get_parser():
     optional.add_argument(
         "-b",
         type=float,
-        nargs='*',
+        nargs=2,
         metavar=Metavar.float,
         help='Min/Max range of TR (in ms) separated with space. Only use with -v 2. Example: 500 3500',
+        default=[500, 3500],
         required=False)
     optional.add_argument(
         "-o",
@@ -129,15 +124,10 @@ def main(argv: Sequence[str]):
     # Initialization
     input_t1 = arguments.t1
     input_fname_output = None
-    input_tr_min = 500
-    input_tr_max = 3500
     input_tr = None
     fname_output_file = arguments.o
     if arguments.ofig is not None:
         input_fname_output = arguments.ofig
-    if arguments.b is not None:
-        input_tr_min = arguments.b[0]
-        input_tr_max = arguments.b[1]
     if arguments.tr is not None:
         input_tr = arguments.tr
 
@@ -145,16 +135,20 @@ def main(argv: Sequence[str]):
     if input_tr is not None:
         printv("\nValue of the Ernst Angle with T1=" + str(graph.t1) + "ms and TR=" + str(input_tr) + "ms :", verbose=verbose, type='info')
         printv(str(graph.getErnstAngle(input_tr)))
-        if input_tr > input_tr_max:
-            input_tr_max = input_tr + 500
-        elif input_tr < input_tr_min:
-            input_tr_min = input_tr - 500
         # save text file
         f = open(fname_output_file, 'w')
         f.write(str(graph.getErnstAngle(input_tr)))
         f.close()
 
     if verbose == 2:
+        # The upper and lower bounds of the TR values to use for plotting the Ernst angle curve
+        input_tr_min = arguments.b[0]
+        input_tr_max = arguments.b[1]
+        # If the input TR value is outside the default plotting range, then widen the range
+        if input_tr > input_tr_max:
+            input_tr_max = input_tr + 500
+        elif input_tr < input_tr_min:
+            input_tr_min = 0
         graph.draw(input_tr_min, input_tr_max)
 
 

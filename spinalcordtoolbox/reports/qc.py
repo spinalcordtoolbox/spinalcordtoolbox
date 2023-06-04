@@ -1,3 +1,10 @@
+"""
+Quality Control report generator
+
+Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
+
 import glob
 import sys
 import os

@@ -1,14 +1,9 @@
-#########################################################################################
-#
-# All sort of utilities for labels.
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Cohen-Adad
-# Modified: 2015-02-11
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+Utilities for labels
+
+Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 from typing import Sequence, Tuple

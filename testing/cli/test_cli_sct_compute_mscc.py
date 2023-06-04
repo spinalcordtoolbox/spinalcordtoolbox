@@ -1,3 +1,5 @@
+# pytest unit tests for sct_compute_mscc
+
 import pytest
 import logging
 

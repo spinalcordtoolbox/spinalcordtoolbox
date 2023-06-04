@@ -1,5 +1,9 @@
-# Functions dealing with image cropping
+"""
+Functions dealing with image cropping
 
+Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 import numpy as np

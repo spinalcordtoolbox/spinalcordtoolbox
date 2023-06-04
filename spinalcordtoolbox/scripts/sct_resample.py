@@ -1,21 +1,16 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# Resample data using nibabel.
+# Resample data using nibabel
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad, Sara Dupont
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: add possiblity to resample to destination image
 
 import sys
 from typing import Sequence
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
 import spinalcordtoolbox.resampling
 
 

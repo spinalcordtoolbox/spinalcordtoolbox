@@ -1,3 +1,5 @@
+# pytest unit tests for sct_fmri_compute_tsnr
+
 import pytest
 import logging
 

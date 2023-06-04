@@ -1,17 +1,12 @@
 #!/usr/bin/env python
-##############################################################################
 #
 # Wrapper to processing scripts, which loops across subjects. Data should be
 # organized according to the BIDS structure and the processing script should
 # make use of the some of the environment variables passed here. More details
 # at: https://spine-generic.readthedocs.io/en/latest/
 #
-# ----------------------------------------------------------------------------
 # Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad, Chris Hammill
-#
-# About the license: see the file LICENSE.TXT
-##############################################################################
+# License: see the file LICENSE
 
 import os
 import sys

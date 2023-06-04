@@ -1,3 +1,10 @@
+"""
+Image slice extractors for generating QC reports
+
+Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
+
 # TODO: Replace slice by spinalcordtoolbox.image.Slicer
 
 import abc

@@ -22,13 +22,10 @@
 #  -d   Prevent the (re)-installation of the data/ directory
 #  -b   Prevent the (re)-installation of the SCT binaries files
 #  -c   Prevent checks from being run to validate the installation
-#  -g   Specify git ref (branch, tag, commit SHA) to clone when 'install_sct' is run by itself
 #  -v   Full verbose
 #
-#
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: PO Quirion, J Cohen-Adad, J Carretero
-# License: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 
 ( # | tee install_sct_log.txt
@@ -57,8 +54,7 @@ NONINTERACTIVE=""
 NO_DATA_INSTALL=""
 NO_SCT_BIN_INSTALL=""
 NO_INSTALL_VALIDATION=""
-# CLI option -g: The git ref to use during the git clone (if `install_sct` is run by itself without source files)
-# (Default value: 'master', however this value is updated on stable release branches.)
+# Default value: 'master', however this value is updated on stable release branches.
 SCT_GIT_REF="master"
 
 # ======================================================================================================================
@@ -351,7 +347,7 @@ for arg in "$@"; do
   esac
 done
 
-while getopts ":iydbcg:vh" opt; do
+while getopts ":iydbcvh" opt; do
   case $opt in
   i)
     SCT_INSTALL_TYPE="in-place"
@@ -371,10 +367,6 @@ while getopts ":iydbcg:vh" opt; do
   c)
     echo " no checks will be run (installation will not be validated)"
     NO_INSTALL_VALIDATION="yes"
-    ;;
-  g)
-    echo " if script has been run by itself, git clone will use ref ${OPTARG}"
-    SCT_GIT_REF=${OPTARG}
     ;;
   v)
     echo " Full verbose!"

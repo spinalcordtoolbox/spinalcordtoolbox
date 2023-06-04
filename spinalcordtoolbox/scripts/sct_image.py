@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-##############################################################################
 #
 # Perform operations on images
 #
-# ----------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad, Sara Dupont
-#
-# About the license: see the file LICENSE.TXT
-##############################################################################
+# License: see the file LICENSE
 
 import os
 import sys

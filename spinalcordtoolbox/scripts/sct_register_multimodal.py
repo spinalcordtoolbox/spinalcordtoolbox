@@ -1,16 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
+#
 # Register a volume (e.g., EPI from fMRI or DTI scan) to an anatomical image.
 #
-# See Usage() below for more information.
-#
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-# Modified: 2014-06-03
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: if user specified -param, then ignore the default paramreg
 # TODO: check syn with shrink=4

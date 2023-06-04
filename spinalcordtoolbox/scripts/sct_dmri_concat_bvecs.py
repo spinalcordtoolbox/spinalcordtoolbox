@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Concatenate bvecs files in time.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Simon LEVY
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
 from typing import Sequence

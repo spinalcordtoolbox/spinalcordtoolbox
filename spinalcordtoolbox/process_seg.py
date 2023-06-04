@@ -1,4 +1,9 @@
-# Functions processing segmentation data
+"""
+Functions processing segmentation data
+
+Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import math
 import platform

@@ -1,3 +1,5 @@
+# pytest unit tests for sct_extract_metric
+
 import numpy as np
 
 import pytest
