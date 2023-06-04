@@ -270,8 +270,8 @@ class QcImage:
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-        logger.info(self.qc_report.abs_bkg_img_path())
-        self._save(fig, self.qc_report.abs_bkg_img_path(), dpi=self.qc_report.dpi)
+        logger.info(self.qc_report.abs_background_img_path())
+        self._save(fig, self.qc_report.abs_background_img_path(), dpi=self.qc_report.dpi)
 
         fig = Figure()
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
@@ -419,7 +419,7 @@ class QcImage:
         if is_mask:
             gif_out_path = self.qc_report.abs_overlay_img_path()
         else:
-            gif_out_path = self.qc_report.abs_bkg_img_path()
+            gif_out_path = self.qc_report.abs_background_img_path()
 
         if self._fps is None:
             self._fps = 3
@@ -493,11 +493,11 @@ class QcReport:
             ext = "gif"
         else:
             ext = "png"
-        self.bkg_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, f"bkg_img.{ext}")
+        self.background_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, f"background_img.{ext}")
         self.overlay_img_path = os.path.join(dataset, subject, contrast, command, self.mod_date, f"overlay_img.{ext}")
 
-    def abs_bkg_img_path(self):
-        return os.path.join(self.path_qc, self.bkg_img_path)
+    def abs_background_img_path(self):
+        return os.path.join(self.path_qc, self.background_img_path)
 
     def abs_overlay_img_path(self):
         return os.path.join(self.path_qc, self.overlay_img_path)
@@ -508,7 +508,7 @@ class QcReport:
         :return: return "root folder of the report" and the "furthest folder path" containing the images
         """
         # make a new or update Qc directory
-        target_img_folder = os.path.dirname(self.abs_bkg_img_path())
+        target_img_folder = os.path.dirname(self.abs_background_img_path())
         os.makedirs(target_img_folder, exist_ok=True)
 
     def update_description_file(self):
@@ -536,7 +536,7 @@ class QcReport:
             'contrast': self.contrast,
             'fname_in': self.fname_in,
             'plane': self.plane,
-            'background_img': self.bkg_img_path,
+            'background_img': self.background_img_path,
             'overlay_img': self.overlay_img_path,
             'moddate': datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             'qc': ""

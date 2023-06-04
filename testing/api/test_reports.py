@@ -99,7 +99,7 @@ def test_label_vertebrae(t2_image, t2_seg_image, tmp_path):
         qcslice=qcslice.Sagittal([t2_image, t2_seg_image]),
     )
 
-    assert os.path.isfile(qc_report.abs_bkg_img_path())
+    assert os.path.isfile(qc_report.abs_background_img_path())
     assert os.path.isfile(qc_report.abs_overlay_img_path())
 
 
@@ -116,6 +116,6 @@ def test_propseg(t2_image, t2_seg_image, tmp_path):
         qcslice=qcslice.Axial([t2_image, t2_seg_image]),
     )
 
-    assert os.path.isfile(qc_report.abs_bkg_img_path())
+    assert os.path.isfile(qc_report.abs_background_img_path())
     assert os.path.isfile(qc_report.abs_overlay_img_path())
     assert os.path.isfile(qc_report.qc_results)
