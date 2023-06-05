@@ -66,12 +66,22 @@ def test_sct_compute_compression_check_missing_input_segmentation(tmp_path, dumm
     """ Run sct_compute_compression when missing -i"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
-        sct_compute_compression.main(argv=['-l', dummy_3d_compression_label, '-vertfile', dummy_3d_vert_label, '-o', filename])
+        sct_compute_compression.main(argv=['-l', dummy_3d_compression_label, '-vertfile', dummy_3d_vert_label,
+                                           '-o', filename, '-normalize-hc',  '1'])
         assert e.value.code == 2
 
 
 def test_sct_compute_compression_check_missing_input_l(tmp_path, dummy_3d_mask_nib, dummy_3d_vert_label):
     """ Run sct_compute_mscc when missing -l"""
+    filename = str(tmp_path / 'tmp_file_out.csv')
+    with pytest.raises(SystemExit) as e:
+        sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-vertfile', dummy_3d_vert_label, '-o', filename,
+                                           '-normalize-hc',  '1'])
+        assert e.value.code == 2
+
+
+def test_sct_compute_compression_check_missing_input_normalize_hc(tmp_path, dummy_3d_mask_nib, dummy_3d_vert_label):
+    """ Run sct_compute_mscc when missing -normalize-hc"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
         sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-vertfile', dummy_3d_vert_label, '-o', filename])
@@ -83,7 +93,7 @@ def test_sct_compute_compression_check_wrong_sex(tmp_path, dummy_3d_mask_nib, du
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
         sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label, '-vertfile', dummy_3d_vert_label,
-                                           '-sex', 'J', '-o', filename])
+                                           '-sex', 'J', '-o', filename, '-normalize-hc',  '1'])
         assert e.value.code == 2
 
 
@@ -92,7 +102,7 @@ def test_sct_compute_compression_check_wrong_age(tmp_path, dummy_3d_mask_nib, du
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
         sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label, '-vertfile', dummy_3d_vert_label,
-                                           '-age', '20', '-o', filename])
+                                           '-age', '20', '-o', filename, '-normalize-hc',  '1'])
         assert e.value.code == 2
 
 
@@ -101,15 +111,15 @@ def test_sct_compute_compression_check_wrong_metric(tmp_path, dummy_3d_mask_nib,
     filename = str(tmp_path / 'tmp_file_out.csv')
     with pytest.raises(SystemExit) as e:
         sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label, '-vertfile', dummy_3d_vert_label,
-                                           '-metric', 'MEAN', '20', '-o', filename])
+                                           '-metric', 'MEAN', '20', '-o', filename, '-normalize-hc',  '0'])
         assert e.value.code == 2
 
 
 def test_sct_compute_compression_no_normalization(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
-    """ Run sct_compute_compression without normalization (-i-PAM50)"""
+    """ Run sct_compute_compression without normalization to a database of healthy controls"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label, '-vertfile', dummy_3d_vert_label,
-                                       '-normalize',  '0', '-o', filename])
+                                       '-normalize-hc',  '0', '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
@@ -122,7 +132,7 @@ def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compressi
     """ Run sct_compute_compression and check mscc and normalized mscc"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label,
-                                       '-vertfile', dummy_3d_vert_label, '-o', filename])
+                                       '-vertfile', dummy_3d_vert_label, '-normalize-hc',  '1', '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
@@ -135,7 +145,8 @@ def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_mask_nib, dummy_3d_com
     """ Run sct_compute_compression and check mscc and normalized mscc"""
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label,
-                                       '-vertfile', dummy_3d_vert_label, '-sex', 'F', '-o', filename])
+                                       '-vertfile', dummy_3d_vert_label, '-normalize-hc',  '1', '-sex', 'F',
+                                       '-o', filename])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
