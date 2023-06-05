@@ -42,7 +42,7 @@ def get_parser():
                     'Where mi: metric at the compression level, ma: metric above the compression level, mb: metric '
                     'below the compression level.\n'
                     '\n'
-                    'Additionally, if the "-normalize" flag is used, metrics are normalized using a database built '
+                    'Additionally, if the "-normalize-hc" flag is used, metrics are normalized using a database built '
                     'from healthy control subjects. This database uses the PAM50 template as an anatomical reference '
                     'system.\n'
                     '\n'
@@ -85,15 +85,14 @@ def get_parser():
         default='diameter_AP',
         choices=['diameter_AP', 'area', 'diameter_RL', 'eccentricity', 'solidity'],
     )
-    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
-    optional.add_argument(
-        '-normalize',
+    mandatory.add_argument(
+        '-normalize-hc',
         metavar=Metavar.int,
         type=int,
         choices=[0, 1],
-        default=1,  # Do we want 1 as default?
-        help='Set to 1 to normalize the metrics using a database of healthy controls. '
+        help='Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize.'
     )
+    optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
         '-extent',
         type=float,
@@ -582,7 +581,7 @@ def main(argv: Sequence[str]):
 
     # Step 2: Get normalization metrics and slices (using PAM50 and reference dataset)
     # -----------------------------------------------------------
-    if arguments.normalize:
+    if arguments.normalize_hc:
         # Select healthy controls based on sex and/or age range
         if sex or age:
             list_HC = select_HC(fname_partcipants, sex, age)
@@ -626,7 +625,7 @@ def main(argv: Sequence[str]):
         printv(f'\nCompression #{idx} at level {level}', verbose=verbose, type='info')
         # Get metric of patient with compression
         slice_avg = list(compressed_levels_dict[idx].values())[0]
-        if arguments.normalize:
+        if arguments.normalize_hc:
             metrics_patient = average_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, slice_avg)
             # Get metrics of healthy controls
             metrics_HC = average_metric(df_avg_HC, metric, z_range_above, z_range_below, slice_avg)
