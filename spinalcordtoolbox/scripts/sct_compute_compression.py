@@ -108,25 +108,19 @@ def get_parser():
         help='Distance (in mm) in the superior-inferior direction from the compression to average healthy slices.'
     )
     optional.add_argument(
-        '-file-participants',
-        metavar=Metavar.file,
-        default='participants.tsv',
-        help='participants.tsv file of healthy controls. Use this flag in combination with the "-sex" and "-age" flags.'
-    )
-    optional.add_argument(
         '-sex',
         type=str,
         choices=['F', 'M'],
-        help='Sex of healthy subject to use for the normalization. Requires the flag "-file-participants".'
-        ' By default, both sexes are used.'
+        help='Sex of healthy subject to use for the normalization. By default, both sexes are used. '
+             'Set the "-normalize-hc 1" to use this flag.'
     )
     optional.add_argument(
         '-age',
         type=int,
         nargs=2,
         metavar="[0 100]",
-        help='Age range of healthy subjects to use for the normalization. Requires the flag "-file-participants". '
-        'Example: "-age 60 80". By default, all ages are considered.'
+        help='Age range of healthy subjects to use for the normalization. Example: "-age 60 80". By default, all ages '
+             'are considered. Set the "-normalize-hc 1" to use this flag.'
     )
     optional.add_argument(
         '-o',
@@ -557,11 +551,15 @@ def main(argv: Sequence[str]):
     if not os.path.isdir(path_ref):
         raise FileNotFoundError(f"Directory with normalized PAM50 metrics {path_ref} does not exist.\n"
                                 f"You can download it using 'sct_download_data -d PAM50_normalized_metrics'.")
+
+    # Print warning if sex or age are specified without normalized-hc
+    if sex and not arguments.normalize_hc:
+        logger.warning("The 'sex' flag requires the '-normalize-hc 1'.")
+    if age and not arguments.normalize_hc:
+        logger.warning("The 'age' flag requires the '-normalize-hc 1'.")
+
     if sex or age:
-        if not os.path.isfile(get_absolute_path(os.path.join(path_ref, arguments.file_participants))):
-            raise FileNotFoundError('participants.tsv file must exists to select sex or age.')
-        else:
-            fname_partcipants = get_absolute_path(os.path.join(path_ref, arguments.file_participants))
+        fname_partcipants = get_absolute_path(os.path.join(path_ref, 'participants.tsv'))
     if age:
         age.sort()
         if any(n < 0 for n in age):
