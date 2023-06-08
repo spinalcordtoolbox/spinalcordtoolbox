@@ -63,7 +63,7 @@ class Slice(object):
                 unique, counts = np.unique(img.data, return_counts=True)
                 unique, counts = unique[np.argsort(counts)[::-1]], counts[np.argsort(counts)[::-1]]  # Sort by counts
                 binary_most_common = set(unique[0:2].astype(float)) == {0.0, 1.0}
-                binary_percentage = ((counts[0] + counts[1]) / np.sum(counts))
+                binary_percentage = np.sum(counts[0:2]) / np.sum(counts)
                 if binary_most_common and binary_percentage > 0.99:
                     # If a segmentation, use linear interpolation and apply thresholding
                     type_img = 'seg'
