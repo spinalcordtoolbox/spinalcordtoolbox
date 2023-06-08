@@ -2,7 +2,7 @@
 #
 # Compute maximum spinal cord compression using AP diameter or other morphometrics.
 #
-# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
+# Copyright (c) 2023 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
 
 # TODO: maybe create an API or move some functions
