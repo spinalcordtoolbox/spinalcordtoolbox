@@ -95,8 +95,8 @@ $(document).ready(function(){
     var item = list[index];
     if(!$(this)[0].innerHTML.includes("<th")){
     selected_row = $(this)[0].innerText;
-    $("#sprite-img").attr("src", item.background_img).removeClass().addClass(item.orientation);
-    $("#overlay-img").attr("src", item.overlay_img).removeClass().addClass(item.orientation);
+    $("#background-img").attr("src", item.background_img).removeClass().addClass(item.plane);
+    $("#overlay-img").attr("src", item.overlay_img).removeClass().addClass(item.plane);
     document.getElementById("cmdLine").innerHTML = "<b>Command:</b> " + item.cmdline;
     document.getElementById("sctVer").innerHTML = "<b>SCT version:</b> " + item.sct_version;
     $(this).addClass('active').siblings().removeClass('active');
