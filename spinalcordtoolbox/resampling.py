@@ -44,7 +44,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
     if type(image) == nib.nifti1.Nifti1Image:
         img = image
     elif type(image) == Image:
-        img = nib.nifti1.Nifti1Image(image.data, image.hdr.get_best_affine())
+        img = nib.nifti1.Nifti1Image(image.data, image.hdr.get_best_affine(), image.hdr)
     else:
         raise TypeError(f'Invalid image type: {type(image)}')
 
