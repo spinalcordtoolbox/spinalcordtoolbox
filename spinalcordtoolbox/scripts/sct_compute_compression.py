@@ -246,8 +246,6 @@ def average_hc(ref_folder, metric, list_HC):
     :param list_HC: list: List of healthy controls to include
     :return df:
     """
-    # Initialize empty dataframe
-    df = pd.DataFrame()
     # Create empty dict to put dataframe of each healthy control
     d = {}
     # Iterator to count number of healthy subjects
