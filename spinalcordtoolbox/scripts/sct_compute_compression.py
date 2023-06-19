@@ -156,7 +156,7 @@ def get_slice_thickness(img):
     return img.dim[6]
 
 
-def get_compressed_slice(img, verbose):
+def get_compressed_slice(img):
     """
     Get all the compression labels (voxels of value: '1') that are contained in the input image.
     :param img: Image: source image
@@ -576,7 +576,7 @@ def main(argv: Sequence[str]):
     # Fetch metrics of subject
     df_metrics = pd.read_csv(fname_metrics).astype({metric: float})
     # Get vertebral level corresponding to the slice with the compression
-    slice_compressed = get_compressed_slice(img_labels, verbose)
+    slice_compressed = get_compressed_slice(img_labels)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
 
     # Step 2: Get normalization metrics and slices (using PAM50 and reference dataset)
