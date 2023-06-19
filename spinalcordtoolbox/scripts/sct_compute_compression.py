@@ -554,9 +554,9 @@ def main(argv: Sequence[str]):
 
     # Print warning if sex or age are specified without normalized-hc
     if sex and not arguments.normalize_hc:
-        logger.warning("The 'sex' flag requires the '-normalize-hc 1'.")
+        parser.error("The 'sex' flag requires '-normalize-hc 1'.")
     if age and not arguments.normalize_hc:
-        logger.warning("The 'age' flag requires the '-normalize-hc 1'.")
+        parser.error("The 'age' flag requires '-normalize-hc 1'.")
 
     if sex or age:
         fname_partcipants = get_absolute_path(os.path.join(path_ref, 'participants.tsv'))
