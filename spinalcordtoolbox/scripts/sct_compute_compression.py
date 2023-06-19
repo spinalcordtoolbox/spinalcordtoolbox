@@ -548,7 +548,7 @@ def main(argv: Sequence[str]):
                          f"Please verify that your compression labels and vertebral labels were done in the same space as your input segmentation.")
     path_ref = os.path.join(__data_dir__, 'PAM50_normalized_metrics')
     # Check if path_ref with normalized metrics exists
-    if not os.path.isdir(path_ref):
+    if arguments.normalize_hc and not os.path.isdir(path_ref):
         raise FileNotFoundError(f"Directory with normalized PAM50 metrics {path_ref} does not exist.\n"
                                 f"You can download it using 'sct_download_data -d PAM50_normalized_metrics'.")
 
