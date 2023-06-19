@@ -54,10 +54,6 @@ def dummy_3d_mask_nib():
 def test_sct_compute_compression_value_against_groundtruth():
     """Run the CLI script and verify that computed mscc value is equivalent to known ground truth value."""
     di, da, db = 6.85, 7.65, 7.02
-    # FIXME: The results of "sct_compute_mscc" are not actually verified. Instead, the "mscc" function is called,
-    #        and THOSE results are verified instead.
-    # This was copied as-is from the existing 'sct_testing' test, but should be fixed at a later date.
-    # sct_compute_compression.main(argv=['-di', str(di), '-da', str(da), '-db', str(db)])
     mscc = sct_compute_compression.metric_ratio(mi=di, ma=da, mb=db)
     assert mscc == pytest.approx(6.612133606, abs=1e-4)
 
