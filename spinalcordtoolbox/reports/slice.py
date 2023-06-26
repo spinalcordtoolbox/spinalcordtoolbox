@@ -59,7 +59,7 @@ class Slice(object):
             if p_resample:
                 # Check if image is a segmentation (binary or soft) by making sure:
                 # - 0/1 are the two most common voxel values
-                # - 0/1 account for >99% of voxels (to allow for some soft voxels)
+                # - 0/1 account for >95% of voxels (to allow for some soft voxels)
                 unique, counts = np.unique(img.data, return_counts=True)
                 unique, counts = unique[np.argsort(counts)[::-1]], counts[np.argsort(counts)[::-1]]  # Sort by counts
                 binary_most_common = set(unique[0:2].astype(float)) == {0.0, 1.0}
