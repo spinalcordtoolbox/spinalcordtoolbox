@@ -625,11 +625,11 @@ fi
 
 # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927)
 if [[ $OS == linux ]]; then
-  conda install -y -c conda-forge libstdcxx-ng
+  python/bin/conda install -y -c conda-forge libstdcxx-ng
 fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
-python -m pip install -U "pip!=21.2.*"
+python/envs/venv_sct/bin/python -m pip install -U "pip!=21.2.*"
 
 ## Install the spinalcordtoolbox into the Conda venv
 print info "Installing Python dependencies..."
@@ -645,9 +645,9 @@ fi
 (
   # We use "--ignore-installed" to preserve the version of `certifi` installed into the conda
   # env, which prevents https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3609
-  pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
+  python/envs/venv_sct/bin/pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
   print info "Installing spinalcordtoolbox..." &&
-  pip install -e .
+  python/envs/venv_sct/bin/pip install -e .
 ) ||
   die "Failed running pip install: $?"
 
