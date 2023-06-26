@@ -40,7 +40,7 @@
     text-align: center;
 }
 
-#sprite-img, #overlay-img {
+#background-img, #overlay-img {
     position: absolute;
     top: 0px;
     left: 0px;

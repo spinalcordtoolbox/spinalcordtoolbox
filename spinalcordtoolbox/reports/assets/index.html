@@ -46,7 +46,7 @@
   <script>
     function fetch_image_height()
     {
-      var image_height=document.getElementById('sprite-img').height;
+      var image_height=document.getElementById('background-img').height;
       image_height+=10;
       document.getElementById("mosaic-container").style.marginBottom=image_height+"px";
     }
@@ -135,7 +135,7 @@
           </div>
           <div class="col-md-7">
               <div class="result-body" id="mosaic-container">
-                  <img id="sprite-img" onload="fetch_image_height()"/>
+                  <img id="background-img" onload="fetch_image_height()"/>
                   <img id="overlay-img"/>
               </div>
               <button onclick="toggleOverlay()">Toggle overlay (right arrow)</button>
