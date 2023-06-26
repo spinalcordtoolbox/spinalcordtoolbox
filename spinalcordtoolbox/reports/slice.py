@@ -293,15 +293,14 @@ class Slice(object):
         nii = Nifti1Image(image.data, image.hdr.get_best_affine())
         # If no reference image is provided, resample to specified resolution
         if image_ref is None:
-            slice_type = self.get_name()
-            if slice_type == 'Axial':
-                # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
-                nii_r = resample_nib(nii, new_size=[image.dim[4], p_resample, p_resample], new_size_type='mm',
-                                     interpolation=dict_interp[type_img])
-            elif slice_type == 'Sagittal':
-                # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
-                nii_r = resample_nib(nii, new_size=[p_resample, p_resample, image.dim[6]], new_size_type='mm',
-                                     interpolation=dict_interp[type_img])
+            # Resample each slice to p_resample x p_resample mm (orientation is SAL by convention in QC module)
+            if isinstance(self, Axial):
+                new_size = [image.dim[4], p_resample, p_resample]
+            elif isinstance(self, Sagittal):
+                new_size = [p_resample, p_resample, image.dim[6]]
+            else:
+                raise TypeError(f"Unexpected slice type: {type(self)}")
+            nii_r = resample_nib(nii, new_size=new_size, new_size_type='mm', interpolation=dict_interp[type_img])
 
         # Otherwise, resampling to the space of the reference image
         else:
