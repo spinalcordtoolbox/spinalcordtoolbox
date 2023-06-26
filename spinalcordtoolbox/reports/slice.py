@@ -200,11 +200,6 @@ class Slice(object):
         return A
 
     @abc.abstractmethod
-    def get_name(self):
-        """Get the class name"""
-        return
-
-    @abc.abstractmethod
     def get_slice(self, data, i):
         """Abstract method to obtain a slice of a 3d matrix
 
@@ -327,8 +322,6 @@ class Slice(object):
 
 class Axial(Slice):
     """The axial representation of a slice"""
-    def get_name(self):
-        return Axial.__name__
 
     def get_aspect(self, image):
         return Slice.axial_aspect(image)
@@ -417,9 +410,6 @@ class Axial(Slice):
 
 class Sagittal(Slice):
     """The sagittal representation of a slice"""
-
-    def get_name(self):
-        return Sagittal.__name__
 
     def get_aspect(self, image):
         return Slice.sagittal_aspect(image)
