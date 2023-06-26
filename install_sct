@@ -614,15 +614,6 @@ set +u #disable safeties, for conda is not written to their standard.
 conda activate "$SCT_DIR/$PYTHON_DIR/envs/venv_sct"
 set -u # reactivate safeties
 
-# double-check conda activated (it can be glitchy): https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3029
-print info "Validating that conda environment can be activated..."
-EXPECTED_PYTHON="$(realpath "$(command -v python/envs/venv_sct/bin/python)")"
-ACTUAL_PYTHON="$(realpath "$(command -v python)")"
-if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
-  echo "Error: Activating venv_sct failed to switch Python interpreter to Miniconda. (Incorrect interpreter loaded: $ACTUAL_PYTHON)" >&2
-  exit 1
-fi
-
 # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927)
 if [[ $OS == linux ]]; then
   python/bin/conda install -y -c conda-forge libstdcxx-ng
