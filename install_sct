@@ -596,7 +596,7 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 # create conda environment
 print info "Creating conda environment..."
 # NB: We use an absolute path (-p) rather than a relative name (-n) to better isolate the conda environment
-python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" python=3.8
+python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" python=3.9
 
 # Reapply the touch fix to avoid `pip` connection issues on WSL
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
