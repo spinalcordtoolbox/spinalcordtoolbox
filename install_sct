@@ -623,9 +623,11 @@ if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
   exit 1
 fi
 
-# Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927)
 if [[ $OS == linux ]]; then
+  # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1298616317)
   conda install -y -c conda-forge libstdcxx-ng
+  # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
+  conda install -y -c conda-forge libffi
 fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
