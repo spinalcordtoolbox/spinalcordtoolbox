@@ -599,7 +599,7 @@ set -u # reactivate safeties
 
 # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927)
 if [[ $OS == linux ]]; then
-  python/bin/conda install -y -c conda-forge libstdcxx-ng
+  conda install -y -c conda-forge libstdcxx-ng
 fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
