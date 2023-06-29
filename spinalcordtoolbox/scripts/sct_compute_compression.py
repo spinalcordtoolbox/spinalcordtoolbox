@@ -646,9 +646,11 @@ def main(argv: Sequence[str]):
 
         # Display results
         logger.debug(f'\nmetric_a = {metrics_patient[0]}, metric_b = {metrics_patient[1]}, metric_i = {metrics_patient[2]}')
-        printv(f'\n{metric} ratio norm = {metric_ratio_norm_result}', verbose=verbose, type='info')
-        printv(f'\n{metric} ratio PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
         printv(f'\n{metric} ratio = {metric_ratio_result}', verbose=verbose, type='info')
+        if arguments.normalize_hc:
+            logger.debug(f'\nPAM50: metric_a = {metrics_patient_PAM50[0]}, metric_b = {metrics_patient_PAM50[1]}, metric_i = {metrics_patient_PAM50[2]}')
+            printv(f'\n{metric} ratio norm = {metric_ratio_norm_result}', verbose=verbose, type='info')
+            printv(f'\n{metric} ratio PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
 
     printv(f'\nSaved: {fname_out}')
 
