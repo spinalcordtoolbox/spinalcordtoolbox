@@ -494,7 +494,7 @@ def metric_ratio_norm(metrics_patients, metrics_HC):
     return metric_ratio(ma, mb, mi)
 
 
-def save_csv(fname_out, level, slices, metric, metric_ratio, metric_ratio_norm, filename):
+def save_csv(fname_out, level, slices, metric, metric_ratio, metric_ratio_PAM50, metric_ratio_norm, filename):
     """
     Save .csv file of MSCC results.
     :param fname_out:
@@ -507,12 +507,12 @@ def save_csv(fname_out, level, slices, metric, metric_ratio, metric_ratio_norm, 
     """
     if not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
-            header = ['filename', 'compression_level', 'slice(I->S)', metric + '_ratio', 'normalized_' + metric + '_ratio']
+            header = ['filename', 'compression_level', 'slice(I->S)', metric + '_ratio', metric + '_ratio_PAM50', 'normalized_' + metric + '_ratio']
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
         csv_writer = csv.writer(csvfile, delimiter=',')
-        line = [filename, level, slices, metric_ratio, metric_ratio_norm]
+        line = [filename, level, slices, metric_ratio, metric_ratio_PAM50, metric_ratio_norm]
         csv_writer.writerow(line)
 
 
@@ -627,20 +627,27 @@ def main(argv: Sequence[str]):
         metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
 
         if arguments.normalize_hc:
-            metrics_patient = average_metric(df_metrics_PAM50, metric, z_range_PAM50_above, z_range_PAM50_below, slice_avg)
+            # Compute metric ratio (normalized, PAM50)
+            # NB: This PAM50 dict has the same structure as the regular dict, so it's safe to re-use `idx` here
+            slice_avg_PAM50 = list(compressed_levels_dict_PAM50[idx].values())[0]
+            metrics_patient_PAM50 = average_metric(df_metrics_PAM50, metric, z_range_PAM50_above, z_range_PAM50_below, slice_avg_PAM50)
+            metric_ratio_PAM50_result = metric_ratio(metrics_patient_PAM50[0], metrics_patient_PAM50[1], metrics_patient_PAM50[2])
             # Get metrics of healthy controls
-            metrics_HC = average_metric(df_avg_HC, metric, z_range_PAM50_above, z_range_PAM50_below, slice_avg)
+            metrics_HC = average_metric(df_avg_HC, metric, z_range_PAM50_above, z_range_PAM50_below, slice_avg_PAM50)
             logger.debug(f'\nmetric_a_HC = {metrics_HC[0]}, metric_b_HC = {metrics_HC[1]}, metric_i_HC = {metrics_HC[2]}')
-            # Compute Normalized Ratio
-            metric_ratio_norm_result = metric_ratio_norm(metrics_patient, metrics_HC)
+            # Compute metric ratio (normalized, PAM50 + HC)
+            metric_ratio_norm_result = metric_ratio_norm(metrics_patient_PAM50, metrics_HC)
         else:
+            # If not `normalize_hc`, then skip computing normalized metrics
+            metric_ratio_PAM50_result = None
             metric_ratio_norm_result = None
 
-        save_csv(fname_out, level, slice_compressed[idx], arguments.metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
+        save_csv(fname_out, level, slice_compressed[idx], arguments.metric, metric_ratio_result, metric_ratio_PAM50_result, metric_ratio_norm_result, arguments.i)
 
         # Display results
         logger.debug(f'\nmetric_a = {metrics_patient[0]}, metric_b = {metrics_patient[1]}, metric_i = {metrics_patient[2]}')
         printv(f'\n{metric} ratio norm = {metric_ratio_norm_result}', verbose=verbose, type='info')
+        printv(f'\n{metric} ratio PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
         printv(f'\n{metric} ratio = {metric_ratio_result}', verbose=verbose, type='info')
 
     printv(f'\nSaved: {fname_out}')
