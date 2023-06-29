@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 #
-# Merge b=0 and dMRI data and output appropriate bvecs/bvals files.
+# Merge b=0 and dMRI data and output appropriate bvecs/bvals files
 #
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 
 import sys

@@ -1,3 +1,5 @@
+# pytest unit tests for sct_compute_snr
+
 import numpy as np
 import pytest
 import logging
@@ -26,7 +28,7 @@ def dummy_3d_data(scale_mid_slice=0):
     profile.
     :return:
     """
-    data = np.ones([32, 32, 32], dtype=np.float)
+    data = np.ones([32, 32, 32], dtype=float)
     # Add an object with representative intensity in the middle of the image
     data[9:24, 9:24, 9:24] = SIGNAL_OBJECT
     # Add Gaussian noise with unit variance on two separate images

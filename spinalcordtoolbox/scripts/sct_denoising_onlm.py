@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+#
+# Utility function to denoise images
+#
+# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import sys
 from time import time
@@ -115,9 +120,9 @@ def main(argv: Sequence[str]):
     path, file, ext = extract_fname(file_to_denoise)
 
     img = nib.load(file_to_denoise)
-    hdr_0 = img.get_header()
+    hdr_0 = img.header
 
-    data = img.get_data()
+    data = np.asanyarray(img.dataobj)
 
     if min(data.shape) <= 5:
         printv('One of the image dimensions is <= 5 : reducing the size of the block radius.')

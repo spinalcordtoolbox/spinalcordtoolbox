@@ -1,20 +1,15 @@
-#########################################################################################
-#
-# All sort of utilities for labels.
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Cohen-Adad
-# Modified: 2015-02-11
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+Utilities for labels
+
+Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 from typing import Sequence, Tuple
 
 import numpy as np
-from scipy import ndimage
+from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
@@ -126,7 +121,7 @@ def create_labels_along_segmentation(img: Image, labels: Sequence[Tuple[int, int
             z_rpi = int(np.round(out.dim[2] / 2.0))
 
         # get center of mass of segmentation at given z
-        x, y = ndimage.measurements.center_of_mass(np.array(img.data[:, :, z_rpi]))
+        x, y = center_of_mass(np.array(img.data[:, :, z_rpi]))
 
         # round values to make indices
         x, y = int(np.round(x)), int(np.round(y))

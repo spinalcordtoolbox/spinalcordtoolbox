@@ -1,3 +1,5 @@
+# pytest unit tests for sct_dmri_display_bvecs
+
 import os
 import sys
 import logging

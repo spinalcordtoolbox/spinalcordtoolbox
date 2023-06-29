@@ -1,12 +1,9 @@
-#########################################################################################
-#
-# Module for spinal cord flattening in different planes.
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+Spinal cord flattening in different planes
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 

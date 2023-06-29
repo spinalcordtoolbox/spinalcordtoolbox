@@ -1,12 +1,9 @@
 #!/usr/bin/env python
-
+#
 # Analyse texture
 #
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Charley
-# Modified: 2017-06-22
-#
-# About the license: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 import os
 import sys

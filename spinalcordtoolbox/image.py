@@ -1,12 +1,9 @@
-#########################################################################################
-#
-# SCT Image API
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+SCT Image API
+
+Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: Sort out the use of Image.hdr and Image.header --> they seem to carry duplicated information.
 
@@ -431,7 +428,7 @@ class Image(object):
         self.absolutepath = os.path.abspath(path)
         im_file = nib.load(self.absolutepath, mmap=mmap)
         self.affine = im_file.affine.copy()
-        self.data = im_file.get_data()
+        self.data = np.asanyarray(im_file.dataobj)
         self.hdr = im_file.header.copy()
         if path != self.absolutepath:
             logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
@@ -970,28 +967,17 @@ def get_dimension(im_file, verbose=1):
     :param: im_file: Image or nibabel object
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-    # initialization
-    nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
-    if type(im_file) is nib.nifti1.Nifti1Image:
-        header = im_file.header
-    elif type(im_file) is Image:
-        header = im_file.hdr
-    else:
-        header = None
-        logger.warning("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
-
-    nb_dims = len(header.get_data_shape())
-    if nb_dims == 2:
-        nx, ny = header.get_data_shape()
-        px, py = header.get_zooms()
-    if nb_dims == 3:
-        nx, ny, nz = header.get_data_shape()
-        px, py, pz = header.get_zooms()
-    if nb_dims == 4:
-        nx, ny, nz, nt = header.get_data_shape()
-        px, py, pz, pt = header.get_zooms()
-
-    return nx, ny, nz, nt, px, py, pz, pt
+    if not isinstance(im_file, (nib.nifti1.Nifti1Image, Image)):
+        raise TypeError("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
+    # initializating ndims [nx, ny, nz, nt] and pdims [px, py, pz, pt]
+    ndims = [1, 1, 1, 1]
+    pdims = [1, 1, 1, 1]
+    data_shape = im_file.header.get_data_shape()
+    zooms = im_file.header.get_zooms()
+    for i in range(min(len(data_shape), 4)):
+        ndims[i] = data_shape[i]
+        pdims[i] = zooms[i]
+    return *ndims, *pdims
 
 
 def all_refspace_strings():
@@ -1402,14 +1388,15 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     warp3d = np.zeros([nx, ny, nz, 1, 3])
 
     for iz, fname in enumerate(fname_list):
-        warp2d = nib.load(fname).get_data()
+        img = nib.load(fname)
+        warp2d = np.asanyarray(img.dataobj)
         warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
         warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
         del warp2d
 
     # save new image
     im_dest = nib.load(fname_dest)
-    affine_dest = im_dest.get_affine()
+    affine_dest = im_dest.affine
     im_warp3d = nib.nifti1.Nifti1Image(warp3d, affine_dest)
 
     # set "intent" code to vector, to be interpreted as warping field

@@ -1,10 +1,13 @@
-# Deals with postprocessing on generated segmentation: remove outliers, fill holes, etc.
+"""
+Postprocessing on generated segmentation: removing outliers, filling holes, etc.
 
+Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 import numpy as np
-from scipy.ndimage.measurements import label
-from scipy.ndimage.morphology import binary_fill_holes
+from scipy.ndimage import label, binary_fill_holes
 
 from spinalcordtoolbox.process_seg import compute_shape
 
@@ -33,7 +36,7 @@ def _fill_z_holes(zz_lst, data, z_spaccing):
                 num_interpolation += (idx_z + 1) * slice_ref_end  # Contribution of the top ref slice
 
                 slice_interpolation = num_interpolation * 1. / denom_interpolation
-                slice_interpolation = (slice_interpolation > 0).astype(np.int)
+                slice_interpolation = (slice_interpolation > 0).astype(int)
 
                 data_interpol[:, :, z_hole_cur] = slice_interpolation
 
@@ -127,7 +130,7 @@ def post_processing_volume_wise(im_seg):
     Post processing function to clean the input segmentation: fill holes, remove edge outlier, etc.
     Note: This function is compatible with soft segmentation (i.e. float between 0-1).
     """
-    data_bin = (im_seg.data > 0).astype(np.int)  # will binarize soft segmentation
+    data_bin = (im_seg.data > 0).astype(int)  # will binarize soft segmentation
 
     # Remove blobs
     data_bin = _remove_blobs(data_bin)
@@ -182,4 +185,4 @@ def fill_holes_2d(z_slice):
     :return: int 2d-array: Output segmentation with holes filled
     """
     assert z_slice.dtype == np.dtype('int')
-    return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(np.int)
+    return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(int)

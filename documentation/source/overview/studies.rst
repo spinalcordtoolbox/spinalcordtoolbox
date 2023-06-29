@@ -26,6 +26,18 @@ The following studies have used SCT:
 2023
 ----
 
+-  Tsivaka *et al.* `A second-order and slice-specific linear shimming technique to improve spinal cord fMRI <https://doi.org/10.1016/j.mri.2023.06.012>`_, **Magn. Reson. Imaging** 2023
+-  Mongay-Ochoa *et al.* `Validation of a New Semiautomated Segmentation Pipeline Based on the Spinal Cord Toolbox DeepSeg Algorithm to Estimate the Cervical Canal Area <https://doi.org/10.3174/ajnr.A7899>`_, **AJNR Am. J. Neuroradiol.** 2023
+-  Koch *et al.* `Diffusion-weighted MRI of the spinal cord in cervical spondylotic myelopathy after instrumented fusion <https://doi.org/10.3389%2Ffneur.2023.1172833>`_, **Front Neurol.** 2023
+-  Mahmud *et al.* `Feasibility of spinal cord imaging at 7 T using rosette trajectory with magnetization transfer preparation and compressed sensing <https://doi.org/10.1038/s41598-023-35853-7>`_, **Sci Rep** 2023
+-  Destruel *et al.* `Optimized interferometric encoding of presaturated TurboFLASH B1 mapping for parallel transmission MRI at 7 T: Preliminary application for quantitative T1 mapping in the spinal cord <https://doi.org/10.1002/mrm.29708>`_, **Magn Reson Med.** 2023
+-  Kinany *et al.* `Decoding cerebro-spinal signatures of human behavior: Application to motor sequence learning <https://doi.org/10.1016/j.neuroimage.2023.120174>`_, **Neuroimage** 2023
+-  Oliveira *et al.* `The longitudinal progression of MRI changes in pre-ataxic carriers of SCA3/MJD <https://doi.org/10.1007/s00415-023-11763-6>`_, **J. Neurol.** 2023
+-  Pareto *et al.* `Assessing the Equivalence of Brain-Derived Measures from Two 3D T1-Weighted Acquisitions: One Covering the Brain and One Covering the Brain and Spinal Cord <https://doi.org/10.3174/ajnr.a7843>`_, **AJNR Am. J. Neuroradiol.** 2023
+-  Koning *et al.* `A Comparison of Functional Connectivity in the Human Brainstem and Spinal Cord Associated with Noxious and Innocuous Thermal Stimulation Identified by Means of Functional MRI <https://doi.org/10.3390/brainsci13050777>`_, **Brain Sci.**, 2023
+-  Althobity *et al.* `Multi-parametric MR for detection of pathological changes in CNS of mouse model of multiple sclerosis in vivo <https://doi.org/10.1002/nbm.4964>`_, **NMR Biomed** 2023
+-  Khamaysa *et al.* `Comparison of spinal magnetic resonance imaging and classical clinical factors in predicting motor capacity in amyotrophic lateral sclerosis <https://doi.org/10.1007/s00415-023-11727-w>`_, **J. Neurol.** 2023
+-  Schaefer *et al.* `Could spinal cord oscillation contribute to spinal cord injury in degenerative cervical myelopathy? <https://doi.org/10.1016/j.bas.2023.101743>`_, **Brain and Spine** 2023
 -  Branco *et al.* `Advanced structural magnetic resonance imaging of the spinal cord: Technical aspects and clinical use <https://doi.org/10.1053/j.sult.2023.03.016>`_, **Semin. Ultrasound CT MR** 2023
 -  Camera *et al.* `Shared imaging markers of fatigue across multiple sclerosis, aquaporin-4 antibody neuromyelitis optica spectrum disorder and MOG antibody disease <https://doi.org/10.1093/braincomms/fcad107>`_, **Brain commun.** 2023
 -  Scheuren *et al.* `Combined Neurophysiologic and Neuroimaging Approach to Reveal the Structure-Function Paradox in Cervical Myelopathy <https://doi.org/10.1212/WNL.0000000000012643>`_, **Neurology** 2023

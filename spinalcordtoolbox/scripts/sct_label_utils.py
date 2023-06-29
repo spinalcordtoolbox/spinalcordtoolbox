@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# All sort of utilities for labels.
+# Utilities for labels
 #
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Cohen-Adad
-# Modified: 2015-02-11
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 # TODO: for vert-disc: make it faster! currently the module display-voxel is very long
 #       (esp. when ran on PAM50). We can find an alternative approach by sweeping through

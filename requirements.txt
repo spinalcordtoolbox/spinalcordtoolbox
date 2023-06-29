@@ -29,11 +29,11 @@ portalocker
 psutil
 # pyqt5=5.11.X causes https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3916#discussion_r997435037
 # pyqt5=5.15.X causes https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3925
-# So, we limit the range to 5.12-5.14.
-pyqt5>=5.12.0,<5.15.0
+# Additionally, for versions between 5.12-5.14, the only release to have Python 3.9 wheels is 5.12.3. So, we pin it.
+# See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3367#issuecomment-1533181462
+pyqt5==5.12.3
 pytest
 pytest-cov
-raven
 requests
 requirements-parser
 scipy
@@ -42,8 +42,11 @@ scikit-learn
 xlwt
 tqdm
 transforms3d
-urllib3[secure]
+urllib3
 pytest_console_scripts
 pyyaml
 voxelmorph
 wquantiles
+# XlxsWriter is needed to write `.xlsx` files, since pandas removed support for the `xlwt` engine
+# Source: https://github.com/pandas-dev/pandas/pull/49296
+xlsxwriter

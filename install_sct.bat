@@ -1,5 +1,9 @@
 @echo off
 rem Installation script for SCT on native Windows platforms
+rem
+rem Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
+rem License: see the file LICENSE
+rem
 rem Usage: install_sct.bat <version>
 rem e.g.
 rem        install_sct.bat 5.5
@@ -28,12 +32,8 @@ git --version >nul 2>&1 || (
     goto error
 )
 
-rem Set git ref. If no git ref is specified when calling `install_sct.bat`, use a default instead.
-if [%1]==[] (
-  set git_ref=master
-) else (
-  set git_ref=%1
-)
+rem Default value: 'master', however this value is updated on stable release branches.
+set git_ref=master
 
 rem Check to see if the PWD contains the project source files (using `version.txt` as a proxy for the entire source dir)
 rem If it exists, then we can reliably access source files (`version.txt`, `requirements-freeze.txt`) from the PWD.
@@ -167,7 +167,7 @@ start /wait "" %TMP_DIR%\miniconda.exe /InstallationType=JustMe /AddToPath=0 /Re
 rem Create and activate miniconda environment to install SCT into
 echo:
 echo ### Using Conda to create virtual environment...
-python\Scripts\conda create -y -p python\envs\venv_sct python=3.8 || goto error
+python\Scripts\conda create -y -p python\envs\venv_sct python=3.9 || goto error
 CALL python\Scripts\activate.bat python\envs\venv_sct || goto error
 echo Virtual environment created and activated successfully!
 
@@ -180,9 +180,9 @@ if exist requirements-freeze.txt (
 echo:
 echo ### Installing SCT and its dependencies from %requirements_file%...
 rem Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
-python -m pip install -U "pip^!=21.2.*" || goto error
-pip install -r %requirements_file% || goto error
-pip install -e . || goto error
+python\envs\venv_sct\python -m pip install -U "pip^!=21.2.*" || goto error
+python\envs\venv_sct\Scripts\pip install -r %requirements_file% || goto error
+python\envs\venv_sct\Scripts\pip install -e . || goto error
 
 rem Install external dependencies
 echo:

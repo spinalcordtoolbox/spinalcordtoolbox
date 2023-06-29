@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Function to segment the multiple sclerosis lesions using convolutional neural networks
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Charley Gros
-# Modified: 2018-06-11
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import os
 import sys

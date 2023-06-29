@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.qmri
 
 import numpy as np
@@ -23,7 +21,7 @@ def make_sct_image(data):
     """
     affine = np.eye(4)
     nii = nibabel.nifti1.Nifti1Image(np.array([data, data]), affine)
-    img = Image(nii.get_data(), hdr=nii.header, orientation="LPI", dim=nii.header.get_data_shape())
+    img = Image(np.asanyarray(nii.dataobj), hdr=nii.header, orientation="LPI", dim=nii.header.get_data_shape())
     return img
 
 

@@ -1,3 +1,5 @@
+# pytest unit tests for sct_compute_ernst_angle
+
 import pytest
 import logging
 

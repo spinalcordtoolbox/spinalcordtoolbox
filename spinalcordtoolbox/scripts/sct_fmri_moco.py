@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Motion correction of fMRI data.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Karun Raju, Tanguy Duval, Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
-
+# License: see the file LICENSE
 
 import sys
 import os

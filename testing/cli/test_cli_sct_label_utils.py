@@ -1,3 +1,5 @@
+# pytest unit tests for sct_label_utils
+
 import pytest
 import logging
 

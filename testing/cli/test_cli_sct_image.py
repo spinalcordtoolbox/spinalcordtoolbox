@@ -1,3 +1,5 @@
+# pytest unit tests for sct_image
+
 import logging
 import os
 

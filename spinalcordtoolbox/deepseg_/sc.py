@@ -1,4 +1,9 @@
-# Functions dealing with deepseg_sc
+"""
+API for functions used in the sct_deepseg_sc CLI script
+
+Copyright (c) 2022 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import sys
@@ -6,8 +11,7 @@ import logging
 
 import numpy as np
 from skimage.exposure import rescale_intensity
-from scipy.ndimage.measurements import center_of_mass, label
-from scipy.ndimage import distance_transform_edt
+from scipy.ndimage import distance_transform_edt, center_of_mass, label
 
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.deepseg_.onnx import onnx_inference
@@ -213,7 +217,7 @@ def heatmap(im, model, patch_shape, mean_train, std_train, brain_bool=True):
     data = np.zeros(im_out.data.shape)
 
     x_shape, y_shape = data_im.shape[:2]
-    x_shape_block, y_shape_block = np.ceil(x_shape * 1.0 / patch_shape[0]).astype(np.int), np.int(
+    x_shape_block, y_shape_block = np.ceil(x_shape * 1.0 / patch_shape[0]).astype(int), int(
         y_shape * 1.0 / patch_shape[1])
     x_pad = int(x_shape_block * patch_shape[0] - x_shape)
     if y_shape > patch_shape[1]:
@@ -433,7 +437,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     # Resample image to 0.5mm in plane
     im_image_res = \
-        resampling.resample_nib(im_image, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
+        resampling.resample_nib(im_image, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm',
+                                interpolation='linear', preserve_codes=True)
 
     fname_orient = 'image_in_RPI_res.nii'
     im_image_res.save(fname_orient)
@@ -450,7 +455,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     if ctr_algo == 'file':
         im_ctl = \
-            resampling.resample_nib(im_ctl, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
+            resampling.resample_nib(im_ctl, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm',
+                                    interpolation='linear', preserve_codes=True)
 
     # crop image around the spinal cord centerline
     logger.info("Cropping the image around the spinal cord...")
@@ -510,7 +516,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     # resample to initial resolution
     logger.info("Resampling the segmentation to the native image resolution using linear interpolation...")
-    im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
+    im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear', preserve_codes=True)
 
     if ctr_algo == 'viewer':  # for debugging
         im_labels_viewer.save(add_suffix(fname_orient, '_labels-viewer'))

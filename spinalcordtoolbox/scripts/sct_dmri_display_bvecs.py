@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Display bvecs
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
 from typing import Sequence

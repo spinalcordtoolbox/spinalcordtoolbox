@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
 # pytest unit tests for spinalcordtoolbox.labels
 
 import logging
@@ -28,7 +26,7 @@ def fake_3dimage_sct2():
     shape = (1,2,3)
     """
     i = fake_3dimage2()
-    img = Image(i.get_data(), hdr=i.header,
+    img = Image(np.asanyarray(i.dataobj), hdr=i.header,
                 orientation="RPI",
                 dim=i.header.get_data_shape(),
                 )
@@ -41,7 +39,7 @@ def fake_3dimage_sct():
     shape = (7,8,9)
     """
     i = fake_3dimage()
-    img = Image(i.get_data(), hdr=i.header,
+    img = Image(np.asanyarray(i.dataobj), hdr=i.header,
                 orientation="LPI",
                 dim=i.header.get_data_shape(),
                 )

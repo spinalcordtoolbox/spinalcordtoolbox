@@ -1,8 +1,9 @@
-#  Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-#
-# About the license: see the file LICENSE.TXT
+"""
+Qt dialog for manually segmenting a spinalcord image
 
-""" Qt dialog for manually segmenting a spinalcord image """
+Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 
@@ -51,14 +52,13 @@ class SagittalDialog(base.BaseDialog):
         parent.addLayout(layout)
 
         self.labels = widgets.VertebraeWidget(self, self.params.vertebraes)
-        self.labels.label = self.params.start_vertebrae
+        self.labels.label = self._controller.label = self.params.start_vertebrae
         layout.addWidget(self.labels)
 
         self.sagittal = widgets.SagittalCanvas(self, plot_points=True, annotate=True)
         self.sagittal.title(self.params.subtitle)
         self.sagittal.point_selected_signal.connect(self.on_select_point)
         layout.addWidget(self.sagittal)
-        self.labels.refresh()
         self.sagittal.refresh()
 
     def _init_controls(self, parent):
