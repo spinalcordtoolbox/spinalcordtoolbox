@@ -661,7 +661,7 @@ else
 fi
 
 # Install deep learning models
-python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()'
+python/envs/venv_sct/bin/python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()'
 
 
 # ----------------------------------------------------------------------------------------------------------------------
