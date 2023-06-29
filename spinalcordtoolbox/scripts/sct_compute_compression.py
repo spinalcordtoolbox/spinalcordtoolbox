@@ -603,17 +603,16 @@ def main(argv: Sequence[str]):
 
     # Step 2: Get normalization metrics and slices (using non-compressed subject slices)
     # -----------------------------------------------------------
-    else:
-        # Get spinal cord centerline object to compute the distance
-        # Get max and min index of the segmentation with pmj
-        _, _, Z = (img_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
-        min_z_index, max_z_index = min(Z), max(Z)
-        # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
-        z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
-        # Get centerline object
-        centerline = get_centerline_object(img_seg, verbose=verbose)
-        # Get healthy slices to average for level above and below
-        z_range_centerline_above, z_range_centerline_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
+    # Get spinal cord centerline object to compute the distance
+    # Get max and min index of the segmentation with pmj
+    _, _, Z = (img_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
+    min_z_index, max_z_index = min(Z), max(Z)
+    # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
+    z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
+    # Get centerline object
+    centerline = get_centerline_object(img_seg, verbose=verbose)
+    # Get healthy slices to average for level above and below
+    z_range_centerline_above, z_range_centerline_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
 
     # Step 3. Compute MSCC metrics for each compressed level
     # ------------------------------------------------------
@@ -621,8 +620,12 @@ def main(argv: Sequence[str]):
     for idx in compressed_levels_dict.keys():
         level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
         printv(f'\nCompression #{idx} at level {level}', verbose=verbose, type='info')
-        # Get metric of patient with compression
+
+        # Compute metric ratio (non-normalized)
         slice_avg = list(compressed_levels_dict[idx].values())[0]
+        metrics_patient = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_avg)
+        metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
+
         if arguments.normalize_hc:
             metrics_patient = average_metric(df_metrics_PAM50, metric, z_range_PAM50_above, z_range_PAM50_below, slice_avg)
             # Get metrics of healthy controls
@@ -631,10 +634,8 @@ def main(argv: Sequence[str]):
             # Compute Normalized Ratio
             metric_ratio_norm_result = metric_ratio_norm(metrics_patient, metrics_HC)
         else:
-            metrics_patient = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_avg)
             metric_ratio_norm_result = None
-        # Compute Ratio
-        metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
+
         save_csv(fname_out, level, slice_compressed[idx], arguments.metric, metric_ratio_result, metric_ratio_norm_result, arguments.i)
 
         # Display results
