@@ -53,7 +53,7 @@ Once you have downloaded SCT, open a new Terminal in the location of the downloa
 .. code:: sh
 
   cd ~/Downloads
-  ./install_sct-<version.sh
+  ./install_sct-<version>_linux.sh
 
 
 Option 2: Install from GitHub (development)
