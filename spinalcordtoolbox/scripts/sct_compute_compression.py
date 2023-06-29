@@ -599,7 +599,7 @@ def main(argv: Sequence[str]):
         df_avg_HC = average_hc(path_ref, metric, list_HC)
         # Get slices correspondence in PAM50 space
         compressed_levels_dict = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
-        z_range_below, z_range_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
+        z_range_PAM50_below, z_range_PAM50_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
 
     # Step 2: Get normalization metrics and slices (using non-compressed subject slices)
     # -----------------------------------------------------------
@@ -613,7 +613,7 @@ def main(argv: Sequence[str]):
         # Get centerline object
         centerline = get_centerline_object(img_seg, verbose=verbose)
         # Get healthy slices to average for level above and below
-        z_range_above, z_range_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
+        z_range_centerline_above, z_range_centerline_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
 
     # Step 3. Compute MSCC metrics for each compressed level
     # ------------------------------------------------------
@@ -624,14 +624,14 @@ def main(argv: Sequence[str]):
         # Get metric of patient with compression
         slice_avg = list(compressed_levels_dict[idx].values())[0]
         if arguments.normalize_hc:
-            metrics_patient = average_metric(df_metrics_PAM50, metric, z_range_above, z_range_below, slice_avg)
+            metrics_patient = average_metric(df_metrics_PAM50, metric, z_range_PAM50_above, z_range_PAM50_below, slice_avg)
             # Get metrics of healthy controls
-            metrics_HC = average_metric(df_avg_HC, metric, z_range_above, z_range_below, slice_avg)
+            metrics_HC = average_metric(df_avg_HC, metric, z_range_PAM50_above, z_range_PAM50_below, slice_avg)
             logger.debug(f'\nmetric_a_HC = {metrics_HC[0]}, metric_b_HC = {metrics_HC[1]}, metric_i_HC = {metrics_HC[2]}')
             # Compute Normalized Ratio
             metric_ratio_norm_result = metric_ratio_norm(metrics_patient, metrics_HC)
         else:
-            metrics_patient = average_metric(df_metrics, metric, z_range_above, z_range_below, slice_avg)
+            metrics_patient = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_avg)
             metric_ratio_norm_result = None
         # Compute Ratio
         metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
