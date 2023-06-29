@@ -577,6 +577,19 @@ def main(argv: Sequence[str]):
     slice_compressed = get_compressed_slice(img_labels)
     compressed_levels_dict = get_verterbral_level_from_slice(slice_compressed, df_metrics)
 
+    # Step 2: Get normalization metrics and slices (using non-compressed subject slices)
+    # -----------------------------------------------------------
+    # Get spinal cord centerline object to compute the distance
+    # Get max and min index of the segmentation with pmj
+    _, _, Z = (img_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
+    min_z_index, max_z_index = min(Z), max(Z)
+    # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
+    z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
+    # Get centerline object
+    centerline = get_centerline_object(img_seg, verbose=verbose)
+    # Get healthy slices to average for level above and below
+    z_range_centerline_above, z_range_centerline_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
+
     # Step 2: Get normalization metrics and slices (using PAM50 and reference dataset)
     # -----------------------------------------------------------
     if arguments.normalize_hc:
@@ -600,19 +613,6 @@ def main(argv: Sequence[str]):
         # Get slices correspondence in PAM50 space
         compressed_levels_dict_PAM50 = get_slices_in_PAM50(compressed_levels_dict, df_metrics, df_metrics_PAM50)
         z_range_PAM50_below, z_range_PAM50_above = get_slices_upper_lower_level_from_PAM50(compressed_levels_dict_PAM50, df_metrics_PAM50, distance, extent, slice_thickness_PAM50)
-
-    # Step 2: Get normalization metrics and slices (using non-compressed subject slices)
-    # -----------------------------------------------------------
-    # Get spinal cord centerline object to compute the distance
-    # Get max and min index of the segmentation with pmj
-    _, _, Z = (img_seg.data > NEAR_ZERO_THRESHOLD).nonzero()
-    min_z_index, max_z_index = min(Z), max(Z)
-    # Get the z index corresponding to the segmentation since the centerline only includes slices of the segmentation.
-    z_ref = np.array(range(min_z_index.astype(int), max_z_index.max().astype(int) + 1))
-    # Get centerline object
-    centerline = get_centerline_object(img_seg, verbose=verbose)
-    # Get healthy slices to average for level above and below
-    z_range_centerline_above, z_range_centerline_below = get_slices_upper_lower_level_from_centerline(centerline, distance, extent, slice_compressed, z_ref)
 
     # Step 3. Compute MSCC metrics for each compressed level
     # ------------------------------------------------------
