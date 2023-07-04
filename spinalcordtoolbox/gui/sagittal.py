@@ -29,8 +29,7 @@ class SagittalController(base.BaseController):
         # To check if this is the case, if `set` has a different length, then duplicate labels are present
         self.selecting_duplicates = len(params.vertebraes) != len(set(params.vertebraes))
 
-    def select_point(self, x, y, z, label):
-        label, idx = label.val, label.idx
+    def select_point(self, x, y, z, label, idx):
         if not self.valid_point(x, y, z):
             raise ValueError('Invalid coordinates {}'.format((x, y, z)))
 
@@ -70,11 +69,12 @@ class SagittalDialog(base.BaseDialog):
         try:
             x, y, z = np.array(np.round((x, y, z)), dtype=int)
             label = self.labels.label
-            self._controller.select_point(x, y, z, label)
+            value = label.val
+            index = label.idx
+            self._controller.select_point(x, y, z, value, index)
             self.labels.refresh()
             self.sagittal.refresh()
 
-            index = label.idx
             if index + 1 < len(self.params.vertebraes):
                 self.labels.label = index + 1
         except (TooManyPointsWarning, MissingLabelWarning) as warn:

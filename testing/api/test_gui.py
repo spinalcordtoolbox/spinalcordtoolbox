@@ -91,8 +91,8 @@ class SagittalTestCase(unittest.TestCase):
     def test_select_L1_label(self):
         controller = sagittal.SagittalController(self.image, self.params)
         controller.reformat_image()
-        expected = input_point = (25, 50, 21, 21)
-        input_point = (25, 50, 21, 21)
+        expected = input_point = (25, 50, 21, 21, 0)
+        input_point = (25, 50, 21, 21, 0)
 
         controller.label = 21
         controller.select_point(*input_point)
