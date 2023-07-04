@@ -507,7 +507,7 @@ def save_csv(fname_out, level, slices, metric, metric_ratio, metric_ratio_PAM50,
     """
     if not os.path.isfile(fname_out):
         with open(fname_out, 'w') as csvfile:
-            header = ['filename', 'compression_level', 'slice(I->S)', metric + '_ratio', metric + '_ratio_PAM50', metric + '_ratio_normalized']
+            header = ['filename', 'compression_level', 'slice(I->S)', metric + '_ratio', metric + '_ratio_PAM50', metric + '_ratio_PAM50_normalized']
             writer = csv.DictWriter(csvfile, fieldnames=header)
             writer.writeheader()
     with open(fname_out, 'a') as csvfile:
