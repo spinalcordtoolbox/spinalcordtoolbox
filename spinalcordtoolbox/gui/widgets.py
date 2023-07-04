@@ -25,7 +25,7 @@ class VertebraeWidget(QtWidgets.QWidget):
     _unchecked = []
     _checked = []
     _active_label = None
-    _check_boxes = {}
+    _check_boxes = []
     _labels = None
     _label = None
 
@@ -42,12 +42,13 @@ class VertebraeWidget(QtWidgets.QWidget):
         font = QtGui.QFont()
         font.setPointSize(10)
 
-        for vertebrae in self.vertebraes:
+        for idx, vertebrae in enumerate(self.vertebraes):
             rdo = QtWidgets.QCheckBox('Label {}'.format(vertebrae))
-            rdo.label = vertebrae
+            rdo.val = vertebrae
+            rdo.idx = idx
             rdo.setFont(font)
             rdo.setTristate()
-            self._check_boxes[vertebrae] = rdo
+            self._check_boxes.append(rdo)
             rdo.clicked.connect(self.on_select_label)
             layout.addWidget(rdo)
 
@@ -62,17 +63,18 @@ class VertebraeWidget(QtWidgets.QWidget):
             self._checked = labels
             self._unchecked = set(self._check_boxes.keys()) - set(labels)
 
-        for checkbox in self._check_boxes.values():
+        for checkbox in self._check_boxes:
             checkbox.setCheckState(QtCore.Qt.Unchecked)
 
         logger.debug('refresh labels {}'.format(self.parent._controller.points))
         for point in self.parent._controller.points:
-            self._check_boxes[point[3]].setCheckState(QtCore.Qt.Checked)
+            idx = point[4]
+            self._check_boxes[idx].setCheckState(QtCore.Qt.Checked)
 
     @property
     def label(self):
         if self._active_label:
-            return self._active_label.label
+            return self._active_label
         raise MissingLabelWarning('No vertebrae was selected')
 
     @label.setter
@@ -88,11 +90,13 @@ class VertebraeWidget(QtWidgets.QWidget):
     @labels.setter
     def labels(self, values):
         self._labels = values
-        for x in self._check_boxes.values():
+        for x in self._check_boxes:
             x.setCheckState(QtCore.Qt.Unchecked)
 
         for label in self._labels:
-            self._check_boxes[label].setCheckState(QtCore.Qt.Checked)
+            for checkbox in self._check_boxes:
+                if checkbox.val == label:
+                    checkbox.setCheckState(QtCore.Qt.Checked)
 
 
 class AnatomicalCanvas(FigureCanvas):
@@ -307,7 +311,7 @@ class SagittalCanvas(AnatomicalCanvas):
             points = self._parent._controller.points
             self.clear()
             try:
-                xs, ys, zs, labels = zip(*points)
+                xs, ys, zs, labels, _ = zip(*points)
                 self.plot_data(ys, xs, labels)
             except ValueError:
                 pass

@@ -30,17 +30,18 @@ class SagittalController(base.BaseController):
         self.selecting_duplicates = len(params.vertebraes) != len(set(params.vertebraes))
 
     def select_point(self, x, y, z, label):
+        label, idx = label.val, label.idx
         if not self.valid_point(x, y, z):
             raise ValueError('Invalid coordinates {}'.format((x, y, z)))
 
         existing_point = [i for i, j in enumerate(self.points) if j[3] == label]
 
         if existing_point and not self.selecting_duplicates:
-            self.points[existing_point[0]] = (x, y, z, label)
+            self.points[existing_point[0]] = (x, y, z, label, idx)
         elif self.params.num_points and len(self.points) >= self.params.num_points:
             raise TooManyPointsWarning('Reached the maximum number of points')
         else:
-            self.points.append((x, y, z, label))
+            self.points.append((x, y, z, label, idx))
 
         self.position = (x, y, z)
 
@@ -52,7 +53,8 @@ class SagittalDialog(base.BaseDialog):
         parent.addLayout(layout)
 
         self.labels = widgets.VertebraeWidget(self, self.params.vertebraes)
-        self.labels.label = self._controller.label = self.params.start_vertebrae
+        self.labels.label = self.params.start_vertebrae_idx
+        self._controller.label = self.labels.label.val
         layout.addWidget(self.labels)
 
         self.sagittal = widgets.SagittalCanvas(self, plot_points=True, annotate=True)
@@ -72,9 +74,9 @@ class SagittalDialog(base.BaseDialog):
             self.labels.refresh()
             self.sagittal.refresh()
 
-            index = self.params.vertebraes.index(label)
+            index = label.idx
             if index + 1 < len(self.params.vertebraes):
-                self.labels.label = self.params.vertebraes[index + 1]
+                self.labels.label = index + 1
         except (TooManyPointsWarning, MissingLabelWarning) as warn:
             self.update_warning(str(warn))
 
@@ -82,7 +84,7 @@ class SagittalDialog(base.BaseDialog):
         super(SagittalDialog, self).on_undo()
         self.sagittal.refresh()
         self.labels.refresh()
-        self.labels.label = self._controller.label
+        self.labels.label = self._controller.label_idx
 
     def increment_vertical_nav(self):
         x, y, z = self._controller.position
