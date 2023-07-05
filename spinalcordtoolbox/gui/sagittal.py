@@ -25,17 +25,13 @@ class SagittalController(base.BaseController):
             for i in range(len(previous_point)):
                 self.points.append(previous_point[i])
 
-        # In some cases, we might want to allow selecting multiple points with the same label values
-        # To check if this is the case, if `set` has a different length, then duplicate labels are present
-        self.selecting_duplicates = len(params.vertebraes) != len(set(params.vertebraes))
-
     def select_point(self, x, y, z, label, idx):
         if not self.valid_point(x, y, z):
             raise ValueError('Invalid coordinates {}'.format((x, y, z)))
 
-        existing_point = [i for i, j in enumerate(self.points) if j[3] == label]
+        existing_point = [i for i, j in enumerate(self.points) if j[3] == label and j[4] == idx]
 
-        if existing_point and not self.selecting_duplicates:
+        if existing_point:
             self.points[existing_point[0]] = (x, y, z, label, idx)
         elif self.params.num_points and len(self.points) >= self.params.num_points:
             raise TooManyPointsWarning('Reached the maximum number of points')
