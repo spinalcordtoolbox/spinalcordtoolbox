@@ -56,7 +56,7 @@ class VertebraeWidget(QtWidgets.QWidget):
 
     def on_select_label(self):
         label = self.sender()
-        self.label = label.label
+        self.label = label.idx
 
     def refresh(self, labels=None):
         if labels:
