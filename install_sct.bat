@@ -200,13 +200,17 @@ echo ### Installation finished!
 echo:
 echo To use SCT's command-line scripts in Command Prompt, please follow these instructions:
 echo:
-echo 1. Open the Start Menu -^> Type 'path' -^> Open 'Edit environment variables for your account'
-echo 2. Under the section 'User variables for ____', highlight the 'Path' entry, then click the 'Edit...' button.
-echo 3. Click 'New', then copy and paste this directory:
+echo 1. Open the Start Menu -^> Type 'edit environment' -^> Open 'Edit environment variables for your account'
+echo 2. Click 'New', then enter 'SCT_DIR' for the variable name. For the value, copy and paste this directory:
+echo:
+echo    %CD%
+echo:
+echo 3. Click 'OK', then click on the 'Path' variable, then click the 'Edit...' button.
+echo 4. Click 'New', then copy and paste this directory:
 echo:
 echo    %CD%\bin\
 echo:
-echo 4. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
+echo 5. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
 echo:
 echo If you have any questions or concerns, feel free to create a new topic on SCT's forum:
 echo   --^> http://forum.spinalcordmri.org/c/sct
