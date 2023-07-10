@@ -687,7 +687,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         qcslice = Sagittal([Image(fname) for fname in fname_list], p_resample=None)
         action_list = [QcImage.smooth_centerline, QcImage.highlight_pmj, QcImage.listed_seg]
         def qcslice_layout(x): return x.single()
-    elif process in ['sct_image -stitch']:
+    elif process in ['sct_image_stitch']:
         plane = 'Sagittal'
         dpi = 150
         qcslice = Sagittal([Image(fname_in1), Image(fname_in2)], p_resample=None)
