@@ -335,9 +335,13 @@ class Centerline:
         intervertebral discs in space. A reference label can be provided (default is top of C1) so that relative
         distances are computed from this reference.
 
-        :param discs_levels: list: list of coordinates with value [[x, y, z, value], [x, y, z, value], ...]\
-                        the value correspond to the intervertebral disc label
-        :param label_reference: reference label from which relative position will be computed.\
+        :param discs_levels: list: list of coordinates with value [[x, y, z, value], [x, y, z, value], ...]
+                        the value corresponds to the intervertebral disc label. These coordinates should
+                        be defined in the same space as the Centerline (`self`) object. This means that if
+                        your Centerline object is defined in physical (`phys`) space, the [x,y,z] coordinates
+                        should be defined in physical space. If your Centerline object is defined in pixel
+                        (`pix`) space, the [x,y,z] coordinates should be defined in pixel space.
+        :param label_reference: reference label from which relative position will be computed.
                         Must be on of self.labels_regions
         """
         self.discs_levels = discs_levels
