@@ -283,7 +283,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
         'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(itk_threads),
         'SCT_PROGRESS_BAR': 'off'
     })
-    if 'SCT_DIR' not in envir:  # For native Windows installations, the install script won't add SCT_DIR
+    if 'SCT_DIR' not in envir:
         envir['SCT_DIR'] = __sct_dir__
 
     cmd = [script_full, subj_dir] + script_args.split(' ')
