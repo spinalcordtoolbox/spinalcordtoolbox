@@ -439,7 +439,8 @@ def main(argv: Sequence[str]):
             printv("Generating QC Report...", verbose=verbose)
             # specify filenames to use in QC report
             path_tmp = tmp_create(basename="stitching-qc")
-            fname_qc_concat = os.path.join(path_tmp, "concatenated_input_images.nii.gz")
+            fname_qc_concat = "-".join([os.path.basename(p).split(".")[0] for p in fname_in]) + ".nii.gz"
+            fname_qc_concat = os.path.join(path_tmp, fname_qc_concat)
             fname_qc_out = os.path.join(path_tmp, os.path.basename(fname_out))
             # generate 2 images to compare in QC report
             # (1. naively concatenated input images, and 2. stitched image) padded so both have same dimensions
