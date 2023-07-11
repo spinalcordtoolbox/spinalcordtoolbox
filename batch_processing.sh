@@ -255,9 +255,6 @@ sct_warp_template -d fmri_crop_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 
 # Note, once you have computed fMRI statistics in the subject's space, you can use
 # warp_fmri2template.nii.gz to bring the statistical maps on the template space, for group analysis.
 
-# Go back to sct_example_data -> data -> $SCT_DIR
-cd ../../..
-
 
 # Display results (to easily compare integrity across SCT versions)
 # ===========================================================================================
