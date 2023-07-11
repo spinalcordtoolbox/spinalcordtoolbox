@@ -437,7 +437,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     # Resample image to 0.5mm in plane
     im_image_res = \
-        resampling.resample_nib(im_image, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
+        resampling.resample_nib(im_image, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm',
+                                interpolation='linear', preserve_codes=True)
 
     fname_orient = 'image_in_RPI_res.nii'
     im_image_res.save(fname_orient)
@@ -454,7 +455,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     if ctr_algo == 'file':
         im_ctl = \
-            resampling.resample_nib(im_ctl, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm', interpolation='linear')
+            resampling.resample_nib(im_ctl, new_size=[0.5, 0.5, im_image.dim[6]], new_size_type='mm',
+                                    interpolation='linear', preserve_codes=True)
 
     # crop image around the spinal cord centerline
     logger.info("Cropping the image around the spinal cord...")
@@ -514,7 +516,7 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     # resample to initial resolution
     logger.info("Resampling the segmentation to the native image resolution using linear interpolation...")
-    im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear')
+    im_seg_r = resampling.resample_nib(im_seg, image_dest=im_image, interpolation='linear', preserve_codes=True)
 
     if ctr_algo == 'viewer':  # for debugging
         im_labels_viewer.save(add_suffix(fname_orient, '_labels-viewer'))
