@@ -77,6 +77,11 @@ def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt,
     sct_register_to_template.main(argv=['-i', 't2/t2.nii.gz', '-s', fname_seg, '-ofolder', str(tmp_path)]
                                   + remaining_args)
 
+    # Straightening files are only generated for `-ref template`. They should *not* exist for `-ref subject`.
+    for file in ["straightening.cache", "straight_ref.nii.gz",
+                 "warp_straight2curve.nii.gz", "warp_curve2straight.nii.gz"]:
+        assert os.path.isfile(tmp_path/file) == (False if 'subject' in remaining_args else True)
+
     # apply transformation to binary mask: template --> anat
     sct_apply_transfo.main(argv=[
         '-i', fname_gt,
