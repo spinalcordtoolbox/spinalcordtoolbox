@@ -529,8 +529,8 @@ def main(argv: Sequence[str]):
         cache_sig = cache_signature(
             input_files=cache_input_files,
         )
-        cachefile = os.path.join(curdir, "straightening.cache")
-        if cache_valid(cachefile, cache_sig) and os.path.isfile(fn_warp_curve2straight) and os.path.isfile(fn_warp_straight2curve) and os.path.isfile(fn_straight_ref):
+        fname_cache = "straightening.cache"
+        if cache_valid(os.path.join(curdir, "straightening.cache"), cache_sig) and os.path.isfile(fn_warp_curve2straight) and os.path.isfile(fn_warp_straight2curve) and os.path.isfile(fn_straight_ref):
             printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
             copy(fn_warp_curve2straight, 'warp_curve2straight.nii.gz')
             copy(fn_warp_straight2curve, 'warp_straight2curve.nii.gz')
@@ -560,7 +560,7 @@ def main(argv: Sequence[str]):
                 sc_straight.discs_ref_filename = ftmp_template_label
 
             sc_straight.straighten()
-            cache_save(cachefile, cache_sig)
+            cache_save(fname_cache, cache_sig)
 
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)
@@ -801,6 +801,7 @@ def main(argv: Sequence[str]):
     generate_output_file(os.path.join(path_tmp, "anat2template.nii.gz"), fname_anat2template, verbose=verbose)
     if ref == 'template':
         # copy straightening files in case subsequent SCT functions need them
+        generate_output_file(os.path.join(path_tmp, "straightening.cache"), os.path.join(path_output, "straightening.cache"), verbose=verbose)
         generate_output_file(os.path.join(path_tmp, "warp_curve2straight.nii.gz"), os.path.join(path_output, "warp_curve2straight.nii.gz"), verbose=verbose)
         generate_output_file(os.path.join(path_tmp, "warp_straight2curve.nii.gz"), os.path.join(path_output, "warp_straight2curve.nii.gz"), verbose=verbose)
         generate_output_file(os.path.join(path_tmp, "straight_ref.nii.gz"), os.path.join(path_output, "straight_ref.nii.gz"), verbose=verbose)
