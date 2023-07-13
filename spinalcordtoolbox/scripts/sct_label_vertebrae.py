@@ -314,6 +314,7 @@ def main(argv: Sequence[str]):
             and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz"))):
         # if they exist, copy them into current folder
         printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
+        copy(os.path.join(curdir, fname_cache), fname_cache)
         copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
         copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
         copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')

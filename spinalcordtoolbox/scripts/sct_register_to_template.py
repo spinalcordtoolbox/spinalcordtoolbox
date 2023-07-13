@@ -530,8 +530,12 @@ def main(argv: Sequence[str]):
             input_files=cache_input_files,
         )
         fname_cache = "straightening.cache"
-        if cache_valid(os.path.join(curdir, "straightening.cache"), cache_sig) and os.path.isfile(fn_warp_curve2straight) and os.path.isfile(fn_warp_straight2curve) and os.path.isfile(fn_straight_ref):
+        if (cache_valid(os.path.join(curdir, "straightening.cache"), cache_sig)
+                and os.path.isfile(fn_warp_curve2straight)
+                and os.path.isfile(fn_warp_straight2curve)
+                and os.path.isfile(fn_straight_ref)):
             printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
+            copy(os.path.join(curdir, "straightening.cache"), 'straightening.cache')
             copy(fn_warp_curve2straight, 'warp_curve2straight.nii.gz')
             copy(fn_warp_straight2curve, 'warp_straight2curve.nii.gz')
             copy(fn_straight_ref, 'straight_ref.nii.gz')
