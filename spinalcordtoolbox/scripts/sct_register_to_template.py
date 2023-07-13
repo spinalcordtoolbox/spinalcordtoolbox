@@ -529,7 +529,6 @@ def main(argv: Sequence[str]):
         cache_sig = cache_signature(
             input_files=cache_input_files,
         )
-        fname_cache = "straightening.cache"
         if (cache_valid(os.path.join(curdir, "straightening.cache"), cache_sig)
                 and os.path.isfile(fn_warp_curve2straight)
                 and os.path.isfile(fn_warp_straight2curve)
@@ -564,7 +563,7 @@ def main(argv: Sequence[str]):
                 sc_straight.discs_ref_filename = ftmp_template_label
 
             sc_straight.straighten()
-            cache_save(fname_cache, cache_sig)
+            cache_save("straightening.cache", cache_sig)
 
         # N.B. DO NOT UPDATE VARIABLE ftmp_seg BECAUSE TEMPORARY USED LATER
         # re-define warping field using non-cropped space (to avoid issue #367)

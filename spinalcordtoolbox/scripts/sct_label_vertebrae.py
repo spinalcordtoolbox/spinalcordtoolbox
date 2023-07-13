@@ -307,14 +307,13 @@ def main(argv: Sequence[str]):
     cache_sig = cache_signature(
         input_files=[fname_in, fname_seg],
     )
-    fname_cache = "straightening.cache"
-    if (cache_valid(os.path.join(curdir, fname_cache), cache_sig)
+    if (cache_valid(os.path.join(curdir, "straightening.cache"), cache_sig)
             and os.path.isfile(os.path.join(curdir, "warp_curve2straight.nii.gz"))
             and os.path.isfile(os.path.join(curdir, "warp_straight2curve.nii.gz"))
             and os.path.isfile(os.path.join(curdir, "straight_ref.nii.gz"))):
         # if they exist, copy them into current folder
         printv('Reusing existing warping field which seems to be valid', verbose, 'warning')
-        copy(os.path.join(curdir, fname_cache), fname_cache)
+        copy(os.path.join(curdir, "straightening.cache"), 'straightening.cache')
         copy(os.path.join(curdir, "warp_curve2straight.nii.gz"), 'warp_curve2straight.nii.gz')
         copy(os.path.join(curdir, "warp_straight2curve.nii.gz"), 'warp_straight2curve.nii.gz')
         copy(os.path.join(curdir, "straight_ref.nii.gz"), 'straight_ref.nii.gz')
@@ -327,7 +326,7 @@ def main(argv: Sequence[str]):
             '-r', str(remove_temp_files),
             '-v', '0',
         ])
-        cache_save(fname_cache, cache_sig)
+        cache_save("straightening.cache", cache_sig)
 
     # resample to 0.5mm isotropic to match template resolution
     printv('\nResample to 0.5mm isotropic...', verbose)
