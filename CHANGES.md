@@ -35,7 +35,7 @@
  - **sct_deepseg**: Clean up improper submodule access (via imported parent modules). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3973)
  - **sct_deepseg_lesion**: Fix broken `-v 2` case by making sure `fname_res_ctr` exists prior to resampling. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3987)
  - **sct_deepseg_sc**: Ensure that qform/sform codes are preserved when generating segmentation. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4135)
- - **sct_get_centerline**: Prevents centerline soft being used with non fitseg methods. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4063)
+ - **sct_get_centerline**: Prevent soft centerline being used with non fitseg methods. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4063)
  - **sct_get_centerline**: Add extrapolation for `sct_get_centerline` fitseg. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4079)
  - **sct_image**: Swap order of `sct_image -stitch` QC images to fix incorrect YML path. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4157)
  - **sct_label_utils**: Fix buggy `-create-viewer` behavior on initialization (undo crash, blank checkboxes). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4108)
