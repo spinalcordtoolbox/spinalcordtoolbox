@@ -16,8 +16,17 @@ jobs:
     - name: Install dependencies
       run: pip install flake8
     # Note: flake8 picks up project-wide configuration options from 'setup.cfg' in SCT's root directory
+    # We set -o pipefail so that the check fails if there's an error with the `git diff` part of the pipeline.
+    # We allow (($? == 1)) after grep to allow the empty list as a result (but not (($? == 2)), which would be some other error with grep).
+    # We specify --no-run-if-empty so that flake8 doesn't check the whole repo when no .py files got changed.
     - name: Lint Python files with flake8
-      run: git diff --name-only --diff-filter=d --merge-base master | grep '\.py$' | xargs --delimiter='\n' --no-run-if-empty flake8
+      run: |
+        set -eu -o pipefail
+        git diff --name-only --diff-filter=d \
+          --merge-base refs/remotes/origin/master -- \
+          | (grep '\.py$' || (($? == 1)) ) \
+          | xargs --delimiter='\n' --no-run-if-empty flake8
+
     - name: Check shell scripts with shellcheck
       uses: ludeeus/action-shellcheck@master
       with:
