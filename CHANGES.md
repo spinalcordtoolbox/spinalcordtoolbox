@@ -15,7 +15,7 @@
  - **sct_process_segmentation**: Bring metrics in PAM50 anatomical dimensions in `sct_process_segmentation`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3977)
  - **sct_process_segmentation**: Display vertebral levels when provided with `-perslice 1`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4004)
  - **sct_warp_template**: Add new `-histo` option to warp the newly-added PAM50 histology files. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3444)
- - List resampled labels in order. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4088)
+ - **sct_register_to_template**: List resampled labels in order. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4088)
 
 **ENHANCEMENT**
  - **sct_detect_pmj**: Add `-qc-dataset` and `-qc-subject` flags to `sct_detect_pmj.py`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4053)
