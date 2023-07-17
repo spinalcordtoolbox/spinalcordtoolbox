@@ -67,7 +67,7 @@ The easiest way to try out different versions of SCT is using Git.
 
 2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Miniconda environment for you.
 
-3. Once the installer finishes, follow the instructions given at the end of the Command Prompt window, which will instruct you to add SCT to your PATH.
+3. Once the installer finishes, follow the instructions given at the end of the Command Prompt window, which will instruct you to create the SCT_DIR variable, and to add the SCT installation folder to the PATH variable.
 
 4. Finally, in the Command Prompt window, type ``sct_check_dependencies`` and press enter. Make sure that you see a status report containing all "OKs" before continuing.
 
