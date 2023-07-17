@@ -26,6 +26,10 @@ The following studies have used SCT:
 2023
 ----
 
+-  Tsivaka *et al.* `A second-order and slice-specific linear shimming technique to improve spinal cord fMRI <https://doi.org/10.1016/j.mri.2023.06.012>`_, **Magn. Reson. Imaging** 2023
+-  Mongay-Ochoa *et al.* `Validation of a New Semiautomated Segmentation Pipeline Based on the Spinal Cord Toolbox DeepSeg Algorithm to Estimate the Cervical Canal Area <https://doi.org/10.3174/ajnr.A7899>`_, **AJNR Am. J. Neuroradiol.** 2023
+-  Koch *et al.* `Diffusion-weighted MRI of the spinal cord in cervical spondylotic myelopathy after instrumented fusion <https://doi.org/10.3389%2Ffneur.2023.1172833>`_, **Front Neurol.** 2023
+-  Mahmud *et al.* `Feasibility of spinal cord imaging at 7 T using rosette trajectory with magnetization transfer preparation and compressed sensing <https://doi.org/10.1038/s41598-023-35853-7>`_, **Sci Rep** 2023
 -  Destruel *et al.* `Optimized interferometric encoding of presaturated TurboFLASH B1 mapping for parallel transmission MRI at 7 T: Preliminary application for quantitative T1 mapping in the spinal cord <https://doi.org/10.1002/mrm.29708>`_, **Magn Reson Med.** 2023
 -  Kinany *et al.* `Decoding cerebro-spinal signatures of human behavior: Application to motor sequence learning <https://doi.org/10.1016/j.neuroimage.2023.120174>`_, **Neuroimage** 2023
 -  Oliveira *et al.* `The longitudinal progression of MRI changes in pre-ataxic carriers of SCA3/MJD <https://doi.org/10.1007/s00415-023-11763-6>`_, **J. Neurol.** 2023

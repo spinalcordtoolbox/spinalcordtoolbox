@@ -46,7 +46,7 @@
   <script>
     function fetch_image_height()
     {
-      var image_height=document.getElementById('sprite-img').height;
+      var image_height=document.getElementById('background-img').height;
       image_height+=10;
       document.getElementById("mosaic-container").style.marginBottom=image_height+"px";
     }
@@ -135,7 +135,7 @@
           </div>
           <div class="col-md-7">
               <div class="result-body" id="mosaic-container">
-                  <img id="sprite-img" onload="fetch_image_height()"/>
+                  <img id="background-img" onload="fetch_image_height()"/>
                   <img id="overlay-img"/>
               </div>
               <button onclick="toggleOverlay()">Toggle overlay (right arrow)</button>
@@ -324,17 +324,18 @@
     function download_yaml(marker) {
         let res = {};
         let seg_cmd_to_seg_type = {
-            "sct_analyze_lesion": "FILES_GMSEG",
+            "sct_analyze_lesion": "FILES_LESION",
             "sct_analyze_texture": "FILES_SEG",
             "sct_create_mask": "FILES_SEG",
             "sct_crop_image": "FILES_SEG",
             "sct_deepseg": "FILES_SEG",
             "sct_deepseg_gm": "FILES_GMSEG",
-            "sct_deepseg_lesion": "FILES_GMSEG",
+            "sct_deepseg_lesion": "FILES_LESION",
             "sct_deepseg_sc": "FILES_SEG",
             "sct_detect_pmj": "FILES_PMJ",
             "sct_dmri_moco": "FILES_TIMESERIES",
             "sct_fmri_moco": "FILES_TIMESERIES",
+            "sct_image_stitch": "FILES_REG",
             "sct_label_utils": "FILES_LABEL",
             "sct_label_vertebrae": "FILES_LABEL",
             "sct_process_segmentation": "FILES_SEG",

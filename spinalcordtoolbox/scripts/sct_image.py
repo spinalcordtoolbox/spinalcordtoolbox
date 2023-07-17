@@ -447,9 +447,9 @@ def main(argv: Sequence[str]):
             im_concat.save(fname_qc_concat)
             im_out_padded.save(fname_qc_out)
             # generate the QC report itself
-            generate_qc(fname_in1=fname_qc_concat, fname_in2=fname_qc_out, args=sys.argv[1:],
+            generate_qc(fname_in1=fname_qc_out, fname_in2=fname_qc_concat, args=sys.argv[1:],
                         path_qc=os.path.abspath(arguments.qc), dataset=arguments.qc_dataset,
-                        subject=arguments.qc_subject, process='sct_image -stitch')
+                        subject=arguments.qc_subject, process='sct_image_stitch')
         else:
             printv("WARNING: '-qc' is only supported for 'sct_image -stitch'. QC report will not be generated.",
                    type='warning')

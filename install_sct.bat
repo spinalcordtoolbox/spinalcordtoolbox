@@ -167,7 +167,7 @@ start /wait "" %TMP_DIR%\miniconda.exe /InstallationType=JustMe /AddToPath=0 /Re
 rem Create and activate miniconda environment to install SCT into
 echo:
 echo ### Using Conda to create virtual environment...
-python\Scripts\conda create -y -p python\envs\venv_sct python=3.8 || goto error
+python\Scripts\conda create -y -p python\envs\venv_sct python=3.9 || goto error
 CALL python\Scripts\activate.bat python\envs\venv_sct || goto error
 echo Virtual environment created and activated successfully!
 
@@ -180,14 +180,14 @@ if exist requirements-freeze.txt (
 echo:
 echo ### Installing SCT and its dependencies from %requirements_file%...
 rem Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
-python -m pip install -U "pip^!=21.2.*" || goto error
-pip install -r %requirements_file% || goto error
-pip install -e . || goto error
+python\envs\venv_sct\python -m pip install -U "pip^!=21.2.*" || goto error
+python\envs\venv_sct\Scripts\pip install -r %requirements_file% || goto error
+python\envs\venv_sct\Scripts\pip install -e . || goto error
 
 rem Install external dependencies
 echo:
 echo ### Downloading model files and binaries...
-FOR %%D IN (PAM50 optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models binaries_win deepreg_models) DO sct_download_data -d %%D -k || goto error
+FOR %%D IN (PAM50 optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models binaries_win deepreg_models PAM50_normalized_metrics) DO sct_download_data -d %%D -k || goto error
 
 rem Copying SCT scripts to an isolated folder (so we can add scripts to the PATH without adding the entire venv_sct)
 echo:
@@ -200,13 +200,17 @@ echo ### Installation finished!
 echo:
 echo To use SCT's command-line scripts in Command Prompt, please follow these instructions:
 echo:
-echo 1. Open the Start Menu -^> Type 'path' -^> Open 'Edit environment variables for your account'
-echo 2. Under the section 'User variables for ____', highlight the 'Path' entry, then click the 'Edit...' button.
-echo 3. Click 'New', then copy and paste this directory:
+echo 1. Open the Start Menu -^> Type 'edit environment' -^> Open 'Edit environment variables for your account'
+echo 2. Click 'New', then enter 'SCT_DIR' for the variable name. For the value, copy and paste this directory:
+echo:
+echo    %CD%
+echo:
+echo 3. Click 'OK', then click on the 'Path' variable, then click the 'Edit...' button.
+echo 4. Click 'New', then copy and paste this directory:
 echo:
 echo    %CD%\bin\
 echo:
-echo 4. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
+echo 5. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
 echo:
 echo If you have any questions or concerns, feel free to create a new topic on SCT's forum:
 echo   --^> http://forum.spinalcordmri.org/c/sct

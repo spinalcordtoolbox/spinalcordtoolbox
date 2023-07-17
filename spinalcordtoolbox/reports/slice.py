@@ -57,8 +57,15 @@ class Slice(object):
             self._absolute_paths.append(img.absolutepath)  # change_orientation removes the field absolute_path
             img.change_orientation('SAL')
             if p_resample:
-                if i == len(images) - 1 and img.dim[3] == 1:
-                    # Last volume, if it is 3d, corresponds to a segmentation, therefore use linear interpolation here
+                # Check if image is a segmentation (binary or soft) by making sure:
+                # - 0/1 are the two most common voxel values
+                # - 0/1 account for >95% of voxels (to allow for some soft voxels)
+                unique, counts = np.unique(img.data, return_counts=True)
+                unique, counts = unique[np.argsort(counts)[::-1]], counts[np.argsort(counts)[::-1]]  # Sort by counts
+                binary_most_common = set(unique[0:2].astype(float)) == {0.0, 1.0}
+                binary_percentage = np.sum(counts[0:2]) / np.sum(counts)
+                if binary_most_common and binary_percentage > 0.95:
+                    # If a segmentation, use linear interpolation and apply thresholding
                     type_img = 'seg'
                 else:
                     # Otherwise it's an image: use spline interpolation
@@ -193,11 +200,6 @@ class Slice(object):
         return A
 
     @abc.abstractmethod
-    def get_name(self):
-        """Get the class name"""
-        return
-
-    @abc.abstractmethod
     def get_slice(self, data, i):
         """Abstract method to obtain a slice of a 3d matrix
 
@@ -286,9 +288,15 @@ class Slice(object):
         nii = Nifti1Image(image.data, image.hdr.get_best_affine())
         # If no reference image is provided, resample to specified resolution
         if image_ref is None:
-            # Resample to px x p_resample x p_resample mm (orientation is SAL by convention in QC module)
-            nii_r = resample_nib(nii, new_size=[image.dim[4], p_resample, p_resample], new_size_type='mm',
-                                 interpolation=dict_interp[type_img])
+            # Resample each slice to p_resample x p_resample mm (orientation is SAL by convention in QC module)
+            if isinstance(self, Axial):
+                new_size = [image.dim[4], p_resample, p_resample]
+            elif isinstance(self, Sagittal):
+                new_size = [p_resample, p_resample, image.dim[6]]
+            else:
+                raise TypeError(f"Unexpected slice type: {type(self)}")
+            nii_r = resample_nib(nii, new_size=new_size, new_size_type='mm', interpolation=dict_interp[type_img])
+
         # Otherwise, resampling to the space of the reference image
         else:
             # Create nibabel object for reference image
@@ -314,8 +322,6 @@ class Slice(object):
 
 class Axial(Slice):
     """The axial representation of a slice"""
-    def get_name(self):
-        return Axial.__name__
 
     def get_aspect(self, image):
         return Slice.axial_aspect(image)
@@ -404,9 +410,6 @@ class Axial(Slice):
 
 class Sagittal(Slice):
     """The sagittal representation of a slice"""
-
-    def get_name(self):
-        return Sagittal.__name__
 
     def get_aspect(self, image):
         return Slice.sagittal_aspect(image)

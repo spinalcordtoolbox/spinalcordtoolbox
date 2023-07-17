@@ -314,23 +314,6 @@ function usage() {
   ' "$0"
 }
 
-if [ "$(uname)" = "Darwin" ]; then
-  # macOS polyfills
-
-  # Linux has `realpath` and `readlink -f`.
-  # BSD has `readlink -f`.
-  # macOS has neither: https://izziswift.com/how-can-i-get-the-behavior-of-gnus-readlink-f-on-a-mac/
-  # even though it *has* the function in its libc: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/realpath.3.html
-  # Someone even wrote a whole C program just for this: https://github.com/harto/realpath-osx/.
-  # https://stackoverflow.com/a/3572105 suggests some bash trickery but it
-  # seems pretty fragile and that it probably doesn't actually expand symlinks.
-  # So here, solve it with python. It's not great either, but since much of
-  # this script already is just calling python at least it's reliable.
-  (command -v realpath >/dev/null) || realpath() {
-    python3 -c 'import sys, os; [print(os.path.realpath(f)) for f in sys.argv[1:]]' "$@"
-  }
-fi
-
 # ======================================================================================================================
 # SCRIPT STARTS HERE
 # ======================================================================================================================
@@ -596,7 +579,7 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 # create conda environment
 print info "Creating conda environment..."
 # NB: We use an absolute path (-p) rather than a relative name (-n) to better isolate the conda environment
-python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" python=3.8
+python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" python=3.9
 
 # Reapply the touch fix to avoid `pip` connection issues on WSL
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
@@ -614,22 +597,15 @@ set +u #disable safeties, for conda is not written to their standard.
 conda activate "$SCT_DIR/$PYTHON_DIR/envs/venv_sct"
 set -u # reactivate safeties
 
-# double-check conda activated (it can be glitchy): https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3029
-print info "Validating that conda environment can be activated..."
-EXPECTED_PYTHON="$(realpath "$(command -v python/envs/venv_sct/bin/python)")"
-ACTUAL_PYTHON="$(realpath "$(command -v python)")"
-if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
-  echo "Error: Activating venv_sct failed to switch Python interpreter to Miniconda. (Incorrect interpreter loaded: $ACTUAL_PYTHON)" >&2
-  exit 1
-fi
-
-# Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927)
 if [[ $OS == linux ]]; then
+  # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1298616317)
   conda install -y -c conda-forge libstdcxx-ng
+  # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
+  conda install -y -c conda-forge libffi
 fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
-python -m pip install -U "pip!=21.2.*"
+python/envs/venv_sct/bin/python -m pip install -U "pip!=21.2.*"
 
 ## Install the spinalcordtoolbox into the Conda venv
 print info "Installing Python dependencies..."
@@ -645,9 +621,9 @@ fi
 (
   # We use "--ignore-installed" to preserve the version of `certifi` installed into the conda
   # env, which prevents https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3609
-  pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
+  python/envs/venv_sct/bin/pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
   print info "Installing spinalcordtoolbox..." &&
-  pip install -e .
+  python/envs/venv_sct/bin/pip install -e .
 ) ||
   die "Failed running pip install: $?"
 
@@ -681,13 +657,13 @@ else
   # Download data
   print info "Installing data..."
   run mkdir -p "$SCT_DIR/$DATA_DIR"
-  for data in PAM50 optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models deepreg_models; do
+  for data in PAM50 optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models deepreg_models PAM50_normalized_metrics; do
     run sct_download_data -d "$data"
   done
 fi
 
 # Install deep learning models
-python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()'
+python/envs/venv_sct/bin/python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()'
 
 
 # ----------------------------------------------------------------------------------------------------------------------

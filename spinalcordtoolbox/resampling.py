@@ -19,7 +19,8 @@ from spinalcordtoolbox.utils import display_viewer_syntax
 logger = logging.getLogger(__name__)
 
 
-def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, interpolation='linear', mode='nearest'):
+def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, interpolation='linear', mode='nearest',
+                 preserve_codes=False):
     """
     Resample a nibabel or Image object based on a specified resampling factor.
     Can deal with 2d, 3d or 4d image objects.
@@ -34,6 +35,13 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         are ignored
     :param interpolation: {'nn', 'linear', 'spline'}. The interpolation type
     :param mode: Outside values are filled with 0 ('constant') or nearest value ('nearest').
+    :param preserve_codes: bool: Whether to preserve the qform/sform codes from the original image.
+        - If set to False, nibabel will overwrite the existing qform/sform codes with `0` and `2` respectively.
+        - This option is set to False by default, as resampling typically implies that the new image is in a different
+          space. Therefore, since the image is no longer aligned to any scan, the previous codes are now invalid.
+        - However, if you plan to eventually resample back to the native space later on, you may wish to set this
+          option to True to preserve the codes. (For more information, see:
+          https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3005)
     :return: The resampled nibabel or Image image (depending on the input object type).
     """
 
@@ -44,7 +52,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
     if type(image) == nib.nifti1.Nifti1Image:
         img = image
     elif type(image) == Image:
-        img = nib.nifti1.Nifti1Image(image.data, image.hdr.get_best_affine())
+        img = nib.nifti1.Nifti1Image(image.data, image.hdr.get_best_affine(), image.hdr)
     else:
         raise TypeError(f'Invalid image type: {type(image)}')
 
@@ -127,6 +135,11 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         img_r = nib.nifti1.Nifti1Image(data4d, affine_r)
         # Copy over the TR parameter from original 4D image (otherwise it will be incorrectly set to 1)
         img_r.header.set_zooms(list(img_r.header.get_zooms()[0:3]) + [img.header.get_zooms()[3]])
+
+    # preserve the codes from the original image, which will otherwise get overwritten with 0/2
+    if preserve_codes:
+        img_r.header['qform_code'] = img.header['qform_code']
+        img_r.header['sform_code'] = img.header['sform_code']
 
     # Convert back to proper type
     if type(image) == nib.nifti1.Nifti1Image:
