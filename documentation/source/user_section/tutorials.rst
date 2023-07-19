@@ -17,9 +17,9 @@ We provide the following hands-on tutorials for SCT's command-line tools.
 
    * :doc:`tutorials/registration-to-template/vertebral-labeling`
    * :doc:`tutorials/registration-to-template/template-registration`
-   * :doc:`tutorials/registration-to-template/shape-metric-computation`
    * :doc:`tutorials/registration-to-template/registering-additional-contrasts`
 
+#. :doc:`Shape analysis <tutorials/shape-analysis>`
 #. :doc:`Multimodal registration <tutorials/multimodal-registration>`
 
    * :doc:`tutorials/multimodal-registration/mtr-computation`
@@ -33,7 +33,6 @@ We provide the following hands-on tutorials for SCT's command-line tools.
 
 #. :doc:`Atlas-based analysis <tutorials/atlas-based-analysis>`
 #. :doc:`Diffusion-weighted MRI (Motion correction, DTI computation) <tutorials/diffusion-weighted-mri>`
-#. :doc:`Normalized morphometrics for spinal cord compression  <tutorials/normalizing-morphometrics-compression>`
 #. :doc:`Other features <tutorials/other-features>`
 
    * :doc:`Functional MRI (Motion correction, Spinal level labeling) <tutorials/other-features/processing-fmri-data>`
@@ -64,6 +63,7 @@ If you would prefer to learn how to use SCT in a guided workshop setting, we pro
 
    Segmentation <tutorials/segmentation>
    tutorials/registration-to-template
+   tutorials/shape-analysis
    tutorials/multimodal-registration
    tutorials/gray-matter-segmentation
    tutorials/atlas-based-analysis
