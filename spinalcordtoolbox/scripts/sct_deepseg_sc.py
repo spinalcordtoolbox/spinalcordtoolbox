@@ -199,6 +199,8 @@ def main(argv: Sequence[str]):
                     dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
     display_viewer_syntax([fname_image, fname_seg], im_types=['anat', 'seg'], opacities=['', '0.7'], verbose=verbose)
 
+    return output_folder, fname_seg
+
 
 if __name__ == "__main__":
     init_sct()
