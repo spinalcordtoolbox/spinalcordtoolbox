@@ -1,7 +1,7 @@
 .. _normalizing-morphometrics:
 
 Normalizing morphometrics to asses spinal cord compression
-#########################################################
+##########################################################
 
 
 Compute ratio of **AP diameter** normalized with healthy controls:
