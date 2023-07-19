@@ -1,0 +1,4 @@
+filename,compression_level,slice(I->S),diameter_AP_ratio,diameter_AP_ratio_PAM50,diameter_AP_ratio_PAM50_normalized
+t2_compressed_seg.nii.gz,4.0,72,0.18239061819191882,1.5384071789902642,9.7162430495632
+t2_compressed_seg.nii.gz,5.0,96,5.004753722430766,3.8584420372280492,9.885674026047175
+t2_compressed_seg.nii.gz,7.0,116,3.940439880470714,3.958073922936489,0.569124906116858

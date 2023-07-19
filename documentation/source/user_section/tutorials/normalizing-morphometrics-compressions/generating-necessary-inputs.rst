@@ -1,14 +1,14 @@
 .. _generating-necessary-inputs:
 
-Generate the 3 necessary input files from this subject file for sct_compute_compression
+Generate the 3 necessary input files for ``sct_compute_compression``
 ########################################################################################
 
-To use sct_compute_compression, we need the 3 following input files:
+To use ``sct_compute_compression``, we need the 3 following input files:
 
 
 1. Spinal cord segmentation
 2. Vertebral labels
-3. Compression labels (t2_compressed_compression_labels.nii.gz)
+3. Compression labels (``t2_compressed_compression_labels.nii.gz``)
 
 
 1. Spinal cord segmentation
@@ -39,7 +39,7 @@ To use sct_compute_compression, we need the 3 following input files:
 
 
 :Output files/folders:
-   - ``sub-twh018_T2w_seg.nii.gz`` : Spinal cord segmentation.
+   - ``t2_compressed_seg_labeled.nii.gz`` : Spinal cord vertebral labels.
 
 3. Generate spinal cord compression labels
 -------------------------------------------
