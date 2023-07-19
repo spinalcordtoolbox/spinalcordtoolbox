@@ -70,18 +70,24 @@ def test_sct_register_to_template_non_rpi_data(tmp_path, template_lpi):
     (os.path.join(__sct_dir__, 'data/PAM50/template/PAM50_cord.nii.gz'),
      ['-ldisc', 't2/labels.nii.gz', '-ref', 'subject'])
 ])
-def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt, remaining_args):
+def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt, remaining_args, tmp_path):
     """Run the CLI script and verify transformed images have expected attributes."""
     fname_seg = 't2/t2_seg-manual.nii.gz'
     dice_threshold = 0.9
-    sct_register_to_template.main(argv=['-i', 't2/t2.nii.gz', '-s', fname_seg] + remaining_args)
+    sct_register_to_template.main(argv=['-i', 't2/t2.nii.gz', '-s', fname_seg, '-ofolder', str(tmp_path)]
+                                  + remaining_args)
+
+    # Straightening files are only generated for `-ref template`. They should *not* exist for `-ref subject`.
+    for file in ["straightening.cache", "straight_ref.nii.gz",
+                 "warp_straight2curve.nii.gz", "warp_curve2straight.nii.gz"]:
+        assert os.path.isfile(tmp_path/file) == (False if 'subject' in remaining_args else True)
 
     # apply transformation to binary mask: template --> anat
     sct_apply_transfo.main(argv=[
         '-i', fname_gt,
         '-d', fname_seg,
-        '-w', 'warp_template2anat.nii.gz',
-        '-o', 'test_template2anat.nii.gz',
+        '-w', str(tmp_path/'warp_template2anat.nii.gz'),
+        '-o', str(tmp_path/'test_template2anat.nii.gz'),
         '-x', 'nn',
         '-v', '0'])
 
@@ -89,19 +95,19 @@ def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt,
     sct_apply_transfo.main(argv=[
         '-i', fname_seg,
         '-d', fname_gt,
-        '-w', 'warp_anat2template.nii.gz',
-        '-o', 'test_anat2template.nii.gz',
+        '-w', str(tmp_path/'warp_anat2template.nii.gz'),
+        '-o', str(tmp_path/'test_anat2template.nii.gz'),
         '-x', 'nn',
         '-v', '0'])
 
     # compute dice coefficient between template segmentation warped to anat and segmentation from anat
     im_seg = Image(fname_seg)
-    im_template_seg_reg = Image('test_template2anat.nii.gz')
+    im_template_seg_reg = Image(str(tmp_path/'test_template2anat.nii.gz'))
     dice_template2anat = compute_dice(im_seg, im_template_seg_reg, mode='3d', zboundaries=True)
     assert dice_template2anat > dice_threshold
 
     # compute dice coefficient between anat segmentation warped to template and segmentation from template
-    im_seg_reg = Image('test_anat2template.nii.gz')
+    im_seg_reg = Image(str(tmp_path/'test_anat2template.nii.gz'))
     im_template_seg = Image(fname_gt)
     dice_anat2template = compute_dice(im_seg_reg, im_template_seg, mode='3d', zboundaries=True)
     assert dice_anat2template > dice_threshold
