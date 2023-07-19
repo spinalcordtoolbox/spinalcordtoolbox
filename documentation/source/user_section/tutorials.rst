@@ -68,6 +68,5 @@ If you would prefer to learn how to use SCT in a guided workshop setting, we pro
    tutorials/gray-matter-segmentation
    tutorials/atlas-based-analysis
    tutorials/diffusion-weighted-mri
-   tutorials/normalizing-morphometrics-compression
    tutorials/other-features
    Analysis pipelines with SCT <tutorials/analysis-pipelines-with-sct>
