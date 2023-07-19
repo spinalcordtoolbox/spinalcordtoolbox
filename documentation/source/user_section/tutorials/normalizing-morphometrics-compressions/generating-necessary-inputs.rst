@@ -12,8 +12,10 @@ To use sct_compute_compression, we need the 3 following input files:
 
 
 ## 1. Spinal cord segmentation
+-------------
 .. code:: sh
 # 1. Generate spinal cord segmentation
+
    sct_deepseg_sc -i t2_compressed.nii.gz -c t2
 
 :Input arguments:
@@ -26,7 +28,9 @@ To use sct_compute_compression, we need the 3 following input files:
 
 
 ## 2. Label the spinal cord vertebral levels
+-------------
 .. code:: sh
+
 # 2. Generate spinal cord vertebral labeling
    sct_label_vertebrae -i t2_compressed.nii.gz -s t2_compressed_seg.nii.gz -c t2
 
@@ -40,10 +44,13 @@ To use sct_compute_compression, we need the 3 following input files:
    - ``sub-twh018_T2w_seg.nii.gz`` : Spinal cord segmentation.
 
 ## 3. Generate spinal cord compression labels
-
+-------------
 1. Open the image in FSLeyes. If the image is not 3D, open both axial and sagittal images in FSLeyes.
+
 .. code:: sh
+
    fsleyes t2_compressed.nii.gz &
+
 2. Look at the clinical data provided with compression information to know at which level the compressions are located.
 3. Locate the compression in the sagittal view.
 4. In the axial view, toggle to the maximum compressed slice around the compression

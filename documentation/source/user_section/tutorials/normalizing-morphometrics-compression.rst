@@ -7,7 +7,8 @@ Compute normalized morphometric measures to assess spinal cord compression
   :align: center
   :figwidth: 60%
 
-This section demonstrates how to compute shape metrics of the spinal cord using the ``sct_process_segmentation`` command. Of primary interest is the cross-sectional area (CSA) of the spinal cord, but this command will also calculate other shape metrics, such as diameter, orientation, and symmetry of the cord.
+This section demonstrates how to compute normalized morphometric measures to assess spinal cord compression using the ``sct_compute_compression`` command.
+
 
 # TO MODIFY
 

@@ -1,23 +1,26 @@
-.. _csa-averaged:
+.. _normalization-pipeline:
 
-CSA (Averaged across vertebral levels)
+Normalization pipeline (Averaged across vertebral levels)
 ######################################
 
-First, we will start by computing the cord cross-sectional area (CSA) averaged across vertebral levels. As an example, we'll choose the C3 and C4 vertebral levels, but you can specify any vertebral levels present in the vertebral level file.
+Morphometrics measures are ouput from ``sct_process_segmentation`` and include cross-sectional area, anterior-posterior diameter, right-left diameter, eccentricity and solidity.
+Metrics are normalized using the non-compressed levels above and below the compression site
+using the following equation:
 
-.. code:: sh
+    ratio = (1 - mi/((ma+mb)/2))
 
-   sct_process_segmentation -i t2_seg.nii.gz -vert 3:4 -vertfile ./label/template/PAM50_levels.nii.gz -o csa_c3c4.csv
+Where mi: metric at the compression level, ma: metric above the compression level, mb:
+metric below the compression level.
 
-:Input arguments:
-   - ``-i`` : The input segmentation file.
-   - ``-vert`` : The vertebral levels to compute metrics across. Vertebral levels can be specified individually (``3,4``) or as a range (``3:4``).
-   - ``-vertfile`` : The volume containing vertebral levels. Here, we use a PAM50 template object that had been previously warped to the same coordinate space as the input segmentation.
-   - ``-o`` : The output CSV file.
+Additionally, if the "-normalize-hc" flag is used, metrics are normalized using a database
+built from healthy control subjects. This database uses the PAM50 template as an anatomical
+reference system.
 
-:Output files/folders:
-   - ``csa_c3c4.csv`` : A file containing the CSA values and other shape metrics. This file is partially replicated in the table below.
 
-.. csv-table:: CSA values computed for C3 and C4 vertebral levels (Averaged)
-   :file: csa_c3c4.csv
-   :header-rows: 1
+# TODO put figure here
+
+
+
+Reference: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic
+spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective
+study with 100 consecutive patients. Radiology 2007;243(3):820-827.
