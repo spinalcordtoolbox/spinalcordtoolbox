@@ -13,6 +13,7 @@ import importlib
 
 from spinalcordtoolbox import __file__ as package_init_file
 from spinalcordtoolbox.utils.sys import init_sct
+from spinalcordtoolbox.utils.fs import generate_json_sidecar
 
 
 def main(argv=None):
@@ -45,4 +46,10 @@ def main(argv=None):
     else:
         init_sct()
         module = importlib.import_module(name=f"spinalcordtoolbox.scripts.{command}")
-        module.main(argv)
+        return_values = module.main(argv)
+        if isinstance(return_values, tuple) and len(return_values) == 2:
+            generate_json_sidecar(
+                script_name=command,
+                output_folder=return_values[0],
+                output_files=return_values[1],
+            )

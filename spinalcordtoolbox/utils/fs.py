@@ -12,9 +12,10 @@ import shutil
 import tempfile
 import datetime
 import logging
+import json
 from pathlib import Path
 
-from .sys import printv
+from .sys import printv, __version__
 
 logger = logging.getLogger(__name__)
 
@@ -258,3 +259,29 @@ def relpath_or_abspath(child_path, parent_path):
         return abspath.relative_to(parent_path)
     except ValueError:
         return abspath
+
+
+def generate_json_sidecar(script_name, output_folder, output_files):
+    data = {
+        "Name": "SCT Outputs",
+        "BIDSVersion": "1.4.0",
+        "DatasetType": "derivative",
+        "GeneratedBy": [
+            {
+              "Name": script_name,
+              "Version": __version__,
+              "Date": datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            },
+        ],
+    }
+    data_json = json.dumps(data, indent=4)
+
+    if isinstance(output_files, str):
+        output_file = output_files
+    else:
+        output_file = output_files[0]
+    output_fname = os.path.basename(os.path.realpath(output_file)).split(".")[0]
+
+    with open(os.path.join(output_folder, f"{output_fname}.json"), 'w') as fp:
+        print(data_json, file=fp)
+
