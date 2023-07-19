@@ -16,7 +16,13 @@ import sys
 
 from spinalcordtoolbox import __sct_dir__
 
-if __name__ == "__main__":
+
+def main(argv):
     # Treat `sct_testing` as an alias to `pytest`. If no arguments are passed,
     # simply point pytest at the repo (to avoid looking for tests in the pwd).
-    sys.exit(pytest.main(sys.argv[1:] if sys.argv[1:] else [__sct_dir__]))
+    sys.exit(pytest.main(argv if sys.argv[1:] else [__sct_dir__]))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
+
