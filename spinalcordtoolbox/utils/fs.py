@@ -284,4 +284,3 @@ def generate_json_sidecar(script_name, output_folder, output_files):
 
     with open(os.path.join(output_folder, f"{output_fname}.json"), 'w') as fp:
         print(data_json, file=fp)
-
