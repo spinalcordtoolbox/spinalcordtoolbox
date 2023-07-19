@@ -3,10 +3,13 @@
 Normalizing morphometrics
 #############################
 
+
+
 Compute ratio of **AP diameter** normalized with healthy controls:
 --------------------------------------------------------------------------------
 First, we will start by computing the ratio of the anterior-posterior diameter at the level of compression and levels above and below all compresssions.
-We will also use the flag ``-normalize-hc`` to use a database of healthy controls to normalize the anterior-posterior diameters.`
+We will also use the flag ``-normalize-hc`` to use a database of healthy controls to normalize the anterior-posterior diameters.
+
 .. code:: sh
 
    sct_compute_compression -i t2_compressed_seg.nii.gz -vertfile t2_compressed_seg_labeled.nii.gz -l t2_compressed_compression_labels.nii.gz -metric diameter_AP -normalize-hc 1 -o ap_ratio_norm_PAM50.csv
