@@ -33,6 +33,7 @@ We provide the following hands-on tutorials for SCT's command-line tools.
 
 #. :doc:`Atlas-based analysis <tutorials/atlas-based-analysis>`
 #. :doc:`Diffusion-weighted MRI (Motion correction, DTI computation) <tutorials/diffusion-weighted-mri>`
+#. :doc:`Normalized morphometrics for spinal cord compression  <tutorials/normalizing-morphometrics-compression>`
 #. :doc:`Other features <tutorials/other-features>`
 
    * :doc:`Functional MRI (Motion correction, Spinal level labeling) <tutorials/other-features/processing-fmri-data>`

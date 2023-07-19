@@ -1,9 +1,9 @@
-.. _csa-averaged:
+.. _normalizing-morphometrics:
 
-CSA (Averaged across vertebral levels)
-######################################
+Normalizing morphometric to asses spinal cord compression
+#########################################################
 
-First, we will start by computing the cord cross-sectional area (CSA) averaged across vertebral levels. As an example, we'll choose the C3 and C4 vertebral levels, but you can specify any vertebral levels present in the vertebral level file.
+
 
 .. code:: sh
 

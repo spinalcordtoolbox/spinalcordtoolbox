@@ -1,9 +1,9 @@
 .. _normalization-pipeline:
 
-Normalization pipeline (Averaged across vertebral levels)
-######################################
+Normalization pipeline
+######################
 
-Morphometrics measures are ouput from ``sct_process_segmentation`` and include cross-sectional area, anterior-posterior diameter, right-left diameter, eccentricity and solidity.
+Morphometrics measures are output from ``sct_process_segmentation`` and include cross-sectional area, anterior-posterior diameter, right-left diameter, eccentricity and solidity.
 Metrics are normalized using the non-compressed levels above and below the compression site
 using the following equation:
 
