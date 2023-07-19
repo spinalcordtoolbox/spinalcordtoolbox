@@ -1,7 +1,7 @@
 .. _normalizing-morphometrics-compressions:
 
 Compute normalized morphometric measures to assess spinal cord compression
-#################################################
+##########################################################################
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/shape-metric-computation/csa.png
   :align: center

@@ -1,7 +1,7 @@
 .. _generating-necessary-inputs:
 
 Generate the 3 necessary input files from this subject file for sct_compute_compression
-#######################################################################################
+########################################################################################
 
 To use sct_compute_compression, we need the 3 following input files:
 
@@ -11,12 +11,11 @@ To use sct_compute_compression, we need the 3 following input files:
 3. Compression labels (t2_compressed_compression_labels.nii.gz)
 
 
-## 1. Spinal cord segmentation
-------------------------------
+1. Spinal cord segmentation
+----------------------------
 .. code:: sh
 
-   # 1. Generate spinal cord segmentation
-      sct_deepseg_sc -i t2_compressed.nii.gz -c t2
+   sct_deepseg_sc -i t2_compressed.nii.gz -c t2
 
 :Input arguments:
    - ``-i`` : Input image.
@@ -27,12 +26,11 @@ To use sct_compute_compression, we need the 3 following input files:
    - ``t2_compressed_seg.nii.gz`` : Spinal cord segmentation.
 
 
-## 2. Label the spinal cord vertebral levels
---------------------------------------------
+2. Label the spinal cord vertebral levels
+------------------------------------------
 .. code:: sh
 
-   # 2. Generate spinal cord vertebral labeling
-      sct_label_vertebrae -i t2_compressed.nii.gz -s t2_compressed_seg.nii.gz -c t2
+   sct_label_vertebrae -i t2_compressed.nii.gz -s t2_compressed_seg.nii.gz -c t2
 
 :Input arguments:
    - ``-i`` : The input image file.
@@ -43,8 +41,9 @@ To use sct_compute_compression, we need the 3 following input files:
 :Output files/folders:
    - ``sub-twh018_T2w_seg.nii.gz`` : Spinal cord segmentation.
 
-## 3. Generate spinal cord compression labels
----------------------------------------------
+3. Generate spinal cord compression labels
+-------------------------------------------
+
 1. Open the image in FSLeyes. If the image is not 3D, open both axial and sagittal images in FSLeyes.
 
 .. code:: sh
@@ -58,7 +57,7 @@ To use sct_compute_compression, we need the 3 following input files:
 6. Create an empty mask alt+N (Windows) or option+N (macOS).
 7. Place the label at the center of the spinal cord of the axial image.
 8. Repeat steps 3 to 7 for the number of compressions.
-9. Save and quit.
+9. Save with the filename ``t2_compressed_compression_labels.nii.gz`` and quit.
 
 
 You can also look at the example using an automatic script when multiples images require compression labels: 
