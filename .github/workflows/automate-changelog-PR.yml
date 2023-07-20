@@ -7,8 +7,11 @@ on:
         description: 'Changelog filename'
         required: true
         default: 'CHANGES.md'
+      milestone_number:
+        description: 'Milestone number (get this from the milestone URL)'
+        required: true
       milestone_title:
-        description: 'Milestone title'
+        description: 'Milestone title (e.g. 6.1)'
         required: true
       future_milestone_title:
         description: 'Next milestone title (used to update dev version.txt on master)'
@@ -45,7 +48,7 @@ jobs:
         branch: "bot/v${{ github.event.inputs.milestone_title }}"
         commit-message  : "Update ${{ github.event.inputs.fname_changelog }} and version.txt for ${{ github.event.inputs.milestone_title }} release"
         title: "Update ${{ github.event.inputs.fname_changelog }} and version.txt for ${{ github.event.inputs.milestone_title }} release"
-        milestone: "${{ github.event.inputs.milestone_title }}"
+        milestone: "${{ github.event.inputs.milestone_number }}"
         body: |
           Update ${{ github.event.inputs.fname_changelog }} and version.txt for ${{ github.event.inputs.milestone_title }} release.
           
