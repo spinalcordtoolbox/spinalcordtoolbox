@@ -10,6 +10,9 @@ on:
       milestone_title:
         description: 'Milestone title'
         required: true
+      future_milestone_title:
+        description: 'Next milestone title (used to update dev version.txt on master)'
+        required: true
 
 jobs:
   create-changelog-PR:
@@ -31,16 +34,20 @@ jobs:
         cd ${{ github.event.repository.name }}
         changelog spinalcordtoolbox/spinalcordtoolbox --update --name "${{ github.event.inputs.fname_changelog }}" --milestone ${{ github.event.inputs.milestone_title }} --use-milestone-due-date
         rm -f "${{ github.event.inputs.fname_changelog }}.bak"
-    - name: Create pull request for updated changelog
+    - name: Update version.txt
+      run: |
+        cd ${{ github.event.repository.name }}
+        echo "${{ github.event.inputs.future_milestone_title }}.dev0" > spinalcordtoolbox/version.txt
+    - name: Create pull request for updated changelog and version.txt
       uses: peter-evans/create-pull-request@v5
       with:
         path: "${{ github.event.repository.name }}"
         branch: "bot/v${{ github.event.inputs.milestone_title }}"
-        commit-message  : "Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release"
-        title: "Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release"
+        commit-message  : "Update ${{ github.event.inputs.fname_changelog }} and version.txt for ${{ github.event.inputs.milestone_title }} release"
+        title: "Update ${{ github.event.inputs.fname_changelog }} and version.txt for ${{ github.event.inputs.milestone_title }} release"
         milestone: "${{ github.event.inputs.milestone_title }}"
         body: |
-          Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release.
+          Update ${{ github.event.inputs.fname_changelog }} and version.txt for ${{ github.event.inputs.milestone_title }} release.
           
           Carried out as a part of the [release](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Misc%3A-Creating-a-new-release) checklist.
         delete-branch: true
