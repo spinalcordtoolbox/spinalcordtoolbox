@@ -18,11 +18,12 @@ To use ``sct_compute_compression``, we need the 3 following input files:
 ----------------------------
 .. code:: sh
 
-   sct_deepseg_sc -i t2_compressed.nii.gz -c t2
+   sct_deepseg_sc -i t2_compressed.nii.gz -c t2 -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : Input image.
    - ``-c`` : Contrast of the input image.
+   - ``-qc`` : Directory for Quality Control reporting.
 
 
 :Output files/folders:
@@ -33,13 +34,13 @@ To use ``sct_compute_compression``, we need the 3 following input files:
 ------------------------------------------
 .. code:: sh
 
-   sct_label_vertebrae -i t2_compressed.nii.gz -s t2_compressed_seg.nii.gz -c t2
+   sct_label_vertebrae -i t2_compressed.nii.gz -s t2_compressed_seg.nii.gz -c t2 -qc ~/qc_singleSubj
 
 :Input arguments:
    - ``-i`` : The input image file.
    - ``-s`` : Spinal cord segmentation.
    - ``-c`` : Contrast of the input image.
-
+   - ``-qc`` : Directory for Quality Control reporting.
 
 :Output files/folders:
    - ``t2_compressed_seg_labeled.nii.gz`` : Spinal cord vertebral labels.
