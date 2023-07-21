@@ -23,6 +23,8 @@ reference system.
    - ``mb`` : metric below the compression level.
 
 
-Reference: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic
-spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective
-study with 100 consecutive patients. Radiology 2007;243(3):820-827.
+.. note::
+   **put in ref format**
+   Reference: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic
+   spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective
+   study with 100 consecutive patients. Radiology 2007;243(3):820-827.
