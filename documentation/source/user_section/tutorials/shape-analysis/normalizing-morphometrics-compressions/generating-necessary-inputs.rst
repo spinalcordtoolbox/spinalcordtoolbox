@@ -61,7 +61,7 @@ To use ``sct_compute_compression``, we need the 3 following input files:
 6. Create an empty mask alt+N (Windows) or option+N (macOS).
 7. Place the label at the center of the spinal cord of the axial image.
 8. Repeat steps 3 to 7 for the number of compressions.
-9. Save with the filename ``t2_compressed_compression_labels.nii.gz`` and quit.
+9. Save with the filename ``t2_compressed_labels-compression.nii.gz`` and quit.
 
 
 You can also look at the example using an automatic script when multiples images require compression labels: 
