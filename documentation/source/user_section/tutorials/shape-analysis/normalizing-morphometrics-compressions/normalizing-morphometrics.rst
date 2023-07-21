@@ -1,7 +1,7 @@
 .. _normalizing-morphometrics:
 
-Applying the normalization on morphometrics
-#############################
+Applying the normalization on morphometrics with ``sct_compute_compression``
+#######################################################################################
 
 A ratio is computed of the morphometrics at the level(s) of compression withe the measures at the levels above and below all compression sites. 
 Adding the option ``-normalize-hc`` normalizes the morphometrics with a database of healthy subjects beofre computing the ratio.
