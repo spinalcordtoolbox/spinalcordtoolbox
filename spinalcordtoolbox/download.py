@@ -58,13 +58,6 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "MNI-Poly-AMU"),
     },
-    "pmj_models": {
-        "mirrors": [
-            "https://github.com/spinalcordtoolbox/pmj_models/releases/download/r20170922/20170922_pmj_models.zip",
-            "https://osf.io/4gufr/?action=download",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "pmj_models"),
-    },
     "binaries_linux": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221109/spinalcordtoolbox-binaries_linux.tar.gz",
