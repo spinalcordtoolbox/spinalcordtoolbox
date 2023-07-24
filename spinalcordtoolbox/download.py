@@ -148,13 +148,6 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_lesion_models"),
     },
-    "c2c3_disc_models": {
-        "mirrors": [
-            "https://github.com/spinalcordtoolbox/c2c3_disc_models/releases/download/r20190117/20190117_c2c3_disc_models.zip",
-            "https://osf.io/t97ap/?action=download",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "c2c3_disc_models"),
-    },
     "exvivo_template": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/exvivo-template/archive/refs/tags/r20210317.zip"
