@@ -58,13 +58,6 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "MNI-Poly-AMU"),
     },
-    "optic_models": {
-        "mirrors": [
-            "https://github.com/spinalcordtoolbox/optic_models/releases/download/r20170413/20170413_optic_models.zip",
-            "https://osf.io/g4fwn/?action=download",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "optic_models"),
-    },
     "pmj_models": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/pmj_models/releases/download/r20170922/20170922_pmj_models.zip",
