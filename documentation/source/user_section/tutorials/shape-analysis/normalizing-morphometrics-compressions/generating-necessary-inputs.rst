@@ -1,6 +1,6 @@
 .. _generating-necessary-inputs:
 
-Generate the input files for ``sct_compute_compression``
+Generate the necessary input files
 #############################################################
 
 The ``sct_compute_compression`` command uses the shape metric of the spinal cord a the level of compression and computes a ratio with healthy levels above and below the compression site.
