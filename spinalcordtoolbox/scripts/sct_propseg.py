@@ -441,6 +441,7 @@ def propseg(img_input, options_dict):
         folder_output = os.path.abspath(arguments.ofolder)
     else:
         folder_output = str(pathlib.Path(fname_out).parent)
+        fname_out = pathlib.Path(fname_out).name
     if not os.path.isdir(folder_output) and os.path.exists(folder_output):
         logger.error("output directory %s is not a valid directory" % folder_output)
     if not os.path.exists(folder_output):
