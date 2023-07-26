@@ -189,8 +189,8 @@ def get_verterbral_level_from_slice(slices, df_metrics):
                              f"Check vertebral labeling file.")
     level_slice_dict = {}
     # TODO adjust for multiple slices for one compresssion (that can have multiple levels too)
-    #slices_combined = []
-    #for slice in slices:
+    # slices_combined = []
+    # for slice in slices:
     #    slices_same_compression = [slice_1 for slice_1 in slices if np.abs((slice - slice_1)) == 1]
     #    if slices_same_compression:
     #        if slices_same_compression[0] < slices_same_compression[1]:
