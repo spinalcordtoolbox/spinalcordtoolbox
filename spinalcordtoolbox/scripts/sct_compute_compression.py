@@ -9,7 +9,6 @@
 import sys
 import os
 import numpy as np
-import csv
 import logging
 from typing import Sequence
 import pandas as pd
@@ -494,7 +493,7 @@ def metric_ratio_norm(metrics_patients, metrics_HC):
     return metric_ratio(ma, mb, mi)
 
 
-def save_csv(fname_out, level, slices, metric, metric_ratio, metric_ratio_PAM50, metric_ratio_norm, filename):
+def save_df_to_csv(dataframe, fname_out):
     """
     Save .csv file of MSCC results.
     :param fname_out:
@@ -505,15 +504,15 @@ def save_csv(fname_out, level, slices, metric, metric_ratio, metric_ratio_PAM50,
     :param filename: str: input filename
     :return:
     """
-    if not os.path.isfile(fname_out):
-        with open(fname_out, 'w') as csvfile:
-            header = ['filename', 'compression_level', 'slice(I->S)', f'{metric}_ratio', f'{metric}_ratio_PAM50', f'{metric}_ratio_PAM50_normalized']
-            writer = csv.DictWriter(csvfile, fieldnames=header)
-            writer.writeheader()
-    with open(fname_out, 'a') as csvfile:
-        csv_writer = csv.writer(csvfile, delimiter=',')
-        line = [filename, level, slices, metric_ratio, metric_ratio_PAM50, metric_ratio_norm]
-        csv_writer.writerow(line)
+    if os.path.isfile(fname_out):
+        # Concatenate existing CSV file to the new CSV file
+        dataframe_old = pd.read_csv(fname_out)
+        dataframe = pd.concat([dataframe_old, dataframe], axis=0, ignore_index=True)
+        # Merge rows that have the same 'filename', 'compression_level', and 'slice(I->S)'
+        dataframe = dataframe.groupby(
+            [dataframe.iloc[:, 0], dataframe.iloc[:, 1], dataframe.iloc[:, 2]]
+        ).max()  # Use max for a tiebreaker (this should never happen unless the user computes the same metric twice)
+    dataframe.to_csv(fname_out, index=False)
 
 
 def main(argv: Sequence[str]):
@@ -617,6 +616,7 @@ def main(argv: Sequence[str]):
     # Step 3. Compute MSCC metrics for each compressed level
     # ------------------------------------------------------
     # Loop through all compressed levels (compute one MSCC per compressed level)
+    rows = []
     for idx in compressed_levels_dict.keys():
         level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
         printv(f'\nCompression #{idx} at level {level}', verbose=verbose, type='info')
@@ -642,7 +642,10 @@ def main(argv: Sequence[str]):
             metric_ratio_PAM50_result = None
             metric_ratio_norm_result = None
 
-        save_csv(fname_out, level, slice_compressed[idx], arguments.metric, metric_ratio_result, metric_ratio_PAM50_result, metric_ratio_norm_result, arguments.i)
+        rows.append([arguments.i, level, slice_compressed[idx],
+                     metric_ratio_result,
+                     metric_ratio_PAM50_result,
+                     metric_ratio_norm_result])
 
         # Display results
         logger.debug(f'\nmetric_a = {metrics_patient[0]}, metric_b = {metrics_patient[1]}, metric_i = {metrics_patient[2]}')
@@ -652,6 +655,11 @@ def main(argv: Sequence[str]):
             printv(f'\n{metric} ratio norm = {metric_ratio_norm_result}', verbose=verbose, type='info')
             printv(f'\n{metric} ratio PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
 
+    df_metric_ratios = pd.DataFrame(rows, columns=['filename', 'compression_level', 'slice(I->S)',
+                                                   f'{arguments.metric}_ratio',
+                                                   f'{arguments.metric}_ratio_PAM50',
+                                                   f'{arguments.metric}_ratio_PAM50_normalized'])
+    save_df_to_csv(df_metric_ratios, fname_out)
     printv(f'\nSaved: {fname_out}')
 
 
