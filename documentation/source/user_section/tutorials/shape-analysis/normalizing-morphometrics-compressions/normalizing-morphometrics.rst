@@ -13,8 +13,8 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric [PUT REF
 
 .. code:: sh
 
-   sct_compute_compression -i t2_compressed_seg.nii.gz -vertfile t2_compressed_seg_labeled.nii.gz -l t2_compressed_labels-compression.nii.gz -metric diameter_AP -normalize-hc 0 -o ap_ratio_norm_PAM50.csv
-
+   sct_compute_compression -i t2_compressed_seg.nii.gz -vertfile t2_compressed_seg_labeled.nii.gz -l t2_compressed_labels-compression.nii.gz -metric diameter_AP -normalize-hc 0 -o ap_ratio.csv
+   
 :Input arguments:
    - ``-i`` : The input segmentation file.
    - ``-vertfile`` : Vertebral labeling file.
@@ -27,7 +27,7 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric [PUT REF
 
 
 .. csv-table:: Anterior - posterior diameter ratio with levels above and below all compressions.
-   :file: ap_ratio_norm_PAM50.csv
+   :file: ap_ratio.csv
    :header-rows: 1
 
 :Legend:   
@@ -38,6 +38,7 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric [PUT REF
 
 .. note::
    metrics
+   distance
 
 Compute ratio of **AP diameter** : normalized with healthy controls:
 --------------------------------------------------------------------------------
