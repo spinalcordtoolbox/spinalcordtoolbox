@@ -26,27 +26,29 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric [PUT REF
    - ``ap_ratio.csv`` : A file containing the ratio values for each. This file is partially replicated in the table below.
 
 
-.. csv-table:: Anterior - posterior diameter ratio with levels above and below all compressions.
+.. csv-table:: Anterposterior diameter ratio with levels above and below all compressions.
    :file: ap_ratio.csv
    :header-rows: 1
 
 :Legend:   
    - **diameter_AP_ratio**: Ratio computed in the subject's native space.
    - **diameter_AP_ratio_PAM50**: Ratio computed in the PAM50 space.
-   - **diameter_AP_ratio_PAM50_normalized**: Ratio computed in the PAM50 space and nromalized with healthy controls
+   - **diameter_AP_ratio_PAM50_normalized**: Ratio computed in the PAM50 space and normalized with healthy controls
 
 
 .. note::
-   metrics
-   distance
+   - The flag `-metric` can be used to specify the morphometric to compute the ratio.
+   - The flag `-distance` can be used to select the distance (mm) in the superior-inferior direction along the cord to average healthy slices.
+   - The flag `-extent` can be used to specify the extent (mm) to average metrics of healthy levels.
+
 
 Compute ratio of **AP diameter** : normalized with healthy controls:
 --------------------------------------------------------------------------------
-We will add the flag ``-normalize-hc`` to use a database of healthy controls to normalize the anterior-posterior diameters.
+We will add the flag ``-normalize-hc`` to use a database of healthy controls to normalize the anterior-posterior diameters. 
 
 .. code:: sh
 
-   sct_compute_compression -i t2_compressed_seg.nii.gz -vertfile t2_compressed_seg_labeled.nii.gz -l t2_compressed_compression_labels.nii.gz -metric area -normalize-hc 1 -o area_ratio_norm_PAM50.csv
+   sct_compute_compression -i t2_compressed_seg.nii.gz -vertfile t2_compressed_seg_labeled.nii.gz -l t2_compressed_labels-compression.nii.gz -metric diameter_AP -normalize-hc 1 -o ap_ratio_norm_PAM50.csv
 
 :Input arguments:
    - ``-i`` : The input segmentation file.
@@ -58,9 +60,10 @@ We will add the flag ``-normalize-hc`` to use a database of healthy controls to 
 :Output files/folders:
    - ``ap_ratio_norm_PAM50.csv`` : A file containing the ratio values for each. This file is partially replicated in the table below.
 
-.. csv-table:: Cross-sectional area ratio with levels above and below all compressions.
-   :file: area_ratio_norm_PAM50.csv
+.. csv-table:: Anterposterior diameter ratio with levels above and below all compressions normalized with healthy controls.
+   :file: ap_ratio_norm_PAM50.csv
    :header-rows: 1
 
 .. note::
-   add to fliter with sex and age
+   - The flag `-sex` can be used select the sex of healthy subject to use for the normalization.
+   - The flag `-age` can be used to select the age range of healthy subjects to use for normalization.

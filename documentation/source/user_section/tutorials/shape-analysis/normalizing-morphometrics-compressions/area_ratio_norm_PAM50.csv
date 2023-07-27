@@ -1,4 +1,0 @@
-filename,compression_level,slice(I->S),area_ratio,area_ratio_PAM50,area_ratio_PAM50_normalized
-t2_compressed_seg.nii.gz,4.0,72,-10.922410429165685,-10.120606668992815,13.547971310339712
-t2_compressed_seg.nii.gz,5.0,96,-6.761575632782657,-7.883226201499061,12.302862538692139
-t2_compressed_seg.nii.gz,7.0,116,-11.134210903432118,-11.407271623272862,-10.248844261393163
