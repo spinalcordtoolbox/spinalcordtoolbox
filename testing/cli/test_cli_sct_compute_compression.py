@@ -121,8 +121,8 @@ def test_sct_compute_compression_no_normalization(tmp_path, dummy_3d_mask_nib, d
         row = next(reader)
         assert float(row['compression_level']) == 5.0
         assert float(row['diameter_AP_ratio']) == pytest.approx(20.040803711692355)
-        assert row['diameter_AP_ratio_PAM50'] == ''
-        assert row['diameter_AP_ratio_PAM50_normalized'] == ''
+        assert row['diameter_AP_ratio_PAM50'] == 'n/a'
+        assert row['diameter_AP_ratio_PAM50_normalized'] == 'n/a'
 
 
 def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
@@ -130,6 +130,10 @@ def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compressi
     filename = str(tmp_path / 'tmp_file_out.csv')
     sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label,
                                        '-vertfile', dummy_3d_vert_label, '-normalize-hc',  '1', '-o', filename])
+    # Run sct_compute_compression a second time with a different metric than the default
+    sct_compute_compression.main(argv=['-i', dummy_3d_mask_nib, '-l', dummy_3d_compression_label,
+                                       '-vertfile', dummy_3d_vert_label, '-normalize-hc',  '1', '-o', filename,
+                                       '-metric', 'area'])
     with open(filename, "r") as csvfile:
         reader = csv.DictReader(csvfile, delimiter=',')
         row = next(reader)
@@ -137,6 +141,12 @@ def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compressi
         assert float(row['diameter_AP_ratio']) == pytest.approx(20.040803711692355)
         assert float(row['diameter_AP_ratio_PAM50']) == pytest.approx(12.525502319807725)
         assert float(row['diameter_AP_ratio_PAM50_normalized']) == pytest.approx(16.985020560800656)
+        assert float(row['area_ratio']) == pytest.approx(19.999959045301974)
+        assert float(row['area_ratio_PAM50']) == pytest.approx(12.499982988595415)
+        assert float(row['area_ratio_PAM50_normalized']) == pytest.approx(20.45962624772345)
+        # Ensure that there isn't a duplicate appended row from running sct_compute_compression twice
+        with pytest.raises(StopIteration):
+            next(reader)
 
 
 def test_sct_compute_compression_sex_F(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
