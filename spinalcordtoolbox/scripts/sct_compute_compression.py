@@ -497,11 +497,6 @@ def save_df_to_csv(dataframe, fname_out):
     """
     Save .csv file of MSCC results.
     :param fname_out:
-    :param level: int: Level of compression.
-    :param metric: str: metric to perform normalization
-    :param metric_ratio: float:
-    :param metric_ratio_norm:
-    :param filename: str: input filename
     :return:
     """
     if os.path.isfile(fname_out):
