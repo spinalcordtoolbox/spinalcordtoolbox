@@ -512,7 +512,7 @@ def save_df_to_csv(dataframe, fname_out):
         dataframe = dataframe.groupby(
             [dataframe.iloc[:, 0], dataframe.iloc[:, 1], dataframe.iloc[:, 2]]
         ).max()  # Use max for a tiebreaker (this should never happen unless the user computes the same metric twice)
-    dataframe.to_csv(fname_out, index=False)
+    dataframe.to_csv(fname_out, na_rep='n/a', index=False)
 
 
 def main(argv: Sequence[str]):
