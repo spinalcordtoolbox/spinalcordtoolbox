@@ -121,8 +121,8 @@ def test_sct_compute_compression_no_normalization(tmp_path, dummy_3d_mask_nib, d
         row = next(reader)
         assert float(row['compression_level']) == 5.0
         assert float(row['diameter_AP_ratio']) == pytest.approx(20.040803711692355)
-        assert row['diameter_AP_ratio_PAM50'] == ''
-        assert row['diameter_AP_ratio_PAM50_normalized'] == ''
+        assert row['diameter_AP_ratio_PAM50'] == 'n/a'
+        assert row['diameter_AP_ratio_PAM50_normalized'] == 'n/a'
 
 
 def test_sct_compute_compression(tmp_path, dummy_3d_mask_nib, dummy_3d_compression_label, dummy_3d_vert_label):
