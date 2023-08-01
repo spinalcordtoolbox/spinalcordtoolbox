@@ -404,7 +404,6 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
             max_slices.append(max(slices))
     level_below = np.argmin(min_slices)
     level_above = np.argmax(max_slices)
-    print('below:', level_below, 'above:', level_above)
     # Get slices to average at distance across the chosen extent for the level above all compressions
     zmin_above = int(max(list(compression_level_dict_PAM50[level_above].values())[0]) + distance/slice_thickness_PAM50)
     zmax_above = int(max(list(compression_level_dict_PAM50[level_above].values())[0]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
