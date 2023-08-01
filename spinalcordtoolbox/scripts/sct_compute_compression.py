@@ -614,7 +614,7 @@ def main(argv: Sequence[str]):
     rows = []
     for idx in compressed_levels_dict.keys():
         level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
-        printv(f'\nCompression #{idx} at level {level}', verbose=verbose, type='info')
+        printv(f'\nCompression at level {int(level)}', verbose=verbose, type='info')
 
         # Compute metric ratio (non-normalized)
         slice_avg = list(compressed_levels_dict[idx].values())[0]
