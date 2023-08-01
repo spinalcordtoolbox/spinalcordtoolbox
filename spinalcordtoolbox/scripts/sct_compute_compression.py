@@ -644,11 +644,11 @@ def main(argv: Sequence[str]):
 
         # Display results
         logger.debug(f'\nmetric_a = {metrics_patient[0]}, metric_b = {metrics_patient[1]}, metric_i = {metrics_patient[2]}')
-        printv(f'\n{arguments.metric}_ratio = {metric_ratio_result}', verbose=verbose, type='info')
+        printv(f'{arguments.metric}_ratio = {metric_ratio_result}', verbose=verbose, type='info')
         if arguments.normalize_hc:
-            logger.debug(f'\nPAM50: metric_a = {metrics_patient_PAM50[0]}, metric_b = {metrics_patient_PAM50[1]}, metric_i = {metrics_patient_PAM50[2]}')
-            printv(f'\n{arguments.metric}_ratio_PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
-            printv(f'\n{arguments.metric}_ratio_PAM50_normalized = {metric_ratio_norm_result}', verbose=verbose, type='info')
+            logger.debug(f'PAM50: metric_a = {metrics_patient_PAM50[0]}, metric_b = {metrics_patient_PAM50[1]}, metric_i = {metrics_patient_PAM50[2]}')
+            printv(f'{arguments.metric}_ratio_PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
+            printv(f'{arguments.metric}_ratio_PAM50_normalized = {metric_ratio_norm_result}', verbose=verbose, type='info')
 
     df_metric_ratios = pd.DataFrame(rows, columns=['filename', 'compression_level', 'slice(I->S)',
                                                    f'{arguments.metric}_ratio',
