@@ -67,6 +67,12 @@ def get_parser():
                         help='The number of frames per second for output gif images. Only useful for sct_fmri_moco and '
                              'sct_dmri_moco.',
                         required=False)
+    parser.add_argument('-size',
+                        metavar='int',
+                        type=int,
+                        help='Radius of the mosaic slices, in voxels. Only useful for -p sct_deepseg_lesion -plane axial.',
+                        required=False,
+                        default=15)
     parser.add_argument('-v',
                         action='store_true',
                         help="Verbose")
@@ -97,7 +103,8 @@ def main(argv: Sequence[str]):
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
                 process=arguments.p,
-                fps=arguments.fps,)
+                fps=arguments.fps,
+                size=arguments.size)
 
 
 if __name__ == "__main__":

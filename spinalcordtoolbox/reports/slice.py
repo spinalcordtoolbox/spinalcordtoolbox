@@ -342,7 +342,7 @@ class Axial(Slice):
             image = self._image_seg
         return self._axial_center(image)
 
-    def mosaic(self, return_center=False):
+    def mosaic(self, return_center=False, size=15):
         """Obtain matrices of the mosaics
 
         Calculates how many squares will fit in a row based on the column and the size
@@ -355,7 +355,7 @@ class Axial(Slice):
 
         # Calculate number of columns to display on the report
         dim = self.get_dim(self._images[0])  # dim represents the 3rd dimension of the 3D matrix
-        size = 15  # (By default, size=15 -> 30x30 squares -> 20 columns)
+        # (By default, size=15 -> 30x30 squares -> 20 columns)
         nb_column = 600 // (size * 2)
 
         nb_row = math.ceil(dim / nb_column)
@@ -459,7 +459,7 @@ class Sagittal(Slice):
         size_x = self.coronal_dim(image)
         return np.ones(dim) * size_x / 2, np.ones(dim) * size_y / 2
 
-    def mosaic(self):
+    def mosaic(self, size=None):
         """Obtain matrices of the mosaics
 
         Mosaic images are cropped based on the bounding box of the spinal cord segmentation.

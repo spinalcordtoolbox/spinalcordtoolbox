@@ -587,7 +587,7 @@ def get_json_data_from_path(path_json):
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None, path_qc=None, dataset=None,
-                subject=None, process=None, fps=None):
+                subject=None, process=None, fps=None, size=15):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
     scripts (e.g. sct_propseg).
@@ -704,7 +704,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         # Then, the input image (fname_in1) is overlaid by the lesion (fname_in2).
         qcslice = SliceSubtype([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         action_list = [QcImage.listed_seg]
-        def qcslice_layout(x): return x.mosaic()[:2]
+        def qcslice_layout(x): return x.mosaic(size=size)[:2]
     else:
         raise ValueError("Unrecognized process: {}".format(process))
 
