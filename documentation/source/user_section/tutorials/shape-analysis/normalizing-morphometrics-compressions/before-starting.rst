@@ -4,13 +4,12 @@ Before starting this tutorial
 To modify
 #. Make sure that you have the following files in your working directory:
 
-   * ``single_subject/data/t2/t2_seg.nii.gz``: A 3D binary mask for the spinal cord of a T2 anatomical image.
-   * ``single_subject/data/t2/label/template/PAM50_levels.nii.gz``: A PAM50 template object containing vertebral levels, that has been transformed to the space of the T2 anatomical image.
+   * ``single_subject/data/t2_compression/t2_compression.nii.gz``: A 3D binary mask for the spinal cord of a T2 anatomical image with spinal cord compression.
 
-You can get these files by downloading :sct_tutorial_data:`data_shape-metric-computation.zip`.
+You can get these files by downloading :sct_tutorial_data:`data_compression.zip`.
 
-#. Open a terminal and navigate to the ``single_subject/data/t2/`` directory:
+#. Open a terminal and navigate to the ``single_subject/data/t2_compression/`` directory:
 
 .. code:: sh
 
-   cd {PATH_TO_DOWNLOADED_DATA}/single_subject/data/t2/
+   cd {PATH_TO_DOWNLOADED_DATA}/single_subject/data/t2_compression/
