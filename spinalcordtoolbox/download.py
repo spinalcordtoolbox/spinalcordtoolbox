@@ -58,20 +58,6 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "MNI-Poly-AMU"),
     },
-    "optic_models": {
-        "mirrors": [
-            "https://github.com/spinalcordtoolbox/optic_models/releases/download/r20170413/20170413_optic_models.zip",
-            "https://osf.io/g4fwn/?action=download",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "optic_models"),
-    },
-    "pmj_models": {
-        "mirrors": [
-            "https://github.com/spinalcordtoolbox/pmj_models/releases/download/r20170922/20170922_pmj_models.zip",
-            "https://osf.io/4gufr/?action=download",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "pmj_models"),
-    },
     "binaries_linux": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221109/spinalcordtoolbox-binaries_linux.tar.gz",
@@ -147,13 +133,6 @@ DATASET_DICT = {
             "https://github.com/spinalcordtoolbox/deepseg_lesion_models/releases/download/r20180613/20220325_deepseg_lesion_models_onnx.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_lesion_models"),
-    },
-    "c2c3_disc_models": {
-        "mirrors": [
-            "https://github.com/spinalcordtoolbox/c2c3_disc_models/releases/download/r20190117/20190117_c2c3_disc_models.zip",
-            "https://osf.io/t97ap/?action=download",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "c2c3_disc_models"),
     },
     "exvivo_template": {
         "mirrors": [
