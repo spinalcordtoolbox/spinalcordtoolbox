@@ -54,7 +54,7 @@ To use ``sct_compute_compression``, we need the 3 following input files:
 
    fsleyes t2_compressed.nii.gz &
 
-2. Look at the clinical data provided with compression information to know at which level the compressions are located.
+2. Look at the clinical data provided with compression information to know at which level the compression(s) are located.
 3. Locate the compression in the sagittal view.
 4. In the axial view, toggle to the maximum compressed slice around the compression.
 5. Click on alt+E (Windows) or option+E (macOS) to open edit mode. Select size 1 and click on the pencil.
