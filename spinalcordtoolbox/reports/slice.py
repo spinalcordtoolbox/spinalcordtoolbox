@@ -229,12 +229,8 @@ class Slice(object):
         centers_y = np.zeros(nz)
         for i in range(nz):
             centers_x[i], centers_y[i] = center_of_mass(data[i, :, :])
-        try:
-            Slice.nan_fill(centers_x)
-            Slice.nan_fill(centers_y)
-        except ValueError as err:
-            logger.error("Axial center of the spinal cord is not found: %s", err)
-            raise
+        Slice.inf_nan_fill(centers_x)
+        Slice.inf_nan_fill(centers_y)
         return centers_x, centers_y
 
     @abc.abstractmethod
