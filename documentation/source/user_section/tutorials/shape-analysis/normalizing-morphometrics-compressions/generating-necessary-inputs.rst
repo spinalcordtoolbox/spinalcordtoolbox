@@ -13,6 +13,7 @@ To use ``sct_compute_compression``, we need the 3 following input files:
 2. Vertebral labels
 3. Compression labels (``t2_compressed_compression_labels.nii.gz``)
 
+You can also get these files by downloading :sct_tutorial_data:`data_normalizing-morphometrics-comppression.zip`.
 
 1. Spinal cord segmentation
 ----------------------------
@@ -56,10 +57,26 @@ To use ``sct_compute_compression``, we need the 3 following input files:
 
 2. Look at the clinical data provided with compression information to know at which level the compressions are located.
 3. Locate the compression in the sagittal view.
+
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/localizing_compression_sag.png
+   :align: center
+
 4. In the axial view, toggle to the maximum compressed slice around the compression.
 5. Click on alt+E (Windows) or option+E (macOS) to open edit mode. Select size 1 and click on the pencil.
+
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/edit_mode.png
+   :align: center
+
 6. Create an empty mask alt+N (Windows) or option+N (macOS).
+
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/create_mask.png
+   :align: center
+
 7. Place the label at the center of the spinal cord of the axial image.
+
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/labeling_compression.png
+   :align: center
+
 8. Repeat steps 3 to 7 for the number of compressions.
 9. Save with the filename ``t2_compressed_labels-compression.nii.gz`` and quit.
 
