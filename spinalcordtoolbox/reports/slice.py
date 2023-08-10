@@ -183,21 +183,19 @@ class Slice(object):
         return matrix
 
     @staticmethod
-    def nan_fill(A):
-        """Interpolate NaN values with neighboring values in array (in-place)
-        If only NaNs, return an array of zeros.
+    def inf_nan_fill(A):
+        """Interpolate inf and NaN values with neighboring values in a 1D array, in-place.
+        If only inf and NaNs, fills the array with zeros.
         """
-        nans = np.isnan(A)
-        if ~np.any(nans):
-            return A
-        elif np.all(nans):
-            A[:] = np.zeros_like(A)
-            return A
-        xp = (~nans).ravel().nonzero()[0]
-        fp = A[~nans]
-        x = nans.ravel().nonzero()[0]
-        A[nans] = np.interp(x, xp, fp)
-        return A
+        valid = np.isfinite(A)
+        invalid = ~valid
+        if np.any(valid):
+            A[invalid] = np.interp(
+                np.nonzero(invalid)[0],
+                np.nonzero(valid)[0],
+                A[valid])
+        else:
+            A.fill(0)
 
     @abc.abstractmethod
     def get_slice(self, data, i):
