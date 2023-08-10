@@ -9,7 +9,6 @@
 import sys
 import os
 import numpy as np
-import csv
 import logging
 from typing import Sequence
 import pandas as pd
@@ -26,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 NEAR_ZERO_THRESHOLD = 1e-6
+INDEX_COLUMNS = ['filename', 'compression_level', 'slice(I->S)']
 
 
 # PARSER
@@ -190,8 +190,8 @@ def get_verterbral_level_from_slice(slices, df_metrics):
                              f"Check vertebral labeling file.")
     level_slice_dict = {}
     # TODO adjust for multiple slices for one compresssion (that can have multiple levels too)
-    #slices_combined = []
-    #for slice in slices:
+    # slices_combined = []
+    # for slice in slices:
     #    slices_same_compression = [slice_1 for slice_1 in slices if np.abs((slice - slice_1)) == 1]
     #    if slices_same_compression:
     #        if slices_same_compression[0] < slices_same_compression[1]:
@@ -405,7 +405,6 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
             max_slices.append(max(slices))
     level_below = np.argmin(min_slices)
     level_above = np.argmax(max_slices)
-    print('below:', level_below, 'above:', level_above)
     # Get slices to average at distance across the chosen extent for the level above all compressions
     zmin_above = int(max(list(compression_level_dict_PAM50[level_above].values())[0]) + distance/slice_thickness_PAM50)
     zmax_above = int(max(list(compression_level_dict_PAM50[level_above].values())[0]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
@@ -494,26 +493,19 @@ def metric_ratio_norm(metrics_patients, metrics_HC):
     return metric_ratio(ma, mb, mi)
 
 
-def save_csv(fname_out, level, slices, metric, metric_ratio, metric_ratio_PAM50, metric_ratio_norm, filename):
+def save_df_to_csv(dataframe, fname_out):
     """
     Save .csv file of MSCC results.
     :param fname_out:
-    :param level: int: Level of compression.
-    :param metric: str: metric to perform normalization
-    :param metric_ratio: float:
-    :param metric_ratio_norm:
-    :param filename: str: input filename
     :return:
     """
-    if not os.path.isfile(fname_out):
-        with open(fname_out, 'w') as csvfile:
-            header = ['filename', 'compression_level', 'slice(I->S)', metric + '_ratio', metric + '_ratio_PAM50', metric + '_ratio_PAM50_normalized']
-            writer = csv.DictWriter(csvfile, fieldnames=header)
-            writer.writeheader()
-    with open(fname_out, 'a') as csvfile:
-        csv_writer = csv.writer(csvfile, delimiter=',')
-        line = [filename, level, slices, metric_ratio, metric_ratio_PAM50, metric_ratio_norm]
-        csv_writer.writerow(line)
+    if os.path.isfile(fname_out):
+        # Combine the data with the existing CSV file.
+        # Rows with the same (filename, compression_level, slice) triple are merged together.
+        # Metric values from the new dataframe take priority over old CSV file values.
+        dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
+        dataframe = dataframe.combine_first(dataframe_old)
+    dataframe.to_csv(fname_out, na_rep='n/a')
 
 
 def main(argv: Sequence[str]):
@@ -617,9 +609,10 @@ def main(argv: Sequence[str]):
     # Step 3. Compute MSCC metrics for each compressed level
     # ------------------------------------------------------
     # Loop through all compressed levels (compute one MSCC per compressed level)
+    rows = []
     for idx in compressed_levels_dict.keys():
         level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
-        printv(f'\nCompression #{idx} at level {level}', verbose=verbose, type='info')
+        printv(f'\nCompression at level {int(level)}', verbose=verbose, type='info')
 
         # Compute metric ratio (non-normalized)
         slice_avg = list(compressed_levels_dict[idx].values())[0]
@@ -642,16 +635,26 @@ def main(argv: Sequence[str]):
             metric_ratio_PAM50_result = None
             metric_ratio_norm_result = None
 
-        save_csv(fname_out, level, slice_compressed[idx], arguments.metric, metric_ratio_result, metric_ratio_PAM50_result, metric_ratio_norm_result, arguments.i)
+        rows.append([arguments.i, level, slice_compressed[idx],
+                     metric_ratio_result,
+                     metric_ratio_PAM50_result,
+                     metric_ratio_norm_result])
 
         # Display results
         logger.debug(f'\nmetric_a = {metrics_patient[0]}, metric_b = {metrics_patient[1]}, metric_i = {metrics_patient[2]}')
-        printv(f'\n{metric} ratio = {metric_ratio_result}', verbose=verbose, type='info')
+        printv(f'{arguments.metric}_ratio = {metric_ratio_result}', verbose=verbose, type='info')
         if arguments.normalize_hc:
-            logger.debug(f'\nPAM50: metric_a = {metrics_patient_PAM50[0]}, metric_b = {metrics_patient_PAM50[1]}, metric_i = {metrics_patient_PAM50[2]}')
-            printv(f'\n{metric} ratio norm = {metric_ratio_norm_result}', verbose=verbose, type='info')
-            printv(f'\n{metric} ratio PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
+            logger.debug(f'PAM50: metric_a = {metrics_patient_PAM50[0]}, metric_b = {metrics_patient_PAM50[1]}, metric_i = {metrics_patient_PAM50[2]}')
+            printv(f'{arguments.metric}_ratio_PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
+            printv(f'{arguments.metric}_ratio_PAM50_normalized = {metric_ratio_norm_result}', verbose=verbose, type='info')
 
+    metric_columns = [
+        f'{arguments.metric}_ratio',
+        f'{arguments.metric}_ratio_PAM50',
+        f'{arguments.metric}_ratio_PAM50_normalized',
+    ]
+    df_metric_ratios = pd.DataFrame.from_records(rows, index=INDEX_COLUMNS, columns=INDEX_COLUMNS + metric_columns)
+    save_df_to_csv(df_metric_ratios, fname_out)
     printv(f'\nSaved: {fname_out}')
 
 

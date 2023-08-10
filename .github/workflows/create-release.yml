@@ -6,9 +6,6 @@ on:
       milestone_title:
         description: 'Milestone title (this release)'
         required: true
-      future_milestone_title:
-        description: 'Milestone title (next release)'
-        required: true
   push:
     branches:
       - master

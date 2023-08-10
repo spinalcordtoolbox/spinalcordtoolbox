@@ -26,6 +26,7 @@ The following studies have used SCT:
 2023
 ----
 
+-  Mendili *et al.* `Association between brain and upper cervical spinal cord atrophy assessed by MRI and disease aggressiveness in amyotrophic lateral sclerosis <https://doi.org/10.1007/s00234-023-03191-0>`_, **Neuroradiology** 2023	
 -  Tsivaka *et al.* `A second-order and slice-specific linear shimming technique to improve spinal cord fMRI <https://doi.org/10.1016/j.mri.2023.06.012>`_, **Magn. Reson. Imaging** 2023
 -  Mongay-Ochoa *et al.* `Validation of a New Semiautomated Segmentation Pipeline Based on the Spinal Cord Toolbox DeepSeg Algorithm to Estimate the Cervical Canal Area <https://doi.org/10.3174/ajnr.A7899>`_, **AJNR Am. J. Neuroradiol.** 2023
 -  Koch *et al.* `Diffusion-weighted MRI of the spinal cord in cervical spondylotic myelopathy after instrumented fusion <https://doi.org/10.3389%2Ffneur.2023.1172833>`_, **Front Neurol.** 2023
