@@ -7,7 +7,7 @@ Morphometrics measures are output from ``sct_process_segmentation`` and include 
 Metrics are normalized using the non-compressed levels above and below the compression site
 using the equation in the figure below.
 
-Additionally, if the ``-normalize-hc`` flag is used, metrics are normalized using a database
+Additionally, if the ``-normalize-hc 1`` flag is used, metrics are normalized using a database
 built from healthy control subjects. This database uses the PAM50 template as an anatomical
 reference system.
 
