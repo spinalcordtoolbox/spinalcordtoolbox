@@ -129,10 +129,10 @@ def get_parser():
                         help='Setting for environment variable: PATH_SEGMANUAL\n'
                         'A path containing manual segmentations to be used by the script program.')
     parser.add_argument('-script-args', default='',
-                        help='A quoted string with extra flags and arguments to pass to the script.\n'
+                        help='A quoted string with extra arguments to pass to the script.\n'
                              'For example \'sct_run_batch -path-data data/ -script process_data.sh '
-                             '-script-args "VARIABLE1 VARIABLE2"\'.\n'
-                             'The variables are retrieved by a script as \'${2}\', \'${3}\', etc.\n'
+                             '-script-args "ARG1 ARG2"\'.\n'
+                             'The arguments are retrieved by a script as \'${2}\', \'${3}\', etc.\n'
                              'Note that \'${1}\' is reserved for the subject folder name, which is retrieved '
                              'automatically.')
     parser.add_argument('-email-to',
