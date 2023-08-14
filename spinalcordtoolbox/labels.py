@@ -358,12 +358,13 @@ def remove_missing_labels(img: Image, ref: Image):
     :param ref: reference image
     :returns: image with labels missing from reference removed
     """
+    # Get all label values in the reference image
+    ref_values = set(coord.value for coord in ref.getNonZeroCoordinates())
+    # Transfer only the source labels that match values present in the reference image
     out = zeros_like(img)
-
     for src_coord in img.getNonZeroCoordinates():
-        for ref_coord in ref.getNonZeroCoordinates():
-            if src_coord.value == ref_coord.value:
-                out.data[src_coord.x, src_coord.y, src_coord.z] = src_coord.value
+        if src_coord.value in ref_values:
+            out.data[src_coord.x, src_coord.y, src_coord.z] = src_coord.value
     return out
 
 
