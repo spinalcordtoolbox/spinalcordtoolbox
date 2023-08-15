@@ -189,13 +189,13 @@ class Slice(object):
         """
         valid = np.isfinite(A)
         invalid = ~valid
-        if np.any(valid):
+        if np.all(invalid):
+            A.fill(0)
+        else:
             A[invalid] = np.interp(
                 np.nonzero(invalid)[0],
                 np.nonzero(valid)[0],
                 A[valid])
-        else:
-            A.fill(0)
 
     @abc.abstractmethod
     def get_slice(self, data, i):
