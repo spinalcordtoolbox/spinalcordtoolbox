@@ -191,7 +191,7 @@ class Slice(object):
         invalid = ~valid
         if np.all(invalid):
             A.fill(0)
-        else:
+        elif np.any(invalid):
             A[invalid] = np.interp(
                 np.nonzero(invalid)[0],
                 np.nonzero(valid)[0],
