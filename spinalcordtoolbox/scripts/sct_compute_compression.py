@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 NEAR_ZERO_THRESHOLD = 1e-6
+INDEX_COLUMNS = ['filename', 'compression_level', 'slice(I->S)']
 
 
 # PARSER
@@ -404,7 +405,6 @@ def get_slices_upper_lower_level_from_PAM50(compression_level_dict_PAM50, df_met
             max_slices.append(max(slices))
     level_below = np.argmin(min_slices)
     level_above = np.argmax(max_slices)
-    print('below:', level_below, 'above:', level_above)
     # Get slices to average at distance across the chosen extent for the level above all compressions
     zmin_above = int(max(list(compression_level_dict_PAM50[level_above].values())[0]) + distance/slice_thickness_PAM50)
     zmax_above = int(max(list(compression_level_dict_PAM50[level_above].values())[0]) + distance/slice_thickness_PAM50 + extent/slice_thickness_PAM50)
@@ -500,14 +500,12 @@ def save_df_to_csv(dataframe, fname_out):
     :return:
     """
     if os.path.isfile(fname_out):
-        # Concatenate existing CSV file to the new CSV file
-        dataframe_old = pd.read_csv(fname_out)
-        dataframe = pd.concat([dataframe_old, dataframe], axis=0, ignore_index=True)
-        # Merge rows that have the same 'filename', 'compression_level', and 'slice(I->S)'
-        dataframe = dataframe.groupby(
-            [dataframe.iloc[:, 0], dataframe.iloc[:, 1], dataframe.iloc[:, 2]]
-        ).max()  # Use max for a tiebreaker (this should never happen unless the user computes the same metric twice)
-    dataframe.to_csv(fname_out, na_rep='n/a', index=False)
+        # Combine the data with the existing CSV file.
+        # Rows with the same (filename, compression_level, slice) triple are merged together.
+        # Metric values from the new dataframe take priority over old CSV file values.
+        dataframe_old = pd.read_csv(fname_out, index_col=INDEX_COLUMNS)
+        dataframe = dataframe.combine_first(dataframe_old)
+    dataframe.to_csv(fname_out, na_rep='n/a')
 
 
 def main(argv: Sequence[str]):
@@ -614,7 +612,7 @@ def main(argv: Sequence[str]):
     rows = []
     for idx in compressed_levels_dict.keys():
         level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
-        printv(f'\nCompression #{idx} at level {level}', verbose=verbose, type='info')
+        printv(f'\nCompression at level {int(level)}', verbose=verbose, type='info')
 
         # Compute metric ratio (non-normalized)
         slice_avg = list(compressed_levels_dict[idx].values())[0]
@@ -644,16 +642,18 @@ def main(argv: Sequence[str]):
 
         # Display results
         logger.debug(f'\nmetric_a = {metrics_patient[0]}, metric_b = {metrics_patient[1]}, metric_i = {metrics_patient[2]}')
-        printv(f'\n{metric} ratio = {metric_ratio_result}', verbose=verbose, type='info')
+        printv(f'{arguments.metric}_ratio = {metric_ratio_result}', verbose=verbose, type='info')
         if arguments.normalize_hc:
-            logger.debug(f'\nPAM50: metric_a = {metrics_patient_PAM50[0]}, metric_b = {metrics_patient_PAM50[1]}, metric_i = {metrics_patient_PAM50[2]}')
-            printv(f'\n{metric} ratio norm = {metric_ratio_norm_result}', verbose=verbose, type='info')
-            printv(f'\n{metric} ratio PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
+            logger.debug(f'PAM50: metric_a = {metrics_patient_PAM50[0]}, metric_b = {metrics_patient_PAM50[1]}, metric_i = {metrics_patient_PAM50[2]}')
+            printv(f'{arguments.metric}_ratio_PAM50 = {metric_ratio_PAM50_result}', verbose=verbose, type='info')
+            printv(f'{arguments.metric}_ratio_PAM50_normalized = {metric_ratio_norm_result}', verbose=verbose, type='info')
 
-    df_metric_ratios = pd.DataFrame(rows, columns=['filename', 'compression_level', 'slice(I->S)',
-                                                   f'{arguments.metric}_ratio',
-                                                   f'{arguments.metric}_ratio_PAM50',
-                                                   f'{arguments.metric}_ratio_PAM50_normalized'])
+    metric_columns = [
+        f'{arguments.metric}_ratio',
+        f'{arguments.metric}_ratio_PAM50',
+        f'{arguments.metric}_ratio_PAM50_normalized',
+    ]
+    df_metric_ratios = pd.DataFrame.from_records(rows, index=INDEX_COLUMNS, columns=INDEX_COLUMNS + metric_columns)
     save_df_to_csv(df_metric_ratios, fname_out)
     printv(f'\nSaved: {fname_out}')
 

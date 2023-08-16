@@ -183,21 +183,19 @@ class Slice(object):
         return matrix
 
     @staticmethod
-    def nan_fill(A):
-        """Interpolate NaN values with neighboring values in array (in-place)
-        If only NaNs, return an array of zeros.
+    def inf_nan_fill(A):
+        """Interpolate inf and NaN values with neighboring values in a 1D array, in-place.
+        If only inf and NaNs, fills the array with zeros.
         """
-        nans = np.isnan(A)
-        if ~np.any(nans):
-            return A
-        elif np.all(nans):
-            A[:] = np.zeros_like(A)
-            return A
-        xp = (~nans).ravel().nonzero()[0]
-        fp = A[~nans]
-        x = nans.ravel().nonzero()[0]
-        A[nans] = np.interp(x, xp, fp)
-        return A
+        valid = np.isfinite(A)
+        invalid = ~valid
+        if np.all(invalid):
+            A.fill(0)
+        elif np.any(invalid):
+            A[invalid] = np.interp(
+                np.nonzero(invalid)[0],
+                np.nonzero(valid)[0],
+                A[valid])
 
     @abc.abstractmethod
     def get_slice(self, data, i):
@@ -231,12 +229,8 @@ class Slice(object):
         centers_y = np.zeros(nz)
         for i in range(nz):
             centers_x[i], centers_y[i] = center_of_mass(data[i, :, :])
-        try:
-            Slice.nan_fill(centers_x)
-            Slice.nan_fill(centers_y)
-        except ValueError as err:
-            logger.error("Axial center of the spinal cord is not found: %s", err)
-            raise
+        Slice.inf_nan_fill(centers_x)
+        Slice.inf_nan_fill(centers_y)
         return centers_x, centers_y
 
     @abc.abstractmethod
