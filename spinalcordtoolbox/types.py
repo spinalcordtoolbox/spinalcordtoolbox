@@ -478,6 +478,9 @@ class Centerline:
             else:
                 return self.get_closest_to_relative_position(vertebral_level=vertebral_level, relative_position=relative_position)
 
+        if backup_index >= backup_centerline.number_of_points:
+            return None
+
         position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disc[backup_centerline.regions_labels[label]]]
         position_reference_self = self.dist_points[self.index_disc[self.regions_labels[label]]]
         relative_position_from_reference_backup = backup_centerline.dist_points[backup_index] - position_reference_backup
