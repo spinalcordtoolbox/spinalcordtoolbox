@@ -31,6 +31,8 @@ def label_vert(fname_seg, fname_label):
     """
     # retrieve all labels
     coord_labels = Image(fname_label).change_orientation("RPI").getNonZeroCoordinates()
+    if not coord_labels:
+        raise ValueError(f'No disc labels present in file {fname_label}')
     # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
     discs = [(cl.z, cl.value - 1) for cl in reversed(coord_labels)]
     discs.sort(reverse=True)

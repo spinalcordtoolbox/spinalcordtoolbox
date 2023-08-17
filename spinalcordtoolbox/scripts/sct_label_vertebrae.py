@@ -353,7 +353,11 @@ def main(argv: Sequence[str]):
         printv('\nApply straightening to disc labels...', verbose)
         sct_apply_transfo.main(['-i', fname_disc, '-d', 'data_straightr.nii', '-w', 'warp_curve2straight.nii.gz',
                                 '-o', 'labeldisc_straight.nii.gz', '-x', 'label', '-v', '0'])
-        label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz')
+        try:
+            label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz')
+        except ValueError:
+            printv(f"No disc labels found in straightened version of discfile {fname_disc}", 1, 'error')
+            sys.exit(1)
 
     else:
         printv('\nCreate label to identify disc...', verbose)
