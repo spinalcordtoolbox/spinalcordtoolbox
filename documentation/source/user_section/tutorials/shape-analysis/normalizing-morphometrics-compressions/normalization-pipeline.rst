@@ -8,7 +8,7 @@ Metrics are normalized using the non-compressed levels above and below the compr
 using the equation in the figure below.
 
 Additionally, if the ``-normalize-hc 1`` flag is used, metrics are normalized using a database
-built from healthy control subjects. This database uses the PAM50 template as an anatomical
+built from adult healthy participants. This database uses the PAM50 template as an anatomical
 reference system.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/normalized_metrics_hc_figure.png
@@ -24,7 +24,6 @@ reference system.
 
 
 .. note::
-   **put in ref format**
-   Reference: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic
+   Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic
    spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective
    study with 100 consecutive patients. Radiology 2007;243(3):820-827.

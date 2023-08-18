@@ -4,12 +4,12 @@ Applying the normalization on morphometrics with ``sct_compute_compression``
 #######################################################################################
 
 A ratio is computed of the morphometrics at the level(s) of compression withe the measures at the levels above and below all compression sites. 
-Adding the option ``-normalize-hc`` normalizes the morphometrics with a database of healthy subjects beofre computing the ratio.
+Adding the option ``-normalize-hc`` normalizes the morphometrics with a database of healthy subjects before computing the ratio.
 
 Compute ratio between **AP-diameter** at level of compression vs. above/below
 --------------------------------------------------------------------------------
-We will compute the ratio of the anterior-posterior diameter at the level of compression and levels above and below all compresssions.
-This is equivalent to the MSCC (maximum spinal cord compression) metric [PUT REF]
+We will compute the ratio of the anteroposterior diameter at the level of compression and levels above and below all compresssions.
+This is equivalent to the MSCC (maximum spinal cord compression) metric (Miyanji et al.)[https://pubmed.ncbi.nlm.nih.gov/17431129/].
 
 .. code:: sh
 
@@ -37,14 +37,14 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric [PUT REF
 
 
 .. note::
-   - The flag `-metric` can be used to specify the morphometric to compute the ratio.
-   - The flag `-distance` can be used to select the distance (mm) in the superior-inferior direction along the cord to average healthy slices.
-   - The flag `-extent` can be used to specify the extent (mm) to average metrics of healthy levels.
+   - The flag ``-metric`` can be used to specify the morphometric to compute the ratio.
+   - The flag ``-distance`` can be used to select the distance (mm) in the superior-inferior direction along the cord to average healthy slices.
+   - The flag ``-extent`` can be used to specify the extent (mm) to average metrics of healthy levels.
 
 
 Compute ratio of **AP diameter** : normalized with healthy controls:
 --------------------------------------------------------------------------------
-We will add the flag ``-normalize-hc`` to use a database of healthy controls to normalize the anterior-posterior diameters. 
+We will add the flag ``-normalize-hc`` to use a database of healthy controls to normalize the anteroposterior diameters. 
 
 .. code:: sh
 
@@ -64,6 +64,12 @@ We will add the flag ``-normalize-hc`` to use a database of healthy controls to 
    :file: ap_ratio_norm_PAM50.csv
    :header-rows: 1
 
+:Legend:   
+   - **diameter_AP_ratio**: Ratio computed in the subject's native space.
+   - **diameter_AP_ratio_PAM50**: Ratio computed in the PAM50 space.
+   - **diameter_AP_ratio_PAM50_normalized**: Ratio computed in the PAM50 space and normalized with healthy controls
+
+
 .. note::
-   - The flag `-sex` can be used select the sex of healthy subject to use for the normalization.
-   - The flag `-age` can be used to select the age range of healthy subjects to use for normalization.
+   - The flag ``-sex`` can be used select the sex of healthy subject to use for the normalization.
+   - The flag ``-age`` can be used to select the age range of healthy subjects to use for normalization.
