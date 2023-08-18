@@ -159,8 +159,8 @@ Docker Image: Ubuntu
    docker run -it ubuntu
    # Now, inside Docker container, install dependencies
    apt-get update
-   apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxbcommon-x11-0 dbus gcc
-   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxbcommon-x11-0 and dbus are required by PyQt
+   apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxbcommon-x11-0 libdbus-1-3 gcc
+   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxbcommon-x11-0 and libdbus-1-3 are required by PyQt
    # Install SCT
    git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
@@ -170,7 +170,7 @@ Docker Image: Ubuntu
    sct_testing
    # save the state of the container. Open a new Terminal and run:
    docker ps -a  # list all containers
-   docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu16.04
+   docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu22.04
 
 
 Enable GUI Scripts (Optional)
@@ -210,14 +210,14 @@ Forward X11 display protocol:
 
 2. Permit docker access to the X11 Server
 
-   If hosting container from local machine:
+   If hosting container from the local machine:
 
    .. code:: sh
 
       xhost +local:docker
 
 3. In your Terminal window, run:
-   ``docker run -ti --rm --privileged -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <CONTAINER_ID>``
+   ``docker run -it --rm --privileged -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <CONTAINER_ID>``
 
 
 Option 5: Hard-core Installation-less SCT usage
