@@ -44,7 +44,7 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric (Miyanji
 
 Compute ratio of **AP diameter** : normalized with healthy controls:
 --------------------------------------------------------------------------------
-We will add the flag ``-normalize-hc`` to use a database of healthy controls to normalize the anteroposterior diameters. 
+We will add the flag ``-normalize-hc`` to use a database of adult healthy participants to normalize the anteroposterior diameters. 
 
 .. code:: sh
 
