@@ -67,7 +67,7 @@ We will add the flag ``-normalize-hc`` to use a database of adult healthy partic
 :Legend:   
    - **diameter_AP_ratio**: Ratio computed in the subject's native space.
    - **diameter_AP_ratio_PAM50**: Ratio computed in the PAM50 space.
-   - **diameter_AP_ratio_PAM50_normalized**: Ratio computed in the PAM50 space and normalized with healthy controls
+   - **diameter_AP_ratio_PAM50_normalized**: Ratio computed in the PAM50 space and normalized with adult healthy participants.
 
 
 .. note::
