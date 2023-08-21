@@ -198,13 +198,13 @@ Forward X11 display protocol:
 
    The following instructions apply to hosts running the Xorg X11 server.
 
-   Set up may vary if you are using a different X11 server, or a different display protocol such as Wayland.
+   Set up may vary if you are using a different X11 server.
 
 1. Install ``xauth`` and ``xhost`` on host machine:
 
    For example on Debian/Ubuntu:
 
-   .. code:: sh
+   .. code:: bash
 
       apt install xauth x11-xserver-utils
 
@@ -212,7 +212,7 @@ Forward X11 display protocol:
 
    If hosting container from the local machine:
 
-   .. code:: sh
+   .. code:: bash
 
       xhost +local:docker
 

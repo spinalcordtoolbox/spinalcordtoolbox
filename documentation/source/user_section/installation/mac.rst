@@ -145,45 +145,23 @@ Docker Image: Ubuntu
 .. code:: bash
 
    # Start from the Terminal
-   docker pull ubuntu:16.04
+   docker pull ubuntu:22.04
    # Launch interactive mode (command-line inside container)
    docker run -it ubuntu
    # Now, inside Docker container, install dependencies
    apt-get update
-   apt install -y git curl bzip2 libglib2.0-0 gcc
-   # Note for above: libglib2.0-0 is required by PyQt
+   apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
+   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
    # Install SCT
    git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
    ./install_sct -y
-   export PATH="/sct/bin:${PATH}"
+   source /root/.bashrc
    # Test SCT
    sct_testing
    # save the state of the container. Open a new Terminal and run:
    docker ps -a  # list all containers
-   docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu16.04
-
-Docker Image: CentOS7
-^^^^^^^^^^^^^^^^^^^^^
-
-.. code:: bash
-
-   # Start from the Terminal
-   docker pull centos:centos7
-   # Launch interactive mode (command-line inside container)
-   docker run -it centos:centos7
-   # Now, inside Docker container, install dependencies
-   yum install -y which gcc git curl
-   # Install SCT
-   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
-   cd sct
-   ./install_sct -y
-   export PATH="/sct/bin:${PATH}"
-   # Test SCT
-   sct_testing
-   # save the state of the container. Open a new Terminal and run:
-   docker ps -a  # list all containers
-   docker commit <CONTAINER_ID> <YOUR_NAME>/centos:centos7
+   docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu22.04
 
 
 Enable GUI Scripts (Optional)
@@ -208,7 +186,7 @@ First, save your Docker image:
 Create an X11 server for handling display:
 
 1. Install XQuartz X11 server.
-2. Check ‘Allow connections from network clientsoption inXQuartz\` settings.
+2. Check ‘Allow connections from network clients option in XQuartz\` settings.
 3. Quit and restart XQuartz.
 4. In XQuartz window xhost + 127.0.0.1
 5. In your other Terminal window, run:
