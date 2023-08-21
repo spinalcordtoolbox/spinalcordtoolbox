@@ -73,4 +73,4 @@ We will add the flag ``-normalize-hc`` to use a database of adult healthy partic
 
 .. note::
    - The flag ``-sex`` can be used select the sex of healthy subject to use for the normalization.
-   - The flag ``-age`` can be used to select the age range of healthy subjects to use for normalization.
+   - The flag ``-age`` can be used to select the age range of adult healthy participants to use for normalization.
