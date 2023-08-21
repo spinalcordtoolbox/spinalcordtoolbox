@@ -81,5 +81,4 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
 9. Save with the filename ``t2_compressed_labels-compression.nii.gz`` and quit.
 
 
-You can also look at the example using an automatic script when multiples images require compression labels: 
-https://github.com/spinalcordtoolbox/manual-correction/wiki#manual-labeling-of-spinal-cord-compression
+If you need to label multiple patients, you can use the `manual_correction.py` script from the [`manual-correction` repository](https://github.com/spinalcordtoolbox/manual-correction); see the example [here](https://github.com/spinalcordtoolbox/manual-correction/wiki#manual-labeling-of-spinal-cord-compression).
