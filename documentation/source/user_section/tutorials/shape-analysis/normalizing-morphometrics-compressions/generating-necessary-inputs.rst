@@ -62,7 +62,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
    :align: center
 
 4. In the axial view, toggle to the maximum compressed slice around the compression.
-5. Click on alt+E (Windows) or option+E (macOS) to open edit mode. Select size 1 and click on the pencil.
+5. Click on alt+E (Linux/Windows) or option+E (macOS) to open edit mode. Select size 1 and click on the pencil.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/edit_mode.png
    :align: center
