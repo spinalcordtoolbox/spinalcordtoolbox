@@ -15,7 +15,7 @@ import numpy as np
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.vertebrae.core import (
     get_z_and_disc_values_from_label, vertebral_detection, expand_labels,
-    crop_labels, label_vert, EmptyArrayError)
+    crop_labels, label_vert, EmptyArrayError, MissingDiscsError)
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
@@ -355,7 +355,7 @@ def main(argv: Sequence[str]):
                                 '-o', 'labeldisc_straight.nii.gz', '-x', 'label', '-v', '0'])
         try:
             label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz')
-        except ValueError:
+        except MissingDiscsError:
             printv(f"No disc labels found in straightened version of discfile {fname_disc}", 1, 'error')
             sys.exit(1)
 
