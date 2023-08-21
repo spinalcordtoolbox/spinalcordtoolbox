@@ -20,7 +20,7 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric (Miyanji
    - ``-vertfile`` : Vertebral labeling file.
    - ``-l`` : Compression labels file.
    - ``metric``: Metric to compute ratio: diameter_AP (default). 
-   - ``normalize``: 
+   - ``-normalize-hc``: Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize.
    - ``-o`` : The output CSV file.
 :Output files/folders:
    - ``ap_ratio.csv`` : A file containing the ratio values for each. This file is partially replicated in the table below.
