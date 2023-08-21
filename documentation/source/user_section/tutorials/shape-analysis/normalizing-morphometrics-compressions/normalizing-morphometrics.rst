@@ -4,7 +4,7 @@ Applying the normalization on morphometrics with ``sct_compute_compression``
 #######################################################################################
 
 The ``sct_compute_compression`` function computes a ratio of the morphometric measures at the level(s) of compression with the measures at the levels above and below all compression sites. 
-Adding the option ``-normalize-hc`` normalizes the morphometrics with a database of healthy subjects before computing the ratio.
+Adding the option ``-normalize-hc`` normalizes the morphometric morphometrics with a database of adult healthy participants before computing the ratio.
 
 Compute ratio between **AP-diameter** at level of compression vs. above/below
 --------------------------------------------------------------------------------
