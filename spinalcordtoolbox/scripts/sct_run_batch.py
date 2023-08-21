@@ -129,8 +129,12 @@ def get_parser():
                         help='Setting for environment variable: PATH_SEGMANUAL\n'
                         'A path containing manual segmentations to be used by the script program.')
     parser.add_argument('-script-args', default='',
-                        help='A quoted string with extra flags and arguments to pass to the script. '
-                        'For example \'sct_run_batch -path-data data/ -script-args "-foo bar -baz /qux" process_data.sh \'')
+                        help='A quoted string with extra arguments to pass to the script.\n'
+                             'For example \'sct_run_batch -path-data data/ -script process_data.sh '
+                             '-script-args "ARG1 ARG2"\'.\n'
+                             'The arguments are retrieved by a script as \'${2}\', \'${3}\', etc.\n'
+                             'Note that \'${1}\' is reserved for the subject folder name, which is retrieved '
+                             'automatically.')
     parser.add_argument('-email-to',
                         help='Optional email address where sct_run_batch can send an alert on completion of the '
                         'batch processing.')
@@ -343,8 +347,10 @@ def main(argv: Sequence[str]):
             _, ext = os.path.splitext(arguments.config)
             if ext == '.json':
                 config = json.load(conf)
-            if ext == '.yml' or ext == '.yaml':
+            elif ext == '.yml' or ext == '.yaml':
                 config = yaml.load(conf, Loader=yaml.Loader)
+            else:
+                raise ValueError('Unrecognized configuration file type: {}'.format(ext))
 
         # Warn people if they're overriding their config file
         if len(argv) > 2:

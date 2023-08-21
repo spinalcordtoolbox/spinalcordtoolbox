@@ -3,7 +3,7 @@
 Generate the necessary input files
 #############################################################
 
-The ``sct_compute_compression`` command uses the shape metric of the spinal cord a the level of compression and computes a ratio with healthy levels above and below the compression site.
+The ``sct_compute_compression`` command uses the shape metric of the spinal cord at the level of compression and computes a ratio with non-compressed levels above and below the compression site.
 
 
 To use ``sct_compute_compression``, we need the 3 following input files:
@@ -49,7 +49,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
 3. Generate spinal cord compression labels
 -------------------------------------------
 
-1. Open the image in FSLeyes. If the image is not 3D, open both axial and sagittal images in FSLeyes.
+1. Open the image in FSLeyes. If the image does not have sufficient axial and sagittal resolution, open two individual images (axial image and sagittal image) in FSLeyes.
 
 .. code:: sh
 
@@ -62,12 +62,12 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
    :align: center
 
 4. In the axial view, toggle to the maximum compressed slice around the compression.
-5. Click on alt+E (Windows) or option+E (macOS) to open edit mode. Select size 1 and click on the pencil.
+5. Click on alt+E (Linux/Windows) or option+E (macOS) to open edit mode. Select size 1 and click on the pencil.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/edit_mode.png
    :align: center
 
-6. Create an empty mask alt+N (Windows) or option+N (macOS).
+6. Create an empty mask alt+N (Linux/Windows) or option+N (macOS).
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/create_mask.png
    :align: center
@@ -81,5 +81,4 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
 9. Save with the filename ``t2_compressed_label-compression.nii.gz`` and quit.
 
 
-You can also look at the example using an automatic script when multiples images require compression labels: 
-https://github.com/spinalcordtoolbox/manual-correction/wiki#manual-labeling-of-spinal-cord-compression
+If you need to label multiple patients, you can use the `manual_correction.py` script from the [`manual-correction` repository](https://github.com/spinalcordtoolbox/manual-correction); see the example [here](https://github.com/spinalcordtoolbox/manual-correction/wiki#manual-labeling-of-spinal-cord-compression).
