@@ -347,8 +347,10 @@ def main(argv: Sequence[str]):
             _, ext = os.path.splitext(arguments.config)
             if ext == '.json':
                 config = json.load(conf)
-            if ext == '.yml' or ext == '.yaml':
+            elif ext == '.yml' or ext == '.yaml':
                 config = yaml.load(conf, Loader=yaml.Loader)
+            else:
+                raise ValueError('Unrecognized configuration file type: {}'.format(ext))
 
         # Warn people if they're overriding their config file
         if len(argv) > 2:
