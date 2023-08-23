@@ -21,6 +21,10 @@ from spinalcordtoolbox.centerline.core import get_centerline
 logger = logging.getLogger(__name__)
 
 
+class MissingDiscsError(ValueError):
+    """Custom exception to indicate that no disc labels were found."""
+
+
 def label_vert(fname_seg, fname_label):
     """
     Label segmentation using vertebral labeling information. No orientation expected.
@@ -31,6 +35,8 @@ def label_vert(fname_seg, fname_label):
     """
     # retrieve all labels
     coord_labels = Image(fname_label).change_orientation("RPI").getNonZeroCoordinates()
+    if not coord_labels:
+        raise MissingDiscsError(f'No disc labels present in file {fname_label}')
     # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
     discs = [(cl.z, cl.value - 1) for cl in reversed(coord_labels)]
     discs.sort(reverse=True)
@@ -252,7 +258,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
 
 class EmptyArrayError(ValueError):
     """Custom exception to distinguish between general SciPy ValueErrors."""
-    pass
 
 
 def center_of_mass(x):
