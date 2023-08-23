@@ -19,6 +19,7 @@ from spinalcordtoolbox.deepseg_.postprocessing import post_processing_volume_wis
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, add_suffix, concat_data, split_img_data
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
 from spinalcordtoolbox.utils import sct_dir_local_path, TempFolder
+from spinalcordtoolbox.types import EmptyArrayError
 
 # Thresholds to apply to binarize segmentations from the output of the 2D CNN. These thresholds were obtained by
 # minimizing the standard deviation of cross-sectional area across contrasts. For more details, see:
@@ -523,8 +524,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
 
     # Check for empty array post-resampling, but pre-binarization
     if not np.any(im_seg_r.data):
-        raise ValueError("Empty array: Spinal cord not detected. Please make sure that there is sufficient contrast "
-                         "between the spinal cord and CSF to ensure good results.")
+        raise EmptyArrayError("Spinal cord not detected. Please make sure that there is sufficient contrast "
+                              "between the spinal cord and CSF to ensure good results.")
 
     # Binarize the resampled image (except for soft segmentation, defined by threshold_seg=-1)
     if threshold_seg >= 0:
@@ -535,8 +536,8 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
         if not np.any(im_seg_r.data):
             # TODO: Address https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4198 so that we can instruct
             #       users to lower the threshold using the `-thr` argument.
-            raise ValueError(f"Empty array due to binarization with threshold '{0.5}'. "
-                             f"(Values before binarization: min: {val_min}, max: {val_max})")
+            raise EmptyArrayError(f"Binarization with threshold '{0.5}' resulted in empty array. "
+                                  f"(Values before binarization: min: {val_min}, max: {val_max})")
 
     # post processing step to z_regularized
     im_seg_r_postproc = post_processing_volume_wise(im_seg_r)
