@@ -356,9 +356,9 @@ def main(argv: Sequence[str]):
                                 '-o', 'labeldisc_straight.nii.gz', '-x', 'label', '-v', '0'])
         try:
             label_vert('segmentation_straight.nii', 'labeldisc_straight.nii.gz')
-        except MissingDiscsError:
-            printv(f"No disc labels found in straightened version of discfile {fname_disc}", 1, 'error')
-            sys.exit(1)
+        except MissingDiscsError as e:
+            printv(f"No disc labels found in straightened version of discfile {fname_disc}\n"
+                   f"    {e.__class__.__name__}: '{e}'", 1, 'error')
 
     else:
         printv('\nCreate label to identify disc...', verbose)

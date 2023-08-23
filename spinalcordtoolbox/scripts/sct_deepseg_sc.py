@@ -191,9 +191,9 @@ def main(argv: Sequence[str]):
                                          ctr_file=manual_centerline_fname, brain_bool=brain_bool,
                                          kernel_size=kernel_size, threshold_seg=threshold,
                                          remove_temp_files=remove_temp_files, verbose=verbose)
-    except EmptyArrayError:
-        printv(f"Spinal cord could not be detected (empty array) for {fname_image}", 1, 'error')
-        sys.exit(1)
+    except EmptyArrayError as e:
+        printv(f"Spinal cord could not be detected for {fname_image}\n"
+               f"    {e.__class__.__name__}: '{e}'", 1, 'error')
 
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, fname_out))
