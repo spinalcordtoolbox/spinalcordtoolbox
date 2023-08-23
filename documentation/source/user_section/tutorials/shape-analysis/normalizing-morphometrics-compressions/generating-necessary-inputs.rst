@@ -78,7 +78,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
    :align: center
 
 8. Repeat steps 3 to 7 for the number of compressions.
-9. Save with the filename ``t2_compressed_label-compression.nii.gz`` and quit.
+9. Save with the filename ``t2_compressed_labels-compression.nii.gz`` and quit.
 
 
 If you need to label multiple patients, you can use the `manual_correction.py` script from the [`manual-correction` repository](https://github.com/spinalcordtoolbox/manual-correction); see the example [here](https://github.com/spinalcordtoolbox/manual-correction/wiki#manual-labeling-of-spinal-cord-compression).
