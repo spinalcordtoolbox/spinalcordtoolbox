@@ -15,7 +15,8 @@ import numpy as np
 from spinalcordtoolbox.image import Image, generate_output_file
 from spinalcordtoolbox.vertebrae.core import (
     get_z_and_disc_values_from_label, vertebral_detection, expand_labels,
-    crop_labels, label_vert, EmptyArrayError, MissingDiscsError)
+    crop_labels, label_vert)
+from spinalcordtoolbox.types import EmptyArrayError, MissingDiscsError
 from spinalcordtoolbox.vertebrae.detect_c2c3 import detect_c2c3
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.math import dilate
