@@ -55,7 +55,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
 
    fsleyes t2_compressed.nii.gz &
 
-2. Look at the clinical data provided with compression information to know at which level the compression(s) are located.
+2. If clinical data with information about compression level(s) is available, look at it to determine how many compressions a subject has and at which levels the compressions are located.
 3. Locate the compression in the sagittal view.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/localizing_compression_sag.png
