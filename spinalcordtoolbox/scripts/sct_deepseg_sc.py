@@ -15,6 +15,7 @@ from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import Image, check_dim
 from spinalcordtoolbox.deepseg_.sc import deep_segmentation_spinalcord
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.types import EmptyArrayError
 
 
 def get_parser():
@@ -184,10 +185,15 @@ def main(argv: Sequence[str]):
 
     im_image = Image(fname_image)
     # note: below we pass im_image.copy() otherwise the field absolutepath becomes None after execution of this function
-    im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp = \
-        deep_segmentation_spinalcord(im_image.copy(), contrast_type, ctr_algo=ctr_algo,
-                                     ctr_file=manual_centerline_fname, brain_bool=brain_bool, kernel_size=kernel_size,
-                                     threshold_seg=threshold, remove_temp_files=remove_temp_files, verbose=verbose)
+    try:
+        im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp = \
+            deep_segmentation_spinalcord(im_image.copy(), contrast_type, ctr_algo=ctr_algo,
+                                         ctr_file=manual_centerline_fname, brain_bool=brain_bool,
+                                         kernel_size=kernel_size, threshold_seg=threshold,
+                                         remove_temp_files=remove_temp_files, verbose=verbose)
+    except EmptyArrayError as e:
+        printv(f"Spinal cord could not be detected for {fname_image}\n"
+               f"    {e.__class__.__name__}: '{e}'", 1, 'error')
 
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, fname_out))

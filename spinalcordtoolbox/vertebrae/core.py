@@ -17,12 +17,9 @@ from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.math import dilate, mutual_information
 from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.types import MissingDiscsError, EmptyArrayError
 
 logger = logging.getLogger(__name__)
-
-
-class MissingDiscsError(ValueError):
-    """Custom exception to indicate that no disc labels were found."""
 
 
 def label_vert(fname_seg, fname_label):
@@ -254,10 +251,6 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     discs = list(zip(list_disc_z, list_disc_value))
     label_segmentation(fname_seg, discs)
     label_discs(fname_seg, discs)
-
-
-class EmptyArrayError(ValueError):
-    """Custom exception to distinguish between general SciPy ValueErrors."""
 
 
 def center_of_mass(x):
