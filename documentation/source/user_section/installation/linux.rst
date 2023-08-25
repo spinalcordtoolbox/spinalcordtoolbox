@@ -145,7 +145,14 @@ In the context of SCT, it can be used:
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker <https://docs.docker.com/install/>`_. Then, follow the examples below to create an OS-specific SCT installation.
+First, `install Docker <https://docs.docker.com/engine/install/>`_.
+
+.. note::
+   Docker Desktop for Linux is not recommended if you intend to use the GUI.
+   Instead install the `Docker CE Engine <https://docs.docker.com/engine/install`_, which is separate to the Docker Desktop Engine.
+   For example on Ubuntu/Debian, follow the instructions for installing Docker from the `apt repository <https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository`_.
+
+Then, follow the example below to create an OS-specific SCT installation.
 
 
 Docker Image: Ubuntu
@@ -156,11 +163,11 @@ Docker Image: Ubuntu
    # Start from the Terminal
    docker pull ubuntu:22.04
    # Launch interactive mode (command-line inside container)
-   docker run -it ubuntu
+   docker run -it ubuntu:22.04
    # Now, inside Docker container, install dependencies
    apt-get update
-   apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxbcommon-x11-0 libdbus-1-3 gcc
-   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxbcommon-x11-0 and libdbus-1-3 are required by PyQt
+   apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
+   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
    # Install SCT
    git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
@@ -177,7 +184,7 @@ Enable GUI Scripts (Optional)
 *****************************
 
 In order to run scripts with GUI you need to allow X11 redirection.
-First, save your Docker image:
+First, save your Docker image if you haven't already done so:
 
 1. Open another Terminal
 2. List current docker images
@@ -186,27 +193,27 @@ First, save your Docker image:
 
       docker ps -a
 
-3. Save container as new image
+3. If you haven't already, save the container as a new image
 
    .. code:: bash
 
-      docker commit <CONTAINER_ID> <YOUR_NAME>/<DISTROS>:<VERSION>
+      docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu22.04
 
-Forward X11 display protocol:
+Forward X11 server:
 
 .. note::
 
-   The following instructions apply to hosts running the Xorg X11 server.
+   The following instructions have been tested with Xorg and xWayland.
 
    Set up may vary if you are using a different X11 server.
 
-1. Install ``xauth`` and ``xhost`` on host machine:
+1. Install ``xauth`` and ``xhost`` on the host machine, if not already installed:
 
    For example on Debian/Ubuntu:
 
    .. code:: bash
 
-      apt install xauth x11-xserver-utils
+      sudo apt install xauth x11-xserver-utils
 
 2. Permit docker access to the X11 Server
 
@@ -217,7 +224,7 @@ Forward X11 display protocol:
       xhost +local:docker
 
 3. In your Terminal window, run:
-   ``docker run -it --rm --privileged -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <CONTAINER_ID>``
+   ``docker run -it --rm --privileged -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <YOUR_NAME>/ubuntu:ubuntu22.04``
 
 
 Option 5: Hard-core Installation-less SCT usage

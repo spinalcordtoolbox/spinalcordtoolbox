@@ -289,7 +289,7 @@ Docker Image: Ubuntu
    # Start from the Terminal
    docker pull ubuntu:22.04
    # Launch interactive mode (command-line inside container)
-   docker run -it ubuntu
+   docker run -it ubuntu:22.04
    # Now, inside Docker container, install dependencies
    apt-get update
    apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
@@ -310,7 +310,7 @@ Enable GUI Scripts (Optional)
 *****************************
 
 In order to run scripts with GUI you need to allow X11 redirection.
-First, save your Docker image:
+First, save your Docker image if you have not already done so:
 
 1. Open another Terminal
 
@@ -324,7 +324,7 @@ First, save your Docker image:
 
    .. code:: bash
 
-      docker commit <CONTAINER_ID> <YOUR_NAME>/<DISTROS>:<VERSION>
+      docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu22.04
 
 4. Install `Xming <http://www.straightrunning.com/XmingNotes/>`_. The Public Domain version of Xming should be sufficient.
    Alternatively, install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`_.
@@ -332,11 +332,11 @@ First, save your Docker image:
 5. Launch an X11 Server
 
 - Run XLaunch, which should have been installed by default.
-- Check 'Multiple Windows', 'Start no Client' and 'No Access Control'
+- Check 'Multiple Windows' and take note of the **display number** > 'Start no Client' > 'No Access Control' > Finish
 
-6. Determine the IP of the virtual Ethernet Adapter with the 'ipconfig' command.
+6. Determine the IP of the virtual Ethernet Adapter by running 'ipconfig' in Powershell or the Command Prompt.
 
 7. In your Terminal Window run:
-   ``docker run -it --rm -e DISPLAY=<IP of vEthernet Adapter>:0 <CONTAINER_ID>``
+   ``docker run -it --rm -e DISPLAY=<IP of vEthernet Adapter>:<Display Number> <YOUR_NAME>/ubuntu:ubuntu22.04``
 
-If you plan to use a web server to access SCT output from the host's browser, be sure to map your ports by including the ``-p <Host Port>:<Container Port>`` flag in the above command.
+If you plan to use a web server within the container to access SCT output from the host's browser, be sure to map your ports by including the ``-p <Host Port>:<Container Port>`` flag in the above command.

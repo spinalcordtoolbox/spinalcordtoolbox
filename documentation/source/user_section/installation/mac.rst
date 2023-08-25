@@ -147,7 +147,7 @@ Docker Image: Ubuntu
    # Start from the Terminal
    docker pull ubuntu:22.04
    # Launch interactive mode (command-line inside container)
-   docker run -it ubuntu
+   docker run -it ubuntu:22.04
    # Now, inside Docker container, install dependencies
    apt-get update
    apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
@@ -168,7 +168,7 @@ Enable GUI Scripts (Optional)
 *****************************
 
 In order to run scripts with GUI you need to allow X11 redirection.
-First, save your Docker image:
+First, save your Docker image if you haven't already done so:
 
 1. Open another Terminal
 2. List current docker images
@@ -181,7 +181,7 @@ First, save your Docker image:
 
    .. code:: bash
 
-      docker commit <CONTAINER_ID> <YOUR_NAME>/<DISTROS>:<VERSION>
+      docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu22.04
 
 Create an X11 server for handling display:
 
@@ -190,7 +190,7 @@ Create an X11 server for handling display:
 3. Quit and restart XQuartz.
 4. In XQuartz window xhost + 127.0.0.1
 5. In your other Terminal window, run:
-   ``docker run -e DISPLAY=host.docker.internal:0 -it <CONTAINER_ID>``
+   ``docker run -e DISPLAY=host.docker.internal:0 -it <YOUR_NAME>/ubuntu:ubuntu22.04``
 
 
 Additional Notes
