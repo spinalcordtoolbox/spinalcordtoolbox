@@ -149,8 +149,8 @@ First, `install Docker <https://docs.docker.com/engine/install/>`_.
 
 .. note::
    Docker Desktop for Linux is not recommended if you intend to use the GUI.
-   Instead install the `Docker CE Engine <https://docs.docker.com/engine/install`_, which is separate to the Docker Desktop Engine.
-   For example on Ubuntu/Debian, follow the instructions for installing Docker from the `apt repository <https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository`_.
+   Instead install the `Docker CE Engine <https://docs.docker.com/engine/install>`_, which is separate to the Docker Desktop Engine.
+   For example on Ubuntu/Debian, follow the instructions for installing Docker from the `apt repository <https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository>`_.
 
 Then, follow the example below to create an OS-specific SCT installation.
 
