@@ -384,9 +384,9 @@ class SpinalCordStraightener(object):
             for index in range(centerline.number_of_points):
                 disc_label = centerline.l_points[index]
                 relative_position = centerline.dist_points_rel[index]
-                idx_closest = centerline_straight.get_closest_to_absolute_position(disc_label, relative_position,
-                                                                                   backup_index=index,
-                                                                                   backup_centerline=centerline_straight)
+                idx_closest = centerline_straight.get_closest_index(disc_label, relative_position,
+                                                                    backup_index=index,
+                                                                    backup_centerline=centerline_straight)
                 if idx_closest is not None:
                     lookup_curved2straight[index] = idx_closest
                 else:
@@ -408,9 +408,9 @@ class SpinalCordStraightener(object):
             for index in range(centerline_straight.number_of_points):
                 disc_label = centerline_straight.l_points[index]
                 relative_position = centerline_straight.dist_points_rel[index]
-                idx_closest = centerline.get_closest_to_absolute_position(disc_label, relative_position,
-                                                                          backup_index=index,
-                                                                          backup_centerline=centerline_straight)
+                idx_closest = centerline.get_closest_index(disc_label, relative_position,
+                                                           backup_index=index,
+                                                           backup_centerline=centerline_straight)
                 if idx_closest is not None:
                     lookup_straight2curved[index] = idx_closest
         for p in range(0, len(lookup_straight2curved) // 2):

@@ -451,6 +451,33 @@ class Centerline:
                 else:
                     self.dist_points_rel[i] = numer/denom
 
+    def get_closest_index(self, vertebral_level, relative_position, backup_index, backup_centerline):
+        # Parse 'list_labels' ([50, 49, 1, 2, 3, ...]) to find the index that corresponds to the vertebral level
+        if vertebral_level in self.labels_regions.keys():
+            vertebral_number = self.labels_regions[vertebral_level]
+            vertebral_index = self.potential_list_labels.index(vertebral_number)
+        elif vertebral_level == 0:  # level == 0 --> above the C1 vertebral level
+            vertebral_index = -1    # so, ensure index is always outside C1 index
+        else:
+            raise ValueError(f"vertebral_index must be a level string (C1, C2, C3...) or 0, but got {vertebral_level}.")
+
+        # If the vertebral level is within the centerline, compute the closest index using relative position
+        if self.list_labels.index(self.first_label) <= vertebral_index < self.list_labels.index(self.last_label):
+            closest_index = self.get_closest_to_relative_position(vertebral_level, relative_position)
+
+        # Otherwise, the vertebral level is outside the centerline. So, we first replace the level with the closest
+        # level that IS in the centerline, then we compute the closest index using absolute position instead.
+        else:
+            if vertebral_index < self.list_labels.index(self.first_label):
+                label = self.first_label
+            elif vertebral_index >= self.list_labels.index(self.last_label):
+                label = self.last_label
+            closest_centerline_level = self.regions_labels[label]
+            closest_index = self.get_closest_to_absolute_position(closest_centerline_level,
+                                                                  backup_index, backup_centerline)
+
+        return closest_index
+
     def get_closest_to_relative_position(self, vertebral_level, relative_position):
         """
         :param vertebral_level: the name of a vertebral level, as a string
@@ -466,23 +493,12 @@ class Centerline:
         else:
             return None
 
-    def get_closest_to_absolute_position(self, vertebral_level, relative_position, backup_index, backup_centerline):
-        if vertebral_level == 0:  # above the C1 vertebral level, the method used is length
-            label = self.first_label
-        else:
-            vertebral_number = self.labels_regions[vertebral_level]
-            if self.potential_list_labels.index(vertebral_number) < self.list_labels.index(self.first_label):
-                label = self.first_label
-            elif self.potential_list_labels.index(vertebral_number) >= self.list_labels.index(self.last_label):
-                label = self.last_label
-            else:
-                return self.get_closest_to_relative_position(vertebral_level=vertebral_level, relative_position=relative_position)
-
+    def get_closest_to_absolute_position(self, reference_level, backup_index, backup_centerline):
         if backup_index >= backup_centerline.number_of_points:
             return None
-
-        position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disc[backup_centerline.regions_labels[label]]]
-        position_reference_self = self.dist_points[self.index_disc[self.regions_labels[label]]]
+        # Get the position of the closest centerline level within the backup centerline
+        position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disc[reference_level]]
+        position_reference_self = self.dist_points[self.index_disc[reference_level]]
         relative_position_from_reference_backup = backup_centerline.dist_points[backup_index] - position_reference_backup
         return np.argmin(np.abs(np.array(self.dist_points) - position_reference_self - relative_position_from_reference_backup))
 
