@@ -386,7 +386,7 @@ class SpinalCordStraightener(object):
                 relative_position = centerline.dist_points_rel[index]
                 idx_closest = centerline_straight.get_closest_index(disc_label, relative_position,
                                                                     backup_index=index,
-                                                                    backup_centerline=centerline_straight)
+                                                                    backup_centerline=centerline)
                 if idx_closest is not None:
                     lookup_curved2straight[index] = idx_closest
                 else:
