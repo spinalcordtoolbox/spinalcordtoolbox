@@ -500,9 +500,6 @@ class Centerline:
         :backup_index: the index of the desired slice, in the 'backup_centerline' space.
         :backup_centerline: an alternate centerline that contains both 'reference_level' and the 'backup_index'
         """
-        if backup_index >= backup_centerline.number_of_points:
-            return None
-
         # Get the slice index of the reference vertebral level within the backup centerline
         backup_index_reference = backup_centerline.index_disc[reference_level]
 
