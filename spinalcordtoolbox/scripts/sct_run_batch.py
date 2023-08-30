@@ -133,8 +133,9 @@ def get_parser():
                              'For example \'sct_run_batch -path-data data/ -script process_data.sh '
                              '-script-args "ARG1 ARG2"\'.\n'
                              'The arguments are retrieved by a script as \'${2}\', \'${3}\', etc.\n'
-                             'Note that \'${1}\' is reserved for the subject folder name, which is retrieved '
-                             'automatically.')
+                             'Note: \'${1}\' is reserved for the subject folder name, which is retrieved '
+                             'automatically.\n'
+                             'Note: Do not use \'~\' in the path. Use \'${HOME}\' instead.')
     parser.add_argument('-email-to',
                         help='Optional email address where sct_run_batch can send an alert on completion of the '
                         'batch processing.')
