@@ -247,6 +247,9 @@ class AnalyzeLeion:
                 type='info')
 
     def _measure_volume(self, im_data, p_lst, idx):
+        """
+        Measure the volume of the lesion
+        """
         for zz in range(im_data.shape[2]):
             self.volumes[zz, idx - 1] = np.sum(im_data[:, :, zz]) * p_lst[0] * p_lst[1] * p_lst[2]
 
@@ -255,11 +258,17 @@ class AnalyzeLeion:
         printv('  Volume : ' + str(np.round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
 
     def _measure_length(self, im_data, p_lst, idx):
+        """
+        Measure the length of the lesion along the superior-inferior axis when taking into account the angle correction
+        """
         length_cur = np.sum([p_lst[2] / np.cos(self.angles[zz]) for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length : ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
     def _measure_diameter(self, im_data, p_lst, idx):
+        """
+        Measure the max. equivalent diameter of the lesion when taking into account the angle correction
+        """
         area_lst = [np.sum(im_data[:, :, zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] for zz in range(im_data.shape[2])]
         diameter_cur = 2 * np.sqrt(max(area_lst) / np.pi)
         self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
