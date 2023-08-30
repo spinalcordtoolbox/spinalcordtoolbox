@@ -145,12 +145,14 @@ In the context of SCT, it can be used:
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker <https://docs.docker.com/engine/install/>`_.
+First, `install Docker <https://docs.docker.com/engine/install/#server>`_. Be sure to install from your distribution's repository.
 
 .. note::
    Docker Desktop for Linux is not recommended if you intend to use the GUI.
-   Instead install the `Docker CE Engine <https://docs.docker.com/engine/install`_, which is separate to the Docker Desktop Engine.
-   For example on Ubuntu/Debian, follow the instructions for installing Docker from the `apt repository <https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository`_.
+   Instead install the `Docker Server Engine <https://docs.docker.com/engine/install/#server>`_, which is separate to the Docker Desktop Engine.
+   For example on Ubuntu/Debian, follow the instructions for installing Docker from the `apt repository <https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository>`_.
+   
+By default, Docker commands require the use of ``sudo`` for additional permissions. If you want to run Docker commands without needing to add ``sudo``, please follow `these instructions <https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user>`_ to create a Unix group called ``docker``, then add users your user account to it.
 
 Then, follow the example below to create an OS-specific SCT installation.
 
@@ -161,9 +163,9 @@ Docker Image: Ubuntu
 .. code:: bash
 
    # Start from the Terminal
-   docker pull ubuntu:22.04
+   sudo docker pull ubuntu:22.04
    # Launch interactive mode (command-line inside container)
-   docker run -it ubuntu:22.04
+   sudo docker run -it ubuntu:22.04
    # Now, inside Docker container, install dependencies
    apt-get update
    apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
@@ -175,9 +177,11 @@ Docker Image: Ubuntu
    source /root/.bashrc
    # Test SCT
    sct_testing
-   # save the state of the container. Open a new Terminal and run:
-   docker ps -a  # list all containers
-   docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu22.04
+   # Save the state of the container as a docker image. 
+   # Back on the Host machine, open a new terminal and run:
+   sudo docker ps -a  # list all containers (to find out the container ID)
+   # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
+   sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 
 Enable GUI Scripts (Optional)
@@ -191,13 +195,13 @@ First, save your Docker image if you haven't already done so:
 
    .. code:: bash
 
-      docker ps -a
+      sudo docker ps -a
 
 3. If you haven't already, save the container as a new image
 
    .. code:: bash
 
-      docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu22.04
+      sudo docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 Forward X11 server:
 
@@ -224,7 +228,18 @@ Forward X11 server:
       xhost +local:docker
 
 3. In your Terminal window, run:
-   ``docker run -it --rm --privileged -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <YOUR_NAME>/ubuntu:ubuntu22.04``
+   
+   .. code:: bash 
+
+      sudo docker run -it --rm --privileged -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <IMAGE_NAME>/ubuntu:ubuntu22.04``
+
+4. Then, you can check if GUI scripts work by running the following command:
+
+   .. code:: bash
+
+      sct_check_dependencies
+      
+   If GUI scripts are enabled, you should see all green ``[OK]`` results without any errors.
 
 
 Option 5: Hard-core Installation-less SCT usage

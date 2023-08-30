@@ -159,9 +159,11 @@ Docker Image: Ubuntu
    source /root/.bashrc
    # Test SCT
    sct_testing
-   # save the state of the container. Open a new Terminal and run:
-   docker ps -a  # list all containers
-   docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu22.04
+   # Save the state of the container as a docker image. 
+   # Back on the Host machine, open a new terminal and run:
+   docker ps -a  # list all containers (to find out the container ID)
+   # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
+   docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 
 Enable GUI Scripts (Optional)
@@ -181,7 +183,7 @@ First, save your Docker image if you haven't already done so:
 
    .. code:: bash
 
-      docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu22.04
+      docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 Create an X11 server for handling display:
 
@@ -190,7 +192,10 @@ Create an X11 server for handling display:
 3. Quit and restart XQuartz.
 4. In XQuartz window xhost + 127.0.0.1
 5. In your other Terminal window, run:
-   ``docker run -e DISPLAY=host.docker.internal:0 -it <YOUR_NAME>/ubuntu:ubuntu22.04``
+   
+   .. code:: bash 
+
+      docker run -e DISPLAY=host.docker.internal:0 -it <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 
 Additional Notes

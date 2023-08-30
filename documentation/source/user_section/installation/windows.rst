@@ -301,9 +301,11 @@ Docker Image: Ubuntu
    source /root/.bashrc
    # Test SCT
    sct_testing
-   # save the state of the container. Open a new Terminal and run:
-   docker ps -a  # list all containers
-   docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu22.04
+   # Save the state of the container as a docker image. 
+   # Back on the Host machine, open a new terminal and run:
+   docker ps -a  # list all containers (to find out the container ID)
+   # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
+   docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 
 Enable GUI Scripts (Optional)
@@ -324,7 +326,7 @@ First, save your Docker image if you have not already done so:
 
    .. code:: bash
 
-      docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu22.04
+      docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 4. Install `Xming <http://www.straightrunning.com/XmingNotes/>`_. The Public Domain version of Xming should be sufficient.
    Alternatively, install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`_.
@@ -336,7 +338,10 @@ First, save your Docker image if you have not already done so:
 
 6. Determine the IP of the virtual Ethernet Adapter by running 'ipconfig' in Powershell or the Command Prompt.
 
-7. In your Terminal Window run:
-   ``docker run -it --rm -e DISPLAY=<IP of vEthernet Adapter>:<Display Number> <YOUR_NAME>/ubuntu:ubuntu22.04``
+7. In your Terminal window, run:
+   
+   .. code:: bash 
+   
+      docker run -it --rm -e DISPLAY=<IP of vEthernet Adapter>:<Display Number> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 If you plan to use a web server within the container to access SCT output from the host's browser, be sure to map your ports by including the ``-p <Host Port>:<Container Port>`` flag in the above command.
