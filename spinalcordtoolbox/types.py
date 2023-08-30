@@ -1,5 +1,5 @@
 """
-Coordinates and Centerline
+Custom object and error types.
 
 Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
@@ -559,3 +559,11 @@ class Centerline:
         plt.xlabel('z')
         plt.ylabel('y')
         plt.show()
+
+
+class EmptyArrayError(ValueError):
+    """Custom exception to distinguish between general SciPy ValueErrors."""
+
+
+class MissingDiscsError(ValueError):
+    """Custom exception to indicate that no disc labels were found."""
