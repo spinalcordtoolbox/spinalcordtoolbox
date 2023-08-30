@@ -77,7 +77,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/labeling_compression.png
    :align: center
 
-8. Repeat steps 3 to 7 for the number of compressions.
+8. Repeat steps 3 to 7 for the remaining three compression sites.
 9. Save with the filename ``t2_compressed_labels-compression.nii.gz`` and quit.
 
 
