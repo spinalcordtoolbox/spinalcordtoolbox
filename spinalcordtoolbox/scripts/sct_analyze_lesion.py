@@ -284,22 +284,16 @@ class AnalyzeLeion:
         im_sc_data = im_sc.data
 
         # Get the lesion and spinal cord area
-        lesion_area_dict = {}
-        sc_area_dict = {}
+        axial_damage_ratio_dict = {}
         # Get slices with lesion
         lesion_slices = np.unique(np.where(im_data)[2])
         for slice in lesion_slices:
             # Lesion area
             lesion_area = np.sum(im_data[:, :, slice]) * p_lst[0] * p_lst[1]
-            lesion_area_dict[slice] = lesion_area
             # Spinal cord area
             sc_area = np.sum(im_sc_data[:, :, slice]) * p_lst[0] * p_lst[1]
-            sc_area_dict[slice] = sc_area
-
-        # Compute the axial damage ratio slice by slice
-        axial_damage_ratio_dict = {}
-        for slice in lesion_slices:
-            axial_damage_ratio_dict[slice] = lesion_area_dict[slice] / sc_area_dict[slice]
+            # Compute the axial damage ratio slice by slice
+            axial_damage_ratio_dict[slice] = lesion_area / sc_area
 
         # Get the maximum axial damage ratio
         maximum_axial_damage_ratio = np.max(list(axial_damage_ratio_dict.values()))
