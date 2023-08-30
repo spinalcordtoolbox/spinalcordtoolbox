@@ -1,7 +1,6 @@
 Before starting this tutorial
 #############################
 
-To modify
 #. Make sure that you have the following files in your working directory:
 
    * ``single_subject/data/t2_compression/t2_compression.nii.gz``: A 3D binary mask for the spinal cord of a T2 anatomical image with spinal cord compression.
