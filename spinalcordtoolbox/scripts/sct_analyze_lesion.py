@@ -27,8 +27,9 @@ def get_parser():
                     '3, etc.) and then outputs morphometric measures for each lesion:\n'
                     '- volume [mm^3]\n'
                     '- length [mm]: length along the Superior-Inferior axis\n'
-                    '- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating\n'
-                    '                                the lesion as a circle in the axial plane.\n\n'
+                    '- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as '
+                    'a circle in the axial plane\n'
+                    '- max_axial_damage_ratio []: maximum ratio of the lesion area divided by the spinal cord area\n\n'
                     'If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means '
                     'that the registered template does not fully cover the lesion. In that case you might want to '
                     'check the registration results.'
@@ -53,8 +54,8 @@ def get_parser():
         required=False,
         help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
              "cord angle with respect to slice. (e.g. 't2_seg.nii.gz')\n"
-             "If provided, then the lesion volume, length, and diameter will be computed. Otherwise, if not provided, "
-             "then only the lesion volume will be computed.",
+             "If provided, then the lesion volume, length, diameter, and axial damage ratio will be computed. "
+             "Otherwise, if not provided, then only the lesion volume will be computed.",
         metavar=Metavar.file)
     optional.add_argument(
         "-i",
@@ -108,7 +109,7 @@ class AnalyzeLeion:
         self.path_ofolder = path_ofolder
         self.verbose = verbose
         self.wrk_dir = os.getcwd()
-        self.measure_keys = ['volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']
+        self.measure_keys = ['volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]', 'max_axial_damage_ratio []']
 
         if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
             if set(np.unique(Image(fname_mask).data)) == set([0.0]):
@@ -269,6 +270,45 @@ class AnalyzeLeion:
         self.measure_pd.loc[idx, 'volume [mm3]'] = vol_tot_cur
         printv('  Volume : ' + str(np.round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
 
+    def _measure_axial_damage_ratio(self, im_data, p_lst, idx):
+        """
+        Measure the maximum axial damage ratio
+        The axial damage ratio is calculated as the ratio of lesion area divided by spinal cord area
+        The axial damage ratio is calculated for each slice and then the maximum value is retained
+        REF: Smith, A. C. et al. (2021). Axial MRI biomarkers of spinal cord damage to predict future walking and motor
+        function: A retrospective study. Spinal Cord, 59(6), 693-699. https://doi.org/10.1038/s41393-020-00561-w
+        """
+
+        # Load the spinal cord image
+        im_sc = Image(self.fname_sc)
+        im_sc_data = im_sc.data
+
+        # Get the lesion and spinal cord area
+        lesion_area_dict = {}
+        sc_area_dict = {}
+        # Get slices with lesion
+        lesion_slices = np.unique(np.where(im_data)[2])
+        for slice in lesion_slices:
+            # Lesion area
+            lesion_area = np.sum(im_data[:, :, slice]) * p_lst[0] * p_lst[1]
+            lesion_area_dict[slice] = lesion_area
+            # Spinal cord area
+            sc_area = np.sum(im_sc_data[:, :, slice]) * p_lst[0] * p_lst[1]
+            sc_area_dict[slice] = sc_area
+
+        # Compute the axial damage ratio slice by slice
+        axial_damage_ratio_dict = {}
+        for slice in lesion_slices:
+            axial_damage_ratio_dict[slice] = lesion_area_dict[slice] / sc_area_dict[slice]
+
+        # Get the maximum axial damage ratio
+        maximum_axial_damage_ratio = np.max(list(axial_damage_ratio_dict.values()))
+
+        # Save the maximum axial damage ratio
+        self.measure_pd.loc[idx, 'max_axial_damage_ratio []'] = maximum_axial_damage_ratio
+        printv('  Maximum axial damage ratio : ' + str(np.round(maximum_axial_damage_ratio, 2)),
+               self.verbose, type='info')
+
     def _measure_length(self, im_data, p_lst, idx):
         """
         Measure the length of the lesion along the superior-inferior axis when taking into account the angle correction
@@ -426,9 +466,11 @@ class AnalyzeLeion:
 
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
             # The SC segmentation is necessary for angle correction when computing length and diameter
+            # We also need SC segmentation to compute axial damage ratio
             if self.fname_sc is not None:
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
+                self._measure_axial_damage_ratio(im_lesion_data_cur, p_lst, label_idx)
             self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
 
             # compute lesion distribution for each lesion
