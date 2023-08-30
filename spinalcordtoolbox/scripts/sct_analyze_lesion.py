@@ -413,7 +413,7 @@ class AnalyzeLeion:
             printv('\nMeasures on lesion #' + str(lesion_label) + '...', self.verbose, 'normal')
 
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
-            # The SC segmentation is necessary to be able to compute the length and diameter
+            # The SC segmentation is necessary for angle correction when computing length and diameter
             if self.fname_sc is not None:
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
