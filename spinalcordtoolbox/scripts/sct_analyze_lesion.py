@@ -108,6 +108,7 @@ class AnalyzeLeion:
         self.path_ofolder = path_ofolder
         self.verbose = verbose
         self.wrk_dir = os.getcwd()
+        self.measure_keys = ['volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']
 
         if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
             if set(np.unique(Image(fname_mask).data)) == set([0.0]):
@@ -122,7 +123,7 @@ class AnalyzeLeion:
         self.fname_label = extract_fname(self.fname_mask)[1] + '_label' + extract_fname(self.fname_mask)[2]
 
         # initialization of measure sheet
-        measure_lst = ['label', 'volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']
+        measure_lst = ['label'] + self.measure_keys
         if self.fname_ref is not None:
             for measure in ['mean', 'std']:
                 measure_lst.append(measure + '_' + extract_fname(self.fname_ref)[1])
