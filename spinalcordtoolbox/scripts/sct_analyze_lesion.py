@@ -218,12 +218,23 @@ class AnalyzeLeion:
         writer.save()
 
     def show_total_results(self):
-        printv('\n\nAveraged measures...', self.verbose, 'normal')
-        for stg, key in zip(['  Volume [mm^3] = ', '  (S-I) Length [mm] = ', '  Equivalent Diameter [mm] = '], ['volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']):
-            printv(stg + str(np.round(np.mean(self.measure_pd[key]), 2)) + '+/-' + str(np.round(np.std(self.measure_pd[key]), 2)), self.verbose, type='info')
+        """
+        Print total results to CLI
+        """
 
-        printv('\nTotal volume = ' + str(np.round(np.sum(self.measure_pd['volume [mm3]']), 2)) + ' mm^3', self.verbose, 'info')
-        printv('Lesion count = ' + str(len(self.measure_pd['volume [mm3]'].values)), self.verbose, 'info')
+        printv('\n\nAveraged measures...', self.verbose, 'normal')
+
+        for label, key in zip(['Volume [mm^3]', '(S-I) Length [mm]', 'Equivalent Diameter [mm]'], self.measure_keys):
+            mean_value = np.round(np.mean(self.measure_pd[key]), 2)
+            std_value = np.round(np.std(self.measure_pd[key]), 2)
+            measure_info = f'{label} = {mean_value} +/- {std_value}'
+            printv(measure_info, self.verbose, type='info')
+
+        total_volume = np.round(np.sum(self.measure_pd['volume [mm3]']), 2)
+        lesion_count = len(self.measure_pd['volume [mm3]'].values)
+
+        printv('\nTotal volume = ' + str(total_volume) + ' mm^3', self.verbose, 'info')
+        printv('Lesion count = ' + str(lesion_count), self.verbose, 'info')
 
     def reorient(self):
         if not self.orientation == 'RPI':
