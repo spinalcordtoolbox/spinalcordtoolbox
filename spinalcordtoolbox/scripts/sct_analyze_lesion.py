@@ -228,7 +228,7 @@ class AnalyzeLeion:
         for label, key in zip(['Volume [mm^3]', '(S-I) Length [mm]', 'Equivalent Diameter [mm]'], self.measure_keys):
             mean_value = np.round(np.mean(self.measure_pd[key]), 2)
             std_value = np.round(np.std(self.measure_pd[key]), 2)
-            measure_info = f'{label} = {mean_value} +/- {std_value}'
+            measure_info = f'  {label} = {mean_value} +/- {std_value}'
             printv(measure_info, self.verbose, type='info')
 
         total_volume = np.round(np.sum(self.measure_pd['volume [mm3]']), 2)
