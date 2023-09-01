@@ -49,7 +49,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
 3. Generate spinal cord compression labels
 -------------------------------------------
 
-1. Open the image in FSLeyes. If the image does not have sufficient axial and sagittal resolution, open two individual images (axial image and sagittal image) in FSLeyes.
+1. Open the image in FSLeyes.
 
 .. code:: sh
 
