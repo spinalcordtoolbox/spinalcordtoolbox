@@ -29,7 +29,8 @@ logger = logging.getLogger(__name__)
 
 def get_parser():
     parser = SCTArgumentParser(
-        description="Segment an anatomical structure or pathologies according to the specified deep learning model."
+        description="Segment an anatomical structure or pathologies according to the specified deep learning model.",
+        epilog=models.list_tasks_string()
     )
 
     input_output = parser.add_argument_group("\nINPUT/OUTPUT")
@@ -63,10 +64,6 @@ def get_parser():
         metavar=Metavar.str)
     seg.add_argument(
         "-list-tasks",
-        action='store_true',
-        help="Display a list of tasks that can be achieved.")
-    seg.add_argument(
-        "-list-tasks-long",
         action='store_true',
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
              "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
@@ -137,18 +134,15 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
-    if (arguments.list_tasks is False and arguments.list_tasks_long is False
+    if (arguments.list_tasks is False
             and arguments.install_task is None
             and (arguments.i is None or arguments.task is None)):
-        parser.error("You must specify either '-list-tasks', '-list-tasks-long', '-install-task', "
+        parser.error("You must specify either '-list-tasks', '-install-task', "
                      "or both '-i' + '-task'.")
 
-    # Deal with task
+    # Deal with task long description
     if arguments.list_tasks:
         models.display_list_tasks()
-    # Deal with task long description
-    if arguments.list_tasks_long:
-        models.display_list_tasks_long()
 
     if arguments.install_task is not None:
         for name_model in models.TASKS[arguments.install_task]['models']:

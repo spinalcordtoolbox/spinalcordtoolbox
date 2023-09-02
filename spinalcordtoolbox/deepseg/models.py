@@ -323,13 +323,12 @@ def list_tasks():
     """
     return {name: value for name, value in TASKS.items()}
 
-
-def display_list_tasks():
+def list_tasks_string():
     tasks = list_tasks()
     # Display beautiful output
     color = {True: 'LightGreen', False: 'LightRed'}
-    print("{:<30s}{:<50s}{:<15s}MODELS".format("TASK", "DESCRIPTION", "CONTRAST"))
-    print("-" * 120)
+    table =  f"{'TASK':<30s}{'DESCRIPTION':<50s}\n"
+    table += f"{'-' * 80}\n"
     for name_task, value in tasks.items():
         path_models = [folder(name_model) for name_model in value['models']]
         path_models = [find_model_folder_paths(path) for path in path_models]
@@ -338,40 +337,40 @@ def display_list_tasks():
                               color[all(are_models_valid)])
         description_status = stylize(value['description'].ljust(50),
                                      color[all(are_models_valid)])
-        models_status = ', '.join([stylize(model_name,
-                                           color[validity])
-                                   for model_name, validity in zip(value['models'], are_models_valid)])
-        input_contrasts = stylize(str(', '.join(model_name for model_name in
-                                                get_required_contrasts(name_task))).ljust(15),
-                                  color[all(are_models_valid)])
 
-        print("{}{}{}{}".format(task_status, description_status, input_contrasts, models_status))
+        table += "{}{}".format(task_status, description_status) + "\n"
 
-    print(
-        '\nLegend: {} | {}\n'.format(
+    table += '\nLegend: {} | {}\n\n'.format(
             stylize("installed", color[True]),
-            stylize("not installed", color[False])))
+            stylize("not installed", color[False]))
 
-    print('To read in-depth descriptions of the training data, model architecture, etc. used for these tasks, '
-          'type the following command:\n'
-          '\n'
-          '    {}'.format(stylize('sct_deepseg -list-tasks-long', ['LightBlue', 'Bold'])))
-    exit(0)
+    table += 'To read in-depth descriptions of the training data, model architecture, '
+    table += 'etc. used for these tasks, type the following command:\n\n'
+    table += '    {}'.format(stylize('sct_deepseg -list-tasks', ['LightBlue', 'Bold']))
+    return table
 
-
-def display_list_tasks_long():
+def display_list_tasks():
     for name_task, value in list_tasks().items():
         indent_len = len("LONG_DESCRIPTION: ")
         print("{}{}".format("TASK:".ljust(indent_len), stylize(name_task, 'Bold')))
+
+        input_contrasts = str(', '.join(model_name for model_name in
+                                      get_required_contrasts(name_task))).ljust(15)
+        print("{}{}".format("CONTRAST:".ljust(indent_len), input_contrasts))
+
+        path_models = [folder(name_model) for name_model in value['models']]
+        path_models = [find_model_folder_paths(path) for path in path_models]
+        are_models_valid = [is_valid(path_model) for path_model in path_models]
+        models_status = ', '.join([model_name
+                                   for model_name, validity in zip(value['models'], are_models_valid)])
+        print("{}{}".format("MODELS:".ljust(indent_len), models_status))
+        
         print('\n'.join(textwrap.wrap(value['long_description'],
                         width=shutil.get_terminal_size()[0]-1,
                         initial_indent="LONG_DESCRIPTION: ",
                         subsequent_indent=' '*indent_len)))
-        print("{}{}".format("URL:".ljust(indent_len), stylize(value['url'], 'Cyan')))
 
-        path_models = [folder(name_model)
-                       for name_model in value['models']]
-        path_models = [find_model_folder_paths(path) for path in path_models]
+        print("{}{}".format("URL:".ljust(indent_len), stylize(value['url'], 'Cyan')))
         if all([is_valid(path_model) for path_model in path_models]):
             installed = stylize("Yes", 'LightGreen')
         else:
