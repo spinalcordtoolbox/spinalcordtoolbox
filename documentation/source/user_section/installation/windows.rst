@@ -278,11 +278,12 @@ Docker installation
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker <https://docs.docker.com/install/>`_. Then, follow the example below to create an OS-specific SCT installation.
-These instructions apply to Docker Desktop installed with the WSL 2 backend.
+First, `install Docker Desktop <https://docs.docker.com/desktop/install/windows-install/>`_ using the WSL 2 backend. Then, follow the example below to create an OS-specific SCT installation.
 
 Docker Image: Ubuntu
 ^^^^^^^^^^^^^^^^^^^^
+
+First, launch Docker Desktop, then open up a new Powershell or Command Prompt window and run the commands below:
 
 .. code:: bash
 
@@ -328,20 +329,30 @@ First, save your Docker image if you have not already done so:
 
       docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
-4. Install `Xming <http://www.straightrunning.com/XmingNotes/>`_. The Public Domain version of Xming should be sufficient.
-   Alternatively, install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`_.
+4. Install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`_.
 
-5. Launch an X11 Server
+5. Launch an X11 Server with XLaunch
 
 - Run XLaunch, which should have been installed by default.
-- Check 'Multiple Windows' and take note of the **display number** > 'Start no Client' > 'No Access Control' > Finish
+- Check 'Multiple Windows' and set the **display number** to ``0``, which you will need later. (The default display number ``-1`` will automatically detect the display number, unless you are running a setup with multiple monitors it will typically use ``0``)
+- Then, you can click Next, select 'Start no Client' then click Next
+- **Uncheck** 'Native opengl' and **check** 'Disable Access Control' then click Next, then click Finish.
 
-6. Determine the IP of the virtual Ethernet Adapter by running 'ipconfig' in Powershell or the Command Prompt.
+6. Determine the IPv4 address of the virtual Ethernet Adapter by running 'ipconfig' in Powershell or the Command Prompt, then looking at the ``Ethernet adapter vEthernet (WSL)`` entry.
 
-7. In your Terminal window, run:
+7. In your Terminal window, run the following command, filling in the IP address, display number, and image name noted earlier:
    
    .. code:: bash 
    
-      docker run -it --rm -e DISPLAY=<IP of vEthernet Adapter>:<Display Number> <IMAGE_NAME>/ubuntu:ubuntu22.04
+      docker run -it --rm -e DISPLAY=<IPv4_ADDRESS>:<DISPLAY_NUMBER> -e XDG_RUNTIME_DIR=/tmp/runtime-root <IMAGE_NAME>/ubuntu:ubuntu22.04
 
+
+8. You can test whether GUI scripts are available by running the following command in your Docker container:
+ 
+   .. code:: bash
+   
+      sct_check_dependencies
+      
+   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT. 
+   
 If you plan to use a web server within the container to access SCT output from the host's browser, be sure to map your ports by including the ``-p <Host Port>:<Container Port>`` flag in the above command.

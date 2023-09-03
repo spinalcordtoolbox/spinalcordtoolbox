@@ -136,11 +136,13 @@ In the context of SCT, it can be used:
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker <https://docs.docker.com/install/>`_. Then, follow the examples below to create an OS-specific SCT installation.
+First, `install Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`_. Then, follow the examples below to create an OS-specific SCT installation.
 
 
 Docker Image: Ubuntu
 ^^^^^^^^^^^^^^^^^^^^
+
+First, launch Docker Desktop, then open up a new Terminal window and run the commands below:
 
 .. code:: bash
 
@@ -197,7 +199,14 @@ Create an X11 server for handling display:
 
       docker run -e DISPLAY=host.docker.internal:0 -it <IMAGE_NAME>/ubuntu:ubuntu22.04
 
-
+6. You can test whether GUI scripts are available by running the following command in your Docker container:
+ 
+   .. code:: bash
+   
+      sct_check_dependencies
+      
+   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT. 
+   
 Additional Notes
 ================
 

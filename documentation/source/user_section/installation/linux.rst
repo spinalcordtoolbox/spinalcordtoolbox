@@ -233,15 +233,14 @@ Forward X11 server:
 
       sudo docker run -it --rm --privileged -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix <IMAGE_NAME>/ubuntu:ubuntu22.04``
 
-4. Then, you can check if GUI scripts work by running the following command:
-
+4. You can test whether GUI scripts are available by running the following command in your Docker container:
+ 
    .. code:: bash
-
+   
       sct_check_dependencies
       
-   If GUI scripts are enabled, you should see all green ``[OK]`` results without any errors.
-
-
+   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT. 
+   
 Option 5: Hard-core Installation-less SCT usage
 -----------------------------------------------
 
