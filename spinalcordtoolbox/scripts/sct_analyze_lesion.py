@@ -117,6 +117,9 @@ class AnalyzeLeion:
             else:
                 printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
+        if not Image(fname_mask).dim[0:3] == Image(fname_sc).dim[0:3]:
+            printv("ERROR: Lesion and spinal cord images must have the same dimensions", 1, 'error')
+
         # create tmp directory
         self.tmp_dir = tmp_create(basename="analyze-lesion")  # path to tmp directory
 
