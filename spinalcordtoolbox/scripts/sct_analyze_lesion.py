@@ -280,6 +280,10 @@ class AnalyzeLeion:
         The axial damage ratio is calculated for each slice and then the maximum value is retained
         REF: Smith, A. C. et al. (2021). Axial MRI biomarkers of spinal cord damage to predict future walking and motor
         function: A retrospective study. Spinal Cord, 59(6), 693-699. https://doi.org/10.1038/s41393-020-00561-w
+
+        :param im_data: 3D numpy array, binary mask of the lesion
+        :param p_lst: list, pixel size of the lesion
+        :param idx: int, index of the lesion
         """
 
         # Load the spinal cord image
