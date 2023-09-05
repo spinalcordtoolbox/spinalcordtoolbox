@@ -289,6 +289,7 @@ class AnalyzeLeion:
         # Load the spinal cord image
         im_sc = Image(self.fname_sc)
         im_sc_data = im_sc.data
+        p_lst_sc = im_sc.dim[4:7]   # voxel size
 
         # Get the lesion and spinal cord area
         axial_damage_ratio_dict = {}
@@ -298,7 +299,7 @@ class AnalyzeLeion:
             # Lesion area
             lesion_area = np.sum(im_data[:, :, slice]) * p_lst[0] * p_lst[1]
             # Spinal cord area
-            sc_area = np.sum(im_sc_data[:, :, slice]) * p_lst[0] * p_lst[1]
+            sc_area = np.sum(im_sc_data[:, :, slice]) * p_lst_sc[0] * p_lst_sc[1]
             # Compute the axial damage ratio slice by slice
             axial_damage_ratio_dict[slice] = lesion_area / sc_area
 
