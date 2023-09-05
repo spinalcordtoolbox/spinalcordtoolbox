@@ -406,12 +406,16 @@ def main(argv: Sequence[str]):
 
     # copy files to temporary folder
     printv('\nCopying input data to tmp folder and convert to nii...', verbose)
-    Image(fname_data).save(os.path.join(path_tmp, ftmp_data))
-    Image(fname_seg).save(os.path.join(path_tmp, ftmp_seg))
-    Image(fname_landmarks).save(os.path.join(path_tmp, ftmp_label))
-    Image(fname_template).save(os.path.join(path_tmp, ftmp_template))
-    Image(fname_template_seg).save(os.path.join(path_tmp, ftmp_template_seg))
-    Image(fname_template_labeling).save(os.path.join(path_tmp, ftmp_template_label))
+    try:
+        Image(fname_data, check_sform=True).save(os.path.join(path_tmp, ftmp_data))
+        Image(fname_seg, check_sform=True).save(os.path.join(path_tmp, ftmp_seg))
+        Image(fname_landmarks, check_sform=True).save(os.path.join(path_tmp, ftmp_label))
+        Image(fname_template, check_sform=True).save(os.path.join(path_tmp, ftmp_template))
+        Image(fname_template_seg, check_sform=True).save(os.path.join(path_tmp, ftmp_template_seg))
+        Image(fname_template_labeling, check_sform=True).save(os.path.join(path_tmp, ftmp_template_label))
+    except ValueError as e:
+        printv("\nImages could not be saved to temporary folder. Aborting registration.\n"
+               f"    {e.__class__.__name__}: '{e}'", 1, 'error')
 
     # go to tmp folder
     curdir = os.getcwd()
