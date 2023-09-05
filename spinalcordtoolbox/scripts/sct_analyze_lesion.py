@@ -291,7 +291,6 @@ class AnalyzeLeion:
         im_sc_data = im_sc.data
         p_lst_sc = im_sc.dim[4:7]   # voxel size
 
-        # Get the lesion and spinal cord area
         axial_damage_ratio_dict = {}
         # Get slices with lesion
         lesion_slices = np.unique(np.where(im_data)[2])
