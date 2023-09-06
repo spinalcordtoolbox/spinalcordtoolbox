@@ -459,7 +459,7 @@ class Centerline:
         elif vertebral_level == 0:  # level == 0 --> above the C1 vertebral level
             vertebral_index = -1    # so, ensure index is always outside C1 index
         else:
-            raise ValueError(f"vertebral_index must be a level string (C1, C2, C3...) or 0, but got {vertebral_level}.")
+            raise ValueError(f"vertebral_level must be a level string (C1, C2, C3...) or 0, but got {vertebral_level}.")
 
         # If the vertebral level is within the centerline, compute the closest index using relative position
         if self.list_labels.index(self.first_label) <= vertebral_index < self.list_labels.index(self.last_label):
