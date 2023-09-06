@@ -470,7 +470,8 @@ class Centerline:
         else:
             if vertebral_index < self.list_labels.index(self.first_label):
                 label = self.first_label
-            elif vertebral_index >= self.list_labels.index(self.last_label):
+            else:
+                assert vertebral_index >= self.list_labels.index(self.last_label)
                 label = self.last_label
             closest_centerline_level = self.regions_labels[label]
             closest_index = self.get_closest_to_absolute_position(closest_centerline_level,
