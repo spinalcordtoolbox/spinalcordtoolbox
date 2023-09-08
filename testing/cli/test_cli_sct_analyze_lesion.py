@@ -33,6 +33,10 @@ def dummy_lesion(request, tmp_path):
     sct_label_utils.main(argv=['-i', path_ref, '-o', path_out,
                                '-create', create_arg])
 
+    return path_out, starting_coord, dim
+
+
+def compute_expected_measurements(dim):
     # Compute the expected (voxel) measurements from the provided dimensions
     # NB: Actual measurements will differ slightly due to spine curvature
     measurements = {
@@ -51,7 +55,7 @@ def dummy_lesion(request, tmp_path):
         'volume [mm3]': dim[0] * dim[1] * dim[2],
     }
 
-    return path_out, measurements
+    return measurements
 
 
 @pytest.mark.sct_testing
@@ -66,7 +70,7 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
     """Run the CLI script and verify that the lesion measurements match
     expected values."""
     # Run the analysis on the dummy lesion file
-    path_lesion, expected_measurements = dummy_lesion
+    path_lesion, _, dim = dummy_lesion
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-s', sct_test_path("t2", "t2_seg-manual.nii.gz"),
                                   '-ofolder', str(tmp_path)])
@@ -75,6 +79,9 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements(dummy_les
     _, fname, _ = extract_fname(path_lesion)
     with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
         measurements = pickle.load(f)['measures']
+
+    # Compute expected measurements from the lesion dimensions
+    expected_measurements = compute_expected_measurements(dim)
 
     # Validate analysis results
     for key, expected_value in expected_measurements.items():
@@ -107,7 +114,7 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_s
     """Run the CLI script without providing SC segmentation -- only volume is computed. Max_equivalent_diameter and
     length are nan."""
     # Run the analysis on the dummy lesion file
-    path_lesion, expected_measurements = dummy_lesion
+    path_lesion, _, dim = dummy_lesion
     sct_analyze_lesion.main(argv=['-m', path_lesion,
                                   '-ofolder', str(tmp_path)])
 
@@ -115,6 +122,9 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_s
     _, fname, _ = extract_fname(path_lesion)
     with open(tmp_path/f"{fname}_analysis.pkl", 'rb') as f:
         measurements = pickle.load(f)['measures']
+
+    # Compute expected measurements from the lesion dimensions
+    expected_measurements = compute_expected_measurements(dim)
 
     # Validate analysis results
     for key, expected_value in expected_measurements.items():
