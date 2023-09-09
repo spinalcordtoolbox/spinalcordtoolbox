@@ -323,11 +323,12 @@ def list_tasks():
     """
     return {name: value for name, value in TASKS.items()}
 
+
 def list_tasks_string():
     tasks = list_tasks()
     # Display coloured output
     color = {True: 'LightGreen', False: 'LightRed'}
-    table =  f"{'TASK':<30s}{'DESCRIPTION':<50s}\n"
+    table = f"{'TASK':<30s}{'DESCRIPTION':<50s}\n"
     table += f"{'-' * 80}\n"
     for name_task, value in tasks.items():
         path_models = [folder(name_model) for name_model in value['models']]
@@ -349,13 +350,14 @@ def list_tasks_string():
     table += '    {}'.format(stylize('sct_deepseg -list-tasks', ['LightBlue', 'Bold']))
     return table
 
+
 def display_list_tasks():
     for name_task, value in list_tasks().items():
         indent_len = len("LONG_DESCRIPTION: ")
         print("{}{}".format("TASK:".ljust(indent_len), stylize(name_task, 'Bold')))
 
         input_contrasts = str(', '.join(model_name for model_name in
-                                      get_required_contrasts(name_task))).ljust(15)
+                                        get_required_contrasts(name_task))).ljust(15)
         print("{}{}".format("CONTRAST:".ljust(indent_len), input_contrasts))
 
         path_models = [folder(name_model) for name_model in value['models']]
@@ -364,7 +366,6 @@ def display_list_tasks():
         models_status = ', '.join([model_name
                                    for model_name, validity in zip(value['models'], are_models_valid)])
         print("{}{}".format("MODELS:".ljust(indent_len), models_status))
-        
         print('\n'.join(textwrap.wrap(value['long_description'],
                         width=shutil.get_terminal_size()[0]-1,
                         initial_indent="LONG_DESCRIPTION: ",
