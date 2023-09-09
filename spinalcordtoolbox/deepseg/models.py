@@ -325,7 +325,7 @@ def list_tasks():
 
 def list_tasks_string():
     tasks = list_tasks()
-    # Display beautiful output
+    # Display coloured output
     color = {True: 'LightGreen', False: 'LightRed'}
     table =  f"{'TASK':<30s}{'DESCRIPTION':<50s}\n"
     table += f"{'-' * 80}\n"
@@ -371,7 +371,7 @@ def display_list_tasks():
                         subsequent_indent=' '*indent_len)))
 
         print("{}{}".format("URL:".ljust(indent_len), stylize(value['url'], 'Cyan')))
-        if all([is_valid(path_model) for path_model in path_models]):
+        if all(are_models_valid):
             installed = stylize("Yes", 'LightGreen')
         else:
             installed = stylize("No", 'LightRed')
