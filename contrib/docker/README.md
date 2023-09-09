@@ -9,6 +9,4 @@ Inside this directory, run:
     docker build -t dockersct .
     docker run --name sctcontainer -i -t dockersct
     
-# SCT installation with GUI
-
-This directory also contains launcher scripts for XMing. These are used in the "Install SCT using Docker" steps found in the ReadTheDocs documentation.
+For more a more detailed set of instructions, refer to the documentation at https://spinalcordtoolbox.com/user_section/installation.html

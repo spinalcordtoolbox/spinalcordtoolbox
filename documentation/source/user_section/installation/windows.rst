@@ -350,9 +350,8 @@ First, save your Docker image if you have not already done so:
 8. You can test whether GUI scripts are available by running the following command in your Docker container:
  
    .. code:: bash
-   
+
+      mkdir /tmp/runtime-root
       sct_check_dependencies
-      
+
    You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT. 
-   
-If you plan to use a web server within the container to access SCT output from the host's browser, be sure to map your ports by including the ``-p <Host Port>:<Container Port>`` flag in the above command.
