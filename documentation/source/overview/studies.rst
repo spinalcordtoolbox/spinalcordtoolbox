@@ -25,7 +25,9 @@ The following studies have used SCT:
 
 2023
 ----
-
+-  Bedard *et al.* `Pontomedullary junction as a reference for spinal cord cross-sectional area: validation across neck positions <https://doi.org/10.1038/s41598-023-40731-3>`_, **Sci. Rep.** 2023
+-  Filimonova *et al.* `Brainstem and subcortical regions volume loss in patients with degenerative cervical myelopathy and its association with spinal cord compression severity <https://doi.org/10.1016/j.clineuro.2023.107943>`_, **Clin. Neurol. Neurosurg.** 2023
+-  Wang *et al.* `Spinal cord perfusion is associated with microstructural damage in cervical spondylotic myelopathy patients who underwent cervical laminoplasty <https://doi.org/10.1007/s00330-023-10011-9>`_, **Eur. Radiol.** 2023
 -  Mendili *et al.* `Association between brain and upper cervical spinal cord atrophy assessed by MRI and disease aggressiveness in amyotrophic lateral sclerosis <https://doi.org/10.1007/s00234-023-03191-0>`_, **Neuroradiology** 2023	
 -  Tsivaka *et al.* `A second-order and slice-specific linear shimming technique to improve spinal cord fMRI <https://doi.org/10.1016/j.mri.2023.06.012>`_, **Magn. Reson. Imaging** 2023
 -  Mongay-Ochoa *et al.* `Validation of a New Semiautomated Segmentation Pipeline Based on the Spinal Cord Toolbox DeepSeg Algorithm to Estimate the Cervical Canal Area <https://doi.org/10.3174/ajnr.A7899>`_, **AJNR Am. J. Neuroradiol.** 2023
