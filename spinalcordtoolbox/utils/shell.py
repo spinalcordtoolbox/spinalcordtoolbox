@@ -307,19 +307,9 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
         This method is what gets called for the parser's `description` field.
         """
-        import textwrap
         # NB: We use our overridden split_lines method to apply indentation to the help description
         paragraphs = self._split_lines(text, width)
-        # NB: The remaining code is fully custom
-        rebroken = [textwrap.wrap(tpar, width) for tpar in paragraphs]
-        rebrokenstr = []
-        for tlinearr in rebroken:
-            if len(tlinearr) == 0:
-                rebrokenstr.append("")
-            else:
-                for tlinepiece in tlinearr:
-                    rebrokenstr.append(tlinepiece)
-        return '\n'.join(rebrokenstr)
+        return '\n'.join(paragraphs)
 
     def _split_lines(self, text, width):
         """Overrides the default _split_lines method. It takes a single string
