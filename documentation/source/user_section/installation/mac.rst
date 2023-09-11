@@ -148,6 +148,7 @@ First, launch Docker Desktop, then open up a new Terminal window and run the com
 
    # Start from the Terminal
    docker pull ubuntu:22.04
+   # If the previous command says 'Cannot connect to the Docker daemon', make sure you have launched Docker Desktop
    # Launch interactive mode (command-line inside container)
    docker run -it ubuntu:22.04
    # Now, inside Docker container, install dependencies
@@ -158,10 +159,12 @@ First, launch Docker Desktop, then open up a new Terminal window and run the com
    git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
    ./install_sct -y
+   # For the previous command, it's normal if the last two checks show [FAIL] in red
+   # This will be fixed by doing the "Enable GUI Scripts" optional step in the next section
    source /root/.bashrc
    # Test SCT
    sct_testing
-   # Save the state of the container as a docker image. 
+   # Save the state of the container as a docker image.
    # Back on the Host machine, open a new terminal and run:
    docker ps -a  # list all containers (to find out the container ID)
    # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
@@ -189,24 +192,31 @@ First, save your Docker image if you haven't already done so:
 
 Create an X11 server for handling display:
 
-1. Install XQuartz X11 server.
-2. Check ‘Allow connections from network clients option in XQuartz\` settings.
+1. Install `XQuartz X11 <https://www.xquartz.org/>`_ server.
+2. Check ‘Allow connections from network clients option in XQuartz\` settings. (Run XQuartz; in the top-of-screen menu bar, choose "XQuartz", then "Preferences..."; the relevant option is under the "Security" tab.)
 3. Quit and restart XQuartz.
-4. In XQuartz window xhost + 127.0.0.1
+4. In the XQuartz "xterm" window, run the command:
+
+   .. code:: bash
+
+      xhost + 127.0.0.1
+
 5. In your other Terminal window, run:
-   
-   .. code:: bash 
+
+   .. code:: bash
 
       docker run -e DISPLAY=host.docker.internal:0 -it <IMAGE_NAME>/ubuntu:ubuntu22.04
 
+   (If this command says 'Cannot connect to the Docker daemon', try again after launching Docker Desktop.)
+
 6. You can test whether GUI scripts are available by running the following command in your Docker container:
- 
+
    .. code:: bash
-   
+
       sct_check_dependencies
-      
-   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT. 
-   
+
+   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT.
+
 Additional Notes
 ================
 
