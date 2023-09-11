@@ -244,7 +244,7 @@ class ActionCreateFolder(argparse.Action):
         return folder_name
 
     def __call__(self, parser, namespace, values, option_string=None):
-        if type(values) == list:
+        if isinstance(values, list):
             folders = list(map(self.create_folder, values))
         else:
             folders = self.create_folder(values)
@@ -331,7 +331,7 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         for i, li in enumerate(lines):
             if len(li) > 0:
                 # Check for ANSI graphics control sequences, and increase width to compensate
-                width_adjusted = width + len("".join(re.findall("\\x1b\[[0-9;]+m", li)))
+                width_adjusted = width + len("".join(re.findall("\\x1b\[[0-9;]+m", li)))  # noqa: W605
                 # Split the line into two parts: the first line, and wrapped lines
                 init_wrap = textwrap.fill(li, width_adjusted).splitlines()
                 first = init_wrap[0]
