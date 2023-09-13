@@ -67,7 +67,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/edit_mode.png
    :align: center
 
-6. Create an empty mask alt+N (Linux/Windows) or option+N (macOS).
+6. Create an empty mask alt+N (Linux/Windows) or cmd+N (macOS).
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/create_mask.png
    :align: center
