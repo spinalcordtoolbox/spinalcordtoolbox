@@ -56,7 +56,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
    fsleyes t2_compressed.nii.gz &
 
 2. If clinical data with information about compression level(s) is available, look at it to determine how many compressions a subject has and at which levels the compressions are located.
-3. Locate the first compression site in the sagittal view. (The location does not need to be precise, as we will fine-tune the selection in the next step.)
+3. Locate the first compression site in the sagittal view. (The location does not need to be precise, as we will fine-tune the selection in the next step.) All 4 compression sites are indicated here.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/localizing_compression_sag.png
    :align: center
@@ -77,7 +77,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/labeling_compression.png
    :align: center
 
-8. Repeat steps 3 to 7 for the remaining three compression sites.
+8. In the same mask, repeat steps 3, 4 and 7 for the remaining three compression sites.
 9. Save with the filename ``t2_compressed_labels-compression.nii.gz`` and quit.
 
 
