@@ -22,9 +22,3 @@ reference system.
    - ``ma`` : metric above the compression levels.
    - ``mb`` : metric below the compression level.
 
-
-.. note::
-   The MSCC (maximum spinal cord compression) metric was originally introduced in the following study:
-   Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic
-   spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective
-   study with 100 consecutive patients. Radiology 2007;243(3):820-827.
