@@ -7,7 +7,7 @@ Compute normalized measures in spinal cord compression
   :align: center
   :figwidth: 80%
 
-This section demonstrates how to compute normalized morphometric measures to assess spinal cord compression using the ``sct_compute_compression`` command.
+This section demonstrates how to compute normalized morphometric measures to assess spinal cord compression using the ``sct_compute_compression`` command. The approach is based on the Maximum Spinal Cord Compression (MSCC) metric introduced in [Miyanji et al. 2007](https://pubmed.ncbi.nlm.nih.gov/17431129/), and provides additional features such as other shape metrics and a normalization module to account for inter- and intra-subject variability. 
 
 
 .. toctree::
