@@ -1,4 +1,4 @@
-.. _verifying-correctness:
+.. _verify-correctness:
 
 Verifying the correctness of the metrics
 ****************************************

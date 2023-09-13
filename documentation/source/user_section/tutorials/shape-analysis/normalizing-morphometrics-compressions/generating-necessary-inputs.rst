@@ -1,4 +1,4 @@
-.. _generating-necessary-inputs:
+.. _generate-necessary-inputs:
 
 Generate the necessary input files
 #############################################################

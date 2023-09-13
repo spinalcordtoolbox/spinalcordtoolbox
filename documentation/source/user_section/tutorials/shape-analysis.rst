@@ -18,7 +18,7 @@ This section demonstrates how to compute shape metrics of the spinal cord using 
    shape-analysis/csa-pmj
    shape-analysis/csa-perslice
    shape-analysis/other-shape-metrics
-   shape-analysis/verifying-correctness
-   shape-analysis/normalizing-morphometrics-compression
+   shape-analysis/verify-correctness
+   shape-analysis/normalize-morphometrics-compression
 
 
