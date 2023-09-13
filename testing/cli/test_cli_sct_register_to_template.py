@@ -111,3 +111,17 @@ def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt,
     im_template_seg = Image(fname_gt)
     dice_anat2template = compute_dice(im_seg_reg, im_template_seg, mode='3d', zboundaries=True)
     assert dice_anat2template > dice_threshold
+
+
+def test_sct_register_to_template_mismatched_xforms(tmp_path, capsys):
+    fname_mismatch = str(tmp_path / "t2_mismatched.nii.gz")
+    im_in = Image(sct_test_path('t2', 't2.nii.gz'))
+    qform = im_in.header.get_qform()
+    qform[1, 3] += 10
+    im_in.header.set_qform(qform)
+    im_in.save(fname_mismatch)
+    with pytest.raises(SystemExit):
+        sct_register_to_template.main(argv=['-i', fname_mismatch,
+                                            '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                            '-l', sct_test_path('t2', 'labels.nii.gz')])
+    assert "Image sform does not match qform" in capsys.readouterr().out
