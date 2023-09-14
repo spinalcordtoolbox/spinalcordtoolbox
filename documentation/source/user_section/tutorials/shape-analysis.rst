@@ -13,10 +13,7 @@ This section demonstrates how to compute shape metrics of the spinal cord using 
    :maxdepth: 1
 
    shape-analysis/before-starting
-   shape-analysis/csa-averaged
-   shape-analysis/csa-perlevel
-   shape-analysis/csa-pmj
-   shape-analysis/csa-perslice
+   shape-analysis/cross-sectional-area
    shape-analysis/other-shape-metrics
    shape-analysis/verify-correctness
    shape-analysis/normalize-morphometrics-compression
