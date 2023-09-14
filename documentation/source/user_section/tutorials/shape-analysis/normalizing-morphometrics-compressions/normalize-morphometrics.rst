@@ -1,4 +1,4 @@
-.. _normalizing-morphometrics:
+.. _normalize-morphometrics:
 
 Compute normalized morphometrics
 #######################################################################################
