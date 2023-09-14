@@ -1,6 +1,6 @@
 .. _normalizing-morphometrics:
 
-Applying the normalization on morphometrics with ``sct_compute_compression``
+Compute normalized morphometrics
 #######################################################################################
 
 The ``sct_compute_compression`` function computes a ratio of the morphometric measures at the level(s) of compression with the measures at the levels above and below all compression sites. 
