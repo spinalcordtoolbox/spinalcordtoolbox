@@ -1,6 +1,6 @@
 .. _normalize-morphometrics-compressions:
 
-Compute normalized measures in spinal cord compression
+Quantify spinal cord compression
 ######################################################
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/sb/4158-add-tutorial-sct-compute-compression/spinalcord-compresssion-norm/normalized_metrics_hc_figure.png
