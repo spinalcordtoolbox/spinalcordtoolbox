@@ -49,7 +49,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
 3. Generate spinal cord compression labels
 -------------------------------------------
 
-1. Open the image in FSLeyes.
+1. Open the image in FSLeyes (or your favorite viewer).
 
 .. code:: sh
 
