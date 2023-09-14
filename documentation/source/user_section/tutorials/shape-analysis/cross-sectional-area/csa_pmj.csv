@@ -1,0 +1,2 @@
+Filename,Slice (I->S), DistancePMJ,MEAN(area),STD(area)
+single_subject/data/t2/t2_seg.nii.gz,164:200,64.0,73.59883713730028,1.9646306524757562
