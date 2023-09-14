@@ -99,7 +99,7 @@ def get_parser():
     return parser
 
 
-class AnalyzeLeion:
+class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
         self.fname_mask = fname_mask
 
@@ -617,12 +617,12 @@ def main(argv: Sequence[str]):
         rm_tmp = True
 
     # create the Lesion constructor
-    lesion_obj = AnalyzeLeion(fname_mask=fname_mask,
-                              fname_sc=fname_sc,
-                              fname_ref=fname_ref,
-                              path_template=path_template,
-                              path_ofolder=path_results,
-                              verbose=verbose)
+    lesion_obj = AnalyzeLesion(fname_mask=fname_mask,
+                               fname_sc=fname_sc,
+                               fname_ref=fname_ref,
+                               path_template=path_template,
+                               path_ofolder=path_results,
+                               verbose=verbose)
 
     # run the analyze
     lesion_obj.analyze()
