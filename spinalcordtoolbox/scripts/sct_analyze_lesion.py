@@ -140,9 +140,6 @@ class AnalyzeLesion:
         # orientation of the input image
         self.orientation = None
 
-        # volume object
-        self.volumes = None
-
         # initialization of proportion measures, related to registrated atlas
         if self.path_template is not None:
             self.path_atlas = os.path.join(self.path_template, "atlas")
@@ -267,12 +264,9 @@ class AnalyzeLesion:
         """
         Measure the volume of the lesion
         """
-        for zz in range(im_data.shape[2]):
-            self.volumes[zz, idx - 1] = np.sum(im_data[:, :, zz]) * p_lst[0] * p_lst[1] * p_lst[2]
-
-        vol_tot_cur = np.sum(self.volumes[:, idx - 1])
-        self.measure_pd.loc[idx, 'volume [mm3]'] = vol_tot_cur
-        printv('  Volume : ' + str(np.round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
+        volume = np.sum(im_data) * p_lst[0] * p_lst[1] * p_lst[2]
+        self.measure_pd.loc[idx, 'volume [mm3]'] = volume
+        printv(f'  Volume : {round(volume, 2)} mm^3', self.verbose, type='info')
 
     def _measure_axial_damage_ratio(self, im_data, p_lst, idx):
         """
@@ -458,8 +452,6 @@ class AnalyzeLesion:
                 img_cur_copy = img_cur.copy()
                 atlas_data_dct[tract_id] = img_cur_copy.data
                 del img_cur
-
-        self.volumes = np.zeros((im_lesion.dim[2], len(label_lst)))
 
         # iteration across each lesion to measure statistics
         for lesion_label in label_lst:
