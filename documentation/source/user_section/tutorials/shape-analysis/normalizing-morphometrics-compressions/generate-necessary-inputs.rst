@@ -31,7 +31,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
    - ``t2_compressed_seg.nii.gz`` : Spinal cord segmentation.
 
 
-2. Label the spinal cord vertebral levels
+2. Label the vertebral levels
 ------------------------------------------
 .. code:: sh
 
