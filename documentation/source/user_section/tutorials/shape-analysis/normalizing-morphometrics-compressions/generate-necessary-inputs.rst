@@ -46,7 +46,7 @@ You can also get these files by downloading :sct_tutorial_data:`data_normalizing
 :Output files/folders:
    - ``t2_compressed_seg_labeled.nii.gz`` : Spinal cord vertebral labels.
 
-3. Generate spinal cord compression labels
+3. Label spinal cord compression sites
 -------------------------------------------
 
 1. Open the image in FSLeyes (or your favorite viewer).
