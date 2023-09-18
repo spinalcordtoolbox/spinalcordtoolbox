@@ -569,7 +569,7 @@ def main(argv: Sequence[str]):
     # Display timing
     duration = end - start
     timing_message = ('Started: {} | Ended: {} | Duration: {}\n'.format(
-        start.strftime('%Hh%Mm%Ss'),
+        start.strftime('%F %Hh%Mm%Ss'),
         end.strftime('%Hh%Mm%Ss'),
         (datetime.datetime.utcfromtimestamp(0) + duration).strftime('%Hh%Mm%Ss')))
     print(timing_message)
