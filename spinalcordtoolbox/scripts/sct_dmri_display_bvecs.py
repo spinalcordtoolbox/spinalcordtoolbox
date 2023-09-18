@@ -132,7 +132,7 @@ def main(argv: Sequence[str]):
         # skip b=0
         if unique_bval < BZERO_THRESH:
             continue
-        shell_colors[unique_bval] = list(next(colors))
+        shell_colors[unique_bval] = tuple(next(colors))
 
     # Get total number of directions
     n_dir = len(x)
