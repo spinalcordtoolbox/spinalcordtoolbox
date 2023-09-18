@@ -244,7 +244,7 @@ class ActionCreateFolder(argparse.Action):
         return folder_name
 
     def __call__(self, parser, namespace, values, option_string=None):
-        if type(values) == list:
+        if isinstance(values, list):
             folders = list(map(self.create_folder, values))
         else:
             folders = self.create_folder(values)
@@ -307,19 +307,9 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
 
         This method is what gets called for the parser's `description` field.
         """
-        import textwrap
         # NB: We use our overridden split_lines method to apply indentation to the help description
         paragraphs = self._split_lines(text, width)
-        # NB: The remaining code is fully custom
-        rebroken = [textwrap.wrap(tpar, width) for tpar in paragraphs]
-        rebrokenstr = []
-        for tlinearr in rebroken:
-            if len(tlinearr) == 0:
-                rebrokenstr.append("")
-            else:
-                for tlinepiece in tlinearr:
-                    rebrokenstr.append(tlinepiece)
-        return '\n'.join(rebrokenstr)
+        return '\n'.join(paragraphs)
 
     def _split_lines(self, text, width):
         """Overrides the default _split_lines method. It takes a single string
@@ -340,8 +330,10 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         wrapped = []
         for i, li in enumerate(lines):
             if len(li) > 0:
+                # Check for ANSI graphics control sequences, and increase width to compensate
+                width_adjusted = width + len("".join(re.findall("\\x1b\[[0-9;]+m", li)))  # noqa: W605
                 # Split the line into two parts: the first line, and wrapped lines
-                init_wrap = textwrap.fill(li, width).splitlines()
+                init_wrap = textwrap.fill(li, width_adjusted).splitlines()
                 first = init_wrap[0]
                 rest = "\n".join(init_wrap[1:])
                 # Add an offset to the wrapped lines so that they're indented the same as the first line
@@ -349,7 +341,7 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
                 if re.match(r"^\s+[-*]\s\w.*$", li):  # List matching: " - Text" or " * Text"
                     o += "  "  # If the line is a list item, add extra indentation to the wrapped lines (#2889)
                 ol = len(o)
-                rest_wrap = textwrap.fill(rest, width - ol).splitlines()
+                rest_wrap = textwrap.fill(rest, width_adjusted - ol).splitlines()
                 offset_lines = [o + wl for wl in rest_wrap]
                 # Merge the first line and the wrapped lines
                 wrapped = wrapped + [first] + offset_lines

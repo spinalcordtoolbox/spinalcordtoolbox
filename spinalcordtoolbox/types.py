@@ -451,6 +451,34 @@ class Centerline:
                 else:
                     self.dist_points_rel[i] = numer/denom
 
+    def get_closest_index(self, vertebral_level, relative_position, backup_index, backup_centerline):
+        # Parse 'list_labels' ([50, 49, 1, 2, 3, ...]) to find the index that corresponds to the vertebral level
+        if vertebral_level in self.labels_regions.keys():
+            vertebral_number = self.labels_regions[vertebral_level]
+            vertebral_index = self.potential_list_labels.index(vertebral_number)
+        elif vertebral_level == 0:  # level == 0 --> above the C1 vertebral level
+            vertebral_index = -1    # so, ensure index is always outside C1 index
+        else:
+            raise ValueError(f"vertebral_level must be a level string (C1, C2, C3...) or 0, but got {vertebral_level}.")
+
+        # If the vertebral level is within the centerline, compute the closest index using relative position
+        if self.list_labels.index(self.first_label) <= vertebral_index < self.list_labels.index(self.last_label):
+            closest_index = self.get_closest_to_relative_position(vertebral_level, relative_position)
+
+        # Otherwise, the vertebral level is outside the centerline. So, we first replace the level with the closest
+        # level that IS in the centerline, then we compute the closest index using absolute position instead.
+        else:
+            if vertebral_index < self.list_labels.index(self.first_label):
+                label = self.first_label
+            else:
+                assert vertebral_index >= self.list_labels.index(self.last_label)
+                label = self.last_label
+            closest_centerline_level = self.regions_labels[label]
+            closest_index = self.get_closest_to_absolute_position(closest_centerline_level,
+                                                                  backup_index, backup_centerline)
+
+        return closest_index
+
     def get_closest_to_relative_position(self, vertebral_level, relative_position):
         """
         :param vertebral_level: the name of a vertebral level, as a string
@@ -466,25 +494,40 @@ class Centerline:
         else:
             return None
 
-    def get_closest_to_absolute_position(self, vertebral_level, relative_position, backup_index, backup_centerline):
-        if vertebral_level == 0:  # above the C1 vertebral level, the method used is length
-            label = self.first_label
-        else:
-            vertebral_number = self.labels_regions[vertebral_level]
-            if self.potential_list_labels.index(vertebral_number) < self.list_labels.index(self.first_label):
-                label = self.first_label
-            elif self.potential_list_labels.index(vertebral_number) >= self.list_labels.index(self.last_label):
-                label = self.last_label
-            else:
-                return self.get_closest_to_relative_position(vertebral_level=vertebral_level, relative_position=relative_position)
+    def get_closest_to_absolute_position(self, reference_level, backup_index, backup_centerline):
+        """
+        :param reference_level: the name of a vertebral level, as a string. this should be the closest vertebral level
+                                from the centerline, since 'backup_index' is outside the centerline's top/bottom levels.
+        :backup_index: the index of the desired slice, in the 'backup_centerline' space.
+        :backup_centerline: an alternate centerline that contains both 'reference_level' and the 'backup_index'
+        """
+        # Get the slice index of the reference vertebral level within the backup centerline
+        backup_index_reference = backup_centerline.index_disc[reference_level]
 
-        if backup_index >= backup_centerline.number_of_points:
-            return None
+        # Get the 'mm' positions of both the desired slice index and the reference vertebral level
+        backup_position = backup_centerline.dist_points[backup_index]
+        backup_position_reference = backup_centerline.dist_points[backup_index_reference]
 
-        position_reference_backup = backup_centerline.dist_points[backup_centerline.index_disc[backup_centerline.regions_labels[label]]]
-        position_reference_self = self.dist_points[self.index_disc[self.regions_labels[label]]]
-        relative_position_from_reference_backup = backup_centerline.dist_points[backup_index] - position_reference_backup
-        return np.argmin(np.abs(np.array(self.dist_points) - position_reference_self - relative_position_from_reference_backup))
+        # Compute the relative distance between the reference level and the desired slice
+        relative_distance_backup = backup_position_reference - backup_position
+
+        # The steps below are a mathematical equivalent to:
+        #   1. Find the 'mm' position of the reference level in the 'self' centerline
+        #   2. Add the distance that was computed for the 'backup' centerline, which results in new 'mm'
+        #      position corresponding to the position of the 'backup_index' slice, but in the 'self' centerline space.
+        #   3. For this new position, find the corresponding index in the 'self' centerline.
+        # -------------------------------------------------------------------------------------------------------
+        # Normalize the positions of the current centerline's points using the position of the reference level.
+        # This makes it so that the reference level is '0.0', and all other points are +/- from it.
+        dist_points = np.array(self.dist_points)
+        dist_points_norm = dist_points - self.dist_points[self.index_disc[reference_level]]
+        # Add the computed distance so that there is a new "center point" between the + and - values.
+        dist_points_shifted = dist_points_norm + relative_distance_backup
+        # Then, take the absolute value of all the points, causing the center point to become a minimum.
+        # The index of this minimum is our desired index.
+        closest_index = np.argmin(np.abs(dist_points_shifted))
+
+        return closest_index
 
     def save_centerline(self, image=None, fname_output='centerline.sct'):
         if image is not None:
