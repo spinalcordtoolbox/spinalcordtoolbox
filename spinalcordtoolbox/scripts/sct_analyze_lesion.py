@@ -99,7 +99,7 @@ def get_parser():
     return parser
 
 
-class AnalyzeLeion:
+class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
         self.fname_mask = fname_mask
 
@@ -139,9 +139,6 @@ class AnalyzeLeion:
 
         # orientation of the input image
         self.orientation = None
-
-        # volume object
-        self.volumes = None
 
         # initialization of proportion measures, related to registrated atlas
         if self.path_template is not None:
@@ -267,12 +264,9 @@ class AnalyzeLeion:
         """
         Measure the volume of the lesion
         """
-        for zz in range(im_data.shape[2]):
-            self.volumes[zz, idx - 1] = np.sum(im_data[:, :, zz]) * p_lst[0] * p_lst[1] * p_lst[2]
-
-        vol_tot_cur = np.sum(self.volumes[:, idx - 1])
-        self.measure_pd.loc[idx, 'volume [mm3]'] = vol_tot_cur
-        printv('  Volume : ' + str(np.round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
+        volume = np.sum(im_data) * p_lst[0] * p_lst[1] * p_lst[2]
+        self.measure_pd.loc[idx, 'volume [mm3]'] = volume
+        printv(f'  Volume : {round(volume, 2)} mm^3', self.verbose, type='info')
 
     def _measure_axial_damage_ratio(self, im_data, p_lst, idx):
         """
@@ -459,8 +453,6 @@ class AnalyzeLeion:
                 atlas_data_dct[tract_id] = img_cur_copy.data
                 del img_cur
 
-        self.volumes = np.zeros((im_lesion.dim[2], len(label_lst)))
-
         # iteration across each lesion to measure statistics
         for lesion_label in label_lst:
             im_lesion_data_cur = np.copy(im_lesion_data == lesion_label)
@@ -617,12 +609,12 @@ def main(argv: Sequence[str]):
         rm_tmp = True
 
     # create the Lesion constructor
-    lesion_obj = AnalyzeLeion(fname_mask=fname_mask,
-                              fname_sc=fname_sc,
-                              fname_ref=fname_ref,
-                              path_template=path_template,
-                              path_ofolder=path_results,
-                              verbose=verbose)
+    lesion_obj = AnalyzeLesion(fname_mask=fname_mask,
+                               fname_sc=fname_sc,
+                               fname_ref=fname_ref,
+                               path_template=path_template,
+                               path_ofolder=path_results,
+                               verbose=verbose)
 
     # run the analyze
     lesion_obj.analyze()
