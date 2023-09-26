@@ -62,7 +62,7 @@ def locked_file(path: Path):
 
 
 @contextmanager
-def qc_entry(
+def create_qc_entry(
     path_input: Path,
     path_qc: Path,
     command: str,
@@ -100,11 +100,17 @@ def qc_entry(
     # Make sure the image directory exists
     path_img = path_qc / dataset / subject / contrast / command / timestamp
     path_img.mkdir(parents=True, exist_ok=True)
-    path_background_img = path_img / 'background_img.png'
-    path_overlay_img = path_img / 'overlay_img.png'
 
-    # Let the caller generate the image files for the entry
-    yield (path_background_img, path_overlay_img)
+    # Ask the caller to generate the image files for the entry
+    imgs_to_generate = {
+        'path_background_img': path_img / 'background_img.png',
+        'path_overlay_img':  path_img / 'overlay_img.png'
+    }
+    yield imgs_to_generate
+    # Double-check that the images were generated during the 'with:' block
+    for img_type, file_img in imgs_to_generate.items():
+        if not Path.exists(file_img):
+            raise FileNotFoundError(f"Required QC image '{img_type}' was not found at the expected path: '{file_img}')")
 
     # We lock `index.html` so that we halt any other processes *before*
     # they have a chance to generate or read any .json files. This ensures
@@ -191,7 +197,7 @@ def sct_register_multimodal(
     cmdline.extend(argv)
 
     # Axial orientation, switch between two input images
-    with qc_entry(
+    with create_qc_entry(
         path_input=Path(fname_input).absolute(),
         path_qc=Path(path_qc),
         command=command,
@@ -199,7 +205,7 @@ def sct_register_multimodal(
         plane='Axial',
         dataset=dataset,
         subject=subject,
-    ) as (path_background_img, path_overlay_img):
+    ) as imgs_to_generate:
 
         # Resample images slice by slice
         p_resample = 0.6
@@ -245,7 +251,7 @@ def sct_register_multimodal(
         add_orientation_labels(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-        img_path = str(path_background_img)
+        img_path = str(imgs_to_generate['path_background_img'])
         logger.debug('Save image %s', img_path)
         fig.savefig(img_path, format='png', transparent=True, dpi=300)
 
@@ -259,7 +265,7 @@ def sct_register_multimodal(
         add_orientation_labels(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-        img_path = str(path_overlay_img)
+        img_path = str(imgs_to_generate['path_overlay_img'])
         logger.debug('Save image %s', img_path)
         fig.savefig(img_path, format='png', transparent=True, dpi=300)
 
