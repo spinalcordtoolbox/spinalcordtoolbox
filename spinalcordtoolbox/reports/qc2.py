@@ -135,8 +135,8 @@ def create_qc_entry(
                 'contrast': contrast,
                 'fname_in': path_input.name,
                 'plane': plane,
-                'background_img': str(path_background_img.relative_to(path_qc)),
-                'overlay_img': str(path_overlay_img.relative_to(path_qc)),
+                'background_img': str(imgs_to_generate['path_background_img'].relative_to(path_qc)),
+                'overlay_img': str(imgs_to_generate['path_overlay_img'].relative_to(path_qc)),
                 'moddate': mod_date.strftime("%Y-%m-%d %H:%M:%S"),
                 'qc': '',
             }, file_result, indent=1)
