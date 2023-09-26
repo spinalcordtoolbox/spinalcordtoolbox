@@ -104,13 +104,13 @@ def create_qc_entry(
     # Ask the caller to generate the image files for the entry
     imgs_to_generate = {
         'path_background_img': path_img / 'background_img.png',
-        'path_overlay_img':  path_img / 'overlay_img.png'
+        'path_overlay_img':  path_img / 'overlay_img.png',
     }
     yield imgs_to_generate
     # Double-check that the images were generated during the 'with:' block
-    for img_type, file_img in imgs_to_generate.items():
-        if not Path.exists(file_img):
-            raise FileNotFoundError(f"Required QC image '{img_type}' was not found at the expected path: '{file_img}')")
+    for img_type, path in imgs_to_generate.items():
+        if not path.exists():
+            raise FileNotFoundError(f"Required QC image '{img_type}' was not found at the expected path: '{path}')")
 
     # We lock `index.html` so that we halt any other processes *before*
     # they have a chance to generate or read any .json files. This ensures
