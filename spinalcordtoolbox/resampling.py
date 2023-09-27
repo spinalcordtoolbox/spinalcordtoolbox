@@ -49,9 +49,9 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
     dict_interp = {'nn': 0, 'linear': 1, 'spline': 2}
 
     # If input is an Image object, create nibabel object from it
-    if type(image) == nib.nifti1.Nifti1Image:
+    if isinstance(image, nib.nifti1.Nifti1Image):
         img = image
-    elif type(image) == Image:
+    elif isinstance(image, Image):
         img = nib.nifti1.Nifti1Image(image.data, image.hdr.get_best_affine(), image.hdr)
     else:
         raise TypeError(f'Invalid image type: {type(image)}')
@@ -107,9 +107,9 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
 
     # If reference is provided
     else:
-        if type(image_dest) == nib.nifti1.Nifti1Image:
+        if isinstance(image_dest, nib.nifti1.Nifti1Image):
             reference = image_dest
-        elif type(image_dest) == Image:
+        elif isinstance(image_dest, Image):
             reference = nib.nifti1.Nifti1Image(image_dest.data, image_dest.hdr.get_best_affine())
         else:
             raise TypeError(f'Invalid image type: {type(image_dest)}')
@@ -142,9 +142,10 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         img_r.header['sform_code'] = img.header['sform_code']
 
     # Convert back to proper type
-    if type(image) == nib.nifti1.Nifti1Image:
+    if isinstance(image, nib.nifti1.Nifti1Image):
         return img_r
-    elif type(image) == Image:
+    else:
+        assert isinstance(image, Image)
         return Image(np.asanyarray(img_r.dataobj), hdr=img_r.header, orientation=image.orientation, dim=img_r.header.get_data_shape())
 
 
