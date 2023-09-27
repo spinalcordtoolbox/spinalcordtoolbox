@@ -7,11 +7,11 @@ dipy!=1.6.*,!=1.7.*
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
-ivadomed~=2.9.6
+ivadomed @ git+https://github.com/ivadomed/ivadomed@jn/test-torch-compatibility_base-kk-chore-imageio # append_to_freeze
 matplotlib
 # Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
 # Installing "Microsoft Visual C++ Redistributable for Visual Studio" will fix this too, but
-# we'd prefer not to burden users with another prerequisite. 
+# we'd prefer not to burden users with another prerequisite.
 # NB: It's possible this fix gets included upstream in a future skimage release, see:
 #     https://github.com/scikit-image/scikit-image/issues/4780#issuecomment-824678872
 # (The version is pinned because this line gets copied to requirements-freeze.txt when preparing a release, not because we're avoiding bugs with a specific version. Feel free to update it to the latest version.)
