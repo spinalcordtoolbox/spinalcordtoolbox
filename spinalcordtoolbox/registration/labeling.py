@@ -28,15 +28,10 @@ def add_orthogonal_label(fname_label, new_label_value):
     path_label = im_label.absolutepath
     im_label.change_orientation('RPI')
     coord_label = im_label.getCoordinatesAveragedByValue()  # N.B. landmarks are sorted by value
-    # Create new label
-    from copy import deepcopy
-    new_label = deepcopy(coord_label[0])
-    # move it 5mm to the left (orientation is RAS)
+    # Add new label 5mm to the left (orientation is RPI) to existing image
     nx, ny, nz, nt, px, py, pz, pt = im_label.dim
-    new_label.x = np.round(coord_label[0].x + 5.0 / px)  # TODO change to 10 pixels
-    new_label.value = new_label_value
-    # Add to existing image
-    im_label.data[int(new_label.x), int(new_label.y), int(new_label.z)] = new_label.value
+    new_x_coord = np.round(coord_label[0].x + 5.0 / px)  # TODO change to 10 pixels
+    im_label.data[int(new_x_coord), int(coord_label[0].y), int(coord_label[0].z)] = new_label_value
     # Overwrite label file
     im_label.change_orientation(orient_orig)
     im_label.save(path_label)
