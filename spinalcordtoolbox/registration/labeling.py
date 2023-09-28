@@ -15,9 +15,9 @@ import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 
 
-def add_orthogonal_label(fname_label):
+def add_orthogonal_label(fname_label, new_label_value):
     """
-    Add one label of value=99 at the axial slice that contains the label with the lowest value, 10 pixels to the right.
+    Add one label at the axial slice that contains the label with the lowest value, 10 pixels to the right.
     :param fname_label:
     :return:
     """
@@ -34,8 +34,7 @@ def add_orthogonal_label(fname_label):
     # move it 5mm to the left (orientation is RAS)
     nx, ny, nz, nt, px, py, pz, pt = im_label.dim
     new_label.x = np.round(coord_label[0].x + 5.0 / px)  # TODO change to 10 pixels
-    # assign value 99
-    new_label.value = 99
+    new_label.value = new_label_value
     # Add to existing image
     im_label.data[int(new_label.x), int(new_label.y), int(new_label.z)] = new_label.value
     # Overwrite label file
