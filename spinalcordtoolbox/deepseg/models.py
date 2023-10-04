@@ -122,7 +122,7 @@ MODELS = {
     },
     "model_seg_epfl_t2w_lumbar_sc": {
         "url": [
-            "https://github.com/ivadomed/lumbar_seg_EPFL/releases/download/r20220411/model_seg_epfl_t2w_lumbar_sc.zip"
+            "https://github.com/ivadomed/lumbar_seg_EPFL/releases/download/r20231004/model_seg_epfl_t2w_lumbar_sc.zip"
         ],
         "description": "Lumbar SC segmentation on T2w contrast with 3D UNet",
         "contrasts": ["t2"],
