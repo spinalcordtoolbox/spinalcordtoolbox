@@ -2,7 +2,8 @@
 #     stable releases. We do this because `pip freeze` will not capture options (e.g. --extra-index-url) or
 #     platform-specific requirements (e.g. sys.platform == 'win32')
 
-dipy
+# Avoid method=restore bug: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4209#issuecomment-1739644328
+dipy!=1.6.*,!=1.7.*
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
@@ -23,7 +24,8 @@ nilearn
 numpy<1.24
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
-onnxruntime>=1.7.0
+# Temporarily pinned to <1.16 due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
+onnxruntime>=1.7.0,<1.16
 pandas
 portalocker
 psutil
