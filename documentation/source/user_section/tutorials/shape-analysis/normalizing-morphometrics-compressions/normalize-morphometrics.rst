@@ -9,7 +9,7 @@ Adding the option ``-normalize-hc`` normalizes the morphometric measures with a 
 
 Compute ratio between **AP-diameter** at level of compression vs. above/below
 --------------------------------------------------------------------------------
-We will compute the ratio of the anteroposterior diameter at the level of compression and levels above and below all compresssions.
+We will compute the ratio of the anteroposterior diameter (AP-diameter) at the level of compression and levels above and below all compresssions.
 This is equivalent to the MSCC (maximum spinal cord compression) metric (Miyanji et al.)[https://pubmed.ncbi.nlm.nih.gov/17431129/].
 
 .. code:: sh
