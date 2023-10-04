@@ -29,6 +29,7 @@ First, we will start by computing the cord cross-sectional area (CSA) averaged a
    :header-rows: 1
 
 .. _csa-perlevel:
+
 CSA (Per level)
 ###############
 
@@ -75,6 +76,7 @@ Finally, to compute CSA for individual slices, set the ``-perslice`` argument to
    :header-rows: 1
 
 .. _csa-pmj:
+
 CSA (PMJ-based)
 ###############
 
