@@ -1,13 +1,13 @@
 .. _cross-sectional-area:
 
 Cross-sectional area (CSA)
-######################################################
+##########################
 
 This section demonstrates how to compute spinal cord cross-sectional area.
 
 
 CSA (Averaged across vertebral levels)
-######################################
+======================================
 
 First, we will start by computing the cord cross-sectional area (CSA) averaged across vertebral levels. As an example, we'll choose the C3 and C4 vertebral levels, but you can specify any vertebral levels present in the vertebral level file.
 
@@ -31,7 +31,7 @@ First, we will start by computing the cord cross-sectional area (CSA) averaged a
 .. _csa-perlevel:
 
 CSA (Per level)
-###############
+===============
 
 Next, we will compute CSA for each individual vertebral level (rather than averaging).
 
@@ -54,7 +54,7 @@ Next, we will compute CSA for each individual vertebral level (rather than avera
    :header-rows: 1
 
 CSA (Per axial slice)
-#####################
+=====================
 
 Finally, to compute CSA for individual slices, set the ``-perslice`` argument to 1, and use ``-z`` argument to specify axial slice numbers or a range of slices. (For slice numbering, 0 represents the slice furthest towards the inferior direction.)
 
@@ -78,7 +78,7 @@ Finally, to compute CSA for individual slices, set the ``-perslice`` argument to
 .. _csa-pmj:
 
 CSA (PMJ-based)
-###############
+===============
 
 Although using vertebral levels as a reference to :ref:`compute CSA <csa-perlevel>` gives an approximation of the spinal levels, a drawback of that method is that it doesn’t consider neck flexion and extension `(Cadotte et al., 2015) <https://pubmed.ncbi.nlm.nih.gov/25523587/>`_.  
 
