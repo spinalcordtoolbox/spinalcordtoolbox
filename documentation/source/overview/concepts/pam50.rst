@@ -64,7 +64,7 @@ The spinal levels are estimated from the intervertebral discs, using a methods d
 The figure below shows the spatial correspondance between the spinal vs. vertebral levels.
 
 .. figure:: https://www.frontiersin.org/files/Articles/230582/fneur-07-00238-HTML/image_m/fneur-07-00238-g001.jpg
-    :figwidth: 40%
+    :figwidth: 100%
     :align: right
 
 The file `PAM50/template/PAM50_spinal_levels.nii.gz` represents the spinal cord segmentation with parcellation 
