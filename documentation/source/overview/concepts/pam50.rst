@@ -61,7 +61,7 @@ Spinal levels (``PAM50/template/PAM50_spinal_levels.nii.gz``)
 
 The spinal levels are estimated from the intervertebral discs, using a methods described in 
 `Frostell et al. (2016) <https://www.frontiersin.org/articles/10.3389/fneur.2016.00238/full>`_.
-The figure below shows the spatial correspondance between the spinal vs. vertebral levels.
+The figure below (extracted from Frostell et al.) shows the spatial correspondance between the spinal vs. vertebral levels.
 
 .. figure:: https://www.frontiersin.org/files/Articles/230582/fneur-07-00238-HTML/image_m/fneur-07-00238-g001.jpg
     :figwidth: 100%
@@ -80,7 +80,7 @@ References
 
 * `De Leener B, Fonov VS, Collins DL, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage, 2018, 165:170-179. <https://paperpile.com/app/p/e74eced0-7d51-08e2-9c18-a34328fb4a86>`_
 * `Levy S, Benhamou M, Naaman C, Rainville P, Callot V, Cohen-Adad J. White matter atlas of the human spinal cord with estimation of partial volume effect. Neuroimage, 2015, 119:262-271. <https://paperpile.com/app/p/e74eced0-7d51-08e2-9c18-a34328fb4a86>`_
-* `Cadotte DW, Cadotte A, Cohen-Adad J, Fleet D, Livne M, Wilson JR, Mikulis D, Nugaeva N, Fehlings MG. Characterizing the location of spinal and vertebral levels in the human cervical spinal cord. AJNR Am J Neuroradiol, 2015, 36(4):803-810. <https://paperpile.com/app/p/5b580317-6921-06c8-a2ee-685d4dbaa44c>`_
+* `Frostell A, Hakim R, Thelin EP, Mattsson P, Svensson M. A Review of the Segmental Diameter of the Healthy Human Spinal Cord. Front Neurol. 2016 Dec 23;7:238.. <https://www.frontiersin.org/articles/10.3389/fneur.2016.00238/full>`_
 
 Additionally, the template was generated using the following tools:
 
