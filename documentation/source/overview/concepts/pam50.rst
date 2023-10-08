@@ -23,8 +23,10 @@ The template is stored in the ``data/PAM50/`` directory in your SCT installation
 
 .. _pam50-template-section:
 
-Template (``PAM50/template``)
-=============================
+Template
+========
+
+**Location:** ``PAM50/template``
 
 The template folder contains the PAM50 template for various MRI contrast types. It also contains binary and probabilistic masks for different spinal features, as well as point-wise labels for vertebral levels and intervertebral discs.
 
@@ -38,8 +40,10 @@ Please note that the white and gray matter masks found in ``template/`` are for 
 
 .. _pam50-atlas-section:
 
-White and Grey Matter Atlas (``PAM50/atlas``)
-=============================================
+White and Grey Matter Atlas
+===========================
+
+**Location:** ``PAM50/atlas``
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/pam50/white_matter_atlas_illustration.png
     :align: right
@@ -56,8 +60,10 @@ The atlas folder also contains an ``info_label.txt`` file to explain what each f
 
 .. _pam50-spinal-levels-section:
 
-Spinal levels (``PAM50/template/PAM50_spinal_levels.nii.gz``)
-=============================================================
+Spinal levels
+=============
+
+**Location:** ``PAM50/template/PAM50_spinal_levels.nii.gz``
 
 The spinal levels are estimated from the intervertebral discs, using a methods described in 
 `Frostell et al. (2016) <https://www.frontiersin.org/articles/10.3389/fneur.2016.00238/full>`_.
@@ -67,7 +73,7 @@ The figure below (extracted from Frostell et al.) shows the spatial correspondan
     :figwidth: 100%
     :align: right
 
-The file `PAM50/template/PAM50_spinal_levels.nii.gz` represents the spinal cord segmentation with parcellation 
+The file ``PAM50/template/PAM50_spinal_levels.nii.gz`` represents the spinal cord segmentation with parcellation 
 across 30 spinal levels ranging from C1 to S5. Like for the vertebral level file, each level is encoded with 
 an integer value (C1: `1`, C2: `2`, etc.). 
 
