@@ -56,19 +56,23 @@ The atlas folder also contains an ``info_label.txt`` file to explain what each f
 
 .. _pam50-spinal-levels-section:
 
-Spinal levels (``PAM50/spinal_levels``)
-=======================================
+Spinal levels (``PAM50/template/PAM50_spinal_levels.nii.gz``)
+=============================================================
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/pam50/spinal_levels_illustration.png
+The spinal levels are estimated from the intervertebral discs, using a methods described in 
+`Frostell et al. (2016) <https://www.frontiersin.org/articles/10.3389/fneur.2016.00238/full>`_.
+The figure below shows the spatial correspondance between the spinal vs. vertebral levels.
+
+.. figure:: https://www.frontiersin.org/files/Articles/230582/fneur-07-00238-HTML/image_m/fneur-07-00238-g001.jpg
     :figwidth: 40%
     :align: right
 
-In the folder ``data/PAM50/spinal_levels``, you will find 20 label images corresponding to different spinal cord levels, spanning both C1:C8 and T1:T12. In each nifti file, the value of each voxel is the probability for this voxel to belong to the spinal level.
+The file `PAM50/template/PAM50_spinal_levels.nii.gz` represents the spinal cord segmentation with parcellation 
+across 30 spinal levels ranging from C1 to S5. Like for the vertebral level file, each level is encoded with 
+an integer value (C1: `1`, C2: `2`, etc.). 
 
-The spinal_levels folder also contains an ``info_label.txt`` file to explain what each file represents:
+.. note:: For more details on the implementation of the spinal levels in SCT, see the `Pull Request on GitHub <https://github.com/spinalcordtoolbox/PAM50/pull/18>`_. 
 
-.. include:: info_label-spinal_levels.txt
-   :code:
 
 
 References
@@ -82,4 +86,3 @@ Additionally, the template was generated using the following tools:
 
 * `neuropoly/template GitHub repository <https://github.com/neuropoly/template>`_
 * `White matter atlas script <https://github.com/spinalcordtoolbox/spinalcordtoolbox-dev/tree/master/dev/atlas>`_
-* `Spinal levels script <https://github.com/spinalcordtoolbox/spinalcordtoolbox-dev/tree/master/dev/spinal_level>`_
