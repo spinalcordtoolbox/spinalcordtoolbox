@@ -182,7 +182,7 @@ def get_parser():
         type=int,
         choices=[0, 1],
         default=0,
-        help="Warp spinal levels."
+        help=f"Warp spinal levels. DEPRECATED: {S_DEPRECATION_STRING}"
     )
     optional.add_argument(
         '-ofolder',
@@ -235,11 +235,25 @@ def get_parser():
     return parser
 
 
+S_DEPRECATION_STRING = """\
+As of SCT v6.1, probabilistic spinal levels have been replaced with a single integer spinal level file, \
+which can be found inside of the warped 'template/' folder. The '-s' option is no longer \
+needed.
+
+For more information on the rationale behind this decision, please refer to:
+  - https://github.com/spinalcordtoolbox/PAM50/issues/16
+  - https://forum.spinalcordmri.org/t/updating-spinal-levels-feedback-needed/1136\
+"""
+
+
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
+
+    if arguments.s:
+        raise parser.error(S_DEPRECATION_STRING)
 
     param = Param()
 
