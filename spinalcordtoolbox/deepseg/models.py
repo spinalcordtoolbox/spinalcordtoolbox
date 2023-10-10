@@ -30,7 +30,7 @@ MODELS = {
     "t2star_sc": {
         "url": [
             "https://github.com/ivadomed/t2star_sc/releases/download/r20231004/r20231004_t2star_sc.zip",
-            "https://osf.io/425db/download",
+            "https://osf.io/8nk5w/download",
         ],
         "description": "Cord segmentation model on T2*-weighted contrast.",
         "contrasts": ["t2star"],
