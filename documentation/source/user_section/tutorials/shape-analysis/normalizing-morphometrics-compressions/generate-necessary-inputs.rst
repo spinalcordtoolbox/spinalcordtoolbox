@@ -5,9 +5,7 @@ Generate the necessary input files
 
 The ``sct_compute_compression`` command uses the shape metric of the spinal cord at the level of compression and computes a ratio with non-compressed levels above and below the compression site.
 
-
 To use ``sct_compute_compression``, we need the 3 following input files:
-
 
 1. Spinal cord segmentation
 2. Vertebral labels
@@ -15,8 +13,10 @@ To use ``sct_compute_compression``, we need the 3 following input files:
 
 These input files can be generated using the commands below. However, if you would like to save some time, you can also acquire the generated files directly by downloading :sct_tutorial_data:`data_normalizing-morphometrics-compression.zip`.
 
+
 1. Spinal cord segmentation
 ----------------------------
+
 .. code:: sh
 
    sct_deepseg_sc -i t2_compressed.nii.gz -c t2 -qc ~/qc_singleSubj
@@ -45,6 +45,7 @@ These input files can be generated using the commands below. However, if you wou
 
 :Output files/folders:
    - ``t2_compressed_seg_labeled.nii.gz`` : Spinal cord vertebral labels.
+
 
 3. Label spinal cord compression sites
 --------------------------------------
@@ -79,6 +80,5 @@ These input files can be generated using the commands below. However, if you wou
 
 8. In the same mask, repeat steps 3, 4 and 7 for the remaining three compression sites.
 9. Save with the filename ``t2_compressed_labels-compression.nii.gz`` and quit.
-
 
 If you need to label multiple patients, you can use the ``manual_correction.py`` script from the `manual-correction repository <https://github.com/spinalcordtoolbox/manual-correction>`_; see the example `here <https://github.com/spinalcordtoolbox/manual-correction/wiki#manual-labeling-of-spinal-cord-compression>`_.

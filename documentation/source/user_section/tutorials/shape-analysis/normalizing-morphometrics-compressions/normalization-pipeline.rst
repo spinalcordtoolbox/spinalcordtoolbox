@@ -16,7 +16,6 @@ reference system.
 
    Normalized metric ratio using a database of healthy controls.
 
-
 :Legend:
    - ``mi`` : metric at the compression level.
    - ``ma`` : metric above the compression levels.
