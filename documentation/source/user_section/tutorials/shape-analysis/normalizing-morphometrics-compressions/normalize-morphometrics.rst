@@ -22,7 +22,7 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric (Miyanji
    - ``-i`` : The input segmentation file.
    - ``-vertfile`` : Vertebral labeling file.
    - ``-l`` : Compression labels file.
-   - ``metric``: Metric to compute ratio: diameter_AP (default). 
+   - ``-metric``: Metric to compute ratio: diameter_AP (default).
    - ``-normalize-hc``: Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize.
    - ``-o`` : The output CSV file.
 :Output files/folders:
@@ -56,7 +56,7 @@ We will add the flag ``-normalize-hc`` to use a database of adult healthy partic
    - ``-i`` : The input segmentation file.
    - ``-vertfile`` : Vertebral labeling file.
    - ``-l`` : Compression labels file.
-   - ``metric``: Metric to compute ratio: diameter_AP (default).
+   - ``-metric``: Metric to compute ratio: diameter_AP (default).
    - ``-normalize-hc``: Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize.
    - ``-o`` : The output CSV file.
 
