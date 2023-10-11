@@ -17,7 +17,7 @@ import spinalcordtoolbox.labels as sct_labels
 
 def add_orthogonal_label(fname_label, new_label_value):
     """
-    Add one label at the axial slice that contains the label with the lowest value, 10 pixels to the right.
+    Add one label at the axial slice that contains the label with the lowest value, 5mm to the left.
     :param fname_label:
     :return:
     """
