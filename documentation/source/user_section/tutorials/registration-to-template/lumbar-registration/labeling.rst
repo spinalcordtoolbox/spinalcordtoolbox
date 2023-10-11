@@ -54,7 +54,7 @@ Repeat the same process for the posterior tip of the T9-T10 disc. Here, we will 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/label-selection-T9-T10-disc.png
    :align: center
 
-The command below will open the input image in a GUI viewer, allowing you to select points to add labels to. In this case, we will add labels for the T9-T10 disc (numerical ID 17) and the conus medullaris (numerical ID 60).
+The command below will add labels for the T9-T10 disc (numerical ID 17) and the conus medullaris (numerical ID 60).
 
 .. code:: sh
 
@@ -66,7 +66,7 @@ The command below will open the input image in a GUI viewer, allowing you to sel
    * ``-o`` : The name of the output file.
 
 :Output files/folders:
-   * ``t2_crop_labels.nii.gz`` : An image containing the single-voxel label as selected in the GUI coordinate picker.
+   * ``t2_crop_labels.nii.gz`` : An image containing two single-voxel labels.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/io_labeling.png
    :align: center
