@@ -3,7 +3,7 @@ Before starting this tutorial
 
 #. Make sure that you have the following files in your working directory:
 
-   * ``single_subject/data/t2_lumbar/t2.nii.gz`` : An anatomical spinal cord scan in the T2 contrast showing visible lumbar regions.
+   * ``single_subject/data/t2_lumbar/t2.nii.gz`` : T2w anatomical scan of the lumbar spinal cord.
 
    You can get these files by downloading :sct_tutorial_data:`data_lumbar-registration.zip`.
 

@@ -3,7 +3,7 @@
 Using ``sct_deepseg`` to segment the lumber region of the spinal cord
 #####################################################################
 
-.. note:: Currently, ``sct_deepseg`` can only be used to segment the lumbar region of T2-weighted images. For other contrasts (T1, T2*, etc.), it is necessary to manually segment the lumbar region.
+.. note:: Currently, ``sct_deepseg`` can only be used to segment the lumbar region of T2-weighted images. For other contrasts (T1w, T2*w, etc.), it is necessary to manually segment the lumbar region.
 
 In this example, we begin with a full-body T2 anatomical scan (``t2.nii.gz``).
 
@@ -20,7 +20,7 @@ In this case, the lumbar region occupies the lowermost 100 axial slices of the i
 
 :Input arguments:
    - ``-i`` : Input image
-   - ``-zmax`` : The maximum z slice to keep. For an RPI image, the z axis corresponds to the axial plane, so specifying 200 means "keep the axial slices from 0-200".
+   - ``-zmax`` : The maximum z slice to keep. For an image with RPI orientation, the z axis corresponds to the axial plane, so specifying 200 means "keep the axial slices from 0-200".
 
 :Output files/folders:
    - ``t2_crop.nii.gz`` : A cropped version of the initial input image.
@@ -55,7 +55,7 @@ Here, we simply feed the cropped image to the deep learning model to segment the
 
 :Input arguments:
    - ``-i`` : Input image
-   - ``-task`` : The eep learning segmentation task to apply to the image. In this case, we wa
+   - ``-task`` : The deep learning segmentation task to apply to the image. In this case, we want `seg_lumbar_sc_t2w`.
 
 :Output files/folders:
    - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
