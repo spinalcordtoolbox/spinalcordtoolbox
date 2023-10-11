@@ -25,6 +25,11 @@ In this case, the lumbar region occupies the lowermost 100 axial slices of the i
 :Output files/folders:
    - ``t2_crop.nii.gz`` : A cropped version of the initial input image.
 
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/io_cropping.png
+   :align: center
+
+   Input/output images after cropping
+
 Downloading the lumbar segmentation model
 =========================================
 
@@ -60,10 +65,12 @@ Here, we simply feed the cropped image to the deep learning model to segment the
 :Output files/folders:
    - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
-Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`Quality Control (QC) <qc>` reports.
-
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/io_cropping-and-segmentation.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/io_segmentation.png
    :align: center
 
-   Input/output images after cropping and segmentation
+   Input/output images after segmentation
+
+Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`Quality Control (QC) <qc>` reports.
+
+
 
