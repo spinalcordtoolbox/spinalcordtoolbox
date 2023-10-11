@@ -1,7 +1,7 @@
-.. _shape-metric-computation:
+.. _compute-csa-and-other-shape-metrics:
 
-Computing shape metrics for PAM50-registered data
-#################################################
+Compute CSA (and other shape metrics)
+#####################################
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/shape-metric-computation/csa.png
   :align: center
@@ -12,12 +12,8 @@ This section demonstrates how to compute shape metrics of the spinal cord using 
 .. toctree::
    :maxdepth: 1
 
-   shape-metric-computation/before-starting
-   shape-metric-computation/csa-averaged
-   shape-metric-computation/csa-perlevel
-   shape-metric-computation/csa-pmj
-   shape-metric-computation/csa-perslice
-   shape-metric-computation/other-shape-metrics
-   shape-metric-computation/verifying-correctness
-
+   compute-csa-and-other-shape-metrics/before-starting
+   compute-csa-and-other-shape-metrics/cross-sectional-area
+   compute-csa-and-other-shape-metrics/other-shape-metrics
+   compute-csa-and-other-shape-metrics/verify-correctness
 
