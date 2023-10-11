@@ -69,8 +69,3 @@ Here, we simply feed the cropped image to the deep learning model to segment the
    :align: center
 
    Input/output images after segmentation
-
-Once the command has finished, at the bottom of your terminal there will be instructions for inspecting the results using :ref:`Quality Control (QC) <qc>` reports.
-
-
-
