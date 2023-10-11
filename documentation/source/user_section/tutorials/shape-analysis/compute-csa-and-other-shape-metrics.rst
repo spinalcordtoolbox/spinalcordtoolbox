@@ -1,7 +1,7 @@
-.. _shape-analysis:
+.. _compute-csa-and-other-shape-metrics:
 
-Shape analysis
-#################################################
+Compute CSA (and other shape metrics)
+#####################################
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/shape-metric-computation/csa.png
   :align: center
@@ -12,7 +12,8 @@ This section demonstrates how to compute shape metrics of the spinal cord using 
 .. toctree::
    :maxdepth: 1
 
-   shape-analysis/compute-csa-and-other-shape-metrics
-   shape-analysis/normalize-morphometrics-compression
-
+   compute-csa-and-other-shape-metrics/before-starting
+   compute-csa-and-other-shape-metrics/cross-sectional-area
+   compute-csa-and-other-shape-metrics/other-shape-metrics
+   compute-csa-and-other-shape-metrics/verify-correctness
 

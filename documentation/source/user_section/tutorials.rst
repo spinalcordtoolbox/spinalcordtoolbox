@@ -20,6 +20,10 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    * :doc:`tutorials/registration-to-template/registering-additional-contrasts`
 
 #. :doc:`Shape analysis <tutorials/shape-analysis>`
+
+   * :doc:`tutorials/shape-analysis/compute-csa-and-other-shape-metrics`
+   * :doc:`tutorials/shape-analysis/normalize-morphometrics-compression`
+
 #. :doc:`Multimodal registration <tutorials/multimodal-registration>`
 
    * :doc:`tutorials/multimodal-registration/mtr-computation`
