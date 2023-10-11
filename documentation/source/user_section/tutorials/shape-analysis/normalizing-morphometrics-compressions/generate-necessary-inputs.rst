@@ -13,7 +13,7 @@ To use ``sct_compute_compression``, we need the 3 following input files:
 2. Vertebral labels
 3. Compression labels (``t2_compressed_label-compression.nii.gz``)
 
-You can also get these files by downloading :sct_tutorial_data:`data_normalizing-morphometrics-compression.zip`.
+These input files can be generated using the commands below. However, if you would like to save some time, you can also acquire the generated files directly by downloading :sct_tutorial_data:`data_normalizing-morphometrics-compression.zip`.
 
 1. Spinal cord segmentation
 ----------------------------
