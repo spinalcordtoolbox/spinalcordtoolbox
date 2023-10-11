@@ -1,14 +1,14 @@
 .. _normalize-morphometrics:
 
 Compute normalized morphometrics
-#######################################################################################
+################################
 
 The ``sct_compute_compression`` function computes a ratio of the morphometric measures at the level(s) of compression with the measures at the levels above and below all compression sites. 
 
 Adding the option ``-normalize-hc`` normalizes the morphometric measures with a database of adult healthy participants before computing the ratio.
 
 Compute ratio between **AP-diameter** at level of compression vs. above/below
---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------
 We will compute the ratio of the anteroposterior diameter (AP-diameter) at the level of compression and levels above and below all compresssions.
 This is equivalent to the MSCC (maximum spinal cord compression) metric (Miyanji et al.)[https://pubmed.ncbi.nlm.nih.gov/17431129/].
 
@@ -44,7 +44,7 @@ This is equivalent to the MSCC (maximum spinal cord compression) metric (Miyanji
 
 
 Compute ratio of **AP-diameter**  normalized with healthy controls
---------------------------------------------------------------------------------
+------------------------------------------------------------------
 We will add the flag ``-normalize-hc`` to use a database of adult healthy participants to normalize the anteroposterior diameters. 
 
 .. code:: sh

@@ -1,7 +1,7 @@
 .. _generate-necessary-inputs:
 
 Generate the necessary input files
-#############################################################
+##################################
 
 The ``sct_compute_compression`` command uses the shape metric of the spinal cord at the level of compression and computes a ratio with non-compressed levels above and below the compression site.
 
@@ -32,7 +32,7 @@ These input files can be generated using the commands below. However, if you wou
 
 
 2. Label the vertebral levels
-------------------------------------------
+-----------------------------
 .. code:: sh
 
    sct_label_vertebrae -i t2_compressed.nii.gz -s t2_compressed_seg.nii.gz -c t2 -qc ~/qc_singleSubj
@@ -47,7 +47,7 @@ These input files can be generated using the commands below. However, if you wou
    - ``t2_compressed_seg_labeled.nii.gz`` : Spinal cord vertebral labels.
 
 3. Label spinal cord compression sites
--------------------------------------------
+--------------------------------------
 
 1. Open the image in FSLeyes (or your favorite viewer).
 
