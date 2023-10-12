@@ -253,7 +253,7 @@ def main(argv: Sequence[str]):
     set_loglevel(verbose=verbose)
 
     if arguments.s:
-        raise parser.error(S_DEPRECATION_STRING)
+        parser.error(S_DEPRECATION_STRING)
 
     param = Param()
 
