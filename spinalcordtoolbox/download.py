@@ -36,6 +36,7 @@ DATASET_DICT = {
             "https://osf.io/kjcgs/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_example_data"),
+        "download_type": "Testing Datasets",
     },
     "sct_testing_data": {
         "mirrors": [
@@ -43,6 +44,7 @@ DATASET_DICT = {
             "https://osf.io/5twvs/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_testing_data"),
+        "download_type": "Testing Datasets",
     },
     "PAM50": {
         "mirrors": [
@@ -50,6 +52,7 @@ DATASET_DICT = {
             "https://osf.io/8cgme/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
+        "download_type": "Templates",
     },
     "MNI-Poly-AMU": {
         "mirrors": [
@@ -57,24 +60,28 @@ DATASET_DICT = {
             "https://osf.io/sh6h4/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "MNI-Poly-AMU"),
+        "download_type": "Templates",
     },
     "binaries_linux": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221109/spinalcordtoolbox-binaries_linux.tar.gz",
         ],
         "default_location": __bin_dir__,
+        "download_type": "Binaries",
     },
     "binaries_osx": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221018/spinalcordtoolbox-binaries_osx.tar.gz",
         ],
         "default_location": __bin_dir__,
+        "download_type": "Binaries",
     },
     "binaries_win": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221018/spinalcordtoolbox-binaries_windows.tar.gz",
         ],
         "default_location": __bin_dir__,
+        "download_type": "Binaries",
     },
     "course_hawaii17": {
         "mirrors": [
@@ -82,6 +89,7 @@ DATASET_DICT = {
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/hawaii17.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "course_hawaii17"),
+        "download_type": "Course Datasets",
     },
     "course_paris18": {
         "mirrors": [
@@ -89,6 +97,7 @@ DATASET_DICT = {
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/paris18.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "course_paris18"),
+        "download_type": "Course Datasets",
     },
     "course_london19": {
         "mirrors": [
@@ -96,6 +105,7 @@ DATASET_DICT = {
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/london19.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "course_london19"),
+        "download_type": "Course Datasets",
     },
     "course_beijing19": {
         "mirrors": [
@@ -103,54 +113,63 @@ DATASET_DICT = {
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/beijing19.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "course_beijing19"),
+        "download_type": "Course Datasets",
     },
     "course_london20": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/london20.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "course_london20"),
+        "download_type": "Course Datasets",
     },
     "course_harvard21": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20211116.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "course_harvard21"),
+        "download_type": "Course Datasets",
     },
     "deepseg_gm_models": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/deepseg_gm_models/releases/download/r20180205/20220325_deepseg_gm_models_onnx.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_gm_models"),
+        "download_type": "Models",
     },
     "deepseg_sc_models": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/deepseg_sc_models/releases/download/r20180610/20220325_deepseg_sc_models_onnx.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_sc_models"),
+        "download_type": "Models",
     },
     "deepseg_lesion_models": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/deepseg_lesion_models/releases/download/r20180613/20220325_deepseg_lesion_models_onnx.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepseg_lesion_models"),
+        "download_type": "Models",
     },
     "exvivo_template": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/exvivo-template/archive/refs/tags/r20210317.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "exvivo_template"),
+        "download_type": "Templates",
     },
     "deepreg_models": {
         "mirrors": [
             "https://github.com/ivadomed/multimodal-registration/releases/download/r20220512/models.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "deepreg_models"),
+        "download_type": "Models",
     },
     "PAM50_normalized_metrics": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20230222.zip"
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50_normalized_metrics"),
+        "download_type": "Templates",
     },
 }
 
@@ -352,3 +371,17 @@ def install_named_dataset(dataset_name, dest_folder=None, keep=False):
         dest_folder = DATASET_DICT[dataset_name]["default_location"]
 
     install_data(urls, dest_folder, keep)
+
+
+def list_datasets():
+    """
+    :returns: A table containing listing the downloadable datasets
+    :rtype: str
+    """
+    table = f"{'DATASET NAME':<30s}{'TYPE':<20s}\n"
+    table += f"{'-' * 50}\n"
+    sortedDatasets = sorted(DATASET_DICT, key=lambda k: DATASET_DICT[k]['download_type'])
+    for dataset_name in sortedDatasets:
+        download_type = DATASET_DICT[dataset_name]['download_type']
+        table += f"{dataset_name:<30s}{download_type:<20s}\n"
+    return table
