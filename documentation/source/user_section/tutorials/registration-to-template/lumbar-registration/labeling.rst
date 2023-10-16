@@ -58,11 +58,11 @@ The command below will add labels for the T9-T10 disc (numerical ID 17) and the 
 
 .. code:: sh
 
-   sct_label_utils -i t2.nii.gz -create 22,76,187,17:27,79,80,60 -o t2_crop_labels.nii.gz
+   sct_label_utils -i t2.nii.gz -create 22,77,187,17:27,79,80,60 -o t2_crop_labels.nii.gz
 
 :Input arguments:
    * ``-i`` : The input anatomical image.
-   * ``-create`` : This argument will create a label with value 17 (T9-T10 disc) at coordinate ``[27,76,187]``, and a label with value 60 (conus medullaris) at the coordinate ``[22,77,80]``.
+   * ``-create`` : This argument will create a label with value 17 (T9-T10 disc) at coordinate ``[22,77,187]``, and a label with value 60 (conus medullaris) at the coordinate ``[27,79,80]``.
    * ``-o`` : The name of the output file.
 
 :Output files/folders:
