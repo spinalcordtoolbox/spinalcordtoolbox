@@ -1,2 +1,2 @@
 Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,DistancePMJ,Label,Size [vox],MAP(),STD()
-"2023-04-25 10:08:51","git-jn/1804-change-batch-processing-mt0-mt1-to-use-slicereg-4a9892f9a141d4b4a6d1452d63912a0488c3156c","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",980.9417095828503,54.388569575185116,4.841567127321431
+"2023-10-16 11:31:03","git-jn/4180-add-lumbar-template-registration-tutorial-de1019ee67d94e829160a28210894ed3636afd1f","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",981.0556431796804,54.39462068731342,4.822021559295323
