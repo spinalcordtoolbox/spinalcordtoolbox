@@ -46,9 +46,14 @@ def get_parser():
                     'from healthy control subjects. This database uses the PAM50 template as an anatomical reference '
                     'system.\n'
                     '\n'
-                    'Reference: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic '
+                    'References:\n'
+                    '\n'
+                    'Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic '
                     'spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective study '
-                    'with 100 consecutive patients. Radiology 2007;243(3):820-827.'
+                    'with 100 consecutive patients. Radiology 2007;243(3):820-827.\n'
+                    '\n'
+                    'Valošek et al., (2023). A database of the healthy human spinal cord morphometry in the PAM50 '
+                    'template space. NeuroLibre Reproducible Preprints, 17, https://doi.org/10.55458/neurolibre.00017'
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
