@@ -414,7 +414,6 @@ def is_installed(dataset_name, custom_paths):
     lines_to_remove = []
     for line in custom_paths:
         custom_folder, name = line[:-1].split(",")
-        print("DEBUG", custom_folder,name, dataset_name)
         if os.path.exists(custom_folder):
             if name == dataset_name:
                 return True
@@ -443,7 +442,7 @@ def list_datasets():
     table = f"{'DATASET NAME':<30s}{'TYPE':<20s}\n"
     table += f"{'-' * 50}\n"
     sorted_datasets = sorted(DATASET_DICT,
-                            key=lambda k: DATASET_DICT[k]['download_type'])
+                             key=lambda k: DATASET_DICT[k]['download_type'])
 
     # Read record of custom pathways once, in case it is needed.
     custom_paths = None
@@ -458,8 +457,6 @@ def list_datasets():
         download_type = DATASET_DICT[dataset_name]['download_type']
         table += f"{dataset_status}{download_type:<20s}\n"
 
-    if custom_paths:
-        print(len(custom_paths))
     table += '\nLegend: {} | {}\n\n'.format(
             stylize("installed", color[True]),
             stylize("not installed", color[False]))
