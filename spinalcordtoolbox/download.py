@@ -357,6 +357,23 @@ def install_data(url, dest_folder, keep=False):
     shutil.rmtree(extraction_folder)
 
 
+def record_custom_folders(dest_folder, dataset_name):
+    """
+    Record custom output folder to track installation status.
+    """
+    custom_paths = os.path.join(__sct_dir__, "data", ".custom_paths")
+    custom_path = dest_folder + "," + dataset_name + "\n"
+    if (os.path.exists(custom_paths)):
+        with open(custom_paths, 'r') as file:
+            lines = file.readlines()
+        if custom_path not in lines:
+            with open(custom_paths, 'a') as file:
+                file.write(custom_path)
+    else:
+        with open(custom_paths, 'w') as file:
+            file.write(custom_path)
+
+
 def install_named_dataset(dataset_name, dest_folder=None, keep=False):
     """
     A light wrapper for the 'install_data' function to allow downstream consumers to download
@@ -368,10 +385,53 @@ def install_named_dataset(dataset_name, dest_folder=None, keep=False):
                          f"{sorted(list(DATASET_DICT.keys()), key=str.casefold)}")
 
     urls = DATASET_DICT[dataset_name]["mirrors"]
+
+    custom = True
     if dest_folder is None:
+        custom = False
         dest_folder = DATASET_DICT[dataset_name]["default_location"]
 
     install_data(urls, dest_folder, keep)
+
+    if custom is True:
+        record_custom_folders(dest_folder, dataset_name)
+
+
+def is_installed(dataset_name, custom_paths):
+    """
+    :return: bool: Checks whether a dataset is installed
+    """
+    # Check for installation at default location
+    path_default = DATASET_DICT[dataset_name]['default_location']
+    if os.path.exists(path_default):
+        return True
+
+    if custom_paths is None:
+        return False
+
+    # Check if a custom installation pathway has been recorded,
+    # and whether it still exists.
+    lines_to_remove = []
+    for line in custom_paths:
+        custom_folder, name = line[:-1].split(",")
+        print("DEBUG", custom_folder,name, dataset_name)
+        if os.path.exists(custom_folder):
+            if name == dataset_name:
+                return True
+        else:
+            lines_to_remove.append(line)
+
+    # If a recorded custom pathway no longer exists,
+    # remove it from the record.
+    if len(lines_to_remove):
+        for line in lines_to_remove:
+            custom_paths.remove(line)
+        custom_paths_file = os.path.join(__sct_dir__, "data", ".custom_paths")
+        with open(custom_paths_file, 'w') as file:
+            for line in custom_paths:
+                file.write(line)
+
+    return False
 
 
 def list_datasets():
@@ -382,15 +442,24 @@ def list_datasets():
     color = {True: 'LightGreen', False: 'LightRed'}
     table = f"{'DATASET NAME':<30s}{'TYPE':<20s}\n"
     table += f"{'-' * 50}\n"
-    sortedDatasets = sorted(DATASET_DICT,
+    sorted_datasets = sorted(DATASET_DICT,
                             key=lambda k: DATASET_DICT[k]['download_type'])
-    for dataset_name in sortedDatasets:
-        path_dataset = DATASET_DICT[dataset_name]['default_location']
-        installed = os.path.exists(path_dataset)
+
+    # Read record of custom pathways once, in case it is needed.
+    custom_paths = None
+    custom_paths_file = os.path.join(__sct_dir__, "data", ".custom_paths")
+    if os.path.exists(custom_paths_file):
+        with open(custom_paths_file, 'r') as file:
+            custom_paths = file.readlines()
+
+    for dataset_name in sorted_datasets:
+        installed = is_installed(dataset_name, custom_paths)
         dataset_status = stylize(dataset_name.ljust(30), color[installed])
         download_type = DATASET_DICT[dataset_name]['download_type']
         table += f"{dataset_status}{download_type:<20s}\n"
 
+    if custom_paths:
+        print(len(custom_paths))
     table += '\nLegend: {} | {}\n\n'.format(
             stylize("installed", color[True]),
             stylize("not installed", color[False]))
