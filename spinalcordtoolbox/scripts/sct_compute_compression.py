@@ -52,8 +52,9 @@ def get_parser():
                     'spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective study '
                     'with 100 consecutive patients. Radiology 2007;243(3):820-827.\n'
                     '\n'
-                    'Valošek et al., (2023). A database of the healthy human spinal cord morphometry in the PAM50 '
-                    'template space. NeuroLibre Reproducible Preprints, 17, https://doi.org/10.55458/neurolibre.00017'
+                    'Valošek J, Bédard S, Keřkovský M, Rohan T, Cohen-Adad J. A database of the healthy human spinal '
+                    'cord morphometry in the PAM50 template space. NeuroLibre Reproducible Preprints 2023; 17.\n'
+                    'doi.org/10.55458/neurolibre.00017'
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
