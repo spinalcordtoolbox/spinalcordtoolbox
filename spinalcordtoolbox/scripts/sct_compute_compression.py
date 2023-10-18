@@ -51,6 +51,7 @@ def get_parser():
                     'Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic '
                     'spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective study '
                     'with 100 consecutive patients. Radiology 2007;243(3):820-827.\n'
+                    'doi.org/10.1148/radiol.2433060583'
                     '\n'
                     'Valošek J, Bédard S, Keřkovský M, Rohan T, Cohen-Adad J. A database of the healthy human spinal '
                     'cord morphometry in the PAM50 template space. NeuroLibre Reproducible Preprints 2023; 17.\n'
