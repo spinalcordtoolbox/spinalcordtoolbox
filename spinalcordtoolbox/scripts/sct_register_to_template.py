@@ -777,9 +777,13 @@ def main(argv: Sequence[str]):
         printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
         sct_labels.remove_missing_labels(Image(ftmp_template_label), Image(ftmp_label)).save(path=ftmp_template_label)
 
-        # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation.
-        add_orthogonal_label(ftmp_label)
-        add_orthogonal_label(ftmp_template_label)
+        # Add a dummy label, because at least 3 orthogonal labels are required to estimate an affine transformation.
+        # -> Pick a dummy label between [1, 127] that doesn't clash with the existing label values.
+        existing_label_vals = {coord.value for coord in img_tmp_label.getNonZeroCoordinates()}
+        positive_int8_vals = set(range(1, 128))
+        dummy_label = max(positive_int8_vals - existing_label_vals)  # Should be 127 in 99.99% of cases
+        add_orthogonal_label(ftmp_label, new_label_value=dummy_label)
+        add_orthogonal_label(ftmp_template_label, new_label_value=dummy_label)
 
         # Set the angle of the template orientation to 0 (source image)
         for key in list(paramregmulti.steps.keys()):

@@ -21,5 +21,5 @@ def test_sct_warp_template_warp_small_PAM50():
 def test_sct_warp_template_warp_full_PAM50():
     """Warp the full PAM50 template (i.e. the one that is downloaded to `data/PAM50` during installation)."""
     sct_warp_template.main(argv=['-d', 'mt/mt1.nii.gz', '-w', 'mt/warp_template2mt.nii.gz',
-                                 '-a', '1', '-s', '1', '-histo', '1',
+                                 '-a', '1', '-histo', '1',
                                  '-qc', 'testing-qc'])

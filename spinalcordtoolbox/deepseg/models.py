@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
 MODELS = {
     "t2star_sc": {
         "url": [
-            "https://github.com/ivadomed/t2star_sc/releases/download/r20200622/r20200622_t2star_sc.zip",
-            "https://osf.io/v9hs8/download?version=5",
+            "https://github.com/ivadomed/t2star_sc/releases/download/r20231004/r20231004_t2star_sc.zip",
+            "https://osf.io/8nk5w/download",
         ],
         "description": "Cord segmentation model on T2*-weighted contrast.",
         "contrasts": ["t2star"],
@@ -122,7 +122,7 @@ MODELS = {
     },
     "model_seg_epfl_t2w_lumbar_sc": {
         "url": [
-            "https://github.com/ivadomed/lumbar_seg_EPFL/releases/download/r20220411/model_seg_epfl_t2w_lumbar_sc.zip"
+            "https://github.com/ivadomed/lumbar_seg_EPFL/releases/download/r20231004/model_seg_epfl_t2w_lumbar_sc.zip"
         ],
         "description": "Lumbar SC segmentation on T2w contrast with 3D UNet",
         "contrasts": ["t2"],

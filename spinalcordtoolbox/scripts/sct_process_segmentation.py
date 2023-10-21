@@ -87,7 +87,12 @@ def get_parser():
             "Reference for '-pmj' and for '-normalize':\n"
             "Bédard S, Cohen-Adad J. Automatic measure and normalization of spinal cord cross-sectional area using "
             "the pontomedullary junction. Frontiers in Neuroimaging 2022.\n"
-            "doi.org/10.3389/fnimg.2022.1031253"
+            "doi.org/10.3389/fnimg.2022.1031253\n"
+            "\n"
+            "Reference for '-normalize-PAM50':\n"
+            "Valošek J, Bédard S, Keřkovský M, Rohan T, Cohen-Adad J. A database of the healthy human spinal cord "
+            "morphometry in the PAM50 template space. NeuroLibre Reproducible Preprints 2023; 17.\n"
+            "doi.org/10.55458/neurolibre.00017"
         )
     )
 
