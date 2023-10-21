@@ -82,9 +82,18 @@ Spinal levels
 
 **Location:** ``PAM50/template/PAM50_spinal_levels.nii.gz``
 
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/pam50/spinal_levels.png
+    :figwidth: 100%
+    :align: right
+
 The file ``PAM50/template/PAM50_spinal_levels.nii.gz`` represents the spinal cord segmentation with parcellation 
 across 30 spinal levels ranging from C1 to S5. Like for the vertebral level file, each level is encoded with 
 an integer value (C1: **1**, C2: **2**, ..., C8: **8**, T1: **9**, etc.). 
+
+The file ``PAM50/template/PAM50_spinal_midpoint.nii.gz`` represents the mid-point of the spinal level. Each level is 
+encoded by one voxel centered in the spinal cord, and the value of the voxel corresponds to the spinal level. This 
+file can be useful for registration to the PAM50 using the spinal levels instead of the intervertebral discs, if the 
+former are available (e.g., via nerve rootlets segmentation).
 
 The spinal levels are estimated from the intervertebral discs, using a methods described in 
 `Frostell et al. (2016) <https://www.frontiersin.org/articles/10.3389/fneur.2016.00238/full>`_.
