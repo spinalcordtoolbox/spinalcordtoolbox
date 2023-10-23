@@ -80,8 +80,6 @@ The atlas folder also contains an ``info_label.txt`` file to explain what each f
 Spinal levels
 =============
 
-**Location:** ``PAM50/template/PAM50_spinal_levels.nii.gz``
-
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/pam50/spinal_levels.png
     :figwidth: 100%
     :align: right
