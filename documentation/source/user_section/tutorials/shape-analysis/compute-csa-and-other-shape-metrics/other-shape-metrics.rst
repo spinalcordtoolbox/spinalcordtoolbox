@@ -19,12 +19,8 @@ These are of particular interest for studying cord compression. See `Martin et a
 
 For an interactive database of normative values, see `Valošek, Bédard et al. NeuroLibre 2023 <https://neurolibre.org/papers/10.55458/neurolibre.00017>`_.
 
-----
-
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/shape-metric-computation/sct_process_segmentation-shape-metrics.png
    :align: center
-
-----
 
 To demonstrate, below are the shape metrics provided in the CSV file produced by :ref:`csa-perlevel`.
 
