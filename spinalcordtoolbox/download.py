@@ -17,6 +17,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
+from spinalcordtoolbox.utils import stylize
 from spinalcordtoolbox.utils.fs import tmp_create
 from spinalcordtoolbox.utils.sys import sct_progress_bar, __sct_dir__, __bin_dir__
 
@@ -375,13 +376,26 @@ def install_named_dataset(dataset_name, dest_folder=None, keep=False):
 
 def list_datasets():
     """
-    :returns: A table containing listing the downloadable datasets
+    :returns: A table listing the downloadable datasets
     :rtype: str
     """
+    color = {True: 'LightGreen', False: 'LightRed'}
     table = f"{'DATASET NAME':<30s}{'TYPE':<20s}\n"
     table += f"{'-' * 50}\n"
-    sortedDatasets = sorted(DATASET_DICT, key=lambda k: DATASET_DICT[k]['download_type'])
-    for dataset_name in sortedDatasets:
+    sorted_datasets = sorted(DATASET_DICT,
+                             key=lambda k: DATASET_DICT[k]['download_type'] + k)
+    for dataset_name in sorted_datasets:
         download_type = DATASET_DICT[dataset_name]['download_type']
-        table += f"{dataset_name:<30s}{download_type:<20s}\n"
+        dataset_status = dataset_name.ljust(30)
+        if download_type != "Binaries":
+            path_dataset = DATASET_DICT[dataset_name]['default_location']
+            installed = (os.path.exists(path_dataset)
+                         and len(os.listdir(path_dataset)) > 0)
+            dataset_status = stylize(dataset_status, color[installed])
+        table += f"{dataset_status}{download_type:<20s}\n"
+
+    table += '\nLegend: {} | {} (in the $SCT_DIR/data folder)\n\n'.format(
+            stylize("installed", color[True]),
+            stylize("not installed", color[False]))
+
     return table
