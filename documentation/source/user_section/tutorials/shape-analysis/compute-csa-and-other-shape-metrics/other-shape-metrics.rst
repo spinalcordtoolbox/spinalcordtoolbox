@@ -24,8 +24,6 @@ For an interactive database of normative values, see `Valošek, Bédard et al. N
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/shape-metric-computation/sct_process_segmentation-shape-metrics.png
    :align: center
 
-   Figure Caption: (A) Compression at the level of the intervertebral disc C5-C6 (red arrows) is manifested by (B) the decrease of AP Diameter, Compression Ratio, and Solidity and by the increase of Eccentricity (red arrows). The blue line represents normative values computed from 105 males from the spine-generic dataset. Adapted from `Valošek, Bédard et al. NeuroLibre 2023 <https://doi.org/10.55458/neurolibre.00017>`__.
-
 ----
 
 To demonstrate, below are the shape metrics provided in the CSV file produced by :ref:`csa-perlevel`.
