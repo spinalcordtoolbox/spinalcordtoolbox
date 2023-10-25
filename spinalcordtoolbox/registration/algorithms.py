@@ -862,8 +862,8 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         # display rotations
         if verbose == 2 and not angle_src_dest[iz] == 0 and not rot_method == 'hog':
             # compute new coordinates
-            coord_src_rot = coord_src[iz] * R
-            coord_dest_rot = coord_dest[iz] * R.T
+            coord_src_rot = coord_src[iz] @ R
+            coord_dest_rot = coord_dest[iz] @ R.T
             # generate figure
             plt.figure(figsize=(9, 9))
             # plt.ion()  # enables interactive mode (allows keyboard interruption)

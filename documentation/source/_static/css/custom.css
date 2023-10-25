@@ -286,3 +286,10 @@ code.literal {
     border-right: 1px solid var(--color-sidebar-background-border);
     background: #3d3d3c !important;
 } */
+
+/* Figure caption text */
+div.figure p.caption span.caption-text,
+figcaption span.caption-text {
+    font-style: italic;
+    font-size: 0.78rem;
+}
