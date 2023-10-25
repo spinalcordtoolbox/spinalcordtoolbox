@@ -795,7 +795,6 @@ class NURBS:
 
         return P
 
-
     def compute_curve_from_parametrization(self, P, k, x, Nik, Nikp, param):
         n = len(P)  # Nombre de points de controle - 1
         P_x, P_y, P_z = [], [], []  # coord fitees
