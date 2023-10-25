@@ -37,7 +37,7 @@ DATASET_DICT = {
             "https://osf.io/kjcgs/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_example_data"),
-        "download_type": "Testing Datasets",
+        "download_type": "Datasets",
     },
     "sct_testing_data": {
         "mirrors": [
@@ -45,7 +45,14 @@ DATASET_DICT = {
             "https://osf.io/5twvs/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_testing_data"),
-        "download_type": "Testing Datasets",
+        "download_type": "Datasets",
+    },
+    "sct_course_data": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/r20231011.zip",
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "sct_course_data"),
+        "download_type": "Datasets",
     },
     "PAM50": {
         "mirrors": [
@@ -83,13 +90,6 @@ DATASET_DICT = {
         ],
         "default_location": __bin_dir__,
         "download_type": "Binaries",
-    },
-    "sct_course_data": {
-        "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/r20231011.zip",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "sct_course_data"),
-        "download_type": "Course Datasets",
     },
     "deepseg_gm_models": {
         "mirrors": [
