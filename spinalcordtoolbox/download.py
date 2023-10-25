@@ -130,6 +130,13 @@ DATASET_DICT = {
         "default_location": os.path.join(__sct_dir__, "data", "course_harvard21"),
         "download_type": "Course Datasets",
     },
+    "course_virtual23": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/r20231011.zip",
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "course_virtual23"),
+        "download_type": "Course Datasets",
+    },
     "deepseg_gm_models": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/deepseg_gm_models/releases/download/r20180205/20220325_deepseg_gm_models_onnx.zip"
