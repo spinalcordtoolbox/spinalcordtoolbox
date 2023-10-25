@@ -84,57 +84,11 @@ DATASET_DICT = {
         "default_location": __bin_dir__,
         "download_type": "Binaries",
     },
-    "course_hawaii17": {
-        "mirrors": [
-            "https://osf.io/6exht/?action=download",
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/hawaii17.zip",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "course_hawaii17"),
-        "download_type": "Course Datasets",
-    },
-    "course_paris18": {
-        "mirrors": [
-            "https://osf.io/9bmn5/?action=download",
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/paris18.zip",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "course_paris18"),
-        "download_type": "Course Datasets",
-    },
-    "course_london19": {
-        "mirrors": [
-            "https://osf.io/4q3u7/?action=download",
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/london19.zip",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "course_london19"),
-        "download_type": "Course Datasets",
-    },
-    "course_beijing19": {
-        "mirrors": [
-            "https://osf.io/ef4xz/?action=download",
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/beijing19.zip",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "course_beijing19"),
-        "download_type": "Course Datasets",
-    },
-    "course_london20": {
-        "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/SCT-Course/london20.zip",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "course_london20"),
-        "download_type": "Course Datasets",
-    },
-    "course_harvard21": {
-        "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20211116.zip",
-        ],
-        "default_location": os.path.join(__sct_dir__, "data", "course_harvard21"),
-        "download_type": "Course Datasets",
-    },
-    "course_virtual23": {
+    "sct_course_data": {
         "mirrors": [
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/r20231011.zip",
         ],
-        "default_location": os.path.join(__sct_dir__, "data", "course_virtual23"),
+        "default_location": os.path.join(__sct_dir__, "data", "sct_course_data"),
         "download_type": "Course Datasets",
     },
     "deepseg_gm_models": {
