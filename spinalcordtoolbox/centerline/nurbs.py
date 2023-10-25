@@ -795,63 +795,6 @@ class NURBS:
 
         return P
 
-    def reconstructGlobalInterpolation(self, P_x, P_y, P_z, p):  # now in 3D
-        global Nik_temp
-        n = 13
-        length = len(P_x)
-        newPx = P_x[::int(np.round(length / (n - 1)))]
-        newPy = P_y[::int(np.round(length / (n - 1)))]
-        newPz = P_y[::int(np.round(length / (n - 1)))]
-        newPx.append(P_x[-1])
-        newPy.append(P_y[-1])
-        newPz.append(P_z[-1])
-        n = len(newPx)
-
-        # Calcul du vecteur de noeuds
-        di = 0
-        for k in range(n - 1):
-            di += np.sqrt(
-                (newPx[k + 1] - newPx[k]) ** 2 + (newPy[k + 1] - newPy[k]) ** 2 + (newPz[k + 1] - newPz[k]) ** 2)
-        u = [0] * p
-        ubar = [0]
-        for k in range(n - 1):
-            ubar.append(ubar[-1] + np.sqrt(
-                (newPx[k + 1] - newPx[k]) ** 2 + (newPy[k + 1] - newPy[k]) ** 2 + (newPz[k + 1] - newPz[k]) ** 2) / di)
-        for j in range(n - p):
-            sumU = 0
-            for i in range(p):
-                sumU = sumU + ubar[j + i]
-            u.append(sumU / p)
-        u.extend([1] * p)
-
-        # Construction des fonctions basiques
-        Nik_temp = [[-1 for j in range(p)] for i in range(n)]
-        for i in range(n):
-            Nik_temp[i][-1] = self.N(i, p, u)
-        Nik = []
-        for i in range(n):
-            Nik.append(Nik_temp[i][-1])
-
-        # Construction des matrices
-        M = []
-        for i in range(n):
-            ligneM = []
-            for j in range(n):
-                ligneM.append(self.evaluateN(Nik[j], ubar[i], u))
-            M.append(ligneM)
-        M = np.array(M)
-
-        # Matrice des points interpoles
-        Qx = np.array(newPx).T
-        Qy = np.array(newPy).T
-        Qz = np.array(newPz).T
-
-        # Calcul des points de controle
-        P_xb = M.I * Qx
-        P_yb = M.I * Qy
-        P_zb = M.I * Qz
-
-        return [[P_xb[i, 0], P_yb[i, 0], P_zb[i, 0]] for i in range(len(P_xb))]
 
     def compute_curve_from_parametrization(self, P, k, x, Nik, Nikp, param):
         n = len(P)  # Nombre de points de controle - 1
