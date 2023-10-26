@@ -13,8 +13,7 @@ Before starting this tutorial
 
    * ``single_subject/data/t2_lumbar/t2.nii.gz`` : T2w anatomical scan of the lumbar spinal cord.
 
-   You can get these files by downloading :sct_tutorial_data:`data_lumbar-registration.zip`.
-
+   You can get this file by downloading :sct_tutorial_data:`data_lumbar-registration.zip`.
 
 #. Open a terminal and navigate to the ``single_subject/data/t2_lumbar/`` directory:
 
