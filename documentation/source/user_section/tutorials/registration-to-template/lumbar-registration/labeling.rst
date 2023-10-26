@@ -56,7 +56,7 @@ Repeat the same process for the posterior tip of the T9-T10 disc. Here, we will 
 
 The command below will add labels for the T9-T10 disc (numerical ID 17) and the conus medullaris (numerical ID 60).
 
-.. code:: sh
+.. code::
 
    sct_label_utils -i t2.nii.gz -create 22,77,187,17:27,79,80,60 -o t2_crop_labels.nii.gz
 
