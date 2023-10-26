@@ -17,6 +17,6 @@ Before starting this tutorial
 
 #. Open a terminal and navigate to the ``single_subject/data/t2_lumbar/`` directory:
 
-.. code:: sh
+   .. code:: sh
 
-   cd {PATH_TO_DOWNLOADED_DATA}/single_subject/data/t2_lumbar/
+      cd {PATH_TO_DOWNLOADED_DATA}/single_subject/data/t2_lumbar/
