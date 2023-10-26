@@ -26,12 +26,10 @@ class Param:
         self.path_template = os.path.join(__data_dir__, "PAM50")
         self.folder_template = 'template'
         self.folder_atlas = 'atlas'
-        self.folder_spinal_levels = 'spinal_levels'
         self.folder_histo = 'histology'
         self.file_info_label = 'info_label.txt'
         # self.warp_template = 1
         self.warp_atlas = 1
-        self.warp_spinal_levels = 0
         self.warp_histo = 0
         # list of files for which nn interpolation should be used. Default = linear.
         self.list_labels_nn = ['_level.nii.gz', '_levels.nii.gz', '_csf.nii.gz', '_CSF.nii.gz', '_cord.nii.gz']
@@ -40,21 +38,19 @@ class Param:
 
 
 class WarpTemplate:
-    def __init__(self, fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
-                 folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn,
+    def __init__(self, fname_src, fname_transfo, warp_atlas, folder_out, path_template,
+                 folder_template, folder_atlas, file_info_label, list_labels_nn,
                  verbose, warp_histo, folder_histo):
 
         # Initialization
         self.fname_src = fname_src
         self.fname_transfo = fname_transfo
         self.warp_atlas = warp_atlas
-        self.warp_spinal_levels = warp_spinal_levels
         self.warp_histo = warp_histo
         self.folder_out = folder_out
         self.path_template = path_template
         self.folder_template = folder_template
         self.folder_atlas = folder_atlas
-        self.folder_spinal_levels = folder_spinal_levels
         self.folder_histo = folder_histo
         self.file_info_label = file_info_label
         self.list_labels_nn = list_labels_nn
@@ -82,12 +78,6 @@ class WarpTemplate:
         if self.warp_atlas == 1:
             printv('\nWARP ATLAS OF WHITE MATTER TRACTS:', self.verbose)
             warp_label(self.path_template, self.folder_atlas, self.file_info_label, self.fname_src,
-                       self.fname_transfo, self.folder_out, self.list_labels_nn, self.verbose)
-
-        # Warp spinal levels
-        if self.warp_spinal_levels == 1:
-            printv('\nWARP SPINAL LEVELS:', self.verbose)
-            warp_label(self.path_template, self.folder_spinal_levels, self.file_info_label, self.fname_src,
                        self.fname_transfo, self.folder_out, self.list_labels_nn, self.verbose)
 
         # Warp histology atlas
@@ -191,8 +181,8 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         choices=[0, 1],
-        default=param_default.warp_spinal_levels,
-        help="Warp spinal levels."
+        default=0,
+        help=f"Warp spinal levels. DEPRECATED: {S_DEPRECATION_STRING}"
     )
     optional.add_argument(
         '-ofolder',
@@ -245,18 +235,31 @@ def get_parser():
     return parser
 
 
+S_DEPRECATION_STRING = """\
+As of SCT v6.1, probabilistic spinal levels have been replaced with a single integer spinal level file, \
+which can be found inside of the warped 'template/' folder. The '-s' option is no longer \
+needed.
+
+For more information on the rationale behind this decision, please refer to:
+  - https://github.com/spinalcordtoolbox/PAM50/issues/16
+  - https://forum.spinalcordmri.org/t/updating-spinal-levels-feedback-needed/1136\
+"""
+
+
 def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
+    if arguments.s:
+        parser.error(S_DEPRECATION_STRING)
+
     param = Param()
 
     fname_src = arguments.d
     fname_transfo = arguments.w
     warp_atlas = arguments.a
-    warp_spinal_levels = arguments.s
     warp_histo = arguments.histo
     folder_out = arguments.ofolder
     path_template = arguments.t
@@ -265,14 +268,13 @@ def main(argv: Sequence[str]):
     qc_subject = arguments.qc_subject
     folder_template = param.folder_template
     folder_atlas = param.folder_atlas
-    folder_spinal_levels = param.folder_spinal_levels
     folder_histo = param.folder_histo
     file_info_label = param.file_info_label
     list_labels_nn = param.list_labels_nn
 
     # call main function
-    w = WarpTemplate(fname_src, fname_transfo, warp_atlas, warp_spinal_levels, folder_out, path_template,
-                     folder_template, folder_atlas, folder_spinal_levels, file_info_label, list_labels_nn,
+    w = WarpTemplate(fname_src, fname_transfo, warp_atlas, folder_out, path_template,
+                     folder_template, folder_atlas, file_info_label, list_labels_nn,
                      verbose, warp_histo, folder_histo)
 
     path_template = os.path.join(w.folder_out, w.folder_template)

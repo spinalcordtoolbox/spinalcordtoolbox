@@ -15,5 +15,5 @@
 11, point-wise posterior intervertebral disc labels, PAM50_label_discPosterior.nii.gz
 12, spine mask (binary), PAM50_spine.nii.gz
 13, spinal cord centerline, PAM50_centerline.nii.gz
-14, point-wise spinal level labels, PAM50_label_spinal_levels.nii.gz
-
+14, point-wise spinal level labels, PAM50_spinal_midpoint.nii.gz
+15, spinal cord mask with discrete spinal levels, PAM50_spinal_levels.nii.gz
