@@ -46,9 +46,8 @@ DATASET_DICT = {
     },
     "PAM50": {
         "mirrors": [
-            # DO NOT MERGE. This is a prerelease. This should be superseded by a new PAM50 link once spinal level changes are merged.
-            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20231011/PAM50-r20231011.zip",
-            "https://osf.io/dj93u/?action=download",
+            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20230519/PAM50-r20230519.zip",
+            "https://osf.io/8cgme/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
     },
