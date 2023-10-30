@@ -24,6 +24,7 @@ To apply the registration algorithm, the following command is used:
       Label max from template: 21   
 
    In that case, you should update it by following `these instructions <before-starting-lumbar-registration>`_.
+
 :Input arguments:
    - ``-i`` : Input image.
    - ``-s`` : Segmented spinal cord corresponding to the input image.
