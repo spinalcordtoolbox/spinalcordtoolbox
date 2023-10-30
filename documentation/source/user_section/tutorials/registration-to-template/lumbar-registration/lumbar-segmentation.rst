@@ -16,14 +16,14 @@ In this case, the lumbar region occupies the lowermost 100 axial slices of the i
 
 .. code:: sh
 
-   sct_crop_image -i t2.nii.gz -zmax 200
+   sct_crop_image -i t2.nii.gz -zmax 200 -o t2_lumbar.nii.gz
 
 :Input arguments:
    - ``-i`` : Input image
    - ``-zmax`` : The maximum z slice to keep. For an image with RPI orientation, the z axis corresponds to the axial plane, so specifying 200 means "keep the axial slices from 0-200".
 
 :Output files/folders:
-   - ``t2_crop.nii.gz`` : A cropped version of the initial input image.
+   - ``t2_lumbar.nii.gz`` : A cropped version of the lumbar region of the initial input image.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/io_cropping.png
    :align: center
@@ -56,14 +56,14 @@ Here, we simply feed the cropped image to the deep learning model to segment the
 
 .. code:: sh
 
-   sct_deepseg -i t2_crop.nii.gz -task seg_lumbar_sc_t2w
+   sct_deepseg -i t2_lumbar.nii.gz -task seg_lumbar_sc_t2w
 
 :Input arguments:
    - ``-i`` : Input image
    - ``-task`` : The deep learning segmentation task to apply to the image. In this case, we want `seg_lumbar_sc_t2w`.
 
 :Output files/folders:
-   - ``t2_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
+   - ``t2_lumbar_seg.nii.gz`` : 3D binary mask of the segmented spinal cord
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/io_segmentation.png
    :align: center

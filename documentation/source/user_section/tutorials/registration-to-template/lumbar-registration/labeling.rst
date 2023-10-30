@@ -58,7 +58,7 @@ The command below will add labels for the T9-T10 disc (numerical ID 17) and the 
 
 .. code::
 
-   sct_label_utils -i t2.nii.gz -create 22,77,187,17:27,79,80,60 -o t2_crop_labels.nii.gz
+   sct_label_utils -i t2_lumbar.nii.gz -create 22,77,187,17:27,79,80,60 -o t2_lumbar_labels.nii.gz
 
 :Input arguments:
    * ``-i`` : The input anatomical image.
@@ -66,7 +66,7 @@ The command below will add labels for the T9-T10 disc (numerical ID 17) and the 
    * ``-o`` : The name of the output file.
 
 :Output files/folders:
-   * ``t2_crop_labels.nii.gz`` : An image containing two single-voxel labels.
+   * ``t2_lumbar_labels.nii.gz`` : An image containing two single-voxel labels.
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/io_labeling.png
    :align: center

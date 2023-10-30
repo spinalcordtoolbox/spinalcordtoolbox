@@ -7,9 +7,9 @@ To apply the registration algorithm, the following command is used:
 
 .. code:: sh
 
-   sct_register_to_template -i t2_crop.nii.gz \
-                            -s t2_crop_seg.nii.gz \
-                            -ldisc t2_crop_labels.nii.gz \
+   sct_register_to_template -i t2_lumbar.nii.gz \
+                            -s t2_lumbar_seg.nii.gz \
+                            -ldisc t2_lumbar_labels.nii.gz \
                             -c t2 -qc ~/qc_singleSubj \
                             -param step=1,type=seg,algo=centermassrot:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3,slicewise=0:step=3,type=im,algo=syn,metric=CC,iter=3,slicewise=0
 
