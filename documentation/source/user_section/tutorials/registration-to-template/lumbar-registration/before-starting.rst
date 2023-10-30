@@ -1,3 +1,5 @@
+.. _before-starting-lumbar-registration:
+
 Before starting this tutorial
 #############################
 

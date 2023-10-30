@@ -13,6 +13,17 @@ To apply the registration algorithm, the following command is used:
                             -c t2 -qc ~/qc_singleSubj \
                             -param step=1,type=seg,algo=centermassrot:step=2,type=seg,algo=bsplinesyn,metric=MeanSquares,iter=3,slicewise=0:step=3,type=im,algo=syn,metric=CC,iter=3,slicewise=0
 
+.. note::
+
+   If you get the following error message, it means that your installed version of the PAM50 template is too old:
+   
+   .. code::
+   
+      ERROR: Wrong landmarks input. Labels must have correspondence in template space. 
+      Label max provided: 60
+      Label max from template: 21   
+
+   In that case, you should update it by following `these instructions <before-starting-lumbar-registration>`_.
 :Input arguments:
    - ``-i`` : Input image.
    - ``-s`` : Segmented spinal cord corresponding to the input image.
