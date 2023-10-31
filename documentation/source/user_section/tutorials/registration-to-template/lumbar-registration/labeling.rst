@@ -3,9 +3,9 @@
 Adding landmark labels for template matching
 ############################################
 
-Typically, registering an image to the PAM50 template involves using ``sct_label_vertebrae`` to automatically label vertebrae, then selecting 2 intervertebral disc labels to use for matching with the PAM50 template. However, the lumbar region has more variability in cord/disc positioning compared to the cervical and thoracic regions. So, using discs as registration landmarks presents a dilemma: How do we handle variability in the position of the cauda equina relative to the L1-L2 disc?
+Typically, registering an image to the PAM50 template involves using ``sct_label_vertebrae`` to automatically label vertebrae, then selecting 2 intervertebral disc labels to use for matching with the PAM50 template. However, the lumbar region has more variability in cord/disc positioning compared to the cervical and thoracic regions. So, using discs as registration landmarks presents a dilemma: How do we handle variability in the position of the `cauda equina <https://en.wikipedia.org/wiki/Cauda_equina>`_ relative to the L1-L2 disc?
 
-Notably, in the PAM50 template, the conus medullaris (i.e. the terminal end of the spinal cord) is aligned with the L1-L2 disc. However, for your subjects, the spinal cord may end above or below this point. So, if registration were based on disc landmarks alone, then the tapered region of the spinal cord may end up misaligned with the template.
+Notably, in the PAM50 template, the `conus medullaris <https://en.wikipedia.org/wiki/Conus_medullaris>`_ (i.e. the terminal end of the spinal cord) is aligned with the L1-L2 disc. However, for your subjects, the spinal cord may end above or below this point. So, if registration were based on disc landmarks alone, then the tapered region of the spinal cord may end up misaligned with the template.
 
 To correct for this, the PAM50 template provides a cauda equina label (specifically, the conus medullaris) as a registration landmark. By creating a similar label in your subject data, you can align the terminal end of the spinal cord between your subject and the PAM50 template. However, this comes with the necessary tradeoff of potentially misaligning the discs.
 
