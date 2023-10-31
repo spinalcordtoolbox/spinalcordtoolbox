@@ -5,30 +5,7 @@ Using ``sct_deepseg`` to segment the lumber region of the spinal cord
 
 .. note:: Currently, ``sct_deepseg`` can only be used to segment the lumbar region of T2-weighted images. For other contrasts (T1w, T2*w, etc.), it is necessary to manually segment the lumbar region.
 
-In this example, we begin with a full-body T2 anatomical scan (``t2.nii.gz``).
-
-Cropping the image to highlight the lumbar region
-=================================================
-
-SCT's lumbar segmentation tool works best if the lumbar region is the central feature of the image. So, it often helps to crop out the irrelevant portions of the spinal cord (brain, cervical region, and most of the thoracic region).
-
-In this case, the lumbar region occupies the lowermost 100 axial slices of the image. But, we want to include a bit of the thoracic region for registration purposes, so we keep an extra 100 slices corresponding to the T9-T12 region.
-
-.. code:: sh
-
-   sct_crop_image -i t2.nii.gz -zmax 200 -o t2_lumbar.nii.gz
-
-:Input arguments:
-   - ``-i`` : Input image
-   - ``-zmax`` : The maximum z slice to keep. For an image with RPI orientation, the z axis corresponds to the axial plane, so specifying 200 means "keep the axial slices from 0-200".
-
-:Output files/folders:
-   - ``t2_lumbar.nii.gz`` : A cropped version of the lumbar region of the initial input image.
-
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/lumbar-registration/io_cropping.png
-   :align: center
-
-   Input/output images after cropping
+In this example, we begin with a full-body T2 anatomical scan (``t2_lumbar.nii.gz``). (SCT's lumbar segmentation tool works best if the lumbar region is the central feature of the image. So, it often helps to exclude the irrelevant portions of the spinal cord (brain, cervical region, and most of the thoracic region).)
 
 Downloading the lumbar segmentation model
 =========================================

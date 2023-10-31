@@ -36,7 +36,7 @@ To apply the registration algorithm, the following command is used:
      - A third 'Syn' step is added to fine-tune the registration and better match the cord shape.
 
 :Output files/folders:
-   - ``anat2template.nii.gz`` : The anatomical subject image (in this case, ``t2.nii.gz``) warped to the template space.
+   - ``anat2template.nii.gz`` : The anatomical subject image (in this case, ``t2_lumbar.nii.gz``) warped to the template space.
    - ``template2anat.nii.gz`` : The template image (in this case, ``PAM50_t2.nii.gz``) warped to the anatomical subject space.
    - ``warp_anat2template.nii.gz`` : The 4D warping field that defines the transform from the anatomical image to the template image.
    - ``warp_template2anat.nii.gz`` : The 4D warping field that defines the inverse transform from the template image to the anatomical image.
