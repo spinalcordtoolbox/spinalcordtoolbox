@@ -28,7 +28,7 @@ To apply the registration algorithm, the following command is used:
 :Input arguments:
    - ``-i`` : Input image.
    - ``-s`` : Segmented spinal cord corresponding to the input image.
-   - ``-ldisc`` : One or two labels located at posterior tip of the spinal cord discs. (In this case, we are using 1 disc label and 1 cauda equinea label.)
+   - ``-ldisc`` : One or two labels located at posterior tip of the spinal cord discs. (In this case, we are using 1 disc label and 1 cauda equina label.)
    - ``-c`` : Contrast of the image. Specifying this determines the version of the template to use. (Here, ``-c t2`` means that ``PAM50_t2.nii.gz`` will be used.)
    - ``-qc`` : Directory for Quality Control reporting. QC reports allow us to evaluate the results slice-by-slice.
    - ``-param``: Registration parameters used to define the step-by-step refinements applied to the image. In this case, the parameters differ from the default registration parameters in the following ways:
