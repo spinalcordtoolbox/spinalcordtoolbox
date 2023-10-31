@@ -51,6 +51,7 @@
  - Disable PDF and EPUB documentation builds. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4261)
  - Update figure and references for "Other shape metrics" tutorial. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4262)
  - Fix typo in "Other shape metrics" tutorial. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4273)
+ - Add tutorial for lumbar segmentation and registration. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4250)
 
 **REFACTORING**
  - **sct_analyze_lesion**: Simplify lesion volume computation. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4219)
