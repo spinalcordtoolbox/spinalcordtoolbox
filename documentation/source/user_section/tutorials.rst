@@ -18,6 +18,7 @@ We provide the following hands-on tutorials for SCT's command-line tools.
    * :doc:`tutorials/registration-to-template/vertebral-labeling`
    * :doc:`tutorials/registration-to-template/template-registration`
    * :doc:`tutorials/registration-to-template/registering-additional-contrasts`
+   * :doc:`tutorials/registration-to-template/lumbar-registration`
 
 #. :doc:`Shape analysis <tutorials/shape-analysis>`
 

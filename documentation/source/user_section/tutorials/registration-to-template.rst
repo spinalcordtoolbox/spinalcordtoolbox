@@ -16,3 +16,4 @@ Each individual tutorial below is linked together as part of an overarching anal
    registration-to-template/vertebral-labeling
    registration-to-template/template-registration
    registration-to-template/registering-additional-contrasts
+   registration-to-template/lumbar-registration
