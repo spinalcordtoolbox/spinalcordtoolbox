@@ -7,7 +7,7 @@ Typically, registering an image to the PAM50 template involves using ``sct_label
 
 Notably, in the PAM50 template, the `conus medullaris <https://en.wikipedia.org/wiki/Conus_medullaris>`_ (i.e. the terminal end of the spinal cord) is aligned with the L1-L2 disc. However, for your subjects, the spinal cord may end above or below this point. So, if registration were based on disc landmarks alone, then the tapered region of the spinal cord may end up misaligned with the template.
 
-To correct for this, the PAM50 template provides a cauda equina label (specifically, the conus medullaris) as a registration landmark. By creating a similar label in your subject data, you can align the terminal end of the spinal cord between your subject and the PAM50 template. However, this comes with the necessary tradeoff of potentially misaligning the discs.
+To correct for this, the PAM50 template provides a cauda equina label (specifically, the tip of the conus medullaris) as a registration landmark. By creating a similar label in your subject data, you can align the terminal end of the spinal cord between your subject and the PAM50 template. However, this comes with the necessary tradeoff of potentially misaligning the discs.
 
 Deciding which landmarks to use (discs, conus medullaris)
 =========================================================
