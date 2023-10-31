@@ -5,7 +5,9 @@ Using ``sct_deepseg`` to segment the lumber region of the spinal cord
 
 .. note:: Currently, ``sct_deepseg`` can only be used to segment the lumbar region of T2-weighted images. For other contrasts (T1w, T2*w, etc.), it is necessary to manually segment the lumbar region.
 
-In this example, we begin with a full-body T2 anatomical scan (``t2_lumbar.nii.gz``). (SCT's lumbar segmentation tool works best if the lumbar region is the central feature of the image. So, it often helps to exclude the irrelevant portions of the spinal cord (brain, cervical region, and most of the thoracic region).)
+In this example, we begin with T2 anatomical scan of the lumbar region (``t2_lumbar.nii.gz``).
+
+SCT's lumbar segmentation tool works best if the lumbar region is the central feature of the image. So, it often helps to exclude the irrelevant portions of the spinal cord (brain, cervical region, and most of the thoracic region), as was done with this example scan.
 
 Downloading the lumbar segmentation model
 =========================================
