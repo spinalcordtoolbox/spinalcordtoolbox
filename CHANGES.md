@@ -5,20 +5,20 @@
 
 **FEATURE**
  - **sct_analyze_lesion**: Add function to output the axial damage ratio + minor improvements. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4207)
- - **sct_download_data**: Color installed datasets for `sct_download_data -h`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4257)
  - **sct_download_data**: Add current `sct_tutorial_data` release as a new course dataset. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4271)
+ - **sct_download_data**: Update PAM50 template link to include cord and lumbar label changes. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4268)
  - **sct_run_batch**: Add start date information to the logs. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4218)
 
 **ENHANCEMENT**
  - **sct_compute_compression**: Improvements of CLI output printed by the `sct_compute_compression`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4175)
- - **sct_deepseg**: Add checks for empty arrays post-segmentation. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4199)
  - **sct_deepseg**: Append `-list-tasks` to argparse help and update `-list-tasks-long`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4212)
- - **sct_deepseg**: Update model releases (`lumbar_seg`, `t2star_sc`) to fix output suffix (`_seg-manual` -> `_seg`). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4235)
  - **sct_label_utils**: Speed up `-remove-reference` by removing unnecessary iteration. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4194)
  - **sct_run_batch**: Raise error if `-config` file has wrong suffix. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4201)
 
 **BUG**
  - **sct_compute_compression**: Use pandas for `.csv` saving to correctly merge existing output metric columns. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4172)
+ - **sct_deepseg**: Add checks for empty arrays post-segmentation. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4199)
+ - **sct_deepseg**: Update model releases (`lumbar_seg`, `t2star_sc`) to fix output suffix (`_seg-manual` -> `_seg`). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4235)
  - **sct_dmri_compute_dti**: Avoid `dipy` versions 1.6.0 + 1.7.0 that contain a `method=restore` bug. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4232)
  - **sct_dmri_display_bvecs**: Fix `ValueError` by passing a tuple to `color=` instead of a numpy array. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4221)
  - **sct_label_vertebrae**: Check whether the provided discfile is empty. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4200)
@@ -36,15 +36,14 @@
 **INSTALLATION**
  - Inline small `.yml` "model" files. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4171)
  - Update Docker installation instructions for Linux/macOS/Windows. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4196)
- - Update PAM50 template links and fix related test errors. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4268)
 
 **DOCUMENTATION**
  - **sct_compute_compression**: Add tutorial for `sct_compute_compression` in documentation. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4162)
  - **sct_compute_compression, sct_process_segmentation**: Add references for PAM50 normalized metrics. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4259)
- - **sct_download_data**: Make `sct_download_data` datasets readable. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4255)
+ - **sct_download_data**: List `sct_download_data` datasets at the end of `-h`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4255)
+ - **sct_download_data**: Color installed datasets for `sct_download_data -h`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4257)
  - **sct_run_batch**: Clarification of `sct_run_batch -script-args` input flag help. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4190)
  - **sct_run_batch**: Add note that `~` should not be used in paths passed using the `-script-args` arg. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4208)
- - **sct_warp_template**: Remove `-s` functionality and add a deprecation warning. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4252)
  - Update installation docs for Windows (Miniconda) and Linux/macOS (standalone installer). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4060)
  - Migrate old ReadTheDocs settings to `.readthedocs.yaml`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4213)
  - Update documentation for new spinal levels. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4249)
@@ -56,6 +55,7 @@
 **REFACTORING**
  - **sct_analyze_lesion**: Simplify lesion volume computation. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4219)
  - **sct_compute_compression**: Use the `pandas.DataFrame.combine_first` method. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4176)
+ - **sct_warp_template**: Remove `-s` functionality and add a deprecation warning. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4252)
 
 **CI**
  - Exit on errors anywhere in the linter script. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4161)
