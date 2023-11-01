@@ -134,6 +134,8 @@ def get_interp(file_label, list_labels_nn):
     # Nearest Neighbours interp
     if any(substring in file_label for substring in list_labels_nn):
         interp = 'nn'
+    elif any(substring in file_label for substring in ['_label', '_midpoint']):
+        interp = 'label'
     # output
     return interp
 
