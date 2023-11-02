@@ -52,7 +52,14 @@ DATASET_DICT = {
             "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20231020.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_course_data"),
-        "download_type": "Datasets",
+        "download_type": "SCT Course Files",
+    },
+    "manual-correction": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/manual-correction/archive/refs/tags/r20231101.zip",
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "manual-correction"),
+        "download_type": "SCT Course Files",
     },
     "PAM50": {
         "mirrors": [
