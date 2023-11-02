@@ -128,6 +128,7 @@ def get_interp(file_label):
     # default interp
     interp = 'linear'
     # Nearest Neighbours interp
+    # For safety and consistency, ensure strings are bracketed by `_` or `.` on both sides
     if any(substring in file_label for substring in ['_levels.', '_csf.', '_cord.']):
         interp = 'nn'
     elif any(substring in file_label for substring in ['_label_', '_midpoint.']):
