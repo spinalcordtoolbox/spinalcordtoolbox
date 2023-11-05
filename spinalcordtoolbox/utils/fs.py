@@ -8,6 +8,7 @@ License: see the file LICENSE
 import sys
 import io
 import os
+import re
 import shutil
 import tempfile
 import datetime
@@ -26,6 +27,10 @@ def tmp_create(basename):
     tmpdir = tempfile.mkdtemp(prefix=prefix)
     logger.info(f"Creating temporary folder ({tmpdir})")
     return tmpdir
+
+
+# Taken from https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python/14693789#14693789
+ansi_escape = re.compile(r'\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 
 # Modified from http://shallowsky.com/blog/programming/python-tee.html
@@ -47,8 +52,18 @@ class Tee:
             self.fd2.close()
 
     def write(self, text):
-        self.fd1.write(text)
-        self.fd2.write(text)
+        # Quick and dirty solution to filter out ansi escape sequences (like color codes) from
+        # the text if one file is an interactive terminal but the other one is not.
+        # This will only filter out cases where the entire escape sequence is part of a single
+        # call to write(). See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4287
+        if self.fd2.isatty() and not self.fd1.isatty():
+            self.fd1.write(ansi_escape.sub('', text))
+        else:
+            self.fd1.write(text)
+        if self.fd1.isatty() and not self.fd2.isatty():
+            self.fd2.write(ansi_escape.sub('', text))
+        else:
+            self.fd2.write(text)
 
     def flush(self):
         self.fd1.flush()
