@@ -13,9 +13,8 @@ import logging
 import textwrap
 import shutil
 
-import spinalcordtoolbox as sct
 from spinalcordtoolbox import download
-from spinalcordtoolbox.utils.sys import stylize
+from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__
 
 
 logger = logging.getLogger(__name__)
@@ -263,7 +262,7 @@ def folder(name_model):
     :param name: str: Name of model.
     :return: str: Folder to model
     """
-    return os.path.join(sct.__deepseg_dir__, name_model)
+    return os.path.join(__deepseg_dir__, name_model)
 
 
 def install_model(name_model):
