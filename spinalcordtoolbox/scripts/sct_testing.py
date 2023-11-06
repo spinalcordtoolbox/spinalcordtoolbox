@@ -14,7 +14,7 @@
 import pytest
 import sys
 
-from spinalcordtoolbox import __sct_dir__
+from spinalcordtoolbox.utils.sys import __sct_dir__
 
 if __name__ == "__main__":
     # Treat `sct_testing` as an alias to `pytest`. If no arguments are passed,

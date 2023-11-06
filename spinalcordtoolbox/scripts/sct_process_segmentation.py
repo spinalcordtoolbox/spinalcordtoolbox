@@ -32,7 +32,7 @@ from spinalcordtoolbox.utils.fs import get_absolute_path
 from spinalcordtoolbox.utils.sys import __sct_dir__, init_sct, sct_progress_bar, set_loglevel
 from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgumentParser,
                                            display_open, parse_num_list)
-from spinalcordtoolbox import __data_dir__
+from spinalcordtoolbox.utils.sys import __data_dir__
 
 logger = logging.getLogger(__name__)
 
