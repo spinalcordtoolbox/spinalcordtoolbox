@@ -14,7 +14,8 @@ import os
 import json
 from typing import Sequence
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, display_viewer_syntax, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 from spinalcordtoolbox.qmri.mt import compute_mtsat
 from spinalcordtoolbox.image import Image, splitext
 

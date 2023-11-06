@@ -15,7 +15,7 @@ import shutil
 
 import spinalcordtoolbox as sct
 from spinalcordtoolbox import download
-from spinalcordtoolbox.utils import stylize
+from spinalcordtoolbox.utils.sys import stylize
 
 
 logger = logging.getLogger(__name__)

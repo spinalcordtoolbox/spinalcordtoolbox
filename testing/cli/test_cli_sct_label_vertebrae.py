@@ -7,7 +7,7 @@ import pytest
 
 from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.labels import check_missing_label
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 import spinalcordtoolbox.scripts.sct_label_vertebrae as sct_label_vertebrae
 
 logger = logging.getLogger(__name__)

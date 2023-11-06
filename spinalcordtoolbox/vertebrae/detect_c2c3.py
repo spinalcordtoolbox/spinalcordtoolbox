@@ -28,7 +28,8 @@ import nibabel as nib
 from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, zeros_like
-from spinalcordtoolbox.utils import run_proc, TempFolder, __data_dir__
+from spinalcordtoolbox.utils.fs import TempFolder
+from spinalcordtoolbox.utils.sys import __data_dir__, run_proc
 from spinalcordtoolbox.flattening import flatten_sagittal
 
 logger = logging.getLogger(__name__)

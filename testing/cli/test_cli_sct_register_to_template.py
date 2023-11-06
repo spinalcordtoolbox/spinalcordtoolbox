@@ -10,7 +10,7 @@ import pytest
 
 from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox import __sct_dir__
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.scripts import sct_register_to_template, sct_apply_transfo
 
 logger = logging.getLogger(__name__)

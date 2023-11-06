@@ -8,7 +8,8 @@ import pickle
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import sct_test_path, extract_fname
+from spinalcordtoolbox.utils.fs import extract_fname
+from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.scripts import sct_analyze_lesion, sct_label_utils
 
 logger = logging.getLogger(__name__)

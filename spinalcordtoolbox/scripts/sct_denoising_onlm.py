@@ -13,8 +13,9 @@ import numpy as np
 import nibabel as nib
 from dipy.denoise.nlmeans import nlmeans
 
-from spinalcordtoolbox.utils import (SCTArgumentParser, Metavar, init_sct, printv, extract_fname, set_loglevel,
-                                     display_viewer_syntax)
+from spinalcordtoolbox.utils.fs import extract_fname
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 
 
 # DEFAULT PARAMETERS

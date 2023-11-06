@@ -6,7 +6,7 @@ import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.deepseg_.sc as deepseg_sc
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 from .test_centerline import dummy_centerline
 

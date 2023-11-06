@@ -11,7 +11,8 @@ from typing import Sequence
 import numpy as np
 
 from spinalcordtoolbox.image import Image, add_suffix, empty_like
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 
 
 class Param:

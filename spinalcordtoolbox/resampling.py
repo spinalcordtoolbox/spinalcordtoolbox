@@ -14,7 +14,7 @@ import nibabel as nib
 from nibabel.processing import resample_from_to
 
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import display_viewer_syntax
+from spinalcordtoolbox.utils.shell import display_viewer_syntax
 
 logger = logging.getLogger(__name__)
 

@@ -6,7 +6,7 @@ import pytest
 
 from spinalcordtoolbox.qmri import mt
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import init_sct, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 
 
 # Set logger to "DEBUG"
