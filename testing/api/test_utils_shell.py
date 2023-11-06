@@ -23,7 +23,7 @@ def test_sct_argument_parser(capsys):
 
     # Check that new defaults are set properly
     parser3 = shell.SCTArgumentParser()
-    assert parser3.prog == "test_utils"
+    assert parser3.prog == "test_utils_shell"
     assert parser3.formatter_class == shell.SmartFormatter
     assert parser3.add_help is False
 
@@ -36,7 +36,7 @@ def test_sct_argument_parser(capsys):
 
     # Check help message is still output when above error is thrown
     captured = capsys.readouterr()
-    assert "usage: test_utils" in captured.err
+    assert "usage: test_utils_shell" in captured.err
 
     # Ensure no error is thrown when help is explicitly called
     with pytest.raises(SystemExit) as e:
