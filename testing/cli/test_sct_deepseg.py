@@ -9,7 +9,7 @@ import warnings
 from torch.serialization import SourceChangeWarning
 
 import spinalcordtoolbox as sct
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 import spinalcordtoolbox.deepseg.models
 
 from spinalcordtoolbox.scripts import sct_deepseg

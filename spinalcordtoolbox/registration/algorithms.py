@@ -25,7 +25,8 @@ from spinalcordtoolbox.math import laplacian
 from spinalcordtoolbox.registration.landmarks import register_landmarks
 from spinalcordtoolbox.registration import core
 from spinalcordtoolbox.scripts import sct_resample
-from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp_create, sct_dir_local_path
+from spinalcordtoolbox.utils.fs import copy_helper, tmp_create
+from spinalcordtoolbox.utils.sys import run_proc, sct_dir_local_path, sct_progress_bar
 
 from spinalcordtoolbox.scripts import sct_image
 

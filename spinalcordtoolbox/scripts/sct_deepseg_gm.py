@@ -16,7 +16,8 @@ import sys
 import os
 from typing import Sequence
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 from spinalcordtoolbox.image import add_suffix
 from spinalcordtoolbox.reports.qc import generate_qc
 from spinalcordtoolbox.deepseg_.gm import segment_file

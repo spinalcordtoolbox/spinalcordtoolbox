@@ -8,7 +8,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.slice import Sagittal
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 import spinalcordtoolbox.reports.qc as qc
 import spinalcordtoolbox.reports.slice as qcslice
 

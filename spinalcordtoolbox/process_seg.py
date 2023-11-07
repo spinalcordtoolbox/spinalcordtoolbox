@@ -15,7 +15,7 @@ from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.aggregate_slicewise import Metric
 from spinalcordtoolbox.centerline.core import get_centerline
 from spinalcordtoolbox.resampling import resample_nib
-from spinalcordtoolbox.utils import sct_progress_bar
+from spinalcordtoolbox.utils.sys import sct_progress_bar
 
 # NB: We use a threshold to check if an array is empty, instead of checking if it's exactly 0. This is because
 # resampling can change 0 -> ~0 (e.g. 1e-16). See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3402

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from spinalcordtoolbox import __version__
+from spinalcordtoolbox.utils.sys import __version__
 
 
 def main():

@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 
 from spinalcordtoolbox.scripts import sct_deepseg_sc
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.image import Image
 
 logger = logging.getLogger(__name__)

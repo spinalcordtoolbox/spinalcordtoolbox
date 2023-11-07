@@ -33,7 +33,7 @@ from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, r
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
                                            printv, display_viewer_syntax)
 from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc
-from spinalcordtoolbox import __data_dir__
+from spinalcordtoolbox.utils.sys import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample

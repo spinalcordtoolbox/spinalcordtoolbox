@@ -10,7 +10,8 @@ import sys
 from typing import Sequence
 
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import init_sct, set_loglevel, SCTArgumentParser, list2cmdline
+from spinalcordtoolbox.utils.sys import init_sct, list2cmdline, set_loglevel
+from spinalcordtoolbox.utils.shell import SCTArgumentParser
 
 
 def get_parser():

@@ -10,7 +10,8 @@ import logging
 from typing import Sequence
 
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 from spinalcordtoolbox.flattening import flatten_sagittal
 
 logger = logging.getLogger(__name__)

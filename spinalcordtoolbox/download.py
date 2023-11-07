@@ -17,9 +17,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
-from spinalcordtoolbox.utils import stylize
 from spinalcordtoolbox.utils.fs import tmp_create
-from spinalcordtoolbox.utils.sys import sct_progress_bar, __sct_dir__, __bin_dir__
+from spinalcordtoolbox.utils.sys import __bin_dir__, __sct_dir__, sct_progress_bar, stylize
 
 logger = logging.getLogger(__name__)
 

@@ -10,7 +10,7 @@ import nibabel as nib
 from spinalcordtoolbox.centerline.curve_fitting import bspline
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, find_and_sort_coord
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import sct_test_path, init_sct, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, sct_test_path, set_loglevel
 
 # Set logger to "DEBUG"
 init_sct()

@@ -7,7 +7,7 @@ import numpy as np
 import nibabel as nib
 import pandas as pd
 
-from spinalcordtoolbox import __version__
+from spinalcordtoolbox.utils.sys import __version__
 from spinalcordtoolbox import aggregate_slicewise
 from spinalcordtoolbox.process_seg import Metric
 from spinalcordtoolbox.image import Image

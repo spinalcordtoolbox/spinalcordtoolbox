@@ -7,7 +7,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.scripts import sct_label_utils, sct_create_mask
 
 logger = logging.getLogger(__name__)

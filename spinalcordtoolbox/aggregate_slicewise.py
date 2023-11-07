@@ -19,7 +19,8 @@ import wquantiles
 
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import __version__, parse_num_list_inv
+from spinalcordtoolbox.utils.sys import __version__
+from spinalcordtoolbox.utils.shell import parse_num_list_inv
 
 
 class Metric:

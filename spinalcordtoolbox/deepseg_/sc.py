@@ -18,7 +18,8 @@ from spinalcordtoolbox.deepseg_.onnx import onnx_inference
 from spinalcordtoolbox.deepseg_.postprocessing import post_processing_volume_wise, keep_largest_object, fill_holes_2d
 from spinalcordtoolbox.image import Image, empty_like, change_type, zeros_like, add_suffix, concat_data, split_img_data
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline, _call_viewer_centerline
-from spinalcordtoolbox.utils import sct_dir_local_path, TempFolder
+from spinalcordtoolbox.utils.fs import TempFolder
+from spinalcordtoolbox.utils.sys import sct_dir_local_path
 from spinalcordtoolbox.types import EmptyArrayError
 
 # Thresholds to apply to binarize segmentations from the output of the 2D CNN. These thresholds were obtained by

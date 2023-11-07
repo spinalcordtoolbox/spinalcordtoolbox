@@ -26,7 +26,8 @@ import transforms3d.affines as affines
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import extract_fname, mv, run_proc, tmp_create
+from spinalcordtoolbox.utils.fs import extract_fname, mv, tmp_create
+from spinalcordtoolbox.utils.sys import run_proc
 
 
 logger = logging.getLogger(__name__)

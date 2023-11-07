@@ -22,9 +22,9 @@ import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, printv,
-                                     parse_num_list, set_loglevel)
-from spinalcordtoolbox.utils.shell import display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgumentParser,
+                                           display_viewer_syntax, list_type, parse_num_list)
 
 
 def get_parser():

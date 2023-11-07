@@ -10,7 +10,7 @@ import os
 import re
 from operator import itemgetter
 
-from spinalcordtoolbox.utils import parse_num_list
+from spinalcordtoolbox.utils.shell import parse_num_list
 
 
 class InfoLabel(object):

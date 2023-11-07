@@ -12,12 +12,13 @@ import numpy as np
 import logging
 from typing import Sequence
 import pandas as pd
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
-from spinalcordtoolbox.utils.fs import get_absolute_path, extract_fname, printv
+from spinalcordtoolbox.utils.fs import extract_fname, get_absolute_path
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.types import Centerline
-from spinalcordtoolbox import __data_dir__
+from spinalcordtoolbox.utils.sys import __data_dir__
 from spinalcordtoolbox.scripts import sct_process_segmentation
 
 

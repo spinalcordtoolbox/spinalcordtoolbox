@@ -7,7 +7,7 @@ import logging
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import sct_test_path, sct_dir_local_path
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, sct_test_path
 from spinalcordtoolbox.scripts import sct_register_multimodal, sct_create_mask
 
 logger = logging.getLogger(__name__)

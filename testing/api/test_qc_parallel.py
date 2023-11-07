@@ -5,7 +5,7 @@ import pytest
 
 import multiprocessing
 
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 import spinalcordtoolbox.reports.qc as qc
 
 

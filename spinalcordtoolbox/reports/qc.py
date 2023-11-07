@@ -28,7 +28,9 @@ import portalocker
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
-from spinalcordtoolbox.utils import list2cmdline, __version__, copy, extract_fname, display_open
+from spinalcordtoolbox.utils.fs import copy, extract_fname
+from spinalcordtoolbox.utils.sys import __version__, list2cmdline
+from spinalcordtoolbox.utils.shell import display_open
 
 logger = logging.getLogger(__name__)
 

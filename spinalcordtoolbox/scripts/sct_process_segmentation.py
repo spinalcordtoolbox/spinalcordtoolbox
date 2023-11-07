@@ -28,11 +28,11 @@ from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext, Image
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
-from spinalcordtoolbox import __data_dir__
-from spinalcordtoolbox.utils import sct_progress_bar
+from spinalcordtoolbox.utils.sys import __sct_dir__, init_sct, sct_progress_bar, set_loglevel
+from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgumentParser,
+                                           display_open, parse_num_list)
+from spinalcordtoolbox.utils.sys import __data_dir__
 
 logger = logging.getLogger(__name__)
 
