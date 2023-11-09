@@ -114,7 +114,14 @@ class QcImage:
 
     def no_seg_seg(self, mask, ax):
         """Create figure with image overlay. Notably used by sct_registration_to_template"""
-        ax.imshow(mask, cmap='gray', interpolation=self.interpolation, aspect=self.aspect_mask)
+        if self.process == 'sct_fmri_compute_tsnr':
+            cmap='Spectral'
+            cmap='seismic'
+            norm=color.Normalize(vmin=0, vmax=25)
+        else:
+            cmap='gray'
+            norm=None
+        ax.imshow(mask, cmap=cmap,norm=norm, interpolation=self.interpolation, aspect=self.aspect_mask)
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -250,7 +257,8 @@ class QcImage:
         """
 
         if self._stretch_contrast:
-            img = self._func_stretch_contrast(img)
+            if self.process != 'sct_fmri_compute_tsnr':
+                img = self._func_stretch_contrast(img)
 
         # Axial views into images == A mosaic of axial slices. For QC reports, axial mosaics will often have smaller
         # height than width (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
@@ -266,7 +274,14 @@ class QcImage:
         fig.set_size_inches(size_fig[0], size_fig[1], forward=True)
         FigureCanvas(fig)
         ax = fig.add_axes((0, 0, 1, 1))
-        ax.imshow(img, cmap='gray', interpolation=self.interpolation, aspect=float(self.aspect_img))
+        if self.process == 'sct_fmri_compute_tsnr':
+            cmap='Spectral'
+            cmap='seismic'
+            norm=color.Normalize(vmin=0, vmax=25)
+        else:
+            cmap='gray'
+            norm=None
+        ax.imshow(img, cmap=cmap, norm=norm, interpolation=self.interpolation, aspect=float(self.aspect_img))
         self._add_orientation_label(ax)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
@@ -280,7 +295,8 @@ class QcImage:
             logger.debug('Action List %s', action.__name__)
             if self._stretch_contrast and action.__name__ in ("no_seg_seg",):
                 logger.debug("Mask type %s" % mask[i].dtype)
-                mask[i] = self._func_stretch_contrast(mask[i])
+                if self.process != 'sct_fmri_compute_tsnr':
+                    mask[i] = self._func_stretch_contrast(mask[i])
             ax = fig.add_axes((0, 0, 1, 1), label=str(i))
             action(self, mask[i], ax)
         self._save(fig, self.qc_report.abs_overlay_img_path(), dpi=self.qc_report.dpi)
@@ -617,7 +633,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
 
     # Get QC specifics based on SCT process
     # Axial orientation, switch between two input images
-    if process in ['sct_register_multimodal', 'sct_register_to_template']:
+    if process in ['sct_register_multimodal', 'sct_register_to_template', 'sct_fmri_compute_tsnr']:
         plane = 'Axial'
         qcslice = Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
         action_list = [QcImage.no_seg_seg]

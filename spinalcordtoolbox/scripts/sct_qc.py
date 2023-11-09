@@ -31,7 +31,7 @@ def get_parser():
                         choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_deepseg_lesion',
                                  'sct_register_multimodal', 'sct_register_to_template', 'sct_warp_template',
                                  'sct_label_vertebrae', 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline',
-                                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch'),
+                                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch', 'sct_fmri_compute_tsnr'),
                         required=True)
     parser.add_argument('-s',
                         metavar='SEG',
