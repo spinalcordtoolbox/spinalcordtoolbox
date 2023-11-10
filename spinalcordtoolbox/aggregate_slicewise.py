@@ -90,7 +90,8 @@ def func_map(data, mask, map_clusters):
     :return: nd-array: matrix of all beta
     """
     # Check number of labels and map_clusters
-    assert mask.shape[-1] == len(map_clusters)
+    if mask.shape[-1] != len(map_clusters):
+        raise ValueError(f"Expected {mask.shape[-1]} clusters, but got {len(map_clusters)} clusters")
 
     # Iterate across all labels (excluding the first one) and generate cluster labels. Examples of input/output:
     #   [[0], [0], [0], [1], [2], [0]] --> [0, 0, 0, 1, 2, 0]

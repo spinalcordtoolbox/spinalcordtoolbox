@@ -34,7 +34,8 @@ def main():
     pkg_dir = os.path.dirname(package_init_file)
 
     script = os.path.join(pkg_dir, "scripts", "{}.py".format(command))
-    assert os.path.exists(script)
+    if not os.path.exists(script):
+        raise FileNotFoundError(script)
 
     cmd = [sys.executable, script] + sys.argv[1:]
 

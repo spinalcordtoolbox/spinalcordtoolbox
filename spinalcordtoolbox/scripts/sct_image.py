@@ -274,7 +274,7 @@ def main(argv: Sequence[str]):
     # Arguments are sorted alphabetically (not according to the usage order)
     if arguments.concat is not None:
         dim = arguments.concat
-        assert dim in DIM_LIST
+        assert dim in DIM_LIST  # Enforced by add_argument(..., choices=...)
         dim = DIM_LIST.index(dim)
         im_out = [concat_data(im_in_list, dim)]
 
@@ -382,7 +382,7 @@ def main(argv: Sequence[str]):
 
     elif arguments.split is not None:
         dim = arguments.split
-        assert dim in DIM_LIST
+        assert dim in DIM_LIST  # Enforced by add_argument(..., choices=...)
         dim = DIM_LIST.index(dim)
         im_out = split_data(im_in, dim)
 
@@ -566,7 +566,8 @@ def multicomponent_split(im):
     :return:
     """
     data = im.data
-    assert len(data.shape) == 5
+    if len(data.shape) != 5:
+        raise ValueError(f"Wrong number of dimensions: {len(data.shape)}")
     data_out = []
     for i in range(data.shape[-1]):
         dat_out = data[:, :, :, :, i]

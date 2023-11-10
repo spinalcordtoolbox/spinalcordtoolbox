@@ -188,7 +188,8 @@ def smooth(data, sigmas):
     :param sigmas: Kernel SD in voxel
     :return:
     """
-    assert len(data.shape) == len(sigmas)
+    if len(data.shape) != len(sigmas):
+        raise ValueError(f"Expected {len(data.shape)} sigmas, but got {len(sigmas)}")
     return gaussian_filter(data.astype(float), sigmas, order=0, truncate=4.0)
 
 
@@ -196,7 +197,8 @@ def laplacian(data, sigmas):
     """
     Apply Laplacian filter
     """
-    assert len(data.shape) == len(sigmas)
+    if len(data.shape) != len(sigmas):
+        raise ValueError(f"Expected {len(data.shape)} sigmas, but got {len(sigmas)}")
     return gaussian_laplace(data.astype(float), sigmas)
 
 
