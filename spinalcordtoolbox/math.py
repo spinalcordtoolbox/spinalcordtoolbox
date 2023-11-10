@@ -296,7 +296,7 @@ def concatenate_along_last_dimension(data):
 
     # Case 3: 2D/5D/etc. images --> Not supported
     else:
-        raise ValueError(f"Can only process 3D/4D images, but received images with ndim = {ndims - {3,4}}")
+        raise ValueError(f"Can only process 3D/4D images, but received images with ndim = {ndims - {3, 4}}")
 
     return np.concatenate(data, axis=-1)
 
