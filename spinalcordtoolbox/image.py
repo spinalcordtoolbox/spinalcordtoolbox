@@ -274,8 +274,6 @@ class Image(object):
         if absolutepath is not None:
             self._path = os.path.abspath(absolutepath)
 
-        self.verbose = verbose
-
         # Case 1: load an image from file
         if isinstance(param, str):
             try:
