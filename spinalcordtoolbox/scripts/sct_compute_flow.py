@@ -63,6 +63,7 @@ def main(argv: Sequence[str]):
     """
     parser = get_parser()
     arguments = parser.parse_args(argv)
+    venc = float(arguments.venc)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
@@ -75,7 +76,7 @@ def main(argv: Sequence[str]):
 
     # Calculate velocity
     printv('Calculate velocity...', verbose)
-    velocity = flow.calculate_velocity(nii_phase.data, arguments.venc)
+    velocity = flow.calculate_velocity(nii_phase.data, venc)
 
     # Output flow map
     printv('Generate output files...', verbose)
