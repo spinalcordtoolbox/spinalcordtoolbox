@@ -13,6 +13,7 @@ from typing import Sequence
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 from spinalcordtoolbox.image import Image, splitext
+from spinalcordtoolbox.qmri import flow
 
 
 def get_parser():
@@ -28,6 +29,12 @@ def get_parser():
         required=True,
         help="4D phase image. The 4th dimension should be the velocity encoding (VENC) in cm/s.",
         metavar=Metavar.file,
+    )
+    mandatoryArguments.add_argument(
+        "-venc",
+        required=True,
+        help="Maximum velocity encoding (VENC) in cm/s.",
+        metavar=Metavar.float,
     )
 
     optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
@@ -49,6 +56,11 @@ def get_parser():
 
 
 def main(argv: Sequence[str]):
+    """Main function
+
+    Args:
+        argv (Sequence[str]): Command-line arguments
+    """
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -57,7 +69,13 @@ def main(argv: Sequence[str]):
     printv('Load data...', verbose)
     nii_phase = Image(arguments.i)
 
-    # compute flow
+    # Convert input to avoid numerical errors from int16 data
+    # Related issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3636
+    nii_phase.change_type('float32')
+
+    # Calculate velocity
+    printv('Calculate velocity...', verbose)
+    velocity = flow.calculate_velocity(nii_phase.data, arguments.venc)
 
     # Output flow map
     printv('Generate output files...', verbose)
