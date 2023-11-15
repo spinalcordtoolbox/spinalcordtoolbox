@@ -456,22 +456,23 @@ def main(argv: Sequence[str]):
     out.data = binarize(out.data, 0.5)
     out.save(path=ftmp_seg)
 
+    # Change orientation of input images to RPI
+    printv('\nChange orientation of input images to RPI...', verbose)
+
+    img_tmp_data = Image(ftmp_data).change_orientation("RPI")
+    ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
+    img_tmp_data.save(path=ftmp_data, mutable=True)
+
+    img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
+    ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
+    img_tmp_seg.save(path=ftmp_seg, mutable=True)
+
+    img_tmp_label = Image(ftmp_label).change_orientation("RPI")
+    ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
+    img_tmp_label.save(ftmp_label, mutable=True)
+
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
-        # Change orientation of input images to RPI
-        printv('\nChange orientation of input images to RPI...', verbose)
-
-        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
-        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
-        img_tmp_data.save(path=ftmp_data, mutable=True)
-
-        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
-        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
-        img_tmp_seg.save(path=ftmp_seg, mutable=True)
-
-        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
-        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
-        img_tmp_label.save(ftmp_label, mutable=True)
 
         # resample data to 1mm isotropic
         printv('\nResample data to 1mm isotropic...', verbose)
@@ -756,21 +757,6 @@ def main(argv: Sequence[str]):
 
     # register template->subject
     elif ref == 'subject':
-
-        # Change orientation of input images to RPI
-        printv('\nChange orientation of input images to RPI...', verbose)
-
-        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
-        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
-        img_tmp_data.save(path=ftmp_data, mutable=True)
-
-        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
-        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
-        img_tmp_seg.save(path=ftmp_seg, mutable=True)
-
-        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
-        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
-        img_tmp_label.save(ftmp_label, mutable=True)
 
         # Remove unused label on template. Keep only label present in the input label image
         printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
