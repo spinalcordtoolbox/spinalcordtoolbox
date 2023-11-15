@@ -458,18 +458,6 @@ def main(argv: Sequence[str]):
 
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
-
-        # resample data to 1mm isotropic
-        printv('\nResample data to 1mm isotropic...', verbose)
-        resample_file(ftmp_data, add_suffix(ftmp_data, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
-        ftmp_data = add_suffix(ftmp_data, '_1mm')
-        resample_file(ftmp_seg, add_suffix(ftmp_seg, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
-        ftmp_seg = add_suffix(ftmp_seg, '_1mm')
-        # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling
-        # with nearest neighbour can make them disappear.
-        resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
-        ftmp_label = add_suffix(ftmp_label, '_1mm')
-
         # Change orientation of input images to RPI
         printv('\nChange orientation of input images to RPI...', verbose)
 
@@ -484,6 +472,17 @@ def main(argv: Sequence[str]):
         img_tmp_label = Image(ftmp_label).change_orientation("RPI")
         ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
         img_tmp_label.save(ftmp_label, mutable=True)
+
+        # resample data to 1mm isotropic
+        printv('\nResample data to 1mm isotropic...', verbose)
+        resample_file(ftmp_data, add_suffix(ftmp_data, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
+        ftmp_data = add_suffix(ftmp_data, '_1mm')
+        resample_file(ftmp_seg, add_suffix(ftmp_seg, '_1mm'), '1.0x1.0x1.0', 'mm', 'linear', verbose)
+        ftmp_seg = add_suffix(ftmp_seg, '_1mm')
+        # N.B. resampling of labels is more complicated, because they are single-point labels, therefore resampling
+        # with nearest neighbour can make them disappear.
+        resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
+        ftmp_label = add_suffix(ftmp_label, '_1mm')
 
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if level_alignment:
