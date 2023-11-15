@@ -756,7 +756,8 @@ def main(argv: Sequence[str]):
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
     # register template->subject
-    elif ref == 'subject':
+    else:
+        assert ref == 'subject'  # ensured by add_argument('ref', ... choices=['template', 'subject'] , ...)
 
         # Remove unused label on template. Keep only label present in the input label image
         printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
