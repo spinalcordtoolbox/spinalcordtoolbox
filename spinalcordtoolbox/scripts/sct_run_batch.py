@@ -316,7 +316,8 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
                              stdout=open(log_file, 'w'),
                              stderr=subprocess.STDOUT)
 
-        assert res.returncode == 0, 'Processing of subject {} failed'.format(subject)
+        if res.returncode != 0:
+            raise ValueError(f"Processing of subject {subject} failed")
     except Exception as e:
         process_completed = 'res' in locals()
         res = res if process_completed else SimpleNamespace(returncode=-1)
