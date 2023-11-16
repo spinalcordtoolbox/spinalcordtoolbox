@@ -159,7 +159,7 @@ def keep_largest_object(z_slice_bin, x_cOm, y_cOm):
     :return: z_slice: int 2d-array: Processed 2d segmentation
     """
     if z_slice_bin.dtype != np.dtype('int'):
-        raise ValueError(f"Wrong dtype: {z_slice_bin.dtype}")
+        raise ValueError(f"Expected array of type int but got '{z_slice_bin.dtype}' instead.")
     # Find number of closed objects using skimage "label"
     labeled_obj, num_obj = label(z_slice_bin)
     # If more than one object is found, keep the largest one
@@ -186,5 +186,5 @@ def fill_holes_2d(z_slice):
     :return: int 2d-array: Output segmentation with holes filled
     """
     if z_slice.dtype != np.dtype('int'):
-        raise ValueError(f"Wrong dtype: {z_slice.dtype}")
+        raise ValueError(f"Expected array of type int but got '{z_slice.dtype}' instead.")
     return binary_fill_holes(z_slice, structure=np.ones((3, 3))).astype(int)

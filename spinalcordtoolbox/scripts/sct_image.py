@@ -567,7 +567,7 @@ def multicomponent_split(im):
     """
     data = im.data
     if len(data.shape) != 5:
-        raise ValueError(f"Wrong number of dimensions: {len(data.shape)}")
+        raise ValueError(f"Expected 5D image but got '{len(data.shape)}' dimensions instead.")
     data_out = []
     for i in range(data.shape[-1]):
         dat_out = data[:, :, :, :, i]
