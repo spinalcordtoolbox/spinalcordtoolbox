@@ -1818,7 +1818,7 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
 
     # We assume that the [x,y] dimensions match for both of the two QC images
     if im_concat.data.shape[0:2] != im_out.data.shape[0:2]:
-        raise ValueError("Mismatched image dimensions: {im_concat.data.shape[0:2]} != {im_out.data.shape[0:2]}")
+        raise ValueError(f"Mismatched image dimensions: {im_concat.data.shape[0:2]} != {im_out.data.shape[0:2]}")
 
     # However, we can't assume that the [z] dimensions match, because concatenating and stitching produce very
     # different results (lengthwise). So, we pad the smaller image to make the dimensions match.
