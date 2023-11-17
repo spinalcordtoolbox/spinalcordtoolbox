@@ -78,6 +78,11 @@ def main(argv: Sequence[str]):
     printv('Calculate velocity...', verbose)
     velocity = flow.calculate_velocity(nii_phase.data, venc)
 
+    # Save velocity
+    nii_velocity = nii_phase.copy()
+    nii_velocity.data = velocity
+    nii_velocity.save('velocity.nii.gz')
+
     # Output flow map
     printv('Generate output files...', verbose)
 
