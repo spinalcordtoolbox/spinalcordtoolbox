@@ -201,7 +201,8 @@ def main(argv: Sequence[str]):
     rm_tmp = arguments.r
 
     # check if list of input files and warping fields have same length
-    assert len(list_fname_src) == len(list_fname_warp), "ERROR: list of files are not of the same length"
+    if len(list_fname_src) != len(list_fname_warp):
+        parser.error("lists of files are not of the same length")
 
     # merge src images to destination image
     merge_images(list_fname_src, fname_dest, list_fname_warp, fname_out, interp, rm_tmp)

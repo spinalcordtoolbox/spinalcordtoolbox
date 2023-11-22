@@ -274,7 +274,10 @@ class ComputeDistances:
         nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = self.im1.dim
         nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = self.im2.dim
 
-        assert np.isclose(px1, px2) and np.isclose(py1, py2) and np.isclose(px1, py1)
+        if not all(np.isclose(px1, py1) and np.isclose(px2, py2)):
+            raise ValueError(f"2D resolutions must both be isotropic, but got '{(px1, py1)}' and '{(px2, py2)}' instead.")
+        if not all(np.isclose(px1, px2) and np.isclose(py1, py2)):
+            raise ValueError(f"2D resolutions must be close to one another, but got '{(px1, py1)}' and '{(px2, py2)}' instead.")
         self.dim_pix = py1
 
         if self.param.thinning:
@@ -308,7 +311,8 @@ class ComputeDistances:
         nx1, ny1, nz1, nt1, px1, py1, pz1, pt1 = self.im1.dim
         nx2, ny2, nz2, nt2, px2, py2, pz2, pt2 = self.im2.dim
         # assert np.round(pz1, 5) == np.round(pz2, 5) and np.round(py1, 5) == np.round(py2, 5)
-        assert nx1 == nx2
+        if nx1 != nx2:
+            raise ValueError(f"Mismatched image dimensions: {nx1} != {nx2}")
         self.dim_pix = py1
 
         if self.param.thinning:
