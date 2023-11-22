@@ -64,14 +64,14 @@ def get_parser():
                             path_output : "~/pipeline_results"
                             script      : "nature_paper_analysis.sh"
                             jobs        : -1
-                            exclude_list : ["sub-01/ses-01", "sub-02"]      # this will exclude ses-01 for sub-01 and all sessions for sub-02\n
+                            exclude_list : ["sub-01/ses-01", "sub-02", "ses-03"]      # this will exclude ses-01 for sub-01, all sessions for sub-02 and ses-03 for all subjects\n
                             Example JSON configuration:
                             {
                             "path_data"   : "~/sct_data",
                             "path_output" : "~/pipeline_results",
                             "script"      : "nature_paper_analysis.sh",
                             "jobs"        : -1,
-                            "exclude_list" : ["sub-01/ses-01", "sub-02"]
+                            "exclude_list" : ["sub-01/ses-01", "sub-02", "ses-03"]
                             }"""))
     parser.add_argument('-jobs', type=int, default=1,
                         help='The number of jobs to run in parallel. Either an integer greater than or equal to one '
