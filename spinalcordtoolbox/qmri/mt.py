@@ -101,8 +101,8 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     if nii_t1map is None:
         # compute R1
         logger.info("Compute T1 map...")
-        r1map = 0.5 * np.true_divide((fa_t1_rad / tr_t1) * nii_t1.data - (fa_pd_rad / tr_pd) * nii_pd.data,
-                                     nii_pd.data / fa_pd_rad - nii_t1.data / fa_t1_rad)
+        r1map = 0.5 * np.multiply(np.multiply(nii_b1map.data, nii_b1map.data), np.true_divide((fa_t1_rad / tr_t1) * nii_t1.data - (fa_pd_rad / tr_pd) * nii_pd.data,
+                                     nii_pd.data / fa_pd_rad - nii_t1.data / fa_t1_rad))
         # remove nans and clip unrelistic values
         r1map = np.nan_to_num(r1map)
         ind_unrealistic = np.where(r1map < r1_threshold)
@@ -119,9 +119,10 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
 
     # Compute A
     logger.info("Compute A...")
-    a = (tr_pd * fa_t1_rad / fa_pd_rad - tr_t1 * fa_pd_rad / fa_t1_rad) * \
+    a = np.divide((tr_pd * fa_t1_rad / fa_pd_rad - tr_t1 * fa_pd_rad / fa_t1_rad) * \
         np.true_divide(np.multiply(nii_pd.data, nii_t1.data, dtype=float),
-                       tr_pd * fa_t1_rad * nii_t1.data - tr_t1 * fa_pd_rad * nii_pd.data)
+                       tr_pd * fa_t1_rad * nii_t1.data - tr_t1 * fa_pd_rad * nii_pd.data), \
+                       nii_b1map.data)
 
     # Compute MTsat
     logger.info("Compute MTsat...")
