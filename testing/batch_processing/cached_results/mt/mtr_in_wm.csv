@@ -1,2 +1,2 @@
 Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,DistancePMJ,Label,Size [vox],MAP(),STD()
-"2023-10-16 11:31:03","git-jn/4180-add-lumbar-template-registration-tutorial-de1019ee67d94e829160a28210894ed3636afd1f","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",981.0556431796804,54.39462068731342,4.822021559295323
+"2023-11-22 14:55:41","git-jn/4299-reorient-before-resampling-88798c51ca10952d25f289d8c8448634dfacbcd1","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",984.9386570955045,54.3539623020136,4.908823409230993
