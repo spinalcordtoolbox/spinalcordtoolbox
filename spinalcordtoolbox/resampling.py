@@ -14,7 +14,7 @@ import nibabel as nib
 from nibabel.processing import resample_from_to
 
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import display_viewer_syntax
+from spinalcordtoolbox.utils.shell import display_viewer_syntax
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +153,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
     if isinstance(image, nib.nifti1.Nifti1Image):
         return img_r
     else:
-        assert isinstance(image, Image)
+        assert isinstance(image, Image)  # already checked at the start of the function
         return Image(np.asanyarray(img_r.dataobj), hdr=img_r.header, orientation=image.orientation, dim=img_r.header.get_data_shape())
 
 

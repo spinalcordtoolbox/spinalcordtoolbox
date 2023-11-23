@@ -26,8 +26,3 @@ python:
 sphinx:
   configuration: documentation/source/conf.py
   fail_on_warning: true
-
-# Other formats to produce, in addition to html
-formats:
-  - pdf
-  - epub

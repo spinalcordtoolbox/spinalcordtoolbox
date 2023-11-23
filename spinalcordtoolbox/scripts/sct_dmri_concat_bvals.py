@@ -8,7 +8,9 @@
 import sys
 from typing import Sequence
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, extract_fname, set_loglevel
+from spinalcordtoolbox.utils.fs import extract_fname
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 
 
 def get_parser():

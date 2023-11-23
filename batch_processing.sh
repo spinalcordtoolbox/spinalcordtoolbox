@@ -250,8 +250,8 @@ sct_fmri_moco -i fmri_crop.nii.gz -g 1
 sct_qc -i fmri_crop.nii.gz -d fmri_crop_moco.nii.gz -s fmri_crop_moco_mean_seg_manual.nii.gz -p sct_fmri_moco -qc "$SCT_BP_QC_FOLDER"
 # Register template->fmri
 sct_register_multimodal -i "$SCT_DIR/data/PAM50/template/PAM50_t2.nii.gz" -iseg "$SCT_DIR/data/PAM50/template/PAM50_cord.nii.gz" -d fmri_crop_moco_mean.nii.gz -dseg fmri_crop_moco_mean_seg_manual.nii.gz -param step=1,type=seg,algo=slicereg,metric=MeanSquares,smooth=2:step=2,type=im,algo=bsplinesyn,metric=MeanSquares,iter=5,gradStep=0.5 -initwarp ../t2/warp_template2anat.nii.gz -initwarpinv ../t2/warp_anat2template.nii.gz -qc "$SCT_BP_QC_FOLDER" -owarp warp_template2fmri.nii.gz -owarpinv warp_fmri2template.nii.gz
-# Warp template and spinal levels (here we don't need the WM atlas)
-sct_warp_template -d fmri_crop_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0 -s 1
+# Warp template, including spinal levels (here we don't need the WM atlas)
+sct_warp_template -d fmri_crop_moco_mean.nii.gz -w warp_template2fmri.nii.gz -a 0
 # Note, once you have computed fMRI statistics in the subject's space, you can use
 # warp_fmri2template.nii.gz to bring the statistical maps on the template space, for group analysis.
 

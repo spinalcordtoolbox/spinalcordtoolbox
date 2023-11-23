@@ -28,11 +28,11 @@ from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext, Image
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
-from spinalcordtoolbox import __data_dir__
-from spinalcordtoolbox.utils import sct_progress_bar
+from spinalcordtoolbox.utils.sys import __sct_dir__, init_sct, sct_progress_bar, set_loglevel
+from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgumentParser,
+                                           display_open, parse_num_list)
+from spinalcordtoolbox.utils.sys import __data_dir__
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +69,9 @@ def get_parser():
             "length. The value is in the interval [0, 1). When it is 0, the ellipse becomes a circle.\n"
             "  - orientation: angle (in degrees) between the AP axis of the spinal cord and the AP axis of the "
             "image\n"
-            "  - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). If perfect ellipse, it should be one. This "
-            "metric is interesting for detecting non-convex shape (e.g., in case of strong compression)\n"
+            "  - solidity: CSA(spinal_cord) / CSA_convex(spinal_cord). The more ellipse-shaped the cord is (i.e. the "
+            "closer the perimeter of the cord is to being fully convex), the closer the solidity ratio will be to 1. "
+            "This metric is interesting for detecting concave regions (e.g., in case of strong compression).\n"
             "  - length: Length of the segmentation, computed by summing the slice thickness (corrected for the "
             "centerline angle at each slice) across the specified superior-inferior region.\n"
             "\n"
@@ -87,7 +88,12 @@ def get_parser():
             "Reference for '-pmj' and for '-normalize':\n"
             "Bédard S, Cohen-Adad J. Automatic measure and normalization of spinal cord cross-sectional area using "
             "the pontomedullary junction. Frontiers in Neuroimaging 2022.\n"
-            "doi.org/10.3389/fnimg.2022.1031253"
+            "doi.org/10.3389/fnimg.2022.1031253\n"
+            "\n"
+            "Reference for '-normalize-PAM50':\n"
+            "Valošek J, Bédard S, Keřkovský M, Rohan T, Cohen-Adad J. A database of the healthy human spinal cord "
+            "morphometry in the PAM50 template space. NeuroLibre Reproducible Preprints 2023; 17.\n"
+            "doi.org/10.55458/neurolibre.00017"
         )
     )
 

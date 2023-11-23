@@ -33,7 +33,7 @@ from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, r
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
                                            printv, display_viewer_syntax)
 from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc
-from spinalcordtoolbox import __data_dir__
+from spinalcordtoolbox.utils.sys import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
@@ -456,6 +456,21 @@ def main(argv: Sequence[str]):
     out.data = binarize(out.data, 0.5)
     out.save(path=ftmp_seg)
 
+    # Change orientation of input images to RPI
+    printv('\nChange orientation of input images to RPI...', verbose)
+
+    img_tmp_data = Image(ftmp_data).change_orientation("RPI")
+    ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
+    img_tmp_data.save(path=ftmp_data, mutable=True)
+
+    img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
+    ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
+    img_tmp_seg.save(path=ftmp_seg, mutable=True)
+
+    img_tmp_label = Image(ftmp_label).change_orientation("RPI")
+    ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
+    img_tmp_label.save(ftmp_label, mutable=True)
+
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
 
@@ -469,21 +484,6 @@ def main(argv: Sequence[str]):
         # with nearest neighbour can make them disappear.
         resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
         ftmp_label = add_suffix(ftmp_label, '_1mm')
-
-        # Change orientation of input images to RPI
-        printv('\nChange orientation of input images to RPI...', verbose)
-
-        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
-        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
-        img_tmp_data.save(path=ftmp_data, mutable=True)
-
-        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
-        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
-        img_tmp_seg.save(path=ftmp_seg, mutable=True)
-
-        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
-        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
-        img_tmp_label.save(ftmp_label, mutable=True)
 
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if level_alignment:
@@ -756,30 +756,20 @@ def main(argv: Sequence[str]):
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
     # register template->subject
-    elif ref == 'subject':
-
-        # Change orientation of input images to RPI
-        printv('\nChange orientation of input images to RPI...', verbose)
-
-        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
-        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
-        img_tmp_data.save(path=ftmp_data, mutable=True)
-
-        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
-        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
-        img_tmp_seg.save(path=ftmp_seg, mutable=True)
-
-        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
-        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
-        img_tmp_label.save(ftmp_label, mutable=True)
+    else:
+        assert ref == 'subject'  # ensured by add_argument('ref', ... choices=['template', 'subject'] , ...)
 
         # Remove unused label on template. Keep only label present in the input label image
         printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)
         sct_labels.remove_missing_labels(Image(ftmp_template_label), Image(ftmp_label)).save(path=ftmp_template_label)
 
-        # Add one label because at least 3 orthogonal labels are required to estimate an affine transformation.
-        add_orthogonal_label(ftmp_label)
-        add_orthogonal_label(ftmp_template_label)
+        # Add a dummy label, because at least 3 orthogonal labels are required to estimate an affine transformation.
+        # -> Pick a dummy label between [1, 127] that doesn't clash with the existing label values.
+        existing_label_vals = {coord.value for coord in img_tmp_label.getNonZeroCoordinates()}
+        positive_int8_vals = set(range(1, 128))
+        dummy_label = max(positive_int8_vals - existing_label_vals)  # Should be 127 in 99.99% of cases
+        add_orthogonal_label(ftmp_label, new_label_value=dummy_label)
+        add_orthogonal_label(ftmp_template_label, new_label_value=dummy_label)
 
         # Set the angle of the template orientation to 0 (source image)
         for key in list(paramregmulti.steps.keys()):

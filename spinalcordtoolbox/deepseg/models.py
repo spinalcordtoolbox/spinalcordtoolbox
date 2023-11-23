@@ -13,9 +13,8 @@ import logging
 import textwrap
 import shutil
 
-import spinalcordtoolbox as sct
 from spinalcordtoolbox import download
-from spinalcordtoolbox.utils import stylize
+from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__
 
 
 logger = logging.getLogger(__name__)
@@ -29,8 +28,8 @@ logger = logging.getLogger(__name__)
 MODELS = {
     "t2star_sc": {
         "url": [
-            "https://github.com/ivadomed/t2star_sc/releases/download/r20200622/r20200622_t2star_sc.zip",
-            "https://osf.io/v9hs8/download?version=5",
+            "https://github.com/ivadomed/t2star_sc/releases/download/r20231004/r20231004_t2star_sc.zip",
+            "https://osf.io/8nk5w/download",
         ],
         "description": "Cord segmentation model on T2*-weighted contrast.",
         "contrasts": ["t2star"],
@@ -122,7 +121,7 @@ MODELS = {
     },
     "model_seg_epfl_t2w_lumbar_sc": {
         "url": [
-            "https://github.com/ivadomed/lumbar_seg_EPFL/releases/download/r20220411/model_seg_epfl_t2w_lumbar_sc.zip"
+            "https://github.com/ivadomed/lumbar_seg_EPFL/releases/download/r20231004/model_seg_epfl_t2w_lumbar_sc.zip"
         ],
         "description": "Lumbar SC segmentation on T2w contrast with 3D UNet",
         "contrasts": ["t2"],
@@ -263,7 +262,7 @@ def folder(name_model):
     :param name: str: Name of model.
     :return: str: Folder to model
     """
-    return os.path.join(sct.__deepseg_dir__, name_model)
+    return os.path.join(__deepseg_dir__, name_model)
 
 
 def install_model(name_model):
@@ -281,7 +280,8 @@ def install_model(name_model):
         download.install_data(model_urls, folder(name_model))
     # Dict of lists, with each list corresponding to a different model seed for ensembling
     else:
-        assert isinstance(url_field, dict), "Invalid url field in MODELS"
+        if not isinstance(url_field, dict):
+            raise ValueError("Invalid url field in MODELS")
         for seed_name, model_urls in url_field.items():
             logger.info(f"\nInstalling '{seed_name}'...")
             download.install_data(model_urls, folder(os.path.join(name_model, seed_name)), keep=True)

@@ -8,7 +8,7 @@ import nibabel
 import csv
 
 from spinalcordtoolbox.scripts import sct_process_segmentation
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
 

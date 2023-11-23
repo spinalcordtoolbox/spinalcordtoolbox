@@ -8,21 +8,23 @@
 import sys
 from typing import Sequence
 
-from spinalcordtoolbox.download import install_named_dataset, DATASET_DICT
+from spinalcordtoolbox.download import install_named_dataset, DATASET_DICT, list_datasets
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 
 def get_parser():
     parser = SCTArgumentParser(
-        description="Download binaries from the web."
+        description="Download binaries from the web.",
+        epilog=list_datasets(),
     )
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")
     mandatory.add_argument(
         '-d',
         required=True,
         choices=sorted(list(DATASET_DICT.keys()), key=str.casefold),
-        help="Name of the dataset."
+        metavar="<dataset>",
+        help="Name of the dataset, as listed in the table below."
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(

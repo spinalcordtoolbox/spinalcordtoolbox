@@ -55,21 +55,24 @@ def get_parser():
                         'file are the same as the command line arguments, except all dashes (-) are replaced with '
                         'underscores (_). Using command line flags can be used to override arguments provided in '
                         'the configuration file, but this is discouraged. Please note that while quotes are optional '
-                        'for strings in YAML omitting them may cause parse errors.\n' + dedent(
+                        'for strings in YAML omitting them may cause parse errors.\n'
+                        'Note that for the \'exclude_list\' (or \'include_list\') argument you can exclude/include '
+                        'entire subjects or individual sessions; see examples below.\n' + dedent(
                             """
                             Example YAML configuration:
                             path_data   : "~/sct_data"
                             path_output : "~/pipeline_results"
                             script      : "nature_paper_analysis.sh"
-                            jobs        : -1\n
+                            jobs        : -1
+                            exclude_list : ["sub-01/ses-01", "sub-02", "ses-03"]      # this will exclude ses-01 for sub-01, all sessions for sub-02 and ses-03 for all subjects\n
                             Example JSON configuration:
                             {
                             "path_data"   : "~/sct_data",
                             "path_output" : "~/pipeline_results",
                             "script"      : "nature_paper_analysis.sh",
-                            "jobs"        : -1
-                            }\n
-                            """))
+                            "jobs"        : -1,
+                            "exclude_list" : ["sub-01/ses-01", "sub-02", "ses-03"]
+                            }"""))
     parser.add_argument('-jobs', type=int, default=1,
                         help='The number of jobs to run in parallel. Either an integer greater than or equal to one '
                         'specifying the number of cores, 0 or a negative integer specifying number of cores minus '
@@ -316,7 +319,8 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
                              stdout=open(log_file, 'w'),
                              stderr=subprocess.STDOUT)
 
-        assert res.returncode == 0, 'Processing of subject {} failed'.format(subject)
+        if res.returncode != 0:
+            raise ValueError(f"Processing of subject {subject} failed")
     except Exception as e:
         process_completed = 'res' in locals()
         res = res if process_completed else SimpleNamespace(returncode=-1)

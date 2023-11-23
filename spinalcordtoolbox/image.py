@@ -26,7 +26,8 @@ import transforms3d.affines as affines
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import extract_fname, mv, run_proc, tmp_create
+from spinalcordtoolbox.utils.fs import extract_fname, mv, tmp_create
+from spinalcordtoolbox.utils.sys import run_proc
 
 
 logger = logging.getLogger(__name__)
@@ -272,8 +273,6 @@ class Image(object):
 
         if absolutepath is not None:
             self._path = os.path.abspath(absolutepath)
-
-        self.verbose = verbose
 
         # Case 1: load an image from file
         if isinstance(param, str):
@@ -822,11 +821,12 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     dice = 0.0  # default value of dice is 0
 
     # check if images are in the same coordinate system
-    assert image1.data.shape == image2.data.shape, (
-        f"\n\nERROR: the data ({image1.absolutepath} and {image2.absolutepath}) don't have the same size."
-        f"\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  "
-        f"to put the input images in the same space"
-    )
+    if image1.data.shape != image2.data.shape:
+        raise ValueError(
+            f"\n\nERROR: the data ({image1.absolutepath} and {image2.absolutepath}) don't have the same size."
+            f"\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  "
+            f"to put the input images in the same space"
+        )
 
     # if necessary, change orientation of images to RPI and compute segmentation boundaries
     if mode == '2d-slices' or (mode == '3d' and zboundaries):
@@ -1817,7 +1817,8 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
     im_concat = concat_data(im_concat_list, dim=2)     # Concatenate the input images and spacer images together
 
     # We assume that the [x,y] dimensions match for both of the two QC images
-    assert im_concat.data.shape[0:2] == im_out.data.shape[0:2]
+    if im_concat.data.shape[0:2] != im_out.data.shape[0:2]:
+        raise ValueError(f"Mismatched image dimensions: {im_concat.data.shape[0:2]} != {im_out.data.shape[0:2]}")
 
     # However, we can't assume that the [z] dimensions match, because concatenating and stitching produce very
     # different results (lengthwise). So, we pad the smaller image to make the dimensions match.

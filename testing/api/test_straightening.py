@@ -1,7 +1,7 @@
 # pytest unit tests for spinalcordtoolbox.straightening
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 VERBOSE = 0  # Set to 2 to save images, 0 otherwise
 

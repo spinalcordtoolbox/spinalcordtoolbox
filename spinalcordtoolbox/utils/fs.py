@@ -54,6 +54,15 @@ class Tee:
         self.fd1.flush()
         self.fd2.flush()
 
+    def isatty(self):
+        # This method is needed to ensure that `printv` correctly applies color formatting when sys.stdout==Tee().
+        # fixme: Here we return 'True' if either file descriptor is a tty, to ensure that color formatting is added to
+        #        stdout/stderr if used. This has the unfortunate side effect of printing color codes to actual text
+        #        files, so we may want to rethink this solution. But, I'm not sure we can have it both ways without
+        #        modifying the `write()` method of Tee.
+        #        (See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4287)
+        return any((self.fd1.isatty(), self.fd2.isatty()))
+
 
 def copy_helper(src, dst, verbose=1):
     """Copy src to dst, almost like shutil.copy

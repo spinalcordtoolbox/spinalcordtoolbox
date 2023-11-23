@@ -12,12 +12,13 @@ import numpy as np
 import logging
 from typing import Sequence
 import pandas as pd
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, set_loglevel
-from spinalcordtoolbox.utils.fs import get_absolute_path, extract_fname, printv
+from spinalcordtoolbox.utils.fs import extract_fname, get_absolute_path
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.types import Centerline
-from spinalcordtoolbox import __data_dir__
+from spinalcordtoolbox.utils.sys import __data_dir__
 from spinalcordtoolbox.scripts import sct_process_segmentation
 
 
@@ -46,9 +47,16 @@ def get_parser():
                     'from healthy control subjects. This database uses the PAM50 template as an anatomical reference '
                     'system.\n'
                     '\n'
-                    'Reference: Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic '
+                    'Reference:\n'
+                    'Miyanji F, Furlan JC, Aarabi B, Arnold PM, Fehlings MG. Acute cervical traumatic '
                     'spinal cord injury: MR imaging findings correlated with neurologic outcome--prospective study '
-                    'with 100 consecutive patients. Radiology 2007;243(3):820-827.'
+                    'with 100 consecutive patients. Radiology 2007;243(3):820-827.\n'
+                    'doi.org/10.1148/radiol.2433060583\n'
+                    '\n'
+                    'Reference for \'-normalize-hc\':\n'
+                    'Valošek J, Bédard S, Keřkovský M, Rohan T, Cohen-Adad J. A database of the healthy human spinal '
+                    'cord morphometry in the PAM50 template space. NeuroLibre Reproducible Preprints 2023; 17.\n'
+                    'doi.org/10.55458/neurolibre.00017'
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")

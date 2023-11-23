@@ -1,2 +1,2 @@
 Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,DistancePMJ,Label,Size [vox],MAP(),STD()
-"2023-04-25 10:08:51","git-jn/1804-change-batch-processing-mt0-mt1-to-use-slicereg-4a9892f9a141d4b4a6d1452d63912a0488c3156c","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",980.9417095828503,54.388569575185116,4.841567127321431
+"2023-11-22 14:55:41","git-jn/4299-reorient-before-resampling-88798c51ca10952d25f289d8c8448634dfacbcd1","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",984.9386570955045,54.3539623020136,4.908823409230993

@@ -25,7 +25,8 @@ from spinalcordtoolbox.math import laplacian
 from spinalcordtoolbox.registration.landmarks import register_landmarks
 from spinalcordtoolbox.registration import core
 from spinalcordtoolbox.scripts import sct_resample
-from spinalcordtoolbox.utils import sct_progress_bar, copy_helper, run_proc, tmp_create, sct_dir_local_path
+from spinalcordtoolbox.utils.fs import copy_helper, tmp_create
+from spinalcordtoolbox.utils.sys import run_proc, sct_dir_local_path, sct_progress_bar
 
 from spinalcordtoolbox.scripts import sct_image
 
@@ -862,8 +863,8 @@ def register2d_centermassrot(fname_src, fname_dest, paramreg=None, fname_warp='w
         # display rotations
         if verbose == 2 and not angle_src_dest[iz] == 0 and not rot_method == 'hog':
             # compute new coordinates
-            coord_src_rot = coord_src[iz] * R
-            coord_dest_rot = coord_dest[iz] * R.T
+            coord_src_rot = coord_src[iz] @ R
+            coord_dest_rot = coord_dest[iz] @ R.T
             # generate figure
             plt.figure(figsize=(9, 9))
             # plt.ion()  # enables interactive mode (allows keyboard interruption)

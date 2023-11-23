@@ -7,7 +7,7 @@ import pytest
 
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.types import Coordinate
 from .test_image import fake_3dimage, fake_3dimage2
 
@@ -151,8 +151,8 @@ def test_compute_mse_label_warning(caplog):
 
     sct_labels.compute_mean_squared_error(src, ref)
     # Cannot use f-string in assert, I needed to create a variable before
-    string_form_inp = f'Label mismatch: Labels [{src.data[0,0,0]}] present in input image but missing from reference image.'
-    string_form_ref = f'Label mismatch: Labels [{ref.data[0,0,0]}] present in reference image but missing from input image.'
+    string_form_inp = f'Label mismatch: Labels [{src.data[0, 0, 0]}] present in input image but missing from reference image.'
+    string_form_ref = f'Label mismatch: Labels [{ref.data[0, 0, 0]}] present in reference image but missing from input image.'
     assert string_form_inp in caplog.text
     assert string_form_ref in caplog.text
 

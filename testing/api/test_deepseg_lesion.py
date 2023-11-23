@@ -7,7 +7,7 @@ import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.deepseg_.lesion as deepseg_lesion
-from spinalcordtoolbox.utils import __sct_dir__
+from spinalcordtoolbox.utils.sys import __sct_dir__
 
 
 def test_model_file_exists():

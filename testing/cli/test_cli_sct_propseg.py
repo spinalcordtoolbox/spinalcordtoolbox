@@ -6,7 +6,7 @@ import pytest
 import logging
 
 from spinalcordtoolbox.image import Image, compute_dice
-from spinalcordtoolbox.utils import run_proc, sct_test_path
+from spinalcordtoolbox.utils.sys import run_proc, sct_test_path
 from spinalcordtoolbox.scripts import sct_propseg
 
 logger = logging.getLogger(__name__)
