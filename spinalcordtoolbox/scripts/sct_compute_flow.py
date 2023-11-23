@@ -6,20 +6,18 @@
 # License: see the file LICENSE
 
 import sys
-import os
-import json
 from typing import Sequence
 
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
-from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
-from spinalcordtoolbox.image import Image, splitext
+from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.qmri import flow
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 
 def get_parser():
     parser = SCTArgumentParser(
         description="""
-        Compute flow from velocity encoding (VENC) sequence, based on the MRI phase image. 
+        Compute flow from velocity encoding (VENC) sequence, based on the MRI phase image.
         More details in: https://mriquestions.com/what-is-venc.html"""
     )
 

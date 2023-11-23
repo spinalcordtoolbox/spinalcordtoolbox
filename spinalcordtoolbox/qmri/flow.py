@@ -7,10 +7,10 @@ License: see the file LICENSE
 """
 
 import logging
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
-
 
 
 def calculate_velocity(data_phase, venc):
