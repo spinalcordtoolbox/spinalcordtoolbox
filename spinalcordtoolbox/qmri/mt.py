@@ -8,6 +8,7 @@ License: see the file LICENSE
 """
 
 import logging
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -103,6 +104,10 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
         logger.info("Compute T1 map...")
         r1map = 0.5 * np.true_divide((fa_t1_rad / tr_t1) * nii_t1.data - (fa_pd_rad / tr_pd) * nii_pd.data,
                                      nii_pd.data / fa_pd_rad - nii_t1.data / fa_t1_rad)
+        # apply B1 correction if available
+        if nii_b1map is not None:
+            b1_squared = np.multiply(nii_b1map.data, nii_b1map.data)
+            r1map = np.multiply(r1map, b1_squared)
         # remove nans and clip unrelistic values
         r1map = np.nan_to_num(r1map)
         ind_unrealistic = np.where(r1map < r1_threshold)
@@ -122,6 +127,9 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     a = (tr_pd * fa_t1_rad / fa_pd_rad - tr_t1 * fa_pd_rad / fa_t1_rad) * \
         np.true_divide(np.multiply(nii_pd.data, nii_t1.data, dtype=float),
                        tr_pd * fa_t1_rad * nii_t1.data - tr_t1 * fa_pd_rad * nii_pd.data)
+    # apply B1 correction if available
+    if nii_b1map is not None:
+        a = np.divide(a, nii_b1map.data)
 
     # Compute MTsat
     logger.info("Compute MTsat...")
