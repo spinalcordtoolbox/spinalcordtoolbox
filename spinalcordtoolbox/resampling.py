@@ -56,6 +56,14 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
     else:
         raise TypeError(f'Invalid image type: {type(image)}')
 
+    # convert to floating point if we're doing arithmetic interpolation
+    if interpolation != 'nn' and img.get_data_dtype().kind in 'biu':
+        original_dtype = img.get_data_dtype()
+        img = nib.nifti1.Nifti1Image(img.get_fdata(), img.header.get_best_affine(), img.header)
+        img.set_data_dtype(img.dataobj.dtype)
+        logger.warning("Converting image from type '%s' to type '%s' for %s interpolation",
+                       original_dtype, img.get_data_dtype(), interpolation)
+
     if image_dest is None:
         # Get dimensions of data
         p = img.header.get_zooms()

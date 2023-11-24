@@ -13,7 +13,7 @@ from spinalcordtoolbox import resampling
 @pytest.fixture(scope="session")
 def fake_3dimage_nib():
     """
-    :return: an empty 3-d nibabel Image
+    :return: an almost empty 3-d nibabel Image
     """
     nx, ny, nz = 9, 9, 9  # image dimension
     data = np.zeros((nx, ny, nz), dtype=np.int8)
@@ -27,7 +27,7 @@ def fake_3dimage_nib():
 @pytest.fixture(scope="session")
 def fake_3dimage_nib_big():
     """
-    :return: an empty 3-d nibabel Image
+    :return: an almost empty 3-d nibabel Image
     """
     nx, ny, nz = 29, 39, 19  # image dimension
     data = np.zeros((nx, ny, nz), dtype=np.int8)
@@ -41,7 +41,7 @@ def fake_3dimage_nib_big():
 @pytest.fixture(scope="session")
 def fake_4dimage_nib():
     """
-    :return: an empty 4-d nibabel Image
+    :return: an almost empty 4-d nibabel Image
     """
     nx, ny, nz, nt = 9, 9, 9, 3  # image dimension
     data = np.zeros((nx, ny, nz, nt), dtype=np.int8)
@@ -76,3 +76,18 @@ def test_nib_resample_image_4d(fake_4dimage_nib):
     assert np.asanyarray(img_r.dataobj)[8, 8, 4, 0] == 1.0  # make sure there is no displacement in world coordinate system
     assert np.asanyarray(img_r.dataobj)[8, 8, 4, 1] == 0.0
     assert img_r.header.get_zooms() == (0.5, 0.5, 1.0, 1.0)
+
+
+def test_nib_resample_image_convert_to_float(fake_3dimage_nib, caplog):
+    """Test that arithmetic resampling of an integer image gets converted to floating point first."""
+    assert fake_3dimage_nib.dataobj.dtype.kind == 'i', "test input should have an integer dtype"
+    img_r = resampling.resample_nib(fake_3dimage_nib, new_size=[2, 1, 1], new_size_type='factor', interpolation='linear')
+    assert img_r.dataobj.dtype.kind == 'f', "test output should have a floating point dtype"
+    assert "Converting image" in caplog.text, "there should be a type conversion warning"
+
+
+def test_nib_resample_image_no_convert_to_float(fake_3dimage_nib):
+    """Test that a nearest neighbour resampling of an integer image stays integer."""
+    assert fake_3dimage_nib.dataobj.dtype.kind == 'i', "test input should have an integer dtype"
+    img_r = resampling.resample_nib(fake_3dimage_nib, new_size=[2, 1, 1], new_size_type='factor', interpolation='nn')
+    assert img_r.dataobj.dtype == fake_3dimage_nib.dataobj.dtype, "nearest neighbour resampling should not have changed the dtype"
