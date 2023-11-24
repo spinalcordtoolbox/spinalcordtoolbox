@@ -25,6 +25,7 @@ The following studies have used SCT:
 
 2023
 ----
+-  Lawless *et al.* `Detecting macromolecular differences of the CSF in low disability multiple sclerosis using quantitative MT MRI at 3T <https://doi.org/10.1177/20552173231211396>`_, **Mult. scler. j., exp. transl. clin.** 2023
 -  Filimonova *et al.* `Application of the T1w/T2w mapping technique for spinal cord assessment in patients with degenerative cervical myelopathy <https://doi.org/10.1038/s41393-023-00941-y>`_, **Spinal Cord** 2023
 -  Khamaysa *et al.* `Quantitative brainstem and spinal MRI in amyotrophic lateral sclerosis: implications for predicting noninvasive ventilation needs <https://doi.org/10.1007/s00415-023-12045-x>`_, **J. Neurol.** 2023
 -  Milekovic *et al.* `A spinal cord neuroprosthesis for locomotor deficits due to Parkinson’s disease <https://doi.org/10.1038/s41591-023-02584-1>`_, **Nat. Med.** 2023
