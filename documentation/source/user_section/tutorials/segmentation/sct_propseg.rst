@@ -22,3 +22,4 @@ The first spinal cord segmentation tool that SCT offers is called ``sct_propseg`
 :3. Surface refinement:
    Finally, the surface of the mesh is refined using small adjustments.
 
+``sct_propseg`` was developed in 2014. In the years following, however, SCT has added a deep learning-based approach called ``sct_deepseg_sc``.
