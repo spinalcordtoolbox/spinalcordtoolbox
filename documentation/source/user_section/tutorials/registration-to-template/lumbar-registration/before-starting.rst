@@ -3,6 +3,8 @@
 Before starting this tutorial
 #############################
 
+This lumbar registration tutorial is separate from the previous registration tutorials, meaning it can be run standalone.
+
 #. Make sure that you are working with a copy of SCT 6.1 or higher, and have an up-to-date copy of the PAM50 template:
 
    .. code:: sh

@@ -1,6 +1,10 @@
 Before starting this tutorial
 #############################
 
+This tutorial is intended to be run following the previous :ref:`spinalcord-segmentation` and :ref:`vertebral-labeling` tutorials, as shape analysis relies on having a spinal cord segmentation mask as well as a vertebral level file.
+
+You can either run those tutorials first, or download the necessary files below:
+
 #. Make sure that you have the following files in your working directory:
 
    * ``single_subject/data/t2/t2_seg.nii.gz``: A 3D binary mask for the spinal cord of a T2 anatomical image.
