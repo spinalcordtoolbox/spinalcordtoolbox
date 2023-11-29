@@ -14,16 +14,16 @@ We provide the following hands-on tutorials for SCT's command-line tools.
 
 #. :doc:`Segmentation <tutorials/segmentation>`
 #. :doc:`Vertebral labeling <tutorials/vertebral-labeling>`
+#. :doc:`Shape analysis <tutorials/shape-analysis>`
+
+   * :doc:`tutorials/shape-analysis/compute-csa-and-other-shape-metrics`
+   * :doc:`tutorials/shape-analysis/normalize-morphometrics-compression`
+
 #. :doc:`Registration to template <tutorials/registration-to-template>`
 
    * :doc:`tutorials/registration-to-template/template-registration`
    * :doc:`tutorials/registration-to-template/registering-additional-contrasts`
    * :doc:`tutorials/registration-to-template/lumbar-registration`
-
-#. :doc:`Shape analysis <tutorials/shape-analysis>`
-
-   * :doc:`tutorials/shape-analysis/compute-csa-and-other-shape-metrics`
-   * :doc:`tutorials/shape-analysis/normalize-morphometrics-compression`
 
 #. :doc:`Multimodal registration <tutorials/multimodal-registration>`
 
@@ -68,8 +68,8 @@ If you would prefer to learn how to use SCT in a guided workshop setting, we pro
 
    Segmentation <tutorials/segmentation>
    Vertebral labeling <tutorials/vertebral-labeling>
-   tutorials/registration-to-template
    tutorials/shape-analysis
+   tutorials/registration-to-template
    tutorials/multimodal-registration
    tutorials/gray-matter-segmentation
    tutorials/atlas-based-analysis
