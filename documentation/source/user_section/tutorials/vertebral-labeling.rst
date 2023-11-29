@@ -11,6 +11,7 @@ Vertebral labeling for anatomical images
    :maxdepth: 1
 
    vertebral-labeling/before-starting
+   vertebral-labeling/types-of-vertebral-labels
    vertebral-labeling/labeling-conventions
    vertebral-labeling/sct_label_vertebrae
    vertebral-labeling/applying-the-labeling-algorithm

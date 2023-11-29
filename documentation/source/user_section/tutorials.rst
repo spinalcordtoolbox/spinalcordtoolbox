@@ -13,9 +13,9 @@ Written tutorials
 We provide the following hands-on tutorials for SCT's command-line tools.
 
 #. :doc:`Segmentation <tutorials/segmentation>`
+#. :doc:`Vertebral labeling <tutorials/vertebral-labeling>`
 #. :doc:`Registration to template <tutorials/registration-to-template>`
 
-   * :doc:`tutorials/registration-to-template/vertebral-labeling`
    * :doc:`tutorials/registration-to-template/template-registration`
    * :doc:`tutorials/registration-to-template/registering-additional-contrasts`
    * :doc:`tutorials/registration-to-template/lumbar-registration`
@@ -67,6 +67,7 @@ If you would prefer to learn how to use SCT in a guided workshop setting, we pro
    :maxdepth: 2
 
    Segmentation <tutorials/segmentation>
+   Vertebral labeling <tutorials/vertebral-labeling>
    tutorials/registration-to-template
    tutorials/shape-analysis
    tutorials/multimodal-registration
