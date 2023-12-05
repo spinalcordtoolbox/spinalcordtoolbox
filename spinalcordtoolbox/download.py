@@ -5,14 +5,15 @@ Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
 
+import cgi
+import logging
 import os
 import shutil
-import logging
-import cgi
+import tarfile
 import tempfile
 import urllib.parse
-import tarfile
 import zipfile
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
@@ -138,6 +139,13 @@ DATASET_DICT = {
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50_normalized_metrics"),
         "download_type": "Templates",
+    },
+    "softseg_models": {
+        "mirrors": [
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.0/model_2023-09-18.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "softseg_models"),
+        "download_type": "Models",
     },
 }
 

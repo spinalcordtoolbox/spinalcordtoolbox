@@ -52,3 +52,16 @@ wquantiles
 # XlxsWriter is needed to write `.xlsx` files, since pandas removed support for the `xlwt` engine
 # Source: https://github.com/pandas-dev/pandas/pull/49296
 xlsxwriter
+# Minimum necessary dependencies for MONAI-based models
+# See: https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/blob/main/monai/requirements_inference_cpu.txt
+dynamic_network_architectures
+monai[nibabel]
+# Note that the above requirements file also contains additional dependencies:
+#   joblib==1.3.0
+#   loguru==0.7.0
+#   scipy==1.11.2
+#   numpy==1.24.4
+#   torch==2.0.0
+#   --extra-index-url https://download.pytorch.org/whl/cpu
+# However, I'm not fully convinced that it's necessary to explicitly specify/pin these dependencies. So,
+# I'm starting out by simply adding monai and dynamic_network_architectures and nothing else.
