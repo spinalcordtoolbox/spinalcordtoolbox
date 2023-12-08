@@ -31,6 +31,17 @@ $(document).ready(function(){
   var qc_details;
   var current_qc;
 
+  // Load and set QC state from local storage
+  sct_data.forEach((item, index) => {
+    const savedQcState = localStorage.getItem('qcState_' + index);
+    if (savedQcState) {
+      item.qc = savedQcState;
+    }
+  });
+  // Update table display with updated sct_data
+  $("#table").bootstrapTable({data: sct_data});
+  $("#table").bootstrapTable("load", sct_data);
+
   function copyrightYear(){
     var d = new Date();
     var y = d.getFullYear();
@@ -155,6 +166,7 @@ $(document).ready(function(){
             ? heavy_excl_mark
             : heavy_check_mark
       );
+      localStorage.setItem('qcState_' + index, sct_data[index].qc);
       set_download_yml_btn_state(heavy_excl_mark);
       set_download_yml_btn_state(heavy_ballot_x);
       $("#table").bootstrapTable({data: sct_data});
