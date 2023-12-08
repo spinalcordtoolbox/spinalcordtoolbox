@@ -147,6 +147,20 @@ DATASET_DICT = {
         "default_location": os.path.join(__sct_dir__, "data", "softseg_models"),
         "download_type": "Models",
     },
+    "sci_models": {
+        "mirrors": [
+            "https://github.com/joshuacwnewton/model-spinal-rootlets/releases/download/r20230815/model-spinal-rootlets_r20230815.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "sci_models"),
+        "download_type": "Models",
+    },
+    "rootlet_models": {
+        "mirrors": [
+            "https://github.com/joshuacwnewton/model-spinal-rootlets/releases/download/r20230815/model-spinal-rootlets_r20230815.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "rootlet_models"),
+        "download_type": "Models",
+    },
 }
 
 

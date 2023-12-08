@@ -52,6 +52,8 @@ wquantiles
 # XlxsWriter is needed to write `.xlsx` files, since pandas removed support for the `xlwt` engine
 # Source: https://github.com/pandas-dev/pandas/pull/49296
 xlsxwriter
+# Minimum necessary dependencies for nnUNet-based models
+nnunetv2
 # Minimum necessary dependencies for MONAI-based models
 # See: https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/blob/main/monai/requirements_inference_cpu.txt
 dynamic_network_architectures
