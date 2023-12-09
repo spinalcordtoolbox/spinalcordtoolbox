@@ -33,7 +33,8 @@ $(document).ready(function(){
 
   // Load and set QC state from local storage
   sct_data.forEach((item, index) => {
-    const savedQcState = localStorage.getItem('qcState_' + index);
+    var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
+    const savedQcState = localStorage.getItem('qcState_' + uniqueId);
     if (savedQcState) {
       item.qc = savedQcState;
     }
@@ -152,6 +153,7 @@ $(document).ready(function(){
     }
     // f key (mark "failing" subjects using check, X, !)
     if (evt.which == 70) {
+      // console.log()
       var cols = getActiveColumns();
       var vals = obj[0].innerText.split("\t");
       let rel_index = obj[obj.length - 1].getAttribute("data-index");
@@ -166,7 +168,15 @@ $(document).ready(function(){
             ? heavy_excl_mark
             : heavy_check_mark
       );
-      localStorage.setItem('qcState_' + index, sct_data[index].qc);
+      // localStorage.setItem('qcState_' + index, sct_data[index].qc);
+      var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
+      console.log("uniqueId:", uniqueId);
+      localStorage.setItem('qcState_' + uniqueId, sct_data[index].qc);
+
+      // const currentState = JSON.parse(localStorage.getItem(filename));
+      // currentState[row_id] = checkedState;
+      // localStorage.setItem(filename, JSON.stringify(currentState));
+
       set_download_yml_btn_state(heavy_excl_mark);
       set_download_yml_btn_state(heavy_ballot_x);
       $("#table").bootstrapTable({data: sct_data});
