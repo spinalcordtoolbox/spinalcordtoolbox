@@ -267,18 +267,14 @@ function containsNonLatinCodepoints(s) {
 }
 
 function loadAndSetQcStates(event) {
-  console.log("Upload button clicked")
   var file = event.target.files[0];
   var reader = new FileReader();
   reader.onload = function(e) {
       var qcFlags = JSON.parse(e.target.result);
       for (var key in qcFlags) {
-          console.log("Writing to local storage:", key, qcFlags[key]);
           if (qcFlags.hasOwnProperty(key)) {
               localStorage.setItem(key, qcFlags[key]);
-              console.log("Local storage item: key=", key, "qcFlag=", localStorage.getItem(key));
           }
-          console.log("Updated sct_data:", sct_data);
           // Load and set QC state from local storage
           // TODO: create a function for this code block
           sct_data.forEach((item, index) => {
@@ -296,26 +292,3 @@ function loadAndSetQcStates(event) {
   };
   reader.readAsText(file);
 }
-
-// TODO: use the function below instead of defining the download button in the html
-// downloadBtn.onclick = function() {
-//   console.log("Download button clicked")
-//   var qcFlags = {};
-//   // Fetch all qc flags from local storage
-//   sct_data.forEach(function(item, index) {
-//     var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
-//     var state = localStorage.getItem('qcState_' + uniqueId);
-//     if (state) {
-//       qcFlags[uniqueId] = state;
-//     }
-//   });
-  
-//   // Create a blob and trigger a download
-//   var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(qcFlags));
-//   var downloadAnchorNode = document.createElement('a');
-//   downloadAnchorNode.setAttribute("href", dataStr);
-//   downloadAnchorNode.setAttribute("download", "qc_flags.json");
-//   document.body.appendChild(downloadAnchorNode);
-//   downloadAnchorNode.click();
-//   downloadAnchorNode.remove();
-// };
