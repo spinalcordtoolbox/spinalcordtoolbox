@@ -343,7 +343,20 @@
         fileInput.id = "file_input";
         fileInput.style.display = "none";
         fileInput.onchange = function(event) {
-            // Your file reading and uploading logic here
+            console.log("Upload button clicked")
+            var file = event.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var qcFlags = JSON.parse(e.target.result);
+                for (var key in qcFlags) {
+                    if (qcFlags.hasOwnProperty(key)) {
+                        localStorage.setItem(key, qcFlags[key]);
+                        console.log("Updated local storage:", key, localStorage.getItem(key));
+                    }
+                }
+                // Code to refresh the page state after upload, if necessary
+            };
+            reader.readAsText(file);
         };
         document.body.appendChild(fileInput);
 

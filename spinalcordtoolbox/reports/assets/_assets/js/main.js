@@ -266,24 +266,8 @@ function containsNonLatinCodepoints(s) {
     return /[^\u0000-\u00ff]/.test(s);
 }
 
-// document.getElementById('download_qc_flags').addEventListener('click', function() {
-//   var qcFlags = {};
-//   for (var i = 0; i < localStorage.length; i++) {
-//     var key = localStorage.key(i);
-//     if (key.startsWith('qcState_')) {
-//       qcFlags[key] = localStorage.getItem(key);
-//     }
-//   }
-//   var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(qcFlags));
-//   var downloadAnchorNode = document.createElement('a');
-//   downloadAnchorNode.setAttribute("href", dataStr);
-//   downloadAnchorNode.setAttribute("download", "qc_flags.json");
-//   document.body.appendChild(downloadAnchorNode); // required for firefox
-//   downloadAnchorNode.click();
-//   downloadAnchorNode.remove();
-// });
-
 document.getElementById('file_input').addEventListener('change', function(event) {
+  console.log("Upload button clicked")
   var file = event.target.files[0];
   var reader = new FileReader();
   reader.onload = function(e) {
