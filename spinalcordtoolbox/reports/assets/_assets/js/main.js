@@ -280,6 +280,7 @@ function loadAndSetQcStates(event) {
           }
           console.log("Updated sct_data:", sct_data);
           // Load and set QC state from local storage
+          // TODO: create a function for this code block
           sct_data.forEach((item, index) => {
               var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
               const savedQcState = localStorage.getItem(uniqueId);
@@ -290,6 +291,7 @@ function loadAndSetQcStates(event) {
           // Update table display with updated sct_data
           $("#table").bootstrapTable({data: sct_data});
           $("#table").bootstrapTable("load", sct_data);
+          hideColumns();
       }
   };
   reader.readAsText(file);
