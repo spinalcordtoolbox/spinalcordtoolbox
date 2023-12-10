@@ -265,3 +265,58 @@ function set_download_yml_btn_state(marker) {
 function containsNonLatinCodepoints(s) {
     return /[^\u0000-\u00ff]/.test(s);
 }
+
+// document.getElementById('download_qc_flags').addEventListener('click', function() {
+//   var qcFlags = {};
+//   for (var i = 0; i < localStorage.length; i++) {
+//     var key = localStorage.key(i);
+//     if (key.startsWith('qcState_')) {
+//       qcFlags[key] = localStorage.getItem(key);
+//     }
+//   }
+//   var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(qcFlags));
+//   var downloadAnchorNode = document.createElement('a');
+//   downloadAnchorNode.setAttribute("href", dataStr);
+//   downloadAnchorNode.setAttribute("download", "qc_flags.json");
+//   document.body.appendChild(downloadAnchorNode); // required for firefox
+//   downloadAnchorNode.click();
+//   downloadAnchorNode.remove();
+// });
+
+document.getElementById('file_input').addEventListener('change', function(event) {
+  var file = event.target.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var qcFlags = JSON.parse(e.target.result);
+    for (var key in qcFlags) {
+      if (qcFlags.hasOwnProperty(key) && key.startsWith('qcState_')) {
+        localStorage.setItem(key, qcFlags[key]);
+      }
+    }
+    // Code to refresh the page state after upload, if necessary
+  };
+  reader.readAsText(file);
+});
+
+// TODO: use the function below instead of defining the download button in the html
+// downloadBtn.onclick = function() {
+//   console.log("Download button clicked")
+//   var qcFlags = {};
+//   // Fetch all qc flags from local storage
+//   sct_data.forEach(function(item, index) {
+//     var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
+//     var state = localStorage.getItem('qcState_' + uniqueId);
+//     if (state) {
+//       qcFlags[uniqueId] = state;
+//     }
+//   });
+  
+//   // Create a blob and trigger a download
+//   var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(qcFlags));
+//   var downloadAnchorNode = document.createElement('a');
+//   downloadAnchorNode.setAttribute("href", dataStr);
+//   downloadAnchorNode.setAttribute("download", "qc_flags.json");
+//   document.body.appendChild(downloadAnchorNode);
+//   downloadAnchorNode.click();
+//   downloadAnchorNode.remove();
+// };

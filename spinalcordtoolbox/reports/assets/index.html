@@ -144,7 +144,6 @@
           </div>
       </div>
   </div>
-
 </body>
 
 <!-- Latest compiled and minified JavaScript -->
@@ -295,7 +294,59 @@
         btn2.innerText="Download QC Artifacts";
         b.appendChild(btn1);
         b.appendChild(btn2);
-        
+
+        // Create the download button
+        var downloadBtn = document.createElement("button");
+        downloadBtn.type = "button";
+        downloadBtn.classList = "btn btn-default";
+        downloadBtn.id = "download_qc_flags";
+        downloadBtn.innerText = "Download QC Flags";
+        downloadBtn.onclick = function() {
+            console.log("Download button clicked")
+            var qcFlags = {};
+            // Fetch all qc flags from local storage
+            sct_data.forEach(function(item, index) {
+                var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
+                var state = localStorage.getItem('qcState_' + uniqueId);
+                if (state) {
+                qcFlags[uniqueId] = state;
+                }
+            });
+            // Create a blob and trigger a download
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(qcFlags));
+            var downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "qc_flags.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        };
+        // Append it to the container where your other buttons are
+        b.appendChild(downloadBtn);
+
+        // Create the upload button
+        var uploadBtn = document.createElement("button");
+        uploadBtn.type = "button";
+        uploadBtn.classList = "btn btn-default";
+        uploadBtn.id = "upload_qc_flags";
+        uploadBtn.innerText = "Upload QC Flags";
+        uploadBtn.onclick = function() {
+            // Trigger the file input click event
+            document.getElementById('file_input').click();
+        };
+        // Append it to the container where your other buttons are
+        b.appendChild(uploadBtn);
+
+        // Hidden file input for uploading files
+        var fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.id = "file_input";
+        fileInput.style.display = "none";
+        fileInput.onchange = function(event) {
+            // Your file reading and uploading logic here
+        };
+        document.body.appendChild(fileInput);
+
         a = document.getElementsByClassName("bootstrap-table");
         a[0].appendChild(b);
         c = a[0].children[2];
