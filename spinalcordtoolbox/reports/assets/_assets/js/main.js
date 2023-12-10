@@ -34,7 +34,7 @@ $(document).ready(function(){
   // Load and set QC state from local storage
   sct_data.forEach((item, index) => {
     var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
-    const savedQcState = localStorage.getItem('qcState_' + uniqueId);
+    const savedQcState = localStorage.getItem(uniqueId);
     if (savedQcState) {
       item.qc = savedQcState;
     }
@@ -174,7 +174,7 @@ $(document).ready(function(){
       );
       // localStorage.setItem('qcState_' + index, sct_data[index].qc);
       var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
-      localStorage.setItem('qcState_' + uniqueId, sct_data[index].qc);
+      localStorage.setItem(uniqueId, sct_data[index].qc);
 
       // const currentState = JSON.parse(localStorage.getItem(filename));
       // currentState[row_id] = checkedState;
@@ -266,21 +266,34 @@ function containsNonLatinCodepoints(s) {
     return /[^\u0000-\u00ff]/.test(s);
 }
 
-document.getElementById('file_input').addEventListener('change', function(event) {
+function loadAndSetQcStates(event) {
   console.log("Upload button clicked")
   var file = event.target.files[0];
   var reader = new FileReader();
   reader.onload = function(e) {
-    var qcFlags = JSON.parse(e.target.result);
-    for (var key in qcFlags) {
-      if (qcFlags.hasOwnProperty(key) && key.startsWith('qcState_')) {
-        localStorage.setItem(key, qcFlags[key]);
+      var qcFlags = JSON.parse(e.target.result);
+      for (var key in qcFlags) {
+          console.log("Writing to local storage:", key, qcFlags[key]);
+          if (qcFlags.hasOwnProperty(key)) {
+              localStorage.setItem(key, qcFlags[key]);
+              console.log("Local storage item: key=", key, "qcFlag=", localStorage.getItem(key));
+          }
+          console.log("Updated sct_data:", sct_data);
+          // Load and set QC state from local storage
+          sct_data.forEach((item, index) => {
+              var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
+              const savedQcState = localStorage.getItem(uniqueId);
+              if (savedQcState) {
+              item.qc = savedQcState;
+              }
+          });
+          // Update table display with updated sct_data
+          $("#table").bootstrapTable({data: sct_data});
+          $("#table").bootstrapTable("load", sct_data);
       }
-    }
-    // Code to refresh the page state after upload, if necessary
   };
   reader.readAsText(file);
-});
+}
 
 // TODO: use the function below instead of defining the download button in the html
 // downloadBtn.onclick = function() {

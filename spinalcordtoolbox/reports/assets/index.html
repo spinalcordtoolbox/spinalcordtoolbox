@@ -307,7 +307,7 @@
             // Fetch all qc flags from local storage
             sct_data.forEach(function(item, index) {
                 var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
-                var state = localStorage.getItem('qcState_' + uniqueId);
+                var state = localStorage.getItem(uniqueId);
                 if (state) {
                 qcFlags[uniqueId] = state;
                 }
@@ -342,22 +342,7 @@
         fileInput.type = "file";
         fileInput.id = "file_input";
         fileInput.style.display = "none";
-        fileInput.onchange = function(event) {
-            console.log("Upload button clicked")
-            var file = event.target.files[0];
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                var qcFlags = JSON.parse(e.target.result);
-                for (var key in qcFlags) {
-                    if (qcFlags.hasOwnProperty(key)) {
-                        localStorage.setItem(key, qcFlags[key]);
-                        console.log("Updated local storage:", key, localStorage.getItem(key));
-                    }
-                }
-                // Code to refresh the page state after upload, if necessary
-            };
-            reader.readAsText(file);
-        };
+        fileInput.onchange = function(event) { loadAndSetQcStates(event) };
         document.body.appendChild(fileInput);
 
         a = document.getElementsByClassName("bootstrap-table");
