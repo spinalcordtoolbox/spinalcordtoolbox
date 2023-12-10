@@ -281,15 +281,17 @@
         btn1.classList ="btn btn-default";
         btn1.id="download_yaml_btn_274c";
         btn1.onclick = function() { download_yaml('274c') }; 
-        btn1.disabled="disabled";
+        // Initially disable the button if there are no failed QC
+        btn1.disabled=!sct_data.some(item => item.qc === "❌");
         btn1.innerText="Download QC Fails";
 
         btn2 = document.createElement("button");
         btn2.type="button";
         btn2.classList ="btn btn-default";
         btn2.id="download_yaml_btn_26a0";
-        btn2.onclick = function() { download_yaml('26a0') }; 
-        btn2.disabled="disabled";
+        btn2.onclick = function() { download_yaml('26a0') };
+        // Initially disable the button if there are no artifacts
+        btn2.disabled=!sct_data.some(item => item.qc === "⚠️");
         btn2.innerText="Download QC Artifacts";
         b.appendChild(btn1);
         b.appendChild(btn2);

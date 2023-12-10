@@ -39,6 +39,11 @@ $(document).ready(function(){
       item.qc = savedQcState;
     }
   });
+  // Set download button state
+  const heavy_ballot_x = '\u274C'
+  const heavy_excl_mark = '\u26A0\uFE0F'
+  set_download_yml_btn_state(heavy_excl_mark);
+  set_download_yml_btn_state(heavy_ballot_x);
   // Update table display with updated sct_data
   $("#table").bootstrapTable({data: sct_data});
   $("#table").bootstrapTable("load", sct_data);
@@ -153,7 +158,6 @@ $(document).ready(function(){
     }
     // f key (mark "failing" subjects using check, X, !)
     if (evt.which == 70) {
-      // console.log()
       var cols = getActiveColumns();
       var vals = obj[0].innerText.split("\t");
       let rel_index = obj[obj.length - 1].getAttribute("data-index");
@@ -170,7 +174,6 @@ $(document).ready(function(){
       );
       // localStorage.setItem('qcState_' + index, sct_data[index].qc);
       var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
-      console.log("uniqueId:", uniqueId);
       localStorage.setItem('qcState_' + uniqueId, sct_data[index].qc);
 
       // const currentState = JSON.parse(localStorage.getItem(filename));
@@ -237,17 +240,26 @@ function responseHandler(res) {
 }
 
 function set_download_yml_btn_state(marker) {
+  // Return early if marker is null
+  if (marker === null) return;
+
   let disabled = true;
   sct_data.forEach(item => {
       if (item.qc === marker) {
         disabled = false;
       }
   });
+
   if (containsNonLatinCodepoints(marker) === true) {
     // This converts e.g. '\u2718' -> '2718' with corresponding id='download_yaml_btn_2718'
     marker = marker.codePointAt(0).toString(16)
   }
-  document.getElementById("download_yaml_btn_".concat(marker)).disabled = disabled;
+
+  // Safeguard accessing the DOM element
+  let buttonElement = document.getElementById("download_yaml_btn_".concat(marker));
+  if (buttonElement) {
+    buttonElement.disabled = disabled;
+  }
 }
 
 function containsNonLatinCodepoints(s) {
