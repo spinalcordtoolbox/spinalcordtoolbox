@@ -282,7 +282,7 @@
         btn1.onclick = function() { download_yaml('274c') }; 
         // Initially disable the button if there are no failed QC
         btn1.disabled=!sct_data.some(item => item.qc === "❌");
-        btn1.innerText="Download QC Fails";
+        btn1.innerText="Save Fails";
 
         btn2 = document.createElement("button");
         btn2.type="button";
@@ -291,7 +291,7 @@
         btn2.onclick = function() { download_yaml('26a0') };
         // Initially disable the button if there are no artifacts
         btn2.disabled=!sct_data.some(item => item.qc === "⚠️");
-        btn2.innerText="Download QC Artifacts";
+        btn2.innerText="Save Artifact";
         b.appendChild(btn1);
         b.appendChild(btn2);
 
@@ -300,7 +300,7 @@
         downloadBtn.type = "button";
         downloadBtn.classList = "btn btn-default";
         downloadBtn.id = "download_qc_flags";
-        downloadBtn.innerText = "Download QC Flags";
+        downloadBtn.innerText = "Save All";
         downloadBtn.onclick = function() {
             var qcFlags = {};
             // Fetch all qc flags from local storage
@@ -328,7 +328,7 @@
         uploadBtn.type = "button";
         uploadBtn.classList = "btn btn-default";
         uploadBtn.id = "upload_qc_flags";
-        uploadBtn.innerText = "Upload QC Flags";
+        uploadBtn.innerText = "Upload All";
         uploadBtn.onclick = function() {
             // Trigger the file input click event
             document.getElementById('file_input').click();
