@@ -30,23 +30,10 @@ $(document).ready(function(){
   "use strict";
   var qc_details;
   var current_qc;
-
-  // Load and set QC state from local storage
-  sct_data.forEach((item, index) => {
-    var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
-    const savedQcState = localStorage.getItem(uniqueId);
-    if (savedQcState) {
-      item.qc = savedQcState;
-    }
-  });
+  updateQcStates();
   // Set download button state
   const heavy_ballot_x = '\u274C'
   const heavy_excl_mark = '\u26A0\uFE0F'
-  set_download_yml_btn_state(heavy_excl_mark);
-  set_download_yml_btn_state(heavy_ballot_x);
-  // Update table display with updated sct_data
-  $("#table").bootstrapTable({data: sct_data});
-  $("#table").bootstrapTable("load", sct_data);
 
   function copyrightYear(){
     var d = new Date();
@@ -172,19 +159,16 @@ $(document).ready(function(){
           ? empty_state
           : heavy_check_mark
       );
-      // localStorage.setItem('qcState_' + index, sct_data[index].qc);
+      // Save QC state to local storage
       var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
       localStorage.setItem(uniqueId, sct_data[index].qc);
-
-      // const currentState = JSON.parse(localStorage.getItem(filename));
-      // currentState[row_id] = checkedState;
-      // localStorage.setItem(filename, JSON.stringify(currentState));
-
+      // Update table display with updated sct_data
       set_download_yml_btn_state(heavy_excl_mark);
       set_download_yml_btn_state(heavy_ballot_x);
       $("#table").bootstrapTable({data: sct_data});
       $("#table").bootstrapTable("load", sct_data);
       hideColumns();
+      // Set focus on the row that was just updated
       document.getElementById("table").rows[0].classList.remove("active");
       document.getElementById("table").rows[parseInt(rel_index)+1].className="active";
       selected_row = document.getElementById("table").rows[parseInt(rel_index)+1].innerText;
@@ -295,21 +279,24 @@ function loadAndSetQcStates(event) {
           if (qcFlags.hasOwnProperty(key)) {
               localStorage.setItem(key, qcFlags[key]);
           }
-          // Load and set QC state from local storage
-          // TODO: create a function for this code block
-          sct_data.forEach((item, index) => {
-              var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
-              const savedQcState = localStorage.getItem(uniqueId);
-              if (savedQcState) {
-              item.qc = savedQcState;
-              }
-          });
-          // Update table display with updated sct_data
-          $("#table").bootstrapTable({data: sct_data});
-          $("#table").bootstrapTable("load", sct_data);
-          hideColumns();
+          updateQcStates();
       }
   };
   reader.readAsText(file);
 }
 
+function updateQcStates() {
+    // Load and set QC state from local storage
+    // TODO: create a function for this code block
+    sct_data.forEach((item, index) => {
+      var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
+      const savedQcState = localStorage.getItem(uniqueId);
+      if (savedQcState) {
+      item.qc = savedQcState;
+      }
+  });
+  // Update table display with updated sct_data
+  $("#table").bootstrapTable({data: sct_data});
+  $("#table").bootstrapTable("load", sct_data);
+  hideColumns();
+}
