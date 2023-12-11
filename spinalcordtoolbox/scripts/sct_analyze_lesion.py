@@ -495,7 +495,8 @@ class AnalyzeLesion:
         nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
 
         # fit centerline, smooth it and return the first derivative (in physical space)
-        _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
+        # We set minmax=False to prevent cropping and ensure that `self.angles[iz]` covers all z slices of `im_seg`
+        _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(minmax=False), verbose=1)
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
 
         self.angles = np.full_like(np.empty(nz), np.nan, dtype=np.double)
