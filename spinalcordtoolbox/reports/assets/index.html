@@ -284,6 +284,7 @@
         btn1.disabled=!sct_data.some(item => item.qc === "❌");
         btn1.innerText="Save Fails";
         btn1.title="Save all processes marked as 'fail' in a YAML file";
+        btn1.style.marginRight = "10px";
 
         btn2 = document.createElement("button");
         btn2.type="button";
@@ -294,6 +295,7 @@
         btn2.disabled=!sct_data.some(item => item.qc === "⚠️");
         btn2.innerText="Save Artifact";
         btn2.title="Save all processes marked as 'artifact' in a YAML file";
+        btn2.style.marginRight = "10px";
         b.appendChild(btn1);
         b.appendChild(btn2);
 
@@ -304,6 +306,7 @@
         downloadBtn.id = "download_qc_flags";
         downloadBtn.innerText = "Save All";
         downloadBtn.title = "Save all QC flags in a JSON file. This file can be uploaded later to restore the QC flags.";
+        downloadBtn.style.marginRight = "10px";
         downloadBtn.onclick = function() {
             var qcFlags = {};
             // Fetch all qc flags from local storage
