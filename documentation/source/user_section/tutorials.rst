@@ -38,9 +38,9 @@ We provide the following hands-on tutorials for SCT's command-line tools.
 
 #. :doc:`Atlas-based analysis <tutorials/atlas-based-analysis>`
 #. :doc:`Diffusion-weighted MRI (Motion correction, DTI computation) <tutorials/diffusion-weighted-mri>`
+#. :doc:`Functional MRI (Motion correction, Spinal level labeling) <tutorials/processing-fmri-data>`
 #. :doc:`Other features <tutorials/other-features>`
 
-   * :doc:`Functional MRI (Motion correction, Spinal level labeling) <tutorials/other-features/processing-fmri-data>`
    * :doc:`Spinal cord smoothing <tutorials/other-features/spinalcord-smoothing>`
    * :doc:`Visualizing misaligned cords <tutorials/other-features/visualizing-misaligned-cords>`
 
@@ -74,5 +74,6 @@ If you would prefer to learn how to use SCT in a guided workshop setting, we pro
    tutorials/gray-matter-segmentation
    tutorials/atlas-based-analysis
    tutorials/diffusion-weighted-mri
+   tutorials/processing-fmri-data
    tutorials/other-features
    Analysis pipelines with SCT <tutorials/analysis-pipelines-with-sct>
