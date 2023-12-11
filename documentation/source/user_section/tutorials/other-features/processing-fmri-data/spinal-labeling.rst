@@ -5,5 +5,5 @@ In previous tutorials, only the vertebral and/or disc labels have been used for 
 
 Knowing the position of the spinal levels (i.e. where the nerve roots connect to the cord) could be more informative from an anatomo-functional standpoint.
 
-.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/pam50/spinal_levels_illustration.png
+.. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/processing-fmri-data/spinal_levels_illustration.png
     :align: center
