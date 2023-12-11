@@ -307,26 +307,7 @@
         downloadBtn.innerText = "Save All";
         downloadBtn.title = "Save all QC flags in a JSON file. This file can be uploaded later to restore the QC flags.";
         downloadBtn.style.marginRight = "10px";
-        downloadBtn.onclick = function() {
-            var qcFlags = {};
-            // Fetch all qc flags from local storage
-            sct_data.forEach(function(item, index) {
-                var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
-                var state = localStorage.getItem(uniqueId);
-                if (state) {
-                    qcFlags[uniqueId] = state;
-                }
-            });
-            // Create a blob and trigger a download
-            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(qcFlags));
-            var downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "qc_flags.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-        };
-        // Append it to the container where your other buttons are
+        downloadBtn.onclick = function() { downloadQcStates() }
         b.appendChild(downloadBtn);
 
         // Create the upload button
@@ -340,7 +321,6 @@
             // Trigger the file input click event
             document.getElementById('file_input').click();
         };
-        // Append it to the container where your other buttons are
         b.appendChild(uploadBtn);
 
         // Hidden file input for uploading files

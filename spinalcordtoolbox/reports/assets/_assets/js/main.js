@@ -269,6 +269,26 @@ function containsNonLatinCodepoints(s) {
     return /[^\u0000-\u00ff]/.test(s);
 }
 
+function downloadQcStates() {
+  var qcFlags = {};
+  // Fetch all qc flags from local storage
+  sct_data.forEach(function(item, index) {
+      var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
+      var state = localStorage.getItem(uniqueId);
+      if (state) {
+          qcFlags[uniqueId] = state;
+      }
+  });
+  // Create a blob and trigger a download
+  var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(qcFlags));
+  var downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", "qc_flags.json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+};
+
 function loadAndSetQcStates(event) {
   var file = event.target.files[0];
   var reader = new FileReader();
