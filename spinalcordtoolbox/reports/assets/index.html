@@ -283,6 +283,7 @@
         // Initially disable the button if there are no failed QC
         btn1.disabled=!sct_data.some(item => item.qc === "❌");
         btn1.innerText="Save Fails";
+        btn1.title="Save all processes marked as 'fail' in a YAML file";
 
         btn2 = document.createElement("button");
         btn2.type="button";
@@ -292,6 +293,7 @@
         // Initially disable the button if there are no artifacts
         btn2.disabled=!sct_data.some(item => item.qc === "⚠️");
         btn2.innerText="Save Artifact";
+        btn1.title="Save all processes marked as 'artifact' in a YAML file";
         b.appendChild(btn1);
         b.appendChild(btn2);
 
@@ -301,6 +303,7 @@
         downloadBtn.classList = "btn btn-default";
         downloadBtn.id = "download_qc_flags";
         downloadBtn.innerText = "Save All";
+        downloadBtn.title = "Save all QC flags in a JSON file. This file can be uploaded later to restore the QC flags.";
         downloadBtn.onclick = function() {
             var qcFlags = {};
             // Fetch all qc flags from local storage
@@ -329,6 +332,7 @@
         uploadBtn.classList = "btn btn-default";
         uploadBtn.id = "upload_qc_flags";
         uploadBtn.innerText = "Upload All";
+        uploadBtn.title = "Upload a JSON file containing QC flags. This will restore the QC flags.";
         uploadBtn.onclick = function() {
             // Trigger the file input click event
             document.getElementById('file_input').click();
