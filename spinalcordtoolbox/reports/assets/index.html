@@ -275,6 +275,7 @@
         b.className = "fixed-table-toolbar";
         b.style.paddingTop="10px";
 
+        // Create the download 'fail' button
         btn1 = document.createElement("button");
         btn1.type="button";
         btn1.classList ="btn btn-default";
@@ -286,6 +287,7 @@
         btn1.title="Save all processes marked as 'fail' in a YAML file";
         btn1.style.marginRight = "10px";
 
+        // Create the download 'artifact' button
         btn2 = document.createElement("button");
         btn2.type="button";
         btn2.classList ="btn btn-default";
@@ -299,7 +301,7 @@
         b.appendChild(btn1);
         b.appendChild(btn2);
 
-        // Create the download button
+        // Create the download QC states button
         var downloadBtn = document.createElement("button");
         downloadBtn.type = "button";
         downloadBtn.classList = "btn btn-default";
@@ -310,7 +312,7 @@
         downloadBtn.onclick = function() { downloadQcStates() }
         b.appendChild(downloadBtn);
 
-        // Create the upload button
+        // Create the upload QC states button
         var uploadBtn = document.createElement("button");
         uploadBtn.type = "button";
         uploadBtn.classList = "btn btn-default";
@@ -337,12 +339,12 @@
         a[0].children[2] = b;
         a[0].children[3] = c;
 
-         var iTH;
-         var dropdownList = document.getElementsByClassName('dropdown-item');
-         for (iTH = 0; iTH < dropdownList.length-1; iTH++){
-              toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
-         }
-     }, 100);
+        var iTH;
+        var dropdownList = document.getElementsByClassName('dropdown-item');
+        for (iTH = 0; iTH < dropdownList.length-1; iTH++){
+            toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
+        }
+    }, 100);
 
 
     function hideColumns() {
