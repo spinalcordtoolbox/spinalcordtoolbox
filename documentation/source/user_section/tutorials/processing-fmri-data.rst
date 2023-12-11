@@ -1,5 +1,5 @@
-Processing fMRI data (Motion correction, Spinal labeling)
-#######################################################################
+Functional MRI
+##############
 
 This tutorial demonstrates a typical SCT processing pipeline for functional MRI, including motion correction, template registration, and spinal labeling.
 
