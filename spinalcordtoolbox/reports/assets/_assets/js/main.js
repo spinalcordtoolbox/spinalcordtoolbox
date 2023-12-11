@@ -162,15 +162,18 @@ $(document).ready(function(){
       var vals = obj[0].innerText.split("\t");
       let rel_index = obj[obj.length - 1].getAttribute("data-index");
       let index = sct_data.findIndex(y => check_element(y,cols,vals))
-      const heavy_check_mark = '\u2705'
-      const heavy_ballot_x = '\u274C'
-      const heavy_excl_mark = '\u26A0\uFE0F'
+      const heavy_check_mark = '\u2705';
+      const heavy_ballot_x = '\u274C';
+      const heavy_excl_mark = '\u26A0\uFE0F';
+      const empty_state = '';
       sct_data[index].qc = (
-          sct_data[index].qc === heavy_check_mark
+        sct_data[index].qc === heavy_check_mark
           ? heavy_ballot_x
           : sct_data[index].qc === heavy_ballot_x
-            ? heavy_excl_mark
-            : heavy_check_mark
+          ? heavy_excl_mark
+          : sct_data[index].qc === heavy_excl_mark
+          ? empty_state
+          : heavy_check_mark
       );
       // localStorage.setItem('qcState_' + index, sct_data[index].qc);
       var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
