@@ -314,7 +314,12 @@
                 var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
                 var state = localStorage.getItem(uniqueId);
                 if (state) {
-                qcFlags[uniqueId] = state;
+                    qcFlags[uniqueId] = state;
+                }
+                else {
+                    // If the state is not found in local storage, set it to 'empty'
+                    // qcFlags[uniqueId] = empty_state; // Use the empty_state variable
+                    qcFlags[uniqueId] = ""; // TODO: when moving that download code to the server, use the empty_state variable
                 }
             });
             // Create a blob and trigger a download
