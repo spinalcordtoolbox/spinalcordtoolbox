@@ -56,26 +56,23 @@ $(document).ready(function(){
     ele.style.marginLeft = "10px";
   }
 
-  function newScroll(newRow)
-  {
-    var rowTop = newRow.position().top;
-    var rowBottom = rowTop + newRow.height();
-    var $table = $('.fixed-table-body'); // store instead of calling twice
-    var tableHeight = $table.height();
-    var currentScroll = $table.scrollTop();
-    
-    if (rowTop < 0)
-    {
-        // scroll up
-        $('.fixed-table-body').scrollTop(currentScroll + rowTop - 20);
-    }
-    else if (rowBottom  > tableHeight)
-    {
-        // scroll down
-        var scrollAmount = rowBottom - tableHeight;
-        $('.fixed-table-body').scrollTop(currentScroll + scrollAmount + 20);
-    }
-    
+  function newScroll(newRow) {
+    if (newRow && newRow.length > 0) {
+        var rowTop = newRow.position().top;
+        var rowBottom = rowTop + newRow.height();
+        var $table = $('.fixed-table-body'); // store instead of calling twice
+        var tableHeight = $table.height();
+        var currentScroll = $table.scrollTop();
+        
+        if (rowTop < 0) {
+            // scroll up
+            $('.fixed-table-body').scrollTop(currentScroll + rowTop - 20);
+        } else if (rowBottom  > tableHeight) {
+            // scroll down
+            var scrollAmount = rowBottom - tableHeight;
+            $('.fixed-table-body').scrollTop(currentScroll + scrollAmount + 20);
+        }
+    }  
     return false;
   }
 
@@ -315,3 +312,4 @@ function loadAndSetQcStates(event) {
   };
   reader.readAsText(file);
 }
+
