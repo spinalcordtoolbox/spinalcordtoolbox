@@ -245,7 +245,8 @@ class Slice(object):
                   containing the slices and matrix of the transformed 3D MRI
                   to output containing the slices
         """
-        assert len(set([x.data.shape for x in self._images])) == 1, "Volumes don't have the same size"
+        if len(set([x.data.shape for x in self._images])) != 1:
+            raise ValueError("Volumes don't have the same size")
 
         matrices = list()
         # Retrieve the L-R center of the slice for each row (i.e. in the S-I direction).
@@ -427,7 +428,8 @@ class Sagittal(Slice):
         :return: index: [int] * n_SI
         """
         image = self._images[img_idx].copy()
-        assert image.orientation == 'SAL'
+        if image.orientation != 'SAL':
+            raise ValueError(f"Image orientation should be SAL, but got: {image.orientation}")
         # If mask is empty, raise error
         if np.argwhere(image.data).shape[0] == 0:
             raise ValueError("Label/segmentation image is empty. Can't retrieve RL slice indices.")

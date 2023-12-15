@@ -25,6 +25,13 @@ The following studies have used SCT:
 
 2023
 ----
+-  Lawless *et al.* `Detecting macromolecular differences of the CSF in low disability multiple sclerosis using quantitative MT MRI at 3T <https://doi.org/10.1177/20552173231211396>`_, **Mult. scler. j., exp. transl. clin.** 2023
+-  Filimonova *et al.* `Application of the T1w/T2w mapping technique for spinal cord assessment in patients with degenerative cervical myelopathy <https://doi.org/10.1038/s41393-023-00941-y>`_, **Spinal Cord** 2023
+-  Khamaysa *et al.* `Quantitative brainstem and spinal MRI in amyotrophic lateral sclerosis: implications for predicting noninvasive ventilation needs <https://doi.org/10.1007/s00415-023-12045-x>`_, **J. Neurol.** 2023
+-  Milekovic *et al.* `A spinal cord neuroprosthesis for locomotor deficits due to Parkinson’s disease <https://doi.org/10.1038/s41591-023-02584-1>`_, **Nat. Med.** 2023
+-  Dvorak *et al.* `The CALIPR framework for highly accelerated myelin water imaging with improved precision and sensitivity <https://doi.org/10.1126/sciadv.adh9853>`_, **Sci. Adv.** 2023
+-  Braaß *et al.* `Association between activity in the ventral premotor cortex and spinal cord activation during force generation — A combined cortico-spinal fMRI study <https://doi.org/10.1002/hbm.26523>`_, **Hum. Brain Mapp.** 2023
+-  Combes *et al.* `Detection of resting-state functional connectivity in the lumbar spinal cord with 3T MRI <https://doi.org/10.1038/s41598-023-45302-0>`_, **Sci. Rep.** 2023
 -  Bedard *et al.* `Pontomedullary junction as a reference for spinal cord cross-sectional area: validation across neck positions <https://doi.org/10.1038/s41598-023-40731-3>`_, **Sci. Rep.** 2023
 -  Filimonova *et al.* `Brainstem and subcortical regions volume loss in patients with degenerative cervical myelopathy and its association with spinal cord compression severity <https://doi.org/10.1016/j.clineuro.2023.107943>`_, **Clin. Neurol. Neurosurg.** 2023
 -  Wang *et al.* `Spinal cord perfusion is associated with microstructural damage in cervical spondylotic myelopathy patients who underwent cervical laminoplasty <https://doi.org/10.1007/s00330-023-10011-9>`_, **Eur. Radiol.** 2023

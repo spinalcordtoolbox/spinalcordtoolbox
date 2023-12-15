@@ -188,7 +188,8 @@ def smooth(data, sigmas):
     :param sigmas: Kernel SD in voxel
     :return:
     """
-    assert len(data.shape) == len(sigmas)
+    if len(data.shape) != len(sigmas):
+        raise ValueError(f"Expected {len(data.shape)} sigmas, but got {len(sigmas)}")
     return gaussian_filter(data.astype(float), sigmas, order=0, truncate=4.0)
 
 
@@ -196,7 +197,8 @@ def laplacian(data, sigmas):
     """
     Apply Laplacian filter
     """
-    assert len(data.shape) == len(sigmas)
+    if len(data.shape) != len(sigmas):
+        raise ValueError(f"Expected {len(data.shape)} sigmas, but got {len(sigmas)}")
     return gaussian_laplace(data.astype(float), sigmas)
 
 
@@ -294,7 +296,7 @@ def concatenate_along_last_dimension(data):
 
     # Case 3: 2D/5D/etc. images --> Not supported
     else:
-        raise ValueError(f"Can only process 3D/4D images, but received images with ndim = {ndims - {3,4}}")
+        raise ValueError(f"Can only process 3D/4D images, but received images with ndim = {ndims - {3, 4}}")
 
     return np.concatenate(data, axis=-1)
 
