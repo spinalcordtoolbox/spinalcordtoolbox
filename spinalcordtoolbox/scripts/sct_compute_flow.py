@@ -68,13 +68,13 @@ def main(argv: Sequence[str]):
     printv('Load data...', verbose)
     nii_phase = Image(arguments.i)
 
-    # Convert input to avoid numerical errors from int16 data
-    # Related issue: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3636
-    nii_phase.change_type('float32')
+    # Scale phase data between -pi and pi
+    printv('Scale phase data between -pi and pi...', verbose)
+    data_phase_scaled = flow.scale_phase(nii_phase.data)
 
     # Calculate velocity
     printv('Calculate velocity...', verbose)
-    velocity = flow.calculate_velocity(nii_phase.data, venc)
+    velocity = flow.calculate_velocity(data_phase_scaled, venc)
 
     # Save velocity
     nii_velocity = nii_phase.copy()

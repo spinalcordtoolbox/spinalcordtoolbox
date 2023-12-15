@@ -17,9 +17,14 @@ def calculate_velocity(data_phase, venc):
     """
     Convert phase data to velocity. Assumes phase data is scaled between -pi and pi.
     :param data_phase: 4D numpy array of phase data. The 4th dimension should be the velocity encoding (VENC) in cm/s.
-    :param venc: Maximum velocity that can be encoded
+    :param venc: Maximum velocity that can be encoded in cm/s.
     :return: velocity data
     """
+
+    # Check that phase data is scaled between -pi and pi
+    if np.any(data_phase > np.pi) or np.any(data_phase < -np.pi):
+        logger.warning('Phase data is not scaled between -pi and pi. Please check your data.')
+
     # Phase to velocity conversion
     velocity = np.true_divide(data_phase * venc, np.pi)
     return velocity
@@ -53,3 +58,20 @@ def compute_flow(nii_phase4d, venc):
     nii_flow.data = np.true_divide(nii_phase4d.data, 2 * np.pi * venc)
 
     return nii_flow
+
+
+def scale_phase(data_phase):
+    """
+    Scale phase data between -pi and pi, assuming the data is encoded as int13 (i.e., between -4096 and 4095)
+    as this seems to be the default encoding for phase data from Siemens scanners.
+    :param data_phase: numpy array of phase data
+    :return: scaled phase data
+    """
+    # Check that phase data is encoded as int13
+    if np.any(data_phase > 4095) or np.any(data_phase < -4096):
+        logger.warning('Phase data is not encoded as INT13 (i.e., between -4096 and 4095). Please check your data.')
+    # Convert data to float
+    data_phase = data_phase.astype(np.float32)
+    # Scale the data from [-4096, 4095] to [-π, π]
+    scaled_data = (data_phase / 4096) * np.pi
+    return scaled_data
