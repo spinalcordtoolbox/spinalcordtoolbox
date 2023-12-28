@@ -122,7 +122,10 @@ def get_parser():
     func_group.add_argument(
         '-disc',
         metavar=Metavar.file,
-        help="Create an image with regions labelized depending on values from reference"
+        help="Project disc labels onto the spinal cord segmentation to create a labeled segmentation. "
+             "Note: Unlike 'sct_label_vertebrae -discfile', this function does not involve cord straightening. "
+             "The disc labeling follows the convention: "
+             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/labeling-conventions.html"
     )
 
     func_group.add_argument(
