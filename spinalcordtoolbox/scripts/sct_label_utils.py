@@ -46,7 +46,7 @@ def get_parser():
         '-o',
         metavar=Metavar.file,
         default='labels.nii.gz',
-        help=("Output image. Note: Only some label utilities create an output image. Example: t2_labels.nii.gz")
+        help="Output image. Note: Only some label utilities create an output image. Example: t2_labels.nii.gz"
     )
 
     io_group.add_argument(
