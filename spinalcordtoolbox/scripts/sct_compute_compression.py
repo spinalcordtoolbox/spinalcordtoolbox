@@ -619,8 +619,10 @@ def main(argv: Sequence[str]):
     # Loop through all compressed levels (compute one MSCC per compressed level)
     rows = []
     for idx in compressed_levels_dict.keys():
+        # Get compressed level and slice
         level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
-        printv(f'\nCompression at level {int(level)}', verbose=verbose, type='info')
+        slice = list(compressed_levels_dict[idx].values())[0][0]
+        printv(f'\nCompression at level {int(level)} (slice {slice})', verbose=verbose, type='info')
 
         # Compute metric ratio (non-normalized)
         slice_avg = list(compressed_levels_dict[idx].values())[0]
@@ -643,7 +645,7 @@ def main(argv: Sequence[str]):
             metric_ratio_PAM50_result = None
             metric_ratio_norm_result = None
 
-        rows.append([arguments.i, level, slice_compressed[idx],
+        rows.append([arguments.i, level, slice,
                      metric_ratio_result,
                      metric_ratio_PAM50_result,
                      metric_ratio_norm_result])
