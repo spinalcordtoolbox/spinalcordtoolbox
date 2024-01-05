@@ -621,7 +621,7 @@ def main(argv: Sequence[str]):
     for idx in compressed_levels_dict.keys():
         # Get compressed level and slice
         level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
-        slice_list = list(compressed_levels_dict[idx].values())[0]
+        slice_list = compressed_levels_dict[idx][level]
         slice = slice_list[0]
         printv(f'\nCompression at level {int(level)} (slice {slice})', verbose=verbose, type='info')
 
