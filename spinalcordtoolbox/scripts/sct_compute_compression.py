@@ -621,12 +621,12 @@ def main(argv: Sequence[str]):
     for idx in compressed_levels_dict.keys():
         # Get compressed level and slice
         level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
-        slice = list(compressed_levels_dict[idx].values())[0][0]
+        slice_list = list(compressed_levels_dict[idx].values())[0]
+        slice = slice_list[0]
         printv(f'\nCompression at level {int(level)} (slice {slice})', verbose=verbose, type='info')
 
         # Compute metric ratio (non-normalized)
-        slice_avg = list(compressed_levels_dict[idx].values())[0]
-        metrics_patient = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_avg)
+        metrics_patient = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_list)
         metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
 
         if arguments.normalize_hc:
