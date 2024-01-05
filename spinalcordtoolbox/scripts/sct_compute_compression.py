@@ -622,8 +622,8 @@ def main(argv: Sequence[str]):
         # Get compressed level and slice
         level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
         slice_list = compressed_levels_dict[idx][level]
-        slice = slice_list[0]
-        printv(f'\nCompression at level {int(level)} (slice {slice})', verbose=verbose, type='info')
+        slice_num = slice_list[0]
+        printv(f'\nCompression at level {int(level)} (slice {slice_num})', verbose=verbose, type='info')
 
         # Compute metric ratio (non-normalized)
         metrics_patient = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_list)
@@ -645,7 +645,7 @@ def main(argv: Sequence[str]):
             metric_ratio_PAM50_result = None
             metric_ratio_norm_result = None
 
-        rows.append([arguments.i, level, slice,
+        rows.append([arguments.i, level, slice_num,
                      metric_ratio_result,
                      metric_ratio_PAM50_result,
                      metric_ratio_norm_result])
