@@ -243,13 +243,9 @@ function containsNonLatinCodepoints(s) {
 
 function downloadQcStates() {
   var qcFlags = {};
-  // Fetch all qc flags from local storage
+  // Fetch all QC flags from the QC column of the table
   sct_data.forEach(function(item, index) {
-      var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
-      var state = localStorage.getItem(uniqueId);
-      if (state) {
-          qcFlags[uniqueId] = state;
-      }
+      qcFlags[uniqueId] = item.qc;
   });
   // Create a blob and trigger a download
   var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(qcFlags));
