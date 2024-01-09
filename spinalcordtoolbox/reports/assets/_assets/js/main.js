@@ -234,11 +234,7 @@ function set_download_yml_btn_state(marker) {
     marker = marker.codePointAt(0).toString(16)
   }
 
-  // Safeguard accessing the DOM element
-  let buttonElement = document.getElementById("download_yaml_btn_".concat(marker));
-  if (buttonElement) {
-    buttonElement.disabled = disabled;
-  }
+  document.getElementById("download_yaml_btn_".concat(marker)).disabled = disabled;
 }
 
 function containsNonLatinCodepoints(s) {
