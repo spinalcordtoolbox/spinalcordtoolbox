@@ -31,9 +31,11 @@ $(document).ready(function(){
   var qc_details;
   var current_qc;
   updateQcStates();
-  // Set download button state
-  const heavy_ballot_x = '\u274C'
-  const heavy_excl_mark = '\u26A0\uFE0F'
+  // Emoji download button states
+  const heavy_check_mark = '\u2705';
+  const heavy_ballot_x = '\u274C';
+  const heavy_excl_mark = '\u26A0\uFE0F';
+  const empty_state = '';
 
   function copyrightYear(){
     var d = new Date();
@@ -146,10 +148,6 @@ $(document).ready(function(){
       var vals = obj[0].innerText.split("\t");
       let rel_index = obj[obj.length - 1].getAttribute("data-index");
       let index = sct_data.findIndex(y => check_element(y,cols,vals))
-      const heavy_check_mark = '\u2705';
-      const heavy_ballot_x = '\u274C';
-      const heavy_excl_mark = '\u26A0\uFE0F';
-      const empty_state = '';
       sct_data[index].qc = (
         sct_data[index].qc === heavy_check_mark
           ? heavy_ballot_x
