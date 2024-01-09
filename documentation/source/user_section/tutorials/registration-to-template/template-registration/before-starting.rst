@@ -1,6 +1,10 @@
 Before starting this tutorial
 #############################
 
+This tutorial is intended to be run following the previous :ref:`spinalcord-segmentation` and :ref:`vertebral-labeling` tutorials, as registration to the PAM50 template relies on having a spinal cord segmentation mask as well as a point-label file representing vertebral level landmarks.
+
+You can either run those tutorials first, or download the necessary files below:
+
 #. Read through the following pages to familiarize yourself with key SCT concepts:
 
    * :ref:`pam50`: An overview of the PAM50 template's features, as well as context for why the template is used.

@@ -1,6 +1,8 @@
 Before starting this tutorial
 #############################
 
+
+
 #. Make sure that you have the following files in your working directory:
 
    * ``single_subject/data/fmri/fmri.nii.gz`` : A 4D fMRI image comprised of 35 3D volumes.
