@@ -222,9 +222,6 @@ function responseHandler(res) {
 }
 
 function set_download_yml_btn_state(marker) {
-  // Return early if marker is null
-  if (marker === null) return;
-
   let disabled = true;
   sct_data.forEach(item => {
       if (item.qc === marker) {
