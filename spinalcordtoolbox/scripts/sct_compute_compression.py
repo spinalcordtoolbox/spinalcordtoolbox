@@ -65,7 +65,7 @@ def get_parser():
         metavar=Metavar.file,
         required=True,
         help='Spinal cord segmentation mask to compute morphometrics. Example: sub-001_T2w_seg.nii.gz'
-             '\nNote: If no normalization is wanted (i.e., if the "-normalize" flag is not specified),'
+             '\nNote: If no normalization is wanted (i.e., if the "-normalize-hc" flag is not specified),'
              ' metric ratio will take the average along the segmentation centerline.'
     )
     mandatory.add_argument(
@@ -349,7 +349,7 @@ def get_centerline_object(img_seg, verbose):
 def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z_compressions, z_ref):
     """
     Get slices to average for the level above the highest compression and below the lowest compression from the centerline.
-    (If arg -normalize is not used; meaning no normalization)
+    (If arg -normalize-hc is not used; meaning no normalization)
     : param centerline: Centerline(): Spinal cord centerline object
     : param distance: float: distance (mm) from the compression from where to average healthy slices.
     : param extent: float: extent (mm) to average healthy slices.
