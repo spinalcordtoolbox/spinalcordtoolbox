@@ -104,7 +104,8 @@ def get_parser():
         type=int,
         choices=[0, 1],
         help='Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize. '
-             '\nNote: This flag is valid only if the spinal cord segmentation is provided by the flag "-i".',
+             '\nNote: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation). '
+             'It should only be used when computing the MSCC (i.e. using spinal cord segmentation).'
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
