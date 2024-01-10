@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
-# Compute maximum spinal cord compression using AP diameter or other morphometrics.
+# Compute maximum spinal cord compression (MSCC) or maximum canal compromise (MCC) using AP diameter or other
+# morphometrics.
 #
 # Copyright (c) 2023 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
