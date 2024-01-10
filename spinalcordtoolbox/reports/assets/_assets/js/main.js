@@ -248,6 +248,7 @@ function downloadQcStates() {
   var qcFlags = {};
   // Fetch all QC flags from the QC column of the table
   sct_data.forEach(function(item, index) {
+      var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
       qcFlags[uniqueId] = item.qc;
   });
   // Create a blob and trigger a download
