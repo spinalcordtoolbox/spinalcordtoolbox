@@ -68,8 +68,8 @@ def get_parser():
         metavar=Metavar.file,
         required=True,
         help='Spinal cord or spinal canal segmentation mask to compute morphometrics from. If spinal cord segmentation '
-             'is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is computed. '
-             'Example: sub-001_T2w_seg.nii.gz'
+             'is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is '
+             'computed. Example: sub-001_T2w_seg.nii.gz'
              '\nNote: If no normalization is wanted (i.e., if the "-normalize-hc" flag is not specified),'
              ' metric ratio will take the average along the segmentation centerline.'
     )
