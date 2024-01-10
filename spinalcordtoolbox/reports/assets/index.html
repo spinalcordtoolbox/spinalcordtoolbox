@@ -144,6 +144,7 @@
           </div>
       </div>
   </div>
+
 </body>
 
 <!-- Latest compiled and minified JavaScript -->
@@ -339,12 +340,12 @@
         a[0].children[2] = b;
         a[0].children[3] = c;
 
-        var iTH;
-        var dropdownList = document.getElementsByClassName('dropdown-item');
-        for (iTH = 0; iTH < dropdownList.length-1; iTH++){
-            toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
-        }
-    }, 100);
+         var iTH;
+         var dropdownList = document.getElementsByClassName('dropdown-item');
+         for (iTH = 0; iTH < dropdownList.length-1; iTH++){
+              toggleColumn(document.getElementsByClassName('dropdown-item')[iTH].id)
+         }
+     }, 100);
 
 
     function hideColumns() {
