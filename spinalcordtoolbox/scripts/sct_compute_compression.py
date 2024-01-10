@@ -33,7 +33,9 @@ INDEX_COLUMNS = ['filename', 'compression_level', 'slice(I->S)']
 # ==========================================================================================
 def get_parser():
     parser = SCTArgumentParser(
-        description='Compute normalized morphometric measures to assess spinal cord compression.\n'
+        description='Compute normalized morphometric metrics to assess:'
+                    '\n\t- spinal cord compression using MSCC (maximum spinal cord compression)'
+                    '\n\t- spinal canal stenosis using MCC (maximum canal compromise)\n'
                     '\n'
                     'Metrics are normalized using the non-compressed levels above and below the compression site using '
                     'the following equation:\n'
@@ -64,7 +66,9 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help='Spinal cord segmentation mask to compute morphometrics. Example: sub-001_T2w_seg.nii.gz'
+        help='Spinal cord or spinal canal segmentation mask to compute morphometrics from. If spinal cord segmentation '
+             'is provided, MSCC is computed. If spinal canal segmentation is provided, MCC is computed. '
+             'Example: sub-001_T2w_seg.nii.gz'
              '\nNote: If no normalization is wanted (i.e., if the "-normalize-hc" flag is not specified),'
              ' metric ratio will take the average along the segmentation centerline.'
     )
@@ -98,7 +102,8 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         choices=[0, 1],
-        help='Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize.'
+        help='Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize. '
+             '\nNote: This flag is valid only if the spinal cord segmentation is provided by the flag "-i".',
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
