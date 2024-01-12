@@ -665,7 +665,7 @@ def main(argv: Sequence[str]):
     ]
     df_metric_ratios = pd.DataFrame.from_records(rows, index=INDEX_COLUMNS, columns=INDEX_COLUMNS + metric_columns)
     save_df_to_csv(df_metric_ratios, fname_out)
-    printv(f'\nSaved: {fname_out}')
+    printv(f'\nSaved: {os.path.abspath(fname_out)}')
 
 
 if __name__ == "__main__":
