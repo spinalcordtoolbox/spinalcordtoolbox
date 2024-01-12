@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 NEAR_ZERO_THRESHOLD = 1e-6
-INDEX_COLUMNS = ['filename', 'compression_level', 'slice(I->S)']
+INDEX_COLUMNS = ['filename', 'compression_level', 'Slice (I->S)']
 
 
 # PARSER
