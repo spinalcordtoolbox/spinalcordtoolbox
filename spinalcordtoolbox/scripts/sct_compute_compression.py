@@ -209,7 +209,7 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     #        slices_combined.append(slice)
     for idx, _ in enumerate(slices):
         level_slice_dict[idx] = {}
-    for idx, slice in enumerate(slices[::-1]):  # Invert the order to have in vertebral level order (S --> I)
+    for idx, slice in enumerate(slices):
         level = df_level_slice_compression.loc[df_level_slice_compression['Slice (I->S)'] == slice, 'VertLevel'].to_list()[0]
         level_slice_dict[idx][level] = [slice]
     return level_slice_dict
