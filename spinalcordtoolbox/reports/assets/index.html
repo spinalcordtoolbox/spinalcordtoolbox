@@ -276,24 +276,64 @@
         b.className = "fixed-table-toolbar";
         b.style.paddingTop="10px";
 
+        // Create the download 'fail' button
         btn1 = document.createElement("button");
         btn1.type="button";
         btn1.classList ="btn btn-default";
         btn1.id="download_yaml_btn_274c";
         btn1.onclick = function() { download_yaml('274c') }; 
-        btn1.disabled="disabled";
-        btn1.innerText="Download QC Fails";
+        // Initially disable the button if there are no failed QC
+        btn1.disabled=!sct_data.some(item => item.qc === "❌");
+        btn1.innerText="Save Fails";
+        btn1.title="Save all processes marked as 'fail' in a YAML file";
+        btn1.style.marginRight = "10px";
 
+        // Create the download 'artifact' button
         btn2 = document.createElement("button");
         btn2.type="button";
         btn2.classList ="btn btn-default";
         btn2.id="download_yaml_btn_26a0";
-        btn2.onclick = function() { download_yaml('26a0') }; 
-        btn2.disabled="disabled";
-        btn2.innerText="Download QC Artifacts";
+        btn2.onclick = function() { download_yaml('26a0') };
+        // Initially disable the button if there are no artifacts
+        btn2.disabled=!sct_data.some(item => item.qc === "⚠️");
+        btn2.innerText="Save Artifact";
+        btn2.title="Save all processes marked as 'artifact' in a YAML file";
+        btn2.style.marginRight = "10px";
         b.appendChild(btn1);
         b.appendChild(btn2);
-        
+
+        // Create the download QC states button
+        var downloadBtn = document.createElement("button");
+        downloadBtn.type = "button";
+        downloadBtn.classList = "btn btn-default";
+        downloadBtn.id = "download_qc_flags";
+        downloadBtn.innerText = "Save All";
+        downloadBtn.title = "Save all QC flags in a JSON file. This file can be uploaded later to restore the QC flags.";
+        downloadBtn.style.marginRight = "10px";
+        downloadBtn.onclick = function() { downloadQcStates() }
+        b.appendChild(downloadBtn);
+
+        // Create the upload QC states button
+        var uploadBtn = document.createElement("button");
+        uploadBtn.type = "button";
+        uploadBtn.classList = "btn btn-default";
+        uploadBtn.id = "upload_qc_flags";
+        uploadBtn.innerText = "Upload All";
+        uploadBtn.title = "Upload a JSON file containing QC flags. This will restore the QC flags.";
+        uploadBtn.onclick = function() {
+            // Trigger the file input click event
+            document.getElementById('file_input').click();
+        };
+        b.appendChild(uploadBtn);
+
+        // Hidden file input for uploading files
+        var fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.id = "file_input";
+        fileInput.style.display = "none";
+        fileInput.onchange = function(event) { loadAndSetQcStates(event) };
+        document.body.appendChild(fileInput);
+
         a = document.getElementsByClassName("bootstrap-table");
         a[0].appendChild(b);
         c = a[0].children[2];
