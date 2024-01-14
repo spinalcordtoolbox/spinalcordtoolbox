@@ -8,9 +8,9 @@
 import sys
 from typing import Sequence
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.qmri import flow
-from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 
@@ -65,31 +65,28 @@ def main(argv: Sequence[str]):
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
-    printv('Load data...', verbose)
+    printv(f"Load data: {arguments.i}", verbose)
     nii_phase = Image(arguments.i)
 
     # Scale phase data between -pi and pi
-    printv('Scale phase data between -pi and pi...', verbose)
+    printv('Scale phase data between -pi and pi', verbose)
     data_phase_scaled = flow.scale_phase(nii_phase.data)
 
     # Calculate velocity
-    printv('Calculate velocity...', verbose)
+    printv('Calculate velocity', verbose)
     velocity = flow.calculate_velocity(data_phase_scaled, venc)
 
     # Save velocity
+    fname_velocity = add_suffix(arguments.i, '_velocity')
+    printv(f"Save velocity: {fname_velocity}", verbose)
     nii_velocity = nii_phase.copy()
     nii_velocity.data = velocity
-    nii_velocity.save('velocity.nii.gz')
+    nii_velocity.save(fname_velocity)
 
-    # Output flow map
-    printv('Generate output files...', verbose)
-
-    # display_viewer_syntax(
-    #     [arguments.omtsat, arguments.ot1map],
-    #     minmax=['-10,10', '0, 3'],
-    #     opacities=['1', '1'],
-    #     verbose=verbose,
-    # )
+    display_viewer_syntax(
+        [fname_velocity, ],
+        verbose=verbose,
+    )
 
 
 if __name__ == "__main__":
