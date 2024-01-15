@@ -128,16 +128,13 @@ html_theme_options = {
         "color-sidebar-background": "#1a1c1e",
         "color-admonition-title": "#0054af",
         "color-admonition-title-background": "#0054af5c"
-    }
+    },
+    "source_repository": "https://github.com/spinalcordtoolbox/spinalcordtoolbox/",
+    "source_branch": "master",
+    "source_directory": "documentation/source/",
 }
 
 html_context = {
-    # TODO: when the Github icon is supported natively by furo (https://github.com/pradyunsg/furo/discussions/114)
-    # then this should be moved into html_theme_options and the theme_ prefix should be dropped
-    "theme_source_repository": "https://github.com/spinalcordtoolbox/spinalcordtoolbox",
-    "theme_source_branch": "master",  # or subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]) ?
-    "theme_source_directory": "documentation/source/",
-
     # TODO: this should be determined automatically, but it seems that *assigning* to html_context wipes out
     # the automatically determined value?
     "page_source_suffix": "rst",
