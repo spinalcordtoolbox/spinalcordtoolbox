@@ -149,7 +149,7 @@ DATASET_DICT = {
     },
     "sci_models": {
         "mirrors": [
-            "https://github.com/joshuacwnewton/model-spinal-rootlets/releases/download/r20230815/model-spinal-rootlets_r20230815.zip"
+            "https://github.com/joshuacwnewton/model_seg_sci/releases/download/r20230814/model-sci-multisite_r20230814.zip",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sci_models"),
         "download_type": "Models",
