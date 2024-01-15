@@ -23,6 +23,10 @@ Citation list
 
 The following studies have used SCT:
 
+2024
+----
+-  Hameed *et al.* `Early neurological changes in aging cervical spine: insights from PROMIS mobility assessment <https://doi.org/10.1007/s11357-023-01050-7>`_, **GeroScience** 2024
+
 2023
 ----
 -  Cagol *et al.* `Association of Spinal Cord Atrophy and Brain Paramagnetic Rim Lesions With Progression Independent of Relapse Activity in People With MS <https://doi.org/10.1212/WNL.0000000000207768>`_, **Neurology** 2023
