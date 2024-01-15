@@ -81,7 +81,7 @@ author = u'SCT Contributors'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -97,7 +97,7 @@ todo_include_todos = False
 extlinks = {
     # e.g. :sct_tutorial_data:`data_template-registration.zip` gets expanded into:
     # 'https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
-    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20231129/%s', '')
+    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20231129/%s', '%s')
 }
 
 
@@ -128,16 +128,13 @@ html_theme_options = {
         "color-sidebar-background": "#1a1c1e",
         "color-admonition-title": "#0054af",
         "color-admonition-title-background": "#0054af5c"
-    }
+    },
+    "source_repository": "https://github.com/spinalcordtoolbox/spinalcordtoolbox/",
+    "source_branch": "master",
+    "source_directory": "documentation/source/",
 }
 
 html_context = {
-    # TODO: when the Github icon is supported natively by furo (https://github.com/pradyunsg/furo/discussions/114)
-    # then this should be moved into html_theme_options and the theme_ prefix should be dropped
-    "theme_source_repository": "https://github.com/spinalcordtoolbox/spinalcordtoolbox",
-    "theme_source_branch": "master",  # or subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]) ?
-    "theme_source_directory": "documentation/source/",
-
     # TODO: this should be determined automatically, but it seems that *assigning* to html_context wipes out
     # the automatically determined value?
     "page_source_suffix": "rst",
