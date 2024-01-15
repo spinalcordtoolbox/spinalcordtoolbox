@@ -1,7 +1,7 @@
 .. _vertebral-labeling:
 
-Vertebral labeling for anatomical images
-########################################
+Vertebral labeling
+##################
 
 .. figure:: https://raw.githubusercontent.com/spinalcordtoolbox/doc-figures/master/vertebral-labeling/vertebral-labeling.png
    :align: center
@@ -11,6 +11,7 @@ Vertebral labeling for anatomical images
    :maxdepth: 1
 
    vertebral-labeling/before-starting
+   vertebral-labeling/types-of-vertebral-labels
    vertebral-labeling/labeling-conventions
    vertebral-labeling/sct_label_vertebrae
    vertebral-labeling/applying-the-labeling-algorithm

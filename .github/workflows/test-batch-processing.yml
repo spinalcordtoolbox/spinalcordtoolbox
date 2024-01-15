@@ -74,6 +74,12 @@ jobs:
       - name: Run batch_processing.sh
         run: bash batch_processing.sh
 
+      - name: Upload QC results
+        uses: actions/upload-artifact@v3
+        with:
+          name: Batch Processing QC (${{ matrix.os }})
+          path: "qc_example_data"
+
       - name: Validate new results
         run: |
           # Auto-pass macOS as it would fail due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3194

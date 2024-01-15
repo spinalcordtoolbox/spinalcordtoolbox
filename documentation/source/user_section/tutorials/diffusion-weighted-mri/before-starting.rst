@@ -1,6 +1,10 @@
 Before starting this tutorial
 #############################
 
+For this tutorial, because the dMRI data is axially acquired with thick slices, it helps to re-use the registration results from another contrast to initialize template registration for the dMRI data.
+
+That is why, alongside the dMRI data, we provide T2s-based warping fields below:
+
 #. Make sure that you have the following files in your working directory:
 
    * ``single_subject/data/dmri/dmri.nii.gz`` : A 4D dMRI image comprised of 35 3D volumes.

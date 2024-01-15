@@ -17,7 +17,7 @@ Since we are starting the T2* registration with an initial transformation alread
                            -initwarpinv ../t2/warp_anat2template.nii.gz \
                            -owarp warp_template2t2s.nii.gz \
                            -owarpinv warp_t2s2template.nii.gz \
-                           -param step=1,type=seg,algo=rigid:step=2,type=seg,algo=bsplinesyn,slicewise=1,iter=3 \
+                           -param step=1,type=seg,algo=rigid:step=2,type=seg,metric=CC,algo=bsplinesyn,slicewise=1,iter=3:step=3,type=im,metric=CC,algo=syn,slicewise=1,iter=2 \
                            -qc ~/qc_singleSubj
 
 :Input arguments:

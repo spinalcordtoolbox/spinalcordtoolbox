@@ -46,7 +46,7 @@ def get_parser():
         '-o',
         metavar=Metavar.file,
         default='labels.nii.gz',
-        help=("Output image. Note: Only some label utilities create an output image. Example: t2_labels.nii.gz")
+        help="Output image. Note: Only some label utilities create an output image. Example: t2_labels.nii.gz"
     )
 
     io_group.add_argument(
@@ -122,13 +122,16 @@ def get_parser():
     func_group.add_argument(
         '-disc',
         metavar=Metavar.file,
-        help="Create an image with regions labelized depending on values from reference"
+        help="Project disc labels onto the spinal cord segmentation to create a labeled segmentation. "
+             "Note: Unlike 'sct_label_vertebrae -discfile', this function does not involve cord straightening. "
+             "The disc labeling follows the convention: "
+             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/labeling-conventions.html"
     )
 
     func_group.add_argument(
         '-project-centerline',
         metavar=Metavar.file,
-        help="Project labels onto the spinal cord centerline"
+        help="Project disc labels onto the spinal cord centerline."
     )
 
     func_group.add_argument(

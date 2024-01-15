@@ -1,7 +1,7 @@
 .. _processing-multiple-subjects:
 
-Processing batches of subjects using pipeline scripts
-#####################################################
+Analysis pipelines with SCT
+###########################
 
 The tutorials provided so far have focused on analyzing a single subject at a time. If you have a large dataset, however, running terminal commands for each subject could be a labor-intensive, time-consuming process.
 
