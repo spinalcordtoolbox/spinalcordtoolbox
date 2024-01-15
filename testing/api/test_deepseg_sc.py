@@ -75,7 +75,7 @@ def test_uncrop_image():
     input_shape = (100, 100, 100)
     crop_size = 20
     data_crop = np.random.randint(0, 2, size=(crop_size, crop_size, input_shape[2]))
-    data_in = np.random.randint(0, 1000, size=input_shape)
+    data_in = np.random.randint(0, 1000, size=input_shape, dtype=np.uint32)
 
     x_crop_lst = list(np.random.randint(0, input_shape[0] - crop_size, input_shape[2]))
     y_crop_lst = list(np.random.randint(0, input_shape[1] - crop_size, input_shape[2]))
