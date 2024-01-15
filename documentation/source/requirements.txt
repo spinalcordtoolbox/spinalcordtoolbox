@@ -3,4 +3,4 @@ recommonmark
 sphinx_rtd_theme
 sphinx-copybutton
 furo==2021.11.23
-sphinx==4.1.2
+sphinx

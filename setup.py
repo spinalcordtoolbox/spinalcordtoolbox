@@ -49,7 +49,7 @@ setup(
             'sphinx-copybutton',
             'furo==2021.11.23',
             'recommonmark',
-            'sphinx==4.1.2'
+            'sphinx'
         ],
     },
     entry_points=dict(
