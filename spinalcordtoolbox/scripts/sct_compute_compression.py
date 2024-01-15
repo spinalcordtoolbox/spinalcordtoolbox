@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #
-# Compute maximum spinal cord compression using AP diameter or other morphometrics.
+# Compute maximum spinal cord compression (MSCC) or maximum canal compromise (MCC) using AP diameter or other
+# morphometrics.
 #
 # Copyright (c) 2023 Polytechnique Montreal <www.neuro.polymtl.ca>
 # License: see the file LICENSE
@@ -33,7 +34,9 @@ INDEX_COLUMNS = ['filename', 'compression_level', 'Slice (I->S)']
 # ==========================================================================================
 def get_parser():
     parser = SCTArgumentParser(
-        description='Compute normalized morphometric measures to assess spinal cord compression.\n'
+        description='Compute normalized morphometric metrics to assess:'
+                    '\n\t- spinal cord compression using MSCC (maximum spinal cord compression)'
+                    '\n\t- spinal canal stenosis using MCC (maximum canal compromise)\n'
                     '\n'
                     'Metrics are normalized using the non-compressed levels above and below the compression site using '
                     'the following equation:\n'
@@ -53,7 +56,7 @@ def get_parser():
                     'with 100 consecutive patients. Radiology 2007;243(3):820-827.\n'
                     'doi.org/10.1148/radiol.2433060583\n'
                     '\n'
-                    'Reference for \'-normalize-hc\':\n'
+                    'Reference for the "-normalize-hc" flag:\n'
                     'Valošek J, Bédard S, Keřkovský M, Rohan T, Cohen-Adad J. A database of the healthy human spinal '
                     'cord morphometry in the PAM50 template space. NeuroLibre Reproducible Preprints 2023; 17.\n'
                     'doi.org/10.55458/neurolibre.00017'
@@ -64,8 +67,10 @@ def get_parser():
         '-i',
         metavar=Metavar.file,
         required=True,
-        help='Spinal cord segmentation mask to compute morphometrics. Example: sub-001_T2w_seg.nii.gz'
-             '\nNote: If no normalization is wanted (i.e., if the "-normalize" flag is not specified),'
+        help='Spinal cord or spinal canal segmentation mask to compute morphometrics from. If spinal cord segmentation '
+             'is provided, MSCC is computed. If spinal canal segmentation (spinal cord + CSF) is provided, MCC is '
+             'computed. Example: sub-001_T2w_seg.nii.gz'
+             '\nNote: If no normalization is wanted (i.e., if the "-normalize-hc" flag is not specified),'
              ' metric ratio will take the average along the segmentation centerline.'
     )
     mandatory.add_argument(
@@ -73,7 +78,7 @@ def get_parser():
         metavar=Metavar.file,
         required=True,
         help='Vertebral labeling file. Example: sub-001_T2w_seg_labeled.nii.gz'
-             'Note: The input and the vertebral labelling file must be in the same voxel coordinate system'
+             '\nNote: The input and the vertebral labelling file must be in the same voxel coordinate system'
              'and must match the dimensions between each other.'
     )
     mandatory.add_argument(
@@ -83,7 +88,7 @@ def get_parser():
         help='NIfTI file that includes labels at the compression sites. '
              'Each compression site is denoted by a single voxel of value `1`.'
              ' Example: sub-001_T2w_compression_labels.nii.gz '
-             'Note: The input and the compression label file must be in the same voxel coordinate system '
+             '\nNote: The input and the compression label file must be in the same voxel coordinate system '
              'and must match the dimensions between each other.'
     )
     mandatory.add_argument(
@@ -98,7 +103,9 @@ def get_parser():
         metavar=Metavar.int,
         type=int,
         choices=[0, 1],
-        help='Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize.'
+        help='Set to 1 to normalize the metrics using a database of healthy controls. Set to 0 to not normalize. '
+             '\nNote: This flag should not be set to 1 when computing the MCC (i.e. using spinal canal segmentation). '
+             'It should only be used when computing the MSCC (i.e. using spinal cord segmentation).'
     )
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -349,7 +356,7 @@ def get_centerline_object(img_seg, verbose):
 def get_slices_upper_lower_level_from_centerline(centerline, distance, extent, z_compressions, z_ref):
     """
     Get slices to average for the level above the highest compression and below the lowest compression from the centerline.
-    (If arg -normalize is not used; meaning no normalization)
+    (If arg -normalize-hc is not used; meaning no normalization)
     : param centerline: Centerline(): Spinal cord centerline object
     : param distance: float: distance (mm) from the compression from where to average healthy slices.
     : param extent: float: extent (mm) to average healthy slices.

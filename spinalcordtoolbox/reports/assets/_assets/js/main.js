@@ -30,6 +30,12 @@ $(document).ready(function(){
   "use strict";
   var qc_details;
   var current_qc;
+  updateQcStates();
+  // Emoji download button states
+  const heavy_check_mark = '\u2705';
+  const heavy_ballot_x = '\u274C';
+  const heavy_excl_mark = '\u26A0\uFE0F';
+  const empty_state = '';
 
   function copyrightYear(){
     var d = new Date();
@@ -46,7 +52,7 @@ $(document).ready(function(){
     var $table = $('.fixed-table-body'); // store instead of calling twice
     var tableHeight = $table.height();
     var currentScroll = $table.scrollTop();
-    
+
     if (rowTop < 0)
     {
         // scroll up
@@ -58,7 +64,7 @@ $(document).ready(function(){
         var scrollAmount = rowBottom - tableHeight;
         $('.fixed-table-body').scrollTop(currentScroll + scrollAmount + 20);
     }
-    
+
     return false;
   }
 
@@ -120,7 +126,8 @@ $(document).ready(function(){
     // Arrow down: next subject (or j)
     if (evt.which == 40 || evt.which == 74) {
       if (obj.length == 0 || obj.text() === "DateDatasetSubjectPathFileContrastFunctionFunction+ArgsQC") {
-        $('#table tr:first-child').click();
+        obj = $('#table tr:first-child');
+        obj.click();
       }
       else {
         obj.next().click();
@@ -131,7 +138,8 @@ $(document).ready(function(){
     // Arrow up: previous subject (or k)
     if (evt.which == 38 || evt.which == 75) {
       if (obj.length == 0) {
-        $('#table tr:last-child').click();
+        obj = $('#table tr:last-child');
+        obj.click();
       }
       else {
         obj.prev().click();
@@ -140,26 +148,30 @@ $(document).ready(function(){
       newScroll(obj)
     }
     // f key (mark "failing" subjects using check, X, !)
-    if (evt.which == 70) {
+    if (evt.which == 70 && obj.length > 0) {
       var cols = getActiveColumns();
       var vals = obj[0].innerText.split("\t");
       let rel_index = obj[obj.length - 1].getAttribute("data-index");
       let index = sct_data.findIndex(y => check_element(y,cols,vals))
-      const heavy_check_mark = '\u2705'
-      const heavy_ballot_x = '\u274C'
-      const heavy_excl_mark = '\u26A0\uFE0F'
       sct_data[index].qc = (
           sct_data[index].qc === heavy_check_mark
           ? heavy_ballot_x
           : sct_data[index].qc === heavy_ballot_x
-            ? heavy_excl_mark
-            : heavy_check_mark
+          ? heavy_excl_mark
+          : sct_data[index].qc === heavy_excl_mark
+          ? empty_state
+          : heavy_check_mark
       );
+      // Save QC state to local storage
+      var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
+      localStorage.setItem(uniqueId, sct_data[index].qc);
+      // Update table display with updated sct_data
       set_download_yml_btn_state(heavy_excl_mark);
       set_download_yml_btn_state(heavy_ballot_x);
       $("#table").bootstrapTable({data: sct_data});
       $("#table").bootstrapTable("load", sct_data);
       hideColumns();
+      // Set focus on the row that was just updated
       document.getElementById("table").rows[0].classList.remove("active");
       document.getElementById("table").rows[parseInt(rel_index)+1].className="active";
       selected_row = document.getElementById("table").rows[parseInt(rel_index)+1].innerText;
@@ -230,4 +242,52 @@ function set_download_yml_btn_state(marker) {
 
 function containsNonLatinCodepoints(s) {
     return /[^\u0000-\u00ff]/.test(s);
+}
+
+function downloadQcStates() {
+  var qcFlags = {};
+  // Fetch all QC flags from the QC column of the table
+  sct_data.forEach(function(item, index) {
+      var uniqueId = item.moddate + '_' + item.fname_in + '_' + item.command;
+      qcFlags[uniqueId] = item.qc;
+  });
+  // Create a blob and trigger a download
+  var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(qcFlags));
+  var downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", "qc_flags.json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+};
+
+function loadAndSetQcStates(event) {
+  var file = event.target.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+      var qcFlags = JSON.parse(e.target.result);
+      for (var key in qcFlags) {
+          if (qcFlags.hasOwnProperty(key)) {
+              localStorage.setItem(key, qcFlags[key]);
+          }
+          updateQcStates();
+      }
+  };
+  reader.readAsText(file);
+}
+
+function updateQcStates() {
+    // Load and set QC state from local storage
+    // TODO: create a function for this code block
+    sct_data.forEach((item, index) => {
+      var uniqueId = sct_data[index].moddate + '_' + sct_data[index].fname_in + '_' + sct_data[index].command;
+      const savedQcState = localStorage.getItem(uniqueId);
+      if (savedQcState) {
+      item.qc = savedQcState;
+      }
+  });
+  // Update table display with updated sct_data
+  $("#table").bootstrapTable({data: sct_data});
+  $("#table").bootstrapTable("load", sct_data);
+  hideColumns();
 }
