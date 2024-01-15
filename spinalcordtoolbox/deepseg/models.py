@@ -385,6 +385,20 @@ def has_pth_files(path_model):
                                   recursive=True)))
 
 
+def check_model_software_type(path_model):
+    """
+    Determine the software used to train the model based on the types of files in the model folder
+    """
+    if has_ivadomed_files(path_model):
+        return 'ivadomed'
+    elif has_ckpt_files(path_model):
+        return 'monai'
+    elif has_pth_files(path_model):
+        return 'nnunet'
+    else:
+        raise ValueError(f"Model type cannot be determined.")
+
+
 def list_tasks():
     """
     Display available tasks with description.

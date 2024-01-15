@@ -206,12 +206,25 @@ def main(argv: Sequence[str]):
         else:
             input_filenames = arguments.i
 
-        # Call segment_nifti
-        # NB: For single models, the averaging will have no effect.
-        #     For model ensembles, this will average the output of the ensemble into a single set of outputs.
-        nii_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames, 
-                                                                    options={**vars(arguments), 
-                                                                             "fname_prior": fname_prior})
+        # Segment the image based on the type of model present in the model folder
+        try:
+            model_type = models.check_model_software_type(path_models[0])  # NB: [0] -> Fetch first model from ensemble
+        except ValueError:
+            printv(f"Model type could not be determined. Directory '{path_model}' may be missing necessary files."
+                   f"Please redownload the model using `sct_deepseg -install-task` before continuing.", type="error")
+
+        if model_type == 'ivadomed':
+            # NB: For single models, the averaging will have no effect.
+            #     For model ensembles, this will average the output of the ensemble into a single set of outputs.
+            nii_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames,
+                                                                        options={**vars(arguments),
+                                                                                 "fname_prior": fname_prior})
+        # For the other two types, we currently only use single models (not ensembles)
+        elif model_type == 'monai':
+            nii_lst, target_lst = inference.segment_monai()
+        else:
+            assert model_type == 'nnunet'
+            nii_lst, target_lst = inference.segment_nnunet()
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:

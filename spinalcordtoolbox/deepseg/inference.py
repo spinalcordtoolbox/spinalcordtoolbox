@@ -77,3 +77,11 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
     target_lst = target_lsts[0]
 
     return nii_lst, target_lst
+
+
+def segment_monai():
+    return
+
+
+def segment_nnunet():
+    return
