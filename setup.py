@@ -47,9 +47,9 @@ setup(
             'sphinxcontrib-programoutput',
             'sphinx_rtd_theme',
             'sphinx-copybutton',
-            'furo==2021.11.23',
+            'furo==2023.09.10',
             'recommonmark',
-            'sphinx==4.1.2'
+            'sphinx'
         ],
     },
     entry_points=dict(
