@@ -12,6 +12,7 @@ import json
 import logging
 import textwrap
 import shutil
+import glob
 
 from spinalcordtoolbox import download
 from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__
@@ -350,14 +351,38 @@ def is_valid(path_models):
     :param path_models: str or list: Absolute path(s) to folder(s) that enclose the model files.
     """
     def _is_valid(path_model):
-        name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
-        return (os.path.exists(os.path.join(path_model, name_model + '.pt')) or
-                os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and os.path.exists(
-            os.path.join(path_model, name_model + '.json'))
+        return has_ivadomed_files(path_model) or has_ckpt_files(path_model) or has_pth_files(path_model)
     # Adapt the function so that it can be used on single paths (str) or lists of paths
     if not isinstance(path_models, list):
         path_models = [path_models]
     return all(_is_valid(path) for path in path_models)
+
+
+def has_ivadomed_files(path_model):
+    """
+    Check if model path contains A) a named .pt/.onnx model file and B) a named ivadomed json configuration file
+    """
+    name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
+    path_pt = os.path.join(path_model, name_model + '.pt')
+    path_onnx = os.path.join(path_model, name_model + '.onnx')
+    path_json = os.path.join(path_model, name_model + '.json')
+    return os.path.exists(path_pt) or os.path.exists(path_onnx) and os.path.exists(path_json)
+
+
+def has_ckpt_files(path_model):
+    """
+    Check if model path contains any checkpoint files (used by non-ivadomed MONAI models)
+    """
+    return 0 < len(list(glob.glob(os.path.join(path_model, '**', '*.ckpt'),
+                                  recursive=True)))
+
+
+def has_pth_files(path_model):
+    """
+    Check if model path contains any serialized PyTorch state dictionary files (used by non-ivadomed NNUnet models)
+    """
+    return 0 < len(list(glob.glob(os.path.join(path_model, '**', '*.pth'),
+                                  recursive=True)))
 
 
 def list_tasks():
