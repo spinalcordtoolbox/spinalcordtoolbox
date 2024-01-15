@@ -26,7 +26,6 @@ Example lesion segmentation:
 
 import argparse
 import datetime
-import glob
 import os
 import shutil
 import subprocess
@@ -35,9 +34,12 @@ import tempfile
 import time
 
 import torch
+import numpy as np
 from batchgenerators.utilities.file_and_folder_operations import join
 # from nnunetv2.inference.predict_from_raw_data import predict_from_raw_data as predictor
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
+
+from spinalcordtoolbox.image import Image
 
 
 def get_parser():
@@ -148,10 +150,6 @@ def main(argv):
         # reorient the image to RPI using SCT
         os.system('sct_image -i {} -setorient RPI -o {}'.format(fname_file_tmp, fname_file_tmp))
 
-    # NOTE: for individual images, the _0000 suffix is not needed.
-    # BUT, the images should be in a list of lists
-    fname_file_tmp_list = [[fname_file_tmp]]
-
     # Use all the folds available in the model folder by default
     folds_avail = [int(f.split('_')[-1]) for f in os.listdir(args.path_model) if f.startswith('fold_')]
 
@@ -185,27 +183,22 @@ def main(argv):
     )
     print('Model loaded successfully. Fetching test data...')
 
-    # NOTE: for individual files, the image should be in a list of lists
-    predictor.predict_from_files(
-        list_of_lists_or_source_folder=fname_file_tmp_list,
-        output_folder_or_list_of_truncated_output_files=tmpdir_nnunet,
-        save_probabilities=False,
-        overwrite=True,
-        num_processes_preprocessing=8,
-        num_processes_segmentation_export=8,
-        folder_with_segs_from_prev_stage=None,
-        num_parts=1,
-        part_id=0
-    )
+    img_in = Image(fname_file_tmp)
+    data = np.expand_dims(img_in.data, axis=0).transpose([0, 3, 2, 1]).astype(np.float32)
+    pred = predictor.predict_single_npy_array(
+        input_image=data,
+        image_properties={'spacing': img_in.dim[4:7]},
+    ).transpose([2, 1, 0])
 
     end = time.time()
     print('Inference done.')
     total_time = end - start
     print('Total inference time: {} minute(s) {} seconds'.format(int(total_time // 60), int(round(total_time % 60))))
 
-    # Copy .nii.gz file from tmpdir_nnunet to tmpdir
-    pred_file = glob.glob(os.path.join(tmpdir_nnunet, '.nii.gz'))[0]
-    shutil.copyfile(pred_file, fname_prediction)
+    # Save .nii.gz file to tmpdir
+    img_out = img_in.copy()
+    img_out.data = pred
+    img_out.save(fname_prediction)
 
     print('Re-orienting the prediction back to original orientation...')
     # Reorient the image back to original orientation
