@@ -126,7 +126,33 @@ MODELS = {
         "description": "Lumbar SC segmentation on T2w contrast with 3D UNet",
         "contrasts": ["t2"],
         "default": False,
-    }
+    },
+    "model_seg_sc_contrast_agnostic_softseg_nnunet": {
+        "url": [
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.0/model_2023-09-18.zip"
+        ],
+        "description": "Spinal cord segmentation that is agnostic to contrast using NNUnet",
+        "contrasts": ["any"],
+        "default": False,
+    },
+    "model_seg_sci_multiclass_sc_lesion_nnunet": {
+        "url": [
+            # TODO: Replace with official release (*not* from joshuacwnewton)
+            "https://github.com/joshuacwnewton/model_seg_sci/releases/download/r20230814/model-sci-multisite_r20230814.zip"
+        ],
+        "description": "Traumatic SCI spinal cord/lesion segmentation for T2w contrast",
+        "contrasts": ["t2"],
+        "default": False,
+    },
+    "model_seg_spinal_rootlets_nnunet": {
+        "url": [
+            # TODO: Replace with official release (*not* from joshuacwnewton)
+            "https://github.com/joshuacwnewton/model-spinal-rootlets/releases/download/r20230815/model-spinal-rootlets_r20230815.zip"
+        ],
+        "description": "Segmentation of spinal nerve rootlets for T2w images using NNUnet",
+        "contrasts": ["t2"],
+        "default": False,
+    },
 }
 
 
@@ -237,7 +263,25 @@ TASKS = {
                              'and Dimitry Van De Ville of EPFL, with the files consisting of lumbar T2w scans (and '
                              'manual spinal cord segmentations) of 11 healthy (non-pathological) patients.',
          'url': 'https://github.com/ivadomed/lumbar_seg_EPFL',
-         'models': ['model_seg_epfl_t2w_lumbar_sc']}
+         'models': ['model_seg_epfl_t2w_lumbar_sc']},
+    'seg_sc_contrast_agnostic':
+        {'description': 'Spinal cord segmentation that is agnostic to contrast',
+         'long_description': 'This segmentation model for contrast agnostic spinal cord segmentation uses an NNUnet '
+                             'architecture, and was created with the MONAI package. Training data was taken from the '
+                             'Spine Generic Multi Subject dataset, with the 6 different contrasts used spanning 267 '
+                             'different healthy (non-pathological) patients.',
+         'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
+         'models': ['model_seg_sc_contrast_agnostic_softseg_nnunet']},
+    'seg_sc_lesion_t2w_sci':
+        {'description': 'Traumatic SCI spinal cord/lesion seg for T2w contrast',
+         'long_description': 'TBD.',
+         'url': 'https://github.com/ivadomed/model_seg_sci',
+         'models': ['model_seg_sci_multiclass_sc_lesion_nnunet']},
+    'seg_spinal_rootlets_t2w':
+        {'description': 'Segmentation of spinal nerve rootlets for T2w contrast',
+         'long_description': 'TBD.',
+         'url': 'https://github.com/ivadomed/model-spinal-rootlets',
+         'models': ['model_seg_spinal_rootlets_nnunet']},
 }
 
 
