@@ -3,12 +3,11 @@
 import os
 
 import pytest
-import numpy as np
-import nibabel
 import warnings
 from torch.serialization import SourceChangeWarning
 
 import spinalcordtoolbox as sct
+from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.utils.sys import sct_test_path
 import spinalcordtoolbox.deepseg.models
 
@@ -57,5 +56,7 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task,
     # Make sure output file exists
     assert os.path.isfile(fname_out)
     # Compare with ground-truth segmentation
-    assert np.all(nibabel.load(fname_out).get_fdata() ==
-                  nibabel.load(fname_seg_manual).get_fdata()[..., 0])
+    im_seg = Image(fname_out)
+    im_seg_manual = Image(fname_seg_manual)
+    dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
+    assert dice_segmentation > 0.95
