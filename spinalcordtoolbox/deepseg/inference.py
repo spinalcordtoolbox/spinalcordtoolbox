@@ -117,20 +117,18 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
         DEVICE = torch.device("cuda" if torch.cuda.is_available() and device == "gpu" else "cpu")
 
     # define root path for finding datalists
-    path_image = path_img
-    results_path = path_out
     chkp_path = os.path.join(chkp_path, "best_model_loss.ckpt")
 
-    logger.info(f"Saving results to: {results_path}")
-    if not os.path.exists(results_path):
-        os.makedirs(results_path, exist_ok=True)
+    logger.info(f"Saving results to: {path_out}")
+    if not os.path.exists(path_out):
+        os.makedirs(path_out, exist_ok=True)
 
     # define inference patch size and center crop size
     crop_size = tuple([int(i) for i in crop_size.split("x")])
     inference_roi_size = (64, 192, 320)
 
     # define the dataset and dataloader
-    test_loader, test_post_pred = prepare_data(path_image, results_path, crop_size=crop_size)
+    test_loader, test_post_pred = prepare_data(path_img, path_out, crop_size=crop_size)
 
     # define model
     net = create_nnunet_from_plans()
@@ -171,12 +169,12 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
             # this takes about 0.25s on average on a CPU
             # image saver class
             pred_saver = SaveImage(
-                output_dir=results_path, output_postfix="pred", output_ext=".nii.gz",
+                output_dir=path_out, output_postfix="pred", output_ext=".nii.gz",
                 separate_folder=False, print_log=False)
             # save the prediction
             pred_saver(pred)
 
-        os.remove(os.path.join(results_path, "temp_msd_datalist.json"))
+        os.remove(os.path.join(path_out, "temp_msd_datalist.json"))
 
 
 def segment_nnunet():
