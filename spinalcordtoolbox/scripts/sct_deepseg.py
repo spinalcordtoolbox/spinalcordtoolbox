@@ -207,10 +207,11 @@ def main(argv: Sequence[str]):
             input_filenames = arguments.i
 
         # Call segment_nifti
-        options = {**vars(arguments), "fname_prior": fname_prior}
         # NB: For single models, the averaging will have no effect.
         #     For model ensembles, this will average the output of the ensemble into a single set of outputs.
-        nii_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames, options=options)
+        nii_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames, 
+                                                                    options={**vars(arguments), 
+                                                                             "fname_prior": fname_prior})
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
@@ -220,14 +221,14 @@ def main(argv: Sequence[str]):
         output_filenames = []
         # Save output seg
         for nii_seg, target in zip(nii_lst, target_lst):
-            if 'o' in options and options['o'] is not None:
+            if hasattr(arguments, 'o') and arguments.o is not None:
                 # To support if the user adds the extension or not
-                extension = ".nii.gz" if ".nii.gz" in options['o'] else ".nii" if ".nii" in options['o'] else ""
+                extension = ".nii.gz" if ".nii.gz" in arguments.o else ".nii" if ".nii" in arguments.o else ""
                 if extension == "":
-                    fname_seg = options['o'] + target if len(target_lst) > 1 else options['o']
+                    fname_seg = arguments.o + target if len(target_lst) > 1 else arguments.o
                 else:
-                    fname_seg = options['o'].replace(extension, target + extension) if len(target_lst) > 1 \
-                        else options['o']
+                    fname_seg = arguments.o.replace(extension, target + extension) if len(target_lst) > 1 \
+                        else arguments.o
             else:
                 fname_seg = ''.join([splitext(input_filenames[0])[0], target + '.nii.gz'])
 
