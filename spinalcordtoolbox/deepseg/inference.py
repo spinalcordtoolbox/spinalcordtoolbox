@@ -119,10 +119,6 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
     # define root path for finding datalists
     chkp_path = os.path.join(chkp_path, "best_model_loss.ckpt")
 
-    logger.info(f"Saving results to: {path_out}")
-    if not os.path.exists(path_out):
-        os.makedirs(path_out, exist_ok=True)
-
     # define inference patch size and center crop size
     crop_size = tuple([int(i) for i in crop_size.split("x")])
     inference_roi_size = (64, 192, 320)
@@ -162,16 +158,13 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
                 test_post_pred=test_post_pred
             )
 
-            # get subject name
-            subject_name = (batch["image_meta_dict"]["filename_or_obj"][0]).split("/")[-1].replace(".nii.gz", "")
-            logger.info(f"Saving subject: {subject_name}")
-
             # this takes about 0.25s on average on a CPU
             # image saver class
             pred_saver = SaveImage(
                 output_dir=path_out, output_postfix="pred", output_ext=".nii.gz",
                 separate_folder=False, print_log=False)
             # save the prediction
+            logger.info(f"Saving results to: {path_out}")
             pred_saver(pred)
 
         os.remove(os.path.join(path_out, "temp_msd_datalist.json"))
