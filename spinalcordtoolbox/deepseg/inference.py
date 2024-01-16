@@ -128,26 +128,12 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
     test_loader, test_post_pred = prepare_data(path_img, path_out, crop_size=crop_size)
 
     # define model
-    net = create_nnunet_from_plans()
+    net = create_nnunet_from_plans(chkp_path, device)
 
     # iterate over the dataset and compute metrics
     for batch in test_loader:
         # get the test input
         test_input = batch["image"].to(DEVICE)
-
-        # this loop only takes about 0.2s on average on a CPU
-        checkpoint = torch.load(chkp_path, map_location=torch.device(DEVICE))["state_dict"]
-        # NOTE: remove the 'net.' prefix from the keys because of how the model was initialized in lightning
-        # https://discuss.pytorch.org/t/missing-keys-unexpected-keys-in-state-dict-when-loading-self-trained-model/22379/14
-        for key in list(checkpoint.keys()):
-            if 'net.' in key:
-                checkpoint[key.replace('net.', '')] = checkpoint[key]
-                del checkpoint[key]
-
-        # load the trained model weights
-        net.load_state_dict(checkpoint)
-        net.to(DEVICE)
-        net.eval()
 
         # run inference
         pred = sliding_window_inference_wrapped(

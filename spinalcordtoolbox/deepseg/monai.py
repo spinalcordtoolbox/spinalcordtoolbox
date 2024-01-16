@@ -43,7 +43,8 @@ nnunet_plans = {
     "unet_max_num_features": 320,
 }
 
-def create_nnunet_from_plans():
+
+def create_nnunet_from_plans(chkp_path, device):
     """
     Adapted from nnUNet's source code:
     https://github.com/MIC-DKFZ/nnUNet/blob/master/nnunetv2/utilities/get_network_from_plans.py#L9
@@ -110,6 +111,20 @@ def create_nnunet_from_plans():
     model.apply(InitWeights_He(1e-2))
     if network_class == ResidualEncoderUNet:
         model.apply(init_last_bn_before_add_to_0)
+
+    # this loop only takes about 0.2s on average on a CPU
+    checkpoint = torch.load(chkp_path, map_location=torch.device(device))["state_dict"]
+    # NOTE: remove the 'net.' prefix from the keys because of how the model was initialized in lightning
+    # https://discuss.pytorch.org/t/missing-keys-unexpected-keys-in-state-dict-when-loading-self-trained-model/22379/14
+    for key in list(checkpoint.keys()):
+        if 'net.' in key:
+            checkpoint[key.replace('net.', '')] = checkpoint[key]
+            del checkpoint[key]
+
+    # load the trained model weights
+    model.load_state_dict(checkpoint)
+    model.to(device)
+    model.eval()
 
     return model
 
