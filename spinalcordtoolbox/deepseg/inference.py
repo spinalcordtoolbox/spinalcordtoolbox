@@ -86,27 +86,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
     return nii_lst, target_lst
 
 
-def segment_monai(path_model, input_filenames, threshold):
-    nii_lst, target_lst = [], []
-    for fname_in in input_filenames:
-        tmp_dir = tmp_create("sct_deepseg")
-        fname_out, target = segment_monai_single(path_img=fname_in, chkp_path=path_model, path_out=tmp_dir)
-        # TODO: Use API binarization function when output filetype is sct.image.Image
-        run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
-        # TODO: Change the output filetype from Nifti1Image to sct.image.Image to mitigate #3232
-        nii_lst.append(nib.load(fname_out))
-        target_lst.append(target)
-
-    return nii_lst, target_lst
-
-
-def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", device="cpu"):
-    """
-    Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
-
-    Author: Naga Karthik
-
-    """
+def segment_monai(path_model, input_filenames, threshold, device="cpu"):
     # equivalent to `with torch.no_grad()`
     torch.set_grad_enabled(False)
 
@@ -118,9 +98,29 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
         DEVICE = torch.device("cuda" if torch.cuda.is_available() and device == "gpu" else "cpu")
 
     # load model from checkpoint
-    chkp_path = os.path.join(chkp_path, "best_model_loss.ckpt")
+    chkp_path = os.path.join(path_model, "best_model_loss.ckpt")
     net = create_nnunet_from_plans(chkp_path, DEVICE)
 
+    nii_lst, target_lst = [], []
+    for fname_in in input_filenames:
+        tmp_dir = tmp_create("sct_deepseg")
+        fname_out, target = segment_monai_single(path_img=fname_in, net=net, device=DEVICE, path_out=tmp_dir)
+        # TODO: Use API binarization function when output filetype is sct.image.Image
+        run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
+        # TODO: Change the output filetype from Nifti1Image to sct.image.Image to mitigate #3232
+        nii_lst.append(nib.load(fname_out))
+        target_lst.append(target)
+
+    return nii_lst, target_lst
+
+
+def segment_monai_single(path_img, path_out, net, device, crop_size="64x192x-1"):
+    """
+    Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
+
+    Author: Naga Karthik
+
+    """
     # define inference patch size and center crop size
     crop_size = tuple([int(i) for i in crop_size.split("x")])
     inference_roi_size = (64, 192, 320)
@@ -130,7 +130,7 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
     batch = next(iter(test_loader))
 
     # run inference
-    test_input = batch["image"].to(DEVICE)
+    test_input = batch["image"].to(device)
     pred = sliding_window_inference_wrapped(
         batch=batch,
         test_input=test_input,
