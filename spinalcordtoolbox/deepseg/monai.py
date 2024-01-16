@@ -187,13 +187,7 @@ def inference_transforms_single_image(crop_size):
     ])
 
 
-def sliding_window_inference_wrapped(batch, test_input, inference_roi_size, predictor, test_post_pred):
-    """
-    Wrap MONAI's sliding_window_inference funciton with some additional post-processing
-    """
-    batch["pred"] = sliding_window_inference(test_input, inference_roi_size, mode="gaussian",
-                                             sw_batch_size=4, predictor=predictor, overlap=0.5, progress=False)
-
+def postprocessing(batch, test_post_pred):
     # take only the highest resolution prediction
     batch["pred"] = batch["pred"][0]
 

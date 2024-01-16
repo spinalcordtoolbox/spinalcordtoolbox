@@ -14,10 +14,11 @@ import nibabel as nib
 import numpy as np
 import torch
 from monai.transforms import SaveImage
+from monai.inferers import sliding_window_inference
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.utils.sys import run_proc
-from spinalcordtoolbox.deepseg.monai import create_nnunet_from_plans, prepare_data, sliding_window_inference_wrapped
+from spinalcordtoolbox.deepseg.monai import create_nnunet_from_plans, prepare_data, postprocessing
 
 logger = logging.getLogger(__name__)
 
@@ -131,13 +132,9 @@ def segment_monai_single(path_img, path_out, net, device):
 
     # run inference
     test_input = batch["image"].to(device)
-    pred = sliding_window_inference_wrapped(
-        batch=batch,
-        test_input=test_input,
-        inference_roi_size=inference_roi_size,
-        predictor=net,
-        test_post_pred=test_post_pred
-    )
+    batch["pred"] = sliding_window_inference(test_input, inference_roi_size, mode="gaussian",
+                                             sw_batch_size=4, predictor=net, overlap=0.5, progress=False)
+    pred = postprocessing(batch, test_post_pred)
 
     # this takes about 0.25s on average on a CPU
     # image saver class
