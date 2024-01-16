@@ -37,25 +37,29 @@ def test_model_dict():
         assert 'default' in value
 
 
-@pytest.mark.parametrize('fname_image, fname_seg_manual, fname_out, task', [
+@pytest.mark.parametrize('fname_image, fname_seg_manual, fname_out, task, thr', [
     (sct_test_path('t2s', 't2s.nii.gz'),
      sct_test_path('t2s', 't2s_seg-deepseg.nii.gz'),
      't2s_seg_deepseg.nii.gz',
-     'seg_sc_t2star'),
+     'seg_sc_t2star',
+     0.9),
     (sct_test_path('t2', 't2.nii.gz'),
      sct_test_path('t2', 't2_seg-manual.nii.gz'),
      't2_seg_deepseg.nii.gz',
-     'seg_sc_contrast_agnostic'),
+     'seg_sc_contrast_agnostic',
+     0.5),
     (sct_test_path('t2', 't2.nii.gz'),
      None,
      't2_seg_deepseg.nii.gz',
-     'seg_sc_lesion_t2w_sci'),
+     'seg_sc_lesion_t2w_sci',
+     0.5),
     (sct_test_path('t2', 't2.nii.gz'),
      None,
      't2_seg_deepseg.nii.gz',
-     'seg_spinal_rootlets_t2w'),
+     'seg_spinal_rootlets_t2w',
+     0.5),
 ])
-def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task,
+def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
                        tmp_path):
     """
     Uses the locally-installed sct_testing_data
@@ -63,7 +67,7 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task,
     # Ignore warnings from ivadomed model source code changing
     warnings.filterwarnings("ignore", category=SourceChangeWarning)
     fname_out = str(tmp_path/fname_out)  # tmp_path for automatic cleanup
-    sct_deepseg.main(['-i', fname_image, '-task', task, '-o', fname_out, '-thr', str(0.9)])
+    sct_deepseg.main(['-i', fname_image, '-task', task, '-o', fname_out, '-thr', str(thr)])
     # TODO: implement integrity test (for now, just checking if output segmentation file exists)
     # Make sure output file exists
     assert os.path.isfile(fname_out)
