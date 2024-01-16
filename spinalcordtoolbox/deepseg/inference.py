@@ -90,7 +90,6 @@ def segment_monai(path_model, input_filenames, threshold):
 
     """
 
-    import argparse
     import json
     import os
     from time import time
@@ -136,25 +135,6 @@ def segment_monai(path_model, input_filenames, threshold):
         ],
         "unet_max_num_features": 320,
     }
-
-    def get_parser():
-        parser = argparse.ArgumentParser(description="Run inference on a MONAI-trained model")
-
-        parser.add_argument("--path-img", type=str, required=True,
-                            help="Path to the image to run inference on")
-        parser.add_argument("--chkp-path", type=str, required=True, help="Path to the checkpoint folder")
-        parser.add_argument("--path-out", type=str, required=True,
-                            help="Path to the output folder where to store the predictions and associated metrics")
-        parser.add_argument('-crop', '--crop-size', type=str, default="64x192x-1",
-                            help='Size of the window used to crop the volume before inference (NOTE: Images are resampled'
-                                 ' to 1mm isotropic before cropping). The window is centered in the middle of the volume.'
-                                 ' Dimensions are in the order R-L, A-P, I-S. Use -1 for no cropping in a specific axis,'
-                                 ' example: “64x160x-1”. NOTE: heavy R-L cropping is recommended for positioning the SC at'
-                                 ' the center of the image. Default: 64x192x-1')
-        parser.add_argument('--device', default="gpu", type=str, choices=["gpu", "cpu"],
-                            help='Device to run inference on. Default: cpu')
-
-        return parser
 
     # ===========================================================================
     #                          Test-time Transforms
@@ -301,21 +281,18 @@ def segment_monai(path_model, input_filenames, threshold):
     # ===========================================================================
     #                           Inference method
     # ===========================================================================
-    def main(argv):
-        parser = get_parser()
-        args = parser.parse_args(argv)
-
+    def main(path_img, path_out, chkp_path, crop_size="64x192x-1", device="cpu"):
         # define device
-        if args.device == "gpu" and not torch.cuda.is_available():
+        if device == "gpu" and not torch.cuda.is_available():
             logger.warning("GPU not available, using CPU instead")
             DEVICE = torch.device("cpu")
         else:
-            DEVICE = torch.device("cuda" if torch.cuda.is_available() and args.device == "gpu" else "cpu")
+            DEVICE = torch.device("cuda" if torch.cuda.is_available() and device == "gpu" else "cpu")
 
         # define root path for finding datalists
-        path_image = args.path_img
-        results_path = args.path_out
-        chkp_path = os.path.join(args.chkp_path, "best_model_loss.ckpt")
+        path_image = path_img
+        results_path = path_out
+        chkp_path = os.path.join(chkp_path, "best_model_loss.ckpt")
 
         # save terminal outputs to a file
         logger.add(os.path.join(results_path, "logs.txt"), rotation="10 MB", level="INFO")
@@ -325,7 +302,7 @@ def segment_monai(path_model, input_filenames, threshold):
             os.makedirs(results_path, exist_ok=True)
 
         # define inference patch size and center crop size
-        crop_size = tuple([int(i) for i in args.crop_size.split("x")])
+        crop_size = tuple([int(i) for i in crop_size.split("x")])
         inference_roi_size = (64, 192, 320)
 
         # define the dataset and dataloader
@@ -435,11 +412,7 @@ def segment_monai(path_model, input_filenames, threshold):
     nii_lst, target_lst = [], []
     for fname_in in input_filenames:
         tmp_dir = tmp_create("sct_deepseg")
-        main(argv=[
-            "--path-img", fname_in,
-            "--chkp-path", path_model,
-            "--path-out", tmp_dir
-        ])
+        main(path_img=fname_in, chkp_path=path_model, path_out=tmp_dir)
         _, fname, ext = extract_fname(fname_in)
         fname_out = os.path.join(tmp_dir, f"{fname}_pred{ext}")
         # TODO: Use API binarization function when output filetype is sct.image.Image
