@@ -221,7 +221,7 @@ def main(argv: Sequence[str]):
                                                                                  "fname_prior": fname_prior})
         # For the other two types, we currently only use single models (not ensembles)
         elif model_type == 'monai':
-            nii_lst, target_lst = inference.segment_monai()
+            nii_lst, target_lst = inference.segment_monai(path_model, input_filenames, arguments.binarize_prediction)
         else:
             assert model_type == 'nnunet'
             nii_lst, target_lst = inference.segment_nnunet()
