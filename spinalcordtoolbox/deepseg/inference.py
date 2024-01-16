@@ -5,12 +5,17 @@ Copyright (c) 2023 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
 
+import json
 import logging
+import os
 from pathlib import Path
+from time import time
 
 from ivadomed import inference as imed_inference
 import nibabel as nib
 import numpy as np
+import torch
+from monai.transforms import SaveImage
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.utils.sys import run_proc
@@ -84,138 +89,10 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
 
 
 def segment_monai(path_model, input_filenames, threshold):
-    """
-    Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
-
-    Author: Naga Karthik
-
-    """
-
-    import json
-    import os
-    from time import time
-
-    import numpy as np
-    import torch
-
-    from loguru import logger
-    from monai.transforms import SaveImage
-
-    def main(path_img, path_out, chkp_path, crop_size="64x192x-1", device="cpu"):
-        # define device
-        if device == "gpu" and not torch.cuda.is_available():
-            logger.warning("GPU not available, using CPU instead")
-            DEVICE = torch.device("cpu")
-        else:
-            DEVICE = torch.device("cuda" if torch.cuda.is_available() and device == "gpu" else "cpu")
-
-        # define root path for finding datalists
-        path_image = path_img
-        results_path = path_out
-        chkp_path = os.path.join(chkp_path, "best_model_loss.ckpt")
-
-        # save terminal outputs to a file
-        logger.add(os.path.join(results_path, "logs.txt"), rotation="10 MB", level="INFO")
-
-        logger.info(f"Saving results to: {results_path}")
-        if not os.path.exists(results_path):
-            os.makedirs(results_path, exist_ok=True)
-
-        # define inference patch size and center crop size
-        crop_size = tuple([int(i) for i in crop_size.split("x")])
-        inference_roi_size = (64, 192, 320)
-
-        # define the dataset and dataloader
-        test_loader, test_post_pred = prepare_data(path_image, results_path, crop_size=crop_size)
-
-        # define model
-        net = create_nnunet_from_plans()
-
-        # define list to collect the test metrics
-        test_step_outputs = []
-        test_summary = {}
-
-        # iterate over the dataset and compute metrics
-        with torch.no_grad():
-            for batch in test_loader:
-
-                # compute time for inference per subject
-                start_time = time()
-
-                # get the test input
-                test_input = batch["image"].to(DEVICE)
-
-                # this loop only takes about 0.2s on average on a CPU
-                checkpoint = torch.load(chkp_path, map_location=torch.device(DEVICE))["state_dict"]
-                # NOTE: remove the 'net.' prefix from the keys because of how the model was initialized in lightning
-                # https://discuss.pytorch.org/t/missing-keys-unexpected-keys-in-state-dict-when-loading-self-trained-model/22379/14
-                for key in list(checkpoint.keys()):
-                    if 'net.' in key:
-                        checkpoint[key.replace('net.', '')] = checkpoint[key]
-                        del checkpoint[key]
-
-                # load the trained model weights
-                net.load_state_dict(checkpoint)
-                net.to(DEVICE)
-                net.eval()
-
-                # run inference
-                pred = sliding_window_inference_wrapped(
-                    batch=batch,
-                    test_input=test_input,
-                    inference_roi_size=inference_roi_size,
-                    predictor=net,
-                    test_post_pred=test_post_pred
-                )
-
-                # get subject name
-                subject_name = (batch["image_meta_dict"]["filename_or_obj"][0]).split("/")[-1].replace(".nii.gz", "")
-                logger.info(f"Saving subject: {subject_name}")
-
-                # this takes about 0.25s on average on a CPU
-                # image saver class
-                pred_saver = SaveImage(
-                    output_dir=results_path, output_postfix="pred", output_ext=".nii.gz",
-                    separate_folder=False, print_log=False)
-                # save the prediction
-                pred_saver(pred)
-
-                end_time = time()
-                metrics_dict = {
-                    "subject_name_and_contrast": subject_name,
-                    "inference_time_in_sec": round((end_time - start_time), 2),
-                }
-                test_step_outputs.append(metrics_dict)
-
-            # save the test summary
-            test_summary["metrics_per_subject"] = test_step_outputs
-
-            # compute the average inference time
-            avg_inference_time = np.stack([x["inference_time_in_sec"] for x in test_step_outputs]).mean()
-
-            # store the average metrics in a dict
-            avg_metrics = {
-                "avg_inference_time_in_sec": round(avg_inference_time, 2),
-            }
-            test_summary["metrics_avg_across_cohort"] = avg_metrics
-
-            logger.info("========================================================")
-            logger.info(f"      Inference Time per Subject: {avg_inference_time:.2f}s")
-            logger.info("========================================================")
-
-            # dump the test summary to a json file
-            with open(os.path.join(results_path, "test_summary.json"), "w") as f:
-                json.dump(test_summary, f, indent=4, sort_keys=True)
-
-            # free up memory
-            test_step_outputs.clear()
-            test_summary.clear()
-            os.remove(os.path.join(results_path, "temp_msd_datalist.json"))
-
     nii_lst, target_lst = [], []
     for fname_in in input_filenames:
         tmp_dir = tmp_create("sct_deepseg")
-        main(path_img=fname_in, chkp_path=path_model, path_out=tmp_dir)
+        segment_monai_single(path_img=fname_in, chkp_path=path_model, path_out=tmp_dir)
         _, fname, ext = extract_fname(fname_in)
         fname_out = os.path.join(tmp_dir, f"{fname}_pred{ext}")
         # TODO: Use API binarization function when output filetype is sct.image.Image
@@ -225,6 +102,127 @@ def segment_monai(path_model, input_filenames, threshold):
         target_lst.append("_seg")
 
     return nii_lst, target_lst
+
+
+def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", device="cpu"):
+    """
+    Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
+
+    Author: Naga Karthik
+
+    """
+    from loguru import logger
+
+    # define device
+    if device == "gpu" and not torch.cuda.is_available():
+        logger.warning("GPU not available, using CPU instead")
+        DEVICE = torch.device("cpu")
+    else:
+        DEVICE = torch.device("cuda" if torch.cuda.is_available() and device == "gpu" else "cpu")
+
+    # define root path for finding datalists
+    path_image = path_img
+    results_path = path_out
+    chkp_path = os.path.join(chkp_path, "best_model_loss.ckpt")
+
+    # save terminal outputs to a file
+    logger.add(os.path.join(results_path, "logs.txt"), rotation="10 MB", level="INFO")
+
+    logger.info(f"Saving results to: {results_path}")
+    if not os.path.exists(results_path):
+        os.makedirs(results_path, exist_ok=True)
+
+    # define inference patch size and center crop size
+    crop_size = tuple([int(i) for i in crop_size.split("x")])
+    inference_roi_size = (64, 192, 320)
+
+    # define the dataset and dataloader
+    test_loader, test_post_pred = prepare_data(path_image, results_path, crop_size=crop_size)
+
+    # define model
+    net = create_nnunet_from_plans()
+
+    # define list to collect the test metrics
+    test_step_outputs = []
+    test_summary = {}
+
+    # iterate over the dataset and compute metrics
+    with torch.no_grad():
+        for batch in test_loader:
+
+            # compute time for inference per subject
+            start_time = time()
+
+            # get the test input
+            test_input = batch["image"].to(DEVICE)
+
+            # this loop only takes about 0.2s on average on a CPU
+            checkpoint = torch.load(chkp_path, map_location=torch.device(DEVICE))["state_dict"]
+            # NOTE: remove the 'net.' prefix from the keys because of how the model was initialized in lightning
+            # https://discuss.pytorch.org/t/missing-keys-unexpected-keys-in-state-dict-when-loading-self-trained-model/22379/14
+            for key in list(checkpoint.keys()):
+                if 'net.' in key:
+                    checkpoint[key.replace('net.', '')] = checkpoint[key]
+                    del checkpoint[key]
+
+            # load the trained model weights
+            net.load_state_dict(checkpoint)
+            net.to(DEVICE)
+            net.eval()
+
+            # run inference
+            pred = sliding_window_inference_wrapped(
+                batch=batch,
+                test_input=test_input,
+                inference_roi_size=inference_roi_size,
+                predictor=net,
+                test_post_pred=test_post_pred
+            )
+
+            # get subject name
+            subject_name = (batch["image_meta_dict"]["filename_or_obj"][0]).split("/")[-1].replace(".nii.gz", "")
+            logger.info(f"Saving subject: {subject_name}")
+
+            # this takes about 0.25s on average on a CPU
+            # image saver class
+            pred_saver = SaveImage(
+                output_dir=results_path, output_postfix="pred", output_ext=".nii.gz",
+                separate_folder=False, print_log=False)
+            # save the prediction
+            pred_saver(pred)
+
+            end_time = time()
+            metrics_dict = {
+                "subject_name_and_contrast": subject_name,
+                "inference_time_in_sec": round((end_time - start_time), 2),
+            }
+            test_step_outputs.append(metrics_dict)
+
+        # save the test summary
+        test_summary["metrics_per_subject"] = test_step_outputs
+
+        # compute the average inference time
+        avg_inference_time = np.stack([x["inference_time_in_sec"] for x in test_step_outputs]).mean()
+
+        # store the average metrics in a dict
+        avg_metrics = {
+            "avg_inference_time_in_sec": round(avg_inference_time, 2),
+        }
+        test_summary["metrics_avg_across_cohort"] = avg_metrics
+
+        logger.info("========================================================")
+        logger.info(f"      Inference Time per Subject: {avg_inference_time:.2f}s")
+        logger.info("========================================================")
+
+        # dump the test summary to a json file
+        with open(os.path.join(results_path, "test_summary.json"), "w") as f:
+            json.dump(test_summary, f, indent=4, sort_keys=True)
+
+        # free up memory
+        test_step_outputs.clear()
+        test_summary.clear()
+        os.remove(os.path.join(results_path, "temp_msd_datalist.json"))
+
 
 def segment_nnunet():
     return
