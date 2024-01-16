@@ -143,22 +143,13 @@ class InitWeights_He(object):
 def prepare_data(path_image, path_out, crop_size=(64, 160, 320)):
     # create a temporary datalist containing the image
     # boiler plate keys to be defined in the MSD-style datalist
-    params = {}
-    params["description"] = "my-awesome-SC-image"
-    params["labels"] = {
-        "0": "background",
-        "1": "soft-sc-seg"
+    params = {
+        "description": "my-awesome-SC-image",
+        "labels": {"0": "background", "1": "soft-sc-seg"},
+        "modality": {"0": "MRI"},
+        "tensorImageSize": "3D",
+        "test": [{"image": path_image}]
     }
-    params["modality"] = {
-        "0": "MRI"
-    }
-    params["tensorImageSize"] = "3D"
-    params["test"] = [
-        {
-            "image": path_image
-        }
-    ]
-
     final_json = json.dumps(params, indent=4, sort_keys=True)
     jsonFile = open(path_out + "/temp_msd_datalist.json", "w")
     jsonFile.write(final_json)
@@ -166,6 +157,7 @@ def prepare_data(path_image, path_out, crop_size=(64, 160, 320)):
 
     dataset = os.path.join(path_out, "temp_msd_datalist.json")
     test_files = load_decathlon_datalist(dataset, True, "test")
+    os.remove(dataset)
 
     # define test transforms
     transforms_test = inference_transforms_single_image(crop_size=crop_size)

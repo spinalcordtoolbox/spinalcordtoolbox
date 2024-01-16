@@ -151,8 +151,6 @@ def segment_monai_single(path_img, path_out, net, device):
     logger.info(f"Saving results to: {fname_out}")
     pred_saver(pred)
 
-    os.remove(os.path.join(path_out, "temp_msd_datalist.json"))
-
     return fname_out, f"_{postfix}"
 
 
