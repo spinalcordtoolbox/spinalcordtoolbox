@@ -114,7 +114,7 @@ def segment_monai(path_model, input_filenames, threshold, device="cpu"):
     return nii_lst, target_lst
 
 
-def segment_monai_single(path_img, path_out, net, device, crop_size="64x192x-1"):
+def segment_monai_single(path_img, path_out, net, device):
     """
     Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
 
@@ -122,7 +122,7 @@ def segment_monai_single(path_img, path_out, net, device, crop_size="64x192x-1")
 
     """
     # define inference patch size and center crop size
-    crop_size = tuple([int(i) for i in crop_size.split("x")])
+    crop_size = (64, 192, -1)
     inference_roi_size = (64, 192, 320)
 
     # define the dataset and dataloader
