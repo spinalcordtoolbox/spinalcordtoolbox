@@ -111,8 +111,6 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
     Author: Naga Karthik
 
     """
-    from loguru import logger
-
     # define device
     if device == "gpu" and not torch.cuda.is_available():
         logger.warning("GPU not available, using CPU instead")
@@ -124,9 +122,6 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
     path_image = path_img
     results_path = path_out
     chkp_path = os.path.join(chkp_path, "best_model_loss.ckpt")
-
-    # save terminal outputs to a file
-    logger.add(os.path.join(results_path, "logs.txt"), rotation="10 MB", level="INFO")
 
     logger.info(f"Saving results to: {results_path}")
     if not os.path.exists(results_path):
