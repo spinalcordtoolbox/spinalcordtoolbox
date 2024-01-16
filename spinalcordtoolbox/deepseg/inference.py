@@ -107,6 +107,9 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
     Author: Naga Karthik
 
     """
+    # equivalent to `with torch.no_grad()`
+    torch.set_grad_enabled(False)
+
     # define device
     if device == "gpu" and not torch.cuda.is_available():
         logger.warning("GPU not available, using CPU instead")
@@ -128,49 +131,48 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
     net = create_nnunet_from_plans()
 
     # iterate over the dataset and compute metrics
-    with torch.no_grad():
-        for batch in test_loader:
-            # get the test input
-            test_input = batch["image"].to(DEVICE)
+    for batch in test_loader:
+        # get the test input
+        test_input = batch["image"].to(DEVICE)
 
-            # this loop only takes about 0.2s on average on a CPU
-            checkpoint = torch.load(chkp_path, map_location=torch.device(DEVICE))["state_dict"]
-            # NOTE: remove the 'net.' prefix from the keys because of how the model was initialized in lightning
-            # https://discuss.pytorch.org/t/missing-keys-unexpected-keys-in-state-dict-when-loading-self-trained-model/22379/14
-            for key in list(checkpoint.keys()):
-                if 'net.' in key:
-                    checkpoint[key.replace('net.', '')] = checkpoint[key]
-                    del checkpoint[key]
+        # this loop only takes about 0.2s on average on a CPU
+        checkpoint = torch.load(chkp_path, map_location=torch.device(DEVICE))["state_dict"]
+        # NOTE: remove the 'net.' prefix from the keys because of how the model was initialized in lightning
+        # https://discuss.pytorch.org/t/missing-keys-unexpected-keys-in-state-dict-when-loading-self-trained-model/22379/14
+        for key in list(checkpoint.keys()):
+            if 'net.' in key:
+                checkpoint[key.replace('net.', '')] = checkpoint[key]
+                del checkpoint[key]
 
-            # load the trained model weights
-            net.load_state_dict(checkpoint)
-            net.to(DEVICE)
-            net.eval()
+        # load the trained model weights
+        net.load_state_dict(checkpoint)
+        net.to(DEVICE)
+        net.eval()
 
-            # run inference
-            pred = sliding_window_inference_wrapped(
-                batch=batch,
-                test_input=test_input,
-                inference_roi_size=inference_roi_size,
-                predictor=net,
-                test_post_pred=test_post_pred
-            )
+        # run inference
+        pred = sliding_window_inference_wrapped(
+            batch=batch,
+            test_input=test_input,
+            inference_roi_size=inference_roi_size,
+            predictor=net,
+            test_post_pred=test_post_pred
+        )
 
-            # this takes about 0.25s on average on a CPU
-            # image saver class
-            _, fname, ext = extract_fname(path_img)
-            postfix = "seg"
-            pred_saver = SaveImage(
-                output_dir=path_out, output_postfix=postfix, output_ext=ext,
-                separate_folder=False, print_log=False)
-            # save the prediction
-            fname_out = os.path.join(path_out, f"{fname}_{postfix}{ext}")
-            logger.info(f"Saving results to: {fname_out}")
-            pred_saver(pred)
+        # this takes about 0.25s on average on a CPU
+        # image saver class
+        _, fname, ext = extract_fname(path_img)
+        postfix = "seg"
+        pred_saver = SaveImage(
+            output_dir=path_out, output_postfix=postfix, output_ext=ext,
+            separate_folder=False, print_log=False)
+        # save the prediction
+        fname_out = os.path.join(path_out, f"{fname}_{postfix}{ext}")
+        logger.info(f"Saving results to: {fname_out}")
+        pred_saver(pred)
 
-        os.remove(os.path.join(path_out, "temp_msd_datalist.json"))
+    os.remove(os.path.join(path_out, "temp_msd_datalist.json"))
 
-        return fname_out, f"_{postfix}"
+    return fname_out, f"_{postfix}"
 
 
 def segment_nnunet():
