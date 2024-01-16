@@ -90,14 +90,12 @@ def segment_monai(path_model, input_filenames, threshold):
     nii_lst, target_lst = [], []
     for fname_in in input_filenames:
         tmp_dir = tmp_create("sct_deepseg")
-        segment_monai_single(path_img=fname_in, chkp_path=path_model, path_out=tmp_dir)
-        _, fname, ext = extract_fname(fname_in)
-        fname_out = os.path.join(tmp_dir, f"{fname}_pred{ext}")
+        fname_out, target = segment_monai_single(path_img=fname_in, chkp_path=path_model, path_out=tmp_dir)
         # TODO: Use API binarization function when output filetype is sct.image.Image
         run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
         # TODO: Change the output filetype from Nifti1Image to sct.image.Image to mitigate #3232
         nii_lst.append(nib.load(fname_out))
-        target_lst.append("_seg")
+        target_lst.append(target)
 
     return nii_lst, target_lst
 
@@ -160,14 +158,19 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
 
             # this takes about 0.25s on average on a CPU
             # image saver class
+            _, fname, ext = extract_fname(path_img)
+            postfix = "pred"
             pred_saver = SaveImage(
-                output_dir=path_out, output_postfix="pred", output_ext=".nii.gz",
+                output_dir=path_out, output_postfix=postfix, output_ext=ext,
                 separate_folder=False, print_log=False)
             # save the prediction
-            logger.info(f"Saving results to: {path_out}")
+            fname_out = os.path.join(path_out, f"{fname}_{postfix}{ext}")
+            logger.info(f"Saving results to: {fname_out}")
             pred_saver(pred)
 
         os.remove(os.path.join(path_out, "temp_msd_datalist.json"))
+
+        return fname_out, postfix
 
 
 def segment_nnunet():
