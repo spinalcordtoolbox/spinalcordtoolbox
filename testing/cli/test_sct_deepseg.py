@@ -42,6 +42,18 @@ def test_model_dict():
      sct_test_path('t2s', 't2s_seg-deepseg.nii.gz'),
      't2s_seg_deepseg.nii.gz',
      'seg_sc_t2star'),
+    (sct_test_path('t2', 't2.nii.gz'),
+     sct_test_path('t2', 't2_seg-manual.nii.gz'),
+     't2_seg_deepseg.nii.gz',
+     'seg_sc_contrast_agnostic'),
+    (sct_test_path('t2', 't2.nii.gz'),
+     None,
+     't2_seg_deepseg.nii.gz',
+     'seg_sc_lesion_t2w_sci'),
+    (sct_test_path('t2', 't2.nii.gz'),
+     None,
+     't2_seg_deepseg.nii.gz',
+     'seg_spinal_rootlets_t2w'),
 ])
 def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task,
                        tmp_path):
