@@ -14,6 +14,7 @@ import numpy as np
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.utils.sys import run_proc
+from spinalcordtoolbox.deepseg.monai import create_nnunet_from_plans, prepare_data, sliding_window_inference_wrapped
 
 logger = logging.getLogger(__name__)
 
@@ -96,191 +97,10 @@ def segment_monai(path_model, input_filenames, threshold):
 
     import numpy as np
     import torch
-    import torch.nn as nn
-    import torch.nn.functional as F
-    from dynamic_network_architectures.architectures.unet import PlainConvUNet, ResidualEncoderUNet
-    from dynamic_network_architectures.building_blocks.helper import get_matching_instancenorm, convert_dim_to_conv_op
-    from dynamic_network_architectures.initialization.weight_init import init_last_bn_before_add_to_0
+
     from loguru import logger
-    from monai.data import (DataLoader, CacheDataset, load_decathlon_datalist, decollate_batch)
-    from monai.inferers import sliding_window_inference
-    from monai.transforms import (Compose, EnsureTyped, Invertd, SaveImage, Spacingd,
-                                  LoadImaged, NormalizeIntensityd, EnsureChannelFirstd,
-                                  DivisiblePadd, Orientationd, ResizeWithPadOrCropd)
+    from monai.transforms import SaveImage
 
-    # NNUNET global params
-    INIT_FILTERS = 32
-    ENABLE_DS = True
-
-    nnunet_plans = {
-        "UNet_class_name": "PlainConvUNet",
-        "UNet_base_num_features": INIT_FILTERS,
-        "n_conv_per_stage_encoder": [2, 2, 2, 2, 2, 2],
-        "n_conv_per_stage_decoder": [2, 2, 2, 2, 2],
-        "pool_op_kernel_sizes": [
-            [1, 1, 1],
-            [2, 2, 2],
-            [2, 2, 2],
-            [2, 2, 2],
-            [2, 2, 2],
-            [1, 2, 2]
-        ],
-        "conv_kernel_sizes": [
-            [3, 3, 3],
-            [3, 3, 3],
-            [3, 3, 3],
-            [3, 3, 3],
-            [3, 3, 3],
-            [3, 3, 3]
-        ],
-        "unet_max_num_features": 320,
-    }
-
-    # ===========================================================================
-    #                          Test-time Transforms
-    # ===========================================================================
-    def inference_transforms_single_image(crop_size):
-        return Compose([
-            LoadImaged(keys=["image"], image_only=False),
-            EnsureChannelFirstd(keys=["image"]),
-            Orientationd(keys=["image"], axcodes="RPI"),
-            Spacingd(keys=["image"], pixdim=(1.0, 1.0, 1.0), mode=2),
-            ResizeWithPadOrCropd(keys=["image"], spatial_size=crop_size, ),
-            DivisiblePadd(keys=["image"], k=2 ** 5),
-            # pad inputs to ensure divisibility by no. of layers nnUNet has (5)
-            NormalizeIntensityd(keys=["image"], nonzero=False, channel_wise=False),
-        ])
-
-    # ===========================================================================
-    #                              Model utils
-    # ===========================================================================
-    class InitWeights_He(object):
-        def __init__(self, neg_slope=1e-2):
-            self.neg_slope = neg_slope
-
-        def __call__(self, module):
-            if isinstance(module, nn.Conv3d) or isinstance(module, nn.ConvTranspose3d):
-                module.weight = nn.init.kaiming_normal_(module.weight, a=self.neg_slope)
-                if module.bias is not None:
-                    module.bias = nn.init.constant_(module.bias, 0)
-
-    # ============================================================================
-    #               Define the network based on nnunet_plans dict
-    # ============================================================================
-    def create_nnunet_from_plans(plans, num_input_channels: int, num_classes: int, deep_supervision: bool = True):
-        """
-        Adapted from nnUNet's source code:
-        https://github.com/MIC-DKFZ/nnUNet/blob/master/nnunetv2/utilities/get_network_from_plans.py#L9
-
-        """
-        num_stages = len(plans["conv_kernel_sizes"])
-
-        dim = len(plans["conv_kernel_sizes"][0])
-        conv_op = convert_dim_to_conv_op(dim)
-
-        segmentation_network_class_name = plans["UNet_class_name"]
-        mapping = {
-            'PlainConvUNet': PlainConvUNet,
-            'ResidualEncoderUNet': ResidualEncoderUNet
-        }
-        kwargs = {
-            'PlainConvUNet': {
-                'conv_bias': True,
-                'norm_op': get_matching_instancenorm(conv_op),
-                'norm_op_kwargs': {'eps': 1e-5, 'affine': True},
-                'dropout_op': None, 'dropout_op_kwargs': None,
-                'nonlin': nn.LeakyReLU, 'nonlin_kwargs': {'inplace': True},
-            },
-            'ResidualEncoderUNet': {
-                'conv_bias': True,
-                'norm_op': get_matching_instancenorm(conv_op),
-                'norm_op_kwargs': {'eps': 1e-5, 'affine': True},
-                'dropout_op': None, 'dropout_op_kwargs': None,
-                'nonlin': nn.LeakyReLU, 'nonlin_kwargs': {'inplace': True},
-            }
-        }
-        assert segmentation_network_class_name in mapping.keys(), 'The network architecture specified by the plans file ' \
-                                                                  'is non-standard (maybe your own?). Yo\'ll have to dive ' \
-                                                                  'into either this ' \
-                                                                  'function (get_network_from_plans) or ' \
-                                                                  'the init of your nnUNetModule to accomodate that.'
-        network_class = mapping[segmentation_network_class_name]
-
-        conv_or_blocks_per_stage = {
-            'n_conv_per_stage'
-            if network_class != ResidualEncoderUNet else 'n_blocks_per_stage': plans["n_conv_per_stage_encoder"],
-            'n_conv_per_stage_decoder': plans["n_conv_per_stage_decoder"]
-        }
-
-        # network class name!!
-        model = network_class(
-            input_channels=num_input_channels,
-            n_stages=num_stages,
-            features_per_stage=[min(plans["UNet_base_num_features"] * 2 ** i,
-                                    plans["unet_max_num_features"]) for i in range(num_stages)],
-            conv_op=conv_op,
-            kernel_sizes=plans["conv_kernel_sizes"],
-            strides=plans["pool_op_kernel_sizes"],
-            num_classes=num_classes,
-            deep_supervision=deep_supervision,
-            **conv_or_blocks_per_stage,
-            **kwargs[segmentation_network_class_name]
-        )
-        model.apply(InitWeights_He(1e-2))
-        if network_class == ResidualEncoderUNet:
-            model.apply(init_last_bn_before_add_to_0)
-
-        return model
-
-    # ===========================================================================
-    #                   Prepare temporary dataset for inference
-    # ===========================================================================
-    def prepare_data(path_image, path_out, crop_size=(64, 160, 320)):
-        # create a temporary datalist containing the image
-        # boiler plate keys to be defined in the MSD-style datalist
-        params = {}
-        params["description"] = "my-awesome-SC-image"
-        params["labels"] = {
-            "0": "background",
-            "1": "soft-sc-seg"
-        }
-        params["modality"] = {
-            "0": "MRI"
-        }
-        params["tensorImageSize"] = "3D"
-        params["test"] = [
-            {
-                "image": path_image
-            }
-        ]
-
-        final_json = json.dumps(params, indent=4, sort_keys=True)
-        jsonFile = open(path_out + "/temp_msd_datalist.json", "w")
-        jsonFile.write(final_json)
-        jsonFile.close()
-
-        dataset = os.path.join(path_out, "temp_msd_datalist.json")
-        test_files = load_decathlon_datalist(dataset, True, "test")
-
-        # define test transforms
-        transforms_test = inference_transforms_single_image(crop_size=crop_size)
-
-        # define post-processing transforms for testing; taken (with explanations) from
-        # https://github.com/Project-MONAI/tutorials/blob/main/3d_segmentation/torch/unet_inference_dict.py#L66
-        test_post_pred = Compose([
-            EnsureTyped(keys=["pred"]),
-            Invertd(keys=["pred"], transform=transforms_test,
-                    orig_keys=["image"],
-                    meta_keys=["pred_meta_dict"],
-                    nearest_interp=False, to_tensor=True),
-        ])
-        test_ds = CacheDataset(data=test_files, transform=transforms_test, cache_rate=0.75, num_workers=8)
-
-        return test_ds, test_post_pred
-
-    # ===========================================================================
-    #                           Inference method
-    # ===========================================================================
     def main(path_img, path_out, chkp_path, crop_size="64x192x-1", device="cpu"):
         # define device
         if device == "gpu" and not torch.cuda.is_available():
@@ -306,12 +126,10 @@ def segment_monai(path_model, input_filenames, threshold):
         inference_roi_size = (64, 192, 320)
 
         # define the dataset and dataloader
-        test_ds, test_post_pred = prepare_data(path_image, results_path, crop_size=crop_size)
-        test_loader = DataLoader(test_ds, batch_size=1, shuffle=False, num_workers=8, pin_memory=True)
+        test_loader, test_post_pred = prepare_data(path_image, results_path, crop_size=crop_size)
 
         # define model
-        net = create_nnunet_from_plans(plans=nnunet_plans, num_input_channels=1, num_classes=1,
-                                       deep_supervision=ENABLE_DS)
+        net = create_nnunet_from_plans()
 
         # define list to collect the test metrics
         test_step_outputs = []
@@ -342,28 +160,13 @@ def segment_monai(path_model, input_filenames, threshold):
                 net.eval()
 
                 # run inference
-                batch["pred"] = sliding_window_inference(test_input, inference_roi_size, mode="gaussian",
-                                                         sw_batch_size=4, predictor=net, overlap=0.5, progress=False)
-
-                # take only the highest resolution prediction
-                batch["pred"] = batch["pred"][0]
-
-                # NOTE: monai's models do not normalize the output, so we need to do it manually
-                if bool(F.relu(batch["pred"]).max()):
-                    batch["pred"] = F.relu(batch["pred"]) / F.relu(batch["pred"]).max()
-                else:
-                    batch["pred"] = F.relu(batch["pred"])
-
-                post_test_out = [test_post_pred(i) for i in decollate_batch(batch)]
-
-                pred = post_test_out[0]['pred'].cpu()
-
-                # clip the prediction between 0.5 and 1
-                # turns out this sets the background to 0.5 and the SC to 1 (which is not correct)
-                # details: https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/issues/71
-                pred = torch.clamp(pred, 0.5, 1)
-                # set background values to 0
-                pred[pred <= 0.5] = 0
+                pred = sliding_window_inference_wrapped(
+                    batch=batch,
+                    test_input=test_input,
+                    inference_roi_size=inference_roi_size,
+                    predictor=net,
+                    test_post_pred=test_post_pred
+                )
 
                 # get subject name
                 subject_name = (batch["image_meta_dict"]["filename_or_obj"][0]).split("/")[-1].replace(".nii.gz", "")
