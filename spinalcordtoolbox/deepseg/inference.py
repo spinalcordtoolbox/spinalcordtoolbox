@@ -5,11 +5,9 @@ Copyright (c) 2023 Polytechnique Montreal <www.neuro.polymtl.ca>
 License: see the file LICENSE
 """
 
-import json
 import logging
 import os
 from pathlib import Path
-from time import time
 
 from ivadomed import inference as imed_inference
 import nibabel as nib
@@ -137,17 +135,9 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
     # define model
     net = create_nnunet_from_plans()
 
-    # define list to collect the test metrics
-    test_step_outputs = []
-    test_summary = {}
-
     # iterate over the dataset and compute metrics
     with torch.no_grad():
         for batch in test_loader:
-
-            # compute time for inference per subject
-            start_time = time()
-
             # get the test input
             test_input = batch["image"].to(DEVICE)
 
@@ -186,36 +176,6 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
             # save the prediction
             pred_saver(pred)
 
-            end_time = time()
-            metrics_dict = {
-                "subject_name_and_contrast": subject_name,
-                "inference_time_in_sec": round((end_time - start_time), 2),
-            }
-            test_step_outputs.append(metrics_dict)
-
-        # save the test summary
-        test_summary["metrics_per_subject"] = test_step_outputs
-
-        # compute the average inference time
-        avg_inference_time = np.stack([x["inference_time_in_sec"] for x in test_step_outputs]).mean()
-
-        # store the average metrics in a dict
-        avg_metrics = {
-            "avg_inference_time_in_sec": round(avg_inference_time, 2),
-        }
-        test_summary["metrics_avg_across_cohort"] = avg_metrics
-
-        logger.info("========================================================")
-        logger.info(f"      Inference Time per Subject: {avg_inference_time:.2f}s")
-        logger.info("========================================================")
-
-        # dump the test summary to a json file
-        with open(os.path.join(results_path, "test_summary.json"), "w") as f:
-            json.dump(test_summary, f, indent=4, sort_keys=True)
-
-        # free up memory
-        test_step_outputs.clear()
-        test_summary.clear()
         os.remove(os.path.join(results_path, "temp_msd_datalist.json"))
 
 
