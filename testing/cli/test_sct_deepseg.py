@@ -75,5 +75,6 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
     if fname_seg_manual:
         im_seg = Image(fname_out)
         im_seg_manual = Image(fname_seg_manual)
+        im_seg_manual.data = im_seg_manual.data.squeeze()  # FIXME: t2s_seg-deepseg.nii.gz has an extra axis
         dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
         assert dice_segmentation > 0.95
