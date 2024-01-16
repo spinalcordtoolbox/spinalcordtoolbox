@@ -159,7 +159,7 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
             # this takes about 0.25s on average on a CPU
             # image saver class
             _, fname, ext = extract_fname(path_img)
-            postfix = "pred"
+            postfix = "seg"
             pred_saver = SaveImage(
                 output_dir=path_out, output_postfix=postfix, output_ext=ext,
                 separate_folder=False, print_log=False)
@@ -170,7 +170,7 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
 
         os.remove(os.path.join(path_out, "temp_msd_datalist.json"))
 
-        return fname_out, postfix
+        return fname_out, f"_{postfix}"
 
 
 def segment_nnunet():
