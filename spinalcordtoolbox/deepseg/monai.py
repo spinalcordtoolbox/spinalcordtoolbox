@@ -150,12 +150,9 @@ def prepare_data(path_image, path_out, crop_size=(64, 160, 320)):
         "tensorImageSize": "3D",
         "test": [{"image": path_image}]
     }
-    final_json = json.dumps(params, indent=4, sort_keys=True)
-    jsonFile = open(path_out + "/temp_msd_datalist.json", "w")
-    jsonFile.write(final_json)
-    jsonFile.close()
-
     dataset = os.path.join(path_out, "temp_msd_datalist.json")
+    with open(dataset, "w") as jsonFile:
+        jsonFile.write(json.dumps(params, indent=4, sort_keys=True))
     test_files = load_decathlon_datalist(dataset, True, "test")
     os.remove(dataset)
 
