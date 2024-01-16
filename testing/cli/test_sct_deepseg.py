@@ -55,8 +55,9 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task,
     # TODO: implement integrity test (for now, just checking if output segmentation file exists)
     # Make sure output file exists
     assert os.path.isfile(fname_out)
-    # Compare with ground-truth segmentation
-    im_seg = Image(fname_out)
-    im_seg_manual = Image(fname_seg_manual)
-    dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
-    assert dice_segmentation > 0.95
+    # Compare with ground-truth segmentation if provided
+    if fname_seg_manual:
+        im_seg = Image(fname_out)
+        im_seg_manual = Image(fname_seg_manual)
+        dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
+        assert dice_segmentation > 0.95
