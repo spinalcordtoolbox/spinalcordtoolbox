@@ -117,8 +117,9 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
     else:
         DEVICE = torch.device("cuda" if torch.cuda.is_available() and device == "gpu" else "cpu")
 
-    # define root path for finding datalists
+    # load model from checkpoint
     chkp_path = os.path.join(chkp_path, "best_model_loss.ckpt")
+    net = create_nnunet_from_plans(chkp_path, DEVICE)
 
     # define inference patch size and center crop size
     crop_size = tuple([int(i) for i in crop_size.split("x")])
@@ -126,35 +127,29 @@ def segment_monai_single(path_img, path_out, chkp_path, crop_size="64x192x-1", d
 
     # define the dataset and dataloader
     test_loader, test_post_pred = prepare_data(path_img, path_out, crop_size=crop_size)
+    batch = next(iter(test_loader))
 
-    # define model
-    net = create_nnunet_from_plans(chkp_path, device)
+    # run inference
+    test_input = batch["image"].to(DEVICE)
+    pred = sliding_window_inference_wrapped(
+        batch=batch,
+        test_input=test_input,
+        inference_roi_size=inference_roi_size,
+        predictor=net,
+        test_post_pred=test_post_pred
+    )
 
-    # iterate over the dataset and compute metrics
-    for batch in test_loader:
-        # get the test input
-        test_input = batch["image"].to(DEVICE)
-
-        # run inference
-        pred = sliding_window_inference_wrapped(
-            batch=batch,
-            test_input=test_input,
-            inference_roi_size=inference_roi_size,
-            predictor=net,
-            test_post_pred=test_post_pred
-        )
-
-        # this takes about 0.25s on average on a CPU
-        # image saver class
-        _, fname, ext = extract_fname(path_img)
-        postfix = "seg"
-        pred_saver = SaveImage(
-            output_dir=path_out, output_postfix=postfix, output_ext=ext,
-            separate_folder=False, print_log=False)
-        # save the prediction
-        fname_out = os.path.join(path_out, f"{fname}_{postfix}{ext}")
-        logger.info(f"Saving results to: {fname_out}")
-        pred_saver(pred)
+    # this takes about 0.25s on average on a CPU
+    # image saver class
+    _, fname, ext = extract_fname(path_img)
+    postfix = "seg"
+    pred_saver = SaveImage(
+        output_dir=path_out, output_postfix=postfix, output_ext=ext,
+        separate_folder=False, print_log=False)
+    # save the prediction
+    fname_out = os.path.join(path_out, f"{fname}_{postfix}{ext}")
+    logger.info(f"Saving results to: {fname_out}")
+    pred_saver(pred)
 
     os.remove(os.path.join(path_out, "temp_msd_datalist.json"))
 
