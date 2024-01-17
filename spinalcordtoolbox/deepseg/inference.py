@@ -18,6 +18,7 @@ from monai.inferers import sliding_window_inference
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.utils.sys import run_proc
+from spinalcordtoolbox.image import Image, get_orientation, add_suffix
 from spinalcordtoolbox.deepseg.monai import create_nnunet_from_plans, prepare_data, postprocessing
 
 logger = logging.getLogger(__name__)
@@ -178,11 +179,8 @@ def segment_nnunet(path_model, input_filenames, threshold):
             -tile-step-size 0.5
     """
 
-    import datetime
     import os
     import shutil
-    import subprocess
-    import tempfile
     import time
 
     import torch
@@ -191,74 +189,18 @@ def segment_nnunet(path_model, input_filenames, threshold):
     # from nnunetv2.inference.predict_from_raw_data import predict_from_raw_data as predictor
     from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 
-    from spinalcordtoolbox.image import Image
-
-
-    def get_orientation(file):
-        """
-        Get the original orientation of an image
-        :param file: path to the image
-        :return: orig_orientation: original orientation of the image, e.g. LPI
-        """
-
-        # Fetch the original orientation from the output of sct_image
-        sct_command = "sct_image -i {} -header | grep -E qform_[xyz] | awk '{{printf \"%s\", substr($2, 1, 1)}}'".format(
-            file)
-        orig_orientation = subprocess.check_output(sct_command, shell=True).decode('utf-8')
-
-        return orig_orientation
-
-    def tmp_create():
-        """
-        Create temporary folder and return its path
-        """
-        prefix = f"sciseg_prediction_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_"
-        tmpdir = tempfile.mkdtemp(prefix=prefix)
-        print(f"Creating temporary folder ({tmpdir})")
-        return tmpdir
-
-    def splitext(fname):
-        """
-        Split a fname (folder/file + ext) into a folder/file and extension.
-        Note: for .nii.gz the extension is understandably .nii.gz, not .gz
-        (``os.path.splitext()`` would want to do the latter, hence the special case).
-        Taken (shamelessly) from: https://github.com/spinalcordtoolbox/manual-correction/blob/main/utils.py
-        """
-        dir, filename = os.path.split(fname)
-        for special_ext in ['.nii.gz', '.tar.gz']:
-            if filename.endswith(special_ext):
-                stem, ext = filename[:-len(special_ext)], special_ext
-                return os.path.join(dir, stem), ext
-        # If no special case, behaves like the regular splitext
-        stem, ext = os.path.splitext(filename)
-        return os.path.join(dir, stem), ext
-
-    def add_suffix(fname, suffix):
-        """
-        Add suffix between end of file name and extension. Taken (shamelessly) from:
-        https://github.com/spinalcordtoolbox/manual-correction/blob/main/utils.py
-        :param fname: absolute or relative file name. Example: t2.nii.gz
-        :param suffix: suffix. Example: _mean
-        :return: file name with suffix. Example: t2_mean.nii
-        Examples:
-        - add_suffix(t2.nii, _mean) -> t2_mean.nii
-        - add_suffix(t2.nii.gz, a) -> t2a.nii.gz
-        """
-        stem, ext = splitext(fname)
-        return os.path.join(stem + suffix + ext)
-
     def main(fname_file, path_model, use_gpu=False, use_best_checkpoint=False, tile_step_size=0.5):
         print(f'Found {fname_file} file.')
 
         # Create temporary directory in the temp to store the reoriented images
-        tmpdir = tmp_create()
+        tmpdir = tmp_create(basename="sciseg_prediction")
         # Copy the file to the temporary directory using shutil.copyfile
         fname_file_tmp = os.path.join(tmpdir, os.path.basename(fname_file))
         shutil.copyfile(fname_file, fname_file_tmp)
         print(f'Copied {fname_file} to {fname_file_tmp}')
 
         # Get the original orientation of the image, for example LPI
-        orig_orientation = get_orientation(fname_file_tmp)
+        orig_orientation = get_orientation(Image(fname_file_tmp))
 
         # Get the orientation used by the model
 
