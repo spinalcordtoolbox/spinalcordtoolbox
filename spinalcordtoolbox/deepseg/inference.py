@@ -93,27 +93,37 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
     return nii_lst, target_lst
 
 
-def segment_monai(path_model, input_filenames, threshold):
+def segment_non_ivadomed(path_model, model_type, input_filenames, threshold):
+    # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
+    if model_type == "monai":
+        create_net = ds_monai.create_nnunet_from_plans
+        inference = segment_monai
+    else:
+        assert model_type == "nnunet"
+        create_net = ds_nnunet.create_nnunet_from_plans
+        inference = segment_nnunet
+
     # equivalent to `with torch.no_grad()`
     torch.set_grad_enabled(False)
 
     # load model from checkpoint
-    net = ds_monai.create_nnunet_from_plans(path_model)
+    net = create_net(path_model)
 
     nii_lst, target_lst = [], []
     for fname_in in input_filenames:
-        path_out = tmp_create(basename="sct_deepseg")
-        fname_out, target = segment_monai_single(path_img=fname_in, tmpdir=path_out, predictor=net)
-        # TODO: Use API binarization function when output filetype is sct.image.Image
-        run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
-        # TODO: Change the output filetype from Nifti1Image to sct.image.Image to mitigate #3232
-        nii_lst.append(nib.load(fname_out))
-        target_lst.append(target)
+        # model may be multiclass, so the `inference` func should output a list of fnames and targets
+        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmp_create(basename="sct_deepseg"), predictor=net)
+        for fname_out, target in zip(fnames_out, targets):
+            # TODO: Use API binarization function when output filetype is sct.image.Image
+            run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
+            # TODO: Change the output filetype from Nifti1Image to sct.image.Image to mitigate #3232
+            nii_lst.append(nib.load(fname_out))
+            target_lst.append(target)
 
     return nii_lst, target_lst
 
 
-def segment_monai_single(path_img, tmpdir, predictor):
+def segment_monai(path_img, tmpdir, predictor):
     """
     Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
 
@@ -138,6 +148,7 @@ def segment_monai_single(path_img, tmpdir, predictor):
     # image saver class
     _, fname, ext = extract_fname(path_img)
     postfix = "seg"
+    target = f"_{postfix}"
     pred_saver = SaveImage(
         output_dir=tmpdir, output_postfix=postfix, output_ext=ext,
         separate_folder=False, print_log=False)
@@ -146,32 +157,15 @@ def segment_monai_single(path_img, tmpdir, predictor):
     logger.info(f"Saving results to: {fname_out}")
     pred_saver(pred)
 
-    return fname_out, f"_{postfix}"
+    return [fname_out], [target]
 
 
-def segment_nnunet(path_model, input_filenames, threshold):
+def segment_nnunet(path_img, tmpdir, predictor):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
 
     Author: Jan Valosek, Naga Karthik
     """
-    net = ds_nnunet.create_nnunet_from_plans(path_model)
-
-    nii_lst, target_lst = [], []
-    for fname_in in input_filenames:
-        path_out = tmp_create(basename="sct_deepseg")
-        fnames_out, targets = segment_nnunet_single(path_img=fname_in, tmpdir=path_out, predictor=net)
-        for fname_out, target in zip(fnames_out, targets):
-            # TODO: Use API binarization function when output filetype is sct.image.Image
-            run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
-            # TODO: Change the output filetype from Nifti1Image to sct.image.Image to mitigate #3232
-            nii_lst.append(nib.load(fname_out))
-            target_lst.append(target)
-
-    return nii_lst, target_lst
-
-
-def segment_nnunet_single(path_img, tmpdir, predictor):
     print(f'Found {path_img} file.')
     # Copy the file to the temporary directory using shutil.copyfile
     path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))

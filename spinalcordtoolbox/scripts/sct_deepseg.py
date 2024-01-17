@@ -219,12 +219,9 @@ def main(argv: Sequence[str]):
             nii_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames,
                                                                         options={**vars(arguments),
                                                                                  "fname_prior": fname_prior})
-        # For the other two types, we currently only use single models (not ensembles)
-        elif model_type == 'monai':
-            nii_lst, target_lst = inference.segment_monai(path_model, input_filenames, arguments.binarize_prediction)
         else:
-            assert model_type == 'nnunet'
-            nii_lst, target_lst = inference.segment_nnunet(path_model, input_filenames, arguments.binarize_prediction)
+            nii_lst, target_lst = inference.segment_non_ivadomed(path_model, model_type, input_filenames,
+                                                                 arguments.binarize_prediction)
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
