@@ -128,7 +128,7 @@ def segment_monai(path_img, tmpdir, predictor):
     Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
 
     Author: Naga Karthik
-
+    Original script: https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/blob/e65478099d026f865b7f1d7d0082e6e9a507a744/monai/run_inference_single_image.py
     """
     # Copy the file to the temporary directory using shutil.copyfile
     path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))
@@ -179,6 +179,7 @@ def segment_nnunet(path_img, tmpdir, predictor):
     This script is used to run inference on a single subject using a nnUNetV2 model.
 
     Author: Jan Valosek, Naga Karthik
+    Original script: https://github.com/ivadomed/model_seg_sci/blob/4184bc22ef7317b3de5f85dee28449d6f381c984/packaging/run_inference_single_subject.py
     """
     # Copy the file to the temporary directory using shutil.copyfile
     path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))
