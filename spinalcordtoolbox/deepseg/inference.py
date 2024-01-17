@@ -210,9 +210,9 @@ def segment_nnunet(path_model, input_filenames, threshold):
             model_orientation = "LPI"
 
         # Reorient the image to model orientation if not already
+        img_in = Image(fname_file_tmp)
         if orig_orientation != model_orientation:
-            # reorient the image using SCT
-            os.system('sct_image -i {} -setorient {} -o {}'.format(fname_file_tmp, model_orientation, fname_file_tmp))
+            img_in.change_orientation(model_orientation)
 
         # Use all the folds available in the model folder by default
         folds_avail = [int(f.split('_')[-1]) for f in os.listdir(path_model) if f.startswith('fold_')]
@@ -247,12 +247,13 @@ def segment_nnunet(path_model, input_filenames, threshold):
         )
         print('Model loaded successfully. Fetching test data...')
 
-        img_in = Image(fname_file_tmp)
         data = np.expand_dims(img_in.data, axis=0).transpose([0, 3, 2, 1]).astype(np.float32)
         pred = predictor.predict_single_npy_array(
             input_image=data,
             image_properties={'spacing': img_in.dim[4:7]},
         ).transpose([2, 1, 0])
+        img_out = img_in.copy()
+        img_out.data = pred
 
         end = time.time()
         print('Inference done.')
@@ -260,18 +261,14 @@ def segment_nnunet(path_model, input_filenames, threshold):
         print(
             'Total inference time: {} minute(s) {} seconds'.format(int(total_time // 60), int(round(total_time % 60))))
 
-        # Save .nii.gz file to tmpdir
-        img_out = img_in.copy()
-        img_out.data = pred
-        img_out.save(fname_prediction)
-
         print('Re-orienting the prediction back to original orientation...')
         # Reorient the image back to original orientation
         if orig_orientation != model_orientation:
-            # reorient the image to the original orientation using SCT
-            os.system(
-                'sct_image -i {} -setorient {} -o {}'.format(fname_prediction, orig_orientation, fname_prediction))
+            img_out.change_orientation(orig_orientation)
             print(f'Reorientation to original orientation {orig_orientation} done.')
+
+        # Save .nii.gz file to tmpdir
+        img_out.save(fname_prediction)
 
         # for SCI multiclass model, split the predictions into sc-seg and lesion-seg
         if "sci_multiclass" in path_model:
