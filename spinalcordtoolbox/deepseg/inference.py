@@ -237,7 +237,7 @@ def segment_nnunet(path_model, input_filenames, threshold):
             verbose_preprocessing=False,
             allow_tqdm=True
         )
-        print('Running inference on device: {}'.format(predictor.device))
+        print(f'Running inference on device: {predictor.device}')
 
         # initializes the network architecture, loads the checkpoint
         predictor.initialize_from_trained_model_folder(
@@ -258,8 +258,7 @@ def segment_nnunet(path_model, input_filenames, threshold):
         end = time.time()
         print('Inference done.')
         total_time = end - start
-        print(
-            'Total inference time: {} minute(s) {} seconds'.format(int(total_time // 60), int(round(total_time % 60))))
+        print(f'Total inference time: {int(total_time // 60)} minute(s) {int(round(total_time % 60))} seconds')
 
         print('Re-orienting the prediction back to original orientation...')
         # Reorient the image back to original orientation
@@ -275,7 +274,7 @@ def segment_nnunet(path_model, input_filenames, threshold):
             targets = [f"_{pred_type}_seg" for pred_type in ['sc', 'lesion']]
             fnames_out = [add_suffix(fname_prediction, target) for target in targets]
             for i, fname_out in enumerate(fnames_out):
-                os.system('sct_maths -i {} -bin {} -o {}'.format(fname_prediction, i, fname_out))
+                os.system(f'sct_maths -i {fname_prediction} -bin {i} -o {fname_out}')
         else:
             targets = ["_seg"]
             fnames_out = [fname_prediction]
