@@ -17,14 +17,14 @@ import numpy as np
 import torch
 from monai.transforms import SaveImage
 from monai.inferers import sliding_window_inference
-from batchgenerators.utilities.file_and_folder_operations import join
-from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.utils.sys import run_proc
 from spinalcordtoolbox.image import Image, get_orientation, add_suffix
 from spinalcordtoolbox.math import binarize
-from spinalcordtoolbox.deepseg.monai import create_nnunet_from_plans, prepare_data, postprocessing
+
+import spinalcordtoolbox.deepseg.monai as ds_monai
+import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +106,7 @@ def segment_monai(path_model, input_filenames, threshold, device="cpu"):
 
     # load model from checkpoint
     chkp_path = os.path.join(path_model, "best_model_loss.ckpt")
-    net = create_nnunet_from_plans(chkp_path, DEVICE)
+    net = ds_monai.create_nnunet_from_plans(chkp_path, DEVICE)
 
     nii_lst, target_lst = [], []
     for fname_in in input_filenames:
@@ -133,14 +133,14 @@ def segment_monai_single(path_img, path_out, net, device):
     inference_roi_size = (64, 192, 320)
 
     # define the dataset and dataloader
-    test_loader, test_post_pred = prepare_data(path_img, path_out, crop_size=crop_size)
+    test_loader, test_post_pred = ds_monai.prepare_data(path_img, path_out, crop_size=crop_size)
     batch = next(iter(test_loader))
 
     # run inference
     test_input = batch["image"].to(device)
     batch["pred"] = sliding_window_inference(test_input, inference_roi_size, mode="gaussian",
                                              sw_batch_size=4, predictor=net, overlap=0.5, progress=False)
-    pred = postprocessing(batch, test_post_pred)
+    pred = ds_monai.postprocessing(batch, test_post_pred)
 
     # this takes about 0.25s on average on a CPU
     # image saver class
@@ -163,9 +163,11 @@ def segment_nnunet(path_model, input_filenames, threshold):
 
     Author: Jan Valosek, Naga Karthik
     """
+    net = ds_nnunet.create_nnunet_from_plans(path_model)
+
     nii_lst, target_lst = [], []
     for fname_in in input_filenames:
-        fnames_out, targets = segment_nnunet_single(fname_file=fname_in, path_model=path_model)
+        fnames_out, targets = segment_nnunet_single(fname_file=fname_in, path_model=path_model, predictor=net)
         for fname_out, target in zip(fnames_out, targets):
             # TODO: Use API binarization function when output filetype is sct.image.Image
             run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
@@ -176,7 +178,7 @@ def segment_nnunet(path_model, input_filenames, threshold):
     return nii_lst, target_lst
 
 
-def segment_nnunet_single(fname_file, path_model, use_gpu=False, use_best_checkpoint=False, tile_step_size=0.5):
+def segment_nnunet_single(fname_file, path_model, predictor):
     print(f'Found {fname_file} file.')
 
     # Create temporary directory in the temp to store the reoriented images
@@ -201,9 +203,6 @@ def segment_nnunet_single(fname_file, path_model, use_gpu=False, use_best_checkp
     if orig_orientation != model_orientation:
         img_in.change_orientation(model_orientation)
 
-    # Use all the folds available in the model folder by default
-    folds_avail = [int(f.split('_')[-1]) for f in os.listdir(path_model) if f.startswith('fold_')]
-
     # Create directory for nnUNet prediction
     tmpdir_nnunet = os.path.join(tmpdir, 'nnUNet_prediction')
     fname_prediction = os.path.join(tmpdir_nnunet, os.path.basename(add_suffix(fname_file_tmp, "_pred")))
@@ -212,27 +211,6 @@ def segment_nnunet_single(fname_file, path_model, use_gpu=False, use_best_checkp
     # Run nnUNet prediction
     print('Starting inference...')
     start = time.time()
-
-    # instantiate the nnUNetPredictor
-    predictor = nnUNetPredictor(
-        tile_step_size=tile_step_size,  # changing it from 0.5 to 0.9 makes inference faster
-        use_gaussian=True,  # applies gaussian noise and gaussian blur
-        use_mirroring=False,  # test time augmentation by mirroring on all axes
-        perform_everything_on_gpu=True if use_gpu else False,
-        device=torch.device('cuda') if use_gpu else torch.device('cpu'),
-        verbose=False,
-        verbose_preprocessing=False,
-        allow_tqdm=True
-    )
-    print(f'Running inference on device: {predictor.device}')
-
-    # initializes the network architecture, loads the checkpoint
-    predictor.initialize_from_trained_model_folder(
-        join(path_model),
-        use_folds=folds_avail,
-        checkpoint_name='checkpoint_final.pth' if not use_best_checkpoint else 'checkpoint_best.pth',
-    )
-    print('Model loaded successfully. Fetching test data...')
 
     data = np.expand_dims(img_in.data, axis=0).transpose([0, 3, 2, 1]).astype(np.float32)
     pred = predictor.predict_single_npy_array(
