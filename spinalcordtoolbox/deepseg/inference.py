@@ -178,7 +178,6 @@ def segment_nnunet(path_model, input_filenames, threshold):
             -tile-step-size 0.5
     """
 
-    import argparse
     import datetime
     import os
     import shutil
@@ -194,25 +193,6 @@ def segment_nnunet(path_model, input_filenames, threshold):
 
     from spinalcordtoolbox.image import Image
 
-    def get_parser():
-        # parse command line arguments
-        parser = argparse.ArgumentParser(description='Segment an image using nnUNet model.')
-        parser.add_argument('-i', help='Input image to segment. Example: sub-001_T2w.nii.gz', required=True)
-        parser.add_argument('-path-model', help='Path to the model directory. This folder should contain individual '
-                                                'folders like fold_0, fold_1, etc. and dataset.json, '
-                                                'dataset_fingerprint.json and plans.json files.', required=True,
-                            type=str)
-        parser.add_argument('-use-gpu', action='store_true', default=False,
-                            help='Use GPU for inference. Default: False')
-        parser.add_argument('-use-best-checkpoint', action='store_true', default=False,
-                            help='Use the best checkpoint (instead of the final checkpoint) for prediction. '
-                                 'NOTE: nnUNet by default uses the final checkpoint. Default: False')
-        parser.add_argument('-tile-step-size', default=0.5, type=float,
-                            help='Tile step size defining the overlap between images patches during inference. '
-                                 'Default: 0.5 '
-                                 'NOTE: changing it from 0.5 to 0.9 makes inference faster but there is a small drop in '
-                                 'performance.')
-        return parser
 
     def get_orientation(file):
         """
@@ -267,11 +247,7 @@ def segment_nnunet(path_model, input_filenames, threshold):
         stem, ext = splitext(fname)
         return os.path.join(stem + suffix + ext)
 
-    def main(argv):
-        parser = get_parser()
-        args = parser.parse_args(argv)
-
-        fname_file = args.i
+    def main(fname_file, path_model, use_gpu=False, use_best_checkpoint=False, tile_step_size=0.5):
         print(f'Found {fname_file} file.')
 
         # Create temporary directory in the temp to store the reoriented images
@@ -293,7 +269,7 @@ def segment_nnunet(path_model, input_filenames, threshold):
             os.system('sct_image -i {} -setorient RPI -o {}'.format(fname_file_tmp, fname_file_tmp))
 
         # Use all the folds available in the model folder by default
-        folds_avail = [int(f.split('_')[-1]) for f in os.listdir(args.path_model) if f.startswith('fold_')]
+        folds_avail = [int(f.split('_')[-1]) for f in os.listdir(path_model) if f.startswith('fold_')]
 
         # Create directory for nnUNet prediction
         tmpdir_nnunet = os.path.join(tmpdir, 'nnUNet_prediction')
@@ -306,11 +282,11 @@ def segment_nnunet(path_model, input_filenames, threshold):
 
         # instantiate the nnUNetPredictor
         predictor = nnUNetPredictor(
-            tile_step_size=args.tile_step_size,  # changing it from 0.5 to 0.9 makes inference faster
+            tile_step_size=tile_step_size,  # changing it from 0.5 to 0.9 makes inference faster
             use_gaussian=True,  # applies gaussian noise and gaussian blur
             use_mirroring=False,  # test time augmentation by mirroring on all axes
-            perform_everything_on_gpu=True if args.use_gpu else False,
-            device=torch.device('cuda') if args.use_gpu else torch.device('cpu'),
+            perform_everything_on_gpu=True if use_gpu else False,
+            device=torch.device('cuda') if use_gpu else torch.device('cpu'),
             verbose=False,
             verbose_preprocessing=False,
             allow_tqdm=True
@@ -319,9 +295,9 @@ def segment_nnunet(path_model, input_filenames, threshold):
 
         # initializes the network architecture, loads the checkpoint
         predictor.initialize_from_trained_model_folder(
-            join(args.path_model),
+            join(path_model),
             use_folds=folds_avail,
-            checkpoint_name='checkpoint_final.pth' if not args.use_best_checkpoint else 'checkpoint_best.pth',
+            checkpoint_name='checkpoint_final.pth' if not use_best_checkpoint else 'checkpoint_best.pth',
         )
         print('Model loaded successfully. Fetching test data...')
 
@@ -353,7 +329,7 @@ def segment_nnunet(path_model, input_filenames, threshold):
             print(f'Reorientation to original orientation {orig_orientation} done.')
 
         # for SCI multiclass model, split the predictions into sc-seg and lesion-seg
-        if "sci_multiclass" in args.path_model:
+        if "sci_multiclass" in path_model:
             targets = [f"_{pred_type}_seg" for pred_type in ['sc', 'lesion']]
             fnames_out = [add_suffix(fname_prediction, target) for target in targets]
             for i, fname_out in enumerate(fnames_out):
@@ -370,10 +346,7 @@ def segment_nnunet(path_model, input_filenames, threshold):
 
     nii_lst, target_lst = [], []
     for fname_in in input_filenames:
-        fnames_out, targets = main(argv=[
-            "-i", fname_in,
-            "-path-model", path_model,
-        ])
+        fnames_out, targets = main(fname_file=fname_in, path_model=path_model)
         for fname_out, target in zip(fnames_out, targets):
             # TODO: Use API binarization function when output filetype is sct.image.Image
             run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
