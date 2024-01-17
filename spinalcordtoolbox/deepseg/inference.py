@@ -203,12 +203,16 @@ def segment_nnunet(path_model, input_filenames, threshold):
         orig_orientation = get_orientation(Image(fname_file_tmp))
 
         # Get the orientation used by the model
+        if "sci_multiclass" in path_model:
+            model_orientation = "RPI"
+        else:
+            assert "rootlets" in path_model
+            model_orientation = "LPI"
 
-        # TODO: Reconcile orientation differences (rootlets model: LPI, SCI model: RPI)
-        # Reorient the image to RPI orientation if not already in RPI
-        if orig_orientation != 'RPI':
-            # reorient the image to RPI using SCT
-            os.system('sct_image -i {} -setorient RPI -o {}'.format(fname_file_tmp, fname_file_tmp))
+        # Reorient the image to model orientation if not already
+        if orig_orientation != model_orientation:
+            # reorient the image using SCT
+            os.system('sct_image -i {} -setorient {} -o {}'.format(fname_file_tmp, model_orientation, fname_file_tmp))
 
         # Use all the folds available in the model folder by default
         folds_avail = [int(f.split('_')[-1]) for f in os.listdir(path_model) if f.startswith('fold_')]
@@ -263,8 +267,7 @@ def segment_nnunet(path_model, input_filenames, threshold):
 
         print('Re-orienting the prediction back to original orientation...')
         # Reorient the image back to original orientation
-        # skip if already in RPI
-        if orig_orientation != 'RPI':
+        if orig_orientation != model_orientation:
             # reorient the image to the original orientation using SCT
             os.system(
                 'sct_image -i {} -setorient {} -o {}'.format(fname_prediction, orig_orientation, fname_prediction))
