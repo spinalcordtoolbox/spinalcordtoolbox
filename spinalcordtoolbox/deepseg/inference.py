@@ -130,19 +130,33 @@ def segment_monai(path_img, tmpdir, predictor):
     Author: Naga Karthik
 
     """
+    # Copy the file to the temporary directory using shutil.copyfile
+    path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))
+    shutil.copyfile(path_img, path_img_tmp)
+    logger.info(f'Copied {path_img} to {path_img_tmp}')
+
     # define inference patch size and center crop size
     crop_size = (64, 192, -1)
     inference_roi_size = (64, 192, 320)
 
     # define the dataset and dataloader
-    test_loader, test_post_pred = ds_monai.prepare_data(path_img, tmpdir, crop_size=crop_size)
+    test_loader, test_post_pred = ds_monai.prepare_data(path_img_tmp, tmpdir, crop_size=crop_size)
     batch = next(iter(test_loader))
+
+    # Run nnUNet prediction
+    print('Starting inference...')
+    start = time.time()
 
     # run inference
     test_input = batch["image"].to(torch.device("cpu"))
     batch["pred"] = sliding_window_inference(test_input, inference_roi_size, mode="gaussian",
                                              sw_batch_size=4, predictor=predictor, overlap=0.5, progress=False)
     pred = ds_monai.postprocessing(batch, test_post_pred)
+
+    end = time.time()
+    print('Inference done.')
+    total_time = end - start
+    print(f'Total inference time: {int(total_time // 60)} minute(s) {int(round(total_time % 60))} seconds')
 
     # this takes about 0.25s on average on a CPU
     # image saver class
@@ -166,11 +180,10 @@ def segment_nnunet(path_img, tmpdir, predictor):
 
     Author: Jan Valosek, Naga Karthik
     """
-    print(f'Found {path_img} file.')
     # Copy the file to the temporary directory using shutil.copyfile
     path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))
     shutil.copyfile(path_img, path_img_tmp)
-    print(f'Copied {path_img} to {path_img_tmp}')
+    logger.info(f'Copied {path_img} to {path_img_tmp}')
 
     # Get the original orientation of the image, for example LPI
     orig_orientation = get_orientation(Image(path_img_tmp))
@@ -185,6 +198,7 @@ def segment_nnunet(path_img, tmpdir, predictor):
     # Reorient the image to model orientation if not already
     img_in = Image(path_img_tmp)
     if orig_orientation != model_orientation:
+        logger.info(f'Changing orientation of the input to the model orientation ({model_orientation})...')
         img_in.change_orientation(model_orientation)
 
     # Create directory for nnUNet prediction
@@ -209,11 +223,11 @@ def segment_nnunet(path_img, tmpdir, predictor):
     total_time = end - start
     print(f'Total inference time: {int(total_time // 60)} minute(s) {int(round(total_time % 60))} seconds')
 
-    print('Re-orienting the prediction back to original orientation...')
+    logger.info('Reorienting the prediction back to original orientation...')
     # Reorient the image back to original orientation
     if orig_orientation != model_orientation:
         img_out.change_orientation(orig_orientation)
-        print(f'Reorientation to original orientation {orig_orientation} done.')
+        logger.info(f'Reorientation to original orientation {orig_orientation} done.')
 
     # for SCI multiclass model, split the predictions into sc-seg and lesion-seg
     if "SCI" in predictor.plans_manager.dataset_name:
@@ -222,14 +236,12 @@ def segment_nnunet(path_img, tmpdir, predictor):
         for i, fname_out in enumerate(fnames_out):
             img_bin = img_out.copy()
             img_bin.data = binarize(img_bin.data, i)
+            logger.info(f"Saving results to: {fname_out}")
             img_bin.save(fname_out)
     else:
         targets = ["_seg"]
         fnames_out = [fname_prediction]
+        logger.info(f"Saving results to: {fname_prediction}")
         img_out.save(fname_prediction)
-
-    print('-' * 50)
-    print(f'Created {fnames_out}')
-    print('-' * 50)
 
     return fnames_out, targets
