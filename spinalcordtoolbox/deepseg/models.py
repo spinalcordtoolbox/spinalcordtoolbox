@@ -396,7 +396,7 @@ def check_model_software_type(path_model):
     elif has_pth_files(path_model):
         return 'nnunet'
     else:
-        raise ValueError(f"Model type cannot be determined.")
+        raise ValueError("Model type cannot be determined.")
 
 
 def list_tasks():

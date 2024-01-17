@@ -13,7 +13,6 @@ from monai.data import CacheDataset, DataLoader, load_decathlon_datalist, decoll
 from monai.transforms import (Compose, EnsureTyped, Invertd, Spacingd,
                               LoadImaged, NormalizeIntensityd, EnsureChannelFirstd,
                               DivisiblePadd, Orientationd, ResizeWithPadOrCropd)
-from monai.inferers import sliding_window_inference
 
 # NNUNET global params
 INIT_FILTERS = 32
