@@ -198,15 +198,10 @@ def segment_nnunet(path_model, input_filenames, threshold):
         # parse command line arguments
         parser = argparse.ArgumentParser(description='Segment an image using nnUNet model.')
         parser.add_argument('-i', help='Input image to segment. Example: sub-001_T2w.nii.gz', required=True)
-        parser.add_argument('-o', help='Output filename. Example: sub-001_T2w_seg_nnunet.nii.gz', required=True)
         parser.add_argument('-path-model', help='Path to the model directory. This folder should contain individual '
                                                 'folders like fold_0, fold_1, etc. and dataset.json, '
                                                 'dataset_fingerprint.json and plans.json files.', required=True,
                             type=str)
-        # TODO: Make interface more general (this argument is not used for the rootlets model)
-        parser.add_argument('-pred-type', choices=['sc', 'lesion'],
-                            help='Type of prediction to obtain. sc: spinal cord segmentation; lesion: lesion segmentation.',
-                            required=True, type=str)
         parser.add_argument('-use-gpu', action='store_true', default=False,
                             help='Use GPU for inference. Default: False')
         parser.add_argument('-use-best-checkpoint', action='store_true', default=False,
@@ -277,7 +272,6 @@ def segment_nnunet(path_model, input_filenames, threshold):
         args = parser.parse_args(argv)
 
         fname_file = args.i
-        fname_file_out = args.o
         print(f'Found {fname_file} file.')
 
         # Create temporary directory in the temp to store the reoriented images
@@ -358,35 +352,29 @@ def segment_nnunet(path_model, input_filenames, threshold):
                 'sct_image -i {} -setorient {} -o {}'.format(fname_prediction, orig_orientation, fname_prediction))
             print(f'Reorientation to original orientation {orig_orientation} done.')
 
-        # split the predictions into sc-seg and lesion-seg
-        if args.pred_type == 'sc':
-            # keep only the spinal cord segmentation
-            os.system('sct_maths -i {} -bin 0 -o {}'.format(fname_prediction, fname_file_out))
-        elif args.pred_type == 'lesion':
-            # keep only the lesion segmentation
-            os.system('sct_maths -i {} -bin 1 -o {}'.format(fname_prediction, fname_file_out))
-
-        print('Deleting the temporary folder...')
-        # Delete the temporary folder
-        shutil.rmtree(tmpdir)
+        # for SCI multiclass model, split the predictions into sc-seg and lesion-seg
+        if "sci_multiclass" in args.path_model:
+            targets = [f"_{pred_type}_seg" for pred_type in ['sc', 'lesion']]
+            fnames_out = [add_suffix(fname_prediction, target) for target in targets]
+            for i, fname_out in enumerate(fnames_out):
+                os.system('sct_maths -i {} -bin {} -o {}'.format(fname_prediction, i, fname_out))
+        else:
+            targets = ["_seg"]
+            fnames_out = [fname_prediction]
 
         print('-' * 50)
-        print(f'Created {fname_file_out}')
+        print(f'Created {fnames_out}')
         print('-' * 50)
 
+        return fnames_out, targets
 
     nii_lst, target_lst = [], []
     for fname_in in input_filenames:
-        # TODO: Make sure to handle sc/lesion cases only for the relevant multiclass model
-        for pred_type in ['sc', 'lesion']:
-            target = f"_{pred_type}_seg"
-            fname_out = add_suffix(fname_in, target)
-            main(argv=[
-                "-i", fname_in,
-                "-o", fname_out,
-                "-path-model", path_model,
-                "-pred-type", pred_type
-            ])
+        fnames_out, targets = main(argv=[
+            "-i", fname_in,
+            "-path-model", path_model,
+        ])
+        for fname_out, target in zip(fnames_out, targets):
             # TODO: Use API binarization function when output filetype is sct.image.Image
             run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
             # TODO: Change the output filetype from Nifti1Image to sct.image.Image to mitigate #3232
