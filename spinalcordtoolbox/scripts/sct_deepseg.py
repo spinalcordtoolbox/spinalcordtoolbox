@@ -224,7 +224,7 @@ def main(argv: Sequence[str]):
             nii_lst, target_lst = inference.segment_monai(path_model, input_filenames, arguments.binarize_prediction)
         else:
             assert model_type == 'nnunet'
-            nii_lst, target_lst = inference.segment_nnunet()
+            nii_lst, target_lst = inference.segment_nnunet(path_model, input_filenames, arguments.binarize_prediction)
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
