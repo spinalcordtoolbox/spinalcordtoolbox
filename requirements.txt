@@ -20,6 +20,7 @@ monai[nibabel]
 msvc-runtime==14.29.30133; sys.platform == 'win32' # append_to_freeze
 nibabel
 nilearn
+nnunetv2
 # This pin is due to an incompatibility with pystrum==0.2, which is installed via voxelmorph -> neurite -> pystrum
 # See also: https://github.com/adalca/pystrum/issues/9
 # If pystrum is updated to 0.3, then we should replace this version pinning with `pystrum>=0.3`
