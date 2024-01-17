@@ -7,6 +7,8 @@ License: see the file LICENSE
 
 import logging
 import os
+import shutil
+import time
 from pathlib import Path
 
 from ivadomed import inference as imed_inference
@@ -15,6 +17,8 @@ import numpy as np
 import torch
 from monai.transforms import SaveImage
 from monai.inferers import sliding_window_inference
+from batchgenerators.utilities.file_and_folder_operations import join
+from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.utils.sys import run_proc
@@ -157,138 +161,11 @@ def segment_nnunet(path_model, input_filenames, threshold):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
 
-    Note: conda environment with nnUNetV2 is required to run this script.
-    For details how to install nnUNetV2, see:
-    https://github.com/ivadomed/utilities/blob/main/quick_start_guides/nnU-Net_quick_start_guide.md#installation
-
     Author: Jan Valosek, Naga Karthik
-
-    Example spinal cord segmentation:
-        python run_inference_single_subject.py
-            -i sub-001_T2w.nii.gz
-            -o sub-001_T2w_seg_nnunet.nii.gz
-            -path-model /path/to/model
-            -pred-type sc
-            -tile-step-size 0.5
-
-    Example lesion segmentation:
-        python run_inference_single_subject.py
-            -i sub-001_T2w.nii.gz
-            -o sub-001_T2w_lesion_seg_nnunet.nii.gz
-            -path-model /path/to/model
-            -pred-type lesion
-            -tile-step-size 0.5
     """
-
-    import os
-    import shutil
-    import time
-
-    import torch
-    import numpy as np
-    from batchgenerators.utilities.file_and_folder_operations import join
-    # from nnunetv2.inference.predict_from_raw_data import predict_from_raw_data as predictor
-    from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
-
-    def main(fname_file, path_model, use_gpu=False, use_best_checkpoint=False, tile_step_size=0.5):
-        print(f'Found {fname_file} file.')
-
-        # Create temporary directory in the temp to store the reoriented images
-        tmpdir = tmp_create(basename="sciseg_prediction")
-        # Copy the file to the temporary directory using shutil.copyfile
-        fname_file_tmp = os.path.join(tmpdir, os.path.basename(fname_file))
-        shutil.copyfile(fname_file, fname_file_tmp)
-        print(f'Copied {fname_file} to {fname_file_tmp}')
-
-        # Get the original orientation of the image, for example LPI
-        orig_orientation = get_orientation(Image(fname_file_tmp))
-
-        # Get the orientation used by the model
-        if "sci_multiclass" in path_model:
-            model_orientation = "RPI"
-        else:
-            assert "rootlets" in path_model
-            model_orientation = "LPI"
-
-        # Reorient the image to model orientation if not already
-        img_in = Image(fname_file_tmp)
-        if orig_orientation != model_orientation:
-            img_in.change_orientation(model_orientation)
-
-        # Use all the folds available in the model folder by default
-        folds_avail = [int(f.split('_')[-1]) for f in os.listdir(path_model) if f.startswith('fold_')]
-
-        # Create directory for nnUNet prediction
-        tmpdir_nnunet = os.path.join(tmpdir, 'nnUNet_prediction')
-        fname_prediction = os.path.join(tmpdir_nnunet, os.path.basename(add_suffix(fname_file_tmp, "_pred")))
-        os.mkdir(tmpdir_nnunet)
-
-        # Run nnUNet prediction
-        print('Starting inference...')
-        start = time.time()
-
-        # instantiate the nnUNetPredictor
-        predictor = nnUNetPredictor(
-            tile_step_size=tile_step_size,  # changing it from 0.5 to 0.9 makes inference faster
-            use_gaussian=True,  # applies gaussian noise and gaussian blur
-            use_mirroring=False,  # test time augmentation by mirroring on all axes
-            perform_everything_on_gpu=True if use_gpu else False,
-            device=torch.device('cuda') if use_gpu else torch.device('cpu'),
-            verbose=False,
-            verbose_preprocessing=False,
-            allow_tqdm=True
-        )
-        print(f'Running inference on device: {predictor.device}')
-
-        # initializes the network architecture, loads the checkpoint
-        predictor.initialize_from_trained_model_folder(
-            join(path_model),
-            use_folds=folds_avail,
-            checkpoint_name='checkpoint_final.pth' if not use_best_checkpoint else 'checkpoint_best.pth',
-        )
-        print('Model loaded successfully. Fetching test data...')
-
-        data = np.expand_dims(img_in.data, axis=0).transpose([0, 3, 2, 1]).astype(np.float32)
-        pred = predictor.predict_single_npy_array(
-            input_image=data,
-            image_properties={'spacing': img_in.dim[4:7]},
-        ).transpose([2, 1, 0])
-        img_out = img_in.copy()
-        img_out.data = pred
-
-        end = time.time()
-        print('Inference done.')
-        total_time = end - start
-        print(f'Total inference time: {int(total_time // 60)} minute(s) {int(round(total_time % 60))} seconds')
-
-        print('Re-orienting the prediction back to original orientation...')
-        # Reorient the image back to original orientation
-        if orig_orientation != model_orientation:
-            img_out.change_orientation(orig_orientation)
-            print(f'Reorientation to original orientation {orig_orientation} done.')
-
-        # for SCI multiclass model, split the predictions into sc-seg and lesion-seg
-        if "sci_multiclass" in path_model:
-            targets = [f"_{pred_type}_seg" for pred_type in ['sc', 'lesion']]
-            fnames_out = [add_suffix(fname_prediction, target) for target in targets]
-            for i, fname_out in enumerate(fnames_out):
-                img_bin = img_out.copy()
-                img_bin.data = binarize(img_bin.data, i)
-                img_bin.save(fname_out)
-        else:
-            targets = ["_seg"]
-            fnames_out = [fname_prediction]
-            img_out.save(fname_prediction)
-
-        print('-' * 50)
-        print(f'Created {fnames_out}')
-        print('-' * 50)
-
-        return fnames_out, targets
-
     nii_lst, target_lst = [], []
     for fname_in in input_filenames:
-        fnames_out, targets = main(fname_file=fname_in, path_model=path_model)
+        fnames_out, targets = segment_nnunet_single(fname_file=fname_in, path_model=path_model)
         for fname_out, target in zip(fnames_out, targets):
             # TODO: Use API binarization function when output filetype is sct.image.Image
             run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
@@ -297,3 +174,100 @@ def segment_nnunet(path_model, input_filenames, threshold):
             target_lst.append(target)
 
     return nii_lst, target_lst
+
+
+def segment_nnunet_single(fname_file, path_model, use_gpu=False, use_best_checkpoint=False, tile_step_size=0.5):
+    print(f'Found {fname_file} file.')
+
+    # Create temporary directory in the temp to store the reoriented images
+    tmpdir = tmp_create(basename="sciseg_prediction")
+    # Copy the file to the temporary directory using shutil.copyfile
+    fname_file_tmp = os.path.join(tmpdir, os.path.basename(fname_file))
+    shutil.copyfile(fname_file, fname_file_tmp)
+    print(f'Copied {fname_file} to {fname_file_tmp}')
+
+    # Get the original orientation of the image, for example LPI
+    orig_orientation = get_orientation(Image(fname_file_tmp))
+
+    # Get the orientation used by the model
+    if "sci_multiclass" in path_model:
+        model_orientation = "RPI"
+    else:
+        assert "rootlets" in path_model
+        model_orientation = "LPI"
+
+    # Reorient the image to model orientation if not already
+    img_in = Image(fname_file_tmp)
+    if orig_orientation != model_orientation:
+        img_in.change_orientation(model_orientation)
+
+    # Use all the folds available in the model folder by default
+    folds_avail = [int(f.split('_')[-1]) for f in os.listdir(path_model) if f.startswith('fold_')]
+
+    # Create directory for nnUNet prediction
+    tmpdir_nnunet = os.path.join(tmpdir, 'nnUNet_prediction')
+    fname_prediction = os.path.join(tmpdir_nnunet, os.path.basename(add_suffix(fname_file_tmp, "_pred")))
+    os.mkdir(tmpdir_nnunet)
+
+    # Run nnUNet prediction
+    print('Starting inference...')
+    start = time.time()
+
+    # instantiate the nnUNetPredictor
+    predictor = nnUNetPredictor(
+        tile_step_size=tile_step_size,  # changing it from 0.5 to 0.9 makes inference faster
+        use_gaussian=True,  # applies gaussian noise and gaussian blur
+        use_mirroring=False,  # test time augmentation by mirroring on all axes
+        perform_everything_on_gpu=True if use_gpu else False,
+        device=torch.device('cuda') if use_gpu else torch.device('cpu'),
+        verbose=False,
+        verbose_preprocessing=False,
+        allow_tqdm=True
+    )
+    print(f'Running inference on device: {predictor.device}')
+
+    # initializes the network architecture, loads the checkpoint
+    predictor.initialize_from_trained_model_folder(
+        join(path_model),
+        use_folds=folds_avail,
+        checkpoint_name='checkpoint_final.pth' if not use_best_checkpoint else 'checkpoint_best.pth',
+    )
+    print('Model loaded successfully. Fetching test data...')
+
+    data = np.expand_dims(img_in.data, axis=0).transpose([0, 3, 2, 1]).astype(np.float32)
+    pred = predictor.predict_single_npy_array(
+        input_image=data,
+        image_properties={'spacing': img_in.dim[4:7]},
+    ).transpose([2, 1, 0])
+    img_out = img_in.copy()
+    img_out.data = pred
+
+    end = time.time()
+    print('Inference done.')
+    total_time = end - start
+    print(f'Total inference time: {int(total_time // 60)} minute(s) {int(round(total_time % 60))} seconds')
+
+    print('Re-orienting the prediction back to original orientation...')
+    # Reorient the image back to original orientation
+    if orig_orientation != model_orientation:
+        img_out.change_orientation(orig_orientation)
+        print(f'Reorientation to original orientation {orig_orientation} done.')
+
+    # for SCI multiclass model, split the predictions into sc-seg and lesion-seg
+    if "sci_multiclass" in path_model:
+        targets = [f"_{pred_type}_seg" for pred_type in ['sc', 'lesion']]
+        fnames_out = [add_suffix(fname_prediction, target) for target in targets]
+        for i, fname_out in enumerate(fnames_out):
+            img_bin = img_out.copy()
+            img_bin.data = binarize(img_bin.data, i)
+            img_bin.save(fname_out)
+    else:
+        targets = ["_seg"]
+        fnames_out = [fname_prediction]
+        img_out.save(fname_prediction)
+
+    print('-' * 50)
+    print(f'Created {fnames_out}')
+    print('-' * 50)
+
+    return fnames_out, targets
