@@ -19,6 +19,7 @@ from monai.inferers import sliding_window_inference
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.utils.sys import run_proc
 from spinalcordtoolbox.image import Image, get_orientation, add_suffix
+from spinalcordtoolbox.math import binarize
 from spinalcordtoolbox.deepseg.monai import create_nnunet_from_plans, prepare_data, postprocessing
 
 logger = logging.getLogger(__name__)
@@ -266,18 +267,18 @@ def segment_nnunet(path_model, input_filenames, threshold):
             img_out.change_orientation(orig_orientation)
             print(f'Reorientation to original orientation {orig_orientation} done.')
 
-        # Save .nii.gz file to tmpdir
-        img_out.save(fname_prediction)
-
         # for SCI multiclass model, split the predictions into sc-seg and lesion-seg
         if "sci_multiclass" in path_model:
             targets = [f"_{pred_type}_seg" for pred_type in ['sc', 'lesion']]
             fnames_out = [add_suffix(fname_prediction, target) for target in targets]
             for i, fname_out in enumerate(fnames_out):
-                os.system(f'sct_maths -i {fname_prediction} -bin {i} -o {fname_out}')
+                img_bin = img_out.copy()
+                img_bin.data = binarize(img_bin.data, i)
+                img_bin.save(fname_out)
         else:
             targets = ["_seg"]
             fnames_out = [fname_prediction]
+            img_out.save(fname_prediction)
 
         print('-' * 50)
         print(f'Created {fnames_out}')
