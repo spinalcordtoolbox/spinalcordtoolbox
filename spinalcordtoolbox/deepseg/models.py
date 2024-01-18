@@ -13,6 +13,7 @@ import logging
 import textwrap
 import shutil
 import glob
+from pathlib import Path
 
 from spinalcordtoolbox import download
 from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__
@@ -362,7 +363,7 @@ def has_ivadomed_files(path_model):
     """
     Check if model path contains A) a named .pt/.onnx model file and B) a named ivadomed json configuration file
     """
-    name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
+    name_model = Path(path_model).name
     path_pt = os.path.join(path_model, name_model + '.pt')
     path_onnx = os.path.join(path_model, name_model + '.onnx')
     path_json = os.path.join(path_model, name_model + '.json')
