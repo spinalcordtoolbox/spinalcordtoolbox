@@ -367,7 +367,7 @@ def has_ivadomed_files(path_model):
     path_pt = os.path.join(path_model, name_model + '.pt')
     path_onnx = os.path.join(path_model, name_model + '.onnx')
     path_json = os.path.join(path_model, name_model + '.json')
-    return os.path.exists(path_pt) or os.path.exists(path_onnx) and os.path.exists(path_json)
+    return (os.path.exists(path_pt) or os.path.exists(path_onnx)) and os.path.exists(path_json)
 
 
 def has_ckpt_files(path_model):
