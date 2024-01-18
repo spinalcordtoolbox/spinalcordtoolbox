@@ -143,7 +143,7 @@ def segment_monai(path_img, tmpdir, predictor):
     test_loader, test_post_pred = ds_monai.prepare_data(path_img_tmp, tmpdir, crop_size=crop_size)
     batch = next(iter(test_loader))
 
-    # Run nnUNet prediction
+    # Run MONAI prediction
     print('Starting inference...')
     start = time.time()
 
