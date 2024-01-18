@@ -374,16 +374,14 @@ def has_ckpt_files(path_model):
     """
     Check if model path contains any checkpoint files (used by non-ivadomed MONAI models)
     """
-    return 0 < len(list(glob.glob(os.path.join(path_model, '**', '*.ckpt'),
-                                  recursive=True)))
+    return bool(glob.glob(os.path.join(path_model, '**', '*.ckpt'), recursive=True))
 
 
 def has_pth_files(path_model):
     """
     Check if model path contains any serialized PyTorch state dictionary files (used by non-ivadomed NNUnet models)
     """
-    return 0 < len(list(glob.glob(os.path.join(path_model, '**', '*.pth'),
-                                  recursive=True)))
+    return bool(glob.glob(os.path.join(path_model, '**', '*.pth'), recursive=True))
 
 
 def check_model_software_type(path_model):
