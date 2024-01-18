@@ -20,7 +20,7 @@ from typing import Sequence
 import nibabel as nib
 
 from spinalcordtoolbox.deepseg import models, inference
-from spinalcordtoolbox.image import splitext
+from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
@@ -254,7 +254,10 @@ def main(argv: Sequence[str]):
         fname_prior = fname_seg
 
     for output_filename in output_filenames:
-        display_viewer_syntax([arguments.i[0], output_filename], im_types=['anat', 'seg'], opacities=['', '0.7'], verbose=verbose)
+        img_kind = check_image_kind(Image(output_filename))
+        display_viewer_syntax([arguments.i[0], output_filename],
+                              im_types=['anat', img_kind],
+                              opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":
