@@ -52,7 +52,7 @@ def test_model_dict():
      None,  # TODO: implement integrity test (for now, just checking if output segmentation file exists)
      't2_seg_deepseg.nii.gz',
      'seg_spinal_rootlets_t2w',
-     0.5),
+     None),
 ])
 def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
                        tmp_path):
@@ -62,7 +62,10 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
     # Ignore warnings from ivadomed model source code changing
     warnings.filterwarnings("ignore", category=SourceChangeWarning)
     fname_out = str(tmp_path/fname_out)  # tmp_path for automatic cleanup
-    sct_deepseg.main(['-i', fname_image, '-task', task, '-o', fname_out, '-thr', str(thr)])
+    args = ['-i', fname_image, '-task', task, '-o', fname_out]
+    if thr is not None:
+        args.extend(['-thr', str(thr)])
+    sct_deepseg.main(argv=args)
     # Make sure output file exists
     assert os.path.isfile(fname_out)
     # Compare with ground-truth segmentation if provided
