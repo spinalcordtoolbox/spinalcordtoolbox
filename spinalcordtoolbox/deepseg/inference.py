@@ -115,7 +115,8 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold):
         fnames_out, targets = inference(path_img=fname_in, tmpdir=tmp_create(basename="sct_deepseg"), predictor=net)
         for fname_out, target in zip(fnames_out, targets):
             # TODO: Use API binarization function when output filetype is sct.image.Image
-            run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
+            if threshold is not None:
+                run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
             # TODO: Change the output filetype from Nifti1Image to sct.image.Image to mitigate #3232
             nii_lst.append(nib.load(fname_out))
             target_lst.append(target)
