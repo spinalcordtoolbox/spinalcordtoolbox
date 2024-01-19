@@ -12,6 +12,8 @@ from ivadomed import inference as imed_inference
 import nibabel as nib
 import numpy as np
 
+from spinalcordtoolbox.image import Image
+
 logger = logging.getLogger(__name__)
 
 
@@ -76,4 +78,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
     # The 'targets' should be identical for each model, so just take the first
     target_lst = target_lsts[0]
 
-    return nii_lst, target_lst
+    # Convert the output Nifti1Images into SCT images
+    im_lst = [Image(np.asanyarray(nii.dataobj), hdr=nii.header) for nii in nii_lst]
+
+    return im_lst, target_lst
