@@ -17,8 +17,6 @@ import sys
 import logging
 from typing import Sequence
 
-import nibabel as nib
-
 from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
