@@ -1,4 +1,3 @@
-import json
 import os
 
 import torch
@@ -9,7 +8,7 @@ from dynamic_network_architectures.architectures.unet import PlainConvUNet, Resi
 from dynamic_network_architectures.building_blocks.helper import get_matching_instancenorm, convert_dim_to_conv_op
 from dynamic_network_architectures.initialization.weight_init import init_last_bn_before_add_to_0
 
-from monai.data import CacheDataset, DataLoader, load_decathlon_datalist, decollate_batch
+from monai.data import Dataset, DataLoader, decollate_batch
 from monai.transforms import (Compose, EnsureTyped, Invertd, Spacingd,
                               LoadImaged, NormalizeIntensityd, EnsureChannelFirstd,
                               DivisiblePadd, Orientationd, ResizeWithPadOrCropd)
@@ -141,22 +140,7 @@ class InitWeights_He(object):
                 module.bias = nn.init.constant_(module.bias, 0)
 
 
-def prepare_data(path_image, path_out, crop_size=(64, 160, 320)):
-    # create a temporary datalist containing the image
-    # boiler plate keys to be defined in the MSD-style datalist
-    params = {
-        "description": "my-awesome-SC-image",
-        "labels": {"0": "background", "1": "soft-sc-seg"},
-        "modality": {"0": "MRI"},
-        "tensorImageSize": "3D",
-        "test": [{"image": path_image}]
-    }
-    dataset = os.path.join(path_out, "temp_msd_datalist.json")
-    with open(dataset, "w") as jsonFile:
-        jsonFile.write(json.dumps(params, indent=4, sort_keys=True))
-    test_files = load_decathlon_datalist(dataset, True, "test")
-    os.remove(dataset)
-
+def prepare_data(path_image, crop_size=(64, 160, 320)):
     # define test transforms
     transforms_test = inference_transforms_single_image(crop_size=crop_size)
 
@@ -169,7 +153,7 @@ def prepare_data(path_image, path_out, crop_size=(64, 160, 320)):
                 meta_keys=["pred_meta_dict"],
                 nearest_interp=False, to_tensor=True),
     ])
-    test_ds = CacheDataset(data=test_files, transform=transforms_test, cache_rate=0.75, num_workers=8)
+    test_ds = Dataset(data=[{"image": path_image}], transform=transforms_test)
     test_loader = DataLoader(test_ds, batch_size=1, shuffle=False, num_workers=8, pin_memory=True)
 
     return test_loader, test_post_pred
