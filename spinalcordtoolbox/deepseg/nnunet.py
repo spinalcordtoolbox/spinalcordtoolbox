@@ -8,7 +8,7 @@ from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 def create_nnunet_from_plans(path_model):
     use_best_checkpoint = False
     tile_step_size = 0.5
-    folds_avail = [int(f.split('_')[-1]) for f in os.listdir(path_model) if f.startswith('fold_')]
+folds_avail = 'all' if os.listdir(path_model) == 'fold_all' else [int(f.split('_')[-1]) for f in os.listdir(path_model) if f.startswith('fold_')]
 
     # instantiate the nnUNetPredictor
     predictor = nnUNetPredictor(
