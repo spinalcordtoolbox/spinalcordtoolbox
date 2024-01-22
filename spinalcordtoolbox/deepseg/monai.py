@@ -186,11 +186,4 @@ def postprocessing(batch, test_post_pred):
 
     pred = post_test_out[0]['pred'].cpu()
 
-    # clip the prediction between 0.5 and 1
-    # turns out this sets the background to 0.5 and the SC to 1 (which is not correct)
-    # details: https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/issues/71
-    pred = torch.clamp(pred, 0.5, 1)
-    # set background values to 0
-    pred[pred <= 0.5] = 0
-
     return pred
