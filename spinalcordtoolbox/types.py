@@ -345,7 +345,6 @@ class Centerline:
                         Must be on of self.labels_regions
         """
         self.discs_levels = discs_levels
-        self.label_reference = label_reference
 
         # special case for C2, which might not be present because it is difficult to identify
         is_C2_here = False
@@ -394,15 +393,14 @@ class Centerline:
         for i in range(self.number_of_points - 1):
             progress_length[i + 1] = progress_length[i] + self.progressive_length[i]
 
-        self.label_reference = label_reference
-        if self.label_reference not in self.index_disc:
+        if label_reference not in self.index_disc:
             upper = 31
             label_reference = ''
             for label in self.index_disc:
                 if self.labels_regions[label] < upper:
                     label_reference = label
                     upper = self.labels_regions[label]
-            self.label_reference = label_reference
+        self.label_reference = label_reference
 
         self.distance_from_C1label = {}
         progress_length_reference = progress_length[self.index_disc[self.label_reference]]
