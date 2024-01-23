@@ -19,7 +19,6 @@ from monai.transforms import SaveImage
 from monai.inferers import sliding_window_inference
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
-from spinalcordtoolbox.utils.sys import run_proc
 from spinalcordtoolbox.image import Image, get_orientation, add_suffix
 from spinalcordtoolbox.math import binarize
 
@@ -120,10 +119,10 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold):
         # model may be multiclass, so the `inference` func should output a list of fnames and targets
         fnames_out, targets = inference(path_img=fname_in, tmpdir=tmp_create(basename="sct_deepseg"), predictor=net)
         for fname_out, target in zip(fnames_out, targets):
-            # TODO: Use API binarization function when output filetype is sct.image.Image
+            im_out = Image(fname_out)
             if threshold is not None:
-                run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
-            im_lst.append(Image(fname_out))
+                im_out.data = binarize(im_out.data, threshold)
+            im_lst.append(im_out)
             target_lst.append(target)
 
     return im_lst, target_lst
