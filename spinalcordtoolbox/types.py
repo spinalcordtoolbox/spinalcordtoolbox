@@ -381,10 +381,17 @@ class Centerline:
                 if index_last_label is None or index_label > index_last_label:
                     index_last_label = index_label
 
-        if index_first_label is not None:
-            self.first_label = self.list_labels[index_first_label]
-        if index_last_label is not None:
-            self.last_label = self.list_labels[index_last_label]
+        # Assign first/last labels once we guarantee that there even *are* valid labels
+        if index_last_label is None or index_last_label is None:
+            raise ValueError(f"None of the provided disc levels {[l[3] for l in discs_levels]} are present in the"
+                             f"list of expected disc levels: {list(self.list_labels)}.")
+        self.first_label = self.list_labels[index_first_label]
+        self.last_label = self.list_labels[index_last_label]
+
+        # If the reference label (default 'C1' - 1) is not present in the disc labels, then use the uppermost label
+        if label_reference not in self.index_disc.keys():
+            label_reference = self.regions_labels[self.first_label]  # int label -> str label
+        self.label_reference = label_reference
 
         index_disc_inv.append([0, 'bottom'])
         index_disc_inv.sort(key=itemgetter(0))
@@ -392,14 +399,6 @@ class Centerline:
         progress_length = zeros(self.number_of_points)
         for i in range(self.number_of_points - 1):
             progress_length[i + 1] = progress_length[i] + self.progressive_length[i]
-
-        # If the reference label (default 'C1' - 1) is not present in the disc labels, then find the
-        # uppermost label ('C2' - 2, 'C3' - 3, etc.) that _is_ present in the disc label.
-        if label_reference not in self.index_disc.keys():
-            # Convert the present disc labels to integers, then take the minimum value.
-            label_min_int = min(self.labels_regions[label] for label in self.index_disc.keys())
-            label_reference = self.regions_labels[label_min_int]  # int label -> str label
-        self.label_reference = label_reference
 
         self.distance_from_C1label = {}
         progress_length_reference = progress_length[self.index_disc[self.label_reference]]
