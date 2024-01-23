@@ -47,7 +47,7 @@ def test_model_dict():
      sct_test_path('t2', 't2_seg-manual.nii.gz'),
      't2_seg_deepseg.nii.gz',
      'seg_sc_contrast_agnostic',
-     0.5),
+     None),
     (sct_test_path('t2', 't2.nii.gz'),
      None,  # TODO: implement integrity test (for now, just checking if output segmentation file exists)
      't2_seg_deepseg.nii.gz',
