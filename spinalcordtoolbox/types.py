@@ -393,13 +393,12 @@ class Centerline:
         for i in range(self.number_of_points - 1):
             progress_length[i + 1] = progress_length[i] + self.progressive_length[i]
 
-        if label_reference not in self.index_disc:
-            upper = 31
-            label_reference = ''
-            for label in self.index_disc:
-                if self.labels_regions[label] < upper:
-                    label_reference = label
-                    upper = self.labels_regions[label]
+        # If the reference label (default 'C1' - 1) is not present in the disc labels, then find the
+        # uppermost label ('C2' - 2, 'C3' - 3, etc.) that _is_ present in the disc label.
+        if label_reference not in self.index_disc.keys():
+            # Convert the present disc labels to integers, then take the minimum value.
+            label_min_int = min(self.labels_regions[label] for label in self.index_disc.keys())
+            label_reference = self.regions_labels[label_min_int]  # int label -> str label
         self.label_reference = label_reference
 
         self.distance_from_C1label = {}
