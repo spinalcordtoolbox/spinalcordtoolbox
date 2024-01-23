@@ -215,8 +215,8 @@ def main(argv: Sequence[str]):
             # NB: For single models, the averaging will have no effect.
             #     For model ensembles, this will average the output of the ensemble into a single set of outputs.
             im_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames,
-                                                                        options={**vars(arguments),
-                                                                                 "fname_prior": fname_prior})
+                                                                       options={**vars(arguments),
+                                                                                "fname_prior": fname_prior})
         else:
             thr = (arguments.binarize_prediction if arguments.binarize_prediction
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict

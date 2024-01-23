@@ -25,8 +25,6 @@ from spinalcordtoolbox.math import binarize
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
 
-from spinalcordtoolbox.image import Image
-
 logger = logging.getLogger(__name__)
 
 
