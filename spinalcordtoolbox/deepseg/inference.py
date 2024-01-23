@@ -115,7 +115,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold):
     # load model from checkpoint
     net = create_net(path_model)
 
-    nii_lst, target_lst = [], []
+    im_lst, target_lst = [], []
     for fname_in in input_filenames:
         # model may be multiclass, so the `inference` func should output a list of fnames and targets
         fnames_out, targets = inference(path_img=fname_in, tmpdir=tmp_create(basename="sct_deepseg"), predictor=net)
@@ -123,11 +123,10 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold):
             # TODO: Use API binarization function when output filetype is sct.image.Image
             if threshold is not None:
                 run_proc(["sct_maths", "-i", fname_out, "-bin", str(threshold), "-o", fname_out])
-            # TODO: Change the output filetype from Nifti1Image to sct.image.Image to mitigate #3232
-            nii_lst.append(nib.load(fname_out))
+            im_lst.append(Image(fname_out))
             target_lst.append(target)
 
-    return nii_lst, target_lst
+    return im_lst, target_lst
 
 
 def segment_monai(path_img, tmpdir, predictor):

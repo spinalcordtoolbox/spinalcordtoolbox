@@ -218,7 +218,7 @@ def main(argv: Sequence[str]):
                                                                         options={**vars(arguments),
                                                                                  "fname_prior": fname_prior})
         else:
-            nii_lst, target_lst = inference.segment_non_ivadomed(path_model, model_type, input_filenames,
+            im_lst, target_lst = inference.segment_non_ivadomed(path_model, model_type, input_filenames,
                                                                  arguments.binarize_prediction)
 
         # Delete intermediate outputs
