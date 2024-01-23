@@ -393,8 +393,27 @@ class Centerline:
             label_reference = self.regions_labels[self.first_label]  # int label -> str label
         self.label_reference = label_reference
 
+        # Add a special label to handle points below the bottommost label
         index_disc_inv.append([0, 'bottom'])
+        # Add a special label to handle points above the uppermost label
+        # (NB: We only do this if the reference label is not 'C1'. If the reference label *is* 'C1', then we
+        #  want to leave the points above C1 as their default value ('0'), since there is further logic that
+        #  relies on the assumption that 0 == "above C1".)
+        if self.label_reference != 'C1':
+            # Get the label that theoretically would be above the reference label
+            label_reference_int = self.labels_regions[self.label_reference]       # str label -> int label
+            above_label_reference = self.regions_labels[label_reference_int - 1]  # int label -> str label
+            # Then, assign it to the last point in the cord
+            index_disc_inv.append([self.number_of_points, above_label_reference])
+
+        # Sort the discs according to index
         index_disc_inv.sort(key=itemgetter(0))
+
+        # Use the disc indexes to label the points according to the vertebral level they belong to
+        for i in range(1, len(index_disc_inv)):
+            disc = index_disc_inv[i][1]
+            for j in range(index_disc_inv[i - 1][0], index_disc_inv[i][0]):
+                self.l_points[j] = disc
 
         progress_length = zeros(self.number_of_points)
         for i in range(self.number_of_points - 1):
@@ -404,11 +423,6 @@ class Centerline:
         progress_length_reference = progress_length[self.index_disc[self.label_reference]]
         for disc, i in self.index_disc.items():
             self.distance_from_C1label[disc] = progress_length_reference - progress_length[i]
-
-        for i in range(1, len(index_disc_inv)):
-            disc = index_disc_inv[i][1]
-            for j in range(index_disc_inv[i - 1][0], index_disc_inv[i][0]):
-                self.l_points[j] = disc
 
         for i in range(self.number_of_points):
             self.dist_points[i] = progress_length_reference - progress_length[i]
