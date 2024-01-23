@@ -17,8 +17,6 @@ import sys
 import logging
 from typing import Sequence
 
-import nibabel as nib
-
 from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
@@ -216,7 +214,7 @@ def main(argv: Sequence[str]):
         if model_type == 'ivadomed':
             # NB: For single models, the averaging will have no effect.
             #     For model ensembles, this will average the output of the ensemble into a single set of outputs.
-            nii_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames,
+            im_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames,
                                                                         options={**vars(arguments),
                                                                                  "fname_prior": fname_prior})
         else:
@@ -230,7 +228,7 @@ def main(argv: Sequence[str]):
 
         output_filenames = []
         # Save output seg
-        for nii_seg, target in zip(nii_lst, target_lst):
+        for im_seg, target in zip(im_lst, target_lst):
             if hasattr(arguments, 'o') and arguments.o is not None:
                 # To support if the user adds the extension or not
                 extension = ".nii.gz" if ".nii.gz" in arguments.o else ".nii" if ".nii" in arguments.o else ""
@@ -247,7 +245,7 @@ def main(argv: Sequence[str]):
             if not (path_out == '' or os.path.exists(path_out)):
                 os.makedirs(path_out)
 
-            nib.save(nii_seg, fname_seg)
+            im_seg.save(fname_seg)
             output_filenames.append(fname_seg)
 
         # Use the result of the current model as additional input of the next model

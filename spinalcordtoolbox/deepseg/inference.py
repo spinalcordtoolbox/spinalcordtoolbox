@@ -26,6 +26,8 @@ from spinalcordtoolbox.math import binarize
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
 
+from spinalcordtoolbox.image import Image
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,7 +44,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
         :param options: A dictionary containing optional configuration settings, as specified by the
             ivadomed.inference.segment_volume function.
 
-        :return: list, list: List of nibabel objects containing the soft segmentation(s), one per prediction class, \
+        :return: list, list: List of Image objects containing the soft segmentation(s), one per prediction class, \
             List of target suffix associated with each prediction
     """
     if not isinstance(model_paths, list):
@@ -90,7 +92,11 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
     # The 'targets' should be identical for each model, so just take the first
     target_lst = target_lsts[0]
 
-    return nii_lst, target_lst
+    # Convert the output Nifti1Images into SCT images, to avoid scaling issues
+    # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4346)
+    im_lst = [Image(np.asanyarray(nii.dataobj), hdr=nii.header) for nii in nii_lst]
+
+    return im_lst, target_lst
 
 
 def segment_non_ivadomed(path_model, model_type, input_filenames, threshold):
