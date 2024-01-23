@@ -129,12 +129,21 @@ MODELS = {
         "contrasts": ["t2"],
         "default": False,
     },
+    # NB: Handling image binarization threshold for ivadomed vs. non-ivadomed models:
+    #   - ivadomed models (above):
+    #       - Threshold value is stored in the ivadomed-specific `.json` sidecar file
+    #       - Binarization is applied within the ivadomed package
+    #   - non-ivadomed models (below)
+    #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
+    #       - So, threshold value is stored here, within the model dict
+    #       - Binarization is applied within SCT code
     "model_seg_sc_contrast_agnostic_softseg_nnunet": {
         "url": [
             "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.0/model_2023-09-18.zip"
         ],
         "description": "Spinal cord segmentation that is agnostic to contrast using NNUnet",
         "contrasts": ["any"],
+        "thr": 0.5,  # Softseg model -> threshold at 0.5
         "default": False,
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
@@ -144,6 +153,7 @@ MODELS = {
         ],
         "description": "Traumatic SCI spinal cord/lesion segmentation for T2w contrast",
         "contrasts": ["t2"],
+        "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
         "default": False,
     },
     "model_seg_spinal_rootlets_nnunet": {
@@ -153,6 +163,7 @@ MODELS = {
         ],
         "description": "Segmentation of spinal nerve rootlets for T2w images using NNUnet",
         "contrasts": ["t2"],
+        "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
         "default": False,
     },
 }
