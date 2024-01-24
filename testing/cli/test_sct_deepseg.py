@@ -79,7 +79,7 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
 
 @pytest.mark.parametrize('fname_image, fnames_seg_manual, fname_out, suffixes, task, thr', [
     (sct_test_path('t2', 't2.nii.gz'),
-     [None, None],  # TODO: implement integrity test (for now, just checking if output segmentation file exists)
+     [sct_test_path('t2', 't2_seg-manual.nii.gz'), None],  # TODO: Add ground truth for lesion seg
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
      'seg_sc_lesion_t2w_sci',
