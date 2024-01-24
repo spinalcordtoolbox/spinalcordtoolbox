@@ -1,6 +1,13 @@
 import os
 import torch
 
+# This is just to silence nnUNet warnings. These variables should have no purpose/effect.
+# There are sadly no other workarounds at the moment, see:
+# https://github.com/MIC-DKFZ/nnUNet/blob/227d68e77f00ec8792405bc1c62a88ddca714697/nnunetv2/paths.py#L21
+os.environ['nnUNet_raw'] = "./nnUNet_raw"
+os.environ['nnUNet_preprocessed'] = "./nnUNet_preprocessed"
+os.environ['nnUNet_results'] = "./nnUNet_results"
+
 from batchgenerators.utilities.file_and_folder_operations import join
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 
