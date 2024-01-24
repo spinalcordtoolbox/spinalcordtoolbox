@@ -8,8 +8,8 @@ os.environ['nnUNet_raw'] = "./nnUNet_raw"
 os.environ['nnUNet_preprocessed'] = "./nnUNet_preprocessed"
 os.environ['nnUNet_results'] = "./nnUNet_results"
 
-from batchgenerators.utilities.file_and_folder_operations import join
-from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
+from batchgenerators.utilities.file_and_folder_operations import join  # noqa: E402
+from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor   # noqa: E402
 
 
 def create_nnunet_from_plans(path_model):
