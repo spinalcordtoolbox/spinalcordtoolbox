@@ -37,6 +37,10 @@ def get_parser():
 
     optional = parser.add_argument_group('\nOPTIONAL ARGUMENTS')
     optional.add_argument(
+        '-o',
+        metavar=Metavar.file,
+        help='Output filename. Example: velocity.nii.gz')
+    optional.add_argument(
         "-h",
         "--help",
         action="help",
@@ -77,7 +81,10 @@ def main(argv: Sequence[str]):
     velocity = flow.calculate_velocity(data_phase_scaled, venc)
 
     # Save velocity
-    fname_velocity = add_suffix(arguments.i, '_velocity')
+    if arguments.o is not None:
+        fname_velocity = arguments.o
+    else:
+        fname_velocity = add_suffix(arguments.i, '_velocity')
     printv(f"Save velocity: {fname_velocity}", verbose)
     nii_velocity = nii_phase.copy()
     nii_velocity.data = velocity
