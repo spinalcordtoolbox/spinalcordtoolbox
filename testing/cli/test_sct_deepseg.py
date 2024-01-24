@@ -7,7 +7,7 @@ import warnings
 from torch.serialization import SourceChangeWarning
 
 import spinalcordtoolbox as sct
-from spinalcordtoolbox.image import Image, compute_dice, add_suffix
+from spinalcordtoolbox.image import Image, compute_dice, add_suffix, check_image_kind
 from spinalcordtoolbox.utils.sys import sct_test_path
 import spinalcordtoolbox.deepseg.models
 
@@ -72,9 +72,15 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
     if fname_seg_manual:
         im_seg = Image(fname_out)
         im_seg_manual = Image(fname_seg_manual)
-        im_seg_manual.data = im_seg_manual.data.squeeze()  # FIXME: t2s_seg-deepseg.nii.gz has an extra axis
-        dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
-        assert dice_segmentation > 0.95
+        output_type = check_image_kind(im_seg_manual)
+        if output_type in ['seg', 'softseg']:
+            dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
+            assert dice_segmentation > 0.95
+        else:
+            assert output_type == 'seg-labeled', f"ground truth is unexpected type {output_type}"
+            for coord_out, coord_gt in zip(im_seg.getCoordinatesAveragedByValue(),
+                                           im_seg_manual.getCoordinatesAveragedByValue()):
+                assert coord_out == coord_gt
 
 
 @pytest.mark.parametrize('fname_image, fnames_seg_manual, fname_out, suffixes, task, thr', [
