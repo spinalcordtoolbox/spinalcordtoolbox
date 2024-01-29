@@ -158,8 +158,7 @@ MODELS = {
     },
     "model_seg_spinal_rootlets_nnunet": {
         "url": [
-            # TODO: Replace with official release (*not* from joshuacwnewton)
-            "https://github.com/joshuacwnewton/model-spinal-rootlets/releases/download/r20230815/model-spinal-rootlets_r20230815.zip"
+            "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240129/model-spinal-rootlets_M5_r20240129.zip"
         ],
         "description": "Segmentation of spinal nerve rootlets for T2w images using NNUnet",
         "contrasts": ["t2"],
