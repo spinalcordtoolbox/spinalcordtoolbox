@@ -1,4 +1,6 @@
 import os
+import glob
+
 import torch
 
 # This is just to silence nnUNet warnings. These variables should have no purpose/effect.
@@ -15,8 +17,10 @@ from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor   # noqa: E
 def create_nnunet_from_plans(path_model):
     use_best_checkpoint = False
     tile_step_size = 0.5
-    folds_avail = 'all' if os.listdir(path_model) == 'fold_all' else \
-        [int(f.split('_')[-1]) for f in os.listdir(path_model) if f.startswith('fold_')]
+    fold_dirs = [os.path.basename(path) for path in glob.glob(os.path.join(path_model, "fold_*"))]
+    if not fold_dirs:
+        raise FileNotFoundError(f"No 'fold_*' directories found in model path: {path_model}")
+    folds_avail = 'all' if fold_dirs == ['fold_all'] else [int(f.split('_')[-1]) for f in fold_dirs]
 
     # instantiate the nnUNetPredictor
     predictor = nnUNetPredictor(
