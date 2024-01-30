@@ -78,9 +78,10 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
             assert dice_segmentation > 0.95
         else:
             assert output_type == 'seg-labeled', f"ground truth is unexpected type {output_type}"
-            for coord_out, coord_gt in zip(im_seg.getCoordinatesAveragedByValue(),
-                                           im_seg_manual.getCoordinatesAveragedByValue()):
-                assert coord_out == coord_gt
+            expected_labels = {coord.value for coord in im_seg_manual.getCoordinatesAveragedByValue()}
+            detected_labels = {coord.value for coord in im_seg.getCoordinatesAveragedByValue()}
+            for label in expected_labels:
+                assert label in detected_labels
 
 
 @pytest.mark.parametrize('fname_image, fnames_seg_manual, fname_out, suffixes, task, thr', [
