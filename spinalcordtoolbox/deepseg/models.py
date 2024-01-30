@@ -148,8 +148,7 @@ MODELS = {
     },
     "model_seg_sci_multiclass_sc_lesion_nnunet": {
         "url": [
-            # TODO: Replace with official release (*not* from joshuacwnewton)
-            "https://github.com/joshuacwnewton/model_seg_sci/releases/download/r20230814/model-sci-multisite_r20230814.zip"
+            "https://github.com/ivadomed/model_seg_sci/releases/download/r20240130/model-sci-multisite_r20240130.zip"
         ],
         "description": "Traumatic SCI spinal cord/lesion segmentation for T2w contrast",
         "contrasts": ["t2"],
