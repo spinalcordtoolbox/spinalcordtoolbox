@@ -234,19 +234,31 @@ def segment_nnunet(path_img, tmpdir, predictor):
         img_out.change_orientation(orig_orientation)
         logger.info(f'Reorientation to original orientation {orig_orientation} done.')
 
-    # for SCI multiclass model, split the predictions into sc-seg and lesion-seg
-    if "SCI" in predictor.plans_manager.dataset_name:
-        targets = [f"_{pred_type}_seg" for pred_type in ['sc', 'lesion']]
-        fnames_out = [add_suffix(fname_prediction, target) for target in targets]
-        for i, fname_out in enumerate(fnames_out):
-            img_bin = img_out.copy()
-            img_bin.data = binarize(img_bin.data, i)
-            logger.info(f"Saving results to: {fname_out}")
-            img_bin.save(fname_out)
-    else:
+    labels = {k: v for k, v in predictor.dataset_json['labels'].items() if k != 'background'}
+    # for rootlets model (which has labels 'lvl1', 'lvl2', etc.), save the image directly without splitting
+    is_rootlet_model = all((label == f"lvl{i+1}") for i, label in enumerate(labels.keys()))
+    if is_rootlet_model:
         targets = ["_seg"]
         fnames_out = [fname_prediction]
         logger.info(f"Saving results to: {fname_prediction}")
         img_out.save(fname_prediction)
+    # for the other multiclass models (SCI lesion/SC, mouse GM/WM, etc.), save 1 image per label
+    else:
+        targets, fnames_out = [], []
+        for label, label_values in labels.items():
+            # Binarize data array by matching array values with label values
+            # e.g. if `label_values == [1, 2]`, then for the data array, 0 -> False and 1,2 -> True
+            # This handles nested labels, e.g. when the SC includes both lesion labels (2) and cord label (1)
+            # Numpy syntax reference: https://stackoverflow.com/a/20528566
+            label_values = label_values if isinstance(label_values, list) else [label_values]      # convert to list
+            bool_array = np.logical_or.reduce([img_out.data == int(val) for val in label_values])  # 'OR' each label val
+            img_bin = Image(bool_array.astype(np.uint8), hdr=img_out.hdr)
+            # Save the image using the label name from the dataset.json file
+            target = f"_{label}_seg"
+            fname_out = add_suffix(fname_prediction, target)
+            logger.info(f"Saving results to: {fname_out}")
+            img_bin.save(fname_out)
+            targets.append(target)
+            fnames_out.append(fname_out)
 
     return fnames_out, targets
