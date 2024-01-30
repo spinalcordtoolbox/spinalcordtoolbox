@@ -183,6 +183,8 @@ def segment_nnunet(path_img, tmpdir, predictor):
 
     Author: Jan Valosek, Naga Karthik
     Original script: https://github.com/ivadomed/model_seg_sci/blob/4184bc22ef7317b3de5f85dee28449d6f381c984/packaging/run_inference_single_subject.py
+
+    TODO: Find a less brittle way to specify model-based parameters such as model orientation, suffix, etc.
     """
     # Copy the file to the temporary directory using shutil.copyfile
     path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))
@@ -196,7 +198,6 @@ def segment_nnunet(path_img, tmpdir, predictor):
     if "SCI" in predictor.plans_manager.dataset_name:
         model_orientation = "RPI"
     else:
-        assert "levels" in predictor.plans_manager.dataset_name  # rootlets dataset
         model_orientation = "LPI"
 
     # Reorient the image to model orientation if not already
