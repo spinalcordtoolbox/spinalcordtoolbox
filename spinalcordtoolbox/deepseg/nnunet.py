@@ -15,12 +15,19 @@ from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor   # noqa: E
 
 
 def create_nnunet_from_plans(path_model):
-    use_best_checkpoint = False
     tile_step_size = 0.5
     fold_dirs = [os.path.basename(path) for path in glob.glob(os.path.join(path_model, "fold_*"))]
     if not fold_dirs:
         raise FileNotFoundError(f"No 'fold_*' directories found in model path: {path_model}")
     folds_avail = 'all' if fold_dirs == ['fold_all'] else [int(f.split('_')[-1]) for f in fold_dirs]
+
+    # We prioritize 'checkpoint_final.pth', but fallback to 'checkpoint_best.pth' if not available
+    checkpoints = {os.path.basename(path) for path in glob.glob(os.path.join(path_model, "**", "checkpoint_*.pth"))}
+    for checkpoint_name in ['checkpoint_final.pth', 'checkpoint_best.pth', None]:
+        if checkpoint_name in checkpoints:
+            break
+    if checkpoint_name is None:
+        raise ValueError(f"Couldn't find 'checkpoint_final.pth' or 'checkpoint_best.pth' in {path_model}")
 
     # instantiate the nnUNetPredictor
     predictor = nnUNetPredictor(
@@ -39,7 +46,7 @@ def create_nnunet_from_plans(path_model):
     predictor.initialize_from_trained_model_folder(
         join(path_model),
         use_folds=folds_avail,
-        checkpoint_name='checkpoint_final.pth' if not use_best_checkpoint else 'checkpoint_best.pth',
+        checkpoint_name=checkpoint_name,
     )
     print('Model loaded successfully. Fetching test data...')
 
