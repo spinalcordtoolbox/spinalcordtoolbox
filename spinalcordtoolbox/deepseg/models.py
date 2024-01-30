@@ -164,6 +164,15 @@ MODELS = {
         "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
         "default": False,
     },
+    "model_seg_gm_wm_mouse_nnunet": {
+         "url": [
+             "https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1/releases/download/v0.4/model.zip"
+         ],
+         "description": "White and grey matter segmentation on T1-weighted exvivo mouse spinal cord using NNUnet",
+         "contrasts": ["t1"],
+         "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
+         "default": False,
+     },
 }
 
 
@@ -293,6 +302,11 @@ TASKS = {
          'long_description': 'TBD.',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
          'models': ['model_seg_spinal_rootlets_nnunet']},
+    'seg_mouse_gm_wm_t1w':
+        {'description': 'Exvivo mouse GM/WM segmentation for T1w contrast',
+         'long_description': 'TBD.',
+         'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
+         'models': ['model_seg_gm_wm_mouse_nnunet']},
 }
 
 
