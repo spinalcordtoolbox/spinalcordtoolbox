@@ -37,7 +37,7 @@ jobs:
         shell: bash
     steps:
       - name: Checkout SCT
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install SCT (Unix)
         if: matrix.os != 'windows-2019'
@@ -75,7 +75,7 @@ jobs:
         run: bash batch_processing.sh
 
       - name: Upload QC results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Batch Processing QC (${{ matrix.os }})
           path: "qc_example_data"
