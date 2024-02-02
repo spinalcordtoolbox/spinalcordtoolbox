@@ -606,12 +606,12 @@ print info "Checking pip packages..."
 pip freeze
 ########################################################################################################################
 
-if [[ $OS == linux ]]; then
-  # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1298616317)
-  conda install -y -c conda-forge libstdcxx-ng
-  # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
-  conda install -y -c conda-forge libffi
-fi
+#if [[ $OS == linux ]]; then
+#  # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1298616317)
+#  conda install -y -c conda-forge libstdcxx-ng
+#  # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
+#  conda install -y -c conda-forge libffi
+#fi
 
 ########################################################################################################################
 # DEBUGGING COMMANDS
@@ -624,15 +624,6 @@ pip freeze
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
 # python/envs/venv_sct/bin/python -m pip install -U "pip!=21.2.*"
-
-########################################################################################################################
-# DEBUGGING COMMANDS
-########################################################################################################################
-print info "Checking conda packages..."
-conda list
-print info "Checking pip packages..."
-pip freeze
-########################################################################################################################
 
 ########################################################################################################################
 # DEBUGGING COMMANDS
