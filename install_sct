@@ -606,12 +606,13 @@ print info "Checking pip packages..."
 pip freeze
 ########################################################################################################################
 
-#if [[ $OS == linux ]]; then
-#  # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1298616317)
-#  conda install -y -c conda-forge libstdcxx-ng
-#  # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
-#  conda install -y -c conda-forge libffi
-#fi
+if [[ $OS == linux ]]; then
+  # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1298616317)
+  conda install -y -c conda-forge libstdcxx-ng
+  # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
+  conda install -y -c conda-forge libffi
+  conda install -y packaging
+fi
 
 ########################################################################################################################
 # DEBUGGING COMMANDS
@@ -628,12 +629,6 @@ pip freeze
 ########################################################################################################################
 # DEBUGGING COMMANDS
 ########################################################################################################################
-print info "Checking pip executables"
-python/envs/venv_sct/bin/pip --version
-pip --version
-which pip
-pip3 --version
-which pip3
 print info "Installing onnxruntime==1.17.0 by itself"
 python/envs/venv_sct/bin/pip install "onnxruntime==1.17.0"
 print info "Checking conda packages..."
