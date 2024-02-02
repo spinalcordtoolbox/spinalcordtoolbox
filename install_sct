@@ -611,8 +611,10 @@ if [[ $OS == linux ]]; then
   conda install -y -c conda-forge libstdcxx-ng
   # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
   conda install -y -c conda-forge libffi
-  conda install -y packaging
 fi
+
+print info "Installing packaging..."
+conda install -y packaging
 
 ########################################################################################################################
 # DEBUGGING COMMANDS
