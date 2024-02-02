@@ -628,6 +628,12 @@ pip freeze
 ########################################################################################################################
 # DEBUGGING COMMANDS
 ########################################################################################################################
+print info "Checking pip executables"
+python/envs/venv_sct/bin/pip --version
+pip --version
+which pip
+pip3 --version
+which pip3
 print info "Installing onnxruntime==1.17.0 by itself"
 python/envs/venv_sct/bin/pip install "onnxruntime==1.17.0"
 print info "Checking conda packages..."
