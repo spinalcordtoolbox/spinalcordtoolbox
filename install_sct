@@ -623,7 +623,7 @@ pip freeze
 ########################################################################################################################
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
-python/envs/venv_sct/bin/python -m pip install -U "pip!=21.2.*"
+# python/envs/venv_sct/bin/python -m pip install -U "pip!=21.2.*"
 
 ########################################################################################################################
 # DEBUGGING COMMANDS
