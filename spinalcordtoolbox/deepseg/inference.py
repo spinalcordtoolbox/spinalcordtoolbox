@@ -144,7 +144,7 @@ def segment_monai(path_img, tmpdir, predictor):
 
     # define the dataset and dataloader
     test_loader, test_post_pred = ds_monai.prepare_data(path_img_tmp, crop_size=crop_size)
-    batch = next(iter(test_loader))
+    [batch] = test_loader  # we expected there to only be one batch (with one image)
 
     # Run MONAI prediction
     print('Starting inference...')
