@@ -114,8 +114,9 @@ def get_parser():
     parser.add_argument('-include-list',
                         help='Optional space separated list of subjects or sessions to include. Only process '
                         'subjects or sessions if they are on this list. Inclusions are processed before exclusions. '
-                        'Cannot be used with `include`. \n'
-                        'Examples: \'-include-list sub-001 sub-002\' or \'-include-list sub-001/ses-01 ses-02\'', nargs='+')
+                        'Cannot be used with `include`. You can combine subjects and sessions; see examples.\n'
+                        'Examples: \'-include-list sub-001 sub-002\' or \'-include-list sub-001/ses-01 ses-02\'',
+                        nargs='+')
     parser.add_argument('-exclude',
                         help='Optional regex used to filter the list of subject directories. Only process '
                         'a subject if they do not match the regex. Exclusions are processed '
@@ -123,8 +124,9 @@ def get_parser():
     parser.add_argument('-exclude-list',
                         help='Optional space separated list of subjects or sessions to exclude. Only process subjects '
                         'or sessions if they are not on this list. Inclusions are processed before exclusions. '
-                        'Cannot be used with `exclude`. \n'
-                        'Example: \'-exclude-list sub-003 sub-004\' or \'-include-list ses-01 ses-02\'', nargs='+')
+                        'Cannot be used with `exclude`. You can combine subjects and sessions; see examples.\n'
+                        'Examples: \'-exclude-list sub-003 sub-004\' or \'-exclude-list sub-003/ses-01 ses-02\'',
+                        nargs='+')
     parser.add_argument('-ignore-ses', action='store_true',
                         help="By default, if 'ses' subfolders are present, then 'sct_run_batch' will run the script "
                              "within each individual 'ses' subfolder. Passing `-ignore-ses` will change the behavior "
