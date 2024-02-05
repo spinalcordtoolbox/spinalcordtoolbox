@@ -621,7 +621,10 @@ fi
 (
   # We use "--ignore-installed" to preserve the version of `certifi` installed into the conda
   # env, which prevents https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3609
-  python/envs/venv_sct/bin/pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
+  # We use 'SYSTEM_VERSION_COMPAT=0' to tell pip to report macOS 11 instead of macOS 10.16
+  # This is necessary in order to install 'macosx_11_0' wheels. See also:
+  # https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4352
+  SYSTEM_VERSION_COMPAT=0 python/envs/venv_sct/bin/pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
   print info "Installing spinalcordtoolbox..." &&
   python/envs/venv_sct/bin/pip install -e .
 ) ||
