@@ -123,7 +123,7 @@ def get_parser():
     parser.add_argument('-exclude-list',
                         help='Optional space separated list of subjects or sessions to exclude. Only process subjects '
                         'or sessions if they are not on this list. Inclusions are processed before exclusions. '
-                        'Cannot be used with either `exclude`. \n'
+                        'Cannot be used with `exclude`. \n'
                         'Example: \'-exclude-list sub-003 sub-004\' or \'-include-list ses-01 ses-02\'', nargs='+')
     parser.add_argument('-ignore-ses', action='store_true',
                         help="By default, if 'ses' subfolders are present, then 'sct_run_batch' will run the script "
