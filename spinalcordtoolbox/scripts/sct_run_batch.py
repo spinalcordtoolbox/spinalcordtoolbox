@@ -115,7 +115,7 @@ def get_parser():
                         help='Optional space separated list of subjects or sessions to include. Only process '
                         'subjects or sessions if they are on this list. Inclusions are processed before exclusions. '
                         'Cannot be used with `include`. \n'
-                        'Examples: \'-include-list sub-001 sub-002\' or \'-include-list ses-01 ses-02\'', nargs='+')
+                        'Examples: \'-include-list sub-001 sub-002\' or \'-include-list sub-001/ses-01 ses-02\'', nargs='+')
     parser.add_argument('-exclude',
                         help='Optional regex used to filter the list of subject directories. Only process '
                         'a subject if they do not match the regex. Exclusions are processed '
