@@ -236,7 +236,7 @@ def segment_nnunet(path_img, tmpdir, predictor):
 
     labels = {k: v for k, v in predictor.dataset_json['labels'].items() if k != 'background'}
     # for rootlets model (which has labels 'lvl1', 'lvl2', etc.), save the image directly without splitting
-    is_rootlet_model = all((label == f"lvl{i+1}") for i, label in enumerate(labels.keys()))
+    is_rootlet_model = all((label == f"lvl{i}") for i, label in enumerate(labels.keys(), start=1))
     if is_rootlet_model:
         targets = ["_seg"]
         fnames_out = [fname_prediction]
