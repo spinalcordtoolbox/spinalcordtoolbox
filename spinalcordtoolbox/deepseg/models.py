@@ -313,7 +313,13 @@ TASKS = {
          'models': ['model_seg_spinal_rootlets_nnunet']},
     'seg_mouse_gm_wm_t1w':
         {'description': 'Exvivo mouse GM/WM segmentation for T1w contrast',
-         'long_description': 'TBD.',
+         'long_description': 'This segmentation model for gray and white matter segmentation of exvivo mice spinal '
+                             'cords uses an NNunet architecture, and was created with the nnUNetV2 package. It is a '
+                             'multiclass model, outputting segmentations for both the grey matter and white matter.'
+                             'Training data consisted of 22 mice with different numbers of chunks, for a total of 72 '
+                             'MRI 3D images. Each training image was T2-weighted, had a size of 200x200x500, and had '
+                             'a resolution of 0.05mm isotropic. Training data was provided by the Balgrist Center at'
+                             'the University of Zurich.',
          'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
          'models': ['model_seg_gm_wm_mouse_nnunet']},
 }
