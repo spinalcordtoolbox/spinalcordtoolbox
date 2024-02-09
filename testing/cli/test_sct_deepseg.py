@@ -85,8 +85,9 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
 
 
 @pytest.mark.parametrize('fname_image, fnames_seg_manual, fname_out, suffixes, task, thr', [
-    (sct_test_path('t2', 't2.nii.gz'),
-     [sct_test_path('t2', 't2_seg-manual.nii.gz'), None],  # TODO: Add ground truth for lesion seg
+    (sct_test_path('t2', 't2_fake_lesion.nii.gz'),
+     [sct_test_path('t2', 't2_fake_lesion_sc_seg.nii.gz'),
+      sct_test_path('t2', 't2_fake_lesion_lesion_seg.nii.gz')],
      't2_deepseg.nii.gz',
      ["_sc_seg", "_lesion_seg"],
      'seg_sc_lesion_t2w_sci',
