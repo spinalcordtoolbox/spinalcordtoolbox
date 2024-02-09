@@ -53,6 +53,7 @@ def test_model_dict():
      't2_seg_deepseg.nii.gz',
      'seg_spinal_rootlets_t2w',
      None),
+
 ])
 def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
                        tmp_path):
@@ -92,12 +93,25 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
      ["_sc_seg", "_lesion_seg"],
      'seg_sc_lesion_t2w_sci',
      0.5),
+    (sct_test_path('t1', 't1_mouse.nii.gz'),
+     [None, None],
+     't1_deepseg.nii.gz',
+     ["_GM_seg", "_WM_seg"],
+     'seg_mouse_gm_wm_t1w',
+     0.5),
 ])
 def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr,
                                   tmp_path):
     """
     Uses the locally-installed sct_testing_data
     """
+    # Skip mouse test if the file is not present locally
+    # (We do not include the file in sct_testing_data  A) the mouse image is large and B) inference time is lengthy.)
+    # If testing locally, you can get this file from: [insert_link_here] --> copy to sct_testing_data/t1/
+    # TODO: Double-check if the mouse image can be uploaded to a public location, or if it needs to be kept internal
+    if "mouse" in task and not os.path.exists(fname_image):
+        pytest.skip("Mouse data must be manually downloaded to run this test.")
+
     fname_out = str(tmp_path / fname_out)
     sct_deepseg.main(['-i', fname_image, '-task', task, '-thr', str(thr), '-o', fname_out])
     # The `-o` argument takes a single filename, even though one (or more!) files might be output.
