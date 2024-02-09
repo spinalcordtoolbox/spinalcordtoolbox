@@ -23,10 +23,10 @@ def create_nnunet_from_plans(path_model):
 
     # We prioritize 'checkpoint_final.pth', but fallback to 'checkpoint_best.pth' if not available
     checkpoints = {os.path.basename(path) for path in glob.glob(os.path.join(path_model, "**", "checkpoint_*.pth"))}
-    for checkpoint_name in ['checkpoint_final.pth', 'checkpoint_best.pth', None]:
+    for checkpoint_name in ['checkpoint_final.pth', 'checkpoint_best.pth']:
         if checkpoint_name in checkpoints:
-            break
-    if checkpoint_name is None:
+            break  # Use the checkpoint that was found
+    else:
         raise ValueError(f"Couldn't find 'checkpoint_final.pth' or 'checkpoint_best.pth' in {path_model}")
 
     # instantiate the nnUNetPredictor
