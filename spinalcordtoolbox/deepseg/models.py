@@ -294,7 +294,12 @@ TASKS = {
          'models': ['model_seg_sc_contrast_agnostic_softseg_nnunet']},
     'seg_sc_lesion_t2w_sci':
         {'description': 'Traumatic SCI spinal cord/lesion seg for T2w contrast',
-         'long_description': 'TBD.',
+         'long_description': 'This segmentation model for traumatic spinal cord injury segmentation uses an NNUnet '
+                             'architecture, and was created with the nnUNetV2 package. It is a multiclass model, '
+                             'outputting segmentations for both the spinal cord and SCI lesions. Training data '
+                             'consists of T2w scans from 191 SCI patients, spanning numerous resolutions and '
+                             'orientations, as well as multiple scanner manufacturers and field strengths. Training '
+                             'data was provided by the Balgrist Center at the University of Zurich.',
          'url': 'https://github.com/ivadomed/model_seg_sci',
          'models': ['model_seg_sci_multiclass_sc_lesion_nnunet']},
     'seg_spinal_rootlets_t2w':
