@@ -304,7 +304,11 @@ TASKS = {
          'models': ['model_seg_sci_multiclass_sc_lesion_nnunet']},
     'seg_spinal_rootlets_t2w':
         {'description': 'Segmentation of spinal nerve rootlets for T2w contrast',
-         'long_description': 'TBD.',
+         'long_description': 'This segmentation model for spinal nerve rootlet segmentation uses an NNUnet '
+                             'architecture, and was created with the nnUNetV2 package. It is a multiclass model, '
+                             'outputting a single segmentation image containing 8 classes representing the C2-C8 '
+                             'dorsal spinal cord nerve rootlets. Training data consisted of 31 T2w scans and '
+                             'segmentations from healthy subjects across two different open-access datasets.',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
          'models': ['model_seg_spinal_rootlets_nnunet']},
     'seg_mouse_gm_wm_t1w':
