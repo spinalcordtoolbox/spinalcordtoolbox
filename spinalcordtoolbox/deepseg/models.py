@@ -294,21 +294,20 @@ TASKS = {
          'models': ['model_seg_sc_contrast_agnostic_softseg_nnunet']},
     'seg_sc_lesion_t2w_sci':
         {'description': 'Traumatic SCI spinal cord/lesion seg for T2w contrast',
-         'long_description': 'This segmentation model for traumatic spinal cord injury segmentation uses an NNUnet '
-                             'architecture, and was created with the nnUNetV2 package. It is a multiclass model, '
-                             'outputting segmentations for both the spinal cord and SCI lesions. Training data '
-                             'consists of T2w scans from 191 SCI patients, spanning numerous resolutions and '
-                             'orientations, as well as multiple scanner manufacturers and field strengths. Training '
-                             'data was provided by the Balgrist Center at the University of Zurich.',
+         'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
+                             'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
+                             'outputting segmentations for both the hyperintense SCI lesions and spinal cord. Training '
+                             'data consisted of T2w images (n=196), spanning numerous resolutions and '
+                             'orientations, as well as multiple scanner manufacturers and field strengths.',
          'url': 'https://github.com/ivadomed/model_seg_sci',
          'models': ['model_seg_sci_multiclass_sc_lesion_nnunet']},
     'seg_spinal_rootlets_t2w':
         {'description': 'Segmentation of spinal nerve rootlets for T2w contrast',
-         'long_description': 'This segmentation model for spinal nerve rootlet segmentation uses an NNUnet '
-                             'architecture, and was created with the nnUNetV2 package. It is a multiclass model, '
+         'long_description': 'This segmentation model for spinal nerve rootlets segmentation uses a 3D U-Net '
+                             'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
                              'outputting a single segmentation image containing 8 classes representing the C2-C8 '
-                             'dorsal spinal cord nerve rootlets. Training data consisted of 31 T2w scans and '
-                             'segmentations from healthy subjects across two different open-access datasets.',
+                             'dorsal spinal cord nerve rootlets. Training data consisted of 31 isotropic T2w images '
+                             'from healthy subjects from two different open-access datasets.',
          'url': 'https://github.com/ivadomed/model-spinal-rootlets',
          'models': ['model_seg_spinal_rootlets_nnunet']},
     'seg_mouse_gm_wm_t1w':
