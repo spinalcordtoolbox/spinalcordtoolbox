@@ -96,7 +96,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
     return im_lst, target_lst
 
 
-def segment_non_ivadomed(path_model, model_type, input_filenames, threshold):
+def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, remove_temp_files=True):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     if model_type == "monai":
         create_net = ds_monai.create_nnunet_from_plans
@@ -114,14 +114,17 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold):
 
     im_lst, target_lst = [], []
     for fname_in in input_filenames:
+        tmpdir = tmp_create(basename="sct_deepseg")
         # model may be multiclass, so the `inference` func should output a list of fnames and targets
-        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmp_create(basename="sct_deepseg"), predictor=net)
+        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net)
         for fname_out, target in zip(fnames_out, targets):
             im_out = Image(fname_out)
             if threshold is not None:
                 im_out.data = binarize(im_out.data, threshold)
             im_lst.append(im_out)
             target_lst.append(target)
+        if remove_temp_files:
+            shutil.rmtree(tmpdir)
 
     return im_lst, target_lst
 

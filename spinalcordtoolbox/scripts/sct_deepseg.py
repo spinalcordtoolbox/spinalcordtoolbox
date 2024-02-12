@@ -220,7 +220,8 @@ def main(argv: Sequence[str]):
         else:
             thr = (arguments.binarize_prediction if arguments.binarize_prediction
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
-            im_lst, target_lst = inference.segment_non_ivadomed(path_model, model_type, input_filenames, thr)
+            im_lst, target_lst = inference.segment_non_ivadomed(path_model, model_type, input_filenames, thr,
+                                                                remove_temp_files=arguments.r)
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
