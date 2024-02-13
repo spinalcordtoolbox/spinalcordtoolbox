@@ -345,7 +345,6 @@ class Centerline:
                         Must be on of self.labels_regions
         """
         self.discs_levels = discs_levels
-        self.label_reference = label_reference
 
         # special case for C2, which might not be present because it is difficult to identify
         is_C2_here = False
@@ -382,10 +381,12 @@ class Centerline:
                 if index_last_label is None or index_label > index_last_label:
                     index_last_label = index_label
 
-        if index_first_label is not None:
-            self.first_label = self.list_labels[index_first_label]
-        if index_last_label is not None:
-            self.last_label = self.list_labels[index_last_label]
+        # Assign first/last labels once we guarantee that there even *are* valid labels
+        if index_last_label is None or index_last_label is None:
+            raise ValueError(f"None of the provided disc levels {[l[3] for l in discs_levels]} are present in the"
+                             f"list of expected disc levels: {list(self.list_labels)}.")
+        self.first_label = self.list_labels[index_first_label]
+        self.last_label = self.list_labels[index_last_label]
 
         index_disc_inv.append([0, 'bottom'])
         index_disc_inv.sort(key=itemgetter(0))
@@ -394,21 +395,28 @@ class Centerline:
         for i in range(self.number_of_points - 1):
             progress_length[i + 1] = progress_length[i] + self.progressive_length[i]
 
+        # If the reference label (default 'C1' - 1) is not present in the disc labels, then use the uppermost label
+        if label_reference not in self.index_disc.keys():
+            label_reference = self.regions_labels[self.first_label]  # int label -> str label
         self.label_reference = label_reference
-        if self.label_reference not in self.index_disc:
-            upper = 31
-            label_reference = ''
-            for label in self.index_disc:
-                if self.labels_regions[label] < upper:
-                    label_reference = label
-                    upper = self.labels_regions[label]
-            self.label_reference = label_reference
+
+        # Add a special label to handle points above the uppermost label
+        # (NB: We only do this if the reference label is not 'C1'. If the reference label *is* 'C1', then we
+        #  want to leave the points above C1 as their default value ('0'), since there is further logic that
+        #  relies on the assumption that 0 == "above C1".)
+        if self.label_reference != 'C1':
+            # Get the label that theoretically would be above the reference label
+            label_reference_int = self.labels_regions[self.label_reference]       # str label -> int label
+            above_label_reference = self.regions_labels[label_reference_int - 1]  # int label -> str label
+            # Then, assign it to the last point in the cord
+            index_disc_inv.append([self.number_of_points, above_label_reference])
 
         self.distance_from_C1label = {}
         progress_length_reference = progress_length[self.index_disc[self.label_reference]]
         for disc, i in self.index_disc.items():
             self.distance_from_C1label[disc] = progress_length_reference - progress_length[i]
 
+        # Use the disc indexes to label the points according to the vertebral level they belong to
         for i in range(1, len(index_disc_inv)):
             disc = index_disc_inv[i][1]
             for j in range(index_disc_inv[i - 1][0], index_disc_inv[i][0]):
