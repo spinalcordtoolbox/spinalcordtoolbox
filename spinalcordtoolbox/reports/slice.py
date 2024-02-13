@@ -15,7 +15,7 @@ import numpy as np
 from scipy.ndimage import center_of_mass
 from nibabel.nifti1 import Nifti1Image
 
-from spinalcordtoolbox.image import Image, split_img_data
+from spinalcordtoolbox.image import Image, split_img_data, check_image_kind
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
@@ -57,19 +57,7 @@ class Slice(object):
             self._absolute_paths.append(img.absolutepath)  # change_orientation removes the field absolute_path
             img.change_orientation('SAL')
             if p_resample:
-                # Check if image is a segmentation (binary or soft) by making sure:
-                # - 0/1 are the two most common voxel values
-                # - 0/1 account for >95% of voxels (to allow for some soft voxels)
-                unique, counts = np.unique(np.round(img.data, decimals=1), return_counts=True)
-                unique, counts = unique[np.argsort(counts)[::-1]], counts[np.argsort(counts)[::-1]]  # Sort by counts
-                binary_most_common = set(unique[0:2].astype(float)) == {0.0, 1.0}
-                binary_percentage = np.sum(counts[0:2]) / np.sum(counts)
-                if binary_most_common and binary_percentage > 0.95:
-                    # If a segmentation, use linear interpolation and apply thresholding
-                    type_img = 'seg'
-                else:
-                    # Otherwise it's an image: use spline interpolation
-                    type_img = 'im'
+                type_img = 'seg' if ('seg' in check_image_kind(img)) else 'im'  # condense seg/softseg into just 'seg'
                 img_r = self._resample_slicewise(img, p_resample, type_img=type_img, image_ref=image_ref)
             else:
                 img_r = img.copy()

@@ -3,12 +3,11 @@
 import os
 
 import pytest
-import numpy as np
-import nibabel
 import warnings
 from torch.serialization import SourceChangeWarning
 
 import spinalcordtoolbox as sct
+from spinalcordtoolbox.image import Image, compute_dice, add_suffix, check_image_kind
 from spinalcordtoolbox.utils.sys import sct_test_path
 import spinalcordtoolbox.deepseg.models
 
@@ -38,13 +37,25 @@ def test_model_dict():
         assert 'default' in value
 
 
-@pytest.mark.parametrize('fname_image, fname_seg_manual, fname_out, task', [
+@pytest.mark.parametrize('fname_image, fname_seg_manual, fname_out, task, thr', [
     (sct_test_path('t2s', 't2s.nii.gz'),
      sct_test_path('t2s', 't2s_seg-deepseg.nii.gz'),
      't2s_seg_deepseg.nii.gz',
-     'seg_sc_t2star'),
+     'seg_sc_t2star',
+     0.9),
+    (sct_test_path('t2', 't2.nii.gz'),
+     sct_test_path('t2', 't2_seg-manual.nii.gz'),
+     't2_seg_deepseg.nii.gz',
+     'seg_sc_contrast_agnostic',
+     None),
+    (sct_test_path('t2', 't2.nii.gz'),
+     sct_test_path('t2', 't2_seg-deepseg_rootlets.nii.gz'),
+     't2_seg_deepseg.nii.gz',
+     'seg_spinal_rootlets_t2w',
+     None),
+
 ])
-def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task,
+def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task, thr,
                        tmp_path):
     """
     Uses the locally-installed sct_testing_data
@@ -52,10 +63,66 @@ def test_segment_nifti(fname_image, fname_seg_manual, fname_out, task,
     # Ignore warnings from ivadomed model source code changing
     warnings.filterwarnings("ignore", category=SourceChangeWarning)
     fname_out = str(tmp_path/fname_out)  # tmp_path for automatic cleanup
-    sct_deepseg.main(['-i', fname_image, '-task', task, '-o', fname_out, '-thr', str(0.9)])
-    # TODO: implement integrity test (for now, just checking if output segmentation file exists)
+    args = ['-i', fname_image, '-task', task, '-o', fname_out]
+    if thr is not None:
+        args.extend(['-thr', str(thr)])
+    sct_deepseg.main(argv=args)
     # Make sure output file exists
     assert os.path.isfile(fname_out)
-    # Compare with ground-truth segmentation
-    assert np.all(nibabel.load(fname_out).get_fdata() ==
-                  nibabel.load(fname_seg_manual).get_fdata()[..., 0])
+    # Compare with ground-truth segmentation if provided
+    if fname_seg_manual:
+        im_seg = Image(fname_out)
+        im_seg_manual = Image(fname_seg_manual)
+        output_type = check_image_kind(im_seg_manual)
+        if output_type in ['seg', 'softseg']:
+            dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
+            assert dice_segmentation > 0.95
+        else:
+            assert output_type == 'seg-labeled', f"ground truth is unexpected type {output_type}"
+            expected_labels = {coord.value for coord in im_seg_manual.getCoordinatesAveragedByValue()}
+            detected_labels = {coord.value for coord in im_seg.getCoordinatesAveragedByValue()}
+            for label in expected_labels:
+                assert label in detected_labels
+
+
+@pytest.mark.parametrize('fname_image, fnames_seg_manual, fname_out, suffixes, task, thr', [
+    (sct_test_path('t2', 't2_fake_lesion.nii.gz'),
+     [sct_test_path('t2', 't2_fake_lesion_sc_seg.nii.gz'),
+      sct_test_path('t2', 't2_fake_lesion_lesion_seg.nii.gz')],
+     't2_deepseg.nii.gz',
+     ["_sc_seg", "_lesion_seg"],
+     'seg_sc_lesion_t2w_sci',
+     0.5),
+    (sct_test_path('t1', 't1_mouse.nii.gz'),
+     [None, None],
+     't1_deepseg.nii.gz',
+     ["_GM_seg", "_WM_seg"],
+     'seg_mouse_gm_wm_t1w',
+     0.5),
+])
+def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suffixes, task, thr,
+                                  tmp_path):
+    """
+    Uses the locally-installed sct_testing_data
+    """
+    # Skip mouse test if the file is not present locally
+    # (We do not include the file in sct_testing_data as A. the mouse image is large and B. inference time is lengthy.)
+    # If testing locally, you can get this file from our internal testing dataset -> copy to sct_testing_data/t1/
+    # More info here: https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Testing%253A-Datasets
+    if "mouse" in task and not os.path.exists(fname_image):
+        pytest.skip("Mouse data must be manually downloaded to run this test.")
+
+    fname_out = str(tmp_path / fname_out)
+    sct_deepseg.main(['-i', fname_image, '-task', task, '-thr', str(thr), '-o', fname_out])
+    # The `-o` argument takes a single filename, even though one (or more!) files might be output.
+    # If multiple output files will be produced, `sct_deepseg` will take this singular `-o` and add suffixes to it.
+    fnames_out = [add_suffix(fname_out, suffix) for suffix in suffixes]
+    for fname_out, fname_seg_manual in zip(fnames_out, fnames_seg_manual):
+        # Make sure output file exists
+        assert os.path.isfile(fname_out)
+        # Compare with ground-truth segmentation if provided
+        if fname_seg_manual:
+            im_seg = Image(fname_out)
+            im_seg_manual = Image(fname_seg_manual)
+            dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
+            assert dice_segmentation > 0.95
