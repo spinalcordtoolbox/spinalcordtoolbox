@@ -106,9 +106,9 @@ def test_segment_nifti_multiclass(fname_image, fnames_seg_manual, fname_out, suf
     Uses the locally-installed sct_testing_data
     """
     # Skip mouse test if the file is not present locally
-    # (We do not include the file in sct_testing_data  A) the mouse image is large and B) inference time is lengthy.)
-    # If testing locally, you can get this file from: [insert_link_here] --> copy to sct_testing_data/t1/
-    # TODO: Double-check if the mouse image can be uploaded to a public location, or if it needs to be kept internal
+    # (We do not include the file in sct_testing_data as A. the mouse image is large and B. inference time is lengthy.)
+    # If testing locally, you can get this file from our internal testing dataset -> copy to sct_testing_data/t1/
+    # More info here: https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Testing%253A-Datasets
     if "mouse" in task and not os.path.exists(fname_image):
         pytest.skip("Mouse data must be manually downloaded to run this test.")
 
