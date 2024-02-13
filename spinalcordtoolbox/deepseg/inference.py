@@ -218,11 +218,11 @@ def segment_nnunet(path_img, tmpdir, predictor):
     print('Starting inference...')
     start = time.time()
 
-    # NOTE: nnUNet loads images using SimpleITK. When working with SimpleITK images, the axes are [x,y,z]. But, during
-    #       training, when nnUNet fetches a numpy array from the SimpleITK image, the axes get swapped ([z,y,x]).
-    #       Nibabel (the image processing library SCT uses internally) _doesn't_ use this axis swapping behavior.
-    #       So, when SCT fetches the numpy array, we have to swap axes [x] and [z] to mimic nnUNet's internal behavior.
-    #       See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4345#discussion_r1486872227
+    # NOTE: nnUNet loads `.nii.gz` images using SimpleITK. When working with SimpleITK images, the axes are [x,y,z].
+    #       But, during training, when nnUNet fetches a numpy array from the SimpleITK image, the axes get swapped
+    #       ([z,y,x]). Nibabel (the image processing library SCT uses internally) _doesn't_ have this axis-swapping
+    #       behavior. So, when SCT fetches the numpy array, we have to swap axes [x] and [z] to mimic nnUNet's internal
+    #       behavior. See also: https://github.com/MIC-DKFZ/nnUNet/issues/1951
     data = img_in.data.transpose([2, 1, 0])
     # We also need to add an axis and convert to float32 to match nnUNet's input expectations
     # (This would automatically be done by nnUNet if we were to predict from image files, rather than a npy array.)
