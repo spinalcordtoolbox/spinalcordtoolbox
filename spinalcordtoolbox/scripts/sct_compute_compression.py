@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 NEAR_ZERO_THRESHOLD = 1e-6
-INDEX_COLUMNS = ['filename', 'compression_level', 'slice(I->S)']
+INDEX_COLUMNS = ['filename', 'compression_level', 'Slice (I->S)']
 
 
 # PARSER
@@ -216,7 +216,7 @@ def get_verterbral_level_from_slice(slices, df_metrics):
     #        slices_combined.append(slice)
     for idx, _ in enumerate(slices):
         level_slice_dict[idx] = {}
-    for idx, slice in enumerate(slices[::-1]):  # Invert the order to have in vertebral level order (S --> I)
+    for idx, slice in enumerate(slices):
         level = df_level_slice_compression.loc[df_level_slice_compression['Slice (I->S)'] == slice, 'VertLevel'].to_list()[0]
         level_slice_dict[idx][level] = [slice]
     return level_slice_dict
@@ -626,12 +626,14 @@ def main(argv: Sequence[str]):
     # Loop through all compressed levels (compute one MSCC per compressed level)
     rows = []
     for idx in compressed_levels_dict.keys():
+        # Get compressed level and slice
         level = list(compressed_levels_dict[idx].keys())[0]  # TODO change if more than one level
-        printv(f'\nCompression at level {int(level)}', verbose=verbose, type='info')
+        slice_list = compressed_levels_dict[idx][level]
+        slice_num = slice_list[0]
+        printv(f'\nCompression at level {int(level)} (slice {slice_num})', verbose=verbose, type='info')
 
         # Compute metric ratio (non-normalized)
-        slice_avg = list(compressed_levels_dict[idx].values())[0]
-        metrics_patient = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_avg)
+        metrics_patient = average_metric(df_metrics, metric, z_range_centerline_above, z_range_centerline_below, slice_list)
         metric_ratio_result = metric_ratio(metrics_patient[0], metrics_patient[1], metrics_patient[2])
 
         if arguments.normalize_hc:
@@ -650,7 +652,7 @@ def main(argv: Sequence[str]):
             metric_ratio_PAM50_result = None
             metric_ratio_norm_result = None
 
-        rows.append([arguments.i, level, slice_compressed[idx],
+        rows.append([arguments.i, level, slice_num,
                      metric_ratio_result,
                      metric_ratio_PAM50_result,
                      metric_ratio_norm_result])
@@ -670,7 +672,7 @@ def main(argv: Sequence[str]):
     ]
     df_metric_ratios = pd.DataFrame.from_records(rows, index=INDEX_COLUMNS, columns=INDEX_COLUMNS + metric_columns)
     save_df_to_csv(df_metric_ratios, fname_out)
-    printv(f'\nSaved: {fname_out}')
+    printv(f'\nSaved: {os.path.abspath(fname_out)}')
 
 
 if __name__ == "__main__":

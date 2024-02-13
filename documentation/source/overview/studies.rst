@@ -25,6 +25,9 @@ The following studies have used SCT:
 
 2024
 ----
+-  Fang *et al.* `Diagnostic efficacy of tract-specific diffusion tensor imaging in cervical spondylotic myelopathy with electrophysiological examination validation <https://doi.org/10.1007/s00586-023-08111-7>`_, **Eur. Spine J.** 2024
+-  Koch *et al.* `Diffusion Weighted MRI of Spinal Cord Injuries after Instrumented Fusion Stabilization <https://doi.org/10.1089/neu.2023.0591>`_, **J. Neurotrauma** 2024
+-  Yu *et al.* `Wallerian degeneration assessed by multimodal MRI of cervical spinal cord is associated with neurological impairment after spinal cord injury <https://doi.org/10.1089/neu.2023.0305>`_, **J. Neurotrauma** 2024
 -  Hameed *et al.* `Early neurological changes in aging cervical spine: insights from PROMIS mobility assessment <https://doi.org/10.1007/s11357-023-01050-7>`_, **GeroScience** 2024
 
 2023

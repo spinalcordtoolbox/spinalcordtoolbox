@@ -309,10 +309,12 @@ def crop_labels(im_labeled_seg, im_seg):
     modifying on the labeled segmentation in-place.
 
     :param Image im_labeled_seg: labeled segmentation
-    :param Image im_seg: segmentation (with values in [0, 1])
+    :param Image im_seg: segmentation (can be softseg or binary)
     :return: None
     """
-    im_labeled_seg.data *= im_seg.data
+    boolean_mask = (im_seg.data != 0)    # Nonzero -> True | Zero -> False
+    im_labeled_seg.data *= boolean_mask  # Keep only voxels that were nonzero in the segmentation image
+    # Note: NumPy will cast the bool type to the integer type, with False and True converted to 0 and 1 respectively.
 
 
 def expand_labels(im_labeled_seg):
