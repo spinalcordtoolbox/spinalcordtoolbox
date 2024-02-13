@@ -106,9 +106,6 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, rem
         create_net = ds_nnunet.create_nnunet_from_plans
         inference = segment_nnunet
 
-    # equivalent to `with torch.no_grad()`
-    torch.set_grad_enabled(False)
-
     # load model from checkpoint
     net = create_net(path_model)
 
@@ -154,28 +151,29 @@ def segment_monai(path_img, tmpdir, predictor):
     start = time.time()
 
     # run inference
-    test_input = batch["image"].to(torch.device("cpu"))
-    batch["pred"] = sliding_window_inference(test_input, inference_roi_size, mode="gaussian",
-                                             sw_batch_size=4, predictor=predictor, overlap=0.5, progress=False)
-    pred = ds_monai.postprocessing(batch, test_post_pred)
+    with torch.no_grad():
+        test_input = batch["image"].to(torch.device("cpu"))
+        batch["pred"] = sliding_window_inference(test_input, inference_roi_size, mode="gaussian",
+                                                 sw_batch_size=4, predictor=predictor, overlap=0.5, progress=False)
+        pred = ds_monai.postprocessing(batch, test_post_pred)
 
-    end = time.time()
-    print('Inference done.')
-    total_time = end - start
-    print(f'Total inference time: {int(total_time // 60)} minute(s) {int(round(total_time % 60))} seconds')
+        end = time.time()
+        print('Inference done.')
+        total_time = end - start
+        print(f'Total inference time: {int(total_time // 60)} minute(s) {int(round(total_time % 60))} seconds')
 
-    # this takes about 0.25s on average on a CPU
-    # image saver class
-    _, fname, ext = extract_fname(path_img)
-    postfix = "seg"
-    target = f"_{postfix}"
-    pred_saver = SaveImage(
-        output_dir=tmpdir, output_postfix=postfix, output_ext=ext,
-        separate_folder=False, print_log=False)
-    # save the prediction
-    fname_out = os.path.join(tmpdir, f"{fname}_{postfix}{ext}")
-    logger.info(f"Saving results to: {fname_out}")
-    pred_saver(pred)
+        # this takes about 0.25s on average on a CPU
+        # image saver class
+        _, fname, ext = extract_fname(path_img)
+        postfix = "seg"
+        target = f"_{postfix}"
+        pred_saver = SaveImage(
+            output_dir=tmpdir, output_postfix=postfix, output_ext=ext,
+            separate_folder=False, print_log=False)
+        # save the prediction
+        fname_out = os.path.join(tmpdir, f"{fname}_{postfix}{ext}")
+        logger.info(f"Saving results to: {fname_out}")
+        pred_saver(pred)
 
     return [fname_out], [target]
 
