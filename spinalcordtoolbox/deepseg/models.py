@@ -12,6 +12,8 @@ import json
 import logging
 import textwrap
 import shutil
+import glob
+from pathlib import Path
 
 from spinalcordtoolbox import download
 from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__
@@ -126,7 +128,51 @@ MODELS = {
         "description": "Lumbar SC segmentation on T2w contrast with 3D UNet",
         "contrasts": ["t2"],
         "default": False,
-    }
+    },
+    # NB: Handling image binarization threshold for ivadomed vs. non-ivadomed models:
+    #   - ivadomed models (above):
+    #       - Threshold value is stored in the ivadomed-specific `.json` sidecar file
+    #       - Binarization is applied within the ivadomed package
+    #   - non-ivadomed models (below)
+    #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
+    #       - So, threshold value is stored here, within the model dict
+    #       - Binarization is applied within SCT code
+    "model_seg_sc_contrast_agnostic_softseg_nnunet": {
+        "url": [
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.0/model_2023-09-18.zip"
+        ],
+        "description": "Spinal cord segmentation that is agnostic to contrast using NNUnet",
+        "contrasts": ["any"],
+        "thr": 0.5,  # Softseg model -> threshold at 0.5
+        "default": False,
+    },
+    "model_seg_sci_multiclass_sc_lesion_nnunet": {
+        "url": [
+            "https://github.com/ivadomed/model_seg_sci/releases/download/r20240130/model-sci-multisite_r20240130.zip"
+        ],
+        "description": "Traumatic SCI spinal cord/lesion segmentation for T2w contrast",
+        "contrasts": ["t2"],
+        "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
+        "default": False,
+    },
+    "model_seg_spinal_rootlets_nnunet": {
+        "url": [
+            "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240129/model-spinal-rootlets_M5_r20240129.zip"
+        ],
+        "description": "Segmentation of spinal nerve rootlets for T2w images using NNUnet",
+        "contrasts": ["t2"],
+        "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
+        "default": False,
+    },
+    "model_seg_gm_wm_mouse_nnunet": {
+         "url": [
+             "https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1/releases/download/v0.4/model.zip"
+         ],
+         "description": "White and grey matter segmentation on T1-weighted exvivo mouse spinal cord using NNUnet",
+         "contrasts": ["t1"],
+         "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
+         "default": False,
+     },
 }
 
 
@@ -237,7 +283,44 @@ TASKS = {
                              'and Dimitry Van De Ville of EPFL, with the files consisting of lumbar T2w scans (and '
                              'manual spinal cord segmentations) of 11 healthy (non-pathological) patients.',
          'url': 'https://github.com/ivadomed/lumbar_seg_EPFL',
-         'models': ['model_seg_epfl_t2w_lumbar_sc']}
+         'models': ['model_seg_epfl_t2w_lumbar_sc']},
+    'seg_sc_contrast_agnostic':
+        {'description': 'Spinal cord segmentation that is agnostic to contrast',
+         'long_description': 'This segmentation model for contrast agnostic spinal cord segmentation uses an NNUnet '
+                             'architecture, and was created with the MONAI package. Training data was taken from the '
+                             'Spine Generic Multi Subject dataset, with the 6 different contrasts used spanning 267 '
+                             'different healthy (non-pathological) patients.',
+         'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
+         'models': ['model_seg_sc_contrast_agnostic_softseg_nnunet']},
+    'seg_sc_lesion_t2w_sci':
+        {'description': 'Traumatic SCI spinal cord/lesion seg for T2w contrast',
+         'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
+                             'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
+                             'outputting segmentations for both the hyperintense SCI lesions and spinal cord. Training '
+                             'data consisted of T2w images (n=196), spanning numerous resolutions and '
+                             'orientations, as well as multiple scanner manufacturers and field strengths.',
+         'url': 'https://github.com/ivadomed/model_seg_sci',
+         'models': ['model_seg_sci_multiclass_sc_lesion_nnunet']},
+    'seg_spinal_rootlets_t2w':
+        {'description': 'Segmentation of spinal nerve rootlets for T2w contrast',
+         'long_description': 'This segmentation model for spinal nerve rootlets segmentation uses a 3D U-Net '
+                             'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
+                             'outputting a single segmentation image containing 8 classes representing the C2-C8 '
+                             'dorsal spinal cord nerve rootlets. Training data consisted of 31 isotropic T2w images '
+                             'from healthy subjects from two different open-access datasets.',
+         'url': 'https://github.com/ivadomed/model-spinal-rootlets',
+         'models': ['model_seg_spinal_rootlets_nnunet']},
+    'seg_mouse_gm_wm_t1w':
+        {'description': 'Exvivo mouse GM/WM segmentation for T1w contrast',
+         'long_description': 'This segmentation model for gray and white matter segmentation of exvivo mice spinal '
+                             'cords uses an NNunet architecture, and was created with the nnUNetV2 package. It is a '
+                             'multiclass model, outputting segmentations for both the grey matter and white matter.'
+                             'Training data consisted of 22 mice with different numbers of chunks, for a total of 72 '
+                             'MRI 3D images. Each training image was T2-weighted, had a size of 200x200x500, and had '
+                             'a resolution of 0.05mm isotropic. Training data was provided by the Balgrist Center at'
+                             'the University of Zurich.',
+         'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
+         'models': ['model_seg_gm_wm_mouse_nnunet']},
 }
 
 
@@ -306,14 +389,50 @@ def is_valid(path_models):
     :param path_models: str or list: Absolute path(s) to folder(s) that enclose the model files.
     """
     def _is_valid(path_model):
-        name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
-        return (os.path.exists(os.path.join(path_model, name_model + '.pt')) or
-                os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and os.path.exists(
-            os.path.join(path_model, name_model + '.json'))
+        return has_ivadomed_files(path_model) or has_ckpt_files(path_model) or has_pth_files(path_model)
     # Adapt the function so that it can be used on single paths (str) or lists of paths
     if not isinstance(path_models, list):
         path_models = [path_models]
     return all(_is_valid(path) for path in path_models)
+
+
+def has_ivadomed_files(path_model):
+    """
+    Check if model path contains A) a named .pt/.onnx model file and B) a named ivadomed json configuration file
+    """
+    name_model = Path(path_model).name
+    path_pt = os.path.join(path_model, name_model + '.pt')
+    path_onnx = os.path.join(path_model, name_model + '.onnx')
+    path_json = os.path.join(path_model, name_model + '.json')
+    return (os.path.exists(path_pt) or os.path.exists(path_onnx)) and os.path.exists(path_json)
+
+
+def has_ckpt_files(path_model):
+    """
+    Check if model path contains any checkpoint files (used by non-ivadomed MONAI models)
+    """
+    return bool(glob.glob(os.path.join(path_model, '**', '*.ckpt'), recursive=True))
+
+
+def has_pth_files(path_model):
+    """
+    Check if model path contains any serialized PyTorch state dictionary files (used by non-ivadomed NNUnet models)
+    """
+    return bool(glob.glob(os.path.join(path_model, '**', '*.pth'), recursive=True))
+
+
+def check_model_software_type(path_model):
+    """
+    Determine the software used to train the model based on the types of files in the model folder
+    """
+    if has_ivadomed_files(path_model):
+        return 'ivadomed'
+    elif has_ckpt_files(path_model):
+        return 'monai'
+    elif has_pth_files(path_model):
+        return 'nnunet'
+    else:
+        raise ValueError("Model type cannot be determined.")
 
 
 def list_tasks():
