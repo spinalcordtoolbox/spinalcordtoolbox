@@ -183,6 +183,28 @@ function check_requirements() {
   if [[ ! ( $(command -v curl) || $(command -v wget) ) ]]; then
     die "ERROR: neither \"curl\" nor \"wget\" is installed. Please install either of them and restart SCT installation."
   fi
+  # check rosetta
+  if [[ "$OS" == "osx" ]]; then
+    if ! arch -x86_64 true >/dev/null 2>&1; then
+      print warning "WARNING: not running an x86_64 architecture."
+      while [[ ! "$ROSETTA_INSTALL" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+        ROSETTA_INSTALL="no"
+        if [ -z "$NONINTERACTIVE" ]; then
+          print question "Do you want to install \"Rosetta 2\" now? [y]es/[n]o:"
+          read -r ROSETTA_INSTALL
+        fi
+      done
+      if [[ "$ROSETTA_INSTALL" =~ ^[Yy](es)? ]]; then
+        softwareupdate --install-rosetta
+        # check if we can now run x86_64 executables
+        if ! arch -x86_64 true >/dev/null 2>&1; then
+          die "ERROR: still cannot run x86_64 executables. Please contact SCT team for assistance."
+        fi
+      else
+        die "Please install \"Rosetta 2\" by running \"softwareupdate --install-rosetta\" and restart SCT installation."
+      fi
+    fi
+  fi
   # check gcc
   if ! gcc --version > /dev/null 2>&1; then
     print warning "WARNING: \"gcc\" is not installed."

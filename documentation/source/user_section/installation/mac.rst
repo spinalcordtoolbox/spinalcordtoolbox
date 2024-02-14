@@ -13,6 +13,16 @@ Supported Operating Systems
 * MacOS >= 10.13
 
 
+Mac computers with Apple silicon
+--------------------------------
+
+If your computer uses Apple silicon (M1, M2, M3, etc.), you need to make sure `Rosetta 2 <https://en.wikipedia.org/wiki/Rosetta_(software)#Rosetta_2>`__ is installed before installing or running SCT. To do this, you can open a Terminal and run:
+
+.. code:: sh
+
+    softwareupdate --install-rosetta
+
+
 Gnu Compiler Collection (gcc)
 -----------------------------
 
@@ -23,7 +33,7 @@ You need to have ``gcc`` installed. Check to see if ``gcc`` is installed by open
     gcc --version
 
 
-If it isn't installed, we recommend installing `Homebrew <https://brew.sh/>`_ and then run:
+If it isn't installed, we recommend installing `Homebrew <https://brew.sh/>`__ and then run:
 
 .. code:: sh
 
@@ -37,7 +47,7 @@ Installation Options
 Option 1: Install from Package (recommended)
 --------------------------------------------
 
-The simplest way to install SCT is to do it via a stable release. First, navigate to the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_, then download the install script for SCT (``install_sct-<version>_macos.sh``). Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
+The simplest way to install SCT is to do it via a stable release. First, navigate to the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`__, then download the install script for SCT (``install_sct-<version>_macos.sh``). Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
 
 Once you have downloaded SCT, open a new Terminal in the location of the downloaded script, then launch the installer the ``bash`` command. For example, if the script was downloaded to `Downloads/`, then you would run:
 
@@ -124,7 +134,7 @@ Procedure:
 Option 4: Install with Docker
 -----------------------------
 
-`Docker <https://www.docker.com/what-container>`_ is a portable (Linux, macOS, Windows) container platform.
+`Docker <https://www.docker.com/what-container>`__ is a portable (Linux, macOS, Windows) container platform.
 
 In the context of SCT, it can be used:
 
@@ -136,7 +146,7 @@ In the context of SCT, it can be used:
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`_. Then, follow the examples below to create an OS-specific SCT installation.
+First, `install Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`__. Then, follow the examples below to create an OS-specific SCT installation.
 
 
 Docker Image: Ubuntu
@@ -192,7 +202,7 @@ First, save your Docker image if you haven't already done so:
 
 Create an X11 server for handling display:
 
-1. Install `XQuartz X11 <https://www.xquartz.org/>`_ server.
+1. Install `XQuartz X11 <https://www.xquartz.org/>`__ server.
 2. Check ‘Allow connections from network clients option in XQuartz\` settings. (Run XQuartz; in the top-of-screen menu bar, choose "XQuartz", then "Preferences..."; the relevant option is under the "Security" tab.)
 3. Quit and restart XQuartz.
 4. In the XQuartz "xterm" window, run the command:
