@@ -25,6 +25,9 @@ The following studies have used SCT:
 
 2024
 ----
+
+-  Kowalczyk *et al.* `Spinal fMRI demonstrates segmental organisation of functionally connected networks in the cervical spinal cord: A test–retest reliability study <https://doi.org/10.1002/hbm.26600>`_, **Hum. Brain Mapp.** 2024
+-  Lee *et al.* `Cervical spinal cord angiography and vessel-selective perfusion imaging in the rat <https://doi.org/10.1002/nbm.5115>`_, **NMR Biomed.** 2024
 -  Fang *et al.* `Diagnostic efficacy of tract-specific diffusion tensor imaging in cervical spondylotic myelopathy with electrophysiological examination validation <https://doi.org/10.1007/s00586-023-08111-7>`_, **Eur. Spine J.** 2024
 -  Koch *et al.* `Diffusion Weighted MRI of Spinal Cord Injuries after Instrumented Fusion Stabilization <https://doi.org/10.1089/neu.2023.0591>`_, **J. Neurotrauma** 2024
 -  Yu *et al.* `Wallerian degeneration assessed by multimodal MRI of cervical spinal cord is associated with neurological impairment after spinal cord injury <https://doi.org/10.1089/neu.2023.0305>`_, **J. Neurotrauma** 2024
