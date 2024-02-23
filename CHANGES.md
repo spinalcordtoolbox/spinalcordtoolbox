@@ -1,5 +1,48 @@
 # Changelog
 
+## 6.2 (2024-02-15)
+[View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/6.1...6.2)
+
+**FEATURE**
+ - **sct_deepseg**: Integrate NNUnet/MONAI models into DeepSeg CLI (contrast-agnostic, SCI, rootlets, Zurich mouse). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4345)
+ - **sct_qc**: Save QC records to browser local storage. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4317)
+ - **sct_warp_template**: Update PAM50 link to include new `template/PAM50_rootlets.nii.gz` file. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4373)
+
+**ENHANCEMENT**
+ - Convert integer images to floating point when resampling with linear interpolation. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4230)
+
+**BUG**
+ - **sct_analyze_lesion**: Set `minmax=False` to prevent cropping during angle correction, avoiding slice number mismatches. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4316)
+ - **sct_compute_compression**: Fix reversed slice numbering (`S->I` => `I->S`) in output CSV file. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4326)
+ - **sct_compute_mtsat**: Apply missing B1 correction to `r1map` and `a` calculations to fix MTsat bug. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4306)
+ - **sct_deepseg**: Reverse spacings to match nnUNet's `SimpleITK`-based conventions. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4369)
+ - **sct_deepseg, sct_label_vertebrae**: Mitigate scaling issues (`1.0` -> `0.999`) due to float/int datatype mismatches between header and array. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4346)
+ - **sct_label_vertebrae**: Fix path splitting when space (`' '`) is present in `isct_spine_detect` model path. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4328)
+ - **sct_register_to_template**: Ensure reorientation is performed consistently before any resampling. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4300)
+ - **sct_register_to_template**: Fix straightening error during registration if 3+ labels are supplied and topmost disc label is not C1. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4347)
+
+**INSTALLATION**
+ - Temporary fix for dependency issue with dipy 1.8.0. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4321)
+ - Fix broken pip installer by forcing it to detect macOS 11 as `11.0` and not `10.16`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4359)
+ - Document Rosetta 2 as a requirement for installation on Apple silicon (M1, M2, M3). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4368)
+
+**DOCUMENTATION**
+ - **sct_compute_compression**: Update argparse descriptions to make it clear that the script can also be used to compute MCC. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4331)
+ - **sct_label_utils**: Clarify the argparse help description for the `-disc` argument. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4325)
+ - **sct_run_batch**: Add example syntax for YAML and JSON config files to the argparse help description for `exclude_list`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4304)
+ - **sct_run_batch**: Add examples to `-include-list` and `-exclude-list` flags. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4361)
+ - Add links to both the slide deck and YouTube video for the 2023 SCT Course. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4307)
+ - Port changes from SCT Course 2023 Google Slides to the web tutorials. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4311)
+ - Update `sphinx` and `furo` while removing "Edit on GitHub" hack in the process. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4341)
+
+**REFACTORING**
+ - Remove `utils` star imports and ensure we are importing directly from submodules `{fs,sys,shell}`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4289)
+ - Remove unused `Image.verbose` attribute. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4292)
+ - Replace assertions with more appropriate errors. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4294)
+
+**CI**
+ - Use the same Python version as SCT for linting. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4296)
+
 ## 6.1 (2023-11-03)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/6.0...6.1)
 

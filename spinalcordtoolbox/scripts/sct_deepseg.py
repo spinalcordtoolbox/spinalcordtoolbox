@@ -18,7 +18,7 @@ import logging
 from typing import Sequence
 
 from spinalcordtoolbox.deepseg import models, inference
-from spinalcordtoolbox.image import splitext
+from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
@@ -204,11 +204,24 @@ def main(argv: Sequence[str]):
         else:
             input_filenames = arguments.i
 
-        # Call segment_nifti
-        options = {**vars(arguments), "fname_prior": fname_prior}
-        # NB: For single models, the averaging will have no effect.
-        #     For model ensembles, this will average the output of the ensemble into a single set of outputs.
-        im_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames, options=options)
+        # Segment the image based on the type of model present in the model folder
+        try:
+            model_type = models.check_model_software_type(path_models[0])  # NB: [0] -> Fetch first model from ensemble
+        except ValueError:
+            printv(f"Model type could not be determined. Directory '{path_model}' may be missing necessary files."
+                   f"Please redownload the model using `sct_deepseg -install-task` before continuing.", type="error")
+
+        if model_type == 'ivadomed':
+            # NB: For single models, the averaging will have no effect.
+            #     For model ensembles, this will average the output of the ensemble into a single set of outputs.
+            im_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames,
+                                                                       options={**vars(arguments),
+                                                                                "fname_prior": fname_prior})
+        else:
+            thr = (arguments.binarize_prediction if arguments.binarize_prediction
+                   else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
+            im_lst, target_lst = inference.segment_non_ivadomed(path_model, model_type, input_filenames, thr,
+                                                                remove_temp_files=arguments.r)
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:
@@ -218,14 +231,14 @@ def main(argv: Sequence[str]):
         output_filenames = []
         # Save output seg
         for im_seg, target in zip(im_lst, target_lst):
-            if 'o' in options and options['o'] is not None:
+            if hasattr(arguments, 'o') and arguments.o is not None:
                 # To support if the user adds the extension or not
-                extension = ".nii.gz" if ".nii.gz" in options['o'] else ".nii" if ".nii" in options['o'] else ""
+                extension = ".nii.gz" if ".nii.gz" in arguments.o else ".nii" if ".nii" in arguments.o else ""
                 if extension == "":
-                    fname_seg = options['o'] + target if len(target_lst) > 1 else options['o']
+                    fname_seg = arguments.o + target if len(target_lst) > 1 else arguments.o
                 else:
-                    fname_seg = options['o'].replace(extension, target + extension) if len(target_lst) > 1 \
-                        else options['o']
+                    fname_seg = arguments.o.replace(extension, target + extension) if len(target_lst) > 1 \
+                        else arguments.o
             else:
                 fname_seg = ''.join([splitext(input_filenames[0])[0], target + '.nii.gz'])
 
@@ -241,7 +254,10 @@ def main(argv: Sequence[str]):
         fname_prior = fname_seg
 
     for output_filename in output_filenames:
-        display_viewer_syntax([arguments.i[0], output_filename], im_types=['anat', 'seg'], opacities=['', '0.7'], verbose=verbose)
+        img_kind = check_image_kind(Image(output_filename))
+        display_viewer_syntax([arguments.i[0], output_filename],
+                              im_types=['anat', img_kind],
+                              opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":
