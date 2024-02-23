@@ -973,7 +973,17 @@ def get_dimension(im_file, verbose=1):
     ndims = [1, 1, 1, 1]
     pdims = [1, 1, 1, 1]
     data_shape = im_file.header.get_data_shape()
-    zooms = im_file.header.get_zooms()
+    # NB: Nibabel stores dim info as float32. Arithmetic using float32 values can cause issues. So, store the values
+    #     as rounded 64-bit float values, according to the spacing of the value.
+    zooms = []
+    for zoom_f32 in im_file.header.get_zooms():
+        # extract the exponent from the spacing used by the float32 values (i.e. 1e-9 -> '-9')
+        spacing = np.spacing(zoom_f32)
+        spacing_exp = np.floor(np.log10(np.abs(spacing))).astype(int)
+        # convert to python float, then round to remove any spurious digits
+        zoom_f64 = float(zoom_f32)
+        zoom_f64_rounded = round(zoom_f64, abs(spacing_exp) - 1)
+        zooms.append(zoom_f64_rounded)
     for i in range(min(len(data_shape), 4)):
         ndims[i] = data_shape[i]
         pdims[i] = zooms[i]
