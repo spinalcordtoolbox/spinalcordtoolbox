@@ -34,7 +34,7 @@ def create_nnunet_from_plans(path_model):
         tile_step_size=tile_step_size,  # changing it from 0.5 to 0.9 makes inference faster
         use_gaussian=True,  # applies gaussian noise and gaussian blur
         use_mirroring=False,  # test time augmentation by mirroring on all axes
-        perform_everything_on_gpu=False,
+        perform_everything_on_device=False,
         device=torch.device('cpu'),
         verbose=False,
         verbose_preprocessing=False,
