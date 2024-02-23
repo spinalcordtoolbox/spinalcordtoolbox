@@ -182,6 +182,14 @@ def get_parser():
              "-angle-corr to 0."
     )
     optional.add_argument(
+        '-angle-corr-centerline',
+        metavar=Metavar.str,
+        help="Centerline to be used for angle correction. This is optional; if not provided, the centerline will be "
+             "derived from the input segmentation. Use this option if the input segmentation is irregularly shaped "
+             "(e.g. gray/white matter). In such a case, it is best to pass the full cord segmentation to this option, "
+             "as you will get a more accurate centerline (and thus a more accurate, consistent angle correction)."
+    )
+    optional.add_argument(
         '-centerline-algo',
         choices=['polyfit', 'bspline', 'linear', 'nurbs'],
         default='bspline',
@@ -399,6 +407,7 @@ def main(argv: Sequence[str]):
     slices = arguments.z
     perslice = bool(arguments.perslice)
     angle_correction = bool(arguments.angle_corr)
+    angle_correction_centerline = arguments.angle_corr_centerline
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
@@ -422,6 +431,7 @@ def main(argv: Sequence[str]):
 
     metrics, fit_results = compute_shape(fname_segmentation,
                                          angle_correction=angle_correction,
+                                         centerline_path=angle_correction_centerline,
                                          param_centerline=param_centerline,
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
