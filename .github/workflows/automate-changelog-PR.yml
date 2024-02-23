@@ -22,14 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Set up Python (to install 'changelog')
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
     - name: Install 'changelog'
       run: |
         pip install git+https://github.com/neuropoly/changelog@master
     - name: Checkout '${{ github.event.repository.name }}'
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         path: ${{ github.event.repository.name }}
     - name: Update '${{ github.event.inputs.fname_changelog }}' for '${{ github.event.repository.name }}'

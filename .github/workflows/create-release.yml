@@ -34,7 +34,7 @@ jobs:
     steps:
 
     - name: Checkout spinalcordtoolbox
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Install spinalcordtoolbox
       run: |
@@ -50,7 +50,7 @@ jobs:
         grep "# append_to_freeze" requirements.txt >> requirements-freeze.txt
 
     - name: Upload requirements-freeze.txt
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: requirements-freeze
         path: requirements-freeze.txt
@@ -62,7 +62,7 @@ jobs:
     needs: generate-requirements-freeze
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-11, windows-2019]
+        os: [ubuntu-20.04, macos-12, macos-14, windows-2022]
     runs-on: ${{ matrix.os }}
     # NB: Setting `bash` as the default shell is a bit of a hack workaround for Windows to allow it to run .sh scripts.
     #     Normally, we would ask the user to install a Windows-compatible bash via either Cygwin or Git for Windows.
@@ -72,10 +72,10 @@ jobs:
         shell: bash
     steps:
     - name: Checkout spinalcordtoolbox
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Download requirements-freeze.txt
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: requirements-freeze
 
@@ -84,11 +84,11 @@ jobs:
         echo "0.0" > spinalcordtoolbox/version.txt
 
     - name: Install SCT from release branch (Unix)
-      if: matrix.os != 'windows-2019'
+      if: matrix.os != 'windows-2022'
       run: ./install_sct -yc
 
     - name: Install SCT from release branch (Windows)
-      if: matrix.os == 'windows-2019'
+      if: matrix.os == 'windows-2022'
       shell: cmd
       run: install_sct.bat
 
@@ -130,13 +130,13 @@ jobs:
         git config --global user.name "GitHub Actions Bot"
 
     - name: Checkout spinalcordtoolbox (main branch)
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         ref: ${{ env.MAIN_BRANCH }}
         fetch-depth: 0
 
     - name: Download requirements-freeze.txt (for release)
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: requirements-freeze
 
