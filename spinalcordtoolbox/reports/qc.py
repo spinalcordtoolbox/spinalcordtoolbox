@@ -23,6 +23,7 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.colors as color
+from matplotlib import cm
 import matplotlib.patheffects as path_effects
 import portalocker
 
@@ -60,6 +61,50 @@ class QcImage:
     ]
     _seg_colormap = ["#4d0000", "#ff0000"]
     _ctl_colormap = ["#ff000099", '#ffff00']
+
+    def _assign_label_colors_by_groups(self, labels):
+        """
+        This function handles label colors when labels may not be in a single continuous group:
+
+            - Normal vertebral labels:  [2, 3, 4, 5, 6, ...]
+            - Edge case, TotalSegmentator labels: [31, 32, 33, 200, 201, 217, 218, 219]
+
+        We assume that the subgroups of labesl (1: [31, 32, 33, ...], 2: [200, 201], 3: [217, 218, 219, ...])
+        should each be assigned their own distinct colormap, as to
+        """
+        # Arrange colormaps for max contrast between colormaps, and max contrast between colors in colormaps
+        distinct_colormaps = ['Blues', 'Reds', 'Greens', 'Oranges', 'Purples']
+        colormap_sampling = [0.25, 0.5, 0.75, 0.5]  # light -> medium -> dark -> medium -> (repeat)
+
+        # Split labels into subgroups --> we split the groups wherever the difference between labels is > 1
+        start_end = [0, len(labels)]
+        for idx, (prev, curr) in enumerate(zip(labels, labels[1:]), start=1):
+            if curr - prev > 1:
+                start_end.insert(len(start_end)-1, idx)
+        label_groups = [labels[start:end] for start, end in zip(start_end, start_end[1:])]
+
+        # Handle the usual case: A single continuous group (likely vertebral labels)
+        if len(label_groups) == 1:
+            n_colors = labels.max() - labels.min() + 1        # get label range from min label and max label
+            q, r = divmod(n_colors, len(self._labels_color))  # repeat the base list of colors to cover label range
+            color_list = (q * self._labels_color) + self._labels_color[:r]
+
+        # Handle the edge case: Multiple continuous groups
+        else:
+            # Initialize a list by repeating the color black (#000000) to fill in the gaps between colors.
+            # We do this because matplotlib applies colormaps by scaling both the data and the colormap to [0, 1].
+            # Without filling in the gaps between groups, the colormap would be scaled incorrectly relative to the data.
+            # ((Note that, if done right, the #000000 color should never be assigned to our label values.))
+            color_list = ['#000000'] * (labels.max() - labels.min() + 1)
+            # Assign a colormap to each group of labels (while sampling the colormap at different points)
+            for i, label_group in enumerate(label_groups):
+                colormap = cm.get_cmap(distinct_colormaps[i % len(distinct_colormaps)])
+                sampled_colors = [color.to_hex(c) for c in [colormap(n) for n in colormap_sampling]]
+                # Then, assign a color to each label within the group
+                for j, label in enumerate(label_group):
+                    color_list[label - labels.min()] = sampled_colors[j % len(sampled_colors)]
+
+        return color_list
 
     def __init__(self, qc_report, interpolation, action_list, process, stretch_contrast=True,
                  stretch_contrast_method='contrast_stretching', fps=None):
@@ -143,9 +188,7 @@ class QcImage:
         from matplotlib import colors
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
-        n_colors_needed = labels.max() - labels.min() + 1         # get label range from min label and max label
-        q, r = divmod(n_colors_needed, len(self._labels_color))   # repeat the base list of colors to cover label range
-        color_list = (q * self._labels_color) + self._labels_color[:r]
+        color_list = self._assign_label_colors_by_groups(labels)
         ax.imshow(img,
                   cmap=colors.ListedColormap(color_list),
                   interpolation=self.interpolation,
