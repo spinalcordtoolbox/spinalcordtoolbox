@@ -57,7 +57,7 @@ class QcImage:
         "#ff0000",  # Red         ( 5.25:1)
         "#50ff30",  # Green       (15.68:1)
         "#F749FD",  # Magenta     ( 7.32:1)
-    ] * 15
+    ]
     _seg_colormap = ["#4d0000", "#ff0000"]
     _ctl_colormap = ["#ff000099", '#ffff00']
 
@@ -143,8 +143,11 @@ class QcImage:
         from matplotlib import colors
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
+        n_colors_needed = labels.max() - labels.min() + 1         # get label range from min label and max label
+        q, r = divmod(n_colors_needed, len(self._labels_color))   # repeat the base list of colors to cover label range
+        color_list = (q * self._labels_color) + self._labels_color[:r]
         ax.imshow(img,
-                  cmap=colors.ListedColormap(self._labels_color[labels.min():labels.max()+1]),  # get color from min label and max label
+                  cmap=colors.ListedColormap(color_list),
                   interpolation=self.interpolation,
                   alpha=1,
                   aspect=float(self.aspect_mask))
@@ -157,7 +160,8 @@ class QcImage:
                 a.append(val)
                 index = int(val)
                 if index in self._labels_regions.values():
-                    color = self._labels_color[index]
+                    # NB: We need to subtract `min` to convert the label value into an index for the color list
+                    color = color_list[index - labels.min()]
                     y, x = center_of_mass(np.where(data == val, data, 0))
                     # Draw text with a shadow
                     x += data.shape[1] / 25
