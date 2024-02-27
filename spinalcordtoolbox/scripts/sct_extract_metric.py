@@ -97,8 +97,8 @@ def get_parser():
         '-f',
         metavar=Metavar.folder,
         default=os.path.join("label", "atlas"),
-        help=(f"Single label file, or folder that contains WM tract labels."
-              f"Example: {os.path.join(__data_dir__, 'atlas')}")
+        help=(f"Single label file, or folder that contains WM tract labels. "
+              f"Example: {os.path.join(__data_dir__, 'PAM50', 'atlas')}")
     )
     optional.add_argument(
         '-l',
