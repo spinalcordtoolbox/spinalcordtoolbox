@@ -70,7 +70,7 @@ class QcImage:
             - Edge case, TotalSegmentator labels: [31, 32, 33, 200, 201, 217, 218, 219]
 
         We assume that the subgroups of labesl (1: [31, 32, 33, ...], 2: [200, 201], 3: [217, 218, 219, ...])
-        should each be assigned their own distinct colormap, as to
+        should each be assigned their own distinct colormap, as to group them semantically.
         """
         # Arrange colormaps for max contrast between colormaps, and max contrast between colors in colormaps
         distinct_colormaps = ['Blues', 'Reds', 'Greens', 'Oranges', 'Purples']
