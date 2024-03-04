@@ -12,6 +12,7 @@ import logging
 import datetime
 from string import Template
 from typing import Callable, List, Tuple, Union
+import itertools as it
 
 import numpy as np
 import skimage
@@ -85,9 +86,9 @@ class QcImage:
 
         # Handle the usual case: A single continuous group (likely vertebral labels)
         if len(label_groups) == 1:
-            n_colors = labels.max() - labels.min() + 1        # get label range from min label and max label
-            q, r = divmod(n_colors, len(self._labels_color))  # repeat the base list of colors to cover label range
-            color_list = (q * self._labels_color) + self._labels_color[:r]
+            # repeat high-contrast colors until we have enough to cover the range of labels
+            n_colors = labels.max() - labels.min() + 1
+            color_list = list(it.islice(it.cycle(self._labels_color), n_colors))
 
         # Handle the edge case: Multiple continuous groups
         else:
