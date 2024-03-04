@@ -108,7 +108,7 @@ class QcImage:
         return color_list
 
     def __init__(self, qc_report, interpolation, action_list, process, stretch_contrast=True,
-                 stretch_contrast_method='contrast_stretching', fps=None):
+                 stretch_contrast_method='contrast_stretching', fps=None, draw_text=True):
         """
         :param qc_report: QcReport: The QC report object
         :param interpolation: str: Type of interpolation used in matplotlib
@@ -131,6 +131,7 @@ class QcImage:
             raise ValueError("Unrecognized stretch_contrast_method: {}.".format(stretch_contrast_method),
                              "Try 'equalized' or 'contrast_stretching'")
         self._fps = fps
+        self._draw_text = draw_text
         self._centermass = None  # center of mass returned by slice.Axial.get_center()
 
     def listed_seg(self, mask, ax):
@@ -197,22 +198,25 @@ class QcImage:
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-        a = [0.0]
-        data = mask
-        for index, val in np.ndenumerate(data):
-            if val not in a:
-                a.append(val)
-                index = int(val)
-                if index in self._labels_regions.values():
-                    # NB: We need to subtract `min` to convert the label value into an index for the color list
-                    color = color_list[index - labels.min()]
-                    y, x = center_of_mass(np.where(data == val, data, 0))
-                    # Draw text with a shadow
-                    x += data.shape[1] / 25
-                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
-                    label_text = ax.text(x, y, label, color=color, clip_on=True)
-                    label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'),
-                                                 path_effects.Normal()])
+
+        # Use the existing colormap to draw colored text for any vertebral labels belonging to `self._labels_regions`
+        if self._draw_text:
+            a = [0.0]
+            data = mask
+            for index, val in np.ndenumerate(data):
+                if val not in a:
+                    a.append(val)
+                    index = int(val)
+                    if index in self._labels_regions.values():
+                        # NB: We need to subtract `min` to convert the label value into an index for the color list
+                        color = color_list[index - labels.min()]
+                        y, x = center_of_mass(np.where(data == val, data, 0))
+                        # Draw text with a shadow
+                        x += data.shape[1] / 25
+                        label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
+                        label_text = ax.text(x, y, label, color=color, clip_on=True)
+                        label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'),
+                                                     path_effects.Normal()])
 
     def highlight_pmj(self, mask, ax):
         """Hook to show a rectangle where PMJ is on the slice"""
@@ -637,7 +641,7 @@ def get_json_data_from_path(path_json):
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None, path_qc=None, dataset=None,
-                subject=None, process=None, fps=None):
+                subject=None, process=None, fps=None, draw_text=True):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
     scripts (e.g. sct_propseg).
@@ -652,6 +656,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     :param subject: str: Subject name
     :param process: str: Name of SCT function. e.g., sct_propseg
     :param fps: float: Number of frames per second for output gif images. Used only for sct_frmi_moco and sct_dmri_moco.
+    :param exclude_text: bool: If provided, text won't be drawn on top of labels. Used only for sct_label_vertebrae.
     :return: None
     """
     logger.info('\n*** Generate Quality Control (QC) html report ***')
@@ -767,6 +772,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         process=process,
         stretch_contrast_method='equalized',
         fps=fps,
+        draw_text=draw_text,
     ).layout(
         qcslice_layout=qcslice_layout,
         qcslice=qcslice,

@@ -47,6 +47,11 @@ def get_parser():
                         help='Plane of the output QC. Only relevant for -p sct_deepseg_lesion.',
                         choices=('axial', 'sagittal'),
                         required=False)
+    parser.add_argument('-exclude-label-text',
+                        help="If provided, text won't be drawn on top of labels. Only relevant for -p "
+                             "sct_label_vertebrae.",
+                        action="store_true",
+                        required=False)
     parser.add_argument('-qc',
                         metavar='QC',
                         help='Path to save QC report. Default: ./qc',
@@ -98,7 +103,8 @@ def main(argv: Sequence[str]):
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
                 process=arguments.p,
-                fps=arguments.fps,)
+                fps=arguments.fps,
+                draw_text=(not arguments.exclude_label_text))
 
 
 if __name__ == "__main__":
