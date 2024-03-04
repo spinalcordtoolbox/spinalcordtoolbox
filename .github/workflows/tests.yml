@@ -200,7 +200,7 @@ jobs:
     steps:
       - name: Dependencies
         run: |  # NB: mesa-libGL is needed for PyQT testing (https://stackoverflow.com/a/65408967/7584115)
-          yum install -y gcc git curl mesa-libGL
+          yum install -y gcc git mesa-libGL
       - uses: actions/checkout@v4
       - name: Install SCT
         run: |
