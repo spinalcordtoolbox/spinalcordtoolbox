@@ -187,12 +187,11 @@ class QcImage:
 
     def label_vertebrae(self, mask, ax):
         """Draw vertebrae areas, then add text showing the vertebrae names"""
-        from matplotlib import colors
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
         color_list = self._assign_label_colors_by_groups(labels)
         ax.imshow(img,
-                  cmap=colors.ListedColormap(color_list),
+                  cmap=color.ListedColormap(color_list),
                   interpolation=self.interpolation,
                   alpha=1,
                   aspect=float(self.aspect_mask))
@@ -209,12 +208,12 @@ class QcImage:
                     index = int(val)
                     if index in self._labels_regions.values():
                         # NB: We need to subtract `min` to convert the label value into an index for the color list
-                        color = color_list[index - labels.min()]
+                        label_color = color_list[index - labels.min()]
                         y, x = center_of_mass(np.where(data == val, data, 0))
                         # Draw text with a shadow
                         x += data.shape[1] / 25
                         label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
-                        label_text = ax.text(x, y, label, color=color, clip_on=True)
+                        label_text = ax.text(x, y, label, color=label_color, clip_on=True)
                         label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'),
                                                      path_effects.Normal()])
 
