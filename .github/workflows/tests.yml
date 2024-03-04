@@ -152,10 +152,6 @@ jobs:
         # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
         # NB: We echo "archive.debian.org" to address https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4105
         run: |  
-          echo "deb http://archive.debian.org/debian/ stretch main non-free contrib" > /etc/apt/sources.list
-          echo "deb-src http://archive.debian.org/debian/ stretch main non-free contrib" >> /etc/apt/sources.list
-          echo "deb http://archive.debian.org/debian-security/ stretch/updates main non-free contrib" >> /etc/apt/sources.list
-          echo "deb-src http://archive.debian.org/debian-security/ stretch/updates main non-free contrib" >> /etc/apt/sources.list
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v4
       - name: Install SCT
