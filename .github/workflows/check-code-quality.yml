@@ -35,19 +35,8 @@ jobs:
     - name: Check for broken links
       run: | 
         touch valid_urls.txt redirected_urls.txt invalid_urls.txt
-        find . -type f \( -name "*.txt" -o -name "*.md" -o -name "*.py" -o -name "*.rst" \) | 
+        find . -type f \( -name "*.txt" -o -name "*.md" -o -name "*.py" -o -name "*.rst" \) \( \! -name 'CHANGES.md' \) | 
           xargs grep -Eo "\b(https?|ftp):\/\/[-A-Za-z0-9+&@#\/%?=~_|$!:,.;]*[A-Za-z0-9+&@#\/%=~_|$]" | 
-          grep -v 'drive.google.com' |    # Returns 401 (needs google auth)
-          grep -v 'pipeline-hemis' |      # Returns 403 (private GH repo)
-          grep -v 'sciencedirect.com' |   # Returns 403
-          grep -v 'wiley.com' |           # Returns 403
-          grep -v 'sagepub.com' |         # Returns 403
-          grep -v 'ncbi.nlm.nih.gov' |    # Returns 403          
-          grep -v 'oxfordjournals.org' |  # Returns 403
-          grep -v 'docker.com' |          # Returns 403
-          grep -v 'ieeexplore.ieee.org' | # Returns 418
-          grep -v 'CHANGES.md' |          # Has too many GitHub links, triggers "Too many requests"
-          grep -v '%s' |                  # conf.py extlinks URL
           sed 's/:/;/' | 
           xargs -n 1 -P 8 ./.github/workflows/check-url.sh
 
