@@ -447,8 +447,7 @@ def moco_wrapper(param):
             with open(file_moco_params_csv, 'wt', newline='') as out_file:
                 tsv_writer = csv.writer(out_file, delimiter='\t')
                 tsv_writer.writerow(['mean(sqrt(X*X+Y*Y))'])
-                for mocop in moco_param:
-                    tsv_writer.writerow([mocop[0], mocop[1]])
+                tsv_writer.writerows(moco_param)
 
     # Generate output files
     printv('\nGenerate output files...', param.verbose)
