@@ -34,6 +34,7 @@ jobs:
 
     - name: Check for broken links
       run: | 
+        touch valid_urls.txt redirected_urls.txt invalid_urls.txt
         find . -type f \( -name "*.txt" -o -name "*.md" -o -name "*.py" -o -name "*.rst" \) | 
           xargs grep -Eo "\b(https?|ftp):\/\/[-A-Za-z0-9+&@#\/%?=~_|$!:,.;]*[A-Za-z0-9+&@#\/%=~_|$]" | 
           grep -v 'drive.google.com' |    # Returns 401 (needs google auth)
