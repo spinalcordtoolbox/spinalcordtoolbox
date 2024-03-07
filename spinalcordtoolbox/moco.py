@@ -423,7 +423,11 @@ def moco_wrapper(param):
                 files_warp_Y.append(fname_warp_crop_Y)
 
                 # Calculating the slice-wise average moco estimate to provide a QC file
-                moco_param.append([np.mean(np.ravel(im_warp_XYZ[0].data)), np.mean(np.ravel(im_warp_XYZ[1].data))])
+                # We're at a fixed time point, and we have a list of (X, Y) translation vectors, one for each Z slice
+                # This is the average of the translation lengths
+                X = im_warp_XYZ[0].data
+                Y = im_warp_XYZ[1].data
+                moco_param.append([np.mean(np.sqrt(X*X + Y*Y))])
 
             # These two lines allow to generate one file instead of two, containing X, Y and Z moco parameters
             # im_warp = [Image(fname) for fname in files_warp]
@@ -442,7 +446,7 @@ def moco_wrapper(param):
             # Writing a TSV file with the slicewise average estimate of the moco parameters. Useful for QC
             with open(file_moco_params_csv, 'wt', newline='') as out_file:
                 tsv_writer = csv.writer(out_file, delimiter='\t')
-                tsv_writer.writerow(['X', 'Y'])
+                tsv_writer.writerow(['mean(sqrt(X*X+Y*Y))'])
                 for mocop in moco_param:
                     tsv_writer.writerow([mocop[0], mocop[1]])
 
