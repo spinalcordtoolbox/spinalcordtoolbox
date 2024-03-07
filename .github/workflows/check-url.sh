@@ -15,7 +15,7 @@ fi
 status_code=$(curl --write-out '%{http_code}' --silent  --output /dev/null "$URL")
 
 if [[ $status_code -ge 200 && $status_code -le 299 ]];then
-    echo -e "$filename: \x1B[32m✅ OK status code: $status_code for domain $URL  \x1B[0m"
+    # echo -e "$filename: \x1B[32m✅ OK status code: $status_code for domain $URL  \x1B[0m"
     exit 0
 fi
 
