@@ -7,6 +7,11 @@ fi
 filename=$(cut -d ";" -f 1 <<< "$1")
 URL=$(cut -d ";" -f 2 <<< "$1")
 
+if [[ $filename == "./CHANGES.md" ]]; then
+  echo "Skipping CHANGES.md ($URL)"
+  exit 0
+fi
+
 status_code=$(curl --write-out '%{http_code}' --silent  --output /dev/null "$URL")
 
 if [[ $status_code -ge 200 && $status_code -le 299 ]];then
