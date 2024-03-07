@@ -38,6 +38,7 @@ jobs:
         find . -type f \( -name "*.txt" -o -name "*.md" -o -name "*.py" -o -name "*.rst" \) | 
           xargs grep -Eo "\b(https?|ftp):\/\/[-A-Za-z0-9+&@#\/%?=~_|$!:,.;]*[A-Za-z0-9+&@#\/%=~_|$]" | 
           grep -v 'drive.google.com' |    # Returns 401 (needs google auth)
+          grep -v 'pipeline-hemis' |      # Returns 403 (private GH repo)
           grep -v 'sciencedirect.com' |   # Returns 403
           grep -v 'wiley.com' |           # Returns 403
           grep -v 'sagepub.com' |         # Returns 403
