@@ -341,7 +341,7 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
 
     .. note::
         for more info about patch_radius and model, please refer to the dipy website:
-        https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self
+        https://docs.dipy.org/stable/examples_built/preprocessing/denoise_patch2self.html
     """
     denoised = patch2self(data_in, bvals_in, patch_radius=patch_radius,
                           model=model)

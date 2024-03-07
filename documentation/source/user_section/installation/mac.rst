@@ -134,7 +134,7 @@ Procedure:
 Option 4: Install with Docker
 -----------------------------
 
-`Docker <https://www.docker.com/what-container>`__ is a portable (Linux, macOS, Windows) container platform.
+`Docker <https://www.docker.com/resources/what-container/>`__ is a portable (Linux, macOS, Windows) container platform.
 
 In the context of SCT, it can be used:
 
