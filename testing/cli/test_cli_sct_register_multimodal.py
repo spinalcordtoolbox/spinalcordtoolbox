@@ -92,7 +92,7 @@ def test_sct_register_multimodal_with_softmask(tmp_path):
 
     NB: For 'gaussian', ANTs binaries can't handle softmasks natively, so SCT should be applying
         the mask directly to the image. Related links:
-            * github.com/ivadomed/pipeline-hemis/issues/3.
+            * https://github.com/ivadomed/pipeline-hemis/issues/3.
             * https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3075
     """
     fname_mask = str(tmp_path/'mask_t2.nii.gz')
