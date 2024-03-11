@@ -446,7 +446,7 @@ def moco_wrapper(param):
             # Writing a TSV file with the slicewise average estimate of the moco parameters. Useful for QC
             with open(file_moco_params_csv, 'wt', newline='') as out_file:
                 tsv_writer = csv.writer(out_file, delimiter='\t')
-                tsv_writer.writerow(['mean(sqrt(X*X+Y*Y))'])
+                tsv_writer.writerow(['mean(sqrt(X^2 + Y^2))'])
                 tsv_writer.writerows(moco_param)
 
     # Generate output files
