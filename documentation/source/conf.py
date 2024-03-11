@@ -163,7 +163,7 @@ html_favicon = '_static/img/favicon.ico'
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 # This is required for the alabaster theme
-# refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
+# refs: https://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 # html_sidebars = {
 #     '**': [
 #         'about.html',

@@ -213,7 +213,7 @@ echo:
 echo 5. Click 'OK' three times. You can now access SCT's scripts in the Command Prompt.
 echo:
 echo If you have any questions or concerns, feel free to create a new topic on SCT's forum:
-echo   --^> http://forum.spinalcordmri.org/c/sct
+echo   --^> https://forum.spinalcordmri.org/c/sct
 
 rem Return to initial directory and deactivate the virtual environment
 goto exit
@@ -223,7 +223,7 @@ set cached_errorlevel=%errorlevel%
 echo:
 echo Installation failed with error code %cached_errorlevel%.
 echo Please copy and paste the installation log in a new topic on SCT's forum:
-echo   --^> http://forum.spinalcordmri.org/c/sct
+echo   --^> https://forum.spinalcordmri.org/c/sct
 
 :exit
 if "%cached_errorlevel%"=="" set cached_errorlevel=0

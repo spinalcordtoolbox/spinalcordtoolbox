@@ -63,7 +63,7 @@ def get_parser():
         "image (-i). All disc covering the region of interest should be provided. Exmaple: if "
         "you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,"
         "6,7). More details about label creation at "
-        "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/. "  # TODO (Julien) update this link
+        "https://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/. "  # TODO (Julien) update this link
         "This option must be used with the -ldisc-dest parameter.",
         required=False)
     optional.add_argument(

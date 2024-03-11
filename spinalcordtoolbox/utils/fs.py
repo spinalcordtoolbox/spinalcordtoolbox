@@ -28,7 +28,7 @@ def tmp_create(basename):
     return tmpdir
 
 
-# Modified from http://shallowsky.com/blog/programming/python-tee.html
+# Modified from https://shallowsky.com/blog/programming/python-tee.html
 class Tee:
     def __init__(self, _fd1, _fd2):
         self.fd1 = _fd1
