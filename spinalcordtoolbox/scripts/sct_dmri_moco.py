@@ -40,7 +40,7 @@ def get_parser():
 
     parser = SCTArgumentParser(
         description="Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et "
-                    "al. (http://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n"
+                    "al. (https://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n"
                     "  - group-wise (-g)\n"
                     "  - slice-wise regularized along z using polynomial function (-param). For more info about the "
                     "method, type: isct_antsSliceRegularizedRegistration\n"

@@ -119,7 +119,7 @@ def get_parser():
             "options on a case-by-case basis depending on your data.\n"
             "\n"
             "More information about label creation can be found at "
-            "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
+            "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
         )
     )
 
@@ -160,7 +160,7 @@ def get_parser():
         help="One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
              "Example: anat_labels.nii.gz\n"
              "For more information about label creation, please see: "
-             "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
+             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
     )
     optional.add_argument(
         '-ldisc',
@@ -171,7 +171,7 @@ def get_parser():
              "If you are using more than 2 labels, all discs covering the region of interest should be provided. "
              "E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. "
              "For more information about label creation, please refer to "
-             "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
+             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
     )
     optional.add_argument(
         '-lspinal',
@@ -623,7 +623,7 @@ def main(argv: Sequence[str]):
                     "Input labels do not seem to be at the right place. "
                     "Please check the position of the labels. "
                     "See documentation for more details: "
-                    "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html",
+                    "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html",
                     1, 'error')
 
             # Concatenate transformations: curve --> straight --> affine
