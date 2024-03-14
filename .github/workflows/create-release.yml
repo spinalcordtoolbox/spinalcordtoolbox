@@ -6,9 +6,6 @@ on:
       milestone_title:
         description: 'Milestone title (this release)'
         required: true
-  push:
-    branches:
-      - master
   pull_request:
     branches:
       - '*'
