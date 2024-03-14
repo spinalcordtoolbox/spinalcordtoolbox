@@ -262,6 +262,10 @@ jobs:
 
   macos-14:
     name: macOS 14.0 (Sonoma)
+    # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
+    #if: ${{ env.NIGHTLY }}
+    # in the meantime, copy-paste this:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: macos-14
     steps:
       - name: Dependencies
