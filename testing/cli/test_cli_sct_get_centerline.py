@@ -20,8 +20,8 @@ def test_sct_get_centerline_output_file_exists(tmp_path):
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)
     Note: There actually used to be a check here, but it was replaced by 'test_get_centerline_optic' in
     'unit_testing/test_centerline.py'. For more details, see:
-       * https://github.com/neuropoly/spinalcordtoolbox/pull/2774/commits/5e6bd57abf6bcf825cd110e0d74b8e465d298409
-       * https://github.com/neuropoly/spinalcordtoolbox/pull/2774#discussion_r450546434"""
+       * https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2774/commits/5e6bd57abf6bcf825cd110e0d74b8e465d298409
+       * https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2774#discussion_r450546434"""
     sct_get_centerline.main(argv=['-i', 't2s/t2s.nii.gz', '-c', 't2s', '-qc', str(tmp_path)])
     for file in [os.path.join('t2s', 't2s_centerline.nii.gz'), os.path.join('t2s', 't2s_centerline.csv')]:
         assert os.path.exists(file)

@@ -133,7 +133,7 @@ def get_parser():
              "  - bin: binarize mask (threshold=0.5)\n"
              "  - median: weighted median.\n"
              "    This implementation of the median treats quantiles as a continuous (vs. discrete) function. For"
-             " more details, see https://pypi.org/project/wquantiles/.\n"
+             " more details, see https://pypi.org/project/wquantiles/ \n"
              "  - max: for each z-slice of the input data, extract the max value for each slice of the input data."
     )
     optional.add_argument(

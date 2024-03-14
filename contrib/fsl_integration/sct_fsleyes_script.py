@@ -78,7 +78,7 @@ class ErrorDialog(wx.Dialog):
 
         if msg is None:
             msg = "An error has occurred while running SCT. Please go to the Terminal, copy all the content and paste it as a new issue in SCT's forum: \
-            http://forum.spinalcordmri.org/"
+            https://forum.spinalcordmri.org/"
 
         vbox = wx.BoxSizer(wx.VERTICAL)
 
@@ -351,7 +351,7 @@ class SCTPanel(wx.Panel):
         self.call_sct_command(cmd_line)
 
     def help_url(self, event):
-        url = "http://forum.spinalcordmri.org/c/sct"
+        url = "https://forum.spinalcordmri.org/c/sct"
         webbrowser.open(url)
 
     def get_logo(self):

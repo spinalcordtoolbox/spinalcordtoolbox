@@ -306,7 +306,7 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     :param data_in: nd_array to denoise
 
     .. note::
-        for more info about patch_radius and block radius, please refer to the dipy website: http://dipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
+        for more info about patch_radius and block radius, please refer to the dipy website: https://docs.dipy.org/stable/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
     """
 
     data_in = np.asarray(data_in)
@@ -341,7 +341,7 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
 
     .. note::
         for more info about patch_radius and model, please refer to the dipy website:
-        https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self
+        https://docs.dipy.org/stable/examples_built/preprocessing/denoise_patch2self.html
     """
     denoised = patch2self(data_in, bvals_in, patch_radius=patch_radius,
                           model=model)

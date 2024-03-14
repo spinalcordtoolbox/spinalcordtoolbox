@@ -241,7 +241,7 @@ needed.
 
 For more information on the rationale behind this decision, please refer to:
   - https://github.com/spinalcordtoolbox/PAM50/issues/16
-  - https://forum.spinalcordmri.org/t/updating-spinal-levels-feedback-needed/1136\
+  - https://forum.spinalcordmri.org/t/updating-spinal-levels-feedback-needed/1136
 """
 
 

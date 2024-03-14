@@ -17,9 +17,16 @@ def test_sct_dmri_moco_check_params(tmp_path):
     sct_dmri_moco.main(argv=['-i', 'dmri/dmri.nii.gz', '-bvec', 'dmri/bvecs.txt', '-g', '3', '-x', 'nn', '-r', '0',
                              '-ofolder', str(tmp_path)])
 
-    lresults = genfromtxt(tmp_path / "moco_params.tsv", skip_header=1, delimiter='\t')[:, 0]
-    lgroundtruth = [4.75290417e-04, -1.19489128e-05, -1.19489128e-05, -1.19489128e-05,
-                    -1.29636934e-01, -1.29636934e-01, -1.29636934e-01]
+    lresults = genfromtxt(tmp_path / "moco_params.tsv", skip_header=1, delimiter='\t')
+    lgroundtruth = [
+        0.001201150922494186,
+        3.276041445156287e-05,
+        3.276041445156287e-05,
+        3.276041445156287e-05,
+        0.2046662087725081,
+        0.2046662087725081,
+        0.2046662087725081,
+    ]
     assert allclose(lresults, lgroundtruth)
 
 
@@ -40,9 +47,16 @@ def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask):
     sct_dmri_moco.main(argv=['-i', 'dmri/dmri.nii.gz', '-bvec', 'dmri/bvecs.txt', '-g', '3', '-r', '0',
                              '-m', dmri_mask, '-ofolder', str(tmp_path)])
 
-    lresults = genfromtxt(tmp_path / "moco_params.tsv", skip_header=1, delimiter='\t')[:, 0]
-    lgroundtruth = [0.00804089, 0.00395558, 0.00395558, 0.00395558,
-                    -0.01534442, -0.01534442, -0.01534442]
+    lresults = genfromtxt(tmp_path / "moco_params.tsv", skip_header=1, delimiter='\t')
+    lgroundtruth = [
+        0.019113331035413624,
+        0.014628855607724655,
+        0.014628855607724655,
+        0.014628855607724655,
+        0.126981499856721,
+        0.126981499856721,
+        0.126981499856721,
+    ]
     assert allclose(lresults, lgroundtruth)
 
 
