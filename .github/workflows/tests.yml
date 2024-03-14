@@ -139,23 +139,19 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  debian-9:
-    name: Debian 9
+  debian-11:
+    name: Debian 11
     # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-20.04
-    container: debian:9
+    container: debian:11
     steps:
       - name: Dependencies
         # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
         # NB: We echo "archive.debian.org" to address https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4105
         run: |  
-          echo "deb http://archive.debian.org/debian/ stretch main non-free contrib" > /etc/apt/sources.list
-          echo "deb-src http://archive.debian.org/debian/ stretch main non-free contrib" >> /etc/apt/sources.list
-          echo "deb http://archive.debian.org/debian-security/ stretch/updates main non-free contrib" >> /etc/apt/sources.list
-          echo "deb-src http://archive.debian.org/debian-security/ stretch/updates main non-free contrib" >> /etc/apt/sources.list
           apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v4
       - name: Install SCT
@@ -170,6 +166,10 @@ jobs:
 
   centos-8:
     name: CentOS Stream 8
+    # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
+    #if: ${{ env.NIGHTLY }}
+    # in the meantime, copy-paste this:
+    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-20.04
     # Stream8 has a 2024 EOL, while CentOS 8 has a 2021 EOL
     # See: https://blog.centos.org/2020/12/future-is-centos-stream/
@@ -189,18 +189,14 @@ jobs:
         run: |
           ./.ci.sh -t
 
-  centos-7:
-    name: CentOS 7
-    # TODO: when actions supports using ${{env}} in job.*.if and not just job.*.steps.*.if, use this:
-    #if: ${{ env.NIGHTLY }}
-    # in the meantime, copy-paste this:
-    if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+  centos-9:
+    name: CentOS Stream 9
     runs-on: ubuntu-20.04
-    container: centos:7
+    container: quay.io/centos/centos:stream9
     steps:
       - name: Dependencies
         run: |  # NB: mesa-libGL is needed for PyQT testing (https://stackoverflow.com/a/65408967/7584115)
-          yum install -y gcc git curl mesa-libGL
+          yum install -y gcc git mesa-libGL
       - uses: actions/checkout@v4
       - name: Install SCT
         run: |
@@ -289,7 +285,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: windows-2022
+    runs-on: windows-2019
     defaults:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
@@ -343,7 +339,7 @@ jobs:
     #if: ${{ env.NIGHTLY }}
     # in the meantime, copy-paste this:
     if: ${{ github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
-    runs-on: windows-2022
+    runs-on: windows-2019
     defaults:
       run:
         shell: wsl-bash {0} # https://github.com/marketplace/actions/setup-wsl#default-shell
