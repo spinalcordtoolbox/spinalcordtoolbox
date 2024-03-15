@@ -3,7 +3,7 @@
 #     platform-specific requirements (e.g. sys.platform == 'win32')
 
 # Avoid 1.6 and 1.7 due to method=restore bug: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4209#issuecomment-1739644328
-dipy!=1.6.*,!=1.7.*
+dipy!=1.6.*,!=1.7.*,<1.9.0
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
