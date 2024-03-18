@@ -6,6 +6,7 @@ License: see the file LICENSE
 """
 
 import onnxruntime as ort
+import numpy as np
 
 
 def onnx_inference(model_path, input_data):
@@ -18,5 +19,6 @@ def onnx_inference(model_path, input_data):
 
     ort_sess = ort.InferenceSession(model_path, sess_options=sess_options)
     preds = ort_sess.run(output_names=["predictions"], input_feed={"input_1": input_data})
+    preds = [np.nan_to_num(arr) for arr in preds]
 
     return preds
