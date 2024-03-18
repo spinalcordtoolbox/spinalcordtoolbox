@@ -217,7 +217,7 @@ class AnalyzeLesion:
             pickle.dump(self.distrib_matrix_dct, handle)
 
         # Save Excel
-        writer.save()
+        writer.close()
 
     def show_total_results(self):
         """
