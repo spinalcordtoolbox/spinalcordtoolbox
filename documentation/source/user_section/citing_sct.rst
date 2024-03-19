@@ -28,7 +28,7 @@ Main Reference
   note = "",
   issn = "1053-8119",
   doi = "https://doi.org/10.1016/j.neuroimage.2016.10.009",
-  url = "http://www.sciencedirect.com/science/article/pii/S1053811916305560",
+  url = "https://www.sciencedirect.com/science/article/pii/S1053811916305560",
   author = "Benjamin De Leener and Simon Lévy and Sara M. Dupont and Vladimir S. Fonov and Nikola Stikov and D. Louis Collins and Virginie Callot and Julien Cohen-Adad",
   keywords = "Spinal cord",
   keywords = "MRI",
@@ -67,7 +67,7 @@ The table below provides individual references for novel methods used in SCT's :
    * - ``sct_get_centerline``
      - `Gros et al. Automatic spinal cord localization, robust to MRI contrasts using global curve optimization. Med Image Anal 2018 <https://www.sciencedirect.com/science/article/pii/S136184151730186X>`__
    * - ``sct_label_vertebrae``
-     - `Ullmann et al. Automatic labeling of vertebral levels using a robust template-based approach. Int J Biomed Imaging 2014 <http://downloads.hindawi.com/journals/ijbi/2014/719520.pdf>`__
+     - `Ullmann et al. Automatic labeling of vertebral levels using a robust template-based approach. Int J Biomed Imaging 2014 <https://downloads.hindawi.com/journals/ijbi/2014/719520.pdf>`__
    * - ``sct_process_segmentation -pmj``
      - `Bédard S, Cohen-Adad J. Automatic measure and normalization of spinal cord cross-sectional area using the pontomedullary junction. Frontiers in Neuroimaging 2022 <https://doi.org/10.3389/fnimg.2022.1031253>`__
    * - ``sct_process_segmentation -normalize``
@@ -77,11 +77,11 @@ The table below provides individual references for novel methods used in SCT's :
    * - ``sct_propseg -CSF``
      - `De Leener et al. Automatic segmentation of the spinal cord and spinal canal coupled with vertebral labeling. IEEE Transactions on Medical Imaging 2015 <https://www.ncbi.nlm.nih.gov/pubmed/26011879>`__
    * - ``sct_register_multimodal``
-     - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2017. <http://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
+     - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2017. <https://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
    * - ``sct_register_multimodal --param algo=slicereg``
      - `Cohen-Adad et al. Slice-by-slice regularized registration for spinal cord MRI: SliceReg. Proc ISMRM 2015 <https://www.dropbox.com/s/v3bb3etbq4gb1l1/cohenadad_ismrm15_slicereg.pdf?dl=0>`__
    * - ``sct_register_to_template``
-     - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2017. <http://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
+     - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2017. <https://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
    * - ``sct_register_to_template --param algo=slicereg``
      - `Cohen-Adad et al. Slice-by-slice regularized registration for spinal cord MRI: SliceReg. Proc ISMRM 2015 <https://www.dropbox.com/s/v3bb3etbq4gb1l1/cohenadad_ismrm15_slicereg.pdf?dl=0>`__
    * - ``sct_straighten_spinalcord``
@@ -99,7 +99,7 @@ The table below provides references relevant to the :ref:`pam50` used by SCT, in
    * - Template/atlas
      - References
    * - PAM50 template
-     - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2018. <http://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
+     - `De Leener B, Fonov VS, Louis Collins D, Callot V, Stikov N, Cohen-Adad J. PAM50: Unbiased multimodal template of the brainstem and spinal cord aligned with the ICBM152 space. Neuroimage 2018. <https://www.sciencedirect.com/science/article/pii/S1053811917308686>`__
    * - MNI-Poly-AMU template
      - `Fonov et al. Framework for integrated MRI average of the spinal cord white and gray matter: The MNI-Poly-AMU template. Neuroimage 2014. <https://www.ncbi.nlm.nih.gov/pubmed/25204864>`__
    * - White matter atlas

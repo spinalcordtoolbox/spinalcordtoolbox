@@ -227,7 +227,8 @@ def segment_nnunet(path_img, tmpdir, predictor):
     data = np.expand_dims(data, axis=0).astype(np.float32)
     pred = predictor.predict_single_npy_array(
         input_image=data,
-        image_properties={'spacing': img_in.dim[4:7]},
+        # The spacings also have to be reversed to match nnUNet's conventions.
+        image_properties={'spacing': img_in.dim[6:3:-1]},
     )
     # Lastly, we undo the transpose to return the image from [z,y,x] (SimpleITK) to [x,y,z] (nibabel)
     pred = pred.transpose([2, 1, 0])

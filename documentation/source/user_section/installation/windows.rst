@@ -272,7 +272,7 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
 Docker installation
 -------------------
 
-`Docker <https://www.docker.com/what-container>`_ is a portable (Linux, macOS, Windows) container platform.
+`Docker <https://www.docker.com/what-container/>`_ is a portable (Linux, macOS, Windows) container platform.
 
 
 Basic Installation (No GUI)

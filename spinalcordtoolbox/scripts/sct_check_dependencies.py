@@ -57,6 +57,7 @@ def resolve_module(framework_name):
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
         'pyqt5': ('PyQt5.QtCore', False),  # Importing Qt instead PyQt5 to be able to catch this issue #2523
+        'pyqt5-sip': ('PyQt5.sip', False),
         'pyyaml': ('yaml', False),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),

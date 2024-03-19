@@ -98,7 +98,7 @@ The primary way to invoke SCT is through terminal commands. For example:
   Done! To view results, type:
   fsleyes t2.nii.gz -cm greyscale t2_seg.nii.gz -cm red -a 70.0 &
 
-For a full overview of the available commands, see the `Command-Line Tools <https://spinalcordtoolbox.com/en/stable/user_section/command-line.html>`_ page.
+For a full overview of the available commands, see the `Command-Line Tools <https://spinalcordtoolbox.com/user_section/command-line.html>`_ page.
 
 **2. Multi-command pipelines**
 

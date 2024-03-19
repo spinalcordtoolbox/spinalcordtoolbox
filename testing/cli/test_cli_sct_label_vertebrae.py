@@ -110,6 +110,7 @@ def test_sct_label_vertebrae_initial_disc_zero(capsys, tmp_path):
     assert 'Missing label or zero label for initial disc.' in capsys.readouterr().out
 
 
+@pytest.mark.skip("Test doesn't work as intended: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4405")
 def test_sct_label_vertebrae_initial_disc_too_low(capsys, tmp_path):
     with pytest.raises(SystemExit) as excinfo:
         sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),

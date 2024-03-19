@@ -450,17 +450,23 @@ class Sagittal(Slice):
 
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
         """
-        # 0. Use the segmentation image to initialize the image cropper
+        # 0. Initialize an image cropper to trim the AP and SI axes
+        # 0a. Use the segmentation image to initialize the image cropper
         self._image_seg = self._images[-1]
         cropper = ImageCropper()
         cropper.get_bbox_from_mask(self._image_seg)
+        # 0b. Modify the overall width/height of the bounding box to show extra context at the extents
+        cropper.bbox.xmin = max(cropper.bbox.xmin - 50, 0)
+        cropper.bbox.xmax = min(cropper.bbox.xmax + 50, self._image_seg.data.shape[0] - 1)
+        cropper.bbox.ymin = max(cropper.bbox.ymin - 15, 0)
+        cropper.bbox.ymax = min(cropper.bbox.ymax + 15, self._image_seg.data.shape[1] - 1)
 
         # 1. Compute the sizes of the patches, as well as the overall image
         # 1a. Compute width and height of mosaic squares. (This is assumed to be a square for Axial slices.)
         size_h = cropper.bbox.xmax - cropper.bbox.xmin + 1  # SAL -> SI axis provides height
         size_w = cropper.bbox.ymax - cropper.bbox.ymin + 1  # SAL -> AP axis provides width
         # 1b. Calculate number of columns to display on the report.
-        nb_column = 600 // size_w
+        nb_column = round(600 / size_w)
         # 1c. Calculate number of rows to display.
         nb_slices = cropper.bbox.zmax - cropper.bbox.zmin + 1  # SAL -> LR axis provides nb_slices
         nb_row = math.ceil(nb_slices / nb_column)
