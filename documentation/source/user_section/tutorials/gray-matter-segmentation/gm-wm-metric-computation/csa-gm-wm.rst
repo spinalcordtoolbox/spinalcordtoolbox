@@ -3,6 +3,8 @@ Using binary masks to compute CSA for gray and white matter
 
 First, we will use the gray and white matter segmentations to compute the cross sectional area of GM and WM. This is achieved using ``sct_process_segmentation``.
 
+.. important:: There is a limit to the precision you can achieve for a given image resolution. SCT does not truncate spurious digits when performing angle correction, so please keep in mind that there may be non-significant digits in the computed values. You may wish to compare angle-corrected values with their corresponding uncorrected values to get a sense of the limits on precision.
+
 Compute the cord segmentation from the WM and GM segmentations (Optional)
 -------------------------------------------------------------------------
 
