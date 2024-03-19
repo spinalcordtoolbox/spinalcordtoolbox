@@ -36,11 +36,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install SCT (Unix)
-        if: matrix.os != 'windows-2022'
+        if: runner.os != 'Windows'
         run: ./install_sct -y
 
       - name: Install SCT (Windows)
-        if: matrix.os == 'windows-2022'
+        if: runner.os == 'Windows'
         shell: cmd
         run: install_sct.bat
 

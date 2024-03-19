@@ -78,11 +78,11 @@ jobs:
         echo "0.0" > spinalcordtoolbox/version.txt
 
     - name: Install SCT from release branch (Unix)
-      if: matrix.os != 'windows-2022'
+      if: runner.os != 'Windows'
       run: ./install_sct -yc
 
     - name: Install SCT from release branch (Windows)
-      if: matrix.os == 'windows-2022'
+      if: runner.os == 'Windows'
       shell: cmd
       run: install_sct.bat
 
