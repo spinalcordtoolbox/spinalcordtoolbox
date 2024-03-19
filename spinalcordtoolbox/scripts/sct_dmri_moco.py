@@ -40,12 +40,21 @@ def get_parser():
 
     parser = SCTArgumentParser(
         description="Motion correction of dMRI data. Some of the features to improve robustness were proposed in Xu et "
-                    "al. (http://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n"
+                    "al. (https://dx.doi.org/10.1016/j.neuroimage.2012.11.014) and include:\n"
                     "  - group-wise (-g)\n"
                     "  - slice-wise regularized along z using polynomial function (-param). For more info about the "
                     "method, type: isct_antsSliceRegularizedRegistration\n"
                     "  - masking (-m)\n"
                     "  - iterative averaging of target volume\n"
+                    "\n"
+                    "The outputs of the motion correction process are:\n"
+                    "  - the motion-corrected dMRI volumes\n"
+                    "  - the time average of the corrected dMRI volumes with b == 0\n"
+                    "  - the time average of the corrected dMRI volumes with b != 0\n"
+                    "  - a time-series with 1 voxel in the XY plane, for the X and Y motion direction (two separate "
+                    "files), as required for FSL analysis.\n"
+                    "  - a TSV file with one row for each time point, with the slice-wise average of the "
+                    "motion correction magnitude for that time point, that can be used for Quality Control.\n"
     )
 
     mandatory = parser.add_argument_group("\nMANDATORY ARGUMENTS")

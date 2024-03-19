@@ -23,7 +23,7 @@ def get_parser():
     parser = SCTArgumentParser(
         description='Extraction of gray level co-occurence matrix (GLCM) texture features from an image within a given '
                     'mask. The textures features are those defined in the sckit-image implementation: '
-                    'http://scikit-image.org/docs/dev/api/skimage.feature.html#graycoprops. This function outputs '
+                    'https://scikit-image.org/docs/dev/api/skimage.feature.html#graycoprops. This function outputs '
                     'one nifti file per texture metric (' + ParamGLCM().feature + ') and per orientation called '
                     'fnameInput_feature_distance_angle.nii.gz. Also, a file averaging each metric across the angles, '
                     'called fnameInput_feature_distance_mean.nii.gz, is output.'
@@ -289,7 +289,7 @@ class ParamGLCM(object):
         # accumulated co-occurrences for the given offset. The elements of the resulting matrix sum to 1.
         self.normed = True
         # The property formulae for self.feature are detailed here:
-        # http://scikit-image.org/docs/dev/api/skimage.feature.html#graycoprops
+        # https://scikit-image.org/docs/dev/api/skimage.feature.html#graycoprops
         self.feature = 'contrast,dissimilarity,homogeneity,energy,correlation,ASM'
         self.distance = 1  # Size of the window: distance = 1 --> a reference pixel and its immediate neighbor
         self.angle = '0,45,90,135'  # Rotation angles for co-occurrence matrix

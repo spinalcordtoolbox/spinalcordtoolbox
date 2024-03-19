@@ -20,7 +20,7 @@ def make_sct_image(data):
     data: scalar
     """
     affine = np.eye(4)
-    nii = nibabel.nifti1.Nifti1Image(np.array([data, data]), affine)
+    nii = nibabel.nifti1.Nifti1Image(np.array([data, data], dtype=np.uint32), affine)
     img = Image(np.asanyarray(nii.dataobj), hdr=nii.header, orientation="LPI", dim=nii.header.get_data_shape())
     return img
 

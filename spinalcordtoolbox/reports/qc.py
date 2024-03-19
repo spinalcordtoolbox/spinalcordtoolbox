@@ -12,6 +12,7 @@ import logging
 import datetime
 from string import Template
 from typing import Callable, List, Tuple, Union
+import itertools as it
 
 import numpy as np
 import skimage
@@ -23,6 +24,7 @@ from matplotlib.figure import Figure
 from matplotlib.axes import Axes
 from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.colors as color
+from matplotlib import cm
 import matplotlib.patheffects as path_effects
 import portalocker
 
@@ -57,12 +59,56 @@ class QcImage:
         "#ff0000",  # Red         ( 5.25:1)
         "#50ff30",  # Green       (15.68:1)
         "#F749FD",  # Magenta     ( 7.32:1)
-    ] * 15
+    ]
     _seg_colormap = ["#4d0000", "#ff0000"]
     _ctl_colormap = ["#ff000099", '#ffff00']
 
+    def _assign_label_colors_by_groups(self, labels):
+        """
+        This function handles label colors when labels may not be in a single continuous group:
+
+            - Normal vertebral labels:  [2, 3, 4, 5, 6, ...]
+            - Edge case, TotalSegmentator labels: [31, 32, 33, 200, 201, 217, 218, 219]
+
+        We assume that the subgroups of labels (1: [31, 32, 33, ...], 2: [200, 201], 3: [217, 218, 219, ...])
+        should each be assigned their own distinct colormap, as to group them semantically.
+        """
+        # Arrange colormaps for max contrast between colormaps, and max contrast between colors in colormaps
+        distinct_colormaps = ['Blues', 'Reds', 'Greens', 'Oranges', 'Purples']
+        colormap_sampling = [0.25, 0.5, 0.75, 0.5]  # light -> medium -> dark -> medium -> (repeat)
+
+        # Split labels into subgroups --> we split the groups wherever the difference between labels is > 1
+        start_end = [0, len(labels)]
+        for idx, (prev, curr) in enumerate(zip(labels, labels[1:]), start=1):
+            if curr - prev > 1:
+                start_end.insert(len(start_end)-1, idx)
+        label_groups = [labels[start:end] for start, end in zip(start_end, start_end[1:])]
+
+        # Handle the usual case: A single continuous group (likely vertebral labels)
+        if len(label_groups) == 1:
+            # repeat high-contrast colors until we have enough to cover the range of labels
+            n_colors = labels.max() - labels.min() + 1
+            color_list = list(it.islice(it.cycle(self._labels_color), n_colors))
+
+        # Handle the edge case: Multiple continuous groups
+        else:
+            # Initialize a list by repeating the color black (#000000) to fill in the gaps between colors.
+            # We do this because matplotlib applies colormaps by scaling both the data and the colormap to [0, 1].
+            # Without filling in the gaps between groups, the colormap would be scaled incorrectly relative to the data.
+            # ((Note that, if done right, the #000000 color should never be assigned to our label values.))
+            color_list = ['#000000'] * (labels.max() - labels.min() + 1)
+            # Assign a colormap to each group of labels (while sampling the colormap at different points)
+            for i, label_group in enumerate(label_groups):
+                colormap = cm.get_cmap(distinct_colormaps[i % len(distinct_colormaps)])
+                sampled_colors = [color.to_hex(c) for c in [colormap(n) for n in colormap_sampling]]
+                # Then, assign a color to each label within the group
+                for j, label in enumerate(label_group):
+                    color_list[label - labels.min()] = sampled_colors[j % len(sampled_colors)]
+
+        return color_list
+
     def __init__(self, qc_report, interpolation, action_list, process, stretch_contrast=True,
-                 stretch_contrast_method='contrast_stretching', fps=None):
+                 stretch_contrast_method='contrast_stretching', fps=None, draw_text=True):
         """
         :param qc_report: QcReport: The QC report object
         :param interpolation: str: Type of interpolation used in matplotlib
@@ -85,6 +131,7 @@ class QcImage:
             raise ValueError("Unrecognized stretch_contrast_method: {}.".format(stretch_contrast_method),
                              "Try 'equalized' or 'contrast_stretching'")
         self._fps = fps
+        self._draw_text = draw_text
         self._centermass = None  # center of mass returned by slice.Axial.get_center()
 
     def listed_seg(self, mask, ax):
@@ -140,31 +187,35 @@ class QcImage:
 
     def label_vertebrae(self, mask, ax):
         """Draw vertebrae areas, then add text showing the vertebrae names"""
-        from matplotlib import colors
         img = np.rint(np.ma.masked_where(mask < 1, mask))
         labels = np.unique(img[np.where(~img.mask)]).astype(int)  # get available labels
+        color_list = self._assign_label_colors_by_groups(labels)
         ax.imshow(img,
-                  cmap=colors.ListedColormap(self._labels_color[labels.min():labels.max()+1]),  # get color from min label and max label
+                  cmap=color.ListedColormap(color_list),
                   interpolation=self.interpolation,
                   alpha=1,
                   aspect=float(self.aspect_mask))
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-        a = [0.0]
-        data = mask
-        for index, val in np.ndenumerate(data):
-            if val not in a:
-                a.append(val)
-                index = int(val)
-                if index in self._labels_regions.values():
-                    color = self._labels_color[index]
-                    y, x = center_of_mass(np.where(data == val, data, 0))
-                    # Draw text with a shadow
-                    x += data.shape[1] / 25
-                    label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
-                    label_text = ax.text(x, y, label, color=color, clip_on=True)
-                    label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'),
-                                                 path_effects.Normal()])
+
+        # Use the existing colormap to draw colored text for any vertebral labels belonging to `self._labels_regions`
+        if self._draw_text:
+            a = [0.0]
+            data = mask
+            for index, val in np.ndenumerate(data):
+                if val not in a:
+                    a.append(val)
+                    index = int(val)
+                    if index in self._labels_regions.values():
+                        # NB: We need to subtract `min` to convert the label value into an index for the color list
+                        label_color = color_list[index - labels.min()]
+                        y, x = center_of_mass(np.where(data == val, data, 0))
+                        # Draw text with a shadow
+                        x += data.shape[1] / 25
+                        label = list(self._labels_regions.keys())[list(self._labels_regions.values()).index(index)]
+                        label_text = ax.text(x, y, label, color=label_color, clip_on=True)
+                        label_text.set_path_effects([path_effects.Stroke(linewidth=2, foreground='black'),
+                                                     path_effects.Normal()])
 
     def highlight_pmj(self, mask, ax):
         """Hook to show a rectangle where PMJ is on the slice"""
@@ -589,7 +640,7 @@ def get_json_data_from_path(path_json):
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None, path_qc=None, dataset=None,
-                subject=None, process=None, fps=None):
+                subject=None, process=None, fps=None, draw_text=True):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
     scripts (e.g. sct_propseg).
@@ -604,6 +655,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     :param subject: str: Subject name
     :param process: str: Name of SCT function. e.g., sct_propseg
     :param fps: float: Number of frames per second for output gif images. Used only for sct_frmi_moco and sct_dmri_moco.
+    :param exclude_text: bool: If provided, text won't be drawn on top of labels. Used only for sct_label_vertebrae.
     :return: None
     """
     logger.info('\n*** Generate Quality Control (QC) html report ***')
@@ -719,6 +771,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         process=process,
         stretch_contrast_method='equalized',
         fps=fps,
+        draw_text=draw_text,
     ).layout(
         qcslice_layout=qcslice_layout,
         qcslice=qcslice,
