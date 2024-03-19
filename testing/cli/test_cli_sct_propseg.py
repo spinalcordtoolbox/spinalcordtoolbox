@@ -6,7 +6,7 @@ import pytest
 import logging
 
 from spinalcordtoolbox.image import Image, compute_dice
-from spinalcordtoolbox.utils import run_proc, sct_test_path
+from spinalcordtoolbox.utils.sys import run_proc, sct_test_path
 from spinalcordtoolbox.scripts import sct_propseg
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ def test_sct_propseg_check_dice_coefficient_against_groundtruth():
     dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
 
     # note: propseg does *not* produce the same results across platforms, hence the 0.9 Dice threshold.
-    # For more details, see: https://github.com/neuropoly/spinalcordtoolbox/issues/2769
+    # For more details, see: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2769
     assert dice_segmentation > 0.9
 
 

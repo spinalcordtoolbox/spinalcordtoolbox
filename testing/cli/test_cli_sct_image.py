@@ -7,7 +7,8 @@ import pytest
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import extract_fname, sct_test_path
+from spinalcordtoolbox.utils.fs import extract_fname
+from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.scripts import sct_image, sct_crop_image
 
 logger = logging.getLogger(__name__)

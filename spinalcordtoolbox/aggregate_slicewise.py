@@ -19,7 +19,8 @@ import wquantiles
 
 from spinalcordtoolbox.template import get_slices_from_vertebral_levels, get_vertebral_level_from_slice
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import __version__, parse_num_list_inv
+from spinalcordtoolbox.utils.sys import __version__
+from spinalcordtoolbox.utils.shell import parse_num_list_inv
 
 
 class Metric:
@@ -89,7 +90,8 @@ def func_map(data, mask, map_clusters):
     :return: nd-array: matrix of all beta
     """
     # Check number of labels and map_clusters
-    assert mask.shape[-1] == len(map_clusters)
+    if mask.shape[-1] != len(map_clusters):
+        raise ValueError(f"Expected {mask.shape[-1]} clusters, but got {len(map_clusters)} clusters")
 
     # Iterate across all labels (excluding the first one) and generate cluster labels. Examples of input/output:
     #   [[0], [0], [0], [1], [2], [0]] --> [0, 0, 0, 1, 2, 0]

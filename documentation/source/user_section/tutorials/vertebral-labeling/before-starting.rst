@@ -1,6 +1,10 @@
 Before starting this tutorial
 #############################
 
+This tutorial is intended to be run following the previous :ref:`spinalcord-segmentation` tutorial, as vertebral labeling relies on having a spinal cord segmentation mask.
+
+You can either run that tutorial first, or download the necessary files below:
+
 #. Make sure that you have the following files in your working directory:
 
    * ``single_subject/data/t2/t2.nii.gz`` : An anatomical spinal cord scan in the T2 contrast.

@@ -33,7 +33,7 @@ def tmp_create(basename):
 ansi_escape = re.compile(r'\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 
-# Modified from http://shallowsky.com/blog/programming/python-tee.html
+# Modified from https://shallowsky.com/blog/programming/python-tee.html
 class Tee:
     def __init__(self, _fd1, _fd2):
         self.fd1 = _fd1

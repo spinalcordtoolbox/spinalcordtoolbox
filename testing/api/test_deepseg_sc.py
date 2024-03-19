@@ -6,7 +6,7 @@ import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.deepseg_.sc as deepseg_sc
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 from .test_centerline import dummy_centerline
 
@@ -75,7 +75,7 @@ def test_uncrop_image():
     input_shape = (100, 100, 100)
     crop_size = 20
     data_crop = np.random.randint(0, 2, size=(crop_size, crop_size, input_shape[2]))
-    data_in = np.random.randint(0, 1000, size=input_shape)
+    data_in = np.random.randint(0, 1000, size=input_shape, dtype=np.uint32)
 
     x_crop_lst = list(np.random.randint(0, input_shape[0] - crop_size, input_shape[2]))
     y_crop_lst = list(np.random.randint(0, input_shape[1] - crop_size, input_shape[2]))

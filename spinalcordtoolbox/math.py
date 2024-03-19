@@ -188,7 +188,8 @@ def smooth(data, sigmas):
     :param sigmas: Kernel SD in voxel
     :return:
     """
-    assert len(data.shape) == len(sigmas)
+    if len(data.shape) != len(sigmas):
+        raise ValueError(f"Expected {len(data.shape)} sigmas, but got {len(sigmas)}")
     return gaussian_filter(data.astype(float), sigmas, order=0, truncate=4.0)
 
 
@@ -196,7 +197,8 @@ def laplacian(data, sigmas):
     """
     Apply Laplacian filter
     """
-    assert len(data.shape) == len(sigmas)
+    if len(data.shape) != len(sigmas):
+        raise ValueError(f"Expected {len(data.shape)} sigmas, but got {len(sigmas)}")
     return gaussian_laplace(data.astype(float), sigmas)
 
 
@@ -294,7 +296,7 @@ def concatenate_along_last_dimension(data):
 
     # Case 3: 2D/5D/etc. images --> Not supported
     else:
-        raise ValueError(f"Can only process 3D/4D images, but received images with ndim = {ndims - {3,4}}")
+        raise ValueError(f"Can only process 3D/4D images, but received images with ndim = {ndims - {3, 4}}")
 
     return np.concatenate(data, axis=-1)
 
@@ -304,7 +306,7 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     :param data_in: nd_array to denoise
 
     .. note::
-        for more info about patch_radius and block radius, please refer to the dipy website: http://dipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
+        for more info about patch_radius and block radius, please refer to the dipy website: https://docs.dipy.org/stable/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
     """
 
     data_in = np.asarray(data_in)
@@ -339,7 +341,7 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
 
     .. note::
         for more info about patch_radius and model, please refer to the dipy website:
-        https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self
+        https://docs.dipy.org/stable/examples_built/preprocessing/denoise_patch2self.html
     """
     denoised = patch2self(data_in, bvals_in, patch_radius=patch_radius,
                           model=model)

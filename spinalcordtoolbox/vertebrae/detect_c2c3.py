@@ -28,7 +28,8 @@ import nibabel as nib
 from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, zeros_like
-from spinalcordtoolbox.utils import run_proc, TempFolder, __data_dir__
+from spinalcordtoolbox.utils.fs import TempFolder
+from spinalcordtoolbox.utils.sys import __data_dir__, run_proc
 from spinalcordtoolbox.flattening import flatten_sagittal
 
 logger = logging.getLogger(__name__)
@@ -77,8 +78,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     # Run detection
     logger.info('Run C2-C3 detector...')
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
-    cmd_detection = 'isct_spine_detect -ctype=dpdt "%s" "%s" "%s"' % \
-                    (path_model, 'data_midSlice', 'data_midSlice_pred')
+    cmd_detection = ['isct_spine_detect', '-ctype=dpdt', path_model, 'data_midSlice', 'data_midSlice_pred']
     # The command below will fail, but we don't care because it will output an image (prediction), which we
     # will use later on.
     s, o = run_proc(cmd_detection, verbose=0, is_sct_binary=True, raise_exception=False)

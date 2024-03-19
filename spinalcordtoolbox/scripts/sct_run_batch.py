@@ -55,21 +55,24 @@ def get_parser():
                         'file are the same as the command line arguments, except all dashes (-) are replaced with '
                         'underscores (_). Using command line flags can be used to override arguments provided in '
                         'the configuration file, but this is discouraged. Please note that while quotes are optional '
-                        'for strings in YAML omitting them may cause parse errors.\n' + dedent(
+                        'for strings in YAML omitting them may cause parse errors.\n'
+                        'Note that for the \'exclude_list\' (or \'include_list\') argument you can exclude/include '
+                        'entire subjects or individual sessions; see examples below.\n' + dedent(
                             """
                             Example YAML configuration:
                             path_data   : "~/sct_data"
                             path_output : "~/pipeline_results"
                             script      : "nature_paper_analysis.sh"
-                            jobs        : -1\n
+                            jobs        : -1
+                            exclude_list : ["sub-01/ses-01", "sub-02", "ses-03"]      # this will exclude ses-01 for sub-01, all sessions for sub-02 and ses-03 for all subjects\n
                             Example JSON configuration:
                             {
                             "path_data"   : "~/sct_data",
                             "path_output" : "~/pipeline_results",
                             "script"      : "nature_paper_analysis.sh",
-                            "jobs"        : -1
-                            }\n
-                            """))
+                            "jobs"        : -1,
+                            "exclude_list" : ["sub-01/ses-01", "sub-02", "ses-03"]
+                            }"""))
     parser.add_argument('-jobs', type=int, default=1,
                         help='The number of jobs to run in parallel. Either an integer greater than or equal to one '
                         'specifying the number of cores, 0 or a negative integer specifying number of cores minus '
@@ -109,17 +112,21 @@ def get_parser():
                         'a subject if they match the regex. Inclusions are processed before exclusions. '
                         'Cannot be used with `include-list`.')
     parser.add_argument('-include-list',
-                        help='Optional space separated list of subjects to include. Only process '
-                        'a subject if they are on this list. Inclusions are processed before exclusions. '
-                        'Cannot be used with `include`.', nargs='+')
+                        help='Optional space separated list of subjects or sessions to include. Only process '
+                        'subjects or sessions if they are on this list. Inclusions are processed before exclusions. '
+                        'Cannot be used with `include`. You can combine subjects and sessions; see examples.\n'
+                        'Examples: \'-include-list sub-001 sub-002\' or \'-include-list sub-001/ses-01 ses-02\'',
+                        nargs='+')
     parser.add_argument('-exclude',
                         help='Optional regex used to filter the list of subject directories. Only process '
                         'a subject if they do not match the regex. Exclusions are processed '
                         'after inclusions. Cannot be used with `exclude-list`')
     parser.add_argument('-exclude-list',
-                        help='Optional space separated list of subjects to exclude. Only process '
-                        'a subject if they are not on this list. Inclusions are processed before exclusions. '
-                        'Cannot be used with either `exclude`.', nargs='+')
+                        help='Optional space separated list of subjects or sessions to exclude. Only process subjects '
+                        'or sessions if they are not on this list. Inclusions are processed before exclusions. '
+                        'Cannot be used with `exclude`. You can combine subjects and sessions; see examples.\n'
+                        'Examples: \'-exclude-list sub-003 sub-004\' or \'-exclude-list sub-003/ses-01 ses-02\'',
+                        nargs='+')
     parser.add_argument('-ignore-ses', action='store_true',
                         help="By default, if 'ses' subfolders are present, then 'sct_run_batch' will run the script "
                              "within each individual 'ses' subfolder. Passing `-ignore-ses` will change the behavior "
@@ -316,7 +323,8 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
                              stdout=open(log_file, 'w'),
                              stderr=subprocess.STDOUT)
 
-        assert res.returncode == 0, 'Processing of subject {} failed'.format(subject)
+        if res.returncode != 0:
+            raise ValueError(f"Processing of subject {subject} failed")
     except Exception as e:
         process_completed = 'res' in locals()
         res = res if process_completed else SimpleNamespace(returncode=-1)

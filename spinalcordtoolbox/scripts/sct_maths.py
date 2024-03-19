@@ -252,13 +252,13 @@ def get_parser():
         '-mi',
         metavar=Metavar.file,
         help='Compute the mutual information (MI) between both input files (-i and -mi) as in: '
-             'http://scikit-learn.org/stable/modules/generated/sklearn.metrics.mutual_info_score.html',
+             'https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mutual_info_score.html',
         required=False)
     similarity.add_argument(
         '-minorm',
         metavar=Metavar.file,
         help='Compute the normalized mutual information (MI) between both input files (-i and -mi) as in: '
-             'http://scikit-learn.org/stable/modules/generated/sklearn.metrics.normalized_mutual_info_score.html',
+             'https://scikit-learn.org/stable/modules/generated/sklearn.metrics.normalized_mutual_info_score.html',
         required=False)
     similarity.add_argument(
         '-corr',

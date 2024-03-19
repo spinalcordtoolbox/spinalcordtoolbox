@@ -26,7 +26,8 @@ import transforms3d.affines as affines
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import extract_fname, mv, run_proc, tmp_create
+from spinalcordtoolbox.utils.fs import extract_fname, mv, tmp_create
+from spinalcordtoolbox.utils.sys import run_proc
 
 
 logger = logging.getLogger(__name__)
@@ -272,8 +273,6 @@ class Image(object):
 
         if absolutepath is not None:
             self._path = os.path.abspath(absolutepath)
-
-        self.verbose = verbose
 
         # Case 1: load an image from file
         if isinstance(param, str):
@@ -822,11 +821,12 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     dice = 0.0  # default value of dice is 0
 
     # check if images are in the same coordinate system
-    assert image1.data.shape == image2.data.shape, (
-        f"\n\nERROR: the data ({image1.absolutepath} and {image2.absolutepath}) don't have the same size."
-        f"\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  "
-        f"to put the input images in the same space"
-    )
+    if image1.data.shape != image2.data.shape:
+        raise ValueError(
+            f"\n\nERROR: the data ({image1.absolutepath} and {image2.absolutepath}) don't have the same size."
+            f"\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  "
+            f"to put the input images in the same space"
+        )
 
     # if necessary, change orientation of images to RPI and compute segmentation boundaries
     if mode == '2d-slices' or (mode == '3d' and zboundaries):
@@ -1817,7 +1817,8 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
     im_concat = concat_data(im_concat_list, dim=2)     # Concatenate the input images and spacer images together
 
     # We assume that the [x,y] dimensions match for both of the two QC images
-    assert im_concat.data.shape[0:2] == im_out.data.shape[0:2]
+    if im_concat.data.shape[0:2] != im_out.data.shape[0:2]:
+        raise ValueError(f"Mismatched image dimensions: {im_concat.data.shape[0:2]} != {im_out.data.shape[0:2]}")
 
     # However, we can't assume that the [z] dimensions match, because concatenating and stitching produce very
     # different results (lengthwise). So, we pad the smaller image to make the dimensions match.
@@ -1835,3 +1836,36 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
     assert im_concat.data.shape == im_out.data.shape
 
     return im_concat, im_out
+
+
+def check_image_kind(img):
+    """
+    Identify the image as one of 4 image types:
+
+        - 'seg': Binary segmentation (0/1)
+        - 'softseg': Nonbinary segmentation in the range [0, 1], where 0 and 1 are the majority of values
+        - 'labeled_seg': Nonbinary, whole values (0, 1, 2...) or (0.0, 1.0, 2.0...) only
+        - 'im': Any other float-valued image where 0 and 1 are not the majority of values.
+
+    Useful for determining A) which colormap should be applied to an image, or
+                           B) which interpolation can be safely used on a given image
+
+    Output strings should be compatible with display_viewer_syntax() function.
+    """
+    # Check if image is a segmentation (binary or soft) by making sure:
+    # - 0/1 are the two most common voxel values
+    # - 0/1 account for >95% of voxels (to allow for some soft voxels)
+    unique, counts = np.unique(np.round(img.data, decimals=1), return_counts=True)
+    unique, counts = unique[np.argsort(counts)[::-1]], counts[np.argsort(counts)[::-1]]  # Sort by counts
+    binary_most_common = set(unique[0:2].astype(float)) == {0.0, 1.0}
+    binary_percentage = np.sum(counts[0:2]) / np.sum(counts)
+    is_whole_only = np.equal(np.mod(unique, 1), 0).all()
+    if binary_most_common:
+        if binary_percentage == 1.0:
+            return 'seg'
+        elif binary_percentage > 0.95:
+            return 'softseg'
+    if is_whole_only:
+        return 'seg-labeled'
+    else:
+        return 'anat'

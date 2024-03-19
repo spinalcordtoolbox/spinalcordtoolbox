@@ -10,7 +10,8 @@ import sys
 from typing import Sequence
 
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import init_sct, set_loglevel, SCTArgumentParser, list2cmdline
+from spinalcordtoolbox.utils.sys import init_sct, list2cmdline, set_loglevel
+from spinalcordtoolbox.utils.shell import SCTArgumentParser
 
 
 def get_parser():
@@ -45,6 +46,13 @@ def get_parser():
     parser.add_argument('-plane',
                         help='Plane of the output QC. Only relevant for -p sct_deepseg_lesion.',
                         choices=('axial', 'sagittal'),
+                        required=False)
+    parser.add_argument('-text-labels',
+                        help="If set to 0, text won't be drawn on top of labels. Only relevant for -p "
+                             "sct_label_vertebrae.",
+                        choices=(0, 1),
+                        default=1,
+                        type=int,
                         required=False)
     parser.add_argument('-qc',
                         metavar='QC',
@@ -97,7 +105,8 @@ def main(argv: Sequence[str]):
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
                 process=arguments.p,
-                fps=arguments.fps,)
+                fps=arguments.fps,
+                draw_text=bool(arguments.text_labels))
 
 
 if __name__ == "__main__":

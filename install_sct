@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # This is the spinalcord toolbox (SCT) installer
-# It downloads the Conda (http://conda.pydata.org/) version
+# It downloads the Conda (https://conda.pydata.org/) version
 # of python and installs the SCT requirements over it
 #
 # The SCT can be installed in the location where you download it. If you choose to do so,
@@ -122,7 +122,7 @@ function finish() {
     print error "Installation failed!\n
 Please find the file \"$PWD/install_sct_log.txt\",
 then upload it as a .txt attachment in a new topic on SCT's forum:
---> http://forum.spinalcordmri.org/c/sct"
+--> https://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
   rm -rf "$TMP_DIR"
@@ -182,6 +182,28 @@ function check_requirements() {
   # check curl
   if [[ ! ( $(command -v curl) || $(command -v wget) ) ]]; then
     die "ERROR: neither \"curl\" nor \"wget\" is installed. Please install either of them and restart SCT installation."
+  fi
+  # check rosetta
+  if [[ "$OS" == "osx" ]]; then
+    if ! arch -x86_64 true >/dev/null 2>&1; then
+      print warning "WARNING: not running an x86_64 architecture."
+      while [[ ! "$ROSETTA_INSTALL" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+        ROSETTA_INSTALL="no"
+        if [ -z "$NONINTERACTIVE" ]; then
+          print question "Do you want to install \"Rosetta 2\" now? [y]es/[n]o:"
+          read -r ROSETTA_INSTALL
+        fi
+      done
+      if [[ "$ROSETTA_INSTALL" =~ ^[Yy](es)? ]]; then
+        softwareupdate --install-rosetta
+        # check if we can now run x86_64 executables
+        if ! arch -x86_64 true >/dev/null 2>&1; then
+          die "ERROR: still cannot run x86_64 executables. Please contact SCT team for assistance."
+        fi
+      else
+        die "Please install \"Rosetta 2\" by running \"softwareupdate --install-rosetta\" and restart SCT installation."
+      fi
+    fi
   fi
   # check gcc
   if ! gcc --version > /dev/null 2>&1; then
@@ -621,7 +643,10 @@ fi
 (
   # We use "--ignore-installed" to preserve the version of `certifi` installed into the conda
   # env, which prevents https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3609
-  python/envs/venv_sct/bin/pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
+  # We use 'SYSTEM_VERSION_COMPAT=0' to tell pip to report macOS 11 instead of macOS 10.16
+  # This is necessary in order to install 'macosx_11_0' wheels. See also:
+  # https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4352
+  SYSTEM_VERSION_COMPAT=0 python/envs/venv_sct/bin/pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
   print info "Installing spinalcordtoolbox..." &&
   python/envs/venv_sct/bin/pip install -e .
 ) ||

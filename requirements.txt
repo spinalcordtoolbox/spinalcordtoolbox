@@ -2,13 +2,14 @@
 #     stable releases. We do this because `pip freeze` will not capture options (e.g. --extra-index-url) or
 #     platform-specific requirements (e.g. sys.platform == 'win32')
 
-# Avoid method=restore bug: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4209#issuecomment-1739644328
-dipy!=1.6.*,!=1.7.*
+# Avoid 1.6 and 1.7 due to method=restore bug: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4209#issuecomment-1739644328
+dipy!=1.6.*,!=1.7.*,<1.9.0
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
-ivadomed~=2.9.6
+ivadomed
 matplotlib
+monai[nibabel]
 # Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
 # Installing "Microsoft Visual C++ Redistributable for Visual Studio" will fix this too, but
 # we'd prefer not to burden users with another prerequisite. 
@@ -18,10 +19,8 @@ matplotlib
 msvc-runtime==14.29.30133; sys.platform == 'win32' # append_to_freeze
 nibabel
 nilearn
-# This pin is due to an incompatibility with pystrum==0.2, which is installed via voxelmorph -> neurite -> pystrum
-# See also: https://github.com/adalca/pystrum/issues/9
-# If pystrum is updated to 0.3, then we should replace this version pinning with `pystrum>=0.3`
-numpy<1.24
+nnunetv2
+numpy
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
 # Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
@@ -34,6 +33,11 @@ psutil
 # Additionally, for versions between 5.12-5.14, the only release to have Python 3.9 wheels is 5.12.3. So, we pin it.
 # See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3367#issuecomment-1533181462
 pyqt5==5.12.3
+# PyQt5-sip should be updated when PyQt5 is updated: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4354
+pyqt5-sip<12.13.0
+# pystrum==0.2 is incompatible with newer versions of numpy (installed via voxelmorph -> neurite -> pystrum)
+# See also: https://github.com/adalca/pystrum/issues/9
+pystrum>=0.3
 pytest
 pytest-cov
 requests

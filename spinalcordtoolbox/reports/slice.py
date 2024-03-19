@@ -15,7 +15,7 @@ import numpy as np
 from scipy.ndimage import center_of_mass
 from nibabel.nifti1 import Nifti1Image
 
-from spinalcordtoolbox.image import Image, split_img_data
+from spinalcordtoolbox.image import Image, split_img_data, check_image_kind
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
@@ -57,19 +57,7 @@ class Slice(object):
             self._absolute_paths.append(img.absolutepath)  # change_orientation removes the field absolute_path
             img.change_orientation('SAL')
             if p_resample:
-                # Check if image is a segmentation (binary or soft) by making sure:
-                # - 0/1 are the two most common voxel values
-                # - 0/1 account for >95% of voxels (to allow for some soft voxels)
-                unique, counts = np.unique(np.round(img.data, decimals=1), return_counts=True)
-                unique, counts = unique[np.argsort(counts)[::-1]], counts[np.argsort(counts)[::-1]]  # Sort by counts
-                binary_most_common = set(unique[0:2].astype(float)) == {0.0, 1.0}
-                binary_percentage = np.sum(counts[0:2]) / np.sum(counts)
-                if binary_most_common and binary_percentage > 0.95:
-                    # If a segmentation, use linear interpolation and apply thresholding
-                    type_img = 'seg'
-                else:
-                    # Otherwise it's an image: use spline interpolation
-                    type_img = 'im'
+                type_img = 'seg' if ('seg' in check_image_kind(img)) else 'im'  # condense seg/softseg into just 'seg'
                 img_r = self._resample_slicewise(img, p_resample, type_img=type_img, image_ref=image_ref)
             else:
                 img_r = img.copy()
@@ -245,7 +233,8 @@ class Slice(object):
                   containing the slices and matrix of the transformed 3D MRI
                   to output containing the slices
         """
-        assert len(set([x.data.shape for x in self._images])) == 1, "Volumes don't have the same size"
+        if len(set([x.data.shape for x in self._images])) != 1:
+            raise ValueError("Volumes don't have the same size")
 
         matrices = list()
         # Retrieve the L-R center of the slice for each row (i.e. in the S-I direction).
@@ -427,7 +416,8 @@ class Sagittal(Slice):
         :return: index: [int] * n_SI
         """
         image = self._images[img_idx].copy()
-        assert image.orientation == 'SAL'
+        if image.orientation != 'SAL':
+            raise ValueError(f"Image orientation should be SAL, but got: {image.orientation}")
         # If mask is empty, raise error
         if np.argwhere(image.data).shape[0] == 0:
             raise ValueError("Label/segmentation image is empty. Can't retrieve RL slice indices.")
@@ -460,17 +450,23 @@ class Sagittal(Slice):
 
         :return: tuple of numpy.ndarray containing the mosaics of each slice pixels
         """
-        # 0. Use the segmentation image to initialize the image cropper
+        # 0. Initialize an image cropper to trim the AP and SI axes
+        # 0a. Use the segmentation image to initialize the image cropper
         self._image_seg = self._images[-1]
         cropper = ImageCropper()
         cropper.get_bbox_from_mask(self._image_seg)
+        # 0b. Modify the overall width/height of the bounding box to show extra context at the extents
+        cropper.bbox.xmin = max(cropper.bbox.xmin - 50, 0)
+        cropper.bbox.xmax = min(cropper.bbox.xmax + 50, self._image_seg.data.shape[0] - 1)
+        cropper.bbox.ymin = max(cropper.bbox.ymin - 15, 0)
+        cropper.bbox.ymax = min(cropper.bbox.ymax + 15, self._image_seg.data.shape[1] - 1)
 
         # 1. Compute the sizes of the patches, as well as the overall image
         # 1a. Compute width and height of mosaic squares. (This is assumed to be a square for Axial slices.)
         size_h = cropper.bbox.xmax - cropper.bbox.xmin + 1  # SAL -> SI axis provides height
         size_w = cropper.bbox.ymax - cropper.bbox.ymin + 1  # SAL -> AP axis provides width
         # 1b. Calculate number of columns to display on the report.
-        nb_column = 600 // size_w
+        nb_column = round(600 / size_w)
         # 1c. Calculate number of rows to display.
         nb_slices = cropper.bbox.zmax - cropper.bbox.zmin + 1  # SAL -> LR axis provides nb_slices
         nb_row = math.ceil(nb_slices / nb_column)

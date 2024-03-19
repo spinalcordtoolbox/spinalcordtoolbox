@@ -28,11 +28,11 @@ from spinalcordtoolbox.metrics_to_PAM50 import interpolate_metrics
 from spinalcordtoolbox.centerline.core import ParamCenterline
 from spinalcordtoolbox.image import add_suffix, splitext, Image
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, parse_num_list, display_open
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, __sct_dir__
 from spinalcordtoolbox.utils.fs import get_absolute_path
-from spinalcordtoolbox import __data_dir__
-from spinalcordtoolbox.utils import sct_progress_bar
+from spinalcordtoolbox.utils.sys import __sct_dir__, init_sct, sct_progress_bar, set_loglevel
+from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgumentParser,
+                                           display_open, parse_num_list)
+from spinalcordtoolbox.utils.sys import __data_dir__
 
 logger = logging.getLogger(__name__)
 
@@ -391,7 +391,7 @@ def main(argv: Sequence[str]):
                        f"not be displayed. To use vertebral level information, you may need to run "
                        f"`sct_warp_template` to generate the appropriate level file in your working directory.")
         if normalize_pam50:
-            raise FileNotFoundError("The vertebral level file must exist to use -normalize-PAM50.")
+            parser.error("Option '-normalize-PAM50' requires option '-vertfile'.")
         fname_vert_level = None  # Discard the default '-vertfile', so that we don't attempt to find vertebral levels
         if levels:
             raise FileNotFoundError("The vertebral level file must exist to use `-vert` to group by vertebral level.")

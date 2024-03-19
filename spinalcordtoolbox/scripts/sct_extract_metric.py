@@ -97,8 +97,8 @@ def get_parser():
         '-f',
         metavar=Metavar.folder,
         default=os.path.join("label", "atlas"),
-        help=(f"Single label file, or folder that contains WM tract labels."
-              f"Example: {os.path.join(__data_dir__, 'atlas')}")
+        help=(f"Single label file, or folder that contains WM tract labels. "
+              f"Example: {param_default.path_label}")
     )
     optional.add_argument(
         '-l',
@@ -133,7 +133,7 @@ def get_parser():
              "  - bin: binarize mask (threshold=0.5)\n"
              "  - median: weighted median.\n"
              "    This implementation of the median treats quantiles as a continuous (vs. discrete) function. For"
-             " more details, see https://pypi.org/project/wquantiles/.\n"
+             " more details, see https://pypi.org/project/wquantiles/ \n"
              "  - max: for each z-slice of the input data, extract the max value for each slice of the input data."
     )
     optional.add_argument(

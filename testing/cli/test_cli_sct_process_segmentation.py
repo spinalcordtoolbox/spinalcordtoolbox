@@ -8,7 +8,7 @@ import nibabel
 import csv
 
 from spinalcordtoolbox.scripts import sct_process_segmentation
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +125,7 @@ def test_sct_process_segmentation_check_normalize_PAM50_missing_perslice(tmp_pat
 def test_sct_process_segmentation_check_normalize_PAM50_missing_vertfile(tmp_path):
     """ Run sct_process_segmentation with -normalize PAM50 when missing -vertfile"""
     filename = str(tmp_path / 'tmp_file_out.csv')
-    with pytest.raises(FileNotFoundError) as e:
+    with pytest.raises(SystemExit) as e:
         sct_process_segmentation.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-normalize-PAM50', '1',
                                             '-perslice', '1', '-o', filename])
         assert e.value.code == 2

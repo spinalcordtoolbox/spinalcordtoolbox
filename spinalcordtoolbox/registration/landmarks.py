@@ -5,7 +5,7 @@ This file contains an implementation of the iterative closest point algorithm.
 This algo registers two sets of points (3D coordinates) together.
 
 Adapted from:
-http://stackoverflow.com/questions/20120384/iterative-closest-point-icp-implementation-on-python
+https://stackoverflow.com/questions/20120384/iterative-closest-point-icp-implementation-on-python
 
 NOTES ON ITK Transform Files:
 https://intranet.neuro.polymtl.ca/geek-tips/image-processing-software/advanced-normalization-tools-ants.html#itk-transform-file

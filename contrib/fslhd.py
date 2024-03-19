@@ -11,7 +11,7 @@
 //     Steve Smith, Mark Jenkinson and Matthew Webster, FMRIB Image Analysis Group
 //     Copyright (C) 2000-2019 University of Oxford
 /*  Part of FSL - FMRIB's Software Library
-    http://www.fmrib.ox.ac.uk/fsl
+    https://www.fmrib.ox.ac.uk/fsl
     fsl@fmrib.ox.ac.uk
 
     Developed at FMRIB (Oxford Centre for Functional Magnetic Resonance

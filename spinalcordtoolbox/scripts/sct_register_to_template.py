@@ -33,7 +33,7 @@ from spinalcordtoolbox.utils.fs import (copy, extract_fname, check_file_exist, r
 from spinalcordtoolbox.utils.shell import (SCTArgumentParser, ActionCreateFolder, Metavar, list_type,
                                            printv, display_viewer_syntax)
 from spinalcordtoolbox.utils.sys import set_loglevel, init_sct, run_proc
-from spinalcordtoolbox import __data_dir__
+from spinalcordtoolbox.utils.sys import __data_dir__
 import spinalcordtoolbox.image as msct_image
 import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
@@ -119,7 +119,7 @@ def get_parser():
             "options on a case-by-case basis depending on your data.\n"
             "\n"
             "More information about label creation can be found at "
-            "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
+            "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
         )
     )
 
@@ -160,7 +160,7 @@ def get_parser():
         help="One or two labels (preferred) located at the center of the spinal cord, on the mid-vertebral slice. "
              "Example: anat_labels.nii.gz\n"
              "For more information about label creation, please see: "
-             "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
+             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
     )
     optional.add_argument(
         '-ldisc',
@@ -171,7 +171,7 @@ def get_parser():
              "If you are using more than 2 labels, all discs covering the region of interest should be provided. "
              "E.g., if you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,6,7. "
              "For more information about label creation, please refer to "
-             "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html"
+             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html"
     )
     optional.add_argument(
         '-lspinal',
@@ -456,6 +456,21 @@ def main(argv: Sequence[str]):
     out.data = binarize(out.data, 0.5)
     out.save(path=ftmp_seg)
 
+    # Change orientation of input images to RPI
+    printv('\nChange orientation of input images to RPI...', verbose)
+
+    img_tmp_data = Image(ftmp_data).change_orientation("RPI")
+    ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
+    img_tmp_data.save(path=ftmp_data, mutable=True)
+
+    img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
+    ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
+    img_tmp_seg.save(path=ftmp_seg, mutable=True)
+
+    img_tmp_label = Image(ftmp_label).change_orientation("RPI")
+    ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
+    img_tmp_label.save(ftmp_label, mutable=True)
+
     # Switch between modes: subject->template or template->subject
     if ref == 'template':
 
@@ -469,21 +484,6 @@ def main(argv: Sequence[str]):
         # with nearest neighbour can make them disappear.
         resample_labels(ftmp_label, ftmp_data, add_suffix(ftmp_label, '_1mm'))
         ftmp_label = add_suffix(ftmp_label, '_1mm')
-
-        # Change orientation of input images to RPI
-        printv('\nChange orientation of input images to RPI...', verbose)
-
-        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
-        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
-        img_tmp_data.save(path=ftmp_data, mutable=True)
-
-        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
-        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
-        img_tmp_seg.save(path=ftmp_seg, mutable=True)
-
-        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
-        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
-        img_tmp_label.save(ftmp_label, mutable=True)
 
         ftmp_seg_, ftmp_seg = ftmp_seg, add_suffix(ftmp_seg, '_crop')
         if level_alignment:
@@ -623,7 +623,7 @@ def main(argv: Sequence[str]):
                     "Input labels do not seem to be at the right place. "
                     "Please check the position of the labels. "
                     "See documentation for more details: "
-                    "https://spinalcordtoolbox.com/user_section/tutorials/registration-to-template/vertebral-labeling.html",
+                    "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html",
                     1, 'error')
 
             # Concatenate transformations: curve --> straight --> affine
@@ -756,22 +756,8 @@ def main(argv: Sequence[str]):
                 raise RuntimeError(f"Subprocess call {cmd} returned non-zero: {output}")
 
     # register template->subject
-    elif ref == 'subject':
-
-        # Change orientation of input images to RPI
-        printv('\nChange orientation of input images to RPI...', verbose)
-
-        img_tmp_data = Image(ftmp_data).change_orientation("RPI")
-        ftmp_data = add_suffix(img_tmp_data.absolutepath, "_rpi")
-        img_tmp_data.save(path=ftmp_data, mutable=True)
-
-        img_tmp_seg = Image(ftmp_seg).change_orientation("RPI")
-        ftmp_seg = add_suffix(img_tmp_seg.absolutepath, "_rpi")
-        img_tmp_seg.save(path=ftmp_seg, mutable=True)
-
-        img_tmp_label = Image(ftmp_label).change_orientation("RPI")
-        ftmp_label = add_suffix(img_tmp_label.absolutepath, "_rpi")
-        img_tmp_label.save(ftmp_label, mutable=True)
+    else:
+        assert ref == 'subject'  # ensured by add_argument('ref', ... choices=['template', 'subject'] , ...)
 
         # Remove unused label on template. Keep only label present in the input label image
         printv('\nRemove unused label on template. Keep only label present in the input label image...', verbose)

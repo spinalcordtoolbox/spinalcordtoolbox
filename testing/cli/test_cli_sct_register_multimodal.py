@@ -7,7 +7,7 @@ import logging
 import numpy as np
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils import sct_test_path, sct_dir_local_path
+from spinalcordtoolbox.utils.sys import sct_dir_local_path, sct_test_path
 from spinalcordtoolbox.scripts import sct_register_multimodal, sct_create_mask
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ def test_sct_register_multimodal_mt0_image_data_within_threshold(use_seg, param,
     for f in [fname_out_src, fname_out_dest, fname_owarp, fname_owarpinv]:
         assert os.path.isfile(f)
 
-    # This check is skipped because of https://github.com/neuropoly/spinalcordtoolbox/issues/3372
+    # This check is skipped because of https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3372
     #############################################################################################
     # if fname_gt is not None:
     #     im_gt = Image(fname_gt)

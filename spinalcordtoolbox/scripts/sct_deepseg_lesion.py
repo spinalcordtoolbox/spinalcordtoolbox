@@ -25,7 +25,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        help='Input image. Example: t1.nii.gz',
+        help='Input image. Example: t2.nii.gz',
         metavar=Metavar.file,
     )
     mandatory.add_argument(

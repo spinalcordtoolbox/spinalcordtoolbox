@@ -17,9 +17,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
-from spinalcordtoolbox.utils import stylize
 from spinalcordtoolbox.utils.fs import tmp_create
-from spinalcordtoolbox.utils.sys import sct_progress_bar, __sct_dir__, __bin_dir__
+from spinalcordtoolbox.utils.sys import __bin_dir__, __sct_dir__, sct_progress_bar, stylize
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +40,8 @@ DATASET_DICT = {
     },
     "sct_testing_data": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20230207/sct_testing_data-r20230207.zip",
-            "https://osf.io/5twvs/?action=download",
+            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20240213/sct_testing_data-r20240213.zip",
+            "https://osf.io/tfy3u/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "sct_testing_data"),
         "download_type": "Datasets",
@@ -63,8 +62,8 @@ DATASET_DICT = {
     },
     "PAM50": {
         "mirrors": [
-            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20231024/PAM50-r20231024.zip",
-            "https://osf.io/wxc5f/?action=download",
+            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20240215/PAM50-r20240215.zip",
+            "https://osf.io/7d2vg/?action=download",
         ],
         "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
         "download_type": "Templates",
