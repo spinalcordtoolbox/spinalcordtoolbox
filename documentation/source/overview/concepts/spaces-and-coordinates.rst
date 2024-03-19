@@ -82,10 +82,10 @@ References
   See *§ 3D IMAGE (VOLUME) ORIENTATION AND LOCATION IN SPACE*
 
 - `nipy/nibabel's documentation on coordinate systems
-  <http://nipy.org/nibabel/coordinate_systems.html#naming-reference-spaces>`_
+  <https://nipy.org/nibabel/coordinate_systems.html#naming-reference-spaces>`_
 
 - ITK (`ANTs <https://sourceforge.net/p/advants/discussion/840261/thread/2a1e9307/#fb5a>`_,
   `Slicer <https://www.slicer.org/wiki/Coordinate_systems>`_) reference coordinate system is different (LPS-).
 
 - `Matlab FieldTrip toolbox "How are the different head and MRI coordinate systems defined?"
-  <http://www.fieldtriptoolbox.org/faq/how_are_the_different_head_and_mri_coordinate_systems_defined>`_
+  <https://www.fieldtriptoolbox.org/faq/how_are_the_different_head_and_mri_coordinate_systems_defined>`_

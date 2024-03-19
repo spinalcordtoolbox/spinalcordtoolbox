@@ -1,22 +1,17 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Flatten spinal cord in sagittal plane.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Cohen-Adad
-# Modified: 2014-06-02
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
-import os
 import logging
+from typing import Sequence
 
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 from spinalcordtoolbox.flattening import flatten_sagittal
 
 logger = logging.getLogger(__name__)
@@ -31,7 +26,7 @@ class Param:
         self.verbose = 1
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param fname_anat:
@@ -58,7 +53,7 @@ def main(argv=None):
     fname_out = add_suffix(fname_anat, '_flatten')
     im_anat_flattened.save(fname_out)
 
-    display_viewer_syntax([fname_anat, fname_out])
+    display_viewer_syntax([fname_anat, fname_out], verbose=verbose)
 
 
 def get_parser():
@@ -103,4 +98,3 @@ def get_parser():
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

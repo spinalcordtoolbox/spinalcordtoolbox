@@ -1,6 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# Functions that utilize the template (e.g., PAM50)
+"""
+Functions that use the template (e.g., PAM50)
+
+Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 import numpy as np
@@ -52,4 +55,3 @@ def get_vertebral_level_from_slice(im_vertlevel, idx_slice):
         logger.debug('Empty slice: z=%s (%s)', idx_slice, e)
         vert_level = None
     return vert_level
-

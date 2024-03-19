@@ -1,11 +1,12 @@
+# pytest unit tests for spinalcordtoolbox.gui
+
 import logging
-import os
 import unittest
 
 import spinalcordtoolbox.image as msct_image
 from spinalcordtoolbox.gui import base, centerline, sagittal
 from spinalcordtoolbox.gui.base import InvalidActionWarning
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 
 logging.basicConfig(level=logging.DEBUG)

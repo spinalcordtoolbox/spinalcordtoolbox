@@ -1,26 +1,20 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Create mask along z direction.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad
-# Modified: 2014-10-11
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
-
+# License: see the file LICENSE
 
 # TODO: scale size in mm.
 
 import sys
 import os
+from typing import Sequence
 
 import numpy as np
 
 import nibabel
-from scipy import ndimage
+from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, empty_like
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
@@ -28,9 +22,7 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, check_file_exist, extract_fname, rmtree, copy
 from spinalcordtoolbox.labels import create_labels
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.math import concatenate_along_4th_dimension
 
-from spinalcordtoolbox.scripts.sct_maths import get_data_or_scalar
 from spinalcordtoolbox.scripts.sct_image import concat_data
 
 
@@ -122,7 +114,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -152,6 +144,8 @@ def main(argv=None):
     # run main program
     create_mask(param)
 
+    display_viewer_syntax([param.fname_data, param.fname_out], im_types=['anat', 'seg'], opacities=['', '0.5'], verbose=verbose)
+
 
 def create_mask(param):
     # parse argument for method
@@ -171,7 +165,7 @@ def create_mask(param):
     if param.fname_out == '':
         param.fname_out = os.path.abspath(param.file_prefix + file_data + ext_data)
 
-    path_tmp = tmp_create(basename="create_mask")
+    path_tmp = tmp_create(basename="create-mask")
 
     printv('\nOrientation:', param.verbose)
     orientation_input = Image(param.fname_data).orientation
@@ -226,10 +220,10 @@ def create_mask(param):
     # create mask
     printv('\nCreate mask...', param.verbose)
     centerline = nibabel.load(fname_centerline)  # open centerline
-    hdr = centerline.get_header()  # get header
+    hdr = centerline.header  # get header
     hdr.set_data_dtype('uint8')  # set imagetype to uint8
-    spacing = hdr.structarr['pixdim']
-    data_centerline = centerline.get_data()  # get centerline
+    # spacing = hdr.structarr['pixdim']
+    data_centerline = np.asanyarray(centerline.dataobj)  # get centerline
     # if data is 2D, reshape with empty third dimension
     if len(data_centerline.shape) == 2:
         data_centerline_shape = list(data_centerline.shape)
@@ -241,7 +235,7 @@ def create_mask(param):
     cy = [0] * nz
     for iz in range(0, nz, 1):
         if iz in z_centerline_not_null:
-            cx[iz], cy[iz] = ndimage.measurements.center_of_mass(np.array(data_centerline[:, :, iz]))
+            cx[iz], cy[iz] = center_of_mass(np.array(data_centerline[:, :, iz]))
     # create 2d masks
     im_list = []
     for iz in range(nz):
@@ -265,8 +259,6 @@ def create_mask(param):
         printv('\nRemove temporary files...', param.verbose)
         rmtree(path_tmp)
 
-    display_viewer_syntax([param.fname_data, param.fname_out], colormaps=['gray', 'red'], opacities=['', '0.5'])
-
 
 def create_line(param, fname, coord, nz):
     """
@@ -283,9 +275,7 @@ def create_line(param, fname, coord, nz):
 
     # set all voxels to zero
     img = Image('line.nii')
-    data = get_data_or_scalar('0', img.data)
-    data_concat = concatenate_along_4th_dimension(img.data, data)
-    img.data = np.prod(data_concat, axis=3)
+    img.data = np.zeros_like(img.data)
     img.save()
 
     labels = []

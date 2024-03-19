@@ -1,3 +1,5 @@
+# pytest unit tests for sct_straighten_spinalcord
+
 import pytest
 import logging
 

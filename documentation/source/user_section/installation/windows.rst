@@ -32,18 +32,14 @@ This set of instructions will show you how to install SCT directly on Windows.
 
 SCT depends on two pieces of software that must be set up prior to the installation of SCT.
 
-Python 3.7
-^^^^^^^^^^
+Visual C++ 2019 runtime
+^^^^^^^^^^^^^^^^^^^^^^^
 
-Since SCT is a Python package, Python must be installed on your system before SCT can be installed.
+SCT depends on `onnxruntime <https://onnxruntime.ai/docs/install/#requirements>`_, which in turn depends on the `Visual C++ 2019 runtime <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170>`_.
 
-1. Download a "Windows x86-64" installer from `the Python 3.7.9 download page <https://www.python.org/downloads/release/python-379/>`_.
+1. It is likely that you already have this software installed, as many Windows applications rely on this software. You can check for "Microsoft Visual C++ 2015-2022 Redistributable" under the "Apps & Features" section of Windows Settings.
 
-2. Run the installer file. (**Important:** Before clicking "Install Now", make sure to first check the "Add Python 3.7 to PATH" checkbox at the bottom of the window.)
-
-3. After the installation has finished, open your Start Menu and type Command Prompt, then run it. In the Command Prompt window, type ``python --version`` and press enter.
-
-   (Make sure that you see the text ``Python 3.7.9`` before continuing.)
+2. If you do not have this software installed, you will typically want to install the "X64" version (``https://aka.ms/vs/17/release/vc_redist.x64.exe``) from `this page <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170#visual-studio-2015-2017-2019-and-2022>`_.
 
 
 Git for Windows
@@ -67,13 +63,11 @@ The easiest way to try out different versions of SCT is using Git.
 2. Installing SCT
 *****************
 
-We recommend that you install SCT into a Python virtual environment. To help with this process, SCT provides an installer script that will automate the process of creating a Python virtual environment for you.
+1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`_ , then download the ``install_sct-<version>_win.bat`` script from the "Assets" section of the latest release.
 
-1. Navigate to the `Releases page <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/>`_ , then download the ``install_sct.bat`` script from the "Assets" section of the latest release. 
+2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Miniconda environment for you.
 
-2. Run the script by double-clicking it. The script will fetch the SCT source code, then install the `spinalcordtoolbox` package into a Python virtual environment for you.
-
-3. Once the installer finishes, follow the instructions given at the end of the Command Prompt window, which will instruct you to add SCT to your PATH.
+3. Once the installer finishes, follow the instructions given at the end of the Command Prompt window, which will instruct you to create the SCT_DIR variable, and to add the SCT installation folder to the PATH variable.
 
 4. Finally, in the Command Prompt window, type ``sct_check_dependencies`` and press enter. Make sure that you see a status report containing all "OKs" before continuing.
 
@@ -278,67 +272,51 @@ If you would like to use SCT's GUI features, or if you would like to try FSLeyes
 Docker installation
 -------------------
 
-`Docker <https://www.docker.com/what-container>`_ is a portable (Linux, macOS, Windows) container platform.
+`Docker <https://www.docker.com/what-container/>`_ is a portable (Linux, macOS, Windows) container platform.
+
 
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker <https://docs.docker.com/install/>`_. Then, follow either of the examples below to create an OS-specific SCT installation.
+First, `install Docker Desktop <https://docs.docker.com/desktop/install/windows-install/>`_ using the WSL 2 backend. Then, follow the example below to create an OS-specific SCT installation.
 
-Option 1: Ubuntu Docker Image
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Docker Image: Ubuntu
+^^^^^^^^^^^^^^^^^^^^
+
+First, launch Docker Desktop, then open up a new Powershell or Command Prompt window and run the commands below:
 
 .. code:: bash
 
    # Start from the Terminal
-   docker pull ubuntu:16.04
+   docker pull ubuntu:22.04
    # Launch interactive mode (command-line inside container)
-   docker run -it ubuntu
+   docker run -it ubuntu:22.04
    # Now, inside Docker container, install dependencies
    apt-get update
-   apt install -y git curl bzip2 libglib2.0-0 gcc
-   # Note for above: libglib2.0-0 is required by PyQt
+   apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
+   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
    # Install SCT
    git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
    ./install_sct -y
-   export PATH="/sct/bin:${PATH}"
+   source /root/.bashrc
    # Test SCT
    sct_testing
-   # save the state of the container. Open a new Terminal and run:
-   docker ps -a  # list all containers
-   docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu16.04
-
-Option 2: CentOS7 Docker Image
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. code:: bash
-
-   # Start from the Terminal
-   docker pull centos:centos7
-   # Launch interactive mode (command-line inside container)
-   docker run -it centos:centos7
-   # Now, inside Docker container, install dependencies
-   yum install -y which gcc git curl
-   # Install SCT
-   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
-   cd sct
-   ./install_sct -y
-   export PATH="/sct/bin:${PATH}"
-   # Test SCT
-   sct_testing
-   # save the state of the container. Open a new Terminal and run:
-   docker ps -a  # list all containers
-   docker commit <CONTAINER_ID> <YOUR_NAME>/centos:centos7
+   # Save the state of the container as a docker image. 
+   # Back on the Host machine, open a new terminal and run:
+   docker ps -a  # list all containers (to find out the container ID)
+   # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
+   docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 
 Enable GUI Scripts (Optional)
 *****************************
 
 In order to run scripts with GUI you need to allow X11 redirection.
-First, save your Docker image:
+First, save your Docker image if you have not already done so:
 
 1. Open another Terminal
+
 2. List current docker images
 
    .. code:: bash
@@ -349,53 +327,31 @@ First, save your Docker image:
 
    .. code:: bash
 
-      docker commit <CONTAINER_ID> <YOUR_NAME>/<DISTROS>:<VERSION>
+      docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
-#. Install Xming
-#. Connect to it using Xming/SSH:
+4. Install `VcXsrv <https://sourceforge.net/projects/vcxsrv/>`_.
 
-   - If you are using Docker Desktop, please download and run (double click) the following script: :download:`sct-win.xlaunch<../../../../contrib/docker/sct-win.xlaunch>`.
-   - If you are using Docker Toolbox, please download and run the following script instead: :download:`sct-win_docker_toolbox.xlaunch<../../../../contrib/docker/sct-win_docker_toolbox.xlaunch>`
-   - If this is the first time you have done this procedure, the system will ask you if you want to add the remote PC (the docker container) as trust pc, type yes. Then type the password to enter the docker container (by default sct).
+5. Launch an X11 Server with XLaunch
 
-**Troubleshooting:**
+- Run XLaunch, which should have been installed by default.
+- Check 'Multiple Windows' and set the **display number** to ``0``, which you will need later. (The default display number ``-1`` will automatically detect the display number, unless you are running a setup with multiple monitors it will typically use ``0``)
+- Then, you can click Next, select 'Start no Client' then click Next
+- **Uncheck** 'Native opengl' and **check** 'Disable Access Control' then click Next, then click Finish.
 
-The graphic terminal emulator LXterminal should appear (if not check the task bar at the bottom of the screen), which allows copying and pasting commands, which makes it easier for users to use it. If there are no new open windows:
+6. Determine the IPv4 address of the virtual Ethernet Adapter by running 'ipconfig' in Powershell or the Command Prompt, then looking at the ``Ethernet adapter vEthernet (WSL)`` entry.
 
-- Please download and run the following file: :download:`Erase_fingerprint_docker.sh<../../../../contrib/docker/Erase_fingerprint_docker.sh>`
-- Try again
-- If it is still not working:
+7. In your Terminal window, run the following command, filling in the IP address, display number, and image name noted earlier:
+   
+   .. code:: bash 
+   
+      docker run -it --rm -e DISPLAY=<IPv4_ADDRESS>:<DISPLAY_NUMBER> -e XDG_RUNTIME_DIR=/tmp/runtime-root <IMAGE_NAME>/ubuntu:ubuntu22.04
 
-  - Open the file manager and go to C:/Users/Your_username
-  - In the searchbar type ‘.ssh’ - Open the found ‘.ssh’ folder.
-  - Open the ‘known_hosts’ file with a text editor
-  - Remove line starting with ``192.168.99.100`` or ``localhost``
-  - Try again
 
-To check that X forwarding is working well write ``fsleyes &`` in LXterminal and FSLeyes should open, depending on how fast your computer is FSLeyes may take a few seconds to open. If fsleyes is not working in the LXterminal:
+8. You can test whether GUI scripts are available by running the following command in your Docker container:
+ 
+   .. code:: bash
 
-- Check if it's working on the docker machine by running ``fsleyes &`` in the docker quickstart terminal
-- If it works, run all the commands in the docker terminal.
-- If it throws the error ``Unable to access the X Display, is $DISPLAY set properly?`` follow these next steps:
+      mkdir /tmp/runtime-root
+      sct_check_dependencies
 
-  - Run ``echo $DISPLAY`` in the LXterminal
-  - Copy the output address
-  - Run ``export DISPLAY=<previously obtained address>`` in the docker quickstart terminal
-  - Run ``fsleyes &`` (in the docker quickstart terminal) to check if it is working. A new Xming window with fsleyes should appear.
-
-Notes:
-
-- If after closing a program with graphical interface (i.e. FSLeyes) LXterminal does not raise the shell ($) prompt then press Ctrl + C to finish closing the program.
-- Docker exposes the forwarded SSH server at different endpoints depending on whether Docker Desktop or Docker Toolbox is installed.
-
-  - Docker Desktop:
-
-    .. code:: bash
-
-       ssh -Y -p 2222 sct@127.0.0.1
-
-  - Docker Toolbox:
-
-    .. code:: bash
-
-       ssh -Y -p 2222 sct@192.168.99.100
+   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT. 

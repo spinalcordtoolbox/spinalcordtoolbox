@@ -1,6 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# Core functions dealing with vertebral labeling
+"""
+Core functions dealing with vertebral labeling
+
+Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: remove i/o as much as possible
 
@@ -8,14 +11,13 @@ import os
 import logging
 
 import numpy as np
-from scipy.ndimage import distance_transform_edt
-import scipy.ndimage.measurements
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import distance_transform_edt, gaussian_filter, center_of_mass as ndimage_center_of_mass
 
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.metadata import get_file_label
 from spinalcordtoolbox.math import dilate, mutual_information
 from spinalcordtoolbox.centerline.core import get_centerline
+from spinalcordtoolbox.types import MissingDiscsError, EmptyArrayError
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,8 @@ def label_vert(fname_seg, fname_label):
     """
     # retrieve all labels
     coord_labels = Image(fname_label).change_orientation("RPI").getNonZeroCoordinates()
+    if not coord_labels:
+        raise MissingDiscsError(f'No disc labels present in file {fname_label}')
     # '-1' to use the convention "disc labelvalue=3 ==> disc C2/C3"
     discs = [(cl.z, cl.value - 1) for cl in reversed(coord_labels)]
     discs.sort(reverse=True)
@@ -249,18 +253,13 @@ def vertebral_detection(fname, fname_seg, contrast, param, init_disc, verbose=1,
     label_discs(fname_seg, discs)
 
 
-class EmptyArrayError(ValueError):
-    """Custom exception to distinguish between general SciPy ValueErrors."""
-    pass
-
-
 def center_of_mass(x):
     """
     :return: array center of mass
     """
     if (x == 0).all():
         raise EmptyArrayError("Center of mass can't be calculated on empty arrays.")
-    return scipy.ndimage.measurements.center_of_mass(x)
+    return ndimage_center_of_mass(x)
 
 
 def create_label_z(fname_seg, z, value, fname_labelz='labelz.nii.gz'):
@@ -310,10 +309,12 @@ def crop_labels(im_labeled_seg, im_seg):
     modifying on the labeled segmentation in-place.
 
     :param Image im_labeled_seg: labeled segmentation
-    :param Image im_seg: segmentation (with values in [0, 1])
+    :param Image im_seg: segmentation (can be softseg or binary)
     :return: None
     """
-    im_labeled_seg.data *= im_seg.data
+    boolean_mask = (im_seg.data != 0)    # Nonzero -> True | Zero -> False
+    im_labeled_seg.data *= boolean_mask  # Keep only voxels that were nonzero in the segmentation image
+    # Note: NumPy will cast the bool type to the integer type, with False and True converted to 0 and 1 respectively.
 
 
 def expand_labels(im_labeled_seg):

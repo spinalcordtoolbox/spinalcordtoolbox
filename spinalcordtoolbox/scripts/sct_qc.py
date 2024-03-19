@@ -1,17 +1,17 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 #
 # Generate QC report
 #
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 import os
 import sys
+from typing import Sequence
 
-from spinalcordtoolbox.utils import init_sct, set_loglevel, SCTArgumentParser
+from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.utils.sys import init_sct, list2cmdline, set_loglevel
+from spinalcordtoolbox.utils.shell import SCTArgumentParser
 
 
 def get_parser():
@@ -20,7 +20,8 @@ def get_parser():
         epilog='Examples:\n'
                'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc\n'
                'sct_qc -i t2.nii.gz -s t2_seg_labeled.nii.gz -p sct_label_vertebrae\n'
-               'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc -qc-dataset mydata -qc-subject sub-45'
+               'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -p sct_deepseg_sc -qc-dataset mydata -qc-subject sub-45\n'
+               'sct_qc -i t2.nii.gz -s t2_seg.nii.gz -d t2_lesion.nii.gz -p sct_deepseg_lesion -plane axial'
     )
     parser.add_argument('-i',
                         metavar='IMAGE',
@@ -28,10 +29,10 @@ def get_parser():
                         required=True)
     parser.add_argument('-p',
                         help='SCT function associated with the QC report to generate',
-                        choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_register_multimodal',
-                                 'sct_register_to_template', 'sct_warp_template', 'sct_label_vertebrae',
-                                 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline', 'sct_fmri_moco',
-                                 'sct_dmri_moco'),
+                        choices=('sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm', 'sct_deepseg_lesion',
+                                 'sct_register_multimodal', 'sct_register_to_template', 'sct_warp_template',
+                                 'sct_label_vertebrae', 'sct_detect_pmj', 'sct_label_utils', 'sct_get_centerline',
+                                 'sct_fmri_moco', 'sct_dmri_moco', 'sct_image_stitch'),
                         required=True)
     parser.add_argument('-s',
                         metavar='SEG',
@@ -41,6 +42,17 @@ def get_parser():
                         metavar='DEST',
                         help='Input image #2 to overlay on image #1 (requires a segmentation), or output of another '
                              'process (e.g., sct_straighten_spinalcord)',
+                        required=False)
+    parser.add_argument('-plane',
+                        help='Plane of the output QC. Only relevant for -p sct_deepseg_lesion.',
+                        choices=('axial', 'sagittal'),
+                        required=False)
+    parser.add_argument('-text-labels',
+                        help="If set to 0, text won't be drawn on top of labels. Only relevant for -p "
+                             "sct_label_vertebrae.",
+                        choices=(0, 1),
+                        default=1,
+                        type=int,
                         required=False)
     parser.add_argument('-qc',
                         metavar='QC',
@@ -74,31 +86,29 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
 
-    from spinalcordtoolbox.reports.qc import generate_qc
-    # Build args list (for display)
-    args_disp = '-i ' + arguments.i
-    if arguments.d:
-        args_disp += ' -d ' + arguments.d
-    if arguments.s:
-        args_disp += ' -s ' + arguments.s
+    if arguments.p == 'sct_deepseg_lesion' and arguments.plane is None:
+        parser.error('Please provide the plane of the output QC with -plane')
+
     generate_qc(fname_in1=arguments.i,
                 fname_in2=arguments.d,
                 fname_seg=arguments.s,
-                args=args_disp,
+                # Internal functions use capitalized strings ('Axial'/'Sagittal')
+                plane=arguments.plane.capitalize() if isinstance(arguments.plane, str) else arguments.plane,
+                args=f'("sct_qc {list2cmdline(argv)}")',
                 path_qc=arguments.qc,
                 dataset=arguments.qc_dataset,
                 subject=arguments.qc_subject,
                 process=arguments.p,
-                fps=arguments.fps,)
+                fps=arguments.fps,
+                draw_text=bool(arguments.text_labels))
 
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

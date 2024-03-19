@@ -1,7 +1,9 @@
+# pytest unit tests for sct_dmri_denoise_patch2self
+
 import pytest
 from dipy.data.fetcher import read_bvals_bvecs
 
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.image import Image, add_suffix
 from spinalcordtoolbox.scripts import (sct_dmri_concat_b0_and_dwi,
                                        sct_dmri_denoise_patch2self,

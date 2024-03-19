@@ -1,26 +1,21 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# Calculate b-value.
+# Calculate b-value
 #
 # N.B. SI unit for gyromagnetic ratio is radian per second per tesla, therefore need to multiply by 2pi.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad
-# Modified: 2014-07-10
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
-import os
 import math
+from typing import Sequence
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -101,4 +96,3 @@ def get_parser():
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

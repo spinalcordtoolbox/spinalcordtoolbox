@@ -1,16 +1,12 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Display bvecs
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
@@ -19,7 +15,8 @@ from dipy.data.fetcher import read_bvals_bvecs
 from matplotlib.lines import Line2D
 from matplotlib import cm
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 
 BZERO_THRESH = 0.0001  # b-zero threshold
 
@@ -65,7 +62,7 @@ def plot_2dscatter(fig_handle=None, subplot=None, x=None, y=None, xlabel='X', yl
     ax = fig_handle.add_subplot(subplot, aspect='equal')
     for i in range(0, len(x)):
         # if b=0, do not plot
-        if not(abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH):
+        if not (abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH):
             ax.scatter(x[i], y[i], color=colors[bvals[i]], alpha=0.7)
     # plt.axis('equal')
     plt.xlabel(xlabel)
@@ -109,7 +106,7 @@ def create_custom_legend(fig, shell_colors, bvals):
 # MAIN
 # ==========================================================================================
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -136,7 +133,7 @@ def main(argv=None):
         # skip b=0
         if unique_bval < BZERO_THRESH:
             continue
-        shell_colors[unique_bval] = next(colors)
+        shell_colors[unique_bval] = tuple(next(colors))
 
     # Get total number of directions
     n_dir = len(x)
@@ -176,7 +173,7 @@ def main(argv=None):
     for i in range(0, n_dir):
         # x, y, z = bvecs[0], bvecs[1], bvecs[2]
         # if b=0, do not plot
-        if not(abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH):
+        if not (abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH and abs(x[i]) < BZERO_THRESH):
             ax.scatter(x[i], y[i], z[i], color=shell_colors[bvals[i]], alpha=0.7)
     ax.set_xlim3d(-max(bvals), max(bvals))
     ax.set_ylim3d(-max(bvals), max(bvals))

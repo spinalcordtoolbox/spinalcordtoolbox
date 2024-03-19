@@ -1,15 +1,9 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Check the installation and environment variables of the toolbox and its dependencies.
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-# Modified: 2014-07-30
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 # TODO: if fail, run with log and display message to send to sourceforge.
 # TODO: check chmod of binaries
@@ -24,6 +18,7 @@ import importlib
 import warnings
 import psutil
 import traceback
+from typing import Sequence
 
 import requirements
 
@@ -35,15 +30,15 @@ from spinalcordtoolbox.utils.sys import (sct_dir_local_path, init_sct, run_proc,
 def _test_condition(condition):
     """Test condition formatted in requirements"""
     # Define Environment markers (https://www.python.org/dev/peps/pep-0508/#environment-markers)
-    os_name = os.name
-    platform_machine = platform.machine()
-    platform_release = platform.release()
-    platform_system = platform.system()
-    platform_version = platform.version()
-    python_full_version = platform.python_version()
-    platform_python_implementation = platform.python_implementation()
-    python_version = platform.python_version()[:3]
-    sys_platform = sys.platform
+    os_name = os.name  # noqa: F841
+    platform_machine = platform.machine()  # noqa: F841
+    platform_release = platform.release()  # noqa: F841
+    platform_system = platform.system()  # noqa: F841
+    platform_version = platform.version()  # noqa: F841
+    python_full_version = platform.python_version()  # noqa: F841
+    platform_python_implementation = platform.python_implementation()  # noqa: F841
+    python_version = platform.python_version()[:3]  # noqa: F841
+    sys_platform = sys.platform  # noqa: F841
     # Test condition
     return eval(condition)
 
@@ -62,7 +57,8 @@ def resolve_module(framework_name):
         'scikit-image': ('skimage', False),
         'scikit-learn': ('sklearn', False),
         'pyqt5': ('PyQt5.QtCore', False),  # Importing Qt instead PyQt5 to be able to catch this issue #2523
-        'Keras': ('keras', True),
+        'pyqt5-sip': ('PyQt5.sip', False),
+        'pyyaml': ('yaml', False),
         'futures': ("concurrent.futures", False),
         'opencv': ('cv2', False),
         'msvc-runtime': ('msvc_runtime', False),
@@ -94,7 +90,7 @@ def module_import(module_name, suppress_stderr=False):
             sys.stderr = io.TextIOWrapper(io.BytesIO(), sys.stderr.encoding)
         try:
             module = importlib.import_module(module_name)
-        except Exception as e:
+        except Exception:
             sys.stderr = original_stderr
             raise
         else:
@@ -192,11 +188,14 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = complete_test = arguments.complete
     set_loglevel(verbose=verbose)
+
+    print("\nSYSTEM INFORMATION"
+          "\n------------------")
 
     print("SCT info:")
     print("- version: {}".format(__version__))
@@ -239,6 +238,29 @@ def main(argv=None):
 
     if arguments.short:
         sys.exit()
+
+    # Check version of FSLeyes
+    # NB: We put this section first because typically, it will error out, since FSLeyes isn't installed by default.
+    #     SCT devs want to have access to this information, but we don't want to scare our users into thinking that
+    #     there's a critical error. So, we put it up top to allow the installation to end on a nice "OK" note.
+    if not sys.platform.startswith('win32'):
+        print("\nOPTIONAL DEPENDENCIES"
+              "\n---------------------")
+
+        print_line('Check FSLeyes version')
+        cmd = 'fsleyes --version'
+        status, output = run_proc(cmd, verbose=0, raise_exception=False)
+        # Exit code 0 - command has run successfully
+        if status == 0:
+            # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
+            fsleyes_version = output.split()[2]
+            print_ok(more=(" (%s)" % fsleyes_version))
+        else:
+            print('[  ]')
+            print('  ', (status, output))
+
+    print("\nMANDATORY DEPENDENCIES"
+          "\n----------------------")
 
     # check if Python path is within SCT path
     print_line('Check Python executable')
@@ -295,8 +317,8 @@ def main(argv=None):
 
     # Check ANTs integrity
     print_line('Check ANTs compatibility with OS ')
-    cmd = 'isct_test_ants'
-    status, output = run_proc(cmd, verbose=0, raise_exception=False)
+    cmd = ["sct_testing", os.path.join(__sct_dir__, "testing", "dependencies", "test_ants.py")]
+    status, output = run_proc(cmd, verbose=0, raise_exception=False, is_sct_binary=True)
     if status == 0:
         print_ok()
     else:
@@ -312,6 +334,7 @@ def main(argv=None):
         print_line("Skipping PropSeg compatibility check ")
         print("[  ] (Not supported on 'native' Windows (without WSL))")
     else:
+        print_line('Check PropSeg compatibility with OS ')
         status, output = run_proc('isct_propseg', verbose=0, raise_exception=False, is_sct_binary=True)
         if status in (0, 1):
             print_ok()
@@ -321,20 +344,6 @@ def main(argv=None):
             e = 1
         if complete_test:
             print((status, output), '\n')
-
-    print_line('Check if figure can be opened with matplotlib')
-    try:
-        import matplotlib
-        # If matplotlib is using a GUI backend, the default 'show()` function will be overridden
-        # See: https://github.com/matplotlib/matplotlib/issues/20281#issuecomment-846467732
-        fig = plt.figure()  # NB: `plt` was imported earlier in the script to avoid a libgcc error
-        if getattr(fig.canvas.manager.show, "__func__", None) != matplotlib.backend_bases.FigureManagerBase.show:
-            print_ok(f" (Using GUI backend: '{matplotlib.get_backend()}')")
-        else:
-            print_fail(f" (Using non-GUI backend '{matplotlib.get_backend()}')")
-    except Exception as err:
-        print_fail()
-        print(err)
 
     print_line('Check if figure can be opened with PyQt')
     if sys.platform.startswith("linux") and 'DISPLAY' not in os.environ:
@@ -351,32 +360,19 @@ def main(argv=None):
             print_fail()
             print(err)
 
-    # Check version of FSLeyes
-    if not sys.platform.startswith('win32'):
-        print_line('Check FSLeyes version')
-        cmd = 'fsleyes --version'
-        status, output = run_proc(cmd, verbose=0, raise_exception=False)
-        # Exit code 0 - command has run successfully
-        if status == 0:
-            # Fetch only version number (full output of 'fsleyes --version' is 'fsleyes/FSLeyes version 0.34.2')
-            fsleyes_version = output.split()[2]
-            print_ok(more=(" (%s)" % fsleyes_version))
-        # Exit code 126 - Command invoked cannot execute (permission problem or command is not an executable)
-        elif status == 126:
-            print('Command not executable. Please check permissions of fsleyes command.')
-        # Exit code 127 - Command not found (possible problem with $PATH)
-        elif status == 127:
-            print('Command not found. If you installed FSLeyes as part of FSL package, please check that FSL is included '
-                  'in $PATH variable. If you installed FSLeyes using conda environment, make sure that the environment is '
-                  'activated. If you do not have FSLeyes installed, consider its installation to easily visualize '
-                  'processing outputs and/or to use SCT within FSLeyes. More info at: '
-                  'https://spinalcordtoolbox.com/en/latest/user_section/fsleyes.html')
-        # All other exit codes
+    print_line('Check if figure can be opened with matplotlib')
+    try:
+        import matplotlib
+        # If matplotlib is using a GUI backend, the default 'show()` function will be overridden
+        # See: https://github.com/matplotlib/matplotlib/issues/20281#issuecomment-846467732
+        fig = plt.figure()  # NB: `plt` was imported earlier in the script to avoid a libgcc error
+        if getattr(fig.canvas.manager.show, "__func__", None) != matplotlib.backend_bases.FigureManagerBase.show:
+            print_ok(f" (Using GUI backend: '{matplotlib.get_backend()}')")
         else:
-            print(f'Exit code {status} occurred. Please report this issue on SCT GitHub: '
-                  f'https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues')
-            if complete_test:
-                print(output)
+            print_fail(f" (Using non-GUI backend '{matplotlib.get_backend()}')")
+    except Exception as err:
+        print_fail()
+        print(err)
 
     print('')
     sys.exit(e + install_software)

@@ -1,20 +1,16 @@
 #!/usr/bin/env python
-##############################################################################
 #
 # Wrapper to processing scripts, which loops across subjects. Data should be
 # organized according to the BIDS structure and the processing script should
 # make use of the some of the environment variables passed here. More details
 # at: https://spine-generic.readthedocs.io/en/latest/
 #
-# ----------------------------------------------------------------------------
 # Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad, Chris Hammill
-#
-# About the license: see the file LICENSE.TXT
-##############################################################################
+# License: see the file LICENSE
 
 import os
 import sys
+import pathlib
 from getpass import getpass
 import multiprocessing
 import subprocess
@@ -27,6 +23,7 @@ import json
 import tempfile
 import warnings
 import shutil
+from typing import Sequence
 from types import SimpleNamespace
 from textwrap import dedent
 
@@ -58,21 +55,24 @@ def get_parser():
                         'file are the same as the command line arguments, except all dashes (-) are replaced with '
                         'underscores (_). Using command line flags can be used to override arguments provided in '
                         'the configuration file, but this is discouraged. Please note that while quotes are optional '
-                        'for strings in YAML omitting them may cause parse errors.\n' + dedent(
+                        'for strings in YAML omitting them may cause parse errors.\n'
+                        'Note that for the \'exclude_list\' (or \'include_list\') argument you can exclude/include '
+                        'entire subjects or individual sessions; see examples below.\n' + dedent(
                             """
                             Example YAML configuration:
                             path_data   : "~/sct_data"
                             path_output : "~/pipeline_results"
                             script      : "nature_paper_analysis.sh"
-                            jobs        : -1\n
+                            jobs        : -1
+                            exclude_list : ["sub-01/ses-01", "sub-02", "ses-03"]      # this will exclude ses-01 for sub-01, all sessions for sub-02 and ses-03 for all subjects\n
                             Example JSON configuration:
                             {
-                            "path_data"   : "~/sct_data"
-                            "path_output" : "~/pipeline_results"
-                            "script"      : "nature_paper_analysis.sh"
-                            "jobs"        : -1
-                            }\n
-                            """))
+                            "path_data"   : "~/sct_data",
+                            "path_output" : "~/pipeline_results",
+                            "script"      : "nature_paper_analysis.sh",
+                            "jobs"        : -1,
+                            "exclude_list" : ["sub-01/ses-01", "sub-02", "ses-03"]
+                            }"""))
     parser.add_argument('-jobs', type=int, default=1,
                         help='The number of jobs to run in parallel. Either an integer greater than or equal to one '
                         'specifying the number of cores, 0 or a negative integer specifying number of cores minus '
@@ -112,23 +112,37 @@ def get_parser():
                         'a subject if they match the regex. Inclusions are processed before exclusions. '
                         'Cannot be used with `include-list`.')
     parser.add_argument('-include-list',
-                        help='Optional space separated list of subjects to include. Only process '
-                        'a subject if they are on this list. Inclusions are processed before exclusions. '
-                        'Cannot be used with `include`.', nargs='+')
+                        help='Optional space separated list of subjects or sessions to include. Only process '
+                        'subjects or sessions if they are on this list. Inclusions are processed before exclusions. '
+                        'Cannot be used with `include`. You can combine subjects and sessions; see examples.\n'
+                        'Examples: \'-include-list sub-001 sub-002\' or \'-include-list sub-001/ses-01 ses-02\'',
+                        nargs='+')
     parser.add_argument('-exclude',
                         help='Optional regex used to filter the list of subject directories. Only process '
                         'a subject if they do not match the regex. Exclusions are processed '
                         'after inclusions. Cannot be used with `exclude-list`')
     parser.add_argument('-exclude-list',
-                        help='Optional space separated list of subjects to exclude. Only process '
-                        'a subject if they are not on this list. Inclusions are processed before exclusions. '
-                        'Cannot be used with either `exclude`.', nargs='+')
+                        help='Optional space separated list of subjects or sessions to exclude. Only process subjects '
+                        'or sessions if they are not on this list. Inclusions are processed before exclusions. '
+                        'Cannot be used with `exclude`. You can combine subjects and sessions; see examples.\n'
+                        'Examples: \'-exclude-list sub-003 sub-004\' or \'-exclude-list sub-003/ses-01 ses-02\'',
+                        nargs='+')
+    parser.add_argument('-ignore-ses', action='store_true',
+                        help="By default, if 'ses' subfolders are present, then 'sct_run_batch' will run the script "
+                             "within each individual 'ses' subfolder. Passing `-ignore-ses` will change the behavior "
+                             "so that 'sct_run_batch' will not go into each 'ses' folder. Instead, it will run the "
+                             "script on just the top-level subject folders.")
     parser.add_argument('-path-segmanual', default='.',
                         help='Setting for environment variable: PATH_SEGMANUAL\n'
                         'A path containing manual segmentations to be used by the script program.')
     parser.add_argument('-script-args', default='',
-                        help='A quoted string with extra flags and arguments to pass to the script. '
-                        'For example \'sct_run_batch -path-data data/ -script-args "-foo bar -baz /qux" process_data.sh \'')
+                        help='A quoted string with extra arguments to pass to the script.\n'
+                             'For example \'sct_run_batch -path-data data/ -script process_data.sh '
+                             '-script-args "ARG1 ARG2"\'.\n'
+                             'The arguments are retrieved by a script as \'${2}\', \'${3}\', etc.\n'
+                             'Note: \'${1}\' is reserved for the subject folder name, which is retrieved '
+                             'automatically.\n'
+                             'Note: Do not use \'~\' in the path. Use \'${HOME}\' instead.')
     parser.add_argument('-email-to',
                         help='Optional email address where sct_run_batch can send an alert on completion of the '
                         'batch processing.')
@@ -172,6 +186,65 @@ def _find_nonsys32_bash_exe():
     nonsys32_paths = os.pathsep.join([p for p in os.environ['PATH'].split(os.pathsep)
                                       if 'system32' not in p.lower()])
     return shutil.which('bash', path=nonsys32_paths)
+
+
+def _parse_dataset_directory(path_data, subject_prefix="sub-", ignore_ses=False):
+    """
+    Parse a dataset directory to find subject directories (and session subdirectories, if present).
+
+    Notes:
+        - The dataset is assumed to be structured in a (somewhat) BIDS-compliant way, see:
+          https://bids-specification.readthedocs.io/en/stable/02-common-principles.html#file-name-structure
+        - This function is a rudimentary version of the library PyBIDS: https://github.com/bids-standard/pybids.
+          TODO: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3415
+    """
+    dirs = []
+    subject_dirs = sorted([d.name for d in os.scandir(path_data)
+                           if d.name.startswith(subject_prefix)
+                           and d.is_dir()])
+    for sub_dir in subject_dirs:
+        session_dirs = sorted([d.name for d in os.scandir(os.path.join(path_data, sub_dir))
+                               if d.name.startswith('ses-')
+                               and d.is_dir()])
+        if session_dirs and not ignore_ses:
+            # There is a 'ses-' subdirectory AND arguments.ignore_ses = False, so we concatenate: e.g. sub-XX/ses-YY
+            for sess_dir in session_dirs:
+                dirs.append(os.path.join(sub_dir, sess_dir))
+        else:
+            # Otherwise, consider only 'sub-' directories and don't include 'ses-' subdirectories: e.g. sub-XX
+            dirs.append(sub_dir)
+
+    return dirs
+
+
+def _filter_directories(dir_list, include=None, include_list=None, exclude=None, exclude_list=None):
+    """
+    Filter a list of directories using inclusion/exclusion regex patterns or explicit lists.
+
+    NB: Only one of [include, include_list] and only one of [exclude, exclude_list] should be passed.
+        (Currently, this requirement is handled at the argument-parsing level, because we use `parser.error`.)
+    """
+    # Handle inclusions (regex OR explicit list, but not both)
+    if include is not None:
+        dir_list = [f for f in dir_list if re.search(include, f)]
+    elif include_list is not None:
+        dir_list = [f for f in dir_list
+                    # Check if include_list specified entire path (e.g. "sub-01/ses-01")
+                    if f in include_list
+                    # Check if include_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
+                    or any(p in include_list for p in pathlib.Path(f).parts)]
+
+    # Handle exclusions (regex OR explicit list, but not both)
+    if exclude is not None:
+        dir_list = [f for f in dir_list if not re.search(exclude, f)]
+    elif exclude_list is not None:
+        dir_list = [f for f in dir_list
+                    # Check if exclude_list specified entire path (e.g. "sub-01/ses-01")
+                    if f not in exclude_list
+                    # Check if exclude_list specified a subdirectory (e.g. just "sub-01" or just "ses-01")
+                    and all(p not in exclude_list for p in pathlib.Path(f).parts)]
+
+    return dir_list
 
 
 def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_data_processed, path_results, path_log,
@@ -222,7 +295,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
         'ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS': str(itk_threads),
         'SCT_PROGRESS_BAR': 'off'
     })
-    if 'SCT_DIR' not in envir:  # For native Windows installations, the install script won't add SCT_DIR
+    if 'SCT_DIR' not in envir:
         envir['SCT_DIR'] = __sct_dir__
 
     cmd = [script_full, subj_dir] + script_args.split(' ')
@@ -250,7 +323,8 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
                              stdout=open(log_file, 'w'),
                              stderr=subprocess.STDOUT)
 
-        assert res.returncode == 0, 'Processing of subject {} failed'.format(subject)
+        if res.returncode != 0:
+            raise ValueError(f"Processing of subject {subject} failed")
     except Exception as e:
         process_completed = 'res' in locals()
         res = res if process_completed else SimpleNamespace(returncode=-1)
@@ -269,7 +343,7 @@ def run_single(subj_dir, script, script_args, path_segmanual, path_data, path_da
     return res
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -282,8 +356,10 @@ def main(argv=None):
             _, ext = os.path.splitext(arguments.config)
             if ext == '.json':
                 config = json.load(conf)
-            if ext == '.yml' or ext == '.yaml':
+            elif ext == '.yml' or ext == '.yaml':
                 config = yaml.load(conf, Loader=yaml.Loader)
+            else:
+                raise ValueError('Unrecognized configuration file type: {}'.format(ext))
 
         # Warn people if they're overriding their config file
         if len(argv) > 2:
@@ -413,7 +489,7 @@ def main(argv=None):
     else:
         try:
             # Copy the script and record the new location
-            script_copy = os.path.abspath(shutil.copy(script, arguments.path_output))
+            script_copy = os.path.abspath(shutil.copy(script, path_output))
             print("{} -> {}".format(script, script_copy))
             script = script_copy
         except shutil.SameFileError:
@@ -430,42 +506,17 @@ def main(argv=None):
     print("git commit: {}".format(__get_commit(path_to_git_folder=path_data)))
     print("git origin: {}\n".format(__get_git_origin(path_to_git_folder=path_data)))
 
-    # Find subjects and process inclusion/exclusions
-    subject_dirs = []
-    subject_flat_dirs = [f for f in os.listdir(path_data) if f.startswith(arguments.subject_prefix)]
-    for isub in subject_flat_dirs:
-        # Only consider folders
-        if os.path.isdir(os.path.join(path_data, isub)):
-            session_dirs = [f for f in os.listdir(os.path.join(path_data, isub)) if f.startswith('ses-')]
-            if not session_dirs:
-                # There is no session folder, so we consider only sub- directory: sub-XX
-                subject_dirs.append(isub)
-            else:
-                # There is a session folder, so we concatenate: sub-XX/ses-YY
-                session_dirs.sort()
-                for isess in session_dirs:
-                    subject_dirs.append(os.path.join(isub, isess))
+    subject_dirs = _parse_dataset_directory(path_data, arguments.subject_prefix, arguments.ignore_ses)
 
-    # Handle inclusion lists
-    assert not ((arguments.include is not None) and (arguments.include_list is not None)),\
-        'Only one of `include` and `include-list` can be used'
+    if (arguments.include is not None) and (arguments.include_list is not None):
+        parser.error('Only one of `include` and `include-list` can be used')
 
-    if arguments.include is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(arguments.include, f) is not None]
+    if (arguments.exclude is not None) and (arguments.exclude_list is not None):
+        parser.error('Only one of `exclude` and `exclude-list` can be used')
 
-    if arguments.include_list is not None:
-        # TODO decide if we should warn users if one of their inclusions isn't around
-        subject_dirs = [f for f in subject_dirs if f in arguments.include_list]
-
-    # Handle exclusions
-    assert not ((arguments.exclude is not None) and (arguments.exclude_list is not None)),\
-        'Only one of `exclude` and `exclude-list` can be used'
-
-    if arguments.exclude is not None:
-        subject_dirs = [f for f in subject_dirs if re.search(arguments.exclude, f) is None]
-
-    if arguments.exclude_list is not None:
-        subject_dirs = [f for f in subject_dirs if f not in arguments.exclude_list]
+    subject_dirs = _filter_directories(subject_dirs,
+                                       include=arguments.include, include_list=arguments.include_list,
+                                       exclude=arguments.exclude, exclude_list=arguments.exclude_list)
 
     # Determine the number of jobs we can run simultaneously
     if arguments.jobs < 1:
@@ -526,7 +577,7 @@ def main(argv=None):
     # Display timing
     duration = end - start
     timing_message = ('Started: {} | Ended: {} | Duration: {}\n'.format(
-        start.strftime('%Hh%Mm%Ss'),
+        start.strftime('%F %Hh%Mm%Ss'),
         end.strftime('%Hh%Mm%Ss'),
         (datetime.datetime.utcfromtimestamp(0) + duration).strftime('%Hh%Mm%Ss')))
     print(timing_message)

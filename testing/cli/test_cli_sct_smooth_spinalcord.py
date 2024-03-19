@@ -1,3 +1,5 @@
+# pytest unit tests for sct_smooth_spinalcord
+
 import pytest
 import logging
 import os

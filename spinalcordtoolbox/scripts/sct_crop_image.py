@@ -1,18 +1,17 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
 #
-# CLI script to crop an image.
+# CLI script to crop an image
 #
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.image import Image, add_suffix
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, list_type
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
 
 
 def get_parser():
@@ -29,6 +28,9 @@ def get_parser():
                "- To crop an image by specifying min/max (you don't need to specify all dimensions). In the example "
                "below, cropping will occur between x=5 and x=60, and between z=5 and z=zmax-1\n"
                "sct_crop_image -i t2.nii.gz -xmin 5 -xmax 60 -zmin 5 -zmax -2\n\n"
+               "- To crop an image using a binary mask, and keep a margin of 5 voxels on each side in the x and y "
+               "directions only:\n"
+               "sct_crop_image -i t2.nii.gz -m mask.nii.gz -dilate 5x5x0\n\n"
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
@@ -50,6 +52,16 @@ def get_parser():
         help="Output image. By default, the suffix '_crop' will be added to the input image.",
         metavar=Metavar.str,
     )
+    optional.add_argument(
+        '-dilate',
+        type=list_type('x', int),
+        help="Number of extra voxels to keep around the bounding box on each side. Can be specified as a single "
+             "number, or a list of 3 numbers separated by 'x'. For example:\n"
+             "  - '-dilate 5' will add a margin of 5 voxels in each direction\n"
+             "  - '-dilate 2x3x0' will add margin of 2 voxels on each side in the x-axis, 3 voxels on each side in the y-axis, "
+             "and no extra margin in the z-axis.",
+        metavar=Metavar.list,
+    ),
     optional.add_argument(
         '-g',
         type=int,
@@ -132,7 +144,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -142,6 +154,18 @@ def main(argv=None):
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
+
+    dilate = arguments.dilate
+    if dilate is not None:
+        if len(dilate) == 1:
+            dilate *= 3
+        elif len(dilate) == 3:
+            pass  # use dilate as-is
+        else:
+            parser.error(
+                f"Option '-dilate' expected either 1 or 3 numbers, but got "
+                f"{len(dilate)} numbers: {'x'.join(str(d) for d in dilate)}."
+            )
 
     # initialize ImageCropper
     cropper = ImageCropper(Image(arguments.i))
@@ -161,7 +185,7 @@ def main(argv=None):
             arguments.zmin, arguments.zmax)
 
     # Crop image
-    img_crop = cropper.crop(background=arguments.b)
+    img_crop = cropper.crop(background=arguments.b, dilate=dilate)
 
     # Write cropped image to file
     if arguments.o is None:
@@ -170,10 +194,9 @@ def main(argv=None):
         fname_out = arguments.o
     img_crop.save(fname_out)
 
-    display_viewer_syntax([arguments.i, fname_out])
+    display_viewer_syntax([arguments.i, fname_out], verbose=verbose)
 
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

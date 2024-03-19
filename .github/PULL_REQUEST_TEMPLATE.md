@@ -1,4 +1,4 @@
-<!-- Hi, and thank you for submitting a Pull Request! The checklist below is a brief summary of steps found in the NeuroPoly Contributing Guidelines, which can be found here: https://intranet.neuro.polymtl.ca/geek-tips/contributing. 
+<!-- Hi, and thank you for submitting a Pull Request! The checklist below is a brief summary of steps found in the NeuroPoly Contributing Guidelines, which can be found here: https://intranet.neuro.polymtl.ca/onboarding/software-development.html#software-development. 
 -->
 
 ## Checklist
@@ -7,7 +7,7 @@
 
 - [ ] I've given this PR a concise, self-descriptive, and meaningful title
 - [ ] I've linked relevant issues in the PR body
-- [ ] I've applied [the relevant labels](https://intranet.neuro.polymtl.ca/geek-tips/contributing#pr-labels-a-href-pr-labels-id-pr-labels-a) to this PR
+- [ ] I've applied [the relevant labels](https://intranet.neuro.polymtl.ca/onboarding/software-development.html#pr-labels) to this PR
 - [ ] I've applied a [release milestone](https://github.com/spinalcordtoolbox/spinalcordtoolbox/milestones) (major, minor, patch) in line with [Semantic Versioning guidelines](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Misc%3A-Creating-a-new-release#convention-for-naming-releases) 
 - [ ] I've assigned a reviewer
 
@@ -20,8 +20,8 @@
 #### PR contents
 
 - [ ] I've consulted [SCT's internal developer documentation](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki) to ensure my contribution is in line with any relevant design decisions
-- [ ] I've added [relevant tests](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Programming%3A-Tests) for my contribution
-- [ ] I've updated the [relevant documentation](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Programming%3A-Documentation) for my changes, including argparse descriptions, docstrings, and ReadTheDocs tutorial pages
+- [ ] I've added [relevant tests](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Testing) for my contribution
+- [ ] I've updated the [relevant documentation](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Documentation) for my changes, including argparse descriptions, docstrings, and ReadTheDocs tutorial pages
 
 ## Description
 <!-- describe what the PR is about. Explain the approach and possible drawbacks.It's ok to repeat some text from the related issue. -->

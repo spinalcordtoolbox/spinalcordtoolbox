@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # This is the spinalcord toolbox (SCT) installer
-# It downloads the Conda (http://conda.pydata.org/) version
+# It downloads the Conda (https://conda.pydata.org/) version
 # of python and installs the SCT requirements over it
 #
 # The SCT can be installed in the location where you download it. If you choose to do so,
@@ -24,16 +24,14 @@
 #  -c   Prevent checks from being run to validate the installation
 #  -v   Full verbose
 #
-#
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: PO Quirion, J Cohen-Adad, J Carretero
-# License: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 
 ( # | tee install_sct_log.txt
 
 # Change directory to where the script is, for the duration of the script.
-cd "$(dirname $0)" || exit 1
+cd "$(dirname "$0")" || exit 1
 
 # stricter shell mode
 # https://sipb.mit.edu/doc/safe-shell/
@@ -45,7 +43,6 @@ shopt -s failglob # error if a glob doesn't find any files, instead of remaining
 
 # Where tmp file are stored
 TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t 'TMP_DIR')"
-SCT_SOURCE="$PWD"
 DATA_DIR="data"
 PYTHON_DIR="python"
 BIN_DIR="bin"
@@ -57,6 +54,8 @@ NONINTERACTIVE=""
 NO_DATA_INSTALL=""
 NO_SCT_BIN_INSTALL=""
 NO_INSTALL_VALIDATION=""
+# Default value: 'master', however this value is updated on stable release branches.
+SCT_GIT_REF="master"
 
 # ======================================================================================================================
 # FUNCTIONS
@@ -110,6 +109,7 @@ function run() {
 }
 
 # Force a clean exit
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function, since it's invoked in a trap
 function finish() {
   # Catch the last return code
   value="$?"
@@ -120,9 +120,9 @@ function finish() {
     echo ""
   else
     print error "Installation failed!\n
-Please find the file \"$SCT_SOURCE/install_sct_log.txt\",
+Please find the file \"$PWD/install_sct_log.txt\",
 then upload it as a .txt attachment in a new topic on SCT's forum:
---> http://forum.spinalcordmri.org/c/sct"
+--> https://forum.spinalcordmri.org/c/sct"
   fi
   # clean tmp_dir
   rm -rf "$TMP_DIR"
@@ -130,6 +130,7 @@ then upload it as a .txt attachment in a new topic on SCT's forum:
 }
 
 # reenable tty echo when user presses keyboard interrupt and output non-zero status for finish() function
+# shellcheck disable=SC2317  # Don't warn about unreachable commands in this function, since it's invoked in a trap
 detectKeyboardInterrupt() {
       # reenable tty echo
       print error "Installation aborted by the user."
@@ -153,7 +154,7 @@ function fetch_os_type() {
     macOSmajor="$(echo "$OSver" | cut -f 1 -d '.')"
     macOSminor="$(echo "$OSver" | cut -f 2 -d '.')"
     # Make sure OSver is supported
-    if [[ "${macOSmajor}" = 10 ]] && [[ "${macOSminor}" < "${MACOSSUPPORTED}" ]]; then
+    if [[ "${macOSmajor}" = 10 ]] && [[ "${macOSminor}" -lt "${MACOSSUPPORTED}" ]]; then
       die "Sorry, this version of macOS (10.$macOSminor) is not supported. The minimum version is 10.$MACOSSUPPORTED."
     fi
     # Fix for non-English Unicode systems on MAC
@@ -181,6 +182,28 @@ function check_requirements() {
   # check curl
   if [[ ! ( $(command -v curl) || $(command -v wget) ) ]]; then
     die "ERROR: neither \"curl\" nor \"wget\" is installed. Please install either of them and restart SCT installation."
+  fi
+  # check rosetta
+  if [[ "$OS" == "osx" ]]; then
+    if ! arch -x86_64 true >/dev/null 2>&1; then
+      print warning "WARNING: not running an x86_64 architecture."
+      while [[ ! "$ROSETTA_INSTALL" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+        ROSETTA_INSTALL="no"
+        if [ -z "$NONINTERACTIVE" ]; then
+          print question "Do you want to install \"Rosetta 2\" now? [y]es/[n]o:"
+          read -r ROSETTA_INSTALL
+        fi
+      done
+      if [[ "$ROSETTA_INSTALL" =~ ^[Yy](es)? ]]; then
+        softwareupdate --install-rosetta
+        # check if we can now run x86_64 executables
+        if ! arch -x86_64 true >/dev/null 2>&1; then
+          die "ERROR: still cannot run x86_64 executables. Please contact SCT team for assistance."
+        fi
+      else
+        die "Please install \"Rosetta 2\" by running \"softwareupdate --install-rosetta\" and restart SCT installation."
+      fi
+    fi
   fi
   # check gcc
   if ! gcc --version > /dev/null 2>&1; then
@@ -313,23 +336,6 @@ function usage() {
   ' "$0"
 }
 
-if [ "$(uname)" = "Darwin" ]; then
-  # macOS polyfills
-
-  # Linux has `realpath` and `readlink -f`.
-  # BSD has `readlink -f`.
-  # macOS has neither: https://izziswift.com/how-can-i-get-the-behavior-of-gnus-readlink-f-on-a-mac/
-  # even though it *has* the function in its libc: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man3/realpath.3.html
-  # Someone even wrote a whole C program just for this: https://github.com/harto/realpath-osx/.
-  # https://stackoverflow.com/a/3572105 suggests some bash trickery but it
-  # seems pretty fragile and that it probably doesn't actually expand symlinks.
-  # So here, solve it with python. It's not great either, but since much of
-  # this script already is just calling python at least it's reliable.
-  (command -v realpath >/dev/null) || realpath() {
-    python3 -c 'import sys, os; [print(os.path.realpath(f)) for f in sys.argv[1:]]' "$@"
-  }
-fi
-
 # ======================================================================================================================
 # SCRIPT STARTS HERE
 # ======================================================================================================================
@@ -401,23 +407,33 @@ print info "
 fetch_os_type
 check_requirements
 
-# Catch SCT version
+# Check to see if the PWD contains the project source files (using `version.txt` as a proxy for the entire source dir)
+# If it exists, then we can reliably access source files (`version.txt`, `requirements-freeze.txt) from the PWD.
 if [[ -e "spinalcordtoolbox/version.txt" ]]; then
-  SCT_VERSION="$(cat spinalcordtoolbox/version.txt)"
+  SCT_SOURCE="$PWD"
+# If version.txt isn't present, then the installation script is being run by itself (i.e. without source files).
+# So, we need to clone SCT to a TMPDIR to access the source files, and update SCT_SOURCE accordingly.
 else
-  die "ERROR: version.txt not found."
+  SCT_SOURCE="$TMP_DIR/spinalcordtoolbox"
+  echo "Source files not present. Downloading source files (@ $SCT_GIT_REF) to $SCT_SOURCE."
+  git clone -b "$SCT_GIT_REF" --single-branch --depth 1 https://github.com/spinalcordtoolbox/spinalcordtoolbox.git "$SCT_SOURCE"
+  # Since we're git cloning into a TMPDIR, this can never be an "in-place" installation, so we force "package" instead.
+  SCT_INSTALL_TYPE="package"
 fi
 
-# Get installation type (from git or from package) if not already specified
+# Get installation type if not already specified
 if [[ -z "$SCT_INSTALL_TYPE" ]]; then
-  # The file 'requirements-freeze.txt` only exists on the `release` branch
-  # or in stable release "Source Code" .zips (which point at tags `release`)
-  if [[ -e "requirements-freeze.txt" ]]; then
-    SCT_INSTALL_TYPE="package"   # i.e. release installations
+  # The file 'requirements-freeze.txt` only exists for stable releases
+  if [[ -e "$SCT_SOURCE/requirements-freeze.txt" ]]; then
+    SCT_INSTALL_TYPE="package"
+  # If it doesn't exist, then we can assume that a dev is performing an in-place installation from master
   else
-    SCT_INSTALL_TYPE="in-place"  # i.e. dev installations
+    SCT_INSTALL_TYPE="in-place"
   fi
 fi
+
+# Fetch the version of SCT from the source file
+SCT_VERSION=$(cat "$SCT_SOURCE/spinalcordtoolbox/version.txt")
 
 # Define sh files
 get_shell_rc_path
@@ -427,24 +443,6 @@ echo -e "\nSCT version ......... $SCT_VERSION"
 echo -e "Installation type ... $SCT_INSTALL_TYPE"
 echo -e "Operating system .... $OS ($OSver)"
 echo -e "Shell config ........ $RC_FILE_PATH"
-
-REPORT_STATS="no"
-if [ -z "$NONINTERACTIVE" ]; then
-  # Send crash statistic and error logs to developers, that is the question:
-  print question "To improve user experience and fix bugs, the SCT development team is using a
-report system to automatically receive crash reports and errors from users.
-These reports are anonymous.
-
-Do you agree to help us improve SCT? [y]es/[n]o: "
-  read -r REPORT_STATS
-fi
-
-if [[ "$REPORT_STATS" =~ [Yy](es)? ]]; then
-  echo -ne '# Auto-generated by install_sct\nimport os\nSENTRY_DSN=os.environ.get("SCT_SENTRY_DSN", "https://5202d7c96ad84f17a24bd2653f1c4f9e:c1394bb176cc426caf0ff6a9095fb955@sentry.io/415369")\n' >spinalcordtoolbox/sentry_dsn.py
-  print info "--> Crash reports will be sent to the SCT development team. Thank you!"
-else
-  print info "--> Crash reports will not be sent."
-fi
 
 # if installing from git folder, then becomes default installation folder
 if [[ "$SCT_INSTALL_TYPE" == "in-place" ]]; then
@@ -481,8 +479,15 @@ Do you agree? [y]es/[n]o: "
   # Remove trailing /
   new_install="${new_install%/}"
 
+  # Check user-selected path for spaces
+  space_regex="[[:space:]]+"
+  if [[ $SCT_DIR =~ $space_regex ]]; then
+    print info "ERROR: Install directory $SCT_DIR contains spaces.\n\
+                SCT uses conda, which does not permit spaces in installation paths.\n\
+                More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
+    continue
   # Avoid horrible bug, like removing /bin if SCT_DIR "/" or $HOME/bin
-  if [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]]; then
+  elif [[ "$new_install" == "/" ]] || [[ "$HOME" == "${new_install%/}" ]]; then
     print info "Cannot be installed directly in $new_install"
     print info "Please pick a full path"
     continue
@@ -500,23 +505,6 @@ Do you agree? [y]es/[n]o: "
   fi
 done
 
-space_regex="[[:space:]]+"
-if [[ $SCT_DIR =~ $space_regex ]]; then
-  die "ERROR: Install directory $SCT_DIR contains spaces.\n\
-       SCT uses conda, which does not permit spaces in installation paths.\n\
-       More details can be found here: https://github.com/ContinuumIO/anaconda-issues/issues/716"
-fi
-
-# update PATH environment?
-add_to_path=""
-while [[ ! "$add_to_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
-  add_to_path="yes"
-  if [ -z "$NONINTERACTIVE" ]; then
-    print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
-    read -r add_to_path
-  fi
-done
-
 # Create directory
 mkdir -p "$SCT_DIR"
 # check if directory was created
@@ -527,15 +515,6 @@ if [[ -d "$SCT_DIR" ]]; then
   fi
 else
   die "ERROR: $SCT_DIR cannot be created. Make sure you have write permission."
-fi
-
-# Update PATH variables based on Shell type
-if [[ $THE_RC == "bash" ]]; then
-  DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
-elif [[ $THE_RC == "csh" ]]; then
-  DISPLAY_UPDATE_PATH="setenv PATH \"$SCT_DIR/$BIN_DIR:\$PATH\""
-else
-  die "This variable is not recognized: THE_RC=$THE_RC"
 fi
 
 # Copy files to destination directory
@@ -552,6 +531,15 @@ if [[ -x "$SCT_DIR/$BIN_DIR" ]]; then
   find "$SCT_DIR/$BIN_DIR" -type l -name 'sct_*' -exec rm {} \;
   find "$SCT_DIR/$BIN_DIR" -type l -name 'isct_*' -exec rm {} \;
 fi
+# Remove old python folder
+if [[ -x "$SCT_DIR/$BIN_DIR" ]]; then
+  run rm -rf "$SCT_DIR/$PYTHON_DIR"
+  run mkdir -p "$SCT_DIR/$PYTHON_DIR"
+fi
+# Remove old '.egg-info` folder created by editable installs
+if [[ -x "$SCT_DIR"/spinalcordtoolbox.egg-info ]]; then
+  run rm -rf "$SCT_DIR"/spinalcordtoolbox.egg-info
+fi
 
 # Go to installation folder
 cd "$SCT_DIR"
@@ -563,18 +551,37 @@ fi
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# Install Python
+# Handle RC files / $PATH setting
 # ----------------------------------------------------------------------------------------------------------------------
 
+# update PATH environment?
+add_to_path=""
+while [[ ! "$add_to_path" =~ ^([Yy](es)?|[Nn]o?)$ ]]; do
+  add_to_path="yes"
+  if [ -z "$NONINTERACTIVE" ]; then
+    print question "Do you want to add the sct_* scripts to your PATH environment? [y]es/[n]o: "
+    read -r add_to_path
+  fi
+done
 
-# Remove old python folder
-run rm -rf "$SCT_DIR/$PYTHON_DIR"
-run mkdir -p "$SCT_DIR/$PYTHON_DIR"
+# Update PATH variables based on Shell type
+if [[ $THE_RC == "bash" ]]; then
+  DISPLAY_UPDATE_PATH="export PATH=\"$SCT_DIR/$BIN_DIR:\$PATH\""
+elif [[ $THE_RC == "csh" ]]; then
+  DISPLAY_UPDATE_PATH="setenv PATH \"$SCT_DIR/$BIN_DIR:\$PATH\""
+else
+  die "This variable is not recognized: THE_RC=$THE_RC"
+fi
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Install Python
+# ----------------------------------------------------------------------------------------------------------------------
 
 # Download miniconda
 print info "Downloading Miniconda..."
 case $OS in
-linux*)
+linux)
   download "$TMP_DIR/"miniconda.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
   ;;
 osx)
@@ -593,7 +600,8 @@ find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
 
 # create conda environment
 print info "Creating conda environment..."
-python/bin/conda create -y -n venv_sct python=3.7
+# NB: We use an absolute path (-p) rather than a relative name (-n) to better isolate the conda environment
+python/bin/conda create -y -p "$SCT_DIR/$PYTHON_DIR/envs/venv_sct" python=3.9
 
 # Reapply the touch fix to avoid `pip` connection issues on WSL
 find "$SCT_DIR/$PYTHON_DIR" -type f -exec touch {} +
@@ -608,20 +616,18 @@ echo "include-system-site-packages = false" > "$SCT_DIR/$PYTHON_DIR/envs/venv_sc
 # shellcheck disable=SC1091
 source python/etc/profile.d/conda.sh
 set +u #disable safeties, for conda is not written to their standard.
-conda activate venv_sct
+conda activate "$SCT_DIR/$PYTHON_DIR/envs/venv_sct"
 set -u # reactivate safeties
 
-# double-check conda activated (it can be glitchy): https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3029
-print info "Validating that conda environment can be activated..."
-EXPECTED_PYTHON="$(realpath "$(command -v python/envs/venv_sct/bin/python)")"
-ACTUAL_PYTHON="$(realpath "$(command -v python)")"
-if [ "$ACTUAL_PYTHON" != "$EXPECTED_PYTHON"  ]; then
-  echo "Error: Activating venv_sct failed to switch Python interpreter to Miniconda. (Incorrect interpreter loaded: $ACTUAL_PYTHON)" >&2
-  exit 1
+if [[ $OS == linux ]]; then
+  # Ensure that packaged GLIBC version is up to date (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1298616317)
+  conda install -y -c conda-forge libstdcxx-ng
+  # Ensure that libffi isn't linked incorrectly (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3927#issuecomment-1573896770)
+  conda install -y -c conda-forge libffi
 fi
 
 # Skip pip==21.2 to avoid dependency resolver issue (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3593)
-python -m pip install -U "pip!=21.2.*"
+python/envs/venv_sct/bin/python -m pip install -U "pip!=21.2.*"
 
 ## Install the spinalcordtoolbox into the Conda venv
 print info "Installing Python dependencies..."
@@ -637,33 +643,14 @@ fi
 (
   # We use "--ignore-installed" to preserve the version of `certifi` installed into the conda
   # env, which prevents https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3609
-  pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
+  # We use 'SYSTEM_VERSION_COMPAT=0' to tell pip to report macOS 11 instead of macOS 10.16
+  # This is necessary in order to install 'macosx_11_0' wheels. See also:
+  # https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4352
+  SYSTEM_VERSION_COMPAT=0 python/envs/venv_sct/bin/pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
   print info "Installing spinalcordtoolbox..." &&
-  pip install -e .
+  python/envs/venv_sct/bin/pip install -e .
 ) ||
   die "Failed running pip install: $?"
-
-## Check if CPU supports AVX instruction set, and install precompiled TensorFlow if it isn't,
-case $OS in
-linux*)
-  if ! lscpu | grep -q " avx "; then
-    print info "AVX is not supported by this CPU! Installing a version of TensorFlow compiled for older CPUs..."
-    pip uninstall tensorflow -y
-    pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.5-cp37-cp37m-linux_x86_64.whl
-  else
-    print info "AVX is supported on this Linux machine. Keeping default TensorFlow..."
-  fi
-  ;;
-osx)
-  if sysctl machdep.cpu.brand_string | grep -q "Apple M1"; then
-    print info "AVX is not supported on M1 Macs! Installing a version of TensorFlow compiled for M1 Macs..."
-    pip uninstall tensorflow -y
-    pip install https://github.com/spinalcordtoolbox/docker-tensorflow-builder/releases/download/v1.15.5-py3.7/tensorflow-1.15.0-py3-none-any.whl
-  else
-    print info "AVX is supported on this macOS machine. Keeping default TensorFlow..."
-  fi
-  ;;
-esac
 
 ## Create launchers for Python scripts
 print info "Creating launchers for Python scripts..."
@@ -694,15 +681,14 @@ if [[ -n "$NO_DATA_INSTALL" ]]; then
 else
   # Download data
   print info "Installing data..."
-  run rm -rf "$SCT_DIR/$DATA_DIR"
   run mkdir -p "$SCT_DIR/$DATA_DIR"
-  for data in PAM50 gm_model optic_models pmj_models deepseg_sc_models deepseg_gm_models deepseg_lesion_models c2c3_disc_models; do
+  for data in PAM50 deepseg_sc_models deepseg_gm_models deepseg_lesion_models deepreg_models PAM50_normalized_metrics; do
     run sct_download_data -d "$data"
   done
 fi
 
 # Install deep learning models
-python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()'
+python/envs/venv_sct/bin/python -c 'import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models()'
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -717,7 +703,7 @@ conda deactivate >/dev/null 2>&1
 if [[ -e "$RC_FILE_PATH" ]]; then
     if grep "sct_env" "$RC_FILE_PATH"; then
       print info "In case an old version SCT is already installed (4.0.0-beta.1 or before), remove 'sct_env' declaration in RC file"
-      perl -pi -e 's/^(# )?(.*bin/sct_env)/# \2/' "$RC_FILE_PATH"
+      perl -pi -e 's/^(# )?(.*bin\/sct_env)/# \2/' "$RC_FILE_PATH"
     fi
     if grep "^export MPLBACKEND=Agg" "$RC_FILE_PATH"; then
       print info "Commenting out 'export MPLBACKEND=Agg' from previous SCT installation"

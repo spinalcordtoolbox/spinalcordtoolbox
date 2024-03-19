@@ -1,3 +1,5 @@
+# pytest unit tests for sct_dmri_concat_bvals
+
 import pytest
 import logging
 

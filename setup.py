@@ -35,30 +35,27 @@ setup(
         'Operating System :: MacOS',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.9',
     ],
     keywords='Magnetic Resonance Imaging MRI spinal cord analysis template',
     packages=find_packages(exclude=['.git', 'data', 'dev', 'dev.*',
                                     'install', 'testing']),
     include_package_data=True,
-    python_requires="==3.7.*",
+    python_requires="==3.9.*",
     extras_require={
         'docs': [
             'sphinxcontrib-programoutput',
             'sphinx_rtd_theme',
             'sphinx-copybutton',
-            'furo==2021.11.23',
+            'furo==2023.09.10',
             'recommonmark',
-            'sphinx==4.1.2'
+            'sphinx'
         ],
     },
     entry_points=dict(
         console_scripts=[
             '{}=spinalcordtoolbox.compat.launcher:main'.format(x) for x in
             [
-                'isct_convert_binary_to_trilinear',
-                'isct_minc2volume-viewer',
-                'isct_test_ants',
                 'sct_analyze_lesion',
                 'sct_analyze_texture',
                 'sct_apply_transfo',
@@ -66,7 +63,7 @@ setup(
                 'sct_concat_transfo',
                 'sct_compute_ernst_angle',
                 'sct_compute_hausdorff_distance',
-                'sct_compute_mscc',
+                'sct_compute_compression',
                 'sct_compute_mtr',
                 'sct_compute_mtsat',
                 'sct_compute_snr',

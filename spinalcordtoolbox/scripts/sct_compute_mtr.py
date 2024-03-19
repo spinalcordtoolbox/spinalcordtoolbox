@@ -1,20 +1,16 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# Compute magnetization transfer ratio (MTR).
+# Compute magnetization transfer ratio (MTR)
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad
-# Modified: 2014-09-21
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import sys
 import os
+from typing import Sequence
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.qmri.mt import compute_mtr
 
@@ -42,7 +38,7 @@ def get_parser():
     optional.add_argument(
         "-thr",
         type=float,
-        help="Threshold to clip MTR output values in case of division by small number. This implies that the output image"
+        help="Threshold to clip MTR output values in case of division by small number. This implies that the output image "
              "range will be [-thr, +thr]. Default: 100.",
         default=100
     )
@@ -70,7 +66,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -85,10 +81,9 @@ def main(argv=None):
     # save MTR file
     nii_mtr.save(fname_mtr, dtype='float32')
 
-    display_viewer_syntax([arguments.mt0, arguments.mt1, fname_mtr])
+    display_viewer_syntax([arguments.mt0, arguments.mt1, fname_mtr], verbose=verbose)
 
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

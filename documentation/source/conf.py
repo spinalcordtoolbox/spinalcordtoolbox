@@ -81,12 +81,12 @@ author = u'SCT Contributors'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['*/api', "*/api.rst"]
+exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
 # pygments_style = "monokai"
@@ -96,8 +96,8 @@ todo_include_todos = False
 
 extlinks = {
     # e.g. :sct_tutorial_data:`data_template-registration.zip` gets expanded into:
-    # 'https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
-    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20220125/%s', '')
+    # 'github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/<tag>/data_template-registration.zip'
+    'sct_tutorial_data': ('https://github.com/spinalcordtoolbox/sct_tutorial_data/releases/download/r20231129/%s', '%s')
 }
 
 
@@ -128,16 +128,13 @@ html_theme_options = {
         "color-sidebar-background": "#1a1c1e",
         "color-admonition-title": "#0054af",
         "color-admonition-title-background": "#0054af5c"
-    }
+    },
+    "source_repository": "https://github.com/spinalcordtoolbox/spinalcordtoolbox/",
+    "source_branch": "master",
+    "source_directory": "documentation/source/",
 }
 
 html_context = {
-    # TODO: when the Github icon is supported natively by furo (https://github.com/pradyunsg/furo/discussions/114)
-    # then this should be moved into html_theme_options and the theme_ prefix should be dropped
-    "theme_source_repository": "https://github.com/spinalcordtoolbox/spinalcordtoolbox",
-    "theme_source_branch": "master",  # or subprocess.check_output(["git", "rev-parse", "--abbrev-ref", "HEAD"]) ?
-    "theme_source_directory": "documentation/source/",
-
     # TODO: this should be determined automatically, but it seems that *assigning* to html_context wipes out
     # the automatically determined value?
     "page_source_suffix": "rst",
@@ -148,12 +145,25 @@ html_context = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
+# A list of paths that contain extra files not directly related to the
+# documentation, such as robots.txt or .htaccess. Relative paths are taken as
+# relative to the configuration directory. They are copied to the output directory.
+# They will overwrite any existing file of the same name.
+html_extra_path = ['_extra']
+
 html_css_files = ['css/custom.css', 'css/pygments_dark.css']
+
+# If given, this must be the name of an image file (path relative to the
+# configuration directory) that is the favicon of the docs, or URL that points
+# an image file for the favicon. Modern browsers use this as the icon for tabs,
+# windows and bookmarks. It should be a Windows-style icon file (.ico), which is
+# 16x16 or 32x32 pixels large.
+html_favicon = '_static/img/favicon.ico'
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 # This is required for the alabaster theme
-# refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
+# refs: https://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 # html_sidebars = {
 #     '**': [
 #         'about.html',

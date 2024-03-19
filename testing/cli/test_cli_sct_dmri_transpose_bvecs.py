@@ -1,3 +1,5 @@
+# pytest unit tests for sct_dmri_transpose_bvecs
+
 import pytest
 import logging
 

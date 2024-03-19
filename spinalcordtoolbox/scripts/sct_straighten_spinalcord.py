@@ -1,19 +1,15 @@
-# !/usr/bin/env python
+#!/usr/bin/env python
 #
 # This program takes as input an anatomic image and the centerline or segmentation of its spinal cord (that you can get
 # using sct_get_centerline.py or sct_segmentation_propagation) and returns the anatomic image where the spinal
 # cord was straightened.
 #
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2013 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad, Geoffrey Leveque, Julien Touati
-# Modified: 2014-09-01
-#
-# License: see the LICENSE.TXT
-# ======================================================================================================================
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import sys
 import os
+from typing import Sequence
 
 from spinalcordtoolbox.straightening import SpinalCordStraightener
 from spinalcordtoolbox.centerline.core import ParamCenterline
@@ -67,7 +63,7 @@ def get_parser():
         "image (-i). All disc covering the region of interest should be provided. Exmaple: if "
         "you are interested in levels C2 to C7, then you should provide disc labels 2,3,4,5,"
         "6,7). More details about label creation at "
-        "http://sourceforge.net/p/spinalcordtoolbox/wiki/create_labels/. "  # TODO (Julien) update this link
+        "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling.html. "
         "This option must be used with the -ldisc-dest parameter.",
         required=False)
     optional.add_argument(
@@ -139,8 +135,11 @@ def get_parser():
         "-param",
         metavar=Metavar.list,
         help="Parameters for spinal cord straightening. Separate arguments with \",\".\n"
-             "  - precision: Float [1, inf) Precision factor of straightening, related to the number of slices. Increasing this parameter increases the precision along with increased computational time. Not taken into account with Hanning fitting method. Default=2\n"
-             "  - threshold_distance: Float [0, inf) Threshold at which voxels are not considered into displacement. Increase this threshold if the image is blackout around the spinal cord too much. Default=10\n"
+             "  - precision: Float [1, inf) Precision factor of straightening, related to the number of slices. "
+             "Increasing this parameter increases the precision along with increased computational time. "
+             "Not taken into account with Hanning fitting method. Default=2\n"
+             "  - threshold_distance: Float [0, inf) Threshold at which voxels are not considered into displacement. "
+             "Increase this threshold if the image is blackout around the spinal cord too much. Default=10\n"
              "  - accuracy_results: {0, 1} Disable/Enable computation of accuracy results after straightening. Default=0\n"
              "  - template_orientation: {0, 1} Disable/Enable orientation of the straight image to be the same as the template. Default=0",
         required=False)
@@ -188,7 +187,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -268,7 +267,7 @@ def main(argv=None):
         path_qc = os.path.abspath(path_qc)
         qc_dataset = arguments.qc_dataset
         qc_subject = arguments.qc_subject
-        generate_qc(fname_straight, args=arguments, path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_straight, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process=removesuffix(os.path.basename(__file__), ".py"))
 
     display_viewer_syntax([fname_straight], verbose=verbose)
@@ -277,4 +276,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

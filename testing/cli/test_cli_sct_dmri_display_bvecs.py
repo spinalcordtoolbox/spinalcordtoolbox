@@ -1,3 +1,5 @@
+# pytest unit tests for sct_dmri_display_bvecs
+
 import os
 import sys
 import logging
@@ -5,7 +7,7 @@ import logging
 import pytest
 
 from spinalcordtoolbox.scripts import sct_dmri_display_bvecs
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
 

@@ -1,31 +1,29 @@
 #!/usr/bin/env python
-
-"""Detect Ponto-Medullary Junction.
-
-The models were trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
-in section 2.1.2, except that the cords are not straightened for the PMJ disc detection task.
-
-To train a new model:
-- Install SCT v3.2.7 (https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/v3.2.7)
-- Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
-- Run "source sct_launcher" in a terminal
-- Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
-- Save the trained model in https://github.com/spinalcordtoolbox/pmj_models
-
-NB: The files in the `dev/` folder are not actively maintained, so these training steps are not guaranteed to
-    work with more recent versions of SCT.
-
-Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-Author: Charley
-
-About the license: see the file LICENSE.TXT
-"""
+#
+# Detect Ponto-Medullary Junction
+#
+# The models were trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
+# in section 2.1.2, except that the cords are not straightened for the PMJ disc detection task.
+#
+# To train a new model:
+# - Install SCT v3.2.7 (https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/v3.2.7)
+# - Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
+# - Run "source sct_launcher" in a terminal
+# - Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
+# - Save the trained model in https://github.com/spinalcordtoolbox/pmj_models
+#
+# NB: The files in the `dev/` folder are not actively maintained, so these training steps are not guaranteed to
+#     work with more recent versions of SCT.
+#
+# Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
 import os
 import sys
 import logging
+from typing import Sequence
 
-from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage import center_of_mass
 import nibabel as nib
 import numpy as np
 
@@ -33,6 +31,7 @@ from spinalcordtoolbox.image import Image, zeros_like, compute_cross_corr_3d
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, run_proc, printv, __data_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
+from spinalcordtoolbox.scripts import sct_crop_image
 
 logger = logging.getLogger(__name__)
 
@@ -91,10 +90,13 @@ def get_parser():
         help='The path where the quality control generated content will be saved.',
         default=None)
     optional.add_argument(
-        "-igt",
+        '-qc-dataset',
         metavar=Metavar.str,
-        help="File name of ground-truth PMJ (single voxel).",
-        required=False)
+        help='If provided, this string will be mentioned in the QC report as the dataset the process was run on.')
+    optional.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help='If provided, this string will be mentioned in the QC report as the subject the process was run on.')
     optional.add_argument(
         "-r",
         type=int,
@@ -126,7 +128,7 @@ class DetectPMJ:
 
         self.verbose = verbose
 
-        self.tmp_dir = tmp_create()  # path to tmp directory
+        self.tmp_dir = tmp_create(basename="detect-pmj")  # path to tmp directory
 
         self.orientation_im = Image(self.fname_im).orientation  # to re-orient the data at the end
 
@@ -244,7 +246,8 @@ class DetectPMJ:
             self.rl_coord = int(img.dim[2] / 2)  # Right_left coordinate
             del img
 
-        run_proc(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
+        sct_crop_image.main(['-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1),
+                             '-o', self.slice2D_im, '-v', '0'])
 
     def extract_pmj_symmetrical_sagittal_slice(self):
         """Extract a slice that is symmetrical about the estimated PMJ location."""
@@ -256,7 +259,8 @@ class DetectPMJ:
         self.rl_coord = compute_cross_corr_3d(image.change_orientation('RPI'), [self.rl_coord, self.pa_coord, self.is_coord, ])  # Find R-L symmetry
 
         # Replace the mid-sagittal slice, to be used for the "main" PMJ detection
-        run_proc(['sct_crop_image', '-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1), '-o', self.slice2D_im])
+        sct_crop_image.main(['-i', self.fname_im, '-zmin', str(self.rl_coord), '-zmax', str(self.rl_coord + 1),
+                             '-o', self.slice2D_im, '-v', '0'])
 
     def orient2pir(self):
         """Orient input data to PIR orientation."""
@@ -282,7 +286,7 @@ class DetectPMJ:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -339,9 +343,10 @@ def main(argv=None):
     if fname_out is not None:
         if path_qc is not None:
             from spinalcordtoolbox.reports.qc import generate_qc
-            generate_qc(fname_in, fname_seg=fname_out, args=sys.argv[1:], path_qc=os.path.abspath(path_qc), process='sct_detect_pmj')
+            generate_qc(fname_in, fname_seg=fname_out, args=argv, path_qc=os.path.abspath(path_qc),
+                        dataset=arguments.qc_dataset, subject=arguments.qc_subject, process='sct_detect_pmj')
 
-        display_viewer_syntax([fname_in, fname_out], colormaps=['gray', 'red'])
+        display_viewer_syntax([fname_in, fname_out], im_types=['anat', 'seg'], verbose=verbose)
 
 
 if __name__ == "__main__":

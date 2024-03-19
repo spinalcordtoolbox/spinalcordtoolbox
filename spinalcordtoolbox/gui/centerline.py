@@ -1,9 +1,9 @@
-#!/usr/bin/env python
-#  Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-#
-# About the license: see the file LICENSE.TXT
+"""
+Qt dialog for manual labeling of an image
 
-""" Qt dialog for manual labeling of an image """
+Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 import sys

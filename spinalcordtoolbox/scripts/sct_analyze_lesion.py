@@ -1,16 +1,14 @@
 #!/usr/bin/env python
-
+#
 # Analyze lesions
 #
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Charley
-# Modified: 2017-08-19
-#
-# About the license: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 import os
 import sys
 import pickle
+from typing import Sequence
 
 import numpy as np
 import pandas as pd
@@ -18,7 +16,7 @@ from skimage.measure import label
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
@@ -29,8 +27,9 @@ def get_parser():
                     '3, etc.) and then outputs morphometric measures for each lesion:\n'
                     '- volume [mm^3]\n'
                     '- length [mm]: length along the Superior-Inferior axis\n'
-                    '- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating\n'
-                    '                                the lesion as a circle in the axial plane.\n\n'
+                    '- max_equivalent_diameter [mm]: maximum diameter of the lesion, when approximating the lesion as '
+                    'a circle in the axial plane\n'
+                    '- max_axial_damage_ratio []: maximum ratio of the lesion area divided by the spinal cord area\n\n'
                     'If the proportion of lesion in each region (e.g. WM and GM) does not sum up to 100%, it means '
                     'that the registered template does not fully cover the lesion. In that case you might want to '
                     'check the registration results.'
@@ -43,12 +42,6 @@ def get_parser():
         help='Binary mask of lesions (lesions are labeled as "1").',
         metavar=Metavar.file,
     )
-    mandatory_arguments.add_argument(
-        "-s",
-        required=True,
-        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
-             "cord angle with respect to slice. (e.g.'t2_seg.nii.gz')",
-        metavar=Metavar.file)
 
     optional = parser.add_argument_group("\nOPTIONAL ARGUMENTS")
     optional.add_argument(
@@ -56,6 +49,14 @@ def get_parser():
         "--help",
         action="help",
         help="show this help message and exit")
+    optional.add_argument(
+        "-s",
+        required=False,
+        help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
+             "cord angle with respect to slice. (e.g. 't2_seg.nii.gz')\n"
+             "If provided, then the lesion volume, length, diameter, and axial damage ratio will be computed. "
+             "Otherwise, if not provided, then only the lesion volume will be computed.",
+        metavar=Metavar.file)
     optional.add_argument(
         "-i",
         help='Image from which to extract average values within lesions (e.g. "t2.nii.gz"). If provided, the function '
@@ -66,7 +67,7 @@ def get_parser():
     optional.add_argument(
         "-f",
         help="Path to folder containing the atlas/template registered to the anatomical image. If provided, the "
-             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each"
+             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each "
              "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
              "GM, WM) occupied by lesion.",
         metavar=Metavar.str,
@@ -98,7 +99,7 @@ def get_parser():
     return parser
 
 
-class AnalyzeLeion:
+class AnalyzeLesion:
     def __init__(self, fname_mask, fname_sc, fname_ref, path_template, path_ofolder, verbose):
         self.fname_mask = fname_mask
 
@@ -108,6 +109,7 @@ class AnalyzeLeion:
         self.path_ofolder = path_ofolder
         self.verbose = verbose
         self.wrk_dir = os.getcwd()
+        self.measure_keys = ['volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]', 'max_axial_damage_ratio []']
 
         if not set(np.unique(Image(fname_mask).data)) == set([0.0, 1.0]):
             if set(np.unique(Image(fname_mask).data)) == set([0.0]):
@@ -115,14 +117,18 @@ class AnalyzeLeion:
             else:
                 printv("ERROR input file %s is not binary file with 0 and 1 values" % fname_mask, 1, 'error')
 
+        if fname_sc is not None:
+            if not Image(fname_mask).dim[0:3] == Image(fname_sc).dim[0:3]:
+                printv("ERROR: Lesion and spinal cord images must have the same dimensions", 1, 'error')
+
         # create tmp directory
-        self.tmp_dir = tmp_create()  # path to tmp directory
+        self.tmp_dir = tmp_create(basename="analyze-lesion")  # path to tmp directory
 
         # lesion file where each lesion has a different value
         self.fname_label = extract_fname(self.fname_mask)[1] + '_label' + extract_fname(self.fname_mask)[2]
 
         # initialization of measure sheet
-        measure_lst = ['label', 'volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']
+        measure_lst = ['label'] + self.measure_keys
         if self.fname_ref is not None:
             for measure in ['mean', 'std']:
                 measure_lst.append(measure + '_' + extract_fname(self.fname_ref)[1])
@@ -133,9 +139,6 @@ class AnalyzeLeion:
 
         # orientation of the input image
         self.orientation = None
-
-        # volume object
-        self.volumes = None
 
         # initialization of proportion measures, related to registrated atlas
         if self.path_template is not None:
@@ -148,8 +151,8 @@ class AnalyzeLeion:
         self.distrib_matrix_dct = {}
 
         # output names
-        self.pickle_name = extract_fname(self.fname_mask)[1] + '_analyzis.pkl'
-        self.excel_name = extract_fname(self.fname_mask)[1] + '_analyzis.xls'
+        self.pickle_name = extract_fname(self.fname_mask)[1] + '_analysis.pkl'
+        self.excel_name = extract_fname(self.fname_mask)[1] + '_analysis.xls'
 
     def analyze(self):
         self.ifolder2tmp()
@@ -160,8 +163,11 @@ class AnalyzeLeion:
         # Label connected regions of the masked image
         self.label_lesion()
 
-        # Compute angle for CSA correction
-        self.angle_correction()
+        # Compute angle for CSA correction if spinal cord segmentation provided
+        # NB: If segmentation is not provided, then we will only compute volume, so
+        #     no angle correction is needed
+        if self.fname_sc is not None:
+            self.angle_correction()
 
         # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter
         # if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
@@ -190,36 +196,44 @@ class AnalyzeLeion:
             copy(os.path.join(self.tmp_dir, file_), os.path.join(self.path_ofolder, file_))
 
     def pack_measures(self):
-        writer = pd.ExcelWriter(self.excel_name, engine='xlwt')
-        self.measure_pd.to_excel(writer, sheet_name='measures', index=False, engine='xlwt')
+        with pd.ExcelWriter(self.excel_name, engine='xlsxwriter') as writer:
+            self.measure_pd.to_excel(writer, sheet_name='measures', index=False, engine='xlsxwriter')
 
-        # Add the total column and row
-        if self.path_template is not None:
-            for sheet_name in self.distrib_matrix_dct:
-                if '#' in sheet_name:
-                    df = self.distrib_matrix_dct[sheet_name].copy()
-                    df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
-                    df['total'] = df.sum(numeric_only=True, axis=1)
-                    df.iloc[-1, df.columns.get_loc('vert')] = 'total'
-                    df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlwt')
-                else:
-                    self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlwt')
+            # Add the total column and row
+            if self.path_template is not None:
+                for sheet_name in self.distrib_matrix_dct:
+                    if '#' in sheet_name:
+                        df = self.distrib_matrix_dct[sheet_name].copy()
+                        df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
+                        df['total'] = df.sum(numeric_only=True, axis=1)
+                        df.iloc[-1, df.columns.get_loc('vert')] = 'total'
+                        df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
+                    else:
+                        self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
 
-        # Save pickle
-        self.distrib_matrix_dct['measures'] = self.measure_pd
-        with open(self.pickle_name, 'wb') as handle:
-            pickle.dump(self.distrib_matrix_dct, handle)
-
-        # Save Excel
-        writer.save()
+            # Save pickle
+            self.distrib_matrix_dct['measures'] = self.measure_pd
+            with open(self.pickle_name, 'wb') as handle:
+                pickle.dump(self.distrib_matrix_dct, handle)
 
     def show_total_results(self):
-        printv('\n\nAveraged measures...', self.verbose, 'normal')
-        for stg, key in zip(['  Volume [mm^3] = ', '  (S-I) Length [mm] = ', '  Equivalent Diameter [mm] = '], ['volume [mm3]', 'length [mm]', 'max_equivalent_diameter [mm]']):
-            printv(stg + str(np.round(np.mean(self.measure_pd[key]), 2)) + '+/-' + str(np.round(np.std(self.measure_pd[key]), 2)), self.verbose, type='info')
+        """
+        Print total results to CLI
+        """
 
-        printv('\nTotal volume = ' + str(np.round(np.sum(self.measure_pd['volume [mm3]']), 2)) + ' mm^3', self.verbose, 'info')
-        printv('Lesion count = ' + str(len(self.measure_pd['volume [mm3]'].values)), self.verbose, 'info')
+        printv('\n\nAveraged measures...', self.verbose, 'normal')
+
+        for key in self.measure_keys:
+            mean_value = np.round(np.mean(self.measure_pd[key]), 2)
+            std_value = np.round(np.std(self.measure_pd[key]), 2)
+            measure_info = f'  {key} = {mean_value} +/- {std_value}'
+            printv(measure_info, self.verbose, type='info')
+
+        total_volume = np.round(np.sum(self.measure_pd['volume [mm3]']), 2)
+        lesion_count = len(self.measure_pd['volume [mm3]'].values)
+
+        printv('\nTotal volume = ' + str(total_volume) + ' mm^3', self.verbose, 'info')
+        printv('Lesion count = ' + str(lesion_count), self.verbose, 'info')
 
     def reorient(self):
         if not self.orientation == 'RPI':
@@ -237,22 +251,69 @@ class AnalyzeLeion:
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
             self.measure_pd.loc[label_idx, 'mean_' + extract_fname(self.fname_ref)[1]] = mean_cur
             self.measure_pd.loc[label_idx, 'std_' + extract_fname(self.fname_ref)[1]] = std_cur
-            printv('Mean+/-std of lesion #' + str(lesion_label) + ' in ' + extract_fname(self.fname_ref)[1] + ' file: ' + str(np.round(mean_cur, 2)) + '+/-' + str(np.round(std_cur, 2)), self.verbose, type='info')
+            file_ref = extract_fname(self.fname_ref)[1]
+            printv(
+                f'Mean+/-std of lesion #{lesion_label} in {file_ref} file: {mean_cur:.2f}+/-{std_cur:.2f}',
+                self.verbose,
+                type='info')
 
     def _measure_volume(self, im_data, p_lst, idx):
-        for zz in range(im_data.shape[2]):
-            self.volumes[zz, idx - 1] = np.sum(im_data[:, :, zz]) * p_lst[0] * p_lst[1] * p_lst[2]
+        """
+        Measure the volume of the lesion
+        """
+        volume = np.sum(im_data) * p_lst[0] * p_lst[1] * p_lst[2]
+        self.measure_pd.loc[idx, 'volume [mm3]'] = volume
+        printv(f'  Volume : {round(volume, 2)} mm^3', self.verbose, type='info')
 
-        vol_tot_cur = np.sum(self.volumes[:, idx - 1])
-        self.measure_pd.loc[idx, 'volume [mm3]'] = vol_tot_cur
-        printv('  Volume : ' + str(np.round(vol_tot_cur, 2)) + ' mm^3', self.verbose, type='info')
+    def _measure_axial_damage_ratio(self, im_data, p_lst, idx):
+        """
+        Measure the maximum axial damage ratio
+        The axial damage ratio is calculated as the ratio of lesion area divided by spinal cord area
+        The axial damage ratio is calculated for each slice and then the maximum value is retained
+        REF: Smith, A. C. et al. (2021). Axial MRI biomarkers of spinal cord damage to predict future walking and motor
+        function: A retrospective study. Spinal Cord, 59(6), 693-699. https://doi.org/10.1038/s41393-020-00561-w
+
+        :param im_data: 3D numpy array, binary mask of the lesion
+        :param p_lst: list, pixel size of the lesion
+        :param idx: int, index of the lesion
+        """
+
+        # Load the spinal cord image
+        im_sc = Image(self.fname_sc)
+        im_sc_data = im_sc.data
+        p_lst_sc = im_sc.dim[4:7]   # voxel size
+
+        axial_damage_ratio_dict = {}
+        # Get slices with lesion
+        lesion_slices = np.unique(np.where(im_data)[2])
+        for slice in lesion_slices:
+            # Lesion area
+            lesion_area = np.sum(im_data[:, :, slice]) * p_lst[0] * p_lst[1]
+            # Spinal cord area
+            sc_area = np.sum(im_sc_data[:, :, slice]) * p_lst_sc[0] * p_lst_sc[1]
+            # Compute the axial damage ratio slice by slice
+            axial_damage_ratio_dict[slice] = lesion_area / sc_area
+
+        # Get the maximum axial damage ratio
+        maximum_axial_damage_ratio = np.max(list(axial_damage_ratio_dict.values()))
+
+        # Save the maximum axial damage ratio
+        self.measure_pd.loc[idx, 'max_axial_damage_ratio []'] = maximum_axial_damage_ratio
+        printv('  Maximum axial damage ratio : ' + str(np.round(maximum_axial_damage_ratio, 2)),
+               self.verbose, type='info')
 
     def _measure_length(self, im_data, p_lst, idx):
+        """
+        Measure the length of the lesion along the superior-inferior axis when taking into account the angle correction
+        """
         length_cur = np.sum([p_lst[2] / np.cos(self.angles[zz]) for zz in np.unique(np.where(im_data)[2])])
         self.measure_pd.loc[idx, 'length [mm]'] = length_cur
         printv('  (S-I) length : ' + str(np.round(length_cur, 2)) + ' mm', self.verbose, type='info')
 
     def _measure_diameter(self, im_data, p_lst, idx):
+        """
+        Measure the max. equivalent diameter of the lesion when taking into account the angle correction
+        """
         area_lst = [np.sum(im_data[:, :, zz]) * np.cos(self.angles[zz]) * p_lst[0] * p_lst[1] for zz in range(im_data.shape[2])]
         diameter_cur = 2 * np.sqrt(max(area_lst) / np.pi)
         self.measure_pd.loc[idx, 'max_equivalent_diameter [mm]'] = diameter_cur
@@ -363,7 +424,7 @@ class AnalyzeLeion:
         im_lesion_data = im_lesion.data
         p_lst = im_lesion.dim[4:7]  # voxel size
 
-        label_lst = [l for l in np.unique(im_lesion_data) if l]  # lesion label IDs list
+        label_lst = [label for label in np.unique(im_lesion_data) if label]  # lesion label IDs list
 
         if self.path_template is not None:
             if os.path.isfile(self.path_levels):
@@ -373,7 +434,12 @@ class AnalyzeLeion:
 
             else:
                 im_vert_data = None
-                printv('ERROR: the file ' + self.path_levels + ' does not exist. Please make sure the template was correctly registered and warped (sct_register_to_template or sct_register_multimodal and sct_warp_template)', type='error')
+                printv(
+                    f"ERROR: the file {self.path_levels} does not exist. "
+                    f"Please make sure the template was correctly registered and warped "
+                    f"(sct_register_to_template or sct_register_multimodal and sct_warp_template)",
+                    type='error',
+                )
 
             # In order to open atlas images only one time
             atlas_data_dct = {}  # dict containing the np.array of the registrated atlas
@@ -384,17 +450,19 @@ class AnalyzeLeion:
                 atlas_data_dct[tract_id] = img_cur_copy.data
                 del img_cur
 
-        self.volumes = np.zeros((im_lesion.dim[2], len(label_lst)))
-
         # iteration across each lesion to measure statistics
         for lesion_label in label_lst:
             im_lesion_data_cur = np.copy(im_lesion_data == lesion_label)
             printv('\nMeasures on lesion #' + str(lesion_label) + '...', self.verbose, 'normal')
 
             label_idx = self.measure_pd[self.measure_pd.label == lesion_label].index
+            # The SC segmentation is necessary for angle correction when computing length and diameter
+            # We also need SC segmentation to compute axial damage ratio
+            if self.fname_sc is not None:
+                self._measure_length(im_lesion_data_cur, p_lst, label_idx)
+                self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
+                self._measure_axial_damage_ratio(im_lesion_data_cur, p_lst, label_idx)
             self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
-            self._measure_length(im_lesion_data_cur, p_lst, label_idx)
-            self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
 
             # compute lesion distribution for each lesion
             if self.path_template is not None:
@@ -422,10 +490,10 @@ class AnalyzeLeion:
     def angle_correction(self):
         im_seg = Image(self.fname_sc)
         nx, ny, nz, nt, px, py, pz, pt = im_seg.dim
-        data_seg = im_seg.data
 
         # fit centerline, smooth it and return the first derivative (in physical space)
-        _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(), verbose=1)
+        # We set minmax=False to prevent cropping and ensure that `self.angles[iz]` covers all z slices of `im_seg`
+        _, arr_ctl, arr_ctl_der, _ = get_centerline(im_seg, param=ParamCenterline(minmax=False), verbose=1)
         x_centerline_deriv, y_centerline_deriv, z_centerline_deriv = arr_ctl_der
 
         self.angles = np.full_like(np.empty(nz), np.nan, dtype=np.double)
@@ -446,7 +514,7 @@ class AnalyzeLeion:
         im_2save.data = label(im.data, connectivity=2)
         im_2save.save(self.fname_label)
 
-        self.measure_pd['label'] = [l for l in np.unique(im_2save.data) if l]
+        self.measure_pd['label'] = [label for label in np.unique(im_2save.data) if label]
         printv('Lesion count = ' + str(len(self.measure_pd['label'])), self.verbose, 'info')
 
     def _orient(self, fname, orientation):
@@ -503,7 +571,7 @@ class AnalyzeLeion:
         os.chdir(self.tmp_dir)  # go to tmp directory
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -539,12 +607,12 @@ def main(argv=None):
         rm_tmp = True
 
     # create the Lesion constructor
-    lesion_obj = AnalyzeLeion(fname_mask=fname_mask,
-                              fname_sc=fname_sc,
-                              fname_ref=fname_ref,
-                              path_template=path_template,
-                              path_ofolder=path_results,
-                              verbose=verbose)
+    lesion_obj = AnalyzeLesion(fname_mask=fname_mask,
+                               fname_sc=fname_sc,
+                               fname_ref=fname_ref,
+                               path_template=path_template,
+                               path_ofolder=path_results,
+                               verbose=verbose)
 
     # run the analyze
     lesion_obj.analyze()
@@ -553,11 +621,20 @@ def main(argv=None):
     if rm_tmp:
         rmtree(lesion_obj.tmp_dir)
 
-    printv('\nDone! To view the labeled lesion file (one value per lesion), type:', verbose)
     if fname_ref is not None:
-        printv('fsleyes ' + fname_mask + ' ' + os.path.join(path_results, lesion_obj.fname_label) + ' -cm red-yellow -a 70.0 & \n', verbose, 'info')
+        display_viewer_syntax(
+            files=[fname_mask, os.path.join(path_results, lesion_obj.fname_label)],
+            im_types=['anat', 'softseg'],
+            opacities=['1.0', '0.7'],
+            verbose=verbose
+        )
     else:
-        printv('fsleyes ' + os.path.join(path_results, lesion_obj.fname_label) + ' -cm red-yellow -a 70.0 & \n', verbose, 'info')
+        display_viewer_syntax(
+            files=[os.path.join(path_results, lesion_obj.fname_label)],
+            im_types=['softseg'],
+            opacities=['0.7'],
+            verbose=verbose
+        )
 
 
 if __name__ == "__main__":

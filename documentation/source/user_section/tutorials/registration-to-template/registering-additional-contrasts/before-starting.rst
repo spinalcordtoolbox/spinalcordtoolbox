@@ -1,6 +1,10 @@
 Before starting this tutorial
 #############################
 
+This tutorial is intended to be run following the previous :ref:`template-registration` tutorial, as we will be re-using the previously generated warping field to register an additional contrast.
+
+You will also need to download the image file for the additional contrast. Both files are provided below for convenience:
+
 #. Make sure that you have the following files in your working directory:
 
    * ``single_subject/data/mt/mt1.nii.gz`` : The magnetization transfer image with the off-resonance RF pulse applied.

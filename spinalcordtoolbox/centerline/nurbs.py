@@ -1,40 +1,38 @@
-#!/usr/bin/env python
+"""
+Approximate a 3D curve with a B-Spline curve from either a set of data points or a set of control points
 
-# @package nurbs
-# Approximate a 3D curve with a B-Spline curve from either a set of data points or a set of control points
-#
-# If a set of data points is given, it generates a B-spline that either approximates the curve in the least square
-# sense or interpolates the curve. It also computes the derivative of the 3D curve.
-# getCourbe3D() returns the 3D fitted curve. The fitted z coordonate corresponds to the initial z, and the x and y are
-# averaged for a given z getCourbe3D_deriv() returns the derivative of the 3D fitted curve also averaged along z-axis.
-#
-# USAGE
-# ---------------------------------------------------------------------------------------
-# from spinalcordtoolbox.centerline.nurbs import *
-# nurbs=NURBS(degree,precision,data)
-#
-# MANDATORY ARGUMENTS
-# ---------------------------------------------------------------------------------------
-#   degree          the degree of the fitting B-spline curve
-#   precision       number of points before averaging data
-#   data            3D list [x,y,z] of the data requiring fitting
-#
-# EXAMPLES
-# ---------------------------------------------------------------------------------------
-#   from spinalcordtoolbox.centerline.nurbs import *
-#   nurbs = NURBS(3,1000,[[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))])
-#   P = nurbs.getCourbe3D()
-#   x_centerline_fit = P[0]
-#   y_centerline_fit = P[1]
-#   z_centerline_fit = P[2]
-#   D = nurbs.getCourbe3D_deriv()
-#   x_centerline_fit_der = D[0]
-#   y_centerline_fit_der = D[1]
-#   z_centerline_fit_der = D[2]
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2014 NeuroPoly, Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener, Julien Touati
+If a set of data points is given, it generates a B-spline that either approximates the curve in the least square
+sense or interpolates the curve. It also computes the derivative of the 3D curve.
+getCourbe3D() returns the 3D fitted curve. The fitted z coordonate corresponds to the initial z, and the x and y are
+averaged for a given z getCourbe3D_deriv() returns the derivative of the 3D fitted curve also averaged along z-axis.
+
+USAGE
+---------------------------------------------------------------------------------------
+from spinalcordtoolbox.centerline.nurbs import *
+nurbs=NURBS(degree,precision,data)
+
+MANDATORY ARGUMENTS
+---------------------------------------------------------------------------------------
+  degree          the degree of the fitting B-spline curve
+  precision       number of points before averaging data
+  data            3D list [x,y,z] of the data requiring fitting
+
+EXAMPLES
+---------------------------------------------------------------------------------------
+  from spinalcordtoolbox.centerline.nurbs import *
+  nurbs = NURBS(3,1000,[[x_centerline[n],y_centerline[n],z_centerline[n]] for n in range(len(x_centerline))])
+  P = nurbs.getCourbe3D()
+  x_centerline_fit = P[0]
+  y_centerline_fit = P[1]
+  z_centerline_fit = P[2]
+  D = nurbs.getCourbe3D_deriv()
+  x_centerline_fit_der = D[0]
+  y_centerline_fit_der = D[1]
+  z_centerline_fit_der = D[2]
+
+Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import numpy as np
@@ -371,7 +369,7 @@ class NURBS:
             sum_num_x, sum_num_y, sum_num_z, sum_den = 0, 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_num_z_der, sum_den_der = 0, 0, 0, 0
 
-            for l in range(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls  # noqa: E741
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l
             fin = debut + k - 1
@@ -481,7 +479,7 @@ class NURBS:
             sum_num_x, sum_num_y, sum_den = 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_den_der = 0, 0, 0
 
-            for l in range(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls  # noqa: E741
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l
             fin = debut + k - 1
@@ -626,7 +624,7 @@ class NURBS:
             for i in range(n - 1):
                 Rtemp.append(self.evaluateN(Nik[i], ubar[k], u) / den)
             R.append(Rtemp)
-        R = np.matrix(R)
+        R = np.array(R)
 
         # create W diagonal matrix
         W = np.diag(w[0:-1])
@@ -644,7 +642,7 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_x, Nik, ubar[k], u) / denU[k]
             Tx.append(somme)
-        Tx = np.matrix(Tx)
+        Tx = np.expand_dims(np.array(Tx), 0)
 
         Ty = []
         for i in range(n - 1):
@@ -652,7 +650,7 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_y, Nik, ubar[k], u) / denU[k]
             Ty.append(somme)
-        Ty = np.matrix(Ty)
+        Ty = np.expand_dims(np.array(Ty), 0)
 
         Tz = []
         for i in range(n - 1):
@@ -660,11 +658,11 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_z, Nik, ubar[k], u) / denU[k]
             Tz.append(somme)
-        Tz = np.matrix(Tz)
+        Tz = np.expand_dims(np.array(Tz), 0)
 
-        P_xb = np.linalg.pinv(R.T * W * R) * Tx.T
-        P_yb = np.linalg.pinv(R.T * W * R) * Ty.T
-        P_zb = np.linalg.pinv(R.T * W * R) * Tz.T
+        P_xb = np.linalg.pinv(R.T @ W @ R) @ Tx.T
+        P_yb = np.linalg.pinv(R.T @ W @ R) @ Ty.T
+        P_zb = np.linalg.pinv(R.T @ W @ R) @ Tz.T
 
         # Modification of first and last control points
         P_xb[0], P_yb[0], P_zb[0] = P_x[0], P_y[0], P_z[0]
@@ -750,7 +748,7 @@ class NURBS:
             for i in range(n - 1):
                 Rtemp.append(self.evaluateN(Nik[i], ubar[k], u) / den)
             R.append(Rtemp)
-        R = np.matrix(R)
+        R = np.array(R)
 
         # create W diagonal matrix
         W = np.diag(w[0:-1])
@@ -768,7 +766,7 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_x, Nik, ubar[k], u) / denU[k]
             Tx.append(somme)
-        Tx = np.matrix(Tx)
+        Tx = np.expand_dims(np.array(Tx), 0)
 
         Ty = []
         for i in range(n - 1):
@@ -776,10 +774,10 @@ class NURBS:
             for k in range(m - 1):
                 somme += w[k] * self.evaluateN(Nik[i], ubar[k], u) * self.Tk(k, P_y, Nik, ubar[k], u) / denU[k]
             Ty.append(somme)
-        Ty = np.matrix(Ty)
+        Ty = np.expand_dims(np.array(Ty), 0)
 
-        P_xb = (R.T * W * R).I * Tx.T
-        P_yb = (R.T * W * R).I * Ty.T
+        P_xb = (R.T @ W @ R).I @ Tx.T
+        P_yb = (R.T @ W @ R).I @ Ty.T
 
         # Modification of first and last control points
         P_xb[0], P_yb[0] = P_x[0], P_y[0]
@@ -797,64 +795,6 @@ class NURBS:
 
         return P
 
-    def reconstructGlobalInterpolation(self, P_x, P_y, P_z, p):  # now in 3D
-        global Nik_temp
-        n = 13
-        l = len(P_x)
-        newPx = P_x[::int(np.round(l / (n - 1)))]
-        newPy = P_y[::int(np.round(l / (n - 1)))]
-        newPz = P_y[::int(np.round(l / (n - 1)))]
-        newPx.append(P_x[-1])
-        newPy.append(P_y[-1])
-        newPz.append(P_z[-1])
-        n = len(newPx)
-
-        # Calcul du vecteur de noeuds
-        di = 0
-        for k in range(n - 1):
-            di += np.sqrt(
-                (newPx[k + 1] - newPx[k]) ** 2 + (newPy[k + 1] - newPy[k]) ** 2 + (newPz[k + 1] - newPz[k]) ** 2)
-        u = [0] * p
-        ubar = [0]
-        for k in range(n - 1):
-            ubar.append(ubar[-1] + np.sqrt(
-                (newPx[k + 1] - newPx[k]) ** 2 + (newPy[k + 1] - newPy[k]) ** 2 + (newPz[k + 1] - newPz[k]) ** 2) / di)
-        for j in range(n - p):
-            sumU = 0
-            for i in range(p):
-                sumU = sumU + ubar[j + i]
-            u.append(sumU / p)
-        u.extend([1] * p)
-
-        # Construction des fonctions basiques
-        Nik_temp = [[-1 for j in range(p)] for i in range(n)]
-        for i in range(n):
-            Nik_temp[i][-1] = self.N(i, p, u)
-        Nik = []
-        for i in range(n):
-            Nik.append(Nik_temp[i][-1])
-
-        # Construction des matrices
-        M = []
-        for i in range(n):
-            ligneM = []
-            for j in range(n):
-                ligneM.append(self.evaluateN(Nik[j], ubar[i], u))
-            M.append(ligneM)
-        M = np.matrix(M)
-
-        # Matrice des points interpoles
-        Qx = np.matrix(newPx).T
-        Qy = np.matrix(newPy).T
-        Qz = np.matrix(newPz).T
-
-        # Calcul des points de controle
-        P_xb = M.I * Qx
-        P_yb = M.I * Qy
-        P_zb = M.I * Qz
-
-        return [[P_xb[i, 0], P_yb[i, 0], P_zb[i, 0]] for i in range(len(P_xb))]
-
     def compute_curve_from_parametrization(self, P, k, x, Nik, Nikp, param):
         n = len(P)  # Nombre de points de controle - 1
         P_x, P_y, P_z = [], [], []  # coord fitees
@@ -863,7 +803,7 @@ class NURBS:
             sum_num_x, sum_num_y, sum_num_z, sum_den = 0, 0, 0, 0
             sum_num_x_der, sum_num_y_der, sum_num_z_der, sum_den_der = 0, 0, 0, 0
 
-            for l in range(n - k + 1):  # utilisation que des points non nuls
+            for l in range(n - k + 1):  # utilisation que des points non nuls  # noqa: E741
                 if x[l + k - 1] <= param[i] < x[l + k]:
                     debut = l  # TODO: can yield UnboundLocalError: local variable 'debut' referenced before assignment
             fin = debut + k - 1
@@ -1085,7 +1025,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
         import matplotlib.pyplot as plt
         if not twodim:
             plt.figure(1)
-            #ax = plt.subplot(211)
+            # ax = plt.subplot(211)
             plt.subplot(211)
             plt.plot(z, x, 'r.')
             plt.plot(z_fit, x_fit)
@@ -1094,7 +1034,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
             plt.xlabel('z')
             plt.ylabel('x')
             plt.legend(["centerline", "NURBS", "control points"])
-            #ay = plt.subplot(212)
+            # ay = plt.subplot(212)
             plt.subplot(212)
             plt.plot(z, y, 'r.')
             plt.plot(z_fit, y_fit)
@@ -1102,7 +1042,7 @@ def b_spline_nurbs(x, y, z, fname_centerline=None, degree=3, point_number=3000, 
             # ay.set_aspect('equal')
             plt.xlabel('z')
             plt.ylabel('y')
-            plt.legend(["centerline", "NURBS", "control points"],loc=4)
+            plt.legend(["centerline", "NURBS", "control points"], loc=4)
             # plt.show()
         else:
             plt.figure(1)

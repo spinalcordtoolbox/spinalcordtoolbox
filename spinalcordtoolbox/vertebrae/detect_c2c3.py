@@ -1,34 +1,35 @@
-# coding: utf-8
-# This is the interface API to detect the posterior edge of C2-C3 disc.
-#
-# The models have been trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
-# in section 2.1.2, except that the cords are not straightened for the C2-C3 disc detection task.
-#
-# To train a new model:
-# - Install SCT v3.2.7 (https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/v3.2.7)
-# - Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
-# - Run "source sct_launcher" in a terminal
-# - Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
-#
-# - NB: The files in the `dev/` folder are not actively maintained, so these training steps are not guaranteed to
-#       work with more recent versions of SCT.
-#
-# To use this model when running the module "detect_c2c3" (herebelow) and "sct_label_vertebrae":
-# - Save the trained model in "$SCT_DIR/data/c2c3_disc_models/"
-#
-# Author: charley
-# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
-# About the license: see the file LICENSE.TXT
+"""
+Detection of the posterior edge of C2-C3 disc
+
+The models have been trained as explained in (Gros et al. 2018, MIA, doi.org/10.1016/j.media.2017.12.001),
+in section 2.1.2, except that the cords are not straightened for the C2-C3 disc detection task.
+
+To train a new model:
+- Install SCT v3.2.7 (https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases/tag/v3.2.7)
+- Edit "$SCT_DIR/dev/detect_c2c3/config_file.py" according to your needs, then save the file.
+- Run "source sct_launcher" in a terminal
+- Run the script "$SCT_DIR/dev/detect_c2c3/train.py"
+
+NB: The files in the `dev/` folder are not actively maintained, so these training steps are not guaranteed to
+    work with more recent versions of SCT.
+
+To use this model when running the module "detect_c2c3" (herebelow) and "sct_label_vertebrae":
+- Save the trained model in "$SCT_DIR/data/c2c3_disc_models/"
+
+Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import logging
 
 import numpy as np
 import nibabel as nib
-from scipy.ndimage.measurements import center_of_mass
+from scipy.ndimage import center_of_mass
 
 from spinalcordtoolbox.image import Image, zeros_like
-from spinalcordtoolbox.utils import run_proc, TempFolder, __data_dir__
+from spinalcordtoolbox.utils.fs import TempFolder
+from spinalcordtoolbox.utils.sys import __data_dir__, run_proc
 from spinalcordtoolbox.flattening import flatten_sagittal
 
 logger = logging.getLogger(__name__)
@@ -55,12 +56,12 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     z_seg_max = np.max(np.where(nii_seg.change_orientation('PIR').data)[1])
 
     # Flatten sagittal
-    nii_im = flatten_sagittal(nii_im, nii_seg,verbose=verbose)
+    nii_im = flatten_sagittal(nii_im, nii_seg, verbose=verbose)
     nii_seg_flat = flatten_sagittal(nii_seg, nii_seg, verbose=verbose)
 
     # create temporary folder with intermediate results
     logger.info("Creating temporary folder...")
-    tmp_folder = TempFolder()
+    tmp_folder = TempFolder(basename="detect-c2c3")
     tmp_folder.chdir()
 
     # Extract mid-slice
@@ -68,7 +69,7 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     nii_seg_flat.change_orientation('PIR')
     mid_RL = int(np.rint(nii_im.dim[2] * 1.0 / 2))
     nb_sag_avg_half = int(nb_sag_avg / 2 / nii_im.dim[6])
-    midSlice = np.mean(nii_im.data[:, :, mid_RL-nb_sag_avg_half:mid_RL+nb_sag_avg_half+1], 2) # average 7 slices
+    midSlice = np.mean(nii_im.data[:, :, mid_RL-nb_sag_avg_half:mid_RL+nb_sag_avg_half+1], 2)  # average 7 slices
     midSlice_seg = nii_seg_flat.data[:, :, mid_RL]
     nii_midSlice = zeros_like(nii_im)
     nii_midSlice.data = midSlice
@@ -77,12 +78,11 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     # Run detection
     logger.info('Run C2-C3 detector...')
     os.environ["FSLOUTPUTTYPE"] = "NIFTI_PAIR"
-    cmd_detection = 'isct_spine_detect -ctype=dpdt "%s" "%s" "%s"' % \
-                    (path_model, 'data_midSlice', 'data_midSlice_pred')
+    cmd_detection = ['isct_spine_detect', '-ctype=dpdt', path_model, 'data_midSlice', 'data_midSlice_pred']
     # The command below will fail, but we don't care because it will output an image (prediction), which we
     # will use later on.
     s, o = run_proc(cmd_detection, verbose=0, is_sct_binary=True, raise_exception=False)
-    pred = nib.load('data_midSlice_pred_svm.hdr').get_data()
+    pred = np.asanyarray(nib.load('data_midSlice_pred_svm.hdr').dataobj)
     if verbose >= 2:
         # copy the "prediction data before post-processing" in an Image object
         nii_pred_before_postPro = nii_midSlice.copy()
@@ -119,7 +119,6 @@ def detect_c2c3(nii_im, nii_seg, contrast, nb_sag_avg=7.0, verbose=1):
     if np.any(pred > 0):
         logger.info('C2-C3 detected...')
 
-        pred_bin = (pred > 0).astype(np.int_)
         coord_max = np.where(pred == np.max(pred))
         pa_c2c3, is_c2c3 = coord_max[0][0], coord_max[1][0]
         nii_seg.change_orientation('PIR')

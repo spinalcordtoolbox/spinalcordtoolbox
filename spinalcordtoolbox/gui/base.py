@@ -1,4 +1,6 @@
-"""Base classes for creating GUI objects to create manually selected points.
+"""
+Base classes for creating GUI objects to create manually selected points
+
 The definition of X,Y axis is the following:
 
   xmin,ymin o---------o xmax,ymin
@@ -8,7 +10,8 @@ The definition of X,Y axis is the following:
             |         |
   xmin,ymax o---------o xmax,ymax
 
-
+Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
 """
 
 from collections import namedtuple

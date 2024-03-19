@@ -1,17 +1,13 @@
 #!/usr/bin/env python
-#########################################################################################
 #
-# All sort of utilities for labels.
+# Utilities for labels
 #
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Benjamin De Leener, Julien Cohen-Adad
-# Modified: 2015-02-11
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# Copyright (c) 2013 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
 
-# TODO: for vert-disc: make it faster! currently the module display-voxel is very long (esp. when ran on PAM50). We can find an alternative approach by sweeping through centerline voxels.
+# TODO: for vert-disc: make it faster! currently the module display-voxel is very long
+#       (esp. when ran on PAM50). We can find an alternative approach by sweeping through
+#       centerline voxels.
 # TODO: label_disc: for top vertebrae, make label at the center of the cord (currently it's at the tip)
 # TODO: check if use specified several processes.
 # TODO: currently it seems like cross_radius is given in pixel instead of mm
@@ -26,9 +22,9 @@ import spinalcordtoolbox.labels as sct_labels
 from spinalcordtoolbox.image import Image, zeros_like
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.reports.qc import generate_qc
-from spinalcordtoolbox.utils import (SCTArgumentParser, Metavar, ActionCreateFolder, list_type, init_sct, printv,
-                                     parse_num_list, set_loglevel)
-from spinalcordtoolbox.utils.shell import display_viewer_syntax
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgumentParser,
+                                           display_viewer_syntax, list_type, parse_num_list)
 
 
 def get_parser():
@@ -50,7 +46,7 @@ def get_parser():
         '-o',
         metavar=Metavar.file,
         default='labels.nii.gz',
-        help=("Output image. Note: Only some label utilities create an output image. Example: t2_labels.nii.gz")
+        help="Output image. Note: Only some label utilities create an output image. Example: t2_labels.nii.gz"
     )
 
     io_group.add_argument(
@@ -126,7 +122,16 @@ def get_parser():
     func_group.add_argument(
         '-disc',
         metavar=Metavar.file,
-        help="Create an image with regions labelized depending on values from reference"
+        help="Project disc labels onto the spinal cord segmentation to create a labeled segmentation. "
+             "Note: Unlike 'sct_label_vertebrae -discfile', this function does not involve cord straightening. "
+             "The disc labeling follows the convention: "
+             "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/labeling-conventions.html"
+    )
+
+    func_group.add_argument(
+        '-project-centerline',
+        metavar=Metavar.file,
+        help="Project disc labels onto the spinal cord centerline."
     )
 
     func_group.add_argument(
@@ -232,11 +237,6 @@ def get_parser():
 # MAIN
 # ==========================================================================================
 def main(argv: Sequence[str]):
-    """
-    Main function. When this script is run via CLI, the main function is called using main(sys.argv[1:]).
-
-    :param argv: A list of unparsed arguments, which is passed to ArgumentParser.parse_args()
-    """
     for i, arg in enumerate(argv):
         if arg == '-create-seg' and len(argv) > i+1 and '-1,' in argv[i+1]:
             raise DeprecationWarning("The use of '-1' for '-create-seg' has been deprecated. Please use "
@@ -278,6 +278,17 @@ def main(argv: Sequence[str]):
     elif arguments.disc is not None:
         ref = Image(arguments.disc)
         out = sct_labels.labelize_from_discs(img, ref)
+    elif arguments.project_centerline is not None:
+        ref = Image(arguments.project_centerline)
+        try:
+            out = sct_labels.project_centerline(img, ref)
+        except sct_labels.ShapeMismatchError as e:
+            printv(
+                f"Input image: {input_filename} and referenced labels: {arguments.project_centerline} "
+                f"should have the same shape according to the RPI orientation.\n"
+                f"Referenced labels with shape {e.dims['ref']} cannot be projected on "
+                f"input image with shape {e.dims['img']}",
+                type='error')
     elif arguments.vert_body is not None:
         levels = arguments.vert_body
         if len(levels) == 1 and levels[0] == 0:
@@ -318,7 +329,7 @@ def main(argv: Sequence[str]):
 
     printv("Generating output files...")
     out.save(path=output_fname, dtype=dtype)
-    display_viewer_syntax([input_filename, output_fname])
+    display_viewer_syntax([input_filename, output_fname], verbose=verbose)
 
     if arguments.qc is not None:
         generate_qc(fname_in1=input_filename, fname_seg=output_fname, args=argv,
@@ -411,4 +422,3 @@ def launch_manual_label_gui(img: Image, input_labels_img: Image, labels: Sequenc
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

@@ -1,45 +1,58 @@
-dipy
-# h5py is pinned to minor than 3 due to issues with Keras/TF
-# https://github.com/tensorflow/tensorflow/issues/44467
-h5py~=2.10.0
-Keras==2.3.1
+# NB: Any lines marked with 'append_to_freeze' will be copied over to `requirements-freeze.txt` when creating SCT's
+#     stable releases. We do this because `pip freeze` will not capture options (e.g. --extra-index-url) or
+#     platform-specific requirements (e.g. sys.platform == 'win32')
+
+# Avoid 1.6 and 1.7 due to method=restore bug: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4209#issuecomment-1739644328
+dipy!=1.6.*,!=1.7.*,<1.9.0
 # PyTorch's Linux distribution is very large due to its GPU support,
 # but we only need that for training models. Our users only need CPU.
---extra-index-url https://download.pytorch.org/whl/cpu
-ivadomed~=2.9.6
+--extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
+ivadomed
 matplotlib
+monai[nibabel]
 # Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
 # Installing "Microsoft Visual C++ Redistributable for Visual Studio" will fix this too, but
 # we'd prefer not to burden users with another prerequisite. 
 # NB: It's possible this fix gets included upstream in a future skimage release, see:
 #     https://github.com/scikit-image/scikit-image/issues/4780#issuecomment-824678872
-msvc-runtime; sys.platform == 'win32'
+# (The version is pinned because this line gets copied to requirements-freeze.txt when preparing a release, not because we're avoiding bugs with a specific version. Feel free to update it to the latest version.)
+msvc-runtime==14.29.30133; sys.platform == 'win32' # append_to_freeze
 nibabel
+nilearn
+nnunetv2
 numpy
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
-onnxruntime>=1.7.0
+# Avoid version 1.16.0 due to: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4225
+onnxruntime>=1.7.0,!=1.16.0
 pandas
-# This is pinned to address an upstream breaking change from protobuf 4.21.0
-# (Yes, you're reading that right. protobuf updated its major version from 3.20.1 to 4.21.0.)
-# The protobuf update breaks Keras specifically, but we can remove the fix once we drop Keras in
-# https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3738
-protobuf==3.20.1
 portalocker
 psutil
-pyqt5==5.11.3
+# pyqt5=5.11.X causes https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3916#discussion_r997435037
+# pyqt5=5.15.X causes https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3925
+# Additionally, for versions between 5.12-5.14, the only release to have Python 3.9 wheels is 5.12.3. So, we pin it.
+# See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3367#issuecomment-1533181462
+pyqt5==5.12.3
+# PyQt5-sip should be updated when PyQt5 is updated: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4354
+pyqt5-sip<12.13.0
+# pystrum==0.2 is incompatible with newer versions of numpy (installed via voxelmorph -> neurite -> pystrum)
+# See also: https://github.com/adalca/pystrum/issues/9
+pystrum>=0.3
 pytest
 pytest-cov
-raven
 requests
 requirements-parser
 scipy
 scikit-image
 scikit-learn
-tensorflow~=1.15.0
 xlwt
 tqdm
 transforms3d
-urllib3[secure]
+urllib3
 pytest_console_scripts
+pyyaml
+voxelmorph
 wquantiles
+# XlxsWriter is needed to write `.xlsx` files, since pandas removed support for the `xlwt` engine
+# Source: https://github.com/pandas-dev/pandas/pull/49296
+xlsxwriter

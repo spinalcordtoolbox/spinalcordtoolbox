@@ -1,14 +1,9 @@
 #!/usr/bin/env python
-##############################################################################
 #
 # Perform operations on images
 #
-# ----------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad, Sara Dupont
-#
-# About the license: see the file LICENSE.TXT
-##############################################################################
+# License: see the file LICENSE
 
 import os
 import sys
@@ -21,10 +16,15 @@ import nibabel as nib
 
 from spinalcordtoolbox.scripts import sct_apply_transfo, sct_resample
 from spinalcordtoolbox.image import (Image, concat_data, add_suffix, change_orientation, split_img_data, pad_image,
-                                     create_formatted_header_string, HEADER_FORMATS)
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
+                                     create_formatted_header_string, HEADER_FORMATS,
+                                     stitch_images, generate_stitched_qc_images)
+from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.utils.shell import (SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder,
+                                           list_type)
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, rmtree
+
+DIM_LIST = ['x', 'y', 'z', 't']
 
 
 def get_parser():
@@ -39,7 +39,7 @@ def get_parser():
         nargs='+',
         metavar=Metavar.file,
         help='Input file(s). Example: "data.nii.gz"\n'
-             'Note: Only "-concat" or "-omc" support multiple input files. In those cases, separate filenames using '
+             'Note: Only "-concat", "-omc" or "-stitch" support multiple input files. In those cases, separate filenames using '
              'spaces. Example usage: "sct_image -i data1.nii.gz data2.nii.gz -concat"',
         required=True)
     optional = parser.add_argument_group('OPTIONAL ARGUMENTS')
@@ -52,30 +52,55 @@ def get_parser():
         '-o',
         metavar=Metavar.file,
         help='Output file. Example: data_pad.nii.gz',
-        required = False)
+        required=False)
 
     image = parser.add_argument_group('IMAGE OPERATIONS')
     image.add_argument(
         '-pad',
         metavar=Metavar.list,
         help='Pad 3D image. Specify padding as: "x,y,z" (in voxel). Example: "0,0,1"',
-        required = False)
+        required=False)
     image.add_argument(
         '-pad-asym',
         metavar=Metavar.list,
         help='Pad 3D image with asymmetric padding. Specify padding as: "x_i,x_f,y_i,y_f,z_i,z_f" (in voxel). '
              'Example: "0,0,5,10,1,1"',
-        required = False)
+        required=False)
     image.add_argument(
         '-split',
         help='Split data along the specified dimension. The suffix _DIM+NUMBER will be added to the intput file name.',
-        required = False,
-        choices = ('x', 'y', 'z', 't'))
+        required=False,
+        choices=('x', 'y', 'z', 't'))
     image.add_argument(
         '-concat',
         help='Concatenate data along the specified dimension',
-        required = False,
-        choices = ('x', 'y', 'z', 't'))
+        required=False,
+        choices=('x', 'y', 'z', 't'))
+    image.add_argument(
+        '-stitch',
+        action='store_true',
+        help='Stitch multiple images acquired in the same orientation utilizing '
+             'the algorithm by Lavdas, Glocker et al. (https://doi.org/10.1016/j.crad.2019.01.012).',
+        required=False)
+    image.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="The path where the quality control generated content will be saved. "
+             "(Note: QC reporting is only available for 'sct_image -stitch')."
+    )
+    image.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on. "
+             "(Note: QC reporting is only available for 'sct_image -stitch')."
+    )
+    image.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help='If provided, this string will be mentioned in the QC report as the subject the process was run on. '
+             "(Note: QC reporting is only available for 'sct_image -stitch')."
+    )
     image.add_argument(
         '-remove-vol',
         metavar=Metavar.list,
@@ -89,8 +114,8 @@ def get_parser():
     image.add_argument(
         '-type',
         help='Change file type',
-        required = False,
-        choices = ('uint8','int16','int32','float32','complex64','float64','int8','uint16','uint32','int64','uint64'))
+        required=False,
+        choices=('uint8', 'int16', 'int32', 'float32', 'complex64', 'float64', 'int8', 'uint16', 'uint32', 'int64', 'uint64'))
 
     header = parser.add_argument_group('HEADER OPERATIONS')
     header.add_argument(
@@ -106,7 +131,7 @@ def get_parser():
         metavar=Metavar.file,
         help='Copy the header of the source image (specified in -i) to the destination image (specified here) '
              'and save it into a new image (specified in -o)',
-        required = False)
+        required=False)
     affine_fixes = header.add_mutually_exclusive_group(required=False)
     affine_fixes.add_argument(
         '-set-sform-to-qform',
@@ -131,14 +156,37 @@ def get_parser():
         required=False)
     orientation.add_argument(
         '-setorient',
-        help='Set orientation of the input image (only modifies the header).',
-        choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
-        required = False)
+        help='Set orientation of the input image (modifies BOTH the header and data array, similar to `fslswapdim`).',
+        choices=[
+            'LAS', 'LAI', 'LPS', 'LPI', 'LSA', 'LSP', 'LIA', 'LIP',
+            'RAS', 'RAI', 'RPS', 'RPI', 'RSA', 'RSP', 'RIA', 'RIP',
+            'ALS', 'ALI', 'ARS', 'ARI', 'ASL', 'ASR', 'AIL', 'AIR',
+            'PLS', 'PLI', 'PRS', 'PRI', 'PSL', 'PSR', 'PIL', 'PIR',
+            'SLA', 'SLP', 'SRA', 'SRP', 'SAL', 'SAR', 'SPL', 'SPR',
+            'ILA', 'ILP', 'IRA', 'IRP', 'IAL', 'IAR', 'IPL', 'IPR',
+        ],
+        required=False)
     orientation.add_argument(
-        '-setorient-data',
-        help='Set orientation of the input image\'s data (does NOT modify the header, but the data). Use with care !',
-        choices='RIP LIP RSP LSP RIA LIA RSA LSA IRP ILP SRP SLP IRA ILA SRA SLA RPI LPI RAI LAI RPS LPS RAS LAS PRI PLI ARI ALI PRS PLS ARS ALS IPR SPR IAR SAR IPL SPL IAL SAL PIR PSR AIR ASR PIL PSL AIL ASL'.split(),
-        required = False)
+        '-flip',
+        help="Flip an axis of the image's data array. (This will not change the header orientation string.)\n"
+             " - WARNING: This option should only be used to fix the data array when it does not match the orientation "
+             "string in the header. We recommend that you investigate and understand where the mismatch originated "
+             "from in the first place before using this option.\n"
+             " - Example: For an image with 'RPI' in its header, `-flip x` will flip the LR axis of the data array.",
+        choices=DIM_LIST,
+        required=False)
+    orientation.add_argument(
+        '-transpose',
+        metavar="ax1,ax2,ax3",
+        help="Transpose the axes (x,y,z) of the image's data array. (This will not change the header orientation "
+             "string.)\n"
+             " - WARNING: This option should only be used to fix the data array when it does not match the orientation "
+             "string in the header. We recommend that you investigate and understand where the mismatch originated "
+             "from in the first place before using this option.\n"
+             " - Example: For a 3D image with 'RPI' in its header, `-transpose z,y,x` will swap the LR and SI axes of "
+             "the data array.",
+        type=list_type(',', str),
+        required=False)
 
     multi = parser.add_argument_group('MULTI-COMPONENT OPERATIONS ON ITK COMPOSITE WARPING FIELDS')
     multi.add_argument(
@@ -169,7 +217,7 @@ def get_parser():
         'validated so consider checking the results of `applywarp` against `sct_apply_transfo` before using in FSL '
         'pipelines. Example syntax: "sct_image -i WARP_SRC2DEST -to-fsl IM_SRC (IM_DEST) -o WARP_FSL", '
         'followed by FSL: "applywarp -i IM_SRC -r IM_DEST -w WARP_FSL --abs -o IM_SRC2DEST" ',
-        nargs = '*',
+        nargs='*',
         required=False)
 
     misc = parser.add_argument_group('Misc')
@@ -186,7 +234,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -199,13 +247,12 @@ def main(argv=None):
 
     # initializations
     output_type = None
-    dim_list = ['x', 'y', 'z', 't']
 
     fname_in = arguments.i
 
     im_in_list = [Image(fname) for fname in fname_in]
-    if len(im_in_list) > 1 and arguments.concat is None and arguments.omc is None:
-        parser.error("Multi-image input is only supported for the '-concat' and '-omc' arguments.")
+    if len(im_in_list) > 1 and not arguments.concat and not arguments.omc and not arguments.stitch:
+        parser.error("Multi-image input is only supported for the '-concat','-omc' and '-stitch' arguments.")
 
     # Apply initialization steps to all input images first
     if arguments.set_sform_to_qform:
@@ -220,18 +267,19 @@ def main(argv=None):
     if arguments.o is not None:
         fname_out = arguments.o
     else:
-        fname_out = None
+        # in case fname_out is not defined, use first element of input file name list
+        fname_out = fname_in[0]
 
     # Run command
     # Arguments are sorted alphabetically (not according to the usage order)
     if arguments.concat is not None:
         dim = arguments.concat
-        assert dim in dim_list
-        dim = dim_list.index(dim)
+        assert dim in DIM_LIST  # Enforced by add_argument(..., choices=...)
+        dim = DIM_LIST.index(dim)
         im_out = [concat_data(im_in_list, dim)]
 
     elif arguments.copy_header is not None:
-        if fname_out is None:
+        if arguments.o is None:
             raise ValueError("Need to specify output image with -o!")
         im_dest = Image(arguments.copy_header)
         im_dest_new = im_in.copy()
@@ -251,7 +299,7 @@ def main(argv=None):
     elif arguments.keep_vol is not None:
         index_vol = (arguments.keep_vol).split(',')
         for iindex_vol, vol in enumerate(index_vol):
-                index_vol[iindex_vol] = int(vol)
+            index_vol[iindex_vol] = int(vol)
         im_out = [remove_vol(im_in, index_vol, todo='keep')]
 
     elif arguments.mcs:
@@ -306,8 +354,22 @@ def main(argv=None):
         printv(im_in.absolutepath)
         im_out = [change_orientation(im_in, arguments.setorient)]
 
-    elif arguments.setorient_data is not None:
-        im_out = [change_orientation(im_in, arguments.setorient_data, data_only=True)]
+    elif arguments.flip is not None:
+        if DIM_LIST.index(arguments.flip) >= len(im_in.data.shape):
+            parser.error(f"Cannot flip axis '{arguments.flip}' on an image with n_dim = {len(im_in.data.shape)}.")
+        im_out = im_in.copy()
+        im_out.data = np.flip(im_out.data, axis=DIM_LIST.index(arguments.flip))
+        im_out = [im_out]
+
+    elif arguments.transpose is not None:
+        if len(arguments.transpose) != len(im_in.data.shape):
+            parser.error(f"Transpose argument '{','.join(arguments.transpose)}' must match number of image dimensions "
+                         f"in the input image ({len(im_in.data.shape)}).")
+        im_out = im_in.copy()
+        transpose_numerical = [DIM_LIST.index(axis)  # Convert [x, y, z, t] to [0, 1, 2, 3]
+                               for axis in arguments.transpose]
+        im_out.data = np.transpose(im_out.data, axes=transpose_numerical)
+        im_out = [im_out]
 
     elif arguments.header is not None:
         header = im_in.header
@@ -320,9 +382,12 @@ def main(argv=None):
 
     elif arguments.split is not None:
         dim = arguments.split
-        assert dim in dim_list
-        dim = dim_list.index(dim)
+        assert dim in DIM_LIST  # Enforced by add_argument(..., choices=...)
+        dim = DIM_LIST.index(dim)
         im_out = split_data(im_in, dim)
+
+    elif arguments.stitch:
+        im_out = [stitch_images(im_in_list)]
 
     elif arguments.type is not None:
         output_type = arguments.type
@@ -333,10 +398,10 @@ def main(argv=None):
         if len(space_files) > 2 or len(space_files) < 1:
             printv(parser.error('ERROR: -to-fsl expects 1 or 2 arguments'))
             return
-        spaces = [ Image(s) for s in space_files ]
+        spaces = [Image(s) for s in space_files]
         if len(spaces) < 2:
             spaces.append(None)
-        im_out = [ displacement_to_abs_fsl(im_in, spaces[0], spaces[1]) ]
+        im_out = [displacement_to_abs_fsl(im_in, spaces[0], spaces[1])]
 
     # If these arguments are used standalone, simply pass the input image to the output (the affines were set earlier)
     elif arguments.set_sform_to_qform or arguments.set_qform_to_sform:
@@ -345,10 +410,6 @@ def main(argv=None):
     else:
         im_out = None
         printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
-
-    # in case fname_out is not defined, use first element of input file name list
-    if fname_out is None:
-        fname_out = fname_in[0]
 
     # Write output
     if im_out is not None:
@@ -361,16 +422,37 @@ def main(argv=None):
             # use input file name and add _X, _Y _Z. Keep the same extension
             l_fname_out = []
             for i_dim in range(3):
-                l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[i_dim].upper()))
+                l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + DIM_LIST[i_dim].upper()))
                 im_out[i_dim].save(l_fname_out[i_dim], verbose=verbose)
-            display_viewer_syntax(fname_out)
+            display_viewer_syntax(l_fname_out, verbose=verbose)
         if arguments.split is not None:
             # use input file name and add _"DIM+NUMBER". Keep the same extension
             l_fname_out = []
             for i, im in enumerate(im_out):
-                l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + dim_list[dim].upper() + str(i).zfill(4)))
+                l_fname_out.append(add_suffix(fname_out or fname_in[0], '_' + DIM_LIST[dim].upper() + str(i).zfill(4)))
                 im.save(l_fname_out[i])
-            display_viewer_syntax(l_fname_out)
+            display_viewer_syntax(l_fname_out, verbose=verbose)
+
+    # Generate QC report (for `sct_image -stitch` only)
+    if arguments.qc is not None:
+        if arguments.stitch is not None:
+            printv("Generating QC Report...", verbose=verbose)
+            # specify filenames to use in QC report
+            path_tmp = tmp_create(basename="stitching-qc")
+            fname_qc_concat = os.path.join(path_tmp, "concatenated_input_images.nii.gz")
+            fname_qc_out = os.path.join(path_tmp, os.path.basename(fname_out))
+            # generate 2 images to compare in QC report
+            # (1. naively concatenated input images, and 2. stitched image) padded so both have same dimensions
+            im_concat, im_out_padded = generate_stitched_qc_images(im_in_list, im_out[0])
+            im_concat.save(fname_qc_concat)
+            im_out_padded.save(fname_qc_out)
+            # generate the QC report itself
+            generate_qc(fname_in1=fname_qc_out, fname_in2=fname_qc_concat, args=sys.argv[1:],
+                        path_qc=os.path.abspath(arguments.qc), dataset=arguments.qc_dataset,
+                        subject=arguments.qc_subject, process='sct_image_stitch')
+        else:
+            printv("WARNING: '-qc' is only supported for 'sct_image -stitch'. QC report will not be generated.",
+                   type='warning')
 
     elif arguments.getorient:
         printv(orient)
@@ -378,7 +460,8 @@ def main(argv=None):
     elif arguments.display_warp:
         printv('Warping grid generated.', verbose, 'info')
 
-def displacement_to_abs_fsl(disp_im, src, tgt = None):
+
+def displacement_to_abs_fsl(disp_im, src, tgt=None):
     """ Convert an ITK style displacement field to an FSL compatible absolute coordinate field.
         this can be applied using `applywarp` from FSL using the `--abs` flag. Or converted to a
         normal relative displacement field with `convertwarp --abs --relout`
@@ -394,47 +477,47 @@ def displacement_to_abs_fsl(disp_im, src, tgt = None):
 
     def pad1_3vec(vec_arr):
         """ Pad a 3d array of 3 vectors by 1 to make a 3d array of 4 vectors for affine transformation """
-        return np.pad(vec_arr, ((0,0),(0,0),(0,0),(0,1)), constant_values = 1)
+        return np.pad(vec_arr, ((0, 0), (0, 0), (0, 0), (0, 1)), constant_values=1)
 
     def apply_affine(data, aff):
         """ Transform a 3d array of 3 vectors by a 4x4 affine matrix" s.t. y = A x for each x in the array """
-        return np.dot(pad1_3vec(data), aff.T)[...,0:3]
+        return np.dot(pad1_3vec(data), aff.T)[..., 0:3]
 
-    #Drop 5d to 4d displacement
+    # Drop 5d to 4d displacement
     disp_im.data = disp_im.data.squeeze(-2)
 
-    #If the target and displacement are in different spaces, resample the displacement to
-    #the target space
+    # If the target and displacement are in different spaces, resample the displacement to
+    # the target space
     if tgt is not None:
         hdr = disp_im.header.copy()
         shp = disp_im.data.shape
         hdr.set_data_shape(shp)
         disp_nib = Nifti1Image(disp_im.data.copy(), aff(disp_im), hdr)
-        disp_resampled = resample_from_to(disp_nib, (shp, aff(tgt)), order = 1)
+        disp_resampled = resample_from_to(disp_nib, (shp, aff(tgt)), order=1)
         disp_im.data = disp_resampled.dataobj.copy()
         disp_im.header = disp_resampled.header.copy()
 
-    #Generate an array of voxel coordinates for the target (note disp_im is in the same space as the target)
+    # Generate an array of voxel coordinates for the target (note disp_im is in the same space as the target)
     disp_dims = disp_im.data.shape[0:3]
-    disp_coords = np.mgrid[0:disp_dims[0], 0:disp_dims[1], 0:disp_dims[2]].transpose((1,2,3,0))
+    disp_coords = np.mgrid[0:disp_dims[0], 0:disp_dims[1], 0:disp_dims[2]].transpose((1, 2, 3, 0))
 
-    #Convert those to world coordinates
+    # Convert those to world coordinates
     tgt_coords_world = apply_affine(disp_coords, aff(disp_im))
 
-    #Apply the displacement. TODO check if this works for all tgt orientations [works for RPI]
-    src_coords_world = tgt_coords_world + disp_im.data * [-1,-1,1]
+    # Apply the displacement. TODO check if this works for all tgt orientations [works for RPI]
+    src_coords_world = tgt_coords_world + disp_im.data * [-1, -1, 1]
 
-    #Convert these to voxel coordinates in the source image
+    # Convert these to voxel coordinates in the source image
     sw2v = np.linalg.inv(aff(src))  # world to voxel matrix for the source image
     src_coords = apply_affine(src_coords_world, sw2v)
 
-    #Convert from voxel coordinates to FSL "mm" units (not really mm)
-    #First we handle the case where the src or tgt image space has a positive
-    #determinant by inverting the x coordinate
+    # Convert from voxel coordinates to FSL "mm" units (not really mm)
+    # First we handle the case where the src or tgt image space has a positive
+    # determinant by inverting the x coordinate
     if np.linalg.det(aff(src)) > 0:
         src_coords[..., 0] = (src.data.shape[0] - 1) - src_coords[..., 0]
 
-    # #Then we multiply by the voxel sizes and we're done
+    # Then we multiply by the voxel sizes and we're done
     src_coords_mm = src_coords * src.header.get_zooms()[0:3]
 
     out_im = disp_im.copy()
@@ -447,6 +530,7 @@ def split_data(im_in, dim, squeeze_data=True):
     """
     # backwards compat
     return split_img_data(src_img=im_in, dim=dim, squeeze_data=squeeze_data)
+
 
 def remove_vol(im_in, index_vol_user, todo):
     """
@@ -473,6 +557,7 @@ def remove_vol(im_in, index_vol_user, todo):
     im_out.data = data_out
     return im_out
 
+
 def multicomponent_split(im):
     """
     Convert composite image (e.g., ITK warping field, 5dim) into several 3d volumes.
@@ -481,7 +566,8 @@ def multicomponent_split(im):
     :return:
     """
     data = im.data
-    assert len(data.shape) == 5
+    if len(data.shape) != 5:
+        raise ValueError(f"Expected 5D image but got '{len(data.shape)}' dimensions instead.")
     data_out = []
     for i in range(data.shape[-1]):
         dat_out = data[:, :, :, :, i]
@@ -531,7 +617,7 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
     if im_grid:
         fname_grid = im_grid.absolutepath
     else:
-        tmp_dir = tmp_create()
+        tmp_dir = tmp_create(basename="visualize-warp")
         nx, ny, nz = im_warp.data.shape[0:3]
         curdir = os.getcwd()
         os.chdir(tmp_dir)
@@ -550,12 +636,12 @@ def visualize_warp(im_warp: Image, im_grid: Image = None, step=3, rm_tmp=True):
         fname_grid = 'grid_' + str(step) + '.nii.gz'
         im_grid.save(fname_grid)
         fname_grid_resample = add_suffix(fname_grid, '_resample')
-        sct_resample.main(argv=['-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample])
+        sct_resample.main(argv=['-i', fname_grid, '-f', '3x3x1', '-x', 'nn', '-o', fname_grid_resample, '-v', '0'])
         fname_grid = os.path.join(tmp_dir, fname_grid_resample)
         os.chdir(curdir)
     path_warp, file_warp, ext_warp = extract_fname(fname_warp)
     grid_warped = os.path.join(path_warp, extract_fname(fname_grid)[1] + '_' + file_warp + ext_warp)
-    sct_apply_transfo.main(argv=['-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped])
+    sct_apply_transfo.main(argv=['-i', fname_grid, '-d', fname_grid, '-w', fname_warp, '-o', grid_warped, '-v', '0'])
     if rm_tmp:
         rmtree(tmp_dir)
 

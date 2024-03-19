@@ -1,8 +1,17 @@
 Before starting this tutorial
 #############################
 
-#. Make sure that you have the following files in your working directory:
+This tutorial demonstrates how to use the GM/WM information obtained from the T2s contrast to improve registration for other types of contrasts.
 
+This means that we will be re-using the files generated in previous registration tutorials, as well as the segmentation from the previous GM/WM segmentation tutorial:
+
+- T2 files: :ref:`template-registration`
+- MT files: :ref:`mtr-computation`
+- T2s files: :ref:`gm-wm-segmentation`
+
+You can either run those tutorials first, or download the necessary files below:
+
+#. Make sure that you have the following files in your working directory:
 
    * T2 and T2* files (used in the initial registration to template for T2* data)
 

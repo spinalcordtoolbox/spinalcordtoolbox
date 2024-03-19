@@ -1,24 +1,18 @@
 #!/usr/bin/env python
-# ######################################################################################################################
-#
 #
 # Compute TSNR using inputed anat.nii.gz and fmri.nii.gz files.
 #
-# ----------------------------------------------------------------------------------------------------------------------
 # Copyright (c) 2014 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Julien Cohen-Adad, Sara Dupont
-# Created: 2015-03-12
-#
-# About the license: see the file LICENSE.TXT
-# ######################################################################################################################
+# License: see the file LICENSE
 
 import sys
-import os
+from typing import Sequence
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, add_suffix, empty_like
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 
 
 class Param:
@@ -57,8 +51,6 @@ class Tsnr:
         nii_tsnr = empty_like(nii_data)
         nii_tsnr.data = data_tsnr
         nii_tsnr.save(fname_tsnr, dtype=np.float32)
-
-        display_viewer_syntax([fname_tsnr])
 
 
 # PARSER
@@ -101,7 +93,7 @@ def get_parser():
 
 # MAIN
 # ==========================================================================================
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -119,8 +111,9 @@ def main(argv=None):
     tsnr = Tsnr(param=param, fmri=fname_src, out=fname_dst)
     tsnr.compute()
 
+    display_viewer_syntax([fname_dst], verbose=verbose)
+
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

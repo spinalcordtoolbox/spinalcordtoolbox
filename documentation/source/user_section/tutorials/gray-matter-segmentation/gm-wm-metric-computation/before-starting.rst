@@ -1,6 +1,10 @@
 Before starting this tutorial
 #############################
 
+This tutorial is intended to be run following the previous :ref:`gm-wm-segmentation` tutorial, as GM/WM metric computation relies on having segmentation masks of the grey and white matter.
+
+You can either run that tutorials first, or download the necessary files below:
+
 #. Make sure that you have the following files in your working directory:
 
    * ``single_subject/data/t2s/t2s.nii.gz`` : A T2* anatomical image of the spinal region.

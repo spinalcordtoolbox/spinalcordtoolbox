@@ -1,16 +1,11 @@
-#############################################################################
-#
-# Configure tests so that pytest downloads testing data every time
-# pytest is run from the sct directory
-#
-# ----------------------------------------------------------------------------
-# Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad, Chris Hammill
-#
-# About the license: see the file LICENSE.TXT
-###############################################################################
+"""
+Configure tests so that pytest downloads testing data every time pytest is run
+from the sct directory
 
-import sys
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
+
 import os
 import logging
 from typing import Mapping
@@ -18,8 +13,8 @@ from hashlib import md5
 
 import pytest
 
-from spinalcordtoolbox.utils.sys import sct_dir_local_path, sct_test_path
-from spinalcordtoolbox.scripts import sct_download_data as downloader
+from spinalcordtoolbox.utils.sys import sct_test_path
+from spinalcordtoolbox.download import install_named_dataset
 
 
 logger = logging.getLogger(__name__)
@@ -35,7 +30,7 @@ def pytest_sessionstart():
     # Download sct_testing_data prior to test collection
     if not os.path.exists(sct_test_path()):
         logger.info("Downloading sct test data")
-        downloader.main(['-d', 'sct_testing_data', '-o', sct_test_path()])
+        install_named_dataset('sct_testing_data', dest_folder=sct_test_path())
 
 
 @pytest.fixture

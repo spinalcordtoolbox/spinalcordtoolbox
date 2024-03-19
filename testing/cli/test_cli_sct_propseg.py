@@ -1,10 +1,12 @@
+# pytest unit tests for sct_propseg
+
 import os
 import sys
 import pytest
 import logging
 
 from spinalcordtoolbox.image import Image, compute_dice
-from spinalcordtoolbox.utils import run_proc, sct_test_path
+from spinalcordtoolbox.utils.sys import run_proc, sct_test_path
 from spinalcordtoolbox.scripts import sct_propseg
 
 logger = logging.getLogger(__name__)
@@ -25,7 +27,7 @@ def test_sct_propseg_check_dice_coefficient_against_groundtruth():
     dice_segmentation = compute_dice(im_seg, im_seg_manual, mode='3d', zboundaries=False)
 
     # note: propseg does *not* produce the same results across platforms, hence the 0.9 Dice threshold.
-    # For more details, see: https://github.com/neuropoly/spinalcordtoolbox/issues/2769
+    # For more details, see: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2769
     assert dice_segmentation > 0.9
 
 
@@ -43,8 +45,26 @@ def test_isct_propseg_compatibility():
 
 @pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
 def test_sct_propseg_o_flag(tmp_path):
-    argv = ['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path), '-o', 'test_seg.nii.gz']
-    sct_propseg.main(argv)
-    output_files = sorted([f for f in os.listdir(tmp_path)
-                          if os.path.isfile(os.path.join(tmp_path, f))])
-    assert output_files == ['t2_centerline.nii.gz', 'test_seg.nii.gz']
+    sct_propseg.main(['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path),
+                      '-o', 'test_seg.nii.gz'])
+    output_files = {f for f in os.listdir(tmp_path)}
+    assert output_files == {'t2_centerline.nii.gz', 'test_seg.nii.gz'}
+
+
+@pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
+def test_sct_propseg_optional_output_files(tmp_path):
+    sct_propseg.main(['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2', '-ofolder', str(tmp_path),
+                      '-mesh', '-CSF', '-centerline-coord', '-cross', '-init-tube', '-low-resolution-mesh'])
+    output_files = {f for f in os.listdir(tmp_path)}
+    assert output_files == {
+        't2_seg.nii.gz', 't2_centerline.nii.gz',     # default output files
+        't2_mesh.vtk',                               # '-mesh'
+        't2_CSF_mesh.vtk', 't2_CSF_seg.nii.gz',      # '-CSF'
+        't2_centerline.txt',                         # '-centerline-coord'
+        't2_cross_sectional_areas.txt',              # '-cross'
+        't2_cross_sectional_areas_CSF.txt',
+        'InitialTube1.vtk', 'InitialTube2.vtk',      # '-init-tube'
+        'InitialTubeCSF1.vtk', 'InitialTubeCSF2.vtk',
+        'segmentation_CSF_mesh_low_resolution.vtk',  # '-low-resolution-mesh'
+        'segmentation_mesh_low_resolution.vtk',
+    }

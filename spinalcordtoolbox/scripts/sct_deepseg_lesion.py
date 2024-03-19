@@ -1,19 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
-#########################################################################################
 #
 # Function to segment the multiple sclerosis lesions using convolutional neural networks
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Charley Gros
-# Modified: 2018-06-11
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import os
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -22,8 +16,8 @@ from spinalcordtoolbox.utils.fs import extract_fname
 
 def get_parser():
     parser = SCTArgumentParser(
-        description='MS lesion Segmentation using convolutional networks. Reference: Gros C et al. Automatic'
-                    'segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional'
+        description='MS lesion Segmentation using convolutional networks. Reference: Gros C et al. Automatic '
+                    'segmentation of the spinal cord and intramedullary multiple sclerosis lesions with convolutional '
                     'neural networks. Neuroimage. 2018 Oct 6;184:901-915.'
     )
 
@@ -31,7 +25,7 @@ def get_parser():
     mandatory.add_argument(
         "-i",
         required=True,
-        help='Input image. Example: t1.nii.gz',
+        help='Input image. Example: t2.nii.gz',
         metavar=Metavar.file,
     )
     mandatory.add_argument(
@@ -64,7 +58,7 @@ def get_parser():
         default="svm")
     optional.add_argument(
         "-file_centerline",
-        help='Input centerline file (to use with flag -centerline manual). Example: t2_centerline_manual.nii.gz',
+        help='Input centerline file (to use with flag -centerline file). Example: t2_centerline_manual.nii.gz',
         metavar=Metavar.str,
         required=False)
     optional.add_argument(
@@ -97,16 +91,11 @@ def get_parser():
         default=1,
         # Values [0, 1, 2] map to logging levels [WARNING, INFO, DEBUG], but are also used as "if verbose == #" in API
         help="Verbosity. 0: Display only errors/warnings, 1: Errors/warnings + info messages, 2: Debug mode")
-    optional.add_argument(
-        '-igt',
-        metavar=Metavar.str,
-        help='File name of ground-truth segmentation.',
-        required=False)
 
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """Main function."""
     parser = get_parser()
     arguments = parser.parse_args(argv)
@@ -143,10 +132,10 @@ def main(argv=None):
 
     # Segment image
     from spinalcordtoolbox.image import Image
-    from spinalcordtoolbox.deepseg_lesion.core import deep_segmentation_MSlesion
+    from spinalcordtoolbox.deepseg_.lesion import deep_segmentation_MSlesion
     im_image = Image(fname_image)
     im_seg, im_labels_viewer, im_ctr = deep_segmentation_MSlesion(im_image, contrast_type, ctr_algo=ctr_algo, ctr_file=manual_centerline_fname,
-                                        brain_bool=brain_bool, remove_temp_files=remove_temp_files, verbose=verbose)
+                                                                  brain_bool=brain_bool, remove_temp_files=remove_temp_files, verbose=verbose)
 
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_lesionseg' +
@@ -156,19 +145,18 @@ def main(argv=None):
     if ctr_algo == 'viewer':
         # Save labels
         fname_labels = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_labels-centerline' +
-                                               extract_fname(fname_image)[2]))
+                                                    extract_fname(fname_image)[2]))
         im_labels_viewer.save(fname_labels)
 
     if verbose == 2:
         # Save ctr
         fname_ctr = os.path.abspath(os.path.join(output_folder, extract_fname(fname_image)[1] + '_centerline' +
-                                               extract_fname(fname_image)[2]))
+                                                 extract_fname(fname_image)[2]))
         im_ctr.save(fname_ctr)
 
-    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    display_viewer_syntax([fname_image, fname_seg], im_types=['anat', 'seg'], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

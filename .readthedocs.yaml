@@ -1,0 +1,28 @@
+# .readthedocs.yaml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
+version: 2
+
+build:
+  os: "ubuntu-22.04"
+  tools:
+      # This python version needs to be compatible with SCT, see setup.py
+      python: "3.9"
+
+python:
+  install:
+    - requirements: requirements.txt
+    # Install SCT itself
+    - path: .
+      extra_requirements:
+        - docs
+# This file is just a duplicate of the .[docs] requirements specified
+# in the previous point (see setup.py), so it's not necessary:
+#    - requirements: documentation/source/requirements.txt
+
+# The build happens in the documentation/source/ directory
+sphinx:
+  configuration: documentation/source/conf.py
+  fail_on_warning: true

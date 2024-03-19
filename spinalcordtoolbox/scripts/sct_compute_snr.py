@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-#########################################################################################
 #
 # Compute SNR in a given ROI according to different methods presented in Dietrich et al.,
 # Measurement of signal-to-noise ratios in MR images: Influence of multichannel coils,
@@ -7,19 +6,17 @@
 #
 # Also see this discussion: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3481
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2015 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Simon Levy, Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
-########################################################################################
+# License: see the file LICENSE
 
 import sys
+from typing import Sequence
 
 import numpy as np
 
 from spinalcordtoolbox.image import Image, empty_like, add_suffix
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, parse_num_list, init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, parse_num_list
 
 
 # PARAMETERS
@@ -129,12 +126,12 @@ def weighted_std(values, weights):
     return np.sqrt(variance)
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
     set_loglevel(verbose=verbose)
-    
+
     # Default params
     param = Param()
 
@@ -149,7 +146,7 @@ def main(argv=None):
     # Check parameters
     if method in ['diff', 'single']:
         if not fname_mask:
-            raise parser.error(f"Argument '-m' must be specified when using '-method {method}'.")
+            parser.error(f"Argument '-m' must be specified when using '-method {method}'.")
 
     # Load data
     im_data = Image(fname_data)
@@ -242,7 +239,7 @@ def main(argv=None):
         if fname_mask_noise:
             mask_noise = Image(fname_mask_noise).data
         else:
-            raise parser.error("A noise mask is mandatory with '-method single'.")
+            parser.error("A noise mask is mandatory with '-method single'.")
         # Check dimensionality of the noise mask
         if len(mask_noise.shape) != 3:
             raise ValueError(f"Input noise mask dimension: {dim}. Input dimension for the noise mask should be 3.")

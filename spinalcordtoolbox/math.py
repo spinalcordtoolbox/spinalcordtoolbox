@@ -1,14 +1,16 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# Functions that perform mathematical operations on an image.
+"""
+Mathematical operations on an image
 
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 
 import numpy as np
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
-from skimage.filters import threshold_local, threshold_otsu
-from scipy.ndimage.filters import gaussian_filter, gaussian_laplace
+from skimage.filters import threshold_local, threshold_otsu, rank
+from scipy.ndimage import gaussian_filter, gaussian_laplace
 from scipy.stats import pearsonr, spearmanr
 from dipy.denoise.noise_estimate import estimate_sigma
 from dipy.segment.mask import median_otsu
@@ -23,45 +25,45 @@ logger = logging.getLogger(__name__)
 ALMOST_ZERO = 0.000000001
 
 
-def _get_selem(shape, size, dim):
+def _get_footprint(shape, size, dim):
     """
-    Create structuring element of desired shape and radius
+    Create footprint (prev. terminology: structuring element) of desired shape and radius
 
-    :param shape: str: Shape of the structuring element. See available options below in the code
+    :param shape: str: Shape of the footprint. See available options below in the code
     :param size: int: size of the element.
     :param dim: {0, 1, 2}: Dimension of the array which 2D structural element will be orthogonal to. For example, if
     you wish to apply a 2D disk kernel in the X-Y plane, leaving Z unaffected, parameters will be: shape=disk, dim=2.
-    :return: numpy array: structuring element
+    :return: numpy array: footprint
     """
-    # TODO: enable custom selem
+    # TODO: enable custom footprint
     if shape == 'square':
-        selem = square(size)
+        footprint = square(size)
     elif shape == 'cube':
-        selem = cube(size)
+        footprint = cube(size)
     elif shape == 'disk':
-        selem = disk(size)
+        footprint = disk(size)
     elif shape == 'ball':
-        selem = ball(size)
+        footprint = ball(size)
     else:
-        ValueError("This shape is not a valid entry: {}".format(shape))
+        raise ValueError("This shape is not a valid entry: {}".format(shape))
 
-    if not (len(selem.shape) in [2, 3] and selem.shape[0] == selem.shape[1]):
+    if not (len(footprint.shape) in [2, 3] and footprint.shape[0] == footprint.shape[1]):
         raise ValueError("Invalid shape")
 
     # If 2d kernel, replicate it along the specified dimension
-    if len(selem.shape) == 2:
-        selem3d = np.zeros([selem.shape[0]] * 3)
-        imid = np.floor(selem.shape[0] / 2).astype(int)
+    if len(footprint.shape) == 2:
+        footprint3d = np.zeros([footprint.shape[0]] * 3)
+        imid = np.floor(footprint.shape[0] / 2).astype(int)
         if dim == 0:
-            selem3d[imid, :, :] = selem
+            footprint3d[imid, :, :] = footprint
         elif dim == 1:
-            selem3d[:, imid, :] = selem
+            footprint3d[:, imid, :] = footprint
         elif dim == 2:
-            selem3d[:, :, imid] = selem
+            footprint3d[:, :, imid] = footprint
         else:
             raise ValueError("dim can only take values: {0, 1, 2}")
-        selem = selem3d
-    return selem
+        footprint = footprint3d
+    return footprint
 
 
 def dice(im1, im2):
@@ -83,8 +85,8 @@ def dice(im1, im2):
 
     Source: https://gist.github.com/JDWarner/6730747
     """
-    im1 = np.asarray(im1).astype(np.bool)
-    im2 = np.asarray(im2).astype(np.bool)
+    im1 = np.asarray(im1).astype(bool)
+    im2 = np.asarray(im2).astype(bool)
 
     if im1.shape != im2.shape:
         raise ValueError("Shape mismatch: im1 and im2 must have the same shape.")
@@ -112,7 +114,11 @@ def dilate(data, size, shape, dim=None):
         im_out.data = dilate(data.data, size, shape, dim)
         return im_out
     else:
-        return dilation(data, selem=_get_selem(shape, size, dim), out=None)
+        footprint = _get_footprint(shape, size, dim)
+        if data.dtype in ['uint8', 'uint16']:
+            return rank.maximum(data, footprint=footprint)
+        else:
+            return dilation(data, footprint=footprint, out=None)
 
 
 def erode(data, size, shape, dim=None):
@@ -132,7 +138,11 @@ def erode(data, size, shape, dim=None):
         im_out.data = erode(data.data, size, shape, dim)
         return im_out
     else:
-        return erosion(data, selem=_get_selem(shape, size, dim), out=None)
+        footprint = _get_footprint(shape, size, dim)
+        if data.dtype in ['uint8', 'uint16']:
+            return rank.minimum(data, footprint=footprint)
+        else:
+            return erosion(data, footprint=footprint, out=None)
 
 
 def mutual_information(x, y, nbins=32, normalized=False):
@@ -178,7 +188,8 @@ def smooth(data, sigmas):
     :param sigmas: Kernel SD in voxel
     :return:
     """
-    assert len(data.shape) == len(sigmas)
+    if len(data.shape) != len(sigmas):
+        raise ValueError(f"Expected {len(data.shape)} sigmas, but got {len(sigmas)}")
     return gaussian_filter(data.astype(float), sigmas, order=0, truncate=4.0)
 
 
@@ -186,7 +197,8 @@ def laplacian(data, sigmas):
     """
     Apply Laplacian filter
     """
-    assert len(data.shape) == len(sigmas)
+    if len(data.shape) != len(sigmas):
+        raise ValueError(f"Expected {len(data.shape)} sigmas, but got {len(sigmas)}")
     return gaussian_laplace(data.astype(float), sigmas)
 
 
@@ -214,9 +226,9 @@ def compute_similarity(data1, data2, metric):
     # compute similarity metric
     if metric == 'mi':
         res = mutual_information(data1_1d, data2_1d, normalized=False)
-    if metric == 'minorm':
+    elif metric == 'minorm':
         res = mutual_information(data1_1d, data2_1d, normalized=True)
-    if metric == 'corr':
+    elif metric == 'corr':
         res = correlation(data1_1d, data2_1d)
     else:
         raise ValueError(f"Don't know what metric to use! Got unsupported: {metric}")
@@ -260,19 +272,33 @@ def binarize(data, bin_thr=0):
     return data > bin_thr
 
 
-def concatenate_along_4th_dimension(data1, data2):
+def concatenate_along_last_dimension(data):
     """
-    Concatenate two data along 4th dimension.
+    Concatenate multiple data arrays, while ensuring that the last axis of the
+    array ("N") is safe to use for operations involving "axis=-1" (e.g. `np.sum(axis=-1)`).
 
-    :param data1: 3d or 4d array
-    :param data2: 3d or 4d array
-    :return data_concat: concate(data1, data2)
+      * 3D (X,Y,Z)   -> 4D (X,Y,Z,N)
+      * 4D (X,Y,Z,T) -> 5D (X,Y,Z,T,N)
+      * 3D + 4D      -> 4D (X,Y,Z,N)
+
+    :param data: List of ndarrays.
+    :return data_concat: concatenate([data])
     """
-    if len(np.shape(data1)) == 3:
-        data1 = data1[..., np.newaxis]
-    if len(np.shape(data2)) == 3:
-        data2 = data2[..., np.newaxis]
-    return np.concatenate((data1, data2), axis=3)
+    ndims = set([arr.ndim for arr in data])
+
+    # Case 1: All images have the same ndim, so add a new axis to every image
+    if ndims == {3} or ndims == {4}:
+        data = [arr[..., np.newaxis] for arr in data]
+
+    # Case 2: Mix of 3D and 4D images --> No longer supported
+    elif ndims == {3, 4}:
+        raise ValueError(f"Can only process images with the same number of dimensions, but got mix: {ndims}")
+
+    # Case 3: 2D/5D/etc. images --> Not supported
+    else:
+        raise ValueError(f"Can only process 3D/4D images, but received images with ndim = {ndims - {3, 4}}")
+
+    return np.concatenate(data, axis=-1)
 
 
 def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
@@ -280,7 +306,7 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     :param data_in: nd_array to denoise
 
     .. note::
-        for more info about patch_radius and block radius, please refer to the dipy website: http://dipy.org/dipy/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
+        for more info about patch_radius and block radius, please refer to the dipy website: https://docs.dipy.org/stable/reference/dipy.denoise.html#dipy.denoise.nlmeans.nlmeans
     """
 
     data_in = np.asarray(data_in)
@@ -314,7 +340,8 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
     :param model: regression model required to learn the mapping within Patch2Self
 
     .. note::
-        for more info about patch_radius and model, please refer to the dipy website: https://dipy.org/documentation/1.4.1./examples_built/denoise_patch2self/#example-denoise-patch2self
+        for more info about patch_radius and model, please refer to the dipy website:
+        https://docs.dipy.org/stable/examples_built/preprocessing/denoise_patch2self.html
     """
     denoised = patch2self(data_in, bvals_in, patch_radius=patch_radius,
                           model=model)

@@ -1,20 +1,19 @@
 #!/usr/bin/env python
 #
-# Merge b=0 and dMRI data and output appropriate bvecs/bvals files.
+# Merge b=0 and dMRI data and output appropriate bvecs/bvals files
 #
 # Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Author: Julien Cohen-Adad
-#
-# About the license: see the file LICENSE.TXT
+# License: see the file LICENSE
 
 
-import os
 import sys
+from typing import Sequence
 
 import numpy as np
 from dipy.data.fetcher import read_bvals_bvecs
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 from spinalcordtoolbox.image import Image, concat_data
 
 
@@ -97,7 +96,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """
     Main function
     :param argv:
@@ -156,4 +155,3 @@ def main(argv=None):
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

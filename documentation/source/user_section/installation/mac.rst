@@ -13,6 +13,16 @@ Supported Operating Systems
 * MacOS >= 10.13
 
 
+Mac computers with Apple silicon
+--------------------------------
+
+If your computer uses Apple silicon (M1, M2, M3, etc.), you need to make sure `Rosetta 2 <https://en.wikipedia.org/wiki/Rosetta_(software)#Rosetta_2>`__ is installed before installing or running SCT. To do this, you can open a Terminal and run:
+
+.. code:: sh
+
+    softwareupdate --install-rosetta
+
+
 Gnu Compiler Collection (gcc)
 -----------------------------
 
@@ -23,7 +33,7 @@ You need to have ``gcc`` installed. Check to see if ``gcc`` is installed by open
     gcc --version
 
 
-If it isn't installed, we recommend installing `Homebrew <https://brew.sh/>`_ and then run:
+If it isn't installed, we recommend installing `Homebrew <https://brew.sh/>`__ and then run:
 
 .. code:: sh
 
@@ -37,13 +47,14 @@ Installation Options
 Option 1: Install from Package (recommended)
 --------------------------------------------
 
-The simplest way to install SCT is to do it via a stable release. First, download the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`_. Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
+The simplest way to install SCT is to do it via a stable release. First, navigate to the `latest release <https://github.com/spinalcordtoolbox/spinalcordtoolbox/releases>`__, then download the install script for SCT (``install_sct-<version>_macos.sh``). Major changes to each release are listed in the :doc:`/dev_section/CHANGES`.
 
-Once you have downloaded SCT, unpack it (note: Safari will automatically unzip it). Then, open a new Terminal, go into the created folder and launch the installer:
+Once you have downloaded SCT, open a new Terminal in the location of the downloaded script, then launch the installer the ``bash`` command. For example, if the script was downloaded to `Downloads/`, then you would run:
 
 .. code:: sh
 
-  ./install_sct
+  cd ~/Downloads
+  bash install_sct-<version>_macos.sh
 
 
 Option 2: Install from GitHub (development)
@@ -61,7 +72,7 @@ If you wish to benefit from the cutting-edge version of SCT, or if you wish to c
 
       cd spinalcordtoolbox
 
-#. Checkout the revision of interest, if different from `master`:
+#. (Optional) Checkout the revision of interest, if different from `master`:
 
    .. code:: sh
 
@@ -123,7 +134,7 @@ Procedure:
 Option 4: Install with Docker
 -----------------------------
 
-`Docker <https://www.docker.com/what-container>`_ is a portable (Linux, macOS, Windows) container platform.
+`Docker <https://www.docker.com/what-container/>`__ is a portable (Linux, macOS, Windows) container platform.
 
 In the context of SCT, it can be used:
 
@@ -135,61 +146,46 @@ In the context of SCT, it can be used:
 Basic Installation (No GUI)
 ***************************
 
-First, `install Docker <https://docs.docker.com/install/>`_. Then, follow the examples below to create an OS-specific SCT installation.
+First, `install Docker Desktop <https://docs.docker.com/desktop/install/mac-install/>`__. Then, follow the examples below to create an OS-specific SCT installation.
 
 
 Docker Image: Ubuntu
 ^^^^^^^^^^^^^^^^^^^^
 
+First, launch Docker Desktop, then open up a new Terminal window and run the commands below:
+
 .. code:: bash
 
    # Start from the Terminal
-   docker pull ubuntu:16.04
+   docker pull ubuntu:22.04
+   # If the previous command says 'Cannot connect to the Docker daemon', make sure you have launched Docker Desktop
    # Launch interactive mode (command-line inside container)
-   docker run -it ubuntu
+   docker run -it ubuntu:22.04
    # Now, inside Docker container, install dependencies
    apt-get update
-   apt install -y git curl bzip2 libglib2.0-0 gcc
-   # Note for above: libglib2.0-0 is required by PyQt
+   apt install -y git curl bzip2 libglib2.0-0 libgl1-mesa-glx libxrender1 libxkbcommon-x11-0 libdbus-1-3 gcc
+   # Note for above: libglib2.0-0, libgl1-mesa-glx, libxrender1, libxkbcommon-x11-0, libdbus-1-3 are required by PyQt
    # Install SCT
    git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
    cd sct
    ./install_sct -y
-   export PATH="/sct/bin:${PATH}"
+   # For the previous command, it's normal if the last two checks show [FAIL] in red
+   # This will be fixed by doing the "Enable GUI Scripts" optional step in the next section
+   source /root/.bashrc
    # Test SCT
    sct_testing
-   # save the state of the container. Open a new Terminal and run:
-   docker ps -a  # list all containers
-   docker commit <CONTAINER_ID> <YOUR_NAME>/ubuntu:ubuntu16.04
-
-Docker Image: CentOS7
-^^^^^^^^^^^^^^^^^^^^^
-
-.. code:: bash
-
-   # Start from the Terminal
-   docker pull centos:centos7
-   # Launch interactive mode (command-line inside container)
-   docker run -it centos:centos7
-   # Now, inside Docker container, install dependencies
-   yum install -y which gcc git curl
-   # Install SCT
-   git clone https://github.com/spinalcordtoolbox/spinalcordtoolbox.git sct
-   cd sct
-   ./install_sct -y
-   export PATH="/sct/bin:${PATH}"
-   # Test SCT
-   sct_testing
-   # save the state of the container. Open a new Terminal and run:
-   docker ps -a  # list all containers
-   docker commit <CONTAINER_ID> <YOUR_NAME>/centos:centos7
+   # Save the state of the container as a docker image.
+   # Back on the Host machine, open a new terminal and run:
+   docker ps -a  # list all containers (to find out the container ID)
+   # specify the ID, and also choose a name to use for the docker image, such as "sct_v6.0"
+   docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 
 Enable GUI Scripts (Optional)
 *****************************
 
 In order to run scripts with GUI you need to allow X11 redirection.
-First, save your Docker image:
+First, save your Docker image if you haven't already done so:
 
 1. Open another Terminal
 2. List current docker images
@@ -202,17 +198,34 @@ First, save your Docker image:
 
    .. code:: bash
 
-      docker commit <CONTAINER_ID> <YOUR_NAME>/<DISTROS>:<VERSION>
+      docker commit <CONTAINER_ID> <IMAGE_NAME>/ubuntu:ubuntu22.04
 
 Create an X11 server for handling display:
 
-1. Install XQuartz X11 server.
-2. Check ‘Allow connections from network clientsoption inXQuartz\` settings.
+1. Install `XQuartz X11 <https://www.xquartz.org/>`__ server.
+2. Check ‘Allow connections from network clients option in XQuartz\` settings. (Run XQuartz; in the top-of-screen menu bar, choose "XQuartz", then "Preferences..."; the relevant option is under the "Security" tab.)
 3. Quit and restart XQuartz.
-4. In XQuartz window xhost + 127.0.0.1
-5. In your other Terminal window, run:
-   ``docker run -e DISPLAY=host.docker.internal:0 -it <CONTAINER_ID>``
+4. In the XQuartz "xterm" window, run the command:
 
+   .. code:: bash
+
+      xhost + 127.0.0.1
+
+5. In your other Terminal window, run:
+
+   .. code:: bash
+
+      docker run -e DISPLAY=host.docker.internal:0 -it <IMAGE_NAME>/ubuntu:ubuntu22.04
+
+   (If this command says 'Cannot connect to the Docker daemon', try again after launching Docker Desktop.)
+
+6. You can test whether GUI scripts are available by running the following command in your Docker container:
+
+   .. code:: bash
+
+      sct_check_dependencies
+
+   You should see two green ``[OK]`` symbols at the bottom of the report for "PyQT" and "matplotlib" checks, which represent the GUI features provided by SCT.
 
 Additional Notes
 ================

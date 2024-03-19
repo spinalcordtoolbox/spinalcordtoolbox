@@ -1,2 +1,2 @@
-Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,Label,Size [vox],MAP(),STD()
-2021-03-16 10:47:36,git-jn/3254-fix-sform-sct_warp_template-9566dce5850797d73d819917f7f49ce74b4a052c,/home/joshua/repos/spinalcordtoolbox/sct_example_data/mt/mtr.nii.gz,4:17,2:5,white matter,980.9416908352437,54.37973987894469,4.85153610548257
+Timestamp,SCT Version,Filename,Slice (I->S),VertLevel,DistancePMJ,Label,Size [vox],MAP(),STD()
+"2023-11-23 14:46:01","git-mgp/resample-float-70ef897d385b7b6a0de2d7acd2222e3519f4d690","/home/joshua/repos/spinalcordtoolbox/data/sct_example_data/mt/mtr.nii.gz","4:17","2:5","","white matter",979.1405660958703,54.417007018368906,4.731289391883629

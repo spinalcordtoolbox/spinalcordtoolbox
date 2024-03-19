@@ -1,6 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# Filesystem related helpers and utilities
+"""
+Filesystem related helpers and utilities
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import sys
 import io
@@ -9,25 +12,23 @@ import shutil
 import tempfile
 import datetime
 import logging
-import pathlib
+from pathlib import Path
 
 from .sys import printv
 
 logger = logging.getLogger(__name__)
 
 
-def tmp_create(basename=None):
+def tmp_create(basename):
     """Create temporary folder and return its path
     """
-    prefix = "sct-%s-" % datetime.datetime.now().strftime("%Y%m%d%H%M%S.%f")
-    if basename:
-        prefix += "%s-" % basename
+    prefix = f"sct_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}_{basename}_"
     tmpdir = tempfile.mkdtemp(prefix=prefix)
-    logger.info("Creating temporary folder (%s)" % tmpdir)
+    logger.info(f"Creating temporary folder ({tmpdir})")
     return tmpdir
 
 
-# Modified from http://shallowsky.com/blog/programming/python-tee.html
+# Modified from https://shallowsky.com/blog/programming/python-tee.html
 class Tee:
     def __init__(self, _fd1, _fd2):
         self.fd1 = _fd1
@@ -52,6 +53,15 @@ class Tee:
     def flush(self):
         self.fd1.flush()
         self.fd2.flush()
+
+    def isatty(self):
+        # This method is needed to ensure that `printv` correctly applies color formatting when sys.stdout==Tee().
+        # fixme: Here we return 'True' if either file descriptor is a tty, to ensure that color formatting is added to
+        #        stdout/stderr if used. This has the unfortunate side effect of printing color codes to actual text
+        #        files, so we may want to rethink this solution. But, I'm not sure we can have it both ways without
+        #        modifying the `write()` method of Tee.
+        #        (See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4287)
+        return any((self.fd1.isatty(), self.fd2.isatty()))
 
 
 def copy_helper(src, dst, verbose=1):
@@ -123,8 +133,8 @@ def check_file_exist(fname, verbose=1):
 class TempFolder(object):
     """This class will create a temporary folder."""
 
-    def __init__(self, verbose=0):
-        self.path_tmp = tmp_create()
+    def __init__(self, basename, verbose=0):
+        self.path_tmp = tmp_create(basename)
         self.previous_path = None
 
     def chdir(self):
@@ -156,12 +166,11 @@ class TempFolder(object):
         rmtree(self.path_tmp)
 
 
-def cache_signature(input_files=[], input_data=[], input_params={}):
+def cache_signature(input_files=[], input_params={}):
     """
     Create a signature to be used for caching purposes
 
     :param input_files: paths of input files (that can influence output)
-    :param input_data: input data (that can influence output)
     :param input_params: input parameters (that can influence output)
 
     Notes:
@@ -185,12 +194,6 @@ def cache_signature(input_files=[], input_data=[], input_params={}):
         with io.open(path, "rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
                 h.update(chunk)
-    for data in input_data:
-        h.update(str(type(data)))
-        try:
-            h.update(data)
-        except:
-            h.update(str(data))
     for k, v in sorted(input_params.items()):
         h.update(str(type(k)).encode('utf-8'))
         h.update(str(k).encode('utf-8'))
@@ -223,10 +226,13 @@ def cache_save(cachefile, sig):
 
 
 def mv(src, dst, verbose=1):
-    """Move a file from src to dst, almost like os.rename
-    """
+    """Move a file from src to dst (adding a logging message)."""
     printv("mv %s %s" % (src, dst), verbose=verbose, type="code")
-    os.rename(src, dst)
+    # NB: We specify `shutil.copyfile` to override the default of `shutil.copy2`.
+    #     (`copy2` copies file metadata, but doing so fails with a PermissionError on WSL installations where the
+    #     src/dest are on different devices. So, we use `copyfile` instead, which doesn't preserve file metadata.)
+    #     Fixes https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3832.
+    shutil.move(src, dst, copy_function=shutil.copyfile)
 
 
 def copy(src, dst, verbose=1):
@@ -249,3 +255,15 @@ def copy(src, dst, verbose=1):
             if isinstance(e, shutil.SameFileError):
                 return
         raise  # Must be another error
+
+
+def relpath_or_abspath(child_path, parent_path):
+    """
+    Try to find a relative path between a child path and its parent path. If it doesn't exist,
+    then the child path is not within the parent path, so return its abspath instead.
+    """
+    abspath = Path(child_path).absolute()
+    try:
+        return abspath.relative_to(parent_path)
+    except ValueError:
+        return abspath

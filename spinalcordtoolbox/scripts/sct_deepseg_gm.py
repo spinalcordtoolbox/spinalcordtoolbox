@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
+#
 # This command-line tool is the interface for the deepseg_gm API
 # that implements the model for the Spinal Cord Gray Matter Segmentation.
 #
@@ -7,13 +7,20 @@
 #     Perone, C. S., Calabrese, E., & Cohen-Adad, J. (2017).
 #     Spinal cord gray matter segmentation using deep dilated convolutions.
 #     URL: https://arxiv.org/abs/1710.01269
+#
+# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+# License: see the file LICENSE
+
 
 import sys
 import os
+from typing import Sequence
 
-from spinalcordtoolbox.utils import SCTArgumentParser, Metavar, init_sct, display_viewer_syntax, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel
+from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 from spinalcordtoolbox.image import add_suffix
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.deepseg_.gm import segment_file
 
 
 def get_parser():
@@ -90,7 +97,7 @@ def get_parser():
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -113,27 +120,25 @@ def main(argv=None):
     if threshold == 0.0:
         threshold = None
 
-    from spinalcordtoolbox.deepseg_gm import deepseg_gm
-    deepseg_gm.check_backend()
-
-    out_fname = deepseg_gm.segment_file(input_filename, output_filename,
-                                        model_name, threshold, int(verbose),
-                                        use_tta)
+    out_fname = segment_file(input_filename, output_filename,
+                             model_name, threshold, int(verbose),
+                             use_tta)
 
     path_qc = arguments.qc
     qc_dataset = arguments.qc_dataset
     qc_subject = arguments.qc_subject
     if path_qc is not None:
-        generate_qc(fname_in1=input_filename, fname_seg=out_fname, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_in1=input_filename, fname_seg=out_fname, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_gm')
 
-    display_viewer_syntax([input_filename, format(out_fname)],
-                              colormaps=['gray', 'red'],
-                              opacities=['1', '0.7'],
-                              verbose=verbose)
+    display_viewer_syntax(
+        [input_filename, format(out_fname)],
+        im_types=['anat', 'seg'],
+        opacities=['1', '0.7'],
+        verbose=verbose,
+    )
 
 
 if __name__ == "__main__":
     init_sct()
     main(sys.argv[1:])
-

@@ -7,8 +7,14 @@ on:
         description: 'Changelog filename'
         required: true
         default: 'CHANGES.md'
+      milestone_number:
+        description: 'Milestone number (get this from the milestone URL)'
+        required: true
       milestone_title:
-        description: 'Milestone title'
+        description: 'Milestone title (e.g. 6.1)'
+        required: true
+      future_milestone_title:
+        description: 'Next milestone title (used to update dev version.txt on master)'
         required: true
 
 jobs:
@@ -16,29 +22,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Set up Python (to install 'changelog')
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
     - name: Install 'changelog'
       run: |
         pip install git+https://github.com/neuropoly/changelog@master
     - name: Checkout '${{ github.event.repository.name }}'
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: ${{ github.event.repository.name }}
     - name: Update '${{ github.event.inputs.fname_changelog }}' for '${{ github.event.repository.name }}'
       run: |
         cd ${{ github.event.repository.name }}
-        changelog spinalcordtoolbox/spinalcordtoolbox --update --name "${{ github.event.inputs.fname_changelog }}" --milestone ${{ github.event.inputs.milestone_title }}
+        changelog spinalcordtoolbox/spinalcordtoolbox --update --name "${{ github.event.inputs.fname_changelog }}" --milestone ${{ github.event.inputs.milestone_title }} --use-milestone-due-date
         rm -f "${{ github.event.inputs.fname_changelog }}.bak"
-    - name: Create pull request for updated changelog
-      uses: peter-evans/create-pull-request@v3
+    - name: Update version.txt
+      run: |
+        cd ${{ github.event.repository.name }}
+        echo "${{ github.event.inputs.future_milestone_title }}.dev0" > spinalcordtoolbox/version.txt
+    - name: Create pull request for updated changelog and version.txt
+      uses: peter-evans/create-pull-request@v5
       with:
         path: "${{ github.event.repository.name }}"
         branch: "bot/v${{ github.event.inputs.milestone_title }}"
-        commit-message  : "Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release"
-        title: "Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release"
-        milestone: "${{ github.event.inputs.milestone_title }}"
+        commit-message  : "Update ${{ github.event.inputs.fname_changelog }} and version.txt for ${{ github.event.inputs.milestone_title }} release"
+        title: "Update ${{ github.event.inputs.fname_changelog }} and version.txt for ${{ github.event.inputs.milestone_title }} release"
+        milestone: "${{ github.event.inputs.milestone_number }}"
         body: |
-          Update ${{ github.event.inputs.fname_changelog }} for ${{ github.event.inputs.milestone_title }} release.
+          Update ${{ github.event.inputs.fname_changelog }} and version.txt for ${{ github.event.inputs.milestone_title }} release.
           
           Carried out as a part of the [release](https://github.com/spinalcordtoolbox/spinalcordtoolbox/wiki/Misc%3A-Creating-a-new-release) checklist.
         delete-branch: true

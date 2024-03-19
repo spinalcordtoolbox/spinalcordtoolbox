@@ -1,6 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# pytest unit tests for Image stuff
+# pytest unit tests for spinalcordtoolbox.image
 
 import sys
 import os
@@ -11,8 +9,7 @@ import nibabel
 import nibabel.orientations
 
 import spinalcordtoolbox.image as msct_image
-from spinalcordtoolbox.utils import tmp_create, __sct_dir__
-from spinalcordtoolbox.scripts import sct_image
+from spinalcordtoolbox.utils.fs import tmp_create
 
 
 @pytest.fixture(scope="session")
@@ -41,7 +38,7 @@ def fake_3dimage_sct_custom(data):
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     """
     i = fake_3dimage_custom(data)
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )
@@ -127,7 +124,7 @@ def fake_3dimage_sct_vis():
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     """
     i = fake_3dimage_vis()
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )
@@ -221,7 +218,7 @@ def fake_4dimage_sct():
     :return: an Image (4D) in RAS+ (aka SCT LPI) space
     """
     i = fake_4dimage()
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )
@@ -234,7 +231,7 @@ def fake_3dimage_sct():
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     """
     i = fake_3dimage()
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )
@@ -247,7 +244,7 @@ def fake_3dimage_sct2():
     :return: an Image (3D) in RAS+ (aka SCT LPI) space
     """
     i = fake_3dimage2()
-    img = msct_image.Image(i.get_data(), hdr=i.header,
+    img = msct_image.Image(np.asanyarray(i.dataobj), hdr=i.header,
                            orientation="LPI",
                            dim=i.header.get_data_shape(),
                            )
@@ -299,8 +296,6 @@ def test_slicer(fake_3dimage_sct, fake_3dimage_sct2):
         slicer = msct_image.Slicer(1)
 
     im3d = fake_3dimage_sct.copy()
-
-    d = im3d.data.copy()
 
     slicer = msct_image.Slicer(im3d, "RPI")
     if 0:
@@ -486,7 +481,7 @@ def test_more_change_orientation(tmp_path, fake_3dimage_sct, fake_3dimage_sct_vi
     assert (im_dst2.data == im_src.data).all()
     assert np.allclose(im_src.header.get_best_affine(), im_dst2.header.get_best_affine())
 
-    #fn = os.path.join(path_tmp, "pouet.nii")
+    # fn = os.path.join(path_tmp, "pouet.nii")
     im_ref = fake_3dimage_sct.copy()
     im_src = fake_3dimage_sct.copy()
     orientation = im_src.orientation
@@ -563,13 +558,13 @@ def test_more_change_orientation(tmp_path, fake_3dimage_sct, fake_3dimage_sct_vi
         # dst.save("pouet-{}.nii".format(dst.orientation))
         print(orientation, dst.orientation, dst.data.shape, dst.dim)
         assert orientation == dst.orientation
-        #assert dst.data.shape[:] == np.array(dst.dim)[:3]
+        # assert dst.data.shape[:] == np.array(dst.dim)[:3]
         # print(dst.header)
 
 
 def test_change_nd_orientation(fake_4dimage_sct):
     im_src = fake_4dimage_sct.copy()
-    path_tmp = tmp_create(basename="test_reorient")
+    path_tmp = tmp_create(basename="test-reorient")
     im_src.save(os.path.join(path_tmp, "src.nii"), mutable=True)
 
     print(im_src.orientation, im_src.data.shape)
@@ -621,7 +616,7 @@ def test_change_shape(fake_3dimage_sct):
     im_src = fake_3dimage_sct
     shape = tuple(list(im_src.data.shape) + [1])
     im_dst = msct_image.change_shape(im_src, shape)
-    path_tmp = tmp_create(basename="test_reshape")
+    path_tmp = tmp_create(basename="test-reshape")
     src_path = os.path.join(path_tmp, "src.nii")
     dst_path = os.path.join(path_tmp, "dst.nii")
     im_src.save(src_path)
@@ -647,7 +642,7 @@ def test_sequences(fake_3dimage_sct):
 
     img = fake_3dimage_sct.copy()
 
-    path_tmp = tmp_create(basename="test_sequences")
+    path_tmp = tmp_create(basename="test-sequences")
 
     path_a = os.path.join(path_tmp, 'a.nii')
     path_b = os.path.join(path_tmp, 'b.nii')

@@ -1,7 +1,9 @@
-# coding: utf-8
 """
 Deals with models for deepseg module. Available models are listed under MODELS.
 Important: model names (onnx or pt files) should have the same name as the enclosing folder.
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
 """
 
 
@@ -10,21 +12,26 @@ import json
 import logging
 import textwrap
 import shutil
+import glob
+from pathlib import Path
 
-import spinalcordtoolbox as sct
-import spinalcordtoolbox.download
-from spinalcordtoolbox.utils import stylize
+from spinalcordtoolbox import download
+from spinalcordtoolbox.utils.sys import stylize, __deepseg_dir__
 
 
 logger = logging.getLogger(__name__)
 
 # List of models. The convention for model names is: (species)_(university)_(contrast)_region
 # Regions could be: sc, gm, lesion, tumor
+# NB: The 'url' field should either be:
+#     1) A <mirror URL list> containing different mirror URLs for the model
+#     2) A dict of <mirror URL lists>, where each list corresponds to a different seed (for model ensembling), and
+#        each dictionary key corresponds to the seed's name (seed names are used to create subfolders per-seed)
 MODELS = {
     "t2star_sc": {
         "url": [
-            "https://github.com/ivadomed/t2star_sc/releases/download/r20200622/r20200622_t2star_sc.zip",
-            "https://osf.io/v9hs8/download?version=5",
+            "https://github.com/ivadomed/t2star_sc/releases/download/r20231004/r20231004_t2star_sc.zip",
+            "https://osf.io/8nk5w/download",
         ],
         "description": "Cord segmentation model on T2*-weighted contrast.",
         "contrasts": ["t2star"],
@@ -89,12 +96,19 @@ MODELS = {
         "default": False,
     },
     "model_seg_ms_lesion_mp2rage": {
-        "url": [
-            "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20211223/model_seg_ms_lesion_mp2rage.zip"
-        ],
+        "url": {
+            "seed1": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed01.zip"],
+            "seed2": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed02.zip"],
+            "seed3": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed03.zip"],
+            "seed4": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed04.zip"],
+            "seed5": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed05.zip"],
+        },
         "description": "Segmentation of multiple sclerosis lesions on cropped MP2RAGE spinal cord data. To crop the "
                        "data you can first segment the spinal cord using the model 'model_seg_ms_sc_mp2rage' and "
-                       "then crop the MP2RAGE image using 'sct_crop_image -i IMAGE -m IMAGE_seg'",
+                       "then crop the MP2RAGE image using 'sct_crop_image -i IMAGE -m IMAGE_seg -dilate 32x0x32'."
+                       "Note: For the MS lesion segmentation model to perform well, it is important to respect "
+                       "the value 32. Also, the syntax assumes the image is sagittal. For another orientation, "
+                       "change the axes in '32x0x32'.",
         "contrasts": ["mp2rage"],
         "default": False,
     },
@@ -102,18 +116,63 @@ MODELS = {
         "url": [
             "https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass/archive/refs/tags/r20211012.zip"
         ],
-        "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University, France",
+        "description": "SC/GM multiclass segmentation on T2*-w contrast at 7T. The model was created by N.J. Laines Medina, "
+                       "V. Callot and A. Le Troter at CRMBM-CEMEREM Aix-Marseille University, France",
         "contrasts": ["t2star"],
         "default": False,
     },
     "model_seg_epfl_t2w_lumbar_sc": {
         "url": [
-            "https://github.com/ivadomed/lumbar_seg_EPFL/releases/download/r20220411/model_seg_epfl_t2w_lumbar_sc.zip"
+            "https://github.com/ivadomed/lumbar_seg_EPFL/releases/download/r20231004/model_seg_epfl_t2w_lumbar_sc.zip"
         ],
         "description": "Lumbar SC segmentation on T2w contrast with 3D UNet",
         "contrasts": ["t2"],
         "default": False,
-    }
+    },
+    # NB: Handling image binarization threshold for ivadomed vs. non-ivadomed models:
+    #   - ivadomed models (above):
+    #       - Threshold value is stored in the ivadomed-specific `.json` sidecar file
+    #       - Binarization is applied within the ivadomed package
+    #   - non-ivadomed models (below)
+    #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
+    #       - So, threshold value is stored here, within the model dict
+    #       - Binarization is applied within SCT code
+    "model_seg_sc_contrast_agnostic_softseg_nnunet": {
+        "url": [
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.0/model_2023-09-18.zip"
+        ],
+        "description": "Spinal cord segmentation that is agnostic to contrast using NNUnet",
+        "contrasts": ["any"],
+        "thr": 0.5,  # Softseg model -> threshold at 0.5
+        "default": False,
+    },
+    "model_seg_sci_multiclass_sc_lesion_nnunet": {
+        "url": [
+            "https://github.com/ivadomed/model_seg_sci/releases/download/r20240130/model-sci-multisite_r20240130.zip"
+        ],
+        "description": "Traumatic SCI spinal cord/lesion segmentation for T2w contrast",
+        "contrasts": ["t2"],
+        "thr": None,  # Images are already binarized when splitting into sc-seg + lesion-seg
+        "default": False,
+    },
+    "model_seg_spinal_rootlets_nnunet": {
+        "url": [
+            "https://github.com/ivadomed/model-spinal-rootlets/releases/download/r20240129/model-spinal-rootlets_M5_r20240129.zip"
+        ],
+        "description": "Segmentation of spinal nerve rootlets for T2w images using NNUnet",
+        "contrasts": ["t2"],
+        "thr": None,  # Multiclass rootlets model (1.0, 2.0, 3.0...) -> no thresholding
+        "default": False,
+    },
+    "model_seg_gm_wm_mouse_nnunet": {
+         "url": [
+             "https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1/releases/download/v0.4/model.zip"
+         ],
+         "description": "White and grey matter segmentation on T1-weighted exvivo mouse spinal cord using NNUnet",
+         "contrasts": ["t1"],
+         "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
+         "default": False,
+     },
 }
 
 
@@ -172,10 +231,13 @@ TASKS = {
     'seg_ms_lesion_mp2rage':
         {'description': 'MS lesion segmentation on cropped MP2RAGE data',
          'long_description': 'This segmentation model for MP2RAGE MS lesion segmentation uses a Modified3DUNet '
-                             'architecture, and was created with the `ivadomed` package. Training data consisted of '
-                             '30 multiple sclerosis (MS) patients that included manual segmentations of the spinal '
-                             'cord and MS lesions. The dataset was preprocessed to crop around the spinal cord prior '
-                             'to training. This dataset was provided by the University of Basel.',
+                             'architecture, and was created with the `ivadomed` package. Training/Evaluation data included '
+                             '180 multiple sclerosis (MS) patients from the University of Basel. '
+                             'Important: For the MS lesion segmentation model to perform well, it is important to crop it '
+                             'around the spinal cord, using a dilation value of 32. This could be done using: '
+                             '"sct_crop_image -i IMAGE -m IMAGE_seg -dilate 32x0x32". '
+                             'Note that the syntax above assumes the image is sagittal. For another orientation, '
+                             'axes need to be swapped (eg: 32x32x0 for an axial orientation).',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_lesion_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
@@ -221,7 +283,44 @@ TASKS = {
                              'and Dimitry Van De Ville of EPFL, with the files consisting of lumbar T2w scans (and '
                              'manual spinal cord segmentations) of 11 healthy (non-pathological) patients.',
          'url': 'https://github.com/ivadomed/lumbar_seg_EPFL',
-         'models': ['model_seg_epfl_t2w_lumbar_sc']}
+         'models': ['model_seg_epfl_t2w_lumbar_sc']},
+    'seg_sc_contrast_agnostic':
+        {'description': 'Spinal cord segmentation that is agnostic to contrast',
+         'long_description': 'This segmentation model for contrast agnostic spinal cord segmentation uses an NNUnet '
+                             'architecture, and was created with the MONAI package. Training data was taken from the '
+                             'Spine Generic Multi Subject dataset, with the 6 different contrasts used spanning 267 '
+                             'different healthy (non-pathological) patients.',
+         'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
+         'models': ['model_seg_sc_contrast_agnostic_softseg_nnunet']},
+    'seg_sc_lesion_t2w_sci':
+        {'description': 'Traumatic SCI spinal cord/lesion seg for T2w contrast',
+         'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
+                             'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
+                             'outputting segmentations for both the hyperintense SCI lesions and spinal cord. Training '
+                             'data consisted of T2w images (n=196), spanning numerous resolutions and '
+                             'orientations, as well as multiple scanner manufacturers and field strengths.',
+         'url': 'https://github.com/ivadomed/model_seg_sci',
+         'models': ['model_seg_sci_multiclass_sc_lesion_nnunet']},
+    'seg_spinal_rootlets_t2w':
+        {'description': 'Segmentation of spinal nerve rootlets for T2w contrast',
+         'long_description': 'This segmentation model for spinal nerve rootlets segmentation uses a 3D U-Net '
+                             'architecture, and was trained with the nnUNetV2 framework. It is a multiclass model, '
+                             'outputting a single segmentation image containing 8 classes representing the C2-C8 '
+                             'dorsal spinal cord nerve rootlets. Training data consisted of 31 isotropic T2w images '
+                             'from healthy subjects from two different open-access datasets.',
+         'url': 'https://github.com/ivadomed/model-spinal-rootlets',
+         'models': ['model_seg_spinal_rootlets_nnunet']},
+    'seg_mouse_gm_wm_t1w':
+        {'description': 'Exvivo mouse GM/WM segmentation for T1w contrast',
+         'long_description': 'This segmentation model for gray and white matter segmentation of exvivo mice spinal '
+                             'cords uses an NNunet architecture, and was created with the nnUNetV2 package. It is a '
+                             'multiclass model, outputting segmentations for both the grey matter and white matter.'
+                             'Training data consisted of 22 mice with different numbers of chunks, for a total of 72 '
+                             'MRI 3D images. Each training image was T2-weighted, had a size of 200x200x500, and had '
+                             'a resolution of 0.05mm isotropic. Training data was provided by the Balgrist Center at'
+                             'the University of Zurich.',
+         'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
+         'models': ['model_seg_gm_wm_mouse_nnunet']},
 }
 
 
@@ -246,7 +345,7 @@ def folder(name_model):
     :param name: str: Name of model.
     :return: str: Folder to model
     """
-    return os.path.join(sct.__deepseg_dir__, name_model)
+    return os.path.join(__deepseg_dir__, name_model)
 
 
 def install_model(name_model):
@@ -257,7 +356,18 @@ def install_model(name_model):
     :return: None
     """
     logger.info("\nINSTALLING MODEL: {}".format(name_model))
-    sct.download.install_data(MODELS[name_model]['url'], folder(name_model))
+    url_field = MODELS[name_model]['url']
+    # List of mirror URLs corresponding to a single model
+    if isinstance(url_field, list):
+        model_urls = url_field
+        download.install_data(model_urls, folder(name_model))
+    # Dict of lists, with each list corresponding to a different model seed for ensembling
+    else:
+        if not isinstance(url_field, dict):
+            raise ValueError("Invalid url field in MODELS")
+        for seed_name, model_urls in url_field.items():
+            logger.info(f"\nInstalling '{seed_name}'...")
+            download.install_data(model_urls, folder(os.path.join(name_model, seed_name)), keep=True)
 
 
 def install_default_models():
@@ -271,17 +381,58 @@ def install_default_models():
             install_model(name_model)
 
 
-def is_valid(path_model):
+def is_valid(path_models):
     """
-    Check if model has the necessary files and follow naming conventions:
+    Check if model paths have the necessary files and follow naming conventions:
     - Folder should have the same name as the enclosed files.
 
-    :param path_model: str: Absolute path to folder that encloses the model files.
+    :param path_models: str or list: Absolute path(s) to folder(s) that enclose the model files.
     """
-    name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
-    return (os.path.exists(os.path.join(path_model, name_model + '.pt')) or
-            os.path.exists(os.path.join(path_model, name_model + '.onnx'))) and os.path.exists(
-        os.path.join(path_model, name_model + '.json'))
+    def _is_valid(path_model):
+        return has_ivadomed_files(path_model) or has_ckpt_files(path_model) or has_pth_files(path_model)
+    # Adapt the function so that it can be used on single paths (str) or lists of paths
+    if not isinstance(path_models, list):
+        path_models = [path_models]
+    return all(_is_valid(path) for path in path_models)
+
+
+def has_ivadomed_files(path_model):
+    """
+    Check if model path contains A) a named .pt/.onnx model file and B) a named ivadomed json configuration file
+    """
+    name_model = Path(path_model).name
+    path_pt = os.path.join(path_model, name_model + '.pt')
+    path_onnx = os.path.join(path_model, name_model + '.onnx')
+    path_json = os.path.join(path_model, name_model + '.json')
+    return (os.path.exists(path_pt) or os.path.exists(path_onnx)) and os.path.exists(path_json)
+
+
+def has_ckpt_files(path_model):
+    """
+    Check if model path contains any checkpoint files (used by non-ivadomed MONAI models)
+    """
+    return bool(glob.glob(os.path.join(path_model, '**', '*.ckpt'), recursive=True))
+
+
+def has_pth_files(path_model):
+    """
+    Check if model path contains any serialized PyTorch state dictionary files (used by non-ivadomed NNUnet models)
+    """
+    return bool(glob.glob(os.path.join(path_model, '**', '*.pth'), recursive=True))
+
+
+def check_model_software_type(path_model):
+    """
+    Determine the software used to train the model based on the types of files in the model folder
+    """
+    if has_ivadomed_files(path_model):
+        return 'ivadomed'
+    elif has_ckpt_files(path_model):
+        return 'monai'
+    elif has_pth_files(path_model):
+        return 'nnunet'
+    else:
+        raise ValueError("Model type cannot be determined.")
 
 
 def list_tasks():
@@ -292,53 +443,55 @@ def list_tasks():
     return {name: value for name, value in TASKS.items()}
 
 
-def display_list_tasks():
-    tasks = sct.deepseg.models.list_tasks()
-    # Display beautiful output
+def list_tasks_string():
+    tasks = list_tasks()
+    # Display coloured output
     color = {True: 'LightGreen', False: 'LightRed'}
-    print("{:<30s}{:<50s}{:<15s}MODELS".format("TASK", "DESCRIPTION", "CONTRAST"))
-    print("-" * 120)
+    table = f"{'TASK':<30s}{'DESCRIPTION':<50s}\n"
+    table += f"{'-' * 80}\n"
     for name_task, value in tasks.items():
-        path_models = [sct.deepseg.models.folder(name_model) for name_model in value['models']]
-        are_models_valid = [sct.deepseg.models.is_valid(path_model) for path_model in path_models]
+        path_models = [folder(name_model) for name_model in value['models']]
+        path_models = [find_model_folder_paths(path) for path in path_models]
+        are_models_valid = [is_valid(path_model) for path_model in path_models]
         task_status = stylize(name_task.ljust(30),
                               color[all(are_models_valid)])
         description_status = stylize(value['description'].ljust(50),
                                      color[all(are_models_valid)])
-        models_status = ', '.join([stylize(model_name,
-                                           color[is_valid])
-                                   for model_name, is_valid in zip(value['models'], are_models_valid)])
-        input_contrasts = stylize(str(', '.join(model_name for model_name in
-                                                get_required_contrasts(name_task))).ljust(15),
-                                  color[all(are_models_valid)])
 
-        print("{}{}{}{}".format(task_status, description_status, input_contrasts, models_status))
+        table += "{}{}".format(task_status, description_status) + "\n"
 
-    print(
-        '\nLegend: {} | {}\n'.format(
+    table += '\nLegend: {} | {}\n\n'.format(
             stylize("installed", color[True]),
-            stylize("not installed", color[False])))
+            stylize("not installed", color[False]))
 
-    print('To read in-depth descriptions of the training data, model architecture, etc. used for these tasks, '
-          'type the following command:\n'
-          '\n'
-          '    {}'.format(stylize('sct_deepseg -list-tasks-long', ['LightBlue', 'Bold'])))
-    exit(0)
+    table += 'To read in-depth descriptions of the training data, model architecture, '
+    table += 'etc. used for these tasks, type the following command:\n\n'
+    table += '    {}'.format(stylize('sct_deepseg -list-tasks', ['LightBlue', 'Bold']))
+    return table
 
 
-def display_list_tasks_long():
-    for name_task, value in sct.deepseg.models.list_tasks().items():
+def display_list_tasks():
+    for name_task, value in list_tasks().items():
         indent_len = len("LONG_DESCRIPTION: ")
         print("{}{}".format("TASK:".ljust(indent_len), stylize(name_task, 'Bold')))
+
+        input_contrasts = str(', '.join(model_name for model_name in
+                                        get_required_contrasts(name_task))).ljust(15)
+        print("{}{}".format("CONTRAST:".ljust(indent_len), input_contrasts))
+
+        path_models = [folder(name_model) for name_model in value['models']]
+        path_models = [find_model_folder_paths(path) for path in path_models]
+        are_models_valid = [is_valid(path_model) for path_model in path_models]
+        models_status = ', '.join([model_name
+                                   for model_name, validity in zip(value['models'], are_models_valid)])
+        print("{}{}".format("MODELS:".ljust(indent_len), models_status))
         print('\n'.join(textwrap.wrap(value['long_description'],
                         width=shutil.get_terminal_size()[0]-1,
                         initial_indent="LONG_DESCRIPTION: ",
                         subsequent_indent=' '*indent_len)))
-        print("{}{}".format("URL:".ljust(indent_len), stylize(value['url'], 'Cyan')))
 
-        path_models = [sct.deepseg.models.folder(name_model)
-                       for name_model in value['models']]
-        if all([sct.deepseg.models.is_valid(path_model) for path_model in path_models]):
+        print("{}{}".format("URL:".ljust(indent_len), stylize(value['url'], 'Cyan')))
+        if all(are_models_valid):
             installed = stylize("Yes", 'LightGreen')
         else:
             installed = stylize("No", 'LightRed')
@@ -357,3 +510,20 @@ def get_metadata(folder_model):
     with open(fname_metadata, "r") as fhandle:
         metadata = json.load(fhandle)
     return metadata
+
+
+def find_model_folder_paths(path_model):
+    """
+    Search for the presence of model subfolders within the main model folder. If they exist,
+    then the model folder is actually an ensemble of models, so return a list of folders.
+    If they don't exist, then return the original `path_model` (but as a list, to ensure code compatibility).
+
+    :param path_model: Absolute path to folder that encloses the model files.
+    :return: list: Either a list of ensemble subfolders, or a list containing the original model folder path.
+    """
+    name_model = path_model.rstrip(os.sep).split(os.sep)[-1]
+    # Check to see if model folder contains subfolders with the model name (i.e. ensembling)
+    model_subfolders = [folder[0] for folder in os.walk(path_model)  # NB: `[0]` == folder name for os.walk
+                        if folder[0].endswith(name_model) and folder[0] != path_model]
+    # If it does, then these are the "true" model subfolders. Otherwise, return the original path as a list.
+    return model_subfolders if model_subfolders else [path_model]

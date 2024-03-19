@@ -1,11 +1,14 @@
-# coding: utf-8
-# This is the interface API to compute MT-related metrics
-# Code is based on QMRLab: https://github.com/neuropoly/qMRLab
-# Author: Julien Cohen-Adad
-# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
-# About the license: see the file LICENSE.TXT
+"""
+This is the interface API to compute MT-related metrics
+
+Code is based on QMRLab: https://github.com/neuropoly/qMRLab
+
+Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -67,9 +70,9 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     :param nii_mt: Image object for MTw
     :param nii_pd: Image object for PDw
     :param nii_t1: Image object for T1w
-    :param tr_mt: Float: Repetition time for MTw image
-    :param tr_pd: Float: Repetition time for PDw image
-    :param tr_t1: Float: Repetition time for T1w image
+    :param tr_mt: Float: Repetition time (in s) for MTw image
+    :param tr_pd: Float: Repetition time (in s) for PDw image
+    :param tr_t1: Float: Repetition time (in s) for T1w image
     :param fa_mt: Float: Flip angle (in deg) for MTw image
     :param fa_pd: Float: Flip angle (in deg) for PDw image
     :param fa_t1: Float: Flip angle (in deg) for T1w image
@@ -87,11 +90,6 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     # Similarly, we also set a threshold for MTsat values
     mtsat_threshold = 1  # we expect MTsat to be on the order of 0.01
 
-    # convert all TRs in s
-    tr_mt *= 0.001
-    tr_pd *= 0.001
-    tr_t1 *= 0.001
-
     # Convert flip angles into radians
     fa_mt_rad = np.radians(fa_mt)
     fa_pd_rad = np.radians(fa_pd)
@@ -106,6 +104,10 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
         logger.info("Compute T1 map...")
         r1map = 0.5 * np.true_divide((fa_t1_rad / tr_t1) * nii_t1.data - (fa_pd_rad / tr_pd) * nii_pd.data,
                                      nii_pd.data / fa_pd_rad - nii_t1.data / fa_t1_rad)
+        # apply B1 correction if available
+        if nii_b1map is not None:
+            b1_squared = np.multiply(nii_b1map.data, nii_b1map.data)
+            r1map = np.multiply(r1map, b1_squared)
         # remove nans and clip unrelistic values
         r1map = np.nan_to_num(r1map)
         ind_unrealistic = np.where(r1map < r1_threshold)
@@ -125,6 +127,9 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     a = (tr_pd * fa_t1_rad / fa_pd_rad - tr_t1 * fa_pd_rad / fa_t1_rad) * \
         np.true_divide(np.multiply(nii_pd.data, nii_t1.data, dtype=float),
                        tr_pd * fa_t1_rad * nii_t1.data - tr_t1 * fa_pd_rad * nii_pd.data)
+    # apply B1 correction if available
+    if nii_b1map is not None:
+        a = np.divide(a, nii_b1map.data)
 
     # Compute MTsat
     logger.info("Compute MTsat...")
@@ -153,4 +158,3 @@ def compute_mtsat(nii_mt, nii_pd, nii_t1,
     np.seterr(**seterr_old)
 
     return nii_mtsat, nii_t1map
-

@@ -1,14 +1,14 @@
-#!/usr/bin/env python
-#  Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-#
-# About the license: see the file LICENSE.TXT
+"""
+Qt dialog for manually segmenting a spinalcord image
 
-""" Qt dialog for manually segmenting a spinalcord image """
+Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 
 import numpy as np
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtWidgets
 
 from spinalcordtoolbox.gui import base
 from spinalcordtoolbox.gui import widgets
@@ -22,7 +22,7 @@ class SagittalController(base.BaseController):
         super(SagittalController, self).__init__(image, params, init_values)
 
         if previous_point is not None:
-            for i in range (len(previous_point)):
+            for i in range(len(previous_point)):
                 self.points.append(previous_point[i])
 
     def select_point(self, x, y, z, label):
@@ -48,14 +48,13 @@ class SagittalDialog(base.BaseDialog):
         parent.addLayout(layout)
 
         self.labels = widgets.VertebraeWidget(self, self.params.vertebraes)
-        self.labels.label = self.params.start_vertebrae
+        self.labels.label = self._controller.label = self.params.start_vertebrae
         layout.addWidget(self.labels)
 
         self.sagittal = widgets.SagittalCanvas(self, plot_points=True, annotate=True)
         self.sagittal.title(self.params.subtitle)
         self.sagittal.point_selected_signal.connect(self.on_select_point)
         layout.addWidget(self.sagittal)
-        self.labels.refresh()
         self.sagittal.refresh()
 
     def _init_controls(self, parent):
@@ -63,7 +62,7 @@ class SagittalDialog(base.BaseDialog):
 
     def on_select_point(self, x, y, z):
         try:
-            x, y, z = np.array(np.round((x,y,z)), dtype=int)
+            x, y, z = np.array(np.round((x, y, z)), dtype=int)
             label = self.labels.label
             self._controller.select_point(x, y, z, label)
             self.labels.refresh()

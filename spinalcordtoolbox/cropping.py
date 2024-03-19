@@ -1,7 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# Functions dealing with image cropping
+"""
+Functions dealing with image cropping
 
+Copyright (c) 2019 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import logging
 import numpy as np
@@ -23,7 +25,7 @@ class BoundingBox(object):
 
 
 class ImageCropper(object):
-    def __init__(self, img_in):
+    def __init__(self, img_in=None):
         """
         :param img_in:
         """
@@ -31,31 +33,45 @@ class ImageCropper(object):
         # Call one of the `get_bbox_from_*` methods to set the bounding box.
         self.bbox = None
 
-    def crop(self, background=None):
+    def crop(self, img_in=None, background=None, dilate=None):
         """
         Crop image (change dimension)
 
+        :param img_in: Image: Image to be cropped. If not provided, `self.img_in` will be cropped instead.
         :param background: int: If set, the output image will not be cropped. Instead, voxels outside the bounding
         box will be set to the value specified by this parameter.
+        :param dilate: If set, a list of 3 integers specifying an extra margin to keep around the bounding box,
+        in each of the x-, y-, and z-directions.
         :return Image: img_out
         """
+        if img_in is None:
+            if self.img_in:
+                img_in = self.img_in
+            else:
+                raise ValueError('No image to crop. Please provide `img_in` when initializing the cropper, or when '
+                                 'calling the `crop` method.')
+
         bbox = self.bbox
         if bbox is None:
             raise ValueError(
                 'Use one of the `get_bbox_from_*` methods to set the bounding '
                 'box before calling `ImageCropper.crop()`.')
+
+        if dilate is not None:
+            bbox = BoundingBox(
+                xmin=max(bbox.xmin-dilate[0], 0), xmax=min(bbox.xmax+dilate[0], img_in.dim[0]-1),
+                ymin=max(bbox.ymin-dilate[1], 0), ymax=min(bbox.ymax+dilate[1], img_in.dim[1]-1),
+                zmin=max(bbox.zmin-dilate[2], 0), zmax=min(bbox.zmax+dilate[2], img_in.dim[2]-1),
+            )
+
         logger.info("Bounding box: x=[{}, {}], y=[{}, {}], z=[{}, {}]"
                     .format(bbox.xmin, bbox.xmax+1, bbox.ymin, bbox.ymax+1, bbox.zmin, bbox.zmax+1))
 
         # Crop the image
         if background is None:
             logger.info("Cropping the image...")
-            data_crop = self.img_in.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1]
-            img_out = Image(param=data_crop, hdr=self.img_in.hdr)
-
-            # set a more permissive threshold for reading the qform
-            # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3703 for details)
-            img_out.hdr.quaternion_threshold = -1e-6
+            data_crop = img_in.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1]
+            img_out = Image(param=data_crop, hdr=img_in.hdr)
             # adapt the origin in the qform matrix
             new_origin = np.dot(img_out.hdr.get_qform(), [bbox.xmin, bbox.ymin, bbox.zmin, 1])
             img_out.hdr.structarr['qoffset_x'] = new_origin[0]
@@ -70,10 +86,10 @@ class ImageCropper(object):
         # Set voxels outside the bbox to the value 'background'
         else:
             logger.info("Setting voxels outside the bounding box to: {}".format(background))
-            img_out = self.img_in.copy()
+            img_out = img_in.copy()
             img_out.data[:] = background
             img_out.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1] = \
-                self.img_in.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1]
+                img_in.data[bbox.xmin:bbox.xmax+1, bbox.ymin:bbox.ymax+1, bbox.zmin:bbox.zmax+1]
 
         return img_out
 

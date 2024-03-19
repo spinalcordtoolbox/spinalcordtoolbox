@@ -1,24 +1,21 @@
-#!/usr/bin/env python
-#########################################################################################
-#
-# SCT Image API
-#
-# ---------------------------------------------------------------------------------------
-# Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+"""
+SCT Image API
+
+Copyright (c) 2018 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 # TODO: Sort out the use of Image.hdr and Image.header --> they seem to carry duplicated information.
 
 import sys
 import os
+import errno
 import itertools
 import warnings
 import logging
-import shutil
 import math
-from typing import Sequence
+from typing import Sequence, Tuple
+from copy import deepcopy
 
 import nibabel as nib
 import numpy as np
@@ -26,11 +23,12 @@ import pathlib
 from contrib import fslhd
 
 import transforms3d.affines as affines
-import re
 from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
-from spinalcordtoolbox.utils import sct_dir_local_path, extract_fname
+from spinalcordtoolbox.utils.fs import extract_fname, mv, tmp_create
+from spinalcordtoolbox.utils.sys import run_proc
+
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +85,7 @@ class Slicer(object):
 
         if not isinstance(im, Image):
             raise ValueError("Expecting an image")
-        if not orientation in all_refspace_strings():
+        if orientation not in all_refspace_strings():
             raise ValueError("Invalid orientation spec")
 
         # Get a different view on data, as if we were doing a reorientation
@@ -240,7 +238,7 @@ def check_affines_match(im):
                          "please report this on github at https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues "
                          "or on the SCT forums https://forum.spinalcordmri.org/.")
 
-        return(True)
+        return True
 
     return np.allclose(hdr.get_qform(), hdr2.get_qform(), atol=1e-3)
 
@@ -251,14 +249,17 @@ class Image(object):
     a few methods (load, save) that deal with image dtype.
     """
 
-    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None, verbose=1,
-                 check_sform=False):
+    def __init__(self, param=None, hdr=None, orientation=None, absolutepath=None, dim=None,
+                 mmap=(not sys.platform.startswith('win32')), verbose=1, check_sform=False):
         """
         :param param: string indicating a path to a image file or an `Image` object.
         :param hdr: a nibabel header object to use as the header for the image (overwritten if `param` is provided)
         :param orientation: a three character orientation code (e.g. RPI).
         :param absolutepath: a relative path to associate with the image.
         :param dim: The dimensions of the image, defaults to automatically determined.
+        :param mmap: Whether to load data arrays as np.memmaps. Defaults to False (i.e. np.array) on Windows, and True
+          (i.e. np.memmap) on every other platform. (The context for defaulting to False on Windows is:
+          https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3695)
         :param verbose: integer how verbose to be 0 is silent 1 is chatty.
         :param check_sform: whether or not to check whether the sform matches the qform. If this is set to `True`,
           `Image` will fail raise an error if they don't match.
@@ -270,32 +271,40 @@ class Image(object):
         self._path = None
         self.ext = ""
 
-        if hdr is None:
-            hdr = self.hdr = nib.Nifti1Header()  # an empty header
-        else:
-            self.hdr = hdr
-
         if absolutepath is not None:
             self._path = os.path.abspath(absolutepath)
 
-        self.verbose = verbose
-
-        # load an image from file
-        if isinstance(param, str) or (sys.hexversion < 0x03000000 and isinstance(param, unicode)):
-            self.loadFromPath(param, verbose)
-        # copy constructor
+        # Case 1: load an image from file
+        if isinstance(param, str):
+            try:
+                self.loadFromPath(param, mmap, verbose)
+            except OSError as e:
+                if e.errno == errno.EMFILE:
+                    e.strerror += (". Please try increasing your system's file descriptor "
+                                   "limit by using the command `ulimit -Sn`.")
+                raise e
+        # Case 2: create a copy of an existing `Image` object
         elif isinstance(param, type(self)):
             self.copy(param)
-        # create an empty image (full of zero) of dimension [dim]. dim must be [x,y,z] or (x,y,z). No header.
+        # Case 3: create a blank image from a list of dimensions
         elif isinstance(param, list):
             self.data = np.zeros(param)
-            self.hdr = hdr
-        # create a copy of im_ref
+            self.hdr = hdr.copy() if hdr is not None else nib.Nifti1Header()
+            self.hdr.set_data_shape(self.data.shape)
+        # Case 4: create an image from an existing data array
         elif isinstance(param, (np.ndarray, np.generic)):
             self.data = param
-            self.hdr = hdr
+            self.hdr = hdr.copy() if hdr is not None else nib.Nifti1Header()
+            self.hdr.set_data_shape(self.data.shape)
         else:
             raise TypeError('Image constructor takes at least one argument.')
+
+        # Fix any mismatch between the array's datatype and the header datatype
+        self.fix_header_dtype()
+
+        # set a more permissive threshold for reading the qform
+        # (see https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3703 for details)
+        self.hdr.quaternion_threshold = -1e-6
 
         # Make sure sform and qform are the same.
         # Context: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/2429
@@ -310,7 +319,6 @@ class Image(object):
                              f"matrices are valid. Then, consider running either 'sct_image -set-sform-to-qform' or "
                              f"'sct_image -set-qform-to-sform' to fix any discrepancies you may find.")
             raise ValueError("Image sform does not match qform")
-
 
     @property
     def dim(self):
@@ -358,11 +366,9 @@ class Image(object):
         self.hdr = value
 
     def __deepcopy__(self, memo):
-        from copy import deepcopy
         return type(self)(deepcopy(self.data, memo), deepcopy(self.hdr, memo), deepcopy(self.orientation, memo), deepcopy(self.absolutepath, memo), deepcopy(self.dim, memo))
 
     def copy(self, image=None):
-        from copy import deepcopy
         if image is not None:
             self.affine = deepcopy(image.affine)
             self.data = deepcopy(image.data)
@@ -394,7 +400,23 @@ class Image(object):
         self.hdr.set_qform(self.hdr.get_sform())
         self.hdr._structarr['qform_code'] = self.hdr._structarr['sform_code']
 
-    def loadFromPath(self, path, verbose):
+    def fix_header_dtype(self):
+        """
+        Change the header dtype to the match the datatype of the array.
+        """
+        # Using bool for nibabel headers is unsupported, so use uint8 instead:
+        # `nibabel.spatialimages.HeaderDataError: data dtype "bool" not supported`
+        dtype_data = self.data.dtype
+        if dtype_data == bool:
+            dtype_data = np.uint8
+
+        dtype_header = self.hdr.get_data_dtype()
+        if dtype_header != dtype_data:
+            logger.warning(f"Image header specifies datatype '{dtype_header}', but array is of type "
+                           f"'{dtype_data}'. Header metadata will be overwritten to use '{dtype_data}'.")
+            self.hdr.set_data_dtype(dtype_data)
+
+    def loadFromPath(self, path, mmap, verbose):
         """
         This function load an image from an absolute path using nibabel library
 
@@ -403,9 +425,9 @@ class Image(object):
         """
 
         self.absolutepath = os.path.abspath(path)
-        im_file = nib.load(self.absolutepath, mmap=(not sys.platform.startswith('win32')))
+        im_file = nib.load(self.absolutepath, mmap=mmap)
         self.affine = im_file.affine.copy()
-        self.data = im_file.get_data()
+        self.data = np.asanyarray(im_file.dataobj)
         self.hdr = im_file.header.copy()
         if path != self.absolutepath:
             logger.debug("Loaded %s (%s) orientation %s shape %s", path, self.absolutepath, self.orientation, self.data.shape)
@@ -474,57 +496,58 @@ class Image(object):
 
         :param mutable: whether to update members with newly created path or dtype
         """
+        if mutable:  # do all modifications in-place
+            # Case 1: `path` not specified
+            if path is None:
+                if self.absolutepath:  # Fallback to the original filepath
+                    path = self.absolutepath
+                else:
+                    raise ValueError("Don't know where to save the image (no absolutepath or path parameter)")
+            # Case 2: `path` points to an existing directory
+            elif os.path.isdir(path):
+                if self.absolutepath:  # Use the original filename, but save to the directory specified by `path`
+                    path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
+                else:
+                    raise ValueError("Don't know where to save the image (path parameter is dir, but absolutepath is "
+                                     "missing)")
+            # Case 3: `path` points to a file (or a *nonexistent* directory) so use its value as-is
+            #    (We're okay with letting nonexistent directories slip through, because it's difficult to distinguish
+            #     between nonexistent directories and nonexistent files. Plus, `nibabel` will catch any further errors.)
+            else:
+                pass
 
-        if path is None and self.absolutepath is None:
-            raise RuntimeError("Don't know where to save the image (no absolutepath or path parameter)")
-        elif path is not None and os.path.isdir(path) and self.absolutepath is not None:
-            # Save to destination directory with original basename
-            path = os.path.join(os.path.abspath(path), os.path.basename(self.absolutepath))
+            if os.path.isfile(path) and verbose:
+                logger.warning("File %s already exists. Will overwrite it.", path)
+            if os.path.isabs(path):
+                logger.debug("Saving image to %s orientation %s shape %s",
+                             path, self.orientation, self.data.shape)
+            else:
+                logger.debug("Saving image to %s (%s) orientation %s shape %s",
+                             path, os.path.abspath(path), self.orientation, self.data.shape)
 
-        path = path or self.absolutepath
+            # Now that `path` has been set and log messages have been written, we can assign it to the image itself
+            self.absolutepath = os.path.abspath(path)
 
-        if dtype is not None:
-            dst = self.copy()
-            dst.change_type(dtype)
-            data = dst.data
+            if dtype is not None:
+                self.change_type(dtype)
+
+            if self.hdr is not None:
+                self.hdr.set_data_shape(self.data.shape)
+                self.fix_header_dtype()
+
+            # nb. that copy() is important because if it were a memory map, save() would corrupt it
+            dataobj = self.data.copy()
+            affine = None
+            header = self.hdr.copy() if self.hdr is not None else None
+            nib.save(nib.nifti1.Nifti1Image(dataobj, affine, header), self.absolutepath)
+            if not os.path.isfile(self.absolutepath):
+                raise RuntimeError(f"Couldn't save image to {self.absolutepath}")
         else:
-            data = self.data
-
-        # update header
-        hdr = self.hdr.copy() if self.hdr else None
-        if hdr:
-            hdr.set_data_shape(data.shape)
-            # Update dtype if provided (but not if based on SCT-specific values: 'minimize')
-            if (dtype is not None) and (dtype not in ['minimize', 'minimize_int']):
-                hdr.set_data_dtype(dtype)
-
-        # nb. that copy() is important because if it were a memory map, save()
-        # would corrupt it
-        img = nib.nifti1.Nifti1Image(data.copy(), None, hdr)
-        if os.path.isfile(path):
-            if verbose:
-                logger.warning('File ' + path + ' already exists. Will overwrite it.')
-
-        # save file
-        if os.path.isabs(path):
-            logger.debug("Saving image to %s orientation %s shape %s",
-                         path, self.orientation, data.shape)
-        else:
-            logger.debug("Saving image to %s (%s) orientation %s shape %s",
-                         path, os.path.abspath(path), self.orientation, data.shape)
-
-        nib.save(img, path)
-
-        if mutable:
-            self.absolutepath = path
-            self.data = data
-
-        if not os.path.isfile(path):
-            raise RuntimeError("Couldn't save {}".format(path))
-
+            # if we're not operating in-place, then make any required modifications on a throw-away copy
+            self.copy().save(path, dtype, verbose, mutable=True)
         return self
 
-    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False, coordValue=False):
+    def getNonZeroCoordinates(self, sorting=None, reverse_coord=False):
         """
         This function return all the non-zero coordinates that the image contains.
         Coordinate list can also be sorted by x, y, z, or the value with the parameter sorting='x', sorting='y', sorting='z' or sorting='value'
@@ -549,12 +572,6 @@ class Image(object):
                 X, Y, Z = (self.data > 0).nonzero()
                 list_coordinates = [Coordinate([X[i], Y[i], 0, self.data[X[i], Y[i], 0]]) for i in range(0, len(X))]
 
-        if coordValue:
-            from spinalcordtoolbox.types import CoordinateValue
-            if n_dim == 3:
-                list_coordinates = [CoordinateValue([X[i], Y[i], Z[i], self.data[X[i], Y[i], Z[i]]]) for i in range(0, len(X))]
-            else:
-                list_coordinates = [CoordinateValue([X[i], Y[i], 0, self.data[X[i], Y[i]]]) for i in range(0, len(X))]
         if sorting is not None:
             if reverse_coord not in [True, False]:
                 raise ValueError('reverse_coord parameter must be a boolean')
@@ -571,6 +588,16 @@ class Image(object):
                 raise ValueError("sorting parameter must be either 'x', 'y', 'z' or 'value'")
 
         return list_coordinates
+
+    def getNonZeroValues(self, sorting=True):
+        """
+        This function return all the non-zero unique values that the image contains.
+        If sorting is set to True, the list will be sorted.
+        """
+        list_values = list(np.unique(self.data[self.data > 0]))
+        if sorting:
+            list_values.sort()
+        return list_values
 
     def getCoordinatesAveragedByValue(self):
         """
@@ -770,9 +797,6 @@ class Image(object):
         """
         im_out = empty_like(self)
         im_out.data = np.mean(self.data, dim)
-        # TODO: the line below fails because .dim is immutable. We should find a solution to update dim accordingly
-        #  because as of now, this field contains wrong values (in this case, the dimension should be changed)
-        # im_out.dim = im_out.data.shape[:dim] + (1,) + im_out.data.shape[dim:]
         return im_out
 
 
@@ -797,7 +821,12 @@ def compute_dice(image1, image2, mode='3d', label=1, zboundaries=False):
     dice = 0.0  # default value of dice is 0
 
     # check if images are in the same coordinate system
-    assert image1.data.shape == image2.data.shape, "\n\nERROR: the data (" + image1.absolutepath + " and " + image2.absolutepath + ") don't have the same size.\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  to put the input images in the same space"
+    if image1.data.shape != image2.data.shape:
+        raise ValueError(
+            f"\n\nERROR: the data ({image1.absolutepath} and {image2.absolutepath}) don't have the same size."
+            f"\nPlease use  \"sct_register_multimodal -i im1.nii.gz -d im2.nii.gz -identity 1\"  "
+            f"to put the input images in the same space"
+        )
 
     # if necessary, change orientation of images to RPI and compute segmentation boundaries
     if mode == '2d-slices' or (mode == '3d' and zboundaries):
@@ -925,7 +954,6 @@ def find_zmin_zmax(im, threshold=0.1):
 
     # Conversely from top to bottom
     for zmax in range(len(slicer) - 1, zmin, -1):
-        dataz = slicer[zmax]
         if np.any(slicer[zmax] > threshold):
             break
 
@@ -939,28 +967,17 @@ def get_dimension(im_file, verbose=1):
     :param: im_file: Image or nibabel object
     :return: nx, ny, nz, nt, px, py, pz, pt
     """
-    # initialization
-    nx, ny, nz, nt, px, py, pz, pt = 1, 1, 1, 1, 1, 1, 1, 1
-    if type(im_file) is nib.nifti1.Nifti1Image:
-        header = im_file.header
-    elif type(im_file) is Image:
-        header = im_file.hdr
-    else:
-        header = None
-        logger.warning("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
-
-    nb_dims = len(header.get_data_shape())
-    if nb_dims == 2:
-        nx, ny = header.get_data_shape()
-        px, py = header.get_zooms()
-    if nb_dims == 3:
-        nx, ny, nz = header.get_data_shape()
-        px, py, pz = header.get_zooms()
-    if nb_dims == 4:
-        nx, ny, nz, nt = header.get_data_shape()
-        px, py, pz, pt = header.get_zooms()
-
-    return nx, ny, nz, nt, px, py, pz, pt
+    if not isinstance(im_file, (nib.nifti1.Nifti1Image, Image)):
+        raise TypeError("The provided image file is neither a nibabel.nifti1.Nifti1Image instance nor an Image instance")
+    # initializating ndims [nx, ny, nz, nt] and pdims [px, py, pz, pt]
+    ndims = [1, 1, 1, 1]
+    pdims = [1, 1, 1, 1]
+    data_shape = im_file.header.get_data_shape()
+    zooms = im_file.header.get_zooms()
+    for i in range(min(len(data_shape), 4)):
+        ndims[i] = data_shape[i]
+        pdims[i] = zooms[i]
+    return *ndims, *pdims
 
 
 def all_refspace_strings():
@@ -1015,14 +1032,14 @@ def change_shape(im_src, shape, im_dst=None):
         im_dst.data = im_src.data.reshape(shape, order="C")
     else:
         # image data may be a view
-        im_dst_data = im_src.data.copy().reshape(shape, order="F")
+        im_dst.data = im_src.data.copy().reshape(shape, order="F")
 
     pair = nib.nifti1.Nifti1Pair(im_dst.data, im_dst.hdr.get_best_affine(), im_dst.hdr)
     im_dst.hdr = pair.header
     return im_dst
 
 
-def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_only=False):
+def change_orientation(im_src, orientation, im_dst=None, inverse=False):
     """
 
     :param im_src: source image
@@ -1031,8 +1048,6 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
                    operation, can be unset to generate one)
     :param inverse: if you think backwards, use this to specify that you actually
                     want to transform *from* the specified orientation, not *to* it.
-    :param data_only: If you want to only permute the data, not the header. Only use if you know there is a problem
-                      with the native orientation of the input data.
     :return: an image with changed orientation
 
     .. note::
@@ -1040,7 +1055,6 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
         - if the source image is < 3D, it is reshaped to 3D and the destination is 3D
     """
 
-    # TODO: make sure to cover all cases for setorient-data
     if len(im_src.data.shape) < 3:
         pass  # Will reshape to 3D
     elif len(im_src.data.shape) == 3:
@@ -1099,10 +1113,9 @@ def change_orientation(im_src, orientation, im_dst=None, inverse=False, data_onl
         im_src_data.shape)
     im_dst_aff = np.matmul(im_src_aff, aff)
 
-    if not data_only:
-        im_dst.header.set_qform(im_dst_aff)
-        im_dst.header.set_sform(im_dst_aff)
-        im_dst.header.set_data_shape(data.shape)
+    im_dst.header.set_qform(im_dst_aff)
+    im_dst.header.set_sform(im_dst_aff)
+    im_dst.header.set_data_shape(data.shape)
     im_dst.data = data
 
     return im_dst
@@ -1222,11 +1235,8 @@ def to_dtype(dtype):
     if dtype is None:
         return None
     if isinstance(dtype, type):
-        try:
-            if isinstance(dtype(0).dtype, np.dtype):
-                return dtype(0).dtype
-        except:  # TODO
-            raise
+        if isinstance(dtype(0).dtype, np.dtype):
+            return dtype(0).dtype
     if isinstance(dtype, np.dtype):
         return dtype
     if isinstance(dtype, str):
@@ -1378,14 +1388,15 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     warp3d = np.zeros([nx, ny, nz, 1, 3])
 
     for iz, fname in enumerate(fname_list):
-        warp2d = nib.load(fname).get_data()
+        img = nib.load(fname)
+        warp2d = np.asanyarray(img.dataobj)
         warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
         warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
         del warp2d
 
     # save new image
     im_dest = nib.load(fname_dest)
-    affine_dest = im_dest.get_affine()
+    affine_dest = im_dest.affine
     im_warp3d = nib.nifti1.Nifti1Image(warp3d, affine_dest)
 
     # set "intent" code to vector, to be interpreted as warping field
@@ -1408,7 +1419,7 @@ def add_suffix(fname, suffix):
         add_suffix(t2.nii.gz, a) -> t2a.nii.gz
     """
     stem, ext = splitext(fname)
-    return os.path.join(stem + suffix + ext)
+    return stem + suffix + ext
 
 
 def splitext(fname):
@@ -1478,7 +1489,7 @@ def generate_output_file(fname_in, fname_out, squeeze_data=True, verbose=1):
         img.save(fname_out)
     else:
         # Generate output file without changing the extension
-        shutil.move(fname_in, fname_out)
+        mv(fname_in, fname_out, verbose=verbose)
 
     logger.info("File created: %s", os.path.join(path_out, file_out + ext_out))
     return os.path.join(path_out, file_out + ext_out)
@@ -1708,3 +1719,153 @@ def compute_cross_corr_3d(image: Image, coord, xrange=list(range(-10, 10)), xshi
     # Change adjust rl_coord
     logger.info('R-L coordinate adjusted from %s to  %s)', x, x + xrange[ind_peak])
     return x + xrange[ind_peak]
+
+
+def stitch_images(im_list: Sequence[Image], fname_out: str = 'stitched.nii.gz', verbose: int = 1) -> Image:
+    """
+    Stitch two (or more) images utilizing the C++-precompiled binaries of Biomedia-MIRA's stitching toolkit
+    (https://github.com/biomedia-mira/stitching) by placing a system call.
+
+    :param im_list: list of Image objects to stitch
+    :param fname_out: filename for stitched output image
+    :param verbose: adjusts the verbosity of the logging
+    :return: An Image object containing the stitched data array
+    """
+    # preserve original orientation (we assume it's consistent among all images)
+    orig_ornt = im_list[0].orientation
+
+    # reorient input files and save them to a temp directory
+    path_tmp = tmp_create(basename="stitch-images")
+    fnames_in = []
+    for im_in in im_list:
+        temp_file_path = os.path.join(path_tmp, os.path.basename(im_in.absolutepath))
+        im_in_rpi = change_orientation(im_in, 'RPI')
+        im_in_rpi.save(temp_file_path, verbose=verbose)
+        fnames_in.append(temp_file_path)
+
+    # C++ stitching module by Glocker et al. uses the first image as reference image
+    # and allocates an array (to be filled by subsequent images along the z-axis)
+    # based on the dimensions (x,y) of the reference image.
+    # As subsequent images are padded to the x-/y- dimensions of the reference image,
+    # it is important to use the image with the largest dimensions as the first
+    # argument to the input of the C++ binary, to ensure the images are not cropped.
+
+    # order fs_names in descending order based on dimensions (largest -> smallest)
+    fnames_in_sorted = sorted(fnames_in, key=lambda fname: max(Image(fname).dim), reverse=True)
+
+    # ensure that a tmp_path is used for the output of the stitching binary, since sct_image will re-save the image
+    fname_out = os.path.join(path_tmp, os.path.basename(fname_out))
+
+    cmd = ['isct_stitching', '-i'] + fnames_in_sorted + ['-o', fname_out, '-a']
+    status, output = run_proc(cmd, verbose=verbose, is_sct_binary=True)
+    if status != 0:
+        raise RuntimeError(f"Subprocess call to `isct_stitching` returned exit code {status} along with the following "
+                           f"output:\n{output}")
+
+    # reorient the output image back to the original orientation of the input images
+    im_out = change_orientation(Image(fname_out), orig_ornt)
+
+    return im_out
+
+
+def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple[Image, Image]:
+    """
+    Pad input and output images to the same dimensions, so that a QC report can compare between the output of
+    'stitching', vs. the naive output of concatenating the input images together.
+
+    :param ims_in: A sequence of Image objects (i.e. the input images that were stitched).
+    :param im_out: An Image object (i.e. the output stitched image).
+    :return: Two Image objects with the same dimensions, such that they can be toggled back and forth in a QC report:
+               1. A naive concatenation of `ims_in` (so that the images can be displayed side by side)
+               2. A padded version of `im_out` (so that it matches the dimensions of the naive concatenation)
+    """
+    # Work with copies of the images to avoid mutating the original output
+    ims_in = deepcopy(ims_in)
+    im_out = deepcopy(im_out)
+
+    # Ensure all images are in RPI orientation (since we make the assumption that that (x,y,z) = (LR,AP,SI))
+    for im in list(ims_in) + [im_out]:
+        im.change_orientation("RPI")
+
+    # find the max shape of all input images
+    shape_max = [max(im.data.shape[0] for im in ims_in),
+                 max(im.data.shape[1] for im in ims_in),
+                 max(im.data.shape[2] for im in ims_in)]
+
+    # pad any input images that are smaller than the max [x,y] shape
+    # (the stitching tool can handle mismatched [x,y] image shapes natively, but we have to manage it ourselves)
+    for im in ims_in:
+        # the images get concatenated in the z direction,
+        # so we only need to pad in the x, y directions
+        x_diff = shape_max[0] - im.data.shape[0]
+        y_diff = shape_max[1] - im.data.shape[1]
+        if (x_diff, y_diff) != (0, 0):
+            # note that (diff // 2) + ((diff + 1) // 2) == diff
+            im.data = np.pad(im.data, [
+                [x_diff // 2, (x_diff + 1) // 2],
+                [y_diff // 2, (y_diff + 1) // 2],
+                [0, 0],
+            ])
+
+    # create a 1-voxel blank image, to be used to create a gap between each input image to distinguish between them
+    im_blank = Image([shape_max[0], shape_max[1], 1])
+
+    # create a naively-stitched (RPI) image for comparison in QC report
+    # NB: we reverse the list of images because numpy's origin location (bottom) is different than nibabel's (top)
+    im_concat_list = [im_blank] * (2*len(ims_in) - 1)  # Preallocate a list of blank spacer images
+    im_concat_list[::2] = reversed(ims_in)             # Assign so that: [im_in1, im_blank, im_in2, im_blank ...]
+    im_concat = concat_data(im_concat_list, dim=2)     # Concatenate the input images and spacer images together
+
+    # We assume that the [x,y] dimensions match for both of the two QC images
+    if im_concat.data.shape[0:2] != im_out.data.shape[0:2]:
+        raise ValueError(f"Mismatched image dimensions: {im_concat.data.shape[0:2]} != {im_out.data.shape[0:2]}")
+
+    # However, we can't assume that the [z] dimensions match, because concatenating and stitching produce very
+    # different results (lengthwise). So, we pad the smaller image to make the dimensions match.
+    z_max = max(im_out.data.shape[2], im_concat.data.shape[2])
+    for im in [im_out, im_concat]:
+        z_diff = z_max - im.data.shape[2]
+        if z_diff > 0:
+            im.data = np.pad(im.data, [
+                [0, 0],
+                [0, 0],
+                [z_diff // 2, (z_diff + 1) // 2],
+            ])
+
+    # Double-check that the shapes are identical (which is a necessary condition for toggling images in QC reports)
+    assert im_concat.data.shape == im_out.data.shape
+
+    return im_concat, im_out
+
+
+def check_image_kind(img):
+    """
+    Identify the image as one of 4 image types:
+
+        - 'seg': Binary segmentation (0/1)
+        - 'softseg': Nonbinary segmentation in the range [0, 1], where 0 and 1 are the majority of values
+        - 'labeled_seg': Nonbinary, whole values (0, 1, 2...) or (0.0, 1.0, 2.0...) only
+        - 'im': Any other float-valued image where 0 and 1 are not the majority of values.
+
+    Useful for determining A) which colormap should be applied to an image, or
+                           B) which interpolation can be safely used on a given image
+
+    Output strings should be compatible with display_viewer_syntax() function.
+    """
+    # Check if image is a segmentation (binary or soft) by making sure:
+    # - 0/1 are the two most common voxel values
+    # - 0/1 account for >95% of voxels (to allow for some soft voxels)
+    unique, counts = np.unique(np.round(img.data, decimals=1), return_counts=True)
+    unique, counts = unique[np.argsort(counts)[::-1]], counts[np.argsort(counts)[::-1]]  # Sort by counts
+    binary_most_common = set(unique[0:2].astype(float)) == {0.0, 1.0}
+    binary_percentage = np.sum(counts[0:2]) / np.sum(counts)
+    is_whole_only = np.equal(np.mod(unique, 1), 0).all()
+    if binary_most_common:
+        if binary_percentage == 1.0:
+            return 'seg'
+        elif binary_percentage > 0.95:
+            return 'softseg'
+    if is_whole_only:
+        return 'seg-labeled'
+    else:
+        return 'anat'

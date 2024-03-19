@@ -1,25 +1,21 @@
 #!/usr/bin/env python
-# -*- coding: utf-8
-#########################################################################################
 #
 # Function to segment the spinal cord using convolutional neural networks
 #
-# ---------------------------------------------------------------------------------------
 # Copyright (c) 2017 Polytechnique Montreal <www.neuro.polymtl.ca>
-# Authors: Benjamin De Leener & Charley Gros
-#
-# About the license: see the file LICENSE.TXT
-#########################################################################################
+# License: see the file LICENSE
 
 import os
 import sys
+from typing import Sequence
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.image import Image, check_dim
-from spinalcordtoolbox.deepseg_sc.core import deep_segmentation_spinalcord
+from spinalcordtoolbox.deepseg_.sc import deep_segmentation_spinalcord
 from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.types import EmptyArrayError
 
 
 def get_parser():
@@ -66,7 +62,7 @@ def get_parser():
         "-thr",
         type=float,
         help="Binarization threshold (between 0 and 1) to apply to the segmentation prediction. Set to -1 for no "
-             "binarization (i.e. soft segmentation output). The default threshold is specific to each contrast and was"
+             "binarization (i.e. soft segmentation output). The default threshold is specific to each contrast and was "
              "estimated using an optimization algorithm. More details at: "
              "https://github.com/sct-pipeline/deepseg-threshold.",
         metavar=Metavar.float,
@@ -119,15 +115,11 @@ def get_parser():
         '-qc-subject',
         metavar=Metavar.str,
         help='If provided, this string will be mentioned in the QC report as the subject the process was run on',)
-    optional.add_argument(
-        '-igt',
-        metavar=Metavar.str,
-        help='File name of ground-truth segmentation.',)
 
     return parser
 
 
-def main(argv=None):
+def main(argv: Sequence[str]):
     """Main function."""
     parser = get_parser()
     arguments = parser.parse_args(argv)
@@ -155,7 +147,7 @@ def main(argv=None):
     if kernel_size == '3d' and contrast_type == 'dwi':
         kernel_size = '2d'
         printv('3D kernel model for dwi contrast is not available. 2D kernel model is used instead.',
-                   type="warning")
+               type="warning")
 
     if ctr_algo == 'file' and arguments.file_centerline is None:
         printv('Please use the flag -file_centerline to indicate the centerline filename.', 1, 'warning')
@@ -193,10 +185,15 @@ def main(argv=None):
 
     im_image = Image(fname_image)
     # note: below we pass im_image.copy() otherwise the field absolutepath becomes None after execution of this function
-    im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp = \
-        deep_segmentation_spinalcord(im_image.copy(), contrast_type, ctr_algo=ctr_algo,
-                                     ctr_file=manual_centerline_fname, brain_bool=brain_bool, kernel_size=kernel_size,
-                                     threshold_seg=threshold, remove_temp_files=remove_temp_files, verbose=verbose)
+    try:
+        im_seg, im_image_RPI_upsamp, im_seg_RPI_upsamp = \
+            deep_segmentation_spinalcord(im_image.copy(), contrast_type, ctr_algo=ctr_algo,
+                                         ctr_file=manual_centerline_fname, brain_bool=brain_bool,
+                                         kernel_size=kernel_size, threshold_seg=threshold,
+                                         remove_temp_files=remove_temp_files, verbose=verbose)
+    except EmptyArrayError as e:
+        printv(f"Spinal cord could not be detected for {fname_image}\n"
+               f"    {e.__class__.__name__}: '{e}'", 1, 'error')
 
     # Save segmentation
     fname_seg = os.path.abspath(os.path.join(output_folder, fname_out))
@@ -204,9 +201,9 @@ def main(argv=None):
 
     # Generate QC report
     if path_qc is not None:
-        generate_qc(fname_image, fname_seg=fname_seg, args=sys.argv[1:], path_qc=os.path.abspath(path_qc),
+        generate_qc(fname_image, fname_seg=fname_seg, args=argv, path_qc=os.path.abspath(path_qc),
                     dataset=qc_dataset, subject=qc_subject, process='sct_deepseg_sc')
-    display_viewer_syntax([fname_image, fname_seg], colormaps=['gray', 'red'], opacities=['', '0.7'])
+    display_viewer_syntax([fname_image, fname_seg], im_types=['anat', 'seg'], opacities=['', '0.7'], verbose=verbose)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,52 @@
+name: Check code quality
+
+on: [pull_request]
+
+jobs:
+  run_flake8_and_shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetches all references, which is needed to `git diff` with origin/master
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+    - name: Install dependencies
+      run: pip install flake8
+    # Note: flake8 picks up project-wide configuration options from 'setup.cfg' in SCT's root directory
+    # We set -o pipefail so that the check fails if there's an error with the `git diff` part of the pipeline.
+    # We allow (($? == 1)) after grep to allow the empty list as a result (but not (($? == 2)), which would be some other error with grep).
+    # We specify --no-run-if-empty so that flake8 doesn't check the whole repo when no .py files got changed.
+    - name: Lint Python files with flake8
+      run: |
+        set -eu -o pipefail
+        git diff --name-only --diff-filter=d \
+          --merge-base refs/remotes/origin/master -- \
+          | (grep '\.py$' || (($? == 1)) ) \
+          | xargs --delimiter='\n' --no-run-if-empty flake8
+
+    - name: Check shell scripts with shellcheck
+      uses: ludeeus/action-shellcheck@master
+      with:
+        severity: style
+
+    - name: Check for broken links
+      run: | 
+        touch valid_urls.txt redirected_urls.txt invalid_urls.txt
+        find . -type f \( -name "*.txt" -o -name "*.md" -o -name "*.py" -o -name "*.rst" \) \
+          \( \! -name 'CHANGES.md' \) \( \! -name 'requirements.txt' \) \( \! -name 'requirements-freeze.txt' \) | 
+          xargs grep -Eo "\b(https?)://[-A-Za-z0-9+&@#/%?=~_|$!:,.;]*[A-Za-z0-9+&@#/%=~_|$]" | 
+          sed 's/:/;/' | 
+          xargs -n 1 -P 8 ./.github/workflows/check-url.sh
+
+    - name: Summarize broken link check
+      run: |
+        NUM_OK=$(wc -l valid_urls.txt | cut -d " " -f 1)
+        NUM_REDIRECT=$(wc -l redirected_urls.txt | cut -d " " -f 1)
+        NUM_BAD=$(wc -l invalid_urls.txt | cut -d " " -f 1)
+        cat invalid_urls.txt
+        echo -en "========== \033[0;32m$NUM_OK passed\033[0;0m, \033[0;33m$NUM_REDIRECT redirected\033[0;0m, \033[0;31m$NUM_BAD failed\033[0;0m ==========\n"
+        exit $NUM_BAD
+

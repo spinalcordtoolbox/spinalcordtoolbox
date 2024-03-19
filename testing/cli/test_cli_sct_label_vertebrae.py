@@ -1,3 +1,5 @@
+# pytest unit tests for sct_label_vertebrae
+
 import os
 import logging
 
@@ -5,7 +7,7 @@ import pytest
 
 from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.labels import check_missing_label
-from spinalcordtoolbox.utils import sct_test_path
+from spinalcordtoolbox.utils.sys import sct_test_path
 import spinalcordtoolbox.scripts.sct_label_vertebrae as sct_label_vertebrae
 
 logger = logging.getLogger(__name__)
@@ -23,6 +25,11 @@ def test_sct_label_vertebrae_consistent_disc(tmp_path):
     fp, fn = check_missing_label(pred, ref)
     assert fp == []
     assert fn == []
+
+    # Ensure that the straightening files are correctly generated in the output directory
+    for file in ["straightening.cache", "straight_ref.nii.gz",
+                 "warp_straight2curve.nii.gz", "warp_curve2straight.nii.gz"]:
+        assert os.path.isfile(tmp_path/file)
 
 
 @pytest.mark.sct_testing
@@ -49,6 +56,11 @@ def test_sct_label_vertebrae_initz_error():
 # value=19: the code does the 'superior' direction of the loop,
 #   then does two iterations in the 'inferior' direction, and emits
 #   a warning for 'Disc value not included in template.'
+#   FIXME 2023-10-11: After an update to the PAM50 level files, the disc
+#     estimation is now much more accurate for iteration 1 (disc '20'). This results
+#     in the disc estimation exiting before the second iteration can occur, due to the
+#     small size of the cropped t2.nii.gz file. Thus, the warning is never thrown.
+#     See: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4254#issuecomment-1758581360
 #
 # value=20: the code does the 'superior' direction of the loop,
 #   then tries to switch to the 'inferior' direction, but
@@ -60,6 +72,7 @@ def test_sct_label_vertebrae_initz_error():
 #   template, so the code detects this condition and errors out
 #   with a sensible error message.
 
+@pytest.mark.skip("PAM50 levels update (PR PAM50#21) has rendered test invalid.")
 def test_sct_label_vertebrae_high_value_warning(caplog, tmp_path):
     sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),
                               '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
@@ -97,6 +110,7 @@ def test_sct_label_vertebrae_initial_disc_zero(capsys, tmp_path):
     assert 'Missing label or zero label for initial disc.' in capsys.readouterr().out
 
 
+@pytest.mark.skip("Test doesn't work as intended: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4405")
 def test_sct_label_vertebrae_initial_disc_too_low(capsys, tmp_path):
     with pytest.raises(SystemExit) as excinfo:
         sct_label_vertebrae.main(['-i', sct_test_path('t2', 't2.nii.gz'),

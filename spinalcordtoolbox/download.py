@@ -1,10 +1,12 @@
-#!/usr/bin/env python
-# -*- coding: utf-8
-# Functions dealing with data download and installation from the Internet.
+"""
+Utilities for downloading
+
+Copyright (c) 2020 Polytechnique Montreal <www.neuro.polymtl.ca>
+License: see the file LICENSE
+"""
 
 import os
 import shutil
-import distutils.dir_util
 import logging
 import cgi
 import tempfile
@@ -13,13 +15,131 @@ import tarfile
 import zipfile
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util import Retry
+from urllib3.util import Retry
 
-from spinalcordtoolbox.utils import sct_progress_bar, tmp_create
-
-import spinalcordtoolbox as sct
+from spinalcordtoolbox.utils.fs import tmp_create
+from spinalcordtoolbox.utils.sys import __bin_dir__, __sct_dir__, sct_progress_bar, stylize
 
 logger = logging.getLogger(__name__)
+
+
+# Dictionary containing list of URLs and locations for datasets.
+# Mirror servers are listed in order of decreasing priority.
+# If exists, favour release artifact straight from github
+# For the location field, this is where the dataset will be
+# downloaded to (relative to the repo) if a location isn't passed by
+# the user.
+DATASET_DICT = {
+    "sct_example_data": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/sct_example_data/releases/download/r20180525/20180525_sct_example_data.zip",
+            "https://osf.io/kjcgs/?action=download",
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "sct_example_data"),
+        "download_type": "Datasets",
+    },
+    "sct_testing_data": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/sct_testing_data/releases/download/r20240213/sct_testing_data-r20240213.zip",
+            "https://osf.io/tfy3u/?action=download",
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "sct_testing_data"),
+        "download_type": "Datasets",
+    },
+    "sct_course_data": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/sct_tutorial_data/archive/refs/tags/SCT-Course-20231020.zip",
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "sct_course_data"),
+        "download_type": "SCT Course Files",
+    },
+    "manual-correction": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/manual-correction/archive/refs/tags/r20231101.zip",
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "manual-correction"),
+        "download_type": "SCT Course Files",
+    },
+    "PAM50": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/PAM50/releases/download/r20240215/PAM50-r20240215.zip",
+            "https://osf.io/7d2vg/?action=download",
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "PAM50"),
+        "download_type": "Templates",
+    },
+    "MNI-Poly-AMU": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/MNI-Poly-AMU/releases/download/r20170310/20170310_MNI-Poly-AMU.zip",
+            "https://osf.io/sh6h4/?action=download",
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "MNI-Poly-AMU"),
+        "download_type": "Templates",
+    },
+    "binaries_linux": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221109/spinalcordtoolbox-binaries_linux.tar.gz",
+        ],
+        "default_location": __bin_dir__,
+        "download_type": "Binaries",
+    },
+    "binaries_osx": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221018/spinalcordtoolbox-binaries_osx.tar.gz",
+        ],
+        "default_location": __bin_dir__,
+        "download_type": "Binaries",
+    },
+    "binaries_win": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/spinalcordtoolbox-binaries/releases/download/r20221018/spinalcordtoolbox-binaries_windows.tar.gz",
+        ],
+        "default_location": __bin_dir__,
+        "download_type": "Binaries",
+    },
+    "deepseg_gm_models": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/deepseg_gm_models/releases/download/r20180205/20220325_deepseg_gm_models_onnx.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "deepseg_gm_models"),
+        "download_type": "Models",
+    },
+    "deepseg_sc_models": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/deepseg_sc_models/releases/download/r20180610/20220325_deepseg_sc_models_onnx.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "deepseg_sc_models"),
+        "download_type": "Models",
+    },
+    "deepseg_lesion_models": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/deepseg_lesion_models/releases/download/r20180613/20220325_deepseg_lesion_models_onnx.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "deepseg_lesion_models"),
+        "download_type": "Models",
+    },
+    "exvivo_template": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/exvivo-template/archive/refs/tags/r20210317.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "exvivo_template"),
+        "download_type": "Templates",
+    },
+    "deepreg_models": {
+        "mirrors": [
+            "https://github.com/ivadomed/multimodal-registration/releases/download/r20220512/models.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "deepreg_models"),
+        "download_type": "Models",
+    },
+    "PAM50_normalized_metrics": {
+        "mirrors": [
+            "https://github.com/spinalcordtoolbox/PAM50-normalized-metrics/archive/refs/tags/r20230222.zip"
+        ],
+        "default_location": os.path.join(__sct_dir__, "data", "PAM50_normalized_metrics"),
+        "download_type": "Templates",
+    },
+}
 
 
 def download_data(urls):
@@ -48,7 +168,7 @@ def download_data(urls):
             filename = os.path.basename(urllib.parse.urlparse(url).path)
             if "Content-Disposition" in response.headers:
                 _, content = cgi.parse_header(response.headers['Content-Disposition'])
-                filename = content["filename"]
+                filename = content.get("filename", filename)  # Fall-back on original 'filename' if header is malformed
 
             # protect against directory traversal
             filename = os.path.basename(filename)
@@ -63,7 +183,7 @@ def download_data(urls):
 
             with open(tmp_path, 'wb') as tmp_file:
                 total = int(response.headers.get('content-length', 1))
-                sct_bar = sct_progress_bar(total=total, unit='B', unit_scale=True, desc="Status", ascii=False, position=0)
+                sct_bar = sct_progress_bar(total=total, unit='B', unit_scale=True, desc="Status", position=0)
 
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
@@ -98,7 +218,7 @@ def unzip(compressed, dest_folder):
 
     try:
         open(compressed).extractall(dest_folder)
-    except:
+    except Exception:
         logger.error('ERROR: ZIP package corrupted. Please try downloading again.')
         raise
 
@@ -144,7 +264,7 @@ def install_data(url, dest_folder, keep=False):
 
     tmp_file = download_data(url)
 
-    extraction_folder = tmp_create()
+    extraction_folder = tmp_create(basename="install-data")
 
     unzip(tmp_file, extraction_folder)
 
@@ -175,7 +295,7 @@ def install_data(url, dest_folder, keep=False):
     for cwd, ds, fs in os.walk(bundle_folder):
         ds.sort()
         fs.sort()
-        ds[:] = [ d for d in ds if d not in ("__MACOSX",) ]
+        ds[:] = [d for d in ds if d not in ("__MACOSX",)]
         for d in ds:
             srcpath = os.path.join(cwd, d)
             relpath = os.path.relpath(srcpath, bundle_folder)
@@ -202,3 +322,47 @@ def install_data(url, dest_folder, keep=False):
     logger.info("Removing temporary folders...")
     shutil.rmtree(os.path.dirname(tmp_file))
     shutil.rmtree(extraction_folder)
+
+
+def install_named_dataset(dataset_name, dest_folder=None, keep=False):
+    """
+    A light wrapper for the 'install_data' function to allow downstream consumers to download
+    datasets using only the dataset's name (i.e. without needing to access DATASET_DICT fields).
+    """
+    if dataset_name not in DATASET_DICT.keys():
+        # This `lambda` accounts for capitals (A, a, B, b), see https://stackoverflow.com/a/10269828
+        raise ValueError(f"Dataset '{dataset_name}' is not contained in list of datasets. Choose from:\n\n "
+                         f"{sorted(list(DATASET_DICT.keys()), key=str.casefold)}")
+
+    urls = DATASET_DICT[dataset_name]["mirrors"]
+    if dest_folder is None:
+        dest_folder = DATASET_DICT[dataset_name]["default_location"]
+
+    install_data(urls, dest_folder, keep)
+
+
+def list_datasets():
+    """
+    :returns: A table listing the downloadable datasets
+    :rtype: str
+    """
+    color = {True: 'LightGreen', False: 'LightRed'}
+    table = f"{'DATASET NAME':<30s}{'TYPE':<20s}\n"
+    table += f"{'-' * 50}\n"
+    sorted_datasets = sorted(DATASET_DICT,
+                             key=lambda k: DATASET_DICT[k]['download_type'] + k)
+    for dataset_name in sorted_datasets:
+        download_type = DATASET_DICT[dataset_name]['download_type']
+        dataset_status = dataset_name.ljust(30)
+        if download_type != "Binaries":
+            path_dataset = DATASET_DICT[dataset_name]['default_location']
+            installed = (os.path.exists(path_dataset)
+                         and len(os.listdir(path_dataset)) > 0)
+            dataset_status = stylize(dataset_status, color[installed])
+        table += f"{dataset_status}{download_type:<20s}\n"
+
+    table += '\nLegend: {} | {} (in the $SCT_DIR/data folder)\n\n'.format(
+            stylize("installed", color[True]),
+            stylize("not installed", color[False]))
+
+    return table

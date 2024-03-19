@@ -15,7 +15,7 @@ Segmentation
 ============
 
 - sct_create_mask_ - Create mask along z direction.
-- sct_deepseg_ - Segment an anatomical structure or pathologies according using a deep learning model created with `ivadomed <http://ivadomed.org/>`_.
+- sct_deepseg_ - Segment an anatomical structure or pathologies according using a deep learning model created with `ivadomed <https://ivadomed.org/>`_.
 - sct_deepseg_gm_ - Segment spinal cord gray matter using deep learning.
 - sct_deepseg_lesion_ - Segment multiple sclerosis lesions.
 - sct_deepseg_sc_ - Segment spinal cord using deep learning.
@@ -27,7 +27,7 @@ Segmentation Analysis
 
 - sct_analyze_lesion_ - Compute statistics on segmented lesions.
 - sct_compute_hausdorff_distance_ - Compute the Hausdorff's distance between two binary images.
-- sct_compute_mscc_ - Compute Maximum Spinal Cord Compression (MSCC).
+- sct_compute_compression_ - Compute spinal cord compression morphometrics.
 - sct_dice_coefficient_ - Compute the Dice Coefficient to estimate overlap between two binary images.
 - sct_process_segmentation_ - Perform various types of processing from the spinal cord segmentation.
 
@@ -143,10 +143,10 @@ sct_compute_hausdorff_distance
 .. program-output:: sct_compute_hausdorff_distance -h
 
 
-sct_compute_mscc
-================
+sct_compute_compression
+=======================
 
-.. program-output:: sct_compute_mscc -h
+.. program-output:: sct_compute_compression -h
 
 
 sct_compute_mtr
@@ -427,29 +427,3 @@ sct_version
 ===========
 
 .. program-output:: sct_version
-
-
-
-
-Internal Commands
-*****************
-
-These scripts are tailored to the developers.
-
-
-isct_convert_binary_to_trilinear
-================================
-
-.. program-output:: isct_convert_binary_to_trilinear -h
-
-
-isct_minc2volume-viewer
-=======================
-
-.. program-output:: isct_minc2volume-viewer -h
-
-
-isct_test_ants
-==============
-
-.. program-output:: isct_test_ants -h
