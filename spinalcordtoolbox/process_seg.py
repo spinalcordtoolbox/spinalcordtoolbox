@@ -88,11 +88,11 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
             # Compute the angle about AP axis between the centerline and the normal vector to the slice
             v0 = [tangent_vect[0], tangent_vect[2]]
             v1 = [0, 1]
-            angle_AP_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            angle_AP_rad = math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
             # Compute the angle about RL axis between the centerline and the normal vector to the slice
             v0 = [tangent_vect[1], tangent_vect[2]]
             v1 = [0, 1]
-            angle_RL_rad = np.math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
+            angle_RL_rad = math.atan2(np.linalg.det([v0, v1]), np.dot(v0, v1))
             # Apply affine transformation to account for the angle between the centerline and the normal to the patch
             tform = transform.AffineTransform(scale=(np.cos(angle_RL_rad), np.cos(angle_AP_rad)))
             # Convert to float64, to avoid problems in image indexation causing issues when applying transform.warp
