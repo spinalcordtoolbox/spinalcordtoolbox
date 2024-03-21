@@ -982,7 +982,7 @@ def get_dimension(im_file, verbose=1):
         spacing_exp = np.floor(np.log10(np.abs(spacing))).astype(int)
         # convert to python float, then round to remove any spurious digits
         zoom_f64 = float(zoom_f32)
-        zoom_f64_rounded = round(zoom_f64, abs(spacing_exp) - 1)
+        zoom_f64_rounded = round(zoom_f64, -spacing_exp - 1)
         zooms.append(zoom_f64_rounded)
     for i in range(min(len(data_shape), 4)):
         ndims[i] = data_shape[i]
