@@ -189,7 +189,8 @@ def get_parser():
     optional.add_argument(
         '-angle-corr-centerline',
         metavar=Metavar.str,
-        help="Centerline to be used for angle correction. This is optional; if not provided, the centerline will be "
+        help="Image to be used as a centerline for computing angle correction (can be either a cord segmentation or a "
+             "single-voxel centerline mask). This argument is optional; if not provided, the centerline will be "
              "derived from the input segmentation. Use this option if the input segmentation is irregularly shaped "
              "(e.g. gray/white matter). In such a case, it is best to pass the full cord segmentation to this option, "
              "as you will get a more accurate centerline (and thus a more accurate, consistent angle correction)."
