@@ -30,6 +30,7 @@ def compute_shape(segmentation, angle_correction=True, centerline_path=None, par
 
     :param segmentation: input segmentation. Could be either an Image or a file name.
     :param angle_correction:
+    :param centerline_path: path to image file to be used as a centerline for computing angle correction.
     :param param_centerline: see centerline.core.ParamCenterline()
     :param verbose:
     :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
