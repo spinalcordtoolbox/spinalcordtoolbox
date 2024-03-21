@@ -35,7 +35,7 @@ We can now pass both the GM/WM masks and the full cord segmentation to compute t
    - ``-o`` : The output CSV file.
    - ``-perslice`` : Set this option to 1 to turn on per-slice computation.
    - ``-angle-corr-centerline``: Normally, angle correction will be applied during ``sct_process_segmentation`` to account for scans where the spinal cord is positioned at an angle with respect to the superior-inferior axis. While this works well when ``-i`` is a full spinal cord segmentation, in this case we are instead providing GM/WM segmentations to ``-i``. The irregular cross-sectional shape of these segmentations can have a negative effect on the estimation of the cord centerline, which in turn may cause the estimated angle to be incorrect. So, here we explicitly provide a full spinal cord segmentation for angle correction purposes, to ensure accurate and consistent angle correction.
-   - **Note:** Alternatively, if you don't have a full-cord segmentation, you could turn off angle correction entirely using ``-angle-corr 0``, but this will only provide accurate results if you know that your axial slices were acquired roughly orthogonal to the cord.
+   - **Note:** Alternatively, if you don't have a full-cord segmentation, you could turn off angle correction entirely using ``-angle-corr 0``, but this will only provide accurate results if you know that your axial slices were acquired roughly orthogonal to the cord. (And, this will only be true for small FOVs -- the larger the FOV, then the more likely that angle correction will be necessary.)
 
 
 :Output files/folders:
