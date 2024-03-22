@@ -5,6 +5,8 @@ Cross-sectional area (CSA)
 
 This section demonstrates how to compute spinal cord cross-sectional area.
 
+.. important:: There is a limit to the precision you can achieve for a given image resolution. SCT does not truncate spurious digits when performing angle correction, so please keep in mind that there may be non-significant digits in the computed values. You may wish to compare angle-corrected values with their corresponding uncorrected values (``-angle-corr 0``) to get a sense of the limits on precision.
+
 
 CSA (Averaged across vertebral levels)
 ======================================
