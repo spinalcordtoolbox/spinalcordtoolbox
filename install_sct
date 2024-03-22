@@ -647,6 +647,7 @@ fi
   # This is necessary in order to install 'macosx_11_0' wheels. See also:
   # https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4352
   SYSTEM_VERSION_COMPAT=0 python/envs/venv_sct/bin/pip install -r "$REQUIREMENTS_FILE" --ignore-installed certifi &&
+  pip install nibabel@git+https://github.com/joshuacwnewton/nibabel@jn/1309-filter-numpy-warning-longdouble-wsl # append_to_freeze
   print info "Installing spinalcordtoolbox..." &&
   python/envs/venv_sct/bin/pip install -e .
 ) ||
