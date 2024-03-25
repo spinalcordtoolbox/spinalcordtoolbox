@@ -39,17 +39,13 @@ class Tee:
         self.fd1 = _fd1
         self.fd2 = _fd2
 
-    # This is breaking pytest for test_sct_run_batch.py somehow.
-    # I think it is ok to omit this, allowing the fd objects to close themselves
-    # this prevents closing an fd in use elsewhere.
-    # def __del__(self):
-    #     self.close()
-
     def close(self):
-        if self.fd1 != sys.__stdout__ and self.fd1 != sys.__stderr__:
-            self.fd1.close()
-        if self.fd2 != sys.__stdout__ and self.fd2 != sys.__stderr__:
-            self.fd2.close()
+        # We can't assume that we own the underlying files exclusively; maybe
+        # another part of the code also has a reference to them, in which case
+        # it would be rude to actually close them. But, we can give up our
+        # references to them, and this should automatically close them if the
+        # reference count goes to zero.
+        del self.fd1, self.fd2
 
     def write(self, text):
         # Quick and dirty solution to filter out ansi escape sequences (like color codes) from
