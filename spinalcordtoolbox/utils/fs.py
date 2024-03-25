@@ -56,14 +56,15 @@ class Tee:
         # the text if one file is an interactive terminal but the other one is not.
         # This will only filter out cases where the entire escape sequence is part of a single
         # call to write(). See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4287
-        if self.fd2.isatty() and not self.fd1.isatty():
-            self.fd1.write(ansi_escape.sub('', text))
-        else:
-            self.fd1.write(text)
-        if self.fd1.isatty() and not self.fd2.isatty():
-            self.fd2.write(ansi_escape.sub('', text))
-        else:
-            self.fd2.write(text)
+        # If one FD is a TTY and the other is not, remove escape sequences from the non-TTY
+        # Otherwise, if both/neither FDs are TTYs, then preserve escape sequences
+        text_fd1, text_fd2 = text, text
+        if not self.fd1.isatty() and self.fd2.isatty():
+           text_fd1 = ansi_escape.sub('', text)
+        elif not self.fd2.isatty() and self.fd1.isatty():
+           text_fd2 = ansi_escape.sub('', text)
+        self.fd1.write(text_fd1)
+        self.fd2.write(text_fd2)
 
     def flush(self):
         self.fd1.flush()
