@@ -75,6 +75,11 @@ def get_parser():
             "  - length: Length of the segmentation, computed by summing the slice thickness (corrected for the "
             "centerline angle at each slice) across the specified superior-inferior region.\n"
             "\n"
+            "IMPORTANT: There is a limit to the precision you can achieve for a given image resolution. SCT does not "
+            "truncate spurious digits when performing angle correction, so please keep in mind that there may be "
+            "non-significant digits in the computed values. You may wish to compare angle-corrected values with "
+            "their corresponding uncorrected values to get a sense of the limits on precision.\n"
+            "\n"
             "To select the region to compute metrics over, choose one of the following arguments:\n"
             "   1. '-z': Select axial slices based on slice index.\n"
             "   2. '-pmj' + '-pmj-distance' + '-pmj-extent': Select axial slices based on distance from pontomedullary "
@@ -180,6 +185,15 @@ def get_parser():
              "the slice is stretched/expanded by a factor corresponding to the cosine of the angle between the "
              "centerline and the axial plane. If the cord is already quasi-orthogonal to the slab, you can set "
              "-angle-corr to 0."
+    )
+    optional.add_argument(
+        '-angle-corr-centerline',
+        metavar=Metavar.str,
+        help="Image to be used as a centerline for computing angle correction (can be either a cord segmentation or a "
+             "single-voxel centerline mask). This argument is optional; if not provided, the centerline will be "
+             "derived from the input segmentation. Use this option if the input segmentation is irregularly shaped "
+             "(e.g. gray/white matter). In such a case, it is best to pass the full cord segmentation to this option, "
+             "as you will get a more accurate centerline (and thus a more accurate, consistent angle correction)."
     )
     optional.add_argument(
         '-centerline-algo',
@@ -399,6 +413,7 @@ def main(argv: Sequence[str]):
     slices = arguments.z
     perslice = bool(arguments.perslice)
     angle_correction = bool(arguments.angle_corr)
+    angle_correction_centerline = arguments.angle_corr_centerline
     param_centerline = ParamCenterline(
         algo_fitting=arguments.centerline_algo,
         smooth=arguments.centerline_smooth,
@@ -422,6 +437,7 @@ def main(argv: Sequence[str]):
 
     metrics, fit_results = compute_shape(fname_segmentation,
                                          angle_correction=angle_correction,
+                                         centerline_path=angle_correction_centerline,
                                          param_centerline=param_centerline,
                                          verbose=verbose,
                                          remove_temp_files=arguments.r)
