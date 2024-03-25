@@ -56,9 +56,9 @@ class Tee:
         # Otherwise, if both/neither FDs are TTYs, then preserve escape sequences
         text_fd1, text_fd2 = text, text
         if not self.fd1.isatty() and self.fd2.isatty():
-           text_fd1 = ansi_escape.sub('', text)
+            text_fd1 = ansi_escape.sub('', text)
         elif not self.fd2.isatty() and self.fd1.isatty():
-           text_fd2 = ansi_escape.sub('', text)
+            text_fd2 = ansi_escape.sub('', text)
         self.fd1.write(text_fd1)
         self.fd2.write(text_fd2)
 
