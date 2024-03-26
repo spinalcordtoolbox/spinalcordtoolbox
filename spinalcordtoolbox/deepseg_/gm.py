@@ -18,6 +18,7 @@ import numpy as np
 from spinalcordtoolbox import resampling
 from spinalcordtoolbox.utils.sys import __data_dir__
 from spinalcordtoolbox.deepseg_.onnx import onnx_inference
+from spinalcordtoolbox.image import Image
 
 # Models
 # Tuple of (model, metadata)
@@ -275,5 +276,6 @@ def segment_file(input_filename, output_filename,
     if threshold is not None:
         res_data = threshold_predictions(res_data, 0.5)
 
-    nib.save(nii_resampled_original, output_filename)
+    img = Image(param=res_data, hdr=nii_resampled_original.header)
+    img.save(output_filename)
     return output_filename

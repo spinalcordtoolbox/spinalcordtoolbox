@@ -508,13 +508,13 @@ class SpinalCordStraightener(object):
         hdr_warp.set_intent('vector', (), '')
         hdr_warp.set_data_dtype('float32')
         if self.curved2straight:
-            img = Nifti1Image(data_warp_curved2straight, None, hdr_warp_s)
-            save(img, 'tmp.curve2straight.nii.gz')
+            img = Image(param=data_warp_curved2straight, hdr=hdr_warp_s)
+            img.save('tmp.curve2straight.nii.gz')
             logger.info('Warping field generated: tmp.curve2straight.nii.gz')
 
         if self.straight2curved:
-            img = Nifti1Image(data_warp_straight2curved, None, hdr_warp)
-            save(img, 'tmp.straight2curve.nii.gz')
+            img = Image(param=data_warp_straight2curved, hdr=hdr_warp)
+            img.save('tmp.straight2curve.nii.gz')
             logger.info('Warping field generated: tmp.straight2curve.nii.gz')
 
         image_centerline_straight.save(fname_ref)
