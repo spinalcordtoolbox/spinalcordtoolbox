@@ -13,7 +13,7 @@ import numpy as np
 import nibabel as nib
 from dipy.denoise.patch2self import patch2self
 
-from spinalcordtoolbox.image import add_suffix
+from spinalcordtoolbox.image import add_suffix, Image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv
 
@@ -137,10 +137,10 @@ def main(argv: Sequence[str]):
         plt.show()
 
     # Save files
-    nii_denoised = nib.Nifti1Image(data_denoised, None, hdr)
-    nii_diff = nib.Nifti1Image(data_diff, None, hdr)
-    nib.save(nii_denoised, output_file_name_denoised)
-    nib.save(nii_diff, output_file_name_diff)
+    nii_denoised = Image(param=data_denoised, hdr=hdr)
+    nii_diff = Image(param=data_diff, hdr=hdr)
+    nii_denoised.save(output_file_name_denoised)
+    nii_diff.save(output_file_name_diff)
 
     display_viewer_syntax([file_to_denoise, output_file_name_denoised, output_file_name_diff], verbose=verbose)
 

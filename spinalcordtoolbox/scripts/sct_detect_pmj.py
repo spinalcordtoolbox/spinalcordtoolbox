@@ -216,7 +216,7 @@ class DetectPMJ:
         run_proc(cmd_pmj, verbose=0, is_sct_binary=True)
 
         img = nib.load(self.dection_map_pmj + '_svm.hdr')  # convert .img and .hdr files to .nii
-        nib.save(img, self.dection_map_pmj + '.nii')
+        nib.save(img, self.dection_map_pmj + '.nii')  # NB: Use nib.save instead of Image.save for hdr file
 
         self.dection_map_pmj += '.nii'  # fname of the resulting detection map
 
