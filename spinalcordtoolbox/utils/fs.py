@@ -48,19 +48,8 @@ class Tee:
         del self.fd1, self.fd2
 
     def write(self, text):
-        # Quick and dirty solution to filter out ansi escape sequences (like color codes) from
-        # the text if one file is an interactive terminal but the other one is not.
-        # This will only filter out cases where the entire escape sequence is part of a single
-        # call to write(). See https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4287
-        # If one FD is a TTY and the other is not, remove escape sequences from the non-TTY
-        # Otherwise, if both/neither FDs are TTYs, then preserve escape sequences
-        text_fd1, text_fd2 = text, text
-        if not self.fd1.isatty() and self.fd2.isatty():
-            text_fd1 = ansi_escape.sub('', text)
-        elif not self.fd2.isatty() and self.fd1.isatty():
-            text_fd2 = ansi_escape.sub('', text)
-        self.fd1.write(text_fd1)
-        self.fd2.write(text_fd2)
+        self.fd1.write(text)
+        self.fd2.write(text)
 
     def flush(self):
         self.fd1.flush()
@@ -68,12 +57,8 @@ class Tee:
 
     def isatty(self):
         # This method is needed to ensure that `printv` correctly applies color formatting when sys.stdout==Tee().
-        # fixme: Here we return 'True' if either file descriptor is a tty, to ensure that color formatting is added to
-        #        stdout/stderr if used. This has the unfortunate side effect of printing color codes to actual text
-        #        files, so we may want to rethink this solution. But, I'm not sure we can have it both ways without
-        #        modifying the `write()` method of Tee.
-        #        (See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4287)
-        return any((self.fd1.isatty(), self.fd2.isatty()))
+        # Use utils.csi_filter if you want to strip the color codes from only one half of the Tee
+        return self.fd1.isatty() or self.fd2.isatty()
 
 
 def copy_helper(src, dst, verbose=1):
