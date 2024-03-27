@@ -8,7 +8,6 @@ License: see the file LICENSE
 import sys
 import io
 import os
-import re
 import shutil
 import tempfile
 import datetime
@@ -27,10 +26,6 @@ def tmp_create(basename):
     tmpdir = tempfile.mkdtemp(prefix=prefix)
     logger.info(f"Creating temporary folder ({tmpdir})")
     return tmpdir
-
-
-# Taken from https://stackoverflow.com/questions/14693701/how-can-i-remove-the-ansi-escape-sequences-from-a-string-in-python/14693789#14693789
-ansi_escape = re.compile(r'\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
 
 # Modified from https://shallowsky.com/blog/programming/python-tee.html
