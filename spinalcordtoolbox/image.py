@@ -1850,12 +1850,12 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
 
 def check_image_kind(img):
     """
-    Identify the image as one of 4 image types:
+    Identify the image as one of 4 image types (represented as one of 4 strings):
 
         - 'seg': Binary segmentation (0/1)
         - 'softseg': Nonbinary segmentation in the range [0, 1], where 0 and 1 are the majority of values
-        - 'labeled_seg': Nonbinary, whole values (0, 1, 2...) where 0 is the majority of values
-        - 'im': Any other image where 0 is not the majority of values.
+        - 'seg-labeled': Nonbinary, whole values (0, 1, 2...) where 0 is the majority of values
+        - 'anat': Any other image
 
     Useful for determining A) which colormap should be applied to an image, or
                            B) which interpolation can be safely used on a given image
