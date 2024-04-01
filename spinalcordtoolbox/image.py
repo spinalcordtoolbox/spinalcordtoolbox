@@ -1399,7 +1399,7 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
 
     for iz, fname in enumerate(fname_list):
         img = Image(fname)
-        warp2d = np.asanyarray(img.data)
+        warp2d = img.data
         warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
         warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
         del warp2d
