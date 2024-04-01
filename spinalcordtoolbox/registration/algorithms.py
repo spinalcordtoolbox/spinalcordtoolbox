@@ -12,7 +12,7 @@ import psutil
 from math import asin, cos, sin, acos
 
 import numpy as np
-from nibabel import load, Nifti1Image, save, aff2axcodes
+from nibabel import load, Nifti1Image, aff2axcodes
 from nilearn.image import resample_img
 from scipy.signal import argrelmax, medfilt
 from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve

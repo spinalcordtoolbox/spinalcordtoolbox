@@ -13,7 +13,6 @@ import logging
 import bisect
 
 import numpy as np
-from nibabel import Nifti1Image, save
 
 from spinalcordtoolbox.types import Centerline
 from spinalcordtoolbox.image import Image, spatial_crop, generate_output_file, pad_image
