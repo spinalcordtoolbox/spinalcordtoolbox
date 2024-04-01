@@ -377,7 +377,7 @@ class Image(object):
         else:
             return deepcopy(self)
 
-    def copy_qform_from_ref(self, im_ref):
+    def copy_affine_from_ref(self, im_ref):
         """
         Copy qform and sform and associated codes from a reference Image object
 
@@ -1407,7 +1407,7 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     # save new image
     im_dest = Image(fname_dest)
     im_warp3d = Image(warp3d)
-    im_warp3d.copy_qform_from_ref(im_dest)
+    im_warp3d.copy_affine_from_ref(im_dest)
 
     # set "intent" code to vector, to be interpreted as warping field
     im_warp3d.header.set_intent('vector', (), '')

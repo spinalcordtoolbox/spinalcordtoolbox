@@ -558,6 +558,6 @@ def deep_segmentation_spinalcord(im_image, contrast_type, ctr_algo='cnn', ctr_fi
     im_seg_r_postproc.change_orientation(original_orientation)
 
     # copy q/sform from input image to output segmentation
-    im_seg.copy_qform_from_ref(im_image)
+    im_seg.copy_affine_from_ref(im_image)
 
     return im_seg_r_postproc, im_image_res, im_seg.change_orientation('RPI')
