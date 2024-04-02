@@ -172,13 +172,13 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
     """
     # Load data
     logger.info('load data...')
-    nii = nib.load(fname_data)
+    img = Image(fname_data)
     if fname_ref is not None:
-        nii_ref = nib.load(fname_ref)
+        img_ref = Image(fname_ref)
     else:
-        nii_ref = None
+        img_ref = None
 
-    nii_r = resample_nib(nii, new_size.split('x'), new_size_type, image_dest=nii_ref, interpolation=interpolation)
+    img_r = resample_nib(img, new_size.split('x'), new_size_type, image_dest=img_ref, interpolation=interpolation)
 
     # build output file name
     if fname_out == '':
@@ -187,9 +187,9 @@ def resample_file(fname_data, fname_out, new_size, new_size_type, interpolation,
         fname_out = fname_out
 
     # save data
-    nib.save(nii_r, fname_out)
+    img_r.save(fname_out)
 
     # to view results
     display_viewer_syntax([fname_out], verbose=verbose)
 
-    return nii_r
+    return img_r

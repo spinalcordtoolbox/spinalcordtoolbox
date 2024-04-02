@@ -377,7 +377,7 @@ class Image(object):
         else:
             return deepcopy(self)
 
-    def copy_qform_from_ref(self, im_ref):
+    def copy_affine_from_ref(self, im_ref):
         """
         Copy qform and sform and associated codes from a reference Image object
 
@@ -1398,20 +1398,20 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     warp3d = np.zeros([nx, ny, nz, 1, 3])
 
     for iz, fname in enumerate(fname_list):
-        img = nib.load(fname)
-        warp2d = np.asanyarray(img.dataobj)
+        img = Image(fname)
+        warp2d = img.data
         warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
         warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
         del warp2d
 
     # save new image
-    im_dest = nib.load(fname_dest)
-    affine_dest = im_dest.affine
-    im_warp3d = nib.nifti1.Nifti1Image(warp3d, affine_dest)
+    im_dest = Image(fname_dest)
+    im_warp3d = Image(warp3d)
+    im_warp3d.copy_affine_from_ref(im_dest)
 
     # set "intent" code to vector, to be interpreted as warping field
     im_warp3d.header.set_intent('vector', (), '')
-    nib.save(im_warp3d, fname_warp3d)
+    im_warp3d.save(fname_warp3d)
 
 
 def add_suffix(fname, suffix):

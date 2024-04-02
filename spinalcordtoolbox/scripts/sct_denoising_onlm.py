@@ -13,6 +13,7 @@ import numpy as np
 import nibabel as nib
 from dipy.denoise.nlmeans import nlmeans
 
+from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
@@ -183,14 +184,14 @@ def main(argv: Sequence[str]):
         plt.show()
 
     # Save files
-    img_denoise = nib.Nifti1Image(den, None, hdr_0)
-    img_diff = nib.Nifti1Image(diff_3d, None, hdr_0)
+    img_denoise = Image(param=den, hdr=hdr_0)
+    img_diff = Image(param=diff_3d, hdr=hdr_0)
     if output_file_name is not None:
         output_file_name = output_file_name
     else:
         output_file_name = file + '_denoised' + ext
-    nib.save(img_denoise, output_file_name)
-    nib.save(img_diff, file + '_difference' + ext)
+    img_denoise.save(output_file_name)
+    img_diff.save(file + '_difference' + ext)
 
     display_viewer_syntax(files=[file_to_denoise, output_file_name], verbose=verbose)
 
