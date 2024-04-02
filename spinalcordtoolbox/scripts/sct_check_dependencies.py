@@ -13,6 +13,7 @@
 import sys
 import io
 import os
+import shutil
 import platform
 import importlib
 import warnings
@@ -237,6 +238,19 @@ def main(argv: Sequence[str]):
     ram = psutil.virtual_memory()
     factor_MB = 1024 * 1024
     print('RAM: Total: {}MB, Used: {}MB, Available: {}MB'.format(ram.total // factor_MB, ram.used // factor_MB, ram.available // factor_MB))
+
+    if "+cpu" not in __torch_version__:
+        status, n_gpus = run_proc("nvidia-smi --query-gpu=count --format=csv,noheader", verbose=0, raise_exception=False)
+        if status == 0:
+            for n in range(int(n_gpus)):
+                options = (f'-i {n} '
+                           f'--query-gpu=gpu_name,driver_version,vbios_version,memory.total,memory.free '
+                           f'--format=csv,noheader')
+                _, output = run_proc(f"nvidia-smi {options}", verbose=0, raise_exception=False)
+                gpu_name, driver_version, vbios_version, mem_total, mem_free = [s.strip() for s in output.split(",")]
+                print(f"GPU {n}: {gpu_name} "
+                      f"(Driver: {driver_version}, vBIOS: {vbios_version}) "
+                      f"[VRAM Free: {mem_free}/{mem_total}]")
 
     if arguments.short:
         sys.exit()
