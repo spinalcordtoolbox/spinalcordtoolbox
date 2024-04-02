@@ -296,13 +296,13 @@ def main(argv: Sequence[str]):
             else:
                 print_ok(f" ({torch.version.cuda})")
 
-            print_line('Check available GPUs')
+            print_line('Check number of GPUs available to PyTorch')
             if torch.cuda.device_count():
                 print_ok(f" (Device count: {torch.cuda.device_count()})")
             else:
                 print_fail(f" (torch.version.count returned {torch.cuda.device_count()})")
 
-            print_line('Testing torch.tensor multiplication')
+            print_line('Testing PyTorch (torch.tensor multiplication)')
             try:
                 torch.manual_seed(1337)
                 A = torch.randn(30000, 10000, dtype=torch.float16, device=torch.device("cuda"))
