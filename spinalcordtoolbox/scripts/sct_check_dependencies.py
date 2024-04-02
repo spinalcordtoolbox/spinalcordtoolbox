@@ -239,14 +239,16 @@ def main(argv: Sequence[str]):
     if arguments.short:
         sys.exit()
 
+    # Print 'optional' header only if any of the 'optional' checks will be triggered
+    if not sys.platform.startswith('win32'):
+        print("\nOPTIONAL DEPENDENCIES"
+              "\n---------------------")
+
     # Check version of FSLeyes
     # NB: We put this section first because typically, it will error out, since FSLeyes isn't installed by default.
     #     SCT devs want to have access to this information, but we don't want to scare our users into thinking that
     #     there's a critical error. So, we put it up top to allow the installation to end on a nice "OK" note.
     if not sys.platform.startswith('win32'):
-        print("\nOPTIONAL DEPENDENCIES"
-              "\n---------------------")
-
         print_line('Check FSLeyes version')
         cmd = 'fsleyes --version'
         status, output = run_proc(cmd, verbose=0, raise_exception=False)
