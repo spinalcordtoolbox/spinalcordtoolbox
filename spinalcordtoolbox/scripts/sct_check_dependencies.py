@@ -21,6 +21,8 @@ import traceback
 from typing import Sequence
 
 import requirements
+import torch.cuda
+from torch import __version__ as __torch_version__
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
 from spinalcordtoolbox.utils.sys import (sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__,
@@ -240,7 +242,7 @@ def main(argv: Sequence[str]):
         sys.exit()
 
     # Print 'optional' header only if any of the 'optional' checks will be triggered
-    if not sys.platform.startswith('win32'):
+    if not sys.platform.startswith('win32') or ("+cpu" not in __torch_version__):
         print("\nOPTIONAL DEPENDENCIES"
               "\n---------------------")
 
@@ -260,6 +262,15 @@ def main(argv: Sequence[str]):
         else:
             print('[  ]')
             print('  ', (status, output))
+
+    # Check GPU dependencies (but only if the GPU version of torch was installed). We install CPU torch by default, so
+    # if the GPU version is present, then the user must have gone out of their way to make GPU inference work.
+    if "+cpu" not in __torch_version__:
+        print_line('Check if CUDA is available in torch')
+        if torch.cuda.is_available():
+            print_ok()
+        else:
+            print_fail("torch.cuda.is_available() returned False")
 
     print("\nMANDATORY DEPENDENCIES"
           "\n----------------------")
