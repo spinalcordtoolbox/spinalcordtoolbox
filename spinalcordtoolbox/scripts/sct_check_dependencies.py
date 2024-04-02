@@ -266,11 +266,39 @@ def main(argv: Sequence[str]):
     # Check GPU dependencies (but only if the GPU version of torch was installed). We install CPU torch by default, so
     # if the GPU version is present, then the user must have gone out of their way to make GPU inference work.
     if "+cpu" not in __torch_version__:
-        print_line('Check if CUDA is available in torch')
-        if torch.cuda.is_available():
-            print_ok()
+        print_line('Check if CUDA is available in PyTorch')
+        if not torch.cuda.is_available():
+            print_fail(" (torch.cuda.is_available() returned False)")
         else:
-            print_fail("torch.cuda.is_available() returned False")
+            # NB: If CUDA is available, we can perform further GPU tests
+            print_ok()
+
+            print_line('Check CUDA version used by PyTorch')
+            for cuda_envvar in ['CUDA_HOME', 'CUDA_PATH']:
+                if cuda_envvar in os.environ:
+                    print_warning(f" ({torch.version.cuda} (NB: {cuda_envvar} is set to '{os.environ[cuda_envvar]}' "
+                                  f"which may override torch's built-in CUDA))")
+                    break
+            else:
+                print_ok(f" ({torch.version.cuda})")
+
+            print_line('Check available GPUs')
+            if torch.cuda.device_count():
+                print_ok(f" (Device count: {torch.cuda.device_count()})")
+            else:
+                print_fail(f" (torch.version.count returned {torch.cuda.device_count()})")
+
+            print_line('Testing torch.tensor multiplication')
+            try:
+                torch.manual_seed(1337)
+                A = torch.randn(30000, 10000, dtype=torch.float16, device=torch.device("cuda"))
+                B = torch.randn(10000, 20000, dtype=torch.float16, device=torch.device("cuda"))
+                A @ B
+                print_ok()
+            except Exception as err:
+                print_fail()
+                print(f"An error occurred -> {err}")
+                print(f"Full traceback: {traceback.format_exc()}")
 
     print("\nMANDATORY DEPENDENCIES"
           "\n----------------------")
