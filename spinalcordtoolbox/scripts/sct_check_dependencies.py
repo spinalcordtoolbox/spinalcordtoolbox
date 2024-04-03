@@ -240,7 +240,7 @@ def main(argv: Sequence[str]):
     print('RAM: Total: {}MB, Used: {}MB, Available: {}MB'.format(ram.total // factor_MB, ram.used // factor_MB, ram.available // factor_MB))
 
     if "+cpu" not in __torch_version__:
-        status, n_gpus = run_proc("nvidia-smi --query-gpu=count --format=csv,noheader", verbose=0, raise_exception=False)
+        status, n_gpus = run_proc("nvidia-smi --query-gpu=count --format=csv,noheader -i 0", verbose=0, raise_exception=False)
         if status == 0:
             for n in range(int(n_gpus)):
                 options = (f'-i {n} '
