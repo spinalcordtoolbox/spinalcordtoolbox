@@ -42,13 +42,12 @@ nnunet_plans = {
 }
 
 
-def create_nnunet_from_plans(path_model):
+def create_nnunet_from_plans(path_model, device):
     """
     Adapted from nnUNet's source code:
     https://github.com/MIC-DKFZ/nnUNet/blob/master/nnunetv2/utilities/get_network_from_plans.py#L9
 
     """
-    device = torch.device("cpu")
     plans = nnunet_plans
     num_input_channels = 1
     num_classes = 1

@@ -106,14 +106,19 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, rem
         create_net = ds_nnunet.create_nnunet_from_plans
         inference = segment_nnunet
 
+    # Set device based on SCT-specific environment variable
+    # NB: We use 'SCT_USE_GPU' as a "hidden option" to turn on GPU inference internally.
+    # NB: Controlling which GPU(s) are used should be done by the environment variable 'CUDA_VISIBLE_DEVICES'.
+    device = torch.device("cuda" if torch.cuda.is_available() and "SCT_USE_GPU" in os.environ else "cpu")
+
     # load model from checkpoint
-    net = create_net(path_model)
+    net = create_net(path_model, device)
 
     im_lst, target_lst = [], []
     for fname_in in input_filenames:
         tmpdir = tmp_create(basename="sct_deepseg")
         # model may be multiclass, so the `inference` func should output a list of fnames and targets
-        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net)
+        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device)
         for fname_out, target in zip(fnames_out, targets):
             im_out = Image(fname_out)
             if threshold is not None:
@@ -126,7 +131,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, rem
     return im_lst, target_lst
 
 
-def segment_monai(path_img, tmpdir, predictor):
+def segment_monai(path_img, tmpdir, predictor, device):
     """
     Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
 
@@ -152,9 +157,10 @@ def segment_monai(path_img, tmpdir, predictor):
 
     # run inference
     with torch.no_grad():
-        test_input = batch["image"].to(torch.device("cpu"))
+        test_input = batch["image"].to(device)
         batch["pred"] = sliding_window_inference(test_input, inference_roi_size, mode="gaussian",
-                                                 sw_batch_size=4, predictor=predictor, overlap=0.5, progress=False)
+                                                 sw_batch_size=4, predictor=predictor, overlap=0.5, progress=False,
+                                                 sw_device=device)
         pred = ds_monai.postprocessing(batch, test_post_pred)
 
         end = time.time()
@@ -178,7 +184,7 @@ def segment_monai(path_img, tmpdir, predictor):
     return [fname_out], [target]
 
 
-def segment_nnunet(path_img, tmpdir, predictor):
+def segment_nnunet(path_img, tmpdir, predictor, device):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
 

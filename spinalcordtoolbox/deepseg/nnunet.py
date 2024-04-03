@@ -14,7 +14,7 @@ from batchgenerators.utilities.file_and_folder_operations import join  # noqa: E
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor   # noqa: E402
 
 
-def create_nnunet_from_plans(path_model):
+def create_nnunet_from_plans(path_model, device):
     tile_step_size = 0.5
     fold_dirs = [os.path.basename(path) for path in glob.glob(os.path.join(path_model, "fold_*"))]
     if not fold_dirs:
@@ -35,7 +35,7 @@ def create_nnunet_from_plans(path_model):
         use_gaussian=True,  # applies gaussian noise and gaussian blur
         use_mirroring=False,  # test time augmentation by mirroring on all axes
         perform_everything_on_device=False,
-        device=torch.device('cpu'),
+        device=device,
         verbose=False,
         verbose_preprocessing=False,
         allow_tqdm=True
