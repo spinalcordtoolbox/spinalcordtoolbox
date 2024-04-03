@@ -3,7 +3,9 @@
 Getting Started
 ###############
 
-To get started using SCT, you may take a look at the `Batch Processing Example`_, or follow the longer :ref:`tutorials` materials.
+To get started using SCT, you may wish to read our 2024 Review "`Reproducible Spinal Cord Quantitative MRI Analysis with the Spinal Cord Toolbox <https://doi.org/10.2463/mrms.rev.2023-0159>`__".
+
+For a more hands-on approach, you can take a look at the `Batch Processing Example`_, or follow the longer :ref:`tutorials` materials.
 
 
 Batch Processing Example
