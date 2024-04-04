@@ -28,7 +28,7 @@ import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
 logger = logging.getLogger(__name__)
 
 
-def segment_and_average_volumes(model_paths, input_filenames, options):
+def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=False):
     """
         Run `ivadomed.inference.segment_volume()` once per model, then average the outputs.
 
@@ -59,7 +59,13 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
         if len(model_paths) > 1:  # We have an ensemble, so output messages to distinguish between seeds
             name_seed = Path(path_model).parts[-2]
             logger.info(f"\nUsing '{name_seed}'...")
-        nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, options=options)
+        # NB: ivadomed turns on GPU inference via specifying a single GPU ID. This isn't the recommended way to do
+        #     things, since it prevents us from running multi-GPU jobs. I think ivadomed did things this way to limit
+        #     which GPU is used, but we can already accomplish this using the more universal 'CUDA_VISIBLE_DEVICES'
+        #     environment variable). For now, the best we can do on our end is to select the first GPU from the list
+        #     of available GPUs.
+        gpu_id = 0 if use_gpu else None  # NB: If e.g. 'CUDA_VISIBLE_DEVICES=2,3,4', then 0 will refer to GPU 2.
+        nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, gpu_id=gpu_id, options=options)
         nii_lsts.append(nii_lst)
         target_lsts.append(target_lst)
 
@@ -96,7 +102,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
     return im_lst, target_lst
 
 
-def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, remove_temp_files=True):
+def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, use_gpu=False, remove_temp_files=True):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     if model_type == "monai":
         create_net = ds_monai.create_nnunet_from_plans
@@ -106,10 +112,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, rem
         create_net = ds_nnunet.create_nnunet_from_plans
         inference = segment_nnunet
 
-    # Set device based on SCT-specific environment variable
-    # NB: We use 'SCT_USE_GPU' as a "hidden option" to turn on GPU inference internally.
-    # NB: Controlling which GPU(s) are used should be done by the environment variable 'CUDA_VISIBLE_DEVICES'.
-    device = torch.device("cuda" if torch.cuda.is_available() and "SCT_USE_GPU" in os.environ else "cpu")
+    device = torch.device("cuda" if use_gpu else "cpu")
 
     # load model from checkpoint
     net = create_net(path_model, device)
