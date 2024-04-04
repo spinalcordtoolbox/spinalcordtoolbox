@@ -34,17 +34,13 @@ class Tee:
         self.fd1 = _fd1
         self.fd2 = _fd2
 
-    # This is breaking pytest for test_sct_run_batch.py somehow.
-    # I think it is ok to omit this, allowing the fd objects to close themselves
-    # this prevents closing an fd in use elsewhere.
-    # def __del__(self):
-    #     self.close()
-
     def close(self):
-        if self.fd1 != sys.__stdout__ and self.fd1 != sys.__stderr__:
-            self.fd1.close()
-        if self.fd2 != sys.__stdout__ and self.fd2 != sys.__stderr__:
-            self.fd2.close()
+        # We can't assume that we own the underlying files exclusively; maybe
+        # another part of the code also has a reference to them, in which case
+        # it would be rude to actually close them. But, we can give up our
+        # references to them, and this should automatically close them if the
+        # reference count goes to zero.
+        del self.fd1, self.fd2
 
     def write(self, text):
         self.fd1.write(text)
@@ -56,12 +52,8 @@ class Tee:
 
     def isatty(self):
         # This method is needed to ensure that `printv` correctly applies color formatting when sys.stdout==Tee().
-        # fixme: Here we return 'True' if either file descriptor is a tty, to ensure that color formatting is added to
-        #        stdout/stderr if used. This has the unfortunate side effect of printing color codes to actual text
-        #        files, so we may want to rethink this solution. But, I'm not sure we can have it both ways without
-        #        modifying the `write()` method of Tee.
-        #        (See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4287)
-        return any((self.fd1.isatty(), self.fd2.isatty()))
+        # Use utils.csi_filter if you want to strip the color codes from only one half of the Tee
+        return self.fd1.isatty() or self.fd2.isatty()
 
 
 def copy_helper(src, dst, verbose=1):
