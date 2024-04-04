@@ -29,7 +29,8 @@ import skimage.exposure
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports
 from spinalcordtoolbox.resampling import resample_nib
-from spinalcordtoolbox.utils import __version__, display_open, list2cmdline
+from spinalcordtoolbox.utils.shell import display_open
+from spinalcordtoolbox.utils.sys import __version__, list2cmdline
 
 logger = logging.getLogger(__name__)
 
