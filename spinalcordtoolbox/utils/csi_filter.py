@@ -43,6 +43,7 @@ csi_suffix = re.compile(
 
 
 class CsiFilterCodec(codecs.Codec):
+    """Stateless encoder and decoder which filter out CSI escape sequences."""
     @staticmethod
     def encode(input: str, errors="strict") -> tuple[bytes, int]:
         """Discard csi escape sequences and encode the resulting string in utf-8."""
@@ -64,21 +65,33 @@ class CsiFilterCodec(codecs.Codec):
 
 
 class CsiFilterIncrementalEncoder(codecs.BufferedIncrementalEncoder):
+    """Incremental encoder which filters out CSI escape sequences."""
+    # The codecs.BufferedIncrementalEncoder super-class implements all the
+    # necessary methods as long as we supply a _buffer_encode method.
     def _buffer_encode(self, input: str, errors: str, final: bool) -> tuple[bytes, int]:
         return CsiFilterCodec.encode(input, errors)
 
 
 class CsiFilterIncrementalDecoder(codecs.BufferedIncrementalDecoder):
+    """Incremental decoder which filters out CSI escape sequences."""
+    # The codecs.BufferedIncrementalDecoder super-class implements all the
+    # necessary methods as long as we supply a _buffer_decode method.
     def _buffer_decode(self, input: bytes, errors: str, final: bool) -> tuple[str, int]:
         return CsiFilterCodec.decode(input, errors)
 
 
 class CsiFilterStreamReader(CsiFilterCodec, codecs.StreamReader):
-    pass
+    """Stream reader class used by `open(..., 'r', encoding='csi-filter')`."""
+    # The codecs.StreamReader super-class implements all the necessary methods
+    # as long as we supply a decode method, which the CsiFilterCodec
+    # super-class provides.
 
 
 class CsiFilterStreamWriter(CsiFilterCodec, codecs.StreamWriter):
-    pass
+    """Stream writer class used by `open(..., 'w', encoding='csi-filter')`."""
+    # The codecs.StreamWriter super-class implements all the necessary methods
+    # as long as we supply an encode method, which the CsiFilterCodec
+    # super-class provides.
 
 
 def register_codec():
