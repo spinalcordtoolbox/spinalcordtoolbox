@@ -217,7 +217,7 @@ def main(argv: Sequence[str]):
         # NB: We use 'SCT_USE_GPU' as a "hidden option" to turn on GPU inference internally.
         # NB: Controlling which GPU(s) are used should be done by the environment variable 'CUDA_VISIBLE_DEVICES'.
         use_gpu = torch.cuda.is_available() and "SCT_USE_GPU" in os.environ
-        
+
         if model_type == 'ivadomed':
             # NB: For single models, the averaging will have no effect.
             #     For model ensembles, this will average the output of the ensemble into a single set of outputs.

@@ -13,7 +13,6 @@
 import sys
 import io
 import os
-import shutil
 import platform
 import importlib
 import warnings
