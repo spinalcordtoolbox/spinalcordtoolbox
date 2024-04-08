@@ -26,6 +26,7 @@ The following studies have used SCT:
 2024
 ----
 
+-  Hua *et al.* `Spinal cord and brain atrophy patterns in neuromyelitis optica spectrum disorder and multiple sclerosis <https://doi.org/10.1007/s00415-024-12281-9>`_,  **J. Neurol.** 2024
 -  Al-shaari *et al.* `Diffusion tensor imaging within the healthy cervical spinal cord: Within- participants reliability and measurement error <https://doi.org/10.1016/j.mri.2024.03.005>`_, **Magn. Reson. Imaging** 2024
 -  Kuang *et al.* `Neurodegeneration within the rostral spinal cord is associated with brain gray matter volume atrophy in the early stage of cervical spondylotic myelopathy <https://doi.org/10.1038/s41393-024-00971-0>`_, **Spinal Cord** 2024
 -  Filimonova *et al.* `Evaluation of the structural integrity of different spinal cord tracts with magnetization transfer ratio in degenerative cervical myelopathy <https://doi.org/10.1007/s00234-024-03327-w>`_, **Neuroradiology** 2024
