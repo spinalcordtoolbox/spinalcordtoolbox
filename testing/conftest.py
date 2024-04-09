@@ -9,10 +9,10 @@ License: see the file LICENSE
 import os
 import logging
 from typing import Mapping
-from hashlib import md5
 
 import pytest
 
+from spinalcordtoolbox.utils.fs import checksum
 from spinalcordtoolbox.utils.sys import sct_test_path
 from spinalcordtoolbox.download import install_named_dataset
 
@@ -53,12 +53,6 @@ def test_data_integrity(request):
             files_checksums[fname] = chksum
 
     request.addfinalizer(lambda: check_testing_data_integrity(files_checksums))
-
-
-def checksum(fname: os.PathLike) -> str:
-    with open(fname, 'rb') as f:
-        data = f.read()
-    return md5(data).hexdigest()
 
 
 def check_testing_data_integrity(files_checksums: Mapping[os.PathLike, str]):
