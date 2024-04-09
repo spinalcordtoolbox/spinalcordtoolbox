@@ -40,6 +40,6 @@ jobs:
         git diff origin/master... |
           (grep '^+' || (($? == 1)) ) |
           (grep -Eo '\b(https?)://[-A-Za-z0-9+&@#/%?=~_|$!:,.;]*[A-Za-z0-9+&@#/%=~_|$]' || (($? == 1)) ) |
-          sed 's/:/;/' |
+          sed 's/^/;/' |
           xargs -rn 1 .github/workflows/check-url.sh
         test ! -s invalid_urls.txt
