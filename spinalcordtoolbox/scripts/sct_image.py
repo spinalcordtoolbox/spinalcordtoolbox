@@ -369,6 +369,7 @@ def main(argv: Sequence[str]):
         transpose_numerical = [DIM_LIST.index(axis)  # Convert [x, y, z, t] to [0, 1, 2, 3]
                                for axis in arguments.transpose]
         im_out.data = np.transpose(im_out.data, axes=transpose_numerical)
+        im_out.header.set_zooms([im_out.header.get_zooms()[ax] for ax in transpose_numerical])
         im_out = [im_out]
 
     elif arguments.header is not None:
