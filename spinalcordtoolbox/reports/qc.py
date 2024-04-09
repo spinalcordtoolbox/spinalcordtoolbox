@@ -30,7 +30,7 @@ import portalocker
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
-from spinalcordtoolbox.utils.fs import copy, extract_fname
+from spinalcordtoolbox.utils.fs import copy, extract_fname, checksum
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline
 from spinalcordtoolbox.utils.shell import display_open
 
@@ -621,8 +621,13 @@ class QcReport:
             if not os.path.exists(dest_path):
                 os.makedirs(dest_path, exist_ok=True)
             for file_ in os.listdir(src_path):
-                if not os.path.isfile(os.path.join(dest_path, file_)):
-                    copy(os.path.join(src_path, file_), dest_path)
+                src_filepath = os.path.join(src_path, file_)
+                dest_filepath = os.path.join(dest_path, file_)
+                if not os.path.isfile(dest_filepath):
+                    copy(src_filepath, dest_path)
+                elif checksum(src_filepath) != checksum(dest_filepath):
+                    print(f"Updating local copy of {file_} due to checksum difference")
+                    copy(src_filepath, dest_path)
 
         dest_file.flush()
         portalocker.unlock(dest_file)
