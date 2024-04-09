@@ -18,7 +18,7 @@ jobs:
           \( \! -name 'CHANGES.md' \) \( \! -name 'requirements.txt' \) \( \! -name 'requirements-freeze.txt' \) |
           xargs grep -Eo "\b(https?)://[-A-Za-z0-9+&@#/%?=~_|$!:,.;]*[A-Za-z0-9+&@#/%=~_|$]" |
           sed 's/:/;/' |
-          xargs -n 1 -P 8 ./.github/workflows/check-url.sh
+          xargs -n 1 ./.github/workflows/check-url.sh
 
     - name: Summarize
       run: |
