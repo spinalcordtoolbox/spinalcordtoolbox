@@ -626,7 +626,7 @@ class QcReport:
                 if not os.path.isfile(dest_filepath):
                     copy(src_filepath, dest_path)
                 elif checksum(src_filepath) != checksum(dest_filepath):
-                    print(f"Updating local copy of {file_} due to checksum difference")
+                    logger.warning(f"Updating local copy of {file_} due to checksum difference")
                     copy(src_filepath, dest_path)
 
         dest_file.flush()
