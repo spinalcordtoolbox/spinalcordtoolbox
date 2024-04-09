@@ -97,8 +97,8 @@ def get_parser():
             "\n"
             "Reference for '-normalize-PAM50':\n"
             "Valošek J, Bédard S, Keřkovský M, Rohan T, Cohen-Adad J. A database of the healthy human spinal cord "
-            "morphometry in the PAM50 template space. NeuroLibre Reproducible Preprints 2023; 17.\n"
-            "doi.org/10.55458/neurolibre.00017"
+            "morphometry in the PAM50 template space. Imaging Neuroscience 2024; 2 1–15.\n"
+            "doi.org/10.1162/imag_a_00075"
         )
     )
 
