@@ -3,7 +3,7 @@ name: Check code quality
 on: [pull_request]
 
 jobs:
-  run_flake8_and_shellcheck:
+  run_flake8_and_shellcheck_and_checkurl:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -31,3 +31,15 @@ jobs:
       uses: ludeeus/action-shellcheck@master
       with:
         severity: style
+
+    # There's a daily check for _all_ links in check-broken-links.yml,
+    # so this only checks for new/changed links in the PR
+    - name: Check for broken links
+      run: |
+        set -eu -o pipefail
+        git diff origin/master... |
+          (grep '^+' || (($? == 1)) ) |
+          (grep -Eo '\b(https?)://[-A-Za-z0-9+&@#/%?=~_|$!:,.;]*[A-Za-z0-9+&@#/%=~_|$]' || (($? == 1)) ) |
+          sed 's/:/;/' |
+          xargs -rn 1 .github/workflows/check-url.sh
+        test ! -s invalid_urls.txt
