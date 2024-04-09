@@ -30,7 +30,7 @@ import portalocker
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
-from spinalcordtoolbox.utils.fs import copy, extract_fname, checksum
+from spinalcordtoolbox.utils.fs import copy, extract_fname
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline
 from spinalcordtoolbox.utils.shell import display_open
 
@@ -625,8 +625,9 @@ class QcReport:
                 dest_filepath = os.path.join(dest_path, file_)
                 if not os.path.isfile(dest_filepath):
                     copy(src_filepath, dest_path)
-                elif checksum(src_filepath) != checksum(dest_filepath):
-                    logger.warning(f"Updating local copy of {file_} due to checksum difference")
+                elif open(src_filepath, 'rb').read() != open(dest_filepath, 'rb').read():
+                    logger.warning(f"WARNING: Copy of '{file_}' in '{path_qc}' doesn't match the version in the SCT "
+                                   f"source code. Updating file to match newest version...")
                     copy(src_filepath, dest_path)
 
         dest_file.flush()
