@@ -13,7 +13,6 @@ import tempfile
 import datetime
 import logging
 from pathlib import Path
-from hashlib import md5
 
 from .sys import printv
 
@@ -260,9 +259,3 @@ def relpath_or_abspath(child_path, parent_path):
         return abspath.relative_to(parent_path)
     except ValueError:
         return abspath
-
-
-def checksum(fname: os.PathLike) -> str:
-    with open(fname, 'rb') as f:
-        data = f.read()
-    return md5(data).hexdigest()
