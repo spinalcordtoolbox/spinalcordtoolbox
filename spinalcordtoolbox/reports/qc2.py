@@ -172,7 +172,7 @@ def update_files(resource: Traversable, destination: Path):
     if resource.is_dir():
         path.mkdir(exist_ok=True)
         for sub_resource in resource.iterdir():
-            copy_missing(sub_resource, path)
+            update_files(sub_resource, path)
     elif resource.is_file():
         new_content = resource.read_bytes()
         old_content = path.read_bytes() if path.is_file() else None
