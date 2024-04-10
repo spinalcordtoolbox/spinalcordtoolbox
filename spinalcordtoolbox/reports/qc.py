@@ -621,8 +621,14 @@ class QcReport:
             if not os.path.exists(dest_path):
                 os.makedirs(dest_path, exist_ok=True)
             for file_ in os.listdir(src_path):
-                if not os.path.isfile(os.path.join(dest_path, file_)):
-                    copy(os.path.join(src_path, file_), dest_path)
+                src_filepath = os.path.join(src_path, file_)
+                dest_filepath = os.path.join(dest_path, file_)
+                if not os.path.isfile(dest_filepath):
+                    copy(src_filepath, dest_path)
+                elif open(src_filepath, 'rb').read() != open(dest_filepath, 'rb').read():
+                    logger.warning(f"WARNING: Copy of '{file_}' in '{path_qc}' doesn't match the version in the SCT "
+                                   f"source code. Updating file to match newest version...")
+                    copy(src_filepath, dest_path)
 
         dest_file.flush()
         portalocker.unlock(dest_file)
