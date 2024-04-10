@@ -157,25 +157,27 @@ def create_qc_entry(
 
         # Copy any missing assets
         path_qc.mkdir(parents=True, exist_ok=True)
-        copy_missing(path_assets / '_assets', path_qc)
+        update_files(path_assets / '_assets', path_qc)
 
     logger.info('Successfully generated the QC results in %s', str(path_result))
     display_open(file=str(path_index_html), message="To see the results in a browser")
 
 
-def copy_missing(resource: Traversable, destination: Path):
+def update_files(resource: Traversable, destination: Path):
     """
-    Make sure that a copy of `resource` exists at `destination`,
-    by creating any missing files and directories recursively.
+    Make sure that an up-to-date copy of `resource` exists at `destination`,
+    by creating or updating files and directories recursively.
     """
     path = destination / resource.name
     if resource.is_dir():
         path.mkdir(exist_ok=True)
         for sub_resource in resource.iterdir():
-            copy_missing(sub_resource, path)
+            update_files(sub_resource, path)
     elif resource.is_file():
-        if not path.is_file():
-            path.write_bytes(resource.read_bytes())
+        new_content = resource.read_bytes()
+        old_content = path.read_bytes() if path.is_file() else None
+        if new_content != old_content:
+            path.write_bytes(new_content)
     else:
         # Some weird kind of resource? Ignore it
         pass
