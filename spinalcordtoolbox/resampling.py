@@ -134,7 +134,8 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         # Loop across 4th dimension and resample each 3d volume
         for it in range(img.shape[3]):
             # Create dummy 3d nibabel image
-            nii_tmp = nib.nifti1.Nifti1Image(np.asanyarray(img.dataobj)[..., it], affine)
+            data3d = np.asanyarray(img.dataobj)[..., it]
+            nii_tmp = nib.nifti1.Nifti1Image(data3d, affine, dtype=data3d.dtype)
             img3d_r = resample_from_to(
                 nii_tmp, to_vox_map=(shape_r[:-1], affine_r), order=dict_interp[interpolation], mode=mode,
                 cval=0.0, out_class=None)
