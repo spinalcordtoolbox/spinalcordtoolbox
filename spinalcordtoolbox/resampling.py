@@ -118,7 +118,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         if isinstance(image_dest, nib.nifti1.Nifti1Image):
             reference = image_dest
         elif isinstance(image_dest, Image):
-            reference = nib.nifti1.Nifti1Image(image_dest.data, image_dest.hdr.get_best_affine())
+            reference = nib.nifti1.Nifti1Image(image_dest.data, affine=image_dest.hdr.get_best_affine(), header=image_dest.hdr)
         else:
             raise TypeError(f'Invalid image type: {type(image_dest)}')
 
