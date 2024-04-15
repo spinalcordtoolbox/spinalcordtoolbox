@@ -150,7 +150,7 @@ def create_qc_entry(
 
         # Insert the QC report entries into index.html
         path_assets = importlib.resources.files(spinalcordtoolbox.reports) / 'assets'
-        template = string.Template((path_assets / 'index.html').read_text(encoding='utf-8'))
+        template = string.Template((path_assets / '_assets' / 'html' / 'index.html').read_text(encoding='utf-8'))
         # Empty the HTML file before writing, to make sure there's no leftover junk at the end
         file_index_html.truncate()
         file_index_html.write(template.substitute(sct_json_data=json.dumps(json_data)))

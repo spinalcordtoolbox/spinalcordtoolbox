@@ -608,14 +608,14 @@ class QcReport:
         # Append entry to existing HTML file
         json_data = get_json_data_from_path(path_json)
         assets_path = os.path.join(os.path.dirname(__file__), 'assets')
-        with open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
+        with open(os.path.join(assets_path, '_assets', 'html', 'index.html'), encoding="utf-8") as template_index:
             template = Template(template_index.read())
             output = template.substitute(sct_json_data=json.dumps(json_data))
         # Empty the HTML file before writing, to make sure there's no leftover junk at the end
         dest_file.truncate()
         dest_file.write(output)
 
-        for path in ['css', 'js', 'imgs', 'fonts']:
+        for path in ['css', 'js', 'imgs', 'fonts', 'html']:
             src_path = os.path.join(assets_path, '_assets', path)
             dest_path = os.path.join(path_qc, '_assets', path)
             if not os.path.exists(dest_path):
