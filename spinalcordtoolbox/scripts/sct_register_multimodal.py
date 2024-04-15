@@ -31,7 +31,7 @@ from typing import Sequence
 
 import numpy as np
 
-from spinalcordtoolbox.reports.qc import generate_qc
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.registration.algorithms import Paramreg, ParamregMultiStep
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, list_type, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
@@ -365,10 +365,6 @@ def main(argv: Sequence[str]):
     # Raise error if arguments.qc is provided without arguments.dseg
     if arguments.qc is not None and fname_dest_seg == '':
         parser.error("The argument '-qc' requires the argument '-dseg'.")
-    else:
-        path_qc = arguments.qc
-        qc_dataset = arguments.qc_dataset
-        qc_subject = arguments.qc_subject
 
     identity = arguments.identity
     interp = arguments.x
@@ -425,13 +421,16 @@ def main(argv: Sequence[str]):
     elapsed_time = time.time() - start_time
     printv('\nFinished! Elapsed time: ' + str(int(np.round(elapsed_time))) + 's', verbose)
 
-    if path_qc is not None:
-        if fname_dest_seg:
-            generate_qc(fname_src2dest, fname_in2=fname_dest, fname_seg=fname_dest_seg, args=argv,
-                        path_qc=os.path.abspath(path_qc), dataset=qc_dataset, subject=qc_subject,
-                        process='sct_register_multimodal')
-        else:
-            printv('WARNING: Cannot generate QC because it requires destination segmentation.', 1, 'warning')
+    if arguments.qc is not None:
+        qc2.sct_register_multimodal(
+            fname_input=fname_src2dest,
+            fname_output=fname_dest,
+            fname_seg=fname_dest_seg,
+            argv=argv,
+            path_qc=os.path.abspath(arguments.qc),
+            dataset=arguments.qc_dataset,
+            subject=arguments.qc_subject,
+        )
 
     # If dest wasn't registered (e.g. unidirectional registration due to '-initwarp'), then don't output syntax
     if fname_dest2src:

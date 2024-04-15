@@ -118,7 +118,7 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         if isinstance(image_dest, nib.nifti1.Nifti1Image):
             reference = image_dest
         elif isinstance(image_dest, Image):
-            reference = nib.nifti1.Nifti1Image(image_dest.data, image_dest.hdr.get_best_affine())
+            reference = nib.nifti1.Nifti1Image(image_dest.data, affine=image_dest.hdr.get_best_affine(), header=image_dest.hdr)
         else:
             raise TypeError(f'Invalid image type: {type(image_dest)}')
 
@@ -134,13 +134,14 @@ def resample_nib(image, new_size=None, new_size_type=None, image_dest=None, inte
         # Loop across 4th dimension and resample each 3d volume
         for it in range(img.shape[3]):
             # Create dummy 3d nibabel image
-            nii_tmp = nib.nifti1.Nifti1Image(np.asanyarray(img.dataobj)[..., it], affine)
+            data3d = np.asanyarray(img.dataobj)[..., it]
+            nii_tmp = nib.nifti1.Nifti1Image(data3d, affine, dtype=data3d.dtype)
             img3d_r = resample_from_to(
                 nii_tmp, to_vox_map=(shape_r[:-1], affine_r), order=dict_interp[interpolation], mode=mode,
                 cval=0.0, out_class=None)
             data4d[..., it] = np.asanyarray(img3d_r.dataobj)
         # Create 4d nibabel Image
-        img_r = nib.nifti1.Nifti1Image(data4d, affine_r)
+        img_r = nib.nifti1.Nifti1Image(data4d, affine_r)  # Can't be int64 (#4408)
         # Copy over the TR parameter from original 4D image (otherwise it will be incorrectly set to 1)
         img_r.header.set_zooms(list(img_r.header.get_zooms()[0:3]) + [img.header.get_zooms()[3]])
 
