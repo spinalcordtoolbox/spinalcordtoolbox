@@ -12,7 +12,6 @@ from importlib.abc import Traversable
 import json
 import logging
 import math
-import os
 from pathlib import Path
 from typing import Optional, Sequence
 
@@ -21,7 +20,6 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.patheffects as path_effects
 import numpy as np
-import portalocker
 from scipy.ndimage import center_of_mass
 import skimage.exposure
 
@@ -31,35 +29,9 @@ from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline
+from spinalcordtoolbox.utils.fs import mutex
 
 logger = logging.getLogger(__name__)
-
-
-@contextmanager
-def locked_file(path: Path):
-    """
-    Open and lock a file for reading and/or writing.
-
-    Any other process that tries to lock the file will wait until this lock is released.
-    """
-    # Make sure the file exists before trying to lock it
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.touch()
-
-    # NB: We use 'r+' because it allows us to open an existing file for
-    # locking *without* immediately truncating the existing contents prior
-    # to opening. We can then use this file to overwrite the contents later.
-    file = path.open('r+', encoding='utf-8')
-    portalocker.lock(file, portalocker.LOCK_EX)
-    try:
-        # Let the caller use the open, locked file
-        yield file
-    finally:
-        # Safely release the lock
-        file.flush()
-        os.fsync(file.fileno())
-        portalocker.unlock(file)
-        file.close()
 
 
 @contextmanager
@@ -113,14 +85,8 @@ def create_qc_entry(
         if not path.exists():
             raise FileNotFoundError(f"Required QC image '{img_type}' was not found at the expected path: '{path}')")
 
-    # We lock `index.html` so that we halt any other processes *before*
-    # they have a chance to generate or read any .json files. This ensures
-    # that the last process to write to `index.html` has read in all of the
-    # available .json files, preventing:
-    # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3701#discussion_r816300380
-    path_index_html = path_qc / 'index.html'
-    with locked_file(path_index_html) as file_index_html:
-
+    # Use mutex to ensure that we're only generating shared QC assets using one process at a time
+    with mutex(name="sct_qc"):
         # Create a json file for the new QC report entry
         path_json = path_qc / '_json'
         path_json.mkdir(parents=True, exist_ok=True)
