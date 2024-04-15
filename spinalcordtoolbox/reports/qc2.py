@@ -14,7 +14,6 @@ import logging
 import math
 import os
 from pathlib import Path
-import string
 from typing import Optional, Sequence
 
 from matplotlib.axes import Axes
@@ -28,6 +27,7 @@ import skimage.exposure
 
 from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports
+from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline
@@ -142,22 +142,13 @@ def create_qc_entry(
                 'qc': '',
             }, file_result, indent=1)
 
-        # Collect all existing QC report entries
-        json_data = []
-        for path in sorted(path_json.glob('*.json')):
-            with path.open() as file:
-                json_data.append(json.load(file))
-
-        # Insert the QC report entries into index.html
+        # Copy any missing QC assets
         path_assets = importlib.resources.files(spinalcordtoolbox.reports) / 'assets'
-        template = string.Template((path_assets / '_assets' / 'html' / 'index.html').read_text(encoding='utf-8'))
-        # Empty the HTML file before writing, to make sure there's no leftover junk at the end
-        file_index_html.truncate()
-        file_index_html.write(template.substitute(sct_json_data=json.dumps(json_data)))
-
-        # Copy any missing assets
         path_qc.mkdir(parents=True, exist_ok=True)
         update_files(path_assets / '_assets', path_qc)
+
+        # Inject the JSON QC entries into the index.html file
+        path_index_html = refresh_qc_entries.main(path_qc)
 
     logger.info('Successfully generated the QC results in %s', str(path_result))
     display_open(file=str(path_index_html), message="To see the results in a browser")

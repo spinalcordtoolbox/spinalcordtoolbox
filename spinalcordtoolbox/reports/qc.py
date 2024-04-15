@@ -10,7 +10,6 @@ import os
 import json
 import logging
 import datetime
-from string import Template
 from typing import Callable, List, Tuple, Union
 import itertools as it
 
@@ -30,6 +29,7 @@ import portalocker
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
+from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
 from spinalcordtoolbox.utils.fs import copy, extract_fname
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline
 from spinalcordtoolbox.utils.shell import display_open
@@ -605,17 +605,8 @@ class QcReport:
         with open(self.qc_results, 'w+') as qc_file:
             json.dump(output, qc_file, indent=1)
 
-        # Append entry to existing HTML file
-        json_data = get_json_data_from_path(path_json)
         assets_path = os.path.join(os.path.dirname(__file__), 'assets')
-        with open(os.path.join(assets_path, '_assets', 'html', 'index.html'), encoding="utf-8") as template_index:
-            template = Template(template_index.read())
-            output = template.substitute(sct_json_data=json.dumps(json_data))
-        # Empty the HTML file before writing, to make sure there's no leftover junk at the end
-        dest_file.truncate()
-        dest_file.write(output)
-
-        for path in ['css', 'js', 'imgs', 'fonts', 'html']:
+        for path in ['css', 'js', 'imgs', 'fonts', 'html', 'py']:
             src_path = os.path.join(assets_path, '_assets', path)
             dest_path = os.path.join(path_qc, '_assets', path)
             if not os.path.exists(dest_path):
@@ -629,6 +620,9 @@ class QcReport:
                     logger.warning(f"WARNING: Copy of '{file_}' in '{path_qc}' doesn't match the version in the SCT "
                                    f"source code. Updating file to match newest version...")
                     copy(src_filepath, dest_path)
+
+        # Inject the JSON QC entries into the index.html file
+        refresh_qc_entries.main(path_qc)
 
         dest_file.flush()
         portalocker.unlock(dest_file)
