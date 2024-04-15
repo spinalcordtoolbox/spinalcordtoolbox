@@ -43,7 +43,7 @@ def main(path_qc):
 
     # Insert the QC report entries into index.html
     template = string.Template(path_index_html_template.read_text(encoding='utf-8'))
-    with open(path_index_html, mode='w') as file_index_html:
+    with open(path_index_html, mode='w', encoding="utf-8") as file_index_html:
         file_index_html.write(template.substitute(sct_json_data=json.dumps(json_data)))
 
     return path_index_html
