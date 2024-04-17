@@ -173,6 +173,15 @@ MODELS = {
          "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
          "default": False,
      },
+    "model_seg_sc_lesion_canproco_nnunet": {
+         "url": [
+             "https://github.com/ivadomed/canproco/releases/download/r20240125/model_ms_seg_sc-lesion_regionBased_2d.zip"
+         ],
+         "description": "Segmentation of spinal cord and MS lesions for STIR and inverted PSIR (ie. multiplied by -1) images using NNUnet",
+         "contrasts": ["STIR","inverted PSIR (ie. multiplied by -1)"],
+         "thr": None,  # Images are already binarized when splitting into spinal cord and lesion
+         "default": False,
+    },
 }
 
 
@@ -319,6 +328,16 @@ TASKS = {
                              'MRI 3D images. Each training image was T2-weighted, had a size of 200x200x500, and had '
                              'a resolution of 0.05mm isotropic. Training data was provided by the Balgrist Center at'
                              'the University of Zurich.',
+         'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
+         'models': ['model_seg_gm_wm_mouse_nnunet']},
+    'seg_sc_ms_lesion_stir_psir':
+        {'description': 'Segmentation of spinal cord and MS lesions for STIR and inverted PSIR contrast ',
+         'long_description': 'This segmentation model for MS lesion segmentation uses a 2D U-Net architecture, and was '
+                             'trained with the nnUNetV2 framework. It is a region-based model, outputting a single '
+                             'segmentation image containing 2 classes representing the spinal cord and MS lesions. '
+                             'Training data consisted of sagittal PSIR 0.7×0.7×3 mm3 (4 sites, 333 participants) multiplied '
+                             'by -1 and sagittal STIR 0.7×0.7×3 mm3 (1 site, 92 participants) images of the cervical SC from '
+                             'the Canadian Prospective Cohort Study (CanProCo).',
          'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
          'models': ['model_seg_gm_wm_mouse_nnunet']},
 }
