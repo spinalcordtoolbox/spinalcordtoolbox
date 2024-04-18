@@ -178,7 +178,8 @@ MODELS = {
              "https://github.com/ivadomed/canproco/releases/download/r20240125/model_ms_seg_sc-lesion_regionBased_2d.zip"
          ],
          "description": "Segmentation of spinal cord and MS lesions for STIR and inverted PSIR (ie. multiplied by -1) images using NNUnet",
-         "contrasts": ["stir or inverted psir"], # having ["stir", "inverted psir"] or ["stir", "psir"] raised issue "sct_deepseg: error: 1 input files found. Please provide all required input files for the task ['seg_sc_ms_lesion_stir_psir'], i.e. contrasts: stir, psir."
+         "contrasts": ["stir or inverted psir"],  # having ["stir", "psir"] raised and issue : more details here : 
+                                                  # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4443#issuecomment-2064507947
          "thr": None,  # Images are already binarized when splitting into spinal cord and lesion
          "default": False,
     },
