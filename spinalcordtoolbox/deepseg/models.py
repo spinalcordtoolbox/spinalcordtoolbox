@@ -178,7 +178,7 @@ MODELS = {
              "https://github.com/ivadomed/canproco/releases/download/r20240125/model_ms_seg_sc-lesion_regionBased_2d.zip"
          ],
          "description": "Segmentation of spinal cord and MS lesions for STIR and inverted PSIR (ie. multiplied by -1) images using NNUnet",
-         "contrasts": ["STIR", "PSIR"],
+         "contrasts": ["stir", "psir"],
          "thr": None,  # Images are already binarized when splitting into spinal cord and lesion
          "default": False,
     },
