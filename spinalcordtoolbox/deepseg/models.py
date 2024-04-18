@@ -339,8 +339,8 @@ TASKS = {
                              'by -1 and sagittal STIR 0.7×0.7×3 mm3 (1 site, 92 participants) images of the cervical SC from '
                              'the Canadian Prospective Cohort Study (CanProCo). PS: multiplication by -1 can be done using '
                              'sct_image -i IMAGE -mul -1 -o IMAGE_inverted.',
-         'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
-         'models': ['model_seg_gm_wm_mouse_nnunet']},
+         'url': 'https://github.com/ivadomed/canproco',
+         'models': ['model_seg_sc_lesion_canproco_nnunet']},
 }
 
 
