@@ -331,7 +331,7 @@ TASKS = {
          'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
          'models': ['model_seg_gm_wm_mouse_nnunet']},
     'seg_sc_ms_lesion_stir_psir':
-        {'description': 'Segmentation of spinal cord and MS lesions for STIR and inverted PSIR contrast ',
+        {'description': 'Segmentation of spinal cord and MS lesions for STIR and inverted PSIR (multiplied by -1) contrasts ',
          'long_description': 'This segmentation model for MS lesion segmentation uses a 2D U-Net architecture, and was '
                              'trained with the nnUNetV2 framework. It is a region-based model, outputting a single '
                              'segmentation image containing 2 classes representing the spinal cord and MS lesions. '
