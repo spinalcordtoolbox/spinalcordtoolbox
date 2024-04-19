@@ -283,11 +283,13 @@ def main(argv: Sequence[str]):
                            [None if len(output_filenames) == 1 else output_filenames[1]])  # [out2]
 
         # Create one QC report per input image, with one or two segs per image
+        species = 'mouse' if any(s in arguments.task[0] for s in ['mouse', 'mice']) else 'human'  # used for resampling
         for fname_in, fname_seg1, fname_seg2 in iterator:
             qc2.sct_deepseg(
                 fname_input=fname_in,
                 fname_seg=fname_seg1,
                 fname_seg2=fname_seg2,
+                species=species,
                 argv=argv,
                 path_qc=os.path.abspath(arguments.qc),
                 dataset=arguments.qc_dataset,

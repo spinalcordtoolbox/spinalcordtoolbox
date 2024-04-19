@@ -277,6 +277,7 @@ def sct_register_multimodal(
 def sct_deepseg(
     fname_input: str,
     fname_seg: str,
+    species: str,
     argv: Sequence[str],
     path_qc: str,
     dataset: Optional[str],
@@ -305,7 +306,9 @@ def sct_deepseg(
         # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
         #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
         # Resample images slice by slice
-        p_resample = 0.6  # TODO: This works for human SC, but not for mouse SC
+        p_resample = {
+            'human': 0.6, 'mouse': 0.1,
+        }[species]
         logger.info('Resample images to %fx%f vox', p_resample, p_resample)
         img_input = Image(fname_input).change_orientation('SAL')
         img_input = resample_nib(
