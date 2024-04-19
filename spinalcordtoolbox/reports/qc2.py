@@ -313,7 +313,6 @@ def sct_deepseg(
         img_input = Image(fname_input).change_orientation('SAL')
         img_input = resample_nib(
             image=img_input,
-            # dim[0] = 1st voxel axis
             new_size=[img_input.dim[4], p_resample, p_resample],
             new_size_type='mm',
             interpolation='spline',
@@ -375,7 +374,7 @@ def sct_deepseg(
             ax.imshow(img,
                       cmap=(colormaps['seg'] if check_image_kind(image.data) == 'seg' else colormaps['softseg'])[i],
                       norm=color.Normalize(vmin=0.5, vmax=1),
-                      interpolation='none',  # TODO: this seemed to be none by default in qc.py?
+                      interpolation='none',
                       aspect=1.0)
 
         ax.get_xaxis().set_visible(False)
