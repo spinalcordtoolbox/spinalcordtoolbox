@@ -360,7 +360,6 @@ def sct_deepseg(
             'seg': ["#ff0000", "#00ffff"],
             # Gradient (Yellow-Orange-Red, 'Green-Blue')
             'softseg': ['YlOrRd', 'GnBu'],
-            'anat': ['YlOrRd', 'GnBu'],  # Fallback just in case softseg is interpreted as anat
         }
         for i, image in enumerate([img_seg_sc, img_seg_lesion]):
             if not image:
@@ -369,7 +368,7 @@ def sct_deepseg(
             img = np.ma.masked_equal(img, 0)
             nx, ny, nz, nt, px, py, pz, pt = image.dim
             ax.imshow(img,
-                      cmap=colormaps[check_image_kind(image.data)][i],
+                      cmap=(colormaps['seg'] if check_image_kind(image.data) == 'seg' else colormaps['softseg'])[i],
                       norm=color.Normalize(vmin=0.5, vmax=1),
                       interpolation='none',  # TODO: this seemed to be none by default in qc.py?
                       aspect=float(py / pz))
