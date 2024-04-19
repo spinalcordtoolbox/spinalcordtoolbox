@@ -272,15 +272,13 @@ def main(argv: Sequence[str]):
         fname_prior = fname_seg
 
     if arguments.qc is not None:
-        if len(input_filenames) > 1:
-            # The only model that meets this case is :
-            # It has 2 inputs -> 2 outputs (1 seg per input, no secondary seg)
-            iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames))  # [in, out1, out2=None]
+        # Models can have multiple input images -- create 1 QC report per input image.
+        # Models can also either have 1 OR 2 outputs per input, so we may need to split output_filenames into 2 lists
+        if len(output_filenames) == len(input_filenames):
+            iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames))
         else:
-            # The remaining models will have 1 input -> 1 OR 2 outputs.
-            assert len(input_filenames) == 1
-            iterator = zip([input_filenames[0]], [output_filenames[0]],                    # [in, out1
-                           [None if len(output_filenames) == 1 else output_filenames[1]])  # [out2]
+            assert len(output_filenames) == 2 * len(input_filenames)
+            iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2])
 
         # Create one QC report per input image, with one or two segs per image
         species = 'mouse' if any(s in arguments.task[0] for s in ['mouse', 'mice']) else 'human'  # used for resampling
