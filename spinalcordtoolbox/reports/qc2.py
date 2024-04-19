@@ -284,9 +284,7 @@ def sct_deepseg(
     fname_seg2: Optional[str],
 ):
     """
-    Generate a QC report for sct_deepseg, with varying colormaps depending on the type of segmentation:
-       - Binary: Red (1) and Blue (2)
-       - Soft: Red-yellow (1) and Blue-cyan (2)
+    Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
 
     This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
     """
