@@ -21,12 +21,13 @@ from matplotlib.axes import Axes
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.patheffects as path_effects
+import matplotlib.colors as color
 import numpy as np
 import portalocker
 from scipy.ndimage import center_of_mass
 import skimage.exposure
 
-from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.image import Image, check_image_kind
 import spinalcordtoolbox.reports
 from spinalcordtoolbox.resampling import resample_nib
 from spinalcordtoolbox.utils.shell import display_open
@@ -266,6 +267,113 @@ def sct_register_multimodal(
         ax = fig.add_axes((0, 0, 1, 1), label='0')
         ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
         add_orientation_labels(ax)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        img_path = str(imgs_to_generate['path_overlay_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+
+def sct_deepseg(
+    fname_input: str,
+    fname_seg: str,
+    argv: Sequence[str],
+    path_qc: str,
+    dataset: Optional[str],
+    subject: Optional[str],
+    fname_seg2: Optional[str],
+):
+    """
+    Generate a QC report for sct_deepseg, with varying colormaps depending on the type of segmentation:
+       - Binary: Red (1) and Blue (2)
+       - Soft: Red-yellow (1) and Blue-cyan (2)
+
+    This refactor is based off of the `listed_seg` method in qc.py, adapted to support multiple images.
+    """
+    command = 'sct_deepseg'
+    cmdline = [command]
+    cmdline.extend(argv)
+
+    # Axial orientation, switch between one anat image and 1-2 seg images
+    with create_qc_entry(
+        path_input=Path(fname_input).absolute(),
+        path_qc=Path(path_qc),
+        command=command,
+        cmdline=list2cmdline(cmdline),
+        plane='Axial',
+        dataset=dataset,
+        subject=subject,
+    ) as imgs_to_generate:
+        # FIXME: This code is more or less duplicated with the 'sct_register_multimodal' report, because both reports
+        #        use the old qc.py method "_make_QC_image_for_3d_volumes" for generating the background img.
+        # Resample images slice by slice
+        p_resample = 0.6  # TODO: This works for human SC, but not for mouse SC
+        logger.info('Resample images to %fx%f vox', p_resample, p_resample)
+        img_input = Image(fname_input).change_orientation('SAL')
+        img_input = resample_nib(
+            image=img_input,
+            # dim[0] = 1st voxel axis
+            new_size=[img_input.dim[4], p_resample, p_resample],
+            new_size_type='mm',
+            interpolation='spline',
+        )
+        img_seg_sc = resample_nib(
+            image=Image(fname_seg).change_orientation('SAL'),
+            image_dest=img_input,
+            interpolation='linear',
+        )
+        img_seg_lesion = resample_nib(
+            image=Image(fname_seg2).change_orientation('SAL'),
+            image_dest=img_input,
+            interpolation='linear',
+        ) if fname_seg2 else None
+
+        # Each slice is centered on the segmentation
+        logger.info('Find the center of each slice')
+        centers = np.array([center_of_mass(slice) for slice in img_seg_sc.data])
+        inf_nan_fill(centers[:, 0])
+        inf_nan_fill(centers[:, 1])
+
+        # Generate the first QC report image
+        img = equalize_histogram(mosaic(img_input, centers))
+
+        # For QC reports, axial mosaics will often have smaller height than width
+        # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
+        # `size_fig` is in inches. So, dpi=300 --> 1500px, dpi=100 --> 500px, etc.
+        size_fig = [5, 5 * img.shape[0] / img.shape[1]]
+
+        fig = Figure()
+        fig.set_size_inches(*size_fig, forward=True)
+        FigureCanvas(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
+        ax.imshow(img, cmap='gray', interpolation='none', aspect=1.0)
+        add_orientation_labels(ax)
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        img_path = str(imgs_to_generate['path_background_img'])
+        logger.debug('Save image %s', img_path)
+        fig.savefig(img_path, format='png', transparent=True, dpi=300)
+
+        # Generate the second QC report image
+        colormaps = {
+            # Single color (Red, Cyan)
+            'seg': ["#ff0000", "#00ffff"],
+            # Gradient (Yellow-Orange-Red, 'Green-Blue')
+            'softseg': ['YlOrRd', 'GnBu'],
+            'anat': ['YlOrRd', 'GnBu'],  # Fallback just in case softseg is interpreted as anat
+        }
+        for i, image in enumerate([img_seg_sc, img_seg_lesion]):
+            if not image:
+                continue
+            img = mosaic(image, centers)
+            img = np.ma.masked_equal(img, 0)
+            nx, ny, nz, nt, px, py, pz, pt = image.dim
+            ax.imshow(img,
+                      cmap=colormaps[check_image_kind(image.data)][i],
+                      norm=color.Normalize(vmin=0.5, vmax=1),
+                      interpolation='none',  # TODO: this seemed to be none by default in qc.py?
+                      aspect=float(py / pz))
+
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         img_path = str(imgs_to_generate['path_overlay_img'])

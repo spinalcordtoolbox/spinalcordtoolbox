@@ -1875,7 +1875,7 @@ def check_image_kind(img):
     if binary_most_common:
         if binary_percentage == 1.0:
             return 'seg'
-        elif binary_percentage > 0.95:
+        elif binary_percentage > 0.90:
             return 'softseg'
         else:  # binary_percentage <= 0.95
             pass  # may be 'seg-labeled' or 'anat'

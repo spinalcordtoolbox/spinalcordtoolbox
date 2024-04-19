@@ -17,9 +17,10 @@ import sys
 import logging
 from typing import Sequence
 
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 
 logger = logging.getLogger(__name__)
@@ -109,6 +110,23 @@ def get_parser():
         default=None)
 
     misc = parser.add_argument_group('\nMISC')
+    misc.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="The path where the quality control generated content will be saved. Note: This flag requires the '-dseg' "
+             "flag."
+    )
+    misc.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+    )
+    misc.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
     misc.add_argument(
         '-v',
         metavar=Metavar.int,
@@ -252,6 +270,29 @@ def main(argv: Sequence[str]):
 
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
+
+    if arguments.qc is not None:
+        if len(input_filenames) > 1:
+            # The only model that meets this case is :
+            # It has 2 inputs -> 2 outputs (1 seg per input, no secondary seg)
+            iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames))  # [in, out1, out2=None]
+        else:
+            # The remaining models will have 1 input -> 1 OR 2 outputs.
+            assert len(input_filenames) == 1
+            iterator = zip([input_filenames[0]], [output_filenames[0]],                    # [in, out1
+                           [None if len(output_filenames) == 1 else output_filenames[1]])  # [out2]
+
+        # Create one QC report per input image, with one or two segs per image
+        for fname_in, fname_seg1, fname_seg2 in iterator:
+            qc2.sct_deepseg(
+                fname_input=fname_in,
+                fname_seg=fname_seg1,
+                fname_seg2=fname_seg2,
+                argv=argv,
+                path_qc=os.path.abspath(arguments.qc),
+                dataset=arguments.qc_dataset,
+                subject=arguments.qc_subject,
+            )
 
     for output_filename in output_filenames:
         img_kind = check_image_kind(Image(output_filename))
