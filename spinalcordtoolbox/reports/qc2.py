@@ -358,8 +358,9 @@ def sct_deepseg(
         colormaps = {
             # Single color (Red, Cyan)
             'seg': ["#ff0000", "#00ffff"],
-            # Gradient (Yellow-Orange-Red, 'Green-Blue')
-            'softseg': ['YlOrRd', 'GnBu'],
+            # Two-tone colormap (Red-darkred, Cyan-darkcyan)
+            'softseg': [color.ListedColormap(["#4d0000", "#ff0000"]),
+                        color.ListedColormap(["#004d4d", "#00ffff"])],
         }
         for i, image in enumerate([img_seg_sc, img_seg_lesion]):
             if not image:
