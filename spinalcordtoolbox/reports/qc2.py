@@ -355,6 +355,10 @@ def sct_deepseg(
         fig.savefig(img_path, format='png', transparent=True, dpi=300)
 
         # Generate the second QC report image
+        fig = Figure()
+        fig.set_size_inches(*size_fig, forward=True)
+        FigureCanvas(fig)
+        ax = fig.add_axes((0, 0, 1, 1))
         colormaps = {
             # Single color (Red, Cyan)
             'seg': ["#ff0000", "#00ffff"],
