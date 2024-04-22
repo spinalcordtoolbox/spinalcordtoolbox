@@ -12,6 +12,7 @@ import logging
 import datetime
 from typing import Callable, List, Tuple, Union
 import itertools as it
+from hashlib import md5
 
 import numpy as np
 import skimage
@@ -583,7 +584,8 @@ class QcReport:
         }
         logger.debug('Description file: %s', self.qc_results)
 
-        with mutex("sct_qc"):
+        # Use a mutex on a hash of the QC path, so that we use a unique mutex per target QC report
+        with mutex(f"sct_qc-{os.path.basename(path_qc)}-{md5(self.path_qc.encode('utf-8')).hexdigest()}"):
             # results = []
             # Create path to store json files
             path_json, _ = os.path.split(self.qc_results)
