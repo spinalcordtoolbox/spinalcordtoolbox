@@ -177,9 +177,8 @@ MODELS = {
          "url": [
              "https://github.com/ivadomed/canproco/releases/download/r20240125/model_ms_seg_sc-lesion_regionBased_2d.zip"
          ],
-         "description": "Segmentation of spinal cord and MS lesions for STIR and inverted PSIR (ie. multiplied by -1) images using NNUnet",
-         "contrasts": ["stir or inverted psir"],  # having ["stir", "psir"] raised and issue : more details here :
-                                                  # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4443#issuecomment-2064507947
+         "description": "MS lesion/SC seg for STIR/PSIR contrasts",
+         "contrasts": ["stir", "psir"],
          "thr": None,  # Images are already binarized when splitting into spinal cord and lesion
          "default": False,
     },
@@ -332,14 +331,13 @@ TASKS = {
          'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
          'models': ['model_seg_gm_wm_mouse_nnunet']},
     'seg_sc_ms_lesion_stir_psir':
-        {'description': 'Segmentation of spinal cord and MS lesions for STIR and inverted PSIR (multiplied by -1) contrasts ',
+        {'description': 'Segmentation of spinal cord and MS lesions for STIR and PSIR contrasts',
          'long_description': 'This segmentation model for MS lesion segmentation uses a 2D U-Net architecture, and was '
                              'trained with the nnUNetV2 framework. It is a region-based model, outputting a single '
                              'segmentation image containing 2 classes representing the spinal cord and MS lesions. '
                              'Training data consisted of sagittal PSIR 0.7×0.7×3 mm3 (4 sites, 333 participants) multiplied '
                              'by -1 and sagittal STIR 0.7×0.7×3 mm3 (1 site, 92 participants) images of the cervical SC from '
-                             'the Canadian Prospective Cohort Study (CanProCo). PS: multiplication by -1 can be done using '
-                             'sct_image -i IMAGE -mul -1 -o IMAGE_inverted.',
+                             'the Canadian Prospective Cohort Study (CanProCo).',
          'url': 'https://github.com/ivadomed/canproco',
          'models': ['model_seg_sc_lesion_canproco_nnunet']},
 }
