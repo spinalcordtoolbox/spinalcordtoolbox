@@ -93,7 +93,8 @@ encoded by one voxel centered in the spinal cord, and the value of the voxel cor
 file can be useful for registration to the PAM50 using the spinal levels instead of the intervertebral discs, if the 
 former are available (e.g., via nerve rootlets segmentation).
 
-The spinal levels are estimated from the intervertebral discs, using a methods described in 
+The spinal levels are estimated from the relative length of each spinal level with respect to the length of the 
+full spinal cord (expressed as a percentage), found in Table 3 of the article by 
 `Frostell et al. (2016) <https://www.frontiersin.org/articles/10.3389/fneur.2016.00238/full>`_.
 The figure below (extracted from Frostell et al.) shows the spatial correspondance between the spinal vs. vertebral levels.
 
