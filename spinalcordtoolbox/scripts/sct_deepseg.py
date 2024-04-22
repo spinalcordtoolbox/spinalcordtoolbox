@@ -41,10 +41,10 @@ def get_parser():
     input_output.add_argument(
         "-c",
         nargs="+",
-        help="The `-c` option is only relevant for the following tasks:"
-             "\n   - 'seg_tumor-edema-cavity_t1-t2': Specifies the order of input images (e.g. -c t1 t2)"
-             "\n   - 'seg_sc_ms_lesion_stir_psir': Specifies whether input should be inverted (-c stir: no inversion, "
-             "-c psir: inverted)"
+        help="Contrast of the input. The `-c` option is only relevant for the following tasks:"
+             "\n   - 'seg_tumor-edema-cavity_t1-t2': Specifies the contrast order of input images (e.g. -c t1 t2)"
+             "\n   - 'seg_sc_ms_lesion_stir_psir': Specifies whether input should be inverted based on contrast "
+             "(-c stir: no inversion, -c psir: inverted)"
              "\nBecause all other models have only a single input contrast, the '-c' option is ignored for them.",
         choices=('t1', 't2', 't2star', 'stir', 'psir'),
         metavar=Metavar.str)
