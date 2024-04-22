@@ -47,7 +47,7 @@ def get_parser():
              "-c psir: inverted)"
              "\nBecause all other models have only a single input contrast, the '-c' option is ignored for them.",
         choices=('t1', 't2', 't2star', 'stir', 'psir'),
-        metavar=Metavar.file)
+        metavar=Metavar.str)
     input_output.add_argument(
         "-o",
         help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
