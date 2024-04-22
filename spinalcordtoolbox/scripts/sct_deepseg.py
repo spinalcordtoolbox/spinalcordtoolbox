@@ -18,7 +18,7 @@ import logging
 from typing import Sequence
 
 from spinalcordtoolbox.deepseg import models, inference
-from spinalcordtoolbox.image import splitext, Image, check_image_kind
+from spinalcordtoolbox.image import Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create
