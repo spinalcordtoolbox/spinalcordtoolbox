@@ -212,7 +212,7 @@ def main(argv: Sequence[str]):
 
         # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
         if 'seg_sc_ms_lesion_stir_psir' in arguments.task[0]:
-            contrast = arguments.c[0]
+            contrast = arguments.c[0] if arguments.c else None  # default is empty list
             if not contrast:
                 parser.error(
                     "Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to identify whether the input is "
