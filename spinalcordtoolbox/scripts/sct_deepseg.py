@@ -40,9 +40,9 @@ def get_parser():
     input_output.add_argument(
         "-c",
         nargs="+",
-        help="Type of image contrast. Indicates the order in which the images have been presented with -i. "
-             "Optional if only one image is specified with -i. The contrasts should be separated by spaces "
-             "(e.g., -c t1 t2).",
+        help="The `-c` option is only relevant for the following tasks:"
+             "\n   - 'seg_tumor-edema-cavity_t1-t2': Specifies the order of input images (e.g. -c t1 t2)"
+             "\nBecause all other models have only a single input contrast, the '-c' option is ignored for them.",
         choices=('t1', 't2', 't2star', 'stir', 'psir'),
         metavar=Metavar.file)
     input_output.add_argument(
@@ -163,7 +163,9 @@ def main(argv: Sequence[str]):
         n_contrasts = len(arguments.i)
         name_models = arguments.task
 
-    if len(arguments.i) != n_contrasts:
+    # Check if all input images have been specified (only relevant for 'seg_tumor-edema-cavity_t1-t2')
+    # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
+    if 'seg_tumor-edema-cavity_t1-t2' in arguments.task[0] and len(arguments.i) != n_contrasts:
         parser.error(
             "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
             .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
@@ -194,8 +196,9 @@ def main(argv: Sequence[str]):
             if not models.is_valid(path_models):
                 parser.error("The input model is invalid: {}".format(path_models))
 
-        # Order input images
-        if arguments.c is not None:
+        # Order input images (only relevant for 'seg_tumor-edema-cavity_t1-t2')
+        # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
+        if 'seg_tumor-edema-cavity_t1-t2' in arguments.task[0] and arguments.c is not None:
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
