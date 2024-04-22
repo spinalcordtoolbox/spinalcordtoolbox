@@ -21,6 +21,7 @@ from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.fs import tmp_create
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,8 @@ def get_parser():
         nargs="+",
         help="The `-c` option is only relevant for the following tasks:"
              "\n   - 'seg_tumor-edema-cavity_t1-t2': Specifies the order of input images (e.g. -c t1 t2)"
+             "\n   - 'seg_sc_ms_lesion_stir_psir': Specifies whether input should be inverted (-c stir: no inversion, "
+             "-c psir: inverted)"
              "\nBecause all other models have only a single input contrast, the '-c' option is ignored for them.",
         choices=('t1', 't2', 't2star', 'stir', 'psir'),
         metavar=Metavar.file)
@@ -206,6 +209,26 @@ def main(argv: Sequence[str]):
                         input_filenames.append(input_filename)
         else:
             input_filenames = arguments.i
+
+        # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
+        if 'seg_sc_ms_lesion_stir_psir' in arguments.task[0]:
+            contrast = arguments.c[0]
+            if not contrast:
+                parser.error(
+                    "Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to identify whether the input is "
+                    "STIR or PSIR. If `-c psir` is passed, the input will be inverted.")
+            elif contrast == "psir":
+                logger.warning("Inverting input PSIR image (multiplying data array by -1)...")
+                tmpdir = tmp_create("sct_deepseg-inverted-psir")
+                for i, fname_in in enumerate(input_filenames.copy()):
+                    im_in = Image(fname_in)
+                    im_in.data *= -1
+                    path_img_tmp = os.path.join(tmpdir, os.path.basename(fname_in))
+                    im_in.save(path_img_tmp)
+                    input_filenames[i] = path_img_tmp
+            else:
+                if contrast != "stir":
+                    parser.error("Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to be either psir or stir.")
 
         # Segment the image based on the type of model present in the model folder
         try:
