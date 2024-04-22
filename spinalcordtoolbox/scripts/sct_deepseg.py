@@ -208,7 +208,7 @@ def main(argv: Sequence[str]):
                     if required_contrast == provided_contrast:
                         input_filenames.append(input_filename)
         else:
-            input_filenames = arguments.i
+            input_filenames = arguments.i.copy()
 
         # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
         if 'seg_sc_ms_lesion_stir_psir' in arguments.task[0]:
@@ -265,11 +265,15 @@ def main(argv: Sequence[str]):
                 else:
                     fname_seg = arguments.o.replace(extension, target + extension) if len(target_lst) > 1 \
                         else arguments.o
+                path_out = os.path.dirname(fname_seg)
             else:
-                fname_seg = ''.join([splitext(input_filenames[0])[0], target + '.nii.gz'])
+                # NB: we use `arguments.i` here to preserve the original input directory, even if `input_filenames`
+                #     is preprocessed in a tmpdir
+                path_out = os.path.dirname(os.path.abspath(arguments.i[0]))
+                basename = os.path.basename(arguments.i[0])
+                fname_seg = os.path.join(path_out, f"{basename}{target}.nii.gz")
 
             # If output folder does not exist, create it
-            path_out = os.path.dirname(fname_seg)
             if not (path_out == '' or os.path.exists(path_out)):
                 os.makedirs(path_out)
 
