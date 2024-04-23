@@ -1,7 +1,6 @@
 import os
 import glob
-
-import torch
+from typing import TYPE_CHECKING
 
 # This is just to silence nnUNet warnings. These variables should have no purpose/effect.
 # There are sadly no other workarounds at the moment, see:
@@ -13,8 +12,11 @@ os.environ['nnUNet_results'] = "./nnUNet_results"
 from batchgenerators.utilities.file_and_folder_operations import join  # noqa: E402
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor   # noqa: E402
 
+if TYPE_CHECKING:
+    import torch
 
-def create_nnunet_from_plans(path_model):
+
+def create_nnunet_from_plans(path_model, device: 'torch.device'):
     tile_step_size = 0.5
     fold_dirs = [os.path.basename(path) for path in glob.glob(os.path.join(path_model, "fold_*"))]
     if not fold_dirs:
@@ -35,7 +37,7 @@ def create_nnunet_from_plans(path_model):
         use_gaussian=True,  # applies gaussian noise and gaussian blur
         use_mirroring=False,  # test time augmentation by mirroring on all axes
         perform_everything_on_device=False,
-        device=torch.device('cpu'),
+        device=device,
         verbose=False,
         verbose_preprocessing=False,
         allow_tqdm=True
