@@ -239,12 +239,16 @@ def main(argv: Sequence[str]):
     print('RAM: Total: {}MB, Used: {}MB, Available: {}MB'.format(ram.total // factor_MB, ram.used // factor_MB, ram.available // factor_MB))
 
     if "+cpu" not in __torch_version__:
-        status, n_gpus = run_proc([
-            "nvidia-smi",
-            "--query-gpu=count",
-            "--format=csv,noheader",
-            "-i", "0",
-        ], verbose=0, raise_exception=False)
+        try:
+            status, n_gpus = run_proc([
+                "nvidia-smi",
+                "--query-gpu=count",
+                "--format=csv,noheader",
+                "-i", "0",
+            ], verbose=0, raise_exception=False)
+        except FileNotFoundError as e:
+            e.strerror = "GPU version of torch is installed, but could not find NVIDIA's GPU software"
+            raise e
         if status == 0:
             for n in range(int(n_gpus)):
                 _, output = run_proc([
