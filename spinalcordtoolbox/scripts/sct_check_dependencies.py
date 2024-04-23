@@ -238,7 +238,10 @@ def main(argv: Sequence[str]):
     factor_MB = 1024 * 1024
     print('RAM: Total: {}MB, Used: {}MB, Available: {}MB'.format(ram.total // factor_MB, ram.used // factor_MB, ram.available // factor_MB))
 
-    if "+cpu" not in __torch_version__:
+    # Check if SCT was installed with GPU version of torch (NB: On macOS, `torch` will always be CPU-only)
+    gpu_torch_installed = ("+cpu" not in __torch_version__) and not sys.platform.startswith('darwin')
+
+    if gpu_torch_installed:
         try:
             status, n_gpus = run_proc([
                 "nvidia-smi",
@@ -266,7 +269,7 @@ def main(argv: Sequence[str]):
         sys.exit()
 
     # Print 'optional' header only if any of the 'optional' checks will be triggered
-    if not sys.platform.startswith('win32') or ("+cpu" not in __torch_version__):
+    if not sys.platform.startswith('win32') or gpu_torch_installed:
         print("\nOPTIONAL DEPENDENCIES"
               "\n---------------------")
 
@@ -289,7 +292,7 @@ def main(argv: Sequence[str]):
 
     # Check GPU dependencies (but only if the GPU version of torch was installed). We install CPU torch by default, so
     # if the GPU version is present, then the user must have gone out of their way to make GPU inference work.
-    if "+cpu" not in __torch_version__:
+    if gpu_torch_installed:
         print_line('Check if CUDA is available in PyTorch')
         if not torch.cuda.is_available():
             print_fail(" (torch.cuda.is_available() returned False)")
