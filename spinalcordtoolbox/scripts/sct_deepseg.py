@@ -18,7 +18,7 @@ import logging
 from typing import Sequence
 
 from spinalcordtoolbox.deepseg import models, inference
-from spinalcordtoolbox.image import Image, check_image_kind
+from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create
@@ -270,7 +270,7 @@ def main(argv: Sequence[str]):
                 # NB: we use `arguments.i` here to preserve the original input directory, even if `input_filenames`
                 #     is preprocessed in a tmpdir
                 path_out = os.path.dirname(os.path.abspath(arguments.i[0]))
-                basename = os.path.basename(arguments.i[0])
+                basename = splitext(os.path.basename(arguments.i[0]))[0]
                 fname_seg = os.path.join(path_out, f"{basename}{target}.nii.gz")
 
             # If output folder does not exist, create it
