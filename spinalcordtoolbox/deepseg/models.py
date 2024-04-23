@@ -137,11 +137,11 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
-    "model_seg_sc_contrast_agnostic_softseg_nnunet": {
+    "model_seg_sc_contrast_agnostic_softseg_monai": {
         "url": [
             "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.0/model_2023-09-18.zip"
         ],
-        "description": "Spinal cord segmentation that is agnostic to contrast using NNUnet",
+        "description": "Spinal cord segmentation agnostic to MRI contrasts using MONAI-based nnUNet model",
         "contrasts": ["any"],
         "thr": 0.5,  # Softseg model -> threshold at 0.5
         "default": False,
@@ -285,13 +285,9 @@ TASKS = {
          'url': 'https://github.com/ivadomed/lumbar_seg_EPFL',
          'models': ['model_seg_epfl_t2w_lumbar_sc']},
     'seg_sc_contrast_agnostic':
-        {'description': 'Spinal cord segmentation that is agnostic to contrast',
-         'long_description': 'This segmentation model for contrast agnostic spinal cord segmentation uses an NNUnet '
-                             'architecture, and was created with the MONAI package. Training data was taken from the '
-                             'Spine Generic Multi Subject dataset, with the 6 different contrasts used spanning 267 '
-                             'different healthy (non-pathological) patients.',
+        {'description': 'Spinal cord segmentation agnostic to MRI contrasts',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
-         'models': ['model_seg_sc_contrast_agnostic_softseg_nnunet']},
+         'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
     'seg_sc_lesion_t2w_sci':
         {'description': 'Traumatic SCI spinal cord/lesion seg for T2w contrast',
          'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
