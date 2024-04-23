@@ -49,6 +49,10 @@ Spinal Cord Toolbox
 Key Features
 ------------
 
+For a thorough introduction to SCT's features, please refer to our 2024 Review "`Reproducible Spinal Cord Quantitative MRI Analysis with the Spinal Cord Toolbox <https://doi.org/10.2463/mrms.rev.2023-0159>`__".
+
+In summary:
+
 - Segmentation of the spinal cord and gray matter
 - Segmentation of pathologies (e.g. multiple sclerosis lesions)
 - Detection of anatomical highlights (e.g. ponto-medullary junction, spinal cord centerline, vertebral levels)
@@ -60,7 +64,6 @@ Key Features
 - Manual labeling and segmentation via a Graphical User Interface (GUI)
 - Warping field creation and application
 - NIFTI volume manipulation tools for common operations
-
 
 Installation
 ------------

@@ -13,6 +13,9 @@ import tempfile
 import datetime
 import logging
 from pathlib import Path
+from contextlib import contextmanager
+
+import portalocker
 
 from .sys import printv
 
@@ -34,17 +37,13 @@ class Tee:
         self.fd1 = _fd1
         self.fd2 = _fd2
 
-    # This is breaking pytest for test_sct_run_batch.py somehow.
-    # I think it is ok to omit this, allowing the fd objects to close themselves
-    # this prevents closing an fd in use elsewhere.
-    # def __del__(self):
-    #     self.close()
-
     def close(self):
-        if self.fd1 != sys.__stdout__ and self.fd1 != sys.__stderr__:
-            self.fd1.close()
-        if self.fd2 != sys.__stdout__ and self.fd2 != sys.__stderr__:
-            self.fd2.close()
+        # We can't assume that we own the underlying files exclusively; maybe
+        # another part of the code also has a reference to them, in which case
+        # it would be rude to actually close them. But, we can give up our
+        # references to them, and this should automatically close them if the
+        # reference count goes to zero.
+        del self.fd1, self.fd2
 
     def write(self, text):
         self.fd1.write(text)
@@ -56,12 +55,8 @@ class Tee:
 
     def isatty(self):
         # This method is needed to ensure that `printv` correctly applies color formatting when sys.stdout==Tee().
-        # fixme: Here we return 'True' if either file descriptor is a tty, to ensure that color formatting is added to
-        #        stdout/stderr if used. This has the unfortunate side effect of printing color codes to actual text
-        #        files, so we may want to rethink this solution. But, I'm not sure we can have it both ways without
-        #        modifying the `write()` method of Tee.
-        #        (See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4287)
-        return any((self.fd1.isatty(), self.fd2.isatty()))
+        # Use utils.csi_filter if you want to strip the color codes from only one half of the Tee
+        return self.fd1.isatty() or self.fd2.isatty()
 
 
 def copy_helper(src, dst, verbose=1):
@@ -267,3 +262,24 @@ def relpath_or_abspath(child_path, parent_path):
         return abspath.relative_to(parent_path)
     except ValueError:
         return abspath
+
+
+@contextmanager
+def mutex(name):
+    """
+    Use a bounded semaphore as a mutex to prevent parallel processes from running.
+
+    portalocker.BoundedSemaphore is very similar to threading.BoundedSemaphore,
+    but works across multiple processes and across multiple operating systems. So,
+    we can spawn multiple processes using `sct_run_batch`, while still ensuring
+    that we create QC reports sequentially (without mangling the output files).
+
+    We use a mutex over a lock because the mutex doesn't depend on the destination
+    of the locked files, which allows us to avoid locking on e.g. NFS-mounted drives.
+    """
+    semaphore = portalocker.BoundedSemaphore(maximum=1, name=name)
+    semaphore.acquire()
+    try:
+        yield semaphore
+    finally:
+        semaphore.release()
