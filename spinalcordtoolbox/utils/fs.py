@@ -283,4 +283,3 @@ def mutex(name):
         yield semaphore
     finally:
         semaphore.release()
-        os.remove(semaphore.get_filenames()[0])  # nb: BoundedSemaphore doesn't clean up after itself
