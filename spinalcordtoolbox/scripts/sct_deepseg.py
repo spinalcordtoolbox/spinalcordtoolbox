@@ -17,6 +17,8 @@ import sys
 import logging
 from typing import Sequence
 
+import torch
+
 from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
@@ -237,17 +239,22 @@ def main(argv: Sequence[str]):
             printv(f"Model type could not be determined. Directory '{path_model}' may be missing necessary files."
                    f"Please redownload the model using `sct_deepseg -install-task` before continuing.", type="error")
 
+        # Control GPU usage based on SCT-specific environment variable
+        # NB: We use 'SCT_USE_GPU' as a "hidden option" to turn on GPU inference internally.
+        # NB: Controlling which GPU(s) are used should be done by the environment variable 'CUDA_VISIBLE_DEVICES'.
+        use_gpu = torch.cuda.is_available() and "SCT_USE_GPU" in os.environ
+
         if model_type == 'ivadomed':
             # NB: For single models, the averaging will have no effect.
             #     For model ensembles, this will average the output of the ensemble into a single set of outputs.
-            im_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames,
+            im_lst, target_lst = inference.segment_and_average_volumes(path_models, input_filenames, use_gpu=use_gpu,
                                                                        options={**vars(arguments),
                                                                                 "fname_prior": fname_prior})
         else:
             thr = (arguments.binarize_prediction if arguments.binarize_prediction
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
             im_lst, target_lst = inference.segment_non_ivadomed(path_model, model_type, input_filenames, thr,
-                                                                remove_temp_files=arguments.r)
+                                                                use_gpu=use_gpu, remove_temp_files=arguments.r)
 
         # Delete intermediate outputs
         if fname_prior and os.path.isfile(fname_prior) and arguments.r:

@@ -21,6 +21,8 @@ import traceback
 from typing import Sequence
 
 import requirements
+import torch.cuda
+from torch import __version__ as __torch_version__
 
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
 from spinalcordtoolbox.utils.sys import (sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__,
@@ -236,17 +238,46 @@ def main(argv: Sequence[str]):
     factor_MB = 1024 * 1024
     print('RAM: Total: {}MB, Used: {}MB, Available: {}MB'.format(ram.total // factor_MB, ram.used // factor_MB, ram.available // factor_MB))
 
+    # Check if SCT was installed with GPU version of torch (NB: On macOS, `torch` will always be CPU-only)
+    gpu_torch_installed = ("+cpu" not in __torch_version__) and not sys.platform.startswith('darwin')
+
+    if gpu_torch_installed:
+        try:
+            status, n_gpus = run_proc([
+                "nvidia-smi",
+                "--query-gpu=count",
+                "--format=csv,noheader",
+                "-i", "0",
+            ], verbose=0, raise_exception=False)
+        except FileNotFoundError as e:
+            e.strerror = "GPU version of torch is installed, but could not find NVIDIA's GPU software"
+            raise e
+        if status == 0:
+            for n in range(int(n_gpus)):
+                _, output = run_proc([
+                    "nvidia-smi",
+                    "-i", str(n),
+                    "--query-gpu=gpu_name,driver_version,vbios_version,memory.total,memory.free",
+                    "--format=csv,noheader",
+                ], verbose=0, raise_exception=False)
+                gpu_name, driver_version, vbios_version, mem_total, mem_free = [s.strip() for s in output.split(",")]
+                print(f"GPU {n}: {gpu_name} "
+                      f"(Driver: {driver_version}, vBIOS: {vbios_version}) "
+                      f"[VRAM Free: {mem_free}/{mem_total}]")
+
     if arguments.short:
         sys.exit()
+
+    # Print 'optional' header only if any of the 'optional' checks will be triggered
+    if not sys.platform.startswith('win32') or gpu_torch_installed:
+        print("\nOPTIONAL DEPENDENCIES"
+              "\n---------------------")
 
     # Check version of FSLeyes
     # NB: We put this section first because typically, it will error out, since FSLeyes isn't installed by default.
     #     SCT devs want to have access to this information, but we don't want to scare our users into thinking that
     #     there's a critical error. So, we put it up top to allow the installation to end on a nice "OK" note.
     if not sys.platform.startswith('win32'):
-        print("\nOPTIONAL DEPENDENCIES"
-              "\n---------------------")
-
         print_line('Check FSLeyes version')
         cmd = 'fsleyes --version'
         status, output = run_proc(cmd, verbose=0, raise_exception=False)
@@ -258,6 +289,43 @@ def main(argv: Sequence[str]):
         else:
             print('[  ]')
             print('  ', (status, output))
+
+    # Check GPU dependencies (but only if the GPU version of torch was installed). We install CPU torch by default, so
+    # if the GPU version is present, then the user must have gone out of their way to make GPU inference work.
+    if gpu_torch_installed:
+        print_line('Check if CUDA is available in PyTorch')
+        if not torch.cuda.is_available():
+            print_fail(" (torch.cuda.is_available() returned False)")
+        else:
+            # NB: If CUDA is available, we can perform further GPU tests
+            print_ok()
+
+            print_line('Check CUDA version used by PyTorch')
+            for cuda_envvar in ['CUDA_HOME', 'CUDA_PATH']:
+                if cuda_envvar in os.environ:
+                    print_warning(f" ({torch.version.cuda} (NB: {cuda_envvar} is set to '{os.environ[cuda_envvar]}' "
+                                  f"which may override torch's built-in CUDA))")
+                    break
+            else:
+                print_ok(f" ({torch.version.cuda})")
+
+            print_line('Check number of GPUs available to PyTorch')
+            if torch.cuda.device_count():
+                print_ok(f" (Device count: {torch.cuda.device_count()})")
+            else:
+                print_fail(f" (torch.version.count returned {torch.cuda.device_count()})")
+
+            print_line('Testing PyTorch (torch.tensor multiplication)')
+            try:
+                torch.manual_seed(1337)
+                A = torch.randn(30000, 10000, dtype=torch.float16, device=torch.device("cuda"))
+                B = torch.randn(10000, 20000, dtype=torch.float16, device=torch.device("cuda"))
+                A @ B
+                print_ok()
+            except Exception as err:
+                print_fail()
+                print(f"An error occurred -> {err}")
+                print(f"Full traceback: {traceback.format_exc()}")
 
     print("\nMANDATORY DEPENDENCIES"
           "\n----------------------")
