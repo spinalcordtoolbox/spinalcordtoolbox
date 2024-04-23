@@ -40,6 +40,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
             images to segment, i.e.., len(fname_images) > 1.
         :param options: A dictionary containing optional configuration settings, as specified by the
             ivadomed.inference.segment_volume function.
+        :param use_gpu: bool. Whether to try to perform inference using CUDA. (NB: Only a single GPU will be used.)
 
         :return: list, list: List of Image objects containing the soft segmentation(s), one per prediction class, \
             List of target suffix associated with each prediction
@@ -134,7 +135,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, use
     return im_lst, target_lst
 
 
-def segment_monai(path_img, tmpdir, predictor, device):
+def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     """
     Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
 
@@ -187,7 +188,7 @@ def segment_monai(path_img, tmpdir, predictor, device):
     return [fname_out], [target]
 
 
-def segment_nnunet(path_img, tmpdir, predictor, device):
+def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
 
