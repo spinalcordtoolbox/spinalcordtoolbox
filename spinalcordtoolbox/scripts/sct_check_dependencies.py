@@ -239,13 +239,20 @@ def main(argv: Sequence[str]):
     print('RAM: Total: {}MB, Used: {}MB, Available: {}MB'.format(ram.total // factor_MB, ram.used // factor_MB, ram.available // factor_MB))
 
     if "+cpu" not in __torch_version__:
-        status, n_gpus = run_proc("nvidia-smi --query-gpu=count --format=csv,noheader -i 0", verbose=0, raise_exception=False)
+        status, n_gpus = run_proc([
+            "nvidia-smi",
+            "--query-gpu=count",
+            "--format=csv,noheader",
+            "-i", "0",
+        ], verbose=0, raise_exception=False)
         if status == 0:
             for n in range(int(n_gpus)):
-                options = (f'-i {n} '
-                           f'--query-gpu=gpu_name,driver_version,vbios_version,memory.total,memory.free '
-                           f'--format=csv,noheader')
-                _, output = run_proc(f"nvidia-smi {options}", verbose=0, raise_exception=False)
+                _, output = run_proc([
+                    "nvidia-smi",
+                    "-i", str(n),
+                    "--query-gpu=gpu_name,driver_version,vbios_version,memory.total,memory.free",
+                    "--format=csv,noheader",
+                ], verbose=0, raise_exception=False)
                 gpu_name, driver_version, vbios_version, mem_total, mem_free = [s.strip() for s in output.split(",")]
                 print(f"GPU {n}: {gpu_name} "
                       f"(Driver: {driver_version}, vBIOS: {vbios_version}) "
