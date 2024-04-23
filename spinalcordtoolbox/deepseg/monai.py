@@ -1,4 +1,5 @@
 import os
+import glob
 
 import torch
 import torch.nn.functional as F
@@ -112,7 +113,7 @@ def create_nnunet_from_plans(path_model):
         model.apply(init_last_bn_before_add_to_0)
 
     # this loop only takes about 0.2s on average on a CPU
-    chkp_path = os.path.join(path_model, "model", "best_model.ckpt")
+    chkp_path = glob.glob(os.path.join(path_model, '**', '*.ckpt'), recursive=True)[0]
     checkpoint = torch.load(chkp_path, map_location=torch.device(device))["state_dict"]
     # NOTE: remove the 'net.' prefix from the keys because of how the model was initialized in lightning
     # https://discuss.pytorch.org/t/missing-keys-unexpected-keys-in-state-dict-when-loading-self-trained-model/22379/14
