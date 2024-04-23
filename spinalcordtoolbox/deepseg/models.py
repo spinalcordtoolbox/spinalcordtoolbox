@@ -289,8 +289,9 @@ TASKS = {
          'long_description': 'This model for contrast agnostic spinal cord segmentation uses an nnUNet '
                              'architecture, and was created with the MONAI package. Training data consists of healthy '
                              'controls from the open-source Spine Generic Multi Subject database and pathologies from '
-                             'private datasets including DCM and MS patients. Currently supports segmentation of the '
-                             'follwing contrasts: [T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1].',
+                             'private datasets including DCM and MS patients. Segmentation has been tested with the '
+                             'following contrasts: [T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1], but '
+                             'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
          'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
     'seg_sc_lesion_t2w_sci':
