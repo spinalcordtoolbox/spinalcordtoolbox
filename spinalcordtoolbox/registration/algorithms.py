@@ -399,10 +399,10 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     # Scale the data between 0 and 1
     fx_img = dest_img.get_fdata()
     scaled_fx_img = (fx_img - np.min(fx_img)) / (np.max(fx_img) - np.min(fx_img))
-    scaled_fx_nii = Nifti1Image(scaled_fx_img, dest_img.affine)
+    scaled_fx_nii = Nifti1Image(scaled_fx_img, dest_img.affine)  # Can't be int64 (#4408)
     mov_img = src_img.get_fdata()
     scaled_mov_img = (mov_img - np.min(mov_img)) / (np.max(mov_img) - np.min(mov_img))
-    scaled_mov_nii = Nifti1Image(scaled_mov_img, src_img.affine)
+    scaled_mov_nii = Nifti1Image(scaled_mov_img, src_img.affine)  # Can't be int64 (#4408)
     # Ensure that the volumes can be used in the registration model
     # (size multiple of 16 because 4 encoder reducing the size by 2)
     fx_img_shape = scaled_fx_img.shape
