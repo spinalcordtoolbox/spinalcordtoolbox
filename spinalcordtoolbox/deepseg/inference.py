@@ -197,6 +197,12 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
 
     TODO: Find a less brittle way to specify model-based parameters such as model orientation, suffix, etc.
     """
+    # NB: `device` should already be set when the `predictor` is initialized. We only have the `device` parameter here
+    #     to match the function signature of `segment_monai`, which *does* require `device` at inference time.
+    if device != predictor.device:
+        logger.warning(f"Param `device` (value: {device}) is ignored in favor of `predictor.device` (value: "
+                       f"{predictor.device}). To change the device, please modify the initialization of the predictor.")
+
     # Copy the file to the temporary directory using shutil.copyfile
     path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))
     shutil.copyfile(path_img, path_img_tmp)
