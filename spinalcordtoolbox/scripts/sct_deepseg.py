@@ -290,7 +290,7 @@ def main(argv: Sequence[str]):
             # If output folder does not exist, create it
             if not (path_out == '' or os.path.exists(path_out)):
                 os.makedirs(path_out)
-                
+
             im_seg.save(fname_seg)
             output_filenames.append(fname_seg)
 
