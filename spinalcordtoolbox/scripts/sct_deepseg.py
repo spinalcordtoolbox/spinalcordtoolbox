@@ -209,6 +209,8 @@ def main(argv: Sequence[str]):
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
                     if required_contrast == provided_contrast:
                         input_filenames.append(input_filename)
+         else:
+            input_filenames = arguments.i.copy()
 
         # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
         if 'seg_sc_ms_lesion_stir_psir' in arguments.task[0]:
@@ -236,8 +238,6 @@ def main(argv: Sequence[str]):
                 if len(image_shape) == 4:
                     parser.error("Only 3D volumes are supported for this task. You can either provide a mean volume "
                                  "(using 'sct_maths -mean') or a single time point (using 'sct_image -split t'.")
-                else:
-                    input_filenames = arguments.i.copy()
 
         # Segment the image based on the type of model present in the model folder
         try:
