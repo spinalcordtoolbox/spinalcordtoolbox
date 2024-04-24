@@ -234,12 +234,12 @@ def sct_register_multimodal(
 def sct_deepseg(
     fname_input: str,
     fname_seg: str,
+    fname_seg2: Optional[str],
     species: str,
     argv: Sequence[str],
     path_qc: str,
     dataset: Optional[str],
     subject: Optional[str],
-    fname_seg2: Optional[str],
 ):
     """
     Generate a QC report for sct_deepseg, with varied colormaps depending on the type of segmentation.
