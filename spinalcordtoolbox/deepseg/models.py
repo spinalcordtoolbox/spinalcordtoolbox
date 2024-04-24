@@ -351,8 +351,8 @@ TASKS = {
                              'the Canadian Prospective Cohort Study (CanProCo).',
          'url': 'https://github.com/ivadomed/canproco',
          'models': ['model_seg_sc_lesion_canproco_nnunet']},
-    'seg_sc_epi':
-        {'description': 'Spinal cord segmentation for EPI data',
+    'seg_sc_epi-bold_fmri':
+        {'description': 'Spinal cord segmentation for EPI-BOLD fMRI data',
          'long_description': 'This segmentation model for spinal cord on EPI data uses a 3D nnUNet model from '
                              'the nnUNetv2 framework. The training data consists of 3D images (n=192) spanning numerous resolutions '
                              'from multiple sites like Max Planck Institute for Human Cognitive and Brain Sciences - Leipzig, '
