@@ -23,6 +23,7 @@ from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.fs import tmp_create
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +43,13 @@ def get_parser():
     input_output.add_argument(
         "-c",
         nargs="+",
-        help="Type of image contrast. Indicates the order in which the images have been presented with -i. "
-             "Optional if only one image is specified with -i. The contrasts should be separated by spaces "
-             "(e.g., -c t1 t2).",
-        choices=('t1', 't2', 't2star'),
-        metavar=Metavar.file)
+        help="Contrast of the input. The `-c` option is only relevant for the following tasks:"
+             "\n   - 'seg_tumor-edema-cavity_t1-t2': Specifies the contrast order of input images (e.g. -c t1 t2)"
+             "\n   - 'seg_sc_ms_lesion_stir_psir': Specifies whether input should be inverted based on contrast "
+             "(-c stir: no inversion, -c psir: inverted)"
+             "\nBecause all other models have only a single input contrast, the '-c' option is ignored for them.",
+        choices=('t1', 't2', 't2star', 'stir', 'psir'),
+        metavar=Metavar.str)
     input_output.add_argument(
         "-o",
         help="Output file name. In case of multi-class segmentation, class-specific suffixes will be added. By default,"
@@ -165,7 +168,9 @@ def main(argv: Sequence[str]):
         n_contrasts = len(arguments.i)
         name_models = arguments.task
 
-    if len(arguments.i) != n_contrasts:
+    # Check if all input images have been specified (only relevant for 'seg_tumor-edema-cavity_t1-t2')
+    # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
+    if 'seg_tumor-edema-cavity_t1-t2' in arguments.task[0] and len(arguments.i) != n_contrasts:
         parser.error(
             "{} input files found. Please provide all required input files for the task {}, i.e. contrasts: {}."
             .format(len(arguments.i), arguments.task, ', '.join(required_contrasts)))
@@ -196,15 +201,36 @@ def main(argv: Sequence[str]):
             if not models.is_valid(path_models):
                 parser.error("The input model is invalid: {}".format(path_models))
 
-        # Order input images
-        if arguments.c is not None:
+        # Order input images (only relevant for 'seg_tumor-edema-cavity_t1-t2')
+        # TODO: Fix contrast-related behavior as per https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4445
+        if 'seg_tumor-edema-cavity_t1-t2' in arguments.task[0] and arguments.c is not None:
             input_filenames = []
             for required_contrast in models.MODELS[name_model]['contrasts']:
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
                     if required_contrast == provided_contrast:
                         input_filenames.append(input_filename)
         else:
-            input_filenames = arguments.i
+            input_filenames = arguments.i.copy()
+
+        # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
+        if 'seg_sc_ms_lesion_stir_psir' in arguments.task[0]:
+            contrast = arguments.c[0] if arguments.c else None  # default is empty list
+            if not contrast:
+                parser.error(
+                    "Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to identify whether the input is "
+                    "STIR or PSIR. If `-c psir` is passed, the input will be inverted.")
+            elif contrast == "psir":
+                logger.warning("Inverting input PSIR image (multiplying data array by -1)...")
+                tmpdir = tmp_create("sct_deepseg-inverted-psir")
+                for i, fname_in in enumerate(input_filenames.copy()):
+                    im_in = Image(fname_in)
+                    im_in.data *= -1
+                    path_img_tmp = os.path.join(tmpdir, os.path.basename(fname_in))
+                    im_in.save(path_img_tmp)
+                    input_filenames[i] = path_img_tmp
+            else:
+                if contrast != "stir":
+                    parser.error("Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to be either psir or stir.")
 
         # Segment the image based on the type of model present in the model folder
         try:
@@ -246,11 +272,15 @@ def main(argv: Sequence[str]):
                 else:
                     fname_seg = arguments.o.replace(extension, target + extension) if len(target_lst) > 1 \
                         else arguments.o
+                path_out = os.path.dirname(fname_seg)
             else:
-                fname_seg = ''.join([splitext(input_filenames[0])[0], target + '.nii.gz'])
+                # NB: we use `arguments.i` here to preserve the original input directory, even if `input_filenames`
+                #     is preprocessed in a tmpdir
+                path_out = os.path.dirname(os.path.abspath(arguments.i[0]))
+                basename = splitext(os.path.basename(arguments.i[0]))[0]
+                fname_seg = os.path.join(path_out, f"{basename}{target}.nii.gz")
 
             # If output folder does not exist, create it
-            path_out = os.path.dirname(fname_seg)
             if not (path_out == '' or os.path.exists(path_out)):
                 os.makedirs(path_out)
 
