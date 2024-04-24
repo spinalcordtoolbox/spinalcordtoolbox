@@ -209,7 +209,7 @@ def main(argv: Sequence[str]):
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
                     if required_contrast == provided_contrast:
                         input_filenames.append(input_filename)
-         else:
+        else:
             input_filenames = arguments.i.copy()
 
         # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
