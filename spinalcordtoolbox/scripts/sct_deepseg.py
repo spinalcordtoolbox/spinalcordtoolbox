@@ -238,7 +238,8 @@ def main(argv: Sequence[str]):
                 image_load = nb.load(image)
                 image_shape = image_load.shape
                 if len(image_shape) == 4:
-                    parser.error("Only 3D vloumes supported for this task. You can either provide a mean volume or a single time point")
+                    parser.error("Only 3D volumes are supported for this task. You can either provide a mean volume "
+                                 "(using 'sct_maths -mean') or a single time point (using 'sct_image -split t'.")
                 else:
                     input_filenames = arguments.i.copy()
 
