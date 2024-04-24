@@ -212,8 +212,11 @@ def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     orig_orientation = get_orientation(Image(path_img_tmp))
 
     # Get the orientation used by the model
+    # TODO: Make reorientation a model configuration parameter
     if "SCI" in predictor.plans_manager.dataset_name:
         model_orientation = "RPI"
+    elif "RegionBasedLesionSeg" in predictor.plans_manager.dataset_name:
+        model_orientation = "AIL"
     else:
         model_orientation = "LPI"
 
