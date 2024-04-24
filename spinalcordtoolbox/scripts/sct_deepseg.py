@@ -15,6 +15,7 @@
 import os
 import sys
 import logging
+import nibabel as nb
 from typing import Sequence
 
 import torch
@@ -231,6 +232,16 @@ def main(argv: Sequence[str]):
             else:
                 if contrast != "stir":
                     parser.error("Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to be either psir or stir.")
+
+        if 'seg_sc_epi' in arguments.task[0]:
+            for image in arguments.i:
+                image_load = nb.load(image)
+                image_shape = image_load.shape
+                if len(image_shape) == 4:
+                    parser.error("Only 3D vloumes supported for this task. You can either provide a mean volume or a single time point")
+                else:
+                    input_filenames = arguments.i.copy()
+
 
         # Segment the image based on the type of model present in the model folder
         try:
