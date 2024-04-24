@@ -186,7 +186,7 @@ MODELS = {
          "url": [
              "https://github.com/sct-pipeline/fmri-segmentation/releases/download/v0.2/model-fmri-segmentation-v0.2.zip"
          ],
-         "description": "Spinal cord segmentation for mean EPI data using nnUNetv2 model",
+         "description": "Spinal cord segmentation for EPI data (single 3D volume)",
          "contrasts": ["bold"],
          "thr": None,  # Images are already binarized
          "default": False,
