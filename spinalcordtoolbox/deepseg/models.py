@@ -182,6 +182,15 @@ MODELS = {
          "thr": None,  # Images are already binarized when splitting into spinal cord and lesion
          "default": False,
     },
+    "model_seg_sc_epi_nnunet": {
+         "url": [
+             "https://github.com/sct-pipeline/fmri-segmentation/releases/download/v0.2/model-fmri-segmentation-v0.2.zip"
+         ],
+         "description": "Spinal cord segmentation for EPI data (single 3D volume)",
+         "contrasts": ["bold"],
+         "thr": None,  # Images are already binarized
+         "default": False,
+     },
 }
 
 
@@ -342,6 +351,15 @@ TASKS = {
                              'the Canadian Prospective Cohort Study (CanProCo).',
          'url': 'https://github.com/ivadomed/canproco',
          'models': ['model_seg_sc_lesion_canproco_nnunet']},
+    'seg_sc_epi':
+        {'description': 'Spinal cord segmentation for EPI-BOLD fMRI data',
+         'long_description': 'This segmentation model for spinal cord on EPI data (single 3D volume) uses a 3D UNet model built from '
+                             'the nnUNetv2 framework. The training data consists of 3D images (n=192) spanning numerous resolutions '
+                             'from multiple sites like Max Planck Institute for Human Cognitive and Brain Sciences - Leipzig, '
+                             'University of Geneva, Stanford University, Kings College London, Universitätsklinikum Hamburg. The '
+                             'dataset has healthy control subjects. The model has been trained in a human-in-the-loop active learning fashion.',
+         'url': 'https://github.com/sct-pipeline/fmri-segmentation',
+         'models': ['model_seg_sc_epi_nnunet']},
 }
 
 

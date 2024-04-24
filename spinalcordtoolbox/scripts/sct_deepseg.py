@@ -249,6 +249,13 @@ def main(argv: Sequence[str]):
                 if contrast != "stir":
                     parser.error("Task 'seg_sc_ms_lesion_stir_psir' requires the flag `-c` to be either psir or stir.")
 
+        if 'seg_sc_epi' in arguments.task[0]:
+            for image in arguments.i:
+                image_shape = Image(image).data.shape
+                if len(image_shape) == 4:
+                    parser.error("Only 3D volumes are supported for this task. You can either provide a mean volume "
+                                 "(using 'sct_maths -mean') or a single time point (using 'sct_image -split t'.")
+
         # Segment the image based on the type of model present in the model folder
         try:
             model_type = models.check_model_software_type(path_models[0])  # NB: [0] -> Fetch first model from ensemble
