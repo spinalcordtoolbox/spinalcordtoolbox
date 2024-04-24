@@ -38,6 +38,7 @@ jobs:
       run: |
         set -eu -o pipefail
         git diff origin/master... |
+          sed '/^diff.*CHANGES.md/,/^diff/ d' |
           (grep '^+' || (($? == 1)) ) |
           (grep -Eio '\b(https?)://[-a-z0-9+&@#/%?=~_|$!:,.;]*[a-z0-9+&@#/%=~_|$]' || (($? == 1)) ) |
           sed 's/^/diff;/' |
