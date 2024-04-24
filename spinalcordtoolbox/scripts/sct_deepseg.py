@@ -19,9 +19,10 @@ from typing import Sequence
 
 import torch
 
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
-from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax
+from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create
 
@@ -114,6 +115,22 @@ def get_parser():
         default=None)
 
     misc = parser.add_argument_group('\nMISC')
+    misc.add_argument(
+        '-qc',
+        metavar=Metavar.folder,
+        action=ActionCreateFolder,
+        help="The path where the quality control generated content will be saved."
+    )
+    misc.add_argument(
+        '-qc-dataset',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the dataset the process was run on."
+    )
+    misc.add_argument(
+        '-qc-subject',
+        metavar=Metavar.str,
+        help="If provided, this string will be mentioned in the QC report as the subject the process was run on."
+    )
     misc.add_argument(
         '-v',
         metavar=Metavar.int,
@@ -289,6 +306,29 @@ def main(argv: Sequence[str]):
 
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
+
+    if arguments.qc is not None:
+        # Models can have multiple input images -- create 1 QC report per input image.
+        # Models can also either have 1 OR 2 outputs per input, so we may need to split output_filenames into 2 lists
+        if len(output_filenames) == len(input_filenames):
+            iterator = zip(input_filenames, output_filenames, [None] * len(input_filenames))
+        else:
+            assert len(output_filenames) == 2 * len(input_filenames)
+            iterator = zip(input_filenames, output_filenames[0::2], output_filenames[1::2])
+
+        # Create one QC report per input image, with one or two segs per image
+        species = 'mouse' if any(s in arguments.task[0] for s in ['mouse', 'mice']) else 'human'  # used for resampling
+        for fname_in, fname_seg1, fname_seg2 in iterator:
+            qc2.sct_deepseg(
+                fname_input=fname_in,
+                fname_seg=fname_seg1,
+                fname_seg2=fname_seg2,
+                species=species,
+                argv=argv,
+                path_qc=os.path.abspath(arguments.qc),
+                dataset=arguments.qc_dataset,
+                subject=arguments.qc_subject,
+            )
 
     for output_filename in output_filenames:
         img_kind = check_image_kind(Image(output_filename))
