@@ -15,7 +15,6 @@
 import os
 import sys
 import logging
-import nibabel as nb
 from typing import Sequence
 
 import torch
@@ -210,8 +209,6 @@ def main(argv: Sequence[str]):
                 for provided_contrast, input_filename in zip(arguments.c, arguments.i):
                     if required_contrast == provided_contrast:
                         input_filenames.append(input_filename)
-        else:
-            input_filenames = arguments.i.copy()
 
         # Inversion workaround for regular PSIR input to canproco STIR/PSIR model
         if 'seg_sc_ms_lesion_stir_psir' in arguments.task[0]:
@@ -235,15 +232,13 @@ def main(argv: Sequence[str]):
 
         if 'seg_sc_epi' in arguments.task[0]:
             for image in arguments.i:
-                image_load = nb.load(image)
-                image_shape = image_load.shape
+                image_shape = Image(image).data.shape
                 if len(image_shape) == 4:
                     parser.error("Only 3D volumes are supported for this task. You can either provide a mean volume "
                                  "(using 'sct_maths -mean') or a single time point (using 'sct_image -split t'.")
                 else:
                     input_filenames = arguments.i.copy()
-
-
+                    
         # Segment the image based on the type of model present in the model folder
         try:
             model_type = models.check_model_software_type(path_models[0])  # NB: [0] -> Fetch first model from ensemble
