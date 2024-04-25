@@ -322,7 +322,8 @@ def sct_deepseg(
             if not image:
                 continue
             img = mosaic(image, centers)
-            img = np.ma.masked_equal(img, 0)
+            img = np.ma.masked_less_equal(img, 0)
+            img.set_fill_value(0)
             ax.imshow(img,
                       cmap=colormaps[i],
                       norm=color.Normalize(vmin=0.5, vmax=1),
