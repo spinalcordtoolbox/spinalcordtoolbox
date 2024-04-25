@@ -4,7 +4,6 @@
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/6.2...6.3)
 
 **FEATURE**
- - **sct_deepseg**: Add (internal, semi-private) support for `sct_deepseg` GPU inference on Linux. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4421)
  - **sct_deepseg**: Add the canproco nnUNet model for MS lesion segmentation to sct_deepseg. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4443)
  - **sct_deepseg, sct_qc**: Add QC report for `sct_deepseg`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4446)
 
