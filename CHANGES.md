@@ -1,5 +1,55 @@
 # Changelog
 
+## 6.3 (2024-04-25)
+[View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/6.2...6.3)
+
+**FEATURE**
+ - **sct_deepseg**: Add CanProCo-based MS lesion segmentation model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4443)
+ - **sct_deepseg**: Add EPI-BOLD fMRI spinal cord segmentation model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4454)
+ - **sct_deepseg**: Update `contrast-agnostic` SC segmentation model to the latest v2.3 version. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4451)
+ - **sct_deepseg, sct_qc**: Add QC report for `sct_deepseg`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4446)
+
+**ENHANCEMENT**
+ - **sct_fmri_moco**: Switch to using mean magnitude for output `moco_params.tsv` file used for QC. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4396)
+ - **sct_process_segmentation**: Add improvements to CSA calculation for GM/WM masks (`-angle-corr-centerline`, `float32` precision fix, doc warnings). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4409)
+ - **sct_qc**: Add padding to the crop used for sagittal mosaic QC report. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4392)
+ - **sct_qc**: Isolate `index.html`-writing code into reusable script + replace `Lock` with Semaphore-based `mutex`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4439)
+ - **sct_qc**: Switch from two-tone colormap to transparency for `sct_deepseg` QC. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4460)
+
+**BUG**
+ - **sct_deepseg**: Address upstream breaking API change by renaming `_gpu` input param to `_device`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4381)
+ - **sct_deepseg**: Avoid `nnunetv2=={2.4.0,2.4.1}` to mitigate upstream bug for `predict_single_npy_array`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4448)
+ - **sct_qc**: Fix `-p sct_label_vertebrae` QC report when providing TotalSegmentator labels. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4383)
+ - **sct_qc**: Fix detection of PSIR images for QC resampling to avoid unnecessary thresholding. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4414)
+ - **sct_qc**: Keep CSS/JS/etc. assets up to date when QC report is regenerated with a newer version of SCT. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4427)
+ - **sct_qc**: Avoid nibabel crashes due to `int64` arrays by explicitly passing `dtype`/`header` to `Nifti1Image`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4433)
+ - **sct_run_batch**: Filter out color codes from log files. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4288)
+ - Update QC assets when saving the QC report. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4432)
+ - Replace remaining usages of `nib.save()` with `Image.save()` to mitigate scaling issues. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4416)
+
+**INSTALLATION**
+ - Pull upstream `ivadomed` changes that let us upgrade previously-pinned versions of `dipy`/`numpy`/`nibabel`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4332)
+ - Address test warnings by pinning `pyqt5-sip<12.13.0` and updating `setup.cfg` ignore entries (`pkg_resources`). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4355)
+ - Pin to `dipy<1.6` until conflicts with `dipy>=1.8` can be resolved. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4398)
+
+**DOCUMENTATION**
+ - **sct_extract_metric**: Fixed path to PAM50 in help example command. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4385)
+ - **sct_image**: Clarify argparse help for `-copy-header` option to provide caution about header/data mismatches. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4429)
+ - Add links to 2024 review in prominent locations in documentation. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4418)
+ - Fix inaccurate line in docs regarding the method used for spinal level estimation (Frostell et al.). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4449)
+
+**REFACTORING**
+ - Restructure QC report code to use `create_qc_entry` context manager (plus 1 PoC: `multimodal`). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4224)
+
+**CI**
+ - Update GitHub Actions versions (macOS runners, Windows runners, Node.js 16 actions -> 20). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4353)
+ - Update GitHub Actions versions (Debian 9->11, CentOS 7->9, WSL 2022->2019) to fix CI failures. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4391)
+ - Add CI workflow step to detect broken links in repository files. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4395)
+ - Reduce concurrent macOS runners on PRs from 6 to 2 (and remove push-to-master triggers). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4402)
+ - Replace `matrix.os` with `runner.os` to more robustly detect Win OSs in GHA workflows. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4403)
+ - Move most broken link checking to a daily job. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4428)
+ - Fix broken link checker. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4430)
+
 ## 6.2 (2024-02-15)
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/6.1...6.2)
 
