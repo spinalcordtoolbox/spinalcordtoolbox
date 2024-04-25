@@ -4,15 +4,17 @@
 [View detailed changelog](https://github.com/spinalcordtoolbox/spinalcordtoolbox/compare/6.2...6.3)
 
 **FEATURE**
- - **sct_deepseg**: Add the canproco nnUNet model for MS lesion segmentation to sct_deepseg. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4443)
+ - **sct_deepseg**: Add CanProCo-based MS lesion segmentation model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4443)
+ - **sct_deepseg**: Add EPI-BOLD fMRI spinal cord segmentation model. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4454)
+ - **sct_deepseg**: Update `contrast-agnostic` SC segmentation model to the latest v2.3 version. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4451)
  - **sct_deepseg, sct_qc**: Add QC report for `sct_deepseg`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4446)
 
 **ENHANCEMENT**
- - **sct_deepseg**: Update `contrast-agnostic` SC segmentation model to the latest v2.3 version. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4451)
  - **sct_fmri_moco**: Switch to using mean magnitude for output `moco_params.tsv` file used for QC. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4396)
  - **sct_process_segmentation**: Add improvements to CSA calculation for GM/WM masks (`-angle-corr-centerline`, `float32` precision fix, doc warnings). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4409)
  - **sct_qc**: Add padding to the crop used for sagittal mosaic QC report. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4392)
  - **sct_qc**: Isolate `index.html`-writing code into reusable script + replace `Lock` with Semaphore-based `mutex`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4439)
+ - **sct_qc**: Switch from two-tone colormap to transparency for `sct_deepseg` QC. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4460)
 
 **BUG**
  - **sct_deepseg**: Address upstream breaking API change by renaming `_gpu` input param to `_device`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4381)
@@ -23,6 +25,7 @@
  - **sct_qc**: Avoid nibabel crashes due to `int64` arrays by explicitly passing `dtype`/`header` to `Nifti1Image`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4433)
  - **sct_run_batch**: Filter out color codes from log files. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4288)
  - Update QC assets when saving the QC report. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4432)
+ - Replace remaining usages of `nib.save()` with `Image.save()` to mitigate scaling issues. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4416)
 
 **INSTALLATION**
  - Pull upstream `ivadomed` changes that let us upgrade previously-pinned versions of `dipy`/`numpy`/`nibabel`. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4332)
@@ -37,7 +40,6 @@
 
 **REFACTORING**
  - Restructure QC report code to use `create_qc_entry` context manager (plus 1 PoC: `multimodal`). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4224)
- - Replace remaining usages of `nib.save()` with `Image.save()` to mitigate scaling issues. [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4416)
 
 **CI**
  - Update GitHub Actions versions (macOS runners, Windows runners, Node.js 16 actions -> 20). [View pull request](https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/4353)
