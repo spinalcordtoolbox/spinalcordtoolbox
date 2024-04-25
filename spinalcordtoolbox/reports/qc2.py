@@ -24,7 +24,7 @@ import numpy as np
 from scipy.ndimage import center_of_mass
 import skimage.exposure
 
-from spinalcordtoolbox.image import Image, check_image_kind
+from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
@@ -316,21 +316,19 @@ def sct_deepseg(
         fig.set_size_inches(*size_fig, forward=True)
         FigureCanvas(fig)
         ax = fig.add_axes((0, 0, 1, 1))
-        colormaps = {
-            # Single color (Red, Cyan)
-            'seg': ["#ff0000", "#00ffff"],
-            # Two-tone colormap (Red-darkred, Cyan-darkcyan)
-            'softseg': [color.ListedColormap(["#4d0000", "#ff0000"]),
-                        color.ListedColormap(["#004d4d", "#00ffff"])],
-        }
+        colormaps = [color.ListedColormap(["#ff0000"]),  # Red for first image
+                     color.ListedColormap(["#00ffff"])]  # Cyan for second
         for i, image in enumerate([img_seg_sc, img_seg_lesion]):
             if not image:
                 continue
             img = mosaic(image, centers)
-            img = np.ma.masked_equal(img, 0)
+            img = np.ma.masked_less_equal(img, 0)
+            img.set_fill_value(0)
             ax.imshow(img,
-                      cmap=(colormaps['seg'] if check_image_kind(image.data) == 'seg' else colormaps['softseg'])[i],
+                      cmap=colormaps[i],
                       norm=color.Normalize(vmin=0.5, vmax=1),
+                      # img==1 -> opaque, but soft regions -> more transparent as value decreases
+                      alpha=(img / img.max()),  # scale to [0, 1]
                       interpolation='none',
                       aspect=1.0)
 
