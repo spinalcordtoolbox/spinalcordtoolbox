@@ -24,7 +24,7 @@ import numpy as np
 from scipy.ndimage import center_of_mass
 import skimage.exposure
 
-from spinalcordtoolbox.image import Image, check_image_kind
+from spinalcordtoolbox.image import Image
 import spinalcordtoolbox.reports
 from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
 from spinalcordtoolbox.resampling import resample_nib
