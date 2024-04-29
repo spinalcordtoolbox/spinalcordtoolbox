@@ -78,7 +78,7 @@ jobs:
     steps:
       - name: Dependencies
         run: |  # NB: libgl1-mesa-dev is needed for PyQT testing (https://stackoverflow.com/q/33085297/7584115)
-          apt update && apt install -y libglib2.0-0 libgl1-mesa-dev procps gcc git curl
+          apt update && apt install -y libglib2.0-0t64 libgl1-mesa-dev procps gcc git curl
       - uses: actions/checkout@v4
       - name: Install SCT
         run: |
