@@ -17,14 +17,17 @@ import sys
 import logging
 from typing import Sequence
 
-import torch
-
-from spinalcordtoolbox.reports import qc2
-from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 from spinalcordtoolbox.utils.fs import tmp_create
+from spinalcordtoolbox.utils.sys import lazy_import
+
+torch = lazy_import('torch')
+
+qc2 = lazy_import('spinalcordtoolbox.reports')
+inference = lazy_import('spinalcordtoolbox.deepseg.inference')
+models = lazy_import('spinalcordtoolbox.deepseg.models')
 
 logger = logging.getLogger(__name__)
 
