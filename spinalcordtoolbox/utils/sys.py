@@ -134,7 +134,8 @@ def set_loglevel(verbose):
     logger.setLevel(getattr(logging, log_level))
 
     # Set logging level for the file that called this function
-    caller_module_name = get_caller_module().__name__
+    caller_module_name = "__main__"  # hack to test import times
+    # caller_module_name = get_caller_module().__name__
     caller_logger = logging.getLogger(caller_module_name)
     caller_logger.setLevel(getattr(logging, log_level))
 
