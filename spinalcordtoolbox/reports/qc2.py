@@ -300,8 +300,11 @@ def sct_deepseg(
         inf_nan_fill(centers[:, 0])
         inf_nan_fill(centers[:, 1])
 
+        # Rootlets needs a larger radius as it is outside the SC
+        radius = (23, 23) if "seg_spinal_rootlets_t2w" in argv else (15, 15)
+
         # Generate the first QC report image
-        img = equalize_histogram(mosaic(img_input, centers))
+        img = equalize_histogram(mosaic(img_input, centers, radius))
 
         # For QC reports, axial mosaics will often have smaller height than width
         # (e.g. WxH = 20x3 slice images). So, we want to reduce the fig height to match this.
@@ -330,7 +333,7 @@ def sct_deepseg(
         for i, image in enumerate([img_seg_sc, img_seg_lesion]):
             if not image:
                 continue
-            img = mosaic(image, centers)
+            img = mosaic(image, centers, radius)
             img = np.ma.masked_less_equal(img, 0)
             img.set_fill_value(0)
             ax.imshow(img,
