@@ -12,6 +12,7 @@
 # TODO: Fetch default value (and display) depending on the model that is used.
 # TODO: accommodate multiclass segmentation
 
+import json
 import os
 import sys
 import logging
@@ -23,7 +24,7 @@ from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, __version__
 from spinalcordtoolbox.utils.fs import tmp_create
 
 logger = logging.getLogger(__name__)
@@ -318,6 +319,29 @@ def main(argv: Sequence[str]):
 
         # Use the result of the current model as additional input of the next model
         fname_prior = fname_seg
+
+        # write JSON sidecar file
+        sidecar_json = {
+            'GeneratedBy': [
+                {
+                    'Name': 'spinalcordtoolbox',
+                    "Version": __version__,
+                    "CodeURL": "https://github.com/spinalcordtoolbox/spinalcordtoolbox"
+                }
+            ]
+        }
+        source_path = os.path.join(path_model, "source.json")
+        if os.path.isfile(source_path):
+            with open(source_path, "r") as fp:
+                source_dict = json.load(fp)
+        sidecar_json['GeneratedBy'].append(
+            {
+                'Name': f'sct_deepseg -task {arguments.task}',
+                "Version": source_dict["model_urls"][name_model][0]
+            }
+        )
+        with open(splitext(fname_seg)[0] + ".json", "w") as fp:
+            json.dump(sidecar_json, fp, indent=4)
 
     if arguments.qc is not None:
         # Models can have multiple input images -- create 1 QC report per input image.
