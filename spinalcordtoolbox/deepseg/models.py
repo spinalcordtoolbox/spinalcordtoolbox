@@ -407,6 +407,16 @@ def install_model(name_model):
         for seed_name, model_urls in url_field.items():
             logger.info(f"\nInstalling '{seed_name}'...")
             download.install_data(model_urls, folder(os.path.join(name_model, seed_name)), keep=True)
+        model_urls = sum(url_field.values(), [])  # combine seed models into 1 list of urls
+
+    # Write `source.json` (for model provenance / updating)
+    source_dict = {
+        'model_urls': {
+            name_model: model_urls
+        }
+    }
+    with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
+        json.dump(source_dict, fp, indent=4)
 
 
 def install_default_models():
