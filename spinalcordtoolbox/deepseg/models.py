@@ -430,6 +430,20 @@ def install_default_models():
             install_model(name_model)
 
 
+def is_up_to_date(path_model, name_model):
+    source_path = os.path.join(path_model, "source.json")
+    if os.path.isfile(source_path):
+        with open(source_path, "r") as fp:
+            source_dict = json.load(fp)
+    else:
+        logger.warning("Provenance file 'source.json' missing!")
+        source_dict = {'model_urls': {name_model: []}}  # empty list will force reinstall
+    source_urls = source_dict["model_urls"][name_model]
+    newest_urls = MODELS[name_model]['url']
+    missing_urls = set(newest_urls) - set(source_urls)
+    return not missing_urls
+
+
 def is_valid(path_models):
     """
     Check if model paths have the necessary files and follow naming conventions:
