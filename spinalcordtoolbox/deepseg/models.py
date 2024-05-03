@@ -137,11 +137,11 @@ MODELS = {
     #       - Models do not have a `.json` sidecar file, since they were not developed with ivadomed
     #       - So, threshold value is stored here, within the model dict
     #       - Binarization is applied within SCT code
-    "model_seg_sc_contrast_agnostic_softseg_nnunet": {
+    "model_seg_sc_contrast_agnostic_softseg_monai": {
         "url": [
-            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.0/model_2023-09-18.zip"
+            "https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/releases/download/v2.3/model_soft_bin_20240410-1136.zip"
         ],
-        "description": "Spinal cord segmentation that is agnostic to contrast using NNUnet",
+        "description": "Spinal cord segmentation agnostic to MRI contrasts using MONAI-based nnUNet model",
         "contrasts": ["any"],
         "thr": 0.5,  # Softseg model -> threshold at 0.5
         "default": False,
@@ -171,6 +171,24 @@ MODELS = {
          "description": "White and grey matter segmentation on T1-weighted exvivo mouse spinal cord using NNUnet",
          "contrasts": ["t1"],
          "thr": None,  # Images are already binarized when splitting into gm-seg and wm-seg
+         "default": False,
+     },
+    "model_seg_sc_lesion_canproco_nnunet": {
+         "url": [
+             "https://github.com/ivadomed/canproco/releases/download/r20240125/model_ms_seg_sc-lesion_regionBased_2d.zip"
+         ],
+         "description": "MS lesion/SC seg for STIR/PSIR contrasts",
+         "contrasts": ["stir", "psir"],
+         "thr": None,  # Images are already binarized when splitting into spinal cord and lesion
+         "default": False,
+    },
+    "model_seg_sc_epi_nnunet": {
+         "url": [
+             "https://github.com/sct-pipeline/fmri-segmentation/releases/download/v0.2/model-fmri-segmentation-v0.2.zip"
+         ],
+         "description": "Spinal cord segmentation for EPI data (single 3D volume)",
+         "contrasts": ["bold"],
+         "thr": None,  # Images are already binarized
          "default": False,
      },
 }
@@ -285,13 +303,15 @@ TASKS = {
          'url': 'https://github.com/ivadomed/lumbar_seg_EPFL',
          'models': ['model_seg_epfl_t2w_lumbar_sc']},
     'seg_sc_contrast_agnostic':
-        {'description': 'Spinal cord segmentation that is agnostic to contrast',
-         'long_description': 'This segmentation model for contrast agnostic spinal cord segmentation uses an NNUnet '
-                             'architecture, and was created with the MONAI package. Training data was taken from the '
-                             'Spine Generic Multi Subject dataset, with the 6 different contrasts used spanning 267 '
-                             'different healthy (non-pathological) patients.',
+        {'description': 'Spinal cord segmentation agnostic to MRI contrasts',
+         'long_description': 'This model for contrast agnostic spinal cord segmentation uses an nnUNet '
+                             'architecture, and was created with the MONAI package. Training data consists of healthy '
+                             'controls from the open-source Spine Generic Multi Subject database and pathologies from '
+                             'private datasets including DCM and MS patients. Segmentation has been tested with the '
+                             'following contrasts: [T1w, T2w, T2star, MTon_MTS, GRE_T1w, DWI, mp2rage_UNIT1], but '
+                             'other contrasts that are close visual matches may also work well with this model.',
          'url': 'https://github.com/sct-pipeline/contrast-agnostic-softseg-spinalcord/',
-         'models': ['model_seg_sc_contrast_agnostic_softseg_nnunet']},
+         'models': ['model_seg_sc_contrast_agnostic_softseg_monai']},
     'seg_sc_lesion_t2w_sci':
         {'description': 'Traumatic SCI spinal cord/lesion seg for T2w contrast',
          'long_description': 'This segmentation model for spinal cord injury segmentation uses a 3D U-Net '
@@ -321,6 +341,25 @@ TASKS = {
                              'the University of Zurich.',
          'url': 'https://github.com/ivadomed/model_seg_mouse-sc_wm-gm_t1',
          'models': ['model_seg_gm_wm_mouse_nnunet']},
+    'seg_sc_ms_lesion_stir_psir':
+        {'description': 'Segmentation of spinal cord and MS lesions for STIR and PSIR contrasts',
+         'long_description': 'This segmentation model for MS lesion segmentation uses a 2D U-Net architecture, and was '
+                             'trained with the nnUNetV2 framework. It is a region-based model, outputting a single '
+                             'segmentation image containing 2 classes representing the spinal cord and MS lesions. '
+                             'Training data consisted of sagittal PSIR 0.7×0.7×3 mm3 (4 sites, 333 participants) multiplied '
+                             'by -1 and sagittal STIR 0.7×0.7×3 mm3 (1 site, 92 participants) images of the cervical SC from '
+                             'the Canadian Prospective Cohort Study (CanProCo).',
+         'url': 'https://github.com/ivadomed/canproco',
+         'models': ['model_seg_sc_lesion_canproco_nnunet']},
+    'seg_sc_epi':
+        {'description': 'Spinal cord segmentation for EPI-BOLD fMRI data',
+         'long_description': 'This segmentation model for spinal cord on EPI data (single 3D volume) uses a 3D UNet model built from '
+                             'the nnUNetv2 framework. The training data consists of 3D images (n=192) spanning numerous resolutions '
+                             'from multiple sites like Max Planck Institute for Human Cognitive and Brain Sciences - Leipzig, '
+                             'University of Geneva, Stanford University, Kings College London, Universitätsklinikum Hamburg. The '
+                             'dataset has healthy control subjects. The model has been trained in a human-in-the-loop active learning fashion.',
+         'url': 'https://github.com/sct-pipeline/fmri-segmentation',
+         'models': ['model_seg_sc_epi_nnunet']},
 }
 
 

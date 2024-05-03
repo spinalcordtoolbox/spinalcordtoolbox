@@ -35,7 +35,7 @@ To apply the algorithm, we use the ``sct_dmri_moco`` command:
    - ``dmri_moco.nii.gz`` : The motion-corrected 4D dMRI image.
    - ``dmri_moco_b0_mean.nii.gz`` : The time-average of the motion-corrected 3D volumes with ``b == 0``.
    - ``dmri_moco_dwi_mean.nii.gz`` : The time-average of the motion-corrected 3D volumes with ``b != 0``. (This image is what will be used for the template registration.)
-   - ``moco_params.tsv`` : A text file that provides a simplified overview of the motion correction, to be used for quality control. It contains the slicewise average of the axial (X-Y) translations for each 3D volume. (In reality, though, each slice of each volume will have had a different translation applied to it.)
+   - ``moco_params.tsv`` : A text file that provides a simplified overview of the motion correction, to be used for quality control. It contains the slicewise average of the magnitude of the axial (X-Y) translations for each 3D volume. (In reality, though, each slice of each volume will have had a different translation applied to it.)
    - ``moco_params_x.nii.gz`` : A 4D image with dimensions ``[1, 1, z, t]``. Each voxel contains the ``x`` translation corresponding to each ``z`` slice across each ``t`` volume.
    - ``moco_params_y.nii.gz`` : A 4D image with dimensions ``[1, 1, z, t]``. Each voxel contains the ``y`` translation corresponding to each ``z`` slice across each ``t`` volume.
 

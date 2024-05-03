@@ -377,7 +377,7 @@ class Image(object):
         else:
             return deepcopy(self)
 
-    def copy_qform_from_ref(self, im_ref):
+    def copy_affine_from_ref(self, im_ref):
         """
         Copy qform and sform and associated codes from a reference Image object
 
@@ -973,7 +973,17 @@ def get_dimension(im_file, verbose=1):
     ndims = [1, 1, 1, 1]
     pdims = [1, 1, 1, 1]
     data_shape = im_file.header.get_data_shape()
-    zooms = im_file.header.get_zooms()
+    # NB: Nibabel stores dim info as float32. Arithmetic using float32 values can cause issues. So, store the values
+    #     as rounded 64-bit float values, according to the spacing of the value.
+    zooms = []
+    for zoom_f32 in im_file.header.get_zooms():
+        # extract the exponent from the spacing used by the float32 values (i.e. 1e-9 -> '-9')
+        spacing = np.spacing(zoom_f32)
+        spacing_exp = np.floor(np.log10(np.abs(spacing))).astype(int)
+        # convert to python float, then round to remove any spurious digits
+        zoom_f64 = float(zoom_f32)
+        zoom_f64_rounded = round(zoom_f64, -spacing_exp - 1)
+        zooms.append(zoom_f64_rounded)
     for i in range(min(len(data_shape), 4)):
         ndims[i] = data_shape[i]
         pdims[i] = zooms[i]
@@ -1388,20 +1398,20 @@ def concat_warp2d(fname_list, fname_warp3d, fname_dest):
     warp3d = np.zeros([nx, ny, nz, 1, 3])
 
     for iz, fname in enumerate(fname_list):
-        img = nib.load(fname)
-        warp2d = np.asanyarray(img.dataobj)
+        img = Image(fname)
+        warp2d = img.data
         warp3d[:, :, iz, 0, 0] = warp2d[:, :, 0, 0, 0]
         warp3d[:, :, iz, 0, 1] = warp2d[:, :, 0, 0, 1]
         del warp2d
 
     # save new image
-    im_dest = nib.load(fname_dest)
-    affine_dest = im_dest.affine
-    im_warp3d = nib.nifti1.Nifti1Image(warp3d, affine_dest)
+    im_dest = Image(fname_dest)
+    im_warp3d = Image(warp3d)
+    im_warp3d.copy_affine_from_ref(im_dest)
 
     # set "intent" code to vector, to be interpreted as warping field
     im_warp3d.header.set_intent('vector', (), '')
-    nib.save(im_warp3d, fname_warp3d)
+    im_warp3d.save(fname_warp3d)
 
 
 def add_suffix(fname, suffix):
@@ -1840,32 +1850,36 @@ def generate_stitched_qc_images(ims_in: Sequence[Image], im_out: Image) -> Tuple
 
 def check_image_kind(img):
     """
-    Identify the image as one of 4 image types:
+    Identify the image as one of 4 image types (represented as one of 4 strings):
 
         - 'seg': Binary segmentation (0/1)
         - 'softseg': Nonbinary segmentation in the range [0, 1], where 0 and 1 are the majority of values
-        - 'labeled_seg': Nonbinary, whole values (0, 1, 2...) or (0.0, 1.0, 2.0...) only
-        - 'im': Any other float-valued image where 0 and 1 are not the majority of values.
+        - 'seg-labeled': Nonbinary, whole values (0, 1, 2...) where 0 is the majority of values
+        - 'anat': Any other image
 
     Useful for determining A) which colormap should be applied to an image, or
                            B) which interpolation can be safely used on a given image
 
     Output strings should be compatible with display_viewer_syntax() function.
     """
-    # Check if image is a segmentation (binary or soft) by making sure:
-    # - 0/1 are the two most common voxel values
-    # - 0/1 account for >95% of voxels (to allow for some soft voxels)
+    # Count the unique values in the image
     unique, counts = np.unique(np.round(img.data, decimals=1), return_counts=True)
     unique, counts = unique[np.argsort(counts)[::-1]], counts[np.argsort(counts)[::-1]]  # Sort by counts
+    # This heuristic helps to detect binary and soft segmentations
     binary_most_common = set(unique[0:2].astype(float)) == {0.0, 1.0}
     binary_percentage = np.sum(counts[0:2]) / np.sum(counts)
+    # This heuristic helps to distinguish between PSIR images and label images (2-10% zero vs. 99% zero)
     is_whole_only = np.equal(np.mod(unique, 1), 0).all()
+    zero_most_common = float(unique[0]) == 0.0
+    zero_percentage = np.sum(counts[0]) / np.sum(counts)
     if binary_most_common:
         if binary_percentage == 1.0:
             return 'seg'
         elif binary_percentage > 0.95:
             return 'softseg'
-    if is_whole_only:
+        else:  # binary_percentage <= 0.95
+            pass  # may be 'seg-labeled' or 'anat'
+    if is_whole_only and zero_most_common and zero_percentage > 0.50:
         return 'seg-labeled'
     else:
         return 'anat'

@@ -22,13 +22,15 @@ from spinalcordtoolbox.utils.sys import sct_progress_bar
 NEAR_ZERO_THRESHOLD = 1e-6
 
 
-def compute_shape(segmentation, angle_correction=True, param_centerline=None, verbose=1, remove_temp_files=1):
+def compute_shape(segmentation, angle_correction=True, centerline_path=None, param_centerline=None,
+                  verbose=1, remove_temp_files=1):
     """
     Compute morphometric measures of the spinal cord in the transverse (axial) plane from the segmentation.
     The segmentation could be binary or weighted for partial volume [0,1].
 
     :param segmentation: input segmentation. Could be either an Image or a file name.
     :param angle_correction:
+    :param centerline_path: path to image file to be used as a centerline for computing angle correction.
     :param param_centerline: see centerline.core.ParamCenterline()
     :param verbose:
     :param remove_temp_files: int: Whether to remove temporary files. 0 = no, 1 = yes.
@@ -68,9 +70,16 @@ def compute_shape(segmentation, angle_correction=True, param_centerline=None, ve
     fit_results = None
 
     if angle_correction:
+        # allow the centerline image to be bypassed (in case `im_seg` is irregularly shaped, e.g. GM/WM)
+        if centerline_path:
+            im_centerline = Image(centerline_path).change_orientation('RPI')
+            im_centerline_r = resample_nib(im_centerline, new_size=[pr, pr, pz], new_size_type='mm',
+                                           interpolation='linear')
+        else:
+            im_centerline_r = im_segr
         # compute the spinal cord centerline based on the spinal cord segmentation
         # here, param_centerline.minmax needs to be False because we need to retrieve the total number of input slices
-        _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_segr, param=param_centerline, verbose=verbose,
+        _, arr_ctl, arr_ctl_der, fit_results = get_centerline(im_centerline_r, param=param_centerline, verbose=verbose,
                                                               remove_temp_files=remove_temp_files)
 
     # Loop across z and compute shape analysis

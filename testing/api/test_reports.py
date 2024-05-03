@@ -79,7 +79,7 @@ def t2_path():
 
 
 def assert_qc_assets(path):
-    files = ('index.html', 'css/style.css', 'js/main.js')
+    files = ('html/index.html', 'css/style.css', 'js/main.js')
     for file_name in files:
         assert os.path.exists(os.path.join(path, file_name))
 

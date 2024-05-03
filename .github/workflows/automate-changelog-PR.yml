@@ -42,7 +42,7 @@ jobs:
         cd ${{ github.event.repository.name }}
         echo "${{ github.event.inputs.future_milestone_title }}.dev0" > spinalcordtoolbox/version.txt
     - name: Create pull request for updated changelog and version.txt
-      uses: peter-evans/create-pull-request@v5
+      uses: peter-evans/create-pull-request@v6
       with:
         path: "${{ github.event.repository.name }}"
         branch: "bot/v${{ github.event.inputs.milestone_title }}"

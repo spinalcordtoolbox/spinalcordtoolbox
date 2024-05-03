@@ -10,9 +10,9 @@ import os
 import json
 import logging
 import datetime
-from string import Template
 from typing import Callable, List, Tuple, Union
 import itertools as it
+from hashlib import md5
 
 import numpy as np
 import skimage
@@ -26,11 +26,11 @@ from matplotlib.animation import FuncAnimation, PillowWriter
 import matplotlib.colors as color
 from matplotlib import cm
 import matplotlib.patheffects as path_effects
-import portalocker
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.reports.slice import Slice, Axial, Sagittal
-from spinalcordtoolbox.utils.fs import copy, extract_fname
+from spinalcordtoolbox.reports.assets._assets.py import refresh_qc_entries
+from spinalcordtoolbox.utils.fs import copy, extract_fname, mutex
 from spinalcordtoolbox.utils.sys import __version__, list2cmdline
 from spinalcordtoolbox.utils.shell import display_open
 
@@ -567,18 +567,6 @@ class QcReport:
     def update_description_file(self):
         """Create the description file with a JSON structure"""
         path_qc = self.path_qc
-        html_path = os.path.join(path_qc, 'index.html')
-        # Make sure the file exists before trying to open it in 'r+' mode
-        open(html_path, 'a').close()
-        # NB: We use 'r+' because it allows us to open an existing file for locking *without* immediately truncating the
-        # existing contents prior to opening. We can then use this file to overwrite the contents later in the function.
-        dest_file = open(html_path, 'r+', encoding="utf-8")
-        # We lock `index.html` at the start of this function so that we halt any other processes *before* they have a
-        # chance to generate or read any .json files. This ensues that the last process to write to index.html has read
-        # in all of the available .json files, preventing:
-        # https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/3701#discussion_r816300380
-        portalocker.lock(dest_file, portalocker.LOCK_EX)
-
         output = {
             'cwd': self.cwd,
             'cmdline': "{} {}".format(self.command, self.args),
@@ -595,38 +583,39 @@ class QcReport:
             'qc': ""
         }
         logger.debug('Description file: %s', self.qc_results)
-        # results = []
-        # Create path to store json files
-        path_json, _ = os.path.split(self.qc_results)
-        if not os.path.exists(path_json):
-            os.makedirs(path_json, exist_ok=True)
 
-        # Create json file for specific QC entry
-        with open(self.qc_results, 'w+') as qc_file:
-            json.dump(output, qc_file, indent=1)
+        # Use a mutex on a hash of the QC path, so that we use a unique mutex per target QC report
+        with mutex(f"sct_qc-{os.path.basename(path_qc)}-{md5(self.path_qc.encode('utf-8')).hexdigest()}"):
+            # results = []
+            # Create path to store json files
+            path_json, _ = os.path.split(self.qc_results)
+            if not os.path.exists(path_json):
+                os.makedirs(path_json, exist_ok=True)
 
-        # Append entry to existing HTML file
-        json_data = get_json_data_from_path(path_json)
-        assets_path = os.path.join(os.path.dirname(__file__), 'assets')
-        with open(os.path.join(assets_path, 'index.html'), encoding="utf-8") as template_index:
-            template = Template(template_index.read())
-            output = template.substitute(sct_json_data=json.dumps(json_data))
-        # Empty the HTML file before writing, to make sure there's no leftover junk at the end
-        dest_file.truncate()
-        dest_file.write(output)
+            # Create json file for specific QC entry
+            with open(self.qc_results, 'w+') as qc_file:
+                json.dump(output, qc_file, indent=1)
 
-        for path in ['css', 'js', 'imgs', 'fonts']:
-            src_path = os.path.join(assets_path, '_assets', path)
-            dest_path = os.path.join(path_qc, '_assets', path)
-            if not os.path.exists(dest_path):
-                os.makedirs(dest_path, exist_ok=True)
-            for file_ in os.listdir(src_path):
-                if not os.path.isfile(os.path.join(dest_path, file_)):
-                    copy(os.path.join(src_path, file_), dest_path)
+            assets_path = os.path.join(os.path.dirname(__file__), 'assets')
+            for path in ['css', 'js', 'imgs', 'fonts', 'html', 'py']:
+                src_path = os.path.join(assets_path, '_assets', path)
+                dest_path = os.path.join(path_qc, '_assets', path)
+                if not os.path.exists(dest_path):
+                    os.makedirs(dest_path, exist_ok=True)
+                for file_ in os.listdir(src_path):
+                    if file_ == "__pycache__":
+                        continue
+                    src_filepath = os.path.join(src_path, file_)
+                    dest_filepath = os.path.join(dest_path, file_)
+                    if not os.path.isfile(dest_filepath):
+                        copy(src_filepath, dest_path)
+                    elif open(src_filepath, 'rb').read() != open(dest_filepath, 'rb').read():
+                        logger.warning(f"WARNING: Copy of '{file_}' in '{path_qc}' doesn't match the version in the "
+                                       f"SCT source code. Updating file to match newest version...")
+                        copy(src_filepath, dest_path)
 
-        dest_file.flush()
-        portalocker.unlock(dest_file)
-        dest_file.close()
+            # Inject the JSON QC entries into the index.html file
+            refresh_qc_entries.main(path_qc)
 
 
 def get_json_data_from_path(path_json):

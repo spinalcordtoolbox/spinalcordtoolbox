@@ -12,7 +12,7 @@ import psutil
 from math import asin, cos, sin, acos
 
 import numpy as np
-from nibabel import load, Nifti1Image, save, aff2axcodes
+from nibabel import load, Nifti1Image, aff2axcodes
 from nilearn.image import resample_img
 from scipy.signal import argrelmax, medfilt
 from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
@@ -399,10 +399,10 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     # Scale the data between 0 and 1
     fx_img = dest_img.get_fdata()
     scaled_fx_img = (fx_img - np.min(fx_img)) / (np.max(fx_img) - np.min(fx_img))
-    scaled_fx_nii = Nifti1Image(scaled_fx_img, dest_img.affine)
+    scaled_fx_nii = Nifti1Image(scaled_fx_img, dest_img.affine)  # Can't be int64 (#4408)
     mov_img = src_img.get_fdata()
     scaled_mov_img = (mov_img - np.min(mov_img)) / (np.max(mov_img) - np.min(mov_img))
-    scaled_mov_nii = Nifti1Image(scaled_mov_img, src_img.affine)
+    scaled_mov_nii = Nifti1Image(scaled_mov_img, src_img.affine)  # Can't be int64 (#4408)
     # Ensure that the volumes can be used in the registration model
     # (size multiple of 16 because 4 encoder reducing the size by 2)
     fx_img_shape = scaled_fx_img.shape
@@ -503,21 +503,21 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
 
     # Forward registration
     warp_data = warp_data_exp_first + warp_data_exp_second
-    warp = Nifti1Image(warp_data, fx_preproc_nii.affine)
+    warp = image.Image(param=warp_data, hdr=fx_preproc_nii.header)
     # Set the intent code to vector
     # The intent code 1007 was chosen based on information found on:
     #     -  https://brainder.org/2012/09/23/the-nifti-file-format/
     #     -  http://users.bmap.ucla.edu/~mchamber/npl/nifti_8h_source.html#l00470
     warp.header['intent_code'] = 1007
     # Save the composed warping field [forward]
-    save(warp, fname_warp_forward)
+    warp.save(fname_warp_forward)
 
     # Reverse registration
     warp_data_rev = -warp_data
-    warp_rev = Nifti1Image(warp_data_rev, fx_preproc_nii.affine)
+    warp_rev = image.Image(param=warp_data_rev, hdr=fx_preproc_nii.header)
     warp_rev.header['intent_code'] = 1007
     # Save the composed warping field [reverse]
-    save(warp_rev, fname_warp_reverse)
+    warp_rev.save(fname_warp_reverse)
 
 
 def register_dl_inference(fname_model, input_moving, input_fixed, reg_args, device):
@@ -1399,8 +1399,8 @@ def generate_warping_field(fname_dest, warp_x, warp_y, fname_warp='warping_field
     hdr_warp = hdr_dest.copy()
     hdr_warp.set_intent('vector', (), '')
     hdr_warp.set_data_dtype('float32')
-    img = Nifti1Image(data_warp, None, hdr_warp)
-    save(img, fname_warp)
+    img = image.Image(param=data_warp, hdr=hdr_warp)
+    img.save(fname_warp)
     logger.info(f" --> {fname_warp}")
 
 

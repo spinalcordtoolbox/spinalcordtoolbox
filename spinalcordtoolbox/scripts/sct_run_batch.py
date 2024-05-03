@@ -30,11 +30,14 @@ from textwrap import dedent
 import yaml
 import psutil
 
+from spinalcordtoolbox.utils import csi_filter
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_open
 from spinalcordtoolbox.utils.sys import send_email, init_sct, __get_commit, __get_git_origin, __version__, __sct_dir__, set_loglevel
 from spinalcordtoolbox.utils.fs import Tee
 
 from stat import S_IEXEC
+
+csi_filter.register_codec()
 
 
 def get_parser():
@@ -432,7 +435,7 @@ def main(argv: Sequence[str]):
         raise FileNotFoundError('Couldn\'t find the script script at {}'.format(script))
 
     # Setup overall log
-    batch_log = open(os.path.join(path_log, arguments.batch_log), 'w')
+    batch_log = open(os.path.join(path_log, arguments.batch_log), 'w', encoding='csi-filter')
 
     # Duplicate init_sct message to batch_log
     print('\n--\nSpinal Cord Toolbox ({})\n'.format(__version__), file=batch_log, flush=True)

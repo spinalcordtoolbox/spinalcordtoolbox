@@ -286,7 +286,7 @@ class Transform:
         # Copy affine matrix from destination space to make sure qform/sform are the same
         printv("Copy affine matrix from destination space to make sure qform/sform are the same.", verbose)
         im_src_reg = Image(fname_out)
-        im_src_reg.copy_qform_from_ref(Image(fname_dest))
+        im_src_reg.copy_affine_from_ref(Image(fname_dest))
         im_src_reg.save(verbose=0)  # set verbose=0 to avoid warning message about rewriting file
 
         if islabel:

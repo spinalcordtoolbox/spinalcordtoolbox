@@ -28,7 +28,7 @@ import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
 logger = logging.getLogger(__name__)
 
 
-def segment_and_average_volumes(model_paths, input_filenames, options):
+def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=False):
     """
         Run `ivadomed.inference.segment_volume()` once per model, then average the outputs.
 
@@ -40,6 +40,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
             images to segment, i.e.., len(fname_images) > 1.
         :param options: A dictionary containing optional configuration settings, as specified by the
             ivadomed.inference.segment_volume function.
+        :param use_gpu: bool. Whether to try to perform inference using CUDA. (NB: Only a single GPU will be used.)
 
         :return: list, list: List of Image objects containing the soft segmentation(s), one per prediction class, \
             List of target suffix associated with each prediction
@@ -59,7 +60,13 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
         if len(model_paths) > 1:  # We have an ensemble, so output messages to distinguish between seeds
             name_seed = Path(path_model).parts[-2]
             logger.info(f"\nUsing '{name_seed}'...")
-        nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, options=options)
+        # NB: ivadomed turns on GPU inference via specifying a single GPU ID. This isn't the recommended way to do
+        #     things, since it prevents us from running multi-GPU jobs. I think ivadomed did things this way to limit
+        #     which GPU is used, but we can already accomplish this using the more universal 'CUDA_VISIBLE_DEVICES'
+        #     environment variable). For now, the best we can do on our end is to select the first GPU from the list
+        #     of available GPUs.
+        gpu_id = 0 if use_gpu else None  # NB: If e.g. 'CUDA_VISIBLE_DEVICES=2,3,4', then 0 will refer to GPU 2.
+        nii_lst, target_lst = imed_inference.segment_volume(path_model, input_filenames, gpu_id=gpu_id, options=options)
         nii_lsts.append(nii_lst)
         target_lsts.append(target_lst)
 
@@ -96,7 +103,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options):
     return im_lst, target_lst
 
 
-def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, remove_temp_files=True):
+def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, use_gpu=False, remove_temp_files=True):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     if model_type == "monai":
         create_net = ds_monai.create_nnunet_from_plans
@@ -106,14 +113,16 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, rem
         create_net = ds_nnunet.create_nnunet_from_plans
         inference = segment_nnunet
 
+    device = torch.device("cuda" if use_gpu else "cpu")
+
     # load model from checkpoint
-    net = create_net(path_model)
+    net = create_net(path_model, device)
 
     im_lst, target_lst = [], []
     for fname_in in input_filenames:
         tmpdir = tmp_create(basename="sct_deepseg")
         # model may be multiclass, so the `inference` func should output a list of fnames and targets
-        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net)
+        fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device)
         for fname_out, target in zip(fnames_out, targets):
             im_out = Image(fname_out)
             if threshold is not None:
@@ -126,7 +135,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, rem
     return im_lst, target_lst
 
 
-def segment_monai(path_img, tmpdir, predictor):
+def segment_monai(path_img, tmpdir, predictor, device: torch.device):
     """
     Script to run inference on a MONAI-based model for contrast-agnostic soft segmentation of the spinal cord.
 
@@ -152,9 +161,10 @@ def segment_monai(path_img, tmpdir, predictor):
 
     # run inference
     with torch.no_grad():
-        test_input = batch["image"].to(torch.device("cpu"))
+        test_input = batch["image"].to(device)
         batch["pred"] = sliding_window_inference(test_input, inference_roi_size, mode="gaussian",
-                                                 sw_batch_size=4, predictor=predictor, overlap=0.5, progress=False)
+                                                 sw_batch_size=4, predictor=predictor, overlap=0.5, progress=False,
+                                                 sw_device=device)
         pred = ds_monai.postprocessing(batch, test_post_pred)
 
         end = time.time()
@@ -178,7 +188,7 @@ def segment_monai(path_img, tmpdir, predictor):
     return [fname_out], [target]
 
 
-def segment_nnunet(path_img, tmpdir, predictor):
+def segment_nnunet(path_img, tmpdir, predictor, device: torch.device):
     """
     This script is used to run inference on a single subject using a nnUNetV2 model.
 
@@ -187,6 +197,12 @@ def segment_nnunet(path_img, tmpdir, predictor):
 
     TODO: Find a less brittle way to specify model-based parameters such as model orientation, suffix, etc.
     """
+    # NB: `device` should already be set when the `predictor` is initialized. We only have the `device` parameter here
+    #     to match the function signature of `segment_monai`, which *does* require `device` at inference time.
+    if device != predictor.device:
+        logger.warning(f"Param `device` (value: {device}) is ignored in favor of `predictor.device` (value: "
+                       f"{predictor.device}). To change the device, please modify the initialization of the predictor.")
+
     # Copy the file to the temporary directory using shutil.copyfile
     path_img_tmp = os.path.join(tmpdir, os.path.basename(path_img))
     shutil.copyfile(path_img, path_img_tmp)
@@ -196,8 +212,11 @@ def segment_nnunet(path_img, tmpdir, predictor):
     orig_orientation = get_orientation(Image(path_img_tmp))
 
     # Get the orientation used by the model
+    # TODO: Make reorientation a model configuration parameter
     if "SCI" in predictor.plans_manager.dataset_name:
         model_orientation = "RPI"
+    elif "RegionBasedLesionSeg" in predictor.plans_manager.dataset_name:
+        model_orientation = "AIL"
     else:
         model_orientation = "LPI"
 
