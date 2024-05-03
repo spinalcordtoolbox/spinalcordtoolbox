@@ -17,8 +17,12 @@ from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
 def get_parser():
     parser = SCTArgumentParser(
         description="""
-        Compute flow from velocity encoding (VENC) sequence, based on the MRI phase image.
-        More details in: https://mriquestions.com/what-is-venc.html"""
+        Compute velocity from the MRI phase image for velocity encoding (VENC) sequences.
+        More details in: https://mriquestions.com/what-is-venc.html
+
+        Further features are planned for this script. Please refer to this issue for more info:
+          - https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4298
+        """
     )
 
     mandatoryArguments = parser.add_argument_group("\nMANDATORY ARGUMENTS")
