@@ -369,9 +369,10 @@ def main(argv: Sequence[str]):
 
     # Combine individual labels for estimation
     if combine_labels:
-        # Avoid case where user asked to combine a single label which is already a combination of 'native' labels
-        # Related to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4467
-        if not (len(labels_id_user) == 1 and labels_id_user[0] in combined_labels_ids):
+        if len(labels_id_user) == 1:
+            # Trying to combine 1 label may result in https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4467
+            printv("Ignoring `-combine` arg since only 1 label value was provided", 1, type='warning')
+        else:
             # If user is trying to combine more than one label that is part of CombinedLabels, exit with error
             if len(labels_id_user) != 1 and any(element in combined_labels_ids for element in labels_id_user):
                 printv('\nERROR: You are trying to combine multiple labels that are already combined (under '
