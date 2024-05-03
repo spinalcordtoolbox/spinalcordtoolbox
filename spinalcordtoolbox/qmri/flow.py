@@ -62,16 +62,26 @@ def compute_flow(nii_phase4d, venc):
 
 def scale_phase(data_phase):
     """
-    Scale phase data between -pi and pi, assuming the data is encoded as int13 (i.e., between -4096 and 4095)
-    as this seems to be the default encoding for phase data from Siemens scanners.
+    Scale phase data between -π and π. We assume the data was originally encoded as int12 [0, 4095] (as this seems
+    to be the default encoding for phase data from Siemens scanners), then scaled to [-4096, 4094] during conversion
+    from DICOM to Nifti due to a slope/intercept of 2.0 and -4096.
+
+    See also: https://github.com/rordenlab/dcm2niix/issues/406#issuecomment-654141193
+
     :param data_phase: numpy array of phase data
-    :return: scaled phase data
+    :return: scaled phase data from
     """
-    # Check that phase data is encoded as int13
-    if np.any(data_phase > 4095) or np.any(data_phase < -4096):
-        logger.warning('Phase data is not encoded as INT13 (i.e., between -4096 and 4095). Please check your data.')
-    # Convert data to float
+    # Check that phase data is encoded as scaled 12-bit integers
+    slope = 2.0
+    intercept = -4096
+    bounds_unscaled = [0, 4095]                                       # 4096 -> 2^12 -> 12-bit data (Siemens DICOM)
+    bounds_scaled = [b * slope + intercept for b in bounds_unscaled]  # [-4096, 4094] range for NIfTI phase data
+    if np.any(data_phase < bounds_scaled[0]) or np.any(data_phase > bounds_scaled[1]):
+        logger.warning(f'Phase data is not within the expected range for Siemens phase data (i.e., between '
+                       f'{bounds_scaled[0]} and {bounds_scaled[1]}). Please check your data.')
     data_phase = data_phase.astype(np.float32)
-    # Scale the data from [-4096, 4095] to [-π, π]
-    scaled_data = (data_phase / 4096) * np.pi
+    # Scale the data from [-4096, 4094] to [-π, π]
+    scaled_data = (data_phase - intercept) / slope      # [-4096, 4094] -> [0, 4095]
+    scaled_data = scaled_data / bounds_unscaled[1] * 2  # [0, 4095] -> [0, 1] -> [0, 2]
+    scaled_data = (scaled_data - 1) * np.pi             # [0, 2] -> [-1, 1] -> [-π, π]
     return scaled_data
