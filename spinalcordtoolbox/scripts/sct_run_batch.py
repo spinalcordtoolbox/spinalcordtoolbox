@@ -529,7 +529,7 @@ def main(argv: Sequence[str]):
 
     print("RUNNING")
     print("-------")
-    print("Processing {} subjects in parallel. (Worker processes used: {}).".format(len(subject_dirs), jobs))
+    print("Processing {} subjects in total. (Number of subjects processed in parallel: {}).".format(len(subject_dirs), jobs))
 
     # Run the jobs, recording start and end times
     start = datetime.datetime.now()
