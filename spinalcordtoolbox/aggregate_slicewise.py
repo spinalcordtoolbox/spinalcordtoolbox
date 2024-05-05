@@ -392,7 +392,7 @@ def check_labels(indiv_labels_ids, selected_labels):
         if not set(list_ids_of_labels_of_interest).issubset(set(indiv_labels_ids)):
             logging.error(
                 'At least one of the selected labels (' + str(list_ids_of_labels_of_interest) + ') is not available \
-                according to the label list from the text file in the atlas folder.')
+according to the label list from the text file in the atlas folder.')
 
     return list_ids_of_labels_of_interest
 
