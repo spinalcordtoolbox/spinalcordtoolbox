@@ -369,10 +369,20 @@ def main(argv: Sequence[str]):
 
     # Combine individual labels for estimation
     if combine_labels:
-        # Add entry with internal ID value (99) which corresponds to combined labels
-        label_struc[99] = LabelStruc(id=labels_id_user, name=','.join([str(i) for i in labels_id_user]),
-                                     map_cluster=None)
-        labels_id_user = [99]
+        if len(labels_id_user) == 1:
+            # Trying to combine 1 label may result in https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4467
+            printv("Ignoring `-combine` arg since only 1 label value was provided", 1, type='warning')
+        else:
+            # If user is trying to combine more than one label that is part of CombinedLabels, exit with error
+            if len(labels_id_user) != 1 and any(element in combined_labels_ids for element in labels_id_user):
+                printv('\nERROR: You are trying to combine multiple labels that are already combined (under '
+                       'section "# Combined labels" the info_label.txt file. Instead, enter the all the labels that '
+                       'you wish to combine from the list "# Keyword=IndivLabels".', 1, type='error')
+            else:
+                # Add entry with internal ID value (99) which corresponds to combined labels
+                label_struc[99] = LabelStruc(id=labels_id_user, name=','.join([str(i) for i in labels_id_user]),
+                                             map_cluster=None)
+                labels_id_user = [99]
 
     for id_label in labels_id_user:
         printv('Estimation for label: ' + label_struc[id_label].name, verbose)
