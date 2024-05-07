@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_deepseg_gm_check_dice_coefficient_against_groundtruth():
     """Run the CLI script and verify that dice (computed against ground truth) is within a certain threshold."""
     fname_out = 'output.nii.gz'

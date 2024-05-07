@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_dmri_separate_b0_and_dwi_image_data_within_threshold():
     """Run the CLI script and verify that the data of the output images is close to references (within threshold)."""
     sct_dmri_separate_b0_and_dwi.main(argv=['-i', 'dmri/dmri.nii.gz', '-bvec', 'dmri/bvecs.txt', '-a', '1', '-r', '0'])

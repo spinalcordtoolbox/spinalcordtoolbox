@@ -1,6 +1,5 @@
 # pytest unit tests for sct_warp_template
 
-import pytest
 import logging
 
 from spinalcordtoolbox.image import Image
@@ -9,7 +8,6 @@ from spinalcordtoolbox.scripts import sct_warp_template, sct_register_to_templat
 logger = logging.getLogger(__name__)
 
 
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_warp_template_warp_small_PAM50():
     """Warp the cropped, resampled version of the template from `sct_testing_data/template`."""
     sct_warp_template.main(argv=['-d', 'mt/mt1.nii.gz', '-w', 'mt/warp_template2mt.nii.gz',
@@ -18,7 +16,6 @@ def test_sct_warp_template_warp_small_PAM50():
                                  '-qc', 'testing-qc'])
 
 
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_warp_template_warp_full_PAM50():
     """Warp the full PAM50 template (i.e. the one that is downloaded to `data/PAM50` during installation)."""
     sct_warp_template.main(argv=['-d', 'mt/mt1.nii.gz', '-w', 'mt/warp_template2mt.nii.gz',
@@ -26,7 +23,6 @@ def test_sct_warp_template_warp_full_PAM50():
                                  '-qc', 'testing-qc'])
 
 
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_warp_template_point_labels(tmp_path):
     """Warp the full PAM50 template, then test whether point labels are preserved."""
     # Register the cropped T2 image to the full PAM50 template

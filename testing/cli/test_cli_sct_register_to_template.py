@@ -62,7 +62,6 @@ def test_sct_register_to_template_non_rpi_data(tmp_path, template_lpi):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize("fname_gt, remaining_args", [
     ('template/template/PAM50_small_cord.nii.gz',
      ['-l', 't2/labels.nii.gz', '-t', 'template', '-qc', 'qc-testing', '-param',

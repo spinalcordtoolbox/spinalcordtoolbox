@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_convert_output_file_exists():
     """Run the CLI script and verify output file exists."""
     path_out = 't2.nii'

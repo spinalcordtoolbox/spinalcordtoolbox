@@ -13,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_get_centerline_output_file_exists(tmp_path):
     """This test checks the output file using default usage of the CLI script.
 
@@ -28,7 +27,6 @@ def test_sct_get_centerline_output_file_exists(tmp_path):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize('ext', ["", ".nii.gz"])
 def test_sct_get_centerline_output_file_exists_with_o_arg(tmp_path, ext):
     """This test checks the '-o' argument with and without an extension to
@@ -40,7 +38,6 @@ def test_sct_get_centerline_output_file_exists_with_o_arg(tmp_path, ext):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_get_centerline_soft_sums_to_one_and_overlaps_with_bin(tmp_path):
     """
     This test checks two necessary conditions of the soft centerline:

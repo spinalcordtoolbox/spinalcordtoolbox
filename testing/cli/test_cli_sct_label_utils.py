@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_label_utils_cubic_to_point():
     """Run the CLI script and verify the resulting center of mass coordinate."""
     fname_out = 'test_centerofmass.nii.gz'
@@ -24,7 +23,6 @@ def test_sct_label_utils_cubic_to_point():
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_label_utils_create():
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""

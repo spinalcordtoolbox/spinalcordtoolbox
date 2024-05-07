@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_detect_pmj_check_euclidean_distance_against_groundtruth():
     """Run the CLI script and verify that euclidean distances between predicted and ground truth coordinates
     are within a certain threshold."""

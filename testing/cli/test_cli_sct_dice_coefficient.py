@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_dice_coefficient_check_output_against_groundtruth():
     """Run the CLI script and verify its output matches a known ground truth value."""
     # FIXME: The results of "sct_dice_coefficient" are not actually verified. Instead, the "compute_dice" function

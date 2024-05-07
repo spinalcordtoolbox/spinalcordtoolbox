@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_dmri_moco_check_params(tmp_path):
     """Run the CLI script and validate output moco params."""
     sct_dmri_moco.main(argv=['-i', 'dmri/dmri.nii.gz', '-bvec', 'dmri/bvecs.txt', '-g', '3', '-x', 'nn', '-r', '0',
@@ -41,7 +40,6 @@ def dmri_mask(tmp_path):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_dmri_moco_with_mask_check_params(tmp_path, dmri_mask):
     """Run the CLI script with '-m' option and validate output moco params."""
     sct_dmri_moco.main(argv=['-i', 'dmri/dmri.nii.gz', '-bvec', 'dmri/bvecs.txt', '-g', '3', '-r', '0',
@@ -71,7 +69,6 @@ def dmri_ail_cropped(tmp_path):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_dmri_moco_sagittal_no_checks(tmp_path, dmri_ail_cropped):
     """Run the CLI script, but don't check anything."""
     sct_dmri_moco.main(argv=['-i', dmri_ail_cropped, '-bvec', 'dmri/bvecs.txt', '-x', 'nn', '-r', '0',

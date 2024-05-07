@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_smooth_spinalcord_check_output_files(tmp_path):
     """Run the CLI script and ensure output files exist."""
     fname_out = os.path.join(str(tmp_path), "test_smooth.nii.gz")

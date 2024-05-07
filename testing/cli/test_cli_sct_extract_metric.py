@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_extract_metric_against_groundtruth():
     """Verify that computed values are equivalent to known ground truth values."""
     fname_out = 'quantif_mtr.csv'

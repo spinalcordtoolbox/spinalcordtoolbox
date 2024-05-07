@@ -46,7 +46,6 @@ def test_sct_register_multimodal_mask_files_exist(tmp_path):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize("use_seg,param,fname_gt", [
     (False, 'step=1,algo=syn,type=im,iter=1,smooth=1,shrink=2,metric=MI', 'mt/mt0_reg_syn_goldstandard.nii.gz'),
     (False, 'step=1,algo=slicereg,type=im,iter=5,smooth=0,metric=MeanSquares', 'mt/mt0_reg_slicereg_goldstandard.nii.gz'),

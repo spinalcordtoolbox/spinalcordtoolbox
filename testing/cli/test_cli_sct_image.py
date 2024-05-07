@@ -32,7 +32,6 @@ def dmri_t_slices(tmp_path, dmri_in):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_image_split_dmri(dmri_t_slices):
     """Verify the output of '-split' matches reference image. Note: CLI script is run by the 'dmri_t_slices' fixture."""
     _, filename, ext = extract_fname(dmri_t_slices[0])
@@ -42,7 +41,6 @@ def test_sct_image_split_dmri(dmri_t_slices):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_image_concat_dmri(tmp_path, dmri_t_slices, dmri_in):
     """Run the CLI script and verify concatenated image matches reference image."""
     path_out = str(tmp_path / 'dmri_concat.nii.gz')
@@ -53,7 +51,6 @@ def test_sct_image_concat_dmri(tmp_path, dmri_t_slices, dmri_in):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize("path_in", ['t2/t2.nii.gz',       # 3D
                                      'dmri/dmri.nii.gz'])  # 4D
 def test_sct_image_getorient(path_in):
@@ -62,7 +59,6 @@ def test_sct_image_getorient(path_in):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_image_pad():
     """Run the CLI script and test the '-pad' option."""
     pad = 2
@@ -90,7 +86,6 @@ def test_sct_image_display_warp_check_output_exists():
     assert os.path.exists(sct_test_path('t2', fname_out))
 
 
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_image_stitch(tmp_path):
     """Run the CLI script and check that the stitched file was generated."""
     # crop images for testing stitching function

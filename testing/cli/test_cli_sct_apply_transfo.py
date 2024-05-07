@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize("path_in,path_dest,path_warp,path_out,remaining_args", [
     ('template/template/PAM50_small_t2.nii.gz', 't2/t2.nii.gz', 't2/warp_template2anat.nii.gz',
      'PAM50_small_t2_reg.nii', []),

@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_label_vertebrae_consistent_disc(tmp_path):
     """Check that all expected output labeled discs exist"""
     fname_ref = 't2/labels.nii.gz'
@@ -33,7 +32,6 @@ def test_sct_label_vertebrae_consistent_disc(tmp_path):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_label_vertebrae_initfile_qc_no_checks():
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""

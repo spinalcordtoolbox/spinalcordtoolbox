@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 @pytest.mark.skipif(sys.platform.startswith("win32"), reason="sct_propseg is not supported on Windows")
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_propseg_check_dice_coefficient_against_groundtruth():
     """Run the CLI script and verify that dice (computed against ground truth) is within a certain threshold."""
     sct_propseg.main(argv=['-i', 't2/t2.nii.gz', '-c', 't2', '-qc', 'testing-qc'])

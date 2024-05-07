@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize("path_in,type_arg,dim,expected_dim", [
     ('fmri/fmri.nii.gz', '-mm', '1x1x3', (65, 65, 34, 30, 1.0, 1.0, 3.0, 1.13)),                     # 4D, mm
     ('dmri/dmri.nii.gz', '-f', '0.5x0.5x1', (20, 21, 5, 7, 1.682692, 1.682692, 17.5, 2.2)),          # 4D, factor

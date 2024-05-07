@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_compute_mtr_results_are_identical(tmp_path):
     """
     Test the CLI script to ensure that MTR computed with sct_testing_data

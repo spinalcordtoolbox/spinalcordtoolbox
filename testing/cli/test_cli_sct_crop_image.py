@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize("path_in,path_out,remaining_args,expected_dim", [
     ('t2/t2.nii.gz', 't2_crop_xyz.nii', [
         '-xmin', '1',
@@ -49,7 +48,6 @@ def test_sct_crop_image_output_has_expected_dimensions(path_in, path_out, remain
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_crop_image_permissive_qform(tmp_path):
     """
     Check that we can load an image with a slightly bad qform.

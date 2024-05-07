@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize("path_input,process,size", [
     ('mt/mt1.nii.gz', 'coord,15x17', '10'),
     ('mt/mt1.nii.gz', 'point,mt/mt1_point.nii.gz', '10'),
