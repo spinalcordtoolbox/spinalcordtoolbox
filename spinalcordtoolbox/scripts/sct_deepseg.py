@@ -72,7 +72,7 @@ def get_parser():
         help="Display a list of tasks, along with detailed descriptions (including information on how the model was "
              "trained, what data it was trained on, any performance evaluations, associated papers, etc.)")
     seg.add_argument(
-        "-install-task",
+        "-install", "-install-task",
         help="Install models that are required for specified task.",
         choices=list(models.TASKS.keys()))
 
