@@ -148,6 +148,8 @@ def download_data(urls):
     Retry downloading if either server or connection errors occur on a SSL
     connection
     urls: list of several urls (mirror servers) or single url (string)
+    :return: tmp_path: the path to the tmp directory where the filename was downloaded to
+    :return: url_used: the URL that was successfully used to download the bundle
     """
 
     # make sure urls becomes a list, in case user inputs a str
@@ -192,7 +194,7 @@ def download_data(urls):
                         sct_bar.update(dl_chunk)
 
                 sct_bar.close()
-            return tmp_path
+            return tmp_path, url
 
         except Exception as e:
             logger.warning("Link download error, trying next mirror (error was: %s)" % e)
@@ -230,7 +232,7 @@ def install_data(url, dest_folder, keep=False):
     :param url: URL or sequence thereof (if mirrors).
     :param dest_folder: destination directory for the data (to be created).
     :param keep: whether to keep existing data in the destination folder.
-    :return: None
+    :return: url_used: the URL that was successfully used to download the bundle
 
     .. note::
         The function tries to be smart about the data contents.
@@ -262,7 +264,7 @@ def install_data(url, dest_folder, keep=False):
         shutil.rmtree(dest_folder)
     os.makedirs(dest_folder, exist_ok=True)
 
-    tmp_file = download_data(url)
+    tmp_file, url_used = download_data(url)
 
     extraction_folder = tmp_create(basename="install-data")
 
@@ -322,6 +324,8 @@ def install_data(url, dest_folder, keep=False):
     logger.info("Removing temporary folders...")
     shutil.rmtree(os.path.dirname(tmp_file))
     shutil.rmtree(extraction_folder)
+
+    return url_used
 
 
 def install_named_dataset(dataset_name, dest_folder=None, keep=False):

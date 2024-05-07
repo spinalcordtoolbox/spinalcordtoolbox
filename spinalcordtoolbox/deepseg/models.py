@@ -399,7 +399,7 @@ def install_model(name_model):
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
         model_urls = url_field
-        download.install_data(model_urls, folder(name_model))
+        urls_used = [download.install_data(model_urls, folder(name_model))]
     # Dict of lists, with each list corresponding to a different model seed for ensembling
     else:
         if not isinstance(url_field, dict):
@@ -407,12 +407,12 @@ def install_model(name_model):
         for seed_name, model_urls in url_field.items():
             logger.info(f"\nInstalling '{seed_name}'...")
             download.install_data(model_urls, folder(os.path.join(name_model, seed_name)), keep=True)
-        model_urls = sum(url_field.values(), [])  # combine seed models into 1 list of urls
+        urls_used = sum(url_field.values(), [])  # combine seed models into 1 list of urls
 
     # Write `source.json` (for model provenance / updating)
     source_dict = {
         'model_urls': {
-            name_model: model_urls
+            name_model: urls_used
         }
     }
     with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
