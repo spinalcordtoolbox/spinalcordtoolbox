@@ -431,17 +431,24 @@ def install_default_models():
 
 
 def is_up_to_date(path_model, name_model):
+    """
+    Determine whether an on-disk model is up-to-date by comparing
+    the URL used to download the model with the latest mirrors.
+
+    :return: bool: whether the model is up-to-date
+    """
     source_path = os.path.join(path_model, "source.json")
     if os.path.isfile(source_path):
         with open(source_path, "r") as fp:
             source_dict = json.load(fp)
     else:
         logger.warning("Provenance file 'source.json' missing!")
-        source_dict = {'model_urls': {name_model: []}}  # empty list will force reinstall
+        source_dict = {'model_urls': {name_model: ['sample_url']}}  # dummy list will force reinstall
     source_urls = source_dict["model_urls"][name_model]
     newest_urls = MODELS[name_model]['url']
-    missing_urls = set(newest_urls) - set(source_urls)
-    return not missing_urls
+    # if 'source_urls' is up-to-date, then subtracting the current URLs should result in an empty set
+    outdated_urls = set(source_urls) - set(newest_urls)
+    return not outdated_urls
 
 
 def is_valid(path_models):
