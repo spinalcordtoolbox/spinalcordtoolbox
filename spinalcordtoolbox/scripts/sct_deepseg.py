@@ -155,7 +155,7 @@ def main(argv: Sequence[str]):
     set_loglevel(verbose=verbose)
 
     if (arguments.list_tasks is False
-            and arguments.install_task is None
+            and arguments.install is None
             and (arguments.i is None or arguments.task is None)):
         parser.error("You must specify either '-list-tasks', '-install-task', "
                      "or both '-i' + '-task'.")
@@ -164,8 +164,8 @@ def main(argv: Sequence[str]):
     if arguments.list_tasks:
         models.display_list_tasks()
 
-    if arguments.install_task is not None:
-        for name_model in models.TASKS[arguments.install_task]['models']:
+    if arguments.install is not None:
+        for name_model in models.TASKS[arguments.install]['models']:
             models.install_model(name_model)
         exit(0)
 
