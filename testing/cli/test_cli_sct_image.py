@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture
 def dmri_in():
     """Filepath for input 4D dMRI image."""
-    return 'dmri/dmri.nii.gz'
+    return sct_test_path('dmri', 'dmri.nii.gz')
 
 
 @pytest.fixture
@@ -35,7 +35,7 @@ def dmri_t_slices(tmp_path, dmri_in):
 def test_sct_image_split_dmri(dmri_t_slices):
     """Verify the output of '-split' matches reference image. Note: CLI script is run by the 'dmri_t_slices' fixture."""
     _, filename, ext = extract_fname(dmri_t_slices[0])
-    ref = Image(f'dmri/{filename}{ext}')  # Reference image should exist inside working directory (sct_testing_data)
+    ref = Image(sct_test_path('dmri', f'{filename}{ext}'))  # Reference image should exist inside working directory (sct_testing_data)
     new = Image(dmri_t_slices[0])         # New image should be generated inside tmp directory
     assert np.linalg.norm(ref.data - new.data) == 0
 
@@ -51,8 +51,8 @@ def test_sct_image_concat_dmri(tmp_path, dmri_t_slices, dmri_in):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.parametrize("path_in", ['t2/t2.nii.gz',       # 3D
-                                     'dmri/dmri.nii.gz'])  # 4D
+@pytest.mark.parametrize("path_in", [sct_test_path('t2', 't2.nii.gz'),       # 3D
+                                     sct_test_path('dmri', 'dmri.nii.gz')])  # 4D
 def test_sct_image_getorient(path_in):
     """Run the CLI script and ."""
     sct_image.main(argv=['-i', path_in, '-getorient'])
@@ -62,7 +62,7 @@ def test_sct_image_getorient(path_in):
 def test_sct_image_pad():
     """Run the CLI script and test the '-pad' option."""
     pad = 2
-    path_in = 'mt/mtr.nii.gz'  # 3D
+    path_in = sct_test_path('mt', 'mtr.nii.gz')  # 3D
     path_out = 'sct_image_out.nii.gz'
     sct_image.main(argv=['-i', path_in, '-o', 'sct_image_out.nii.gz', '-pad', f'0,0,{pad}'])
 
@@ -89,7 +89,7 @@ def test_sct_image_display_warp_check_output_exists():
 def test_sct_image_stitch(tmp_path):
     """Run the CLI script and check that the stitched file was generated."""
     # crop images for testing stitching function
-    path_in = os.path.join('t2', 't2.nii.gz')
+    path_in = sct_test_path('t2', 't2.nii.gz')
     fname_roi1 = os.path.join(tmp_path, 't2_roi1.nii.gz')
     fname_roi2 = os.path.join(tmp_path, 't2_roi2.nii.gz')
     sct_crop_image.main(argv=['-i', path_in, '-o', fname_roi1, '-xmin', '0', '-xmax', '59',

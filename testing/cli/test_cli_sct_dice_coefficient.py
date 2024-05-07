@@ -5,6 +5,7 @@ import logging
 
 from spinalcordtoolbox.image import Image, compute_dice
 from spinalcordtoolbox.scripts import sct_dice_coefficient
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ def test_sct_dice_coefficient_check_output_against_groundtruth():
     # FIXME: The results of "sct_dice_coefficient" are not actually verified. Instead, the "compute_dice" function
     #        is called, and THOSE results are verified instead.
     # This was copied as-is from the existing 'sct_testing' test, but should be fixed at a later date.
-    path_data = 't2/t2_seg-manual.nii.gz'
+    path_data = sct_test_path('t2', 't2_seg-manual.nii.gz')
     sct_dice_coefficient.main(argv=['-i', path_data, '-d', path_data])
     im_seg_manual = Image(path_data)
     dice_segmentation = compute_dice(im_seg_manual, im_seg_manual, mode='3d', zboundaries=False)

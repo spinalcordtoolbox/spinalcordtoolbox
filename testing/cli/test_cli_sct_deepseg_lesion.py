@@ -4,6 +4,7 @@ import pytest
 import logging
 
 from spinalcordtoolbox.scripts import sct_deepseg_lesion
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
 
@@ -12,4 +13,4 @@ logger = logging.getLogger(__name__)
 def test_sct_deepseg_lesion_no_checks():
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
-    sct_deepseg_lesion.main(argv=['-i', 't2/t2.nii.gz', '-c', 't2'])
+    sct_deepseg_lesion.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'), '-c', 't2'])

@@ -7,6 +7,7 @@ import numpy as np
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.scripts import sct_detect_pmj
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +16,9 @@ logger = logging.getLogger(__name__)
 def test_sct_detect_pmj_check_euclidean_distance_against_groundtruth():
     """Run the CLI script and verify that euclidean distances between predicted and ground truth coordinates
     are within a certain threshold."""
-    fname_in = 'template/template/PAM50_small_t2.nii.gz'
+    fname_in = sct_test_path('template', 'template', 'PAM50_small_t2.nii.gz')
     fname_out = 'PAM50_small_t2_pmj.nii.gz'
-    fname_gt = 'template/template/PAM50_small_t2_pmj_manual.nii.gz'
+    fname_gt = sct_test_path('template', 'template', 'PAM50_small_t2_pmj_manual.nii.gz')
     sct_detect_pmj.main(argv=['-i', fname_in, '-o', fname_out, '-c', 't2', '-qc', 'testing-qc'])
 
     im_pmj = Image(fname_out)

@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 @pytest.mark.sct_testing
 def test_sct_label_vertebrae_consistent_disc(tmp_path):
     """Check that all expected output labeled discs exist"""
-    fname_ref = 't2/labels.nii.gz'
-    sct_label_vertebrae.main(argv=['-i', 't2/t2.nii.gz', '-s', 't2/t2_seg-manual.nii.gz', '-c', 't2',
-                                   '-discfile', fname_ref, '-ofolder', str(tmp_path)])
+    fname_ref = sct_test_path('t2', 'labels.nii.gz')
+    sct_label_vertebrae.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
+                                   '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                   '-c', 't2', '-discfile', fname_ref, '-ofolder', str(tmp_path)])
     ref = Image(fname_ref)
     pred = Image(os.path.join(tmp_path, 't2_seg-manual_labeled_discs.nii.gz'))
     fp, fn = check_missing_label(pred, ref)
@@ -35,8 +36,11 @@ def test_sct_label_vertebrae_consistent_disc(tmp_path):
 def test_sct_label_vertebrae_initfile_qc_no_checks():
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
-    sct_label_vertebrae.main(argv=['-i', 't2/t2.nii.gz', '-s', 't2/t2_seg-manual.nii.gz', '-c', 't2',
-                                   '-initfile', 't2/init_label_vertebrae.txt', '-t', 'template', '-qc', 'testing-qc'])
+    sct_label_vertebrae.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
+                                   '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                   '-c', 't2',
+                                   '-initfile', sct_test_path('t2', 'init_label_vertebrae.txt'),
+                                   '-t', sct_test_path('template'), '-qc', 'testing-qc'])
 
 
 def test_sct_label_vertebrae_initz_error():

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 def test_sct_label_utils_cubic_to_point():
     """Run the CLI script and verify the resulting center of mass coordinate."""
     fname_out = 'test_centerofmass.nii.gz'
-    sct_label_utils.main(argv=['-i', 't2/t2_seg-manual.nii.gz', '-cubic-to-point', '-o', fname_out])
+    sct_label_utils.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-cubic-to-point', '-o', fname_out])
     # Note: Old, broken 'sct_testing' test used '31,28,25,1' as ground truth. Is this a regression?
     assert Image(fname_out).getNonZeroCoordinates() == [Coordinate([31, 27, 25, 1])]
 
@@ -26,7 +26,7 @@ def test_sct_label_utils_cubic_to_point():
 def test_sct_label_utils_create():
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
-    sct_label_utils.main(argv=['-i', 't2/t2_seg-manual.nii.gz', '-create', '1,1,1,1:2,2,2,2'])
+    sct_label_utils.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'), '-create', '1,1,1,1:2,2,2,2'])
 
 
 def test_create_seg_mid(tmp_path):
