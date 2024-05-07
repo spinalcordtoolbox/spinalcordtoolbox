@@ -329,6 +329,7 @@ class SmartFormatter(argparse.ArgumentDefaultsHelpFormatter):
         offsets = [re.match("^[ \t]*", line).group(0) for line in lines]
         wrapped = []
         for i, li in enumerate(lines):
+            li = li.rstrip()  # strip trailing whitespace
             if len(li) > 0:
                 # Check for ANSI graphics control sequences, and increase width to compensate
                 width_adjusted = width + len("".join(re.findall("\\x1b\[[0-9;]+m", li)))  # noqa: W605
