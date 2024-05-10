@@ -213,7 +213,7 @@ def main(argv: Sequence[str]):
                 models.install_model(name_model)
                 path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
             # Check folder version file ('{path_model}/source.json')
-            elif not models.is_up_to_date(path_model, name_model):
+            elif not models.is_up_to_date(path_model):
                 printv("Model {} is out of date. Re-installing it now...".format(name_model))
                 models.install_model(name_model)
                 path_models = models.find_model_folder_paths(path_model)  # Re-parse to find newly downloaded folders
@@ -332,7 +332,7 @@ def main(argv: Sequence[str]):
                     "Version": __version__,
                     "CodeURL": f"https://github.com/spinalcordtoolbox/spinalcordtoolbox/"
                                f"blob/{_git_info()[1].strip('*')}/spinalcordtoolbox/scripts/sct_deepseg.py",
-                    "ModelURL": source_dict["model_urls"][name_model][0],
+                    "ModelURL": source_dict["model_urls"],
                 }
             ]
         }

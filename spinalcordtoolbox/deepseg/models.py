@@ -411,9 +411,8 @@ def install_model(name_model):
 
     # Write `source.json` (for model provenance / updating)
     source_dict = {
-        'model_urls': {
-            name_model: urls_used
-        }
+        'model_name': name_model,
+        'model_urls': urls_used
     }
     with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
         json.dump(source_dict, fp, indent=4)
@@ -430,7 +429,7 @@ def install_default_models():
             install_model(name_model)
 
 
-def is_up_to_date(path_model, name_model):
+def is_up_to_date(path_model):
     """
     Determine whether an on-disk model is up-to-date by comparing
     the URL used to download the model with the latest mirrors.
@@ -443,8 +442,12 @@ def is_up_to_date(path_model, name_model):
         return False  # NB: This will force a reinstall
     with open(source_path, "r") as fp:
         source_dict = json.load(fp)
-    source_urls = source_dict["model_urls"][name_model]
-    newest_urls = MODELS[name_model]['url']
+    model_name = source_dict["model_name"]
+    if model_name not in MODELS:
+        logger.warning(f"Model name '{model_name}' from source.json does not match model names in SCT source code.")
+        return False
+    newest_urls = MODELS[model_name]['url']
+    source_urls = source_dict["model_urls"]
     # if 'source_urls' is up-to-date, then subtracting the current URLs should result in an empty set
     outdated_urls = set(source_urls) - set(newest_urls)
     return not outdated_urls
