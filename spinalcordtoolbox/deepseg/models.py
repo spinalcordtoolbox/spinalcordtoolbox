@@ -451,9 +451,10 @@ def is_up_to_date(path_model):
     # Single-seed models
     if isinstance(expected_model_urls, list) and isinstance(actual_model_urls, list):
         # if 'actual_model_urls' is up-to-date, then subtracting the current URLs should result in an empty set
-        return not (set(actual_model_urls) - set(expected_model_urls))
+        if set(actual_model_urls) - set(expected_model_urls):
+            return False
     # Multi-seed, ensemble models
-    if isinstance(expected_model_urls, dict) and isinstance(actual_model_urls, dict):
+    elif isinstance(expected_model_urls, dict) and isinstance(actual_model_urls, dict):
         for seed, url in actual_model_urls.items():
             if seed not in expected_model_urls:
                 logger.warning(f"unexpected seed: {seed}")
@@ -464,7 +465,11 @@ def is_up_to_date(path_model):
         if expected_model_urls:
             logger.warning(f"missing seeds: {list(expected_model_urls.keys())}")
             return False
-        return True
+    else:
+        logger.warning("Mismatch between 'source.json' URL format and SCT source code URLs")
+        return False
+    logger.info(f"Model '{model_name}' is up to date")
+    return True
 
 
 def is_valid(path_models):
