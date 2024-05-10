@@ -14,19 +14,17 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_maths_percent_no_checks():
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
-    sct_maths.main(argv=['-i', 'mt/mtr.nii.gz', '-percent', '95', '-o', 'test.nii.gz'])
+    sct_maths.main(argv=['-i', sct_test_path('mt', 'mtr.nii.gz'), '-percent', '95', '-o', 'test.nii.gz'])
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_maths_add_integer_no_checks():
     """Run the CLI script without checking results.
     TODO: Check the results. (This test replaces the 'sct_testing' test, which did not implement any checks.)"""
-    sct_maths.main(argv=['-i', 'mt/mtr.nii.gz', '-add', '1', '-o', 'test.nii.gz'])
+    sct_maths.main(argv=['-i', sct_test_path('mt', 'mtr.nii.gz'), '-add', '1', '-o', 'test.nii.gz'])
 
 
 @pytest.mark.parametrize('dim', ['0', '1', '2'])

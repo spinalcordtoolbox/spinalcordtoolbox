@@ -64,6 +64,7 @@ setup(
                 'sct_compute_ernst_angle',
                 'sct_compute_hausdorff_distance',
                 'sct_compute_compression',
+                'sct_compute_flow',
                 'sct_compute_mtr',
                 'sct_compute_mtsat',
                 'sct_compute_snr',

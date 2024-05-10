@@ -7,21 +7,21 @@ import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.scripts import sct_compute_mtr
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_compute_mtr_results_are_identical(tmp_path):
     """
     Test the CLI script to ensure that MTR computed with sct_testing_data
     images remains the same.
     """
 
-    mt0_path = 'mt/mt0_reg_slicereg_goldstandard.nii.gz'
-    mt1_path = 'mt/mt1.nii.gz'
-    mtr_groundtruth_path = 'mt/mtr.nii.gz'
+    mt0_path = sct_test_path('mt', 'mt0_reg_slicereg_goldstandard.nii.gz')
+    mt1_path = sct_test_path('mt', 'mt1.nii.gz')
+    mtr_groundtruth_path = sct_test_path('mt', 'mtr.nii.gz')
     mtr_output_path = str(tmp_path / 'mtr_output.nii.gz')
 
     # We increase the threshold here because the default value is 100, but the

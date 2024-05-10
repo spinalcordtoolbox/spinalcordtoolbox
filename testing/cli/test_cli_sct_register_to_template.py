@@ -62,19 +62,19 @@ def test_sct_register_to_template_non_rpi_data(tmp_path, template_lpi):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize("fname_gt, remaining_args", [
-    ('template/template/PAM50_small_cord.nii.gz',
-     ['-l', 't2/labels.nii.gz', '-t', 'template', '-qc', 'qc-testing', '-param',
+    (sct_test_path('template', 'template', 'PAM50_small_cord.nii.gz'),
+     ['-l', sct_test_path('t2', 'labels.nii.gz'), '-t', sct_test_path('template'), '-qc', 'qc-testing', '-param',
       'step=1,type=seg,algo=centermassrot,metric=MeanSquares:step=2,type=seg,algo=bsplinesyn,iter=5,metric=MeanSquares']),
     (os.path.join(__sct_dir__, 'data/PAM50/template/PAM50_cord.nii.gz'),
-     ['-ldisc', 't2/labels.nii.gz', '-ref', 'subject'])
+     ['-ldisc', sct_test_path('t2', 'labels.nii.gz'), '-ref', 'subject'])
 ])
 def test_sct_register_to_template_dice_coefficient_against_groundtruth(fname_gt, remaining_args, tmp_path):
     """Run the CLI script and verify transformed images have expected attributes."""
-    fname_seg = 't2/t2_seg-manual.nii.gz'
+    fname_seg = sct_test_path('t2', 't2_seg-manual.nii.gz')
     dice_threshold = 0.9
-    sct_register_to_template.main(argv=['-i', 't2/t2.nii.gz', '-s', fname_seg, '-ofolder', str(tmp_path)]
+    sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
+                                        '-s', fname_seg, '-ofolder', str(tmp_path)]
                                   + remaining_args)
 
     # Straightening files are only generated for `-ref template`. They should *not* exist for `-ref subject`.
