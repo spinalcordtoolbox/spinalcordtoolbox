@@ -438,12 +438,11 @@ def is_up_to_date(path_model, name_model):
     :return: bool: whether the model is up-to-date
     """
     source_path = os.path.join(path_model, "source.json")
-    if os.path.isfile(source_path):
-        with open(source_path, "r") as fp:
-            source_dict = json.load(fp)
-    else:
+    if not os.path.isfile(source_path):
         logger.warning("Provenance file 'source.json' missing!")
-        source_dict = {'model_urls': {name_model: ['sample_url']}}  # dummy list will force reinstall
+        return False  # NB: This will force a reinstall
+    with open(source_path, "r") as fp:
+        source_dict = json.load(fp)
     source_urls = source_dict["model_urls"][name_model]
     newest_urls = MODELS[name_model]['url']
     # if 'source_urls' is up-to-date, then subtracting the current URLs should result in an empty set
