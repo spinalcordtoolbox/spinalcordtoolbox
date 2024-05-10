@@ -404,11 +404,11 @@ def install_model(name_model):
     else:
         if not isinstance(url_field, dict):
             raise ValueError("Invalid url field in MODELS")
+        urls_used = {}
         for seed_name, model_urls in url_field.items():
             logger.info(f"\nInstalling '{seed_name}'...")
-            download.install_data(model_urls, folder(os.path.join(name_model, seed_name)), keep=True)
-        urls_used = sum(url_field.values(), [])  # combine seed models into 1 list of urls
-
+            urls_used[seed_name] = download.install_data(model_urls,
+                                                         folder(os.path.join(name_model, seed_name)), keep=True)
     # Write `source.json` (for model provenance / updating)
     source_dict = {
         'model_name': name_model,
@@ -446,11 +446,25 @@ def is_up_to_date(path_model):
     if model_name not in MODELS:
         logger.warning(f"Model name '{model_name}' from source.json does not match model names in SCT source code.")
         return False
-    newest_urls = MODELS[model_name]['url']
-    source_urls = source_dict["model_urls"]
-    # if 'source_urls' is up-to-date, then subtracting the current URLs should result in an empty set
-    outdated_urls = set(source_urls) - set(newest_urls)
-    return not outdated_urls
+    expected_model_urls = MODELS[model_name]['url']
+    actual_model_urls = source_dict["model_urls"]
+    # Single-seed models
+    if isinstance(expected_model_urls, list) and isinstance(actual_model_urls, list):
+        # if 'actual_model_urls' is up-to-date, then subtracting the current URLs should result in an empty set
+        return not (set(actual_model_urls) - set(expected_model_urls))
+    # Multi-seed, ensemble models
+    if isinstance(expected_model_urls, dict) and isinstance(actual_model_urls, dict):
+        for seed, url in actual_model_urls.items():
+            if seed not in expected_model_urls:
+                logger.warning(f"unexpected seed: {seed}")
+                return False
+            if url not in expected_model_urls.pop(seed):
+                logger.warning(f"wrong version for {seed}: {url}")
+                return False
+        if expected_model_urls:
+            logger.warning(f"missing seeds: {list(expected_model_urls.keys())}")
+            return False
+        return True
 
 
 def is_valid(path_models):
