@@ -50,7 +50,6 @@ def dummy_3d_mask_nib():
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_compute_compression_value_against_groundtruth():
     """Run the CLI script and verify that computed mscc value is equivalent to known ground truth value."""
     di, da, db = 6.85, 7.65, 7.02

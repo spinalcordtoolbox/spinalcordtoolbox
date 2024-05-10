@@ -8,12 +8,12 @@ import pytest
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.scripts import sct_get_centerline
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_get_centerline_output_file_exists(tmp_path):
     """This test checks the output file using default usage of the CLI script.
 
@@ -22,25 +22,23 @@ def test_sct_get_centerline_output_file_exists(tmp_path):
     'unit_testing/test_centerline.py'. For more details, see:
        * https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2774/commits/5e6bd57abf6bcf825cd110e0d74b8e465d298409
        * https://github.com/spinalcordtoolbox/spinalcordtoolbox/pull/2774#discussion_r450546434"""
-    sct_get_centerline.main(argv=['-i', 't2s/t2s.nii.gz', '-c', 't2s', '-qc', str(tmp_path)])
-    for file in [os.path.join('t2s', 't2s_centerline.nii.gz'), os.path.join('t2s', 't2s_centerline.csv')]:
+    sct_get_centerline.main(argv=['-i', sct_test_path('t2s', 't2s.nii.gz'), '-c', 't2s', '-qc', str(tmp_path)])
+    for file in [sct_test_path('t2s', 't2s_centerline.nii.gz'), sct_test_path('t2s', 't2s_centerline.csv')]:
         assert os.path.exists(file)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize('ext', ["", ".nii.gz"])
 def test_sct_get_centerline_output_file_exists_with_o_arg(tmp_path, ext):
     """This test checks the '-o' argument with and without an extension to
     ensure that the correct output file is created either way."""
-    sct_get_centerline.main(argv=['-i', 't2s/t2s.nii.gz', '-c', 't2s', '-qc', str(tmp_path),
+    sct_get_centerline.main(argv=['-i', sct_test_path('t2s', 't2s.nii.gz'), '-c', 't2s', '-qc', str(tmp_path),
                                   '-o', os.path.join(tmp_path, 't2s_centerline'+ext)])
-    for file in [os.path.join('t2s', 't2s_centerline.nii.gz'), os.path.join('t2s', 't2s_centerline.csv')]:
+    for file in [sct_test_path('t2s', 't2s_centerline.nii.gz'), sct_test_path('t2s', 't2s_centerline.csv')]:
         assert os.path.exists(file)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_get_centerline_soft_sums_to_one_and_overlaps_with_bin(tmp_path):
     """
     This test checks two necessary conditions of the soft centerline:
@@ -49,7 +47,8 @@ def test_sct_get_centerline_soft_sums_to_one_and_overlaps_with_bin(tmp_path):
     2) The output maximum of the soft centerline overlaps with the binary segmentation on all slices.
     """
     # Condition 1: All slices of the soft centerline sum to 1
-    sct_get_centerline.main(argv=['-i', 't2/t2_seg-manual.nii.gz', '-method', 'fitseg', '-centerline-soft', '1', '-o',
+    sct_get_centerline.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                  '-method', 'fitseg', '-centerline-soft', '1', '-o',
                                   os.path.join(tmp_path, 't2_seg_centerline_soft.nii.gz')])
     im_soft = Image(os.path.join(tmp_path, 't2_seg_centerline_soft.nii.gz'))
     # Sum soft centerline intensities in the (x,y) plane, across all slices
@@ -58,7 +57,8 @@ def test_sct_get_centerline_soft_sums_to_one_and_overlaps_with_bin(tmp_path):
     assert (sum_over_slices == 1).all()
 
     # Condition 2: The max voxels of the soft centerline overlap with the binary centerline
-    sct_get_centerline.main(argv=['-i', 't2/t2_seg-manual.nii.gz', '-method', 'fitseg', '-centerline-soft', '0', '-o',
+    sct_get_centerline.main(argv=['-i', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                  '-method', 'fitseg', '-centerline-soft', '0', '-o',
                                   os.path.join(tmp_path, 't2_seg_centerline_bin.nii.gz')])
     im_bin = Image(os.path.join(tmp_path, 't2_seg_centerline_bin.nii.gz'))
     # Find the maximum intensity voxel across all slices in soft centerline and binary centerline

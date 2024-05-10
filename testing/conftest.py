@@ -33,12 +33,17 @@ def pytest_sessionstart():
         install_named_dataset('sct_testing_data', dest_folder=sct_test_path())
 
 
-@pytest.fixture
-def run_in_sct_testing_data_dir():
-    """Temporarily change the working directory to 'sct_testing_data'. This replicates the behavior of the old
-    `sct_testing`, and is needed to prevent tests from cluttering the working directory with output files."""
+@pytest.fixture(autouse=True)
+def run_in_tmp_path(tmp_path):
+    """
+    Temporarily change the working directory to a pytest temporary dir. This is needed to prevent tests from
+    cluttering the working directory *or* the sct_testing_data directory with output files.
+
+    Note: Because this uses the `tmp_path` fixture, which generates one temporary directory per test, this allows
+          tests to _also_ call `tmp_path` and access the same directory (e.g. for checking outputs).
+    """
     cwd = os.getcwd()
-    os.chdir(sct_test_path())
+    os.chdir(tmp_path)
     yield
     os.chdir(cwd)
 
