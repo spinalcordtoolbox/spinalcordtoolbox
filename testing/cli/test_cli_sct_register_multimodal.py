@@ -46,10 +46,11 @@ def test_sct_register_multimodal_mask_files_exist(tmp_path):
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize("use_seg,param,fname_gt", [
-    (False, 'step=1,algo=syn,type=im,iter=1,smooth=1,shrink=2,metric=MI', 'mt/mt0_reg_syn_goldstandard.nii.gz'),
-    (False, 'step=1,algo=slicereg,type=im,iter=5,smooth=0,metric=MeanSquares', 'mt/mt0_reg_slicereg_goldstandard.nii.gz'),
+    (False, 'step=1,algo=syn,type=im,iter=1,smooth=1,shrink=2,metric=MI',
+     sct_test_path('mt', 'mt0_reg_syn_goldstandard.nii.gz')),
+    (False, 'step=1,algo=slicereg,type=im,iter=5,smooth=0,metric=MeanSquares',
+     sct_test_path('mt', 'mt0_reg_slicereg_goldstandard.nii.gz')),
     (False, 'step=1,algo=dl,type=im', None),
     (True, 'step=1,algo=centermassrot,type=seg,rot_method=pca', None),
     (True, 'step=1,algo=centermassrot,type=imseg,rot_method=hog', None),
@@ -63,9 +64,11 @@ def test_sct_register_multimodal_mt0_image_data_within_threshold(use_seg, param,
     fname_owarp = str(tmp_path/'warp_mt02mt1.nii.gz')
     fname_owarpinv = str(tmp_path/'warp_mt12mt0.nii.gz')
 
-    argv = ['-i', 'mt/mt0.nii.gz', '-d', 'mt/mt1.nii.gz', '-x', 'linear', '-r', '0', '-param', param,
+    argv = ['-i', sct_test_path('mt', 'mt0.nii.gz'),
+            '-d', sct_test_path('mt', 'mt1.nii.gz'), '-x', 'linear', '-r', '0', '-param', param,
             '-o', fname_out_src, '-owarp', fname_owarp, '-owarpinv', fname_owarpinv]
-    seg_argv = ['-iseg', 'mt/mt0_seg.nii.gz', '-dseg', 'mt/mt1_seg.nii.gz']
+    seg_argv = ['-iseg', sct_test_path('mt', 'mt0_seg.nii.gz'),
+                '-dseg', sct_test_path('mt', 'mt1_seg.nii.gz')]
     sct_register_multimodal.main(argv=(argv + seg_argv) if use_seg else argv)
 
     for f in [fname_out_src, fname_out_dest, fname_owarp, fname_owarpinv]:

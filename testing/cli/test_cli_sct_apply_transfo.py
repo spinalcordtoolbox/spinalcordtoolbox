@@ -5,24 +5,37 @@ import logging
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.scripts import sct_apply_transfo
+from spinalcordtoolbox.utils.sys import sct_test_path
 
 logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 @pytest.mark.parametrize("path_in,path_dest,path_warp,path_out,remaining_args", [
-    ('template/template/PAM50_small_t2.nii.gz', 't2/t2.nii.gz', 't2/warp_template2anat.nii.gz',
+    (sct_test_path('template', 'template', 'PAM50_small_t2.nii.gz'),
+     sct_test_path('t2', 't2.nii.gz'),
+     sct_test_path('t2', 'warp_template2anat.nii.gz'),
      'PAM50_small_t2_reg.nii', []),
-    ('template/template/PAM50_small_t2.nii.gz', 't2/t2.nii.gz', 't2/warp_template2anat.nii.gz',
+    (sct_test_path('template', 'template', 'PAM50_small_t2.nii.gz'),
+     sct_test_path('t2', 't2.nii.gz'),
+     sct_test_path('t2', 'warp_template2anat.nii.gz'),
      'PAM50_small_t2_reg-crop1.nii', ['-crop', '1']),
-    ('template/template/PAM50_small_t2.nii.gz', 't2/t2.nii.gz', 't2/warp_template2anat.nii.gz',
+    (sct_test_path('template', 'template', 'PAM50_small_t2.nii.gz'),
+     sct_test_path('t2', 't2.nii.gz'),
+     sct_test_path('t2', 'warp_template2anat.nii.gz'),
      'PAM50_small_t2_reg-crop2.nii', ['-crop', '2']),
-    ('template/template/PAM50_small_t2.nii.gz', 't2/t2.nii.gz', 't2/warp_template2anat.nii.gz',
+    (sct_test_path('template', 'template', 'PAM50_small_t2.nii.gz'),
+     sct_test_path('t2', 't2.nii.gz'),
+     sct_test_path('t2', 'warp_template2anat.nii.gz'),
      'PAM50_small_t2_reg-concatWarp.nii', []),
-    ('template/template/PAM50_small_t2.nii.gz', 'dmri/dmri.nii.gz', 't2/warp_template2anat.nii.gz',
+    (sct_test_path('template', 'template', 'PAM50_small_t2.nii.gz'),
+     sct_test_path('dmri', 'dmri.nii.gz'),
+     sct_test_path('t2', 'warp_template2anat.nii.gz'),
      'PAM50_small_t2_reg-4Dref.nii', []),
-    ('dmri/dmri.nii.gz', 't2/t2.nii.gz', 'mt/warp_t22mt1.nii.gz', 'PAM50_small_t2_reg-4Din.nii', [])
+    (sct_test_path('dmri', 'dmri.nii.gz'),
+     sct_test_path('t2', 't2.nii.gz'),
+     sct_test_path('mt', 'warp_t22mt1.nii.gz'),
+     'PAM50_small_t2_reg-4Din.nii', [])
 ])
 def test_sct_apply_transfo_output_image_attributes(path_in, path_dest, path_warp, path_out, remaining_args):
     """Run the CLI script and verify transformed images have expected attributes."""

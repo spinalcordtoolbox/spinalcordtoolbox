@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 
 @pytest.mark.sct_testing
-@pytest.mark.usefixtures("run_in_sct_testing_data_dir")
 def test_sct_compute_ernst_angle_value_against_groundtruth():
     """Run the CLI script and verify that computed ernst angle is equivalent to known ground truth value."""
     fname_out = 'ernst_angle.txt'
