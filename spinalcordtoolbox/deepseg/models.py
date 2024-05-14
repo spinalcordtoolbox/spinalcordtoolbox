@@ -399,14 +399,23 @@ def install_model(name_model):
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
         model_urls = url_field
-        download.install_data(model_urls, folder(name_model))
+        urls_used = download.install_data(model_urls, folder(name_model))
     # Dict of lists, with each list corresponding to a different model seed for ensembling
     else:
         if not isinstance(url_field, dict):
             raise ValueError("Invalid url field in MODELS")
+        urls_used = {}
         for seed_name, model_urls in url_field.items():
             logger.info(f"\nInstalling '{seed_name}'...")
-            download.install_data(model_urls, folder(os.path.join(name_model, seed_name)), keep=True)
+            urls_used[seed_name] = download.install_data(model_urls,
+                                                         folder(os.path.join(name_model, seed_name)), keep=True)
+    # Write `source.json` (for model provenance / updating)
+    source_dict = {
+        'model_name': name_model,
+        'model_urls': urls_used
+    }
+    with open(os.path.join(folder(name_model), "source.json"), "w") as fp:
+        json.dump(source_dict, fp, indent=4)
 
 
 def install_default_models():
@@ -418,6 +427,48 @@ def install_default_models():
     for name_model, value in MODELS.items():
         if value['default']:
             install_model(name_model)
+
+
+def is_up_to_date(path_model):
+    """
+    Determine whether an on-disk model is up-to-date by comparing
+    the URL used to download the model with the latest mirrors.
+
+    :return: bool: whether the model is up-to-date
+    """
+    source_path = os.path.join(path_model, "source.json")
+    if not os.path.isfile(source_path):
+        logger.warning("Provenance file 'source.json' missing!")
+        return False  # NB: This will force a reinstall
+    with open(source_path, "r") as fp:
+        source_dict = json.load(fp)
+    model_name = source_dict["model_name"]
+    if model_name not in MODELS:
+        logger.warning(f"Model name '{model_name}' from source.json does not match model names in SCT source code.")
+        return False
+    expected_model_urls = MODELS[model_name]['url'].copy()
+    actual_model_urls = source_dict["model_urls"]
+    # Single-seed models
+    if isinstance(expected_model_urls, list) and isinstance(actual_model_urls, str):
+        if actual_model_urls not in expected_model_urls:
+            return False
+    # Multi-seed, ensemble models
+    elif isinstance(expected_model_urls, dict) and isinstance(actual_model_urls, dict):
+        for seed, url in actual_model_urls.items():
+            if seed not in expected_model_urls:
+                logger.warning(f"unexpected seed: {seed}")
+                return False
+            if url not in expected_model_urls.pop(seed):
+                logger.warning(f"wrong version for {seed}: {url}")
+                return False
+        if expected_model_urls:
+            logger.warning(f"missing seeds: {list(expected_model_urls.keys())}")
+            return False
+    else:
+        logger.warning("Mismatch between 'source.json' URL format and SCT source code URLs")
+        return False
+    logger.info(f"Model '{model_name}' is up to date")
+    return True
 
 
 def is_valid(path_models):
