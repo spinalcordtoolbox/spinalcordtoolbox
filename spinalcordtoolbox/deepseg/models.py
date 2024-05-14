@@ -399,7 +399,7 @@ def install_model(name_model):
     # List of mirror URLs corresponding to a single model
     if isinstance(url_field, list):
         model_urls = url_field
-        urls_used = [download.install_data(model_urls, folder(name_model))]
+        urls_used = download.install_data(model_urls, folder(name_model))
     # Dict of lists, with each list corresponding to a different model seed for ensembling
     else:
         if not isinstance(url_field, dict):
@@ -449,9 +449,8 @@ def is_up_to_date(path_model):
     expected_model_urls = MODELS[model_name]['url']
     actual_model_urls = source_dict["model_urls"]
     # Single-seed models
-    if isinstance(expected_model_urls, list) and isinstance(actual_model_urls, list):
-        # if 'actual_model_urls' is up-to-date, then subtracting the current URLs should result in an empty set
-        if set(actual_model_urls) - set(expected_model_urls):
+    if isinstance(expected_model_urls, list) and isinstance(actual_model_urls, str):
+        if actual_model_urls not in expected_model_urls:
             return False
     # Multi-seed, ensemble models
     elif isinstance(expected_model_urls, dict) and isinstance(actual_model_urls, dict):
