@@ -20,7 +20,7 @@ from monai.inferers import sliding_window_inference
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.image import Image, get_orientation, add_suffix
-from spinalcordtoolbox.math import binarize
+from spinalcordtoolbox.math import binarize, keep_largest_object
 
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
@@ -125,6 +125,10 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, use
         fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device)
         for fname_out, target in zip(fnames_out, targets):
             im_out = Image(fname_out)
+            # Apply postprocessing (replicates existing functionality from ivadomed package)
+            # 1. Keep the largest connected object
+            im_out.data = keep_largest_object(im_out.data)
+            # 2. Binarize predictions based on the threshold value
             if threshold is not None:
                 im_out.data = binarize(im_out.data, threshold)
             im_lst.append(im_out)
