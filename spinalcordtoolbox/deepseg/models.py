@@ -446,7 +446,7 @@ def is_up_to_date(path_model):
     if model_name not in MODELS:
         logger.warning(f"Model name '{model_name}' from source.json does not match model names in SCT source code.")
         return False
-    expected_model_urls = MODELS[model_name]['url']
+    expected_model_urls = MODELS[model_name]['url'].copy()
     actual_model_urls = source_dict["model_urls"]
     # Single-seed models
     if isinstance(expected_model_urls, list) and isinstance(actual_model_urls, str):
