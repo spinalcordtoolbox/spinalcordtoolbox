@@ -646,6 +646,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     """
     logger.info('\n*** Generate Quality Control (QC) html report ***')
     dpi = 300  # Output resolution of the image
+    p_resample = 0.6  # Resolution in mm to resample the image to
 
     # The following are the expected types for some variables that get values
     # assigned in all branches of the big `if...elif...elif...` construct below
@@ -659,25 +660,26 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Axial orientation, switch between two input images
     if process in ['sct_register_multimodal', 'sct_register_to_template']:
         plane = 'Axial'
-        qcslice = Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
         action_list = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.mosaic()[:2]
     # Axial orientation, switch between the image and the segmentation
     elif process in ['sct_propseg', 'sct_deepseg_sc', 'sct_deepseg_gm']:
         plane = 'Axial'
-        qcslice = Axial([Image(fname_in1), Image(fname_seg)])
+        im_list = [Image(fname_in1), Image(fname_seg)]
         action_list = [QcImage.listed_seg]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between the image and the centerline
     elif process in ['sct_get_centerline']:
         plane = 'Axial'
-        qcslice = Axial([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        p_resample = None
+        im_list = [Image(fname_in1), Image(fname_seg)]
         action_list = [QcImage.label_centerline]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between the image and the white matter segmentation (linear interp, in blue)
     elif process in ['sct_warp_template']:
         plane = 'Axial'
-        qcslice = Axial([Image(fname_in1), Image(fname_seg)])
+        im_list = [Image(fname_in1), Image(fname_seg)]
         action_list = [QcImage.template]
         def qcslice_layout(x): return x.mosaic()
     # Axial orientation, switch between gif image (before and after motion correction) and grid overlay
@@ -685,69 +687,74 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         plane = 'Axial'
         if fname_seg is None:
             raise ValueError("Segmentation is needed to ensure proper cropping around spinal cord.")
-        qcslice = Axial([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
         action_list = [QcImage.grid]
         def qcslice_layout(x): return x.mosaics_through_time()
     # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
         plane = 'Sagittal'
+        p_resample = None
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
-        qcslice = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        im_list = [Image(fname_in1), Image(fname_seg)]
         action_list = [QcImage.label_vertebrae]
         def qcslice_layout(x): return x.single()
     #  Sagittal orientation, display posterior labels
     elif process in ['sct_label_utils']:
         plane = 'Sagittal'
+        p_resample = None
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         # projected_image = projected(Image(fname_seg))
-        qcslice = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        im_list = [Image(fname_in1), Image(fname_seg)]
         action_list = [QcImage.label_utils]
         def qcslice_layout(x): return x.single()
     # Sagittal orientation, display PMJ box
     elif process in ['sct_detect_pmj']:
         plane = 'Sagittal'
-        qcslice = Sagittal([Image(fname_in1), Image(fname_seg)], p_resample=None)
+        p_resample = None
+        im_list = [Image(fname_in1), Image(fname_seg)]
         action_list = [QcImage.highlight_pmj]
         def qcslice_layout(x): return x.single()
     # Sagittal orientation, static image
     elif process in ['sct_straighten_spinalcord']:
         plane = 'Sagittal'
+        p_resample = None
         dpi = 100
-        qcslice = Sagittal([Image(fname_in1), Image(fname_in1)], p_resample=None)
+        im_list = [Image(fname_in1), Image(fname_in1)]
         action_list = [QcImage.vertical_line]
         def qcslice_layout(x): return x.single()
     # Metric outputs (only graphs)
     elif process in ['sct_process_segmentation']:
         plane = 'Sagittal'
+        p_resample = None
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         fname_list = [fname_in1]
         # fname_seg should be a list of 4 images: 3 for each operation in `action_list`, plus an extra
         # centerline image, which is needed to make `Sagittal.get_center_spit` work correctly
         fname_list.extend(fname_seg)
-        qcslice = Sagittal([Image(fname) for fname in fname_list], p_resample=None)
+        im_list = [Image(fname) for fname in fname_list]
         action_list = [QcImage.smooth_centerline, QcImage.highlight_pmj, QcImage.listed_seg]
         def qcslice_layout(x): return x.single()
     elif process in ['sct_image_stitch']:
         plane = 'Sagittal'
+        p_resample = None
         dpi = 150
-        qcslice = Sagittal([Image(fname_in1), Image(fname_in2)], p_resample=None)
+        im_list = [Image(fname_in1), Image(fname_in2)]
         action_list = [QcImage.no_seg_seg]
         def qcslice_layout(x): return x.single()
     elif process in ['sct_deepseg_lesion']:
-        if plane == 'Axial':
-            SliceSubtype = Axial
-        elif plane == 'Sagittal':
-            SliceSubtype = Sagittal
-        else:
-            raise ValueError(f"Invalid plane '{plane}'. Valid choices are 'Axial' and 'Sagittal'.")
         # Note, spinal cord segmentation (fname_seg) is used to crop the input image.
         # Then, the input image (fname_in1) is overlaid by the lesion (fname_in2).
-        qcslice = SliceSubtype([Image(fname_in1), Image(fname_in2), Image(fname_seg)])
+        im_list = [Image(fname_in1), Image(fname_in2), Image(fname_seg)]
         action_list = [QcImage.listed_seg]
         def qcslice_layout(x): return x.mosaic()[:2]
     else:
         raise ValueError("Unrecognized process: {}".format(process))
 
+    slice_subtypes = {'Axial': Axial, 'Sagittal': Sagittal}
+    if plane not in slice_subtypes.keys():
+        raise ValueError(f"Invalid plane '{plane}'. Valid choices are {slice_subtypes.keys()}.")
+    SliceSubtype = slice_subtypes[plane]
+    qcslice = SliceSubtype(im_list, p_resample=p_resample)
     qc_report = QcReport(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
 
     QcImage(
