@@ -48,7 +48,9 @@ def get_parser():
                         choices=('axial', 'sagittal'),
                         required=False)
     parser.add_argument('-resample',
-                        help='Millimeter resolution to resample the image to. Set to 0 to turn off resampling.',
+                        help='Millimeter resolution to resample the image to. Set to 0 to turn off resampling. You can'
+                             'use this option to control the zoom of the QC report: higher values will result in '
+                             'smaller images, and lower values will result in larger images.',
                         type=float,
                         required=False)
     parser.add_argument('-text-labels',
