@@ -626,7 +626,7 @@ def get_json_data_from_path(path_json):
 
 
 def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None, path_qc=None, dataset=None,
-                subject=None, process=None, fps=None, draw_text=True):
+                subject=None, process=None, fps=None, p_resample=None, draw_text=True):
     """
     Generate a QC entry allowing to quickly review results. This function is the entry point and is called by SCT
     scripts (e.g. sct_propseg).
@@ -641,12 +641,15 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     :param subject: str: Subject name
     :param process: str: Name of SCT function. e.g., sct_propseg
     :param fps: float: Number of frames per second for output gif images. Used only for sct_frmi_moco and sct_dmri_moco.
+    :param p_resample: float: Resolution (in mm) to resample the image to. If not provided, resampling will fall back
+                              to the default value of the specific QC report layout (typically no resampling, or 0.6mm).
+                              To turn off resampling, pass `p_resample==0`.
     :param exclude_text: bool: If provided, text won't be drawn on top of labels. Used only for sct_label_vertebrae.
     :return: None
     """
     logger.info('\n*** Generate Quality Control (QC) html report ***')
     dpi = 300  # Output resolution of the image
-    p_resample = 0.6  # Resolution in mm to resample the image to
+    p_resample_default = 0.6  # Resolution in mm to resample the image to
 
     # The following are the expected types for some variables that get values
     # assigned in all branches of the big `if...elif...elif...` construct below
@@ -672,7 +675,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Axial orientation, switch between the image and the centerline
     elif process in ['sct_get_centerline']:
         plane = 'Axial'
-        p_resample = None
+        p_resample_default = None
         im_list = [Image(fname_in1), Image(fname_seg)]
         action_list = [QcImage.label_centerline]
         def qcslice_layout(x): return x.mosaic()
@@ -693,7 +696,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Sagittal orientation, display vertebral labels
     elif process in ['sct_label_vertebrae']:
         plane = 'Sagittal'
-        p_resample = None
+        p_resample_default = None
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         im_list = [Image(fname_in1), Image(fname_seg)]
         action_list = [QcImage.label_vertebrae]
@@ -701,7 +704,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     #  Sagittal orientation, display posterior labels
     elif process in ['sct_label_utils']:
         plane = 'Sagittal'
-        p_resample = None
+        p_resample_default = None
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         # projected_image = projected(Image(fname_seg))
         im_list = [Image(fname_in1), Image(fname_seg)]
@@ -710,14 +713,14 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Sagittal orientation, display PMJ box
     elif process in ['sct_detect_pmj']:
         plane = 'Sagittal'
-        p_resample = None
+        p_resample_default = None
         im_list = [Image(fname_in1), Image(fname_seg)]
         action_list = [QcImage.highlight_pmj]
         def qcslice_layout(x): return x.single()
     # Sagittal orientation, static image
     elif process in ['sct_straighten_spinalcord']:
         plane = 'Sagittal'
-        p_resample = None
+        p_resample_default = None
         dpi = 100
         im_list = [Image(fname_in1), Image(fname_in1)]
         action_list = [QcImage.vertical_line]
@@ -725,7 +728,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     # Metric outputs (only graphs)
     elif process in ['sct_process_segmentation']:
         plane = 'Sagittal'
-        p_resample = None
+        p_resample_default = None
         dpi = 100  # bigger picture is needed for this special case, hence reduce dpi
         fname_list = [fname_in1]
         # fname_seg should be a list of 4 images: 3 for each operation in `action_list`, plus an extra
@@ -736,7 +739,7 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
         def qcslice_layout(x): return x.single()
     elif process in ['sct_image_stitch']:
         plane = 'Sagittal'
-        p_resample = None
+        p_resample_default = None
         dpi = 150
         im_list = [Image(fname_in1), Image(fname_in2)]
         action_list = [QcImage.no_seg_seg]
@@ -754,6 +757,11 @@ def generate_qc(fname_in1, fname_in2=None, fname_seg=None, plane=None, args=None
     if plane not in slice_subtypes.keys():
         raise ValueError(f"Invalid plane '{plane}'. Valid choices are {slice_subtypes.keys()}.")
     SliceSubtype = slice_subtypes[plane]
+
+    if p_resample is None:  # If no resample value is specified, fall back to default
+        p_resample = p_resample_default
+    elif p_resample == 0:   # If user specified `-resample 0`, turn off resampling
+        p_resample = None
     qcslice = SliceSubtype(im_list, p_resample=p_resample)
     qc_report = QcReport(fname_in1, process, args, plane, path_qc, dpi, dataset, subject)
 
