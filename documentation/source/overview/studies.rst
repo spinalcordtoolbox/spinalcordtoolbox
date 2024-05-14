@@ -26,6 +26,8 @@ The following studies have used SCT:
 2024
 ----
 
+-  Aigner *et al.* `Calibration-free parallel transmission of the cervical, thoracic, and lumbar spinal cord at 7T <https://doi.org/10.1002/mrm.30137>`_, **Magn Reson Med.** 2024
+-  Horak *et al.* `Evidence-based commentary on the diagnosis, management, and further research of degenerative cervical spinal cord compression in the absence of clinical symptoms of myelopathy <https://doi.org/10.3389/fneur.2024.1341371>`_, **Front. Neurol.** 2024
 -  Al-Shawwa *et al.* `Advanced MRI metrics improve the prediction of baseline disease severity for individuals with degenerative cervical myelopathy <https://doi.org/10.1016/j.spinee.2024.04.028>`_, **Spine J.** 2024
 -  Hua *et al.* `Spinal cord and brain atrophy patterns in neuromyelitis optica spectrum disorder and multiple sclerosis <https://doi.org/10.1007/s00415-024-12281-9>`_,  **J. Neurol.** 2024
 -  Al-shaari *et al.* `Diffusion tensor imaging within the healthy cervical spinal cord: Within- participants reliability and measurement error <https://doi.org/10.1016/j.mri.2024.03.005>`_, **Magn. Reson. Imaging** 2024
