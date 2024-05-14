@@ -7,6 +7,7 @@ License: see the file LICENSE
 
 # TODO: Replace slice by spinalcordtoolbox.image.Slicer
 
+import os
 import abc
 import logging
 import math
@@ -46,7 +47,6 @@ class Slice(object):
         """
         :param images: list of 3D or 4D volumes to be separated into slices.
         """
-        logger.info('Resample images to {}x{} mm'.format(p_resample, p_resample))
         self._images = list()  # 3d volumes
         self._4d_images = list()  # 4d volumes
         self._image_seg = None  # for cropping
@@ -266,6 +266,7 @@ class Slice(object):
         :param image_ref: Destination Image() to resample image to.
         :return:
         """
+        logger.info(f'Resampling image "{os.path.basename(image.absolutepath)}" to {p_resample}x{p_resample} mm')
         dict_interp = {'im': 'spline', 'seg': 'linear'}
         # Create nibabel object
         nii = Nifti1Image(image.data, affine=image.hdr.get_best_affine(), header=image.hdr)
