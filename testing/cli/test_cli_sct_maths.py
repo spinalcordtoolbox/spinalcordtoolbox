@@ -80,6 +80,19 @@ def test_arithmetic_operation_output_dimensions(tmp_path, ndims, op):
     assert dim_out == dim_expected, f"Calling {op} on ndims {ndims} resulted in mismatch."
 
 
+@pytest.mark.parametrize('ndims', [(3, 3), (4, 4), (3, 3, 3), (4, 4, 4)])
+def test_chained_arithmetic_operations_output_dimensions(tmp_path, ndims):
+    """Test that arithmetic operations return the correct dimensions across various combinations
+       of 3D and 4D images."""
+    ops = ['-add', '-mul', '-sub', '-div']
+    possible_dims = {3: [10, 15, 20], 4: [10, 15, 20, 5]}
+    dims = [possible_dims[n] for n in ndims]
+    data_out = run_arithmetic_operation(tmp_path, dims, ops)
+    dim_expected = dims[0]  # Expected dimension should match the input image
+    dim_out = list(data_out.shape)
+    assert dim_out == dim_expected, f"Calling {ops} on ndims {ndims} resulted in mismatch."
+
+
 @pytest.mark.parametrize('ndims', [(3, 4), (3, 4, 5)])
 @pytest.mark.parametrize('op', ['-add', '-mul', '-sub', '-div'])
 def test_mismatched_dimensions_error(tmp_path, ndims, op):
