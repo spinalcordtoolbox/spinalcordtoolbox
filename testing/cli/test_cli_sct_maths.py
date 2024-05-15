@@ -41,20 +41,26 @@ def test_sct_maths_symmetrize(dim, tmp_path):
                           (im_in.data + np.flip(im_in.data, axis=int(dim))) / 2.0)
 
 
-def run_arithmetic_operation(tmp_path, dims, op):
+def run_arithmetic_operation(tmp_path, dims, ops):
     """Generate some dummy data, then run -add/-sub/-mul/-div on the data."""
+    assert len(dims) > 1  # dim[0] -> -i, dim[1:] -> ops
     args = []
-    # Add input images to argument list
+    im_list = []
+    # Generate input images
     for i, dim in enumerate(dims):
         path_im = str(tmp_path / f"im_{i}.nii.gz")
         Image(np.ones(dim)).save(path_im)
         if i == 0:
             args += ["-i", path_im]
-            args += [op]
         else:
-            args += [path_im]
+            im_list += [path_im]
+    # Generate arg string
+    if not isinstance(ops, list):
+        ops = [ops]
+    for op in ops:
+        args += [op] + im_list
     # Add output image to argument list
-    path_out = str(tmp_path / f"im_out{op}.nii.gz")
+    path_out = str(tmp_path / f"im_out{''.join(ops)}.nii.gz")
     args += ["-o", path_out]
     # Call sct_maths and return output data
     sct_maths.main(args)
