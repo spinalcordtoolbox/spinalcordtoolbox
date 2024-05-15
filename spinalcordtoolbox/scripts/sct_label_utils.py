@@ -122,7 +122,7 @@ def get_parser():
     func_group.add_argument(
         '-disc',
         metavar=Metavar.file,
-        help="Project disc labels onto the spinal cord segmentation to create a labeled segmentation. "
+        help="Project disc labels (-disc) onto a spinal cord segmentation (-i) to create a labeled segmentation. "
              "Note: Unlike 'sct_label_vertebrae -discfile', this function does not involve cord straightening. "
              "The disc labeling follows the convention: "
              "https://spinalcordtoolbox.com/user_section/tutorials/vertebral-labeling/labeling-conventions.html"
