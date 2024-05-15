@@ -449,31 +449,6 @@ def main(argv: Sequence[str]):
         nii_out = Image(fname_in)  # use header of input file
         nii_out.data = data_out
         nii_out.save(fname_out, dtype=output_type)
-    # TODO: case of multiple outputs
-    # assert len(data_out) == n_out
-    # if n_in == n_out:
-    #     for im_in, d_out, fn_out in zip(nii, data_out, fname_out):
-    #         im_in.data = d_out
-    #         im_in.absolutepath = fn_out
-    #         if arguments.w is not None:
-    #             im_in.hdr.set_intent('vector', (), '')
-    #         im_in.save()
-    # elif n_out == 1:
-    #     nii[0].data = data_out[0]
-    #     nii[0].absolutepath = fname_out[0]
-    #     if arguments.w is not None:
-    #             nii[0].hdr.set_intent('vector', (), '')
-    #     nii[0].save()
-    # elif n_out > n_in:
-    #     for dat_out, name_out in zip(data_out, fname_out):
-    #         im_out = nii[0].copy()
-    #         im_out.data = dat_out
-    #         im_out.absolutepath = name_out
-    #         if arguments.w is not None:
-    #             im_out.hdr.set_intent('vector', (), '')
-    #         im_out.save()
-    # else:
-    #     printv(parser.usage.generate(error='ERROR: not the correct numbers of inputs and outputs'))
 
     # display message
     if data_out is not None:
