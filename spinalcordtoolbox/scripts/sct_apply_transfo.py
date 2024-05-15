@@ -13,7 +13,7 @@ import os
 import functools
 from typing import Sequence
 
-from spinalcordtoolbox.image import Image, generate_output_file
+from spinalcordtoolbox.image import Image, generate_output_file, add_suffix
 from spinalcordtoolbox.cropping import ImageCropper
 from spinalcordtoolbox.math import dilate
 from spinalcordtoolbox.labels import cubic_to_point
@@ -78,8 +78,7 @@ def get_parser():
         "-o",
         help='Registered source. Example: dest.nii.gz',
         required=False,
-        metavar=Metavar.file,
-        default='')
+        metavar=Metavar.file)
     optional.add_argument(
         "-x",
         help=""" Interpolation method. The 'label' method is to be used if you would like to apply a transformation
@@ -110,7 +109,7 @@ def get_parser():
 
 
 class Transform:
-    def __init__(self, input_filename, fname_dest, list_warp, list_warpinv=[], output_filename='', verbose=0, crop=0,
+    def __init__(self, input_filename, fname_dest, output_filename, list_warp, list_warpinv=[], verbose=0, crop=0,
                  interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
         self.list_warp = list_warp
@@ -178,13 +177,6 @@ class Transform:
         # Extract path, file and extension
         path_src, file_src, ext_src = extract_fname(fname_src)
         path_dest, file_dest, ext_dest = extract_fname(fname_dest)
-
-        # Get output folder and file name
-        if fname_out == '':
-            path_out = ''  # output in user's current directory
-            file_out = file_src + '_reg'
-            ext_out = ext_src
-            fname_out = os.path.join(path_out, file_out + ext_out)
 
         # Get dimensions of data
         printv('\nGet dimensions of data...', verbose)
@@ -337,15 +329,15 @@ def main(argv: Sequence[str]):
     set_loglevel(verbose=verbose)
 
     input_filename = arguments.i
+    fname_out = arguments.o if arguments.o is not None else os.path.basename(add_suffix(input_filename, '_reg'))
     fname_dest = arguments.d
     warp_filename = arguments.w
     warpinv_filename = arguments.winv
 
     transform = Transform(input_filename=input_filename, fname_dest=fname_dest, list_warp=warp_filename,
-                          list_warpinv=warpinv_filename)
+                          list_warpinv=warpinv_filename, output_filename=fname_out)
 
     transform.crop = arguments.crop
-    transform.output_filename = fname_out = arguments.o
     transform.interp = arguments.x
     transform.remove_temp_files = arguments.r
     transform.verbose = verbose
