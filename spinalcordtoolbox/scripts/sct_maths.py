@@ -291,6 +291,124 @@ def get_parser():
     return parser
 
 
+def apply_array_operation(data, dim, arguments, arg_name, parser):
+    dim_list = ['x', 'y', 'z', 't']
+
+    if arg_name == "otsu":
+        param = arguments.otsu
+        data_out = sct_math.otsu(data, param)
+
+    elif arg_name == "adap":
+        param = arguments.adap
+        data_out = sct_math.adap(data, param[0], param[1])
+
+    elif arg_name == "otsu_median":
+        param = arguments.otsu_median
+        data_out = sct_math.otsu_median(data, param[0], param[1])
+
+    elif arg_name == "thr" or arguments.uthr is not None:
+        data_out = sct_math.threshold(data, arguments.thr, arguments.uthr)
+
+    elif arg_name == "percent":
+        param = arguments.percent
+        data_out = sct_math.perc(data, param)
+
+    elif arg_name == "bin":
+        bin_thr = arguments.bin
+        data_out = sct_math.binarize(data, bin_thr=bin_thr)
+
+    elif arg_name == "add":
+        if data.ndim == 4 and len(arguments.add) == 0:
+            data_to_add = data  # Special case for summing 3D volumes within a single 4D image (i.e. "-add" by itself)
+        else:
+            data_to_add = sct_math.concatenate_along_last_dimension([data] + arguments.add)
+        data_out = np.sum(data_to_add, axis=-1)
+
+    elif arg_name == "sub":
+        data_to_sub = sct_math.concatenate_along_last_dimension(arguments.sub)
+        data_out = np.subtract(data, np.sum(data_to_sub, axis=-1))
+
+    elif arg_name == "laplacian":
+        sigmas = arguments.laplacian
+        if len(sigmas) == 1:
+            sigmas = [sigmas for i in range(len(data.shape))]
+        elif len(sigmas) != len(data.shape):
+            printv(parser.error(
+                'ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
+        # adjust sigma based on voxel size
+        sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
+        # smooth data
+        data_out = sct_math.laplacian(data, sigmas)
+
+    elif arg_name == "mul":
+        if data.ndim == 4 and len(arguments.mul) == 0:
+            data_to_mul = data  # Special case for multiplying 3D volumes within a single 4D image (i.e. "-mul" by itself)
+        else:
+            data_to_mul = sct_math.concatenate_along_last_dimension([data] + arguments.mul)
+        data_out = np.prod(data_to_mul, axis=-1)
+
+    elif arg_name == "div":
+        data_to_div = sct_math.concatenate_along_last_dimension(arguments.div)
+        data_out = np.divide(data, np.prod(data_to_div, axis=-1))
+
+    elif arg_name == "mean":
+        dim = dim_list.index(arguments.mean)
+        if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+            data = data[..., np.newaxis]
+        data_out = np.mean(data, dim)
+
+    elif arg_name == "rms":
+        dim = dim_list.index(arguments.rms)
+        if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+            data = data[..., np.newaxis]
+        data_out = np.sqrt(np.mean(np.square(data.astype(float)), dim))
+
+    elif arg_name == "std":
+        dim = dim_list.index(arguments.std)
+        if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
+            data = data[..., np.newaxis]
+        data_out = np.std(data, dim, ddof=1)
+
+    elif arg_name == "smooth":
+        sigmas = arguments.smooth
+        if len(sigmas) == 1:
+            sigmas = [sigmas[0] for i in range(len(data.shape))]
+        elif len(sigmas) != len(data.shape):
+            printv(parser.error(
+                'ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
+        # adjust sigma based on voxel size
+        sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
+        # smooth data
+        data_out = sct_math.smooth(data, sigmas)
+
+    elif arg_name == "dilate":
+        if arguments.shape in ['disk', 'square'] and arguments.dim is None:
+            printv(parser.error('ERROR: -dim is required for -dilate with 2D morphological kernel'))
+        data_out = sct_math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
+
+    elif arg_name == "erode":
+        if arguments.shape in ['disk', 'square'] and arguments.dim is None:
+            printv(parser.error('ERROR: -dim is required for -erode with 2D morphological kernel'))
+        data_out = sct_math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
+
+    elif arg_name == "denoise":
+        # parse denoising arguments
+        p, b = 1, 5  # default arguments
+        list_denoise = (arguments.denoise).split(",")
+        for i in list_denoise:
+            if 'p' in i:
+                p = int(i.split('=')[1])
+            if 'b' in i:
+                b = int(i.split('=')[1])
+        data_out = sct_math.denoise_nlmeans(data, patch_radius=p, block_radius=b)
+
+    else:
+        assert arg_name == "symmetrize"
+        data_out = sct_math.symmetrize(data, arguments.symmetrize)
+
+    return data_out
+
+
 # MAIN
 # ==========================================================================================
 def main(argv: Sequence[str]):
@@ -306,6 +424,14 @@ def main(argv: Sequence[str]):
     # Open file(s)
     im = Image(fname_in)
 
+    # Get argument names passed to the parser
+    argv_arg_names = [arg.lstrip('-').replace('-', '_') for arg in argv if arg.startswith("-")
+                      and arg not in ['-i', '-o', '-type', '-shape', '-dim', '-v']]  # Include only array operations
+
+    if not argv_arg_names:
+        printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
+
+    # Case 1: Compute similarity metrics
     if any(getattr(arguments, similarity_arg) is not None for similarity_arg in ['mi', 'minorm', 'corr']):
         if arguments.mi is not None:
             # input 1 = from flag -i --> im
@@ -318,7 +444,8 @@ def main(argv: Sequence[str]):
             compute_similarity(im, im_2, fname_out, metric='minorm', metric_full='Normalized Mutual information',
                                verbose=verbose)
 
-        elif arguments.corr is not None:
+        else:
+            assert arguments.corr is not None
             # input 1 = from flag -i --> im
             # input 2 = from flag -mi
             im_2 = Image(arguments.corr)
@@ -327,128 +454,16 @@ def main(argv: Sequence[str]):
 
         printv('\nDone! File created: ' + fname_out, verbose, 'info')
 
+    # Case 2: One or more array operations (array_in -> array_out)
     else:
-        dim_list = ['x', 'y', 'z', 't']
-        data = im.data  # 3d or 4d numpy array
+        # Loop through arguments and sequentially process data
+        data_intermediate = im.data  # 3d or 4d numpy array
         dim = im.dim
-
-        # run command
-        if arguments.otsu is not None:
-            param = arguments.otsu
-            data_out = sct_math.otsu(data, param)
-
-        elif arguments.adap is not None:
-            param = arguments.adap
-            data_out = sct_math.adap(data, param[0], param[1])
-
-        elif arguments.otsu_median is not None:
-            param = arguments.otsu_median
-            data_out = sct_math.otsu_median(data, param[0], param[1])
-
-        elif arguments.thr is not None or arguments.uthr is not None:
-            data_out = sct_math.threshold(data, arguments.thr, arguments.uthr)
-
-        elif arguments.percent is not None:
-            param = arguments.percent
-            data_out = sct_math.perc(data, param)
-
-        elif arguments.bin is not None:
-            bin_thr = arguments.bin
-            data_out = sct_math.binarize(data, bin_thr=bin_thr)
-
-        elif arguments.add is not None:
-            if data.ndim == 4 and len(arguments.add) == 0:
-                data_to_add = data  # Special case for summing 3D volumes within a single 4D image (i.e. "-add" by itself)
-            else:
-                data_to_add = sct_math.concatenate_along_last_dimension([data] + arguments.add)
-            data_out = np.sum(data_to_add, axis=-1)
-
-        elif arguments.sub is not None:
-            data_to_sub = sct_math.concatenate_along_last_dimension(arguments.sub)
-            data_out = np.subtract(data, np.sum(data_to_sub, axis=-1))
-
-        elif arguments.laplacian is not None:
-            sigmas = arguments.laplacian
-            if len(sigmas) == 1:
-                sigmas = [sigmas for i in range(len(data.shape))]
-            elif len(sigmas) != len(data.shape):
-                printv(parser.error('ERROR: -laplacian need the same number of inputs as the number of image dimension OR only one input'))
-            # adjust sigma based on voxel size
-            sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
-            # smooth data
-            data_out = sct_math.laplacian(data, sigmas)
-
-        elif arguments.mul is not None:
-            if data.ndim == 4 and len(arguments.mul) == 0:
-                data_to_mul = data  # Special case for multiplying 3D volumes within a single 4D image (i.e. "-mul" by itself)
-            else:
-                data_to_mul = sct_math.concatenate_along_last_dimension([data] + arguments.mul)
-            data_out = np.prod(data_to_mul, axis=-1)
-
-        elif arguments.div is not None:
-            data_to_div = sct_math.concatenate_along_last_dimension(arguments.div)
-            data_out = np.divide(data, np.prod(data_to_div, axis=-1))
-
-        elif arguments.mean is not None:
-            dim = dim_list.index(arguments.mean)
-            if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
-                data = data[..., np.newaxis]
-            data_out = np.mean(data, dim)
-
-        elif arguments.rms is not None:
-            dim = dim_list.index(arguments.rms)
-            if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
-                data = data[..., np.newaxis]
-            data_out = np.sqrt(np.mean(np.square(data.astype(float)), dim))
-
-        elif arguments.std is not None:
-            dim = dim_list.index(arguments.std)
-            if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
-                data = data[..., np.newaxis]
-            data_out = np.std(data, dim, ddof=1)
-
-        elif arguments.smooth is not None:
-            sigmas = arguments.smooth
-            if len(sigmas) == 1:
-                sigmas = [sigmas[0] for i in range(len(data.shape))]
-            elif len(sigmas) != len(data.shape):
-                printv(parser.error('ERROR: -smooth need the same number of inputs as the number of image dimension OR only one input'))
-            # adjust sigma based on voxel size
-            sigmas = [sigmas[i] / dim[i + 4] for i in range(3)]
-            # smooth data
-            data_out = sct_math.smooth(data, sigmas)
-
-        elif arguments.dilate is not None:
-            if arguments.shape in ['disk', 'square'] and arguments.dim is None:
-                printv(parser.error('ERROR: -dim is required for -dilate with 2D morphological kernel'))
-            data_out = sct_math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
-
-        elif arguments.erode is not None:
-            if arguments.shape in ['disk', 'square'] and arguments.dim is None:
-                printv(parser.error('ERROR: -dim is required for -erode with 2D morphological kernel'))
-            data_out = sct_math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
-
-        elif arguments.denoise is not None:
-            # parse denoising arguments
-            p, b = 1, 5  # default arguments
-            list_denoise = (arguments.denoise).split(",")
-            for i in list_denoise:
-                if 'p' in i:
-                    p = int(i.split('=')[1])
-                if 'b' in i:
-                    b = int(i.split('=')[1])
-            data_out = sct_math.denoise_nlmeans(data, patch_radius=p, block_radius=b)
-
-        elif arguments.symmetrize is not None:
-            data_out = sct_math.symmetrize(data, arguments.symmetrize)
-
-        # if no flag is set
-        else:
-            printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
-
+        for arg_name in argv_arg_names:
+            data_intermediate = apply_array_operation(data_intermediate, dim, arguments, arg_name, parser)
         # Write output
         nii_out = Image(fname_in)  # use header of input file
-        nii_out.data = data_out
+        nii_out.data = data_intermediate
         nii_out.save(fname_out, dtype=output_type)
 
         # display message
