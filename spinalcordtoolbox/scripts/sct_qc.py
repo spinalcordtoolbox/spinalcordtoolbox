@@ -47,6 +47,12 @@ def get_parser():
                         help='Plane of the output QC. Only relevant for -p sct_deepseg_lesion.',
                         choices=('axial', 'sagittal'),
                         required=False)
+    parser.add_argument('-resample',
+                        help='Millimeter resolution to resample the image to. Set to 0 to turn off resampling. You can '
+                             'use this option to control the zoom of the QC report: higher values will result in '
+                             'smaller images, and lower values will result in larger images.',
+                        type=float,
+                        required=False)
     parser.add_argument('-text-labels',
                         help="If set to 0, text won't be drawn on top of labels. Only relevant for -p "
                              "sct_label_vertebrae.",
@@ -106,6 +112,7 @@ def main(argv: Sequence[str]):
                 subject=arguments.qc_subject,
                 process=arguments.p,
                 fps=arguments.fps,
+                p_resample=arguments.resample,
                 draw_text=bool(arguments.text_labels))
 
 
