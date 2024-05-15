@@ -109,7 +109,7 @@ def get_parser():
 
 
 class Transform:
-    def __init__(self, input_filename, fname_dest, list_warp, list_warpinv=[], output_filename='', verbose=0, crop=0,
+    def __init__(self, input_filename, fname_dest, output_filename, list_warp, list_warpinv=[], verbose=0, crop=0,
                  interp='spline', remove_temp_files=1, debug=0):
         self.input_filename = input_filename
         self.list_warp = list_warp
