@@ -187,7 +187,7 @@ python\envs\venv_sct\Scripts\pip install -e . || goto error
 rem Install external dependencies
 echo:
 echo ### Downloading model files and binaries...
-FOR %%D IN (PAM50 deepseg_sc_models deepseg_gm_models deepseg_lesion_models binaries_win deepreg_models PAM50_normalized_metrics) DO sct_download_data -d %%D -k
+FOR %%D IN (PAM50 deepseg_sc_models deepseg_gm_models deepseg_lesion_models binaries_win deepreg_models PAM50_normalized_metrics) DO sct_download_data -d %%D -k || echo Failed to install '%%D'. Please re-run 'sct_download_data -d %%D' after installation.
 
 rem Copying SCT scripts to an isolated folder (so we can add scripts to the PATH without adding the entire venv_sct)
 echo:
