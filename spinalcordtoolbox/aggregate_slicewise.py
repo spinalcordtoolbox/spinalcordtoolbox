@@ -315,9 +315,15 @@ def aggregate_per_slice_or_level(metric, mask=None, slices=[], levels=[], distan
         else:
             # slicegroups = [(0, 1, 2, 3, 4, 5, 6, 7, 8)]
             slicegroups = [tuple(slices)]
-    agg_metric = dict((slicegroup, dict()) for slicegroup in slicegroups)
+    agg_metric = dict((slicegroup, dict()) for slicegroup in slicegroups if slicegroup)  # skip empty slicegroups '()'
     # loop across slice group
     for slicegroup in slicegroups:
+        # Skip empty slicegroups. This can occur if, for example, the user requests vertlevels that are not in the
+        # data. e.g. -vert 4:7 but data only has 5+6. In that case, vertgroups = [(4,), (5,), (6,), (7,)] but
+        # slicegroups = [(), (2,), (1,), ()].
+        if not slicegroup:
+            continue
+
         # add distance from PMJ info
         if distance_pmj is not None:
             agg_metric[slicegroup]['DistancePMJ'] = distance_pmj
