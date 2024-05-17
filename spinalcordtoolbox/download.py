@@ -345,6 +345,16 @@ def install_named_dataset(dataset_name, dest_folder=None, keep=False):
     install_data(urls, dest_folder, keep)
 
 
+def is_installed(dataset_name):
+    """
+    :param dataset_name: Dataset name
+    :returns: Whether the dataset is installed in $SCT_DIR.
+    :rtype: bool
+    """
+    path_dataset = DATASET_DICT[dataset_name]['default_location']
+    return os.path.exists(path_dataset) and len(os.listdir(path_dataset)) > 0
+
+
 def list_datasets():
     """
     :returns: A table listing the downloadable datasets
@@ -359,10 +369,7 @@ def list_datasets():
         download_type = DATASET_DICT[dataset_name]['download_type']
         dataset_status = dataset_name.ljust(30)
         if download_type != "Binaries":
-            path_dataset = DATASET_DICT[dataset_name]['default_location']
-            installed = (os.path.exists(path_dataset)
-                         and len(os.listdir(path_dataset)) > 0)
-            dataset_status = stylize(dataset_status, color[installed])
+            dataset_status = stylize(dataset_status, color[is_installed(dataset_name)])
         table += f"{dataset_status}{download_type:<20s}\n"
 
     table += '\nLegend: {} | {} (in the $SCT_DIR/data folder)\n\n'.format(
