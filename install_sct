@@ -687,9 +687,9 @@ if [[ -n "$NO_SCT_BIN_INSTALL" ]]; then
   print warning "WARNING: SCT binaries will not be (re)-installed"
 else
   print info "Installing binaries..."
-  # shellcheck disable=SC2015  # it would be very strange if print (echo) failed and triggered the || case
-  run sct_download_data -d "binaries_${OS}" -k && print info "All requirements installed!"
-  fi
+  run sct_download_data -d "binaries_${OS}" -k
+fi
+print info "All requirements installed!"
 
 
 # Install data
