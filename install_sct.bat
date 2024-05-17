@@ -188,8 +188,8 @@ rem Install external dependencies
 echo:
 echo ### Downloading model files and binaries...
 python\envs\venv_sct\Scripts\sct_download_data -d binaries_win -k
-python\envs\venv_sct\Scripts\python -c "import spinalcordtoolbox.download; spinalcordtoolbox.download.install_default_datasets^(^)"
-python\envs\venv_sct\Scripts\python -c "import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models^(^)"
+python\envs\venv_sct\python -c "import spinalcordtoolbox.download; spinalcordtoolbox.download.install_default_datasets^(^)"
+python\envs\venv_sct\python -c "import spinalcordtoolbox.deepseg.models; spinalcordtoolbox.deepseg.models.install_default_models^(^)"
 
 rem Copying SCT scripts to an isolated folder (so we can add scripts to the PATH without adding the entire venv_sct)
 echo:
