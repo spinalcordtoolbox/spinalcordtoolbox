@@ -196,6 +196,9 @@ echo:
 echo ### Copying SCT's CLI scripts to %CD%\bin\
 xcopy %CD%\python\envs\venv_sct\Scripts\*sct*.* %CD%\bin\ /v /y /q /i || goto error
 
+echo ### Checking installation...
+python\envs\venv_sct\Scripts\sct_check_dependencies
+
 rem Give further instructions that the user add the Scripts directory to their PATH
 echo:
 echo ### Installation finished!
