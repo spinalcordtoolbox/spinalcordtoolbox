@@ -688,10 +688,8 @@ if [[ -n "$NO_SCT_BIN_INSTALL" ]]; then
 else
   print info "Installing binaries..."
   # shellcheck disable=SC2015  # it would be very strange if print (echo) failed and triggered the || case
-  run sct_download_data -d "binaries_${OS}" -k \
-    && print info "All requirements installed!" \
-    || print error "Failed to install 'binaries_${OS}'. Please re-run 'sct_download_data -d binaries_${OS}' after installation."
-fi
+  run sct_download_data -d "binaries_${OS}" -k && print info "All requirements installed!"
+  fi
 
 
 # Install data
@@ -701,10 +699,7 @@ else
   # Download data
   print info "Installing data..."
   run mkdir -p "$SCT_DIR/$DATA_DIR"
-  for data in PAM50 deepseg_sc_models deepseg_gm_models deepseg_lesion_models deepreg_models PAM50_normalized_metrics; do
-    run sct_download_data -d "$data" \
-      || print error "Failed to install '$data'. Please re-run 'sct_download_data -d $data' after installation."
-  done
+  python/envs/venv_sct/bin/python -c 'import spinalcordtoolbox.download; spinalcordtoolbox.download.install_default_datasets()'
 fi
 
 # Install deep learning models
