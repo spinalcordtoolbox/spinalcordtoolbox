@@ -24,9 +24,10 @@ import requirements
 import torch.cuda
 from torch import __version__ as __torch_version__
 
+from spinalcordtoolbox.download import default_datasets, is_installed
 from spinalcordtoolbox.utils.shell import SCTArgumentParser
 from spinalcordtoolbox.utils.sys import (sct_dir_local_path, init_sct, run_proc, __version__, __sct_dir__,
-                                         __data_dir__, set_loglevel, ANSIColors16)
+                                         set_loglevel, ANSIColors16, _which_sct_binaries)
 
 
 def _test_condition(condition):
@@ -340,13 +341,6 @@ def main(argv: Sequence[str]):
         print_warning()
         print('  Using system python which is unsupported: {}'.format(path_python))
 
-    # check if data folder is empty
-    print_line('Check if data are installed')
-    if os.path.isdir(__data_dir__):
-        print_ok()
-    else:
-        print_fail()
-
     # Import matplotlib.pyplot here (before PyQt can be imported) in order to mitigate a libgcc error
     # See also: https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3511#issuecomment-912167649
     import matplotlib.pyplot as plt
@@ -441,6 +435,14 @@ def main(argv: Sequence[str]):
     except Exception as err:
         print_fail()
         print(err)
+
+    # check if data folder contains the required default depedencies
+    for dataset_name in default_datasets() + [_which_sct_binaries()]:
+        print_line(f"Check data dependency '{dataset_name}'")
+        if is_installed(dataset_name):
+            print_ok()
+        else:
+            print_fail(f" Run 'sct_download_data -d {dataset_name}' to reinstall")
 
     print('')
     sys.exit(e + install_software)

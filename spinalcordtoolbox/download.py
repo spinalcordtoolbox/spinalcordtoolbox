@@ -360,15 +360,18 @@ def install_named_dataset(dataset_name, dest_folder=None, keep=False):
     install_data(urls, dest_folder, keep)
 
 
+def default_datasets():
+    return [name_model for name_model, value in DATASET_DICT.items() if value['default']]
+
+
 def install_default_datasets():
     """
     Download all default datasets and install them under SCT installation dir.
 
     :return: None
     """
-    for name_model, value in DATASET_DICT.items():
-        if value['default']:
-            install_named_dataset(name_model, keep=True)
+    for name_model in default_datasets():
+        install_named_dataset(name_model, keep=True)
 
 
 def is_installed(dataset_name):
