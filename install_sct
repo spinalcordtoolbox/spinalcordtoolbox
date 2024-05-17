@@ -691,7 +691,6 @@ else
 fi
 print info "All requirements installed!"
 
-
 # Install data
 if [[ -n "$NO_DATA_INSTALL" ]]; then
   print warning "WARNING: data/ will not be (re)-install"
