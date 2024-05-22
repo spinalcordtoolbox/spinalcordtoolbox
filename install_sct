@@ -698,7 +698,7 @@ else
   # Download data
   print info "Installing data..."
   run mkdir -p "$SCT_DIR/$DATA_DIR"
-  python/envs/venv_sct/bin/python -c 'import spinalcordtoolbox.download; spinalcordtoolbox.download.install_default_datasets()'
+  run sct_download_data -d "default" -k
 fi
 
 # Install deep learning models
