@@ -15,7 +15,7 @@ import inspect
 
 from enum import Enum
 
-from .sys import check_exe, printv, ANSIColors16
+from .sys import check_exe, printv, ANSIColors16, removesuffix
 from .fs import relpath_or_abspath
 
 logger = logging.getLogger(__name__)
@@ -200,16 +200,14 @@ class SCTArgumentParser(argparse.ArgumentParser):
 
         update_parent_default('formatter_class', SmartFormatter)
 
-        # Update "usage:" message to match how SCT scripts are actually called (no '.py')
-        # frame = inspect.stack()[1]
-        # module = inspect.getmodule(frame[0])
-        # update_parent_default('prog', removesuffix(os.path.basename(module.__file__), ".py"))
-
         # Disable "add_help", because it won't properly add '-h' to our custom argument groups
         # (We use custom argument groups because of https://stackoverflow.com/a/24181138)
         update_parent_default('add_help', False)
 
         super(SCTArgumentParser, self).__init__(*args, **kwargs)
+
+        # Update "usage:" message to match how SCT scripts are actually called (no '.py')
+        self.prog = removesuffix(self.prog, ".py")
 
     def error(self, message):
         """
