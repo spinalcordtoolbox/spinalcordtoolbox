@@ -284,7 +284,7 @@ class AnalyzeLesion:
         p_lst_sc = im_sc.dim[4:7]   # voxel size
 
         axial_damage_ratio_dict = {}
-        # Get slices with lesion
+        # Get axial slices with lesion
         lesion_slices = np.unique(np.where(im_data)[2])
         for slice in lesion_slices:
             # Lesion area
