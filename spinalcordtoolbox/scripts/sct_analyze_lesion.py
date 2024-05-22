@@ -12,6 +12,7 @@ from typing import Sequence
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from skimage.measure import label
 
 from spinalcordtoolbox.image import Image
@@ -54,7 +55,8 @@ def get_parser():
         required=False,
         help="Spinal cord centerline or segmentation file, which will be used to correct morphometric measures with "
              "cord angle with respect to slice. (e.g. 't2_seg.nii.gz')\n"
-             "If provided, then the lesion volume, length, diameter, and axial damage ratio will be computed. "
+             "If provided, then the lesion volume, length, diameter, axial damage ratio, and tissue bridges will be "
+             "computed. "
              "Otherwise, if not provided, then only the lesion volume will be computed.",
         metavar=Metavar.file)
     optional.add_argument(
@@ -302,6 +304,142 @@ class AnalyzeLesion:
         printv('  Maximum axial damage ratio : ' + str(np.round(maximum_axial_damage_ratio, 2)),
                self.verbose, type='info')
 
+    def _measure_tissue_bridges(self, im_data, p_lst, idx):
+        """
+        Measure the midsagittal tissue bridges (widths of spared tissue ventral and dorsal to the spinal cord lesion).
+        Tissue bridges are quantified as the width of spared tissue at the **minimum** distance from cerebrospinal fluid
+        (i.e., the spinal cord boundary) to the lesion boundary.
+        REF: Huber E, Lachappelle P, Sutter R, Curt A, Freund P. Are midsagittal tissue bridges predictive of outcome
+        after cervical spinal cord injury? Ann Neurol. 2017 May;81(5):740-748. doi: 10.1002/ana.24932.
+
+        :param im_data: 3D numpy array, binary mask of the lesion
+        :param p_lst: list, pixel size of the lesion
+        :param idx: int, index of the lesion
+        """
+
+        # Load the spinal cord image
+        im_sc = Image(self.fname_sc)
+        im_sc_data = im_sc.data
+
+        # --------------------------------------
+        # Get midsagittal slice
+        # --------------------------------------
+        # TODO: consider how to determine the midsagittal slice:
+        #       1) based on the lesion or the spinal cord segmentation? (note that the lesion may not be centered in the spinal cord)
+        #       2) based on the sagittal slice with the largest lesion area?
+        #       3) allow the user to specify the midsagittal slice?
+
+        # 1) Use the spinal cord segmentation to get the midsagittal slice because the lesion may not be centered in
+        # the spinal cord
+        # mid_sagittal_slice = int(np.mean([np.min(np.unique(np.where(im_sc_data)[0])),
+        #                                   np.max(np.unique(np.where(im_sc_data)[0]))]))
+        # # Get axial slices (S-I direction) with lesion
+        # axial_lesion_slices = np.unique(np.where(im_data)[2])
+
+        # 2) Get the midsagittal slice based on the sagittal slice with the largest lesion area
+        lesion_area_per_slice = [np.sum(im_data[slice, :, :]) for slice in np.unique(np.where(im_data)[0])]
+        mid_sagittal_slice = np.unique(np.where(im_data)[0])[np.argmax(lesion_area_per_slice)]
+        # Get axial slices (S-I direction) with lesion for the midsagittal slice
+        axial_lesion_slices = np.unique(np.where(im_data[mid_sagittal_slice, :, :])[1])
+
+        if self.verbose == 2:
+            printv('  Mid-sagittal slice : ' + str(mid_sagittal_slice), self.verbose, type='info')
+
+        # --------------------------------------
+        # Compute tissue bridges for each axial slice
+        # --------------------------------------
+        tissue_bridges_dict = {}
+        # Iterate across axial slices to compute tissue bridges
+        for axial_slice in axial_lesion_slices:
+            # Get the column of the current slice
+            slice_data = im_data[mid_sagittal_slice, :, axial_slice]
+            # Get the spinal cord column of the current slice
+            slice_sc_data = im_sc_data[mid_sagittal_slice, :, axial_slice]
+            # Get the indices of the lesion in the column
+            lesion_indices = np.where(slice_data)[0]
+            # Get the indices of the spinal cord in the column
+            sc_indices = np.where(slice_sc_data)[0]
+
+            # Compute ventral and dorsal tissue bridges
+            dorsal_bridge_width = lesion_indices[0] - sc_indices[0]           # [0] returns the most dorsal elements
+            # if the lesion extends the spinal cord, the dorsal bridge is set to 0
+            if dorsal_bridge_width < 0:
+                dorsal_bridge_width = 0
+            ventral_bridge_width = sc_indices[-1] - lesion_indices[-1]        # [-1] returns the most ventral elements
+            # if the lesion extends the spinal cord, the ventral bridge is set to 0
+            if ventral_bridge_width < 0:
+                ventral_bridge_width = 0
+
+            tissue_bridges_dict[axial_slice] = {'dorsal_bridge_width': dorsal_bridge_width,
+                                                'ventral_bridge_width': ventral_bridge_width,
+                                                'lesion_indices': lesion_indices}
+
+        # --------------------------------------
+        # Get minimal tissue bridges
+        # --------------------------------------
+        # Convert the dictionary to a DataFrame (for easier manipulation)
+        tissue_bridges_df = pd.DataFrame.from_dict(tissue_bridges_dict, orient='index')
+
+        # Get minimum dorsal and ventral tissue bridges together with their corresponding slices (slices are indices)
+        # NOTE: we get minimum because tissue bridges are quantified as the width of spared tissue at the minimum
+        # distance from cerebrospinal fluid to the lesion boundary
+        min_dorsal_bridge_width_slice = tissue_bridges_df['dorsal_bridge_width'].idxmin()
+        min_ventral_bridge_width_slice = tissue_bridges_df['ventral_bridge_width'].idxmin()
+
+        # Get the width of the tissue bridges in mm
+        # TODO: verify whether to use [0] or [1] for the pixel size
+        dorsal_bridge_width_mm = tissue_bridges_df.loc[min_dorsal_bridge_width_slice, 'dorsal_bridge_width'] * p_lst[1]
+        ventral_bridge_width_mm = tissue_bridges_df.loc[min_ventral_bridge_width_slice, 'ventral_bridge_width'] * p_lst[1]
+
+        # Save the maximum axial damage ratio
+        self.measure_pd.loc[idx, 'dorsal_bridge_width [mm]'] = dorsal_bridge_width_mm
+        self.measure_pd.loc[idx, 'ventral_bridge_width [mm]'] = ventral_bridge_width_mm
+        printv('  Minimum dorsal tissue bridge width : ' + str(np.round(dorsal_bridge_width_mm, 2)) +
+               ' mm (slice ' + str(min_dorsal_bridge_width_slice) + ')', self.verbose, type='info')
+        printv('  Minimum ventral tissue bridge width : ' + str(np.round(ventral_bridge_width_mm, 2)) +
+               ' mm (slice ' + str(min_ventral_bridge_width_slice) + ')', self.verbose, type='info')
+
+        # --------------------------------------
+        # Plot the mid-sagittal slice using matplotlib and save it as png
+        # --------------------------------------
+        # TODO: make the plotting below optional --> move the code below under `if self.verbose == 2`?
+        #  or include the figure into QC report?
+        im_sc_mid_sagittal = im_sc_data[mid_sagittal_slice]
+        im_mid_sagittal = im_data[mid_sagittal_slice]
+
+        fig, ax = plt.subplots()
+        ax.imshow(np.swapaxes(im_sc_mid_sagittal, 1, 0), cmap='gray', origin="lower")
+        ax.imshow(np.swapaxes(im_mid_sagittal, 1, 0), cmap='jet', alpha=0.8, interpolation='nearest', origin="lower")
+
+        # Crop around the lesion
+        ax.set_xlim(np.min(np.where(im_data)[1]) - 20, np.max(np.where(im_data)[1]) + 20)
+        ax.set_ylim(np.min(np.where(im_data)[2]) - 20, np.max(np.where(im_data)[2]) + 20)
+
+        # Add horizontal lines for the tissue bridges
+        x1, x2 = tissue_bridges_df.loc[min_dorsal_bridge_width_slice, ['lesion_indices', 'dorsal_bridge_width']].values
+        ax.plot([x1[0] - 1, x1[0] - x2], [min_dorsal_bridge_width_slice] * 2, 'r--', linewidth=1)
+        x1, x2 = tissue_bridges_df.loc[min_ventral_bridge_width_slice, ['lesion_indices', 'ventral_bridge_width']].values
+        ax.plot([x1[-1] + 1, x1[-1] + x2], [min_ventral_bridge_width_slice] * 2, 'r--', linewidth=1)
+
+        # Add text with the width of the tissue bridges above the tissue bridges
+        ax.text(x1[0] - x2 / 2,
+                min_dorsal_bridge_width_slice + 1,
+                str(np.round(dorsal_bridge_width_mm, 2)) + ' mm',
+                color='red', fontsize=12, ha='right', va='bottom')
+        ax.text(x1[-1] + x2 / 2,
+                min_ventral_bridge_width_slice + 1,
+                str(np.round(ventral_bridge_width_mm, 2)) + ' mm',
+                color='red', fontsize=12, ha='left', va='bottom')
+
+        ax.set_title(f'Mid-sagittal slice (slice {mid_sagittal_slice})')
+        ax.set_ylabel('Inferior-Superior')
+        ax.set_xlabel('Posterior-Anterior')
+
+        file_path = os.path.join(self.tmp_dir, 'mid_sagittal_slice.png')
+        plt.savefig(file_path)
+        plt.close()
+        print(f'Mid-sagittal slice saved as {file_path}')
+
     def _measure_length(self, im_data, p_lst, idx):
         """
         Measure the length of the lesion along the superior-inferior axis when taking into account the angle correction
@@ -463,6 +601,7 @@ class AnalyzeLesion:
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_axial_damage_ratio(im_lesion_data_cur, p_lst, label_idx)
             self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
+            self._measure_tissue_bridges(im_lesion_data_cur, p_lst, label_idx)
 
             # compute lesion distribution for each lesion
             if self.path_template is not None:
