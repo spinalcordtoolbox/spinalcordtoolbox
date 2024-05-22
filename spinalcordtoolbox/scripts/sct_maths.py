@@ -12,13 +12,14 @@ import argparse
 from typing import Sequence
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 import spinalcordtoolbox.math as sct_math
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, lazy_import
 from spinalcordtoolbox.utils.fs import extract_fname
+
+plt = lazy_import("matplotlib.pyplot")
 
 
 class ParseDataOrScalarArgument(argparse.Action):
