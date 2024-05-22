@@ -310,45 +310,43 @@ def get_parser():
     return parser
 
 
-def apply_array_operation(data, dim, arguments, arg_name, parser):
+def apply_array_operation(data, dim, arguments, arg_name, arg_value, parser):
     dim_list = ['x', 'y', 'z', 't']
 
     if arg_name == "otsu":
-        param = arguments.otsu
-        data_out = sct_math.otsu(data, param)
+        data_out = sct_math.otsu(data, arg_value)
 
     elif arg_name == "adap":
-        param = arguments.adap
-        data_out = sct_math.adap(data, param[0], param[1])
+        data_out = sct_math.adap(data, arg_value[0], arg_value[1])
 
     elif arg_name == "otsu_median":
-        param = arguments.otsu_median
-        data_out = sct_math.otsu_median(data, param[0], param[1])
+        data_out = sct_math.otsu_median(data, arg_value[0], arg_value[1])
 
-    elif arg_name == "thr" or arguments.uthr is not None:
-        data_out = sct_math.threshold(data, arguments.thr, arguments.uthr)
+    elif arg_name == "thr":
+        data_out = sct_math.threshold(data, lthr=arg_value)
+
+    elif arg_name == "uthr":
+        data_out = sct_math.threshold(data, uthr=arg_value)
 
     elif arg_name == "percent":
-        param = arguments.percent
-        data_out = sct_math.perc(data, param)
+        data_out = sct_math.perc(data, arg_value)
 
     elif arg_name == "bin":
-        bin_thr = arguments.bin
-        data_out = sct_math.binarize(data, bin_thr=bin_thr)
+        data_out = sct_math.binarize(data, bin_thr=arg_value)
 
     elif arg_name == "add":
-        if data.ndim == 4 and len(arguments.add) == 0:
+        if data.ndim == 4 and len(arg_value) == 0:
             data_to_add = data  # Special case for summing 3D volumes within a single 4D image (i.e. "-add" by itself)
         else:
-            data_to_add = sct_math.concatenate_along_last_dimension([data] + arguments.add)
+            data_to_add = sct_math.concatenate_along_last_dimension([data] + arg_value)
         data_out = np.sum(data_to_add, axis=-1)
 
     elif arg_name == "sub":
-        data_to_sub = sct_math.concatenate_along_last_dimension(arguments.sub)
+        data_to_sub = sct_math.concatenate_along_last_dimension(arg_value)
         data_out = np.subtract(data, np.sum(data_to_sub, axis=-1))
 
     elif arg_name == "laplacian":
-        sigmas = arguments.laplacian
+        sigmas = arg_value
         if len(sigmas) == 1:
             sigmas = [sigmas for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
@@ -360,36 +358,36 @@ def apply_array_operation(data, dim, arguments, arg_name, parser):
         data_out = sct_math.laplacian(data, sigmas)
 
     elif arg_name == "mul":
-        if data.ndim == 4 and len(arguments.mul) == 0:
+        if data.ndim == 4 and len(arg_value) == 0:
             data_to_mul = data  # Special case for multiplying 3D volumes within a single 4D image (i.e. "-mul" by itself)
         else:
-            data_to_mul = sct_math.concatenate_along_last_dimension([data] + arguments.mul)
+            data_to_mul = sct_math.concatenate_along_last_dimension([data] + arg_value)
         data_out = np.prod(data_to_mul, axis=-1)
 
     elif arg_name == "div":
-        data_to_div = sct_math.concatenate_along_last_dimension(arguments.div)
+        data_to_div = sct_math.concatenate_along_last_dimension(arg_value)
         data_out = np.divide(data, np.prod(data_to_div, axis=-1))
 
     elif arg_name == "mean":
-        dim = dim_list.index(arguments.mean)
+        dim = dim_list.index(arg_value)
         if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
         data_out = np.mean(data, dim)
 
     elif arg_name == "rms":
-        dim = dim_list.index(arguments.rms)
+        dim = dim_list.index(arg_value)
         if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
         data_out = np.sqrt(np.mean(np.square(data.astype(float)), dim))
 
     elif arg_name == "std":
-        dim = dim_list.index(arguments.std)
+        dim = dim_list.index(arg_value)
         if dim + 1 > len(np.shape(data)):  # in case input volume is 3d and dim=t
             data = data[..., np.newaxis]
         data_out = np.std(data, dim, ddof=1)
 
     elif arg_name == "smooth":
-        sigmas = arguments.smooth
+        sigmas = arg_value
         if len(sigmas) == 1:
             sigmas = [sigmas[0] for i in range(len(data.shape))]
         elif len(sigmas) != len(data.shape):
@@ -403,17 +401,17 @@ def apply_array_operation(data, dim, arguments, arg_name, parser):
     elif arg_name == "dilate":
         if arguments.shape in ['disk', 'square'] and arguments.dim is None:
             printv(parser.error('ERROR: -dim is required for -dilate with 2D morphological kernel'))
-        data_out = sct_math.dilate(data, size=arguments.dilate, shape=arguments.shape, dim=arguments.dim)
+        data_out = sct_math.dilate(data, size=arg_value, shape=arguments.shape, dim=arguments.dim)
 
     elif arg_name == "erode":
         if arguments.shape in ['disk', 'square'] and arguments.dim is None:
             printv(parser.error('ERROR: -dim is required for -erode with 2D morphological kernel'))
-        data_out = sct_math.erode(data, size=arguments.erode, shape=arguments.shape, dim=arguments.dim)
+        data_out = sct_math.erode(data, size=arg_value, shape=arguments.shape, dim=arguments.dim)
 
     elif arg_name == "denoise":
         # parse denoising arguments
         p, b = 1, 5  # default arguments
-        list_denoise = (arguments.denoise).split(",")
+        list_denoise = arg_value.split(",")
         for i in list_denoise:
             if 'p' in i:
                 p = int(i.split('=')[1])
@@ -423,7 +421,7 @@ def apply_array_operation(data, dim, arguments, arg_name, parser):
 
     else:
         assert arg_name == "symmetrize"
-        data_out = sct_math.symmetrize(data, arguments.symmetrize)
+        data_out = sct_math.symmetrize(data, arg_value)
 
     return data_out
 
@@ -443,11 +441,10 @@ def main(argv: Sequence[str]):
     # Open file(s)
     im = Image(fname_in)
 
-    # Get argument names passed to the parser
-    argv_arg_names = [arg.lstrip('-').replace('-', '_') for arg in argv if arg.startswith("-")
-                      and arg not in ['-i', '-o', '-type', '-shape', '-dim', '-v']]  # Include only array operations
-
-    if not argv_arg_names:
+    # Get "array operation" arguments passed to the parser
+    ordered_args = [(arg, value) for (arg, value) in arguments.ordered_args
+                    if arg not in ['i', 'o', 'type', 'shape', 'dim', 'v']]  # Include only array operations
+    if not ordered_args:
         printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
 
     # Case 1: Compute similarity metrics
@@ -478,8 +475,8 @@ def main(argv: Sequence[str]):
         # Loop through arguments and sequentially process data
         data_intermediate = im.data  # 3d or 4d numpy array
         dim = im.dim
-        for arg_name in argv_arg_names:
-            data_intermediate = apply_array_operation(data_intermediate, dim, arguments, arg_name, parser)
+        for arg_name, arg_value in ordered_args:
+            data_intermediate = apply_array_operation(data_intermediate, dim, arguments, arg_name, arg_value, parser)
         # Write output
         nii_out = Image(fname_in)  # use header of input file
         nii_out.data = data_intermediate
