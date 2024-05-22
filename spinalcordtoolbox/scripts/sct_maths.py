@@ -55,13 +55,32 @@ class ParseDataOrScalarArgument(argparse.Action):
                     parser.error(f"Dimensions of '{val}' ({data.shape}) "
                                  f"must match input image ({data_in.shape}).")
 
-        setattr(namespace, self.dest, data_out)
+        # Make sure the custom action follows the same logic as the regular "store" action
+        store(namespace, dest=self.dest, values=data_out)
+
+
+def store(namespace, dest, values):
+    """
+    In addition to the default behavior (storing the argument value in the `arguments` namespace),
+    we preserve the parsed arguments in an ordered list. This allows us to execute each of the `sct_maths`
+    operations in the order they were passed in, while also allowing for duplicate calls to the same argument.
+    """
+    setattr(namespace, dest, values)    # default behavior of argparse._StoreAction.__call__
+    setattr(namespace, "ordered_args",  # store the parsed argument in a separate list of ordered args
+            getattr(namespace, "ordered_args", []) + [(dest, values)])
 
 
 def get_parser():
     parser = SCTArgumentParser(
         description='Perform mathematical operations on images.'
     )
+
+    # Add additional functionality to the default "store" action (used only for sct_maths' parser)
+    class StoreAction(argparse._StoreAction):
+        def __call__(self, _, namespace, values, option_string=None):
+            store(namespace, dest=self.dest, values=values)
+    parser.register("action", None, StoreAction)
+    parser.register("action", "store", StoreAction)
 
     mandatory = parser.add_argument_group("MANDATORY ARGUMENTS")
     mandatory.add_argument(
