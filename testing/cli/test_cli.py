@@ -3,6 +3,7 @@
 import pytest
 from importlib.metadata import entry_points
 import subprocess
+import time
 
 scripts = [cs.name for cs in entry_points()['console_scripts'] if cs.value.startswith("spinalcordtoolbox")]
 
@@ -18,8 +19,13 @@ scripts_to_test = [s for s in scripts if s not in scripts_where_no_args_is_valid
 
 @pytest.mark.parametrize("script", scripts_to_test)
 def test_calling_scripts_with_no_args_shows_usage(capsys, script):
-    """Test that SCT's scripts all return error code 2 and
-    show usage descriptions when called with no arguments."""
+    """
+    Test that SCT's scripts all return error code 2 and show usage descriptions when called with no arguments.
+    Also, ensure that calling the help takes under 1s per script.
+    """
+    start_time = time.time()
     completed_process = subprocess.run([script], capture_output=True)
+    duration = time.time() - start_time
     assert completed_process.returncode == 2
     assert b'usage' in completed_process.stderr
+    assert duration < 3.0, f"Expected '{script} -h' to execute in under 2.0s, but took {duration}"
