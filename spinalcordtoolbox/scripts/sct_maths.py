@@ -310,7 +310,7 @@ def get_parser():
     return parser
 
 
-def apply_array_operation(data, dim, arguments, arg_name, arg_value, parser):
+def apply_array_operation(data, dim, arg_name, arg_value, parser):
     dim_list = ['x', 'y', 'z', 't']
 
     if arg_name == "otsu":
@@ -399,14 +399,14 @@ def apply_array_operation(data, dim, arguments, arg_name, arg_value, parser):
         data_out = sct_math.smooth(data, sigmas)
 
     elif arg_name == "dilate":
-        if arguments.shape in ['disk', 'square'] and arguments.dim is None:
+        if arg_value[1] in ['disk', 'square'] and arg_value[2] is None:
             printv(parser.error('ERROR: -dim is required for -dilate with 2D morphological kernel'))
-        data_out = sct_math.dilate(data, size=arg_value, shape=arguments.shape, dim=arguments.dim)
+        data_out = sct_math.dilate(data, size=arg_value[0], shape=arg_value[1], dim=arg_value[2])
 
     elif arg_name == "erode":
-        if arguments.shape in ['disk', 'square'] and arguments.dim is None:
+        if arg_value[1] in ['disk', 'square'] and arg_value[2] is None:
             printv(parser.error('ERROR: -dim is required for -erode with 2D morphological kernel'))
-        data_out = sct_math.erode(data, size=arg_value, shape=arguments.shape, dim=arguments.dim)
+        data_out = sct_math.erode(data, size=arg_value[0], shape=arg_value[1], dim=arg_value[2])
 
     elif arg_name == "denoise":
         # parse denoising arguments
@@ -476,7 +476,10 @@ def main(argv: Sequence[str]):
         data_intermediate = im.data  # 3d or 4d numpy array
         dim = im.dim
         for arg_name, arg_value in ordered_args:
-            data_intermediate = apply_array_operation(data_intermediate, dim, arguments, arg_name, arg_value, parser)
+            # arguments "-dilate" and "-erode" depend on the "global variable"-esque arguments -shape and -dim,
+            if arg_name in ["dilate", "erode"]:
+                arg_value = [arg_value, arguments.shape, arguments.dim]
+            data_intermediate = apply_array_operation(data_intermediate, dim, arg_name, arg_value, parser)
         # Write output
         nii_out = Image(fname_in)  # use header of input file
         nii_out.data = data_intermediate
