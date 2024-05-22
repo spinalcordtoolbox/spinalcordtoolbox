@@ -9,14 +9,15 @@ import sys
 from typing import Sequence
 
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-from dipy.data.fetcher import read_bvals_bvecs
 from matplotlib.lines import Line2D
 from matplotlib import cm
 
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, lazy_import
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
+
+fetcher = lazy_import('dipy.data.fetcher')
+pd = lazy_import("pandas")
 
 BZERO_THRESH = 0.0001  # b-zero threshold
 
@@ -115,7 +116,7 @@ def main(argv: Sequence[str]):
     fname_bvecs = arguments.bvec
     fname_bvals = arguments.bval
     # Read bvals and bvecs files (if arguments.bval is not passed, bvals will be None)
-    bvals, bvecs = read_bvals_bvecs(fname_bvals, fname_bvecs)
+    bvals, bvecs = fetcher.read_bvals_bvecs(fname_bvals, fname_bvecs)
     # if first dimension is not equal to 3 (x,y,z), transpose bvecs file
     if bvecs.shape[0] != 3:
         bvecs = bvecs.transpose()

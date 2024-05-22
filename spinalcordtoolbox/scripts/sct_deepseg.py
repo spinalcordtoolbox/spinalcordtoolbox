@@ -18,14 +18,17 @@ import sys
 import logging
 from typing import Sequence
 
-import torch
-
-from spinalcordtoolbox.reports import qc2
-from spinalcordtoolbox.deepseg import models, inference
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, __version__, _git_info
 from spinalcordtoolbox.utils.fs import tmp_create
+from spinalcordtoolbox.utils.sys import lazy_import
+
+cuda = lazy_import('torch.cuda')
+
+qc2 = lazy_import('spinalcordtoolbox.reports.qc2')
+inference = lazy_import('spinalcordtoolbox.deepseg.inference')
+models = lazy_import('spinalcordtoolbox.deepseg.models')
 
 logger = logging.getLogger(__name__)
 
@@ -272,7 +275,7 @@ def main(argv: Sequence[str]):
         # Control GPU usage based on SCT-specific environment variable
         # NB: We use 'SCT_USE_GPU' as a "hidden option" to turn on GPU inference internally.
         # NB: Controlling which GPU(s) are used should be done by the environment variable 'CUDA_VISIBLE_DEVICES'.
-        use_gpu = torch.cuda.is_available() and "SCT_USE_GPU" in os.environ
+        use_gpu = cuda.is_available() and "SCT_USE_GPU" in os.environ
 
         if model_type == 'ivadomed':
             # NB: For single models, the averaging will have no effect.

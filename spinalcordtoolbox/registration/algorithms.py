@@ -13,12 +13,8 @@ from math import asin, cos, sin, acos
 
 import numpy as np
 from nibabel import load, Nifti1Image, aff2axcodes
-from nilearn.image import resample_img
-from scipy.signal import argrelmax, medfilt
 from scipy.ndimage import gaussian_filter, gaussian_filter1d, convolve
-from sklearn.decomposition import PCA
 from scipy.io import loadmat
-import torch
 
 import spinalcordtoolbox.image as image
 from spinalcordtoolbox.math import laplacian
@@ -26,14 +22,20 @@ from spinalcordtoolbox.registration.landmarks import register_landmarks
 from spinalcordtoolbox.registration import core
 from spinalcordtoolbox.scripts import sct_resample
 from spinalcordtoolbox.utils.fs import copy_helper, tmp_create
-from spinalcordtoolbox.utils.sys import run_proc, sct_dir_local_path, sct_progress_bar
+from spinalcordtoolbox.utils.sys import run_proc, sct_dir_local_path, sct_progress_bar, lazy_import
 
 from spinalcordtoolbox.scripts import sct_image
 
 # import VoxelMorph and Neurite (used in VoxelMorph) with pytorch backend
 os.environ['VXM_BACKEND'] = 'pytorch'
 os.environ['NEURITE_BACKEND'] = 'pytorch'
-import voxelmorph as vxm  # noqa: E402
+
+vxm = lazy_import("voxelmorph")
+torch = lazy_import("torch")
+nil_image = lazy_import("nilearn.image")
+decomposition = lazy_import("sklearn.decomposition")
+scipy_signal = lazy_import("scipy.signal")
+
 
 # TODO [AJ]
 # introduce potential cleanup functions in case exceptions occur and
@@ -411,10 +413,10 @@ def register_dl_multimodal_cascaded_reg(fname_src, fname_dest, fname_warp_forwar
     new_img_shape = (int(np.ceil(max_img_shape[0] / 16)) * 16, int(np.ceil(max_img_shape[1] / 16)) * 16,
                      int(np.ceil(max_img_shape[2] / 16)) * 16)
     # Pad the volumes to the new image shape
-    fx_preproc_nii = resample_img(scaled_fx_nii, target_affine=scaled_fx_nii.affine,
-                                  target_shape=new_img_shape, interpolation='continuous')
-    mov_preproc_nii = resample_img(scaled_mov_nii, target_affine=scaled_mov_nii.affine,
-                                   target_shape=new_img_shape, interpolation='continuous')
+    fx_preproc_nii = nil_image.resample_img(scaled_fx_nii, target_affine=scaled_fx_nii.affine,
+                                            target_shape=new_img_shape, interpolation='continuous')
+    mov_preproc_nii = nil_image.resample_img(scaled_mov_nii, target_affine=scaled_mov_nii.affine,
+                                             target_shape=new_img_shape, interpolation='continuous')
 
     # ---- Creating data tensors ---- #
     # Specify the PyTorch device
@@ -1444,7 +1446,7 @@ def compute_pca(data2d):
     coordsrc /= coordsrc.std()
 
     # Performs PCA
-    pca = PCA(n_components=2, copy=False, whiten=False)
+    pca = decomposition.PCA(n_components=2, copy=False, whiten=False)
     pca.fit(coordsrc)
 
     return coordsrc, pca, centermass
@@ -1533,7 +1535,7 @@ def find_angle_hog(image, centermass, px, py, angle_range=10):
     angle_found_score = np.amax(grad_orient_histo_conv_restrained)
 
     # Finding other maxima to compute confidence score
-    arg_maxs = argrelmax(grad_orient_histo_conv_restrained, order=kmedian_size, mode='wrap')[0]
+    arg_maxs = scipy_signal.argrelmax(grad_orient_histo_conv_restrained, order=kmedian_size, mode='wrap')[0]
 
     # Confidence score is the ratio of the 2 first maxima :
     if len(arg_maxs) > 1:
@@ -1620,7 +1622,7 @@ def circular_filter_1d(signal, window_size, kernel='gaussian'):
     if kernel == 'gaussian':
         signal_extended_smooth = gaussian_filter(signal_extended, window_size)  # gaussian
     elif kernel == 'median':
-        signal_extended_smooth = medfilt(signal_extended, window_size)  # median filtering
+        signal_extended_smooth = scipy_signal.medfilt(signal_extended, window_size)  # median filtering
     else:
         raise Exception("Unknow type of kernel")
 

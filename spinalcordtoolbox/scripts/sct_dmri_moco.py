@@ -216,7 +216,7 @@ def main(argv: Sequence[str]):
     # run moco
     fname_output_image = moco_wrapper(param)
 
-    set_loglevel(verbose)  # moco_wrapper changes verbose to 0, see issue #3341
+    set_loglevel(verbose, caller_module_name=__name__)  # moco_wrapper changes verbose to 0, see issue #3341
 
     # QC report
     if path_qc is not None:
