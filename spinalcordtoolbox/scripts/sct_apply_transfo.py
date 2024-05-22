@@ -326,7 +326,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     input_filename = arguments.i
     fname_out = arguments.o if arguments.o is not None else os.path.basename(add_suffix(input_filename, '_reg'))
