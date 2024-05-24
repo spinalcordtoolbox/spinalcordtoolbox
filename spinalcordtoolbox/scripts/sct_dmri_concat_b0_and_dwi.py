@@ -11,11 +11,11 @@ from typing import Sequence
 
 import numpy as np
 
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, lazy_import
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 from spinalcordtoolbox.image import Image, concat_data
 
-fetcher = lazy_import("dipy.data.fetcher")
+fetcher = LazyLoader("fetcher", globals(), "dipy.data.fetcher")
 
 
 def get_parser():

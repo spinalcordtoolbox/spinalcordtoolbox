@@ -18,17 +18,17 @@ import sys
 import logging
 from typing import Sequence
 
+from spinalcordtoolbox.reports import qc2
 from spinalcordtoolbox.image import splitext, Image, check_image_kind
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, display_viewer_syntax, ActionCreateFolder
 from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, __version__, _git_info
 from spinalcordtoolbox.utils.fs import tmp_create
-from spinalcordtoolbox.utils.sys import lazy_import
+from spinalcordtoolbox.utils.sys import LazyLoader
 
-cuda = lazy_import('torch.cuda')
+cuda = LazyLoader("cuda", globals(), 'torch.cuda')
 
-qc2 = lazy_import('spinalcordtoolbox.reports.qc2')
-inference = lazy_import('spinalcordtoolbox.deepseg.inference')
-models = lazy_import('spinalcordtoolbox.deepseg.models')
+inference = LazyLoader("inference", globals(), 'spinalcordtoolbox.deepseg.inference')
+models = LazyLoader("models", globals(), 'spinalcordtoolbox.deepseg.models')
 
 logger = logging.getLogger(__name__)
 

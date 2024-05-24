@@ -16,10 +16,10 @@ from skimage.measure import label
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import ParamCenterline, get_centerline
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, ActionCreateFolder, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, lazy_import
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname, copy, rmtree
 
-pd = lazy_import("pandas")
+pd = LazyLoader("pd", globals(), "pandas")
 
 
 def get_parser():

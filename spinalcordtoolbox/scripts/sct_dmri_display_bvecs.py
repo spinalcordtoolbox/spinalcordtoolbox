@@ -13,11 +13,11 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 from matplotlib import cm
 
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, lazy_import
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 
-fetcher = lazy_import('dipy.data.fetcher')
-pd = lazy_import("pandas")
+fetcher = LazyLoader("fetcher", globals(), 'dipy.data.fetcher')
+pd = LazyLoader("pd", globals(), "pandas")
 
 BZERO_THRESH = 0.0001  # b-zero threshold
 

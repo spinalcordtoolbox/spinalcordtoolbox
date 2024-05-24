@@ -22,7 +22,7 @@ from spinalcordtoolbox.registration.landmarks import register_landmarks
 from spinalcordtoolbox.registration import core
 from spinalcordtoolbox.scripts import sct_resample
 from spinalcordtoolbox.utils.fs import copy_helper, tmp_create
-from spinalcordtoolbox.utils.sys import run_proc, sct_dir_local_path, sct_progress_bar, lazy_import
+from spinalcordtoolbox.utils.sys import run_proc, sct_dir_local_path, sct_progress_bar, LazyLoader
 
 from spinalcordtoolbox.scripts import sct_image
 
@@ -30,11 +30,11 @@ from spinalcordtoolbox.scripts import sct_image
 os.environ['VXM_BACKEND'] = 'pytorch'
 os.environ['NEURITE_BACKEND'] = 'pytorch'
 
-vxm = lazy_import("voxelmorph")
-torch = lazy_import("torch")
-nil_image = lazy_import("nilearn.image")
-decomposition = lazy_import("sklearn.decomposition")
-scipy_signal = lazy_import("scipy.signal")
+vxm = LazyLoader("vxm", globals(), "voxelmorph")
+torch = LazyLoader("torch", globals(), "torch")
+nil_image = LazyLoader("nil_image", globals(), "nilearn.image")
+skl_decomposition = LazyLoader("skl_decomposition", globals(), "sklearn.decomposition")
+scipy_signal = LazyLoader("scipy_signal", globals(), "scipy.signal")
 
 
 # TODO [AJ]
@@ -1446,7 +1446,7 @@ def compute_pca(data2d):
     coordsrc /= coordsrc.std()
 
     # Performs PCA
-    pca = decomposition.PCA(n_components=2, copy=False, whiten=False)
+    pca = skl_decomposition.PCA(n_components=2, copy=False, whiten=False)
     pca.fit(coordsrc)
 
     return coordsrc, pca, centermass

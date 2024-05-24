@@ -31,9 +31,9 @@ from spinalcordtoolbox.utils.fs import get_absolute_path
 from spinalcordtoolbox.utils.sys import __sct_dir__, init_sct, sct_progress_bar, set_loglevel
 from spinalcordtoolbox.utils.shell import (ActionCreateFolder, Metavar, SCTArgumentParser,
                                            display_open, parse_num_list)
-from spinalcordtoolbox.utils.sys import __data_dir__, lazy_import
+from spinalcordtoolbox.utils.sys import __data_dir__, LazyLoader
 
-pd = lazy_import("pandas")
+pd = LazyLoader("pd", globals(), "pandas")
 
 logger = logging.getLogger(__name__)
 

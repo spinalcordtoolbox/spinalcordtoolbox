@@ -14,10 +14,10 @@ import nibabel as nib
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.fs import extract_fname
-from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, lazy_import
+from spinalcordtoolbox.utils.sys import init_sct, printv, set_loglevel, LazyLoader
 from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser, display_viewer_syntax
 
-nlmeans = lazy_import("dipy.denoise.nlmeans")
+nlmeans = LazyLoader("nlmeans", globals(), "dipy.denoise.nlmeans")
 
 
 # DEFAULT PARAMETERS

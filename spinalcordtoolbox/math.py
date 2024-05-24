@@ -13,11 +13,11 @@ from skimage.filters import threshold_local, threshold_otsu, rank
 from scipy.ndimage import gaussian_filter, gaussian_laplace
 
 from spinalcordtoolbox.image import Image
-from spinalcordtoolbox.utils.sys import lazy_import
+from spinalcordtoolbox.utils.sys import LazyLoader
 
-dipy = lazy_import("dipy")
-metrics = lazy_import("sklearn.metrics")
-stats = lazy_import("scipy.stats")
+dipy = LazyLoader("dipy", globals(), "dipy")
+skl_metrics = LazyLoader("skl_metrics", globals(), "sklearn.metrics")
+scipy_stats = LazyLoader("scipy_stats", globals(), "scipy.stats")
 
 logger = logging.getLogger(__name__)
 
@@ -154,10 +154,10 @@ def mutual_information(x, y, nbins=32, normalized=False):
     :return: float non negative value : mutual information
     """
     if normalized:
-        mi = metrics.normalized_mutual_info_score(x, y)
+        mi = skl_metrics.normalized_mutual_info_score(x, y)
     else:
         c_xy = np.histogram2d(x, y, nbins)[0]
-        mi = metrics.mutual_info_score(None, None, contingency=c_xy)
+        mi = skl_metrics.mutual_info_score(None, None, contingency=c_xy)
     return mi
 
 
@@ -173,9 +173,9 @@ def correlation(x, y, type='pearson'):
     """
 
     if type == 'pearson':
-        corr = stats.pearsonr(x, y)[0]
+        corr = scipy_stats.pearsonr(x, y)[0]
     if type == 'spearman':
-        corr = stats.spearmanr(x, y)[0]
+        corr = scipy_stats.spearmanr(x, y)[0]
 
     return corr
 

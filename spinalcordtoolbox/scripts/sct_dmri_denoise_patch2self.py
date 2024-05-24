@@ -14,9 +14,9 @@ import nibabel as nib
 
 from spinalcordtoolbox.image import add_suffix, Image
 from spinalcordtoolbox.utils.shell import SCTArgumentParser, Metavar, list_type, display_viewer_syntax
-from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv, lazy_import
+from spinalcordtoolbox.utils.sys import init_sct, set_loglevel, printv, LazyLoader
 
-patch2self = lazy_import('dipy.denoise.patch2self')
+patch2self = LazyLoader("patch2self", globals(), 'dipy.denoise.patch2self')
 
 
 def get_parser():

@@ -18,10 +18,10 @@ from spinalcordtoolbox.utils.shell import Metavar, SCTArgumentParser
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.centerline.core import get_centerline, ParamCenterline
 from spinalcordtoolbox.types import Centerline
-from spinalcordtoolbox.utils.sys import __data_dir__, lazy_import
+from spinalcordtoolbox.utils.sys import __data_dir__, LazyLoader
 from spinalcordtoolbox.scripts import sct_process_segmentation
 
-pd = lazy_import("pandas")
+pd = LazyLoader("pd", globals(), "pandas")
 
 logger = logging.getLogger(__name__)
 

@@ -26,10 +26,9 @@ import transforms3d.affines as affines
 
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils.fs import extract_fname, mv, tmp_create
-from spinalcordtoolbox.utils.sys import run_proc, lazy_import
+from spinalcordtoolbox.utils.sys import run_proc, LazyLoader
 
-ndimage = lazy_import("scipy.ndimage")
-
+ndimage = LazyLoader("ndimage", globals(), "scipy.ndimage")
 
 logger = logging.getLogger(__name__)
 
