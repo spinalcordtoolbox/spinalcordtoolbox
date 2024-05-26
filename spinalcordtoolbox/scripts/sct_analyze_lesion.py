@@ -380,7 +380,8 @@ class AnalyzeLesion:
         # Convert the dictionary to a DataFrame (for easier manipulation)
         tissue_bridges_df = pd.DataFrame.from_dict(tissue_bridges_dict, orient='index')
 
-        # Get minimum dorsal and ventral tissue bridges together with their corresponding slices (slices are indices)
+        # Get slices of minimum dorsal and ventral tissue bridges
+        # We use idxmin() because slices are the index of the DataFrame
         # NOTE: we get minimum because tissue bridges are quantified as the width of spared tissue at the minimum
         # distance from cerebrospinal fluid to the lesion boundary
         min_dorsal_bridge_width_slice = tissue_bridges_df['dorsal_bridge_width'].idxmin()
