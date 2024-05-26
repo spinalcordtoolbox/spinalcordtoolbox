@@ -391,7 +391,7 @@ class AnalyzeLesion:
         dorsal_bridge_width_mm = tissue_bridges_df.loc[min_dorsal_bridge_width_slice, 'dorsal_bridge_width'] * p_lst[1]
         ventral_bridge_width_mm = tissue_bridges_df.loc[min_ventral_bridge_width_slice, 'ventral_bridge_width'] * p_lst[1]
 
-        # Save the maximum axial damage ratio
+        # Save the minimum mid-sagittal tissue bridges
         self.measure_pd.loc[idx, 'dorsal_bridge_width [mm]'] = dorsal_bridge_width_mm
         self.measure_pd.loc[idx, 'ventral_bridge_width [mm]'] = ventral_bridge_width_mm
         printv('  Minimum dorsal tissue bridge width : ' + str(np.round(dorsal_bridge_width_mm, 2)) +
