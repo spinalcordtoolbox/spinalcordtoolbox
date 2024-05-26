@@ -388,7 +388,10 @@ class AnalyzeLesion:
         min_ventral_bridge_width_slice = tissue_bridges_df['ventral_bridge_width'].idxmin()
 
         # Get the width of the tissue bridges in mm
-        # TODO: verify whether to use [0] or [1] for the pixel size
+        # NOTE: the orientation is RPI (because we reoriented the image to RPI using orient2rpi()); therefore p_lst[0]
+        # is the pixel size in the R-L direction, p_lst[1] is the pixel size in the A-P direction, and p_lst[2] is the
+        # pixel size in the S-I direction.
+        # Since we are computing dorsal and ventral tissue bridges, we use p_lst[1] (A-P direction)
         dorsal_bridge_width_mm = tissue_bridges_df.loc[min_dorsal_bridge_width_slice, 'dorsal_bridge_width'] * p_lst[1]
         ventral_bridge_width_mm = tissue_bridges_df.loc[min_ventral_bridge_width_slice, 'ventral_bridge_width'] * p_lst[1]
 
