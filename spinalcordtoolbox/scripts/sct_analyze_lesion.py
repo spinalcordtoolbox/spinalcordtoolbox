@@ -328,7 +328,7 @@ class AnalyzeLesion:
         # Get midsagittal slice
         # --------------------------------------
         # TODO: consider how to determine the midsagittal slice:
-        #       1) based on the lesion or the spinal cord segmentation? (note that the lesion may not be centered in the spinal cord)
+        #       1) based on the middle of lesion or the spinal cord segmentation? (note that the lesion may not be centered in the spinal cord)
         #       2) based on the sagittal slice with the largest lesion area?
         #       3) allow the user to specify the midsagittal slice?
 
