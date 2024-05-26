@@ -224,7 +224,7 @@ class AnalyzeLesion:
         Print total results to CLI
         """
 
-        printv('\n\nAveraged measures...', self.verbose, 'normal')
+        printv('\n\nAveraged measures across all lesions...', self.verbose, 'normal')
 
         for key in self.measure_keys:
             mean_value = np.round(np.mean(self.measure_pd[key]), 2)
