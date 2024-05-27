@@ -205,8 +205,8 @@ class AnalyzeLesion:
                     if '#' in sheet_name:
                         df = self.distrib_matrix_dct[sheet_name].copy()
                         df = df.append(df.sum(numeric_only=True, axis=0), ignore_index=True)
-                        df['total'] = df.sum(numeric_only=True, axis=1)
-                        df.iloc[-1, df.columns.get_loc('vert')] = 'total'
+                        df['total % (all tracts)'] = df.sum(numeric_only=True, axis=1)
+                        df.iloc[-1, df.columns.get_loc('vert')] = 'total % (all vert)'
                         df.to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
                     else:
                         self.distrib_matrix_dct[sheet_name].to_excel(writer, sheet_name=sheet_name, index=False, engine='xlsxwriter')
@@ -386,14 +386,14 @@ class AnalyzeLesion:
     def _measure_totLesion_distribution(self, im_lesion, atlas_data, im_vert, p_lst):
 
         sheet_name = 'ROI_occupied_by_lesion'
-        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst] + ['total']})
+        self.distrib_matrix_dct[sheet_name] = pd.DataFrame.from_dict({'vert': [str(v) for v in self.vert_lst] + ['total % (all vert)']})
 
         # initialized to 0 for each vertebral level and each PAM50 tract
         for tract_id in atlas_data:
-            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.vert_lst + ['total'])
+            self.distrib_matrix_dct[sheet_name]['PAM50_' + str(tract_id).zfill(2)] = [0] * len(self.vert_lst + ['total % (all vert)'])
 
-        for vert in self.vert_lst + ['total']:  # loop over the vertebral levels
-            if vert != 'total':
+        for vert in self.vert_lst + ['total % (all vert)']:  # loop over the vertebral levels
+            if vert != 'total % (all vert)':
                 im_vert_cur = np.copy(im_vert)
                 im_vert_cur[np.where(im_vert_cur != vert)] = 0
             else:
