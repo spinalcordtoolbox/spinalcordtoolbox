@@ -67,9 +67,17 @@ def get_parser():
     optional.add_argument(
         "-f",
         help="Path to folder containing the atlas/template registered to the anatomical image. If provided, the "
-             "function computes: (i) the distribution of each lesion depending on each vertebral level and on each "
-             "region of the template (e.g. GM, WM, WM tracts) and (ii) the proportion of ROI (e.g. vertebral level, "
-             "GM, WM) occupied by lesion.",
+             "function computes:\n"
+             "\n"
+             "  a. for each lesion, the proportion of that lesion within each vertebral level and each region "
+             "of the template (e.g. GM, WM, WM tracts). Each cell contains a percentage value representing how much of "
+             "the lesion volume exists within the region indicated by the row/column (rows represent vertebral levels, "
+             "columns represent ROIs). The percentage values are summed to totals in both the bottom row and the right "
+             "column, and the sum of all cells is 100 (i.e. 100 percent of the lesion), found in the bottom-right.\n"
+             "  b. the proportions of each ROI (e.g. vertebral level, GM, WM) occupied by lesions.\n"
+             "\n"
+             "These percentage values are stored in different pages of the output `lesion_analysis.xls` spreadsheet;"
+             "one page for each lesion (a.) plus a final page summarizing the total ROI occupation of all lesions (b.)",
         metavar=Metavar.str,
         default=None,
         required=False)
