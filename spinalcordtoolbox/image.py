@@ -1876,7 +1876,7 @@ def check_image_kind(img):
     zero_percentage = np.sum(counts[0]) / np.sum(counts)
     if binary_percentage == 1.0:
         return 'seg'
-    if binary_percentage > 0.95:
+    if 0.0 <= min(unique) <= max(unique) <= 1.0 and binary_percentage > 0.95:
         return 'softseg'
     if is_whole_only and zero_most_common and zero_percentage > 0.50:
         return 'seg-labeled'
