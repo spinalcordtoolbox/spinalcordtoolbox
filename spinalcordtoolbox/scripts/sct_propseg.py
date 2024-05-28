@@ -670,7 +670,7 @@ def main(argv: Sequence[str]):
                      "https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/3694")
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     fname_input_data = os.path.abspath(arguments.i)
     img_input = Image(fname_input_data)

@@ -23,12 +23,12 @@ import pathlib
 from contrib import fslhd
 
 import transforms3d.affines as affines
-from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils.fs import extract_fname, mv, tmp_create
-from spinalcordtoolbox.utils.sys import run_proc
+from spinalcordtoolbox.utils.sys import run_proc, LazyLoader
 
+ndimage = LazyLoader("ndimage", globals(), "scipy.ndimage")
 
 logger = logging.getLogger(__name__)
 
@@ -679,7 +679,8 @@ class Image(object):
         :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline, 4= 2nd-order spline, 5= 5th-order spline
         :return: intensity values at continuouspix with interpolation_mode
         """
-        return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode, mode=border, cval=cval)
+        return ndimage.map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode,
+                                       mode=border, cval=cval)
 
     def get_transform(self, im_ref, mode='affine'):
         aff_im_self = self.affine
@@ -1866,19 +1867,18 @@ def check_image_kind(img):
     unique, counts = np.unique(np.round(img.data, decimals=1), return_counts=True)
     unique, counts = unique[np.argsort(counts)[::-1]], counts[np.argsort(counts)[::-1]]  # Sort by counts
     # This heuristic helps to detect binary and soft segmentations
-    binary_most_common = set(unique[0:2].astype(float)) == {0.0, 1.0}
-    binary_percentage = np.sum(counts[0:2]) / np.sum(counts)
+    idx_zero = np.where(unique == 0.0)[0]
+    idx_ones = np.where(unique == 1.0)[0]
+    binary_percentage = ((counts[idx_zero[0]] if idx_zero.size > 0 else 0) +
+                         (counts[idx_ones[0]] if idx_ones.size > 0 else 0)) / np.sum(counts)
     # This heuristic helps to distinguish between PSIR images and label images (2-10% zero vs. 99% zero)
     is_whole_only = np.equal(np.mod(unique, 1), 0).all()
     zero_most_common = float(unique[0]) == 0.0
     zero_percentage = np.sum(counts[0]) / np.sum(counts)
-    if binary_most_common:
-        if binary_percentage == 1.0:
-            return 'seg'
-        elif binary_percentage > 0.95:
-            return 'softseg'
-        else:  # binary_percentage <= 0.95
-            pass  # may be 'seg-labeled' or 'anat'
+    if binary_percentage == 1.0:
+        return 'seg'
+    if 0.0 <= min(unique) <= max(unique) <= 1.0 and binary_percentage > 0.95:
+        return 'softseg'
     if is_whole_only and zero_most_common and zero_percentage > 0.50:
         return 'seg-labeled'
     else:

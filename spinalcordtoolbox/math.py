@@ -11,14 +11,13 @@ import numpy as np
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
 from skimage.filters import threshold_local, threshold_otsu, rank
 from scipy.ndimage import gaussian_filter, gaussian_laplace, label
-from scipy.stats import pearsonr, spearmanr
-from dipy.denoise.noise_estimate import estimate_sigma
-from dipy.segment.mask import median_otsu
-from dipy.denoise.nlmeans import nlmeans
-from dipy.denoise.patch2self import patch2self
-from sklearn.metrics import normalized_mutual_info_score, mutual_info_score
 
 from spinalcordtoolbox.image import Image
+from spinalcordtoolbox.utils.sys import LazyLoader
+
+dipy = LazyLoader("dipy", globals(), "dipy")
+skl_metrics = LazyLoader("skl_metrics", globals(), "sklearn.metrics")
+scipy_stats = LazyLoader("scipy_stats", globals(), "scipy.stats")
 
 logger = logging.getLogger(__name__)
 
@@ -155,10 +154,10 @@ def mutual_information(x, y, nbins=32, normalized=False):
     :return: float non negative value : mutual information
     """
     if normalized:
-        mi = normalized_mutual_info_score(x, y)
+        mi = skl_metrics.normalized_mutual_info_score(x, y)
     else:
         c_xy = np.histogram2d(x, y, nbins)[0]
-        mi = mutual_info_score(None, None, contingency=c_xy)
+        mi = skl_metrics.mutual_info_score(None, None, contingency=c_xy)
     return mi
 
 
@@ -174,9 +173,9 @@ def correlation(x, y, type='pearson'):
     """
 
     if type == 'pearson':
-        corr = pearsonr(x, y)[0]
+        corr = scipy_stats.pearsonr(x, y)[0]
     if type == 'spearman':
-        corr = spearmanr(x, y)[0]
+        corr = scipy_stats.spearmanr(x, y)[0]
 
     return corr
 
@@ -251,7 +250,7 @@ def adap(data, block_size, offset):
 
 
 def otsu_median(data, size, n_iter):
-    data, mask = median_otsu(data, size, n_iter)
+    data, mask = dipy.segment.mask.median_otsu(data, size, n_iter)
     return mask
 
 
@@ -314,8 +313,8 @@ def denoise_nlmeans(data_in, patch_radius=1, block_radius=5):
     block_radius_max = min(data_in.shape) - 1
     block_radius = block_radius_max if block_radius > block_radius_max else block_radius
 
-    sigma = estimate_sigma(data_in)
-    denoised = nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
+    sigma = dipy.denoise.noise_estimate.estimate_sigma(data_in)
+    denoised = dipy.denoise.nlmeans.nlmeans(data_in, sigma, patch_radius=patch_radius, block_radius=block_radius)
 
     return denoised
 
@@ -343,8 +342,7 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
         for more info about patch_radius and model, please refer to the dipy website:
         https://docs.dipy.org/stable/examples_built/preprocessing/denoise_patch2self.html
     """
-    denoised = patch2self(data_in, bvals_in, patch_radius=patch_radius,
-                          model=model)
+    denoised = dipy.denoise.patch2self.patch2self(data_in, bvals_in, patch_radius=patch_radius, model=model)
 
     return denoised
 

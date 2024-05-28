@@ -149,7 +149,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     # initialization
     param = ParamMoco(group_size=1, metric='MeanSquares', smooth='0')
@@ -180,7 +180,7 @@ def main(argv: Sequence[str]):
     # run moco
     fname_output_image = moco_wrapper(param)
 
-    set_loglevel(verbose)  # moco_wrapper changes verbose to 0, see issue #3341
+    set_loglevel(verbose, caller_module_name=__name__)  # moco_wrapper changes verbose to 0, see issue #3341
 
     # QC report
     if path_qc is not None:

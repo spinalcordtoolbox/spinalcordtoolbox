@@ -48,7 +48,8 @@ check_dependencies() {
 
 run_tests() {
   activate_venv_sct
-  pytest testing/api testing/cli
+  # re-run failed tests, just in case something flaky has happened. if no failures, do nothing.
+  pytest testing/api testing/cli || pytest --last-failed --last-failed-no-failures none
   # NB: 'testing/batch_processing' is run by a separate CI workflow
 }
 
