@@ -23,12 +23,12 @@ import pathlib
 from contrib import fslhd
 
 import transforms3d.affines as affines
-from scipy.ndimage import map_coordinates
 
 from spinalcordtoolbox.types import Coordinate
 from spinalcordtoolbox.utils.fs import extract_fname, mv, tmp_create
-from spinalcordtoolbox.utils.sys import run_proc
+from spinalcordtoolbox.utils.sys import run_proc, LazyLoader
 
+ndimage = LazyLoader("ndimage", globals(), "scipy.ndimage")
 
 logger = logging.getLogger(__name__)
 
@@ -679,7 +679,8 @@ class Image(object):
         :param interpolation_mode: 0=nearest neighbor, 1= linear, 2= 2nd-order spline, 3= 2nd-order spline, 4= 2nd-order spline, 5= 5th-order spline
         :return: intensity values at continuouspix with interpolation_mode
         """
-        return map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode, mode=border, cval=cval)
+        return ndimage.map_coordinates(self.data, coordi, output=np.float32, order=interpolation_mode,
+                                       mode=border, cval=cval)
 
     def get_transform(self, im_ref, mode='affine'):
         aff_im_self = self.affine

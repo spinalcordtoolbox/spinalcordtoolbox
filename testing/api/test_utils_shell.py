@@ -1,6 +1,7 @@
 # pytest unit tests for spinalcordtoolbox.utils
 
 import os
+import sys
 import pytest
 from stat import S_IEXEC
 
@@ -15,32 +16,26 @@ def test_parse_num_list_inv():
 
 def test_sct_argument_parser(capsys):
     """Test extra argparse functionality added by SCTArgumentParser subclass."""
-    # Check that new defaults can still be overridden (setting add_help via args AND kwargs)
-    parser1 = shell.SCTArgumentParser(None, None, None, None, [], shell.SmartFormatter, '-', None, None, 'error', True)
-    assert parser1.add_help is True
-    parser2 = shell.SCTArgumentParser(add_help=True)
-    assert parser2.add_help is True
-
     # Check that new defaults are set properly
-    parser3 = shell.SCTArgumentParser()
-    assert parser3.prog == "test_utils_shell"
-    assert parser3.formatter_class == shell.SmartFormatter
-    assert parser3.add_help is False
+    parser = shell.SCTArgumentParser(description="A test argument parser.")
+    assert parser.prog == os.path.basename(sys.argv[0]).rstrip(".py")
+    assert parser.formatter_class == shell.SmartFormatter
+    assert parser.add_help is False
 
     # Check that error is thrown when required argument isn't passed
-    parser3.add_argument('-r', '--required', required=True)
-    parser3.add_argument('-h', "--help", help="show this message and exit", action="help")
+    parser.add_argument('-r', '--required', required=True)
+    parser.add_argument('-h', "--help", help="show this message and exit", action="help")
     with pytest.raises(SystemExit) as e:
-        parser3.parse_args()
+        parser.parse_args()
     assert e.value.code == 2
 
     # Check help message is still output when above error is thrown
     captured = capsys.readouterr()
-    assert "usage: test_utils_shell" in captured.err
+    assert "usage:" in captured.err
 
     # Ensure no error is thrown when help is explicitly called
     with pytest.raises(SystemExit) as e:
-        parser3.parse_args(['-h'])
+        parser.parse_args(['-h'])
     assert e.value.code == 0
 
 

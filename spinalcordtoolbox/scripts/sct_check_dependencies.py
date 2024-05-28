@@ -194,7 +194,7 @@ def main(argv: Sequence[str]):
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = complete_test = arguments.complete
-    set_loglevel(verbose=verbose)
+    set_loglevel(verbose=verbose, caller_module_name=__name__)
 
     print("\nSYSTEM INFORMATION"
           "\n------------------")
