@@ -1,6 +1,7 @@
 # pytest unit tests for spinalcordtoolbox.utils
 
 import os
+import sys
 import pytest
 from stat import S_IEXEC
 
@@ -17,7 +18,7 @@ def test_sct_argument_parser(capsys):
     """Test extra argparse functionality added by SCTArgumentParser subclass."""
     # Check that new defaults are set properly
     parser = shell.SCTArgumentParser(description="A test argument parser.")
-    # assert parser.prog == "test_utils_shell"  this may actually be `pytest`, `sct_testing`, etc. -- hard to test
+    assert parser.prog == os.path.basename(sys.argv[0]).rstrip(".py")
     assert parser.formatter_class == shell.SmartFormatter
     assert parser.add_help is False
 
