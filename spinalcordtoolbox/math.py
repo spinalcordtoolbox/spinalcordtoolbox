@@ -349,10 +349,10 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
 
 def keep_largest_object(predictions):
     """Keep the largest connected object from the input array (2D or 3D).
-    
+
     Taken from:
     https://github.com/ivadomed/ivadomed/blob/master/ivadomed/postprocessing.py#L101-L116
-    
+
     Args:
         predictions (ndarray or nibabel object): Input segmentation. Image could be 2D or 3D.
 
