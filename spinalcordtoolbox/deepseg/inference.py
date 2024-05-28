@@ -103,7 +103,8 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
     return im_lst, target_lst
 
 
-def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, use_gpu=False, remove_temp_files=True):
+def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, use_gpu=False,
+                         remove_temp_files=True):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     if model_type == "monai":
         create_net = ds_monai.create_nnunet_from_plans
@@ -127,7 +128,8 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, use
             im_out = Image(fname_out)
             # Apply postprocessing (replicates existing functionality from ivadomed package)
             # 1. Keep the largest connected object
-            im_out.data = keep_largest_object(im_out.data)
+            if keep_largest is not None:
+                im_out.data = keep_largest_object(im_out.data)
             # 2. Binarize predictions based on the threshold value
             if threshold is not None:
                 im_out.data = binarize(im_out.data, threshold)
