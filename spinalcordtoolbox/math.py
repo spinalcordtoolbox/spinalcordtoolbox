@@ -351,7 +351,7 @@ def keep_largest_object(predictions):
     """Keep the largest connected object from the input array (2D or 3D).
 
     Taken from:
-    https://github.com/ivadomed/ivadomed/blob/master/ivadomed/postprocessing.py#L101-L116
+    https://github.com/ivadomed/ivadomed/blob/1fccf77239985fc3be99161f9eb18c9470d65206/ivadomed/postprocessing.py#L99-L116
 
     Args:
         predictions (ndarray or nibabel object): Input segmentation. Image could be 2D or 3D.
