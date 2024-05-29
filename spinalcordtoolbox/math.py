@@ -387,3 +387,57 @@ def fill_holes(predictions, structure=(3, 3, 3)):
     assert len(structure) == len(predictions.shape)
     return binary_fill_holes(predictions, structure=np.ones(structure)).astype(int)
 
+
+def remove_small_objects(data, dim_lst, unit, thr):
+    """Removes all unconnected objects smaller than the minimum specified size.
+
+    Adapted from:
+    https://github.com/ivadomed/ivadomed/blob/master/ivadomed/postprocessing.py#L327
+    and
+    https://github.com/ivadomed/ivadomed/blob/master/ivadomed/postprocessing.py#L224
+
+    Args:
+        data (ndarray): Input data.
+        dim_lst (list): Dimensions of a voxel in mm.
+        unit (str): Indicates the units of the objects: "mm3" or "vox"
+        thr (int or list): Minimal object size to keep in input data.
+    
+    Attributes:
+        bin_structure (ndarray): Structuring element that defines feature connections.
+        size_min (int): Minimal object size to keep in input data.
+
+    Returns:
+        ndarray: Array with small objects.
+    """
+    px, py, pz = dim_lst
+    # if there are more than 1 classes, `data` is a 4D array with the 1st 
+    # dimension representing number of classes. For e.g. 
+    # for spinal cord (SC) segmentation, num_classes=1, 
+    # for region-based models with both SC and lesion segmentations, num_classes=2
+    num_classes = data.shape[0] if len(data.shape) == 4 else 1
+
+    bin_structure = generate_binary_structure(3, 2)
+    data_label, n = label(data, structure=bin_structure)
+
+    if isinstance(thr, list) and (num_classes != len(thr)):
+        raise ValueError("Length mismatch for remove small object postprocessing step: threshold length of {} "
+                            "while the number of predicted class is {}.".format(len(thr), num_classes))
+
+    thr = thr[0] if num_classes == 1 else thr
+
+    if unit == 'vox':
+        size_min = thr
+    elif unit == 'mm3':
+        size_min = np.round(thr / (px * py * pz))
+    else:
+        logger.error('Please choose a different unit for removeSmall. Choices: vox or mm3')
+        exit()
+
+    for idx in range(1, n + 1):
+        data_idx = (data_label == idx).astype(int)
+        n_nonzero = np.count_nonzero(data_idx)
+
+        if n_nonzero < size_min:
+            data[data_label == idx] = 0
+
+    return data

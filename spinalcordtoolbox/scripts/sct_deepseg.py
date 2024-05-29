@@ -289,6 +289,7 @@ def main(argv: Sequence[str]):
             im_lst, target_lst = inference.segment_non_ivadomed(path_model, model_type, input_filenames, thr,
                                                                 keep_largest=arguments.keep_largest,
                                                                 fill_holes_in_pred=arguments.fill_holes,
+                                                                remove_small=arguments.remove_small,
                                                                 use_gpu=use_gpu, remove_temp_files=arguments.r)
 
         # Delete intermediate outputs

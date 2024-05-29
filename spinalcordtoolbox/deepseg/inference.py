@@ -104,7 +104,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
 
 
 def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred, 
-                         remove_temp_files=True):
+                         remove_small, use_gpu=False, remove_temp_files=True):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     if model_type == "monai":
         create_net = ds_monai.create_nnunet_from_plans
@@ -133,6 +133,11 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
             # 3. Fill holes
             if fill_holes_in_pred is not None:
                 im_out.data = fill_holes(im_out.data)
+            # 4. Remove small objects
+            if remove_small is not None:
+                unit = 'mm3' if 'mm3' in remove_small[-1] else 'vox'
+                thr = [int(t.replace(unit, "")) for t in remove_small]
+                im_out.data = remove_small_objects(im_out.data, im_out.dim[4:7], unit, thr)
             im_lst.append(im_out)
             target_lst.append(target)
         if remove_temp_files:
