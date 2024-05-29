@@ -1,4 +1,6 @@
 # pytest unit tests for sct_analyze_lesion
+import os.path
+import shutil
 
 import pytest
 import logging
@@ -10,7 +12,7 @@ import numpy as np
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.fs import extract_fname
 from spinalcordtoolbox.utils.sys import sct_test_path
-from spinalcordtoolbox.scripts import sct_analyze_lesion, sct_label_utils
+from spinalcordtoolbox.scripts import sct_analyze_lesion, sct_label_utils, sct_register_to_template, sct_warp_template
 
 logger = logging.getLogger(__name__)
 
@@ -146,3 +148,31 @@ def test_sct_analyze_lesion_matches_expected_dummy_lesion_measurements_without_s
         # The max_equivalent_diameter, length, and damage ratio are nan because no segmentation is provided
         elif key in ['max_equivalent_diameter [mm]', 'length [mm]', 'max_axial_damage_ratio []']:
             assert math.isnan(measurements.at[0, key])
+
+
+@pytest.mark.parametrize("dummy_lesion", [
+    ([(29, 0, 25), (4, 15, 3)])
+], indirect=["dummy_lesion"])
+def test_sct_analyze_lesion_with_template(dummy_lesion, tmp_path):
+    # prep the template for use with `-f` argument of sct_analyze_lesion
+    sct_register_to_template.main(argv=['-i', sct_test_path('t2', 't2.nii.gz'),
+                                        '-s', sct_test_path('t2', 't2_seg-manual.nii.gz'),
+                                        '-l', sct_test_path('t2', 'labels.nii.gz'),
+                                        '-t', sct_test_path('template'),
+                                        '-ofolder', str(tmp_path)])
+    sct_warp_template.main(argv=['-d', sct_test_path('t2', 't2.nii.gz'),
+                                 '-w', str(tmp_path/'warp_template2anat.nii.gz'),
+                                 '-a', '0',  # -a is '1' by default, but small template doesn't have atlas
+                                 '-t', sct_test_path('template'),
+                                 '-ofolder', str(tmp_path)])
+    template_path = tmp_path / 'template'
+    shutil.copy(template_path / "PAM50_small_levels.nii.gz",
+                template_path / "PAM50_levels.nii.gz")  # Rename to comply with sct_analyze_lesion expectations
+    (tmp_path / 'atlas').mkdir()  # make a dummy atlas folder to avoid errors due to expected folder
+
+    # Run the analysis on the dummy lesion file
+    path_lesion, _, dim = dummy_lesion
+    sct_analyze_lesion.main(argv=['-m', path_lesion,
+                                  '-f', str(tmp_path),
+                                  '-ofolder', str(tmp_path)])
+    assert os.path.isfile(tmp_path / "lesion_analysis.xls")
