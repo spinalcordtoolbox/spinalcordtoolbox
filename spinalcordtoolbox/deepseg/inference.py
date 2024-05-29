@@ -20,7 +20,7 @@ from monai.inferers import sliding_window_inference
 
 from spinalcordtoolbox.utils.fs import tmp_create, extract_fname
 from spinalcordtoolbox.image import Image, get_orientation, add_suffix
-from spinalcordtoolbox.math import binarize, keep_largest_object
+from spinalcordtoolbox.math import binarize, keep_largest_object, fill_holes, remove_small_objects
 
 import spinalcordtoolbox.deepseg.monai as ds_monai
 import spinalcordtoolbox.deepseg.nnunet as ds_nnunet
@@ -103,7 +103,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
     return im_lst, target_lst
 
 
-def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, use_gpu=False,
+def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred, 
                          remove_temp_files=True):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     if model_type == "monai":
@@ -130,9 +130,9 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
             # 1. Keep the largest connected object
             if keep_largest is not None:
                 im_out.data = keep_largest_object(im_out.data)
-            # 2. Binarize predictions based on the threshold value
-            if threshold is not None:
-                im_out.data = binarize(im_out.data, threshold)
+            # 3. Fill holes
+            if fill_holes_in_pred is not None:
+                im_out.data = fill_holes(im_out.data)
             im_lst.append(im_out)
             target_lst.append(target)
         if remove_temp_files:
