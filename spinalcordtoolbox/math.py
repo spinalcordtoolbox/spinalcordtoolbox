@@ -383,7 +383,10 @@ def fill_holes(predictions, structure=(3, 3, 3)):
     Returns:
         ndrray or nibabel (same object as the input). Output type is int.
     """
-    assert np.array_equal(predictions, predictions.astype(bool))
+    assert np.array_equal(predictions, predictions.astype(bool)), (
+        "fill_holes expects a binary segmentation as input. "
+        "Use `-thr` to binarize the prediction before using fill_holes."
+    )
     assert len(structure) == len(predictions.shape)
     return binary_fill_holes(predictions, structure=np.ones(structure)).astype(int)
 
@@ -402,10 +405,6 @@ def remove_small_objects(data, dim_lst, unit, thr):
         unit (str): Indicates the units of the objects: "mm3" or "vox"
         thr (int or list): Minimal object size to keep in input data.
 
-    Attributes:
-        bin_structure (ndarray): Structuring element that defines feature connections.
-        size_min (int): Minimal object size to keep in input data.
-
     Returns:
         ndarray: Array with small objects.
     """
@@ -416,7 +415,9 @@ def remove_small_objects(data, dim_lst, unit, thr):
     # for region-based models with both SC and lesion segmentations, num_classes=2
     num_classes = data.shape[0] if len(data.shape) == 4 else 1
 
+    # structuring element that defines feature connections
     bin_structure = generate_binary_structure(3, 2)
+
     data_label, n = label(data, structure=bin_structure)
 
     if isinstance(thr, list) and (num_classes != len(thr)):
