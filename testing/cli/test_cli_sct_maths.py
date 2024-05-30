@@ -127,6 +127,30 @@ def test_add_mul_4d_image_with_no_argument(op, tmp_path):
         assert np.all(data_out == val ** n_vol)
 
 
+@pytest.mark.parametrize('op', ['-add', '-mul'])
+def test_add_mul_4d_image_with_volumewise(op, tmp_path):
+    """Test that passing a 4D image with '-volumewise' operates on the 3D volumes."""
+    # Generate input image
+    base_dim = [20, 20, 20]
+    n_vol = 5
+    dim = base_dim + [n_vol]
+    path_im = str(tmp_path / "im.nii.gz")
+    val = 2
+    val_op = 5
+    Image(np.ones(dim) * val).save(path_im)
+    # Generate output image
+    path_out = str(tmp_path / "im_out.nii.gz")
+    sct_maths.main(["-i", path_im, op, str(val_op), "-volumewise", "1", "-o", path_out])
+    # Validate output data
+    data_out = Image(path_out).data
+    dim_out = list(data_out.shape)
+    assert dim_out == dim
+    if op == '-add':
+        assert np.all(data_out == val + val_op)
+    elif op == '-mul':
+        assert np.all(data_out == val * val_op)
+
+
 @pytest.mark.parametrize('similarity_arg', ['-mi', '-minorm', '-corr'])
 def test_similarity_metrics(tmp_path, similarity_arg):
     # Compute similarity between identical images
