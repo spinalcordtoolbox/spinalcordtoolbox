@@ -45,7 +45,8 @@ class ParseDataOrScalarArgument(argparse.Action):
         for val in values:
             # Case 1: Argument is a float
             if is_float(val):
-                data_out.append(np.full_like(data_in, float(val)))
+                shape = data_in.shape[:-1] if namespace.volumewise else data_in.shape
+                data_out.append(np.ones(shape) * float(val))
             # Case 2: If argument is not a float, assume argument is a path to an image file
             else:
                 data = Image(val).data
@@ -95,6 +96,17 @@ def get_parser():
         required=True)
 
     optional = parser.add_argument_group("OPTIONAL ARGUMENTS")
+    optional.add_argument(
+        '-volumewise',
+        type=int,
+        help='Specifying this option will process a 4D image in a "volumewise" manner:\n'
+             '  - Split the 4D input into individual 3D volumes\n'
+             '  - Apply the maths operations to each 3D volume\n'
+             '  - Merge the processed 3D volumes back into a single 4D output image',
+        required=False,
+        choices=(0, 1),
+        default=0
+    )
     optional.add_argument(
         "-h",
         "--help",
@@ -426,9 +438,24 @@ def apply_array_operation(data, dim, arg_name, arg_value, parser):
     return data_out
 
 
+def contains(small, big):
+    """Check if the 'big' list contains the 'small' list, and return the start/end indexes if found."""
+    for i in range(len(big)-len(small)+1):
+        for j in range(len(small)):
+            if big[i+j] != small[j]:
+                break
+        else:
+            return i, i+len(small)
+    return False
+
+
 # MAIN
 # ==========================================================================================
 def main(argv: Sequence[str]):
+    # ensure '-volumewise 1' is parsed before any of the 'ParseDataOrScalarArgument' args
+    if idx := contains(['-volumewise', '1'], argv):
+        argv = ['-volumewise', '1'] + list(argv)[:idx[0]] + list(argv)[idx[1]:]
+
     parser = get_parser()
     arguments = parser.parse_args(argv)
     verbose = arguments.v
@@ -443,9 +470,12 @@ def main(argv: Sequence[str]):
 
     # Get "array operation" arguments passed to the parser
     ordered_args = [(arg, value) for (arg, value) in arguments.ordered_args
-                    if arg not in ['i', 'o', 'type', 'shape', 'dim', 'v']]  # Include only array operations
+                    if arg not in ['i', 'o', 'type', 'shape', 'dim', 'v', 'volumewise']]  # Include only array options
     if not ordered_args:
         printv(parser.error('ERROR: you need to specify an operation to do on the input image'))
+
+    if arguments.volumewise and len(im.data.shape) != 4:
+        parser.error('ERROR: -volumewise can only be used with 4D input images')
 
     # Case 1: Compute similarity metrics
     if any(getattr(arguments, similarity_arg) is not None for similarity_arg in ['mi', 'minorm', 'corr']):
@@ -472,17 +502,33 @@ def main(argv: Sequence[str]):
 
     # Case 2: One or more array operations (array_in -> array_out)
     else:
-        # Loop through arguments and sequentially process data
-        data_intermediate = im.data  # 3d or 4d numpy array
-        dim = im.dim
-        for arg_name, arg_value in ordered_args:
-            # arguments "-dilate" and "-erode" depend on the "global variable"-esque arguments -shape and -dim,
-            if arg_name in ["dilate", "erode"]:
-                arg_value = [arg_value, arguments.shape, arguments.dim]
-            data_intermediate = apply_array_operation(data_intermediate, dim, arg_name, arg_value, parser)
+        # If volumewise is specified, treat 4D image as a set of 3D volumes
+        if arguments.volumewise:
+            data_list = [np.squeeze(arr, axis=3) for arr in np.array_split(im.data, im.data.shape[3], 3)]
+            dim = list(im.dim)
+            dim[3] = 1  # Replace 4D dim with 1 (indicating single 3D volume)
+            dim_list = [tuple(dim)] * len(data_list)
+        else:
+            data_list = [im.data]
+            dim_list = [im.dim]
+
+        # Iterate through all input images
+        data_out_list = []
+        for data_intermediate, dim in zip(data_list.copy(), dim_list.copy()):
+            # Iterate over all specified arguments
+            for arg_name, arg_value in ordered_args:
+                # arguments "-dilate" and "-erode" depend on the "global variable"-esque arguments -shape and -dim,
+                if arg_name in ["dilate", "erode"]:
+                    arg_value = [arg_value, arguments.shape, arguments.dim]
+                data_intermediate = apply_array_operation(data_intermediate, dim, arg_name, arg_value, parser)
+            data_out_list.append(data_intermediate)
+
+        # Reconstruct output data array from processed volumes
+        data_out = np.stack(data_out_list, axis=3) if len(data_out_list) > 1 else data_out_list[0]
+
         # Write output
         nii_out = Image(fname_in)  # use header of input file
-        nii_out.data = data_intermediate
+        nii_out.data = data_out
         nii_out.save(fname_out, dtype=output_type)
 
         # display message
