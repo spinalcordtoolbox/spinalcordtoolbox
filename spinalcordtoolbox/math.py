@@ -370,9 +370,9 @@ def keep_largest_object(predictions):
 
 def fill_holes(predictions, structure=(3, 3, 3)):
     """Fill holes in the predictions using a given structuring element.
-    Note: This function only works for binary segmentation. 
+    Note: This function only works for binary segmentation.
 
-    Taken from: 
+    Taken from:
     https://github.com/ivadomed/ivadomed/blob/master/ivadomed/postprocessing.py#L143
 
     Args:
@@ -401,7 +401,7 @@ def remove_small_objects(data, dim_lst, unit, thr):
         dim_lst (list): Dimensions of a voxel in mm.
         unit (str): Indicates the units of the objects: "mm3" or "vox"
         thr (int or list): Minimal object size to keep in input data.
-    
+
     Attributes:
         bin_structure (ndarray): Structuring element that defines feature connections.
         size_min (int): Minimal object size to keep in input data.
@@ -410,9 +410,9 @@ def remove_small_objects(data, dim_lst, unit, thr):
         ndarray: Array with small objects.
     """
     px, py, pz = dim_lst
-    # if there are more than 1 classes, `data` is a 4D array with the 1st 
-    # dimension representing number of classes. For e.g. 
-    # for spinal cord (SC) segmentation, num_classes=1, 
+    # if there are more than 1 classes, `data` is a 4D array with the 1st
+    # dimension representing number of classes. For e.g.
+    # for spinal cord (SC) segmentation, num_classes=1,
     # for region-based models with both SC and lesion segmentations, num_classes=2
     num_classes = data.shape[0] if len(data.shape) == 4 else 1
 

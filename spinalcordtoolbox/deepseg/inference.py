@@ -103,7 +103,7 @@ def segment_and_average_volumes(model_paths, input_filenames, options, use_gpu=F
     return im_lst, target_lst
 
 
-def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred, 
+def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, keep_largest, fill_holes_in_pred,
                          remove_small, use_gpu=False, remove_temp_files=True):
     # MONAI and NNUnet have similar structure, and so we use nnunet+inference functions with the same signature
     if model_type == "monai":
@@ -128,7 +128,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
             im_out = Image(fname_out)
             # Apply postprocessing (replicates existing functionality from ivadomed package)
             # 1. Binarize predictions based on the threshold value
-            # NOTE: Any post-processing is done only after thresholding (as post-processing operations 
+            # NOTE: Any post-processing is done only after thresholding (as post-processing operations
             # expect binary masks)
             if threshold is not None:
                 im_out.data = binarize(im_out.data, threshold)
