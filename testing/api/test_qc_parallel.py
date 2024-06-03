@@ -2,6 +2,8 @@
 
 from tempfile import TemporaryDirectory
 import pytest
+import logging
+import sys
 
 import multiprocessing
 
@@ -17,6 +19,13 @@ def gen_qc(path_qc):
 
 def test_many_qc():
     """Test many qc images can be made in parallel"""
+    # Turn on debug logging for fs.py to check mutex acquire/release times
+    # To check this output locally, run: `sct_testing -o log_cli=true testing/api/test_qc_parallel.py::test_many_qc`
+    screen_handler = logging.StreamHandler(stream=sys.stderr)
+    logger = logging.getLogger("portalocker.utils")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(screen_handler)
+
     if multiprocessing.cpu_count() < 2:
         pytest.skip("Can't test parallel behaviour")
 
