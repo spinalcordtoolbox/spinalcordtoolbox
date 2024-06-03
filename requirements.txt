@@ -20,7 +20,8 @@ msvc-runtime==14.29.30133; sys.platform == 'win32' # append_to_freeze
 nibabel
 nilearn
 # 2.4.0/2.4.1 fail during inference due to https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4444
-nnunetv2!=2.4.0,!=2.4.1
+# 3.2.0 and below are incompatible due to breaking API change (https://github.com/spinalcordtoolbox/spinalcordtoolbox/issues/4380)
+nnunetv2!=2.4.0,!=2.4.1,>=3.2.1
 numpy
 # 1.7.0>onnxruntime>=1.5.1 required `brew install libomp` on macOS.
 # So, pin to >=1.7.0 to avoid having to ask users to install libomp.
