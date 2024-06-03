@@ -167,7 +167,7 @@ def inference_transforms_single_image(crop_size):
         LoadImaged(keys=["image"], image_only=False),
         EnsureChannelFirstd(keys=["image"]),
         Orientationd(keys=["image"], axcodes="RPI"),
-        Spacingd(keys=["image"], pixdim=(1.0, 1.0, 1.0), mode=2),
+        Spacingd(keys=["image"], pixdim=(1.0, 1.0, 1.0), mode="bilinear"),
         ResizeWithPadOrCropd(keys=["image"], spatial_size=crop_size, ),
         DivisiblePadd(keys=["image"], k=2 ** 5),
         # pad inputs to ensure divisibility by no. of layers nnUNet has (5)
