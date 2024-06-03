@@ -284,7 +284,7 @@ def main(argv: Sequence[str]):
                                                                        options={**vars(arguments),
                                                                                 "fname_prior": fname_prior})
         else:
-            thr = (arguments.binarize_prediction if arguments.binarize_prediction
+            thr = (arguments.binarize_prediction if arguments.binarize_prediction is not None
                    else models.MODELS[name_model]['thr'])  # Default `thr` value stored in model dict
             im_lst, target_lst = inference.segment_non_ivadomed(path_model, model_type, input_filenames, thr,
                                                                 use_gpu=use_gpu, remove_temp_files=arguments.r)

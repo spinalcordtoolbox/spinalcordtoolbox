@@ -125,7 +125,7 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, use
         fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device)
         for fname_out, target in zip(fnames_out, targets):
             im_out = Image(fname_out)
-            if threshold is not None:
+            if threshold:  # Default: None, but `-thr 0` will also turn off binarization
                 im_out.data = binarize(im_out.data, threshold)
             im_lst.append(im_out)
             target_lst.append(target)
