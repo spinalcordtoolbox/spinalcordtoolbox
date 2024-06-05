@@ -477,10 +477,7 @@ class SpinalCordStraightener(object):
                 coord_in_planes_curved = centerline.get_in_plans_coordinates(projected_points_curved,
                                                                              nearest_indexes_curved)
 
-                coord_curved2straight = centerline_straight.points[lookup]
-                coord_curved2straight[:, 0:2] += coord_in_planes_curved[:, 0:2]
-                coord_curved2straight[:, 2] += distances_curved
-
+                coord_curved2straight = centerline_straight.get_inverse_plans_coordinates(coord_in_planes_curved, lookup)
                 displacements_curved = coord_curved2straight - physical_coordinates
 
                 displacements_curved[:, 2] = -displacements_curved[:, 2]
