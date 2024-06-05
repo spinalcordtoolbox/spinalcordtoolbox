@@ -624,11 +624,18 @@ class Image(object):
         averaged_coordinates = sorted(averaged_coordinates, key=lambda obj: obj.value, reverse=False)
         return averaged_coordinates
 
-    def transfo_pix2phys(self, coordi=None):
+    def transfo_pix2phys(self, coordi, mode='absolute'):
         """
         This function returns the physical coordinates of all points of 'coordi'.
 
         :param coordi: sequence of (nb_points x 3) values containing the pixel coordinate of points.
+        :param mode: either 'absolute' or 'relative'.
+                     Use 'absolute' to transform absolute pixel coordinates, taking into account
+                     the origin of the physical coordinate system. (For example, use 'absolute'
+                     for individual voxels.)
+                     Use 'relative' to transform relative pixel coordinates, ignoring the origin of
+                     the physical coordinate system. (For example, use 'relative' for the
+                     difference between two voxels, or for derivatives.)
         :return: sequence with the physical coordinates of the points in the space of the image.
 
         Example:
@@ -641,14 +648,22 @@ class Image(object):
             coordi_phys = img.transfo_pix2phys(coordi=coordi_pix)
 
         """
-
-        m_p2f = self.hdr.get_best_affine()
-        aug = np.hstack((np.asarray(coordi), np.ones((len(coordi), 1))))
-        ret = np.empty_like(coordi, dtype=np.float64)
-        for idx_coord, coord in enumerate(aug):
-            phys = np.matmul(m_p2f, coord)
-            ret[idx_coord] = phys[:3]
-        return ret
+        coordi = np.asarray(coordi, dtype=np.float64)
+        num_points, dimension = coordi.shape
+        if dimension != 3:
+            raise ValueError(f'wrong {dimension=}')
+        if mode == 'absolute':
+            affine_column = np.ones((num_points, 1), dtype=np.float64)
+        elif mode == 'relative':
+            affine_column = np.zeros((num_points, 1), dtype=np.float64)
+        else:
+            raise ValueError(f'invalid {mode=}')
+        augmented_pix = np.hstack([coordi, affine_column])
+        # The affine matrix usually transforms _column_ vectors of pix coordinates, but here we
+        # want to transform _row_ vectors of pix coordinates, so we need the transpose.
+        affine_matrix = self.hdr.get_best_affine().T
+        augmented_phys = np.matmul(augmented_pix, affine_matrix)
+        return augmented_phys[:, :3]
 
     def transfo_phys2pix(self, coordi, real=True):
         """
