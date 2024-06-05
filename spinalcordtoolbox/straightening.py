@@ -344,17 +344,16 @@ class SpinalCordStraightener(object):
             time_centerlines = time.time()
 
             coord_straight = np.empty((number_of_points, 3))
-            coord_straight[..., 0] = int(np.round(nx_s / 2))
-            coord_straight[..., 1] = int(np.round(ny_s / 2))
-            coord_straight[..., 2] = np.linspace(0, end_point_coord[2] - start_point_coord[2], number_of_points)
-            coord_phys_straight = image_centerline_straight.transfo_pix2phys(coord_straight)
+            coord_straight[:, 0] = int(np.round(nx_s / 2))
+            coord_straight[:, 1] = int(np.round(ny_s / 2))
+            coord_straight[:, 2] = np.linspace(0, end_point_coord[2] - start_point_coord[2], number_of_points)
+            coord_phys_straight = image_centerline_straight.transfo_pix2phys(coord_straight, mode='absolute')
             derivs_straight = np.empty((number_of_points, 3))
-            derivs_straight[..., 0] = derivs_straight[..., 1] = 0
-            derivs_straight[..., 2] = 1
-            dx_straight, dy_straight, dz_straight = derivs_straight.T
-            centerline_straight = Centerline(coord_phys_straight[:, 0], coord_phys_straight[:, 1],
-                                             coord_phys_straight[:, 2],
-                                             dx_straight, dy_straight, dz_straight)
+            derivs_straight[:] = image_centerline_straight.transfo_pix2phys([[0, 0, 1]], mode='relative')
+            centerline_straight = Centerline(
+                coord_phys_straight[:, 0], coord_phys_straight[:, 1], coord_phys_straight[:, 2],
+                derivs_straight[:, 0], derivs_straight[:, 1], derivs_straight[:, 2],
+            )
 
             time_centerlines = time.time() - time_centerlines
             logger.info('Time to generate centerline: {} ms'.format(np.round(time_centerlines * 1000.0)))
