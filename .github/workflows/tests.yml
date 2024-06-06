@@ -170,10 +170,15 @@ jobs:
     runs-on: ubuntu-20.04
     # Stream8 has a 2024 EOL, while CentOS 8 has a 2021 EOL
     # See: https://blog.centos.org/2020/12/future-is-centos-stream/
+    # See: https://blog.centos.org/2023/04/end-dates-are-coming-for-centos-stream-8-and-centos-linux-7/
+    # After Stream8 hits EOL, we need to use the vault.centos.org mirrorlist to fetch the necessary packages
     container: quay.io/centos/centos:stream8
     steps:
       - name: Dependencies
         run: |  # NB: mesa-libGL is needed for PyQT testing (https://stackoverflow.com/a/65408967/7584115)
+          # Sed commands come from https://archive.ph/FS47T
+          sed -i -e "s|mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-*
+          sed -i -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-*
           yum install -y gcc git curl mesa-libGL
       - uses: actions/checkout@v4
       - name: Install SCT
