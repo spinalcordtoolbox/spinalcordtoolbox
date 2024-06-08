@@ -315,12 +315,12 @@ class AnalyzeLesion:
         REF: Huber E, Lachappelle P, Sutter R, Curt A, Freund P. Are midsagittal tissue bridges predictive of outcome
         after cervical spinal cord injury? Ann Neurol. 2017 May;81(5):740-748. doi: 10.1002/ana.24932.
 
-        :param im_data: 3D numpy array, binary mask of the lesion
+        :param im_data: 3D numpy array, binary mask of the lesion. The orientation is assumed to be RPI.
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
 
-        # Load the spinal cord image
+        # Load the spinal cord segmentation
         im_sc = Image(self.fname_sc)
         im_sc_data = im_sc.data
 
@@ -346,7 +346,7 @@ class AnalyzeLesion:
         axial_lesion_slices = np.unique(np.where(im_data[mid_sagittal_slice, :, :])[1])
 
         if self.verbose == 2:
-            printv('  Mid-sagittal slice : ' + str(mid_sagittal_slice), self.verbose, type='info')
+            printv('  Mid-sagittal slice: ' + str(mid_sagittal_slice), self.verbose, type='info')
 
         # --------------------------------------
         # Compute tissue bridges for each axial slice
@@ -354,13 +354,13 @@ class AnalyzeLesion:
         tissue_bridges_dict = {}
         # Iterate across axial slices to compute tissue bridges
         for axial_slice in axial_lesion_slices:
-            # Get the column of the current slice
+            # Get the data of the selected 2D axial slice
             slice_data = im_data[mid_sagittal_slice, :, axial_slice]
-            # Get the spinal cord column of the current slice
+            # Get the spinal cord mask of the selected 2D axial slice, from the input spinal cord segmentation
             slice_sc_data = im_sc_data[mid_sagittal_slice, :, axial_slice]
-            # Get the indices of the lesion in the column
+            # Get the indices of the lesion for the selected axial slice
             lesion_indices = np.where(slice_data)[0]
-            # Get the indices of the spinal cord in the column
+            # Get the indices of the spinal cord mask for the selected axial slice
             sc_indices = np.where(slice_sc_data)[0]
 
             # Compute ventral and dorsal tissue bridges
