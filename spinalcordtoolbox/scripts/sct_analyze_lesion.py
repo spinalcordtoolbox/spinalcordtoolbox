@@ -356,7 +356,7 @@ class AnalyzeLesion:
         for axial_slice in axial_lesion_slices:
             # Get the data of the selected 2D axial slice
             slice_data = im_data[mid_sagittal_slice, :, axial_slice]
-            # Get the spinal cord column of the current slice
+            # Get the spinal cord mask of the selected 2D axial slice, from the input spinal cord segmentation
             slice_sc_data = im_sc_data[mid_sagittal_slice, :, axial_slice]
             # Get the indices of the lesion for the selected axial slice
             lesion_indices = np.where(slice_data)[0]
