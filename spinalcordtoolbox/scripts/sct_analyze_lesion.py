@@ -346,7 +346,7 @@ class AnalyzeLesion:
         axial_lesion_slices = np.unique(np.where(im_data[mid_sagittal_slice, :, :])[1])
 
         if self.verbose == 2:
-            printv('  Mid-sagittal slice : ' + str(mid_sagittal_slice), self.verbose, type='info')
+            printv('  Mid-sagittal slice: ' + str(mid_sagittal_slice), self.verbose, type='info')
 
         # --------------------------------------
         # Compute tissue bridges for each axial slice
