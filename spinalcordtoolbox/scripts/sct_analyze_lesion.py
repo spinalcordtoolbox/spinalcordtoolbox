@@ -360,7 +360,7 @@ class AnalyzeLesion:
             slice_sc_data = im_sc_data[mid_sagittal_slice, :, axial_slice]
             # Get the indices of the lesion for the selected axial slice
             lesion_indices = np.where(slice_data)[0]
-            # Get the indices of the spinal cord in the column
+            # Get the indices of the spinal cord mask for the selected axial slice
             sc_indices = np.where(slice_sc_data)[0]
 
             # Compute ventral and dorsal tissue bridges
