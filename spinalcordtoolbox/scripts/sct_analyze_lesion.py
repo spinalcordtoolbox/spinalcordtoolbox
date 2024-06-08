@@ -320,7 +320,7 @@ class AnalyzeLesion:
         :param idx: int, index of the lesion
         """
 
-        # Load the spinal cord image
+        # Load the spinal cord segmentation
         im_sc = Image(self.fname_sc)
         im_sc_data = im_sc.data
 
