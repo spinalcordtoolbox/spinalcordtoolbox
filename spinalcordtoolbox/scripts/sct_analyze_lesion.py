@@ -354,7 +354,7 @@ class AnalyzeLesion:
         tissue_bridges_dict = {}
         # Iterate across axial slices to compute tissue bridges
         for axial_slice in axial_lesion_slices:
-            # Get the column of the current slice
+            # Get the data of the selected 2D axial slice
             slice_data = im_data[mid_sagittal_slice, :, axial_slice]
             # Get the spinal cord column of the current slice
             slice_sc_data = im_sc_data[mid_sagittal_slice, :, axial_slice]
