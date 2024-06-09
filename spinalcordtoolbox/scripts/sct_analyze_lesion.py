@@ -608,8 +608,8 @@ class AnalyzeLesion:
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_axial_damage_ratio(im_lesion_data_cur, p_lst, label_idx)
+                self._measure_tissue_bridges(im_lesion_data_cur, p_lst, label_idx)
             self._measure_volume(im_lesion_data_cur, p_lst, label_idx)
-            self._measure_tissue_bridges(im_lesion_data_cur, p_lst, label_idx)
 
             # compute lesion distribution for each lesion
             if self.path_template is not None:
