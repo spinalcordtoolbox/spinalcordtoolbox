@@ -174,12 +174,12 @@ class AnalyzeLesion:
         if self.fname_sc is not None:
             self.angle_correction()
 
-        # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter
+        # Compute lesion volume, equivalent diameter, (S-I) length, max axial nominal diameter, and tissue bridges
         # if registered template provided: across vertebral level, GM, WM, within WM/GM tracts...
         # if ref image is provided: Compute mean and std value in each labeled lesion
         self.measure()
 
-        # reorient data if needed
+        # reorient data to RPI if needed
         self.reorient()
 
         # print averaged results
