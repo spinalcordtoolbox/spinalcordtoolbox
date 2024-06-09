@@ -315,12 +315,14 @@ class AnalyzeLesion:
         REF: Huber E, Lachappelle P, Sutter R, Curt A, Freund P. Are midsagittal tissue bridges predictive of outcome
         after cervical spinal cord injury? Ann Neurol. 2017 May;81(5):740-748. doi: 10.1002/ana.24932.
 
-        :param im_data: 3D numpy array, binary mask of the lesion. The orientation is assumed to be RPI.
+        :param im_data: 3D numpy array: mask of the lesion. The orientation is assumed to be RPI (because we reoriented
+                        the image to RPI using orient2rpi())
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
 
-        # Load the spinal cord segmentation
+        # Load the spinal cord segmentation mask
+        # The orientation is assumed to be RPI (because we reoriented the image to RPI using orient2rpi())
         im_sc = Image(self.fname_sc)
         im_sc_data = im_sc.data
 
