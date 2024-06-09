@@ -316,7 +316,7 @@ class AnalyzeLesion:
         printv('  Maximum axial damage ratio : ' + str(np.round(maximum_axial_damage_ratio, 2)),
                self.verbose, type='info')
 
-    def _measure_tissue_bridges(self, im_data, p_lst, idx):
+    def _measure_tissue_bridges(self, im_lesion_data, p_lst, idx):
         """
         Measure the tissue bridges (widths of spared tissue ventral and dorsal to the spinal cord lesion).
         Tissue bridges are quantified as the width of spared tissue at the **minimum** distance from cerebrospinal fluid
@@ -326,8 +326,8 @@ class AnalyzeLesion:
         REF: Huber E, Lachappelle P, Sutter R, Curt A, Freund P. Are midsagittal tissue bridges predictive of outcome
         after cervical spinal cord injury? Ann Neurol. 2017 May;81(5):740-748. doi: 10.1002/ana.24932.
 
-        :param im_data: 3D numpy array: mask of the lesion. The orientation is assumed to be RPI (because we reoriented
-                        the image to RPI using orient2rpi())
+        :param im_lesion_data: 3D numpy array: mask of the lesion. The orientation is assumed to be RPI (because we
+            reoriented the image to RPI using orient2rpi())
         :param p_lst: list, pixel size of the lesion
         :param idx: int, index of the lesion
         """
@@ -344,7 +344,7 @@ class AnalyzeLesion:
         # In other words, we compute the tissue bridges from the midsagittal slice and also from all parasagittal slices
 
         # Get slices with lesion
-        sagittal_lesion_slices = np.unique(np.where(im_data)[0])     # as the orientation is RPI, [0] is the R-L direction
+        sagittal_lesion_slices = np.unique(np.where(im_lesion_data)[0])     # as the orientation is RPI, [0] is the R-L direction
         if self.verbose == 2:
             printv('  Slices with lesion: ' + str(sagittal_lesion_slices), self.verbose, type='info')
 
@@ -357,11 +357,11 @@ class AnalyzeLesion:
             # Get all axial slices (S-I direction) with the lesion for the selected sagittal slice
             # In other words, we will iterate through the lesion in S-I direction and compute tissue bridges for each
             # axial slice with the lesion
-            axial_lesion_slices = np.unique(np.where(im_data[sagittal_slice, :, :])[1])     # as the orientation is RPI, [1] is the S-I direction
+            axial_lesion_slices = np.unique(np.where(im_lesion_data[sagittal_slice, :, :])[1])     # as the orientation is RPI, [1] is the S-I direction
             # Iterate across axial slices to compute tissue bridges
             for axial_slice in axial_lesion_slices:
                 # Get the lesion segmentation mask of the selected 2D axial slice
-                slice_lesion_data = im_data[sagittal_slice, :, axial_slice]
+                slice_lesion_data = im_lesion_data[sagittal_slice, :, axial_slice]
                 # Get the spinal cord segmentation mask of the selected 2D axial slice
                 slice_sc_data = im_sc_data[sagittal_slice, :, axial_slice]
                 # Get the indices of the lesion mask for the selected axial slice
@@ -450,7 +450,7 @@ class AnalyzeLesion:
             sagittal_slice = sagittal_lesion_slices[index]
             # Get spinal cord and lesion masks data for the selected sagittal slice
             im_sc_mid_sagittal = im_sc_data[sagittal_slice]
-            im_mid_sagittal = im_data[sagittal_slice]
+            im_mid_sagittal = im_lesion_data[sagittal_slice]
 
             # Plot spinal cord and lesion masks
             axs[index].imshow(np.swapaxes(im_sc_mid_sagittal, 1, 0), cmap='gray', origin="lower")
@@ -458,8 +458,8 @@ class AnalyzeLesion:
                               interpolation='nearest', origin="lower")
 
             # Crop around the lesion
-            axs[index].set_xlim(np.min(np.where(im_data)[1]) - 20, np.max(np.where(im_data)[1]) + 20)
-            axs[index].set_ylim(np.min(np.where(im_data)[2]) - 20, np.max(np.where(im_data)[2]) + 20)
+            axs[index].set_xlim(np.min(np.where(im_lesion_data)[1]) - 20, np.max(np.where(im_lesion_data)[1]) + 20)
+            axs[index].set_ylim(np.min(np.where(im_lesion_data)[2]) - 20, np.max(np.where(im_lesion_data)[2]) + 20)
 
             # --------------------------------------
             # Add horizontal lines for the tissue bridges
