@@ -604,6 +604,8 @@ class AnalyzeLesion:
             # For the lesion length and diameter, we need the spinal cord segmentation for angle correction
             # For the axial damage ratio, we need the spinal cord segmentation to compute the ratio between lesion area
             # and spinal cord area
+            # For the tissue bridges, we need the spinal cord segmentation to compute the width of spared tissue ventral
+            # and dorsal to the spinal cord lesion
             if self.fname_sc is not None:
                 self._measure_length(im_lesion_data_cur, p_lst, label_idx)
                 self._measure_diameter(im_lesion_data_cur, p_lst, label_idx)
