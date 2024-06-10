@@ -9,6 +9,11 @@ dipy!=1.6.*,!=1.7.*,<1.9.0
 --extra-index-url https://download.pytorch.org/whl/cpu # append_to_freeze
 ivadomed
 matplotlib
+# `matplotlib-inline` is an optional package that comes with `jupyter` for use with the '%matplotlib inline' directive.
+# However, if the user runs `jupyter` from a separate environment and sets '%matplotlib inline', then SCT's
+# environment will be missing this backend, and SCT scripts will crash when trying to import matplotlib. So, we install
+# `matplotlib-inline` in our env by default to ensure that SCT scripts can be run in Jupyter notebooks without error.
+matplotlib-inline
 monai[nibabel]
 # Fresh Windows installations may be missing the C++ runtime library required by scikit-image.
 # Installing "Microsoft Visual C++ Redistributable for Visual Studio" will fix this too, but
