@@ -467,7 +467,7 @@ def is_up_to_date(path_model):
     else:
         logger.warning("Mismatch between 'source.json' URL format and SCT source code URLs")
         return False
-    logger.info(f"Model '{model_name}' is up to date")
+    logger.info(f"Model '{model_name}' is up to date (Source: {actual_model_urls})")
     return True
 
 
