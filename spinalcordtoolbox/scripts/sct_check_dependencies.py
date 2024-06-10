@@ -359,6 +359,10 @@ def main(argv: Sequence[str]):
 
         try:
             module_name, suppress_stderr = resolve_module(dep_pkg)
+            # If a module cannot be imported, then its `dep_pkg` name should be resolved to `module_name=None`
+            if module_name is None:
+                print_ok()
+                continue
             module = module_import(module_name, suppress_stderr)
             version = get_version(module)
 
