@@ -68,7 +68,11 @@ def resolve_module(framework_name):
         'pytest-cov': ('pytest_cov', False),
         'urllib3[secure]': ('urllib3', False),
         'pytest-xdist': ('xdist', False),
-        'protobuf': ('google.protobuf', False)
+        'protobuf': ('google.protobuf', False),
+        # Importing `matplotlib_inline` requires IPython, but we don't install IPython (on purpose). This is because
+        # `matplotlib_inline` is only needed to run SCT scripts in Jupyter notebooks, and IPython would already be
+        # installed in the parent context. So, we map `matplotlib-inline` to None to skip import (which would fail).
+        'matplotlib-inline': (None, False)
     }
 
     try:
