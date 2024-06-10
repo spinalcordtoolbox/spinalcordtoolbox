@@ -659,10 +659,11 @@ class Image(object):
         else:
             raise ValueError(f'invalid {mode=}')
         augmented_pix = np.hstack([coordi, affine_column])
-        # The affine matrix usually transforms _column_ vectors of pix coordinates, but here we
-        # want to transform _row_ vectors of pix coordinates, so we need the transpose.
-        affine_matrix = self.hdr.get_best_affine().T
-        augmented_phys = np.matmul(augmented_pix, affine_matrix)
+       # The affine matrix usually transforms _column_ vectors of pix coordinates, but
+       # `augmented_pix` takes the form of _row_ vectors. So, we transpose before and 
+       # after we do the matrix multiplication.
+       affine_matrix = self.hdr.get_best_affine()
+       augmented_phys = np.matmul(affine_matrix, augmented_pix.T).T
         return augmented_phys[:, :3]
 
     def transfo_phys2pix(self, coordi, real=True):
