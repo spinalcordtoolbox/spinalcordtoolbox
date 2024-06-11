@@ -277,7 +277,7 @@ def mutex(name):
     We use a mutex over a lock because the mutex doesn't depend on the destination
     of the locked files, which allows us to avoid locking on e.g. NFS-mounted drives.
     """
-    semaphore = portalocker.BoundedSemaphore(maximum=1, name=name)
+    semaphore = portalocker.BoundedSemaphore(maximum=1, name=name, timeout=60, check_interval=0.1)
     semaphore.acquire()
     try:
         yield semaphore

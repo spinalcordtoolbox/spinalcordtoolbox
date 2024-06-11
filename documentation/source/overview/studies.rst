@@ -26,6 +26,8 @@ The following studies have used SCT:
 2024
 ----
 
+-  Chang *et al.* `Hoffmann's sign in cervical spondylotic myelopathy patients: pathological insights from neuroimaging <https://doi.org/10.3171/2024.3.FOCUS23837>`_, **Neurosurg. Focus** 2024
+-  Qi *et al.* `The relationship between the structural changes in the cervical spinal cord and sensorimotor function of children with thoracolumbar spinal cord injury (TLSCI) <https://doi.org/10.1038/s41393-024-01000-w>`_, **Spinal Cord** 2024
 -  Al-shaari *et al.* `Within-participants reliability and measurement error of magnetization transfer imaging determinations within the healthy cervical spinal cord <https://doi.org/10.1016/j.radi.2024.04.027>`_, **Radiography** 2024
 -  Aigner *et al.* `Calibration-free parallel transmission of the cervical, thoracic, and lumbar spinal cord at 7T <https://doi.org/10.1002/mrm.30137>`_, **Magn Reson Med.** 2024
 -  Horak *et al.* `Evidence-based commentary on the diagnosis, management, and further research of degenerative cervical spinal cord compression in the absence of clinical symptoms of myelopathy <https://doi.org/10.3389/fneur.2024.1341371>`_, **Front. Neurol.** 2024
