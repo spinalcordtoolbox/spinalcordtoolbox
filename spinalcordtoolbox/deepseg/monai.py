@@ -156,7 +156,10 @@ def prepare_data(path_image, crop_size=(64, 160, 320)):
                 meta_keys=["pred_meta_dict"],
                 nearest_interp=False, to_tensor=True),
         # The output softseg includes garbage low-intensity values around ~0.0, so we filter them with thresholding
-        ThresholdIntensityd(keys=["pred"], threshold=0.1)
+        ThresholdIntensityd(keys=["pred"], threshold=0.1),
+        # With spline interpolation, resampled softsegs can end up with values >1.0, so clip to 1.0.
+        # TODO: Replace with bilinear once https://github.com/Project-MONAI/MONAI/issues/7836 is solved.
+        ThresholdIntensityd(keys=["pred"], threshold=1.0, above=False, cval=1.0)
     ])
     test_ds = Dataset(data=[{"image": path_image}], transform=transforms_test)
     test_loader = DataLoader(test_ds, batch_size=1, shuffle=False, num_workers=8, pin_memory=True)
@@ -169,7 +172,7 @@ def inference_transforms_single_image(crop_size):
         LoadImaged(keys=["image"], image_only=False),
         EnsureChannelFirstd(keys=["image"]),
         Orientationd(keys=["image"], axcodes="RPI"),
-        Spacingd(keys=["image"], pixdim=(1.0, 1.0, 1.0), mode="bilinear"),
+        Spacingd(keys=["image"], pixdim=(1.0, 1.0, 1.0), mode=2),
         ResizeWithPadOrCropd(keys=["image"], spatial_size=crop_size, ),
         DivisiblePadd(keys=["image"], k=2 ** 5),
         # pad inputs to ensure divisibility by no. of layers nnUNet has (5)
