@@ -10,7 +10,7 @@ import logging
 import numpy as np
 from skimage.morphology import erosion, dilation, disk, ball, square, cube
 from skimage.filters import threshold_local, threshold_otsu, rank
-from scipy.ndimage import gaussian_filter, gaussian_laplace
+from scipy.ndimage import gaussian_filter, gaussian_laplace, label, binary_fill_holes, generate_binary_structure
 
 from spinalcordtoolbox.image import Image
 from spinalcordtoolbox.utils.sys import LazyLoader
@@ -345,3 +345,101 @@ def denoise_patch2self(data_in, bvals_in, patch_radius=0, model='ols'):
     denoised = dipy.denoise.patch2self.patch2self(data_in, bvals_in, patch_radius=patch_radius, model=model)
 
     return denoised
+
+
+def keep_largest_object(predictions):
+    """Keep the largest connected object from the input array (2D or 3D).
+
+    Taken from:
+    https://github.com/ivadomed/ivadomed/blob/1fccf77239985fc3be99161f9eb18c9470d65206/ivadomed/postprocessing.py#L99-L116
+
+    Args:
+        predictions (ndarray or nibabel object): Input segmentation. Image could be 2D or 3D.
+
+    Returns:
+        ndarray or nibabel (same object as the input).
+    """
+    # Find number of closed objects using skimage "label"
+    labeled_obj, num_obj = label(np.copy(predictions))
+    # If more than one object is found, keep the largest one
+    if num_obj > 1:
+        # Keep the largest object
+        predictions[np.where(labeled_obj != (np.bincount(labeled_obj.flat)[1:].argmax() + 1))] = 0
+    return predictions
+
+
+def fill_holes(predictions, structure=(3, 3, 3)):
+    """Fill holes in the predictions using a given structuring element.
+    Note: This function only works for binary segmentation.
+
+    Taken from:
+    https://github.com/ivadomed/ivadomed/blob/master/ivadomed/postprocessing.py#L143
+
+    Args:
+        predictions (ndarray or nibabel object): Input binary segmentation. Image could be 2D or 3D.
+        structure (tuple of integers): Structuring element, number of ints equals
+            number of dimensions in the input array.
+
+    Returns:
+        ndrray or nibabel (same object as the input). Output type is int.
+    """
+    assert np.array_equal(predictions, predictions.astype(bool)), (
+        "fill_holes expects a binary segmentation as input. "
+        "Use `-thr` to binarize the prediction before using fill_holes."
+    )
+    assert len(structure) == len(predictions.shape)
+    return binary_fill_holes(predictions, structure=np.ones(structure)).astype(int)
+
+
+def remove_small_objects(data, dim_lst, unit, thr):
+    """Removes all unconnected objects smaller than the minimum specified size.
+
+    Adapted from:
+    https://github.com/ivadomed/ivadomed/blob/master/ivadomed/postprocessing.py#L327
+    and
+    https://github.com/ivadomed/ivadomed/blob/master/ivadomed/postprocessing.py#L224
+
+    Args:
+        data (ndarray): Input data.
+        dim_lst (list): Dimensions of a voxel in mm.
+        unit (str): Indicates the units of the objects: "mm3" or "vox"
+        thr (int or list): Minimal object size to keep in input data.
+
+    Returns:
+        ndarray: Array with small objects.
+    """
+    px, py, pz = dim_lst
+    # if there are more than 1 classes, `data` is a 4D array with the 1st
+    # dimension representing number of classes. For e.g.
+    # for spinal cord (SC) segmentation, num_classes=1,
+    # for region-based models with both SC and lesion segmentations, num_classes=2
+    num_classes = data.shape[0] if len(data.shape) == 4 else 1
+
+    # structuring element that defines feature connections
+    bin_structure = generate_binary_structure(3, 2)
+
+    data_label, n = label(data, structure=bin_structure)
+
+    if isinstance(thr, list) and (num_classes != len(thr)):
+        raise ValueError(
+            "Length mismatch for remove small object postprocessing step: threshold length of {} "
+            "while the number of predicted class is {}.".format(len(thr), num_classes)
+        )
+    thr = thr[0] if num_classes == 1 else thr
+
+    if unit == 'vox':
+        size_min = thr
+    elif unit == 'mm3':
+        size_min = np.round(thr / (px * py * pz))
+    else:
+        logger.error('Please choose a different unit for removeSmall. Choices: vox or mm3')
+        exit()
+
+    for idx in range(1, n + 1):
+        data_idx = (data_label == idx).astype(int)
+        n_nonzero = np.count_nonzero(data_idx)
+
+        if n_nonzero < size_min:
+            data[data_label == idx] = 0
+
+    return data
