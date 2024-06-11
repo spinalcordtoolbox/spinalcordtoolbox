@@ -126,14 +126,12 @@ def segment_non_ivadomed(path_model, model_type, input_filenames, threshold, kee
         fnames_out, targets = inference(path_img=fname_in, tmpdir=tmpdir, predictor=net, device=device)
         for fname_out, target in zip(fnames_out, targets):
             im_out = Image(fname_out)
-            # add soft threshold (not binarization)
-            im_out.data[im_out.data < 0.1] = 0
             # Apply postprocessing (replicates existing functionality from ivadomed package)
             # 1. Binarize predictions based on the threshold value
             # NOTE: Any post-processing is done only after thresholding (as post-processing operations
             # expect binary masks)
-            # if threshold is not None:
-            #     im_out.data = binarize(im_out.data, threshold)
+            if threshold is not None:
+                im_out.data = binarize(im_out.data, threshold)
             # 2. Keep the largest connected object
             if keep_largest is not None:
                 im_out.data = keep_largest_object(im_out.data)
