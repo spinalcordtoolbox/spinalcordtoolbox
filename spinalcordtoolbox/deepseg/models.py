@@ -95,23 +95,6 @@ MODELS = {
         "contrasts": ["mp2rage"],
         "default": False,
     },
-    "model_seg_ms_lesion_mp2rage": {
-        "url": {
-            "seed1": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed01.zip"],
-            "seed2": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed02.zip"],
-            "seed3": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed03.zip"],
-            "seed4": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed04.zip"],
-            "seed5": ["https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20230210/model_seg_lesion_mp2rage_r20230210_dil32_seed05.zip"],
-        },
-        "description": "Segmentation of multiple sclerosis lesions on cropped MP2RAGE spinal cord data. To crop the "
-                       "data you can first segment the spinal cord using the model 'model_seg_ms_sc_mp2rage' and "
-                       "then crop the MP2RAGE image using 'sct_crop_image -i IMAGE -m IMAGE_seg -dilate 32x0x32'."
-                       "Note: For the MS lesion segmentation model to perform well, it is important to respect "
-                       "the value 32. Also, the syntax assumes the image is sagittal. For another orientation, "
-                       "change the axes in '32x0x32'.",
-        "contrasts": ["mp2rage"],
-        "default": False,
-    },
     "model_7t_multiclass_gm_sc_unet2d": {
         "url": [
             "https://github.com/ivadomed/model_seg_gm-wm_t2star_7t_unet3d-multiclass/archive/refs/tags/r20211012.zip"
@@ -191,6 +174,15 @@ MODELS = {
          "thr": None,  # Images are already binarized
          "default": False,
      },
+    "model_seg_ms_lesion_mp2rage": {
+         "url": [
+             "https://github.com/ivadomed/model_seg_ms_mp2rage/releases/download/r20240610/model_ms_lesion_mp2rage-unit1_3d.zip"
+         ],
+         "description": "Segmentation of spinal cord MS lesions on MP2RAGE UNIT1 contrast",
+         "contrasts": ["UNIT1"],
+         "thr": None,  # Images are already binarized
+         "default": False,
+     },
 }
 
 
@@ -246,18 +238,6 @@ TASKS = {
                              'segmentations of MS lesions. This dataset was provided by the University of Basel.',
          'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
          'models': ['model_seg_ms_sc_mp2rage']},
-    'seg_ms_lesion_mp2rage':
-        {'description': 'MS lesion segmentation on cropped MP2RAGE data',
-         'long_description': 'This segmentation model for MP2RAGE MS lesion segmentation uses a Modified3DUNet '
-                             'architecture, and was created with the `ivadomed` package. Training/Evaluation data included '
-                             '180 multiple sclerosis (MS) patients from the University of Basel. '
-                             'Important: For the MS lesion segmentation model to perform well, it is important to crop it '
-                             'around the spinal cord, using a dilation value of 32. This could be done using: '
-                             '"sct_crop_image -i IMAGE -m IMAGE_seg -dilate 32x0x32". '
-                             'Note that the syntax above assumes the image is sagittal. For another orientation, '
-                             'axes need to be swapped (eg: 32x32x0 for an axial orientation).',
-         'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
-         'models': ['model_seg_ms_lesion_mp2rage']},
     'seg_tumor-edema-cavity_t1-t2':
         {'description': 'Multiclass cord tumor/edema/cavity segmentation',
          'long_description': 'This segmentation model for T1w and T2w spinal tumor, edema, and cavity segmentation '
@@ -360,6 +340,21 @@ TASKS = {
                              'dataset has healthy control subjects. The model has been trained in a human-in-the-loop active learning fashion.',
          'url': 'https://github.com/sct-pipeline/fmri-segmentation',
          'models': ['model_seg_sc_epi_nnunet']},
+    'seg_ms_lesion_mp2rage':
+        {'description': 'Segmentation of spinal cord MS lesions on MP2RAGE UNIT1 contrast',
+         'long_description': 'This segmentation model for multiple sclerosis lesion segmentation on cropped MP2RAGE-UNIT1 spinal cord data. '
+                        'Uses a 3D U-Net, trained with the nnUNetV2 framework. It is a single-class model outputting binary MS lesions '
+                        'segmentations. Training consisted of MP2RAGE data on UNIT1 contrast at 1.0 mm3 isotropic (322 subjects from '
+                        '3 sites: National Institutes of Health, Bethesda, USA, University Hospital Basel and University of Basel, Basel, '
+                        'Switzerland and Center for Magnetic Resonance in Biology and Medicine, CRMBM-CEMEREM, UMR 7339, CNRS,  '
+                        'Aix-Marseille University, Marseille, France). '
+                        'To crop the data you can first segment the spinal cord using the contrast agnostic model, This could be '
+                        'done using: "sct_deepseg -i IMAGE_UNIT1 -task seg_sc_contrast_agnostic -o IMAGE_UNIT1_sc", then crop the ' 
+                        'IMAGE_UNIT1 image with 30 mm of dilation on axial orientation around the spinal cord. This could be done using: '
+                        '"sct_crop_image -i IMAGE_UNIT1 -m IMAGE_seg -dilate 30x30x5" . Note that 30 is only for 1mm isotropic ' 
+                        'resolution, for images with another resolution divide 30/your_axial_resolution.',
+         'url': 'https://github.com/ivadomed/model_seg_ms_mp2rage',
+         'models': ['model_seg_ms_lesion_mp2rage']},
 }
 
 
